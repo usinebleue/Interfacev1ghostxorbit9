@@ -68,37 +68,24 @@ interface PioneersViewProps {
 
 export function PioneersView({ onBack }: PioneersViewProps) {
   return (
-    <div className="flex-1 flex flex-col h-full">
-      {/* En-tête spécial */}
-      <div className="bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 border-b px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={onBack}
-              className="gap-2 text-white hover:bg-white/20 hover:text-white"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Retour
-            </Button>
-            <Separator orientation="vertical" className="h-6 bg-white/30" />
-            <div className="flex items-center gap-2">
-              <Crown className="h-5 w-5 text-white" />
-              <h1 className="text-xl font-bold text-white">Cercle des Pionniers</h1>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Badge className="bg-white text-amber-700 hover:bg-white text-base px-4 py-1.5 font-bold">
-              9/9 COMPLET
-            </Badge>
-          </div>
-        </div>
+    <div className="flex-1 flex flex-col">
+      {/* En-tête */}
+      <div className="bg-white border-b border-t-2 border-t-blue-600 px-4 h-12 flex items-center">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onBack}
+          className="gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Retour
+        </Button>
+        <Separator orientation="vertical" className="h-5 mx-2" />
+        <h1 className="text-sm font-semibold">Cercle des Pionniers</h1>
       </div>
 
       {/* Contenu */}
-      <div className="flex-1 overflow-y-auto bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50">
+      <div className="flex-1 bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50">
         <div className="max-w-6xl mx-auto p-6 space-y-6">
           {/* Statut pionnier */}
           <Card className="p-6 border-2 border-amber-300 bg-gradient-to-br from-amber-50 to-yellow-50 shadow-xl">
@@ -111,7 +98,7 @@ export function PioneersView({ onBack }: PioneersViewProps) {
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <span className="text-3xl">🏆</span>
-                    <h2 className="text-2xl font-bold text-amber-900">
+                    <h2 className="text-sm font-bold text-amber-900">
                       CARL FUGÈRE — PIONNIER #1
                     </h2>
                   </div>
@@ -149,8 +136,8 @@ export function PioneersView({ onBack }: PioneersViewProps) {
               {/* Avantages exclusifs */}
               <div className="bg-white rounded-lg p-5 border-2 border-amber-200 shadow-md">
                 <div className="flex items-center gap-2 mb-4">
-                  <Zap className="h-5 w-5 text-amber-600" />
-                  <h3 className="font-bold text-lg text-amber-900">
+                  <Zap className="h-4 w-4 text-amber-600" />
+                  <h3 className="text-sm font-semibold text-amber-900">
                     AVANTAGES PIONNIERS (exclusifs, à vie) :
                   </h3>
                 </div>
@@ -160,7 +147,7 @@ export function PioneersView({ onBack }: PioneersViewProps) {
                       key={idx}
                       className="flex items-start gap-2 p-3 bg-amber-50 rounded-lg border border-amber-200"
                     >
-                      <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                      <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
                       <span className="text-sm font-medium text-gray-800">{benefit}</span>
                     </div>
                   ))}
@@ -171,8 +158,8 @@ export function PioneersView({ onBack }: PioneersViewProps) {
 
           {/* Les 9 Pionniers */}
           <Card className="p-6 border-2 border-amber-200">
-            <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-              <Users className="h-5 w-5 text-amber-600" />
+            <h2 className="text-sm font-bold mb-6 flex items-center gap-2">
+              <Users className="h-4 w-4 text-amber-600" />
               LES 9 PIONNIERS
             </h2>
 
@@ -233,13 +220,13 @@ export function PioneersView({ onBack }: PioneersViewProps) {
 
             <div className="mt-6 space-y-3">
               <div className="flex items-center gap-2 p-4 bg-green-50 rounded-lg border border-green-200">
-                <CheckCircle2 className="h-5 w-5 text-green-600" />
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
                 <span className="font-semibold text-green-900">
                   COMPLET — Prochaine vague dans 6 mois
                 </span>
               </div>
               <div className="flex items-center gap-2 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <Users className="h-5 w-5 text-blue-600" />
+                <Users className="h-4 w-4 text-blue-600" />
                 <span className="font-medium text-blue-900">
                   Waitlist Vague 2: <strong>34 inscrits</strong>
                 </span>
@@ -249,8 +236,8 @@ export function PioneersView({ onBack }: PioneersViewProps) {
 
           {/* Impact du cercle */}
           <Card className="p-6 border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-blue-50">
-            <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-purple-600" />
+            <h2 className="text-sm font-bold mb-6 flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-purple-600" />
               IMPACT DU CERCLE (DASHBOARD COLLECTIF)
             </h2>
 
@@ -267,12 +254,12 @@ export function PioneersView({ onBack }: PioneersViewProps) {
                       className="bg-white p-4 rounded-lg border shadow-sm hover:shadow-md transition-shadow"
                     >
                       <div className="flex items-center gap-2 mb-2">
-                        <Icon className={`h-5 w-5 ${metric.color}`} />
+                        <Icon className={`h-4 w-4 ${metric.color}`} />
                         <span className="text-xs text-gray-600 font-medium">
                           {metric.label}
                         </span>
                       </div>
-                      <p className={`text-2xl font-bold ${metric.color}`}>
+                      <p className={`text-sm font-bold ${metric.color}`}>
                         {metric.value}
                       </p>
                     </div>
@@ -285,8 +272,8 @@ export function PioneersView({ onBack }: PioneersViewProps) {
 
             {/* Revenue GhostX */}
             <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-6 border-2 border-green-200">
-              <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                <DollarSign className="h-5 w-5 text-green-600" />
+              <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
+                <DollarSign className="h-4 w-4 text-green-600" />
                 REVENUE GHOSTX DU CERCLE :
               </h3>
               
@@ -317,11 +304,11 @@ export function PioneersView({ onBack }: PioneersViewProps) {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium mb-1 opacity-90">TOTAL MENSUEL</p>
-                    <p className="text-4xl font-bold">36,714$/mois</p>
+                    <p className="text-sm font-bold">36,714$/mois</p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-medium mb-1 opacity-90">TOTAL ANNUEL</p>
-                    <p className="text-3xl font-bold">440K$/an</p>
+                    <p className="text-sm font-bold">440K$/an</p>
                   </div>
                 </div>
                 <p className="text-sm mt-3 opacity-90 text-center">
@@ -332,7 +319,7 @@ export function PioneersView({ onBack }: PioneersViewProps) {
               <div className="mt-4 p-4 bg-amber-50 rounded-lg border border-amber-200">
                 <p className="text-sm text-amber-900 text-center">
                   💡 <strong>Ta commission de 5%</strong> sur le cercle = 
-                  <strong className="text-lg"> ~1,835$/mois</strong> (~22K$/an)
+                  <strong className="text-sm font-semibold"> ~1,835$/mois</strong> (~22K$/an)
                 </p>
               </div>
             </div>
@@ -345,7 +332,7 @@ export function PioneersView({ onBack }: PioneersViewProps) {
                 <Crown className="h-6 w-6 text-white" />
               </div>
               <div className="flex-1">
-                <h3 className="font-bold text-xl mb-2">
+                <h3 className="text-sm font-bold mb-2">
                   Merci d'être Pionnier #1 🙏
                 </h3>
                 <p className="text-white/90 leading-relaxed mb-4">

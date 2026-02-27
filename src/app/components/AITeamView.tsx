@@ -9,11 +9,13 @@ import { Slider } from './ui/slider';
 
 interface Bot {
   id: string;
-  emoji: string;
+  avatar: string;
+  agentName: string;
   name: string;
   role: string;
   trisociation: string[];
   color: string;
+  borderColor: string;
   active: boolean;
   messageCount: number;
   tonality: number;
@@ -31,11 +33,13 @@ interface Ghost {
 const bots: Bot[] = [
   {
     id: 'carlos',
-    emoji: '🔵',
-    name: 'CarlOS CEO',
+    avatar: '/agents/ceo-carlos.png',
+    agentName: 'CarlOS',
+    name: 'CEO',
     role: 'Direction',
     trisociation: ['Bezos', 'Munger', 'Churchill'],
     color: 'blue',
+    borderColor: 'ring-blue-500',
     active: true,
     messageCount: 342,
     tonality: 80,
@@ -45,11 +49,13 @@ const bots: Bot[] = [
   },
   {
     id: 'cto',
-    emoji: '🟣',
-    name: 'CTO Bot',
+    avatar: '/agents/cto-thomas.png',
+    agentName: 'Musk',
+    name: 'CTO',
     role: 'Technologie',
     trisociation: ['Musk', 'Curie', 'Vinci'],
     color: 'purple',
+    borderColor: 'ring-purple-500',
     active: true,
     messageCount: 156,
     tonality: 80,
@@ -59,11 +65,13 @@ const bots: Bot[] = [
   },
   {
     id: 'cfo',
-    emoji: '🟢',
-    name: 'CFO Bot',
+    avatar: '/agents/cfo-francois.png',
+    agentName: 'Buffett',
+    name: 'CFO',
     role: 'Finance',
     trisociation: ['Buffett', 'Munger', 'Franklin'],
     color: 'green',
+    borderColor: 'ring-green-500',
     active: true,
     messageCount: 98,
     tonality: 40,
@@ -73,11 +81,13 @@ const bots: Bot[] = [
   },
   {
     id: 'cmo',
-    emoji: '🩷',
-    name: 'CMO Bot',
+    avatar: '/agents/cmo-sofia.png',
+    agentName: 'Disney',
+    name: 'CMO',
     role: 'Marketing',
     trisociation: ['Disney', 'Jobs/Blakely', 'Oprah'],
     color: 'pink',
+    borderColor: 'ring-pink-500',
     active: true,
     messageCount: 67,
     tonality: 85,
@@ -87,11 +97,13 @@ const bots: Bot[] = [
   },
   {
     id: 'cso',
-    emoji: '🔴',
-    name: 'CSO Bot',
-    role: 'Stratégie',
+    avatar: '/agents/cso-marc.png',
+    agentName: 'Sun Tzu',
+    name: 'CSO',
+    role: 'Vente',
     trisociation: ['Sun Tzu', 'Thiel', 'Chanel'],
     color: 'red',
+    borderColor: 'ring-red-500',
     active: true,
     messageCount: 112,
     tonality: 70,
@@ -101,11 +113,13 @@ const bots: Bot[] = [
   },
   {
     id: 'coo',
-    emoji: '🟠',
-    name: 'COO Bot',
+    avatar: '/agents/coo-lise.png',
+    agentName: 'Marc Aurèle',
+    name: 'COO',
     role: 'Opérations',
     trisociation: ['Marc Aurèle', 'Deming', 'Nightingale'],
     color: 'orange',
+    borderColor: 'ring-orange-500',
     active: true,
     messageCount: 89,
     tonality: 60,
@@ -139,38 +153,23 @@ export function AITeamView({ onBack }: AITeamViewProps) {
   const activeBotsCount = bots.filter(b => b.active).length;
 
   return (
-    <div className="flex-1 flex flex-col h-full">
+    <div className="flex-1 flex flex-col bg-gray-50 h-full">
       {/* En-tête */}
-      <div className="bg-white border-b px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={onBack}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Cockpit
-            </Button>
-            <Separator orientation="vertical" className="h-6" />
-            <h1 className="text-xl font-semibold">Mon Équipe AI</h1>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Badge className="bg-green-600">
-              {activeBotsCount}/6 bots actifs
-            </Badge>
-          </div>
-        </div>
+      <div className="bg-white border-b border-t-2 border-t-blue-600 px-4 h-12 flex items-center flex-shrink-0">
+        <Button variant="ghost" size="sm" onClick={onBack} className="gap-2">
+          <ArrowLeft className="h-4 w-4" />
+          Retour
+        </Button>
+        <Separator orientation="vertical" className="h-5 mx-2" />
+        <h1 className="text-sm font-semibold">Mon Équipe AI</h1>
       </div>
 
       {/* Contenu */}
-      <div className="flex-1 overflow-y-auto bg-gray-50">
+      <div className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto p-6 space-y-6">
           {/* Section des bots */}
           <div>
-            <h2 className="text-lg font-semibold mb-4">TES 6 C-LEVEL AI</h2>
+            <h2 className="text-sm font-semibold mb-4">TES 6 C-LEVEL AI</h2>
             
             <div className="grid grid-cols-2 gap-6">
               {bots.map((bot) => (
@@ -182,9 +181,13 @@ export function AITeamView({ onBack }: AITeamViewProps) {
                     {/* En-tête du bot */}
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
-                        <span className="text-3xl">{bot.emoji}</span>
+                        <img
+                          src={bot.avatar}
+                          alt={bot.agentName}
+                          className={`w-12 h-12 rounded-full object-cover ring-2 ${bot.borderColor}`}
+                        />
                         <div>
-                          <h3 className="font-semibold text-lg">{bot.name}</h3>
+                          <h3 className="text-sm font-semibold">{bot.agentName} — {bot.name}</h3>
                           <p className="text-sm text-gray-600">{bot.role}</p>
                         </div>
                       </div>
@@ -287,7 +290,7 @@ export function AITeamView({ onBack }: AITeamViewProps) {
           <Card className="p-6">
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-semibold mb-2">
+                <h2 className="text-sm font-semibold mb-2">
                   GHOSTS DISPONIBLES (Modèles Cognitifs)
                 </h2>
                 <p className="text-sm text-gray-600">
@@ -309,9 +312,9 @@ export function AITeamView({ onBack }: AITeamViewProps) {
                   >
                     <div className="flex items-center gap-3">
                       {ghost.active ? (
-                        <CheckCircle2 className="h-5 w-5 text-blue-600 fill-blue-600 flex-shrink-0" />
+                        <CheckCircle2 className="h-4 w-4 text-blue-600 fill-blue-600 flex-shrink-0" />
                       ) : (
-                        <Circle className="h-5 w-5 text-gray-300 flex-shrink-0" />
+                        <Circle className="h-4 w-4 text-gray-300 flex-shrink-0" />
                       )}
                       <div className="min-w-0 flex-1">
                         <p className="font-semibold text-sm truncate">

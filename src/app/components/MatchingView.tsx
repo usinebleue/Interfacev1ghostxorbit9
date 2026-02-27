@@ -127,7 +127,7 @@ const getUrgencyBadge = (urgency: 'high' | 'medium' | 'low') => {
     case 'high':
       return (
         <Badge className="bg-red-600 gap-1">
-          <Zap className="h-3 w-3" />
+          <Zap className="h-4 w-4" />
           Haute
         </Badge>
       );
@@ -150,42 +150,25 @@ export function MatchingView({ onBack }: MatchingViewProps) {
   const currentMatch = matches.find(m => m.id === selectedMatch);
 
   return (
-    <div className="flex-1 flex flex-col h-full">
+    <div className="flex-1 flex flex-col bg-gray-50 h-full">
       {/* En-tête */}
-      <div className="bg-white border-b px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={onBack}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Cockpit
-            </Button>
-            <Separator orientation="vertical" className="h-6" />
-            <h1 className="text-xl font-semibold">Orbit9 — Matching</h1>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Search className="h-4 w-4 text-gray-500" />
-            <span className="text-sm text-gray-600">Réseau:</span>
-            <Badge variant="secondary" className="font-semibold">
-              350 co.
-            </Badge>
-          </div>
-        </div>
+      <div className="bg-white border-b border-t-2 border-t-blue-600 px-4 h-12 flex items-center flex-shrink-0">
+        <Button variant="ghost" size="sm" onClick={onBack} className="gap-2">
+          <ArrowLeft className="h-4 w-4" />
+          Retour
+        </Button>
+        <Separator orientation="vertical" className="h-5 mx-2" />
+        <h1 className="text-sm font-semibold">Orbit9 — Matching</h1>
       </div>
 
       <div className="flex-1 flex overflow-hidden">
         {/* Zone principale */}
-        <div className="flex-1 overflow-y-auto bg-gray-50">
+        <div className="flex-1 overflow-y-auto">
           <div className="max-w-5xl mx-auto p-6 space-y-6">
             {/* Besoins détectés */}
             <Card className="p-6">
               <div className="mb-6">
-                <h2 className="text-lg font-semibold mb-2">
+                <h2 className="text-xs font-semibold mb-2">
                   BESOINS DÉTECTÉS PAR TES BOTS
                 </h2>
                 <p className="text-sm text-gray-600">
@@ -262,7 +245,7 @@ export function MatchingView({ onBack }: MatchingViewProps) {
                     <div className="flex-1">
                       <div className="flex items-start justify-between mb-2">
                         <div>
-                          <h2 className="text-xl font-bold text-green-800 mb-1">
+                          <h2 className="text-sm font-bold text-green-800 mb-1">
                             MEILLEUR MATCH : {currentMatch.name}
                           </h2>
                           {currentMatch.isAnonymized && (
@@ -274,7 +257,7 @@ export function MatchingView({ onBack }: MatchingViewProps) {
                             </div>
                           )}
                         </div>
-                        <Badge className="bg-green-600 text-lg px-3 py-1">
+                        <Badge className="bg-green-600 text-xs px-3 py-1">
                           {currentMatch.compatibility}%
                         </Badge>
                       </div>
@@ -316,7 +299,7 @@ export function MatchingView({ onBack }: MatchingViewProps) {
                     <div className="space-y-2">
                       {currentMatch.reasons.map((reason, idx) => (
                         <div key={idx} className="flex items-start gap-2">
-                          <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                          <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
                           <span className="text-sm text-gray-700">{reason}</span>
                         </div>
                       ))}
@@ -375,7 +358,7 @@ export function MatchingView({ onBack }: MatchingViewProps) {
                       Discuter avec CarlOS d'abord
                     </Button>
                     <Button variant="ghost" size="icon" className="text-gray-500">
-                      <X className="h-5 w-5" />
+                      <X className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
@@ -385,7 +368,7 @@ export function MatchingView({ onBack }: MatchingViewProps) {
             {/* Note sur l'anonymisation */}
             <Card className="p-5 bg-blue-50 border-blue-200">
               <div className="flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <AlertCircle className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
                 <div className="space-y-2">
                   <h3 className="font-semibold text-blue-900">
                     NOTE: Les infos des entreprises sont ANONYMISÉES
@@ -418,7 +401,7 @@ export function MatchingView({ onBack }: MatchingViewProps) {
         </div>
 
         {/* Canvas droit */}
-        <div className="w-80 border-l bg-white overflow-y-auto">
+        <div className="w-80 border-l bg-white">
           <div className="p-6 space-y-6">
             {/* Stats réseau */}
             <Card className="p-4">
@@ -429,15 +412,15 @@ export function MatchingView({ onBack }: MatchingViewProps) {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Entreprises</span>
-                  <span className="font-bold text-lg">350</span>
+                  <span className="font-bold text-sm">350</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Cercles</span>
-                  <span className="font-bold text-lg">42</span>
+                  <span className="font-bold text-sm">42</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Secteurs</span>
-                  <span className="font-bold text-lg">12</span>
+                  <span className="font-bold text-sm">12</span>
                 </div>
                 <Separator />
                 <div className="bg-blue-50 p-3 rounded-lg">
@@ -487,15 +470,15 @@ export function MatchingView({ onBack }: MatchingViewProps) {
               <h3 className="font-semibold mb-3">FILTRES RAPIDES</h3>
               <div className="space-y-2">
                 <Button variant="outline" size="sm" className="w-full justify-start">
-                  <Zap className="h-3.5 w-3.5 mr-2" />
+                  <Zap className="h-4 w-4 mr-2" />
                   Urgence haute
                 </Button>
                 <Button variant="outline" size="sm" className="w-full justify-start">
-                  <MapPin className="h-3.5 w-3.5 mr-2" />
+                  <MapPin className="h-4 w-4 mr-2" />
                   Québec seulement
                 </Button>
                 <Button variant="outline" size="sm" className="w-full justify-start">
-                  <CheckCircle2 className="h-3.5 w-3.5 mr-2" />
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
                   Compatibilité 80%+
                 </Button>
               </div>

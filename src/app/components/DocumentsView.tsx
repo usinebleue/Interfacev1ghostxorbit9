@@ -114,34 +114,19 @@ export function DocumentsView({ onBack }: DocumentsViewProps) {
   });
 
   return (
-    <div className="flex-1 flex flex-col h-full">
+    <div className="flex-1 flex flex-col bg-gray-50 h-full">
       {/* En-tête */}
-      <div className="bg-white border-b px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={onBack}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Cockpit
-            </Button>
-            <Separator orientation="vertical" className="h-6" />
-            <h1 className="text-xl font-semibold">Mes Documents</h1>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="text-sm">
-              {documents.length} documents
-            </Badge>
-          </div>
-        </div>
+      <div className="bg-white border-b border-t-2 border-t-blue-600 px-4 h-12 flex items-center flex-shrink-0">
+        <Button variant="ghost" size="sm" onClick={onBack} className="gap-2">
+          <ArrowLeft className="h-4 w-4" />
+          Retour
+        </Button>
+        <Separator orientation="vertical" className="h-5 mx-2" />
+        <h1 className="text-sm font-semibold">Mes Documents</h1>
       </div>
 
       {/* Contenu */}
-      <div className="flex-1 overflow-y-auto bg-gray-50">
+      <div className="flex-1 overflow-y-auto">
         <div className="max-w-5xl mx-auto p-6 space-y-6">
           {/* Filtres */}
           <Card className="p-4">
@@ -166,7 +151,7 @@ export function DocumentsView({ onBack }: DocumentsViewProps) {
           {/* Documents CREDO */}
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <h2 className="text-lg font-semibold">DOCUMENTS CREDO (Auto-générés)</h2>
+              <h2 className="text-sm font-semibold">DOCUMENTS CREDO (Auto-générés)</h2>
               <Badge variant="secondary" className="text-xs">
                 {filteredDocuments.filter(d => d.type === 'credo').length}
               </Badge>
@@ -210,7 +195,7 @@ export function DocumentsView({ onBack }: DocumentsViewProps) {
                             </h3>
                             <div className="flex items-center gap-3 text-sm text-gray-600">
                               <div className="flex items-center gap-1">
-                                <Calendar className="h-3.5 w-3.5" />
+                                <Calendar className="h-4 w-4" />
                                 <span>Généré le {doc.date}</span>
                               </div>
                               {doc.metadata && (
@@ -223,7 +208,7 @@ export function DocumentsView({ onBack }: DocumentsViewProps) {
                                 <>
                                   <span>•</span>
                                   <div className="flex items-center gap-1">
-                                    <Paperclip className="h-3.5 w-3.5" />
+                                    <Paperclip className="h-4 w-4" />
                                     <span>Lié au {doc.linkedTo}</span>
                                   </div>
                                 </>
@@ -252,18 +237,18 @@ export function DocumentsView({ onBack }: DocumentsViewProps) {
                           {doc.status === 'completed' ? (
                             <>
                               <Button variant="default" size="sm" className="gap-2">
-                                <ExternalLink className="h-3.5 w-3.5" />
+                                <ExternalLink className="h-4 w-4" />
                                 Ouvrir
                               </Button>
                               <Button variant="outline" size="sm" className="gap-2">
-                                <Download className="h-3.5 w-3.5" />
+                                <Download className="h-4 w-4" />
                                 Exporter PDF
                               </Button>
                             </>
                           ) : (
                             <>
                               <Button variant="default" size="sm" className="gap-2">
-                                <ExternalLink className="h-3.5 w-3.5" />
+                                <ExternalLink className="h-4 w-4" />
                                 Ouvrir
                               </Button>
                               <Button 
@@ -271,7 +256,7 @@ export function DocumentsView({ onBack }: DocumentsViewProps) {
                                 size="sm" 
                                 className="gap-2 bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
                               >
-                                <MessageSquare className="h-3.5 w-3.5" />
+                                <MessageSquare className="h-4 w-4" />
                                 Compléter avec CarlOS
                               </Button>
                             </>
@@ -341,11 +326,11 @@ export function DocumentsView({ onBack }: DocumentsViewProps) {
                 </p>
                 <div className="flex gap-3 pt-2">
                   <Button variant="outline" size="sm" className="gap-2">
-                    <MessageSquare className="h-3.5 w-3.5" />
+                    <MessageSquare className="h-4 w-4" />
                     Créer un nouveau document
                   </Button>
                   <Button variant="outline" size="sm" className="gap-2">
-                    <Download className="h-3.5 w-3.5" />
+                    <Download className="h-4 w-4" />
                     Tout exporter
                   </Button>
                 </div>

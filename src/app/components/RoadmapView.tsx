@@ -27,7 +27,7 @@ const allPages = [
   { id: 5, name: 'Département Technologie (CTO)', category: 'PRINCIPALE', status: 'progress' },
   { id: 6, name: 'Département Finance (CFO)', category: 'PRINCIPALE', status: 'progress' },
   { id: 7, name: 'Département Marketing (CMO)', category: 'PRINCIPALE', status: 'planned' },
-  { id: 8, name: 'Département Stratégie (CSO)', category: 'PRINCIPALE', status: 'planned' },
+  { id: 8, name: 'Département Vente (CSO)', category: 'PRINCIPALE', status: 'planned' },
   { id: 9, name: 'Département Opérations (COO)', category: 'PRINCIPALE', status: 'planned' },
   { id: 10, name: 'Chat CarlOS (pleine page)', category: 'PRINCIPALE', status: 'done' },
   { id: 11, name: 'Cahier de Projet (sections)', category: 'PRINCIPALE', status: 'done' },
@@ -146,40 +146,24 @@ export function RoadmapView({ onBack }: RoadmapViewProps) {
   const progressPercentage = Math.round((completedPages / allPages.length) * 100);
 
   return (
-    <div className="flex-1 flex flex-col h-full">
+    <div className="flex-1 flex flex-col">
       {/* En-tête */}
-      <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-pink-600 border-b px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={onBack}
-              className="gap-2 text-white hover:bg-white/20 hover:text-white"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Retour
-            </Button>
-            <Separator orientation="vertical" className="h-6 bg-white/30" />
-            <div className="flex items-center gap-2">
-              <Rocket className="h-5 w-5 text-white" />
-              <h1 className="text-xl font-bold text-white">Roadmap & Vision Stratégique</h1>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <Badge className="bg-white text-purple-700 hover:bg-white text-sm px-3 py-1 font-bold">
-              {completedPages}/{allPages.length} pages
-            </Badge>
-            <Badge className="bg-green-500 text-white hover:bg-green-500 text-sm px-3 py-1 font-bold">
-              {progressPercentage}% complété
-            </Badge>
-          </div>
-        </div>
+      <div className="bg-white border-b border-t-2 border-t-blue-600 px-4 h-12 flex items-center">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onBack}
+          className="gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Retour
+        </Button>
+        <Separator orientation="vertical" className="h-5 mx-2" />
+        <h1 className="text-sm font-semibold">Roadmap & Vision Stratégique</h1>
       </div>
 
       {/* Contenu */}
-      <div className="flex-1 overflow-y-auto bg-gradient-to-br from-purple-50 to-blue-50">
+      <div className="flex-1 bg-gradient-to-br from-purple-50 to-blue-50">
         <div className="max-w-7xl mx-auto p-6 space-y-6">
           {/* Vision 1-Image */}
           <Card className="p-6 border-2 border-purple-300 bg-gradient-to-br from-purple-100 to-blue-100">
@@ -189,7 +173,7 @@ export function RoadmapView({ onBack }: RoadmapViewProps) {
                   <Layers className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold">GHOSTX = Netflix du conseil stratégique</h2>
+                  <h2 className="text-sm font-bold">GHOSTX = Netflix du conseil stratégique</h2>
                   <p className="text-sm text-gray-600">La vision en 4 couches</p>
                 </div>
               </div>
@@ -203,12 +187,12 @@ export function RoadmapView({ onBack }: RoadmapViewProps) {
                     className={`p-4 border-2 ${layer.color}`}
                   >
                     <div className="flex items-center gap-4">
-                      <Badge className={`${layer.badge} text-lg px-3 py-1 font-bold`}>
+                      <Badge className={`${layer.badge} text-xs px-3 py-1 font-bold`}>
                         COUCHE {layer.number}
                       </Badge>
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-1">
-                          <h3 className="font-bold text-lg">{layer.title}</h3>
+                          <h3 className="text-sm font-semibold">{layer.title}</h3>
                           <Badge variant="outline" className="font-semibold">
                             {layer.price}
                           </Badge>
@@ -225,8 +209,8 @@ export function RoadmapView({ onBack }: RoadmapViewProps) {
               <div className="bg-gradient-to-r from-orange-50 to-red-50 p-5 rounded-lg border-2 border-orange-200">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 mb-3">
-                    <Shield className="h-6 w-6 text-orange-600" />
-                    <h3 className="font-bold text-lg text-orange-900">LE MOAT :</h3>
+                    <Shield className="h-4 w-4 text-orange-600" />
+                    <h3 className="text-sm font-semibold text-orange-900">LE MOAT :</h3>
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div className="flex items-center gap-2">
@@ -247,7 +231,7 @@ export function RoadmapView({ onBack }: RoadmapViewProps) {
                     </div>
                   </div>
                   <Separator className="my-3 bg-orange-200" />
-                  <p className="text-center font-bold text-orange-900 text-lg italic">
+                  <p className="text-center font-bold text-orange-900 text-sm italic">
                     "La valeur attire la valeur."
                   </p>
                 </div>
@@ -259,8 +243,8 @@ export function RoadmapView({ onBack }: RoadmapViewProps) {
           <Card className="p-6 border-2 border-blue-200">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold">TOUTES LES PAGES</h2>
-                <Badge className="bg-blue-600 text-base px-3 py-1">
+                <h2 className="text-sm font-bold">TOUTES LES PAGES</h2>
+                <Badge className="bg-blue-600 text-xs px-3 py-1">
                   22 écrans + sous-pages
                 </Badge>
               </div>
@@ -307,9 +291,9 @@ export function RoadmapView({ onBack }: RoadmapViewProps) {
           <Card className="p-6 border-2 border-green-200">
             <div className="space-y-6">
               <div className="flex items-center gap-3">
-                <TrendingUp className="h-6 w-6 text-green-600" />
+                <TrendingUp className="h-4 w-4 text-green-600" />
                 <div>
-                  <h2 className="text-2xl font-bold">ORDRE DE CONSTRUCTION</h2>
+                  <h2 className="text-sm font-bold">ORDRE DE CONSTRUCTION</h2>
                   <p className="text-sm text-gray-600">
                     Règle : Construire CE QUI FAIT DU CASH en premier
                   </p>
@@ -328,10 +312,10 @@ export function RoadmapView({ onBack }: RoadmapViewProps) {
                     <div className={`bg-gradient-to-r ${sprint.color} p-4`}>
                       <div className="flex items-center justify-between text-white">
                         <div className="flex items-center gap-3">
-                          <Badge className="bg-white text-gray-900 hover:bg-white text-lg px-3 py-1 font-bold">
+                          <Badge className="bg-white text-gray-900 hover:bg-white text-xs px-3 py-1 font-bold">
                             SPRINT {sprint.id}
                           </Badge>
-                          <h3 className="font-bold text-xl">{sprint.title}</h3>
+                          <h3 className="text-sm font-bold">{sprint.title}</h3>
                         </div>
                         <div className="flex items-center gap-3">
                           <div className="flex gap-1">
@@ -368,14 +352,14 @@ export function RoadmapView({ onBack }: RoadmapViewProps) {
 
                       <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg border border-green-200">
                         <div className="flex items-start gap-3">
-                          <Zap className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                          <Zap className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
                           <div className="flex-1">
                             <p className="font-semibold text-green-900 mb-2">
                               RÉSULTAT :
                             </p>
                             <p className="text-sm text-gray-700">{sprint.result}</p>
                           </div>
-                          <Badge className="bg-green-600 text-white hover:bg-green-600 text-base px-3 py-1">
+                          <Badge className="bg-green-600 text-white hover:bg-green-600 text-xs px-3 py-1">
                             <DollarSign className="h-4 w-4 inline mr-1" />
                             {sprint.revenue}
                           </Badge>
@@ -391,14 +375,14 @@ export function RoadmapView({ onBack }: RoadmapViewProps) {
           {/* Metrics de progression */}
           <Card className="p-6 border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-blue-50">
             <div className="space-y-4">
-              <h2 className="text-2xl font-bold">PROGRESSION ACTUELLE</h2>
+              <h2 className="text-sm font-bold">PROGRESSION ACTUELLE</h2>
               <Separator />
               
               <div className="grid grid-cols-4 gap-4">
                 <Card className="p-4 bg-white border-2 border-green-300">
                   <div className="text-center space-y-2">
                     <p className="text-sm text-gray-600">Complétées</p>
-                    <p className="text-4xl font-bold text-green-600">
+                    <p className="text-sm font-bold text-green-600">
                       {allPages.filter(p => p.status === 'done').length}
                     </p>
                     <p className="text-xs text-gray-500">pages</p>
@@ -407,7 +391,7 @@ export function RoadmapView({ onBack }: RoadmapViewProps) {
                 <Card className="p-4 bg-white border-2 border-blue-300">
                   <div className="text-center space-y-2">
                     <p className="text-sm text-gray-600">En cours</p>
-                    <p className="text-4xl font-bold text-blue-600">
+                    <p className="text-sm font-bold text-blue-600">
                       {allPages.filter(p => p.status === 'progress').length}
                     </p>
                     <p className="text-xs text-gray-500">pages</p>
@@ -416,7 +400,7 @@ export function RoadmapView({ onBack }: RoadmapViewProps) {
                 <Card className="p-4 bg-white border-2 border-gray-300">
                   <div className="text-center space-y-2">
                     <p className="text-sm text-gray-600">Planifiées</p>
-                    <p className="text-4xl font-bold text-gray-600">
+                    <p className="text-sm font-bold text-gray-600">
                       {allPages.filter(p => p.status === 'planned').length}
                     </p>
                     <p className="text-xs text-gray-500">pages</p>
@@ -425,7 +409,7 @@ export function RoadmapView({ onBack }: RoadmapViewProps) {
                 <Card className="p-4 bg-white border-2 border-purple-300">
                   <div className="text-center space-y-2">
                     <p className="text-sm text-gray-600">Total</p>
-                    <p className="text-4xl font-bold text-purple-600">
+                    <p className="text-sm font-bold text-purple-600">
                       {allPages.length}
                     </p>
                     <p className="text-xs text-gray-500">pages</p>
@@ -455,7 +439,7 @@ export function RoadmapView({ onBack }: RoadmapViewProps) {
                 <Rocket className="h-6 w-6 text-white" />
               </div>
               <div className="flex-1">
-                <h3 className="font-bold text-xl mb-2">
+                <h3 className="text-sm font-bold mb-2">
                   Construction par couches successives
                 </h3>
                 <p className="text-white/90 leading-relaxed">
