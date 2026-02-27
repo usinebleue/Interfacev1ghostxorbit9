@@ -16,6 +16,7 @@ interface FrameMasterState {
   rightSidebarCollapsed: boolean;
   isAuthenticated: boolean;
   isOnboarded: boolean;
+  hasSeenSimulation: boolean;
   currentUser: string;
 }
 
@@ -26,6 +27,7 @@ interface FrameMasterActions {
   toggleRightSidebar: () => void;
   setAuthenticated: (v: boolean) => void;
   setOnboarded: (v: boolean) => void;
+  setHasSeenSimulation: (v: boolean) => void;
   setLeftCollapsed: (v: boolean) => void;
   // Registre pour le panel imperatif
   registerLeftPanel: (api: { collapse: () => void; expand: () => void }) => void;
@@ -46,7 +48,22 @@ export function FrameMasterProvider({
   const [leftSidebarCollapsed, setLeftCollapsed] = useState(false);
   const [rightSidebarCollapsed, setRightCollapsed] = useState(false);
   const [isAuthenticated, setAuthenticated] = useState(true);   // DEV: bypass login
-  const [isOnboarded, setOnboarded] = useState(true);           // DEV: bypass onboarding
+  const [isOnboarded, setOnboardedState] = useState(true);      // DEV: bypass onboarding
+
+  const setOnboarded = useCallback((v: boolean) => {
+    setOnboardedState(v);
+    try { localStorage.setItem("ghostx-onboarded", String(v)); }
+    catch { /* noop */ }
+  }, []);
+
+  // Simulation CREDO dans CenterZone — active quand onboarding sera live
+  const [hasSeenSimulation, setHasSeenSimulationState] = useState(true); // DEV: bypass
+
+  const setHasSeenSimulation = useCallback((v: boolean) => {
+    setHasSeenSimulationState(v);
+    try { localStorage.setItem("ghostx-simulation-done", String(v)); }
+    catch { /* noop */ }
+  }, []);
 
   const leftPanelRef = useRef<{ collapse: () => void; expand: () => void } | null>(null);
 
@@ -85,6 +102,7 @@ export function FrameMasterProvider({
         rightSidebarCollapsed,
         isAuthenticated,
         isOnboarded,
+        hasSeenSimulation,
         currentUser: "Carl Fugere",
         setActiveBot,
         setActiveView,
@@ -92,6 +110,7 @@ export function FrameMasterProvider({
         toggleRightSidebar,
         setAuthenticated,
         setOnboarded,
+        setHasSeenSimulation,
         setLeftCollapsed,
         registerLeftPanel,
       }}

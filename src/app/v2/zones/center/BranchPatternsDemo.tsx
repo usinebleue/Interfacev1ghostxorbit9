@@ -1058,7 +1058,7 @@ function CristalliseConfirmation({ type, titre }: { type: CristalType; titre: st
  * 11   — Cristallisation
  * 12   — Done (2 threads resolus)
  */
-export function BranchPatternsDemo() {
+export function BranchPatternsDemo({ onComplete }: { onComplete?: () => void } = {}) {
   const [stage, setStage] = useState(0);
   const [phase, setPhase] = useState<CREDOPhase>("C");
   const [cristalType, setCristalType] = useState<CristalType>(null);
@@ -1075,6 +1075,7 @@ export function BranchPatternsDemo() {
     setCristalType(type);
     setPhase("done");
     setStage(12);
+    onComplete?.();
   };
 
   const handleRestart = () => {

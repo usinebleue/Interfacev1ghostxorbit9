@@ -18,29 +18,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../../../components/ui/dropdown-menu";
-import { cn } from "../../../components/ui/utils";
 import { useFrameMaster } from "../../context/FrameMasterContext";
 import { BotPresenceIndicator } from "./BotPresenceIndicator";
 
 const UB_BLUE = "#073E5A";
-
-/** Couleur identitaire par bot — bande fine en bas du header */
-const HEADER_BOT_COLORS: Record<string, string> = {
-  BCO: "bg-blue-500",
-  BCT: "bg-violet-500",
-  BCF: "bg-emerald-500",
-  BCM: "bg-pink-500",
-  BCS: "bg-red-500",
-  BOO: "bg-orange-500",
-  BFA: "bg-slate-400",
-  BHR: "bg-teal-500",
-  BIO: "bg-cyan-500",
-  BCC: "bg-rose-500",
-  BPO: "bg-fuchsia-500",
-  BRO: "bg-amber-500",
-  BLE: "bg-indigo-500",
-  BSE: "bg-zinc-400",
-};
 
 /** Header colonne GAUCHE — Logo Usine Bleue */
 export function HeaderLeft({ collapsed }: { collapsed: boolean }) {
@@ -58,10 +39,9 @@ export function HeaderLeft({ collapsed }: { collapsed: boolean }) {
 /** Header colonne CENTRE — Bot ID + Tour de Controle / Cockpit / Reglage Bot */
 export function HeaderCenter() {
   const { activeBot, activeBotCode, setActiveView } = useFrameMaster();
-  const botBand = HEADER_BOT_COLORS[activeBotCode];
 
   return (
-    <div className="h-14 border-b border-white/10 flex flex-col shrink-0" style={{ backgroundColor: UB_BLUE }}>
+    <div className="h-14 border-b border-white/10 flex items-center shrink-0" style={{ backgroundColor: UB_BLUE }}>
       {/* Contenu header */}
       <div className="flex-1 flex items-center justify-between px-4">
         {/* Bot actif + Presence — gauche */}
@@ -145,9 +125,6 @@ export function HeaderCenter() {
         </Tooltip>
         </div>
       </div>
-
-      {/* Bande couleur identitaire du bot actif */}
-      {botBand && <div className={cn("h-1", botBand)} />}
     </div>
   );
 }

@@ -8,7 +8,7 @@ import { FrameMasterProvider, useFrameMaster } from "./context/FrameMasterContex
 import { ChatProvider } from "./context/ChatContext";
 import { FrameMaster } from "./layout/FrameMaster";
 import { LoginView } from "../components/LoginView";
-import { OnboardingView } from "../components/OnboardingView";
+import { WelcomeOnboardingView } from "./zones/center/WelcomeOnboardingView";
 
 function AppRouter() {
   const { isAuthenticated, isOnboarded, setAuthenticated, setOnboarded } =
@@ -19,7 +19,7 @@ function AppRouter() {
   }
 
   if (!isOnboarded) {
-    return <OnboardingView onComplete={() => setOnboarded(true)} />;
+    return <WelcomeOnboardingView onComplete={() => setOnboarded(true)} />;
   }
 
   return (

@@ -86,7 +86,7 @@ export function SidebarRight({ collapsed = false }: Props) {
     <div className="h-full flex flex-col bg-white">
       {/* Sections scrollables en haut */}
       <ScrollArea className="flex-1 min-h-0">
-        <div className="py-2">
+        <div className="pt-4 pb-2">
           {/* Section Sentinel */}
           <div className="mx-3 mb-1">
             <ActiveAgentsPanel />
