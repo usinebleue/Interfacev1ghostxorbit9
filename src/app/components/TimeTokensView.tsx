@@ -144,36 +144,20 @@ interface TimeTokensViewProps {
 
 export function TimeTokensView({ onBack }: TimeTokensViewProps) {
   return (
-    <div className="flex-1 flex flex-col h-full">
+    <div className="flex-1 flex flex-col bg-gray-50 h-full">
       {/* En-tête */}
-      <div className="bg-white border-b px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={onBack}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Cockpit
-            </Button>
-            <Separator orientation="vertical" className="h-6" />
-            <h1 className="text-xl font-semibold">Orbit9 — TimeTokens</h1>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">Balance:</span>
-            <Badge className="bg-purple-600 text-lg px-3 py-1">
-              {balance.total.toLocaleString()} TT
-            </Badge>
-          </div>
-        </div>
+      <div className="bg-white border-b border-t-2 border-t-blue-600 px-4 h-12 flex items-center flex-shrink-0">
+        <Button variant="ghost" size="sm" onClick={onBack} className="gap-2">
+          <ArrowLeft className="h-4 w-4" />
+          Retour
+        </Button>
+        <Separator orientation="vertical" className="h-5 mx-2" />
+        <h1 className="text-sm font-semibold">Orbit9 — TimeTokens</h1>
       </div>
 
       <div className="flex-1 flex overflow-hidden">
         {/* Zone principale */}
-        <div className="flex-1 overflow-y-auto bg-gray-50">
+        <div className="flex-1 overflow-y-auto">
           <div className="max-w-5xl mx-auto p-6 space-y-6">
             {/* Balance */}
             <Card className="p-6 bg-gradient-to-br from-purple-50 to-blue-50 border-purple-200">
@@ -216,11 +200,11 @@ export function TimeTokensView({ onBack }: TimeTokensViewProps) {
 
                 <div className="flex items-center justify-between bg-white p-4 rounded-lg">
                   <div className="flex items-center gap-2">
-                    <DollarSign className="h-5 w-5 text-green-600" />
+                    <DollarSign className="h-4 w-4 text-green-600" />
                     <span className="font-semibold">Valeur estimée :</span>
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-bold text-green-600">
+                    <p className="text-sm font-bold text-green-600">
                       ~{balance.estimatedValue.toLocaleString()}$ CAD
                     </p>
                     <p className="text-xs text-gray-600">
@@ -233,8 +217,8 @@ export function TimeTokensView({ onBack }: TimeTokensViewProps) {
 
             {/* Historique des contributions */}
             <Card className="p-6">
-              <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
+              <h2 className="text-xs font-semibold mb-6 flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
                 HISTORIQUE DES CONTRIBUTIONS
               </h2>
 
@@ -322,8 +306,8 @@ export function TimeTokensView({ onBack }: TimeTokensViewProps) {
             <Card className="p-6 bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200">
               <div className="space-y-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <Info className="h-5 w-5 text-blue-600" />
-                  <h2 className="text-lg font-semibold">COMMENT ÇA MARCHE</h2>
+                  <Info className="h-4 w-4 text-blue-600" />
+                  <h2 className="text-xs font-semibold">COMMENT ÇA MARCHE</h2>
                 </div>
 
                 <div className="bg-white p-4 rounded-lg space-y-3">
@@ -380,7 +364,7 @@ export function TimeTokensView({ onBack }: TimeTokensViewProps) {
         </div>
 
         {/* Canvas droit */}
-        <div className="w-80 border-l bg-white overflow-y-auto">
+        <div className="w-80 border-l bg-white">
           <div className="p-6 space-y-6">
             {/* Formule TT-RG */}
             <Card className="p-4 bg-gradient-to-br from-purple-50 to-blue-50">
@@ -388,7 +372,7 @@ export function TimeTokensView({ onBack }: TimeTokensViewProps) {
                 <h3 className="font-semibold text-center">FORMULE TT-RG</h3>
                 
                 <div className="bg-white p-4 rounded-lg">
-                  <p className="text-center font-mono text-xl font-bold text-purple-600 mb-3">
+                  <p className="text-center font-mono text-sm font-bold text-purple-600 mb-3">
                     TT = A×D×I×Z
                   </p>
                   <div className="space-y-2 text-sm">
@@ -418,7 +402,7 @@ export function TimeTokensView({ onBack }: TimeTokensViewProps) {
                 </div>
 
                 <Button variant="outline" size="sm" className="w-full gap-2">
-                  <Info className="h-3.5 w-3.5" />
+                  <Info className="h-4 w-4" />
                   En savoir plus
                 </Button>
               </div>
@@ -461,7 +445,7 @@ export function TimeTokensView({ onBack }: TimeTokensViewProps) {
               </div>
               <div className="mt-3 text-center">
                 <p className="text-sm text-gray-600">Croissance mensuelle</p>
-                <p className="text-2xl font-bold text-purple-600">
+                <p className="text-sm font-bold text-purple-600">
                   {evolutionData[evolutionData.length - 1].value.toLocaleString()}
                 </p>
               </div>
@@ -479,7 +463,7 @@ export function TimeTokensView({ onBack }: TimeTokensViewProps) {
                   <div className="flex items-center justify-between">
                     <span className="text-2xl">🏆</span>
                     <div className="text-right">
-                      <p className="text-2xl font-bold text-orange-600">2</p>
+                      <p className="text-sm font-bold text-orange-600">2</p>
                       <p className="text-xs text-gray-600">brevets déposés</p>
                     </div>
                   </div>
@@ -499,7 +483,7 @@ export function TimeTokensView({ onBack }: TimeTokensViewProps) {
                 </div>
 
                 <Button variant="outline" size="sm" className="w-full gap-2">
-                  Détails <ChevronRight className="h-3.5 w-3.5" />
+                  Détails <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </Card>

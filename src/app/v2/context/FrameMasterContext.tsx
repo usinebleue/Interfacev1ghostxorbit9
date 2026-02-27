@@ -1,0 +1,109 @@
+/**
+ * FrameMasterContext.tsx — Etat global du Frame Master
+ * Sprint A — Frame Master V2
+ */
+
+import { createContext, useContext, useState, useCallback, useRef } from "react";
+import type { BotInfo } from "../api/types";
+
+export type ActiveView = "dashboard" | "cockpit" | "health" | "department" | "discussion" | "branches";
+
+interface FrameMasterState {
+  activeBot: BotInfo | null;
+  activeBotCode: string;
+  activeView: ActiveView;
+  leftSidebarCollapsed: boolean;
+  rightSidebarCollapsed: boolean;
+  isAuthenticated: boolean;
+  isOnboarded: boolean;
+  currentUser: string;
+}
+
+interface FrameMasterActions {
+  setActiveBot: (bot: BotInfo) => void;
+  setActiveView: (view: ActiveView) => void;
+  toggleLeftSidebar: () => void;
+  toggleRightSidebar: () => void;
+  setAuthenticated: (v: boolean) => void;
+  setOnboarded: (v: boolean) => void;
+  setLeftCollapsed: (v: boolean) => void;
+  // Registre pour le panel imperatif
+  registerLeftPanel: (api: { collapse: () => void; expand: () => void }) => void;
+}
+
+type FrameMasterContextType = FrameMasterState & FrameMasterActions;
+
+const FrameMasterContext = createContext<FrameMasterContextType | null>(null);
+
+export function FrameMasterProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [activeBot, setActiveBotState] = useState<BotInfo | null>(null);
+  const [activeBotCode, setActiveBotCode] = useState("BCO");
+  const [activeView, setActiveView] = useState<ActiveView>("dashboard");
+  const [leftSidebarCollapsed, setLeftCollapsed] = useState(false);
+  const [rightSidebarCollapsed, setRightCollapsed] = useState(false);
+  const [isAuthenticated, setAuthenticated] = useState(true);   // DEV: bypass login
+  const [isOnboarded, setOnboarded] = useState(true);           // DEV: bypass onboarding
+
+  const leftPanelRef = useRef<{ collapse: () => void; expand: () => void } | null>(null);
+
+  const setActiveBot = useCallback((bot: BotInfo) => {
+    setActiveBotState(bot);
+    setActiveBotCode(bot.code);
+  }, []);
+
+  const registerLeftPanel = useCallback((api: { collapse: () => void; expand: () => void }) => {
+    leftPanelRef.current = api;
+  }, []);
+
+  const toggleLeftSidebar = useCallback(() => {
+    if (leftPanelRef.current) {
+      if (leftSidebarCollapsed) {
+        leftPanelRef.current.expand();
+      } else {
+        leftPanelRef.current.collapse();
+      }
+    }
+    setLeftCollapsed((v) => !v);
+  }, [leftSidebarCollapsed]);
+
+  const toggleRightSidebar = useCallback(
+    () => setRightCollapsed((v) => !v),
+    []
+  );
+
+  return (
+    <FrameMasterContext.Provider
+      value={{
+        activeBot,
+        activeBotCode,
+        activeView,
+        leftSidebarCollapsed,
+        rightSidebarCollapsed,
+        isAuthenticated,
+        isOnboarded,
+        currentUser: "Carl Fugere",
+        setActiveBot,
+        setActiveView,
+        toggleLeftSidebar,
+        toggleRightSidebar,
+        setAuthenticated,
+        setOnboarded,
+        setLeftCollapsed,
+        registerLeftPanel,
+      }}
+    >
+      {children}
+    </FrameMasterContext.Provider>
+  );
+}
+
+export function useFrameMaster(): FrameMasterContextType {
+  const ctx = useContext(FrameMasterContext);
+  if (!ctx)
+    throw new Error("useFrameMaster must be inside FrameMasterProvider");
+  return ctx;
+}

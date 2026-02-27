@@ -1,7 +1,5 @@
-import { 
+import {
   ArrowLeft,
-  Globe,
-  Building2,
   Users,
   Zap,
   TrendingUp,
@@ -142,38 +140,24 @@ export function FranchiseView({ onBack }: FranchiseViewProps) {
   }, 0);
 
   return (
-    <div className="flex-1 flex flex-col h-full">
+    <div className="flex-1 flex flex-col">
       {/* En-tête */}
-      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 border-b px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={onBack}
-              className="gap-2 text-white hover:bg-white/20 hover:text-white"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Retour
-            </Button>
-            <Separator orientation="vertical" className="h-6 bg-white/30" />
-            <div className="flex items-center gap-2">
-              <Network className="h-5 w-5 text-white" />
-              <h1 className="text-xl font-bold text-white">Orbit9 — Modèle Franchise 5.0</h1>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Globe className="h-4 w-4 text-white" />
-            <Badge className="bg-white text-purple-700 hover:bg-white text-sm px-3 py-1 font-bold">
-              Vue Réseau
-            </Badge>
-          </div>
-        </div>
+      <div className="bg-white border-b border-t-2 border-t-blue-600 px-4 h-12 flex items-center">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onBack}
+          className="gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Retour
+        </Button>
+        <Separator orientation="vertical" className="h-5 mx-2" />
+        <h1 className="text-sm font-semibold">Orbit9 — Modèle Franchise 5.0</h1>
       </div>
 
       {/* Contenu */}
-      <div className="flex-1 overflow-y-auto bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+      <div className="flex-1 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
         <div className="max-w-7xl mx-auto p-6 space-y-6">
           {/* La vision */}
           <Card className="p-6 border-2 border-purple-200 bg-white">
@@ -182,7 +166,7 @@ export function FranchiseView({ onBack }: FranchiseViewProps) {
                 <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
                   <Lightbulb className="h-6 w-6 text-white" />
                 </div>
-                <h2 className="text-2xl font-bold">LA VISION : FRANCHISE INTELLIGENTE 5.0</h2>
+                <h2 className="text-sm font-bold">LA VISION : FRANCHISE INTELLIGENTE 5.0</h2>
               </div>
 
               <div className="space-y-2">
@@ -221,7 +205,7 @@ export function FranchiseView({ onBack }: FranchiseViewProps) {
               <Separator className="my-6" />
 
               <div className="bg-gradient-to-r from-orange-50 to-red-50 p-5 rounded-lg border-2 border-orange-200">
-                <h3 className="font-bold text-lg mb-3 text-orange-900">
+                <h3 className="text-sm font-semibold mb-3 text-orange-900">
                   DIFFÉRENCE FONDAMENTALE :
                 </h3>
                 <div className="space-y-2 text-sm">
@@ -243,24 +227,24 @@ export function FranchiseView({ onBack }: FranchiseViewProps) {
 
           {/* Comment ça marche */}
           <Card className="p-6 border-2 border-blue-200">
-            <h2 className="text-2xl font-bold mb-6">COMMENT ÇA MARCHE</h2>
+            <h2 className="text-sm font-bold mb-6">COMMENT ÇA MARCHE</h2>
             
             <div className="space-y-6">
               {networkStages.map((stage, idx) => (
                 <div key={stage.stage}>
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
-                      <Badge className="bg-blue-600 text-lg px-3 py-1">
+                      <Badge className="bg-blue-600 text-xs px-3 py-1">
                         ÉTAGE {stage.stage}
                       </Badge>
-                      <span className="font-bold text-lg">: {stage.title}</span>
+                      <span className="text-sm font-semibold">: {stage.title}</span>
                     </div>
 
                     <Card className="p-5 bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-300">
                       <div className="space-y-3">
                         <div className="flex items-center gap-3 mb-3">
                           <span className="text-3xl">{stage.emoji}</span>
-                          <span className="font-semibold text-lg">{stage.description}</span>
+                          <span className="text-sm font-semibold">{stage.description}</span>
                         </div>
                         <div className="space-y-2">
                           {stage.features.map((feature, fIdx) => (
@@ -288,8 +272,8 @@ export function FranchiseView({ onBack }: FranchiseViewProps) {
           <Card className="p-6 border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50">
             <div className="space-y-6">
               <div className="flex items-center gap-3">
-                <DollarSign className="h-6 w-6 text-green-600" />
-                <h2 className="text-2xl font-bold">MODÈLE DE REVENUS PAR ÉTAGE</h2>
+                <DollarSign className="h-4 w-4 text-green-600" />
+                <h2 className="text-sm font-bold">MODÈLE DE REVENUS PAR ÉTAGE</h2>
               </div>
 
               <div className="bg-white rounded-lg border-2 border-green-200 overflow-hidden">
@@ -321,15 +305,15 @@ export function FranchiseView({ onBack }: FranchiseViewProps) {
                 {/* Total */}
                 <div className="p-4 bg-green-50 border-t-2 border-green-300">
                   <div className="grid grid-cols-12 gap-4">
-                    <div className="col-span-6 flex items-center font-bold text-lg">
+                    <div className="col-span-6 flex items-center text-sm font-semibold">
                       TOTAL PAR CERCLE
                     </div>
                     <div className="col-span-6 flex items-center">
                       <div className="space-y-1">
-                        <p className="font-bold text-2xl text-green-600">
+                        <p className="text-sm font-bold text-green-600">
                           ~41,714$/mois
                         </p>
-                        <p className="text-lg font-semibold text-green-700">
+                        <p className="text-sm font-semibold text-green-700">
                           = 500K$/an
                         </p>
                       </div>
@@ -342,7 +326,7 @@ export function FranchiseView({ onBack }: FranchiseViewProps) {
 
               {/* Projections réseau */}
               <div>
-                <h3 className="font-bold text-lg mb-4">PROJECTION RÉSEAU :</h3>
+                <h3 className="text-sm font-semibold mb-4">PROJECTION RÉSEAU :</h3>
                 <div className="space-y-3">
                   {projections.map((proj) => (
                     <div 
@@ -350,19 +334,19 @@ export function FranchiseView({ onBack }: FranchiseViewProps) {
                       className="flex items-center justify-between p-4 bg-white rounded-lg border-2 border-green-200"
                     >
                       <div className="flex items-center gap-4">
-                        <Badge className="bg-blue-600 text-base px-3 py-1">
+                        <Badge className="bg-blue-600 text-xs px-3 py-1">
                           {proj.circles} cercles ({proj.year})
                         </Badge>
                       </div>
                       <div className="flex items-center gap-6">
                         <div className="text-right">
                           <p className="text-sm text-gray-600">Mensuel</p>
-                          <p className="font-bold text-lg text-green-600">{proj.monthly}/mois</p>
+                          <p className="text-sm font-bold text-green-600">{proj.monthly}/mois</p>
                         </div>
                         <span className="text-gray-400">=</span>
                         <div className="text-right">
                           <p className="text-sm text-gray-600">Annuel</p>
-                          <p className="font-bold text-xl text-green-600">{proj.annual}/an</p>
+                          <p className="text-sm font-bold text-green-600">{proj.annual}/an</p>
                         </div>
                       </div>
                     </div>
@@ -376,8 +360,8 @@ export function FranchiseView({ onBack }: FranchiseViewProps) {
           <Card className="p-6 border-2 border-purple-200">
             <div className="space-y-6">
               <div className="flex items-center gap-3">
-                <Network className="h-6 w-6 text-purple-600" />
-                <h2 className="text-2xl font-bold">VUE RÉSEAU LIVE</h2>
+                <Network className="h-4 w-4 text-purple-600" />
+                <h2 className="text-sm font-bold">VUE RÉSEAU LIVE</h2>
               </div>
 
               {/* Diagramme du réseau */}
@@ -439,13 +423,13 @@ export function FranchiseView({ onBack }: FranchiseViewProps) {
               <div className="grid grid-cols-3 gap-4">
                 <Card className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 border-blue-300">
                   <div className="text-center">
-                    <p className="text-3xl font-bold text-blue-600">{circles.length}</p>
+                    <p className="text-sm font-bold text-blue-600">{circles.length}</p>
                     <p className="text-sm text-gray-700">cercles</p>
                   </div>
                 </Card>
                 <Card className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 border-purple-300">
                   <div className="text-center">
-                    <p className="text-3xl font-bold text-purple-600">
+                    <p className="text-sm font-bold text-purple-600">
                       {circles.reduce((sum, c) => sum + c.members, 0)}
                     </p>
                     <p className="text-sm text-gray-700">entreprises</p>
@@ -453,7 +437,7 @@ export function FranchiseView({ onBack }: FranchiseViewProps) {
                 </Card>
                 <Card className="p-4 bg-gradient-to-br from-green-50 to-green-100 border-green-300">
                   <div className="text-center">
-                    <p className="text-3xl font-bold text-green-600">
+                    <p className="text-sm font-bold text-green-600">
                       {circles.reduce((sum, c) => sum + c.members, 0) * 6}
                     </p>
                     <p className="text-sm text-gray-700">bots actifs</p>
@@ -464,11 +448,11 @@ export function FranchiseView({ onBack }: FranchiseViewProps) {
               <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-5 rounded-lg border-2 border-green-200">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <TrendingUp className="h-6 w-6 text-green-600" />
+                    <TrendingUp className="h-4 w-4 text-green-600" />
                     <span className="font-semibold">DEALS INTER-CERCLES CE MOIS :</span>
                   </div>
                   <div className="text-right">
-                    <p className="text-3xl font-bold text-green-600">8</p>
+                    <p className="text-sm font-bold text-green-600">8</p>
                     <p className="text-sm text-gray-600">(valeur: 1.2M$)</p>
                   </div>
                 </div>
@@ -483,7 +467,7 @@ export function FranchiseView({ onBack }: FranchiseViewProps) {
                 <Shield className="h-6 w-6 text-white" />
               </div>
               <div className="flex-1">
-                <h3 className="font-bold text-xl mb-3">
+                <h3 className="text-sm font-bold mb-3">
                   GhostX = L'OS de l'économie fragmentée
                 </h3>
                 <p className="text-white/90 leading-relaxed mb-4">

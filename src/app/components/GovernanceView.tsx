@@ -1,9 +1,6 @@
-import { 
+import {
   ArrowLeft,
   Shield,
-  Crown,
-  FileText,
-  Link as LinkIcon,
   Users,
   AlertTriangle,
   CheckCircle2,
@@ -134,35 +131,24 @@ interface GovernanceViewProps {
 
 export function GovernanceView({ onBack }: GovernanceViewProps) {
   return (
-    <div className="flex-1 flex flex-col h-full">
+    <div className="flex-1 flex flex-col">
       {/* En-tête */}
-      <div className="bg-gradient-to-r from-purple-600 to-blue-600 border-b px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={onBack}
-              className="gap-2 text-white hover:bg-white/20 hover:text-white"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Retour
-            </Button>
-            <Separator orientation="vertical" className="h-6 bg-white/30" />
-            <div className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-white" />
-              <h1 className="text-xl font-bold text-white">Orbit9 — Gouvernance</h1>
-            </div>
-          </div>
-          
-          <Badge className="bg-white text-purple-700 hover:bg-white text-sm px-3 py-1 font-bold">
-            Cercle Pionniers
-          </Badge>
-        </div>
+      <div className="bg-white border-b border-t-2 border-t-blue-600 px-4 h-12 flex items-center">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onBack}
+          className="gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Retour
+        </Button>
+        <Separator orientation="vertical" className="h-5 mx-2" />
+        <h1 className="text-sm font-semibold">Orbit9 — Gouvernance</h1>
       </div>
 
       {/* Contenu */}
-      <div className="flex-1 overflow-y-auto bg-gradient-to-br from-purple-50 to-blue-50">
+      <div className="flex-1 bg-gradient-to-br from-purple-50 to-blue-50">
         <div className="max-w-6xl mx-auto p-6 space-y-6">
           {/* Gouvernance Holacratique */}
           <Card className="p-6 border-2 border-purple-200">
@@ -172,7 +158,7 @@ export function GovernanceView({ onBack }: GovernanceViewProps) {
                   <Shield className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold">GOUVERNANCE HOLACRATIQUE</h2>
+                  <h2 className="text-sm font-bold">GOUVERNANCE HOLACRATIQUE</h2>
                   <p className="text-sm text-gray-600">Principes non-négociables du cercle</p>
                 </div>
               </div>
@@ -180,7 +166,7 @@ export function GovernanceView({ onBack }: GovernanceViewProps) {
               <Separator />
 
               <div>
-                <h3 className="font-bold text-lg mb-4">4 AXIOMES (non-négociables) :</h3>
+                <h3 className="text-sm font-semibold mb-4">4 AXIOMES (non-négociables) :</h3>
                 <div className="space-y-4">
                   {axioms.map((axiom) => (
                     <Card 
@@ -189,10 +175,10 @@ export function GovernanceView({ onBack }: GovernanceViewProps) {
                     >
                       <div className="space-y-2">
                         <div className="flex items-center gap-3">
-                          <Badge className="bg-purple-600 text-lg px-3 py-1 font-bold">
+                          <Badge className="bg-purple-600 text-xs px-3 py-1 font-bold">
                             {axiom.number}
                           </Badge>
-                          <h4 className="font-bold text-lg">{axiom.title}</h4>
+                          <h4 className="text-sm font-semibold">{axiom.title}</h4>
                         </div>
                         <p className="text-gray-700 ml-12">{axiom.description}</p>
                         {axiom.subtitle && (
@@ -213,8 +199,8 @@ export function GovernanceView({ onBack }: GovernanceViewProps) {
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Users className="h-6 w-6 text-blue-600" />
-                  <h2 className="text-2xl font-bold">RÔLES ÉLUS</h2>
+                  <Users className="h-4 w-4 text-blue-600" />
+                  <h2 className="text-sm font-bold">RÔLES ÉLUS</h2>
                 </div>
                 <Button variant="outline" className="gap-2">
                   <Edit className="h-4 w-4" />
@@ -233,7 +219,7 @@ export function GovernanceView({ onBack }: GovernanceViewProps) {
                     <div className="space-y-3">
                       <div className="flex items-center gap-2">
                         <span className="text-3xl">{role.emoji}</span>
-                        <h3 className="font-bold text-lg">{role.title}</h3>
+                        <h3 className="text-sm font-semibold">{role.title}</h3>
                       </div>
                       <Separator />
                       <div>
@@ -262,9 +248,9 @@ export function GovernanceView({ onBack }: GovernanceViewProps) {
           <Card className="p-6 border-2 border-red-200 bg-gradient-to-br from-red-50 to-orange-50">
             <div className="space-y-6">
               <div className="flex items-center gap-3">
-                <AlertTriangle className="h-6 w-6 text-red-600" />
+                <AlertTriangle className="h-4 w-4 text-red-600" />
                 <div>
-                  <h2 className="text-2xl font-bold">MATRICE DE SORTIE</h2>
+                  <h2 className="text-sm font-bold">MATRICE DE SORTIE</h2>
                   <p className="text-sm text-gray-600">
                     Protocoles pour gérer les départs du cercle
                   </p>
@@ -294,7 +280,7 @@ export function GovernanceView({ onBack }: GovernanceViewProps) {
                   <div className="p-4 border-r-2 border-red-200">
                     <Card className={`p-4 border-2 ${exitQuadrants[0].color}`}>
                       <div className="flex items-center gap-2 mb-2">
-                        <CheckCircle2 className="h-5 w-5 text-green-600" />
+                        <CheckCircle2 className="h-4 w-4 text-green-600" />
                         <h4 className="font-bold">{exitQuadrants[0].title}</h4>
                       </div>
                       <p className="text-sm text-gray-700">{exitQuadrants[0].process}</p>
@@ -303,7 +289,7 @@ export function GovernanceView({ onBack }: GovernanceViewProps) {
                   <div className="p-4">
                     <Card className={`p-4 border-2 ${exitQuadrants[1].color}`}>
                       <div className="flex items-center gap-2 mb-2">
-                        <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                        <AlertTriangle className="h-4 w-4 text-yellow-600" />
                         <h4 className="font-bold">{exitQuadrants[1].title}</h4>
                       </div>
                       <p className="text-sm text-gray-700">{exitQuadrants[1].process}</p>
@@ -319,7 +305,7 @@ export function GovernanceView({ onBack }: GovernanceViewProps) {
                   <div className="p-4 border-r-2 border-red-200">
                     <Card className={`p-4 border-2 ${exitQuadrants[2].color}`}>
                       <div className="flex items-center gap-2 mb-2">
-                        <AlertTriangle className="h-5 w-5 text-orange-600" />
+                        <AlertTriangle className="h-4 w-4 text-orange-600" />
                         <h4 className="font-bold">{exitQuadrants[2].title}</h4>
                       </div>
                       <p className="text-sm text-gray-700">{exitQuadrants[2].process}</p>
@@ -328,7 +314,7 @@ export function GovernanceView({ onBack }: GovernanceViewProps) {
                   <div className="p-4">
                     <Card className={`p-4 border-2 ${exitQuadrants[3].color}`}>
                       <div className="flex items-center gap-2 mb-2">
-                        <XCircle className="h-5 w-5 text-red-600" />
+                        <XCircle className="h-4 w-4 text-red-600" />
                         <h4 className="font-bold">{exitQuadrants[3].title}</h4>
                       </div>
                       <p className="text-sm text-gray-700">{exitQuadrants[3].process}</p>
@@ -342,7 +328,7 @@ export function GovernanceView({ onBack }: GovernanceViewProps) {
               {/* Protection PI */}
               <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-5 rounded-lg border-2 border-purple-200">
                 <div className="flex items-start gap-3">
-                  <Lock className="h-6 w-6 text-purple-600 flex-shrink-0 mt-0.5" />
+                  <Lock className="h-4 w-4 text-purple-600 flex-shrink-0 mt-0.5" />
                   <div className="space-y-2">
                     <h3 className="font-bold text-purple-900">Protection PI :</h3>
                     <p className="text-sm text-gray-700 leading-relaxed">
@@ -363,12 +349,12 @@ export function GovernanceView({ onBack }: GovernanceViewProps) {
 
           {/* Détails des quadrants */}
           <Card className="p-6 border-2 border-gray-200">
-            <h3 className="font-bold text-lg mb-4">DÉTAILS DES SCÉNARIOS DE SORTIE</h3>
+            <h3 className="text-sm font-semibold mb-4">DÉTAILS DES SCÉNARIOS DE SORTIE</h3>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-3">
                 <div className="p-4 bg-green-50 rounded-lg border-2 border-green-200">
                   <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-600" />
+                    <CheckCircle2 className="h-4 w-4 text-green-600" />
                     <h4 className="font-bold text-green-900">Q1: Rachat TT</h4>
                   </div>
                   <ul className="text-sm text-gray-700 space-y-1 ml-6">
@@ -381,7 +367,7 @@ export function GovernanceView({ onBack }: GovernanceViewProps) {
 
                 <div className="p-4 bg-yellow-50 rounded-lg border-2 border-yellow-200">
                   <div className="flex items-center gap-2 mb-2">
-                    <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                    <AlertTriangle className="h-4 w-4 text-yellow-600" />
                     <h4 className="font-bold text-yellow-900">Q2: Médiation</h4>
                   </div>
                   <ul className="text-sm text-gray-700 space-y-1 ml-6">
@@ -396,7 +382,7 @@ export function GovernanceView({ onBack }: GovernanceViewProps) {
               <div className="space-y-3">
                 <div className="p-4 bg-orange-50 rounded-lg border-2 border-orange-200">
                   <div className="flex items-center gap-2 mb-2">
-                    <AlertTriangle className="h-5 w-5 text-orange-600" />
+                    <AlertTriangle className="h-4 w-4 text-orange-600" />
                     <h4 className="font-bold text-orange-900">Q3: Warning 3x</h4>
                   </div>
                   <ul className="text-sm text-gray-700 space-y-1 ml-6">
@@ -409,7 +395,7 @@ export function GovernanceView({ onBack }: GovernanceViewProps) {
 
                 <div className="p-4 bg-red-50 rounded-lg border-2 border-red-200">
                   <div className="flex items-center gap-2 mb-2">
-                    <XCircle className="h-5 w-5 text-red-600" />
+                    <XCircle className="h-4 w-4 text-red-600" />
                     <h4 className="font-bold text-red-900">Q4: Succession</h4>
                   </div>
                   <ul className="text-sm text-gray-700 space-y-1 ml-6">
@@ -430,7 +416,7 @@ export function GovernanceView({ onBack }: GovernanceViewProps) {
                 <Shield className="h-6 w-6 text-white" />
               </div>
               <div className="flex-1">
-                <h3 className="font-bold text-xl mb-2">
+                <h3 className="text-sm font-bold mb-2">
                   Gouvernance transparente et équitable
                 </h3>
                 <p className="text-white/90 leading-relaxed mb-4">

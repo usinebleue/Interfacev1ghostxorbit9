@@ -96,38 +96,24 @@ export function HealthDashboard({ onBack }: HealthDashboardProps) {
   const triangleEmoji = '🟡';
 
   return (
-    <div className="flex-1 flex flex-col h-full">
+    <div className="flex-1 flex flex-col bg-gray-50 h-full">
       {/* En-tête */}
-      <div className="bg-white border-b px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={onBack}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Cockpit
-            </Button>
-            <Separator orientation="vertical" className="h-6" />
-            <h1 className="text-xl font-semibold">Mon Bilan de Santé</h1>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">Dernière MAJ:</span>
-            <Badge variant="secondary">Aujourd'hui</Badge>
-          </div>
-        </div>
+      <div className="bg-white border-b border-t-2 border-t-blue-600 px-4 h-12 flex items-center flex-shrink-0">
+        <Button variant="ghost" size="sm" onClick={onBack} className="gap-2">
+          <ArrowLeft className="h-4 w-4" />
+          Retour
+        </Button>
+        <Separator orientation="vertical" className="h-5 mx-2" />
+        <h1 className="text-sm font-semibold">Mon Bilan de Santé</h1>
       </div>
 
       <div className="flex-1 flex overflow-hidden">
         {/* Zone principale */}
-        <div className="flex-1 overflow-y-auto bg-gray-50">
+        <div className="flex-1 overflow-y-auto">
           <div className="max-w-5xl mx-auto p-6 space-y-6">
             {/* Scorecard VITAA */}
             <Card className="p-6">
-              <h2 className="text-lg font-semibold mb-6">SCORECARD VITAA</h2>
+              <h2 className="text-sm font-semibold mb-6">SCORECARD VITAA</h2>
               
               <div className="grid grid-cols-2 gap-8">
                 {/* Graphique Radar */}
@@ -162,7 +148,7 @@ export function HealthDashboard({ onBack }: HealthDashboardProps) {
                       <div className="flex items-center justify-between">
                         <span className="font-semibold text-sm">{item.subject}</span>
                         <div className="flex items-center gap-2">
-                          <span className={`font-bold text-lg ${getPillarColor(item.value)}`}>
+                          <span className={`text-sm font-bold ${getPillarColor(item.value)}`}>
                             {item.value}/100
                           </span>
                           {item.value < 50 && (
@@ -182,7 +168,7 @@ export function HealthDashboard({ onBack }: HealthDashboardProps) {
                   <div className="space-y-3 pt-2">
                     <div className="flex items-center justify-between">
                       <span className="font-semibold">SCORE GLOBAL:</span>
-                      <span className="text-2xl font-bold text-blue-600">
+                      <span className="text-sm font-bold text-blue-600">
                         {globalScore}/100
                       </span>
                     </div>
@@ -208,7 +194,7 @@ export function HealthDashboard({ onBack }: HealthDashboardProps) {
             <Card className="p-6 bg-gradient-to-r from-orange-50 to-red-50 border-orange-200">
               <div className="flex items-center gap-2 mb-6">
                 <span className="text-2xl">🔥</span>
-                <h2 className="text-lg font-semibold">
+                <h2 className="text-sm font-semibold">
                   POUR PASSER DE {triangleStatus} À BRÛLE :
                 </h2>
               </div>
@@ -257,7 +243,7 @@ export function HealthDashboard({ onBack }: HealthDashboardProps) {
 
             {/* Double Diagnostic */}
             <Card className="p-6">
-              <h2 className="text-lg font-semibold mb-4">DOUBLE DIAGNOSTIC</h2>
+              <h2 className="text-sm font-semibold mb-4">DOUBLE DIAGNOSTIC</h2>
               
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
@@ -296,7 +282,7 @@ export function HealthDashboard({ onBack }: HealthDashboardProps) {
         </div>
 
         {/* Canvas droit */}
-        <div className="w-80 border-l bg-white overflow-y-auto">
+        <div className="w-80 border-l bg-white">
           <div className="p-6 space-y-6">
             {/* Historique */}
             <Card className="p-4">
@@ -347,7 +333,7 @@ export function HealthDashboard({ onBack }: HealthDashboardProps) {
                   <h3 className="font-semibold">OBJECTIFS</h3>
                 </div>
                 <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                  <Edit className="h-3 w-3" />
+                  <Edit className="h-4 w-4" />
                 </Button>
               </div>
               
@@ -365,7 +351,7 @@ export function HealthDashboard({ onBack }: HealthDashboardProps) {
                       className="h-2"
                     />
                     <div className="flex items-center gap-1 text-xs text-gray-600">
-                      <Calendar className="h-3 w-3" />
+                      <Calendar className="h-4 w-4" />
                       <span>{obj.weeks} sem.</span>
                     </div>
                   </div>
@@ -395,7 +381,7 @@ export function HealthDashboard({ onBack }: HealthDashboardProps) {
       </div>
 
       {/* Barre de chat en bas */}
-      <div className="border-t bg-white px-6 py-4">
+      <div className="border-t bg-white px-6 py-4 flex-shrink-0">
         <div className="max-w-5xl mx-auto flex items-center gap-3">
           <div className="text-xl">💬</div>
           <Input

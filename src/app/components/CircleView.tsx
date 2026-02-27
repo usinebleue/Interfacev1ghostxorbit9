@@ -176,28 +176,19 @@ export function CircleView({ onBack, onMemberClick }: CircleViewProps) {
     if (!member) return null;
 
     return (
-      <div className="flex-1 flex flex-col h-full">
+      <div className="flex-1 flex flex-col bg-gray-50 h-full">
         {/* En-tête */}
-        <div className="bg-white border-b px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setSelectedMember(null)}
-                className="gap-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Mon Cercle
-              </Button>
-              <Separator orientation="vertical" className="h-6" />
-              <h1 className="text-xl font-semibold">{member.name} — Membre du Cercle Pionniers</h1>
-            </div>
-          </div>
+        <div className="bg-white border-b border-t-2 border-t-blue-600 px-4 h-12 flex items-center flex-shrink-0">
+          <Button variant="ghost" size="sm" onClick={() => setSelectedMember(null)} className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Retour
+          </Button>
+          <Separator orientation="vertical" className="h-5 mx-2" />
+          <h1 className="text-sm font-semibold">{member.name} — Membre du Cercle Pionniers</h1>
         </div>
 
         {/* Contenu */}
-        <div className="flex-1 overflow-y-auto bg-gray-50 p-6">
+        <div className="flex-1 overflow-y-auto p-6">
           <div className="max-w-4xl mx-auto">
             <Card className="p-6">
               <div className="space-y-6">
@@ -208,7 +199,7 @@ export function CircleView({ onBack, onMemberClick }: CircleViewProps) {
                       <span className="text-2xl">🏭</span>
                     </div>
                     <div>
-                      <h2 className="text-2xl font-bold mb-1">{member.name}</h2>
+                      <h2 className="text-sm font-bold mb-1">{member.name}</h2>
                       <p className="text-gray-600">Secteur: {member.sector}</p>
                       <p className="text-gray-600">Contact: {member.contact}</p>
                     </div>
@@ -223,7 +214,7 @@ export function CircleView({ onBack, onMemberClick }: CircleViewProps) {
 
                 {/* Connexions */}
                 <div>
-                  <h3 className="font-semibold text-lg mb-4">CONNEXIONS AVEC TOI :</h3>
+                  <h3 className="text-sm font-semibold mb-4">CONNEXIONS AVEC TOI :</h3>
                   <div className="space-y-3">
                     {member.connections.map((conn, idx) => (
                       <div key={idx} className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
@@ -244,7 +235,7 @@ export function CircleView({ onBack, onMemberClick }: CircleViewProps) {
                 {/* Deals en cours */}
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-lg">DEALS EN COURS :</h3>
+                    <h3 className="text-sm font-semibold">DEALS EN COURS :</h3>
                     <Badge>{member.deals.length}</Badge>
                   </div>
                   <div className="space-y-3">
@@ -265,7 +256,7 @@ export function CircleView({ onBack, onMemberClick }: CircleViewProps) {
 
                 {/* Contribution VITAA */}
                 <div>
-                  <h3 className="font-semibold text-lg mb-4">CONTRIBUTION VITAA AU CERCLE :</h3>
+                  <h3 className="text-sm font-semibold mb-4">CONTRIBUTION VITAA AU CERCLE :</h3>
                   <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
                     <div className="flex items-center gap-6 mb-2">
                       <span className="font-mono font-semibold">V:{member.vitaaContribution.v}</span>
@@ -275,7 +266,7 @@ export function CircleView({ onBack, onMemberClick }: CircleViewProps) {
                       <span className="font-mono font-semibold">A*:{member.vitaaContribution.astar}</span>
                     </div>
                     <div className="flex items-center gap-4">
-                      <span className="text-2xl font-bold text-blue-600">
+                      <span className="text-sm font-bold text-blue-600">
                         Score: {member.vitaaContribution.score.toFixed(1)}
                       </span>
                       <span className="text-gray-600">
@@ -294,45 +285,26 @@ export function CircleView({ onBack, onMemberClick }: CircleViewProps) {
 
   // Vue principale du cercle
   return (
-    <div className="flex-1 flex flex-col h-full">
+    <div className="flex-1 flex flex-col bg-gray-50 h-full">
       {/* En-tête */}
-      <div className="bg-white border-b px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={onBack}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Cockpit
-            </Button>
-            <Separator orientation="vertical" className="h-6" />
-            <h1 className="text-xl font-semibold">Orbit9 — Mon Cercle</h1>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <Badge className="bg-purple-600 gap-1">
-              🌐 Cercle Pionniers
-            </Badge>
-            <Button variant="outline" size="sm" className="gap-2">
-              <Settings className="h-4 w-4" />
-              Gouvernance
-            </Button>
-          </div>
-        </div>
+      <div className="bg-white border-b border-t-2 border-t-blue-600 px-4 h-12 flex items-center flex-shrink-0">
+        <Button variant="ghost" size="sm" onClick={onBack} className="gap-2">
+          <ArrowLeft className="h-4 w-4" />
+          Retour
+        </Button>
+        <Separator orientation="vertical" className="h-5 mx-2" />
+        <h1 className="text-sm font-semibold">Orbit9 — Mon Cercle</h1>
       </div>
 
       <div className="flex-1 flex overflow-hidden">
         {/* Zone principale */}
-        <div className="flex-1 overflow-y-auto bg-gray-50">
+        <div className="flex-1 overflow-y-auto">
           <div className="max-w-6xl mx-auto p-6 space-y-6">
             {/* Carte du cercle */}
             <Card className="p-6">
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-2">
-                  <h2 className="text-lg font-semibold flex items-center gap-2">
+                  <h2 className="text-xs font-semibold flex items-center gap-2">
                     🌐 CERCLE DES PIONNIERS
                   </h2>
                   <div className="flex items-center gap-3">
@@ -431,7 +403,7 @@ export function CircleView({ onBack, onMemberClick }: CircleViewProps) {
 
             {/* Activité du cercle */}
             <Card className="p-6">
-              <h2 className="text-lg font-semibold mb-4">ACTIVITÉ DU CERCLE</h2>
+              <h2 className="text-xs font-semibold mb-4">ACTIVITÉ DU CERCLE</h2>
               <div className="space-y-4">
                 {activities.map((activity) => (
                   <div key={activity.id} className="p-4 bg-gray-50 rounded-lg border">
@@ -456,7 +428,7 @@ export function CircleView({ onBack, onMemberClick }: CircleViewProps) {
         </div>
 
         {/* Canvas droit */}
-        <div className="w-80 border-l bg-white overflow-y-auto">
+        <div className="w-80 border-l bg-white">
           <div className="p-6 space-y-6">
             {/* Stats du cercle */}
             <Card className="p-4">
@@ -514,7 +486,7 @@ export function CircleView({ onBack, onMemberClick }: CircleViewProps) {
                 </div>
                 <Separator className="my-3" />
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-blue-600">36</p>
+                  <p className="text-sm font-bold text-blue-600">36</p>
                   <p className="text-xs text-gray-600">connexions actives</p>
                 </div>
               </div>
@@ -538,7 +510,7 @@ export function CircleView({ onBack, onMemberClick }: CircleViewProps) {
       </div>
 
       {/* Barre de chat en bas */}
-      <div className="border-t bg-white px-6 py-4">
+      <div className="border-t bg-white px-6 py-4 flex-shrink-0">
         <div className="max-w-6xl mx-auto flex items-center gap-3">
           <div className="text-xl">💬</div>
           <Input

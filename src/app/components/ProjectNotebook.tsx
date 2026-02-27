@@ -114,7 +114,7 @@ const subsections: SubSection[] = [
 const teamActivity = [
   { emoji: '🟣', name: 'CTO', activity: 'rédige 2.3' },
   { emoji: '🟢', name: 'CFO', activity: 'calcule ROI' },
-  { emoji: '🔴', name: 'CSO', activity: 'veille compétitive' },
+  { emoji: '🔴', name: 'CSO', activity: 'prospection pipeline' },
 ];
 
 const linkedSections = [
@@ -148,42 +148,20 @@ export function ProjectNotebook({ onBack }: ProjectNotebookProps) {
   const currentSection = sections.find(s => s.id === activeSection) || sections[3];
 
   return (
-    <div className="flex-1 flex flex-col h-full">
+    <div className="flex-1 flex flex-col bg-gray-50 h-full">
       {/* En-tête */}
-      <div className="bg-white border-b px-6 py-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={onBack}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Projets
-            </Button>
-            <Separator orientation="vertical" className="h-6" />
-            <div>
-              <div className="flex items-center gap-3">
-                <h1 className="text-xl font-semibold">Cahier — Robot Soudure</h1>
-                <Badge className="bg-blue-600">78% complet</Badge>
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" className="gap-2">
-              <Download className="h-4 w-4" />
-              Exporter PDF
-            </Button>
-            <Button variant="ghost" size="icon">
-              <Settings className="h-5 w-5" />
-            </Button>
-          </div>
+      <div className="bg-white border-b border-t-2 border-t-blue-600 px-4 flex-shrink-0">
+        <div className="h-12 flex items-center">
+          <Button variant="ghost" size="sm" onClick={onBack} className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Retour
+          </Button>
+          <Separator orientation="vertical" className="h-5 mx-2" />
+          <h1 className="text-sm font-semibold">Cahier — Robot Soudure</h1>
         </div>
 
         {/* Navigation sections */}
-        <div className="space-y-1">
+        <div className="space-y-1 pb-2">
           <div className="flex items-center gap-2">
             {sections.map((section) => (
               <Button
@@ -215,14 +193,14 @@ export function ProjectNotebook({ onBack }: ProjectNotebookProps) {
 
       <div className="flex-1 flex overflow-hidden">
         {/* Zone de contenu */}
-        <div className="flex-1 flex flex-col bg-gray-50 overflow-y-auto">
+        <div className="flex-1 flex flex-col overflow-y-auto">
           <div className="max-w-5xl mx-auto w-full p-6 space-y-6">
             {/* En-tête de section */}
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <span className="text-3xl">{currentSection.emoji}</span>
                 <div>
-                  <h2 className="text-2xl font-bold">
+                  <h2 className="text-sm font-bold">
                     SECTION {currentSection.code} — {currentSection.title.toUpperCase()}
                   </h2>
                   <div className="flex items-center gap-2 mt-1">
@@ -264,7 +242,7 @@ export function ProjectNotebook({ onBack }: ProjectNotebookProps) {
             {/* Contenu de la sous-section */}
             <Card className="p-6">
               <div className="prose prose-sm max-w-none">
-                <h3 className="text-lg font-bold mb-4">## 2.2 Solutions Technologiques</h3>
+                <h3 className="text-sm font-bold mb-4">## 2.2 Solutions Technologiques</h3>
                 
                 <p className="text-gray-700 leading-relaxed mb-4">
                   Après analyse des besoins de production actuels (voir §2.1), 
@@ -312,7 +290,7 @@ export function ProjectNotebook({ onBack }: ProjectNotebookProps) {
                         Cette section a été générée à partir de la conversation du 24 février.
                       </p>
                       <Button variant="link" className="p-0 h-auto text-blue-600">
-                        Voir la conversation <ArrowRight className="ml-1 h-3 w-3" />
+                        Voir la conversation <ArrowRight className="ml-1 h-4 w-4" />
                       </Button>
                     </div>
                   </div>
@@ -342,7 +320,7 @@ export function ProjectNotebook({ onBack }: ProjectNotebookProps) {
         </div>
 
         {/* Canvas droit */}
-        <div className="w-80 border-l bg-white overflow-y-auto">
+        <div className="w-80 border-l bg-white">
           <div className="p-6 space-y-6">
             {/* Sous-sections */}
             <Card className="p-4">
@@ -422,15 +400,15 @@ export function ProjectNotebook({ onBack }: ProjectNotebookProps) {
               </h3>
               <div className="space-y-2 text-xs text-gray-600">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-3 w-3 text-green-600" />
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
                   <span>Complet</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Loader2 className="h-3 w-3 text-blue-600" />
+                  <Loader2 className="h-4 w-4 text-blue-600" />
                   <span>En cours</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Circle className="h-3 w-3 text-gray-300" />
+                  <Circle className="h-4 w-4 text-gray-300" />
                   <span>En attente</span>
                 </div>
               </div>
@@ -440,7 +418,7 @@ export function ProjectNotebook({ onBack }: ProjectNotebookProps) {
       </div>
 
       {/* Barre de chat contextuel en bas */}
-      <div className="border-t bg-white px-6 py-3">
+      <div className="border-t bg-white px-6 py-3 flex-shrink-0">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center gap-2 mb-2">
             <MessageSquare className="h-4 w-4 text-blue-600" />
@@ -467,7 +445,7 @@ export function ProjectNotebook({ onBack }: ProjectNotebookProps) {
               }}
             />
             <Button variant="ghost" size="icon">
-              <Paperclip className="h-5 w-5" />
+              <Paperclip className="h-4 w-4" />
             </Button>
             <Button 
               disabled={!chatInput.trim()}

@@ -125,11 +125,11 @@ const opportunities: Opportunity[] = [
 const getPhaseIcon = (status: Phase['status']) => {
   switch (status) {
     case 'completed':
-      return <CheckCircle2 className="h-5 w-5 text-green-600" />;
+      return <CheckCircle2 className="h-4 w-4 text-green-600" />;
     case 'in-progress':
-      return <Loader className="h-5 w-5 text-blue-600 animate-spin" />;
+      return <Loader className="h-4 w-4 text-blue-600 animate-spin" />;
     case 'upcoming':
-      return <Circle className="h-5 w-5 text-gray-300" />;
+      return <Circle className="h-4 w-4 text-gray-300" />;
   }
 };
 
@@ -151,35 +151,20 @@ export function CoCreationView({ onBack }: CoCreationViewProps) {
   }));
 
   return (
-    <div className="flex-1 flex flex-col h-full">
+    <div className="flex-1 flex flex-col bg-gray-50 h-full">
       {/* En-tête */}
-      <div className="bg-white border-b px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={onBack}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Cockpit
-            </Button>
-            <Separator orientation="vertical" className="h-6" />
-            <h1 className="text-xl font-semibold">Orbit9 — Co-Créations</h1>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Badge className="bg-purple-600">
-              {projects.length} projets actifs
-            </Badge>
-          </div>
-        </div>
+      <div className="bg-white border-b border-t-2 border-t-blue-600 px-4 h-12 flex items-center flex-shrink-0">
+        <Button variant="ghost" size="sm" onClick={onBack} className="gap-2">
+          <ArrowLeft className="h-4 w-4" />
+          Retour
+        </Button>
+        <Separator orientation="vertical" className="h-5 mx-2" />
+        <h1 className="text-sm font-semibold">Orbit9 — Co-Créations</h1>
       </div>
 
       <div className="flex-1 flex overflow-hidden">
         {/* Zone principale */}
-        <div className="flex-1 overflow-y-auto bg-gray-50">
+        <div className="flex-1 overflow-y-auto">
           <div className="max-w-5xl mx-auto p-6 space-y-6">
             {/* Projet actif principal */}
             <Card className="p-6 border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-blue-50">
@@ -192,9 +177,9 @@ export function CoCreationView({ onBack }: CoCreationViewProps) {
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-2xl">🚀</span>
-                      <h2 className="text-xl font-bold">PROJET ACTIF #{currentProject.id}</h2>
+                      <h2 className="text-sm font-bold">PROJET ACTIF #{currentProject.id}</h2>
                     </div>
-                    <h3 className="text-2xl font-bold text-purple-900 mb-3">
+                    <h3 className="text-sm font-bold text-purple-900 mb-3">
                       {currentProject.title}
                     </h3>
                     <div className="grid grid-cols-3 gap-4 text-sm">
@@ -220,7 +205,7 @@ export function CoCreationView({ onBack }: CoCreationViewProps) {
 
                 {/* Partenaires */}
                 <div>
-                  <h3 className="font-semibold text-lg mb-4">PARTENAIRES :</h3>
+                  <h3 className="text-sm font-semibold mb-4">PARTENAIRES :</h3>
                   <div className="grid grid-cols-3 gap-4">
                     {currentProject.partners.map((partner) => (
                       <Card 
@@ -237,7 +222,7 @@ export function CoCreationView({ onBack }: CoCreationViewProps) {
                           </div>
                           <p className="text-xs text-gray-600">{partner.role}</p>
                           <div className="pt-2 border-t">
-                            <p className="text-lg font-bold text-purple-600">
+                            <p className="text-sm font-bold text-purple-600">
                               {partner.vitaaShare.toFixed(1)}%
                             </p>
                           </div>
@@ -252,7 +237,7 @@ export function CoCreationView({ onBack }: CoCreationViewProps) {
                 {/* Timeline */}
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-lg">TIMELINE :</h3>
+                    <h3 className="text-sm font-semibold">TIMELINE :</h3>
                     <span className="text-sm font-semibold text-purple-600">
                       {currentProject.progress}% complété
                     </span>
@@ -291,7 +276,7 @@ export function CoCreationView({ onBack }: CoCreationViewProps) {
 
                 {/* Dernière activité */}
                 <div>
-                  <h3 className="font-semibold text-lg mb-3">DERNIÈRE ACTIVITÉ :</h3>
+                  <h3 className="text-sm font-semibold mb-3">DERNIÈRE ACTIVITÉ :</h3>
                   <div className="space-y-2">
                     {currentProject.activities.map((activity, idx) => (
                       <div key={idx} className="flex items-start gap-2 text-sm">
@@ -327,12 +312,12 @@ export function CoCreationView({ onBack }: CoCreationViewProps) {
                 <div className="space-y-4">
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 bg-yellow-400 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <Lightbulb className="h-5 w-5 text-yellow-900" />
+                      <Lightbulb className="h-4 w-4 text-yellow-900" />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-xl">💡</span>
-                        <h3 className="font-semibold text-lg">DÉTECTÉE PAR GHOSTX</h3>
+                        <h3 className="text-sm font-semibold">DÉTECTÉE PAR GHOSTX</h3>
                       </div>
                       <p className="text-sm text-gray-700 leading-relaxed mb-4">
                         "{opp.description}"
@@ -367,7 +352,7 @@ export function CoCreationView({ onBack }: CoCreationViewProps) {
             {/* Autres projets */}
             {projects.length > 1 && (
               <div className="space-y-3">
-                <h3 className="font-semibold text-lg">AUTRES PROJETS ACTIFS</h3>
+                <h3 className="text-sm font-semibold">AUTRES PROJETS ACTIFS</h3>
                 {projects.filter(p => p.id !== selectedProject).map((project) => (
                   <Card 
                     key={project.id}
@@ -376,7 +361,7 @@ export function CoCreationView({ onBack }: CoCreationViewProps) {
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <Rocket className="h-5 w-5 text-purple-600" />
+                        <Rocket className="h-4 w-4 text-purple-600" />
                         <div>
                           <h4 className="font-semibold">{project.title}</h4>
                           <p className="text-sm text-gray-600">
@@ -384,7 +369,7 @@ export function CoCreationView({ onBack }: CoCreationViewProps) {
                           </p>
                         </div>
                       </div>
-                      <ChevronRight className="h-5 w-5 text-gray-400" />
+                      <ChevronRight className="h-4 w-4 text-gray-400" />
                     </div>
                   </Card>
                 ))}
@@ -394,7 +379,7 @@ export function CoCreationView({ onBack }: CoCreationViewProps) {
         </div>
 
         {/* Canvas droit */}
-        <div className="w-80 border-l bg-white overflow-y-auto">
+        <div className="w-80 border-l bg-white">
           <div className="p-6 space-y-6">
             {/* Répartition VITAA */}
             <Card className="p-4">
@@ -439,7 +424,7 @@ export function CoCreationView({ onBack }: CoCreationViewProps) {
                 Basé sur contribution VITAA réelle
               </p>
               <Button variant="outline" size="sm" className="w-full mt-3 gap-2">
-                Détails <ChevronRight className="h-3 w-3" />
+                Détails <ChevronRight className="h-4 w-4" />
               </Button>
             </Card>
 
@@ -452,7 +437,7 @@ export function CoCreationView({ onBack }: CoCreationViewProps) {
               <div className="space-y-3">
                 <div className="bg-white p-3 rounded-lg">
                   <p className="text-sm text-gray-600 mb-1">Total émis</p>
-                  <p className="text-2xl font-bold text-purple-600">
+                  <p className="text-sm font-bold text-purple-600">
                     {currentProject.totalTimeTokens.toLocaleString()}
                   </p>
                 </div>
@@ -523,7 +508,7 @@ export function CoCreationView({ onBack }: CoCreationViewProps) {
       </div>
 
       {/* Barre de chat en bas */}
-      <div className="border-t bg-white px-6 py-4">
+      <div className="border-t bg-white px-6 py-4 flex-shrink-0">
         <div className="max-w-5xl mx-auto flex items-center gap-3">
           <div className="text-xl">💬</div>
           <Input
