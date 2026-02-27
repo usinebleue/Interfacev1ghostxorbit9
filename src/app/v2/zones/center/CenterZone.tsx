@@ -12,6 +12,7 @@ import { HealthView } from "./HealthView";
 import { DepartmentTourDeControle } from "./DepartmentTourDeControle";
 import { DiscussionView } from "./DiscussionView";
 import { BranchPatternsDemo } from "./BranchPatternsDemo";
+import { CahierSmartDemo } from "./CahierSmartDemo";
 import { InputBar } from "./InputBar";
 
 /** Couleur identitaire par bot — bande fine en haut du canevas */
@@ -49,6 +50,7 @@ export function CenterZone() {
         {activeView === "department" && <DepartmentTourDeControle />}
         {activeView === "discussion" && <DiscussionView />}
         {activeView === "branches" && <BranchPatternsDemo />}
+        {activeView === "cahier" && <CahierSmartDemo />}
       </div>
 
       {/* InputBar fixe en bas — a cote de Ma Productivite */}
