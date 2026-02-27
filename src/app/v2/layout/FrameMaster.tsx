@@ -9,6 +9,7 @@
 
 import { useRef, useEffect, useCallback, useState } from "react";
 import type { ImperativePanelHandle } from "react-resizable-panels";
+import { GripVertical } from "lucide-react";
 import {
   ResizablePanelGroup,
   ResizablePanel,
@@ -54,6 +55,23 @@ export function FrameMaster() {
     return <FrameMasterMobile />;
   }
 
+  /* Style inline pour les grip indicators (les poignees de drag sur les lignes grises) */
+  const gripStyle: React.CSSProperties = {
+    position: 'absolute',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    zIndex: 20,
+    width: 12,
+    height: 28,
+    background: '#e5e7eb',
+    border: '1px solid #d1d5db',
+    borderRadius: 6,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    pointerEvents: 'none',
+  };
+
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-white">
       {/* BODY — 3 colonnes resizable, pleine hauteur */}
@@ -88,8 +106,20 @@ export function FrameMaster() {
         <ResizablePanel defaultSize={60} minSize={35}>
           <div className="h-full flex flex-col">
             <HeaderCenter />
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 overflow-hidden" style={{ position: 'relative' }}>
               <CenterZone />
+              {/* Ligne grise gauche du canvas */}
+              <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 1, background: '#d1d5db', zIndex: 5 }} />
+              {/* Grip indicator gauche */}
+              <div style={{ ...gripStyle, left: 0 }}>
+                <GripVertical style={{ width: 10, height: 10, color: '#9ca3af' }} />
+              </div>
+              {/* Ligne grise droite du canvas */}
+              <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 1, background: '#d1d5db', zIndex: 5 }} />
+              {/* Grip indicator droite */}
+              <div style={{ ...gripStyle, right: 0 }}>
+                <GripVertical style={{ width: 10, height: 10, color: '#9ca3af' }} />
+              </div>
             </div>
           </div>
         </ResizablePanel>

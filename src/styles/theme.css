@@ -124,7 +124,7 @@
     @apply border-border outline-ring/50;
   }
 
-  /* ResizableHandle — zero width, invisible sauf hover */
+  /* ResizableHandle — invisible (pas de ligne dans le header) */
   [data-resize-handle] {
     width: 0 !important;
     min-width: 0 !important;
@@ -139,6 +139,7 @@
     background: transparent !important;
     border: none !important;
     --tw-border-style: none !important;
+    width: 0 !important;
   }
   /* Hit area pour le drag — 8px invisible */
   [data-resize-handle]::after {
@@ -150,12 +151,6 @@
     width: 8px !important;
     cursor: col-resize !important;
     z-index: 10 !important;
-  }
-  [data-resize-handle]:hover::after {
-    background: #00A4E3 !important;
-    left: -1px !important;
-    width: 2px !important;
-    border-radius: 1px !important;
   }
 
   body {

@@ -4,7 +4,7 @@
  * Sprint A — Frame Master V2
  */
 
-import { Gauge, Settings, LayoutDashboard, SlidersHorizontal, User, HeartPulse, GitBranch } from "lucide-react";
+import { Gauge, Settings, LayoutDashboard, SlidersHorizontal, User, HeartPulse, GitBranch, ClipboardCheck } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import {
   Tooltip,
@@ -28,7 +28,7 @@ export function HeaderLeft({ collapsed }: { collapsed: boolean }) {
   return (
     <div className="h-14 border-b border-white/10 flex items-center justify-center px-3 shrink-0" style={{ backgroundColor: UB_BLUE }}>
       {collapsed ? (
-        <img src="/logo-usine-bleue.png" alt="Usine Bleue" className="h-6 object-contain" />
+        <img src="/logo-usine-bleue-icon.png" alt="Usine Bleue" className="h-7 object-contain" />
       ) : (
         <img src="/logo-usine-bleue.png" alt="Usine Bleue" className="h-8 object-contain" />
       )}
@@ -118,10 +118,25 @@ export function HeaderCenter() {
               onClick={() => setActiveView("branches")}
             >
               <GitBranch className="h-3.5 w-3.5" />
-              <span className="hidden lg:inline">Branches</span>
+              <span className="hidden lg:inline">Discussion</span>
             </Button>
           </TooltipTrigger>
-          <TooltipContent>Demo — 3 patterns de branches</TooltipContent>
+          <TooltipContent>Simulation — Discussion CREDO</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 gap-1.5 text-xs text-amber-400 hover:text-amber-300 hover:bg-white/10"
+              onClick={() => setActiveView("cahier")}
+            >
+              <ClipboardCheck className="h-3.5 w-3.5" />
+              <span className="hidden lg:inline">Cahier SMART</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Simulation — Cahier de Projet SMART</TooltipContent>
         </Tooltip>
         </div>
       </div>

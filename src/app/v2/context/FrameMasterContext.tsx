@@ -6,7 +6,7 @@
 import { createContext, useContext, useState, useCallback, useRef } from "react";
 import type { BotInfo } from "../api/types";
 
-export type ActiveView = "dashboard" | "cockpit" | "health" | "department" | "discussion" | "branches";
+export type ActiveView = "dashboard" | "cockpit" | "health" | "department" | "discussion" | "branches" | "cahier";
 
 interface FrameMasterState {
   activeBot: BotInfo | null;
