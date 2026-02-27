@@ -55,7 +55,7 @@ export function FrameMaster() {
   }
 
   return (
-    <div className="h-screen w-screen flex flex-col overflow-hidden bg-gray-50">
+    <div className="h-screen w-screen flex flex-col overflow-hidden bg-white">
       {/* BODY — 3 colonnes resizable, pleine hauteur */}
       <ResizablePanelGroup
         direction="horizontal"
@@ -82,7 +82,7 @@ export function FrameMaster() {
           </div>
         </ResizablePanel>
 
-        <ResizableHandle className="bg-[#073E5A] w-px hover:bg-[#00A4E3] transition-colors" />
+        <ResizableHandle className="cursor-col-resize" />
 
         {/* ZONE CENTRALE — Header Bot ID + Contenu + InputBar */}
         <ResizablePanel defaultSize={60} minSize={35}>
@@ -94,7 +94,7 @@ export function FrameMaster() {
           </div>
         </ResizablePanel>
 
-        <ResizableHandle className="bg-[#073E5A] w-px hover:bg-[#00A4E3] transition-colors" />
+        <ResizableHandle className="cursor-col-resize" />
 
         {/* SIDEBAR DROITE — Header Profil + Contexte (meme pattern collapse que gauche) */}
         <ResizablePanel

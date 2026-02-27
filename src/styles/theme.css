@@ -124,6 +124,40 @@
     @apply border-border outline-ring/50;
   }
 
+  /* ResizableHandle — zero width, invisible sauf hover */
+  [data-resize-handle] {
+    width: 0 !important;
+    min-width: 0 !important;
+    flex: 0 0 0px !important;
+    background: transparent !important;
+    border: none !important;
+    --tw-border-style: none !important;
+    position: relative;
+  }
+  [data-resize-handle]::before,
+  [data-resize-handle]::after {
+    background: transparent !important;
+    border: none !important;
+    --tw-border-style: none !important;
+  }
+  /* Hit area pour le drag — 8px invisible */
+  [data-resize-handle]::after {
+    content: "" !important;
+    position: absolute !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: -4px !important;
+    width: 8px !important;
+    cursor: col-resize !important;
+    z-index: 10 !important;
+  }
+  [data-resize-handle]:hover::after {
+    background: #00A4E3 !important;
+    left: -1px !important;
+    width: 2px !important;
+    border-radius: 1px !important;
+  }
+
   body {
     @apply bg-background text-foreground;
   }
