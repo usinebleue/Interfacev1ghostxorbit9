@@ -5,6 +5,18 @@
 
 // --- Chat ---
 
+export interface ChatOption {
+  id: number;
+  label: string;
+  description?: string;
+}
+
+export interface SentinelAlert {
+  type: "repetition" | "over_challenge" | "long_thread" | "deep_branch";
+  message: string;
+  suggestions: string[];
+}
+
 export interface ChatRequest {
   message: string;
   user_id?: number;
@@ -12,6 +24,10 @@ export interface ChatRequest {
   ghost?: string;
   mode?: string;
   direct?: boolean;
+  // B.1 — metadata de branche
+  msg_type?: string;
+  parent_id?: string;
+  branch_depth?: number;
 }
 
 export interface ChatResponse {
@@ -24,6 +40,36 @@ export interface ChatResponse {
   cout_usd: number;
   latence_ms: number;
   ghost_actif: string | null;
+  // B.1 — reponses structurees
+  options?: ChatOption[];
+  sentinel_alert?: SentinelAlert | null;
+  phase_credo?: string | null;
+  mode_actif?: string | null;
+}
+
+// --- Multi-Perspectives ---
+
+export interface MultiChatRequest {
+  message: string;
+  user_id?: number;
+  agents: string[];
+  mode?: string;
+  ghost?: string;
+}
+
+export interface PerspectiveItem {
+  agent: string;
+  nom: string;
+  contenu: string;
+  options: ChatOption[];
+  tier: string;
+  cout_usd: number;
+}
+
+export interface MultiChatResponse {
+  perspectives: PerspectiveItem[];
+  total_cout_usd: number;
+  total_latence_ms: number;
 }
 
 // --- Bots ---

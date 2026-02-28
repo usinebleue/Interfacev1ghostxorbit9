@@ -10,12 +10,15 @@ import type {
   HealthResponse,
   ChatMessage,
   ChatRequest,
+  ChatResponse,
   ClientSummary,
   Thread,
   ThreadStatus,
   ReflectionMode,
   MessageType,
   Crystal,
+  MultiChatRequest,
+  PerspectiveItem,
 } from "./types";
 
 // Options contextuelles par defaut — arbre de developpement de la pensee (wireframe p.3)
@@ -506,11 +509,26 @@ export function useChat() {
           ghost,
           mode: mode || undefined,
           direct: true,
+          // B.1 — metadata de branche
+          msg_type: msgType !== "normal" ? msgType : undefined,
+          parent_id: meta?.parentId,
+          branch_depth: branchDepth,
         };
         const res = await api.chat(req);
 
-        // Parse API options from response text (📌 format)
-        const { cleanText, parsedOptions } = parseApiOptions(res.response);
+        // B.1 — Options: backend structured > text parsing > mode defaults > fallback
+        let cleanText = res.response;
+        let parsedOptions: string[] = [];
+
+        // Priorite 1: options structurees du backend
+        if (res.options && res.options.length > 0) {
+          parsedOptions = res.options.map((o) => o.label);
+        } else {
+          // Fallback: parser du texte (format 📌)
+          const parsed = parseApiOptions(res.response);
+          cleanText = parsed.cleanText;
+          parsedOptions = parsed.parsedOptions;
+        }
 
         // Mode-specific options (parsed > mode > agent > fallback)
         const modeConf = MODE_LIVE_CONFIG[mode || "credo"] || MODE_LIVE_CONFIG.credo;
@@ -598,8 +616,16 @@ export function useChat() {
           }, 500);
         }
 
-        // ── Suspension Intelligente — drift detection ──
-        if (userMsgs.length >= 3 && msgType === "normal") {
+        // ── B.1 — Sentinelle backend ──
+        if (res.sentinel_alert) {
+          const sa = res.sentinel_alert;
+          setTimeout(() => {
+            injectCoaching(sa.message, sa.suggestions.length > 0 ? sa.suggestions : undefined);
+          }, 700);
+        }
+
+        // ── Suspension Intelligente — drift detection (frontend complement) ──
+        if (!res.sentinel_alert && userMsgs.length >= 3 && msgType === "normal") {
           const originalTension = userMsgs[0]?.content || "";
           const isDrifting = detectDrift(originalTension, text);
 
@@ -607,7 +633,6 @@ export function useChat() {
             driftWarningCount.current++;
 
             if (driftWarningCount.current === 1) {
-              // Premier avertissement — signal doux
               setTimeout(() => {
                 injectCoaching(
                   "On s'eloigne du sujet initial. Tu veux continuer sur cette tangente ou revenir a ta tension de depart?",
@@ -615,7 +640,6 @@ export function useChat() {
                 );
               }, 600);
             } else if (driftWarningCount.current >= 2) {
-              // Deuxieme avertissement — auto-park propose
               setTimeout(() => {
                 injectCoaching(
                   "Ca fait 2 fois qu'on derive. Je te propose de parker cette discussion et d'en ouvrir une nouvelle pour ce nouveau sujet.",
@@ -714,10 +738,89 @@ export function useChat() {
     }
   }, [activeThreadId]);
 
+  // B.1 — Multi-perspectives : consulter N bots en parallele
+  const sendMultiPerspective = useCallback(
+    async (text: string, agents: string[], mode?: string) => {
+      if (agents.length < 1) return;
+
+      setIsTyping(true);
+
+      // Auto-create thread if needed
+      if (!activeThreadId) {
+        const userMsg: ChatMessage = {
+          id: `msg-${++idCounter.current}`,
+          role: "user",
+          content: text,
+          timestamp: new Date(),
+          msgType: "normal",
+        };
+        setMessages((prev) => [...prev, userMsg]);
+
+        const newId = generateThreadId();
+        const thread: Thread = {
+          id: newId,
+          title: generateThreadTitle([userMsg]),
+          status: "active",
+          messages: [userMsg],
+          mode: (mode as Thread["mode"]) || "credo",
+          primaryBot: agents[0] || "BCO",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        setThreads((prev) => [...prev, thread]);
+        setActiveThreadId(newId);
+      }
+
+      try {
+        const req: MultiChatRequest = {
+          message: text,
+          user_id: 1,
+          agents,
+          mode: mode || undefined,
+        };
+        const res = await api.chatMulti(req);
+
+        // Creer un message par perspective
+        for (const persp of res.perspectives) {
+          const modeConf = MODE_LIVE_CONFIG[mode || "credo"] || MODE_LIVE_CONFIG.credo;
+          const options = persp.options.length > 0
+            ? persp.options.map((o) => o.label)
+            : modeConf.options;
+
+          const botMsg: ChatMessage = {
+            id: `msg-${++idCounter.current}`,
+            role: "assistant",
+            content: persp.contenu,
+            timestamp: new Date(),
+            agent: persp.agent,
+            tier: persp.tier,
+            options,
+            msgType: "consultation",
+            branchLabel: `Consultation — ${persp.nom}`,
+            branchDepth: 1,
+          };
+          setMessages((prev) => [...prev, botMsg]);
+        }
+      } catch (err) {
+        const errMsg: ChatMessage = {
+          id: `msg-${++idCounter.current}`,
+          role: "assistant",
+          content: `Erreur multi-perspectives: ${err instanceof Error ? err.message : "Connexion impossible"}`,
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, errMsg]);
+      } finally {
+        setIsTyping(false);
+      }
+    },
+    [activeThreadId, messages]
+  );
+
   return {
     messages,
     isTyping,
     sendMessage,
+    sendMultiPerspective,
     newConversation,
     threads,
     activeThreadId,
