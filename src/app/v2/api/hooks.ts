@@ -198,6 +198,7 @@ export function useHealth(intervalMs = 30000) {
 // --- localStorage helpers for threads ---
 
 const THREADS_KEY = "ghostx-threads";
+const ACTIVE_THREAD_KEY = "ghostx-active-thread";
 
 function loadThreads(): Thread[] {
   try {
@@ -209,6 +210,18 @@ function loadThreads(): Thread[] {
 function saveThreads(threads: Thread[]) {
   try {
     localStorage.setItem(THREADS_KEY, JSON.stringify(threads));
+  } catch { /* noop */ }
+}
+
+function loadActiveThreadId(): string | null {
+  try { return localStorage.getItem(ACTIVE_THREAD_KEY); }
+  catch { return null; }
+}
+
+function saveActiveThreadId(id: string | null) {
+  try {
+    if (id) localStorage.setItem(ACTIVE_THREAD_KEY, id);
+    else localStorage.removeItem(ACTIVE_THREAD_KEY);
   } catch { /* noop */ }
 }
 
@@ -258,8 +271,36 @@ export function useChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [threads, setThreads] = useState<Thread[]>(() => loadThreads());
-  const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
+  const [activeThreadId, setActiveThreadIdRaw] = useState<string | null>(() => loadActiveThreadId());
   const idCounter = useRef(0);
+  const hasAutoRestored = useRef(false);
+
+  // Wrapper: persist activeThreadId to localStorage on every change
+  const setActiveThreadId = useCallback((id: string | null) => {
+    setActiveThreadIdRaw(id);
+    saveActiveThreadId(id);
+  }, []);
+
+  // Auto-restore: if there's an active thread in localStorage, reload its messages on mount
+  useEffect(() => {
+    if (hasAutoRestored.current) return;
+    hasAutoRestored.current = true;
+
+    const savedId = loadActiveThreadId();
+    if (!savedId) return;
+
+    const savedThreads = loadThreads();
+    const thread = savedThreads.find((t) => t.id === savedId);
+    if (thread && thread.messages && thread.messages.length > 0) {
+      setMessages(thread.messages);
+      setActiveThreadIdRaw(savedId);
+      idCounter.current = thread.messages.length;
+    } else {
+      // Thread not found — clear stale reference
+      saveActiveThreadId(null);
+      setActiveThreadIdRaw(null);
+    }
+  }, []);
 
   // Persist threads to localStorage
   useEffect(() => {
