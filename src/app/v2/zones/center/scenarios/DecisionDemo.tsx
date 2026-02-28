@@ -110,7 +110,7 @@ function ScoreBar({ score, max = 10, color }: { score: number; max?: number; col
   const pct = (score / max) * 100;
   return (
     <div className="flex items-center gap-2">
-      <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+      <div className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
         <div className={cn("h-full rounded-full transition-all duration-700", color)} style={{ width: `${pct}%` }} />
       </div>
       <span className="text-xs font-mono font-bold text-gray-600 w-6 text-right">{score}</span>

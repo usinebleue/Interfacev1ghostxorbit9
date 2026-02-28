@@ -435,7 +435,7 @@ export function CahierProjetDemo({ onTransition }: { onTransition?: (target: str
       {stage >= 6 && (
         <div className="animate-in fade-in zoom-in-95 duration-700">
           <div className="bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 border-2 border-green-300 rounded-2xl overflow-hidden shadow-xl">
-            <div className="h-2 bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400" />
+            <div className="h-2.5 bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400" />
             <div className="px-6 py-6">
               <div className="flex items-center justify-center gap-3 mb-5">
                 <CheckCircle2 className="h-8 w-8 text-green-600" />

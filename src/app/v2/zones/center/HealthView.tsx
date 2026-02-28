@@ -310,7 +310,7 @@ export function HealthView() {
               return (
                 <div key={d.label} className="flex items-center gap-3 py-2">
                   <span className="text-xs text-gray-700 w-32 truncate">{d.label}</span>
-                  <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
                     <div className={cn("h-full rounded-full", color)} style={{ width: `${d.score}%` }} />
                   </div>
                   <span className={cn("text-xs font-bold w-10 text-right", textColor)}>{d.score}%</span>

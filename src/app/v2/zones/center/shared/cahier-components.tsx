@@ -339,7 +339,7 @@ export function CahierProgressBar({ current, total, label }: { current: number; 
         <span className="text-xs font-medium text-gray-600">{label}</span>
         <span className="text-xs font-bold text-blue-700">{pct}%</span>
       </div>
-      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+      <div className="h-2.5 bg-gray-200 rounded-full overflow-hidden">
         <div
           className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-700 ease-out"
           style={{ width: `${pct}%` }}
@@ -938,7 +938,7 @@ export function ScoringAnimation({ categories, results, onComplete }: {
                   {results.map((r, ri) => (
                     <td key={ri} className="py-2 px-3">
                       <div className="flex flex-col items-center gap-1">
-                        <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
                           <div
                             className={cn(
                               "h-full rounded-full transition-all duration-700",
@@ -986,7 +986,7 @@ export function WinnerAnnouncement({ integrator, animate }: { integrator: Integr
   return (
     <div className="animate-in fade-in zoom-in-95 duration-700">
       <div className="bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 border-2 border-amber-300 rounded-2xl overflow-hidden shadow-xl">
-        <div className="h-2 bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400" />
+        <div className="h-2.5 bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400" />
         <div className="px-6 py-5">
           <div className="flex items-center justify-center gap-3 mb-4">
             <Trophy className="h-8 w-8 text-amber-500" />

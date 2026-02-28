@@ -30,26 +30,27 @@ export function GouvernancePage({ onNavigate }: GouvernancePageProps) {
 
   return (
     <div className="space-y-5">
-      {/* Header gradient */}
-      <div className="bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 rounded-xl p-5 text-white">
-        <div className="flex items-center gap-3 mb-2">
-          <Scale className="h-6 w-6" />
-          <div>
-            <h2 className="text-lg font-bold">Gouvernance Augmentee par IA</h2>
-            <p className="text-xs text-white/70">Systeme Holacratique avec Agents Intelligence Artificielle</p>
+      {/* Header Card avec gradient */}
+      <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+        <div className="bg-gradient-to-r from-violet-500 to-indigo-500 px-4 py-2.5 border-b">
+          <div className="flex items-center gap-2">
+            <Scale className="h-4 w-4 text-white" />
+            <span className="text-sm font-bold text-white">Gouvernance Augmentee par IA</span>
           </div>
         </div>
-        <p className="text-xs text-white/80">Le pouvoir ne reside pas dans une personne mais dans un PROCESSUS defini. Inspire Holacracy — adapte pour la collaboration IA + Humain.</p>
+        <div className="px-4 py-3">
+          <p className="text-xs text-gray-600">Le pouvoir ne reside pas dans une personne mais dans un PROCESSUS defini. Inspire Holacracy — adapte pour la collaboration IA + Humain.</p>
+        </div>
       </div>
 
-      {/* Sub-tabs */}
-      <div className="flex gap-1 bg-gray-50 p-1 rounded-lg">
+      {/* Sub-tabs — pill style standard */}
+      <div className="flex gap-1">
         {tabs.map((tab) => {
           const TIcon = tab.icon;
           return (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={cn(
-              "flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-medium transition-all cursor-pointer flex-1 justify-center",
-              activeTab === tab.id ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
+              activeTab === tab.id ? "bg-gray-900 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
             )}>
               <TIcon className="h-3.5 w-3.5" />
               {tab.label}
