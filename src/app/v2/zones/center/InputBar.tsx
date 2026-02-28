@@ -1,8 +1,8 @@
 /**
  * InputBar.tsx — Boite de dialogue en bas de la zone centrale
  * Layout : Textarea (grande) + Envoyer | Clip | Vocal Telephone Camera
- * Ligne 2 : Modes de reflexion + separateur + raccourcis Productivite
- * Sprint A — Frame Master V2
+ * CarlOS = Sherpa/GPS — il route automatiquement vers le bon mode
+ * Sprint B — UX Sherpa
  */
 
 import { useState, useRef, type KeyboardEvent } from "react";
@@ -20,6 +20,7 @@ import {
   Map,
   Sparkles,
   Brain,
+  Compass,
 } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import { Textarea } from "../../../components/ui/textarea";
@@ -33,17 +34,18 @@ import { useFrameMaster } from "../../context/FrameMasterContext";
 import type { ReflectionMode } from "../../api/types";
 import { cn } from "../../../components/ui/utils";
 
-// Modes de reflexion avec icones (CREDO = mode par defaut, pas dans la liste)
-const MODES: { id: ReflectionMode; label: string; icon: React.ElementType; color: string }[] = [
-  { id: "debat", label: "Debat", icon: Swords, color: "bg-red-600" },
-  { id: "brainstorm", label: "Brainstorm", icon: Lightbulb, color: "bg-yellow-500" },
-  { id: "crise", label: "Crise", icon: Flame, color: "bg-orange-600" },
-  { id: "analyse", label: "Analyse", icon: Search, color: "bg-green-600" },
-  { id: "decision", label: "Decision", icon: Scale, color: "bg-purple-600" },
-  { id: "strategie", label: "Strategie", icon: Map, color: "bg-indigo-600" },
-  { id: "innovation", label: "Innov.", icon: Sparkles, color: "bg-pink-600" },
-  { id: "deep", label: "Deep", icon: Brain, color: "bg-cyan-600" },
-];
+// Modes de reflexion — CarlOS route automatiquement (Sherpa GPS)
+// L'utilisateur ne choisit PAS manuellement, mais on affiche le mode actif
+const MODE_META: Partial<Record<ReflectionMode, { label: string; icon: React.ElementType; color: string }>> = {
+  debat: { label: "Debat", icon: Swords, color: "bg-red-600" },
+  brainstorm: { label: "Brainstorm", icon: Lightbulb, color: "bg-yellow-500" },
+  crise: { label: "Crise", icon: Flame, color: "bg-orange-600" },
+  analyse: { label: "Analyse", icon: Search, color: "bg-green-600" },
+  decision: { label: "Decision", icon: Scale, color: "bg-purple-600" },
+  strategie: { label: "Strategie", icon: Map, color: "bg-indigo-600" },
+  innovation: { label: "Innov.", icon: Sparkles, color: "bg-pink-600" },
+  deep: { label: "Deep", icon: Brain, color: "bg-cyan-600" },
+};
 
 export function InputBar() {
   const [text, setText] = useState("");
@@ -57,7 +59,7 @@ export function InputBar() {
   const handleSend = () => {
     const trimmed = text.trim();
     if (!trimmed || isTyping) return;
-    setActiveView("discussion");
+    setActiveView("live-chat");
     sendMessage(trimmed, activeBotCode);
     setText("");
     textareaRef.current?.focus();
@@ -140,31 +142,25 @@ export function InputBar() {
         </div>
       </div>
 
-      {/* Ligne 2 : Modes de reflexion */}
+      {/* Ligne 2 : Badge Sherpa — CarlOS route automatiquement */}
       <div className="flex items-center gap-2">
-        <span className="text-[11px] text-muted-foreground shrink-0">
-          Mode de reflexion
-        </span>
-        <div className="flex gap-1 flex-wrap">
-          {MODES.map((mode) => {
-            const active = activeReflectionMode === mode.id;
-            return (
-              <button
-                key={mode.id}
-                onClick={() => setReflectionMode(mode.id)}
-                className={cn(
-                  "flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full transition-all font-medium",
-                  active
-                    ? mode.color + " text-white shadow-sm"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                )}
-              >
-                <mode.icon className="h-3 w-3" />
-                {mode.label}
-              </button>
-            );
-          })}
+        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+          <Compass className="h-3 w-3" />
+          <span>CarlOS pilote</span>
         </div>
+        {activeReflectionMode && MODE_META[activeReflectionMode] && (() => {
+          const meta = MODE_META[activeReflectionMode];
+          const Icon = meta.icon;
+          return (
+            <span className={cn(
+              "flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full font-medium text-white shadow-sm",
+              meta.color
+            )}>
+              <Icon className="h-3 w-3" />
+              {meta.label}
+            </span>
+          );
+        })()}
       </div>
     </div>
   );
