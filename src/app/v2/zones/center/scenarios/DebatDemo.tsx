@@ -15,6 +15,8 @@ import {
   RotateCcw,
   Send,
   CheckCircle2,
+  Brain,
+  Eye,
 } from "lucide-react";
 import { cn } from "../../../../components/ui/utils";
 import {
@@ -386,7 +388,8 @@ function VerdictCard({
  */
 export function DebatDemo({
   onComplete,
-}: { onComplete?: () => void } = {}) {
+  onTransition,
+}: { onComplete?: () => void; onTransition?: (target: string) => void } = {}) {
   const [stage, setStage] = useState(0);
   const [phase, setPhase] = useState<CREDOPhase>("C");
   const [ceoIntroDone, setCeoIntroDone] = useState(false);
@@ -567,6 +570,19 @@ export function DebatDemo({
                     Debat termine — 3 rounds, verdict rendu
                   </span>
                 </div>
+              </div>
+
+              {/* Transition buttons */}
+              <div className="flex items-center gap-2 justify-center flex-wrap mt-2">
+                <button onClick={() => onTransition?.("deep")} className="text-xs bg-indigo-50 text-indigo-700 border border-indigo-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-indigo-100 font-medium cursor-pointer">
+                  <Brain className="h-3.5 w-3.5" /> Deep Resonance
+                </button>
+                <button onClick={() => onTransition?.("decision")} className="text-xs bg-amber-50 text-amber-700 border border-amber-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-amber-100 font-medium cursor-pointer">
+                  <Scale className="h-3.5 w-3.5" /> Decision
+                </button>
+                <button onClick={() => onTransition?.("analyse")} className="text-xs bg-cyan-50 text-cyan-700 border border-cyan-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-cyan-100 font-medium cursor-pointer">
+                  <Eye className="h-3.5 w-3.5" /> Analyse
+                </button>
               </div>
 
               {/* Restart */}

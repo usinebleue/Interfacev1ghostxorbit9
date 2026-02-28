@@ -14,6 +14,8 @@ import {
   ArrowRight,
   RotateCcw,
   Sparkles,
+  Scale,
+  Target,
 } from "lucide-react";
 import { cn } from "../../../../components/ui/utils";
 import {
@@ -386,7 +388,8 @@ function MirrorSynthesis({
  */
 export function DeepResonanceDemo({
   onComplete,
-}: { onComplete?: () => void } = {}) {
+  onTransition,
+}: { onComplete?: () => void; onTransition?: (target: string) => void } = {}) {
   const [stage, setStage] = useState(0);
   const [activeSpiral, setActiveSpiral] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -826,6 +829,16 @@ export function DeepResonanceDemo({
                         Deep Resonance terminee — 3 spirales, 1 cristallisation
                       </span>
                     </div>
+                  </div>
+
+                  {/* Transition buttons */}
+                  <div className="flex items-center gap-2 justify-center flex-wrap mt-2">
+                    <button onClick={() => onTransition?.("decision")} className="text-xs bg-amber-50 text-amber-700 border border-amber-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-amber-100 font-medium cursor-pointer">
+                      <Scale className="h-3.5 w-3.5" /> Decision
+                    </button>
+                    <button onClick={() => onTransition?.("strategie")} className="text-xs bg-purple-50 text-purple-700 border border-purple-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-purple-100 font-medium cursor-pointer">
+                      <Target className="h-3.5 w-3.5" /> Strategie
+                    </button>
                   </div>
 
                   {/* Restart */}

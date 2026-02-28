@@ -17,6 +17,8 @@ import {
   Zap,
   RotateCcw,
   ChevronRight,
+  Eye,
+  Target,
 } from "lucide-react";
 import { cn } from "../../../../components/ui/utils";
 import {
@@ -386,7 +388,7 @@ function PlanCorrectifCard({
 
 // ========== STABILISE CARD ==========
 
-function StabiliseCard({ onRestart }: { onRestart: () => void }) {
+function StabiliseCard({ onRestart, onTransition }: { onRestart: () => void; onTransition?: (target: string) => void }) {
   return (
     <div className="ml-11 bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-300 rounded-xl p-5 shadow-md animate-in fade-in duration-500">
       <div className="flex items-center gap-3 mb-3">
@@ -409,6 +411,21 @@ function StabiliseCard({ onRestart }: { onRestart: () => void }) {
           le temps a ete achete et la credibilite restauree.
         </p>
       </div>
+      {/* Actions — TYPE 6 Synthese/Verdict */}
+      <div className="flex items-center gap-2 flex-wrap mb-3">
+        <button
+          onClick={() => onTransition?.("analyse")}
+          className="text-xs bg-cyan-50 text-cyan-700 border border-cyan-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-cyan-100 font-medium cursor-pointer"
+        >
+          <Eye className="h-3.5 w-3.5" /> Post-mortem (Analyse)
+        </button>
+        <button
+          onClick={() => onTransition?.("strategie")}
+          className="text-xs bg-purple-50 text-purple-700 border border-purple-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-purple-100 font-medium cursor-pointer"
+        >
+          <Target className="h-3.5 w-3.5" /> Prevention (Strategie)
+        </button>
+      </div>
       <button
         onClick={onRestart}
         className="flex items-center gap-2 text-sm text-green-700 hover:text-green-900 font-medium transition-colors cursor-pointer"
@@ -422,9 +439,10 @@ function StabiliseCard({ onRestart }: { onRestart: () => void }) {
 
 // ========== MAIN COMPONENT ==========
 
-export function CriseDemo({ onComplete }: { onComplete?: () => void } = {}) {
+export function CriseDemo({ onComplete, onTransition: onTransitionProp }: { onComplete?: () => void; onTransition?: (target: string) => void } = {}) {
   const [stage, setStage] = useState(0);
   const [oodaPhase, setOodaPhase] = useState<OODAPhase>("alert");
+  const [orientChoice, setOrientChoice] = useState<number | null>(null);
   const [ceoTextDone, setCeoTextDone] = useState(false);
   const [orientTextDone, setOrientTextDone] = useState(false);
   const [directiveTextDone, setDirectiveTextDone] = useState(false);
@@ -453,6 +471,7 @@ export function CriseDemo({ onComplete }: { onComplete?: () => void } = {}) {
   function handleRestart() {
     setStage(0);
     setOodaPhase("alert");
+    setOrientChoice(null);
     setCeoTextDone(false);
     setOrientTextDone(false);
     setDirectiveTextDone(false);
@@ -574,10 +593,30 @@ export function CriseDemo({ onComplete }: { onComplete?: () => void } = {}) {
               orientTextDone={orientTextDone}
               onTextDone={() => setOrientTextDone(true)}
               onSelect={(num) => {
+                setOrientChoice(num);
                 setOodaPhase("decider");
-                setStage(3);
+                setStage(num === 1 ? 2.5 : 3);
               }}
             />
+          )}
+
+          {/* STAGE 2.5 — Option 1: Appel immediat (path rapide) */}
+          {stage >= 2.5 && stage < 3 && (
+            <div className="flex gap-3">
+              <BotAvatar code="BCO" size="md" />
+              <div className="bg-white border-l-[3px] border border-gray-200 rounded-xl rounded-tl-none px-4 py-3 max-w-[75%] shadow-sm border-l-red-400">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-semibold text-blue-700">CarlOS (CEO)</span>
+                  <span className="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-bold">APPEL IMMEDIAT</span>
+                </div>
+                <TypewriterText
+                  text="Tu as choisi l'attaque directe. On appelle Jean-Pierre MAINTENANT. C'est risque mais ca montre qu'on prend la situation au serieux. Je prepare le script d'appel pendant que le reste de l'equipe se mobilise en parallele."
+                  speed={8}
+                  className="text-sm text-gray-800"
+                  onComplete={() => setStage(3)}
+                />
+              </div>
+            </div>
           )}
 
           {/* ============================================ */}
@@ -604,7 +643,7 @@ export function CriseDemo({ onComplete }: { onComplete?: () => void } = {}) {
             />
           )}
 
-          {/* STAGE 3.5 — CEO Directive */}
+          {/* STAGE 3.5 — CEO Directive (adapted to choice) */}
           {stage >= 3.5 && stage < 6 && (
             <div className="flex gap-3">
               <BotAvatar code="BCO" size="md" />
@@ -619,7 +658,10 @@ export function CriseDemo({ onComplete }: { onComplete?: () => void } = {}) {
                 </div>
                 {stage === 3.5 ? (
                   <TypewriterText
-                    text={data.decide.ceoDirective}
+                    text={orientChoice === 2
+                      ? "Plan correctif d'abord — on redige un document structure avant d'appeler. Ca prend 2 heures de plus mais on arrive avec du concret. Voici la repartition :"
+                      : data.decide.ceoDirective
+                    }
                     speed={8}
                     className="text-sm text-gray-800 font-medium"
                     onComplete={() => {
@@ -629,7 +671,10 @@ export function CriseDemo({ onComplete }: { onComplete?: () => void } = {}) {
                   />
                 ) : (
                   <p className="text-sm text-gray-800 font-medium">
-                    {data.decide.ceoDirective}
+                    {orientChoice === 2
+                      ? "Plan correctif d'abord — on redige un document structure avant d'appeler. Ca prend 2 heures de plus mais on arrive avec du concret. Voici la repartition :"
+                      : data.decide.ceoDirective
+                    }
                   </p>
                 )}
               </div>
@@ -727,7 +772,7 @@ export function CriseDemo({ onComplete }: { onComplete?: () => void } = {}) {
           {stage >= 7 && (
             <>
               <PhaseUpdater phase="stabilise" setPhase={setOodaPhase} stage={7} currentStage={stage} />
-              <StabiliseCard onRestart={handleRestart} />
+              <StabiliseCard onRestart={handleRestart} onTransition={onTransitionProp} />
             </>
           )}
 

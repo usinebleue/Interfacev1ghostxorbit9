@@ -18,6 +18,9 @@ import {
   AlertTriangle,
   Star,
   Clock,
+  Scale,
+  Swords,
+  FileText,
 } from "lucide-react";
 import { cn } from "../../../../components/ui/utils";
 import {
@@ -835,7 +838,8 @@ function SyntheseCard({
  */
 export function StrategieDemo({
   onComplete,
-}: { onComplete?: () => void } = {}) {
+  onTransition,
+}: { onComplete?: () => void; onTransition?: (target: string) => void } = {}) {
   const [stage, setStage] = useState(0);
   const [phase, setPhase] = useState<CREDOPhase>("C");
   const [ceoIntroDone, setCeoIntroDone] = useState(false);
@@ -1053,6 +1057,19 @@ export function StrategieDemo({
                     <div className="text-[10px] text-gray-500">Risques</div>
                   </div>
                 </div>
+              </div>
+
+              {/* Transition buttons */}
+              <div className="flex items-center gap-2 justify-center flex-wrap mt-2">
+                <button onClick={() => onTransition?.("decision")} className="text-xs bg-amber-50 text-amber-700 border border-amber-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-amber-100 font-medium cursor-pointer">
+                  <Scale className="h-3.5 w-3.5" /> Decision
+                </button>
+                <button onClick={() => onTransition?.("debat")} className="text-xs bg-red-50 text-red-700 border border-red-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-red-100 font-medium cursor-pointer">
+                  <Swords className="h-3.5 w-3.5" /> Debat
+                </button>
+                <button onClick={() => onTransition?.("cahier")} className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-emerald-100 font-medium cursor-pointer">
+                  <FileText className="h-3.5 w-3.5" /> Cahier SMART
+                </button>
               </div>
 
               {/* Restart */}

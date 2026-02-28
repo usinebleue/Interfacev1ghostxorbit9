@@ -18,6 +18,9 @@ import {
   CheckCircle2,
   Zap,
   ArrowRight,
+  FileText,
+  Eye,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "../../../../components/ui/utils";
 import {
@@ -429,7 +432,8 @@ function SyntheseCard({ animate }: { animate: boolean }) {
 
 export function BrainstormDemo({
   onComplete,
-}: { onComplete?: () => void } = {}) {
+  onTransition,
+}: { onComplete?: () => void; onTransition?: (target: string) => void } = {}) {
   const [stage, setStage] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -684,16 +688,39 @@ export function BrainstormDemo({
           {/* ===== STAGE 7 — Synthese card (plan + projection + idee phare) ===== */}
           {stage >= 7 && <SyntheseCard animate={stage === 7} />}
           {stage === 7 && (
-            <div className="flex justify-center">
-              <button
-                onClick={() => {
-                  setStage(8);
-                  onComplete?.();
-                }}
-                className="text-xs bg-green-100 text-green-700 px-4 py-2 rounded-full hover:bg-green-200 flex items-center gap-1 transition-colors mt-2"
-              >
-                <CheckCircle2 className="h-3 w-3" /> Brainstorm termine
-              </button>
+            <div className="space-y-2 mt-2">
+              {/* Transition buttons — TYPE 6 Synthese */}
+              <div className="flex items-center gap-2 justify-center flex-wrap">
+                <button
+                  onClick={() => onTransition?.("cahier")}
+                  className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-emerald-100 font-medium cursor-pointer"
+                >
+                  <FileText className="h-3.5 w-3.5" /> Cahier SMART
+                </button>
+                <button
+                  onClick={() => onTransition?.("analyse")}
+                  className="text-xs bg-cyan-50 text-cyan-700 border border-cyan-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-cyan-100 font-medium cursor-pointer"
+                >
+                  <Eye className="h-3.5 w-3.5" /> Approfondir (Analyse)
+                </button>
+                <button
+                  onClick={() => onTransition?.("innovation")}
+                  className="text-xs bg-pink-50 text-pink-700 border border-pink-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-pink-100 font-medium cursor-pointer"
+                >
+                  <Sparkles className="h-3.5 w-3.5" /> Innovation
+                </button>
+              </div>
+              <div className="flex justify-center">
+                <button
+                  onClick={() => {
+                    setStage(8);
+                    onComplete?.();
+                  }}
+                  className="text-xs bg-green-100 text-green-700 px-4 py-2 rounded-full hover:bg-green-200 flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  <CheckCircle2 className="h-3 w-3" /> Brainstorm termine
+                </button>
+              </div>
             </div>
           )}
 

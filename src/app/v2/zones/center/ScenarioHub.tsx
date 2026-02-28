@@ -1,12 +1,13 @@
 /**
- * ScenarioHub.tsx — Galerie des 9 scenarios de simulation
+ * ScenarioHub.tsx — Galerie des 10 scenarios de simulation
+ * Integre TransitionContext pour les transitions inter-modes
  * Chaque carte lance une simulation d'un mode de reflexion GHML
  * Sprint A — Frame Master V2
  */
 
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import {
   GitBranch,
   FileText,
@@ -20,6 +21,9 @@ import {
   Scale,
   ArrowLeft,
   Play,
+  Home,
+  ChevronRight,
+  AlertTriangle,
 } from "lucide-react";
 import { cn } from "../../../components/ui/utils";
 import { BranchPatternsDemo } from "./BranchPatternsDemo";
@@ -35,6 +39,11 @@ import { DecisionDemo } from "./scenarios/DecisionDemo";
 
 type ScenarioView = "hub" | "credo" | "cahier" | "debat" | "crise" | "brainstorm" | "analyse" | "strategie" | "innovation" | "deep" | "decision";
 
+interface BreadcrumbEntry {
+  mode: ScenarioView;
+  label: string;
+}
+
 interface ScenarioCard {
   id: ScenarioView;
   title: string;
@@ -47,6 +56,22 @@ interface ScenarioCard {
   status: "ready" | "coming";
   description: string;
 }
+
+const MODE_LABELS: Record<ScenarioView, string> = {
+  hub: "Hub",
+  credo: "CREDO",
+  cahier: "Cahier SMART",
+  debat: "Debat",
+  crise: "Crise",
+  brainstorm: "Brainstorm",
+  analyse: "Analyse",
+  strategie: "Strategie",
+  innovation: "Innovation",
+  deep: "Deep Resonance",
+  decision: "Decision",
+};
+
+const MAX_DEPTH = 3;
 
 const SCENARIOS: ScenarioCard[] = [
   {
@@ -173,17 +198,64 @@ const SCENARIOS: ScenarioCard[] = [
 
 export function ScenarioHub() {
   const [view, setView] = useState<ScenarioView>("hub");
+  const [breadcrumb, setBreadcrumb] = useState<BreadcrumbEntry[]>([]);
 
-  if (view === "credo") return <WithBackButton onBack={() => setView("hub")}><BranchPatternsDemo /></WithBackButton>;
-  if (view === "cahier") return <WithBackButton onBack={() => setView("hub")}><CahierSmartDemo /></WithBackButton>;
-  if (view === "debat") return <WithBackButton onBack={() => setView("hub")}><DebatDemo /></WithBackButton>;
-  if (view === "crise") return <WithBackButton onBack={() => setView("hub")}><CriseDemo /></WithBackButton>;
-  if (view === "brainstorm") return <WithBackButton onBack={() => setView("hub")}><BrainstormDemo /></WithBackButton>;
-  if (view === "analyse") return <WithBackButton onBack={() => setView("hub")}><AnalyseDemo /></WithBackButton>;
-  if (view === "strategie") return <WithBackButton onBack={() => setView("hub")}><StrategieDemo /></WithBackButton>;
-  if (view === "innovation") return <WithBackButton onBack={() => setView("hub")}><InnovationDemo /></WithBackButton>;
-  if (view === "deep") return <WithBackButton onBack={() => setView("hub")}><DeepResonanceDemo /></WithBackButton>;
-  if (view === "decision") return <WithBackButton onBack={() => setView("hub")}><DecisionDemo /></WithBackButton>;
+  const navigateTo = useCallback((target: ScenarioView) => {
+    if (target === "hub") {
+      setView("hub");
+      setBreadcrumb([]);
+      return;
+    }
+    setView(target);
+  }, []);
+
+  const handleTransition = useCallback((targetId: string) => {
+    const target = targetId as ScenarioView;
+    if (breadcrumb.length >= MAX_DEPTH) return;
+
+    setBreadcrumb(prev => [
+      ...prev,
+      { mode: view, label: MODE_LABELS[view] },
+    ]);
+    setView(target);
+  }, [view, breadcrumb]);
+
+  const handleBack = useCallback(() => {
+    if (breadcrumb.length > 0) {
+      const prev = breadcrumb[breadcrumb.length - 1];
+      setBreadcrumb(bc => bc.slice(0, -1));
+      setView(prev.mode);
+    } else {
+      setView("hub");
+    }
+  }, [breadcrumb]);
+
+  const handleHub = useCallback(() => {
+    setView("hub");
+    setBreadcrumb([]);
+  }, []);
+
+  if (view !== "hub") {
+    return (
+      <WithBackButton
+        onBack={handleBack}
+        onHub={handleHub}
+        breadcrumb={breadcrumb}
+        currentLabel={MODE_LABELS[view]}
+      >
+        {view === "credo" && <BranchPatternsDemo />}
+        {view === "cahier" && <CahierSmartDemo />}
+        {view === "debat" && <DebatDemo onTransition={handleTransition} />}
+        {view === "crise" && <CriseDemo onTransition={handleTransition} />}
+        {view === "brainstorm" && <BrainstormDemo onTransition={handleTransition} />}
+        {view === "analyse" && <AnalyseDemo onTransition={handleTransition} />}
+        {view === "strategie" && <StrategieDemo onTransition={handleTransition} />}
+        {view === "innovation" && <InnovationDemo onTransition={handleTransition} />}
+        {view === "deep" && <DeepResonanceDemo onTransition={handleTransition} />}
+        {view === "decision" && <DecisionDemo onTransition={handleTransition} />}
+      </WithBackButton>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col bg-gray-50">
@@ -202,7 +274,7 @@ export function ScenarioHub() {
             return (
               <button
                 key={s.id}
-                onClick={() => isReady && setView(s.id)}
+                onClick={() => isReady && navigateTo(s.id)}
                 disabled={!isReady}
                 className={cn(
                   "text-left rounded-2xl border-2 overflow-hidden transition-all group",
@@ -250,13 +322,49 @@ export function ScenarioHub() {
   );
 }
 
-function WithBackButton({ onBack, children }: { onBack: () => void; children: React.ReactNode }) {
+function WithBackButton({ onBack, onHub, breadcrumb, currentLabel, children }: {
+  onBack: () => void;
+  onHub: () => void;
+  breadcrumb: BreadcrumbEntry[];
+  currentLabel: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="h-full flex flex-col">
-      <div className="shrink-0 bg-white border-b px-3 py-1.5 flex items-center">
-        <button onClick={onBack} className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-100 transition-colors">
-          <ArrowLeft className="h-3.5 w-3.5" /> Retour aux scenarios
+      <div className="shrink-0 bg-white border-b px-3 py-1.5 flex items-center gap-2">
+        <button onClick={onHub} className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-100 transition-colors cursor-pointer">
+          <Home className="h-3.5 w-3.5" /> Hub
         </button>
+        {breadcrumb.length > 0 && (
+          <>
+            {breadcrumb.map((entry, i) => (
+              <div key={i} className="flex items-center gap-1 text-[11px] text-gray-400">
+                <ChevronRight className="h-3 w-3" />
+                <span>{entry.label}</span>
+              </div>
+            ))}
+            <div className="flex items-center gap-1 text-[11px] text-blue-600 font-medium">
+              <ChevronRight className="h-3 w-3 text-gray-400" />
+              <span>{currentLabel}</span>
+            </div>
+          </>
+        )}
+        {breadcrumb.length > 0 && (
+          <button onClick={onBack} className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-100 transition-colors ml-auto cursor-pointer">
+            <ArrowLeft className="h-3.5 w-3.5" /> Retour
+          </button>
+        )}
+        {breadcrumb.length === 0 && (
+          <button onClick={onBack} className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-100 transition-colors ml-auto cursor-pointer">
+            <ArrowLeft className="h-3.5 w-3.5" /> Retour aux scenarios
+          </button>
+        )}
+        {breadcrumb.length >= MAX_DEPTH && (
+          <div className="flex items-center gap-1 text-[10px] text-amber-600 ml-2">
+            <AlertTriangle className="h-3 w-3" />
+            <span>Profondeur max atteinte</span>
+          </div>
+        )}
       </div>
       <div className="flex-1 overflow-hidden">
         {children}
