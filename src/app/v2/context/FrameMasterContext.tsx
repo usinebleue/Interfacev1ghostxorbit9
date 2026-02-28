@@ -6,7 +6,7 @@
 import { createContext, useContext, useState, useCallback, useRef, useEffect } from "react";
 import type { BotInfo } from "../api/types";
 
-export type ActiveView = "dashboard" | "cockpit" | "health" | "department" | "discussion" | "branches" | "cahier" | "scenarios";
+export type ActiveView = "dashboard" | "cockpit" | "health" | "department" | "discussion" | "branches" | "cahier" | "scenarios" | "live-chat" | "canvas";
 
 interface FrameMasterState {
   activeBot: BotInfo | null;
@@ -44,7 +44,7 @@ export function FrameMasterProvider({
 }) {
   const [activeBot, setActiveBotState] = useState<BotInfo | null>(null);
   const [activeBotCode, setActiveBotCode] = useState("BCO");
-  const [activeView, setActiveView] = useState<ActiveView>("dashboard");
+  const [activeView, setActiveView] = useState<ActiveView>("canvas");
   const [leftSidebarCollapsed, setLeftCollapsed] = useState(false);
   const [rightSidebarCollapsed, setRightCollapsed] = useState(false);
   const [isAuthenticated, setAuthenticatedState] = useState(() => {

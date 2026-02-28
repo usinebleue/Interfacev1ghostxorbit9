@@ -1,9 +1,10 @@
 /**
- * CenterZone.tsx — Router entre Dashboard, Department et Discussion
+ * CenterZone.tsx — Router entre Dashboard, Department, Discussion, LiveChat, Canvas
  * InputBar fixe en bas (meme niveau que "Ma Productivite" dans sidebar)
  * Sprint A — Frame Master V2
  */
 
+import { useState } from "react";
 import { cn } from "../../../components/ui/utils";
 import { useFrameMaster } from "../../context/FrameMasterContext";
 import { DashboardView } from "./DashboardView";
@@ -14,6 +15,8 @@ import { DiscussionView } from "./DiscussionView";
 import { BranchPatternsDemo } from "./BranchPatternsDemo";
 import { CahierSmartDemo } from "./CahierSmartDemo";
 import { ScenarioHub } from "./ScenarioHub";
+import { LiveChat } from "./LiveChat";
+import { SmartCanvas } from "./SmartCanvas";
 import { InputBar } from "./InputBar";
 
 /** Couleur identitaire par bot — bande fine en haut du canevas */
@@ -35,8 +38,14 @@ const BOT_BAND_COLORS: Record<string, string> = {
 };
 
 export function CenterZone() {
-  const { activeView, activeBotCode } = useFrameMaster();
+  const { activeView, activeBotCode, setActiveView } = useFrameMaster();
   const botBand = BOT_BAND_COLORS[activeBotCode];
+  const [liveChatMode, setLiveChatMode] = useState("analyse");
+
+  const handleStartChat = (mode: string) => {
+    setLiveChatMode(mode);
+    setActiveView("live-chat");
+  };
 
   return (
     <div className="h-full flex flex-col bg-background overflow-hidden">
@@ -53,10 +62,22 @@ export function CenterZone() {
         {activeView === "branches" && <BranchPatternsDemo />}
         {activeView === "cahier" && <CahierSmartDemo />}
         {activeView === "scenarios" && <ScenarioHub />}
+        {activeView === "live-chat" && (
+          <LiveChat
+            initialMode={liveChatMode}
+            onBack={() => setActiveView("canvas")}
+          />
+        )}
+        {activeView === "canvas" && (
+          <SmartCanvas
+            onStartChat={handleStartChat}
+            onOpenScenarios={() => setActiveView("scenarios")}
+          />
+        )}
       </div>
 
-      {/* InputBar fixe en bas — a cote de Ma Productivite */}
-      <InputBar />
+      {/* InputBar fixe en bas — sauf dans live-chat (il a son propre input) */}
+      {activeView !== "live-chat" && <InputBar />}
     </div>
   );
 }
