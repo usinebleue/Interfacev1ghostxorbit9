@@ -21,6 +21,7 @@ import { NouvellesPage } from "./NouvellesPage";
 import { EvenementsPage } from "./EvenementsPage";
 import { BenchmarkPage } from "./BenchmarkPage";
 import { TrgIndustriePage } from "./TrgIndustriePage";
+import { PageTypePage } from "./PageTypePage";
 
 // ── Groupes de sections avec sous-tabs ──
 
@@ -51,6 +52,7 @@ const SECTION_TITLES: Record<string, string> = {
   benchmark: "Benchmark VITAA",
   nouvelles: "Nouvelles",
   "trg-industrie": "Dashboard de l'Industrie",
+  "page-type": "Page Type",
 };
 
 const SECTION_SUBTITLES: Record<string, string> = {
@@ -98,6 +100,8 @@ export function Orbit9DetailView() {
         return <BenchmarkPage />;
       case "trg-industrie":
         return <TrgIndustriePage />;
+      case "page-type":
+        return <PageTypePage />;
       default:
         return <MarketplacePage volet="bots" onNavigate={handleNavigate} />;
     }
