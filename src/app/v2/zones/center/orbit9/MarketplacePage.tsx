@@ -1,16 +1,17 @@
 /**
- * MarketplacePage.tsx — Marketplace GhostX (REFAIT COMPLET)
- * 2 volets: "Marketplace Bots" (fiches CV agents IA) | "Mains Levees" (cahiers)
+ * MarketplacePage.tsx — Marketplace (REFAIT COMPLET)
+ * 2 volets controles par l'orchestrateur via prop `volet`:
+ *   - "bots" = Fiches CV agents IA
+ *   - "cahiers" = Mains levees / opportunites
  * CarlOS = GPS de la plateforme, detecte besoins et guide l'utilisateur
  * Sprint B — Reorganisation Orbit9
  */
 
-import { useState } from "react";
 import {
-  Bot, Search, Star, DollarSign, Zap, Shield, Factory,
-  Wrench, Briefcase, FileText, Hand, ArrowRight, Send,
-  CheckCircle2, Clock, Target, Plus, Eye, MessageSquare,
-  Sparkles, Handshake, TrendingUp, Users, ChevronRight,
+  Bot, Search, Star, DollarSign, Zap,
+  FileText, Hand, ArrowRight, Send,
+  Target, Plus, Eye, MessageSquare,
+  TrendingUp,
 } from "lucide-react";
 import { cn } from "../../../../components/ui/utils";
 import { Card } from "../../../../components/ui/card";
@@ -18,11 +19,11 @@ import { Badge } from "../../../../components/ui/badge";
 import { Button } from "../../../../components/ui/button";
 
 interface MarketplacePageProps {
+  volet?: "bots" | "cahiers";
   onNavigate?: (section: string) => void;
 }
 
-export function MarketplacePage({ onNavigate }: MarketplacePageProps) {
-  const [activeTab, setActiveTab] = useState<"bots" | "cahiers">("bots");
+export function MarketplacePage({ volet = "bots", onNavigate }: MarketplacePageProps) {
 
   const bots = [
     {
@@ -168,45 +169,8 @@ export function MarketplacePage({ onNavigate }: MarketplacePageProps) {
 
   return (
     <div className="space-y-5">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl p-5 border border-orange-200">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center">
-            <Briefcase className="h-5 w-5 text-orange-600" />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-gray-900">Marketplace GhostX</h2>
-            <p className="text-xs text-gray-500">Trouvez des bots specialises ou repondez aux opportunites du reseau</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Tabs: Marketplace Bots | Mains Levees */}
-      <div className="flex gap-1 bg-gray-50 p-1 rounded-lg">
-        <button
-          onClick={() => setActiveTab("bots")}
-          className={cn(
-            "flex items-center gap-1.5 px-4 py-2 rounded-md text-xs font-medium transition-all cursor-pointer flex-1 justify-center",
-            activeTab === "bots" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"
-          )}
-        >
-          <Bot className="h-3.5 w-3.5" />
-          Marketplace Bots
-        </button>
-        <button
-          onClick={() => setActiveTab("cahiers")}
-          className={cn(
-            "flex items-center gap-1.5 px-4 py-2 rounded-md text-xs font-medium transition-all cursor-pointer flex-1 justify-center",
-            activeTab === "cahiers" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"
-          )}
-        >
-          <Hand className="h-3.5 w-3.5" />
-          Mains Levees
-        </button>
-      </div>
-
-      {/* ═══ VOLET 1 — MARKETPLACE BOTS ═══ */}
-      {activeTab === "bots" && (
+      {/* ═══ VOLET 1 — BOTS & AGENTS ═══ */}
+      {volet === "bots" && (
         <div className="space-y-5">
           {/* KPIs */}
           <div className="grid grid-cols-4 gap-3">
@@ -305,8 +269,8 @@ export function MarketplacePage({ onNavigate }: MarketplacePageProps) {
         </div>
       )}
 
-      {/* ═══ VOLET 2 — MAINS LEVEES (CAHIERS) ═══ */}
-      {activeTab === "cahiers" && (
+      {/* ═══ VOLET 2 — OPPORTUNITES (CAHIERS / MAINS LEVEES) ═══ */}
+      {volet === "cahiers" && (
         <div className="space-y-5">
           {/* KPIs */}
           <div className="grid grid-cols-4 gap-3">
