@@ -834,7 +834,7 @@ export function DepartmentTourDeControle() {
           <Button
             size="sm"
             className="shrink-0 gap-1.5"
-            onClick={() => setActiveView("discussion")}
+            onClick={() => setActiveView("live-chat")}
           >
             Repondre
             <ArrowRight className="h-3.5 w-3.5" />
@@ -844,14 +844,14 @@ export function DepartmentTourDeControle() {
         {/* Row 1 : 5 blocs domaine — meme layout que DashboardView */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
           {config.row1.map((bloc, i) => (
-            <Bloc key={i} config={bloc} onClick={() => setActiveView("discussion")} />
+            <Bloc key={i} config={bloc} onClick={() => setActiveView("live-chat")} />
           ))}
         </div>
 
         {/* Row 2 : 5 blocs outils (Taches, Agenda, KPIs, Veille, Benchmarks) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
           {config.row2.map((bloc, i) => (
-            <Bloc key={i} config={bloc} onClick={() => setActiveView("discussion")} />
+            <Bloc key={i} config={bloc} onClick={() => setActiveView("live-chat")} />
           ))}
         </div>
       </div>
