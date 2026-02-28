@@ -79,22 +79,11 @@ const MODE_LABELS: Record<ScenarioView, string> = {
 
 const MAX_DEPTH = 3;
 
-const SCENARIOS: ScenarioCard[] = [
-  {
-    id: "credo",
-    title: "CREDO Complet",
-    subtitle: "Developpement d'idee + Thread Parking",
-    icon: GitBranch,
-    color: "bg-blue-600",
-    bgGradient: "from-blue-50 to-blue-100/50",
-    borderColor: "border-blue-300",
-    textColor: "text-blue-700",
-    status: "ready",
-    description: "Simulation complete du cycle CREDO : tension, multi-perspectives, challenge, suspension intelligente, synthese et cristallisation.",
-  },
+// === FLOW PRINCIPAL : Client / Fournisseur (3 etapes sequentielles) ===
+const FLOW_SCENARIOS: ScenarioCard[] = [
   {
     id: "diagnostic",
-    title: "Diagnostic Express",
+    title: "1. Diagnostic Express",
     subtitle: "Tension \u2192 Analyse multi-bot \u2192 Pre-rapport",
     icon: Scan,
     color: "bg-red-600",
@@ -106,7 +95,7 @@ const SCENARIOS: ScenarioCard[] = [
   },
   {
     id: "jumelage",
-    title: "Jumelage SMART",
+    title: "2. Jumelage SMART",
     subtitle: "Matching \u2192 Scoring \u2192 Selection",
     icon: Handshake,
     color: "bg-amber-600",
@@ -118,7 +107,7 @@ const SCENARIOS: ScenarioCard[] = [
   },
   {
     id: "cahier-projet",
-    title: "Cahier de Projet",
+    title: "3. Cahier de Projet",
     subtitle: "7 sections \u2192 PDF 34 pages",
     icon: FileText,
     color: "bg-emerald-600",
@@ -127,6 +116,22 @@ const SCENARIOS: ScenarioCard[] = [
     textColor: "text-emerald-700",
     status: "ready",
     description: "Co-construction du cahier avec l'integrateur : profil, diagnostic, solutions, budget waterfall, timeline, KPIs et validation.",
+  },
+];
+
+// === MODES DE REFLEXION (8+1 outils independants) ===
+const MODE_SCENARIOS: ScenarioCard[] = [
+  {
+    id: "credo",
+    title: "CREDO Complet",
+    subtitle: "Developpement d'idee + Thread Parking",
+    icon: GitBranch,
+    color: "bg-blue-600",
+    bgGradient: "from-blue-50 to-blue-100/50",
+    borderColor: "border-blue-300",
+    textColor: "text-blue-700",
+    status: "ready",
+    description: "Simulation complete du cycle CREDO : tension, multi-perspectives, challenge, suspension intelligente, synthese et cristallisation.",
   },
   {
     id: "debat",
@@ -299,58 +304,105 @@ export function ScenarioHub() {
       </div>
 
       <div className="flex-1 overflow-auto p-6">
-        <div className="max-w-5xl mx-auto grid grid-cols-3 gap-4">
-          {SCENARIOS.map(s => {
-            const Icon = s.icon;
-            const isReady = s.status === "ready";
-            return (
-              <button
-                key={s.id}
-                onClick={() => isReady && navigateTo(s.id)}
-                disabled={!isReady}
-                className={cn(
-                  "text-left rounded-2xl border-2 overflow-hidden transition-all group",
-                  isReady
-                    ? cn("hover:shadow-lg hover:scale-[1.02] cursor-pointer", s.borderColor)
-                    : "border-gray-200 opacity-60 cursor-not-allowed",
-                )}
-              >
-                {/* Color band */}
-                <div className={cn("h-2", isReady ? s.color : "bg-gray-300")} />
+        <div className="max-w-5xl mx-auto space-y-6">
 
-                <div className={cn("p-5 bg-gradient-to-b", isReady ? s.bgGradient : "from-gray-50 to-gray-100/50")}>
-                  <div className="flex items-start gap-3 mb-3">
-                    <div className={cn(
-                      "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
-                      isReady ? cn(s.color, "text-white") : "bg-gray-300 text-gray-500",
-                    )}>
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h3 className={cn("text-sm font-bold", isReady ? s.textColor : "text-gray-500")}>{s.title}</h3>
-                        {!isReady && <span className="text-[10px] bg-gray-200 text-gray-500 px-1.5 py-0.5 rounded-full">Bientot</span>}
-                      </div>
-                      <p className="text-xs text-gray-500 mt-0.5">{s.subtitle}</p>
-                    </div>
-                  </div>
-                  <p className="text-xs text-gray-600 leading-relaxed">{s.description}</p>
+          {/* === SECTION 1: Flow Client / Fournisseur === */}
+          <div>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center">
+                <ArrowLeft className="h-4 w-4 text-white rotate-180" />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-gray-800">Pipeline Client / Fournisseur</h2>
+                <p className="text-xs text-gray-500">Le flow complet : du diagnostic au cahier de projet livrable</p>
+              </div>
+              <div className="flex items-center gap-1 ml-auto text-[10px] text-gray-400">
+                <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">1</span>
+                <ChevronRight className="h-3 w-3" />
+                <span className="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">2</span>
+                <ChevronRight className="h-3 w-3" />
+                <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">3</span>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              {FLOW_SCENARIOS.map(s => (
+                <ScenarioCardButton key={s.id} scenario={s} onNavigate={navigateTo} />
+              ))}
+            </div>
+          </div>
 
-                  {isReady && (
-                    <div className={cn(
-                      "mt-3 flex items-center gap-1.5 text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity",
-                      s.textColor,
-                    )}>
-                      <Play className="h-3.5 w-3.5" /> Lancer la simulation
-                    </div>
-                  )}
-                </div>
-              </button>
-            );
-          })}
+          {/* === Separator === */}
+          <div className="border-t border-gray-200" />
+
+          {/* === SECTION 2: Modes de reflexion === */}
+          <div>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-600 to-purple-600 flex items-center justify-center">
+                <Brain className="h-4 w-4 text-white" />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-gray-800">Modes de reflexion</h2>
+                <p className="text-xs text-gray-500">8+1 outils de reflexion utilisables a tout moment dans le flow</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              {MODE_SCENARIOS.map(s => (
+                <ScenarioCardButton key={s.id} scenario={s} onNavigate={navigateTo} />
+              ))}
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
+  );
+}
+
+function ScenarioCardButton({ scenario: s, onNavigate }: { scenario: ScenarioCard; onNavigate: (id: ScenarioView) => void }) {
+  const Icon = s.icon;
+  const isReady = s.status === "ready";
+  return (
+    <button
+      onClick={() => isReady && onNavigate(s.id)}
+      disabled={!isReady}
+      className={cn(
+        "text-left rounded-2xl border-2 overflow-hidden transition-all group flex flex-col",
+        isReady
+          ? cn("hover:shadow-lg hover:scale-[1.02] cursor-pointer", s.borderColor)
+          : "border-gray-200 opacity-60 cursor-not-allowed",
+      )}
+    >
+      {/* Color band */}
+      <div className={cn("h-2 shrink-0", isReady ? s.color : "bg-gray-300")} />
+
+      <div className={cn("p-5 bg-gradient-to-b flex-1 flex flex-col", isReady ? s.bgGradient : "from-gray-50 to-gray-100/50")}>
+        <div className="flex items-start gap-3 mb-3">
+          <div className={cn(
+            "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
+            isReady ? cn(s.color, "text-white") : "bg-gray-300 text-gray-500",
+          )}>
+            <Icon className="h-5 w-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h3 className={cn("text-sm font-bold", isReady ? s.textColor : "text-gray-500")}>{s.title}</h3>
+              {!isReady && <span className="text-[10px] bg-gray-200 text-gray-500 px-1.5 py-0.5 rounded-full">Bientot</span>}
+            </div>
+            <p className="text-xs text-gray-500 mt-0.5">{s.subtitle}</p>
+          </div>
+        </div>
+        <p className="text-xs text-gray-600 leading-relaxed flex-1">{s.description}</p>
+
+        {isReady && (
+          <div className={cn(
+            "mt-3 flex items-center gap-1.5 text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity",
+            s.textColor,
+          )}>
+            <Play className="h-3.5 w-3.5" /> Lancer la simulation
+          </div>
+        )}
+      </div>
+    </button>
   );
 }
 
