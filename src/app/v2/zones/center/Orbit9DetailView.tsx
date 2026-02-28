@@ -204,27 +204,24 @@ function CerclesPage() {
         </div>
       </Card>
 
-      {/* Features Coordination Inter-Bots */}
+      {/* Activite recente du cercle */}
       <Card className="p-4">
-        <h3 className="text-sm font-bold text-gray-800 mb-3">Coordination Inter-Bots — Ce que le cercle debloque</h3>
-        <div className="grid grid-cols-3 gap-3">
+        <h3 className="text-sm font-bold text-gray-800 mb-3">Activite recente</h3>
+        <div className="space-y-2">
           {[
-            { icon: RefreshCw, title: "Specs propagees auto", desc: "Changement de specs chez un membre → mis a jour automatiquement chez tous les partenaires", active: true },
-            { icon: DollarSign, title: "Budget partage visible", desc: "Chaque membre voit le budget global du projet. Transparence totale.", active: true },
-            { icon: Clock, title: "Timeline synchronisee", desc: "Deadlines et jalons synces entre tous les bots du cercle", active: true },
-            { icon: Search, title: "Matching intra-cercle", desc: "CarlOS detecte les besoins et match avec les capacites des autres membres", active: true },
-            { icon: Bot, title: "Bots qui se parlent", desc: "Les bots CTO/CFO/COO des entreprises negocient specs, budget et delais automatiquement", active: false },
-            { icon: Sparkles, title: "Co-creation intelligente", desc: "CarlOS detecte quand 3+ membres ont le meme besoin et propose un projet commun", active: false },
-          ].map((feat, i) => {
-            const FIcon = feat.icon;
+            { time: "Il y a 1h", text: "Bot CTO d'AutomaTech a envoye les specs du cobot a Bot CTO d'Usinage Precision", icon: RefreshCw, color: "blue" },
+            { time: "Il y a 3h", text: "Nouveau matching detecte: LogiFlow peut optimiser l'entrepot de MetalPro", icon: Search, color: "green" },
+            { time: "Hier", text: "Budget projet soudage mis a jour: 125K$ → 145K$ (ajout formation)", icon: DollarSign, color: "amber" },
+            { time: "2 jours", text: "PlastiForm a accepte l'invitation — en attente d'activation", icon: UserPlus, color: "emerald" },
+          ].map((act, i) => {
+            const AIcon = act.icon;
             return (
-              <div key={i} className={cn("p-3 rounded-lg border transition-all", feat.active ? "bg-white border-emerald-200" : "bg-gray-50 border-gray-200 opacity-60")}>
-                <div className="flex items-center gap-2 mb-1.5">
-                  <FIcon className={cn("h-4 w-4", feat.active ? "text-emerald-600" : "text-gray-400")} />
-                  <span className="text-xs font-bold text-gray-800">{feat.title}</span>
-                  {!feat.active && <Badge variant="outline" className="text-[8px]">Sprint D</Badge>}
+              <div key={i} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50">
+                <div className={cn("w-7 h-7 rounded-full flex items-center justify-center shrink-0", `bg-${act.color}-100`)}>
+                  <AIcon className={cn("h-3.5 w-3.5", `text-${act.color}-600`)} />
                 </div>
-                <p className="text-[10px] text-gray-500">{feat.desc}</p>
+                <p className="text-xs text-gray-600 flex-1">{act.text}</p>
+                <span className="text-[10px] text-gray-400 shrink-0">{act.time}</span>
               </div>
             );
           })}
@@ -405,27 +402,15 @@ function MatchingPage() {
         ))}
       </div>
 
-      {/* 3 niveaux de matching */}
-      <Card className="p-4">
-        <h3 className="text-sm font-bold text-gray-800 mb-3">Moteur de Matching — 3 Niveaux</h3>
-        <div className="grid grid-cols-3 gap-3">
-          {[
-            { icon: Users, title: "Intra-Cercle", desc: "Match au sein de vos 9 membres. Coordination directe, bots connectes, delais rapides.", color: "blue", count: 4 },
-            { icon: Network, title: "Inter-Cercles", desc: "Recherche dans tout le reseau Orbit9. Des centaines de partenaires potentiels.", color: "purple", count: 2 },
-            { icon: Zap, title: "Co-Creation", desc: "CarlOS detecte quand 15+ membres cherchent la meme chose et propose un projet commun.", color: "amber", count: 1 },
-          ].map((level) => {
-            const LIcon = level.icon;
-            return (
-              <div key={level.title} className={cn("p-4 rounded-lg border", `bg-${level.color}-50 border-${level.color}-200`)}>
-                <div className="flex items-center justify-between mb-2">
-                  <LIcon className={cn("h-5 w-5", `text-${level.color}-600`)} />
-                  <Badge variant="outline" className="text-[9px]">{level.count} actifs</Badge>
-                </div>
-                <p className="text-sm font-bold text-gray-800 mb-1">{level.title}</p>
-                <p className="text-[10px] text-gray-600">{level.desc}</p>
-              </div>
-            );
-          })}
+      {/* Publier un besoin */}
+      <Card className="p-4 bg-blue-50 border-blue-200">
+        <div className="flex items-center gap-3">
+          <Plus className="h-8 w-8 text-blue-600 shrink-0" />
+          <div className="flex-1">
+            <h3 className="text-sm font-bold text-blue-800">Publier un nouveau besoin</h3>
+            <p className="text-xs text-blue-600">Decrivez votre besoin et CarlOS trouvera le meilleur match dans le reseau.</p>
+          </div>
+          <Button size="sm" className="gap-1 text-xs bg-blue-600 hover:bg-blue-700"><Send className="h-3 w-3" /> Publier</Button>
         </div>
       </Card>
     </div>
@@ -797,94 +782,103 @@ function PionniersPage() {
 // ══════════════════════════════════════════
 
 function MarketplacePage() {
+  const [activeFilter, setActiveFilter] = useState("tous");
+  const filters = ["tous", "robotique", "logistique", "qualite", "subventions", "securite"];
+
+  const experts = [
+    { name: "Cofamek Inc.", type: "Integrateur", specialites: ["Robot collaboratif", "Soudure automatisee", "Vision industrielle"], region: "Sherbrooke, QC", distance: "45 km", projets: 28, rating: 4.9, disponible: true, tarif: "125$/h", photo: "CO", verified: true },
+    { name: "Cyber Expert QC", type: "Expert Solo", specialites: ["Audit securite OT", "Conformite NIST", "Tests penetration"], region: "Montreal, QC", distance: "120 km", projets: 15, rating: 4.8, disponible: true, tarif: "150$/h", photo: "CE", verified: true },
+    { name: "LogiTech Solutions", type: "Fournisseur", specialites: ["WMS", "AGV/AMR", "Optimisation entrepot"], region: "Quebec, QC", distance: "250 km", projets: 42, rating: 4.7, disponible: false, tarif: "110$/h", photo: "LT", verified: true },
+    { name: "Me Julie Tremblay", type: "Expert Solo", specialites: ["Contrats commerciaux", "PI / Brevets", "Droit des affaires"], region: "Montreal, QC", distance: "120 km", projets: 31, rating: 4.9, disponible: true, tarif: "200$/h", photo: "JT", verified: false },
+    { name: "ISO Performance", type: "Fournisseur", specialites: ["ISO 9001", "ISO 13485", "Audit qualite"], region: "Trois-Rivieres, QC", distance: "90 km", projets: 56, rating: 4.6, disponible: true, tarif: "95$/h", photo: "IP", verified: true },
+    { name: "EnerVert Conseil", type: "Expert Solo", specialites: ["Audit energetique", "Credits carbone", "Efficacite usine"], region: "Drummondville, QC", distance: "60 km", projets: 12, rating: 4.5, disponible: true, tarif: "135$/h", photo: "EV", verified: false },
+  ];
+
   return (
     <div className="space-y-5">
+      {/* KPI */}
       <div className="grid grid-cols-4 gap-3">
-        <Card className="p-3"><div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Bots specialises</span><Bot className="h-3.5 w-3.5 text-violet-400" /></div><div className="text-2xl font-bold text-violet-600">15</div><div className="text-[10px] text-gray-500">6 actifs · 4 en dev · 5 demandes</div></Card>
-        <Card className="p-3"><div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Experts reseau</span><GraduationCap className="h-3.5 w-3.5 text-orange-400" /></div><div className="text-2xl font-bold text-orange-600">130+</div><div className="text-[10px] text-gray-500">Fournisseurs REAI</div></Card>
-        <Card className="p-3"><div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Taux completion IA</span><Sparkles className="h-3.5 w-3.5 text-blue-400" /></div><div className="text-2xl font-bold text-blue-600">80%</div><div className="text-[10px] text-gray-500">Brouillon automatique</div></Card>
-        <Card className="p-3"><div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Satisfaction</span><Star className="h-3.5 w-3.5 text-amber-400" /></div><div className="text-2xl font-bold text-amber-600">92%</div><div className="text-[10px] text-gray-500">Score moyen</div></Card>
+        <Card className="p-3"><div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Experts disponibles</span><Users className="h-3.5 w-3.5 text-orange-400" /></div><div className="text-2xl font-bold text-orange-600">130+</div><div className="text-[10px] text-gray-500">Fournisseurs et experts</div></Card>
+        <Card className="p-3"><div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Mandats actifs</span><Briefcase className="h-3.5 w-3.5 text-blue-400" /></div><div className="text-2xl font-bold text-blue-600">8</div><div className="text-[10px] text-gray-500">En cours dans le reseau</div></Card>
+        <Card className="p-3"><div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Satisfaction</span><Star className="h-3.5 w-3.5 text-amber-400" /></div><div className="text-2xl font-bold text-amber-600">4.7/5</div><div className="text-[10px] text-gray-500">Score moyen</div></Card>
+        <Card className="p-3"><div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Valeur livree</span><DollarSign className="h-3.5 w-3.5 text-green-400" /></div><div className="text-2xl font-bold text-green-600">1.2M$</div><div className="text-[10px] text-gray-500">Projets realises</div></Card>
       </div>
 
-      {/* Flow 80/20 */}
-      <Card className="p-4">
-        <h3 className="text-sm font-bold text-gray-800 mb-3">Modele 80/20 — Bot genere, Expert finalise</h3>
-        <div className="flex items-center gap-2">
-          <div className="flex-1 p-3 bg-blue-50 rounded-lg border border-blue-200 text-center">
-            <Bot className="h-6 w-6 text-blue-600 mx-auto mb-1" />
-            <p className="text-sm font-bold text-blue-800">Bot genere 80%</p>
-            <p className="text-[10px] text-blue-600">Structure, brouillon, donnees. En 2h vs 15-20h humain.</p>
-          </div>
-          <ArrowRight className="h-5 w-5 text-gray-300 shrink-0" />
-          <div className="flex-1 p-3 bg-orange-50 rounded-lg border border-orange-200 text-center">
-            <GraduationCap className="h-6 w-6 text-orange-600 mx-auto mb-1" />
-            <p className="text-sm font-bold text-orange-800">Expert finalise 20%</p>
-            <p className="text-[10px] text-orange-600">Revision, ajustement, validation terrain. Expertise humaine.</p>
-          </div>
-          <ArrowRight className="h-5 w-5 text-gray-300 shrink-0" />
-          <div className="flex-1 p-3 bg-green-50 rounded-lg border border-green-200 text-center">
-            <RefreshCw className="h-6 w-6 text-green-600 mx-auto mb-1" />
-            <p className="text-sm font-bold text-green-800">Bot s'ameliore</p>
-            <p className="text-[10px] text-green-600">Chaque correction = entrainement. Le bot devient expert.</p>
-          </div>
+      {/* Barre de recherche + filtres */}
+      <div className="flex items-center gap-3">
+        <div className="flex-1 flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg bg-white">
+          <Search className="h-4 w-4 text-gray-400" />
+          <input type="text" placeholder="Rechercher un expert, service ou competence..." className="flex-1 text-sm outline-none bg-transparent" readOnly />
         </div>
-      </Card>
+        <div className="flex items-center gap-1 px-2 py-1.5 border border-gray-200 rounded-lg bg-white">
+          <MapPin className="h-3.5 w-3.5 text-gray-400" />
+          <span className="text-xs text-gray-500">Quebec, Canada</span>
+        </div>
+      </div>
 
-      {/* Bots specialises — grille */}
-      <Card className="p-4">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-bold text-gray-800">Catalogue des Bots Specialises</h3>
-          <div className="flex gap-1">
-            <Badge variant="outline" className="text-[10px] cursor-pointer">Tous</Badge>
-            <Badge variant="outline" className="text-[10px] cursor-pointer bg-green-50 text-green-700">Actifs</Badge>
-            <Badge variant="outline" className="text-[10px] cursor-pointer">En dev</Badge>
-            <Badge variant="outline" className="text-[10px] cursor-pointer">Demandes</Badge>
-          </div>
-        </div>
-        <div className="grid grid-cols-3 gap-2">
-          {[
-            { name: "Bot Subventions", parent: "CFO", uses: 42, rating: 4.8, status: "actif" as const, desc: "Identifie et prepare les demandes de subventions automatiquement" },
-            { name: "Bot Diagnostic", parent: "CTO", uses: 38, rating: 4.7, status: "actif" as const, desc: "Evaluations technologiques (robotique, IA, logistique)" },
-            { name: "Bot Devis", parent: "CFO", uses: 25, rating: 4.5, status: "actif" as const, desc: "Generation automatique de devis et propositions" },
-            { name: "Bot Planification", parent: "COO", uses: 0, rating: 0, status: "en_dev" as const, desc: "Planification de production et ordonnancement" },
-            { name: "Bot Qualite ISO", parent: "CTO", uses: 0, rating: 0, status: "demande" as const, desc: "Gestion documentaire et audits ISO" },
-            { name: "Bot Formation", parent: "CHRO", uses: 0, rating: 0, status: "demande" as const, desc: "Programmes de formation et e-learning" },
-          ].map((bot, i) => (
-            <div key={i} className={cn("p-3 rounded-lg border transition-all hover:shadow-sm",
-              bot.status === "actif" ? "bg-white border-green-200" :
-              bot.status === "en_dev" ? "bg-blue-50/50 border-blue-200" :
-              "bg-gray-50 border-gray-200"
-            )}>
-              <div className="flex items-center justify-between mb-1.5">
-                <Badge variant="outline" className={cn("text-[9px]",
-                  bot.status === "actif" ? "text-green-600 bg-green-50" :
-                  bot.status === "en_dev" ? "text-blue-600 bg-blue-50" :
-                  "text-gray-500"
-                )}>{bot.status === "actif" ? "Actif" : bot.status === "en_dev" ? "En dev" : "Demande"}</Badge>
-                <span className="text-[9px] text-gray-400">{bot.parent} AI</span>
-              </div>
-              <p className="text-xs font-bold text-gray-800">{bot.name}</p>
-              <p className="text-[10px] text-gray-500 mt-0.5">{bot.desc}</p>
-              {bot.uses > 0 && (
-                <div className="flex items-center gap-2 mt-2 text-[10px] text-gray-400">
-                  <span>{bot.uses} utilisations</span>
-                  <span>· ★ {bot.rating}</span>
+      {/* Filtres categories */}
+      <div className="flex gap-1.5">
+        {filters.map((f) => (
+          <button key={f} onClick={() => setActiveFilter(f)} className={cn(
+            "px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer capitalize",
+            activeFilter === f ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          )}>{f}</button>
+        ))}
+      </div>
+
+      {/* Grille d'experts */}
+      <div className="grid grid-cols-2 gap-3">
+        {experts.map((expert, i) => (
+          <Card key={i} className="p-4 hover:shadow-md transition-shadow">
+            <div className="flex items-start gap-3">
+              <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-700 text-sm font-bold shrink-0">{expert.photo}</div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <h4 className="text-sm font-bold text-gray-800 truncate">{expert.name}</h4>
+                  {expert.verified && <Badge className="bg-blue-100 text-blue-700 text-[8px]">Verifie</Badge>}
                 </div>
-              )}
+                <div className="flex items-center gap-2 text-[10px] text-gray-400 mb-2">
+                  <span>{expert.type}</span>
+                  <span>·</span>
+                  <span className="flex items-center gap-0.5"><MapPin className="h-2.5 w-2.5" />{expert.region}</span>
+                  <span>·</span>
+                  <span>{expert.distance}</span>
+                </div>
+                <div className="flex flex-wrap gap-1 mb-2">
+                  {expert.specialites.map((s, j) => (
+                    <Badge key={j} variant="outline" className="text-[9px] px-1.5">{s}</Badge>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 text-[10px] text-gray-500">
+                    <span className="flex items-center gap-1"><Star className="h-3 w-3 text-amber-500" />{expert.rating}</span>
+                    <span>{expert.projets} projets</span>
+                    <span className="font-semibold text-gray-700">{expert.tarif}</span>
+                  </div>
+                  <div className="flex gap-1.5">
+                    <Button size="sm" variant="outline" className="text-[10px] h-7 gap-1"><Eye className="h-3 w-3" /> Profil</Button>
+                    {expert.disponible ? (
+                      <Button size="sm" className="text-[10px] h-7 gap-1 bg-orange-600 hover:bg-orange-700"><MessageSquare className="h-3 w-3" /> Contacter</Button>
+                    ) : (
+                      <Button size="sm" variant="outline" className="text-[10px] h-7 text-gray-400" disabled>Occupe</Button>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
-          ))}
-        </div>
-      </Card>
+          </Card>
+        ))}
+      </div>
 
-      {/* Demander un bot */}
-      <Card className="p-4 bg-blue-50 border-blue-200">
+      {/* Publier un besoin */}
+      <Card className="p-4 bg-orange-50 border-orange-200">
         <div className="flex items-center gap-3">
-          <Plus className="h-8 w-8 text-blue-600 shrink-0" />
+          <Plus className="h-8 w-8 text-orange-600 shrink-0" />
           <div className="flex-1">
-            <h3 className="text-sm font-bold text-blue-800">Demander un nouveau bot specialise</h3>
-            <p className="text-xs text-blue-600">Decrivez le besoin et CarlOS evaluera la faisabilite avec l'equipe.</p>
+            <h3 className="text-sm font-bold text-orange-800">Vous cherchez un expert?</h3>
+            <p className="text-xs text-orange-600">Publiez votre besoin et CarlOS vous proposera les meilleurs candidats du reseau.</p>
           </div>
-          <Button size="sm" className="gap-1 text-xs bg-blue-600 hover:bg-blue-700"><Send className="h-3 w-3" /> Soumettre</Button>
+          <Button size="sm" className="gap-1 text-xs bg-orange-600 hover:bg-orange-700"><Send className="h-3 w-3" /> Publier un besoin</Button>
         </div>
       </Card>
     </div>
@@ -1416,7 +1410,7 @@ export function Orbit9DetailView() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-auto p-5 max-w-5xl">
+      <div className="flex-1 overflow-auto p-5">
         <Renderer />
       </div>
     </div>
