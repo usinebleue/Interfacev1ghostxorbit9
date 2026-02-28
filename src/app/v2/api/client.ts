@@ -17,7 +17,36 @@ import type {
   CahierRequest,
   CahierJobResponse,
   CahierStatusResponse,
+  ChatOption,
 } from "./types";
+
+// --- SSE Stream types ---
+
+export interface StreamTokenEvent {
+  t: string; // chunk de texte
+}
+
+export interface StreamDoneEvent {
+  response: string;
+  agent: string;
+  tier: string;
+  modele: string;
+  tokens_input: number;
+  tokens_output: number;
+  cout_usd: number;
+  latence_ms: number;
+  ghost_actif: string | null;
+  options?: ChatOption[];
+  sentinel_alert?: { type: string; message: string; suggestions: string[] } | null;
+  phase_credo?: string | null;
+  mode_actif?: string | null;
+}
+
+export type StreamCallback = {
+  onToken: (text: string, accumulated: string) => void;
+  onDone: (data: StreamDoneEvent) => void;
+  onError: (error: string) => void;
+};
 
 // Chemin relatif — nginx reverse proxy vers FastAPI :8000
 const BASE_URL = "/api/v1";
@@ -107,5 +136,80 @@ export const api = {
   /** Statut d'un job de cahier */
   getCahierStatus(jobId: string): Promise<CahierStatusResponse> {
     return apiFetch<CahierStatusResponse>(`/cahier/${jobId}`);
+  },
+
+  /** Chat avec streaming SSE — tokens en temps reel */
+  chatStream(req: ChatRequest, callbacks: StreamCallback): AbortController {
+    const controller = new AbortController();
+    const url = `${BASE_URL}/chat/stream`;
+
+    fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-API-Key": API_KEY,
+      },
+      body: JSON.stringify(req),
+      signal: controller.signal,
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          const body = await res.text().catch(() => "");
+          callbacks.onError(`API ${res.status}: ${body}`);
+          return;
+        }
+
+        const reader = res.body?.getReader();
+        if (!reader) {
+          callbacks.onError("ReadableStream not supported");
+          return;
+        }
+
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let accumulated = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+
+          let currentEvent = "";
+
+          for (const line of lines) {
+            if (line.startsWith("event:")) {
+              currentEvent = line.slice(6).trim();
+            } else if (line.startsWith("data:")) {
+              const dataStr = line.slice(5).trim();
+              if (!dataStr) continue;
+
+              try {
+                const data = JSON.parse(dataStr);
+
+                if (currentEvent === "token") {
+                  accumulated += data.t;
+                  callbacks.onToken(data.t, accumulated);
+                } else if (currentEvent === "done") {
+                  callbacks.onDone(data as StreamDoneEvent);
+                } else if (currentEvent === "error") {
+                  callbacks.onError(data.error || "Unknown stream error");
+                }
+              } catch {
+                // Ignore malformed JSON lines
+              }
+            }
+          }
+        }
+      })
+      .catch((err) => {
+        if (err.name !== "AbortError") {
+          callbacks.onError(err.message || "Stream connection failed");
+        }
+      });
+
+    return controller;
   },
 };

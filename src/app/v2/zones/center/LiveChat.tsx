@@ -532,11 +532,11 @@ export function LiveChat({
   const [typewriterMsgId, setTypewriterMsgId] = useState<string | null>(null);
   const prevMsgCount = useRef(messages.length);
 
-  // Track new bot messages for typewriter effect
+  // Track new bot messages for typewriter effect (skip if streaming — already live)
   useEffect(() => {
     if (messages.length > prevMsgCount.current) {
       const lastMsg = messages[messages.length - 1];
-      if (lastMsg.role === "assistant" && lastMsg.msgType !== "coaching") {
+      if (lastMsg.role === "assistant" && lastMsg.msgType !== "coaching" && !lastMsg.isStreaming) {
         setTypewriterMsgId(lastMsg.id);
       }
     }
@@ -1218,9 +1218,15 @@ export function LiveChat({
                       </div>
                     )}
 
-                    {/* Content — typewriter effect on latest bot response */}
+                    {/* Content — streaming live OR typewriter on latest bot response */}
                     {!isUser ? (
-                      typewriterMsgId === msg.id ? (
+                      msg.isStreaming ? (
+                        // SSE streaming — text appears in real-time from the server
+                        <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                          {msg.content}
+                          <span className="inline-block w-0.5 h-4 bg-current ml-0.5 animate-pulse align-text-bottom" />
+                        </div>
+                      ) : typewriterMsgId === msg.id ? (
                         <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
                           <TypewriterText
                             text={msg.content}

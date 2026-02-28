@@ -50,13 +50,36 @@ export function MonEspace() {
     setOpenItems((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
+  // Mock data pour les sections (demo — a remplacer par API)
+  const mockProjets = [
+    { id: "p1", titre: "Expansion Ontario", status: "En cours", bot: "BCS", date: "2026-02-27" },
+    { id: "p2", titre: "Nouveau produit composite", status: "Planification", bot: "BPO", date: "2026-02-25" },
+    { id: "p3", titre: "Migration ERP", status: "En attente", bot: "BCT", date: "2026-02-20" },
+  ];
+  const mockDocuments = [
+    { id: "d1", titre: "Cahier SMART — Expansion ON", type: "PDF", date: "2026-02-27" },
+    { id: "d2", titre: "Analyse financiere Q1", type: "XLSX", date: "2026-02-26" },
+    { id: "d3", titre: "Plan marketing 2026", type: "PDF", date: "2026-02-24" },
+  ];
+  const mockTaches = [
+    { id: "t1", titre: "Valider soumission ABC Corp", urgence: "haute", bot: "BCF", deadline: "Aujourd'hui" },
+    { id: "t2", titre: "Revoir contrat fournisseur", urgence: "moyenne", bot: "BLE", deadline: "Demain" },
+    { id: "t3", titre: "Approuver budget formation", urgence: "basse", bot: "BHR", deadline: "5 mars" },
+    { id: "t4", titre: "Mettre a jour pricing Q2", urgence: "moyenne", bot: "BRO", deadline: "3 mars" },
+  ];
+  const mockOutils = [
+    { id: "o1", titre: "Calculateur ROI", description: "Estimer le retour sur investissement" },
+    { id: "o2", titre: "Estimateur TRS/OEE", description: "Taux de rendement synthetique" },
+    { id: "o3", titre: "Generateur de pitch", description: "Creer un pitch deck en 5 min" },
+  ];
+
   // Count items per section — crystals go into "idees"
   const sectionCounts: Record<string, number> = {
     idees: crystals.length,
-    projets: 0,
-    documents: 0,
-    taches: 0,
-    outils: 0,
+    projets: mockProjets.length,
+    documents: mockDocuments.length,
+    taches: mockTaches.length,
+    outils: mockOutils.length,
   };
   const totalItems = Object.values(sectionCounts).reduce((a, b) => a + b, 0);
 
@@ -137,9 +160,57 @@ export function MonEspace() {
                           </div>
                         ))
                       )
-                    ) : count === 0 ? (
+                    ) : section.id === "projets" ? (
+                      mockProjets.map((p) => (
+                        <div key={p.id} className="text-xs py-1.5 border-l-2 border-blue-200 pl-2 hover:border-blue-500 hover:text-gray-900 transition-colors cursor-pointer">
+                          <div className="font-medium text-gray-800 truncate">{p.titre}</div>
+                          <div className="text-[10px] text-gray-400 mt-0.5 flex items-center gap-1.5">
+                            <span className={cn(
+                              "px-1 py-0.5 rounded text-[9px] font-medium",
+                              p.status === "En cours" ? "bg-blue-100 text-blue-700" :
+                              p.status === "Planification" ? "bg-amber-100 text-amber-700" :
+                              "bg-gray-100 text-gray-500"
+                            )}>{p.status}</span>
+                            <span>{p.bot}</span>
+                          </div>
+                        </div>
+                      ))
+                    ) : section.id === "documents" ? (
+                      mockDocuments.map((d) => (
+                        <div key={d.id} className="text-xs py-1.5 border-l-2 border-green-200 pl-2 hover:border-green-500 hover:text-gray-900 transition-colors cursor-pointer">
+                          <div className="font-medium text-gray-800 truncate">{d.titre}</div>
+                          <div className="text-[10px] text-gray-400 mt-0.5">
+                            {d.type} — {d.date}
+                          </div>
+                        </div>
+                      ))
+                    ) : section.id === "taches" ? (
+                      mockTaches.map((t) => (
+                        <div key={t.id} className="text-xs py-1.5 border-l-2 pl-2 hover:text-gray-900 transition-colors cursor-pointer" style={{
+                          borderColor: t.urgence === "haute" ? "#ef4444" : t.urgence === "moyenne" ? "#f59e0b" : "#d1d5db"
+                        }}>
+                          <div className="font-medium text-gray-800 truncate">{t.titre}</div>
+                          <div className="text-[10px] text-gray-400 mt-0.5 flex items-center gap-1.5">
+                            <span className={cn(
+                              "px-1 py-0.5 rounded text-[9px] font-medium",
+                              t.urgence === "haute" ? "bg-red-100 text-red-700" :
+                              t.urgence === "moyenne" ? "bg-amber-100 text-amber-700" :
+                              "bg-gray-100 text-gray-500"
+                            )}>{t.deadline}</span>
+                            <span>{t.bot}</span>
+                          </div>
+                        </div>
+                      ))
+                    ) : section.id === "outils" ? (
+                      mockOutils.map((o) => (
+                        <div key={o.id} className="text-xs py-1.5 border-l-2 border-orange-200 pl-2 hover:border-orange-500 hover:text-gray-900 transition-colors cursor-pointer">
+                          <div className="font-medium text-gray-800 truncate">{o.titre}</div>
+                          <div className="text-[10px] text-gray-400 mt-0.5">{o.description}</div>
+                        </div>
+                      ))
+                    ) : (
                       <p className="text-[10px] text-gray-400 py-1">{section.emptyMessage}</p>
-                    ) : null}
+                    )}
                   </div>
                 </CollapsibleContent>
               </Collapsible>

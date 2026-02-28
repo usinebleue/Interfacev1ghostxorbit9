@@ -22,6 +22,7 @@ import {
   CollapsibleTrigger,
 } from "../../../components/ui/collapsible";
 import { cn } from "../../../components/ui/utils";
+import { useFrameMaster } from "../../context/FrameMasterContext";
 
 interface Props {
   collapsed: boolean;
@@ -41,6 +42,12 @@ const ORBIT9_ITEMS = [
 export function SectionOrbit9({ collapsed }: Props) {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
+  const { setActiveView } = useFrameMaster();
+
+  const handleItemClick = (id: string) => {
+    setSelected(id);
+    setActiveView("scenarios");
+  };
 
   if (collapsed) {
     return (
@@ -53,7 +60,7 @@ export function SectionOrbit9({ collapsed }: Props) {
           return (
             <button
               key={item.id}
-              onClick={() => setSelected(item.id)}
+              onClick={() => handleItemClick(item.id)}
               className={cn(
                 "w-full flex justify-center py-1.5 rounded hover:bg-accent transition-colors",
                 selected === item.id && "bg-accent"
@@ -86,7 +93,7 @@ export function SectionOrbit9({ collapsed }: Props) {
             return (
               <button
                 key={item.id}
-                onClick={() => setSelected(item.id)}
+                onClick={() => handleItemClick(item.id)}
                 className={cn(
                   "w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm hover:bg-accent transition-colors",
                   selected === item.id && "bg-accent font-medium"

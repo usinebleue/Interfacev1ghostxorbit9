@@ -191,6 +191,8 @@ export interface ChatMessage {
   parentId?: string;       // ID du message auquel celui-ci repond
   branchDepth?: number;    // 0 = trunk, 1 = sous-branche, 2 = sous-sous-branche
   branchLabel?: string;    // "Challenge #2 — BCT", "Consultation CFO"
+  // Streaming
+  isStreaming?: boolean;    // true pendant le streaming SSE en cours
 }
 
 // --- Crystal (idee cristallisee) ---

@@ -19,6 +19,7 @@ import { CahierSmartDemo } from "./CahierSmartDemo";
 import { ScenarioHub } from "./ScenarioHub";
 import { LiveChat } from "./LiveChat";
 import { SmartCanvas } from "./SmartCanvas";
+import { DepartmentDetailView } from "./DepartmentDetailView";
 import { InputBar } from "./InputBar";
 
 /** Couleur identitaire par bot — bande fine en haut du canevas */
@@ -66,6 +67,7 @@ export function CenterZone() {
         {activeView === "branches" && <BranchPatternsDemo />}
         {activeView === "cahier" && <CahierSmartDemo />}
         {activeView === "scenarios" && <ScenarioHub />}
+        {activeView === "detail" && <DepartmentDetailView />}
         {activeView === "live-chat" && (
           <LiveChat
             initialMode={liveChatMode}
