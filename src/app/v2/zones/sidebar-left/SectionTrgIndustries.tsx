@@ -1,18 +1,18 @@
 /**
- * SectionOrbit9.tsx — "Mon Reseau Orbit 9"
- * 4 items directs dans le sidebar (pas de groupes)
- * Sprint B — Reorganisation vocal Carl 13:14:24
+ * SectionTrgIndustries.tsx — "TRG Industries"
+ * Nouvelle section sidebar — Nouvelles, Evenements, Benchmark, Dashboard
+ * Sprint B — Vocal Carl 13:14:24
  */
 
 import { useState } from "react";
 import {
   ChevronDown,
   ChevronRight,
-  Network,
-  Handshake,
-  Crown,
-  Store,
-  Rocket,
+  Factory,
+  Newspaper,
+  Calendar,
+  Gauge,
+  Globe,
 } from "lucide-react";
 import {
   Collapsible,
@@ -26,14 +26,14 @@ interface Props {
   collapsed: boolean;
 }
 
-const ORBIT9_ITEMS = [
-  { id: "collaboration", label: "Cercles de Collaboration", icon: Handshake, color: "text-emerald-500" },
-  { id: "gouvernance", label: "Gouvernance", icon: Crown, color: "text-violet-500" },
-  { id: "marketplace", label: "Marketplace", icon: Store, color: "text-orange-500" },
-  { id: "pionniers", label: "Pionniers", icon: Rocket, color: "text-indigo-500" },
+const TRG_ITEMS = [
+  { id: "nouvelles", label: "Nouvelles", icon: Newspaper, color: "text-blue-500" },
+  { id: "evenements", label: "Evenements", icon: Calendar, color: "text-rose-500" },
+  { id: "benchmark", label: "Benchmark VITAA", icon: Gauge, color: "text-amber-500" },
+  { id: "trg-industrie", label: "Dashboard Industrie", icon: Globe, color: "text-indigo-500" },
 ];
 
-export function SectionOrbit9({ collapsed }: Props) {
+export function SectionTrgIndustries({ collapsed }: Props) {
   const [open, setOpen] = useState(false);
   const { activeOrbit9Section, navigateOrbit9 } = useFrameMaster();
 
@@ -41,9 +41,9 @@ export function SectionOrbit9({ collapsed }: Props) {
     return (
       <div className="space-y-1 px-1">
         <div className="text-center text-xs text-muted-foreground py-1">
-          <Network className="h-3 w-3 mx-auto" />
+          <Factory className="h-3 w-3 mx-auto" />
         </div>
-        {ORBIT9_ITEMS.map((item) => {
+        {TRG_ITEMS.map((item) => {
           const Icon = item.icon;
           return (
             <button
@@ -71,12 +71,12 @@ export function SectionOrbit9({ collapsed }: Props) {
         ) : (
           <ChevronRight className="h-3 w-3" />
         )}
-        Mon Reseau Orbit 9
+        TRG Industries
       </CollapsibleTrigger>
 
       <CollapsibleContent>
         <div className="space-y-0.5 px-1">
-          {ORBIT9_ITEMS.map((item) => {
+          {TRG_ITEMS.map((item) => {
             const Icon = item.icon;
             return (
               <button
