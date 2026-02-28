@@ -5,10 +5,8 @@
  */
 
 import { useState } from "react";
-import { MessageSquare } from "lucide-react";
 import { cn } from "../../../components/ui/utils";
 import { useFrameMaster } from "../../context/FrameMasterContext";
-import { useChatContext } from "../../context/ChatContext";
 import { DashboardView } from "./DashboardView";
 import { CockpitView } from "./CockpitView";
 import { HealthView } from "./HealthView";
@@ -44,10 +42,8 @@ const BOT_BAND_COLORS: Record<string, string> = {
 
 export function CenterZone() {
   const { activeView, activeBotCode, setActiveView } = useFrameMaster();
-  const { messages } = useChatContext();
   const botBand = BOT_BAND_COLORS[activeBotCode];
   const [liveChatMode, setLiveChatMode] = useState("analyse");
-  const hasActiveDiscussion = messages.length > 0 && activeView !== "live-chat";
 
   const handleStartChat = (mode: string) => {
     setLiveChatMode(mode);
@@ -85,17 +81,6 @@ export function CenterZone() {
           />
         )}
       </div>
-
-      {/* Badge flottant — discussion en cours (visible quand on navigue ailleurs) */}
-      {hasActiveDiscussion && (
-        <button
-          onClick={() => setActiveView("live-chat")}
-          className="absolute top-14 right-4 z-20 flex items-center gap-2 px-3 py-2 bg-blue-600 text-white text-xs font-medium rounded-full shadow-lg hover:bg-blue-700 transition-all animate-in fade-in slide-in-from-right-4 duration-300 cursor-pointer"
-        >
-          <MessageSquare className="h-3.5 w-3.5" />
-          Discussion en cours ({messages.length})
-        </button>
-      )}
 
       {/* InputBar fixe en bas — toujours visible */}
       <InputBar />
