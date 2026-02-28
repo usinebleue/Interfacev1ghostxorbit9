@@ -65,7 +65,7 @@ export function CenterZone() {
         {activeView === "live-chat" && (
           <LiveChat
             initialMode={liveChatMode}
-            onBack={() => setActiveView("canvas")}
+            onBack={() => setActiveView("department")}
           />
         )}
         {activeView === "canvas" && (
@@ -76,8 +76,8 @@ export function CenterZone() {
         )}
       </div>
 
-      {/* InputBar fixe en bas — sauf dans live-chat (il a son propre input) */}
-      {activeView !== "live-chat" && <InputBar />}
+      {/* InputBar fixe en bas — toujours visible */}
+      <InputBar />
     </div>
   );
 }

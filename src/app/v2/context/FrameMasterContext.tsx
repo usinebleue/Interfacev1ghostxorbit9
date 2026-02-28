@@ -44,7 +44,7 @@ export function FrameMasterProvider({
 }) {
   const [activeBot, setActiveBotState] = useState<BotInfo | null>(null);
   const [activeBotCode, setActiveBotCode] = useState("BCO");
-  const [activeView, setActiveView] = useState<ActiveView>("canvas");
+  const [activeView, setActiveView] = useState<ActiveView>("department"); // Ouvre sur Direction (BCO) par defaut
   const [leftSidebarCollapsed, setLeftCollapsed] = useState(false);
   const [rightSidebarCollapsed, setRightCollapsed] = useState(false);
   const [isAuthenticated, setAuthenticatedState] = useState(() => {
