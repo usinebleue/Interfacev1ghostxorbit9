@@ -21,7 +21,7 @@ import { LiveChat } from "./LiveChat";
 import { SmartCanvas } from "./SmartCanvas";
 import { DepartmentDetailView } from "./DepartmentDetailView";
 import { InputBar } from "./InputBar";
-import { Orbit9DetailView } from "./Orbit9DetailView";
+import { Orbit9DetailView } from "./orbit9/Orbit9DetailView";
 import { AgentSettingsView } from "./AgentSettingsView";
 
 /** Couleur identitaire par bot — bande fine en haut du canevas */
