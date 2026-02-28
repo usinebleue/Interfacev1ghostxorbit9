@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * DiagnosticDemo.tsx — Acte 1 du Cahier SMART : Diagnostic Express
+ * DiagnosticDemo.tsx — Acte 1 du Cahier SMART : Diagnostic Preliminaire
  * Tension de depart -> CEO analyse -> Multi-bot consultation -> Synthese -> Pre-rapport
  * Entreprise fictive : Aliments Boreal inc. (manufacturier alimentaire, Saguenay, 85 employes)
  * Sprint A — Frame Master V2
@@ -19,6 +19,10 @@ import {
   Target,
   RotateCcw,
   Download,
+  MessageSquare,
+  Pin,
+  ShieldQuestion,
+  ArrowRight,
 } from "lucide-react";
 import { cn } from "../../../../components/ui/utils";
 import {
@@ -63,6 +67,11 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
   const [showCfoChallengeCard, setShowCfoChallengeCard] = useState(false);
   const [showCooDeepDive, setShowCooDeepDive] = useState(false);
   const [showSyntheseChallenge, setShowSyntheseChallenge] = useState(false);
+  // Post-challenge action states
+  const [showCfoVsCooDebate, setShowCfoVsCooDebate] = useState(false);
+  const [showCooChallenge, setShowCooChallenge] = useState(false);
+  const [showContreArgument, setShowContreArgument] = useState(false);
+  const [extractedInsights, setExtractedInsights] = useState<string[]>([]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -74,7 +83,7 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
         behavior: "smooth",
       });
     }, 150);
-  }, [stage, ceoTextDone, showCfoChallengeCard, showCooDeepDive, showSyntheseChallenge]);
+  }, [stage, ceoTextDone, showCfoChallengeCard, showCooDeepDive, showSyntheseChallenge, showCfoVsCooDebate, showCooChallenge, showContreArgument, extractedInsights]);
 
   const handleRestart = () => {
     setStage(0);
@@ -82,6 +91,10 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
     setShowCfoChallengeCard(false);
     setShowCooDeepDive(false);
     setShowSyntheseChallenge(false);
+    setShowCfoVsCooDebate(false);
+    setShowCooChallenge(false);
+    setShowContreArgument(false);
+    setExtractedInsights([]);
   };
 
   const handleExportPreRapport = () => {
@@ -140,7 +153,7 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
           <Zap className="h-4 w-4 text-red-500" />
           <div>
             <div className="text-sm font-bold text-gray-800">
-              Diagnostic Express
+              Diagnostic Preliminaire
             </div>
             <div className="text-xs text-muted-foreground">
               Acte 1 — De la tension au pre-rapport
@@ -181,7 +194,7 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-gray-900 mb-2">
-                    Diagnostic Express
+                    Diagnostic Preliminaire
                   </h2>
                   <p className="text-sm text-gray-500 max-w-md mx-auto leading-relaxed">
                     Decrivez votre probleme. CarlOS et ses specialistes analysent
@@ -389,7 +402,7 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
 
                   {/* CFO Challenge inline card */}
                   {showCfoChallengeCard && (
-                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-2">
                       <div className="flex gap-3">
                         <BotAvatar code="BCF" size="md" />
                         <div className="bg-white border rounded-xl rounded-tl-none px-4 py-3 shadow-sm border-l-[3px] border-l-emerald-400 flex-1">
@@ -401,12 +414,46 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
                           />
                         </div>
                       </div>
+                      {/* Post-CFO-challenge actions */}
+                      <div className="flex items-center gap-2 flex-wrap ml-11">
+                        <button
+                          onClick={() => setShowCfoVsCooDebate(true)}
+                          disabled={showCfoVsCooDebate}
+                          className={cn(
+                            "text-[11px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all",
+                            showCfoVsCooDebate
+                              ? "bg-violet-100 text-violet-700 border border-violet-300"
+                              : "bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100"
+                          )}
+                        >
+                          <MessageSquare className="h-3 w-3" /> Debat CFO vs COO
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (!extractedInsights.includes("cfo")) setExtractedInsights(prev => [...prev, "cfo"]);
+                          }}
+                          className={cn(
+                            "text-[11px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all",
+                            extractedInsights.includes("cfo")
+                              ? "bg-green-100 text-green-700 border border-green-300"
+                              : "bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100"
+                          )}
+                        >
+                          <Pin className="h-3 w-3" /> {extractedInsights.includes("cfo") ? "Extrait ✓" : "Extraire → pre-rapport"}
+                        </button>
+                        <button
+                          onClick={() => setStage(5)}
+                          className="text-[11px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-all"
+                        >
+                          <ArrowRight className="h-3 w-3" /> Passer a la synthese
+                        </button>
+                      </div>
                     </div>
                   )}
 
                   {/* COO Deep Dive inline card */}
                   {showCooDeepDive && (
-                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-2">
                       <div className="flex gap-3">
                         <BotAvatar code="BOO" size="md" />
                         <div className="bg-white border rounded-xl rounded-tl-none px-4 py-3 shadow-sm border-l-[3px] border-l-orange-400 flex-1">
@@ -431,6 +478,99 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
                             </div>
                           </div>
                         </div>
+                      </div>
+                      {/* Post-COO-deepdive actions */}
+                      <div className="flex items-center gap-2 flex-wrap ml-11">
+                        <button
+                          onClick={() => setShowCooChallenge(true)}
+                          disabled={showCooChallenge}
+                          className={cn(
+                            "text-[11px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all",
+                            showCooChallenge
+                              ? "bg-orange-100 text-orange-700 border border-orange-300"
+                              : "bg-orange-50 text-orange-700 border border-orange-200 hover:bg-orange-100"
+                          )}
+                        >
+                          <Target className="h-3 w-3" /> Challenger les delais
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (!extractedInsights.includes("coo")) setExtractedInsights(prev => [...prev, "coo"]);
+                          }}
+                          className={cn(
+                            "text-[11px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all",
+                            extractedInsights.includes("coo")
+                              ? "bg-green-100 text-green-700 border border-green-300"
+                              : "bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100"
+                          )}
+                        >
+                          <Pin className="h-3 w-3" /> {extractedInsights.includes("coo") ? "Extrait ✓" : "Extraire → pre-rapport"}
+                        </button>
+                        <button
+                          onClick={() => setStage(5)}
+                          className="text-[11px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-all"
+                        >
+                          <ArrowRight className="h-3 w-3" /> Passer a la synthese
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* COO Challenge response (challenger les delais) */}
+                  {showCooChallenge && (
+                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                      <div className="flex gap-3">
+                        <BotAvatar code="BOO" size="md" />
+                        <div className="bg-white border rounded-xl rounded-tl-none px-4 py-3 shadow-sm border-l-[3px] border-l-orange-400 flex-1">
+                          <div className="text-xs text-orange-600 mb-2 font-medium">Lise (COO) — Defense des delais</div>
+                          <TypewriterText
+                            text="Les 20 semaines sont basees sur 42 projets similaires d'Energia Solutions. Le risque principal est le delai de livraison du systeme CO2 transcritique (6-8 semaines apres commande). On anticipe en commandant des la confirmation des subventions. Les phases 2-3 se chevauchent de 2 semaines, et 3-4 de 3 semaines — c'est la ou on gagne le temps. Si on separe les phases sans chevauchement, on tombe a 28 semaines. Buffer de 15% deja integre dans chaque phase. Le vrai bottleneck c'est l'approbation HQ : deposer avant juin 2026 est non-negociable."
+                            speed={5}
+                            className="text-sm text-gray-700 leading-relaxed"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* CFO vs COO Debate card */}
+                  {showCfoVsCooDebate && (
+                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                      <div className="border border-violet-200 rounded-xl overflow-hidden">
+                        <div className="bg-violet-50 px-4 py-2.5 flex items-center gap-2 border-b border-violet-200">
+                          <MessageSquare className="h-4 w-4 text-violet-600" />
+                          <span className="text-xs font-bold text-violet-800">Mini-debat — CFO vs COO</span>
+                        </div>
+                        <div className="p-4 space-y-3">
+                          <div className="flex gap-3">
+                            <BotAvatar code="BCF" size="sm" />
+                            <div className="flex-1">
+                              <div className="text-xs text-emerald-600 font-medium mb-1">Francois (CFO)</div>
+                              <p className="text-sm text-gray-700">Le risque financier est minimal si on depose les dossiers a temps. Le 470K$ minimum de subventions rend le projet quasiment autofinance. Mon souci c'est qu'on ne peut pas se permettre de commencer les travaux AVANT la confirmation HQ — sinon on perd l'admissibilite.</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-3">
+                            <BotAvatar code="BOO" size="sm" />
+                            <div className="flex-1">
+                              <div className="text-xs text-orange-600 font-medium mb-1">Lise (COO)</div>
+                              <p className="text-sm text-gray-700">Je suis d'accord avec Francois sur le timing. Par contre, on PEUT commencer les travaux preparatoires (audit, specs, commande equipement) avant la confirmation sans perdre l'admissibilite. C'est seulement l'installation physique qui doit attendre. Ca nous sauve 4-6 semaines sur le calendrier total.</p>
+                            </div>
+                          </div>
+                          <div className="bg-violet-50 border border-violet-200 rounded-lg px-3 py-2 text-xs">
+                            <div className="font-bold text-violet-800 mb-1">Consensus</div>
+                            <p className="text-gray-700">Deposer les dossiers immediatement + demarrer les travaux preparatoires en parallele. Installation physique seulement apres confirmation HQ. Gain potentiel : 4-6 semaines.</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Extracted insights badge */}
+                  {extractedInsights.length > 0 && (
+                    <div className="flex items-center gap-2 ml-11 animate-in fade-in duration-300">
+                      <div className="bg-green-50 border border-green-200 rounded-full px-3 py-1 flex items-center gap-1.5">
+                        <Pin className="h-3 w-3 text-green-600" />
+                        <span className="text-[11px] text-green-700 font-medium">{extractedInsights.length} insight(s) extraite(s) → pre-rapport enrichi</span>
                       </div>
                     </div>
                   )}
@@ -458,6 +598,7 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
                   <div className="flex items-center gap-2 flex-wrap">
                     <button
                       onClick={() => setShowSyntheseChallenge(true)}
+                      disabled={showSyntheseChallenge}
                       className={cn(
                         "text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all",
                         showSyntheseChallenge
@@ -466,6 +607,18 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
                       )}
                     >
                       <Target className="h-3 w-3" /> Challenger la synthese
+                    </button>
+                    <button
+                      onClick={() => setShowContreArgument(true)}
+                      disabled={showContreArgument}
+                      className={cn(
+                        "text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all",
+                        showContreArgument
+                          ? "bg-red-100 text-red-700 border border-red-300"
+                          : "bg-red-50 text-red-700 border border-red-200 hover:bg-red-100"
+                      )}
+                    >
+                      <ShieldQuestion className="h-3 w-3" /> Contre-argument
                     </button>
                     <button
                       onClick={() => setStage(6)}
@@ -477,7 +630,7 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
 
                   {/* Synthese challenge inline card */}
                   {showSyntheseChallenge && (
-                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-2">
                       <div className="flex gap-3">
                         <BotAvatar code="BCO" size="md" />
                         <div className="bg-white border rounded-xl rounded-tl-none px-4 py-3 shadow-sm border-l-[3px] border-l-blue-500 flex-1">
@@ -488,6 +641,52 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
                             className="text-sm text-gray-700 leading-relaxed"
                           />
                         </div>
+                      </div>
+                      {/* Post-synthese-challenge actions */}
+                      <div className="flex items-center gap-2 flex-wrap ml-11">
+                        <button
+                          onClick={() => setStage(6)}
+                          className="text-[11px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer bg-blue-600 text-white hover:bg-blue-700 transition-all"
+                        >
+                          <FileText className="h-3 w-3" /> Generer le pre-rapport
+                        </button>
+                        <button
+                          onClick={() => onTransition?.("debat")}
+                          className="text-[11px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100 transition-all"
+                        >
+                          <MessageSquare className="h-3 w-3" /> Ouvrir un debat complet
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Contre-argument card */}
+                  {showContreArgument && (
+                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-2">
+                      <div className="flex gap-3">
+                        <BotAvatar code="BCO" size="md" />
+                        <div className="bg-white border rounded-xl rounded-tl-none px-4 py-3 shadow-sm border-l-[3px] border-l-red-400 flex-1">
+                          <div className="text-xs text-red-600 mb-2 font-medium">CarlOS (CEO) — Meilleur argument CONTRE</div>
+                          <TypewriterText
+                            text="Si je devais plaider contre ce projet, voici l'argument le plus solide : la dependance aux subventions est trop forte. Sur 1.1M$ brut, 592K$ (54%) viennent de programmes gouvernementaux. Si HQ change ses criteres ou si le cycle budgetaire est retarde, le ROI passe de 22 a 42 mois — ce qui est limite pour un investissement de cette taille. De plus, le marche des cobots palettiseurs est en surchauffe — les delais fournisseurs pourraient s'allonger de 4-8 semaines, ce qui decalerait toute la phase 3. Enfin, la formation des 6 employes de palettisation vers le controle qualite n'est pas garantie — le taux d'echec de reconversion en manufacture est de 15-20%."
+                            speed={5}
+                            className="text-sm text-gray-700 leading-relaxed"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap ml-11">
+                        <button
+                          onClick={() => setStage(6)}
+                          className="text-[11px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer bg-blue-600 text-white hover:bg-blue-700 transition-all"
+                        >
+                          <FileText className="h-3 w-3" /> Generer le pre-rapport
+                        </button>
+                        <button
+                          onClick={() => onTransition?.("analyse")}
+                          className="text-[11px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer bg-cyan-50 text-cyan-700 border border-cyan-200 hover:bg-cyan-100 transition-all"
+                        >
+                          <Eye className="h-3 w-3" /> Analyser les risques
+                        </button>
                       </div>
                     </div>
                   )}
@@ -547,7 +746,7 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
           {stage >= 7.5 && (
             <div className="space-y-4">
               <TransitionBanner
-                from="Diagnostic Express termine"
+                from="Diagnostic Preliminaire termine"
                 to="Prochaine etape : Jumelage SMART ou retour au hub"
                 animate={stage === 7.5}
               />

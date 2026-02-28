@@ -18,6 +18,10 @@ import {
   RotateCcw,
   Eye,
   Scale,
+  ArrowRight,
+  Target,
+  MessageSquare,
+  ShieldQuestion,
 } from "lucide-react";
 import { cn } from "../../../../components/ui/utils";
 import {
@@ -143,6 +147,8 @@ export function CahierProjetDemo({ onTransition }: { onTransition?: (target: str
   const [stage, setStage] = useState(0);
   const [showBudgetChallenge, setShowBudgetChallenge] = useState(false);
   const [showAltKPIs, setShowAltKPIs] = useState(false);
+  const [showPessimiste, setShowPessimiste] = useState(false);
+  const [showRiskAnalysis, setShowRiskAnalysis] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll on stage change
@@ -153,7 +159,7 @@ export function CahierProjetDemo({ onTransition }: { onTransition?: (target: str
       }, 150);
       return () => clearTimeout(timer);
     }
-  }, [stage, showBudgetChallenge, showAltKPIs]);
+  }, [stage, showBudgetChallenge, showAltKPIs, showPessimiste, showRiskAnalysis]);
 
   // Auto-advance sections during building (stages 2 through 5)
   useEffect(() => {
@@ -362,14 +368,61 @@ export function CahierProjetDemo({ onTransition }: { onTransition?: (target: str
 
       {/* ===== STAGE 5 → 5.5: Auto-advance after last section ===== */}
       {stage === 5 && (
-        <div className="flex justify-center mt-2 animate-in fade-in duration-500">
-          <button
-            onClick={() => setStage(5.5)}
-            className="bg-blue-600 text-white text-sm font-semibold px-5 py-2.5 rounded-full shadow hover:bg-blue-700 transition-all cursor-pointer flex items-center gap-2"
-          >
-            <CheckCircle2 className="h-4 w-4" />
-            Finaliser le document
-          </button>
+        <div className="space-y-2 mt-2 animate-in fade-in duration-500">
+          <div className="flex justify-center gap-3">
+            <button
+              onClick={() => setStage(5.5)}
+              className="bg-blue-600 text-white text-sm font-semibold px-5 py-2.5 rounded-full shadow hover:bg-blue-700 transition-all cursor-pointer flex items-center gap-2"
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              Finaliser le document
+            </button>
+            <button
+              onClick={() => setShowRiskAnalysis(true)}
+              disabled={showRiskAnalysis}
+              className={cn(
+                "text-sm px-5 py-2.5 rounded-full shadow transition-all cursor-pointer flex items-center gap-2 font-semibold",
+                showRiskAnalysis
+                  ? "bg-red-100 text-red-700 border border-red-300"
+                  : "bg-white text-red-700 border border-red-200 hover:bg-red-50"
+              )}
+            >
+              <ShieldQuestion className="h-4 w-4" />
+              Analyser les risques
+            </button>
+          </div>
+          {/* Risk analysis card */}
+          {showRiskAnalysis && (
+            <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+              <div className="flex gap-3">
+                <BotAvatar code="BCO" size="md" />
+                <div className="bg-white border rounded-xl rounded-tl-none px-4 py-3 shadow-sm border-l-[3px] border-red-400 flex-1">
+                  <div className="text-xs text-red-600 mb-2 font-medium">CarlOS (CEO) — Analyse des risques</div>
+                  <div className="space-y-2 text-sm text-gray-700">
+                    <div className="flex items-start gap-2">
+                      <span className="text-red-500 font-bold shrink-0">R1</span>
+                      <span><strong>Subventions refusees/reduites</strong> — Probabilite: 15%. Impact: ROI passe de 22 a 42 mois. Mitigation: deposer 4 programmes en parallele pour diversifier.</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span className="text-orange-500 font-bold shrink-0">R2</span>
+                      <span><strong>Delai livraison CO2 transcritique</strong> — Probabilite: 30%. Impact: +4-8 semaines sur Phase 2. Mitigation: commander des la confirmation, clause penalite fournisseur.</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span className="text-amber-500 font-bold shrink-0">R3</span>
+                      <span><strong>Resistance au changement equipe</strong> — Probabilite: 25%. Impact: adoption cobot ralentie. Mitigation: formation progressive, champion interne, zero licenciement communique.</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span className="text-yellow-500 font-bold shrink-0">R4</span>
+                      <span><strong>Depassement budgetaire</strong> — Probabilite: 20%. Impact: +10-15% sur investissement brut. Mitigation: buffer 15% deja integre, paiements par jalons.</span>
+                    </div>
+                  </div>
+                  <div className="mt-3 bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-xs text-green-800 font-medium">
+                    Score de risque global : MODERE — Tous les risques sont mitigeables. Aucun risque fatal identifie.
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -479,7 +532,7 @@ export function CahierProjetDemo({ onTransition }: { onTransition?: (target: str
 
           {/* Budget challenge card */}
           {showBudgetChallenge && (
-            <div className="mt-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <div className="mt-3 animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-2">
               <div className="flex gap-3">
                 <BotAvatar code="BCO" size="md" />
                 <div className="bg-white border rounded-xl rounded-tl-none px-4 py-3 shadow-sm border-l-[3px] border-blue-400 max-w-lg">
@@ -494,6 +547,65 @@ export function CahierProjetDemo({ onTransition }: { onTransition?: (target: str
                   </p>
                 </div>
               </div>
+              {/* Post-budget-challenge actions */}
+              <div className="flex items-center gap-2 flex-wrap ml-11">
+                <button
+                  onClick={() => setShowPessimiste(true)}
+                  disabled={showPessimiste}
+                  className={cn(
+                    "text-[11px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all",
+                    showPessimiste
+                      ? "bg-red-100 text-red-700 border border-red-300"
+                      : "bg-red-50 text-red-700 border border-red-200 hover:bg-red-100"
+                  )}
+                >
+                  <ShieldQuestion className="h-3 w-3" /> Scenario pessimiste
+                </button>
+                <button
+                  onClick={() => { setShowBudgetChallenge(false); if (stage === 6) setStage(6.5); }}
+                  className="text-[11px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 transition-all"
+                >
+                  <CheckCircle2 className="h-3 w-3" /> Accepter le budget
+                </button>
+                <button
+                  onClick={() => onTransition?.("debat")}
+                  className="text-[11px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100 transition-all"
+                >
+                  <MessageSquare className="h-3 w-3" /> Debat CFO vs CEO
+                </button>
+              </div>
+              {/* Pessimist scenario */}
+              {showPessimiste && (
+                <div className="ml-11 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                  <div className="flex gap-3">
+                    <BotAvatar code="BCF" size="md" />
+                    <div className="bg-white border rounded-xl rounded-tl-none px-4 py-3 shadow-sm border-l-[3px] border-emerald-400 flex-1">
+                      <div className="text-xs text-emerald-600 mb-2 font-medium">Francois (CFO) — Scenario pessimiste</div>
+                      <p className="text-sm text-gray-700 leading-relaxed">
+                        Pire cas realiste : les subventions HQ sont reduites de 30% (413K$ au lieu de 592K$), le delai d'approbation
+                        est de 14 semaines au lieu de 12, et les economies energetiques atteignent seulement 75% des projections.
+                        Dans ce scenario : investissement net = 687K$, economies annuelles = 208K$/an, ROI = 39 mois.
+                        Le projet reste rentable mais le cashflow mensuel tombe a +7,800$/mois. Recommandation : prevoir une ligne
+                        de credit de 150K$ en tampon.
+                      </p>
+                      <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
+                        <div className="bg-red-50 border border-red-200 rounded-lg px-2 py-1.5 text-center">
+                          <div className="font-bold text-red-700">687K$</div>
+                          <div className="text-gray-500">Invest. net</div>
+                        </div>
+                        <div className="bg-red-50 border border-red-200 rounded-lg px-2 py-1.5 text-center">
+                          <div className="font-bold text-red-700">39 mois</div>
+                          <div className="text-gray-500">ROI pessimiste</div>
+                        </div>
+                        <div className="bg-green-50 border border-green-200 rounded-lg px-2 py-1.5 text-center">
+                          <div className="font-bold text-green-700">Rentable</div>
+                          <div className="text-gray-500">Verdict</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -531,6 +643,21 @@ export function CahierProjetDemo({ onTransition }: { onTransition?: (target: str
                     Scenario optimiste base sur les donnees historiques de projets similaires (top 30%)
                   </div>
                 </div>
+              </div>
+              {/* Post-KPI actions */}
+              <div className="flex items-center gap-2 flex-wrap mt-2">
+                <button
+                  onClick={() => { setShowAltKPIs(false); if (stage === 6) setStage(6.5); }}
+                  className="text-[11px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer bg-indigo-500 text-white hover:bg-indigo-600 transition-all"
+                >
+                  <CheckCircle2 className="h-3 w-3" /> Appliquer ces KPIs
+                </button>
+                <button
+                  onClick={() => setShowAltKPIs(false)}
+                  className="text-[11px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100 transition-all"
+                >
+                  <RotateCcw className="h-3 w-3" /> Garder les KPIs standards
+                </button>
               </div>
             </div>
           )}
