@@ -30,7 +30,7 @@ interface Props {
 }
 
 export function SidebarRight({ collapsed = false }: Props) {
-  const { autoTTSEnabled, toggleAutoTTS } = useChatContext();
+  const { autoTTSEnabled, videoAvatarEnabled, toggleAutoTTS, toggleVideoAvatar } = useChatContext();
 
   // Mode collapsed — icones seulement
   if (collapsed) {
@@ -109,7 +109,12 @@ export function SidebarRight({ collapsed = false }: Props) {
       {/* CarlOS Live — panneau cockpit fixe en bas */}
       <div className="h-[2px] bg-gradient-to-r from-green-400 via-blue-400 to-purple-400" />
       <div className="shrink-0">
-        <LiveControlsPanel autoTTSEnabled={autoTTSEnabled} onToggleAutoTTS={toggleAutoTTS} />
+        <LiveControlsPanel
+          autoTTSEnabled={autoTTSEnabled}
+          videoAvatarEnabled={videoAvatarEnabled}
+          onToggleAutoTTS={toggleAutoTTS}
+          onToggleVideoAvatar={toggleVideoAvatar}
+        />
       </div>
     </div>
   );

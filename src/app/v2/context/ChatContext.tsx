@@ -17,6 +17,7 @@ interface ChatState {
   activeThreadId: string | null;
   crystals: Crystal[];
   autoTTSEnabled: boolean;
+  videoAvatarEnabled: boolean;
 }
 
 interface BranchMeta {
@@ -38,6 +39,7 @@ interface ChatActions {
   deleteCrystal: (id: string) => void;
   exportCrystals: () => string;
   toggleAutoTTS: () => void;
+  toggleVideoAvatar: () => void;
 }
 
 type ChatContextType = ChatState & ChatActions;
@@ -63,6 +65,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     useState<ReflectionMode>("credo");
   const [currentCREDOPhase] = useState<CREDOPhase>("C");
   const [autoTTSEnabled, setAutoTTSEnabled] = useState(false);
+  const [videoAvatarEnabled, setVideoAvatarEnabled] = useState(false);
   const tts = useTextToSpeech();
   const prevMsgCountRef = useRef(messages.length);
 
@@ -88,6 +91,10 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       return !prev;
     });
   }, [tts]);
+
+  const toggleVideoAvatar = useCallback(() => {
+    setVideoAvatarEnabled((prev) => !prev);
+  }, []);
 
   // Wrap sendMessage to inject active reflection mode + branch meta
   const sendMessage = useCallback(
@@ -140,6 +147,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         activeThreadId,
         crystals,
         autoTTSEnabled,
+        videoAvatarEnabled,
         sendMessage,
         sendMultiPerspective,
         setReflectionMode,
@@ -152,6 +160,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         deleteCrystal,
         exportCrystals,
         toggleAutoTTS,
+        toggleVideoAvatar,
       }}
     >
       {children}

@@ -19,21 +19,26 @@ type LiveChannel = "mic" | "phone" | "video";
 
 interface LiveControlsPanelProps {
   autoTTSEnabled?: boolean;
+  videoAvatarEnabled?: boolean;
   onToggleAutoTTS?: () => void;
+  onToggleVideoAvatar?: () => void;
 }
 
-export function LiveControlsPanel({ autoTTSEnabled, onToggleAutoTTS }: LiveControlsPanelProps) {
+export function LiveControlsPanel({ autoTTSEnabled, videoAvatarEnabled, onToggleAutoTTS, onToggleVideoAvatar }: LiveControlsPanelProps) {
   const [activeChannel, setActiveChannel] = useState<LiveChannel | null>(null);
 
   const toggleChannel = (channel: LiveChannel) => {
     if (channel === "mic" && onToggleAutoTTS) {
-      // Vocal = toggle auto-TTS (chaque reponse bot est lue)
       onToggleAutoTTS();
       setActiveChannel((prev) => (prev === channel ? null : channel));
       return;
     }
+    if (channel === "video" && onToggleVideoAvatar) {
+      onToggleVideoAvatar();
+      return;
+    }
     setActiveChannel((prev) => (prev === channel ? null : channel));
-    // TODO: WebRTC pour phone/video
+    // TODO: WebRTC pour phone
   };
 
   const channels: {
@@ -95,7 +100,7 @@ export function LiveControlsPanel({ autoTTSEnabled, onToggleAutoTTS }: LiveContr
       <div className="flex gap-2">
         {channels.map((channel) => {
           const Icon = channel.icon;
-          const isActive = channel.id === "mic" ? (autoTTSEnabled || false) : activeChannel === channel.id;
+          const isActive = channel.id === "mic" ? (autoTTSEnabled || false) : channel.id === "video" ? (videoAvatarEnabled || false) : activeChannel === channel.id;
           return (
             <Tooltip key={channel.id}>
               <TooltipTrigger asChild>
