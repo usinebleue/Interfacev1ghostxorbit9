@@ -3,8 +3,9 @@
  * Sprint B — LiveChat interactif + cristallisation
  */
 
-import { createContext, useContext, useState, useCallback } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
 import { useChat, useCrystals } from "../api/hooks";
+import { useTextToSpeech } from "../api/useVocal";
 import type { ChatMessage, ReflectionMode, CREDOPhase, Thread, MessageType, Crystal } from "../api/types";
 
 interface ChatState {
@@ -15,6 +16,7 @@ interface ChatState {
   threads: Thread[];
   activeThreadId: string | null;
   crystals: Crystal[];
+  autoTTSEnabled: boolean;
 }
 
 interface BranchMeta {
@@ -35,6 +37,7 @@ interface ChatActions {
   crystallize: (msgContent: string, botCode: string) => Crystal;
   deleteCrystal: (id: string) => void;
   exportCrystals: () => string;
+  toggleAutoTTS: () => void;
 }
 
 type ChatContextType = ChatState & ChatActions;
@@ -59,6 +62,32 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [activeReflectionMode, setReflectionMode] =
     useState<ReflectionMode>("credo");
   const [currentCREDOPhase] = useState<CREDOPhase>("C");
+  const [autoTTSEnabled, setAutoTTSEnabled] = useState(false);
+  const tts = useTextToSpeech();
+  const prevMsgCountRef = useRef(messages.length);
+
+  // Auto-TTS: lire automatiquement les nouvelles reponses bot
+  useEffect(() => {
+    if (!autoTTSEnabled || !tts.isSupported) return;
+    if (messages.length <= prevMsgCountRef.current) {
+      prevMsgCountRef.current = messages.length;
+      return;
+    }
+    prevMsgCountRef.current = messages.length;
+
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg && lastMsg.role === "assistant" && lastMsg.content && !lastMsg.isStreaming) {
+      // Petit delai pour laisser le rendu finir
+      setTimeout(() => tts.speak(lastMsg.content, lastMsg.id), 300);
+    }
+  }, [messages, autoTTSEnabled, tts]);
+
+  const toggleAutoTTS = useCallback(() => {
+    setAutoTTSEnabled((prev) => {
+      if (prev) tts.stop();
+      return !prev;
+    });
+  }, [tts]);
 
   // Wrap sendMessage to inject active reflection mode + branch meta
   const sendMessage = useCallback(
@@ -110,6 +139,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         threads,
         activeThreadId,
         crystals,
+        autoTTSEnabled,
         sendMessage,
         sendMultiPerspective,
         setReflectionMode,
@@ -121,6 +151,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         crystallize,
         deleteCrystal,
         exportCrystals,
+        toggleAutoTTS,
       }}
     >
       {children}
