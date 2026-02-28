@@ -54,6 +54,22 @@ const BOT_COLOR: Record<string, string> = {
   BPO: "bg-fuchsia-600",
 };
 
+// Couleur identitaire pour les icones sidebar (Design System: sidebar = couleur)
+const BOT_ICON_COLOR: Record<string, string> = {
+  BCO: "text-blue-600",
+  BCF: "text-emerald-600",
+  BCT: "text-violet-600",
+  BFA: "text-slate-600",
+  BOO: "text-orange-600",
+  BRO: "text-amber-600",
+  BCM: "text-pink-600",
+  BCS: "text-red-600",
+  BHR: "text-teal-600",
+  BSE: "text-zinc-600",
+  BLE: "text-indigo-600",
+  BPO: "text-fuchsia-600",
+};
+
 // Notifications simulees par departement (taches completees, alertes, approbations)
 // TODO: brancher sur l'API quand le backend sera pret
 const DEPT_NOTIFICATIONS: Record<string, number> = {
@@ -108,6 +124,7 @@ export function SectionEntreprise({ collapsed }: Props) {
           const notifCount = DEPT_NOTIFICATIONS[dept.code] || 0;
           const isActive = dept.code && activeBotCode === dept.code;
           const botColor = BOT_COLOR[dept.code] || "bg-gray-400";
+          const iconColor = BOT_ICON_COLOR[dept.code] || "text-muted-foreground";
           return (
             <div key={dept.label}>
               <button
@@ -118,7 +135,7 @@ export function SectionEntreprise({ collapsed }: Props) {
                 )}
                 title={dept.label}
               >
-                <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+                <Icon className={cn("h-3.5 w-3.5", iconColor)} />
                 {notifCount > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
                     {notifCount}
@@ -159,6 +176,7 @@ export function SectionEntreprise({ collapsed }: Props) {
             const notifCount = DEPT_NOTIFICATIONS[dept.code] || 0;
 
             const botColor = BOT_COLOR[dept.code] || "bg-gray-400";
+            const iconColor = BOT_ICON_COLOR[dept.code] || "text-muted-foreground";
 
             return (
               <div key={dept.label}>
@@ -169,7 +187,7 @@ export function SectionEntreprise({ collapsed }: Props) {
                     isActive && "bg-accent font-medium"
                   )}
                 >
-                  <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <Icon className={cn("h-3.5 w-3.5 shrink-0", iconColor)} />
                   <span className="flex-1 text-left truncate">{dept.label}</span>
                   {notifCount > 0 && (
                     <span className="min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 shrink-0">

@@ -30,33 +30,31 @@ export function GouvernancePage({ onNavigate }: GouvernancePageProps) {
 
   return (
     <div className="space-y-5">
-      {/* Header Card avec gradient */}
+      {/* Header Card avec gradient + sub-tabs a droite */}
       <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
         <div className="bg-gradient-to-r from-violet-500 to-indigo-500 px-4 py-2.5 border-b">
           <div className="flex items-center gap-2">
             <Scale className="h-4 w-4 text-white" />
             <span className="text-sm font-bold text-white">Gouvernance Augmentee par IA</span>
+            <div className="flex gap-1 ml-auto">
+              {tabs.map((tab) => {
+                const TIcon = tab.icon;
+                return (
+                  <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={cn(
+                    "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all cursor-pointer",
+                    activeTab === tab.id ? "bg-white/90 text-violet-800 shadow-sm" : "text-white/70 hover:bg-white/20 hover:text-white"
+                  )}>
+                    <TIcon className="h-3 w-3" />
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
         <div className="px-4 py-3">
           <p className="text-xs text-gray-600">Le pouvoir ne reside pas dans une personne mais dans un PROCESSUS defini. Inspire Holacracy — adapte pour la collaboration IA + Humain.</p>
         </div>
-      </div>
-
-      {/* Sub-tabs — pill style standard */}
-      <div className="flex gap-1">
-        {tabs.map((tab) => {
-          const TIcon = tab.icon;
-          return (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
-              activeTab === tab.id ? "bg-gray-900 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-            )}>
-              <TIcon className="h-3.5 w-3.5" />
-              {tab.label}
-            </button>
-          );
-        })}
       </div>
 
       {/* Contenu par tab */}

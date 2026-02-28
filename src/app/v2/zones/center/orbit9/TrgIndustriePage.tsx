@@ -31,12 +31,19 @@ export function TrgIndustriePage() {
       {/* Header Card avec gradient + KPIs */}
       <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
         <div className="bg-gradient-to-r from-indigo-500 to-violet-500 px-4 py-2.5 border-b">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Globe className="h-4 w-4 text-white" />
-              <span className="text-sm font-bold text-white">Indicateurs Cles</span>
+          <div className="flex items-center gap-2">
+            <Globe className="h-4 w-4 text-white" />
+            <span className="text-sm font-bold text-white">Indicateurs Cles</span>
+            <div className="flex gap-1 ml-auto">
+              {tabs.map((tab) => (
+                <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={cn(
+                  "px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all cursor-pointer",
+                  activeTab === tab.id ? "bg-white/90 text-indigo-800 shadow-sm" : "text-white/70 hover:bg-white/20 hover:text-white"
+                )}>
+                  {tab.label}
+                </button>
+              ))}
             </div>
-            <Badge className="bg-white/20 text-white text-[10px]">Fevrier 2026</Badge>
           </div>
         </div>
         <div className="grid grid-cols-4 gap-3 p-4">
@@ -61,22 +68,16 @@ export function TrgIndustriePage() {
         </div>
       </div>
 
-      {/* Sub-tabs — pill style standard */}
-      <div className="flex gap-1">
-        {tabs.map((tab) => (
-          <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={cn(
-            "px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
-            activeTab === tab.id ? "bg-gray-900 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-          )}>
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
       {activeTab === "vue" && (
         <div className="space-y-4">
-          <Card className="p-4">
-            <h3 className="text-sm font-bold text-gray-800 mb-3">4 Instances — Ecosysteme Usine Bleue</h3>
+          <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+            <div className="bg-gradient-to-r from-blue-100 to-cyan-100 px-4 py-2.5 border-b border-blue-200">
+              <div className="flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-bold text-blue-900">4 Instances — Ecosysteme Usine Bleue</span>
+              </div>
+            </div>
+            <div className="p-4">
             <div className="grid grid-cols-2 gap-3">
               {[
                 { name: "Usine Bleue (Admin)", sub: "admin.usinebleue.ai", icon: Building2, color: "blue", desc: "Dashboard complet, bots, CRM, matching, Data Room, War Room", role: "Orchestrateur" },
@@ -98,13 +99,17 @@ export function TrgIndustriePage() {
                 );
               })}
             </div>
-          </Card>
-
-          <Card className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Bot className="h-4 w-4 text-teal-600" />
-              <h3 className="text-sm font-bold text-gray-800">Sources de Donnees — Sous-Bot CMO</h3>
             </div>
+          </div>
+
+          <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+            <div className="bg-gradient-to-r from-teal-100 to-emerald-100 px-4 py-2.5 border-b border-teal-200">
+              <div className="flex items-center gap-2">
+                <Bot className="h-4 w-4 text-teal-600" />
+                <span className="text-sm font-bold text-teal-900">Sources de Donnees — Sous-Bot CMO</span>
+              </div>
+            </div>
+            <div className="p-4">
             <div className="grid grid-cols-3 gap-2">
               {[
                 { source: "Statistique Canada", type: "Federal", freq: "Annuel", icon: Building2 },
@@ -126,7 +131,8 @@ export function TrgIndustriePage() {
                 );
               })}
             </div>
-          </Card>
+            </div>
+          </div>
         </div>
       )}
 
