@@ -3,11 +3,11 @@
  * 3 boutons : Micro (vocal), Telephone (appel), Camera (video)
  * Fixe en bas du sidebar droit, meme hauteur que InputBar (min-h-[136px])
  * Design premium light — subtle, elegant, vivant
- * Sprint B — Panneau Live Controls
+ * Sprint B — Panneau Live Controls + Auto-TTS
  */
 
 import { useState } from "react";
-import { Mic, Phone, Video, Radio } from "lucide-react";
+import { Mic, Phone, Video } from "lucide-react";
 import {
   Tooltip,
   TooltipTrigger,
@@ -17,12 +17,23 @@ import { cn } from "../../../components/ui/utils";
 
 type LiveChannel = "mic" | "phone" | "video";
 
-export function LiveControlsPanel() {
+interface LiveControlsPanelProps {
+  autoTTSEnabled?: boolean;
+  onToggleAutoTTS?: () => void;
+}
+
+export function LiveControlsPanel({ autoTTSEnabled, onToggleAutoTTS }: LiveControlsPanelProps) {
   const [activeChannel, setActiveChannel] = useState<LiveChannel | null>(null);
 
   const toggleChannel = (channel: LiveChannel) => {
+    if (channel === "mic" && onToggleAutoTTS) {
+      // Vocal = toggle auto-TTS (chaque reponse bot est lue)
+      onToggleAutoTTS();
+      setActiveChannel((prev) => (prev === channel ? null : channel));
+      return;
+    }
     setActiveChannel((prev) => (prev === channel ? null : channel));
-    // TODO: brancher sur ElevenLabs (mic), WebRTC (phone/video)
+    // TODO: WebRTC pour phone/video
   };
 
   const channels: {
@@ -84,7 +95,7 @@ export function LiveControlsPanel() {
       <div className="flex gap-2">
         {channels.map((channel) => {
           const Icon = channel.icon;
-          const isActive = activeChannel === channel.id;
+          const isActive = channel.id === "mic" ? (autoTTSEnabled || false) : activeChannel === channel.id;
           return (
             <Tooltip key={channel.id}>
               <TooltipTrigger asChild>
@@ -120,7 +131,11 @@ export function LiveControlsPanel() {
                   </span>
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="top">{channel.label}</TooltipContent>
+              <TooltipContent side="top">
+                {channel.id === "mic" && autoTTSEnabled
+                  ? "Lecture auto activee — cliquer pour desactiver"
+                  : channel.label}
+              </TooltipContent>
             </Tooltip>
           );
         })}

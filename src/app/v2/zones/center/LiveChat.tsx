@@ -33,11 +33,14 @@ import {
   Plus,
   Bookmark,
   Maximize2,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import { cn } from "../../../components/ui/utils";
 import { useChatContext } from "../../context/ChatContext";
 import { useBots } from "../../api/hooks";
 import { useFrameMaster } from "../../context/FrameMasterContext";
+import { useTextToSpeech } from "../../api/useVocal";
 
 // ══════════════════════════════════════════════
 // Config
@@ -525,6 +528,7 @@ export function LiveChat({
   const { bots } = useBots();
   const scrollRef = useRef<HTMLDivElement>(null);
   const { copied, copy } = useCopy();
+  const tts = useTextToSpeech();
   const [challengeCounts, setChallengeCounts] = useState<Record<string, number>>({});
   const [showThreads, setShowThreads] = useState(false);
   const [showCrystals, setShowCrystals] = useState(false);
@@ -1111,13 +1115,27 @@ export function LiveChat({
                       <div className="mt-3 pt-2 border-t border-amber-200 flex items-center justify-between">
                         <div className="flex items-center gap-3 text-[10px] text-amber-500">
                         </div>
-                        <button
-                          onClick={() => copy(msg.id, msg.content)}
-                          className="text-amber-400 hover:text-amber-600 cursor-pointer p-1 rounded transition-colors opacity-0 group-hover:opacity-100"
-                          title="Copier la synthese"
-                        >
-                          {copied === msg.id ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
-                        </button>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {tts.isSupported && (
+                            <button
+                              onClick={() => tts.toggleSpeak(msg.content, msg.id)}
+                              className={cn(
+                                "cursor-pointer p-1 rounded transition-colors",
+                                tts.speakingMsgId === msg.id ? "text-amber-600" : "text-amber-400 hover:text-amber-600"
+                              )}
+                              title={tts.speakingMsgId === msg.id ? "Arreter" : "Ecouter la synthese"}
+                            >
+                              {tts.speakingMsgId === msg.id ? <VolumeX className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
+                            </button>
+                          )}
+                          <button
+                            onClick={() => copy(msg.id, msg.content)}
+                            className="text-amber-400 hover:text-amber-600 cursor-pointer p-1 rounded transition-colors"
+                            title="Copier la synthese"
+                          >
+                            {copied === msg.id ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1244,17 +1262,33 @@ export function LiveChat({
                       <p className="text-sm leading-relaxed">{msg.content}</p>
                     )}
 
-                    {/* Bot copy */}
+                    {/* Bot actions — TTS + copy */}
                     {!isUser && (
                       <div className="mt-3 pt-2 border-t border-gray-50 flex items-center justify-between">
                         <div />
-                        <button
-                          onClick={() => copy(msg.id, msg.content)}
-                          className="text-gray-300 hover:text-gray-500 cursor-pointer p-1 rounded transition-colors opacity-0 group-hover:opacity-100"
-                          title="Copier"
-                        >
-                          {copied === msg.id ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
-                        </button>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {tts.isSupported && (
+                            <button
+                              onClick={() => tts.toggleSpeak(msg.content, msg.id)}
+                              className={cn(
+                                "cursor-pointer p-1 rounded transition-colors",
+                                tts.speakingMsgId === msg.id
+                                  ? "text-blue-500 hover:text-blue-700"
+                                  : "text-gray-300 hover:text-gray-500"
+                              )}
+                              title={tts.speakingMsgId === msg.id ? "Arreter" : "Ecouter"}
+                            >
+                              {tts.speakingMsgId === msg.id ? <VolumeX className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
+                            </button>
+                          )}
+                          <button
+                            onClick={() => copy(msg.id, msg.content)}
+                            className="text-gray-300 hover:text-gray-500 cursor-pointer p-1 rounded transition-colors"
+                            title="Copier"
+                          >
+                            {copied === msg.id ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                          </button>
+                        </div>
                       </div>
                     )}
 

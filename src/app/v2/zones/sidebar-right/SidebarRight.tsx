@@ -23,12 +23,15 @@ import { CarlOsPulse } from "./CarlOsPulse";
 import { DiscussionsPanel } from "./DiscussionsPanel";
 import { MonEspace } from "./MonEspace";
 import { LiveControlsPanel } from "./LiveControlsPanel";
+import { useChatContext } from "../../context/ChatContext";
 
 interface Props {
   collapsed?: boolean;
 }
 
 export function SidebarRight({ collapsed = false }: Props) {
+  const { autoTTSEnabled, toggleAutoTTS } = useChatContext();
+
   // Mode collapsed — icones seulement
   if (collapsed) {
     return (
@@ -106,7 +109,7 @@ export function SidebarRight({ collapsed = false }: Props) {
       {/* CarlOS Live — panneau cockpit fixe en bas */}
       <div className="h-[2px] bg-gradient-to-r from-green-400 via-blue-400 to-purple-400" />
       <div className="shrink-0">
-        <LiveControlsPanel />
+        <LiveControlsPanel autoTTSEnabled={autoTTSEnabled} onToggleAutoTTS={toggleAutoTTS} />
       </div>
     </div>
   );

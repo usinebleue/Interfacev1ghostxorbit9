@@ -5,10 +5,12 @@
  * Sprint B — UX Sherpa
  */
 
-import { useState, useRef, type KeyboardEvent } from "react";
+import { useState, useRef, useEffect, type KeyboardEvent } from "react";
 import {
   Send,
   Paperclip,
+  Mic,
+  MicOff,
   Swords,
   Lightbulb,
   Flame,
@@ -30,6 +32,7 @@ import { useChatContext } from "../../context/ChatContext";
 import { useFrameMaster } from "../../context/FrameMasterContext";
 import type { ReflectionMode } from "../../api/types";
 import { cn } from "../../../components/ui/utils";
+import { useSpeechToText } from "../../api/useVocal";
 
 // Modes de reflexion — CarlOS route automatiquement (Sherpa GPS)
 // L'utilisateur ne choisit PAS manuellement, mais on affiche le mode actif
@@ -50,12 +53,23 @@ export function InputBar() {
   const { sendMessage, isTyping, activeReflectionMode, setReflectionMode } =
     useChatContext();
   const { activeBotCode, activeBot, setActiveView } = useFrameMaster();
+  const stt = useSpeechToText();
 
   const botName = activeBot?.nom || "CarlOS";
+
+  // Quand le transcript change, injecter dans le textarea
+  useEffect(() => {
+    if (stt.fullTranscript) {
+      setText(stt.fullTranscript);
+    }
+  }, [stt.fullTranscript]);
 
   const handleSend = () => {
     const trimmed = text.trim();
     if (!trimmed || isTyping) return;
+    // Arreter l'ecoute micro si active
+    if (stt.isListening) stt.stopListening();
+    stt.clearTranscript();
     setActiveView("live-chat");
     sendMessage(trimmed, activeBotCode);
     setText("");
@@ -95,6 +109,27 @@ export function InputBar() {
           </Button>
         </div>
 
+        {/* Micro — Speech-to-Text */}
+        {stt.isSupported && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  "h-9 w-9 mb-0.5 shrink-0 transition-all",
+                  stt.isListening && "bg-red-50 text-red-600 hover:bg-red-100 ring-2 ring-red-300 animate-pulse"
+                )}
+                onClick={stt.toggleListening}
+                disabled={isTyping}
+              >
+                {stt.isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{stt.isListening ? "Arreter l'ecoute" : "Parler a " + botName}</TooltipContent>
+          </Tooltip>
+        )}
+
         {/* Clip (piece jointe) */}
         <Tooltip>
           <TooltipTrigger asChild>
@@ -105,6 +140,23 @@ export function InputBar() {
           <TooltipContent>Joindre un fichier</TooltipContent>
         </Tooltip>
       </div>
+
+      {/* Indicateur micro actif */}
+      {stt.isListening && (
+        <div className="flex items-center gap-2 text-xs text-red-600 animate-in fade-in duration-300">
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75 animate-ping" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+          </span>
+          Ecoute en cours... parle naturellement
+          {stt.interimTranscript && (
+            <span className="text-gray-400 italic truncate max-w-[200px]">{stt.interimTranscript}</span>
+          )}
+        </div>
+      )}
+      {stt.error && (
+        <div className="text-xs text-red-500">{stt.error}</div>
+      )}
 
       {/* Ligne 2 : Modes de reflexion cliquables */}
       <div className="flex items-center gap-1.5 flex-wrap">
