@@ -10,6 +10,8 @@ export interface ChatRequest {
   user_id?: number;
   agent?: string;
   ghost?: string;
+  mode?: string;
+  direct?: boolean;
 }
 
 export interface ChatResponse {
@@ -130,6 +132,21 @@ export interface ChatMessage {
   tier?: string;
   latence_ms?: number;
   options?: string[];
+}
+
+// --- Thread (conversation branch) ---
+
+export type ThreadStatus = "active" | "parked" | "completed";
+
+export interface Thread {
+  id: string;
+  title: string;
+  status: ThreadStatus;
+  messages: ChatMessage[];
+  mode: ReflectionMode;
+  primaryBot: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // --- Avatar Map (vrais fichiers dans /public/agents/) ---
