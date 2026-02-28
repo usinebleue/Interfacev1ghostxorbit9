@@ -41,6 +41,7 @@ import { useChatContext } from "../../context/ChatContext";
 import { useBots } from "../../api/hooks";
 import { useFrameMaster } from "../../context/FrameMasterContext";
 import { useTextToSpeech } from "../../api/useVocal";
+import { CarlOSAvatar } from "./CarlOSAvatar";
 
 // ══════════════════════════════════════════════
 // Config
@@ -523,6 +524,7 @@ export function LiveChat({
     messages, isTyping, activeReflectionMode, newConversation, sendMessage, sendMultiPerspective,
     threads, activeThreadId, parkThread, resumeThread, completeThread, deleteThread,
     crystals, crystallize, deleteCrystal, exportCrystals,
+    videoAvatarEnabled, toggleVideoAvatar,
   } = useChatContext();
   const { activeBotCode } = useFrameMaster();
   const { bots } = useBots();
@@ -857,6 +859,11 @@ export function LiveChat({
           </div>
         </div>
       </div>
+
+      {/* Avatar video CarlOS */}
+      {videoAvatarEnabled && (
+        <CarlOSAvatar onClose={toggleVideoAvatar} />
+      )}
 
       {/* Mes Idees panel */}
       {showCrystals && (
