@@ -122,9 +122,17 @@ export interface CahierStatusResponse {
 
 // --- Chat Message (frontend) ---
 
+export type MessageType =
+  | "normal"       // question/reponse standard
+  | "challenge"    // user a challenge un bot
+  | "consultation" // reponse d'un bot consulte (multi-perspective)
+  | "synthesis"    // synthese auto-generee par CarlOS
+  | "coaching"     // message proactif de CarlOS (encadrement)
+  | "decision";    // noeud de decision (options a choisir)
+
 export interface ChatMessage {
   id: string;
-  role: "user" | "assistant";
+  role: "user" | "assistant" | "system";
   content: string;
   timestamp: Date;
   agent?: string;
@@ -132,6 +140,11 @@ export interface ChatMessage {
   tier?: string;
   latence_ms?: number;
   options?: string[];
+  // Branch tracking
+  msgType?: MessageType;
+  parentId?: string;       // ID du message auquel celui-ci repond
+  branchDepth?: number;    // 0 = trunk, 1 = sous-branche, 2 = sous-sous-branche
+  branchLabel?: string;    // "Challenge #2 — BCT", "Consultation CFO"
 }
 
 // --- Thread (conversation branch) ---

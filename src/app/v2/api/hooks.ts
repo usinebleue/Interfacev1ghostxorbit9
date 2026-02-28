@@ -14,6 +14,7 @@ import type {
   Thread,
   ThreadStatus,
   ReflectionMode,
+  MessageType,
 } from "./types";
 
 // Options contextuelles par defaut — arbre de developpement de la pensee (wireframe p.3)
@@ -162,13 +163,61 @@ export function useChat() {
     }
   }, [messages, activeThreadId]);
 
+  // Inject a coaching message from CarlOS (system-level guidance)
+  const injectCoaching = useCallback(
+    (text: string, options?: string[]) => {
+      const coachMsg: ChatMessage = {
+        id: `msg-${++idCounter.current}`,
+        role: "system",
+        content: text,
+        timestamp: new Date(),
+        agent: "BCO",
+        msgType: "coaching",
+        options,
+      };
+      setMessages((prev) => [...prev, coachMsg]);
+    },
+    []
+  );
+
+  // Track branch depth
+  const currentBranchDepth = useRef(0);
+
   const sendMessage = useCallback(
-    async (text: string, agent?: string, ghost?: string, mode?: string) => {
+    async (
+      text: string,
+      agent?: string,
+      ghost?: string,
+      mode?: string,
+      meta?: { msgType?: MessageType; parentId?: string; branchLabel?: string }
+    ) => {
+      const msgType = meta?.msgType || "normal";
+      const branchDepth = msgType === "challenge" || msgType === "consultation"
+        ? currentBranchDepth.current + 1
+        : currentBranchDepth.current;
+
+      // Anti-boucle: max 3 niveaux de profondeur
+      if (branchDepth > 3) {
+        injectCoaching(
+          "Tu es a 3 niveaux de profondeur. C'est assez — finalise le mode actuel ou retourne a la question principale.",
+          ["Synthese finale", "Retour au sujet principal"]
+        );
+        return;
+      }
+
+      if (msgType === "challenge" || msgType === "consultation") {
+        currentBranchDepth.current = branchDepth;
+      }
+
       const userMsg: ChatMessage = {
         id: `msg-${++idCounter.current}`,
         role: "user",
         content: text,
         timestamp: new Date(),
+        msgType,
+        parentId: meta?.parentId,
+        branchDepth,
+        branchLabel: meta?.branchLabel,
       };
       setMessages((prev) => [...prev, userMsg]);
       setIsTyping(true);
@@ -212,8 +261,33 @@ export function useChat() {
           latence_ms: res.latence_ms,
           options:
             DEFAULT_OPTIONS_BY_AGENT[agent || "BCO"] || FALLBACK_OPTIONS,
+          msgType: msgType === "challenge" ? "challenge" : msgType === "consultation" ? "consultation" : "normal",
+          parentId: meta?.parentId,
+          branchDepth,
+          branchLabel: meta?.branchLabel,
         };
         setMessages((prev) => [...prev, botMsg]);
+
+        // CarlOS coaching: after first bot response, guide the user
+        const allMsgs = [...messages, userMsg, botMsg];
+        const botCount = allMsgs.filter((m) => m.role === "assistant").length;
+
+        if (botCount === 1) {
+          // First response — introduce branching
+          setTimeout(() => {
+            injectCoaching(
+              "Tu peux challenger cette reponse, approfondir un point, ou consulter un autre specialiste. Explore les angles — je t'encadre.",
+            );
+          }, 500);
+        } else if (botCount === 5) {
+          // After 5 exchanges — nudge towards convergence
+          setTimeout(() => {
+            injectCoaching(
+              "On a bien explore le sujet. Tu veux continuer ou on passe a la synthese?",
+              ["Synthese", "Continuer l'exploration"]
+            );
+          }, 500);
+        }
       } catch (err) {
         const errMsg: ChatMessage = {
           id: `msg-${++idCounter.current}`,
@@ -226,7 +300,7 @@ export function useChat() {
         setIsTyping(false);
       }
     },
-    [activeThreadId]
+    [activeThreadId, messages, injectCoaching]
   );
 
   const newConversation = useCallback(() => {
