@@ -5,7 +5,7 @@
  * Sprint A — Frame Master V2
  */
 
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Settings } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import { Card } from "../../../components/ui/card";
 import { Badge } from "../../../components/ui/badge";
@@ -831,6 +831,14 @@ export function DepartmentTourDeControle() {
               {config.summary}
             </p>
           </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="shrink-0 gap-1.5"
+            onClick={() => setActiveView("detail")}
+          >
+            <Settings className="h-3.5 w-3.5" />
+          </Button>
           <Button
             size="sm"
             className="shrink-0 gap-1.5"

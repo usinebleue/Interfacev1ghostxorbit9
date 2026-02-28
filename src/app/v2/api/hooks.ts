@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { api } from "./client";
+import type { StreamDoneEvent } from "./client";
 import type {
   BotInfo,
   HealthResponse,
@@ -445,6 +446,10 @@ export function useChat() {
   // Track branch depth
   const currentBranchDepth = useRef(0);
 
+  // Track streaming state — message ID currently being streamed
+  const streamingMsgId = useRef<string | null>(null);
+  const streamAbort = useRef<AbortController | null>(null);
+
   const sendMessage = useCallback(
     async (
       text: string,
@@ -501,164 +506,236 @@ export function useChat() {
         setActiveThreadId(newId);
       }
 
+      const req: ChatRequest = {
+        message: text,
+        user_id: 1,
+        agent,
+        ghost,
+        mode: mode || undefined,
+        direct: true,
+        msg_type: msgType !== "normal" ? msgType : undefined,
+        parent_id: meta?.parentId,
+        branch_depth: branchDepth,
+      };
+
+      // Create placeholder bot message for streaming
+      const botMsgId = `msg-${++idCounter.current}`;
+      const botMsgBase: ChatMessage = {
+        id: botMsgId,
+        role: "assistant",
+        content: "",
+        timestamp: new Date(),
+        agent: agent || "BCO",
+        msgType: msgType === "challenge" ? "challenge" : msgType === "consultation" ? "consultation" : msgType === "synthesis" ? "synthesis" : "normal",
+        parentId: meta?.parentId,
+        branchDepth,
+        branchLabel: meta?.branchLabel,
+        isStreaming: true,
+      };
+
+      // Add empty bot message that will fill progressively
+      setMessages((prev) => [...prev, botMsgBase]);
+      streamingMsgId.current = botMsgId;
+
+      const modeConf = MODE_LIVE_CONFIG[mode || "credo"] || MODE_LIVE_CONFIG.credo;
+
+      // Try streaming first, fallback to standard chat
       try {
-        const req: ChatRequest = {
-          message: text,
-          user_id: 1,
-          agent,
-          ghost,
-          mode: mode || undefined,
-          direct: true,
-          // B.1 — metadata de branche
-          msg_type: msgType !== "normal" ? msgType : undefined,
-          parent_id: meta?.parentId,
-          branch_depth: branchDepth,
-        };
-        const res = await api.chat(req);
-
-        // B.1 — Options: backend structured > text parsing > mode defaults > fallback
-        let cleanText = res.response;
-        let parsedOptions: string[] = [];
-
-        // Priorite 1: options structurees du backend
-        if (res.options && res.options.length > 0) {
-          parsedOptions = res.options.map((o) => o.label);
-        } else {
-          // Fallback: parser du texte (format 📌)
-          const parsed = parseApiOptions(res.response);
-          cleanText = parsed.cleanText;
-          parsedOptions = parsed.parsedOptions;
-        }
-
-        // Mode-specific options (parsed > mode > agent > fallback)
-        const modeConf = MODE_LIVE_CONFIG[mode || "credo"] || MODE_LIVE_CONFIG.credo;
-        const agentOptions = DEFAULT_OPTIONS_BY_AGENT[agent || "BCO"];
-        const options = parsedOptions.length > 0
-          ? parsedOptions
-          : msgType === "synthesis"
-            ? ["Cristalliser le resultat", "Passer au Cahier SMART", "Continuer l'exploration"]
-            : modeConf.options.length > 0 ? modeConf.options : (agentOptions || FALLBACK_OPTIONS);
-
-        const botMsg: ChatMessage = {
-          id: `msg-${++idCounter.current}`,
-          role: "assistant",
-          content: cleanText,
-          timestamp: new Date(),
-          agent: res.agent,
-          ghost: res.ghost_actif,
-          tier: res.tier,
-          latence_ms: res.latence_ms,
-          options,
-          msgType: msgType === "challenge" ? "challenge" : msgType === "consultation" ? "consultation" : msgType === "synthesis" ? "synthesis" : "normal",
-          parentId: meta?.parentId,
-          branchDepth,
-          branchLabel: meta?.branchLabel,
-        };
-        setMessages((prev) => [...prev, botMsg]);
-
-        // CarlOS coaching: mode-specific, after first bot response
-        const allMsgs = [...messages, userMsg, botMsg];
-        const botCount = allMsgs.filter((m) => m.role === "assistant").length;
-        const userMsgs = allMsgs.filter((m) => m.role === "user");
-
-        if (botCount === 1) {
-          // First response — mode-specific intro
-          setTimeout(() => {
-            injectCoaching(modeConf.coachingIntro);
-          }, 500);
-
-          // Smart title — CarlOS genere un titre intelligent en background (Gemini Flash, gratuit)
-          generateSmartTitle(text, cleanText).then((smartTitle) => {
-            if (smartTitle) {
-              setThreads((prev) =>
-                prev.map((t) =>
-                  t.id === activeThreadId ? { ...t, title: smartTitle } : t
+        await new Promise<void>((resolve, reject) => {
+          const controller = api.chatStream(req, {
+            onToken: (_chunk: string, accumulated: string) => {
+              // Update the bot message content progressively
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === botMsgId ? { ...m, content: accumulated } : m
                 )
               );
-            }
+            },
+            onDone: (data: StreamDoneEvent) => {
+              // Final update with all metadata
+              let cleanText = data.response;
+              let parsedOptions: string[] = [];
+
+              if (data.options && data.options.length > 0) {
+                parsedOptions = data.options.map((o) => o.label);
+              } else {
+                const parsed = parseApiOptions(data.response);
+                cleanText = parsed.cleanText;
+                parsedOptions = parsed.parsedOptions;
+              }
+
+              const agentOptions = DEFAULT_OPTIONS_BY_AGENT[agent || "BCO"];
+              const options = parsedOptions.length > 0
+                ? parsedOptions
+                : msgType === "synthesis"
+                  ? ["Cristalliser le resultat", "Passer au Cahier SMART", "Continuer l'exploration"]
+                  : modeConf.options.length > 0 ? modeConf.options : (agentOptions || FALLBACK_OPTIONS);
+
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === botMsgId
+                    ? {
+                        ...m,
+                        content: cleanText,
+                        agent: data.agent,
+                        ghost: data.ghost_actif,
+                        tier: data.tier,
+                        latence_ms: data.latence_ms,
+                        options,
+                        isStreaming: false,
+                      }
+                    : m
+                )
+              );
+
+              streamingMsgId.current = null;
+
+              // Post-stream: coaching, sentinelle, drift detection
+              const allMsgs = [...messages, userMsg];
+              const botCount = allMsgs.filter((m) => m.role === "assistant").length + 1;
+              const userMsgs = allMsgs.filter((m) => m.role === "user");
+
+              if (botCount === 1) {
+                setTimeout(() => injectCoaching(modeConf.coachingIntro), 500);
+
+                generateSmartTitle(text, cleanText).then((smartTitle) => {
+                  if (smartTitle) {
+                    setThreads((prev) =>
+                      prev.map((t) =>
+                        t.id === activeThreadId ? { ...t, title: smartTitle } : t
+                      )
+                    );
+                  }
+                });
+
+                if (modeConf.autoConsultBots.length > 0 && msgType === "normal") {
+                  const firstAutoBot = modeConf.autoConsultBots[0];
+                  if (firstAutoBot && firstAutoBot !== agent) {
+                    setTimeout(async () => {
+                      try {
+                        const autoReq: ChatRequest = { message: text, user_id: 1, agent: firstAutoBot, mode: mode || undefined, direct: true };
+                        const autoRes = await api.chat(autoReq);
+                        const autoMsg: ChatMessage = {
+                          id: `msg-${++idCounter.current}`,
+                          role: "assistant",
+                          content: autoRes.response,
+                          timestamp: new Date(),
+                          agent: autoRes.agent,
+                          ghost: autoRes.ghost_actif,
+                          tier: autoRes.tier,
+                          latence_ms: autoRes.latence_ms,
+                          options: modeConf.options,
+                          msgType: "consultation",
+                          branchLabel: `Auto-consultation — ${firstAutoBot}`,
+                          branchDepth: 1,
+                        };
+                        setMessages((prev) => [...prev, autoMsg]);
+                      } catch { /* silent fail on auto-consult */ }
+                    }, 1500);
+                  }
+                }
+              } else if (botCount >= modeConf.maxExchanges) {
+                setTimeout(() => {
+                  injectCoaching(modeConf.coachingConverge, ["Synthese", "Continuer l'exploration"]);
+                }, 500);
+              }
+
+              if (data.sentinel_alert) {
+                const sa = data.sentinel_alert;
+                setTimeout(() => {
+                  injectCoaching(sa.message, sa.suggestions.length > 0 ? sa.suggestions : undefined);
+                }, 700);
+              }
+
+              if (!data.sentinel_alert && userMsgs.length >= 3 && msgType === "normal") {
+                const originalTension = userMsgs[0]?.content || "";
+                const isDrifting = detectDrift(originalTension, text);
+                if (isDrifting) {
+                  driftWarningCount.current++;
+                  if (driftWarningCount.current === 1) {
+                    setTimeout(() => {
+                      injectCoaching(
+                        "On s'eloigne du sujet initial. Tu veux continuer sur cette tangente ou revenir a ta tension de depart?",
+                        ["Revenir au sujet", "Parker et continuer ici", "C'est lie, continue"]
+                      );
+                    }, 600);
+                  } else if (driftWarningCount.current >= 2) {
+                    setTimeout(() => {
+                      injectCoaching(
+                        "Ca fait 2 fois qu'on derive. Je te propose de parker cette discussion et d'en ouvrir une nouvelle pour ce nouveau sujet.",
+                        ["Parker et nouveau thread", "Forcer la synthese", "Laisser-moi continuer"]
+                      );
+                    }, 600);
+                  }
+                }
+              }
+
+              resolve();
+            },
+            onError: (error: string) => {
+              reject(new Error(error));
+            },
           });
-
-          // Auto-consult bots for this mode (if configured)
-          if (modeConf.autoConsultBots.length > 0 && msgType === "normal") {
-            const firstAutoBot = modeConf.autoConsultBots[0];
-            if (firstAutoBot && firstAutoBot !== agent) {
-              // Auto-fire consultation to the first recommended bot
-              setTimeout(async () => {
-                try {
-                  const autoReq: ChatRequest = { message: text, user_id: 1, agent: firstAutoBot, mode: mode || undefined, direct: true };
-                  const autoRes = await api.chat(autoReq);
-                  const autoMsg: ChatMessage = {
-                    id: `msg-${++idCounter.current}`,
-                    role: "assistant",
-                    content: autoRes.response,
-                    timestamp: new Date(),
-                    agent: autoRes.agent,
-                    ghost: autoRes.ghost_actif,
-                    tier: autoRes.tier,
-                    latence_ms: autoRes.latence_ms,
-                    options: modeConf.options,
-                    msgType: "consultation",
-                    branchLabel: `Auto-consultation — ${firstAutoBot}`,
-                    branchDepth: 1,
-                  };
-                  setMessages((prev) => [...prev, autoMsg]);
-                } catch { /* silent fail on auto-consult */ }
-              }, 1500);
-            }
-          }
-        } else if (botCount >= modeConf.maxExchanges) {
-          // Mode-specific convergence nudge
-          setTimeout(() => {
-            injectCoaching(
-              modeConf.coachingConverge,
-              ["Synthese", "Continuer l'exploration"]
-            );
-          }, 500);
-        }
-
-        // ── B.1 — Sentinelle backend ──
-        if (res.sentinel_alert) {
-          const sa = res.sentinel_alert;
-          setTimeout(() => {
-            injectCoaching(sa.message, sa.suggestions.length > 0 ? sa.suggestions : undefined);
-          }, 700);
-        }
-
-        // ── Suspension Intelligente — drift detection (frontend complement) ──
-        if (!res.sentinel_alert && userMsgs.length >= 3 && msgType === "normal") {
-          const originalTension = userMsgs[0]?.content || "";
-          const isDrifting = detectDrift(originalTension, text);
-
-          if (isDrifting) {
-            driftWarningCount.current++;
-
-            if (driftWarningCount.current === 1) {
-              setTimeout(() => {
-                injectCoaching(
-                  "On s'eloigne du sujet initial. Tu veux continuer sur cette tangente ou revenir a ta tension de depart?",
-                  ["Revenir au sujet", "Parker et continuer ici", "C'est lie, continue"]
-                );
-              }, 600);
-            } else if (driftWarningCount.current >= 2) {
-              setTimeout(() => {
-                injectCoaching(
-                  "Ca fait 2 fois qu'on derive. Je te propose de parker cette discussion et d'en ouvrir une nouvelle pour ce nouveau sujet.",
-                  ["Parker et nouveau thread", "Forcer la synthese", "Laisser-moi continuer"]
-                );
-              }, 600);
-            }
-          }
-        }
+          streamAbort.current = controller;
+        });
       } catch (err) {
-        const errMsg: ChatMessage = {
-          id: `msg-${++idCounter.current}`,
-          role: "assistant",
-          content: `Erreur: ${err instanceof Error ? err.message : "Connexion impossible"}`,
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, errMsg]);
+        // Streaming failed — fallback to standard chat
+        streamingMsgId.current = null;
+
+        try {
+          const res = await api.chat(req);
+
+          let cleanText = res.response;
+          let parsedOptions: string[] = [];
+
+          if (res.options && res.options.length > 0) {
+            parsedOptions = res.options.map((o) => o.label);
+          } else {
+            const parsed = parseApiOptions(res.response);
+            cleanText = parsed.cleanText;
+            parsedOptions = parsed.parsedOptions;
+          }
+
+          const agentOptions = DEFAULT_OPTIONS_BY_AGENT[agent || "BCO"];
+          const options = parsedOptions.length > 0
+            ? parsedOptions
+            : msgType === "synthesis"
+              ? ["Cristalliser le resultat", "Passer au Cahier SMART", "Continuer l'exploration"]
+              : modeConf.options.length > 0 ? modeConf.options : (agentOptions || FALLBACK_OPTIONS);
+
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === botMsgId
+                ? {
+                    ...m,
+                    content: cleanText,
+                    agent: res.agent,
+                    ghost: res.ghost_actif,
+                    tier: res.tier,
+                    latence_ms: res.latence_ms,
+                    options,
+                    isStreaming: false,
+                  }
+                : m
+            )
+          );
+        } catch (fallbackErr) {
+          // Both streaming and fallback failed
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === botMsgId
+                ? {
+                    ...m,
+                    content: `Erreur: ${fallbackErr instanceof Error ? fallbackErr.message : "Connexion impossible"}`,
+                    isStreaming: false,
+                  }
+                : m
+            )
+          );
+        }
       } finally {
         setIsTyping(false);
+        streamAbort.current = null;
       }
     },
     [activeThreadId, messages, injectCoaching]
