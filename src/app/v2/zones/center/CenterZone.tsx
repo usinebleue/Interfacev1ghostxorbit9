@@ -13,6 +13,7 @@ import { DepartmentTourDeControle } from "./DepartmentTourDeControle";
 import { DiscussionView } from "./DiscussionView";
 import { BranchPatternsDemo } from "./BranchPatternsDemo";
 import { CahierSmartDemo } from "./CahierSmartDemo";
+import { ScenarioHub } from "./ScenarioHub";
 import { InputBar } from "./InputBar";
 
 /** Couleur identitaire par bot — bande fine en haut du canevas */
@@ -51,6 +52,7 @@ export function CenterZone() {
         {activeView === "discussion" && <DiscussionView />}
         {activeView === "branches" && <BranchPatternsDemo />}
         {activeView === "cahier" && <CahierSmartDemo />}
+        {activeView === "scenarios" && <ScenarioHub />}
       </div>
 
       {/* InputBar fixe en bas — a cote de Ma Productivite */}
