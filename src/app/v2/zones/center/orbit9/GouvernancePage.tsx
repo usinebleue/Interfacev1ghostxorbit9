@@ -143,21 +143,26 @@ export function GouvernancePage({ onNavigate }: GouvernancePageProps) {
 
       {activeTab === "timetokens" && (
         <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-3">
-            <Card className="p-3 text-center border-t-[3px] border-t-violet-400">
-              <p className="text-2xl font-bold text-violet-700">1,240</p>
-              <p className="text-xs text-violet-600">TT accumules</p>
-              <p className="text-[10px] text-gray-400 mt-1">Vos contributions</p>
+          <div className="grid grid-cols-4 gap-3">
+            <Card className="p-3 border-t-[3px] border-t-violet-400">
+              <div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">TT accumules</span><DollarSign className="h-3.5 w-3.5 text-violet-400" /></div>
+              <div className="text-2xl font-bold text-violet-600">1,240</div>
+              <div className="text-[10px] text-gray-500">Vos contributions</div>
             </Card>
-            <Card className="p-3 text-center border-t-[3px] border-t-green-400">
-              <p className="text-2xl font-bold text-green-700">V1</p>
-              <p className="text-xs text-green-600">Off-chain (SQLite)</p>
-              <p className="text-[10px] text-gray-400 mt-1">Phase actuelle</p>
+            <Card className="p-3 border-t-[3px] border-t-green-400">
+              <div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Phase</span><Layers className="h-3.5 w-3.5 text-green-400" /></div>
+              <div className="text-2xl font-bold text-green-600">V1</div>
+              <div className="text-[10px] text-gray-500">Off-chain (SQLite)</div>
             </Card>
-            <Card className="p-3 text-center border-t-[3px] border-t-blue-400">
-              <p className="text-2xl font-bold text-blue-700">5D</p>
-              <p className="text-xs text-blue-600">Formule TT-RG</p>
-              <p className="text-[10px] text-gray-400 mt-1">Allocation x Densite x Impact x Z x Pilier</p>
+            <Card className="p-3 border-t-[3px] border-t-blue-400">
+              <div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Formule</span><Zap className="h-3.5 w-3.5 text-blue-400" /></div>
+              <div className="text-2xl font-bold text-blue-600">5D</div>
+              <div className="text-[10px] text-gray-500">TT-RG: A x D x I x Z x P</div>
+            </Card>
+            <Card className="p-3 border-t-[3px] border-t-amber-400">
+              <div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Valeur TT</span><Scale className="h-3.5 w-3.5 text-amber-400" /></div>
+              <div className="text-2xl font-bold text-amber-600">~3.2$</div>
+              <div className="text-[10px] text-gray-500">Valeur estimee/token</div>
             </Card>
           </div>
 
