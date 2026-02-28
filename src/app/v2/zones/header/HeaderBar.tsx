@@ -5,6 +5,7 @@
  */
 
 import { Gauge, Settings, LayoutDashboard, SlidersHorizontal, User, HeartPulse, Play, MessageSquare } from "lucide-react";
+import { cn } from "../../../components/ui/utils";
 import { Button } from "../../../components/ui/button";
 import {
   Tooltip,
@@ -41,7 +42,8 @@ export function HeaderLeft({ collapsed }: { collapsed: boolean }) {
 export function HeaderCenter() {
   const { activeBot, activeBotCode, activeView, setActiveView } = useFrameMaster();
   const { messages } = useChatContext();
-  const hasActiveDiscussion = messages.length > 0 && activeView !== "live-chat";
+  const hasMessages = messages.length > 0;
+  const isInChat = activeView === "live-chat";
 
   return (
     <div className="h-14 border-b border-white/10 flex items-center shrink-0" style={{ backgroundColor: UB_BLUE }}>
@@ -67,14 +69,19 @@ export function HeaderCenter() {
           <TooltipContent>Tour de Controle</TooltipContent>
         </Tooltip>
 
-        {/* Discussion en cours — visible seulement quand on a quitte le LiveChat */}
-        {hasActiveDiscussion && (
+        {/* Discussion — toujours visible quand il y a des messages */}
+        {hasMessages && (
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 gap-1.5 text-xs text-blue-300 hover:text-blue-200 hover:bg-white/10 relative"
+                className={cn(
+                  "h-8 gap-1.5 text-xs relative",
+                  isInChat
+                    ? "text-white bg-white/15 hover:bg-white/20"
+                    : "text-blue-300 hover:text-blue-200 hover:bg-white/10"
+                )}
                 onClick={() => setActiveView("live-chat")}
               >
                 <MessageSquare className="h-3.5 w-3.5" />
@@ -84,7 +91,7 @@ export function HeaderCenter() {
                 </span>
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Retourner a la discussion en cours</TooltipContent>
+            <TooltipContent>{isInChat ? "Discussion en cours" : "Retourner a la discussion"}</TooltipContent>
           </Tooltip>
         )}
 
