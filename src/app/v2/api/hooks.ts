@@ -346,19 +346,40 @@ export function useChat() {
     if (hasAutoRestored.current) return;
     hasAutoRestored.current = true;
 
-    const savedId = loadActiveThreadId();
-    if (!savedId) return;
+    try {
+      const savedId = loadActiveThreadId();
+      if (!savedId) return;
 
-    const savedThreads = loadThreads();
-    const thread = savedThreads.find((t) => t.id === savedId);
-    if (thread && thread.messages && thread.messages.length > 0) {
-      setMessages(thread.messages);
-      setActiveThreadIdRaw(savedId);
-      idCounter.current = thread.messages.length;
-    } else {
-      // Thread not found — clear stale reference
+      const savedThreads = loadThreads();
+      const thread = savedThreads.find((t) => t.id === savedId);
+      if (thread && thread.messages && thread.messages.length > 0) {
+        // Valider que les messages ont la structure minimale requise
+        const validMessages = thread.messages.filter(
+          (m: ChatMessage) => m && typeof m.role === "string" && typeof m.content === "string" && m.id
+        );
+        if (validMessages.length > 0) {
+          // S'assurer que timestamp est un Date (pas un string du JSON)
+          const fixedMessages = validMessages.map((m: ChatMessage) => ({
+            ...m,
+            timestamp: m.timestamp instanceof Date ? m.timestamp : new Date(m.timestamp || Date.now()),
+          }));
+          setMessages(fixedMessages);
+          setActiveThreadIdRaw(savedId);
+          idCounter.current = fixedMessages.length;
+        } else {
+          saveActiveThreadId(null);
+          setActiveThreadIdRaw(null);
+        }
+      } else {
+        saveActiveThreadId(null);
+        setActiveThreadIdRaw(null);
+      }
+    } catch (err) {
+      console.error("[useChat] Auto-restore failed, clearing state:", err);
       saveActiveThreadId(null);
       setActiveThreadIdRaw(null);
+      // Nettoyer les threads corrompus
+      try { localStorage.removeItem(THREADS_KEY); } catch { /* noop */ }
     }
   }, []);
 
