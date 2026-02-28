@@ -1,5 +1,5 @@
 /**
- * ScenarioHub.tsx — Galerie des 10 scenarios de simulation
+ * ScenarioHub.tsx — Galerie des 12 scenarios de simulation
  * Integre TransitionContext pour les transitions inter-modes
  * Chaque carte lance une simulation d'un mode de reflexion GHML
  * Sprint A — Frame Master V2
@@ -24,10 +24,11 @@ import {
   Home,
   ChevronRight,
   AlertTriangle,
+  Handshake,
+  Scan,
 } from "lucide-react";
 import { cn } from "../../../components/ui/utils";
 import { BranchPatternsDemo } from "./BranchPatternsDemo";
-import { CahierSmartDemo } from "./CahierSmartDemo";
 import { DebatDemo } from "./scenarios/DebatDemo";
 import { CriseDemo } from "./scenarios/CriseDemo";
 import { BrainstormDemo } from "./scenarios/BrainstormDemo";
@@ -36,8 +37,11 @@ import { StrategieDemo } from "./scenarios/StrategieDemo";
 import { InnovationDemo } from "./scenarios/InnovationDemo";
 import { DeepResonanceDemo } from "./scenarios/DeepResonanceDemo";
 import { DecisionDemo } from "./scenarios/DecisionDemo";
+import { DiagnosticDemo } from "./scenarios/DiagnosticDemo";
+import { JumelageDemo } from "./scenarios/JumelageDemo";
+import { CahierProjetDemo } from "./scenarios/CahierProjetDemo";
 
-type ScenarioView = "hub" | "credo" | "cahier" | "debat" | "crise" | "brainstorm" | "analyse" | "strategie" | "innovation" | "deep" | "decision";
+type ScenarioView = "hub" | "credo" | "diagnostic" | "jumelage" | "cahier-projet" | "debat" | "crise" | "brainstorm" | "analyse" | "strategie" | "innovation" | "deep" | "decision";
 
 interface BreadcrumbEntry {
   mode: ScenarioView;
@@ -60,7 +64,9 @@ interface ScenarioCard {
 const MODE_LABELS: Record<ScenarioView, string> = {
   hub: "Hub",
   credo: "CREDO",
-  cahier: "Cahier SMART",
+  diagnostic: "Diagnostic Express",
+  jumelage: "Jumelage SMART",
+  "cahier-projet": "Cahier de Projet",
   debat: "Debat",
   crise: "Crise",
   brainstorm: "Brainstorm",
@@ -87,16 +93,40 @@ const SCENARIOS: ScenarioCard[] = [
     description: "Simulation complete du cycle CREDO : tension, multi-perspectives, challenge, suspension intelligente, synthese et cristallisation.",
   },
   {
-    id: "cahier",
-    title: "Cahier SMART",
-    subtitle: "Tension \u2192 Diagnostic \u2192 Cahier PDF",
+    id: "diagnostic",
+    title: "Diagnostic Express",
+    subtitle: "Tension \u2192 Analyse multi-bot \u2192 Pre-rapport",
+    icon: Scan,
+    color: "bg-red-600",
+    bgGradient: "from-red-50 to-red-100/50",
+    borderColor: "border-red-300",
+    textColor: "text-red-700",
+    status: "ready",
+    description: "CarlOS analyse la tension, consulte 3 specialistes (CFO, COO, CTO), synthetise et genere un pre-rapport de visite transmissible.",
+  },
+  {
+    id: "jumelage",
+    title: "Jumelage SMART",
+    subtitle: "Matching \u2192 Scoring \u2192 Selection",
+    icon: Handshake,
+    color: "bg-amber-600",
+    bgGradient: "from-amber-50 to-amber-100/50",
+    borderColor: "border-amber-300",
+    textColor: "text-amber-700",
+    status: "ready",
+    description: "Scan du reseau Usine Bleue (130+ integrateurs), criteres de matching, sessions AI, scoring comparatif et selection du meilleur candidat.",
+  },
+  {
+    id: "cahier-projet",
+    title: "Cahier de Projet",
+    subtitle: "7 sections \u2192 PDF 34 pages",
     icon: FileText,
     color: "bg-emerald-600",
     bgGradient: "from-emerald-50 to-emerald-100/50",
     borderColor: "border-emerald-300",
     textColor: "text-emerald-700",
     status: "ready",
-    description: "3 actes : diagnostic multi-bot, jumelage SMART avec scoring, et generation d'un cahier de projet 34 pages.",
+    description: "Co-construction du cahier avec l'integrateur : profil, diagnostic, solutions, budget waterfall, timeline, KPIs et validation.",
   },
   {
     id: "debat",
@@ -244,7 +274,9 @@ export function ScenarioHub() {
         currentLabel={MODE_LABELS[view]}
       >
         {view === "credo" && <BranchPatternsDemo />}
-        {view === "cahier" && <CahierSmartDemo />}
+        {view === "diagnostic" && <DiagnosticDemo onTransition={handleTransition} />}
+        {view === "jumelage" && <JumelageDemo onTransition={handleTransition} />}
+        {view === "cahier-projet" && <CahierProjetDemo onTransition={handleTransition} />}
         {view === "debat" && <DebatDemo onTransition={handleTransition} />}
         {view === "crise" && <CriseDemo onTransition={handleTransition} />}
         {view === "brainstorm" && <BrainstormDemo onTransition={handleTransition} />}
@@ -262,7 +294,7 @@ export function ScenarioHub() {
       <div className="bg-white border-b px-6 py-4 shrink-0">
         <h1 className="text-lg font-bold text-gray-900">Scenarios de simulation</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
-          10 modes de reflexion GhostX — chaque scenario simule un type de discussion avec la Bot Team
+          12 modes de reflexion GhostX — chaque scenario simule un type de discussion avec la Bot Team
         </p>
       </div>
 
