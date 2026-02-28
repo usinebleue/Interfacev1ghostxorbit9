@@ -13,13 +13,19 @@ export function EvenementsPage() {
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-3 gap-3">
-        <Card className="p-3"><div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Prochain</span><Calendar className="h-3.5 w-3.5 text-rose-400" /></div><div className="text-lg font-bold text-rose-600">15 mars</div><div className="text-[10px] text-gray-500">Kickoff Pionniers</div></Card>
-        <Card className="p-3"><div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Frequence (Or)</span><Star className="h-3.5 w-3.5 text-amber-400" /></div><div className="text-lg font-bold text-amber-600">Trimestriel</div><div className="text-[10px] text-gray-500">4x/an + diners prives</div></Card>
-        <Card className="p-3"><div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Grande Offensive</span><Rocket className="h-3.5 w-3.5 text-indigo-400" /></div><div className="text-lg font-bold text-indigo-600">Sprint D</div><div className="text-[10px] text-gray-500">Expansion regionale</div></Card>
+        <Card className="p-3 border-t-[3px] border-t-rose-400"><div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Prochain</span><Calendar className="h-3.5 w-3.5 text-rose-400" /></div><div className="text-lg font-bold text-rose-600">15 mars</div><div className="text-[10px] text-gray-500">Kickoff Pionniers</div></Card>
+        <Card className="p-3 border-t-[3px] border-t-amber-400"><div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Frequence (Or)</span><Star className="h-3.5 w-3.5 text-amber-400" /></div><div className="text-lg font-bold text-amber-600">Trimestriel</div><div className="text-[10px] text-gray-500">4x/an + diners prives</div></Card>
+        <Card className="p-3 border-t-[3px] border-t-indigo-400"><div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Grande Offensive</span><Rocket className="h-3.5 w-3.5 text-indigo-400" /></div><div className="text-lg font-bold text-indigo-600">Sprint D</div><div className="text-[10px] text-gray-500">Expansion regionale</div></Card>
       </div>
 
-      <Card className="p-4">
-        <h3 className="text-sm font-bold text-gray-800 mb-3">Calendrier des evenements</h3>
+      <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+        <div className="bg-gradient-to-r from-rose-100 to-pink-100 px-4 py-2.5 border-b border-rose-200">
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-rose-600" />
+            <span className="text-sm font-bold text-rose-900">Calendrier des evenements</span>
+          </div>
+        </div>
+        <div className="p-4">
         <div className="space-y-2">
           {[
             { date: "15 mars 2026", title: "Kickoff Pionniers Bleus", type: "Visio", desc: "Presentation des 9 pionniers. Onboarding collectif. CarlOS configure les bots de chaque membre.", status: "confirme" as const, participants: 9 },
@@ -48,7 +54,8 @@ export function EvenementsPage() {
             </div>
           ))}
         </div>
-      </Card>
+      </div>
+      </div>
     </div>
   );
 }

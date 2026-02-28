@@ -32,9 +32,9 @@ export function CellulesPage({ onNavigate }: CellulesPageProps) {
 
   return (
     <div className="space-y-5">
-      {/* KPI Cards */}
+      {/* KPI Cards avec tops colores */}
       <div className="grid grid-cols-4 gap-3">
-        <Card className="p-3">
+        <Card className="p-3 border-t-[3px] border-t-emerald-400">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[10px] text-gray-400 uppercase">Membres</span>
             <Users className="h-3.5 w-3.5 text-emerald-400" />
@@ -42,7 +42,7 @@ export function CellulesPage({ onNavigate }: CellulesPageProps) {
           <div className="text-2xl font-bold text-emerald-600">{pris}/9</div>
           <div className="text-[10px] text-gray-500">{9 - pris} places disponibles</div>
         </Card>
-        <Card className="p-3">
+        <Card className="p-3 border-t-[3px] border-t-emerald-400">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[10px] text-gray-400 uppercase">Rabais actif</span>
             <DollarSign className="h-3.5 w-3.5 text-emerald-400" />
@@ -50,7 +50,7 @@ export function CellulesPage({ onNavigate }: CellulesPageProps) {
           <div className="text-2xl font-bold text-emerald-600">-15%</div>
           <div className="text-[10px] text-gray-500">Prochain palier: -20% a 7</div>
         </Card>
-        <Card className="p-3">
+        <Card className="p-3 border-t-[3px] border-t-blue-400">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[10px] text-gray-400 uppercase">Connexions Bot-to-Bot</span>
             <Network className="h-3.5 w-3.5 text-blue-400" />
@@ -58,7 +58,7 @@ export function CellulesPage({ onNavigate }: CellulesPageProps) {
           <div className="text-2xl font-bold text-blue-600">10</div>
           <div className="text-[10px] text-gray-500">Loi de Metcalfe: n(n-1)/2</div>
         </Card>
-        <Card className="p-3">
+        <Card className="p-3 border-t-[3px] border-t-green-400">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[10px] text-gray-400 uppercase">Economie collective</span>
             <TrendingUp className="h-3.5 w-3.5 text-green-400" />
@@ -69,8 +69,11 @@ export function CellulesPage({ onNavigate }: CellulesPageProps) {
       </div>
 
       {/* Grille progression rabais */}
-      <Card className="p-4">
-        <h3 className="text-sm font-bold text-gray-800 mb-3">Progression du rabais de groupe</h3>
+      <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+        <div className="bg-gradient-to-r from-emerald-100 to-green-100 px-4 py-2.5 border-b border-emerald-200">
+          <span className="text-sm font-bold text-emerald-900">Progression du rabais de groupe</span>
+        </div>
+        <div className="p-4">
         <div className="flex items-center gap-1 mb-2">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
             <div key={n} className="flex-1 flex flex-col items-center">
@@ -88,17 +91,19 @@ export function CellulesPage({ onNavigate }: CellulesPageProps) {
           <span>-25% (9 max)</span>
         </div>
         <p className="text-[10px] text-gray-400 mt-2 italic">Le palier atteint ne redescend JAMAIS, meme si des membres quittent le cercle.</p>
-      </Card>
+        </div>
+      </div>
 
       {/* Tableau des membres */}
-      <Card className="p-4">
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <h3 className="text-sm font-bold text-gray-800">Membres de la Cellule Orbit9</h3>
-            <p className="text-[10px] text-gray-400">Max 9 membres. 1 client = 1 seule cellule. Bots collaborent automatiquement.</p>
+      <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+        <div className="bg-gradient-to-r from-blue-100 to-cyan-100 px-4 py-2.5 border-b border-blue-200">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-bold text-blue-900">Membres de la Cellule Orbit9</span>
+            <Button size="sm" className="gap-1.5 text-xs"><UserPlus className="h-3 w-3" /> Inviter un partenaire</Button>
           </div>
-          <Button size="sm" className="gap-1.5 text-xs"><UserPlus className="h-3 w-3" /> Inviter un partenaire</Button>
         </div>
+        <div className="p-4">
+        <p className="text-[10px] text-gray-400 mb-3">Max 9 membres. 1 client = 1 seule cellule. Bots collaborent automatiquement.</p>
 
         <div className="grid grid-cols-12 gap-2 px-2 py-1.5 bg-gray-50 rounded text-[10px] font-semibold text-gray-500 uppercase mb-1">
           <span className="col-span-4">Entreprise</span>
@@ -148,21 +153,25 @@ export function CellulesPage({ onNavigate }: CellulesPageProps) {
             </div>
           ))}
         </div>
-      </Card>
+      </div>
+      </div>
 
       {/* ── OPPORTUNITES ACTIVES (absorbe du Matching) ── */}
-      <Card className="p-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Handshake className="h-4 w-4 text-blue-600" />
-            <h3 className="text-sm font-bold text-gray-800">Opportunites actives dans la Cellule</h3>
-          </div>
-          <div className="flex gap-2">
-            <Badge variant="outline" className="text-[10px] cursor-pointer">Toutes</Badge>
-            <Badge variant="outline" className="text-[10px] cursor-pointer">Intra-Cellule</Badge>
-            <Badge variant="outline" className="text-[10px] cursor-pointer">Inter-Cellules</Badge>
+      <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+        <div className="bg-gradient-to-r from-amber-100 to-orange-100 px-4 py-2.5 border-b border-amber-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Handshake className="h-4 w-4 text-amber-600" />
+              <span className="text-sm font-bold text-amber-900">Opportunites actives dans la Cellule</span>
+            </div>
+            <div className="flex gap-2">
+              <Badge variant="outline" className="text-[10px] cursor-pointer">Toutes</Badge>
+              <Badge variant="outline" className="text-[10px] cursor-pointer">Intra-Cellule</Badge>
+              <Badge variant="outline" className="text-[10px] cursor-pointer">Inter-Cellules</Badge>
+            </div>
           </div>
         </div>
+        <div className="p-4">
 
         {/* Alerte main levee */}
         <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3 mb-3">
@@ -267,11 +276,18 @@ export function CellulesPage({ onNavigate }: CellulesPageProps) {
             </Card>
           ))}
         </div>
-      </Card>
+      </div>
+      </div>
 
       {/* Activite recente */}
-      <Card className="p-4">
-        <h3 className="text-sm font-bold text-gray-800 mb-3">Activite recente</h3>
+      <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+        <div className="bg-gradient-to-r from-gray-100 to-slate-100 px-4 py-2.5 border-b border-gray-200">
+          <div className="flex items-center gap-2">
+            <RefreshCw className="h-4 w-4 text-gray-600" />
+            <span className="text-sm font-bold text-gray-800">Activite recente</span>
+          </div>
+        </div>
+        <div className="p-4">
         <div className="space-y-2">
           {[
             { time: "Il y a 1h", text: "Bot CTO d'AutomaTech a envoye les specs du cobot a Bot CTO d'Usinage Precision", icon: RefreshCw, color: "blue" },
@@ -291,7 +307,8 @@ export function CellulesPage({ onNavigate }: CellulesPageProps) {
             );
           })}
         </div>
-      </Card>
+      </div>
+      </div>
 
       {/* Cross-links */}
       <div className="grid grid-cols-2 gap-3">

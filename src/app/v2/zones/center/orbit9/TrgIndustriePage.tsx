@@ -138,8 +138,14 @@ export function TrgIndustriePage() {
 
       {activeTab === "couts" && (
         <div className="space-y-4">
-          <Card className="p-4">
-            <h3 className="text-sm font-bold text-gray-800 mb-1">Couts Moyens par Type de Solution (k$)</h3>
+          <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+            <div className="bg-gradient-to-r from-amber-100 to-orange-100 px-4 py-2.5 border-b border-amber-200">
+              <div className="flex items-center gap-2">
+                <DollarSign className="h-4 w-4 text-amber-600" />
+                <span className="text-sm font-bold text-amber-900">Couts Moyens par Type de Solution (k$)</span>
+              </div>
+            </div>
+            <div className="p-4">
             <p className="text-xs text-gray-400 mb-3">Investissement total incluant materiel, integration, formation et maintenance annuelle</p>
             {[
               { type: "Robot Collaboratif (Cobot)", materiel: "25-75k$", integration: "35k$", formation: "8k$", maintenance: "6k$/an", total: "124k$" },
@@ -165,14 +171,21 @@ export function TrgIndustriePage() {
                 </div>
               </div>
             ))}
-          </Card>
+          </div>
+          </div>
         </div>
       )}
 
       {activeTab === "rh" && (
         <div className="space-y-4">
-          <Card className="p-4">
-            <h3 className="text-sm font-bold text-gray-800 mb-3">Salaires Moyens — Secteur Manufacturier Quebec</h3>
+          <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+            <div className="bg-gradient-to-r from-blue-100 to-indigo-100 px-4 py-2.5 border-b border-blue-200">
+              <div className="flex items-center gap-2">
+                <Briefcase className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-bold text-blue-900">Salaires Moyens — Secteur Manufacturier Quebec</span>
+              </div>
+            </div>
+            <div className="p-4">
             <div className="grid grid-cols-2 gap-2">
               {[
                 { role: "Ingenieur mecanique", salaire: "78-95K$", demande: "Forte" },
@@ -196,13 +209,20 @@ export function TrgIndustriePage() {
                 </div>
               ))}
             </div>
-          </Card>
+          </div>
+          </div>
         </div>
       )}
 
       {activeTab === "opportunites" && (
-        <Card className="p-4">
-          <h3 className="text-sm font-bold text-gray-800 mb-3">Opportunites sectorielles detectees</h3>
+        <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+          <div className="bg-gradient-to-r from-indigo-100 to-violet-100 px-4 py-2.5 border-b border-indigo-200">
+            <div className="flex items-center gap-2">
+              <Lightbulb className="h-4 w-4 text-indigo-600" />
+              <span className="text-sm font-bold text-indigo-900">Opportunites sectorielles detectees</span>
+            </div>
+          </div>
+          <div className="p-4">
           <p className="text-xs text-gray-400 mb-3">Basees sur l'analyse croisee des sources de donnees et des tendances du reseau Orbit9.</p>
           {[
             { sector: "Automatisation", opportunity: "Penurie de main-d'oeuvre → ROI cobot en 14 mois", impact: "Eleve", trend: "↑" },
@@ -222,7 +242,8 @@ export function TrgIndustriePage() {
               <span className="text-sm">{o.trend}</span>
             </div>
           ))}
-        </Card>
+        </div>
+        </div>
       )}
 
       {activeTab === "etudes" && (
@@ -241,8 +262,14 @@ export function TrgIndustriePage() {
             </div>
           </Card>
 
-          <Card className="p-4">
-            <h3 className="text-sm font-bold text-gray-800 mb-3">Etudes disponibles</h3>
+          <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+            <div className="bg-gradient-to-r from-blue-100 to-cyan-100 px-4 py-2.5 border-b border-blue-200">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-bold text-blue-900">Etudes disponibles</span>
+              </div>
+            </div>
+            <div className="p-4">
             {[
               { title: "Portrait manufacturier Quebec 2025", source: "STIQ + MEI", pages: 45, type: "Rapport" },
               { title: "Tendances automatisation Canada", source: "Deloitte", pages: 32, type: "Etude" },
@@ -258,7 +285,8 @@ export function TrgIndustriePage() {
                 <Button size="sm" variant="outline" className="text-[10px] h-7 gap-1"><Download className="h-3 w-3" /> PDF</Button>
               </div>
             ))}
-          </Card>
+          </div>
+          </div>
         </div>
       )}
     </div>

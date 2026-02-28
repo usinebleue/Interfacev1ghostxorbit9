@@ -71,7 +71,7 @@ export function SectionOrbit9({ collapsed }: Props) {
         ) : (
           <ChevronRight className="h-3 w-3" />
         )}
-        Mon Reseau Orbit 9
+        Mon Reseau
       </CollapsibleTrigger>
 
       <CollapsibleContent>
