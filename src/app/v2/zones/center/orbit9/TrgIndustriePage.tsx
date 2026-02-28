@@ -28,16 +28,18 @@ export function TrgIndustriePage() {
 
   return (
     <div className="space-y-5">
-      {/* Header gradient */}
-      <div className="bg-gradient-to-r from-indigo-700 via-purple-600 to-violet-700 rounded-xl p-5 text-white">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-bold">Dashboard de l'Industrie</h2>
-            <p className="text-xs text-white/70">Statistiques et tendances du secteur manufacturier</p>
+      {/* Header Card avec gradient + KPIs */}
+      <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+        <div className="bg-gradient-to-r from-indigo-500 to-violet-500 px-4 py-2.5 border-b">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Globe className="h-4 w-4 text-white" />
+              <span className="text-sm font-bold text-white">Indicateurs Cles</span>
+            </div>
+            <Badge className="bg-white/20 text-white text-[10px]">Fevrier 2026</Badge>
           </div>
-          <Badge className="bg-white/20 text-white text-[10px]">Mise a jour: Fevrier 2026</Badge>
         </div>
-        <div className="grid grid-cols-4 gap-3 mt-4">
+        <div className="grid grid-cols-4 gap-3 p-4">
           {[
             { value: "68.5%", label: "Taux d'Efficacite Global Moyen", trend: "+4.2%", icon: Gauge },
             { value: "2.8M$", label: "Investissement en Automatisation", trend: "+12.5%", icon: DollarSign },
@@ -46,25 +48,25 @@ export function TrgIndustriePage() {
           ].map((kpi) => {
             const KIcon = kpi.icon;
             return (
-              <div key={kpi.label} className="bg-white/10 rounded-lg p-3 backdrop-blur">
+              <div key={kpi.label} className="p-3 rounded-lg bg-gray-50 border border-gray-100">
                 <div className="flex items-center justify-between mb-1">
-                  <KIcon className="h-4 w-4 text-white/70" />
-                  <span className="text-[10px] font-bold text-green-300">{kpi.trend}</span>
+                  <KIcon className="h-4 w-4 text-gray-400" />
+                  <span className="text-[10px] font-bold text-green-600">{kpi.trend}</span>
                 </div>
-                <p className="text-xl font-bold">{kpi.value}</p>
-                <p className="text-[10px] text-white/70">{kpi.label}</p>
+                <p className="text-xl font-bold text-gray-800">{kpi.value}</p>
+                <p className="text-[10px] text-gray-500">{kpi.label}</p>
               </div>
             );
           })}
         </div>
       </div>
 
-      {/* Sub-tabs */}
-      <div className="flex gap-1 border-b border-gray-200">
+      {/* Sub-tabs — pill style standard */}
+      <div className="flex gap-1">
         {tabs.map((tab) => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={cn(
-            "px-4 py-2 text-xs font-medium border-b-2 transition-all cursor-pointer",
-            activeTab === tab.id ? "border-indigo-600 text-indigo-700" : "border-transparent text-gray-500 hover:text-gray-700"
+            "px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
+            activeTab === tab.id ? "bg-gray-900 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
           )}>
             {tab.label}
           </button>

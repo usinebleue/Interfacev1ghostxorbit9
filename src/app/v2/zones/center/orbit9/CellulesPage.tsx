@@ -250,7 +250,7 @@ export function CellulesPage({ onNavigate }: CellulesPageProps) {
               <div className="flex items-center justify-between pt-3 border-t border-gray-100">
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-gray-500">Match:</span>
-                  <div className="w-20 h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="w-20 h-2.5 bg-gray-100 rounded-full overflow-hidden">
                     <div className="h-full bg-blue-500 rounded-full" style={{ width: `${opp.score}%` }} />
                   </div>
                   <span className="text-xs font-bold text-blue-600">{opp.score}%</span>

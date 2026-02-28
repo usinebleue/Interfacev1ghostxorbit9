@@ -853,7 +853,7 @@ export function PageTypePage() {
                       </div>
                       <p className="text-xs text-gray-600 leading-relaxed mb-2">Architecture scalable, APIs pretes en 48h.</p>
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
                           <div className="h-full bg-green-500 rounded-full" style={{ width: "80%" }} />
                         </div>
                         <span className="text-xs font-mono font-bold text-gray-600 w-6 text-right">8</span>
@@ -867,7 +867,7 @@ export function PageTypePage() {
                       </div>
                       <p className="text-xs text-gray-600 leading-relaxed mb-2">Risque d'integration avec systemes legacy.</p>
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
                           <div className="h-full bg-red-500 rounded-full" style={{ width: "40%" }} />
                         </div>
                         <span className="text-xs font-mono font-bold text-gray-600 w-6 text-right">4</span>
@@ -1009,7 +1009,7 @@ export function PageTypePage() {
                   {/* Barre pleine largeur */}
                   <div className="flex items-center gap-3">
                     <span className="text-[10px] text-gray-400 w-24 shrink-0">Barre</span>
-                    <div className="flex-1 max-w-[200px] h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="flex-1 max-w-[200px] h-2.5 bg-gray-100 rounded-full overflow-hidden">
                       <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500" style={{ width: "65%" }} />
                     </div>
                     <span className="text-[10px] text-gray-400">Cahier Projet</span>
