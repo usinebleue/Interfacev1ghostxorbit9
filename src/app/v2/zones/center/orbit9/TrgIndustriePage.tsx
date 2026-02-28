@@ -48,21 +48,23 @@ export function TrgIndustriePage() {
         </div>
         <div className="grid grid-cols-4 gap-3 p-4">
           {[
-            { value: "68.5%", label: "Taux d'Efficacite Global Moyen", trend: "+4.2%", icon: Gauge },
-            { value: "2.8M$", label: "Investissement en Automatisation", trend: "+12.5%", icon: DollarSign },
-            { value: "42 min", label: "Temps d'Arret Moyen", trend: "-8.3%", icon: Clock },
-            { value: "18 mois", label: "ROI Moyen Projets Auto.", trend: "-3 mois", icon: TrendingUp },
+            { value: "68.5%", label: "TRG Global Moyen", trend: "+4.2%", icon: Gauge, color: "indigo" },
+            { value: "2.8M$", label: "Invest. Automatisation", trend: "+12.5%", icon: DollarSign, color: "emerald" },
+            { value: "42 min", label: "Temps d'Arret Moyen", trend: "-8.3%", icon: Clock, color: "amber" },
+            { value: "18 mois", label: "ROI Moyen Projets", trend: "-3 mois", icon: TrendingUp, color: "green" },
           ].map((kpi) => {
             const KIcon = kpi.icon;
             return (
-              <div key={kpi.label} className="p-3 rounded-lg bg-gray-50 border border-gray-100">
+              <Card key={kpi.label} className={cn("p-3 border-t-[3px]", `border-t-${kpi.color}-400`)}>
                 <div className="flex items-center justify-between mb-1">
-                  <KIcon className="h-4 w-4 text-gray-400" />
-                  <span className="text-[10px] font-bold text-green-600">{kpi.trend}</span>
+                  <span className="text-[10px] text-gray-400 uppercase">{kpi.label}</span>
+                  <KIcon className={cn("h-3.5 w-3.5", `text-${kpi.color}-400`)} />
                 </div>
-                <p className="text-xl font-bold text-gray-800">{kpi.value}</p>
-                <p className="text-[10px] text-gray-500">{kpi.label}</p>
-              </div>
+                <div className={cn("text-2xl font-bold", `text-${kpi.color}-600`)}>{kpi.value}</div>
+                <div className="text-[10px] text-gray-500">
+                  <span className="font-bold text-green-600">{kpi.trend}</span>
+                </div>
+              </Card>
             );
           })}
         </div>

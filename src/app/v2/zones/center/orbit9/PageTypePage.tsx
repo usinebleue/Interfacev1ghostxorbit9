@@ -500,9 +500,9 @@ export function PageTypePage() {
               {/* --- KPI Cards 4 colonnes --- */}
               <div>
                 <h3 className="text-sm font-bold text-gray-800 mb-1">KPI Cards — 4 colonnes (standard)</h3>
-                <p className="text-[10px] text-gray-400 mb-3">grid-cols-4 gap-3 — Marketplace, Cellules, Tour de Controle</p>
+                <p className="text-[10px] text-gray-400 mb-3">grid-cols-4 gap-3 — border-t-[3px] obligatoire — Marketplace, Cellules, Pionniers, etc.</p>
                 <div className="grid grid-cols-4 gap-3">
-                  <Card className="p-3">
+                  <Card className="p-3 border-t-[3px] border-t-blue-400">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-[10px] text-gray-400 uppercase">Label KPI</span>
                       <Users className="h-3.5 w-3.5 text-blue-400" />
@@ -510,7 +510,7 @@ export function PageTypePage() {
                     <div className="text-2xl font-bold text-blue-600">42</div>
                     <div className="text-[10px] text-gray-500">Description courte</div>
                   </Card>
-                  <Card className="p-3">
+                  <Card className="p-3 border-t-[3px] border-t-green-400">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-[10px] text-gray-400 uppercase">Montant</span>
                       <DollarSign className="h-3.5 w-3.5 text-green-400" />
@@ -518,7 +518,7 @@ export function PageTypePage() {
                     <div className="text-2xl font-bold text-green-600">2,700$</div>
                     <div className="text-[10px] text-gray-500">Par mois</div>
                   </Card>
-                  <Card className="p-3">
+                  <Card className="p-3 border-t-[3px] border-t-emerald-400">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-[10px] text-gray-400 uppercase">Pourcentage</span>
                       <TrendingUp className="h-3.5 w-3.5 text-emerald-400" />
@@ -526,7 +526,7 @@ export function PageTypePage() {
                     <div className="text-2xl font-bold text-emerald-600">85%</div>
                     <div className="text-[10px] text-gray-500">En hausse</div>
                   </Card>
-                  <Card className="p-3">
+                  <Card className="p-3 border-t-[3px] border-t-amber-400">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-[10px] text-gray-400 uppercase">Score</span>
                       <Star className="h-3.5 w-3.5 text-amber-400" />
