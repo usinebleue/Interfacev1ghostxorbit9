@@ -15,6 +15,7 @@ import type {
   ThreadStatus,
   ReflectionMode,
   MessageType,
+  Crystal,
 } from "./types";
 
 // Options contextuelles par defaut — arbre de developpement de la pensee (wireframe p.3)
@@ -62,6 +63,92 @@ const FALLBACK_OPTIONS = [
   "Quelles sont les options?",
   "Passer a l'action",
 ];
+
+// ── Mode de reflexion live — config par mode ──
+
+interface ModeConfig {
+  options: string[];
+  coachingIntro: string;
+  coachingConverge: string;
+  synthesisPrompt: string;
+  autoConsultBots: string[];   // bots auto-consultes dans ce mode
+  maxExchanges: number;        // avant nudge convergence
+}
+
+const MODE_LIVE_CONFIG: Record<string, ModeConfig> = {
+  credo: {
+    options: ["Approfondir cette idee", "Voir les implications", "Prochaines etapes?", "Challenger"],
+    coachingIntro: "Mode CREDO — je vais te guider de la tension jusqu'a l'action concrete. Explore les angles, challenge, et je cristallise a la fin.",
+    coachingConverge: "On a bien explore. Pret pour la synthese CREDO?",
+    synthesisPrompt: "Synthetise en format CREDO: (C) Tension identifiee, (R) Recherche faite, (E) Expose des options, (D) Demonstration de la meilleure, (O) Obtenir — prochaines etapes concretes.",
+    autoConsultBots: [],
+    maxExchanges: 6,
+  },
+  debat: {
+    options: ["Argument pour", "Argument contre", "Trouver un compromis", "Verdict final"],
+    coachingIntro: "Mode Debat — je vais presenter 2 positions opposees. Challenge chaque cote, pousse les arguments.",
+    coachingConverge: "Les arguments sont clairs des 2 cotes. On passe au verdict?",
+    synthesisPrompt: "Synthetise le debat: Position A (arguments + forces), Position B (arguments + forces), Verdict (quelle position est la plus solide et pourquoi), Decision recommandee.",
+    autoConsultBots: ["BCF", "BCS"],
+    maxExchanges: 8,
+  },
+  brainstorm: {
+    options: ["Plus d'idees!", "Combiner 2 idees", "Idee folle", "Assez — on trie"],
+    coachingIntro: "Mode Brainstorm — toutes les idees sont bonnes, on filtre apres. Quantite avant qualite!",
+    coachingConverge: "On a assez d'idees. On passe au tri et au clustering?",
+    synthesisPrompt: "Classe les idees par potentiel (fort/moyen/faible). Top 3 idees avec justification. Prochaine etape pour chaque top idee.",
+    autoConsultBots: ["BCM", "BCT"],
+    maxExchanges: 5,
+  },
+  crise: {
+    options: ["Impact immediat?", "Qui est affecte?", "Plan B", "Action dans les 30 min"],
+    coachingIntro: "Mode Crise — priorite: stabiliser la situation. Pas de place pour la nuance, il faut agir.",
+    coachingConverge: "Situation evaluee. On passe au plan d'action immediat?",
+    synthesisPrompt: "Plan de crise: (1) Severite 1-10, (2) Actions immediates (30 min), (3) Communication a faire, (4) Responsable de chaque action, (5) Suivi dans 24h.",
+    autoConsultBots: ["BOO"],
+    maxExchanges: 4,
+  },
+  analyse: {
+    options: ["Cause racine?", "Donnees manquantes", "Comparer avec un benchmark", "Conclusions?"],
+    coachingIntro: "Mode Analyse — decomposons le probleme methodiquement. Facts d'abord, opinions ensuite.",
+    coachingConverge: "L'analyse est solide. On formule les conclusions?",
+    synthesisPrompt: "Analyse structuree: (1) Probleme decompose, (2) Causes racines identifiees, (3) Donnees cles, (4) Conclusions, (5) Recommandations actionnables.",
+    autoConsultBots: ["BCT", "BCF"],
+    maxExchanges: 6,
+  },
+  decision: {
+    options: ["Quels criteres?", "Risques de chaque option", "Comparer Go vs No-Go", "Ma decision"],
+    coachingIntro: "Mode Decision — on va structurer les options et les evaluer objectivement. Pas de gut feeling sans donnees.",
+    coachingConverge: "Les options sont evaluees. Pret a trancher?",
+    synthesisPrompt: "Matrice de decision: Options evaluees (criteres, risques, potentiel). Recommandation avec niveau de confiance. Conditions de succes du Go. Plan B si No-Go.",
+    autoConsultBots: ["BCF", "BCS"],
+    maxExchanges: 5,
+  },
+  strategie: {
+    options: ["Forces et faiblesses", "Opportunites du marche", "Menaces a anticiper", "Plan d'execution"],
+    coachingIntro: "Mode Strategie — vision long terme. On regarde le terrain avant de bouger.",
+    coachingConverge: "La strategie se dessine. On formalise le plan?",
+    synthesisPrompt: "Plan strategique: (1) SWOT synthetise, (2) 3 axes strategiques prioritaires, (3) Quick wins (30 jours), (4) Moyen terme (90 jours), (5) Indicateurs de succes.",
+    autoConsultBots: ["BCS", "BCF"],
+    maxExchanges: 7,
+  },
+  innovation: {
+    options: ["Technique disruptive?", "Qui fait ca ailleurs?", "Prototype minimal", "Potentiel marche"],
+    coachingIntro: "Mode Innovation — on cherche ce qui n'existe pas encore. Aucune idee trop folle.",
+    coachingConverge: "On a identifie des pistes. On selectionne la plus prometteuse?",
+    synthesisPrompt: "Innovation brief: (1) Opportunite identifiee, (2) Solution proposee, (3) Differenciateur cle, (4) Premier prototype (description), (5) Marche potentiel, (6) Prochaine etape concrete.",
+    autoConsultBots: ["BCT", "BCM"],
+    maxExchanges: 6,
+  },
+  deep: {
+    options: ["Creuse plus profond", "Lien inattendu?", "Analogie avec un autre domaine", "Insight a retenir"],
+    coachingIntro: "Mode Deep Resonance — on plonge dans les couches profondes. Intuition + reflexion croisee.",
+    coachingConverge: "Des insights profonds emergent. On cristallise?",
+    synthesisPrompt: "Deep insights: (1) Insight principal (ce qui n'etait pas evident), (2) Connexions inattendues decouvertes, (3) Question que personne ne posait, (4) Recommandation contre-intuitive, (5) Ce que ca change pour la suite.",
+    autoConsultBots: ["BCS"],
+    maxExchanges: 5,
+  },
+};
 
 // --- useBots ---
 
@@ -163,6 +250,27 @@ export function useChat() {
     }
   }, [messages, activeThreadId]);
 
+  // ── Suspension Intelligente — drift detection ──
+  const driftWarningCount = useRef(0);
+
+  function detectDrift(originalTension: string, currentMsg: string): boolean {
+    // Extract significant words (>3 chars, not stopwords)
+    const stopwords = new Set(["avec", "pour", "dans", "cette", "quel", "quels", "quelle", "quelles", "comment", "pourquoi", "aussi", "mais", "plus", "nous", "vous", "sont", "etre", "avoir", "faire", "peut", "comme", "tout", "bien", "tres", "alors"]);
+    const extractWords = (s: string) =>
+      s.toLowerCase().replace(/[^a-zàâéèêëïîôùûüçœ]/g, " ").split(/\s+/).filter((w) => w.length > 3 && !stopwords.has(w));
+
+    const origWords = new Set(extractWords(originalTension));
+    const currWords = extractWords(currentMsg);
+    if (origWords.size === 0 || currWords.length === 0) return false;
+
+    // Calculate overlap ratio
+    const overlap = currWords.filter((w) => origWords.has(w)).length;
+    const ratio = overlap / currWords.length;
+
+    // If less than 15% overlap and more than 3 exchanges happened, it's a drift
+    return ratio < 0.15 && currWords.length >= 4;
+  }
+
   // Inject a coaching message from CarlOS (system-level guidance)
   const injectCoaching = useCallback(
     (text: string, options?: string[]) => {
@@ -250,6 +358,13 @@ export function useChat() {
         };
         const res = await api.chat(req);
 
+        // Mode-specific options
+        const modeConf = MODE_LIVE_CONFIG[mode || "credo"] || MODE_LIVE_CONFIG.credo;
+        const agentOptions = DEFAULT_OPTIONS_BY_AGENT[agent || "BCO"];
+        const options = msgType === "synthesis"
+          ? ["Cristalliser le resultat", "Passer au Cahier SMART", "Continuer l'exploration"]
+          : modeConf.options.length > 0 ? modeConf.options : (agentOptions || FALLBACK_OPTIONS);
+
         const botMsg: ChatMessage = {
           id: `msg-${++idCounter.current}`,
           role: "assistant",
@@ -259,34 +374,89 @@ export function useChat() {
           ghost: res.ghost_actif,
           tier: res.tier,
           latence_ms: res.latence_ms,
-          options:
-            DEFAULT_OPTIONS_BY_AGENT[agent || "BCO"] || FALLBACK_OPTIONS,
-          msgType: msgType === "challenge" ? "challenge" : msgType === "consultation" ? "consultation" : "normal",
+          options,
+          msgType: msgType === "challenge" ? "challenge" : msgType === "consultation" ? "consultation" : msgType === "synthesis" ? "synthesis" : "normal",
           parentId: meta?.parentId,
           branchDepth,
           branchLabel: meta?.branchLabel,
         };
         setMessages((prev) => [...prev, botMsg]);
 
-        // CarlOS coaching: after first bot response, guide the user
+        // CarlOS coaching: mode-specific, after first bot response
         const allMsgs = [...messages, userMsg, botMsg];
         const botCount = allMsgs.filter((m) => m.role === "assistant").length;
+        const userMsgs = allMsgs.filter((m) => m.role === "user");
 
         if (botCount === 1) {
-          // First response — introduce branching
+          // First response — mode-specific intro
           setTimeout(() => {
-            injectCoaching(
-              "Tu peux challenger cette reponse, approfondir un point, ou consulter un autre specialiste. Explore les angles — je t'encadre.",
-            );
+            injectCoaching(modeConf.coachingIntro);
           }, 500);
-        } else if (botCount === 5) {
-          // After 5 exchanges — nudge towards convergence
+
+          // Auto-consult bots for this mode (if configured)
+          if (modeConf.autoConsultBots.length > 0 && msgType === "normal") {
+            const firstAutoBot = modeConf.autoConsultBots[0];
+            if (firstAutoBot && firstAutoBot !== agent) {
+              // Auto-fire consultation to the first recommended bot
+              setTimeout(async () => {
+                try {
+                  const autoReq: ChatRequest = { message: text, user_id: 1, agent: firstAutoBot, mode: mode || undefined, direct: true };
+                  const autoRes = await api.chat(autoReq);
+                  const autoMsg: ChatMessage = {
+                    id: `msg-${++idCounter.current}`,
+                    role: "assistant",
+                    content: autoRes.response,
+                    timestamp: new Date(),
+                    agent: autoRes.agent,
+                    ghost: autoRes.ghost_actif,
+                    tier: autoRes.tier,
+                    latence_ms: autoRes.latence_ms,
+                    options: modeConf.options,
+                    msgType: "consultation",
+                    branchLabel: `Auto-consultation — ${firstAutoBot}`,
+                    branchDepth: 1,
+                  };
+                  setMessages((prev) => [...prev, autoMsg]);
+                } catch { /* silent fail on auto-consult */ }
+              }, 1500);
+            }
+          }
+        } else if (botCount >= modeConf.maxExchanges) {
+          // Mode-specific convergence nudge
           setTimeout(() => {
             injectCoaching(
-              "On a bien explore le sujet. Tu veux continuer ou on passe a la synthese?",
+              modeConf.coachingConverge,
               ["Synthese", "Continuer l'exploration"]
             );
           }, 500);
+        }
+
+        // ── Suspension Intelligente — drift detection ──
+        if (userMsgs.length >= 3 && msgType === "normal") {
+          const originalTension = userMsgs[0]?.content || "";
+          const isDrifting = detectDrift(originalTension, text);
+
+          if (isDrifting) {
+            driftWarningCount.current++;
+
+            if (driftWarningCount.current === 1) {
+              // Premier avertissement — signal doux
+              setTimeout(() => {
+                injectCoaching(
+                  "On s'eloigne du sujet initial. Tu veux continuer sur cette tangente ou revenir a ta tension de depart?",
+                  ["Revenir au sujet", "Parker et continuer ici", "C'est lie, continue"]
+                );
+              }, 600);
+            } else if (driftWarningCount.current >= 2) {
+              // Deuxieme avertissement — auto-park propose
+              setTimeout(() => {
+                injectCoaching(
+                  "Ca fait 2 fois qu'on derive. Je te propose de parker cette discussion et d'en ouvrir une nouvelle pour ce nouveau sujet.",
+                  ["Parker et nouveau thread", "Forcer la synthese", "Laisser-moi continuer"]
+                );
+              }, 600);
+            }
+          }
         }
       } catch (err) {
         const errMsg: ChatMessage = {
@@ -412,4 +582,45 @@ export function useClients() {
   }, []);
 
   return { clients, loading, error };
+}
+
+// --- useCrystals — banque d'idees cristallisees ---
+
+const CRYSTALS_KEY = "ghostx-crystals";
+
+export function useCrystals() {
+  const [crystals, setCrystals] = useState<Crystal[]>(() => {
+    try {
+      const raw = localStorage.getItem(CRYSTALS_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch { return []; }
+  });
+
+  useEffect(() => {
+    try { localStorage.setItem(CRYSTALS_KEY, JSON.stringify(crystals)); }
+    catch { /* noop */ }
+  }, [crystals]);
+
+  const addCrystal = useCallback((crystal: Omit<Crystal, "id" | "date">) => {
+    const newCrystal: Crystal = {
+      ...crystal,
+      id: `crystal-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
+      date: new Date().toISOString(),
+    };
+    setCrystals((prev) => [newCrystal, ...prev]);
+    return newCrystal;
+  }, []);
+
+  const deleteCrystal = useCallback((id: string) => {
+    setCrystals((prev) => prev.filter((c) => c.id !== id));
+  }, []);
+
+  const exportCrystals = useCallback(() => {
+    const text = crystals.map((c) =>
+      `## ${c.titre}\n*${c.bot} — ${c.mode} — ${new Date(c.date).toLocaleDateString("fr-CA")}*\n\n${c.contenu}\n\n---`
+    ).join("\n\n");
+    return text;
+  }, [crystals]);
+
+  return { crystals, addCrystal, deleteCrystal, exportCrystals };
 }

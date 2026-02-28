@@ -307,6 +307,8 @@ interface BotActionsProps {
   onChallenge: () => void;
   onApprofondir: () => void;
   onConsulterBot: (botCode: string) => void;
+  onCrystallize: () => void;
+  crystallized: boolean;
   disabled: boolean;
   availableBots: { code: string; nom: string; titre: string }[];
   currentBotCode: string;
@@ -320,6 +322,8 @@ function BotMessageActions({
   onChallenge,
   onApprofondir,
   onConsulterBot,
+  onCrystallize,
+  crystallized,
   disabled,
   availableBots,
   currentBotCode,
@@ -428,14 +432,22 @@ function BotMessageActions({
           )}
         </div>
 
-        {/* Cristalliser (sauvegarder l'idee) */}
+        {/* Cristalliser (sauvegarder l'idee dans la banque) */}
         <button
-          onClick={() => onOptionClick("Cristallise cette idee — resume le resultat cle en 3 points.")}
-          disabled={disabled}
-          className="flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors cursor-pointer disabled:opacity-50 font-medium"
+          onClick={onCrystallize}
+          disabled={disabled || crystallized}
+          className={cn(
+            "flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full transition-colors cursor-pointer font-medium",
+            crystallized
+              ? "bg-emerald-200 text-emerald-800 border border-emerald-300"
+              : "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 disabled:opacity-50"
+          )}
         >
-          <Bookmark className="h-3 w-3" />
-          Cristalliser
+          {crystallized ? (
+            <><Check className="h-3 w-3" /> Cristallise</>
+          ) : (
+            <><Bookmark className="h-3 w-3" /> Cristalliser</>
+          )}
         </button>
       </div>
     </div>
@@ -455,6 +467,7 @@ export function LiveChat({
   const {
     messages, isTyping, activeReflectionMode, newConversation, sendMessage,
     threads, activeThreadId, parkThread, resumeThread, completeThread, deleteThread,
+    crystals, crystallize, deleteCrystal, exportCrystals,
   } = useChatContext();
   const { activeBotCode } = useFrameMaster();
   const { bots } = useBots();
@@ -462,6 +475,8 @@ export function LiveChat({
   const { copied, copy } = useCopy();
   const [challengeCounts, setChallengeCounts] = useState<Record<string, number>>({});
   const [showThreads, setShowThreads] = useState(false);
+  const [showCrystals, setShowCrystals] = useState(false);
+  const [justCrystallized, setJustCrystallized] = useState<string | null>(null);
 
   const modeInfo = MODE_CONFIG[activeReflectionMode] || MODE_CONFIG.credo;
 
@@ -489,9 +504,33 @@ export function LiveChat({
   // Action handlers
   const handleOptionClick = useCallback(
     (text: string) => {
-      if (!isTyping) sendMessage(text, activeBotCode);
+      if (isTyping) return;
+
+      // Special routing for coaching options
+      switch (text) {
+        case "Parker et nouveau thread":
+          parkThread();
+          return;
+        case "Revenir au sujet": {
+          const firstUser = messages.find((m) => m.role === "user");
+          if (firstUser) sendMessage(`Revenons au sujet initial: ${firstUser.content}`, activeBotCode);
+          return;
+        }
+        case "Forcer la synthese":
+        case "Synthese finale":
+        case "Synthese":
+          handleSynthesis();
+          return;
+        case "Retour au sujet principal": {
+          const orig = messages.find((m) => m.role === "user");
+          if (orig) sendMessage(`Recentrons-nous: ${orig.content}`, activeBotCode);
+          return;
+        }
+        default:
+          sendMessage(text, activeBotCode);
+      }
     },
-    [sendMessage, activeBotCode, isTyping]
+    [sendMessage, activeBotCode, isTyping, messages, parkThread, handleSynthesis]
   );
 
   const handleChallenge = useCallback(
@@ -537,16 +576,30 @@ export function LiveChat({
   );
 
   // Request synthesis from CarlOS
+  // Mode-specific synthesis prompts
+  const SYNTHESIS_PROMPTS: Record<string, string> = {
+    credo: "Synthetise en format CREDO: (C) Tension identifiee, (R) Recherche faite, (E) Expose des options, (D) Demonstration de la meilleure, (O) Obtenir — prochaines etapes concretes.",
+    debat: "Synthetise le debat: Position A (arguments + forces), Position B (arguments + forces), Verdict (quelle position est la plus solide et pourquoi), Decision recommandee.",
+    brainstorm: "Classe les idees par potentiel (fort/moyen/faible). Top 3 idees avec justification. Prochaine etape pour chaque top idee.",
+    crise: "Plan de crise: (1) Severite 1-10, (2) Actions immediates (30 min), (3) Communication a faire, (4) Responsable de chaque action, (5) Suivi dans 24h.",
+    analyse: "Analyse structuree: (1) Probleme decompose, (2) Causes racines identifiees, (3) Donnees cles, (4) Conclusions, (5) Recommandations actionnables.",
+    decision: "Matrice de decision: Options evaluees (criteres, risques, potentiel). Recommandation avec niveau de confiance. Conditions de succes du Go. Plan B si No-Go.",
+    strategie: "Plan strategique: (1) SWOT synthetise, (2) 3 axes strategiques prioritaires, (3) Quick wins (30 jours), (4) Moyen terme (90 jours), (5) Indicateurs de succes.",
+    innovation: "Innovation brief: (1) Opportunite identifiee, (2) Solution proposee, (3) Differenciateur cle, (4) Premier prototype, (5) Marche potentiel, (6) Prochaine etape.",
+    deep: "Deep insights: (1) Insight principal (ce qui n'etait pas evident), (2) Connexions inattendues, (3) Question que personne ne posait, (4) Recommandation contre-intuitive.",
+  };
+
   const handleSynthesis = useCallback(() => {
     if (!isTyping) {
+      const prompt = SYNTHESIS_PROMPTS[activeReflectionMode] || SYNTHESIS_PROMPTS.credo;
       sendMessage(
-        "Synthetise cette discussion. Quels sont les 3 points cles, la recommandation principale, et les prochaines etapes concretes?",
+        prompt,
         "BCO",
         undefined,
-        { msgType: "synthesis" as const, branchLabel: "Synthese CarlOS" }
+        { msgType: "synthesis" as const, branchLabel: `Synthese ${activeReflectionMode.toUpperCase()}` }
       );
     }
-  }, [sendMessage, isTyping]);
+  }, [sendMessage, isTyping, activeReflectionMode]);
 
   // ── Sentinelle CarlOS — detection de boucles ──
   const sentinelleWarning = useMemo(() => {
@@ -632,9 +685,26 @@ export function LiveChat({
             </button>
           )}
 
+          {/* Mes Idees toggle */}
+          <button
+            onClick={() => { setShowCrystals(!showCrystals); setShowThreads(false); }}
+            className={cn(
+              "flex items-center gap-1.5 p-1.5 rounded-lg transition-colors cursor-pointer",
+              showCrystals ? "bg-emerald-50 text-emerald-600" : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+            )}
+            title="Mes Idees"
+          >
+            <Bookmark className="h-3.5 w-3.5" />
+            {crystals.length > 0 && (
+              <span className="text-[9px] font-bold bg-emerald-500 text-white px-1 rounded-full min-w-[14px] text-center">
+                {crystals.length}
+              </span>
+            )}
+          </button>
+
           {/* Thread Manager toggle */}
           <button
-            onClick={() => setShowThreads(!showThreads)}
+            onClick={() => { setShowThreads(!showThreads); setShowCrystals(false); }}
             className={cn(
               "flex items-center gap-1.5 p-1.5 rounded-lg transition-colors cursor-pointer",
               showThreads ? "bg-violet-50 text-violet-600" : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
@@ -666,6 +736,59 @@ export function LiveChat({
           </div>
         </div>
       </div>
+
+      {/* Mes Idees panel */}
+      {showCrystals && (
+        <div className="bg-white border-b px-4 py-3 space-y-2 max-h-[280px] overflow-auto shrink-0">
+          <div className="flex items-center justify-between">
+            <div className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+              Mes Idees ({crystals.length})
+            </div>
+            {crystals.length > 0 && (
+              <button
+                onClick={() => {
+                  const text = exportCrystals();
+                  navigator.clipboard.writeText(text);
+                }}
+                className="text-[10px] px-2 py-0.5 rounded bg-gray-100 text-gray-500 hover:bg-gray-200 cursor-pointer font-medium"
+              >
+                Copier tout
+              </button>
+            )}
+          </div>
+
+          {crystals.length === 0 && (
+            <p className="text-xs text-gray-400 py-2">Aucune idee cristallisee. Clique "Cristalliser" sur une reponse bot pour sauvegarder.</p>
+          )}
+
+          {crystals.map((crystal) => {
+            const botInfo = AGENT_NAMES[crystal.bot];
+            return (
+              <div key={crystal.id} className="py-2 px-3 rounded-lg bg-emerald-50/50 border border-emerald-100 group">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-semibold text-gray-800 truncate">{crystal.titre}</div>
+                    <div className="text-[10px] text-gray-400 mt-0.5 flex items-center gap-2">
+                      <span className={cn("font-medium", botInfo?.color || "text-gray-500")}>{botInfo?.name || crystal.bot}</span>
+                      <span>·</span>
+                      <span>{crystal.mode}</span>
+                      <span>·</span>
+                      <span>{new Date(crystal.date).toLocaleDateString("fr-CA")}</span>
+                    </div>
+                    <p className="text-[11px] text-gray-600 mt-1 line-clamp-2 leading-relaxed">{crystal.contenu.slice(0, 150)}...</p>
+                  </div>
+                  <button
+                    onClick={() => deleteCrystal(crystal.id)}
+                    className="text-[10px] px-1.5 py-0.5 rounded text-red-400 hover:text-red-600 hover:bg-red-50 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Thread Manager panel */}
       {showThreads && (
@@ -969,6 +1092,12 @@ export function LiveChat({
                         onChallenge={() => handleChallenge(msg.id, msg.agent)}
                         onApprofondir={() => handleApprofondir(msg.id, msg.agent)}
                         onConsulterBot={handleConsulterBot}
+                        onCrystallize={() => {
+                          crystallize(msg.content, msg.agent || activeBotCode);
+                          setJustCrystallized(msg.id);
+                          setTimeout(() => setJustCrystallized(null), 3000);
+                        }}
+                        crystallized={justCrystallized === msg.id}
                         disabled={isTyping}
                         availableBots={bots}
                         currentBotCode={msg.agent || activeBotCode}
