@@ -1,13 +1,13 @@
 /**
  * LiveControlsPanel.tsx — Panneau cockpit "CarlOS Live"
  * 3 boutons : Micro (vocal), Telephone (appel), Camera (video)
- * Fixe en bas du sidebar droit, meme hauteur que InputBar
- * Design cockpit : sharp, live, organique — montre que CarlOS est vivant
+ * Fixe en bas du sidebar droit, meme hauteur que InputBar (min-h-[136px])
+ * Design cockpit premium : dark, glow, sharp
  * Sprint B — Panneau Live Controls
  */
 
 import { useState } from "react";
-import { Mic, Phone, Video, Radio } from "lucide-react";
+import { Mic, Phone, Video, Radio, Waves } from "lucide-react";
 import {
   Tooltip,
   TooltipTrigger,
@@ -29,47 +29,52 @@ export function LiveControlsPanel() {
     id: LiveChannel;
     icon: React.ElementType;
     label: string;
-    activeColor: string;
-    hoverColor: string;
+    glow: string;
+    activeGradient: string;
+    ringColor: string;
   }[] = [
     {
       id: "mic",
       icon: Mic,
       label: "Message vocal",
-      activeColor: "bg-green-500 text-white shadow-green-500/30",
-      hoverColor: "hover:bg-green-50 hover:text-green-600",
+      glow: "shadow-[0_0_20px_rgba(34,197,94,0.4)]",
+      activeGradient: "bg-gradient-to-br from-green-400 to-emerald-600",
+      ringColor: "ring-green-400/50",
     },
     {
       id: "phone",
       icon: Phone,
       label: "Appel CarlOS",
-      activeColor: "bg-blue-500 text-white shadow-blue-500/30",
-      hoverColor: "hover:bg-blue-50 hover:text-blue-600",
+      glow: "shadow-[0_0_20px_rgba(59,130,246,0.4)]",
+      activeGradient: "bg-gradient-to-br from-blue-400 to-indigo-600",
+      ringColor: "ring-blue-400/50",
     },
     {
       id: "video",
       icon: Video,
       label: "Video CarlOS",
-      activeColor: "bg-purple-500 text-white shadow-purple-500/30",
-      hoverColor: "hover:bg-purple-50 hover:text-purple-600",
+      glow: "shadow-[0_0_20px_rgba(168,85,247,0.4)]",
+      activeGradient: "bg-gradient-to-br from-purple-400 to-violet-600",
+      ringColor: "ring-purple-400/50",
     },
   ];
 
   return (
-    <div className="px-3 py-3 bg-gradient-to-t from-gray-50 to-white">
+    <div className="min-h-[136px] flex flex-col justify-center bg-gradient-to-b from-gray-900 via-gray-900 to-black px-4 py-4 rounded-t-2xl">
       {/* Header cockpit */}
-      <div className="flex items-center gap-2 mb-3">
+      <div className="flex items-center justify-center gap-2 mb-4">
         <div className="relative">
-          <Radio className="h-3.5 w-3.5 text-green-500" />
-          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+          <Radio className="h-3.5 w-3.5 text-green-400" />
+          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-400 rounded-full animate-pulse" />
         </div>
-        <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+        <span className="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em]">
           CarlOS Live
         </span>
+        <Waves className="h-3 w-3 text-green-500/50 animate-pulse" />
       </div>
 
       {/* 3 boutons cockpit */}
-      <div className="flex gap-2 justify-center">
+      <div className="flex gap-3 justify-center">
         {channels.map((channel) => {
           const Icon = channel.icon;
           const isActive = activeChannel === channel.id;
@@ -79,21 +84,27 @@ export function LiveControlsPanel() {
                 <button
                   onClick={() => toggleChannel(channel.id)}
                   className={cn(
-                    "flex-1 flex flex-col items-center gap-1.5 py-3 rounded-xl transition-all duration-200 cursor-pointer",
-                    "border border-gray-200",
+                    "flex-1 flex flex-col items-center gap-2 py-3.5 rounded-2xl transition-all duration-300 cursor-pointer",
                     isActive
-                      ? cn(channel.activeColor, "shadow-lg border-transparent scale-105")
+                      ? cn(
+                          channel.activeGradient,
+                          "text-white",
+                          channel.glow,
+                          "scale-105 ring-2",
+                          channel.ringColor
+                        )
                       : cn(
-                          "bg-white text-gray-400",
-                          channel.hoverColor,
-                          "hover:border-gray-300 hover:shadow-sm"
+                          "bg-gray-800/80 text-gray-500",
+                          "hover:bg-gray-700/80 hover:text-gray-300",
+                          "hover:shadow-lg hover:scale-[1.02]",
+                          "border border-gray-700/50"
                         )
                   )}
                 >
-                  <Icon className="h-5 w-5" />
+                  <Icon className={cn("h-5 w-5", isActive && "drop-shadow-lg")} />
                   <span className={cn(
-                    "text-[10px] font-medium",
-                    isActive ? "text-white" : "text-gray-500"
+                    "text-[10px] font-semibold tracking-wide",
+                    isActive ? "text-white/90" : "text-gray-500"
                   )}>
                     {channel.id === "mic" ? "Vocal" : channel.id === "phone" ? "Appel" : "Video"}
                   </span>
