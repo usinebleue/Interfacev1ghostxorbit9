@@ -17,6 +17,7 @@ import {
   Target,
   Sparkles,
   Brain,
+  Scale,
   ArrowLeft,
   Play,
 } from "lucide-react";
@@ -30,8 +31,9 @@ import { AnalyseDemo } from "./scenarios/AnalyseDemo";
 import { StrategieDemo } from "./scenarios/StrategieDemo";
 import { InnovationDemo } from "./scenarios/InnovationDemo";
 import { DeepResonanceDemo } from "./scenarios/DeepResonanceDemo";
+import { DecisionDemo } from "./scenarios/DecisionDemo";
 
-type ScenarioView = "hub" | "credo" | "cahier" | "debat" | "crise" | "brainstorm" | "analyse" | "strategie" | "innovation" | "deep";
+type ScenarioView = "hub" | "credo" | "cahier" | "debat" | "crise" | "brainstorm" | "analyse" | "strategie" | "innovation" | "deep" | "decision";
 
 interface ScenarioCard {
   id: ScenarioView;
@@ -155,6 +157,18 @@ const SCENARIOS: ScenarioCard[] = [
     status: "ready",
     description: "Dialogue profond 1-on-1 avec le CEO. Questions reflexives, modeles mentaux, exploration de paradoxes.",
   },
+  {
+    id: "decision",
+    title: "Mode D\u00e9cision",
+    subtitle: "Acquisition 1.2M$ — Go or No-Go?",
+    icon: Scale,
+    color: "bg-slate-700",
+    bgGradient: "from-slate-50 to-slate-100/50",
+    borderColor: "border-slate-400",
+    textColor: "text-slate-700",
+    status: "ready",
+    description: "Matrice de decision ponderee, impact stakeholders, 4 scenarios conditionnes, verdict du board avec plan d'action.",
+  },
 ];
 
 export function ScenarioHub() {
@@ -169,13 +183,14 @@ export function ScenarioHub() {
   if (view === "strategie") return <WithBackButton onBack={() => setView("hub")}><StrategieDemo /></WithBackButton>;
   if (view === "innovation") return <WithBackButton onBack={() => setView("hub")}><InnovationDemo /></WithBackButton>;
   if (view === "deep") return <WithBackButton onBack={() => setView("hub")}><DeepResonanceDemo /></WithBackButton>;
+  if (view === "decision") return <WithBackButton onBack={() => setView("hub")}><DecisionDemo /></WithBackButton>;
 
   return (
     <div className="h-full flex flex-col bg-gray-50">
       <div className="bg-white border-b px-6 py-4 shrink-0">
         <h1 className="text-lg font-bold text-gray-900">Scenarios de simulation</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
-          9 modes de reflexion GhostX — chaque scenario simule un type de discussion avec la Bot Team
+          10 modes de reflexion GhostX — chaque scenario simule un type de discussion avec la Bot Team
         </p>
       </div>
 
