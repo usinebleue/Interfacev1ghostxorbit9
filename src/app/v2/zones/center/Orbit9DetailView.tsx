@@ -4,7 +4,7 @@
  * Sprint B — Task Orbit9 simulations
  */
 
-import { ArrowLeft, Search, Handshake, Crown, Rocket, Store, Calendar, Newspaper, Gauge, Users, TrendingUp, Shield, Zap, CheckCircle2, Clock, DollarSign, Target, Star, ArrowRight } from "lucide-react";
+import { ArrowLeft, Search, Handshake, Crown, Rocket, Store, Calendar, Newspaper, Gauge, Users, TrendingUp, Shield, Zap, CheckCircle2, Clock, DollarSign, Target, Star, ArrowRight, Globe, BarChart3, Building2, Factory, Wrench, GraduationCap } from "lucide-react";
 import { cn } from "../../../components/ui/utils";
 import { useFrameMaster } from "../../context/FrameMasterContext";
 import { Card } from "../../../components/ui/card";
@@ -277,6 +277,38 @@ const SECTION_CONFIGS: Record<string, Orbit9SectionConfig> = {
     ],
     timeline: "Integre Sprint A+ (diagnostics de base)",
   },
+  "trg-industrie": {
+    id: "trg-industrie",
+    title: "TRG de l'Industrie",
+    subtitle: "Tableau de bord & Rapport Global — Intelligence sectorielle",
+    icon: Globe,
+    color: "text-teal-600",
+    bgGradient: "from-teal-50 to-cyan-50",
+    borderColor: "border-teal-200",
+    status: "concept",
+    description: "Le TRG compile les donnees de l'industrie manufacturiere au Quebec, au Canada et dans le monde. Usine Bleue est positionnee au centre de l'ecosysteme — c'est credible et strategique que ce soit nous qui compilons ces donnees. Un puissant lead magnet pour attirer des prospects qualifies.",
+    features: [
+      { title: "Dashboard Industrie 360", description: "Vue d'ensemble des metriques sectorielles : salaires moyens, taux d'adoption IA, couts par robot, OEE par secteur, tendances main-d'oeuvre", icon: BarChart3 },
+      { title: "4 Vues par Instance", description: "Usine Bleue (admin), Manufacturier (PME), Fournisseur (integrateurs), Expert Solo (consultants) — chaque instance voit les donnees pertinentes a son role", icon: Building2 },
+      { title: "CMO Sub-Bot Recherche", description: "Un sous-bot CMO specialise scrute en continu les etudes de marche, compile les rapports (STIQ, MEI, StatCan, Deloitte) et croise les donnees", icon: Search },
+      { title: "Sondages Reseau", description: "CarlOS lance des sondages dans le reseau Orbit9 pour valider les donnees existantes et generer des insights proprietaires uniques", icon: Users },
+    ],
+    metrics: [
+      { label: "Sources de donnees", value: "50+", trend: "Quebec, Canada, Global" },
+      { label: "Secteurs couverts", value: "12+", trend: "Usinage, soudage, plastique, etc." },
+      { label: "Instances", value: "4", trend: "Admin/Manuf/Fourn/Expert" },
+      { label: "Lead magnet", value: "Rapport annuel", trend: "Positionnement central UB" },
+    ],
+    userFlow: [
+      { step: "Consultation libre", description: "L'utilisateur consulte le dashboard industrie — salaires, tendances, benchmarks sectoriels disponibles librement" },
+      { step: "Donnees croisees", description: "Le CMO sub-bot croise les etudes publiques (StatCan, STIQ, MEI) avec les donnees anonymisees du reseau Orbit9" },
+      { step: "Sondages reseau", description: "CarlOS lance des micro-sondages dans le reseau : 'Quel est votre cout moyen par piece usinee?' — donnees proprietaires" },
+      { step: "Rapport sectoriel personnalise", description: "L'utilisateur recoit un rapport positionne dans son secteur : 'Ton cout/piece est 12% au-dessus de la mediane'" },
+      { step: "Rapport Global annuel", description: "Usine Bleue publie LE rapport de reference de l'industrie manufacturiere au Quebec — lead magnet puissant" },
+      { step: "Prospection", description: "Les prospects telechargent le rapport → entrent dans le funnel → decouvrent CarlOS → deviennent clients" },
+    ],
+    timeline: "Sprint D+ (apres 50+ entreprises = donnees significatives)",
+  },
 };
 
 const STATUS_BADGES: Record<string, { label: string; color: string }> = {
@@ -386,6 +418,40 @@ export function Orbit9DetailView() {
             ))}
           </div>
         </div>
+
+        {/* 4 Instances — visible seulement pour TRG Industrie */}
+        {config.id === "trg-industrie" && (
+          <div>
+            <h2 className="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wide">4 Instances — Vues par role</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {[
+                { name: "Usine Bleue (Admin)", subdomain: "admin.usinebleue.ai", icon: Building2, color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-200", desc: "Carl + equipe interne. Dashboard complet, tous les bots, configuration, CRM, diagnostics, matching, Data Room", role: "Orchestrateur" },
+                { name: "Manufacturier (PME)", subdomain: "app.usinebleue.ai", icon: Factory, color: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-200", desc: "Dirigeants PME. Chat CarlOS, diagnostic, Mon Usine (OEE/KPIs), cahier projet, benchmarks secteur", role: "Client" },
+                { name: "Fournisseur", subdomain: "partner.usinebleue.ai", icon: Wrench, color: "text-orange-600", bg: "bg-orange-50", border: "border-orange-200", desc: "Integrateurs, firmes d'automatisation. Profil competences, opportunites matchees, soumissions, portfolio", role: "Partenaire" },
+                { name: "Expert Solo", subdomain: "expert.usinebleue.ai", icon: GraduationCap, color: "text-purple-600", bg: "bg-purple-50", border: "border-purple-200", desc: "Consultants independants. Mandats, outils diagnostics, formation CREDO, certification GHML", role: "Expert" },
+              ].map((inst) => {
+                const IIcon = inst.icon;
+                return (
+                  <Card key={inst.name} className={cn("p-4 border-l-4", inst.border)}>
+                    <div className="flex items-start gap-3">
+                      <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", inst.bg)}>
+                        <IIcon className={cn("h-4.5 w-4.5", inst.color)} />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="text-sm font-semibold text-gray-800">{inst.name}</span>
+                          <Badge variant="outline" className="text-[9px]">{inst.role}</Badge>
+                        </div>
+                        <p className="text-[10px] text-gray-400 font-mono mb-1">{inst.subdomain}</p>
+                        <p className="text-xs text-gray-500 leading-relaxed">{inst.desc}</p>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Timeline */}
         <Card className={cn("p-4 border-l-4", config.borderColor)}>
