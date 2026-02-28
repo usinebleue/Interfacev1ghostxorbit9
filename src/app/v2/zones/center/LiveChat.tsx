@@ -566,6 +566,31 @@ export function LiveChat({
     return null;
   }, [messages]);
 
+  // Request synthesis from CarlOS — MUST be defined before handleOptionClick
+  const SYNTHESIS_PROMPTS: Record<string, string> = {
+    credo: "Synthetise en format CREDO: (C) Tension identifiee, (R) Recherche faite, (E) Expose des options, (D) Demonstration de la meilleure, (O) Obtenir — prochaines etapes concretes.",
+    debat: "Synthetise le debat: Position A (arguments + forces), Position B (arguments + forces), Verdict (quelle position est la plus solide et pourquoi), Decision recommandee.",
+    brainstorm: "Classe les idees par potentiel (fort/moyen/faible). Top 3 idees avec justification. Prochaine etape pour chaque top idee.",
+    crise: "Plan de crise: (1) Severite 1-10, (2) Actions immediates (30 min), (3) Communication a faire, (4) Responsable de chaque action, (5) Suivi dans 24h.",
+    analyse: "Analyse structuree: (1) Probleme decompose, (2) Causes racines identifiees, (3) Donnees cles, (4) Conclusions, (5) Recommandations actionnables.",
+    decision: "Matrice de decision: Options evaluees (criteres, risques, potentiel). Recommandation avec niveau de confiance. Conditions de succes du Go. Plan B si No-Go.",
+    strategie: "Plan strategique: (1) SWOT synthetise, (2) 3 axes strategiques prioritaires, (3) Quick wins (30 jours), (4) Moyen terme (90 jours), (5) Indicateurs de succes.",
+    innovation: "Innovation brief: (1) Opportunite identifiee, (2) Solution proposee, (3) Differenciateur cle, (4) Premier prototype, (5) Marche potentiel, (6) Prochaine etape.",
+    deep: "Deep insights: (1) Insight principal (ce qui n'etait pas evident), (2) Connexions inattendues, (3) Question que personne ne posait, (4) Recommandation contre-intuitive.",
+  };
+
+  const handleSynthesis = useCallback(() => {
+    if (!isTyping) {
+      const prompt = SYNTHESIS_PROMPTS[activeReflectionMode] || SYNTHESIS_PROMPTS.credo;
+      sendMessage(
+        prompt,
+        "BCO",
+        undefined,
+        { msgType: "synthesis" as const, branchLabel: `Synthese ${activeReflectionMode.toUpperCase()}` }
+      );
+    }
+  }, [sendMessage, isTyping, activeReflectionMode]);
+
   // Action handlers
   const handleOptionClick = useCallback(
     (text: string) => {
@@ -675,32 +700,6 @@ export function LiveChat({
       { msgType: "normal", branchLabel: `Branche — ${branchTopic.slice(0, 40)}` }
     );
   }, [sendMessage, activeBotCode, isTyping]);
-
-  // Request synthesis from CarlOS
-  // Mode-specific synthesis prompts
-  const SYNTHESIS_PROMPTS: Record<string, string> = {
-    credo: "Synthetise en format CREDO: (C) Tension identifiee, (R) Recherche faite, (E) Expose des options, (D) Demonstration de la meilleure, (O) Obtenir — prochaines etapes concretes.",
-    debat: "Synthetise le debat: Position A (arguments + forces), Position B (arguments + forces), Verdict (quelle position est la plus solide et pourquoi), Decision recommandee.",
-    brainstorm: "Classe les idees par potentiel (fort/moyen/faible). Top 3 idees avec justification. Prochaine etape pour chaque top idee.",
-    crise: "Plan de crise: (1) Severite 1-10, (2) Actions immediates (30 min), (3) Communication a faire, (4) Responsable de chaque action, (5) Suivi dans 24h.",
-    analyse: "Analyse structuree: (1) Probleme decompose, (2) Causes racines identifiees, (3) Donnees cles, (4) Conclusions, (5) Recommandations actionnables.",
-    decision: "Matrice de decision: Options evaluees (criteres, risques, potentiel). Recommandation avec niveau de confiance. Conditions de succes du Go. Plan B si No-Go.",
-    strategie: "Plan strategique: (1) SWOT synthetise, (2) 3 axes strategiques prioritaires, (3) Quick wins (30 jours), (4) Moyen terme (90 jours), (5) Indicateurs de succes.",
-    innovation: "Innovation brief: (1) Opportunite identifiee, (2) Solution proposee, (3) Differenciateur cle, (4) Premier prototype, (5) Marche potentiel, (6) Prochaine etape.",
-    deep: "Deep insights: (1) Insight principal (ce qui n'etait pas evident), (2) Connexions inattendues, (3) Question que personne ne posait, (4) Recommandation contre-intuitive.",
-  };
-
-  const handleSynthesis = useCallback(() => {
-    if (!isTyping) {
-      const prompt = SYNTHESIS_PROMPTS[activeReflectionMode] || SYNTHESIS_PROMPTS.credo;
-      sendMessage(
-        prompt,
-        "BCO",
-        undefined,
-        { msgType: "synthesis" as const, branchLabel: `Synthese ${activeReflectionMode.toUpperCase()}` }
-      );
-    }
-  }, [sendMessage, isTyping, activeReflectionMode]);
 
   // ── Sentinelle CarlOS — detection de boucles (vocaux Carl: max 3 challenges/bulle, max 3 niveaux branches) ──
   const sentinelleWarning = useMemo(() => {
