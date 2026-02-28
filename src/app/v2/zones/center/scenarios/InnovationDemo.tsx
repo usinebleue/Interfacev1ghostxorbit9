@@ -18,6 +18,8 @@ import {
   Shuffle,
   Leaf,
   Star,
+  Eye,
+  FileText,
 } from "lucide-react";
 import { cn } from "../../../../components/ui/utils";
 import {
@@ -540,7 +542,8 @@ function SyntheseCard({
  */
 export function InnovationDemo({
   onComplete,
-}: { onComplete?: () => void } = {}) {
+  onTransition,
+}: { onComplete?: () => void; onTransition?: (target: string) => void } = {}) {
   const [stage, setStage] = useState(0);
   const [phase, setPhase] = useState<CREDOPhase>("C");
   const [ceoIntroDone, setCeoIntroDone] = useState(false);
@@ -729,6 +732,19 @@ export function InnovationDemo({
                     Innovation terminee — 3 techniques, modele hybride genere
                   </span>
                 </div>
+              </div>
+
+              {/* Transition buttons */}
+              <div className="flex items-center gap-2 justify-center flex-wrap mt-2">
+                <button onClick={() => onTransition?.("brainstorm")} className="text-xs bg-yellow-50 text-yellow-700 border border-yellow-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-yellow-100 font-medium cursor-pointer">
+                  <Lightbulb className="h-3.5 w-3.5" /> Brainstorm
+                </button>
+                <button onClick={() => onTransition?.("analyse")} className="text-xs bg-cyan-50 text-cyan-700 border border-cyan-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-cyan-100 font-medium cursor-pointer">
+                  <Eye className="h-3.5 w-3.5" /> Analyse
+                </button>
+                <button onClick={() => onTransition?.("cahier")} className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-emerald-100 font-medium cursor-pointer">
+                  <FileText className="h-3.5 w-3.5" /> Cahier SMART
+                </button>
               </div>
 
               {/* Restart */}

@@ -1,6 +1,8 @@
 /**
- * DecisionDemo.tsx — Simulation Mode Decision
+ * DecisionDemo.tsx — Simulation Mode Decision (V2)
  * Go/No-Go acquisition — Matrice ponderee + Stakeholder Impact + Verdict
+ * V2: Start button, boutons Continue (plus d'auto-advance), actions sur chaque carte,
+ *     restart, transitions inter-modes, challenger verdict
  * Sprint A — Frame Master V2
  */
 
@@ -23,10 +25,20 @@ import {
   DollarSign,
   TrendingUp,
   Shield,
+  RotateCcw,
+  Swords,
+  FileText,
+  Eye,
+  Play,
+  Download,
+  MessageCircle,
 } from "lucide-react";
 import { cn } from "../../../../components/ui/utils";
 import { DECISION_DATA } from "./decision-data";
 import type { DecisionCriteria } from "./decision-data";
+
+// ─── Types ───
+type TransitionTarget = "cahier" | "analyse" | "debat" | null;
 
 // ─── Bot colors ───
 const BOT_COLORS: Record<string, { bg: string; text: string; border: string; label: string }> = {
@@ -109,8 +121,6 @@ function ScoreBar({ score, max = 10, color }: { score: number; max?: number; col
 // ─── Criteria card ───
 function CriteriaCard({ criteria, index, animated }: { criteria: DecisionCriteria; index: number; animated: boolean }) {
   const weightStars = "★".repeat(criteria.weight) + "☆".repeat(5 - criteria.weight);
-  const botFor = BOT_COLORS[criteria.botFor] || BOT_COLORS.BCO;
-  const botAgainst = BOT_COLORS[criteria.botAgainst] || BOT_COLORS.BCO;
 
   return (
     <div className={cn(
@@ -229,7 +239,13 @@ function ScenariosCard({ animated }: { animated: boolean }) {
 }
 
 // ─── Verdict card ───
-function VerdictCard({ animated }: { animated: boolean }) {
+function VerdictCard({ animated, challengeCount, onChallenge, onCounterArg, onTransition }: {
+  animated: boolean;
+  challengeCount: number;
+  onChallenge: () => void;
+  onCounterArg: () => void;
+  onTransition: (target: TransitionTarget) => void;
+}) {
   const v = DECISION_DATA.verdict;
 
   return (
@@ -291,7 +307,7 @@ function VerdictCard({ animated }: { animated: boolean }) {
       </div>
 
       {/* Next steps */}
-      <div className="px-4 py-3 bg-gray-50">
+      <div className="px-4 py-3 bg-gray-50 border-b">
         <div className="flex items-center gap-1.5 mb-2">
           <Clock className="h-3.5 w-3.5 text-gray-500" />
           <span className="text-xs font-bold text-gray-700">Plan d'action</span>
@@ -307,22 +323,153 @@ function VerdictCard({ animated }: { animated: boolean }) {
           ))}
         </div>
       </div>
+
+      {/* Actions — TYPE 6 Synthese */}
+      <div className="px-4 py-3 bg-white space-y-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {challengeCount < 1 && (
+            <button onClick={onChallenge} className="text-xs bg-red-50 text-red-700 border border-red-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-red-100 font-medium cursor-pointer">
+              <Swords className="h-3.5 w-3.5" /> Challenger le verdict
+            </button>
+          )}
+          <button onClick={onCounterArg} className="text-xs bg-amber-50 text-amber-700 border border-amber-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-amber-100 font-medium cursor-pointer">
+            <MessageCircle className="h-3.5 w-3.5" /> Contre-argument
+          </button>
+          <button onClick={() => onTransition("cahier")} className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-emerald-100 font-medium cursor-pointer">
+            <FileText className="h-3.5 w-3.5" /> Cahier SMART
+          </button>
+          <button onClick={() => onTransition("analyse")} className="text-xs bg-cyan-50 text-cyan-700 border border-cyan-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-cyan-100 font-medium cursor-pointer">
+            <Eye className="h-3.5 w-3.5" /> Approfondir (Analyse)
+          </button>
+        </div>
+        {challengeCount >= 1 && (
+          <p className="text-[10px] text-gray-400 italic">Le verdict a ete challenge. Actions : exporter, creer un cahier, ou approfondir.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Challenge response card ───
+function ChallengeResponseCard({ type }: { type: "challenge" | "counter" }) {
+  const isChallenge = type === "challenge";
+  return (
+    <div className="border rounded-xl overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-500">
+      <div className={cn("px-4 py-2.5 border-b flex items-center gap-2", isChallenge ? "bg-red-50" : "bg-amber-50")}>
+        <BotAvatar code="BCO" size="sm" />
+        <span className={cn("text-xs font-bold", isChallenge ? "text-red-800" : "text-amber-800")}>
+          {isChallenge ? "Defense du verdict" : "Contre-argument"}
+        </span>
+      </div>
+      <div className="p-4">
+        {isChallenge ? (
+          <>
+            <p className="text-sm text-gray-700 leading-relaxed mb-2">
+              L'ecart de 12% est effectivement serre. Mais 3 facteurs penchent pour le GO conditionnel :
+            </p>
+            <ul className="space-y-1.5 text-sm text-gray-600">
+              <li className="flex items-start gap-2"><span className="text-blue-500 shrink-0">1.</span> Le cout d'inaction est sous-estime — si un autre acheteur prend Zenith, on perd 35 clients potentiels ET on gagne un concurrent renforce.</li>
+              <li className="flex items-start gap-2"><span className="text-blue-500 shrink-0">2.</span> L'earn-out de 350K$ est une assurance — si la retention echoue, on economise 30% du prix.</li>
+              <li className="flex items-start gap-2"><span className="text-blue-500 shrink-0">3.</span> La due diligence de 45 jours est un filet de securite — on peut encore dire non.</li>
+            </ul>
+          </>
+        ) : (
+          <>
+            <p className="text-sm text-gray-700 leading-relaxed mb-2">
+              <strong>Meilleur argument contre le GO :</strong>
+            </p>
+            <p className="text-sm text-gray-600 leading-relaxed mb-2">
+              Zenith est en difficulte pour une RAISON. Leurs problemes structurels (culture, processus, dette technique) ne disparaissent pas avec le rachat — ils deviennent VOS problemes. Le CFO a raison : zero marge de manoeuvre pendant 12 mois + heritage de problemes = risque systemique.
+            </p>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              Alternative : attendre 6 mois. Si Zenith ferme, recruter les 4 meilleurs et recuperer les clients gratuitement. Cout : ~200K$ de recrutement au lieu de 1.2M$.
+            </p>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Transition message ───
+function TransitionMessage({ target }: { target: TransitionTarget }) {
+  if (!target) return null;
+  const config = {
+    cahier: { icon: FileText, label: "Cahier SMART", color: "text-emerald-700", bg: "bg-emerald-50", border: "border-emerald-300" },
+    analyse: { icon: Eye, label: "Mode Analyse", color: "text-cyan-700", bg: "bg-cyan-50", border: "border-cyan-300" },
+    debat: { icon: Swords, label: "Mode Debat", color: "text-red-700", bg: "bg-red-50", border: "border-red-300" },
+  };
+  const c = config[target];
+  const Icon = c.icon;
+  return (
+    <div className={cn("border-2 rounded-xl p-4 flex items-center gap-3 animate-in fade-in duration-500", c.bg, c.border)}>
+      <Icon className={cn("h-6 w-6", c.color)} />
+      <div>
+        <p className={cn("text-sm font-bold", c.color)}>Transition vers {c.label}</p>
+        <p className="text-xs text-gray-500">Les donnees de la decision (scores, stakeholders, verdict) seront portees dans le nouveau mode.</p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Continue button ───
+function ContinueButton({ onClick, label = "Continuer" }: { onClick: () => void; label?: string }) {
+  return (
+    <div className="flex justify-center py-2">
+      <button
+        onClick={onClick}
+        className="text-xs bg-gray-100 text-gray-600 border border-gray-200 px-4 py-2 rounded-full flex items-center gap-1.5 hover:bg-gray-200 hover:text-gray-800 font-medium transition-colors cursor-pointer"
+      >
+        <ChevronRight className="h-3.5 w-3.5" /> {label}
+      </button>
     </div>
   );
 }
 
 // ─── Main component ───
-export function DecisionDemo() {
+export function DecisionDemo({ onComplete, onTransition: onTransitionProp }: {
+  onComplete?: () => void;
+  onTransition?: (target: string) => void;
+} = {}) {
   const [stage, setStage] = useState(0);
+  const [challengeCount, setChallengeCount] = useState(0);
+  const [showChallenge, setShowChallenge] = useState(false);
+  const [showCounter, setShowCounter] = useState(false);
+  const [transitionTarget, setTransitionTarget] = useState<TransitionTarget>(null);
+  const [introTyped, setIntroTyped] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+      setTimeout(() => {
+        scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+      }, 100);
     }
-  }, [stage]);
+  }, [stage, showChallenge, showCounter, transitionTarget]);
 
-  const advance = (next: number) => () => setStage((s) => Math.max(s, next));
+  const handleChallenge = () => {
+    setChallengeCount(c => c + 1);
+    setShowChallenge(true);
+  };
+
+  const handleCounterArg = () => {
+    setShowCounter(true);
+  };
+
+  const handleTransition = (target: TransitionTarget) => {
+    setTransitionTarget(target);
+    onComplete?.();
+    if (target) onTransitionProp?.(target);
+  };
+
+  const handleRestart = () => {
+    setStage(0);
+    setChallengeCount(0);
+    setShowChallenge(false);
+    setShowCounter(false);
+    setTransitionTarget(null);
+    setIntroTyped(false);
+  };
 
   return (
     <div className="h-full flex flex-col bg-gray-50">
@@ -350,41 +497,57 @@ export function DecisionDemo() {
 
       {/* Content */}
       <div ref={scrollRef} className="flex-1 overflow-auto px-4 py-4 space-y-4">
-        {/* Stage 0 — User tension */}
-        {stage >= 0 && (
+
+        {/* Stage 0 — Start button */}
+        {stage === 0 && (
+          <div className="flex justify-center py-16">
+            <button onClick={() => setStage(0.5)}
+              className="flex items-center gap-3 bg-indigo-600 text-white px-8 py-4 rounded-2xl text-sm font-semibold shadow-lg hover:bg-indigo-700 transition-all hover:scale-105 cursor-pointer">
+              <Play className="h-5 w-5" /> Lancer le Mode Decision
+            </button>
+          </div>
+        )}
+
+        {/* Stage 0.5 — User tension */}
+        {stage >= 0.5 && (
           <div className="flex justify-end">
             <div className="bg-blue-600 text-white rounded-2xl rounded-tr-md px-4 py-3 max-w-[85%] shadow-sm">
               <p className="text-sm leading-relaxed">
-                <TypewriterText text={DECISION_DATA.userTension} speed={8} onDone={advance(0.5)} />
+                <TypewriterText text={DECISION_DATA.userTension} speed={8} onDone={() => setStage(Math.max(stage, 1))} />
               </p>
               <p className="text-[10px] text-blue-200 mt-1 text-right">Carl Fugere — 09:15</p>
             </div>
           </div>
         )}
 
-        {/* Stage 0.5 — CEO intro */}
-        {stage >= 0.5 && (
+        {/* Stage 1 — CEO intro */}
+        {stage >= 1 && (
           <div className="flex gap-2">
             <BotAvatar code="BCO" size="md" />
             <div className="bg-white border rounded-2xl rounded-tl-md px-4 py-3 max-w-[85%] shadow-sm">
               <p className="text-sm text-gray-700 leading-relaxed">
-                <TypewriterText text={DECISION_DATA.ceoIntro} speed={10} onDone={advance(1)} />
+                <TypewriterText text={DECISION_DATA.ceoIntro} speed={10} onDone={() => setIntroTyped(true)} />
               </p>
             </div>
           </div>
         )}
 
-        {/* Stage 1 — Thinking setup */}
-        {stage >= 1 && (
+        {/* Stage 1 — Continue button after intro typed */}
+        {stage === 1 && introTyped && (
+          <ContinueButton onClick={() => setStage(1.5)} label="Construire la matrice" />
+        )}
+
+        {/* Stage 1.5 — Thinking setup */}
+        {stage >= 1.5 && stage < 2 && (
           <div className="flex gap-2">
             <BotAvatar code="BCO" size="md" />
             <div className="bg-white border rounded-2xl px-4 py-2 shadow-sm">
-              <ThinkingAnimation steps={DECISION_DATA.setupThinking} speed={700} onDone={advance(2)} />
+              <ThinkingAnimation steps={DECISION_DATA.setupThinking} speed={700} onDone={() => setStage(2)} />
             </div>
           </div>
         )}
 
-        {/* Stage 2 — Contexte + Criteres */}
+        {/* Stage 2 — Criteria cards + Continue */}
         {stage >= 2 && (
           <>
             {/* Contexte */}
@@ -410,53 +573,75 @@ export function DecisionDemo() {
             {DECISION_DATA.criteres.map((c, i) => (
               <CriteriaCard key={c.id} criteria={c} index={i} animated={stage >= 2} />
             ))}
-
-            {/* Auto-advance after criteria appear */}
-            {stage === 2 && <AutoAdvance delay={2500} onDone={advance(3)} />}
           </>
         )}
 
-        {/* Stage 3 — Stakeholder Impact */}
+        {/* Stage 2 — Continue button */}
+        {stage === 2 && (
+          <ContinueButton onClick={() => setStage(3)} label="Voir l'impact stakeholders" />
+        )}
+
+        {/* Stage 3 — Stakeholder Impact + Continue */}
         {stage >= 3 && (
-          <>
-            <StakeholderCard stakeholders={DECISION_DATA.stakeholders} animated={stage >= 3} />
-            {stage === 3 && <AutoAdvance delay={2000} onDone={advance(4)} />}
-          </>
+          <StakeholderCard stakeholders={DECISION_DATA.stakeholders} animated={stage >= 3} />
         )}
 
-        {/* Stage 4 — Scenarios */}
+        {stage === 3 && (
+          <ContinueButton onClick={() => setStage(4)} label="Voir les scenarios" />
+        )}
+
+        {/* Stage 4 — Scenarios + Continue */}
         {stage >= 4 && (
-          <>
-            <ScenariosCard animated={stage >= 4} />
-            {stage === 4 && <AutoAdvance delay={2000} onDone={advance(4.5)} />}
-          </>
+          <ScenariosCard animated={stage >= 4} />
+        )}
+
+        {stage === 4 && (
+          <ContinueButton onClick={() => setStage(4.5)} label="Generer le verdict" />
         )}
 
         {/* Stage 4.5 — Verdict thinking */}
-        {stage >= 4.5 && (
+        {stage >= 4.5 && stage < 5 && (
           <div className="flex gap-2">
             <BotAvatar code="BCO" size="md" />
             <div className="bg-white border rounded-2xl px-4 py-2 shadow-sm">
-              <ThinkingAnimation steps={DECISION_DATA.verdictThinking} speed={800} onDone={advance(5)} />
+              <ThinkingAnimation steps={DECISION_DATA.verdictThinking} speed={800} onDone={() => setStage(5)} />
             </div>
           </div>
         )}
 
-        {/* Stage 5 — Verdict */}
-        {stage >= 5 && <VerdictCard animated={stage >= 5} />}
+        {/* Stage 5 — Verdict with actions */}
+        {stage >= 5 && (
+          <VerdictCard
+            animated={stage >= 5}
+            challengeCount={challengeCount}
+            onChallenge={handleChallenge}
+            onCounterArg={handleCounterArg}
+            onTransition={handleTransition}
+          />
+        )}
+
+        {/* Challenge response */}
+        {showChallenge && <ChallengeResponseCard type="challenge" />}
+
+        {/* Counter-argument */}
+        {showCounter && <ChallengeResponseCard type="counter" />}
+
+        {/* Transition message */}
+        {transitionTarget && <TransitionMessage target={transitionTarget} />}
+
+        {/* Restart button — always visible at stage 5+ */}
+        {stage >= 5 && (
+          <div className="flex justify-center py-4">
+            <button onClick={handleRestart}
+              className="flex items-center gap-2 bg-gray-200 text-gray-600 px-6 py-3 rounded-xl text-sm font-medium hover:bg-gray-300 transition-all cursor-pointer">
+              <RotateCcw className="h-4 w-4" /> Relancer la simulation
+            </button>
+          </div>
+        )}
 
         {/* Bottom spacer */}
         <div className="h-4" />
       </div>
     </div>
   );
-}
-
-// ─── Auto-advance helper ───
-function AutoAdvance({ delay, onDone }: { delay: number; onDone: () => void }) {
-  useEffect(() => {
-    const t = setTimeout(onDone, delay);
-    return () => clearTimeout(t);
-  }, [delay, onDone]);
-  return null;
 }

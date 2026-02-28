@@ -572,9 +572,12 @@ function ModeSelector({ activeMode, onChangeMode }: {
 
 // ========== CARD COMPONENTS ==========
 
-function MultiPerspectivesCard({ perspectives, onChallenge, animate }: {
+function MultiPerspectivesCard({ perspectives, onChallenge, onNewBranch, onAddBot, onDeepSearch, animate }: {
   perspectives: typeof SIM.perspectives;
   onChallenge: () => void;
+  onNewBranch?: () => void;
+  onAddBot?: () => void;
+  onDeepSearch?: () => void;
   animate: boolean;
 }) {
   const [visibleCols, setVisibleCols] = useState(animate ? 0 : 3);
@@ -654,16 +657,16 @@ function MultiPerspectivesCard({ perspectives, onChallenge, animate }: {
             <ModeSelector activeMode={activeMode} onChangeMode={setActiveMode} />
             {/* Action buttons */}
             <div className="flex items-center gap-2">
-              <button onClick={onChallenge} className="text-xs bg-red-50 text-red-700 border border-red-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-red-100 font-medium">
+              <button onClick={onChallenge} className="text-xs bg-red-50 text-red-700 border border-red-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-red-100 font-medium cursor-pointer">
                 <Swords className="h-3.5 w-3.5" /> Challenger
               </button>
-              <button className="text-xs bg-green-50 text-green-700 border border-green-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-green-100 font-medium">
+              <button onClick={onNewBranch} className="text-xs bg-green-50 text-green-700 border border-green-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-green-100 font-medium cursor-pointer">
                 <GitBranch className="h-3.5 w-3.5" /> Nouvelle branche
               </button>
-              <button className="text-xs bg-purple-50 text-purple-700 border border-purple-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-purple-100 font-medium">
+              <button onClick={onAddBot} className="text-xs bg-purple-50 text-purple-700 border border-purple-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-purple-100 font-medium cursor-pointer">
                 <MessageCircle className="h-3.5 w-3.5" /> Ajouter un Bot
               </button>
-              <button className="text-xs bg-cyan-50 text-cyan-700 border border-cyan-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-cyan-100 font-medium">
+              <button onClick={onDeepSearch} className="text-xs bg-cyan-50 text-cyan-700 border border-cyan-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-cyan-100 font-medium cursor-pointer">
                 <Search className="h-3.5 w-3.5" /> Deep Search
               </button>
             </div>
@@ -1063,6 +1066,9 @@ export function BranchPatternsDemo({ onComplete }: { onComplete?: () => void } =
   const [phase, setPhase] = useState<CREDOPhase>("C");
   const [cristalType, setCristalType] = useState<CristalType>(null);
   const [ceoTextDone, setCeoTextDone] = useState(false);
+  const [showNewBranch, setShowNewBranch] = useState(false);
+  const [showAddBot, setShowAddBot] = useState(false);
+  const [showDeepSearch, setShowDeepSearch] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -1080,6 +1086,7 @@ export function BranchPatternsDemo({ onComplete }: { onComplete?: () => void } =
 
   const handleRestart = () => {
     setStage(0); setPhase("C"); setCristalType(null); setCeoTextDone(false);
+    setShowNewBranch(false); setShowAddBot(false); setShowDeepSearch(false);
   };
 
   // Thread states — computed from current stage
@@ -1211,11 +1218,63 @@ export function BranchPatternsDemo({ onComplete }: { onComplete?: () => void } =
 
           {/* ===== STAGE 3.5 — Multi-perspectives card ===== */}
           {stage >= 3.5 && (
-            <MultiPerspectivesCard
-              perspectives={SIM.perspectives}
-              onChallenge={() => { if (stage === 3.5) setStage(4); }}
-              animate={stage === 3.5}
-            />
+            <>
+              <MultiPerspectivesCard
+                perspectives={SIM.perspectives}
+                onChallenge={() => { if (stage === 3.5) setStage(4); }}
+                onNewBranch={() => setShowNewBranch(true)}
+                onAddBot={() => setShowAddBot(true)}
+                onDeepSearch={() => setShowDeepSearch(true)}
+                animate={stage === 3.5}
+              />
+              {/* Nouvelle branche response */}
+              {showNewBranch && (
+                <div className="ml-11 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                  <div className="border-2 border-green-200 bg-green-50/50 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <GitBranch className="h-4 w-4 text-green-600" />
+                      <span className="text-sm font-bold text-green-800">Nouvelle branche creee</span>
+                    </div>
+                    <p className="text-sm text-gray-600">Thread "Test pilote 1 client" ouvert. Le CRO va evaluer la faisabilite d'un test avec un seul client avant de deployer la structure tarifaire complete.</p>
+                    <div className="mt-2 flex items-center gap-2">
+                      <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Phase C</span>
+                      <span className="text-xs text-gray-400">0 contributions</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {/* Ajouter un Bot response */}
+              {showAddBot && (
+                <div className="ml-11 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                  <div className="border-2 border-purple-200 bg-purple-50/50 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <MessageCircle className="h-4 w-4 text-purple-600" />
+                      <span className="text-sm font-bold text-purple-800">Bot ajoute — CMO (Marketing)</span>
+                    </div>
+                    <p className="text-sm text-gray-600">"Du point de vue marketing, un abonnement mensuel fonctionne si le packaging est clair. Je recommande 3 paliers (Starter, Pro, Enterprise) avec un ancrage prix sur le palier Pro. Le naming est crucial — evitez 'abonnement', preferez 'Partenariat Continu'."</p>
+                    <div className="mt-2">
+                      <span className="text-xs text-gray-400">Sources: Guide pricing SaaS B2B 2025, Benchmark manufacturier QC</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {/* Deep Search response */}
+              {showDeepSearch && (
+                <div className="ml-11 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                  <div className="border-2 border-cyan-200 bg-cyan-50/50 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Search className="h-4 w-4 text-cyan-600" />
+                      <span className="text-sm font-bold text-cyan-800">Deep Search — Resultats</span>
+                    </div>
+                    <div className="space-y-2 text-sm text-gray-600">
+                      <p><strong>Benchmark industrie :</strong> Les manufacturiers avec abonnement recurrent ont un taux de retention 2.3x superieur (source: McKinsey Manufacturing 2024).</p>
+                      <p><strong>Prix marche :</strong> Fourchette 2,500-15,000$/mois pour du consulting manufacturier continu au Quebec.</p>
+                      <p><strong>Risque identifie :</strong> 40% des PME manufacturieres ont tente un modele d'abonnement et l'ont abandonne en &lt;12 mois — raison principale: promesse de valeur floue.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
           )}
           {stage === 3.5 && (
             <div className="flex justify-center">
