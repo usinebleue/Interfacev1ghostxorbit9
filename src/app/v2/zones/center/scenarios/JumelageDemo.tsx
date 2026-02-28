@@ -20,6 +20,10 @@ import {
   Eye,
   Sparkles,
   RotateCcw,
+  ArrowRight,
+  MessageSquare,
+  Pin,
+  ShieldQuestion,
 } from "lucide-react";
 import { cn } from "../../../../components/ui/utils";
 import {
@@ -86,9 +90,9 @@ function IntegratorDetailExpanded({ integrator }: { integrator: (typeof INTEGRAT
 
 // ========== CHALLENGE DEFENSE CARD ==========
 
-function ChallengeDefenseCard() {
+function ChallengeDefenseCard({ onAccept, onMoreData }: { onAccept?: () => void; onMoreData?: () => void }) {
   return (
-    <div className="ml-11 animate-in fade-in slide-in-from-bottom-2 duration-500">
+    <div className="ml-11 animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-2">
       <div className="border border-blue-200 rounded-xl overflow-hidden">
         <div className="bg-blue-50 px-4 py-2.5 flex items-center gap-2 border-b border-blue-200">
           <BotAvatar code="BCO" size="sm" />
@@ -116,6 +120,21 @@ function ChallengeDefenseCard() {
             Conclusion : l'ecart de 26-29 points avec les 2 autres candidats n'est pas un hasard — c'est la difference entre un projet integre reussi et une coordination multi-fournisseurs risquee.
           </div>
         </div>
+      </div>
+      {/* Post-challenge actions */}
+      <div className="flex items-center gap-2 flex-wrap ml-0">
+        <button
+          onClick={onAccept}
+          className="text-[11px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer bg-amber-500 text-white hover:bg-amber-600 transition-all"
+        >
+          <CheckCircle2 className="h-3 w-3" /> Accepter la recommandation
+        </button>
+        <button
+          onClick={onMoreData}
+          className="text-[11px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100 transition-all"
+        >
+          <Eye className="h-3 w-3" /> Voir les donnees brutes
+        </button>
       </div>
     </div>
   );
@@ -479,6 +498,8 @@ export function JumelageDemo({ onTransition }: { onTransition?: (target: string)
                       animate={stage === 2.5}
                       delay={i * 400}
                     />
+                    {/* Intro text visible directly */}
+                    <p className="text-[11px] text-gray-500 leading-relaxed mt-1.5 px-1 line-clamp-2">{integ.intro}</p>
                     {/* Detail toggle button */}
                     {stage >= 2.5 && (
                       <div className="mt-2 flex justify-center">
@@ -635,10 +656,34 @@ export function JumelageDemo({ onTransition }: { onTransition?: (target: string)
               )}
 
               {/* Challenge defense */}
-              {showChallenge && <ChallengeDefenseCard />}
+              {showChallenge && (
+                <ChallengeDefenseCard
+                  onAccept={() => setStage(4.5)}
+                  onMoreData={() => { if (!showAllThree) setShowAllThree(true); }}
+                />
+              )}
 
               {/* All three comparison */}
-              {showAllThree && <AllThreeComparison />}
+              {showAllThree && (
+                <div className="space-y-2">
+                  <AllThreeComparison />
+                  {/* Post-comparison actions */}
+                  <div className="flex items-center gap-2 flex-wrap ml-11">
+                    <button
+                      onClick={() => setStage(4.5)}
+                      className="text-[11px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer bg-amber-500 text-white hover:bg-amber-600 transition-all"
+                    >
+                      <ArrowRight className="h-3 w-3" /> Confirmer #{INTEGRATORS[0].nom.split(" ")[0]}
+                    </button>
+                    <button
+                      onClick={() => onTransition?.("analyse")}
+                      className="text-[11px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer bg-cyan-50 text-cyan-700 border border-cyan-200 hover:bg-cyan-100 transition-all"
+                    >
+                      <Eye className="h-3 w-3" /> Analyser les ecarts
+                    </button>
+                  </div>
+                </div>
+              )}
             </>
           )}
 

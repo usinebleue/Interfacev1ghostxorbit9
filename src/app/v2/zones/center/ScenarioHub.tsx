@@ -64,7 +64,7 @@ interface ScenarioCard {
 const MODE_LABELS: Record<ScenarioView, string> = {
   hub: "Hub",
   credo: "CREDO",
-  diagnostic: "Diagnostic Express",
+  diagnostic: "Diagnostic Preliminaire",
   jumelage: "Jumelage SMART",
   "cahier-projet": "Cahier de Projet",
   debat: "Debat",
@@ -83,7 +83,7 @@ const MAX_DEPTH = 3;
 const FLOW_SCENARIOS: ScenarioCard[] = [
   {
     id: "diagnostic",
-    title: "1. Diagnostic Express",
+    title: "1. Diagnostic Preliminaire",
     subtitle: "Tension \u2192 Analyse multi-bot \u2192 Pre-rapport",
     icon: Scan,
     color: "bg-red-600",
