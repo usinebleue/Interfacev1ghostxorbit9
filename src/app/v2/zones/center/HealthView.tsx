@@ -249,12 +249,13 @@ export function HealthView() {
         </Card>
 
         {/* Diagnostics disponibles */}
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <FileSearch className="h-4 w-4 text-gray-600" />
-            <h2 className="text-sm font-bold text-gray-800 uppercase tracking-wide">Diagnostics Disponibles</h2>
+        <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+          <div className="bg-gradient-to-r from-violet-100 to-indigo-100 px-4 py-2.5 border-b border-violet-200 flex items-center gap-2">
+            <FileSearch className="h-4 w-4 text-violet-600" />
+            <span className="text-sm font-bold text-violet-900">Diagnostics Disponibles</span>
+            <Badge variant="outline" className="ml-auto text-[9px] text-violet-600 bg-violet-50 border-violet-300">{DIAGNOSTICS.length} diagnostics</Badge>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
             {DIAGNOSTICS.map((diag) => {
               const Icon = diag.icon;
               const statusCfg = STATUS_CONFIG[diag.status];

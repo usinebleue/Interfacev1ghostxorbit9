@@ -714,15 +714,33 @@ export function DepartmentDetailView() {
 
           {/* 4 widgets en grille — identique V1 */}
           <div className="grid grid-cols-4 gap-2.5 shrink-0">
-            {config.widgets.map((widget, wi) => (
-              <Card key={wi} className="p-2.5">
-                <div className="flex items-center gap-1.5 mb-2">
-                  <widget.icon className={`h-4 w-4 ${widget.iconColor}`} />
-                  <h3 className="text-xs font-semibold">{widget.title}</h3>
+            {config.widgets.map((widget, wi) => {
+              const colorMap: Record<string, string> = {
+                "text-red-500": "from-red-50 to-rose-50 border-red-100",
+                "text-blue-500": "from-blue-50 to-indigo-50 border-blue-100",
+                "text-purple-500": "from-purple-50 to-violet-50 border-purple-100",
+                "text-green-500": "from-green-50 to-emerald-50 border-green-100",
+                "text-orange-500": "from-orange-50 to-amber-50 border-orange-100",
+                "text-pink-500": "from-pink-50 to-rose-50 border-pink-100",
+                "text-teal-500": "from-teal-50 to-cyan-50 border-teal-100",
+                "text-amber-500": "from-amber-50 to-yellow-50 border-amber-100",
+                "text-cyan-500": "from-cyan-50 to-sky-50 border-cyan-100",
+                "text-fuchsia-500": "from-fuchsia-50 to-pink-50 border-fuchsia-100",
+                "text-slate-500": "from-slate-50 to-gray-50 border-slate-100",
+                "text-indigo-500": "from-indigo-50 to-blue-50 border-indigo-100",
+                "text-rose-500": "from-rose-50 to-pink-50 border-rose-100",
+              };
+              const grad = colorMap[widget.iconColor] || "from-gray-50 to-slate-50 border-gray-100";
+              return (
+              <div key={wi} className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+                <div className={`bg-gradient-to-r ${grad} px-2.5 py-1.5 border-b flex items-center gap-1.5`}>
+                  <widget.icon className={`h-3.5 w-3.5 ${widget.iconColor}`} />
+                  <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-700 flex-1">{widget.title}</h3>
                   {widget.badge && (
-                    <Badge variant="destructive" className="text-xs px-1 py-0 h-4 ml-auto">{widget.badge}</Badge>
+                    <Badge variant="destructive" className="text-[9px] px-1 py-0 h-3.5">{widget.badge}</Badge>
                   )}
                 </div>
+                <div className="p-2.5">
                 <div className="space-y-1.5">
                   {widget.items.map((item) => (
                     <div key={item.id} className="cursor-pointer group" onClick={() => setActiveView("discussion")}>
@@ -755,20 +773,23 @@ export function DepartmentDetailView() {
                     </div>
                   ))}
                 </div>
-              </Card>
-            ))}
+                </div>
+              </div>
+              );
+            })}
           </div>
 
           {/* Zone bas — Derniers Dossiers + Activite — identique V1 */}
           <div className="grid grid-cols-2 gap-2.5 flex-1 min-h-0">
-            <Card className="p-2.5 flex flex-col min-h-0">
-              <div className="flex items-center gap-1.5 mb-2 shrink-0">
-                <Clock className="h-4 w-4 text-orange-500" />
-                <h3 className="text-xs font-semibold">DERNIERS DOSSIERS</h3>
-                <Button variant="link" className="p-0 h-auto text-xs ml-auto">
+            <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm flex flex-col min-h-0">
+              <div className="bg-gradient-to-r from-orange-50 to-amber-50 px-2.5 py-1.5 border-b border-orange-100 flex items-center gap-1.5 shrink-0">
+                <Clock className="h-3.5 w-3.5 text-orange-500" />
+                <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-700 flex-1">Derniers Dossiers</h3>
+                <Button variant="link" className="p-0 h-auto text-[10px]">
                   Voir tout <ExternalLink className="ml-0.5 h-3 w-3" />
                 </Button>
               </div>
+              <div className="p-2.5 flex-1 min-h-0">
               <div className="space-y-2 flex-1 overflow-y-auto">
                 {config.recentFiles.map((file) => (
                   <div key={file.id} className="flex items-center gap-2.5 cursor-pointer group" onClick={() => setActiveView("discussion")}>
@@ -789,13 +810,15 @@ export function DepartmentDetailView() {
                   </div>
                 ))}
               </div>
-            </Card>
-
-            <Card className="p-2.5 flex flex-col min-h-0">
-              <div className="flex items-center gap-1.5 mb-2 shrink-0">
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
-                <h3 className="text-xs font-semibold">ACTIVITE</h3>
               </div>
+            </div>
+
+            <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm flex flex-col min-h-0">
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 px-2.5 py-1.5 border-b border-green-100 flex items-center gap-1.5 shrink-0">
+                <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-700">Activite</h3>
+              </div>
+              <div className="p-2.5 flex-1 min-h-0">
               <div className="space-y-2 flex-1 overflow-y-auto">
                 {config.activity.map((update) => (
                   <div key={update.id} className="flex items-center gap-2">
@@ -809,7 +832,8 @@ export function DepartmentDetailView() {
                   </div>
                 ))}
               </div>
-            </Card>
+              </div>
+            </div>
           </div>
         </TabsContent>
 

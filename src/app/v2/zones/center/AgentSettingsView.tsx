@@ -225,9 +225,9 @@ export function AgentSettingsView() {
 
             {/* Expandable Sections */}
             <Card className="overflow-hidden">
-              <div className="px-3 py-2 bg-gray-50 border-b">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-600 flex items-center gap-2">
-                  <User className="h-3 w-3" />
+              <div className="bg-gradient-to-r from-blue-100 to-sky-100 px-3 py-2 border-b border-blue-200">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-blue-800 flex items-center gap-2">
+                  <User className="h-3 w-3 text-blue-600" />
                   Profil Humain
                 </h3>
               </div>
@@ -273,9 +273,9 @@ export function AgentSettingsView() {
 
             {/* Decision Modes — Grid 2x2 + 1 */}
             <Card className="overflow-hidden">
-              <div className="px-3 py-2 bg-gray-50 border-b">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-600 flex items-center gap-2">
-                  <Bot className="h-3 w-3" />
+              <div className="bg-gradient-to-r from-indigo-100 to-violet-100 px-3 py-2 border-b border-indigo-200">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-800 flex items-center gap-2">
+                  <Bot className="h-3 w-3 text-indigo-600" />
                   Mode de Decision
                 </h3>
               </div>
@@ -332,8 +332,8 @@ export function AgentSettingsView() {
 
             {/* Parameter Sliders */}
             <Card className="overflow-hidden">
-              <div className="px-3 py-2 bg-gray-50 border-b">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-600">
+              <div className="bg-gradient-to-r from-slate-100 to-blue-100 px-3 py-2 border-b border-slate-200">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
                   Parametres — Mode {DECISION_MODES.find(m => m.id === activeMode)?.label}
                 </h3>
               </div>
@@ -376,8 +376,8 @@ export function AgentSettingsView() {
 
             {/* Personality Settings */}
             <Card className="overflow-hidden">
-              <div className="px-3 py-2 bg-gray-50 border-b">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-600">
+              <div className="bg-gradient-to-r from-purple-100 to-fuchsia-100 px-3 py-2 border-b border-purple-200">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-purple-800">
                   Personnalite
                 </h3>
               </div>
