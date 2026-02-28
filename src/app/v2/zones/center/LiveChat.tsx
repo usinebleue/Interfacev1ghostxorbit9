@@ -1093,12 +1093,6 @@ export function LiveChat({
                       />
                       <div className="mt-3 pt-2 border-t border-amber-200 flex items-center justify-between">
                         <div className="flex items-center gap-3 text-[10px] text-amber-500">
-                          {msg.tier && <span className="px-1.5 py-0.5 bg-amber-100 rounded">{msg.tier}</span>}
-                          {msg.latence_ms !== undefined && (
-                            <span className="flex items-center gap-0.5">
-                              <Clock className="h-2.5 w-2.5" /> {(msg.latence_ms / 1000).toFixed(1)}s
-                            </span>
-                          )}
                         </div>
                         <button
                           onClick={() => copy(msg.id, msg.content)}
@@ -1227,17 +1221,10 @@ export function LiveChat({
                       <p className="text-sm leading-relaxed">{msg.content}</p>
                     )}
 
-                    {/* Bot metadata + copy */}
+                    {/* Bot copy */}
                     {!isUser && (
                       <div className="mt-3 pt-2 border-t border-gray-50 flex items-center justify-between">
-                        <div className="flex items-center gap-3 text-[10px] text-gray-400">
-                          {msg.tier && <span className="px-1.5 py-0.5 bg-gray-50 rounded">{msg.tier}</span>}
-                          {msg.latence_ms !== undefined && (
-                            <span className="flex items-center gap-0.5">
-                              <Clock className="h-2.5 w-2.5" /> {(msg.latence_ms / 1000).toFixed(1)}s
-                            </span>
-                          )}
-                        </div>
+                        <div />
                         <button
                           onClick={() => copy(msg.id, msg.content)}
                           className="text-gray-300 hover:text-gray-500 cursor-pointer p-1 rounded transition-colors opacity-0 group-hover:opacity-100"
