@@ -499,20 +499,25 @@ export function LiveChat({
       const count = challengeCounts[msgId] || 0;
       if (count >= 2 || isTyping) return;
       setChallengeCounts((prev) => ({ ...prev, [msgId]: count + 1 }));
+      const agentName = AGENT_NAMES[agentCode || activeBotCode]?.name || "Bot";
       sendMessage(
         "Je ne suis pas d'accord avec cette analyse. Defends ta position avec plus de details et des sources concretes.",
-        agentCode || activeBotCode
+        agentCode || activeBotCode,
+        undefined,
+        { msgType: "challenge", parentId: msgId, branchLabel: `Challenge — ${agentName}` }
       );
     },
     [challengeCounts, sendMessage, activeBotCode, isTyping]
   );
 
   const handleApprofondir = useCallback(
-    (agentCode?: string) => {
+    (msgId: string, agentCode?: string) => {
       if (!isTyping)
         sendMessage(
           "Developpe ce point en detail. Quelles sont les implications concretes?",
-          agentCode || activeBotCode
+          agentCode || activeBotCode,
+          undefined,
+          { msgType: "normal", parentId: msgId }
         );
     },
     [sendMessage, activeBotCode, isTyping]
@@ -521,11 +526,27 @@ export function LiveChat({
   const handleConsulterBot = useCallback(
     (botCode: string) => {
       if (!isTyping && lastUserMessage) {
-        sendMessage(lastUserMessage, botCode);
+        const botName = AGENT_NAMES[botCode]?.name || botCode;
+        sendMessage(lastUserMessage, botCode, undefined, {
+          msgType: "consultation",
+          branchLabel: `Consultation — ${botName}`,
+        });
       }
     },
     [sendMessage, lastUserMessage, isTyping]
   );
+
+  // Request synthesis from CarlOS
+  const handleSynthesis = useCallback(() => {
+    if (!isTyping) {
+      sendMessage(
+        "Synthetise cette discussion. Quels sont les 3 points cles, la recommandation principale, et les prochaines etapes concretes?",
+        "BCO",
+        undefined,
+        { msgType: "synthesis" as const, branchLabel: "Synthese CarlOS" }
+      );
+    }
+  }, [sendMessage, isTyping]);
 
   // ── Sentinelle CarlOS — detection de boucles ──
   const sentinelleWarning = useMemo(() => {
@@ -752,91 +773,234 @@ export function LiveChat({
           })()}
 
           {/* Message bubbles */}
-          {messages.map((msg) => {
+          {messages.map((msg, idx) => {
             const agentInfo = msg.agent ? AGENT_NAMES[msg.agent] : null;
             const isUser = msg.role === "user";
+            const isSystem = msg.role === "system";
+            const isChallenge = msg.msgType === "challenge";
+            const isConsultation = msg.msgType === "consultation";
+            const isSynthesis = msg.msgType === "synthesis";
+            const isCoaching = msg.msgType === "coaching";
+            const depth = msg.branchDepth || 0;
+
+            // ── Coaching messages — CarlOS encadrement ──
+            if (isCoaching || isSystem) {
+              return (
+                <div key={msg.id} className="flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center shrink-0 shadow-sm mt-1 ring-2 ring-blue-200">
+                    <Zap className="h-4 w-4 text-white" />
+                  </div>
+                  <div className="bg-blue-50 border border-blue-200 rounded-2xl rounded-tl-md px-5 py-4 shadow-sm max-w-[85%]">
+                    <div className="text-xs font-semibold text-blue-700 mb-1.5 flex items-center gap-1.5">
+                      <Bot className="h-3 w-3" /> CarlOS — Coaching
+                    </div>
+                    <p className="text-sm text-blue-800 leading-relaxed">{msg.content}</p>
+                    {msg.options && msg.options.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-3">
+                        {msg.options.map((opt, i) => (
+                          <button
+                            key={i}
+                            onClick={() => handleOptionClick(opt)}
+                            disabled={isTyping}
+                            className="text-xs px-3 py-1.5 rounded-full bg-white border border-blue-300 text-blue-700 hover:bg-blue-100 transition-colors cursor-pointer font-medium"
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            }
+
+            // ── Synthesis card — special golden card ──
+            if (isSynthesis && !isUser) {
+              return (
+                <div key={msg.id} className="animate-in fade-in slide-in-from-bottom-3 duration-700">
+                  {/* Branch connector */}
+                  <div className="flex items-center gap-2 mb-2 ml-10">
+                    <div className="w-6 h-px bg-amber-300" />
+                    <span className="text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                      Synthese
+                    </span>
+                    <div className="flex-1 h-px bg-amber-200" />
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 to-yellow-600 flex items-center justify-center shrink-0 shadow-sm mt-1">
+                      <Sparkles className="h-4 w-4 text-white" />
+                    </div>
+                    <div className="bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-200 rounded-2xl rounded-tl-md px-5 py-4 shadow-md max-w-[85%] group">
+                      <div className="text-xs font-bold text-amber-700 mb-2 flex items-center gap-1.5">
+                        <Sparkles className="h-3 w-3" /> Synthese CarlOS
+                      </div>
+                      <div
+                        className="text-sm text-amber-900 leading-relaxed prose-sm"
+                        dangerouslySetInnerHTML={{ __html: formatBotText(msg.content) }}
+                      />
+                      <div className="mt-3 pt-2 border-t border-amber-200 flex items-center justify-between">
+                        <div className="flex items-center gap-3 text-[10px] text-amber-500">
+                          {msg.tier && <span className="px-1.5 py-0.5 bg-amber-100 rounded">{msg.tier}</span>}
+                          {msg.latence_ms !== undefined && (
+                            <span className="flex items-center gap-0.5">
+                              <Clock className="h-2.5 w-2.5" /> {(msg.latence_ms / 1000).toFixed(1)}s
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => copy(msg.id, msg.content)}
+                          className="text-amber-400 hover:text-amber-600 cursor-pointer p-1 rounded transition-colors opacity-0 group-hover:opacity-100"
+                          title="Copier la synthese"
+                        >
+                          {copied === msg.id ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
+            // ── Branch indicator for challenges and consultations ──
+            const showBranchIndicator = (isChallenge || isConsultation) && !isUser;
+
             return (
-              <div key={msg.id} className={cn("flex gap-3", isUser && "justify-end")}>
-                {!isUser && (
-                  <div className={cn(
-                    "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-sm bg-gradient-to-br mt-1",
-                    agentInfo?.gradient || "from-blue-500 to-indigo-600"
-                  )}>
-                    <Bot className="h-4 w-4 text-white" />
+              <div key={msg.id}>
+                {/* Branch connector line */}
+                {showBranchIndicator && (
+                  <div className="flex items-center gap-2 mb-2 ml-10 animate-in fade-in duration-300">
+                    <div className={cn("w-6 h-px", isChallenge ? "bg-red-300" : "bg-violet-300")} />
+                    <span className={cn(
+                      "text-[10px] font-semibold px-2 py-0.5 rounded-full border",
+                      isChallenge
+                        ? "text-red-600 bg-red-50 border-red-200"
+                        : "text-violet-600 bg-violet-50 border-violet-200"
+                    )}>
+                      {isChallenge ? (
+                        <span className="flex items-center gap-1"><Swords className="h-2.5 w-2.5" /> {msg.branchLabel || "Challenge"}</span>
+                      ) : (
+                        <span className="flex items-center gap-1"><Users className="h-2.5 w-2.5" /> {msg.branchLabel || "Consultation"}</span>
+                      )}
+                    </span>
+                    <div className={cn("flex-1 h-px", isChallenge ? "bg-red-200" : "bg-violet-200")} />
                   </div>
                 )}
+
+                {/* Message bubble */}
                 <div className={cn(
-                  "rounded-2xl shadow-sm max-w-[85%] relative group",
-                  isUser
-                    ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white px-4 py-3 rounded-tr-md"
-                    : "bg-white border border-gray-100 px-5 py-4 rounded-tl-md"
+                  "flex gap-3",
+                  isUser && "justify-end",
+                  depth > 0 && "ml-6",
+                  depth > 1 && "ml-12",
                 )}>
-                  {/* Agent name */}
-                  {!isUser && agentInfo && (
-                    <div className={cn("text-xs mb-2 font-semibold", agentInfo.color)}>
-                      {agentInfo.name}
+                  {/* Branch depth indicator */}
+                  {depth > 0 && !isUser && (
+                    <div className={cn(
+                      "w-0.5 self-stretch rounded-full shrink-0",
+                      isChallenge ? "bg-red-200" : isConsultation ? "bg-violet-200" : "bg-gray-200"
+                    )} />
+                  )}
+
+                  {!isUser && (
+                    <div className={cn(
+                      "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-sm bg-gradient-to-br mt-1",
+                      isChallenge && "ring-2 ring-red-200",
+                      isConsultation && "ring-2 ring-violet-200",
+                      agentInfo?.gradient || "from-blue-500 to-indigo-600"
+                    )}>
+                      <Bot className="h-4 w-4 text-white" />
                     </div>
                   )}
-
-                  {/* Content */}
-                  {!isUser ? (
-                    <div
-                      className="text-sm text-gray-700 leading-relaxed prose-sm"
-                      dangerouslySetInnerHTML={{ __html: formatBotText(msg.content) }}
-                    />
-                  ) : (
-                    <p className="text-sm leading-relaxed">{msg.content}</p>
-                  )}
-
-                  {/* Bot metadata + copy */}
-                  {!isUser && (
-                    <div className="mt-3 pt-2 border-t border-gray-50 flex items-center justify-between">
-                      <div className="flex items-center gap-3 text-[10px] text-gray-400">
-                        {msg.tier && <span className="px-1.5 py-0.5 bg-gray-50 rounded">{msg.tier}</span>}
-                        {msg.latence_ms !== undefined && (
-                          <span className="flex items-center gap-0.5">
-                            <Clock className="h-2.5 w-2.5" /> {(msg.latence_ms / 1000).toFixed(1)}s
-                          </span>
-                        )}
+                  <div className={cn(
+                    "rounded-2xl shadow-sm max-w-[85%] relative group",
+                    isUser
+                      ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white px-4 py-3 rounded-tr-md"
+                      : isChallenge
+                        ? "bg-white border-2 border-red-100 px-5 py-4 rounded-tl-md"
+                        : isConsultation
+                          ? "bg-white border-2 border-violet-100 px-5 py-4 rounded-tl-md"
+                          : "bg-white border border-gray-100 px-5 py-4 rounded-tl-md"
+                  )}>
+                    {/* Agent name */}
+                    {!isUser && agentInfo && (
+                      <div className={cn("text-xs mb-2 font-semibold", agentInfo.color)}>
+                        {agentInfo.name}
                       </div>
-                      <button
-                        onClick={() => copy(msg.id, msg.content)}
-                        className="text-gray-300 hover:text-gray-500 cursor-pointer p-1 rounded transition-colors opacity-0 group-hover:opacity-100"
-                        title="Copier"
-                      >
-                        {copied === msg.id ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
-                      </button>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Actions interactives — branches */}
-                  {!isUser && (
-                    <BotMessageActions
-                      msg={msg}
-                      isLast={msg.id === lastBotMsgId}
-                      challengeCount={challengeCounts[msg.id] || 0}
-                      onOptionClick={handleOptionClick}
-                      onChallenge={() => handleChallenge(msg.id, msg.agent)}
-                      onApprofondir={() => handleApprofondir(msg.agent)}
-                      onConsulterBot={handleConsulterBot}
-                      disabled={isTyping}
-                      availableBots={bots}
-                      currentBotCode={msg.agent || activeBotCode}
-                    />
+                    {/* Content */}
+                    {!isUser ? (
+                      <div
+                        className="text-sm text-gray-700 leading-relaxed prose-sm"
+                        dangerouslySetInnerHTML={{ __html: formatBotText(msg.content) }}
+                      />
+                    ) : (
+                      <p className="text-sm leading-relaxed">{msg.content}</p>
+                    )}
+
+                    {/* Bot metadata + copy */}
+                    {!isUser && (
+                      <div className="mt-3 pt-2 border-t border-gray-50 flex items-center justify-between">
+                        <div className="flex items-center gap-3 text-[10px] text-gray-400">
+                          {msg.tier && <span className="px-1.5 py-0.5 bg-gray-50 rounded">{msg.tier}</span>}
+                          {msg.latence_ms !== undefined && (
+                            <span className="flex items-center gap-0.5">
+                              <Clock className="h-2.5 w-2.5" /> {(msg.latence_ms / 1000).toFixed(1)}s
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => copy(msg.id, msg.content)}
+                          className="text-gray-300 hover:text-gray-500 cursor-pointer p-1 rounded transition-colors opacity-0 group-hover:opacity-100"
+                          title="Copier"
+                        >
+                          {copied === msg.id ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Actions interactives — branches */}
+                    {!isUser && (
+                      <BotMessageActions
+                        msg={msg}
+                        isLast={msg.id === lastBotMsgId}
+                        challengeCount={challengeCounts[msg.id] || 0}
+                        onOptionClick={handleOptionClick}
+                        onChallenge={() => handleChallenge(msg.id, msg.agent)}
+                        onApprofondir={() => handleApprofondir(msg.id, msg.agent)}
+                        onConsulterBot={handleConsulterBot}
+                        disabled={isTyping}
+                        availableBots={bots}
+                        currentBotCode={msg.agent || activeBotCode}
+                      />
+                    )}
+                  </div>
+                  {isUser && (
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center shrink-0 text-[10px] font-bold text-white mt-1">
+                      CF
+                    </div>
                   )}
                 </div>
-                {isUser && (
-                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center shrink-0 text-[10px] font-bold text-white mt-1">
-                    CF
-                  </div>
-                )}
               </div>
             );
           })}
 
+          {/* Synthese rapide — apparait apres 4+ echanges bot */}
+          {!isTyping && messages.filter(m => m.role === "assistant").length >= 4 && !messages.some(m => m.msgType === "synthesis") && (
+            <div className="flex justify-center">
+              <button
+                onClick={handleSynthesis}
+                className="flex items-center gap-2 text-xs px-4 py-2 rounded-full bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 text-amber-700 hover:from-amber-100 hover:to-yellow-100 transition-all cursor-pointer font-medium shadow-sm"
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                Demander la synthese a CarlOS
+              </button>
+            </div>
+          )}
+
           {/* Sentinelle CarlOS — alerte anti-boucle */}
           {sentinelleWarning && !isTyping && (
-            <div className="flex gap-3">
+            <div className="flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
               <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shrink-0 shadow-sm mt-1">
                 <AlertTriangle className="h-4 w-4 text-white" />
               </div>
@@ -849,7 +1013,10 @@ export function LiveChat({
                   {sentinelleWarning.actions.map((action, i) => (
                     <button
                       key={i}
-                      onClick={() => handleOptionClick(action)}
+                      onClick={() => {
+                        if (action === "Synthese finale" || action === "Synthese") handleSynthesis();
+                        else handleOptionClick(action);
+                      }}
                       className="text-xs px-3 py-1.5 rounded-full bg-white border border-amber-300 text-amber-700 hover:bg-amber-100 transition-colors cursor-pointer font-medium"
                     >
                       {action}

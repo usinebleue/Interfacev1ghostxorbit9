@@ -5,7 +5,7 @@
 
 import { createContext, useContext, useState, useCallback } from "react";
 import { useChat } from "../api/hooks";
-import type { ChatMessage, ReflectionMode, CREDOPhase, Thread } from "../api/types";
+import type { ChatMessage, ReflectionMode, CREDOPhase, Thread, MessageType } from "../api/types";
 
 interface ChatState {
   messages: ChatMessage[];
@@ -16,8 +16,14 @@ interface ChatState {
   activeThreadId: string | null;
 }
 
+interface BranchMeta {
+  msgType?: MessageType;
+  parentId?: string;
+  branchLabel?: string;
+}
+
 interface ChatActions {
-  sendMessage: (text: string, agent?: string, ghost?: string) => Promise<void>;
+  sendMessage: (text: string, agent?: string, ghost?: string, meta?: BranchMeta) => Promise<void>;
   setReflectionMode: (mode: ReflectionMode) => void;
   newConversation: () => void;
   parkThread: () => void;
@@ -47,10 +53,10 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     useState<ReflectionMode>("credo");
   const [currentCREDOPhase] = useState<CREDOPhase>("C");
 
-  // Wrap sendMessage to inject active reflection mode + direct:true
+  // Wrap sendMessage to inject active reflection mode + branch meta
   const sendMessage = useCallback(
-    async (text: string, agent?: string, ghost?: string) => {
-      await rawSend(text, agent, ghost, activeReflectionMode);
+    async (text: string, agent?: string, ghost?: string, meta?: BranchMeta) => {
+      await rawSend(text, agent, ghost, activeReflectionMode, meta);
     },
     [rawSend, activeReflectionMode]
   );
