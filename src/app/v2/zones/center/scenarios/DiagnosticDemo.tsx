@@ -66,12 +66,27 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
   // Inline action states
   const [showCfoChallengeCard, setShowCfoChallengeCard] = useState(false);
   const [showCooDeepDive, setShowCooDeepDive] = useState(false);
+  const [showCtoChallenge, setShowCtoChallenge] = useState(false);
   const [showSyntheseChallenge, setShowSyntheseChallenge] = useState(false);
   // Post-challenge action states
   const [showCfoVsCooDebate, setShowCfoVsCooDebate] = useState(false);
   const [showCooChallenge, setShowCooChallenge] = useState(false);
   const [showContreArgument, setShowContreArgument] = useState(false);
+  const [showTripleDebat, setShowTripleDebat] = useState(false);
   const [extractedInsights, setExtractedInsights] = useState<string[]>([]);
+  // Sentinel — CarlOS watches interaction depth
+  const [challengeCount, setChallengeCount] = useState(0);
+  const [showSentinelWarning, setShowSentinelWarning] = useState(false);
+  const MAX_CHALLENGES = 3;
+
+  const handleChallenge = (action: () => void) => {
+    const newCount = challengeCount + 1;
+    setChallengeCount(newCount);
+    action();
+    if (newCount >= MAX_CHALLENGES && !showSentinelWarning) {
+      setTimeout(() => setShowSentinelWarning(true), 1500);
+    }
+  };
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -83,18 +98,22 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
         behavior: "smooth",
       });
     }, 150);
-  }, [stage, ceoTextDone, showCfoChallengeCard, showCooDeepDive, showSyntheseChallenge, showCfoVsCooDebate, showCooChallenge, showContreArgument, extractedInsights]);
+  }, [stage, ceoTextDone, showCfoChallengeCard, showCooDeepDive, showCtoChallenge, showSyntheseChallenge, showCfoVsCooDebate, showCooChallenge, showContreArgument, showTripleDebat, showSentinelWarning, extractedInsights]);
 
   const handleRestart = () => {
     setStage(0);
     setCeoTextDone(false);
     setShowCfoChallengeCard(false);
     setShowCooDeepDive(false);
+    setShowCtoChallenge(false);
     setShowSyntheseChallenge(false);
     setShowCfoVsCooDebate(false);
     setShowCooChallenge(false);
     setShowContreArgument(false);
+    setShowTripleDebat(false);
     setExtractedInsights([]);
+    setChallengeCount(0);
+    setShowSentinelWarning(false);
   };
 
   const handleExportPreRapport = () => {
@@ -375,9 +394,12 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
               {/* Extra action buttons after PerspectivesCard */}
               {stage === 4.5 && (
                 <div className="ml-11 space-y-3">
+                  {/* Row 1 — Challenge each bot individually */}
                   <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide mr-1">Challenger :</span>
                     <button
-                      onClick={() => setShowCfoChallengeCard(true)}
+                      onClick={() => handleChallenge(() => setShowCfoChallengeCard(true))}
+                      disabled={showCfoChallengeCard}
                       className={cn(
                         "text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all",
                         showCfoChallengeCard
@@ -385,10 +407,11 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
                           : "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
                       )}
                     >
-                      <Target className="h-3 w-3" /> Challenger le CFO
+                      <Target className="h-3 w-3" /> CFO — Subventions
                     </button>
                     <button
-                      onClick={() => setShowCooDeepDive(true)}
+                      onClick={() => handleChallenge(() => setShowCooDeepDive(true))}
+                      disabled={showCooDeepDive}
                       className={cn(
                         "text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all",
                         showCooDeepDive
@@ -396,7 +419,40 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
                           : "bg-orange-50 text-orange-700 border border-orange-200 hover:bg-orange-100"
                       )}
                     >
-                      <Eye className="h-3 w-3" /> Approfondir la perspective COO
+                      <Target className="h-3 w-3" /> COO — Plan operationnel
+                    </button>
+                    <button
+                      onClick={() => handleChallenge(() => setShowCtoChallenge(true))}
+                      disabled={showCtoChallenge}
+                      className={cn(
+                        "text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all",
+                        showCtoChallenge
+                          ? "bg-purple-100 text-purple-700 border border-purple-300"
+                          : "bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100"
+                      )}
+                    >
+                      <Target className="h-3 w-3" /> CTO — Technologies
+                    </button>
+                  </div>
+                  {/* Row 2 — Group actions */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      onClick={() => handleChallenge(() => setShowTripleDebat(true))}
+                      disabled={showTripleDebat}
+                      className={cn(
+                        "text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all",
+                        showTripleDebat
+                          ? "bg-violet-100 text-violet-700 border border-violet-300"
+                          : "bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100"
+                      )}
+                    >
+                      <MessageSquare className="h-3 w-3" /> Debat entre les 3 bots
+                    </button>
+                    <button
+                      onClick={() => setStage(5)}
+                      className="text-xs bg-blue-600 text-white px-4 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-blue-700 font-medium cursor-pointer"
+                    >
+                      <ArrowRight className="h-3 w-3" /> Synthetiser
                     </button>
                   </div>
 
@@ -528,6 +584,153 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
                             speed={5}
                             className="text-sm text-gray-700 leading-relaxed"
                           />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* CTO Challenge inline card */}
+                  {showCtoChallenge && (
+                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-2">
+                      <div className="flex gap-3">
+                        <BotAvatar code="BCT" size="md" />
+                        <div className="bg-white border rounded-xl rounded-tl-none px-4 py-3 shadow-sm border-l-[3px] border-l-purple-400 flex-1">
+                          <div className="text-xs text-purple-600 mb-2 font-medium">Marc (CTO) — Defense des choix technologiques</div>
+                          <TypewriterText
+                            text="Les 3 technologies recommandees ne sont pas experimentales — elles sont eprouvees en manufacturier alimentaire. Le cobot UR10e est certifie IP67 pour les environnements alimentaires, 40,000+ unites installees dans le monde. Le systeme CO2 transcritique est le standard post-HFC en refrigeration industrielle — la reglementation canadienne interdit les HFC d'ici 2028, donc c'est inevitable. Les capteurs IoT utilisent LoRaWAN, la meme techno que chez Saputo et Agropur pour le monitoring temps reel. Le ROI de 20-24 mois est base sur 23 projets similaires — pas des projections theoriques. Le seul risque technologique : la maintenance predictive par analyse vibratoire necessite 6-8 semaines de donnees avant d'etre fiable. Pendant cette periode, on maintient la maintenance preventive classique en parallele."
+                            speed={5}
+                            className="text-sm text-gray-700 leading-relaxed"
+                          />
+                          <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                            <div className="bg-purple-50 border border-purple-200 rounded-lg px-2 py-1.5 text-center">
+                              <div className="font-bold text-purple-800">40,000+</div>
+                              <div className="text-gray-500">UR10e installes</div>
+                            </div>
+                            <div className="bg-purple-50 border border-purple-200 rounded-lg px-2 py-1.5 text-center">
+                              <div className="font-bold text-purple-800">2028</div>
+                              <div className="text-gray-500">Fin HFC (loi)</div>
+                            </div>
+                            <div className="bg-purple-50 border border-purple-200 rounded-lg px-2 py-1.5 text-center">
+                              <div className="font-bold text-purple-800">23 projets</div>
+                              <div className="text-gray-500">Base ROI</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      {/* Post-CTO-challenge actions */}
+                      <div className="flex items-center gap-2 flex-wrap ml-11">
+                        <button
+                          onClick={() => {
+                            if (!extractedInsights.includes("cto")) setExtractedInsights(prev => [...prev, "cto"]);
+                          }}
+                          className={cn(
+                            "text-[11px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all",
+                            extractedInsights.includes("cto")
+                              ? "bg-green-100 text-green-700 border border-green-300"
+                              : "bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100"
+                          )}
+                        >
+                          <Pin className="h-3 w-3" /> {extractedInsights.includes("cto") ? "Extrait ✓" : "Extraire → pre-rapport"}
+                        </button>
+                        <button
+                          onClick={() => setStage(5)}
+                          className="text-[11px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-all"
+                        >
+                          <ArrowRight className="h-3 w-3" /> Passer a la synthese
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 3-way Debate card — all 3 bots debating */}
+                  {showTripleDebat && (
+                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                      <div className="border border-violet-200 rounded-xl overflow-hidden">
+                        <div className="bg-violet-50 px-4 py-2.5 flex items-center gap-2 border-b border-violet-200">
+                          <MessageSquare className="h-4 w-4 text-violet-600" />
+                          <span className="text-xs font-bold text-violet-800">Debat croise — CFO × COO × CTO</span>
+                        </div>
+                        <div className="p-4 space-y-3">
+                          <div className="flex gap-3">
+                            <BotAvatar code="BCF" size="sm" />
+                            <div className="flex-1">
+                              <div className="text-xs text-emerald-600 font-medium mb-1">Francois (CFO)</div>
+                              <p className="text-sm text-gray-700">Le timing est critique. Si on rate la fenetre HQ de juin 2026, on perd 12 mois. Je recommande de deposer les 4 dossiers simultanement — EnerGuide, systemes industriels, STIQ et RS&DE. Le risque de ne pas combiner les 3 axes, c'est de perdre l'effet levier des subventions croisees.</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-3">
+                            <BotAvatar code="BOO" size="sm" />
+                            <div className="flex-1">
+                              <div className="text-xs text-orange-600 font-medium mb-1">Lise (COO)</div>
+                              <p className="text-sm text-gray-700">Francois a raison sur le timing, mais je souleve un point : les 6 operateurs de palettisation doivent etre formes AVANT l'arrivee du cobot, pas pendant. Ca veut dire demarrer la formation en Phase 1, pas en Phase 3. Ca ajoute un cout de 15-20K$ mais reduit le risque de resistance au changement de 80%.</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-3">
+                            <BotAvatar code="BCT" size="sm" />
+                            <div className="flex-1">
+                              <div className="text-xs text-purple-600 font-medium mb-1">Marc (CTO)</div>
+                              <p className="text-sm text-gray-700">D'accord avec Lise. J'ajoute que l'IoT devrait commencer en Phase 1 aussi — installer les capteurs de base des le debut permet de mesurer le "avant" pour prouver les economies a HQ. Les donnees de monitoring pre-travaux renforcent enormement le dossier de subvention.</p>
+                            </div>
+                          </div>
+                          <div className="bg-violet-50 border border-violet-200 rounded-lg px-3 py-2.5 text-xs">
+                            <div className="font-bold text-violet-800 mb-1 flex items-center gap-1.5">
+                              <Sparkles className="h-3.5 w-3.5" /> Consensus des 3 specialistes
+                            </div>
+                            <p className="text-gray-700">Demarrer la formation operateurs ET les capteurs IoT des la Phase 1 (ajout de 15-20K$). Deposer les 4 dossiers de subventions simultanement. Le chevauchement anticipe permet de gagner 4-6 semaines sur le calendrier total tout en renforçant le dossier HQ avec des donnees reelles.</p>
+                          </div>
+                        </div>
+                      </div>
+                      {/* Post-debate actions */}
+                      <div className="flex items-center gap-2 flex-wrap mt-2">
+                        <button
+                          onClick={() => {
+                            if (!extractedInsights.includes("debat")) setExtractedInsights(prev => [...prev, "debat"]);
+                          }}
+                          className={cn(
+                            "text-[11px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all",
+                            extractedInsights.includes("debat")
+                              ? "bg-green-100 text-green-700 border border-green-300"
+                              : "bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100"
+                          )}
+                        >
+                          <Pin className="h-3 w-3" /> {extractedInsights.includes("debat") ? "Consensus extrait ✓" : "Extraire le consensus"}
+                        </button>
+                        <button
+                          onClick={() => setStage(5)}
+                          className="text-[11px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer bg-blue-600 text-white hover:bg-blue-700 transition-all"
+                        >
+                          <ArrowRight className="h-3 w-3" /> Synthetiser avec le consensus
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* CarlOS Sentinel warning — anti-loop */}
+                  {showSentinelWarning && (
+                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                      <div className="flex gap-3">
+                        <BotAvatar code="BCO" size="md" />
+                        <div className="bg-amber-50 border border-amber-200 rounded-xl rounded-tl-none px-4 py-3 shadow-sm border-l-[3px] border-l-amber-500 flex-1">
+                          <div className="text-xs text-amber-700 mb-1.5 font-medium flex items-center gap-1.5">
+                            <Sparkles className="h-3 w-3" /> CarlOS — Sentinelle de discussion
+                          </div>
+                          <p className="text-sm text-gray-700 leading-relaxed">
+                            On a bien explore les perspectives — {challengeCount} interactions sur les analyses. Les 3 specialistes convergent sur les points cles. Je recommande de passer a la synthese pour consolider, ou d'ouvrir un debat complet si tu veux stress-tester davantage.
+                          </p>
+                          <div className="mt-2 flex items-center gap-2">
+                            <button
+                              onClick={() => setStage(5)}
+                              className="text-[11px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer bg-blue-600 text-white hover:bg-blue-700 transition-all"
+                            >
+                              <ArrowRight className="h-3 w-3" /> Passer a la synthese
+                            </button>
+                            <button
+                              onClick={() => onTransition?.("debat")}
+                              className="text-[11px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100 transition-all"
+                            >
+                              <MessageSquare className="h-3 w-3" /> Debat complet (mode dedie)
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
