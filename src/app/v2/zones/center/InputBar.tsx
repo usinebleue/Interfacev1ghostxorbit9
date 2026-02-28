@@ -106,25 +106,29 @@ export function InputBar() {
         </Tooltip>
       </div>
 
-      {/* Ligne 2 : Badge Sherpa — CarlOS route automatiquement */}
-      <div className="flex items-center gap-2">
-        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-          <Compass className="h-3 w-3" />
-          <span>CarlOS pilote</span>
-        </div>
-        {activeReflectionMode && MODE_META[activeReflectionMode] && (() => {
-          const meta = MODE_META[activeReflectionMode];
-          const Icon = meta.icon;
-          return (
-            <span className={cn(
-              "flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full font-medium text-white shadow-sm",
-              meta.color
-            )}>
-              <Icon className="h-3 w-3" />
-              {meta.label}
-            </span>
-          );
-        })()}
+      {/* Ligne 2 : Modes de reflexion cliquables */}
+      <div className="flex items-center gap-1.5 flex-wrap">
+        {(Object.entries(MODE_META) as [ReflectionMode, { label: string; icon: React.ElementType; color: string }][]).map(
+          ([mode, meta]) => {
+            const Icon = meta.icon;
+            const isActive = activeReflectionMode === mode;
+            return (
+              <button
+                key={mode}
+                onClick={() => setReflectionMode(isActive ? null : mode)}
+                className={cn(
+                  "flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full font-medium transition-all cursor-pointer",
+                  isActive
+                    ? cn("text-white shadow-sm", meta.color)
+                    : "text-gray-500 bg-gray-100 hover:bg-gray-200"
+                )}
+              >
+                <Icon className="h-3 w-3" />
+                {meta.label}
+              </button>
+            );
+          }
+        )}
       </div>
     </div>
   );
