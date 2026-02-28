@@ -568,9 +568,14 @@ export function CriseDemo({ onComplete, onTransition: onTransitionProp }: { onCo
             <FactsDashboard facts={data.observe.facts} animate={true} />
           )}
 
-          {/* Auto-advance from facts to orient after brief delay */}
+          {/* Continue button after facts */}
           {stage === 1.5 && ceoTextDone && (
-            <FactsAutoAdvance onAdvance={() => setStage(2)} />
+            <div className="flex justify-center py-2">
+              <button onClick={() => setStage(2)}
+                className="text-xs bg-gray-100 text-gray-600 border border-gray-200 px-4 py-2 rounded-full flex items-center gap-1.5 hover:bg-gray-200 hover:text-gray-800 font-medium transition-colors cursor-pointer">
+                <ChevronRight className="h-3.5 w-3.5" /> Passer a l'orientation
+              </button>
+            </div>
           )}
 
           {/* ============================================ */}
@@ -696,7 +701,12 @@ export function CriseDemo({ onComplete, onTransition: onTransitionProp }: { onCo
           )}
 
           {stage === 4 && directiveTextDone && (
-            <AssignmentsAutoAdvance onAdvance={() => setStage(5)} />
+            <div className="flex justify-center py-2">
+              <button onClick={() => setStage(orientChoice === 1 ? 6 : 5)}
+                className="text-xs bg-gray-100 text-gray-600 border border-gray-200 px-4 py-2 rounded-full flex items-center gap-1.5 hover:bg-gray-200 hover:text-gray-800 font-medium transition-colors cursor-pointer">
+                <ChevronRight className="h-3.5 w-3.5" /> {orientChoice === 1 ? "Passer a l'appel" : "Voir le plan correctif"}
+              </button>
+            </div>
           )}
 
           {/* ============================================ */}
@@ -729,14 +739,24 @@ export function CriseDemo({ onComplete, onTransition: onTransitionProp }: { onCo
           )}
 
           {stage === 5 && (
-            <PlanAutoAdvance onAdvance={() => setStage(5.5)} />
+            <div className="flex justify-center py-2">
+              <button onClick={() => setStage(5.5)}
+                className="text-xs bg-gray-100 text-gray-600 border border-gray-200 px-4 py-2 rounded-full flex items-center gap-1.5 hover:bg-gray-200 hover:text-gray-800 font-medium transition-colors cursor-pointer">
+                <ChevronRight className="h-3.5 w-3.5" /> Voir le plan correctif
+              </button>
+            </div>
           )}
 
           {stage === 5.5 && (
-            <PlanSectionsAutoAdvance onAdvance={() => setStage(6)} />
+            <div className="flex justify-center py-2">
+              <button onClick={() => setStage(6)}
+                className="text-xs bg-gray-100 text-gray-600 border border-gray-200 px-4 py-2 rounded-full flex items-center gap-1.5 hover:bg-gray-200 hover:text-gray-800 font-medium transition-colors cursor-pointer">
+                <ChevronRight className="h-3.5 w-3.5" /> Voir le resultat
+              </button>
+            </div>
           )}
 
-          {/* STAGE 6 — Resultat message */}
+          {/* STAGE 6 — Resultat message (differs by orient choice) */}
           {stage >= 6 && stage < 10 && (
             <div className="flex gap-3">
               <BotAvatar code="BCO" size="md" />
@@ -751,7 +771,10 @@ export function CriseDemo({ onComplete, onTransition: onTransitionProp }: { onCo
                 </div>
                 {stage === 6 ? (
                   <TypewriterText
-                    text={data.act.resultat}
+                    text={orientChoice === 1
+                      ? "Appel fait dans les 30 minutes. Jean-Pierre etait surpris — \"C'est la premiere fois qu'un fournisseur reagit aussi vite.\" Il a accepte un meeting demain 8h. On n'a pas de plan ecrit, mais la credibilite est restauree par la vitesse d'execution. Risque : il va demander le plan demain, il faut le produire cette nuit."
+                      : data.act.resultat
+                    }
                     speed={8}
                     className="text-sm text-gray-800"
                     onComplete={() => {
@@ -760,7 +783,12 @@ export function CriseDemo({ onComplete, onTransition: onTransitionProp }: { onCo
                     }}
                   />
                 ) : (
-                  <p className="text-sm text-gray-800">{data.act.resultat}</p>
+                  <p className="text-sm text-gray-800">
+                    {orientChoice === 1
+                      ? "Appel fait dans les 30 minutes. Jean-Pierre etait surpris — \"C'est la premiere fois qu'un fournisseur reagit aussi vite.\" Il a accepte un meeting demain 8h. On n'a pas de plan ecrit, mais la credibilite est restauree par la vitesse d'execution. Risque : il va demander le plan demain, il faut le produire cette nuit."
+                      : data.act.resultat
+                    }
+                  </p>
                 )}
               </div>
             </div>
@@ -784,45 +812,7 @@ export function CriseDemo({ onComplete, onTransition: onTransitionProp }: { onCo
   );
 }
 
-// ========== HELPER COMPONENTS (timers) ==========
-
-/** Fires the orient phase update + auto-advances after facts display */
-function FactsAutoAdvance({ onAdvance }: { onAdvance: () => void }) {
-  useEffect(() => {
-    const timer = setTimeout(onAdvance, 2500);
-    return () => clearTimeout(timer);
-  }, [onAdvance]);
-  return null;
-}
-
-/** Auto-advances after assignment cards are shown */
-function AssignmentsAutoAdvance({ onAdvance }: { onAdvance: () => void }) {
-  useEffect(() => {
-    // 4 cards * 400ms stagger + 1200ms viewing time
-    const timer = setTimeout(onAdvance, 4 * 400 + 1200);
-    return () => clearTimeout(timer);
-  }, [onAdvance]);
-  return null;
-}
-
-/** Auto-advances to show the plan correctif */
-function PlanAutoAdvance({ onAdvance }: { onAdvance: () => void }) {
-  useEffect(() => {
-    const timer = setTimeout(onAdvance, 1500);
-    return () => clearTimeout(timer);
-  }, [onAdvance]);
-  return null;
-}
-
-/** Auto-advances after plan sections display */
-function PlanSectionsAutoAdvance({ onAdvance }: { onAdvance: () => void }) {
-  useEffect(() => {
-    // 4 sections * 500ms + 1500ms viewing
-    const timer = setTimeout(onAdvance, 4 * 500 + 1500);
-    return () => clearTimeout(timer);
-  }, [onAdvance]);
-  return null;
-}
+// (AutoAdvance components removed — replaced with manual Continue buttons)
 
 /** Updates the OODA phase indicator without rendering anything */
 function PhaseUpdater({
