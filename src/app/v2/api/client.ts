@@ -17,11 +17,8 @@ import type {
   CahierStatusResponse,
 } from "./types";
 
-// Utilise le meme host que le navigateur pour eviter le probleme localhost vs IP
-const BASE_URL =
-  typeof window !== "undefined" && window.location.hostname !== "localhost"
-    ? `http://${window.location.hostname}:8000/api/v1`
-    : "http://localhost:8000/api/v1";
+// Chemin relatif — nginx reverse proxy vers FastAPI :8000
+const BASE_URL = "/api/v1";
 const API_KEY = "ghostx-dev-key-2026";
 
 async function apiFetch<T>(
