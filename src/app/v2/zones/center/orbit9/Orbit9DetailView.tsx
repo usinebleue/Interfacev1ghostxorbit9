@@ -1,12 +1,15 @@
 /**
  * Orbit9DetailView.tsx — Orchestrateur allege
- * Importe les 8 composants-pages et route via SECTION_RENDERERS
- * TRG Industries garde ses sous-tabs dans le header
+ * Importe les 8 composants-pages et route via switch/case
+ * Marketplace et TRG ont des sous-tabs dans le header (meme logique de nav)
  * Default fallback: Marketplace (porte d'entree)
  * Sprint B — Reorganisation Orbit9
  */
 
-import { ArrowLeft, Newspaper, Calendar, Gauge, Globe } from "lucide-react";
+import {
+  ArrowLeft, Newspaper, Calendar, Gauge, Globe,
+  Bot, Hand, Store, Briefcase,
+} from "lucide-react";
 import { cn } from "../../../../components/ui/utils";
 import { useFrameMaster } from "../../../context/FrameMasterContext";
 
@@ -19,9 +22,10 @@ import { EvenementsPage } from "./EvenementsPage";
 import { BenchmarkPage } from "./BenchmarkPage";
 import { TrgIndustriePage } from "./TrgIndustriePage";
 
-// ── Sections Orbit9 (sidebar direct) + TRG Industries (section separee) ──
+// ── Groupes de sections avec sous-tabs ──
 
 const TRG_SECTIONS = new Set(["nouvelles", "evenements", "benchmark", "trg-industrie"]);
+const MARKETPLACE_SECTIONS = new Set(["marketplace", "marketplace-cahiers"]);
 
 const TRG_TABS = [
   { id: "nouvelles", label: "Nouvelles", icon: Newspaper },
@@ -30,10 +34,16 @@ const TRG_TABS = [
   { id: "trg-industrie", label: "Dashboard", icon: Globe },
 ];
 
-// ── Section renderers (pages individuelles) ──
+const MARKETPLACE_TABS = [
+  { id: "marketplace", label: "Bots & Agents", icon: Bot },
+  { id: "marketplace-cahiers", label: "Opportunites", icon: Briefcase },
+];
+
+// ── Titres de section ──
 
 const SECTION_TITLES: Record<string, string> = {
-  marketplace: "Marketplace GhostX",
+  marketplace: "Marketplace",
+  "marketplace-cahiers": "Marketplace",
   cellules: "Cellules Orbit9",
   gouvernance: "Gouvernance",
   pionniers: "Pionniers Bleus",
@@ -41,6 +51,14 @@ const SECTION_TITLES: Record<string, string> = {
   benchmark: "Benchmark VITAA",
   nouvelles: "Nouvelles",
   "trg-industrie": "Dashboard de l'Industrie",
+};
+
+const SECTION_SUBTITLES: Record<string, string> = {
+  marketplace: "Trouvez des bots specialises ou repondez aux opportunites du reseau",
+  "marketplace-cahiers": "Trouvez des bots specialises ou repondez aux opportunites du reseau",
+  cellules: "Mon Reseau Orbit 9",
+  gouvernance: "Mon Reseau Orbit 9",
+  pionniers: "Mon Reseau Orbit 9",
 };
 
 // ══════════════════════════════════════════
@@ -52,18 +70,20 @@ export function Orbit9DetailView() {
   const sectionId = activeOrbit9Section || "marketplace";
 
   const isTrg = TRG_SECTIONS.has(sectionId);
+  const isMarketplace = MARKETPLACE_SECTIONS.has(sectionId);
   const sectionTitle = SECTION_TITLES[sectionId] || "Orbit9";
+  const sectionSubtitle = SECTION_SUBTITLES[sectionId] || "Mon Reseau Orbit 9";
 
-  // Cross-navigation handler
   const handleNavigate = (section: string) => {
     navigateOrbit9(section);
   };
 
-  // Render the active page
   const renderPage = () => {
     switch (sectionId) {
       case "marketplace":
-        return <MarketplacePage onNavigate={handleNavigate} />;
+        return <MarketplacePage volet="bots" onNavigate={handleNavigate} />;
+      case "marketplace-cahiers":
+        return <MarketplacePage volet="cahiers" onNavigate={handleNavigate} />;
       case "cellules":
         return <CellulesPage onNavigate={handleNavigate} />;
       case "gouvernance":
@@ -79,13 +99,16 @@ export function Orbit9DetailView() {
       case "trg-industrie":
         return <TrgIndustriePage />;
       default:
-        return <MarketplacePage onNavigate={handleNavigate} />;
+        return <MarketplacePage volet="bots" onNavigate={handleNavigate} />;
     }
   };
 
+  // Determine which sub-tabs to show (same pattern for both TRG and Marketplace)
+  const activeTabs = isTrg ? TRG_TABS : isMarketplace ? MARKETPLACE_TABS : null;
+
   return (
     <div className="h-full flex flex-col overflow-hidden">
-      {/* Header */}
+      {/* Header — barre d'action du Canvas */}
       <div className="bg-white border-b px-4 py-3 shrink-0">
         <div className="flex items-center gap-3 mb-1">
           <button
@@ -94,20 +117,23 @@ export function Orbit9DetailView() {
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
-          <div>
-            <h1 className="text-sm font-bold text-gray-900">
-              {isTrg ? "TRG Industries" : sectionTitle}
-            </h1>
-            <p className="text-[10px] text-gray-400">
-              {isTrg ? "Statistiques et tendances du secteur manufacturier" : "Mon Reseau Orbit 9"}
-            </p>
+          <div className="flex items-center gap-2 flex-1">
+            {isMarketplace && <Store className="h-4 w-4 text-orange-500" />}
+            <div>
+              <h1 className="text-sm font-bold text-gray-900">
+                {isTrg ? "TRG Industries" : sectionTitle}
+              </h1>
+              <p className="text-[10px] text-gray-400">
+                {isTrg ? "Statistiques et tendances du secteur manufacturier" : sectionSubtitle}
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Sous-tabs — seulement pour TRG Industries */}
-        {isTrg && (
+        {/* Sous-tabs — meme logique de navigation pour TRG et Marketplace */}
+        {activeTabs && (
           <div className="flex gap-1 mt-2">
-            {TRG_TABS.map((tab) => {
+            {activeTabs.map((tab) => {
               const TIcon = tab.icon;
               const isActive = tab.id === sectionId;
               return (
