@@ -517,7 +517,7 @@ export function LiveChat({
   onBack?: () => void;
 }) {
   const {
-    messages, isTyping, activeReflectionMode, newConversation, sendMessage,
+    messages, isTyping, activeReflectionMode, newConversation, sendMessage, sendMultiPerspective,
     threads, activeThreadId, parkThread, resumeThread, completeThread, deleteThread,
     crystals, crystallize, deleteCrystal, exportCrystals,
   } = useChatContext();
@@ -663,6 +663,15 @@ export function LiveChat({
       }
     },
     [sendMessage, lastUserMessage, isTyping]
+  );
+
+  // B.1 — Consulter MULTIPLE bots en parallele via /chat/multi
+  const handleConsulterMulti = useCallback(
+    (botCodes: string[]) => {
+      if (isTyping || !lastUserMessage || botCodes.length < 2) return;
+      sendMultiPerspective(lastUserMessage, botCodes);
+    },
+    [sendMultiPerspective, lastUserMessage, isTyping]
   );
 
   // Challenge ALL consulted bots at once (multi-perspective debate)
@@ -999,9 +1008,17 @@ export function LiveChat({
                     );
                   })}
                 </div>
-                {/* Actions collectives — challenger les N bots, debat, nouvelle branche */}
+                {/* Actions collectives */}
                 {!isTyping && (
-                  <div className="flex gap-1.5 ml-auto">
+                  <div className="flex gap-1.5 ml-auto flex-wrap">
+                    {/* Multi-consult — relancer sur tous les bots */}
+                    <button
+                      onClick={() => handleConsulterMulti(consultedBots)}
+                      className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-violet-100 text-violet-700 border border-violet-300 hover:bg-violet-200 transition-colors cursor-pointer font-medium"
+                    >
+                      <Cpu className="h-2.5 w-2.5" />
+                      Relancer {consultedBots.length} bots
+                    </button>
                     <button
                       onClick={handleChallengeAll}
                       className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-colors cursor-pointer font-medium"
@@ -1294,10 +1311,16 @@ export function LiveChat({
                     <button
                       key={i}
                       onClick={() => {
-                        if (action === "Synthese finale" || action === "Synthetiser" || action === "Synthetiser cette branche") handleSynthesis();
-                        else if (action === "Cristalliser le resultat" || action === "Cristalliser le meilleur" || action === "Cristalliser et continuer") {
+                        const lower = action.toLowerCase();
+                        if (lower.includes("synth")) handleSynthesis();
+                        else if (lower.includes("cristallise")) {
                           const lastBot = messages.filter(m => m.role === "assistant").slice(-1)[0];
                           if (lastBot) { crystallize(lastBot.content, lastBot.agent || activeBotCode); setJustCrystallized(lastBot.id); setTimeout(() => setJustCrystallized(null), 3000); }
+                        }
+                        else if (lower.includes("parker")) parkThread();
+                        else if (lower.includes("retour") || lower.includes("revenir") || lower.includes("sujet principal")) {
+                          const orig = messages.find(m => m.role === "user");
+                          if (orig) sendMessage(`Recentrons-nous: ${orig.content}`, activeBotCode);
                         }
                         else handleOptionClick(action);
                       }}

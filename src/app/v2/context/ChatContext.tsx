@@ -25,6 +25,7 @@ interface BranchMeta {
 
 interface ChatActions {
   sendMessage: (text: string, agent?: string, ghost?: string, meta?: BranchMeta) => Promise<void>;
+  sendMultiPerspective: (text: string, agents: string[]) => Promise<void>;
   setReflectionMode: (mode: ReflectionMode) => void;
   newConversation: () => void;
   parkThread: () => void;
@@ -45,6 +46,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     messages,
     isTyping,
     sendMessage: rawSend,
+    sendMultiPerspective: rawMulti,
     newConversation,
     threads,
     activeThreadId,
@@ -64,6 +66,14 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       await rawSend(text, agent, ghost, activeReflectionMode, meta);
     },
     [rawSend, activeReflectionMode]
+  );
+
+  // B.1 — Multi-perspectives wrapper
+  const sendMultiPerspective = useCallback(
+    async (text: string, agents: string[]) => {
+      await rawMulti(text, agents, activeReflectionMode);
+    },
+    [rawMulti, activeReflectionMode]
   );
 
   const handleNewConversation = useCallback(() => {
@@ -101,6 +111,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         activeThreadId,
         crystals,
         sendMessage,
+        sendMultiPerspective,
         setReflectionMode,
         newConversation: handleNewConversation,
         parkThread,

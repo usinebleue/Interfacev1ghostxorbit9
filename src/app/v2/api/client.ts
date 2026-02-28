@@ -6,6 +6,8 @@
 import type {
   ChatRequest,
   ChatResponse,
+  MultiChatRequest,
+  MultiChatResponse,
   BotListResponse,
   BotActivateResponse,
   ClientListResponse,
@@ -53,6 +55,14 @@ export const api = {
   /** Envoyer un message au pipeline CarlOS */
   chat(req: ChatRequest): Promise<ChatResponse> {
     return apiFetch<ChatResponse>("/chat", {
+      method: "POST",
+      body: JSON.stringify(req),
+    });
+  },
+
+  /** Multi-perspectives : consulter 2-3 bots en parallele */
+  chatMulti(req: MultiChatRequest): Promise<MultiChatResponse> {
+    return apiFetch<MultiChatResponse>("/chat/multi", {
       method: "POST",
       body: JSON.stringify(req),
     });
