@@ -11,6 +11,7 @@ import {
   Activity,
   MessageSquare,
   Briefcase,
+  Radio,
 } from "lucide-react";
 import { ScrollArea } from "../../../components/ui/scroll-area";
 import {
@@ -21,6 +22,7 @@ import {
 import { CarlOsPulse } from "./CarlOsPulse";
 import { DiscussionsPanel } from "./DiscussionsPanel";
 import { MonEspace } from "./MonEspace";
+import { LiveControlsPanel } from "./LiveControlsPanel";
 
 interface Props {
   collapsed?: boolean;
@@ -58,6 +60,16 @@ export function SidebarRight({ collapsed = false }: Props) {
             </TooltipTrigger>
             <TooltipContent side="left">Mon Espace</TooltipContent>
           </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button className="w-full flex justify-center py-2 rounded hover:bg-accent transition-colors relative">
+                <Radio className="h-4 w-4 text-green-500" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="left">CarlOS Live</TooltipContent>
+          </Tooltip>
         </div>
       </div>
     );
@@ -90,6 +102,12 @@ export function SidebarRight({ collapsed = false }: Props) {
           </div>
         </div>
       </ScrollArea>
+
+      {/* CarlOS Live — panneau cockpit fixe en bas */}
+      <div className="h-[2px] bg-gradient-to-r from-green-400 via-blue-400 to-purple-400" />
+      <div className="shrink-0">
+        <LiveControlsPanel />
+      </div>
     </div>
   );
 }

@@ -8,9 +8,6 @@
 import { useState, useRef, type KeyboardEvent } from "react";
 import {
   Send,
-  Mic,
-  Phone,
-  Video,
   Paperclip,
   Swords,
   Lightbulb,
@@ -107,39 +104,6 @@ export function InputBar() {
           </TooltipTrigger>
           <TooltipContent>Joindre un fichier</TooltipContent>
         </Tooltip>
-
-        {/* Separateur visuel */}
-        <div className="w-px h-8 bg-gray-200 mb-1 shrink-0" />
-
-        {/* Vocal / Telephone / Camera — au bout */}
-        <div className="flex gap-0.5 mb-0.5 shrink-0">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9">
-                <Mic className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Vocal</TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9">
-                <Phone className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Telephone</TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9">
-                <Video className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Videoconference</TooltipContent>
-          </Tooltip>
-        </div>
       </div>
 
       {/* Ligne 2 : Badge Sherpa — CarlOS route automatiquement */}
