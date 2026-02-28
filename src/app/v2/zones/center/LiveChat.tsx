@@ -55,22 +55,89 @@ const MODE_CONFIG: Record<string, { label: string; icon: typeof Zap; color: stri
   deep: { label: "Deep Resonance", icon: Brain, color: "text-cyan-500", bg: "bg-cyan-50" },
 };
 
-const AGENT_NAMES: Record<string, { name: string; color: string; gradient: string }> = {
-  BCO: { name: "CarlOS — CEO", color: "text-blue-600", gradient: "from-blue-500 to-indigo-600" },
-  BCF: { name: "CFO Bot", color: "text-emerald-600", gradient: "from-emerald-500 to-green-600" },
-  BCT: { name: "CTO Bot", color: "text-purple-600", gradient: "from-purple-500 to-violet-600" },
-  BOO: { name: "COO Bot", color: "text-orange-600", gradient: "from-orange-500 to-amber-600" },
-  BCM: { name: "CMO Bot", color: "text-pink-600", gradient: "from-pink-500 to-rose-600" },
-  BCS: { name: "CSO Bot", color: "text-red-600", gradient: "from-red-500 to-rose-600" },
-  BRO: { name: "CRO Bot", color: "text-amber-600", gradient: "from-amber-500 to-yellow-600" },
-  BHR: { name: "CHRO Bot", color: "text-teal-600", gradient: "from-teal-500 to-cyan-600" },
-  BSE: { name: "CISO Bot", color: "text-zinc-600", gradient: "from-zinc-500 to-gray-600" },
-  BLE: { name: "CLO Bot", color: "text-indigo-600", gradient: "from-indigo-500 to-blue-600" },
-  BPO: { name: "CINO Bot", color: "text-fuchsia-600", gradient: "from-fuchsia-500 to-purple-600" },
-  BFA: { name: "CPO Bot", color: "text-slate-600", gradient: "from-slate-500 to-gray-600" },
-  BIO: { name: "CIO Bot", color: "text-sky-600", gradient: "from-sky-500 to-blue-600" },
-  BCC: { name: "CCO Bot", color: "text-rose-600", gradient: "from-rose-500 to-pink-600" },
+// ── Bot identity — photos, couleurs, noms (meme config que simulations) ──
+
+const BOT_COLORS: Record<string, {
+  bg: string; bgLight: string; text: string; border: string;
+  ring: string; emoji: string; name: string; role: string; avatar: string;
+}> = {
+  BCO: { bg: "bg-blue-600", bgLight: "bg-blue-50", text: "text-blue-700", border: "border-blue-400", ring: "ring-blue-300", emoji: "\u{1F454}", name: "CarlOS", role: "CEO", avatar: "/agents/ceo-carlos.png" },
+  BCT: { bg: "bg-violet-600", bgLight: "bg-violet-50", text: "text-violet-700", border: "border-violet-400", ring: "ring-violet-300", emoji: "\u{1F4BB}", name: "Thomas", role: "CTO", avatar: "/agents/cto-thomas.png" },
+  BCF: { bg: "bg-emerald-600", bgLight: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-400", ring: "ring-emerald-300", emoji: "\u{1F4B0}", name: "Fran\u00E7ois", role: "CFO", avatar: "/agents/cfo-francois.png" },
+  BCM: { bg: "bg-pink-600", bgLight: "bg-pink-50", text: "text-pink-700", border: "border-pink-400", ring: "ring-pink-300", emoji: "\u{1F4E3}", name: "Sofia", role: "CMO", avatar: "/agents/cmo-sofia.png" },
+  BCS: { bg: "bg-red-600", bgLight: "bg-red-50", text: "text-red-700", border: "border-red-400", ring: "ring-red-300", emoji: "\u{1F3AF}", name: "Marc", role: "CSO", avatar: "/agents/cso-marc.png" },
+  BOO: { bg: "bg-orange-600", bgLight: "bg-orange-50", text: "text-orange-700", border: "border-orange-400", ring: "ring-orange-300", emoji: "\u{2699}\u{FE0F}", name: "Lise", role: "COO", avatar: "/agents/coo-lise.png" },
+  BFA: { bg: "bg-slate-600", bgLight: "bg-slate-50", text: "text-slate-700", border: "border-slate-400", ring: "ring-slate-300", emoji: "\u{1F3ED}", name: "FactoryBot", role: "Factory", avatar: "" },
+  BHR: { bg: "bg-teal-600", bgLight: "bg-teal-50", text: "text-teal-700", border: "border-teal-400", ring: "ring-teal-300", emoji: "\u{1F91D}", name: "David", role: "CHRO", avatar: "/agents/David - CHRO.png" },
+  BIO: { bg: "bg-cyan-600", bgLight: "bg-cyan-50", text: "text-cyan-700", border: "border-cyan-400", ring: "ring-cyan-300", emoji: "\u{1F4CA}", name: "H\u00E9l\u00E8ne", role: "CIO", avatar: "/agents/H\u00E9l\u00E8ne - CIO.png" },
+  BCC: { bg: "bg-rose-600", bgLight: "bg-rose-50", text: "text-rose-700", border: "border-rose-400", ring: "ring-rose-300", emoji: "\u{1F4E2}", name: "\u00C9milie", role: "CCO", avatar: "/agents/CCO - \u00C9milie2.png" },
+  BPO: { bg: "bg-fuchsia-600", bgLight: "bg-fuchsia-50", text: "text-fuchsia-700", border: "border-fuchsia-400", ring: "ring-fuchsia-300", emoji: "\u{1F680}", name: "Alex", role: "CPO", avatar: "/agents/CPO - Alex2.png" },
+  BRO: { bg: "bg-amber-600", bgLight: "bg-amber-50", text: "text-amber-700", border: "border-amber-400", ring: "ring-amber-300", emoji: "\u{1F4C8}", name: "Julien", role: "CRO", avatar: "/agents/CRO - Julien2.png" },
+  BLE: { bg: "bg-indigo-600", bgLight: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-400", ring: "ring-indigo-300", emoji: "\u{2696}\u{FE0F}", name: "Isabelle", role: "Legal", avatar: "/agents/CLO - Isabelle3.png" },
+  BSE: { bg: "bg-zinc-700", bgLight: "bg-zinc-50", text: "text-zinc-700", border: "border-zinc-400", ring: "ring-zinc-300", emoji: "\u{1F6E1}\u{FE0F}", name: "SecBot", role: "CISO", avatar: "" },
 };
+
+const USER_AVATAR = "/agents/carl-fugere.jpg";
+
+function botFullName(code: string): string {
+  const bot = BOT_COLORS[code];
+  return bot ? `${bot.name} — ${bot.role}` : code;
+}
+
+/** Avatar du bot — photo si disponible, emoji en fallback */
+function BotAvatar({ code, size = "md", className }: { code: string; size?: "sm" | "md" | "lg"; className?: string }) {
+  const bot = BOT_COLORS[code];
+  if (!bot) return null;
+  const sizeClasses = { sm: "w-6 h-6", md: "w-8 h-8", lg: "w-10 h-10" };
+  const textSizes = { sm: "text-xs", md: "text-sm", lg: "text-lg" };
+
+  if (bot.avatar) {
+    return (
+      <div className={cn("rounded-full overflow-hidden shrink-0 ring-2", bot.ring, sizeClasses[size], className)}>
+        <img src={bot.avatar} alt={bot.name} className="w-full h-full object-cover" />
+      </div>
+    );
+  }
+  return (
+    <div className={cn("rounded-full flex items-center justify-center shrink-0 text-white", bot.bg, sizeClasses[size], textSizes[size], className)}>
+      {bot.emoji}
+    </div>
+  );
+}
+
+/** TypewriterText — texte qui s'ecrit caractere par caractere (cerveau vivant) */
+function TypewriterText({ text, speed = 10, onComplete, className }: {
+  text: string;
+  speed?: number;
+  onComplete?: () => void;
+  className?: string;
+}) {
+  const [displayed, setDisplayed] = useState("");
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    setDisplayed("");
+    setDone(false);
+    let i = 0;
+    const interval = setInterval(() => {
+      i++;
+      setDisplayed(text.slice(0, i));
+      if (i >= text.length) {
+        clearInterval(interval);
+        setDone(true);
+        onComplete?.();
+      }
+    }, speed);
+    return () => clearInterval(interval);
+  }, [text, speed]);
+
+  return (
+    <span className={className}>
+      {displayed}
+      {!done && <span className="inline-block w-0.5 h-4 bg-current ml-0.5 animate-pulse align-text-bottom" />}
+    </span>
+  );
+}
 
 // ══════════════════════════════════════════════
 // Rich markdown formatter for CarlOS responses
@@ -227,65 +294,55 @@ function getThinkingSteps(mode: string): ThinkingStep[] {
   return [...common, ...(modeSteps[mode] || modeSteps.credo)];
 }
 
-function ThinkingProcess({ mode }: { mode: string }) {
+/** ThinkingAnimation — style simulation : bot photo, random timing, hidden pending steps */
+function ThinkingAnimation({ mode, botCode }: { mode: string; botCode?: string }) {
   const [currentStep, setCurrentStep] = useState(0);
+  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const steps = useMemo(() => getThinkingSteps(mode), [mode]);
+  const bot = BOT_COLORS[botCode || "BCO"];
 
   useEffect(() => {
     setCurrentStep(0);
+    setCompletedSteps([]);
   }, [mode]);
 
   useEffect(() => {
-    if (currentStep >= steps.length - 1) return; // last step loops
+    if (currentStep >= steps.length) return;
     const timer = setTimeout(() => {
-      setCurrentStep((prev) => prev + 1);
-    }, steps[currentStep].duration);
+      setCompletedSteps(prev => [...prev, currentStep]);
+      setCurrentStep(prev => prev + 1);
+    }, 800 + Math.random() * 600); // randomized timing
     return () => clearTimeout(timer);
-  }, [currentStep, steps]);
+  }, [currentStep, steps.length]);
 
   return (
-    <div className="flex gap-3">
-      <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shrink-0 shadow-sm mt-1">
-        <Bot className="h-4 w-4 text-white" />
-      </div>
-      <div className="bg-white border border-gray-100 rounded-2xl rounded-tl-md px-5 py-4 shadow-sm min-w-[280px]">
-        <div className="space-y-2.5">
+    <div className="flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
+      <BotAvatar code={botCode || "BCO"} size="md" className="mt-1" />
+      <div className={cn(
+        "bg-white border rounded-2xl rounded-tl-md px-5 py-4 shadow-sm min-w-[280px]",
+        bot && `border-l-[3px] ${bot.border}`
+      )}>
+        <div className={cn("text-xs font-semibold mb-2.5 flex items-center gap-1.5", bot?.text || "text-blue-600")}>
+          <Brain className="h-3 w-3 animate-pulse" />
+          {bot?.name || "CarlOS"} reflechit...
+        </div>
+        <div className="space-y-2">
           {steps.map((step, i) => {
             const StepIcon = step.icon;
             const isActive = i === currentStep;
-            const isDone = i < currentStep;
+            const isDone = completedSteps.includes(i);
             const isPending = i > currentStep;
-
+            if (isPending) return null; // hidden until reached (simulation style)
             return (
-              <div
-                key={i}
-                className={cn(
-                  "flex items-center gap-2.5 transition-all duration-500",
-                  isPending && "opacity-0 translate-y-1",
-                  isDone && "opacity-60",
-                  isActive && "opacity-100"
-                )}
-                style={{
-                  transitionDelay: isPending ? "0ms" : `${i * 100}ms`,
-                }}
-              >
-                {isDone ? (
-                  <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
-                ) : isActive ? (
-                  <Loader2 className="h-3.5 w-3.5 text-blue-500 animate-spin shrink-0" />
-                ) : (
-                  <StepIcon className="h-3.5 w-3.5 text-gray-300 shrink-0" />
-                )}
-                <span
-                  className={cn(
-                    "text-sm transition-colors duration-300",
-                    isDone && "text-gray-400 line-through",
-                    isActive && "text-gray-700 font-medium",
-                    isPending && "text-gray-300"
-                  )}
-                >
-                  {step.label}
-                </span>
+              <div key={i} className={cn(
+                "flex items-center gap-2.5 text-sm transition-all duration-300 animate-in fade-in slide-in-from-left-2",
+                isActive && (bot?.text || "text-blue-600"),
+                isDone && "text-green-600 opacity-60",
+              )}>
+                {isActive && <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />}
+                {isDone && <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />}
+                <StepIcon className="h-3.5 w-3.5 shrink-0" />
+                <span className={cn(isDone && "line-through")}>{step.label}</span>
               </div>
             );
           })}
@@ -405,7 +462,7 @@ function BotMessageActions({
               {availableBots
                 .filter((b) => b.code !== currentBotCode)
                 .map((bot) => {
-                  const info = AGENT_NAMES[bot.code];
+                  const info = BOT_COLORS[bot.code];
                   return (
                     <button
                       key={bot.code}
@@ -415,12 +472,7 @@ function BotMessageActions({
                       }}
                       className="w-full text-left px-3 py-1.5 text-xs hover:bg-gray-50 flex items-center gap-2 transition-colors cursor-pointer"
                     >
-                      <div className={cn(
-                        "w-5 h-5 rounded-md flex items-center justify-center bg-gradient-to-br shrink-0",
-                        info?.gradient || "from-gray-400 to-gray-500"
-                      )}>
-                        <Bot className="h-3 w-3 text-white" />
-                      </div>
+                      <BotAvatar code={bot.code} size="sm" />
                       <div>
                         <span className="font-medium text-gray-700">{bot.titre}</span>
                         <span className="text-gray-400 ml-1">— {bot.nom}</span>
@@ -477,6 +529,19 @@ export function LiveChat({
   const [showThreads, setShowThreads] = useState(false);
   const [showCrystals, setShowCrystals] = useState(false);
   const [justCrystallized, setJustCrystallized] = useState<string | null>(null);
+  const [typewriterMsgId, setTypewriterMsgId] = useState<string | null>(null);
+  const prevMsgCount = useRef(messages.length);
+
+  // Track new bot messages for typewriter effect
+  useEffect(() => {
+    if (messages.length > prevMsgCount.current) {
+      const lastMsg = messages[messages.length - 1];
+      if (lastMsg.role === "assistant" && lastMsg.msgType !== "coaching") {
+        setTypewriterMsgId(lastMsg.id);
+      }
+    }
+    prevMsgCount.current = messages.length;
+  }, [messages]);
 
   const modeInfo = MODE_CONFIG[activeReflectionMode] || MODE_CONFIG.credo;
 
@@ -538,7 +603,7 @@ export function LiveChat({
       const count = challengeCounts[msgId] || 0;
       if (count >= 2 || isTyping) return;
       setChallengeCounts((prev) => ({ ...prev, [msgId]: count + 1 }));
-      const agentName = AGENT_NAMES[agentCode || activeBotCode]?.name || "Bot";
+      const agentName = botFullName(agentCode || activeBotCode);
       sendMessage(
         "Je ne suis pas d'accord avec cette analyse. Defends ta position avec plus de details et des sources concretes.",
         agentCode || activeBotCode,
@@ -565,7 +630,7 @@ export function LiveChat({
   const handleConsulterBot = useCallback(
     (botCode: string) => {
       if (!isTyping && lastUserMessage) {
-        const botName = AGENT_NAMES[botCode]?.name || botCode;
+        const botName = botFullName(botCode);
         sendMessage(lastUserMessage, botCode, undefined, {
           msgType: "consultation",
           branchLabel: `Consultation — ${botName}`,
@@ -658,12 +723,10 @@ export function LiveChat({
               <ArrowLeft className="h-4 w-4" />
             </button>
           )}
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-sm">
-            <Bot className="h-5 w-5 text-white" />
-          </div>
+          <BotAvatar code={activeBotCode} size="lg" />
           <div>
             <div className="text-sm font-bold text-gray-800 flex items-center gap-2">
-              CarlOS
+              {botFullName(activeBotCode)}
               <span className={cn("text-[10px] font-medium flex items-center gap-1 px-2 py-0.5 rounded-full", modeInfo.color, modeInfo.bg)}>
                 <ModeIcon className="h-3 w-3" /> {modeInfo.label}
               </span>
@@ -762,14 +825,14 @@ export function LiveChat({
           )}
 
           {crystals.map((crystal) => {
-            const botInfo = AGENT_NAMES[crystal.bot];
+            const botInfo = BOT_COLORS[crystal.bot];
             return (
               <div key={crystal.id} className="py-2 px-3 rounded-lg bg-emerald-50/50 border border-emerald-100 group">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="text-xs font-semibold text-gray-800 truncate">{crystal.titre}</div>
                     <div className="text-[10px] text-gray-400 mt-0.5 flex items-center gap-2">
-                      <span className={cn("font-medium", botInfo?.color || "text-gray-500")}>{botInfo?.name || crystal.bot}</span>
+                      <span className={cn("font-medium", botInfo?.text || "text-gray-500")}>{botInfo ? botFullName(crystal.bot) : crystal.bot}</span>
                       <span>·</span>
                       <span>{crystal.mode}</span>
                       <span>·</span>
@@ -883,10 +946,10 @@ export function LiveChat({
                 <span className="text-[11px] text-violet-600 font-medium">Perspectives :</span>
                 <div className="flex gap-1.5 flex-wrap">
                   {consultedBots.map((code) => {
-                    const info = AGENT_NAMES[code];
+                    const info = BOT_COLORS[code];
                     return (
-                      <span key={code} className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white border", info?.color || "text-gray-500")}>
-                        {info?.name || code}
+                      <span key={code} className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white border", info?.text || "text-gray-500")}>
+                        {info ? botFullName(code) : code}
                       </span>
                     );
                   })}
@@ -897,7 +960,7 @@ export function LiveChat({
 
           {/* Message bubbles */}
           {messages.map((msg, idx) => {
-            const agentInfo = msg.agent ? AGENT_NAMES[msg.agent] : null;
+            const agentInfo = msg.agent ? BOT_COLORS[msg.agent] : null;
             const isUser = msg.role === "user";
             const isSystem = msg.role === "system";
             const isChallenge = msg.msgType === "challenge";
@@ -910,12 +973,10 @@ export function LiveChat({
             if (isCoaching || isSystem) {
               return (
                 <div key={msg.id} className="flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center shrink-0 shadow-sm mt-1 ring-2 ring-blue-200">
-                    <Zap className="h-4 w-4 text-white" />
-                  </div>
-                  <div className="bg-blue-50 border border-blue-200 rounded-2xl rounded-tl-md px-5 py-4 shadow-sm max-w-[85%]">
+                  <BotAvatar code="BCO" size="md" className="mt-1" />
+                  <div className="bg-blue-50 border border-blue-200 border-l-[3px] border-l-blue-400 rounded-2xl rounded-tl-md px-5 py-4 shadow-sm max-w-[85%]">
                     <div className="text-xs font-semibold text-blue-700 mb-1.5 flex items-center gap-1.5">
-                      <Bot className="h-3 w-3" /> CarlOS — Coaching
+                      <Zap className="h-3 w-3" /> CarlOS — Coaching
                     </div>
                     <p className="text-sm text-blue-800 leading-relaxed">{msg.content}</p>
                     {msg.options && msg.options.length > 0 && (
@@ -950,9 +1011,7 @@ export function LiveChat({
                     <div className="flex-1 h-px bg-amber-200" />
                   </div>
                   <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 to-yellow-600 flex items-center justify-center shrink-0 shadow-sm mt-1">
-                      <Sparkles className="h-4 w-4 text-white" />
-                    </div>
+                    <BotAvatar code="BCO" size="md" className="mt-1" />
                     <div className="bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-200 rounded-2xl rounded-tl-md px-5 py-4 shadow-md max-w-[85%] group">
                       <div className="text-xs font-bold text-amber-700 mb-2 flex items-center gap-1.5">
                         <Sparkles className="h-3 w-3" /> Synthese CarlOS
@@ -1025,38 +1084,49 @@ export function LiveChat({
                   )}
 
                   {!isUser && (
-                    <div className={cn(
-                      "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-sm bg-gradient-to-br mt-1",
-                      isChallenge && "ring-2 ring-red-200",
-                      isConsultation && "ring-2 ring-violet-200",
-                      agentInfo?.gradient || "from-blue-500 to-indigo-600"
-                    )}>
-                      <Bot className="h-4 w-4 text-white" />
-                    </div>
+                    <BotAvatar
+                      code={msg.agent || "BCO"}
+                      size="md"
+                      className={cn(
+                        "mt-1",
+                        isChallenge && "ring-red-200",
+                        isConsultation && "ring-violet-200"
+                      )}
+                    />
                   )}
                   <div className={cn(
                     "rounded-2xl shadow-sm max-w-[85%] relative group",
                     isUser
                       ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white px-4 py-3 rounded-tr-md"
                       : isChallenge
-                        ? "bg-white border-2 border-red-100 px-5 py-4 rounded-tl-md"
+                        ? cn("bg-white border border-red-100 border-l-[3px] px-5 py-4 rounded-tl-md", agentInfo?.border || "border-l-red-400")
                         : isConsultation
-                          ? "bg-white border-2 border-violet-100 px-5 py-4 rounded-tl-md"
-                          : "bg-white border border-gray-100 px-5 py-4 rounded-tl-md"
+                          ? cn("bg-white border border-violet-100 border-l-[3px] px-5 py-4 rounded-tl-md", agentInfo?.border || "border-l-violet-400")
+                          : cn("bg-white border border-gray-100 border-l-[3px] px-5 py-4 rounded-tl-md", agentInfo?.border || "border-l-blue-400")
                   )}>
                     {/* Agent name */}
                     {!isUser && agentInfo && (
-                      <div className={cn("text-xs mb-2 font-semibold", agentInfo.color)}>
-                        {agentInfo.name}
+                      <div className={cn("text-xs mb-2 font-semibold", agentInfo.text)}>
+                        {botFullName(msg.agent || "BCO")}
                       </div>
                     )}
 
-                    {/* Content */}
+                    {/* Content — typewriter effect on latest bot response */}
                     {!isUser ? (
-                      <div
-                        className="text-sm text-gray-700 leading-relaxed prose-sm"
-                        dangerouslySetInnerHTML={{ __html: formatBotText(msg.content) }}
-                      />
+                      typewriterMsgId === msg.id ? (
+                        <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                          <TypewriterText
+                            text={msg.content}
+                            speed={8}
+                            onComplete={() => setTypewriterMsgId(null)}
+                          />
+                        </div>
+                      ) : (
+                        <div
+                          className="text-sm text-gray-700 leading-relaxed prose-sm"
+                          dangerouslySetInnerHTML={{ __html: formatBotText(msg.content) }}
+                        />
+                      )
                     ) : (
                       <p className="text-sm leading-relaxed">{msg.content}</p>
                     )}
@@ -1105,8 +1175,8 @@ export function LiveChat({
                     )}
                   </div>
                   {isUser && (
-                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center shrink-0 text-[10px] font-bold text-white mt-1">
-                      CF
+                    <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 ring-2 ring-gray-300 mt-1">
+                      <img src={USER_AVATAR} alt="Carl" className="w-full h-full object-cover" />
                     </div>
                   )}
                 </div>
@@ -1130,12 +1200,10 @@ export function LiveChat({
           {/* Sentinelle CarlOS — alerte anti-boucle */}
           {sentinelleWarning && !isTyping && (
             <div className="flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shrink-0 shadow-sm mt-1">
-                <AlertTriangle className="h-4 w-4 text-white" />
-              </div>
-              <div className="bg-amber-50 border border-amber-200 rounded-2xl rounded-tl-md px-5 py-4 shadow-sm max-w-[85%]">
+              <BotAvatar code="BCO" size="md" className="mt-1" />
+              <div className="bg-amber-50 border border-amber-200 border-l-[3px] border-l-amber-400 rounded-2xl rounded-tl-md px-5 py-4 shadow-sm max-w-[85%]">
                 <div className="text-xs font-semibold text-amber-700 mb-1 flex items-center gap-1.5">
-                  <Zap className="h-3 w-3" /> Sentinelle CarlOS
+                  <AlertTriangle className="h-3 w-3" /> Sentinelle CarlOS
                 </div>
                 <p className="text-sm text-amber-800">{sentinelleWarning.message}</p>
                 <div className="flex flex-wrap gap-1.5 mt-3">
@@ -1158,7 +1226,7 @@ export function LiveChat({
 
           {/* Thinking process animation */}
           {isTyping && (
-            <ThinkingProcess mode={activeReflectionMode} />
+            <ThinkingAnimation mode={activeReflectionMode} botCode={activeBotCode} />
           )}
         </div>
       </div>

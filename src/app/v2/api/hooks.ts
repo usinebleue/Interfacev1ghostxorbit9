@@ -223,6 +223,35 @@ function generateThreadTitle(messages: ChatMessage[]): string {
   return text.length > 50 ? text.slice(0, 50) + "..." : text;
 }
 
+// --- Parse API options from response (📌 1 · ... | 2 · ...) ---
+
+function parseApiOptions(responseText: string): { cleanText: string; parsedOptions: string[] } {
+  const lines = responseText.split("\n");
+  const parsedOptions: string[] = [];
+  const cleanLines: string[] = [];
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    // Detect Telegram-style options: 📌 1 · Option A | 2 · Option B | 3 · Option C
+    if (/^\p{Emoji}?\s*1\s*[·.]\s*/u.test(trimmed) && /\|/.test(trimmed)) {
+      const parts = trimmed.split(/\s*\|\s*/);
+      for (const part of parts) {
+        const cleaned = part.replace(/^\p{Emoji}?\s*\d+\s*[·.]\s*/u, "").trim();
+        if (cleaned) parsedOptions.push(cleaned);
+      }
+    } else {
+      cleanLines.push(line);
+    }
+  }
+
+  // Trim trailing blank lines
+  while (cleanLines.length > 0 && cleanLines[cleanLines.length - 1].trim() === "") {
+    cleanLines.pop();
+  }
+
+  return { cleanText: cleanLines.join("\n"), parsedOptions };
+}
+
 // --- useChat ---
 
 export function useChat() {
@@ -358,17 +387,22 @@ export function useChat() {
         };
         const res = await api.chat(req);
 
-        // Mode-specific options
+        // Parse API options from response text (📌 format)
+        const { cleanText, parsedOptions } = parseApiOptions(res.response);
+
+        // Mode-specific options (parsed > mode > agent > fallback)
         const modeConf = MODE_LIVE_CONFIG[mode || "credo"] || MODE_LIVE_CONFIG.credo;
         const agentOptions = DEFAULT_OPTIONS_BY_AGENT[agent || "BCO"];
-        const options = msgType === "synthesis"
-          ? ["Cristalliser le resultat", "Passer au Cahier SMART", "Continuer l'exploration"]
-          : modeConf.options.length > 0 ? modeConf.options : (agentOptions || FALLBACK_OPTIONS);
+        const options = parsedOptions.length > 0
+          ? parsedOptions
+          : msgType === "synthesis"
+            ? ["Cristalliser le resultat", "Passer au Cahier SMART", "Continuer l'exploration"]
+            : modeConf.options.length > 0 ? modeConf.options : (agentOptions || FALLBACK_OPTIONS);
 
         const botMsg: ChatMessage = {
           id: `msg-${++idCounter.current}`,
           role: "assistant",
-          content: res.response,
+          content: cleanText,
           timestamp: new Date(),
           agent: res.agent,
           ghost: res.ghost_actif,
