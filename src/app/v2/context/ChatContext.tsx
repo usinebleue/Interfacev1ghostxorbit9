@@ -1,11 +1,11 @@
 /**
  * ChatContext.tsx — Etat chat avec bridge vers useChat hook
- * Sprint A — Frame Master V2
+ * Sprint B — LiveChat interactif + cristallisation
  */
 
 import { createContext, useContext, useState, useCallback } from "react";
-import { useChat } from "../api/hooks";
-import type { ChatMessage, ReflectionMode, CREDOPhase, Thread, MessageType } from "../api/types";
+import { useChat, useCrystals } from "../api/hooks";
+import type { ChatMessage, ReflectionMode, CREDOPhase, Thread, MessageType, Crystal } from "../api/types";
 
 interface ChatState {
   messages: ChatMessage[];
@@ -14,6 +14,7 @@ interface ChatState {
   currentCREDOPhase: CREDOPhase;
   threads: Thread[];
   activeThreadId: string | null;
+  crystals: Crystal[];
 }
 
 interface BranchMeta {
@@ -30,6 +31,9 @@ interface ChatActions {
   resumeThread: (threadId: string) => void;
   completeThread: () => void;
   deleteThread: (threadId: string) => void;
+  crystallize: (msgContent: string, botCode: string) => Crystal;
+  deleteCrystal: (id: string) => void;
+  exportCrystals: () => string;
 }
 
 type ChatContextType = ChatState & ChatActions;
@@ -49,6 +53,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     completeThread,
     deleteThread,
   } = useChat();
+  const { crystals, addCrystal, deleteCrystal, exportCrystals } = useCrystals();
   const [activeReflectionMode, setReflectionMode] =
     useState<ReflectionMode>("credo");
   const [currentCREDOPhase] = useState<CREDOPhase>("C");
@@ -66,6 +71,25 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     setReflectionMode("credo");
   }, [newConversation]);
 
+  // Crystallize a bot response — extract title from first line, save to banque
+  const crystallize = useCallback(
+    (msgContent: string, botCode: string): Crystal => {
+      const lines = msgContent.split("\n").filter((l) => l.trim());
+      const titre = lines[0]?.replace(/^\*\*(.+?)\*\*/, "$1").replace(/^#+\s*/, "").slice(0, 80) || "Idee cristallisee";
+      const threadTitle = messages.find((m) => m.role === "user")?.content.slice(0, 50) || "Conversation";
+
+      return addCrystal({
+        titre,
+        contenu: msgContent,
+        source: threadTitle,
+        bot: botCode,
+        mode: activeReflectionMode,
+        tags: [],
+      });
+    },
+    [addCrystal, messages, activeReflectionMode]
+  );
+
   return (
     <ChatCtx.Provider
       value={{
@@ -75,6 +99,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         currentCREDOPhase,
         threads,
         activeThreadId,
+        crystals,
         sendMessage,
         setReflectionMode,
         newConversation: handleNewConversation,
@@ -82,6 +107,9 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         resumeThread,
         completeThread,
         deleteThread,
+        crystallize,
+        deleteCrystal,
+        exportCrystals,
       }}
     >
       {children}

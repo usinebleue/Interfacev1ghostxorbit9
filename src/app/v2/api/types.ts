@@ -147,6 +147,19 @@ export interface ChatMessage {
   branchLabel?: string;    // "Challenge #2 — BCT", "Consultation CFO"
 }
 
+// --- Crystal (idee cristallisee) ---
+
+export interface Crystal {
+  id: string;
+  titre: string;
+  contenu: string;
+  source: string;      // thread title
+  bot: string;         // agent code
+  mode: ReflectionMode;
+  date: string;
+  tags: string[];
+}
+
 // --- Thread (conversation branch) ---
 
 export type ThreadStatus = "active" | "parked" | "completed";
