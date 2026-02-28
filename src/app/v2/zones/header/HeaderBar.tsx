@@ -4,7 +4,7 @@
  * Sprint A — Frame Master V2
  */
 
-import { Gauge, Settings, LayoutDashboard, SlidersHorizontal, User, HeartPulse, Play } from "lucide-react";
+import { Gauge, Settings, LayoutDashboard, SlidersHorizontal, User, HeartPulse, Play, MessageSquare } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import {
   Tooltip,
@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "../../../components/ui/dropdown-menu";
 import { useFrameMaster } from "../../context/FrameMasterContext";
+import { useChatContext } from "../../context/ChatContext";
 import { BotPresenceIndicator } from "./BotPresenceIndicator";
 
 const UB_BLUE = "#073E5A";
@@ -38,7 +39,9 @@ export function HeaderLeft({ collapsed }: { collapsed: boolean }) {
 
 /** Header colonne CENTRE — Bot ID + Tour de Controle / Cockpit / Reglage Bot */
 export function HeaderCenter() {
-  const { activeBot, activeBotCode, setActiveView } = useFrameMaster();
+  const { activeBot, activeBotCode, activeView, setActiveView } = useFrameMaster();
+  const { messages } = useChatContext();
+  const hasActiveDiscussion = messages.length > 0 && activeView !== "live-chat";
 
   return (
     <div className="h-14 border-b border-white/10 flex items-center shrink-0" style={{ backgroundColor: UB_BLUE }}>
@@ -63,6 +66,27 @@ export function HeaderCenter() {
           </TooltipTrigger>
           <TooltipContent>Tour de Controle</TooltipContent>
         </Tooltip>
+
+        {/* Discussion en cours — visible seulement quand on a quitte le LiveChat */}
+        {hasActiveDiscussion && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 gap-1.5 text-xs text-blue-300 hover:text-blue-200 hover:bg-white/10 relative"
+                onClick={() => setActiveView("live-chat")}
+              >
+                <MessageSquare className="h-3.5 w-3.5" />
+                <span className="hidden lg:inline">Discussion</span>
+                <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-3.5 bg-blue-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5">
+                  {messages.length}
+                </span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Retourner a la discussion en cours</TooltipContent>
+          </Tooltip>
+        )}
 
         <Tooltip>
           <TooltipTrigger asChild>

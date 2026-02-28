@@ -9,7 +9,7 @@
 import {
   ShieldAlert,
   LayoutGrid,
-  UserCircle,
+  MessageSquare,
   Briefcase,
 } from "lucide-react";
 import { ScrollArea } from "../../../components/ui/scroll-area";
@@ -21,7 +21,7 @@ import {
 } from "../../../components/ui/tooltip";
 import { ActiveAgentsPanel } from "./ActiveAgentsPanel";
 import { ContextBoxes } from "./ContextBoxes";
-import { CollaborateursPanel } from "./CollaborateursPanel";
+import { DiscussionsPanel } from "./DiscussionsPanel";
 import { SectionProductivite } from "../sidebar-left/SectionProductivite";
 
 interface Props {
@@ -58,10 +58,10 @@ export function SidebarRight({ collapsed = false }: Props) {
           <Tooltip>
             <TooltipTrigger asChild>
               <button className="w-full flex justify-center py-2 rounded hover:bg-accent transition-colors">
-                <UserCircle className="h-4 w-4 text-green-500" />
+                <MessageSquare className="h-4 w-4 text-blue-500" />
               </button>
             </TooltipTrigger>
-            <TooltipContent side="left">Collaborateurs</TooltipContent>
+            <TooltipContent side="left">Mes Discussions</TooltipContent>
           </Tooltip>
         </div>
 
@@ -103,9 +103,9 @@ export function SidebarRight({ collapsed = false }: Props) {
           {/* Separateur bleu */}
           <div className="h-[2px] bg-blue-500 my-2" />
 
-          {/* Section Collaborateurs */}
+          {/* Section Discussions (remplace Collaborateurs — Orbit9 plus tard) */}
           <div className="mx-3 mb-1">
-            <CollaborateursPanel />
+            <DiscussionsPanel />
           </div>
         </div>
       </ScrollArea>

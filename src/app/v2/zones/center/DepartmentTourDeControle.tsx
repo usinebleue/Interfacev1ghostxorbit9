@@ -56,7 +56,7 @@ interface BlocConfig {
 
 function Bloc({ config, onClick }: { config: BlocConfig; onClick?: () => void }) {
   return (
-    <Card className={cn("p-4 overflow-hidden cursor-pointer hover:ring-2 transition-shadow", config.ringColor)} onClick={onClick}>
+    <Card className={cn("p-4 overflow-hidden transition-shadow", onClick ? "cursor-pointer hover:ring-2 " + config.ringColor : "")} onClick={onClick}>
       <BlockHeader icon={config.icon} title={config.title} count={config.count} gradient={config.gradient} />
       <ul className="space-y-2.5">
         {config.items.map((item, i) => (
@@ -841,17 +841,17 @@ export function DepartmentTourDeControle() {
           </Button>
         </div>
 
-        {/* Row 1 : 5 blocs domaine — meme layout que DashboardView */}
+        {/* Row 1 : 5 blocs domaine — cartes info (discussion via InputBar) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
           {config.row1.map((bloc, i) => (
-            <Bloc key={i} config={bloc} onClick={() => setActiveView("live-chat")} />
+            <Bloc key={i} config={bloc} />
           ))}
         </div>
 
         {/* Row 2 : 5 blocs outils (Taches, Agenda, KPIs, Veille, Benchmarks) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
           {config.row2.map((bloc, i) => (
-            <Bloc key={i} config={bloc} onClick={() => setActiveView("live-chat")} />
+            <Bloc key={i} config={bloc} />
           ))}
         </div>
       </div>
