@@ -12,7 +12,7 @@ import {
   Hand, Handshake, AlertTriangle, Flame, Info,
   Activity, BarChart3, TrendingDown, Minus,
   Gauge, Briefcase, Settings, FileText, Lightbulb,
-  Heart,
+  Heart, Sparkles, Shuffle, Leaf, RotateCcw,
 } from "lucide-react";
 import { cn } from "../../../../components/ui/utils";
 import { Card } from "../../../../components/ui/card";
@@ -28,6 +28,7 @@ export function PageTypePage() {
     { id: "couleurs", label: "Couleurs & Bots" },
     { id: "navigation", label: "Navigation" },
     { id: "cartes", label: "Types de Cartes" },
+    { id: "simulations", label: "Simulations (Gold)" },
     { id: "discussions", label: "Discussions & Alertes" },
   ];
 
@@ -848,7 +849,295 @@ export function PageTypePage() {
         </div>
       )}
 
-      {/* ═══ TAB 6 — DISCUSSIONS & ALERTES ═══ */}
+      {/* ═══ TAB 6 — SIMULATIONS (GOLD STANDARD) ═══ */}
+      {activeTab === "simulations" && (
+        <div className="space-y-6">
+
+          {/* Intro */}
+          <Card className="p-4 bg-gradient-to-r from-fuchsia-50 to-pink-50 border-fuchsia-200">
+            <div className="flex items-start gap-3">
+              <Sparkles className="h-5 w-5 text-fuchsia-600 mt-0.5 shrink-0" />
+              <div>
+                <h3 className="text-sm font-bold text-fuchsia-900">Reference: Mode Innovation</h3>
+                <p className="text-xs text-fuchsia-700 mt-1">Cette page est le gold standard valide par Carl. Tous les patterns ci-dessous doivent etre reappliques dans chaque nouvelle section.</p>
+              </div>
+            </div>
+          </Card>
+
+          {/* Structure de page */}
+          <Card className="p-4">
+            <h3 className="text-sm font-bold text-gray-800 mb-1">Structure de page (patron gold)</h3>
+            <p className="text-[10px] text-gray-400 mb-3">bg-gray-50 pour le contenu, max-w-4xl mx-auto, space-y-4, pb-12</p>
+            <div className="border border-gray-200 rounded-xl overflow-hidden">
+              {/* Header */}
+              <div className="bg-white border-b px-4 py-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-fuchsia-600" />
+                  <div>
+                    <div className="text-sm font-bold text-gray-800">Titre de la Section</div>
+                    <div className="text-xs text-gray-400">Sous-titre contextuel</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  {["C", "R", "E", "D", "O"].map((letter, i) => (
+                    <span key={letter} className={cn("w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold", i < 2 ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-400")}>
+                      {letter}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              {/* Content area */}
+              <div className="bg-gray-50 p-4">
+                <div className="max-w-4xl mx-auto space-y-3">
+                  <div className="h-8 rounded-lg bg-white border border-gray-200 flex items-center px-3 text-[10px] text-gray-400">Contenu scrollable — max-w-4xl mx-auto</div>
+                  <div className="h-8 rounded-lg bg-white border border-gray-200 flex items-center px-3 text-[10px] text-gray-400">Cards, bulles, sections...</div>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* TechniqueCard — card avec gradient header */}
+          <Card className="p-4">
+            <h3 className="text-sm font-bold text-gray-800 mb-1">TechniqueCard — Card avec gradient + contenu bot</h3>
+            <p className="text-[10px] text-gray-400 mb-3">Header gradient couleur, badge arrondi, corps avec intro CEO + proposition bot</p>
+            <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+              {/* Header gradient */}
+              <div className="bg-gradient-to-r from-fuchsia-500 to-pink-500 px-4 py-2.5 flex items-center gap-2 border-b">
+                <Lightbulb className="h-4 w-4 text-white" />
+                <span className="text-sm font-bold text-white">Technique 1</span>
+                <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-white/90 text-fuchsia-800">ANALOGIE</span>
+                <span className="text-xs bg-white/20 text-white px-2 py-0.5 rounded-full ml-auto font-medium">Innovation</span>
+              </div>
+              {/* Corps */}
+              <div className="p-4 space-y-4">
+                {/* Intro CEO */}
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-[10px] font-bold shrink-0">CO</div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="text-xs font-semibold text-blue-700">CarlOS (CEO)</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-fuchsia-100 text-fuchsia-800">Analogie</span>
+                    </div>
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5">
+                      <p className="text-sm text-gray-700 leading-relaxed">Pensons a un modele similaire dans un autre secteur. Otis, le fabricant d'ascenseurs, a transforme son SAV...</p>
+                    </div>
+                  </div>
+                </div>
+                {/* Proposition bot */}
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-violet-500 flex items-center justify-center text-white text-[10px] font-bold shrink-0">CT</div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="text-xs font-semibold text-violet-700">CTO <span className="font-normal text-gray-400">(Technologie)</span></span>
+                      <span className="text-[10px] bg-pink-100 text-pink-700 px-1.5 py-0.5 rounded font-medium">Proposition</span>
+                    </div>
+                    <div className="border rounded-lg px-3 py-2.5 border-l-[3px] border-l-violet-400 bg-violet-50/30 border-gray-200">
+                      <p className="text-sm text-gray-700 leading-relaxed">Offre "Zero-Panne Garanti" — abonnement predictif avec IoT sur equipements critiques...</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {/* Footer action */}
+              <div className="bg-gray-50 px-4 py-2.5 border-t flex items-center justify-center">
+                <button className="text-xs bg-fuchsia-600 text-white px-4 py-2 rounded-full flex items-center gap-1.5 hover:bg-fuchsia-700 font-medium cursor-pointer">
+                  <ArrowRight className="h-3.5 w-3.5" /> Technique suivante
+                </button>
+              </div>
+            </div>
+          </Card>
+
+          {/* Score bars animees */}
+          <Card className="p-4">
+            <h3 className="text-sm font-bold text-gray-800 mb-1">Score bars (spectre faisabilite)</h3>
+            <p className="text-[10px] text-gray-400 mb-3">h-2.5 bg-gray-100 rounded-full, fill couleur avec transition 1s</p>
+            <div className="space-y-3">
+              {[
+                { label: "Impact revenus", score: 92, color: "bg-fuchsia-500" },
+                { label: "Faisabilite 12 mois", score: 65, color: "bg-orange-500" },
+                { label: "Originalite", score: 75, color: "bg-green-500" },
+              ].map((s) => (
+                <div key={s.label}>
+                  <div className="text-[10px] text-gray-500 font-medium mb-0.5">{s.label}</div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className={cn("h-full rounded-full", s.color)} style={{ width: `${s.score}%` }} />
+                    </div>
+                    <span className="text-xs font-bold text-gray-600 w-8 text-right">{s.score}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* Spectre comparatif 3 colonnes */}
+          <Card className="p-4">
+            <h3 className="text-sm font-bold text-gray-800 mb-1">Comparaison 3 colonnes (spectre faisabilite)</h3>
+            <p className="text-[10px] text-gray-400 mb-3">grid grid-cols-3 gap-3, header gradient pastel, scores par axe</p>
+            <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+              <div className="bg-gradient-to-r from-fuchsia-100 to-pink-100 px-4 py-2.5 flex items-center gap-2 border-b border-fuchsia-200">
+                <Star className="h-4 w-4 text-fuchsia-700" />
+                <div className="flex-1">
+                  <div className="text-sm font-bold text-fuchsia-900">Spectre de faisabilite</div>
+                  <div className="text-xs text-fuchsia-700">3 idees comparees sur 3 axes</div>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-3 p-4">
+                {[
+                  { nom: "Zero-Panne", tech: "Analogie", color: "fuchsia", scores: [92, 65, 75] },
+                  { nom: "Equip-as-Service", tech: "Inversion", color: "orange", scores: [98, 40, 95] },
+                  { nom: "Certification", tech: "Biomimetisme", color: "green", scores: [70, 90, 60] },
+                ].map((idee) => (
+                  <div key={idee.nom} className={cn("border rounded-lg overflow-hidden", `border-${idee.color}-300`)}>
+                    <div className={cn("px-3 py-2 border-b bg-gradient-to-r", `from-${idee.color}-50 to-${idee.color}-50/50 border-${idee.color}-200`)}>
+                      <div className={cn("text-xs font-bold", `text-${idee.color}-800`)}>{idee.nom}</div>
+                      <span className={cn("text-[10px] px-1.5 py-0.5 rounded font-medium", `bg-${idee.color}-100 text-${idee.color}-700`)}>{idee.tech}</span>
+                    </div>
+                    <div className="p-3 space-y-2">
+                      {["Impact", "Faisabilite", "Originalite"].map((axe, j) => (
+                        <div key={axe}>
+                          <div className="text-[10px] text-gray-500 font-medium mb-0.5">{axe}</div>
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                              <div className={cn("h-full rounded-full", `bg-${idee.color}-500`)} style={{ width: `${idee.scores[j]}%` }} />
+                            </div>
+                            <span className="text-[10px] font-bold text-gray-600">{idee.scores[j]}</span>
+                          </div>
+                        </div>
+                      ))}
+                      <div className="pt-2 border-t flex items-center justify-between">
+                        <span className="text-[10px] text-gray-500">Score global</span>
+                        <span className={cn("text-sm font-bold", `text-${idee.color}-800`)}>{Math.round(idee.scores.reduce((a, b) => a + b, 0) / 3)}/100</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Card>
+
+          {/* Synthese card premium */}
+          <Card className="p-4">
+            <h3 className="text-sm font-bold text-gray-800 mb-1">Synthese card (premium — border-2 shadow-lg)</h3>
+            <p className="text-[10px] text-gray-400 mb-3">Pour les conclusions, recommandations, plans en phases</p>
+            <div className="bg-gradient-to-b from-fuchsia-50 to-white border-2 border-fuchsia-300 rounded-xl overflow-hidden shadow-lg">
+              <div className="bg-gradient-to-r from-fuchsia-100 to-pink-100 px-4 py-3 flex items-center gap-2 border-b border-fuchsia-300">
+                <Sparkles className="h-5 w-5 text-fuchsia-700" />
+                <div className="flex-1">
+                  <div className="text-sm font-bold text-fuchsia-900">Synthese et recommandation</div>
+                  <div className="text-xs text-fuchsia-700">Fusion des 3 techniques</div>
+                </div>
+                <div className="w-7 h-7 rounded-full bg-blue-500 flex items-center justify-center text-white text-[9px] font-bold">CO</div>
+              </div>
+              <div className="p-4 space-y-4">
+                {/* Recommendation */}
+                <div className="bg-fuchsia-50 border border-fuchsia-200 rounded-lg px-3 py-2">
+                  <p className="text-sm text-fuchsia-900 leading-relaxed">Recommandation: Adopter un modele hybride combinant maintenance predictive et certification en 3 phases...</p>
+                </div>
+                {/* Plan 3 phases */}
+                <div>
+                  <div className="text-xs font-semibold text-gray-600 uppercase mb-2">Plan en 3 phases</div>
+                  <div className="space-y-2.5">
+                    {[
+                      { num: 1, label: "Biomimetisme", color: "green", text: "Phase 1: Certifier les operateurs en 3 niveaux de competence maintenance" },
+                      { num: 2, label: "Analogie", color: "fuchsia", text: "Phase 2: Installer IoT + offre predictive \"Zero-Panne Garanti\"" },
+                      { num: 3, label: "Inversion", color: "orange", text: "Phase 3: Lancer \"Equipment-as-a-Service\" pour les gros contrats" },
+                    ].map((phase) => (
+                      <div key={phase.num} className="flex items-start gap-3">
+                        <div className={cn("w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5", `bg-${phase.color}-100`)}>
+                          <span className={cn("text-xs font-bold", `text-${phase.color}-800`)}>{phase.num}</span>
+                        </div>
+                        <div className="flex-1">
+                          <span className={cn("inline-flex text-[10px] px-1.5 py-0.5 rounded font-medium mb-1", `bg-${phase.color}-100 text-${phase.color}-800`)}>{phase.label}</span>
+                          <p className="text-sm text-gray-700 leading-relaxed">{phase.text}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {/* Conclusion CarlOS */}
+                <div className="bg-gradient-to-r from-fuchsia-50 to-pink-50 border border-fuchsia-200 rounded-lg px-4 py-3">
+                  <div className="flex items-start gap-2">
+                    <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-[9px] font-bold shrink-0 mt-0.5">CO</div>
+                    <div>
+                      <div className="text-xs font-semibold text-fuchsia-700 mb-1">Conclusion CarlOS</div>
+                      <p className="text-sm text-gray-800 leading-relaxed font-medium">Ce modele hybride peut generer 4-6M$ de revenus annuels en 18 mois avec un investissement initial modere.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Boutons de transition + completion */}
+          <Card className="p-4">
+            <h3 className="text-sm font-bold text-gray-800 mb-1">Pilules de completion + transitions</h3>
+            <p className="text-[10px] text-gray-400 mb-3">Centrees, rounded-full, pastel — pour fin de flow et navigation entre modes</p>
+            <div className="space-y-4">
+              {/* Completion pill */}
+              <div>
+                <p className="text-[10px] text-gray-400 mb-2">Pilule de completion</p>
+                <div className="flex justify-center">
+                  <div className="flex items-center gap-2 bg-fuchsia-50 border border-fuchsia-200 rounded-full px-4 py-2">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-fuchsia-600" />
+                    <span className="text-xs text-fuchsia-700 font-medium">Innovation terminee — 3 techniques, modele hybride genere</span>
+                  </div>
+                </div>
+              </div>
+              {/* Transition pills */}
+              <div>
+                <p className="text-[10px] text-gray-400 mb-2">Pilules de transition (entre modes)</p>
+                <div className="flex items-center gap-2 justify-center flex-wrap">
+                  <button className="text-xs bg-yellow-50 text-yellow-700 border border-yellow-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-yellow-100 font-medium cursor-pointer"><Lightbulb className="h-3.5 w-3.5" /> Brainstorm</button>
+                  <button className="text-xs bg-cyan-50 text-cyan-700 border border-cyan-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-cyan-100 font-medium cursor-pointer"><Eye className="h-3.5 w-3.5" /> Analyse</button>
+                  <button className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-emerald-100 font-medium cursor-pointer"><FileText className="h-3.5 w-3.5" /> Cahier SMART</button>
+                </div>
+              </div>
+              {/* Start button */}
+              <div>
+                <p className="text-[10px] text-gray-400 mb-2">Bouton Start (lancement de simulation)</p>
+                <div className="flex justify-center">
+                  <button className="flex items-center gap-3 bg-fuchsia-600 text-white px-8 py-4 rounded-2xl text-sm font-semibold shadow-lg hover:bg-fuchsia-700 transition-all cursor-pointer">
+                    <Sparkles className="h-5 w-5" /> Lancer l'Innovation
+                  </button>
+                </div>
+              </div>
+              {/* Restart button */}
+              <div>
+                <p className="text-[10px] text-gray-400 mb-2">Bouton Restart</p>
+                <div className="flex justify-center">
+                  <button className="flex items-center gap-2 bg-gray-200 text-gray-600 px-6 py-3 rounded-xl text-sm font-medium hover:bg-gray-300 transition-all cursor-pointer">
+                    <RotateCcw className="h-4 w-4" /> Relancer
+                  </button>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* CREDO Phase Indicator */}
+          <Card className="p-4">
+            <h3 className="text-sm font-bold text-gray-800 mb-1">Indicateur CREDO (progression)</h3>
+            <p className="text-[10px] text-gray-400 mb-3">5 pastilles rondes — actives en bleu, inactives en gris</p>
+            <div className="flex items-center gap-4 justify-center">
+              {[
+                { letter: "C", label: "Connect", active: true },
+                { letter: "R", label: "Research", active: true },
+                { letter: "E", label: "Expose", active: true },
+                { letter: "D", label: "Demonstrate", active: false },
+                { letter: "O", label: "Obtain", active: false },
+              ].map((p) => (
+                <div key={p.letter} className="flex flex-col items-center gap-1">
+                  <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold", p.active ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-400")}>
+                    {p.letter}
+                  </div>
+                  <span className={cn("text-[10px]", p.active ? "text-blue-600 font-medium" : "text-gray-400")}>{p.label}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* ═══ TAB 7 — DISCUSSIONS & ALERTES ═══ */}
       {activeTab === "discussions" && (
         <div className="space-y-6">
 
