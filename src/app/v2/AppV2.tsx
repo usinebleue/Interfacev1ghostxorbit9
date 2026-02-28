@@ -6,6 +6,7 @@
 import { ApiProvider } from "./context/ApiContext";
 import { FrameMasterProvider, useFrameMaster } from "./context/FrameMasterContext";
 import { ChatProvider } from "./context/ChatContext";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { FrameMaster } from "./layout/FrameMaster";
 import { LoginView } from "../components/LoginView";
 import { WelcomeOnboardingView } from "./zones/center/WelcomeOnboardingView";
@@ -31,10 +32,12 @@ function AppRouter() {
 
 export default function AppV2() {
   return (
-    <ApiProvider>
-      <FrameMasterProvider>
-        <AppRouter />
-      </FrameMasterProvider>
-    </ApiProvider>
+    <ErrorBoundary>
+      <ApiProvider>
+        <FrameMasterProvider>
+          <AppRouter />
+        </FrameMasterProvider>
+      </ApiProvider>
+    </ErrorBoundary>
   );
 }
