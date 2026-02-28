@@ -27,9 +27,9 @@ interface Props {
 }
 
 const ORBIT9_ITEMS = [
-  { id: "collaboration", label: "Cercles de Collaboration", icon: Handshake, color: "text-emerald-500" },
-  { id: "gouvernance", label: "Gouvernance", icon: Crown, color: "text-violet-500" },
   { id: "marketplace", label: "Marketplace", icon: Store, color: "text-orange-500" },
+  { id: "cellules", label: "Cellules Orbit9", icon: Handshake, color: "text-emerald-500" },
+  { id: "gouvernance", label: "Gouvernance", icon: Crown, color: "text-violet-500" },
   { id: "pionniers", label: "Pionniers", icon: Rocket, color: "text-indigo-500" },
 ];
 
