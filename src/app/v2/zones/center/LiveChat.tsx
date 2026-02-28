@@ -640,6 +640,42 @@ export function LiveChat({
     [sendMessage, lastUserMessage, isTyping]
   );
 
+  // Challenge ALL consulted bots at once (multi-perspective debate)
+  const handleChallengeAll = useCallback(() => {
+    if (isTyping) return;
+    const consultedBots = [...new Set(messages.filter(m => m.role === "assistant" && m.agent).map(m => m.agent!))];
+    if (consultedBots.length < 2) return;
+    const botNames = consultedBots.map(c => botFullName(c)).join(", ");
+    sendMessage(
+      `Je challenge TOUS vos points de vue (${botNames}). Defendez vos positions avec des arguments concrets et des sources. Ou etes-vous en desaccord entre vous?`,
+      "BCO", undefined,
+      { msgType: "challenge", branchLabel: `Challenge collectif — ${consultedBots.length} bots` }
+    );
+  }, [messages, sendMessage, isTyping]);
+
+  // Launch a formal debate between 2+ bots
+  const handleDebat = useCallback(() => {
+    if (isTyping || !lastUserMessage) return;
+    const consultedBots = [...new Set(messages.filter(m => m.role === "assistant" && m.agent).map(m => m.agent!))];
+    const botNames = consultedBots.map(c => botFullName(c)).join(" vs ");
+    sendMessage(
+      `Lance un DEBAT structure entre ${botNames} sur le sujet: "${lastUserMessage}". Chaque bot defend sa position. Identifie les points de friction et propose un verdict.`,
+      "BCO", undefined,
+      { msgType: "challenge", branchLabel: `Debat — ${botNames}` }
+    );
+  }, [messages, sendMessage, lastUserMessage, isTyping]);
+
+  // Create a new branch (sub-thread) from current discussion
+  const handleNewBranch = useCallback((topic?: string) => {
+    if (isTyping) return;
+    const branchTopic = topic || "cet angle specifique";
+    sendMessage(
+      `Ouvre une nouvelle branche d'exploration sur: ${branchTopic}. Analyse cet angle en profondeur separement du fil principal.`,
+      activeBotCode, undefined,
+      { msgType: "normal", branchLabel: `Branche — ${branchTopic.slice(0, 40)}` }
+    );
+  }, [sendMessage, activeBotCode, isTyping]);
+
   // Request synthesis from CarlOS
   // Mode-specific synthesis prompts
   const SYNTHESIS_PROMPTS: Record<string, string> = {
@@ -666,40 +702,50 @@ export function LiveChat({
     }
   }, [sendMessage, isTyping, activeReflectionMode]);
 
-  // ── Sentinelle CarlOS — detection de boucles ──
+  // ── Sentinelle CarlOS — detection de boucles (vocaux Carl: max 3 challenges/bulle, max 3 niveaux branches) ──
   const sentinelleWarning = useMemo(() => {
     const botMessages = messages.filter((m) => m.role === "assistant");
     const userMessages = messages.filter((m) => m.role === "user");
+    const totalChallenges = Object.values(challengeCounts).reduce((a, b) => a + b, 0);
 
-    // Regle 1: Trop de messages sans action concrete (>10 echanges)
-    if (botMessages.length >= 10 && botMessages.length % 5 === 0) {
-      return {
-        type: "long-thread" as const,
-        message: `Ca fait ${botMessages.length} echanges. On tourne autour du sujet. Veux-tu cristalliser une decision ou passer a l'action?`,
-        actions: ["Cristalliser le resultat", "Passer au Cahier SMART", "Continuer"],
-      };
-    }
-
-    // Regle 2: Messages similaires (user qui pose la meme question)
+    // Regle 1: Messages similaires — user tourne en rond (3x meme question)
     if (userMessages.length >= 3) {
       const last3 = userMessages.slice(-3).map((m) => m.content.toLowerCase().slice(0, 50));
       const unique = new Set(last3);
       if (unique.size === 1) {
         return {
           type: "repetition" as const,
-          message: "Tu poses la meme question 3 fois. Reformule differemment ou change d'angle.",
-          actions: ["Reformuler", "Changer de bot", "Passer a un autre sujet"],
+          message: "Ca fait 3 fois qu'on tourne autour de la meme idee. C'est pas mal tout le temps les memes options qui sortent. Change d'angle ou cristallise.",
+          actions: ["Reformuler", "Consulter un autre bot", "Cristalliser le resultat"],
         };
       }
     }
 
-    // Regle 3: Trop de challenges globaux (>4 dans la conversation)
-    const totalChallenges = Object.values(challengeCounts).reduce((a, b) => a + b, 0);
+    // Regle 2: Trop de challenges (>4) — "il n'y a rien de plus qui va sortir"
     if (totalChallenges >= 4) {
       return {
         type: "over-challenge" as const,
-        message: "Tu as challenge plusieurs fois. Les positions sont claires — il est temps de trancher.",
-        actions: ["Synthese finale", "Decision Go/No-Go", "Continuer quand meme"],
+        message: "Tu as challenge plusieurs fois. Les positions sont claires — il n'y a rien de plus qui va sortir. C'est le moment de trancher.",
+        actions: ["Synthese finale", "Decision Go/No-Go", "Cristalliser le meilleur"],
+      };
+    }
+
+    // Regle 3: Long thread sans synthese (>8 echanges bot) — pousser vers l'action
+    if (botMessages.length >= 8 && !messages.some(m => m.msgType === "synthesis") && botMessages.length % 4 === 0) {
+      return {
+        type: "long-thread" as const,
+        message: `Ca fait ${botMessages.length} echanges. On a explore pas mal d'angles. Veux-tu cristalliser une idee geniale ou passer a l'action?`,
+        actions: ["Synthetiser", "Passer au Cahier SMART", "Cristalliser et continuer"],
+      };
+    }
+
+    // Regle 4: Branches trop profondes (>2 niveaux) — ramener vers le concentre
+    const maxDepth = Math.max(0, ...messages.map(m => m.branchDepth || 0));
+    if (maxDepth >= 2) {
+      return {
+        type: "deep-branch" as const,
+        message: "Tu es a 2+ niveaux de profondeur dans les branches. Finalise cette branche ou remonte vers le fil principal.",
+        actions: ["Synthetiser cette branche", "Retour au fil principal", "Continuer quand meme"],
       };
     }
 
@@ -936,12 +982,12 @@ export function LiveChat({
             </div>
           )}
 
-          {/* Bots consultes — breadcrumb multi-perspectives */}
+          {/* Bots consultes — breadcrumb multi-perspectives + actions collectives */}
           {(() => {
             const consultedBots = [...new Set(messages.filter(m => m.role === "assistant" && m.agent).map(m => m.agent!))];
             if (consultedBots.length <= 1) return null;
             return (
-              <div className="flex items-center gap-2 py-2 px-3 bg-violet-50/50 rounded-xl border border-violet-100">
+              <div className="flex items-center gap-2 py-2.5 px-3 bg-violet-50/50 rounded-xl border border-violet-100 flex-wrap">
                 <Users className="h-3.5 w-3.5 text-violet-500 shrink-0" />
                 <span className="text-[11px] text-violet-600 font-medium">Perspectives :</span>
                 <div className="flex gap-1.5 flex-wrap">
@@ -954,6 +1000,32 @@ export function LiveChat({
                     );
                   })}
                 </div>
+                {/* Actions collectives — challenger les N bots, debat, nouvelle branche */}
+                {!isTyping && (
+                  <div className="flex gap-1.5 ml-auto">
+                    <button
+                      onClick={handleChallengeAll}
+                      className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-colors cursor-pointer font-medium"
+                    >
+                      <Swords className="h-2.5 w-2.5" />
+                      Challenger les {consultedBots.length}
+                    </button>
+                    <button
+                      onClick={handleDebat}
+                      className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-violet-50 text-violet-600 border border-violet-200 hover:bg-violet-100 transition-colors cursor-pointer font-medium"
+                    >
+                      <MessageSquare className="h-2.5 w-2.5" />
+                      Debat
+                    </button>
+                    <button
+                      onClick={() => handleNewBranch()}
+                      className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 transition-colors cursor-pointer font-medium"
+                    >
+                      <Plus className="h-2.5 w-2.5" />
+                      Branche
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })()}
@@ -1045,26 +1117,51 @@ export function LiveChat({
 
             // ── Branch indicator for challenges and consultations ──
             const showBranchIndicator = (isChallenge || isConsultation) && !isUser;
+            const isDebat = msg.branchLabel?.startsWith("Debat");
+            const isCollectiveChallenge = msg.branchLabel?.startsWith("Challenge collectif");
 
             return (
               <div key={msg.id}>
-                {/* Branch connector line */}
+                {/* Branch node — visual fork point */}
                 {showBranchIndicator && (
-                  <div className="flex items-center gap-2 mb-2 ml-10 animate-in fade-in duration-300">
-                    <div className={cn("w-6 h-px", isChallenge ? "bg-red-300" : "bg-violet-300")} />
+                  <div className="flex items-center gap-2 mb-2 ml-10 animate-in fade-in slide-in-from-left-3 duration-400">
+                    {/* Node dot */}
+                    <div className={cn(
+                      "w-3 h-3 rounded-full border-2 shrink-0",
+                      isDebat ? "bg-violet-500 border-violet-300" :
+                      isCollectiveChallenge ? "bg-red-500 border-red-300" :
+                      isChallenge ? "bg-red-400 border-red-200" : "bg-violet-400 border-violet-200"
+                    )} />
+                    {/* Branch line */}
+                    <div className={cn("w-4 h-px",
+                      isChallenge ? "bg-red-300" : "bg-violet-300"
+                    )} />
+                    {/* Label */}
                     <span className={cn(
-                      "text-[10px] font-semibold px-2 py-0.5 rounded-full border",
+                      "text-[10px] font-semibold px-2.5 py-0.5 rounded-full border flex items-center gap-1",
+                      isDebat ? "text-violet-700 bg-violet-100 border-violet-300" :
+                      isCollectiveChallenge ? "text-red-700 bg-red-100 border-red-300" :
                       isChallenge
                         ? "text-red-600 bg-red-50 border-red-200"
                         : "text-violet-600 bg-violet-50 border-violet-200"
                     )}>
-                      {isChallenge ? (
-                        <span className="flex items-center gap-1"><Swords className="h-2.5 w-2.5" /> {msg.branchLabel || "Challenge"}</span>
+                      {isDebat ? (
+                        <><MessageSquare className="h-2.5 w-2.5" /> {msg.branchLabel}</>
+                      ) : isCollectiveChallenge ? (
+                        <><Swords className="h-2.5 w-2.5" /> {msg.branchLabel}</>
+                      ) : isChallenge ? (
+                        <><Swords className="h-2.5 w-2.5" /> {msg.branchLabel || "Challenge"}</>
                       ) : (
-                        <span className="flex items-center gap-1"><Users className="h-2.5 w-2.5" /> {msg.branchLabel || "Consultation"}</span>
+                        <><Users className="h-2.5 w-2.5" /> {msg.branchLabel || "Consultation"}</>
                       )}
                     </span>
                     <div className={cn("flex-1 h-px", isChallenge ? "bg-red-200" : "bg-violet-200")} />
+                    {/* Branch depth badge */}
+                    {depth > 0 && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-400 font-mono">
+                        N{depth}
+                      </span>
+                    )}
                   </div>
                 )}
 
@@ -1184,15 +1281,15 @@ export function LiveChat({
             );
           })}
 
-          {/* Synthese rapide — apparait apres 4+ echanges bot */}
-          {!isTyping && messages.filter(m => m.role === "assistant").length >= 4 && !messages.some(m => m.msgType === "synthesis") && (
+          {/* Synthese — bouton discret toujours visible, le user controle le rythme */}
+          {!isTyping && messages.filter(m => m.role === "assistant").length >= 2 && !messages.some(m => m.msgType === "synthesis") && (
             <div className="flex justify-center">
               <button
                 onClick={handleSynthesis}
-                className="flex items-center gap-2 text-xs px-4 py-2 rounded-full bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 text-amber-700 hover:from-amber-100 hover:to-yellow-100 transition-all cursor-pointer font-medium shadow-sm"
+                className="flex items-center gap-2 text-[11px] px-3 py-1.5 rounded-full bg-white border border-gray-200 text-gray-400 hover:bg-amber-50 hover:border-amber-200 hover:text-amber-700 transition-all cursor-pointer font-medium"
               >
-                <Sparkles className="h-3.5 w-3.5" />
-                Demander la synthese a CarlOS
+                <Sparkles className="h-3 w-3" />
+                Synthetiser
               </button>
             </div>
           )}
@@ -1211,7 +1308,11 @@ export function LiveChat({
                     <button
                       key={i}
                       onClick={() => {
-                        if (action === "Synthese finale" || action === "Synthese") handleSynthesis();
+                        if (action === "Synthese finale" || action === "Synthetiser" || action === "Synthetiser cette branche") handleSynthesis();
+                        else if (action === "Cristalliser le resultat" || action === "Cristalliser le meilleur" || action === "Cristalliser et continuer") {
+                          const lastBot = messages.filter(m => m.role === "assistant").slice(-1)[0];
+                          if (lastBot) { crystallize(lastBot.content, lastBot.agent || activeBotCode); setJustCrystallized(lastBot.id); setTimeout(() => setJustCrystallized(null), 3000); }
+                        }
                         else handleOptionClick(action);
                       }}
                       className="text-xs px-3 py-1.5 rounded-full bg-white border border-amber-300 text-amber-700 hover:bg-amber-100 transition-colors cursor-pointer font-medium"
