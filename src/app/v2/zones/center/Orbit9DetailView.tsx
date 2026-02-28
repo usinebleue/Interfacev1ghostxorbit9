@@ -1,7 +1,8 @@
 /**
- * Orbit9DetailView.tsx — Pages fonctionnelles Orbit9
- * Navigation par tabs (comme departements) + contenu interactif
- * Sprint B — Inspire des templates Admin Interface Design de Carl
+ * Orbit9DetailView.tsx — Pages fonctionnelles Orbit9 + TRG Industries
+ * Navigation directe depuis le sidebar (pas de groupes)
+ * TRG Industries a ses propres sous-tabs dans le header
+ * Sprint B — Reorganisation vocal Carl 13:14:24
  */
 
 import { useState } from "react";
@@ -23,49 +24,17 @@ import { Card } from "../../../components/ui/card";
 import { Badge } from "../../../components/ui/badge";
 import { Button } from "../../../components/ui/button";
 
-// ── Navigation groups avec sous-sections ──
+// ── Sections Orbit9 (sidebar direct) + TRG Industries (section separee) ──
 
-interface SubSection {
-  id: string;
-  label: string;
-  icon: React.ElementType;
-}
+const ORBIT9_SECTIONS = new Set(["collaboration", "matching", "gouvernance", "marketplace", "pionniers"]);
+const TRG_SECTIONS = new Set(["nouvelles", "evenements", "benchmark", "trg-industrie"]);
 
-interface Orbit9Group {
-  id: string;
-  sections: SubSection[];
-}
-
-const GROUPS: Orbit9Group[] = [
-  {
-    id: "reseau",
-    sections: [
-      { id: "collaboration", label: "Cercles", icon: Handshake },
-      { id: "matching", label: "Matching", icon: Search },
-      { id: "gouvernance", label: "Gouvernance", icon: Crown },
-    ],
-  },
-  {
-    id: "croissance",
-    sections: [
-      { id: "pionniers", label: "Pionniers", icon: Rocket },
-      { id: "marketplace", label: "Marketplace", icon: Store },
-      { id: "evenements", label: "Evenements", icon: Calendar },
-    ],
-  },
-  {
-    id: "intelligence",
-    sections: [
-      { id: "benchmark", label: "Benchmark", icon: Gauge },
-      { id: "nouvelles", label: "Nouvelles", icon: Newspaper },
-      { id: "trg-industrie", label: "TRG Industrie", icon: Globe },
-    ],
-  },
+const TRG_TABS = [
+  { id: "nouvelles", label: "Nouvelles", icon: Newspaper },
+  { id: "evenements", label: "Evenements", icon: Calendar },
+  { id: "benchmark", label: "Benchmark", icon: Gauge },
+  { id: "trg-industrie", label: "Dashboard", icon: Globe },
 ];
-
-function findGroup(sectionId: string): Orbit9Group | undefined {
-  return GROUPS.find(g => g.sections.some(s => s.id === sectionId));
-}
 
 // ══════════════════════════════════════════
 // SECTION: CERCLES / COLLABORATION
@@ -1338,21 +1307,15 @@ const SECTION_RENDERERS: Record<string, () => JSX.Element> = {
 };
 
 const SECTION_TITLES: Record<string, string> = {
-  collaboration: "Cercles Orbit9",
+  collaboration: "Cercles de Collaboration",
   matching: "Matching Engine",
   gouvernance: "Gouvernance",
   pionniers: "Pionniers Bleus",
   marketplace: "Marketplace Experts",
   evenements: "Evenements",
-  benchmark: "Benchmark",
+  benchmark: "Benchmark VITAA",
   nouvelles: "Nouvelles",
-  "trg-industrie": "TRG de l'Industrie",
-};
-
-const GROUP_LABELS: Record<string, string> = {
-  reseau: "Reseau & Collaboration",
-  croissance: "Croissance",
-  intelligence: "Intelligence & Donnees",
+  "trg-industrie": "Dashboard de l'Industrie",
 };
 
 // ══════════════════════════════════════════
@@ -1362,17 +1325,18 @@ const GROUP_LABELS: Record<string, string> = {
 export function Orbit9DetailView() {
   const { activeOrbit9Section, setActiveView, navigateOrbit9 } = useFrameMaster();
   const sectionId = activeOrbit9Section || "collaboration";
-  const group = findGroup(sectionId);
-  if (!group) return null;
 
   const Renderer = SECTION_RENDERERS[sectionId];
   if (!Renderer) return null;
 
+  const isTrg = TRG_SECTIONS.has(sectionId);
+  const sectionTitle = SECTION_TITLES[sectionId] || "Orbit9";
+
   return (
     <div className="h-full flex flex-col overflow-hidden">
-      {/* Header avec tabs de navigation — meme pattern que departements */}
+      {/* Header */}
       <div className="bg-white border-b px-4 py-3 shrink-0">
-        <div className="flex items-center gap-3 mb-3">
+        <div className="flex items-center gap-3 mb-1">
           <button
             onClick={() => setActiveView("department")}
             className="text-gray-400 hover:text-gray-600 cursor-pointer p-1 rounded-lg hover:bg-gray-100 transition-colors"
@@ -1380,33 +1344,39 @@ export function Orbit9DetailView() {
             <ArrowLeft className="h-4 w-4" />
           </button>
           <div>
-            <h1 className="text-sm font-bold text-gray-900">{GROUP_LABELS[group.id] || "Orbit9"}</h1>
-            <p className="text-[10px] text-gray-400">Mon Reseau Orbit 9</p>
+            <h1 className="text-sm font-bold text-gray-900">
+              {isTrg ? "TRG Industries" : sectionTitle}
+            </h1>
+            <p className="text-[10px] text-gray-400">
+              {isTrg ? "Statistiques et tendances du secteur manufacturier" : "Mon Reseau Orbit 9"}
+            </p>
           </div>
         </div>
 
-        {/* Tabs — sous-sections du groupe */}
-        <div className="flex gap-1">
-          {group.sections.map((sec) => {
-            const SIcon = sec.icon;
-            const isActive = sec.id === sectionId;
-            return (
-              <button
-                key={sec.id}
-                onClick={() => navigateOrbit9(sec.id)}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
-                  isActive
-                    ? "bg-gray-900 text-white shadow-sm"
-                    : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-                )}
-              >
-                <SIcon className="h-3.5 w-3.5" />
-                {sec.label}
-              </button>
-            );
-          })}
-        </div>
+        {/* Sous-tabs — seulement pour TRG Industries */}
+        {isTrg && (
+          <div className="flex gap-1 mt-2">
+            {TRG_TABS.map((tab) => {
+              const TIcon = tab.icon;
+              const isActive = tab.id === sectionId;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => navigateOrbit9(tab.id)}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
+                    isActive
+                      ? "bg-gray-900 text-white shadow-sm"
+                      : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                  )}
+                >
+                  <TIcon className="h-3.5 w-3.5" />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Content */}
