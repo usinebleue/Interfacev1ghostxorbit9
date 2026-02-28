@@ -172,24 +172,24 @@ export function MarketplacePage({ volet = "bots", onNavigate }: MarketplacePageP
       {/* ═══ VOLET 1 — BOTS & AGENTS ═══ */}
       {volet === "bots" && (
         <div className="space-y-5">
-          {/* KPIs */}
+          {/* KPIs avec tops colores */}
           <div className="grid grid-cols-4 gap-3">
-            <Card className="p-3">
+            <Card className="p-3 border-t-[3px] border-t-orange-400">
               <div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Bots disponibles</span><Bot className="h-3.5 w-3.5 text-orange-400" /></div>
               <div className="text-2xl font-bold text-orange-600">{bots.length}</div>
               <div className="text-[10px] text-gray-500">Agents specialises</div>
             </Card>
-            <Card className="p-3">
+            <Card className="p-3 border-t-[3px] border-t-blue-400">
               <div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Mes bots actifs</span><Zap className="h-3.5 w-3.5 text-blue-400" /></div>
               <div className="text-2xl font-bold text-blue-600">6</div>
               <div className="text-[10px] text-gray-500">C-Suite complet</div>
             </Card>
-            <Card className="p-3">
+            <Card className="p-3 border-t-[3px] border-t-violet-400">
               <div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Categories</span><Target className="h-3.5 w-3.5 text-violet-400" /></div>
               <div className="text-2xl font-bold text-violet-600">12</div>
               <div className="text-[10px] text-gray-500">Secteurs couverts</div>
             </Card>
-            <Card className="p-3">
+            <Card className="p-3 border-t-[3px] border-t-green-400">
               <div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Economie vs consultants</span><DollarSign className="h-3.5 w-3.5 text-green-400" /></div>
               <div className="text-2xl font-bold text-green-600">85%</div>
               <div className="text-[10px] text-gray-500">En moyenne</div>
@@ -272,24 +272,24 @@ export function MarketplacePage({ volet = "bots", onNavigate }: MarketplacePageP
       {/* ═══ VOLET 2 — OPPORTUNITES (CAHIERS / MAINS LEVEES) ═══ */}
       {volet === "cahiers" && (
         <div className="space-y-5">
-          {/* KPIs */}
+          {/* KPIs avec tops colores */}
           <div className="grid grid-cols-4 gap-3">
-            <Card className="p-3">
+            <Card className="p-3 border-t-[3px] border-t-blue-400">
               <div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Cahiers publies</span><FileText className="h-3.5 w-3.5 text-blue-400" /></div>
               <div className="text-2xl font-bold text-blue-600">{cahiers.length}</div>
               <div className="text-[10px] text-gray-500">Besoins documentes</div>
             </Card>
-            <Card className="p-3">
+            <Card className="p-3 border-t-[3px] border-t-green-400">
               <div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Mains levees actives</span><Hand className="h-3.5 w-3.5 text-green-400" /></div>
               <div className="text-2xl font-bold text-green-600">{cahiers.reduce((s, c) => s + c.mainsLevees, 0)}</div>
               <div className="text-[10px] text-gray-500">Reponses recues</div>
             </Card>
-            <Card className="p-3">
+            <Card className="p-3 border-t-[3px] border-t-amber-400">
               <div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Valeur pipeline</span><DollarSign className="h-3.5 w-3.5 text-amber-400" /></div>
               <div className="text-2xl font-bold text-amber-600">285K$</div>
               <div className="text-[10px] text-gray-500">Projets en cours</div>
             </Card>
-            <Card className="p-3">
+            <Card className="p-3 border-t-[3px] border-t-emerald-400">
               <div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Taux conversion</span><TrendingUp className="h-3.5 w-3.5 text-emerald-400" /></div>
               <div className="text-2xl font-bold text-emerald-600">72%</div>
               <div className="text-[10px] text-gray-500">Cahier → Projet</div>
@@ -297,8 +297,14 @@ export function MarketplacePage({ volet = "bots", onNavigate }: MarketplacePageP
           </div>
 
           {/* Flow pipeline visuel — 3 etapes */}
-          <Card className="p-4">
-            <h3 className="text-sm font-bold text-gray-800 mb-3">Comment ca fonctionne</h3>
+          <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+            <div className="bg-gradient-to-r from-blue-100 to-indigo-100 px-4 py-2.5 border-b border-blue-200">
+              <div className="flex items-center gap-2">
+                <ArrowRight className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-bold text-blue-900">Comment ca fonctionne</span>
+              </div>
+            </div>
+            <div className="p-4">
             <div className="flex items-center gap-2">
               {[
                 { step: "1", title: "BESOIN", desc: "Le client decrit son besoin a CarlOS", icon: MessageSquare, color: "blue" },
@@ -320,7 +326,8 @@ export function MarketplacePage({ volet = "bots", onNavigate }: MarketplacePageP
                 );
               })}
             </div>
-          </Card>
+            </div>
+          </div>
 
           {/* Card routeur CarlOS */}
           <Card className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">

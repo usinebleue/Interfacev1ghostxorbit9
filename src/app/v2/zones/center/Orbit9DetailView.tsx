@@ -1345,10 +1345,10 @@ export function Orbit9DetailView() {
           </button>
           <div>
             <h1 className="text-sm font-bold text-gray-900">
-              {isTrg ? "TRG Industries" : sectionTitle}
+              {isTrg ? "Mon Industrie" : sectionTitle}
             </h1>
             <p className="text-[10px] text-gray-400">
-              {isTrg ? "Statistiques et tendances du secteur manufacturier" : "Mon Reseau Orbit 9"}
+              {isTrg ? "Statistiques et tendances du secteur manufacturier" : "Mon Reseau"}
             </p>
           </div>
         </div>

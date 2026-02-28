@@ -52,10 +52,10 @@ export function PionniersPage({ onNavigate }: PionniersPageProps) {
       </div>
 
       <div className="grid grid-cols-4 gap-3">
-        <Card className="p-3"><div className="text-[10px] text-gray-400 uppercase">Confirmes</div><div className="text-2xl font-bold text-indigo-600">{pris}</div></Card>
-        <Card className="p-3"><div className="text-[10px] text-gray-400 uppercase">En discussion</div><div className="text-2xl font-bold text-amber-600">{prospects}</div></Card>
-        <Card className="p-3"><div className="text-[10px] text-gray-400 uppercase">Prix pionnier</div><div className="text-2xl font-bold text-green-600">1,350$</div><div className="text-[10px] text-gray-500">/mois vs 2,500$ vague 2</div></Card>
-        <Card className="p-3"><div className="text-[10px] text-gray-400 uppercase">Economie/an</div><div className="text-2xl font-bold text-green-600">13,800$</div><div className="text-[10px] text-gray-500">Garanti a vie</div></Card>
+        <Card className="p-3 border-t-[3px] border-t-indigo-400"><div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Confirmes</span><Users className="h-3.5 w-3.5 text-indigo-400" /></div><div className="text-2xl font-bold text-indigo-600">{pris}</div><div className="text-[10px] text-gray-500">Pionniers actifs</div></Card>
+        <Card className="p-3 border-t-[3px] border-t-amber-400"><div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">En discussion</span><Clock className="h-3.5 w-3.5 text-amber-400" /></div><div className="text-2xl font-bold text-amber-600">{prospects}</div><div className="text-[10px] text-gray-500">Prospects actifs</div></Card>
+        <Card className="p-3 border-t-[3px] border-t-green-400"><div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Prix pionnier</span><DollarSign className="h-3.5 w-3.5 text-green-400" /></div><div className="text-2xl font-bold text-green-600">1,350$</div><div className="text-[10px] text-gray-500">/mois vs 2,500$ vague 2</div></Card>
+        <Card className="p-3 border-t-[3px] border-t-emerald-400"><div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Economie/an</span><Target className="h-3.5 w-3.5 text-emerald-400" /></div><div className="text-2xl font-bold text-emerald-600">13,800$</div><div className="text-[10px] text-gray-500">Garanti a vie</div></Card>
       </div>
 
       {/* ── MODELE DE CROISSANCE 9 → 81 ── */}
@@ -85,8 +85,14 @@ export function PionniersPage({ onNavigate }: PionniersPageProps) {
       </Card>
 
       {/* Grille des 9 places */}
-      <Card className="p-4">
-        <h3 className="text-sm font-bold text-gray-800 mb-3">9 Places — 1 Leader par Secteur Strategique</h3>
+      <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+        <div className="bg-gradient-to-r from-indigo-100 to-purple-100 px-4 py-2.5 border-b border-indigo-200">
+          <div className="flex items-center gap-2">
+            <Target className="h-4 w-4 text-indigo-600" />
+            <span className="text-sm font-bold text-indigo-900">9 Places — 1 Leader par Secteur Strategique</span>
+          </div>
+        </div>
+        <div className="p-4">
         <div className="grid grid-cols-3 gap-2">
           {sectors.map((s, i) => (
             <div key={i} className={cn(
@@ -115,11 +121,18 @@ export function PionniersPage({ onNavigate }: PionniersPageProps) {
             </div>
           ))}
         </div>
-      </Card>
+      </div>
+      </div>
 
       {/* Package Pioneer */}
-      <Card className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200">
-        <h3 className="text-sm font-bold text-indigo-800 mb-3">Package Pionnier — Conditions a Vie</h3>
+      <div className="bg-gradient-to-b from-gray-50 to-white border-2 border-indigo-300 rounded-xl overflow-hidden shadow-lg">
+        <div className="bg-gradient-to-r from-indigo-500 to-purple-500 px-4 py-2.5 border-b">
+          <div className="flex items-center gap-2">
+            <Award className="h-4 w-4 text-white" />
+            <span className="text-sm font-bold text-white">Package Pionnier — Conditions a Vie</span>
+          </div>
+        </div>
+        <div className="p-4">
         <div className="grid grid-cols-2 gap-3">
           {[
             { icon: Users, label: "C-Suite complet (6 bots)", detail: "1,350$/mois vs 2,500$ vague 2 = -46% garanti a vie" },
@@ -141,11 +154,18 @@ export function PionniersPage({ onNavigate }: PionniersPageProps) {
             );
           })}
         </div>
-      </Card>
+      </div>
+      </div>
 
       {/* Script de rencontre */}
-      <Card className="p-4">
-        <h3 className="text-sm font-bold text-gray-800 mb-1">Script de Rencontre — 45 min, 5 actes</h3>
+      <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+        <div className="bg-gradient-to-r from-blue-100 to-indigo-100 px-4 py-2.5 border-b border-blue-200">
+          <div className="flex items-center gap-2">
+            <Handshake className="h-4 w-4 text-blue-600" />
+            <span className="text-sm font-bold text-blue-900">Script de Rencontre — 45 min, 5 actes</span>
+          </div>
+        </div>
+        <div className="p-4">
         <p className="text-[10px] text-gray-400 mb-3">En personne (JAMAIS Zoom). Cafe ou bureau du prospect. iPad avec CarlOS pret a rouler. Pas de PowerPoint.</p>
         <div className="space-y-2">
           {[
@@ -167,11 +187,18 @@ export function PionniersPage({ onNavigate }: PionniersPageProps) {
             </div>
           ))}
         </div>
-      </Card>
+      </div>
+      </div>
 
       {/* Calendrier sprint */}
-      <Card className="p-4">
-        <h3 className="text-sm font-bold text-gray-800 mb-3">Calendrier Sprint 30 Jours</h3>
+      <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+        <div className="bg-gradient-to-r from-rose-100 to-pink-100 px-4 py-2.5 border-b border-rose-200">
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-rose-600" />
+            <span className="text-sm font-bold text-rose-900">Calendrier Sprint 30 Jours</span>
+          </div>
+        </div>
+        <div className="p-4">
         <div className="grid grid-cols-4 gap-2">
           {[
             { week: "Sem 1", title: "Les 3 premiers", desc: "Lun-Mer-Ven: 3 rencontres. Dimanche: Post LinkedIn '3/9 prises'", status: "done" },
@@ -186,7 +213,8 @@ export function PionniersPage({ onNavigate }: PionniersPageProps) {
             </div>
           ))}
         </div>
-      </Card>
+      </div>
+      </div>
 
       {/* Cross-link Cellules */}
       {onNavigate && (

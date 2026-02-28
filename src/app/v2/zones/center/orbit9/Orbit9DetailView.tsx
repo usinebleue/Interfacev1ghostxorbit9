@@ -125,7 +125,7 @@ export function Orbit9DetailView() {
             {isMarketplace && <Store className="h-4 w-4 text-orange-500" />}
             <div>
               <h1 className="text-sm font-bold text-gray-900">
-                {isTrg ? "TRG Industries" : sectionTitle}
+                {isTrg ? "Mon Industrie" : sectionTitle}
               </h1>
               <p className="text-[10px] text-gray-400">
                 {isTrg ? "Statistiques et tendances du secteur manufacturier" : sectionSubtitle}

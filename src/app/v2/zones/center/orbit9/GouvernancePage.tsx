@@ -103,8 +103,14 @@ export function GouvernancePage({ onNavigate }: GouvernancePageProps) {
 
       {activeTab === "roles" && (
         <div className="space-y-4">
-          <Card className="p-4">
-            <h3 className="text-sm font-bold text-gray-800 mb-3">Roles dans le Cercle Orbit9</h3>
+          <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+            <div className="bg-gradient-to-r from-violet-100 to-indigo-100 px-4 py-2.5 border-b border-violet-200">
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-violet-600" />
+                <span className="text-sm font-bold text-violet-900">Roles dans le Cercle Orbit9</span>
+              </div>
+            </div>
+            <div className="p-4">
             <div className="grid grid-cols-2 gap-3">
               {[
                 { role: "Facilitateur", occupant: "CarlOS (CEO-AI)", accountabilites: ["Faciliter les reunions de gouvernance", "S'assurer que le processus est respecte", "Detecter les tensions non-exprimees"], type: "ia" },
@@ -130,32 +136,39 @@ export function GouvernancePage({ onNavigate }: GouvernancePageProps) {
                 </div>
               ))}
             </div>
-          </Card>
+          </div>
+          </div>
         </div>
       )}
 
       {activeTab === "timetokens" && (
         <div className="space-y-4">
           <div className="grid grid-cols-3 gap-3">
-            <Card className="p-3 text-center">
+            <Card className="p-3 text-center border-t-[3px] border-t-violet-400">
               <p className="text-2xl font-bold text-violet-700">1,240</p>
               <p className="text-xs text-violet-600">TT accumules</p>
               <p className="text-[10px] text-gray-400 mt-1">Vos contributions</p>
             </Card>
-            <Card className="p-3 text-center">
+            <Card className="p-3 text-center border-t-[3px] border-t-green-400">
               <p className="text-2xl font-bold text-green-700">V1</p>
               <p className="text-xs text-green-600">Off-chain (SQLite)</p>
               <p className="text-[10px] text-gray-400 mt-1">Phase actuelle</p>
             </Card>
-            <Card className="p-3 text-center">
+            <Card className="p-3 text-center border-t-[3px] border-t-blue-400">
               <p className="text-2xl font-bold text-blue-700">5D</p>
               <p className="text-xs text-blue-600">Formule TT-RG</p>
               <p className="text-[10px] text-gray-400 mt-1">Allocation x Densite x Impact x Z x Pilier</p>
             </Card>
           </div>
 
-          <Card className="p-4">
-            <h3 className="text-sm font-bold text-gray-800 mb-3">Pourquoi les Bots rendent les Smart Contracts 100x meilleurs</h3>
+          <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+            <div className="bg-gradient-to-r from-amber-100 to-orange-100 px-4 py-2.5 border-b border-amber-200">
+              <div className="flex items-center gap-2">
+                <Zap className="h-4 w-4 text-amber-600" />
+                <span className="text-sm font-bold text-amber-900">Pourquoi les Bots rendent les Smart Contracts 100x meilleurs</span>
+              </div>
+            </div>
+            <div className="p-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="p-3 bg-red-50 rounded-lg border border-red-200">
                 <p className="text-xs font-bold text-red-700 mb-2">DAO Traditionnelle</p>
@@ -174,10 +187,17 @@ export function GouvernancePage({ onNavigate }: GouvernancePageProps) {
                 </div>
               </div>
             </div>
-          </Card>
+          </div>
+          </div>
 
-          <Card className="p-4">
-            <h3 className="text-sm font-bold text-gray-800 mb-3">Evolution en 3 phases</h3>
+          <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+            <div className="bg-gradient-to-r from-indigo-100 to-blue-100 px-4 py-2.5 border-b border-indigo-200">
+              <div className="flex items-center gap-2">
+                <Layers className="h-4 w-4 text-indigo-600" />
+                <span className="text-sm font-bold text-indigo-900">Evolution en 3 phases</span>
+              </div>
+            </div>
+            <div className="p-4">
             <div className="flex gap-3">
               {[
                 { phase: "Phase 1", label: "Off-Chain", desc: "SQLite local, tracking par bots, rapports mensuels", status: "actif", color: "green" },
@@ -191,14 +211,21 @@ export function GouvernancePage({ onNavigate }: GouvernancePageProps) {
                 </div>
               ))}
             </div>
-          </Card>
+          </div>
+          </div>
         </div>
       )}
 
       {activeTab === "sortie" && (
         <div className="space-y-4">
-          <Card className="p-4">
-            <h3 className="text-sm font-bold text-gray-800 mb-3">Matrice de Sortie — 4 Quadrants</h3>
+          <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+            <div className="bg-gradient-to-r from-rose-100 to-red-100 px-4 py-2.5 border-b border-rose-200">
+              <div className="flex items-center gap-2">
+                <Scale className="h-4 w-4 text-rose-600" />
+                <span className="text-sm font-bold text-rose-900">Matrice de Sortie — 4 Quadrants</span>
+              </div>
+            </div>
+            <div className="p-4">
             <div className="grid grid-cols-2 gap-3">
               {[
                 { q: "Q1", title: "Volontaire + Bons termes", desc: "Rachat TimeTokens a valeur marchande. Transition planifiee sur 90 jours. Bots continuent le suivi.", icon: Check, color: "green" },
@@ -223,7 +250,8 @@ export function GouvernancePage({ onNavigate }: GouvernancePageProps) {
                 );
               })}
             </div>
-          </Card>
+          </div>
+          </div>
 
           <Card className="p-4 bg-violet-50 border-violet-200">
             <div className="flex items-center gap-2 mb-2">

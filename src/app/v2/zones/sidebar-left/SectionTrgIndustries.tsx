@@ -71,7 +71,7 @@ export function SectionTrgIndustries({ collapsed }: Props) {
         ) : (
           <ChevronRight className="h-3 w-3" />
         )}
-        TRG Industries
+        Mon Industrie
       </CollapsibleTrigger>
 
       <CollapsibleContent>
