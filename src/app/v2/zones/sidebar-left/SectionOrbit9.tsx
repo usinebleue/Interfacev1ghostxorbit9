@@ -42,11 +42,11 @@ const ORBIT9_ITEMS = [
 export function SectionOrbit9({ collapsed }: Props) {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
-  const { setActiveView } = useFrameMaster();
+  const { navigateOrbit9 } = useFrameMaster();
 
   const handleItemClick = (id: string) => {
     setSelected(id);
-    setActiveView("scenarios");
+    navigateOrbit9(id);
   };
 
   if (collapsed) {
