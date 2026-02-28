@@ -22,6 +22,7 @@ import { SmartCanvas } from "./SmartCanvas";
 import { DepartmentDetailView } from "./DepartmentDetailView";
 import { InputBar } from "./InputBar";
 import { Orbit9DetailView } from "./Orbit9DetailView";
+import { AgentSettingsView } from "./AgentSettingsView";
 
 /** Couleur identitaire par bot — bande fine en haut du canevas */
 const BOT_BAND_COLORS: Record<string, string> = {
@@ -76,6 +77,7 @@ export function CenterZone() {
           />
         )}
         {activeView === "orbit9-detail" && <Orbit9DetailView />}
+        {activeView === "agent-settings" && <AgentSettingsView />}
         {activeView === "canvas" && (
           <SmartCanvas
             onStartChat={handleStartChat}
