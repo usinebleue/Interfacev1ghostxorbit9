@@ -4,7 +4,7 @@
  * Sprint B — Persistence discussions
  */
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   ChevronDown,
   ChevronRight,
@@ -13,6 +13,9 @@ import {
   CheckCircle2,
   Trash2,
   Plus,
+  Archive,
+  CalendarDays,
+  Zap,
 } from "lucide-react";
 import {
   Collapsible,
@@ -30,6 +33,11 @@ const STATUS_CONFIG = {
   completed: { label: "Termine", color: "bg-gray-400", icon: CheckCircle2 },
 } as const;
 
+/** Calcule l'age d'un thread en heures */
+function threadAgeHours(thread: { updatedAt: string }): number {
+  return (Date.now() - new Date(thread.updatedAt).getTime()) / (1000 * 60 * 60);
+}
+
 export function DiscussionsPanel() {
   const [open, setOpen] = useState(true);
   const {
@@ -37,6 +45,7 @@ export function DiscussionsPanel() {
     threads,
     activeThreadId,
     resumeThread,
+    completeThread,
     deleteThread,
     newConversation,
   } = useChatContext();
@@ -51,6 +60,13 @@ export function DiscussionsPanel() {
   const activeCount = threads.filter((t) => t.status === "active").length;
   const parkedCount = threads.filter((t) => t.status === "parked").length;
   const totalActive = activeCount + parkedCount;
+
+  // CarlOS lifecycle coaching — detecter les threads parkes qui meritent attention
+  const staleThreads = useMemo(() => {
+    return threads.filter((t) => t.status === "parked" && threadAgeHours(t) > 24);
+  }, [threads]);
+
+  const hasStaleThreads = staleThreads.length > 0;
 
   const handleClick = (threadId: string) => {
     resumeThread(threadId);
@@ -141,6 +157,57 @@ export function DiscussionsPanel() {
               </div>
             );
           })}
+
+          {/* CarlOS coaching — threads parkes depuis longtemps */}
+          {hasStaleThreads && (
+            <div className="mt-2 bg-amber-50 border border-amber-200 rounded-lg p-2.5 space-y-2">
+              <div className="flex items-center gap-1.5 text-[11px] font-medium text-amber-700">
+                <Zap className="h-3 w-3" />
+                CarlOS suggere
+              </div>
+              <p className="text-[10px] text-amber-600">
+                {staleThreads.length === 1
+                  ? `"${staleThreads[0].title}" est parke depuis plus de 24h. Qu'est-ce qu'on en fait?`
+                  : `${staleThreads.length} discussions parkees depuis 24h+. On fait le menage?`
+                }
+              </p>
+              <div className="flex flex-wrap gap-1">
+                <button
+                  onClick={() => {
+                    staleThreads.forEach((t) => {
+                      // Reprendre le premier, le user decidera
+                      if (staleThreads.indexOf(t) === 0) {
+                        resumeThread(t.id);
+                        setActiveView("live-chat");
+                      }
+                    });
+                  }}
+                  className="text-[10px] px-2 py-1 bg-white border border-amber-300 rounded-full text-amber-700 hover:bg-amber-100 transition-colors cursor-pointer"
+                >
+                  Reprendre
+                </button>
+                <button
+                  onClick={() => {
+                    staleThreads.forEach((t) => {
+                      // Archiver = completer
+                      resumeThread(t.id);
+                      setTimeout(() => completeThread(), 50);
+                    });
+                  }}
+                  className="text-[10px] px-2 py-1 bg-white border border-amber-300 rounded-full text-amber-700 hover:bg-amber-100 transition-colors cursor-pointer flex items-center gap-1"
+                >
+                  <Archive className="h-2.5 w-2.5" />
+                  Archiver
+                </button>
+                <button
+                  className="text-[10px] px-2 py-1 bg-white border border-amber-300 rounded-full text-amber-700 hover:bg-amber-100 transition-colors cursor-pointer flex items-center gap-1"
+                >
+                  <CalendarDays className="h-2.5 w-2.5" />
+                  Meeting lundi
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Bouton nouvelle discussion */}
           <button

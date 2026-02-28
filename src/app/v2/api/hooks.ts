@@ -229,11 +229,71 @@ function generateThreadId(): string {
   return `thread-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
 }
 
+/** Titre temporaire — nettoyage basique en attendant le titre IA */
 function generateThreadTitle(messages: ChatMessage[]): string {
   const firstUser = messages.find((m) => m.role === "user");
   if (!firstUser) return "Nouvelle conversation";
-  const text = firstUser.content;
-  return text.length > 50 ? text.slice(0, 50) + "..." : text;
+
+  let text = firstUser.content;
+
+  // Retirer les formules de politesse et fillers francais
+  text = text
+    .replace(/^(salut|bonjour|allo|hey|ok|bon)\s*,?\s*/i, "")
+    .replace(/^(je voudrais|j'aimerais|est-ce qu[e']|qu'est-ce qu[e']|pourrais-tu|peux-tu|dis-moi|parle-moi de)\s*/i, "")
+    .replace(/^(on pourrait|il faudrait|on devrait|je pense qu[e']|j'ai besoin)\s*/i, "")
+    .replace(/\s*(s'il te plait|svp|merci|please|stp)\s*/gi, "")
+    .trim();
+
+  // Retirer les articles en debut
+  text = text.replace(/^(le |la |les |un |une |des |du |de la |l')/i, "");
+
+  // Majuscule
+  text = text.charAt(0).toUpperCase() + text.slice(1);
+
+  // Premiere phrase seulement
+  const firstSentence = text.split(/[.!?\n]/)[0].trim();
+  return firstSentence.length > 50 ? firstSentence.slice(0, 47) + "..." : firstSentence || "Nouvelle conversation";
+}
+
+/**
+ * Generer un titre intelligent via CarlOS (Gemini Flash — gratuit)
+ * Fire-and-forget: le titre est mis a jour en background apres la 1ere reponse
+ */
+async function generateSmartTitle(userMessage: string, botResponse: string): Promise<string> {
+  try {
+    const res = await api.chat({
+      message: `[SYSTEME — ne reponds PAS comme un assistant, reponds UNIQUEMENT avec un titre court]
+Genere un titre de 3 a 6 mots pour identifier cette discussion.
+Le titre doit etre concret et specifique (pas generique).
+Exemples bons: "Budget R&D Q2", "Embauche developpeur senior", "Crise serveur production"
+Exemples mauvais: "Discussion importante", "Nouvelle idee", "Question"
+
+Utilisateur: ${userMessage.slice(0, 300)}
+Reponse du bot: ${botResponse.slice(0, 300)}
+
+Titre:`,
+      user_id: 1,
+      agent: "BCO",
+      direct: true,
+    });
+
+    // Nettoyer la reponse — garder seulement la premiere ligne, retirer guillemets
+    let title = res.response
+      .split("\n")[0]
+      .trim()
+      .replace(/^["'«]|["'»]$/g, "")
+      .replace(/^titre\s*:\s*/i, "")
+      .trim();
+
+    // Securite: si le bot a genere une reponse trop longue, c'est pas un titre
+    if (title.length > 60 || title.length < 3) {
+      return "";
+    }
+
+    return title;
+  } catch {
+    return "";
+  }
 }
 
 // --- Parse API options from response (📌 1 · ... | 2 · ...) ---
@@ -405,7 +465,7 @@ export function useChat() {
         const newId = generateThreadId();
         const thread: Thread = {
           id: newId,
-          title: text.length > 50 ? text.slice(0, 50) + "..." : text,
+          title: generateThreadTitle([userMsg]),
           status: "active",
           messages: [userMsg],
           mode: (mode as Thread["mode"]) || "credo",
@@ -467,6 +527,17 @@ export function useChat() {
           setTimeout(() => {
             injectCoaching(modeConf.coachingIntro);
           }, 500);
+
+          // Smart title — CarlOS genere un titre intelligent en background (Gemini Flash, gratuit)
+          generateSmartTitle(text, cleanText).then((smartTitle) => {
+            if (smartTitle) {
+              setThreads((prev) =>
+                prev.map((t) =>
+                  t.id === activeThreadId ? { ...t, title: smartTitle } : t
+                )
+              );
+            }
+          });
 
           // Auto-consult bots for this mode (if configured)
           if (modeConf.autoConsultBots.length > 0 && msgType === "normal") {
