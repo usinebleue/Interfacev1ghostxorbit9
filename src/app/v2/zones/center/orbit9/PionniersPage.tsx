@@ -35,17 +35,19 @@ export function PionniersPage({ onNavigate }: PionniersPageProps) {
 
   return (
     <div className="space-y-5">
-      {/* Header gradient */}
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-5 text-white">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-bold">Cercle des Pionniers</h2>
-            <p className="text-xs text-white/70">9 places. 9 leaders. 5 secteurs. Les portes ferment.</p>
+      {/* Header Card avec gradient */}
+      <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+        <div className="bg-gradient-to-r from-indigo-500 to-purple-500 px-4 py-2.5 border-b">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Rocket className="h-4 w-4 text-white" />
+              <span className="text-sm font-bold text-white">Cercle des Pionniers</span>
+            </div>
+            <span className="text-xs font-bold text-white/90">{pris}/9 places</span>
           </div>
-          <div className="text-right">
-            <div className="text-3xl font-bold">{pris}/9</div>
-            <p className="text-xs text-white/70">Places confirmees</p>
-          </div>
+        </div>
+        <div className="px-4 py-3">
+          <p className="text-xs text-gray-600">9 places. 9 leaders. 5 secteurs. Les portes ferment.</p>
         </div>
       </div>
 

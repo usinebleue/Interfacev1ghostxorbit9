@@ -114,14 +114,14 @@ export function Orbit9DetailView() {
     <div className="h-full flex flex-col overflow-hidden">
       {/* Header — barre d'action du Canvas */}
       <div className="bg-white border-b px-4 py-3 shrink-0">
-        <div className="flex items-center gap-3 mb-1">
+        <div className="flex items-center gap-3">
           <button
             onClick={() => setActiveView("department")}
             className="text-gray-400 hover:text-gray-600 cursor-pointer p-1 rounded-lg hover:bg-gray-100 transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
-          <div className="flex items-center gap-2 flex-1">
+          <div className="flex items-center gap-2">
             {isMarketplace && <Store className="h-4 w-4 text-orange-500" />}
             <div>
               <h1 className="text-sm font-bold text-gray-900">
@@ -132,32 +132,32 @@ export function Orbit9DetailView() {
               </p>
             </div>
           </div>
-        </div>
 
-        {/* Sous-tabs — meme logique de navigation pour TRG et Marketplace */}
-        {activeTabs && (
-          <div className="flex gap-1 mt-2">
-            {activeTabs.map((tab) => {
-              const TIcon = tab.icon;
-              const isActive = tab.id === sectionId;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => navigateOrbit9(tab.id)}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
-                    isActive
-                      ? "bg-gray-900 text-white shadow-sm"
-                      : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-                  )}
-                >
-                  <TIcon className="h-3.5 w-3.5" />
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
-        )}
+          {/* Sous-tabs a droite du titre — meme logique pour TRG et Marketplace */}
+          {activeTabs && (
+            <div className="flex gap-1 ml-auto">
+              {activeTabs.map((tab) => {
+                const TIcon = tab.icon;
+                const isActive = tab.id === sectionId;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => navigateOrbit9(tab.id)}
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
+                      isActive
+                        ? "bg-gray-900 text-white shadow-sm"
+                        : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                    )}
+                  >
+                    <TIcon className="h-3.5 w-3.5" />
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Content */}
