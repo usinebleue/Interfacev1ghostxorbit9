@@ -4,7 +4,7 @@
  * Sprint A — Frame Master V2
  */
 
-import { Gauge, Settings, LayoutDashboard, SlidersHorizontal, User, HeartPulse, GitBranch, ClipboardCheck } from "lucide-react";
+import { Gauge, Settings, LayoutDashboard, SlidersHorizontal, User, HeartPulse, Play } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import {
   Tooltip,
@@ -108,35 +108,20 @@ export function HeaderCenter() {
           <TooltipContent>Reglage de l'Agent AI</TooltipContent>
         </Tooltip>
 
-        {/* TEMP — Demo branches d'idees */}
+        {/* Scenarios — galerie des 9 simulations */}
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
               variant="ghost"
               size="sm"
               className="h-8 gap-1.5 text-xs text-green-400 hover:text-green-300 hover:bg-white/10"
-              onClick={() => setActiveView("branches")}
+              onClick={() => setActiveView("scenarios")}
             >
-              <GitBranch className="h-3.5 w-3.5" />
-              <span className="hidden lg:inline">Discussion</span>
+              <Play className="h-3.5 w-3.5" />
+              <span className="hidden lg:inline">Scenarios</span>
             </Button>
           </TooltipTrigger>
-          <TooltipContent>Simulation — Discussion CREDO</TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 gap-1.5 text-xs text-amber-400 hover:text-amber-300 hover:bg-white/10"
-              onClick={() => setActiveView("cahier")}
-            >
-              <ClipboardCheck className="h-3.5 w-3.5" />
-              <span className="hidden lg:inline">Cahier SMART</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Simulation — Cahier de Projet SMART</TooltipContent>
+          <TooltipContent>9 simulations — Modes de reflexion GhostX</TooltipContent>
         </Tooltip>
         </div>
       </div>

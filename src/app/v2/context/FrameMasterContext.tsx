@@ -3,10 +3,10 @@
  * Sprint A — Frame Master V2
  */
 
-import { createContext, useContext, useState, useCallback, useRef } from "react";
+import { createContext, useContext, useState, useCallback, useRef, useEffect } from "react";
 import type { BotInfo } from "../api/types";
 
-export type ActiveView = "dashboard" | "cockpit" | "health" | "department" | "discussion" | "branches" | "cahier";
+export type ActiveView = "dashboard" | "cockpit" | "health" | "department" | "discussion" | "branches" | "cahier" | "scenarios";
 
 interface FrameMasterState {
   activeBot: BotInfo | null;
@@ -47,7 +47,18 @@ export function FrameMasterProvider({
   const [activeView, setActiveView] = useState<ActiveView>("dashboard");
   const [leftSidebarCollapsed, setLeftCollapsed] = useState(false);
   const [rightSidebarCollapsed, setRightCollapsed] = useState(false);
-  const [isAuthenticated, setAuthenticated] = useState(true);   // DEV: bypass login
+  const [isAuthenticated, setAuthenticatedState] = useState(() => {
+    try { return localStorage.getItem("ghostx-auth") === "authenticated"; }
+    catch { return false; }
+  });
+
+  const setAuthenticated = useCallback((v: boolean) => {
+    setAuthenticatedState(v);
+    try {
+      if (v) localStorage.setItem("ghostx-auth", "authenticated");
+      else localStorage.removeItem("ghostx-auth");
+    } catch { /* noop */ }
+  }, []);
   const [isOnboarded, setOnboardedState] = useState(true);      // DEV: bypass onboarding
 
   const setOnboarded = useCallback((v: boolean) => {
