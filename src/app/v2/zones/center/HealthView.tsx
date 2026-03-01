@@ -7,6 +7,7 @@
 import { useState } from "react";
 import { Card } from "../../../components/ui/card";
 import { Badge } from "../../../components/ui/badge";
+import { Button } from "../../../components/ui/button";
 import { ScrollArea } from "../../../components/ui/scroll-area";
 import { cn } from "../../../components/ui/utils";
 import {
@@ -27,6 +28,8 @@ import {
   ArrowRight,
   CheckCircle2,
   Clock,
+  Eye,
+  Users,
 } from "lucide-react";
 import { useFrameMaster } from "../../context/FrameMasterContext";
 
@@ -169,6 +172,15 @@ const QUICK_WINS = [
   { text: "Optimiser l'utilisation des actifs existants", bot: "COO", priority: "moyenne" },
 ];
 
+/* ============ BENCHMARK SECTORIEL ============ */
+const BENCHMARK_PILLARS = [
+  { letter: "V", name: "Vente", score: 72, avg: 65, color: "bg-blue-500", status: "sain" as const },
+  { letter: "I", name: "Idee", score: 45, avg: 55, color: "bg-purple-500", status: "risque" as const },
+  { letter: "T", name: "Temps", score: 88, avg: 70, color: "bg-emerald-500", status: "sain" as const },
+  { letter: "A", name: "Argent", score: 31, avg: 50, color: "bg-amber-500", status: "critique" as const },
+  { letter: "A", name: "Actif", score: 62, avg: 60, color: "bg-red-500", status: "sain" as const },
+];
+
 /* ============ HEALTH VIEW ============ */
 export function HealthView() {
   const { setActiveView } = useFrameMaster();
@@ -247,6 +259,78 @@ export function HealthView() {
             ))}
           </div>
         </Card>
+
+        {/* Benchmark VITAA — Toi vs Secteur */}
+        <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+          <div className="bg-gradient-to-r from-violet-100 to-indigo-100 px-4 py-2.5 border-b border-violet-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <BarChart3 className="h-4 w-4 text-violet-600" />
+                <span className="text-sm font-bold text-violet-900">Benchmark VITAA — Toi vs Secteur</span>
+              </div>
+              <Badge variant="outline" className="text-[10px] border-violet-300 text-violet-700">Derniere mise a jour: aujourd'hui</Badge>
+            </div>
+          </div>
+          <div className="p-4 space-y-3">
+            {BENCHMARK_PILLARS.map((p) => (
+              <div key={p.name}>
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <div className={cn("w-6 h-6 rounded flex items-center justify-center text-white text-[10px] font-bold", p.color)}>{p.letter}</div>
+                    <span className="text-sm font-medium text-gray-700">{p.name}</span>
+                  </div>
+                  <div className="flex items-center gap-4 text-xs">
+                    <span className={cn("font-bold", p.score >= p.avg ? "text-green-600" : "text-red-600")}>Toi: {p.score}</span>
+                    <span className="text-gray-400">Secteur: {p.avg}</span>
+                    <Badge variant="outline" className={cn("text-[9px]",
+                      p.status === "sain" ? "text-green-600 bg-green-50" :
+                      p.status === "risque" ? "text-amber-600 bg-amber-50" :
+                      "text-red-600 bg-red-50"
+                    )}>{p.status}</Badge>
+                  </div>
+                </div>
+                <div className="relative h-3 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-full rounded-full bg-gray-200 absolute" style={{ width: `${p.avg}%` }} />
+                  <div className={cn("h-full rounded-full absolute", p.color)} style={{ width: `${p.score}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 3 types de Benchmark */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+            <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500">
+              <BarChart3 className="h-4 w-4 text-white" />
+              <span className="text-sm font-bold text-white">Benchmark Externe</span>
+            </div>
+            <div className="p-4">
+              <p className="text-xs text-gray-500">Compare avec les competiteurs et la mediane sectorielle de ton industrie.</p>
+              <Button size="sm" variant="outline" className="text-[10px] mt-3 gap-1"><Eye className="h-3 w-3" /> Voir le rapport</Button>
+            </div>
+          </div>
+          <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+            <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500">
+              <Users className="h-4 w-4 text-white" />
+              <span className="text-sm font-bold text-white">Benchmark Pairs</span>
+            </div>
+            <div className="p-4">
+              <p className="text-xs text-gray-500">Compare avec les 8 autres membres de ton Cercle Orbit9 (anonymise).</p>
+              <Button size="sm" variant="outline" className="text-[10px] mt-3 gap-1"><Eye className="h-3 w-3" /> Voir le rapport</Button>
+            </div>
+          </div>
+          <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+            <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-violet-600 to-violet-500">
+              <TrendingUp className="h-4 w-4 text-white" />
+              <span className="text-sm font-bold text-white">Benchmark Historique</span>
+            </div>
+            <div className="p-4">
+              <p className="text-xs text-gray-500">Ta propre trajectoire sur les 6 derniers mois. Mesure ta progression.</p>
+              <Button size="sm" variant="outline" className="text-[10px] mt-3 gap-1"><Eye className="h-3 w-3" /> Voir le rapport</Button>
+            </div>
+          </div>
+        </div>
 
         {/* Diagnostics disponibles */}
         <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
