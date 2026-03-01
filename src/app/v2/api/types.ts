@@ -174,7 +174,8 @@ export type MessageType =
   | "consultation" // reponse d'un bot consulte (multi-perspective)
   | "synthesis"    // synthese auto-generee par CarlOS
   | "coaching"     // message proactif de CarlOS (encadrement)
-  | "decision";    // noeud de decision (options a choisir)
+  | "decision"     // noeud de decision (options a choisir)
+  | "voice";       // transcript vocal (appel LiveKit)
 
 export interface ChatMessage {
   id: string;
