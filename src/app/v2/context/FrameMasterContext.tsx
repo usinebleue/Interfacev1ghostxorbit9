@@ -27,6 +27,8 @@ interface FrameMasterState {
 interface FrameMasterActions {
   setActiveBot: (bot: BotInfo) => void;
   setActiveView: (view: ActiveView) => void;
+  /** Navigate vers un departement par code bot (sans BotInfo complet) */
+  navigateToDepartment: (botCode: string, view?: ActiveView) => void;
   toggleLeftSidebar: () => void;
   toggleRightSidebar: () => void;
   setAuthenticated: (v: boolean) => void;
@@ -101,6 +103,11 @@ export function FrameMasterProvider({
     setActiveView("espace-bureau");
   }, []);
 
+  const navigateToDepartment = useCallback((botCode: string, view: ActiveView = "department") => {
+    setActiveBotCode(botCode);
+    setActiveView(view);
+  }, []);
+
   const registerLeftPanel = useCallback((api: { collapse: () => void; expand: () => void }) => {
     leftPanelRef.current = api;
   }, []);
@@ -137,6 +144,7 @@ export function FrameMasterProvider({
         currentUser: "Carl Fugere",
         setActiveBot,
         setActiveView,
+        navigateToDepartment,
         toggleLeftSidebar,
         toggleRightSidebar,
         setAuthenticated,

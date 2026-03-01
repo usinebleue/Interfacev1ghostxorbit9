@@ -578,6 +578,11 @@ export function useChat() {
                   ? ["Cristalliser le resultat", "Passer au Cahier SMART", "Continuer l'exploration"]
                   : modeConf.options.length > 0 ? modeConf.options : (agentOptions || FALLBACK_OPTIONS);
 
+              // Filtrer les canvas_actions pour enlever les meta-actions (phase_update)
+              const visibleActions = (data.canvas_actions || []).filter(
+                (a: CanvasAction) => !((a.data as Record<string, unknown>)?.type === "phase_update")
+              );
+
               setMessages((prev) =>
                 prev.map((m) =>
                   m.id === botMsgId
@@ -590,6 +595,7 @@ export function useChat() {
                         latence_ms: data.latence_ms,
                         options,
                         isStreaming: false,
+                        canvasActions: visibleActions.length > 0 ? visibleActions : undefined,
                       }
                     : m
                 )

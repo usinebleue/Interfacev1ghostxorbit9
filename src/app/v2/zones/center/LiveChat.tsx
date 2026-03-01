@@ -36,13 +36,19 @@ import {
   Volume2,
   VolumeX,
   Mic,
+  ArrowRight,
+  LayoutDashboard,
+  FileBarChart,
+  Heart,
 } from "lucide-react";
 import { cn } from "../../../components/ui/utils";
 import { useChatContext } from "../../context/ChatContext";
 import { useBots } from "../../api/hooks";
 import { useFrameMaster } from "../../context/FrameMasterContext";
+import { useCanvasActions } from "../../context/CanvasActionContext";
 import { useTextToSpeech } from "../../api/useVocal";
 import { CarlOSAvatar } from "./CarlOSAvatar";
+import type { CanvasAction } from "../../api/types";
 
 // ══════════════════════════════════════════════
 // Config
@@ -83,6 +89,95 @@ const BOT_COLORS: Record<string, {
 };
 
 const USER_AVATAR = "/agents/carl-fugere.jpg";
+
+/** Labels et icones pour les canvas action badges inline */
+const ACTION_BADGE_CONFIG: Record<string, { label: string; icon: typeof ArrowRight; color: string; bg: string }> = {
+  navigate: { label: "Voir", icon: LayoutDashboard, color: "text-blue-700", bg: "bg-blue-50 border-blue-200 hover:bg-blue-100" },
+  push_content: { label: "Contenu", icon: FileBarChart, color: "text-indigo-700", bg: "bg-indigo-50 border-indigo-200 hover:bg-indigo-100" },
+  context_widget: { label: "Action", icon: Zap, color: "text-amber-700", bg: "bg-amber-50 border-amber-200 hover:bg-amber-100" },
+  annotate: { label: "Coaching", icon: Heart, color: "text-pink-700", bg: "bg-pink-50 border-pink-200 hover:bg-pink-100" },
+  execute: { label: "Executer", icon: ArrowRight, color: "text-green-700", bg: "bg-green-50 border-green-200 hover:bg-green-100" },
+  split_screen: { label: "Split", icon: LayoutDashboard, color: "text-violet-700", bg: "bg-violet-50 border-violet-200 hover:bg-violet-100" },
+};
+
+const VIEW_LABELS: Record<string, string> = {
+  department: "Departement",
+  health: "Sante Globale",
+  cockpit: "Cockpit",
+  "orbit9-detail": "Orbit9",
+  "agent-settings": "Reglages",
+  "espace-bureau": "Espace Bureau",
+  dashboard: "Dashboard",
+  detail: "Detail",
+};
+
+function CanvasActionBadges({ actions }: { actions: CanvasAction[] }) {
+  const { dispatch } = useCanvasActions();
+  const { navigateToDepartment, setActiveView } = useFrameMaster();
+
+  const handleClick = (action: CanvasAction) => {
+    if (action.type === "navigate" && action.view) {
+      const params = action.params as Record<string, unknown> | undefined;
+      const botCode = params?.bot as string | undefined;
+      if (botCode && (action.view === "department" || action.view === "detail")) {
+        navigateToDepartment(botCode, action.view as "department" | "detail");
+      } else {
+        setActiveView(action.view as "department" | "health" | "cockpit" | "orbit9-detail" | "agent-settings" | "espace-bureau");
+      }
+    } else {
+      dispatch(action);
+    }
+  };
+
+  // Ne montrer que les actions pertinentes (pas les phase_update)
+  const visibleActions = actions.filter(
+    (a) => a.type !== "annotate" || (a.data as Record<string, unknown>)?.type !== "phase_update"
+  );
+
+  if (visibleActions.length === 0) return null;
+
+  return (
+    <div className="flex flex-wrap gap-1.5 mt-2">
+      {visibleActions.map((action, i) => {
+        const config = ACTION_BADGE_CONFIG[action.type];
+        if (!config) return null;
+        const ActionIcon = config.icon;
+        const params = action.params as Record<string, unknown> | undefined;
+        const botCode = params?.bot as string | undefined;
+        const viewLabel = action.view ? VIEW_LABELS[action.view] || action.view : "";
+        const botInfo = botCode ? BOT_COLORS[botCode] : null;
+
+        let label = config.label;
+        if (action.type === "navigate" && viewLabel) {
+          label = botInfo ? `${viewLabel} ${botInfo.role}` : viewLabel;
+        } else if (action.type === "context_widget") {
+          const data = action.data as Record<string, unknown> | undefined;
+          const actionType = data?.action_type as string;
+          if (actionType === "document") label = "Generer doc";
+          else if (actionType === "analyse") label = "Analyse";
+          else label = "Action";
+        } else if (action.type === "push_content") {
+          label = "Voir le contenu";
+        }
+
+        return (
+          <button
+            key={i}
+            onClick={() => handleClick(action)}
+            className={cn(
+              "flex items-center gap-1 text-[10px] px-2 py-1 rounded-full border font-medium transition-colors cursor-pointer",
+              config.bg, config.color
+            )}
+          >
+            <ActionIcon className="h-2.5 w-2.5" />
+            {label}
+            <ArrowRight className="h-2 w-2 opacity-50" />
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 function botFullName(code: string): string {
   const bot = BOT_COLORS[code];
@@ -1278,6 +1373,11 @@ export function LiveChat({
                       )
                     ) : (
                       <p className="text-sm leading-relaxed">{msg.content}</p>
+                    )}
+
+                    {/* Canvas Action Badges — inline dans la bulle */}
+                    {!isUser && msg.canvasActions && msg.canvasActions.length > 0 && (
+                      <CanvasActionBadges actions={msg.canvasActions} />
                     )}
 
                     {/* Bot actions — TTS + copy */}
