@@ -10,6 +10,7 @@ import { ScrollArea } from "../../../components/ui/scroll-area";
 import { Separator } from "../../../components/ui/separator";
 import { useFrameMaster } from "../../context/FrameMasterContext";
 import { SectionEntreprise } from "./SectionEntreprise";
+import { SectionEspaceBureau } from "./SectionEspaceBureau";
 import { SectionOrbit9 } from "./SectionOrbit9";
 import { SectionTrgIndustries } from "./SectionTrgIndustries";
 import { cn } from "../../../components/ui/utils";
@@ -19,11 +20,13 @@ export function SidebarLeft() {
   const collapsed = leftSidebarCollapsed;
 
   return (
-    <div className="h-full flex flex-col bg-white">
-      {/* Sections scrollables : Entreprise + Orbit 9 + TRG Industries */}
-      <ScrollArea className="flex-1">
+    <div className="h-full flex flex-col bg-white overflow-hidden">
+      {/* Sections scrollables : Entreprise + Bureau + Orbit 9 + TRG Industries */}
+      <ScrollArea className="flex-1 min-h-0">
         <div className="py-2">
           <SectionEntreprise collapsed={collapsed} />
+          <Separator className="my-2" />
+          <SectionEspaceBureau collapsed={collapsed} />
           <Separator className="my-2" />
           <SectionOrbit9 collapsed={collapsed} />
           <Separator className="my-2" />
