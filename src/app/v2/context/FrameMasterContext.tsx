@@ -6,13 +6,16 @@
 import { createContext, useContext, useState, useCallback, useRef, useEffect } from "react";
 import type { BotInfo } from "../api/types";
 
-export type ActiveView = "dashboard" | "cockpit" | "health" | "department" | "detail" | "discussion" | "branches" | "cahier" | "scenarios" | "live-chat" | "canvas" | "orbit9-detail" | "agent-settings";
+export type ActiveView = "dashboard" | "cockpit" | "health" | "department" | "detail" | "discussion" | "branches" | "cahier" | "scenarios" | "live-chat" | "canvas" | "orbit9-detail" | "agent-settings" | "espace-bureau";
+
+export type EspaceSection = "idees" | "projets" | "documents" | "taches" | "outils";
 
 interface FrameMasterState {
   activeBot: BotInfo | null;
   activeBotCode: string;
   activeView: ActiveView;
   activeOrbit9Section: string | null;
+  activeEspaceSection: EspaceSection;
   leftSidebarCollapsed: boolean;
   rightSidebarCollapsed: boolean;
   isAuthenticated: boolean;
@@ -31,6 +34,7 @@ interface FrameMasterActions {
   setHasSeenSimulation: (v: boolean) => void;
   setLeftCollapsed: (v: boolean) => void;
   navigateOrbit9: (sectionId: string) => void;
+  navigateEspace: (section: EspaceSection) => void;
   // Registre pour le panel imperatif
   registerLeftPanel: (api: { collapse: () => void; expand: () => void }) => void;
 }
@@ -48,6 +52,7 @@ export function FrameMasterProvider({
   const [activeBotCode, setActiveBotCode] = useState("BCO");
   const [activeView, setActiveView] = useState<ActiveView>("department"); // Ouvre sur Direction (BCO) par defaut
   const [activeOrbit9Section, setActiveOrbit9Section] = useState<string | null>(null);
+  const [activeEspaceSection, setActiveEspaceSection] = useState<EspaceSection>("idees");
   const [leftSidebarCollapsed, setLeftCollapsed] = useState(false);
   const [rightSidebarCollapsed, setRightCollapsed] = useState(false);
   const [isAuthenticated, setAuthenticatedState] = useState(() => {
@@ -91,6 +96,11 @@ export function FrameMasterProvider({
     setActiveView("orbit9-detail");
   }, []);
 
+  const navigateEspace = useCallback((section: EspaceSection) => {
+    setActiveEspaceSection(section);
+    setActiveView("espace-bureau");
+  }, []);
+
   const registerLeftPanel = useCallback((api: { collapse: () => void; expand: () => void }) => {
     leftPanelRef.current = api;
   }, []);
@@ -118,6 +128,7 @@ export function FrameMasterProvider({
         activeBotCode,
         activeView,
         activeOrbit9Section,
+        activeEspaceSection,
         leftSidebarCollapsed,
         rightSidebarCollapsed,
         isAuthenticated,
@@ -133,6 +144,7 @@ export function FrameMasterProvider({
         setHasSeenSimulation,
         setLeftCollapsed,
         navigateOrbit9,
+        navigateEspace,
         registerLeftPanel,
       }}
     >

@@ -29,6 +29,12 @@ import {
   Pencil,
   Save,
   X,
+  Link2,
+  CalendarDays,
+  HardDrive,
+  MessageSquare,
+  Database,
+  Calculator,
 } from "lucide-react";
 import { Card } from "../../../components/ui/card";
 import { Badge } from "../../../components/ui/badge";
@@ -570,6 +576,34 @@ export function AgentSettingsView() {
                     </div>
                     <Badge variant="default" className="text-[10px] cursor-pointer">Active</Badge>
                   </div>
+                </div>
+              </Card>
+
+              {/* Connexions API */}
+              <Card className="p-0 overflow-hidden">
+                <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-cyan-600 to-cyan-500">
+                  <Link2 className="h-4 w-4 text-white" />
+                  <span className="text-sm font-bold text-white">Connexions API</span>
+                </div>
+                <div className="p-3 space-y-1.5">
+                  {[
+                    { icon: CalendarDays, label: "Google Calendar", status: "Bientot" },
+                    { icon: HardDrive, label: "Google Drive", status: "Bientot" },
+                    { icon: Database, label: "HubSpot CRM", status: "Bientot" },
+                    { icon: MessageSquare, label: "Slack", status: "Bientot" },
+                    { icon: Calculator, label: "ERP", status: "Bientot" },
+                    { icon: Calculator, label: "Comptabilite", status: "Bientot" },
+                  ].map((connexion) => {
+                    const CIcon = connexion.icon;
+                    return (
+                      <div key={connexion.label} className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg bg-gray-50 border border-gray-100">
+                        <CIcon className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                        <span className="text-xs text-gray-700 flex-1">{connexion.label}</span>
+                        <Badge variant="outline" className="text-[9px] text-cyan-600 bg-cyan-50 border-cyan-200">{connexion.status}</Badge>
+                      </div>
+                    );
+                  })}
+                  <p className="text-[10px] text-gray-400 text-center pt-1.5">Connexions disponibles Sprint C — Nango</p>
                 </div>
               </Card>
             </div>
