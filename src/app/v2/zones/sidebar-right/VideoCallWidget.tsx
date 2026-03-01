@@ -23,7 +23,9 @@ import {
 import { cn } from "../../../components/ui/utils";
 import { useFrameMaster } from "../../context/FrameMasterContext";
 import { useChatContext } from "../../context/ChatContext";
+import { useCanvasActions } from "../../context/CanvasActionContext";
 import { BOT_AVATAR, BOT_SUBTITLE } from "../../api/types";
+import type { CanvasAction } from "../../api/types";
 import { api } from "../../api/client";
 import {
   Room,
@@ -64,6 +66,7 @@ type CallState = "idle" | "connecting" | "connected" | "error";
 export function VideoCallWidget() {
   const { activeBotCode, activeBot } = useFrameMaster();
   const { injectVoiceMessage } = useChatContext();
+  const { dispatchBatch } = useCanvasActions();
 
   // Call state
   const [callState, setCallState] = useState<CallState>("idle");
@@ -199,6 +202,8 @@ export function VideoCallWidget() {
   // --- Polling voice transcript listener ---
   const injectRef = useRef(injectVoiceMessage);
   injectRef.current = injectVoiceMessage;
+  const dispatchBatchRef = useRef(dispatchBatch);
+  dispatchBatchRef.current = dispatchBatch;
 
   const startVoicePolling = useCallback((roomName: string) => {
     // Stop any existing polling
@@ -228,6 +233,10 @@ export function VideoCallWidget() {
               }
               if (evt.bot_text) {
                 injectRef.current("assistant", evt.bot_text, evt.agent);
+              }
+              // Voice → Canvas Bus: dispatch canvas actions from voice responses
+              if (evt.canvas_actions && evt.canvas_actions.length > 0) {
+                dispatchBatchRef.current(evt.canvas_actions as CanvasAction[]);
               }
             }
           }

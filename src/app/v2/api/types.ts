@@ -196,6 +196,8 @@ export interface ChatMessage {
   branchLabel?: string;    // "Challenge #2 — BCT", "Consultation CFO"
   // Streaming
   isStreaming?: boolean;    // true pendant le streaming SSE en cours
+  // Canvas Actions associees a cette reponse
+  canvasActions?: CanvasAction[];
 }
 
 // --- Crystal (idee cristallisee) ---
