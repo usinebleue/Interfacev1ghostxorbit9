@@ -31,25 +31,45 @@ export function NouvellesPage() {
     <div className="space-y-5">
       {/* KPIs */}
       <div className="grid grid-cols-4 gap-3">
-        <Card className="p-3 border-t-[3px] border-t-blue-400">
-          <div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Nouvelles</span><Newspaper className="h-3.5 w-3.5 text-blue-400" /></div>
-          <div className="text-2xl font-bold text-blue-600">{news.length}</div>
-          <div className="text-[10px] text-gray-500">Cette semaine</div>
+        <Card className="p-0 overflow-hidden">
+          <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-500">
+            <Newspaper className="h-4 w-4 text-white" />
+            <span className="text-sm font-bold text-white">Nouvelles</span>
+          </div>
+          <div className="px-3 py-2">
+            <div className="text-2xl font-bold text-blue-600">{news.length}</div>
+            <div className="text-[10px] text-gray-500">Cette semaine</div>
+          </div>
         </Card>
-        <Card className="p-3 border-t-[3px] border-t-green-400">
-          <div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Opportunites</span><TrendingUp className="h-3.5 w-3.5 text-green-400" /></div>
-          <div className="text-2xl font-bold text-green-600">3</div>
-          <div className="text-[10px] text-gray-500">Matchs detectes</div>
+        <Card className="p-0 overflow-hidden">
+          <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-green-600 to-green-500">
+            <TrendingUp className="h-4 w-4 text-white" />
+            <span className="text-sm font-bold text-white">Opportunites</span>
+          </div>
+          <div className="px-3 py-2">
+            <div className="text-2xl font-bold text-green-600">3</div>
+            <div className="text-[10px] text-gray-500">Matchs detectes</div>
+          </div>
         </Card>
-        <Card className="p-3 border-t-[3px] border-t-amber-400">
-          <div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Valeur generee</span><DollarSign className="h-3.5 w-3.5 text-amber-400" /></div>
-          <div className="text-2xl font-bold text-amber-600">47K$</div>
-          <div className="text-[10px] text-gray-500">Ce mois</div>
+        <Card className="p-0 overflow-hidden">
+          <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-amber-600 to-amber-500">
+            <DollarSign className="h-4 w-4 text-white" />
+            <span className="text-sm font-bold text-white">Valeur generee</span>
+          </div>
+          <div className="px-3 py-2">
+            <div className="text-2xl font-bold text-amber-600">47K$</div>
+            <div className="text-[10px] text-gray-500">Ce mois</div>
+          </div>
         </Card>
-        <Card className="p-3 border-t-[3px] border-t-emerald-400">
-          <div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Taches bots</span><Zap className="h-3.5 w-3.5 text-emerald-400" /></div>
-          <div className="text-2xl font-bold text-emerald-600">124</div>
-          <div className="text-[10px] text-gray-500">Completees ce mois</div>
+        <Card className="p-0 overflow-hidden">
+          <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-emerald-600 to-emerald-500">
+            <Zap className="h-4 w-4 text-white" />
+            <span className="text-sm font-bold text-white">Taches bots</span>
+          </div>
+          <div className="px-3 py-2">
+            <div className="text-2xl font-bold text-emerald-600">124</div>
+            <div className="text-[10px] text-gray-500">Completees ce mois</div>
+          </div>
         </Card>
       </div>
 

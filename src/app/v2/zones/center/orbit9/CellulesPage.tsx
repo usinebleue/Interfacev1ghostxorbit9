@@ -34,37 +34,45 @@ export function CellulesPage({ onNavigate }: CellulesPageProps) {
     <div className="space-y-5">
       {/* KPI Cards avec tops colores */}
       <div className="grid grid-cols-4 gap-3">
-        <Card className="p-3 border-t-[3px] border-t-emerald-400">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] text-gray-400 uppercase">Membres</span>
-            <Users className="h-3.5 w-3.5 text-emerald-400" />
+        <Card className="p-0 overflow-hidden">
+          <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-emerald-600 to-emerald-500">
+            <Users className="h-4 w-4 text-white" />
+            <span className="text-sm font-bold text-white">Membres</span>
           </div>
-          <div className="text-2xl font-bold text-emerald-600">{pris}/9</div>
-          <div className="text-[10px] text-gray-500">{9 - pris} places disponibles</div>
+          <div className="px-3 py-2">
+            <div className="text-2xl font-bold text-emerald-600">{pris}/9</div>
+            <div className="text-[10px] text-gray-500">{9 - pris} places disponibles</div>
+          </div>
         </Card>
-        <Card className="p-3 border-t-[3px] border-t-emerald-400">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] text-gray-400 uppercase">Rabais actif</span>
-            <DollarSign className="h-3.5 w-3.5 text-emerald-400" />
+        <Card className="p-0 overflow-hidden">
+          <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-emerald-600 to-emerald-500">
+            <DollarSign className="h-4 w-4 text-white" />
+            <span className="text-sm font-bold text-white">Rabais actif</span>
           </div>
-          <div className="text-2xl font-bold text-emerald-600">-15%</div>
-          <div className="text-[10px] text-gray-500">Prochain palier: -20% a 7</div>
+          <div className="px-3 py-2">
+            <div className="text-2xl font-bold text-emerald-600">-15%</div>
+            <div className="text-[10px] text-gray-500">Prochain palier: -20% a 7</div>
+          </div>
         </Card>
-        <Card className="p-3 border-t-[3px] border-t-blue-400">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] text-gray-400 uppercase">Connexions Bot-to-Bot</span>
-            <Network className="h-3.5 w-3.5 text-blue-400" />
+        <Card className="p-0 overflow-hidden">
+          <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-500">
+            <Network className="h-4 w-4 text-white" />
+            <span className="text-sm font-bold text-white">Connexions Bot-to-Bot</span>
           </div>
-          <div className="text-2xl font-bold text-blue-600">10</div>
-          <div className="text-[10px] text-gray-500">Loi de Metcalfe: n(n-1)/2</div>
+          <div className="px-3 py-2">
+            <div className="text-2xl font-bold text-blue-600">10</div>
+            <div className="text-[10px] text-gray-500">Loi de Metcalfe: n(n-1)/2</div>
+          </div>
         </Card>
-        <Card className="p-3 border-t-[3px] border-t-green-400">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] text-gray-400 uppercase">Economie collective</span>
-            <TrendingUp className="h-3.5 w-3.5 text-green-400" />
+        <Card className="p-0 overflow-hidden">
+          <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-green-600 to-green-500">
+            <TrendingUp className="h-4 w-4 text-white" />
+            <span className="text-sm font-bold text-white">Economie collective</span>
           </div>
-          <div className="text-2xl font-bold text-green-600">2,700$</div>
-          <div className="text-[10px] text-gray-500">/mois pour le cercle</div>
+          <div className="px-3 py-2">
+            <div className="text-2xl font-bold text-green-600">2,700$</div>
+            <div className="text-[10px] text-gray-500">/mois pour le cercle</div>
+          </div>
         </Card>
       </div>
 

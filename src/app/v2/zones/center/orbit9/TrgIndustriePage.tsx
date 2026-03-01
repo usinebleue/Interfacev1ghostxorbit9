@@ -55,14 +55,16 @@ export function TrgIndustriePage() {
           ].map((kpi) => {
             const KIcon = kpi.icon;
             return (
-              <Card key={kpi.label} className={cn("p-3 border-t-[3px]", `border-t-${kpi.color}-400`)}>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] text-gray-400 uppercase">{kpi.label}</span>
-                  <KIcon className={cn("h-3.5 w-3.5", `text-${kpi.color}-400`)} />
+              <Card key={kpi.label} className="p-0 overflow-hidden">
+                <div className={cn("flex items-center gap-2 px-3 py-2 bg-gradient-to-r", `from-${kpi.color}-600 to-${kpi.color}-500`)}>
+                  <KIcon className="h-4 w-4 text-white" />
+                  <span className="text-sm font-bold text-white">{kpi.label}</span>
                 </div>
-                <div className={cn("text-2xl font-bold", `text-${kpi.color}-600`)}>{kpi.value}</div>
-                <div className="text-[10px] text-gray-500">
-                  <span className="font-bold text-green-600">{kpi.trend}</span>
+                <div className="px-3 py-2">
+                  <div className={cn("text-2xl font-bold", `text-${kpi.color}-600`)}>{kpi.value}</div>
+                  <div className="text-[10px] text-gray-500">
+                    <span className="font-bold text-green-600">{kpi.trend}</span>
+                  </div>
                 </div>
               </Card>
             );

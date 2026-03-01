@@ -174,25 +174,45 @@ export function MarketplacePage({ volet = "bots", onNavigate }: MarketplacePageP
         <div className="space-y-5">
           {/* KPIs avec tops colores */}
           <div className="grid grid-cols-4 gap-3">
-            <Card className="p-3 border-t-[3px] border-t-orange-400">
-              <div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Bots disponibles</span><Bot className="h-3.5 w-3.5 text-orange-400" /></div>
-              <div className="text-2xl font-bold text-orange-600">{bots.length}</div>
-              <div className="text-[10px] text-gray-500">Agents specialises</div>
+            <Card className="p-0 overflow-hidden">
+              <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-orange-600 to-orange-500">
+                <Bot className="h-4 w-4 text-white" />
+                <span className="text-sm font-bold text-white">Bots disponibles</span>
+              </div>
+              <div className="px-3 py-2">
+                <div className="text-2xl font-bold text-orange-600">{bots.length}</div>
+                <div className="text-[10px] text-gray-500">Agents specialises</div>
+              </div>
             </Card>
-            <Card className="p-3 border-t-[3px] border-t-blue-400">
-              <div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Mes bots actifs</span><Zap className="h-3.5 w-3.5 text-blue-400" /></div>
-              <div className="text-2xl font-bold text-blue-600">6</div>
-              <div className="text-[10px] text-gray-500">C-Suite complet</div>
+            <Card className="p-0 overflow-hidden">
+              <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-500">
+                <Zap className="h-4 w-4 text-white" />
+                <span className="text-sm font-bold text-white">Mes bots actifs</span>
+              </div>
+              <div className="px-3 py-2">
+                <div className="text-2xl font-bold text-blue-600">6</div>
+                <div className="text-[10px] text-gray-500">C-Suite complet</div>
+              </div>
             </Card>
-            <Card className="p-3 border-t-[3px] border-t-violet-400">
-              <div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Categories</span><Target className="h-3.5 w-3.5 text-violet-400" /></div>
-              <div className="text-2xl font-bold text-violet-600">12</div>
-              <div className="text-[10px] text-gray-500">Secteurs couverts</div>
+            <Card className="p-0 overflow-hidden">
+              <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-violet-600 to-violet-500">
+                <Target className="h-4 w-4 text-white" />
+                <span className="text-sm font-bold text-white">Categories</span>
+              </div>
+              <div className="px-3 py-2">
+                <div className="text-2xl font-bold text-violet-600">12</div>
+                <div className="text-[10px] text-gray-500">Secteurs couverts</div>
+              </div>
             </Card>
-            <Card className="p-3 border-t-[3px] border-t-green-400">
-              <div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Economie vs consultants</span><DollarSign className="h-3.5 w-3.5 text-green-400" /></div>
-              <div className="text-2xl font-bold text-green-600">85%</div>
-              <div className="text-[10px] text-gray-500">En moyenne</div>
+            <Card className="p-0 overflow-hidden">
+              <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-green-600 to-green-500">
+                <DollarSign className="h-4 w-4 text-white" />
+                <span className="text-sm font-bold text-white">Economie vs consultants</span>
+              </div>
+              <div className="px-3 py-2">
+                <div className="text-2xl font-bold text-green-600">85%</div>
+                <div className="text-[10px] text-gray-500">En moyenne</div>
+              </div>
             </Card>
           </div>
 
@@ -274,25 +294,45 @@ export function MarketplacePage({ volet = "bots", onNavigate }: MarketplacePageP
         <div className="space-y-5">
           {/* KPIs avec tops colores */}
           <div className="grid grid-cols-4 gap-3">
-            <Card className="p-3 border-t-[3px] border-t-blue-400">
-              <div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Cahiers publies</span><FileText className="h-3.5 w-3.5 text-blue-400" /></div>
-              <div className="text-2xl font-bold text-blue-600">{cahiers.length}</div>
-              <div className="text-[10px] text-gray-500">Besoins documentes</div>
+            <Card className="p-0 overflow-hidden">
+              <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-500">
+                <FileText className="h-4 w-4 text-white" />
+                <span className="text-sm font-bold text-white">Cahiers publies</span>
+              </div>
+              <div className="px-3 py-2">
+                <div className="text-2xl font-bold text-blue-600">{cahiers.length}</div>
+                <div className="text-[10px] text-gray-500">Besoins documentes</div>
+              </div>
             </Card>
-            <Card className="p-3 border-t-[3px] border-t-green-400">
-              <div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Mains levees actives</span><Hand className="h-3.5 w-3.5 text-green-400" /></div>
-              <div className="text-2xl font-bold text-green-600">{cahiers.reduce((s, c) => s + c.mainsLevees, 0)}</div>
-              <div className="text-[10px] text-gray-500">Reponses recues</div>
+            <Card className="p-0 overflow-hidden">
+              <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-green-600 to-green-500">
+                <Hand className="h-4 w-4 text-white" />
+                <span className="text-sm font-bold text-white">Mains levees actives</span>
+              </div>
+              <div className="px-3 py-2">
+                <div className="text-2xl font-bold text-green-600">{cahiers.reduce((s, c) => s + c.mainsLevees, 0)}</div>
+                <div className="text-[10px] text-gray-500">Reponses recues</div>
+              </div>
             </Card>
-            <Card className="p-3 border-t-[3px] border-t-amber-400">
-              <div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Valeur pipeline</span><DollarSign className="h-3.5 w-3.5 text-amber-400" /></div>
-              <div className="text-2xl font-bold text-amber-600">285K$</div>
-              <div className="text-[10px] text-gray-500">Projets en cours</div>
+            <Card className="p-0 overflow-hidden">
+              <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-amber-600 to-amber-500">
+                <DollarSign className="h-4 w-4 text-white" />
+                <span className="text-sm font-bold text-white">Valeur pipeline</span>
+              </div>
+              <div className="px-3 py-2">
+                <div className="text-2xl font-bold text-amber-600">285K$</div>
+                <div className="text-[10px] text-gray-500">Projets en cours</div>
+              </div>
             </Card>
-            <Card className="p-3 border-t-[3px] border-t-emerald-400">
-              <div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Taux conversion</span><TrendingUp className="h-3.5 w-3.5 text-emerald-400" /></div>
-              <div className="text-2xl font-bold text-emerald-600">72%</div>
-              <div className="text-[10px] text-gray-500">Cahier → Projet</div>
+            <Card className="p-0 overflow-hidden">
+              <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-emerald-600 to-emerald-500">
+                <TrendingUp className="h-4 w-4 text-white" />
+                <span className="text-sm font-bold text-white">Taux conversion</span>
+              </div>
+              <div className="px-3 py-2">
+                <div className="text-2xl font-bold text-emerald-600">72%</div>
+                <div className="text-[10px] text-gray-500">Cahier → Projet</div>
+              </div>
             </Card>
           </div>
 

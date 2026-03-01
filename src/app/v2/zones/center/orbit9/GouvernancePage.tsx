@@ -144,25 +144,45 @@ export function GouvernancePage({ onNavigate }: GouvernancePageProps) {
       {activeTab === "timetokens" && (
         <div className="space-y-4">
           <div className="grid grid-cols-4 gap-3">
-            <Card className="p-3 border-t-[3px] border-t-violet-400">
-              <div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">TT accumules</span><DollarSign className="h-3.5 w-3.5 text-violet-400" /></div>
-              <div className="text-2xl font-bold text-violet-600">1,240</div>
-              <div className="text-[10px] text-gray-500">Vos contributions</div>
+            <Card className="p-0 overflow-hidden">
+              <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-violet-600 to-violet-500">
+                <DollarSign className="h-4 w-4 text-white" />
+                <span className="text-sm font-bold text-white">TT accumules</span>
+              </div>
+              <div className="px-3 py-2">
+                <div className="text-2xl font-bold text-violet-600">1,240</div>
+                <div className="text-[10px] text-gray-500">Vos contributions</div>
+              </div>
             </Card>
-            <Card className="p-3 border-t-[3px] border-t-green-400">
-              <div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Phase</span><Layers className="h-3.5 w-3.5 text-green-400" /></div>
-              <div className="text-2xl font-bold text-green-600">V1</div>
-              <div className="text-[10px] text-gray-500">Off-chain (SQLite)</div>
+            <Card className="p-0 overflow-hidden">
+              <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-green-600 to-green-500">
+                <Layers className="h-4 w-4 text-white" />
+                <span className="text-sm font-bold text-white">Phase</span>
+              </div>
+              <div className="px-3 py-2">
+                <div className="text-2xl font-bold text-green-600">V1</div>
+                <div className="text-[10px] text-gray-500">Off-chain (SQLite)</div>
+              </div>
             </Card>
-            <Card className="p-3 border-t-[3px] border-t-blue-400">
-              <div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Formule</span><Zap className="h-3.5 w-3.5 text-blue-400" /></div>
-              <div className="text-2xl font-bold text-blue-600">5D</div>
-              <div className="text-[10px] text-gray-500">TT-RG: A x D x I x Z x P</div>
+            <Card className="p-0 overflow-hidden">
+              <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-500">
+                <Zap className="h-4 w-4 text-white" />
+                <span className="text-sm font-bold text-white">Formule</span>
+              </div>
+              <div className="px-3 py-2">
+                <div className="text-2xl font-bold text-blue-600">5D</div>
+                <div className="text-[10px] text-gray-500">TT-RG: A x D x I x Z x P</div>
+              </div>
             </Card>
-            <Card className="p-3 border-t-[3px] border-t-amber-400">
-              <div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400 uppercase">Valeur TT</span><Scale className="h-3.5 w-3.5 text-amber-400" /></div>
-              <div className="text-2xl font-bold text-amber-600">~3.2$</div>
-              <div className="text-[10px] text-gray-500">Valeur estimee/token</div>
+            <Card className="p-0 overflow-hidden">
+              <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-amber-600 to-amber-500">
+                <Scale className="h-4 w-4 text-white" />
+                <span className="text-sm font-bold text-white">Valeur TT</span>
+              </div>
+              <div className="px-3 py-2">
+                <div className="text-2xl font-bold text-amber-600">~3.2$</div>
+                <div className="text-[10px] text-gray-500">Valeur estimee/token</div>
+              </div>
             </Card>
           </div>
 
