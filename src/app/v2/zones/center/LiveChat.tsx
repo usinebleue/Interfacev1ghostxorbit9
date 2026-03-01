@@ -35,6 +35,7 @@ import {
   Maximize2,
   Volume2,
   VolumeX,
+  Mic,
 } from "lucide-react";
 import { cn } from "../../../components/ui/utils";
 import { useChatContext } from "../../context/ChatContext";
@@ -1066,6 +1067,7 @@ export function LiveChat({
             const isConsultation = msg.msgType === "consultation";
             const isSynthesis = msg.msgType === "synthesis";
             const isCoaching = msg.msgType === "coaching";
+            const isVoice = msg.msgType === "voice";
             const depth = msg.branchDepth || 0;
 
             // ── Coaching messages — CarlOS encadrement ──
@@ -1236,10 +1238,19 @@ export function LiveChat({
                           ? cn("bg-white border border-violet-100 border-l-[3px] px-5 py-4 rounded-tl-md", agentInfo?.border || "border-l-violet-400")
                           : cn("bg-white border border-gray-100 border-l-[3px] px-5 py-4 rounded-tl-md", agentInfo?.border || "border-l-blue-400")
                   )}>
+                    {/* Voice indicator */}
+                    {isVoice && isUser && (
+                      <div className="flex items-center gap-1 mb-1 opacity-60">
+                        <Mic className="h-2.5 w-2.5" />
+                        <span className="text-[9px] font-medium">Vocal</span>
+                      </div>
+                    )}
+
                     {/* Agent name */}
                     {!isUser && agentInfo && (
-                      <div className={cn("text-xs mb-2 font-semibold", agentInfo.text)}>
+                      <div className={cn("text-xs mb-2 font-semibold flex items-center gap-1.5", agentInfo.text)}>
                         {botFullName(msg.agent || "BCO")}
+                        {isVoice && <Mic className="h-2.5 w-2.5 opacity-50" />}
                       </div>
                     )}
 

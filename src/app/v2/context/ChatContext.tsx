@@ -29,6 +29,7 @@ interface BranchMeta {
 interface ChatActions {
   sendMessage: (text: string, agent?: string, ghost?: string, meta?: BranchMeta) => Promise<void>;
   sendMultiPerspective: (text: string, agents: string[]) => Promise<void>;
+  injectVoiceMessage: (role: "user" | "assistant", content: string, agent?: string) => void;
   setReflectionMode: (mode: ReflectionMode) => void;
   newConversation: () => void;
   parkThread: () => void;
@@ -52,6 +53,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     isTyping,
     sendMessage: rawSend,
     sendMultiPerspective: rawMulti,
+    injectVoiceMessage,
     newConversation,
     threads,
     activeThreadId,
@@ -150,6 +152,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         videoAvatarEnabled,
         sendMessage,
         sendMultiPerspective,
+        injectVoiceMessage,
         setReflectionMode,
         newConversation: handleNewConversation,
         parkThread,

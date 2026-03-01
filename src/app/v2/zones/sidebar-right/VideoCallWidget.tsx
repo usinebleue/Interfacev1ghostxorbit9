@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { cn } from "../../../components/ui/utils";
 import { useFrameMaster } from "../../context/FrameMasterContext";
+import { useChatContext } from "../../context/ChatContext";
 import { BOT_AVATAR, BOT_SUBTITLE } from "../../api/types";
 import { api } from "../../api/client";
 import {
@@ -62,6 +63,7 @@ type CallState = "idle" | "connecting" | "connected" | "error";
 
 export function VideoCallWidget() {
   const { activeBotCode, activeBot } = useFrameMaster();
+  const { injectVoiceMessage } = useChatContext();
 
   // Call state
   const [callState, setCallState] = useState<CallState>("idle");
@@ -69,11 +71,15 @@ export function VideoCallWidget() {
   const [botAudioOn, setBotAudioOn] = useState(true);
   const [callDuration, setCallDuration] = useState(0);
   const [errorMsg, setErrorMsg] = useState("");
+  const [lastTranscript, setLastTranscript] = useState("");
 
   // LiveKit refs
   const roomRef = useRef<Room | null>(null);
   const audioElRef = useRef<HTMLAudioElement | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollCursorRef = useRef(0);
+  const roomNameRef = useRef<string>("");
 
   const avatar = BOT_AVATAR[activeBotCode];
   const botName = activeBot?.nom || BOT_ROLES[activeBotCode] || "CarlOS";
@@ -126,6 +132,12 @@ export function VideoCallWidget() {
 
       room.on(RoomEvent.Reconnecting, () => {
         console.log("[CarlOS Voice] Reconnecting...");
+        setCallState("connecting");
+      });
+
+      room.on(RoomEvent.Reconnected, () => {
+        console.log("[CarlOS Voice] Reconnected!");
+        setCallState("connected");
       });
 
       // 3. Connect to LiveKit Cloud
@@ -135,6 +147,10 @@ export function VideoCallWidget() {
       await room.localParticipant.setMicrophoneEnabled(true);
 
       setCallState("connected");
+      roomNameRef.current = tokenData.room_name;
+
+      // Start polling for voice transcripts → LiveChat
+      startVoicePolling(tokenData.room_name);
 
       // Start duration timer
       timerRef.current = setInterval(() => {
@@ -154,6 +170,57 @@ export function VideoCallWidget() {
     }
   }, [activeBotCode, callState, attachRemoteAudio]);
 
+  // --- Polling voice transcript listener ---
+  const injectRef = useRef(injectVoiceMessage);
+  injectRef.current = injectVoiceMessage;
+
+  const startVoicePolling = useCallback((roomName: string) => {
+    // Stop any existing polling
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+    pollCursorRef.current = 0;
+
+    console.log(`[Voice Poll] Starting polling for room: ${roomName}`);
+
+    pollRef.current = setInterval(async () => {
+      try {
+        const res = await fetch(
+          `/api/v1/voice/events/${roomName}?cursor=${pollCursorRef.current}`,
+          { headers: { "X-API-Key": "ghostx-dev-key-2026" } }
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+
+        if (data.events && data.events.length > 0) {
+          for (const evt of data.events) {
+            if (evt.type === "exchange") {
+              if (evt.user_text) {
+                injectRef.current("user", evt.user_text);
+                setLastTranscript(evt.user_text);
+              }
+              if (evt.bot_text) {
+                injectRef.current("assistant", evt.bot_text, evt.agent);
+              }
+            }
+          }
+          pollCursorRef.current = data.cursor;
+        }
+      } catch {
+        // Silent fail — will retry on next poll
+      }
+    }, 2000);
+  }, []);
+
+  const stopVoicePolling = useCallback(() => {
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+    pollCursorRef.current = 0;
+  }, []);
+
   // --- End call ---
   const endCall = useCallback(() => {
     if (roomRef.current) {
@@ -169,10 +236,13 @@ export function VideoCallWidget() {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
+    stopVoicePolling();
+    roomNameRef.current = "";
     setCallState("idle");
     setCallDuration(0);
     setMicOn(true);
-  }, []);
+    setLastTranscript("");
+  }, [stopVoicePolling]);
 
   // --- Toggle mic ---
   const toggleMic = useCallback(async () => {
@@ -193,18 +263,16 @@ export function VideoCallWidget() {
     });
   }, []);
 
-  // Cleanup on unmount
+  // Cleanup ONLY on full unmount — not on re-renders
   useEffect(() => {
     return () => {
-      if (roomRef.current) {
-        roomRef.current.disconnect();
-      }
-      if (audioElRef.current) {
-        audioElRef.current.remove();
-      }
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
+      if (pollRef.current) {
+        clearInterval(pollRef.current);
+      }
+      // Don't disconnect room on unmount — let user explicitly hang up
     };
   }, []);
 
@@ -270,8 +338,10 @@ export function VideoCallWidget() {
             </div>
           )}
           <span className="text-[10px] text-white/90 font-medium mt-1">{botName}</span>
-          <span className="text-[8px] text-white/50">
-            {isInCall ? "Ecoute..." : BOT_SUBTITLE[activeBotCode] || botRole}
+          <span className="text-[8px] text-white/50 max-w-[140px] truncate text-center">
+            {isInCall
+              ? (lastTranscript ? `"${lastTranscript.slice(0, 40)}${lastTranscript.length > 40 ? "..." : ""}"` : "Ecoute...")
+              : BOT_SUBTITLE[activeBotCode] || botRole}
           </span>
         </div>
 

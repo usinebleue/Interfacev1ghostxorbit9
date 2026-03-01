@@ -893,11 +893,45 @@ export function useChat() {
     [activeThreadId, messages]
   );
 
+  // Voice transcript injection — called by VideoCallWidget when SSE events arrive
+  const injectVoiceMessage = useCallback(
+    (role: "user" | "assistant", content: string, agent?: string) => {
+      const msg: ChatMessage = {
+        id: `msg-${++idCounter.current}`,
+        role,
+        content,
+        timestamp: new Date(),
+        agent: role === "assistant" ? (agent || "BCO") : undefined,
+        msgType: "voice" as MessageType,
+      };
+      setMessages((prev) => [...prev, msg]);
+
+      // Auto-create thread if first voice message
+      if (!activeThreadId && role === "user") {
+        const newId = generateThreadId();
+        const thread: Thread = {
+          id: newId,
+          title: `Appel vocal — ${new Date().toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })}`,
+          status: "active",
+          messages: [msg],
+          mode: "credo",
+          primaryBot: agent || "BCO",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        setThreads((prev) => [...prev, thread]);
+        setActiveThreadId(newId);
+      }
+    },
+    [activeThreadId]
+  );
+
   return {
     messages,
     isTyping,
     sendMessage,
     sendMultiPerspective,
+    injectVoiceMessage,
     newConversation,
     threads,
     activeThreadId,
