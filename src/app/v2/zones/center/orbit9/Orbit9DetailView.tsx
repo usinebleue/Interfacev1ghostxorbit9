@@ -7,7 +7,7 @@
  */
 
 import {
-  ArrowLeft, Newspaper, Calendar, Gauge, Globe,
+  ArrowLeft, Newspaper, Calendar, Globe,
   Bot, Hand, Store, Briefcase,
 } from "lucide-react";
 import { cn } from "../../../../components/ui/utils";
@@ -19,19 +19,17 @@ import { GouvernancePage } from "./GouvernancePage";
 import { PionniersPage } from "./PionniersPage";
 import { NouvellesPage } from "./NouvellesPage";
 import { EvenementsPage } from "./EvenementsPage";
-import { BenchmarkPage } from "./BenchmarkPage";
 import { TrgIndustriePage } from "./TrgIndustriePage";
 import { PageTypePage } from "./PageTypePage";
 
 // ── Groupes de sections avec sous-tabs ──
 
-const TRG_SECTIONS = new Set(["nouvelles", "evenements", "benchmark", "trg-industrie"]);
+const TRG_SECTIONS = new Set(["nouvelles", "evenements", "trg-industrie"]);
 const MARKETPLACE_SECTIONS = new Set(["marketplace", "marketplace-cahiers"]);
 
 const TRG_TABS = [
   { id: "nouvelles", label: "Nouvelles", icon: Newspaper },
   { id: "evenements", label: "Evenements", icon: Calendar },
-  { id: "benchmark", label: "Benchmark", icon: Gauge },
   { id: "trg-industrie", label: "Dashboard", icon: Globe },
 ];
 
@@ -49,7 +47,6 @@ const SECTION_TITLES: Record<string, string> = {
   gouvernance: "Gouvernance",
   pionniers: "Pionniers Bleus",
   evenements: "Evenements",
-  benchmark: "Benchmark VITAA",
   nouvelles: "Nouvelles",
   "trg-industrie": "Dashboard de l'Industrie",
   "page-type": "Page Type",
@@ -96,8 +93,6 @@ export function Orbit9DetailView() {
         return <NouvellesPage />;
       case "evenements":
         return <EvenementsPage />;
-      case "benchmark":
-        return <BenchmarkPage />;
       case "trg-industrie":
         return <TrgIndustriePage />;
       case "page-type":
