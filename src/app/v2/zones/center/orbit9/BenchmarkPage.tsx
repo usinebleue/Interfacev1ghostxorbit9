@@ -78,27 +78,33 @@ export function BenchmarkPage() {
 
       {/* 3 types de benchmark */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm border-t-[3px] border-t-blue-400">
+        <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+          <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500">
+            <BarChart3 className="h-4 w-4 text-white" />
+            <span className="text-sm font-bold text-white">Benchmark Externe</span>
+          </div>
           <div className="p-4">
-            <BarChart3 className="h-5 w-5 text-blue-600 mb-2" />
-            <p className="text-sm font-bold text-gray-800">Benchmark Externe</p>
-            <p className="text-xs text-gray-500 mt-1">Compare avec les competiteurs et la mediane sectorielle de ton industrie.</p>
+            <p className="text-xs text-gray-500">Compare avec les competiteurs et la mediane sectorielle de ton industrie.</p>
             <Button size="sm" variant="outline" className="text-[10px] mt-3 gap-1"><Eye className="h-3 w-3" /> Voir le rapport</Button>
           </div>
         </div>
-        <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm border-t-[3px] border-t-emerald-400">
+        <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+          <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500">
+            <Users className="h-4 w-4 text-white" />
+            <span className="text-sm font-bold text-white">Benchmark Pairs</span>
+          </div>
           <div className="p-4">
-            <Users className="h-5 w-5 text-emerald-600 mb-2" />
-            <p className="text-sm font-bold text-gray-800">Benchmark Pairs</p>
-            <p className="text-xs text-gray-500 mt-1">Compare avec les 8 autres membres de ton Cercle Orbit9 (anonymise).</p>
+            <p className="text-xs text-gray-500">Compare avec les 8 autres membres de ton Cercle Orbit9 (anonymise).</p>
             <Button size="sm" variant="outline" className="text-[10px] mt-3 gap-1"><Eye className="h-3 w-3" /> Voir le rapport</Button>
           </div>
         </div>
-        <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm border-t-[3px] border-t-violet-400">
+        <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+          <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-violet-600 to-violet-500">
+            <TrendingUp className="h-4 w-4 text-white" />
+            <span className="text-sm font-bold text-white">Benchmark Historique</span>
+          </div>
           <div className="p-4">
-            <TrendingUp className="h-5 w-5 text-violet-600 mb-2" />
-            <p className="text-sm font-bold text-gray-800">Benchmark Historique</p>
-            <p className="text-xs text-gray-500 mt-1">Ta propre trajectoire sur les 6 derniers mois. Mesure ta progression.</p>
+            <p className="text-xs text-gray-500">Ta propre trajectoire sur les 6 derniers mois. Mesure ta progression.</p>
             <Button size="sm" variant="outline" className="text-[10px] mt-3 gap-1"><Eye className="h-3 w-3" /> Voir le rapport</Button>
           </div>
         </div>

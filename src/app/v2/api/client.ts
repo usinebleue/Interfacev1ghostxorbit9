@@ -138,6 +138,14 @@ export const api = {
     return apiFetch<CahierStatusResponse>(`/cahier/${jobId}`);
   },
 
+  /** Obtenir un token LiveKit pour appel vocal/video */
+  voiceToken(agentCode = "BCO", userId = 1): Promise<{ token: string; room_name: string; livekit_url: string; agent_code: string }> {
+    return apiFetch("/voice/token", {
+      method: "POST",
+      body: JSON.stringify({ user_id: userId, agent_code: agentCode }),
+    });
+  },
+
   /** Chat avec streaming SSE — tokens en temps reel */
   chatStream(req: ChatRequest, callbacks: StreamCallback): AbortController {
     const controller = new AbortController();

@@ -1,6 +1,6 @@
 /**
  * SectionTrgIndustries.tsx — "TRG Industries"
- * Nouvelle section sidebar — Nouvelles, Evenements, Benchmark, Dashboard
+ * Nouvelle section sidebar — Nouvelles, Evenements, Dashboard
  * Sprint B — Vocal Carl 13:14:24
  */
 
@@ -11,7 +11,6 @@ import {
   Factory,
   Newspaper,
   Calendar,
-  Gauge,
   Globe,
 } from "lucide-react";
 import {
@@ -29,7 +28,6 @@ interface Props {
 const TRG_ITEMS = [
   { id: "nouvelles", label: "Nouvelles", icon: Newspaper, color: "text-blue-500" },
   { id: "evenements", label: "Evenements", icon: Calendar, color: "text-rose-500" },
-  { id: "benchmark", label: "Benchmark VITAA", icon: Gauge, color: "text-amber-500" },
   { id: "trg-industrie", label: "Dashboard Industrie", icon: Globe, color: "text-indigo-500" },
 ];
 
