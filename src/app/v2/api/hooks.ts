@@ -20,6 +20,7 @@ import type {
   Crystal,
   MultiChatRequest,
   PerspectiveItem,
+  CanvasAction,
 } from "./types";
 
 // Options contextuelles par defaut — arbre de developpement de la pensee (wireframe p.3)
@@ -339,6 +340,12 @@ export function useChat() {
   const idCounter = useRef(0);
   const hasAutoRestored = useRef(false);
 
+  // Canvas Actions — callback ref pour dispatch vers le bus
+  const canvasActionsCallbackRef = useRef<((actions: CanvasAction[]) => void) | null>(null);
+  const setCanvasActionsCallback = useCallback((cb: (actions: CanvasAction[]) => void) => {
+    canvasActionsCallbackRef.current = cb;
+  }, []);
+
   // Wrapper: persist activeThreadId to localStorage on every change
   const setActiveThreadId = useCallback((id: string | null) => {
     setActiveThreadIdRaw(id);
@@ -589,6 +596,11 @@ export function useChat() {
               );
 
               streamingMsgId.current = null;
+
+              // Canvas Actions — dispatch vers le bus
+              if (data.canvas_actions && data.canvas_actions.length > 0 && canvasActionsCallbackRef.current) {
+                canvasActionsCallbackRef.current(data.canvas_actions);
+              }
 
               // Post-stream: coaching, sentinelle, drift detection
               const allMsgs = [...messages, userMsg];
@@ -939,6 +951,7 @@ export function useChat() {
     resumeThread,
     completeThread,
     deleteThread,
+    setCanvasActionsCallback,
   };
 }
 

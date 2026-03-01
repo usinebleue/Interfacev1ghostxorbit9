@@ -45,6 +45,8 @@ export interface ChatResponse {
   sentinel_alert?: SentinelAlert | null;
   phase_credo?: string | null;
   mode_actif?: string | null;
+  // Canvas Actions — CREDO Trisociation → Canevas
+  canvas_actions?: CanvasAction[];
 }
 
 // --- Multi-Perspectives ---
@@ -281,6 +283,29 @@ export const BOT_EMOJI: Record<string, string> = {
   BIO: "🖥️",
   BCC: "📡",
 };
+
+// --- Canvas Actions (CREDO Trisociation → Canevas) ---
+
+export type CanvasActionType =
+  | "navigate"         // Bouche: ouvre une vue
+  | "push_content"     // Cerveau: injecte du contenu dans une vue
+  | "split_screen"     // Bouche: chat + vue cote a cote
+  | "execute"          // Cerveau: lance une action (connexion, generation, etc.)
+  | "context_widget"   // Coeur: affiche un widget contextuel overlay
+  | "annotate";        // Coeur: highlight/badge sur un element
+
+export type CredoLayer = "bouche" | "cerveau" | "coeur";
+
+export interface CanvasAction {
+  type: CanvasActionType;
+  layer: CredoLayer;             // quelle couche CREDO declenche
+  view?: string;                 // vue cible (ActiveView)
+  params?: Record<string, unknown>;  // parametres specifiques a l'action
+  data?: unknown;                // contenu a injecter
+  message?: string;              // message humain (coaching, annotation)
+  priority?: "low" | "normal" | "high";  // urgence
+  bot?: string;                  // bot source (BCO, BCT, etc.)
+}
 
 // --- Reflection Modes ---
 
