@@ -5,7 +5,7 @@
  * Sprint B — Bloc Communication (D-078)
  *
  * Appel vocal : Mic Carl → LiveKit → Deepgram STT → CarlOS Pipeline → ElevenLabs TTS → Speaker
- * Video : meme pipeline + Tavus avatar (Sprint C)
+ * Video : meme pipeline + Tavus avatar lip-sync sur le TTS audio
  */
 
 import { useState, useRef, useCallback, useEffect } from "react";
@@ -72,10 +72,13 @@ export function VideoCallWidget() {
   const [callDuration, setCallDuration] = useState(0);
   const [errorMsg, setErrorMsg] = useState("");
   const [lastTranscript, setLastTranscript] = useState("");
+  const [isVideoCall, setIsVideoCall] = useState(false);
+  const [hasVideoTrack, setHasVideoTrack] = useState(false);
 
   // LiveKit refs
   const roomRef = useRef<Room | null>(null);
   const audioElRef = useRef<HTMLAudioElement | null>(null);
+  const videoElRef = useRef<HTMLVideoElement | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollCursorRef = useRef(0);
@@ -98,17 +101,30 @@ export function VideoCallWidget() {
     }
   }, []);
 
+  // --- Attach remote video track (Tavus avatar) ---
+  const attachRemoteVideo = useCallback((track: RemoteTrack, participant: Participant) => {
+    if (track.kind === Track.Kind.Video) {
+      console.log(`[CarlOS Video] Video track from: ${participant.identity}`);
+      if (videoElRef.current) {
+        track.attach(videoElRef.current);
+        setHasVideoTrack(true);
+      }
+    }
+  }, []);
+
   // --- Start call ---
-  const startCall = useCallback(async () => {
+  const startCall = useCallback(async (withVideo = false) => {
     if (callState === "connecting" || callState === "connected") return;
 
     setCallState("connecting");
     setErrorMsg("");
     setCallDuration(0);
+    setIsVideoCall(withVideo);
+    setHasVideoTrack(false);
 
     try {
       // 1. Get LiveKit token from our API
-      const tokenData = await api.voiceToken(activeBotCode);
+      const tokenData = await api.voiceToken(activeBotCode, 1, withVideo);
 
       // 2. Create room and connect
       const room = new Room({
@@ -117,13 +133,23 @@ export function VideoCallWidget() {
       });
       roomRef.current = room;
 
-      // Listen for remote audio (bot's voice via ElevenLabs TTS)
+      // Listen for remote tracks (audio = bot voice, video = Tavus avatar)
       room.on(
         RoomEvent.TrackSubscribed,
-        (track: RemoteTrack, _pub: RemoteTrackPublication, _participant: Participant) => {
-          attachRemoteAudio(track);
+        (track: RemoteTrack, _pub: RemoteTrackPublication, participant: Participant) => {
+          if (track.kind === Track.Kind.Audio) {
+            attachRemoteAudio(track);
+          } else if (track.kind === Track.Kind.Video) {
+            attachRemoteVideo(track, participant);
+          }
         }
       );
+
+      room.on(RoomEvent.TrackUnsubscribed, (track: RemoteTrack) => {
+        if (track.kind === Track.Kind.Video) {
+          setHasVideoTrack(false);
+        }
+      });
 
       room.on(RoomEvent.Disconnected, (reason?: DisconnectReason) => {
         console.log("[CarlOS Voice] Disconnected:", reason);
@@ -157,7 +183,7 @@ export function VideoCallWidget() {
         setCallDuration((d) => d + 1);
       }, 1000);
 
-      console.log(`[CarlOS Voice] Connected to room: ${tokenData.room_name}`);
+      console.log(`[CarlOS ${withVideo ? "Video" : "Voice"}] Connected to room: ${tokenData.room_name}`);
     } catch (err: unknown) {
       console.error("[CarlOS Voice] Connection failed:", err);
       setCallState("error");
@@ -168,7 +194,7 @@ export function VideoCallWidget() {
         setErrorMsg("");
       }, 3000);
     }
-  }, [activeBotCode, callState, attachRemoteAudio]);
+  }, [activeBotCode, callState, attachRemoteAudio, attachRemoteVideo]);
 
   // --- Polling voice transcript listener ---
   const injectRef = useRef(injectVoiceMessage);
@@ -242,6 +268,8 @@ export function VideoCallWidget() {
     setCallDuration(0);
     setMicOn(true);
     setLastTranscript("");
+    setIsVideoCall(false);
+    setHasVideoTrack(false);
   }, [stopVoicePolling]);
 
   // --- Toggle mic ---
@@ -305,7 +333,11 @@ export function VideoCallWidget() {
           />
         </span>
         <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
-          {isInCall ? "En appel" : isConnecting ? "Connexion..." : "CarlOS Live"}
+          {isInCall
+            ? (isVideoCall ? "Video en cours" : "En appel")
+            : isConnecting
+              ? "Connexion..."
+              : "CarlOS Live"}
         </span>
         {isInCall && (
           <span className="text-[10px] font-mono text-green-600 ml-auto">
@@ -316,8 +348,28 @@ export function VideoCallWidget() {
 
       {/* Bot video — 16:9 */}
       <div className="relative rounded-t-lg overflow-hidden aspect-video bg-gray-900">
-        <div className={cn("absolute inset-0 bg-gradient-to-br opacity-80", gradient)} />
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
+        {/* Tavus video track — shown when available */}
+        <video
+          ref={videoElRef}
+          autoPlay
+          playsInline
+          muted
+          className={cn(
+            "absolute inset-0 w-full h-full object-cover transition-opacity duration-500",
+            hasVideoTrack ? "opacity-100 z-10" : "opacity-0 z-0"
+          )}
+        />
+
+        {/* Gradient fallback — shown when no video track */}
+        <div className={cn(
+          "absolute inset-0 bg-gradient-to-br opacity-80 transition-opacity duration-500",
+          hasVideoTrack ? "opacity-0" : "opacity-80",
+          gradient,
+        )} />
+        <div className={cn(
+          "absolute inset-0 flex flex-col items-center justify-center transition-opacity duration-500",
+          hasVideoTrack ? "opacity-0" : "opacity-100",
+        )}>
           {avatar ? (
             <img
               src={avatar}
@@ -345,16 +397,26 @@ export function VideoCallWidget() {
           </span>
         </div>
 
+        {/* Loading Tavus avatar indicator */}
+        {isVideoCall && isInCall && !hasVideoTrack && (
+          <div className="absolute inset-0 z-20 flex items-center justify-center">
+            <div className="flex items-center gap-1.5 bg-black/50 px-2.5 py-1 rounded-full">
+              <Loader2 className="h-3 w-3 text-white animate-spin" />
+              <span className="text-[9px] text-white/80">Chargement avatar...</span>
+            </div>
+          </div>
+        )}
+
         {/* Audio toggle — top right */}
         <button
           onClick={toggleBotAudio}
-          className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/30 hover:bg-black/50 text-white/80 transition-colors cursor-pointer"
+          className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/30 hover:bg-black/50 text-white/80 transition-colors cursor-pointer z-20"
         >
           {botAudioOn ? <Volume2 className="h-3 w-3" /> : <VolumeX className="h-3 w-3" />}
         </button>
 
         {/* Role badge — bottom left */}
-        <div className="absolute bottom-1.5 left-1.5">
+        <div className="absolute bottom-1.5 left-1.5 z-20">
           <span className="text-[9px] text-white/70 bg-black/30 px-1.5 py-0.5 rounded">
             {botRole}
           </span>
@@ -365,7 +427,7 @@ export function VideoCallWidget() {
           <button
             onClick={toggleMic}
             className={cn(
-              "absolute bottom-1.5 right-1.5 p-1 rounded-full transition-colors cursor-pointer",
+              "absolute bottom-1.5 right-1.5 p-1 rounded-full transition-colors cursor-pointer z-20",
               micOn ? "bg-green-500/80 text-white" : "bg-red-500/80 text-white"
             )}
             title={micOn ? "Couper le micro" : "Activer le micro"}
@@ -394,7 +456,7 @@ export function VideoCallWidget() {
         <div className="flex-1 min-w-0">
           <p className="text-[11px] font-semibold text-gray-700 leading-tight">Carl Fugere</p>
           <p className={cn("text-[9px] font-medium", isInCall ? "text-green-600" : "text-gray-400")}>
-            {isInCall ? "En appel" : isConnecting ? "Connexion..." : "En ligne"}
+            {isInCall ? (isVideoCall ? "Video" : "En appel") : isConnecting ? "Connexion..." : "En ligne"}
           </p>
         </div>
 
@@ -407,34 +469,52 @@ export function VideoCallWidget() {
 
         {/* Appel vocal */}
         <button
-          onClick={isInCall ? endCall : startCall}
+          onClick={isInCall ? endCall : () => startCall(false)}
           disabled={isConnecting}
           className={cn(
             "p-2 rounded-full transition-all cursor-pointer",
-            isInCall
+            isInCall && !isVideoCall
               ? "bg-red-100 text-red-600 ring-1 ring-red-300 shadow-sm hover:bg-red-200"
               : isConnecting
                 ? "bg-blue-50 text-blue-400 cursor-wait"
-                : "bg-white text-gray-400 hover:bg-blue-50 hover:text-blue-500 border border-gray-200"
+                : isInCall
+                  ? "bg-white text-gray-300 border border-gray-100 cursor-not-allowed"
+                  : "bg-white text-gray-400 hover:bg-blue-50 hover:text-blue-500 border border-gray-200"
           )}
           title={isInCall ? "Raccrocher" : isConnecting ? "Connexion..." : "Appeler"}
         >
-          {isConnecting ? (
+          {isConnecting && !isVideoCall ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : isInCall ? (
+          ) : isInCall && !isVideoCall ? (
             <PhoneOff className="h-3.5 w-3.5" />
           ) : (
             <Phone className="h-3.5 w-3.5" />
           )}
         </button>
 
-        {/* Video — desactive pour V1, sera Tavus Sprint C */}
+        {/* Video — Tavus avatar */}
         <button
-          disabled
-          className="p-2 rounded-full bg-white text-gray-300 border border-gray-100 cursor-not-allowed"
-          title="Video — bientot (Tavus Sprint C)"
+          onClick={isInCall && isVideoCall ? endCall : () => startCall(true)}
+          disabled={isConnecting || (isInCall && !isVideoCall)}
+          className={cn(
+            "p-2 rounded-full transition-all cursor-pointer",
+            isInCall && isVideoCall
+              ? "bg-red-100 text-red-600 ring-1 ring-red-300 shadow-sm hover:bg-red-200"
+              : isConnecting && isVideoCall
+                ? "bg-blue-50 text-blue-400 cursor-wait"
+                : isInCall
+                  ? "bg-white text-gray-300 border border-gray-100 cursor-not-allowed"
+                  : "bg-white text-gray-400 hover:bg-violet-50 hover:text-violet-500 border border-gray-200"
+          )}
+          title={isInCall && isVideoCall ? "Raccrocher video" : isInCall ? "Raccrocher d'abord" : "Appel video"}
         >
-          <VideoOff className="h-3.5 w-3.5" />
+          {isConnecting && isVideoCall ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : isInCall && isVideoCall ? (
+            <VideoOff className="h-3.5 w-3.5" />
+          ) : (
+            <Video className="h-3.5 w-3.5" />
+          )}
         </button>
       </div>
     </div>
