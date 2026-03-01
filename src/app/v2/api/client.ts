@@ -18,6 +18,7 @@ import type {
   CahierJobResponse,
   CahierStatusResponse,
   ChatOption,
+  CanvasAction,
 } from "./types";
 
 // --- SSE Stream types ---
@@ -40,6 +41,7 @@ export interface StreamDoneEvent {
   sentinel_alert?: { type: string; message: string; suggestions: string[] } | null;
   phase_credo?: string | null;
   mode_actif?: string | null;
+  canvas_actions?: CanvasAction[];
 }
 
 export type StreamCallback = {

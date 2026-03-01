@@ -6,6 +6,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
 import { useChat, useCrystals } from "../api/hooks";
 import { useTextToSpeech } from "../api/useVocal";
+import { useCanvasActions } from "./CanvasActionContext";
 import type { ChatMessage, ReflectionMode, CREDOPhase, Thread, MessageType, Crystal } from "../api/types";
 
 interface ChatState {
@@ -61,8 +62,17 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     resumeThread,
     completeThread,
     deleteThread,
+    setCanvasActionsCallback,
   } = useChat();
   const { crystals, addCrystal, deleteCrystal, exportCrystals } = useCrystals();
+  const { dispatchBatch } = useCanvasActions();
+
+  // Connecter le hook chat au Canvas Action Bus
+  useEffect(() => {
+    setCanvasActionsCallback((actions) => {
+      dispatchBatch(actions);
+    });
+  }, [setCanvasActionsCallback, dispatchBatch]);
   const [activeReflectionMode, setReflectionMode] =
     useState<ReflectionMode>("credo");
   const [currentCREDOPhase] = useState<CREDOPhase>("C");

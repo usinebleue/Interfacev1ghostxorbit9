@@ -6,6 +6,7 @@
 import { ApiProvider } from "./context/ApiContext";
 import { FrameMasterProvider, useFrameMaster } from "./context/FrameMasterContext";
 import { ChatProvider } from "./context/ChatContext";
+import { CanvasActionProvider } from "./context/CanvasActionContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { FrameMaster } from "./layout/FrameMaster";
 import { LoginView } from "../components/LoginView";
@@ -24,9 +25,11 @@ function AppRouter() {
   }
 
   return (
-    <ChatProvider>
-      <FrameMaster />
-    </ChatProvider>
+    <CanvasActionProvider>
+      <ChatProvider>
+        <FrameMaster />
+      </ChatProvider>
+    </CanvasActionProvider>
   );
 }
 
