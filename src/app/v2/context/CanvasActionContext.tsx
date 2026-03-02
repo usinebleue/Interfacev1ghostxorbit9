@@ -34,6 +34,8 @@ export interface PushedContent {
 interface CanvasActionState {
   /** Derniere action recue (pour reaction immediate) */
   lastAction: CanvasAction | null;
+  /** Action navigate dediee — survit au batching React (CenterZone la consomme) */
+  navigateAction: CanvasAction | null;
   /** File d'actions en attente (pour batch processing) */
   pendingActions: CanvasAction[];
   /** Historique des 20 dernieres actions (debug + contexte) */
@@ -69,6 +71,8 @@ interface CanvasActionActions {
   toggleSplitScreen: () => void;
   /** Dismiss execute action overlay */
   dismissExecuteAction: () => void;
+  /** Consommer l'action navigate (reset apres navigation) */
+  clearNavigateAction: () => void;
   /** Vider la file */
   clearPending: () => void;
 }
@@ -82,6 +86,7 @@ const DEFAULT_PHASES: CredoPhases = { bouche: "C", cerveau: "C", coeur: "C" };
 
 export function CanvasActionProvider({ children }: { children: React.ReactNode }) {
   const [lastAction, setLastAction] = useState<CanvasAction | null>(null);
+  const [navigateAction, setNavigateAction] = useState<CanvasAction | null>(null);
   const [activeWidget, setActiveWidget] = useState<CanvasAction | null>(null);
   const [activeAnnotation, setActiveAnnotation] = useState<CanvasAction | null>(null);
   const [pushedContent, setPushedContent] = useState<PushedContent | null>(null);
@@ -137,8 +142,10 @@ export function CanvasActionProvider({ children }: { children: React.ReactNode }
         setSplitScreen(true);
         break;
       case "navigate":
-        // Consommee par CenterZone via lastAction
+        // State dedie pour navigate — survit au batching React
+        // CenterZone consomme via navigateAction (pas lastAction)
         pendingRef.current = [...pendingRef.current, action];
+        setNavigateAction(action);
         break;
       case "execute":
         // Afficher overlay d'execution avec auto-dismiss 6s
@@ -179,6 +186,7 @@ export function CanvasActionProvider({ children }: { children: React.ReactNode }
   const dismissPushedContent = useCallback(() => setPushedContent(null), []);
   const toggleSplitScreen = useCallback(() => setSplitScreen((v) => !v), []);
   const dismissExecuteAction = useCallback(() => setExecuteAction(null), []);
+  const clearNavigateAction = useCallback(() => setNavigateAction(null), []);
   const clearPending = useCallback(() => {
     pendingRef.current = [];
     forceUpdate((n) => n + 1);
@@ -188,6 +196,7 @@ export function CanvasActionProvider({ children }: { children: React.ReactNode }
     <CanvasActionCtx.Provider
       value={{
         lastAction,
+        navigateAction,
         pendingActions: pendingRef.current,
         history: historyRef.current,
         activeWidget,
@@ -204,6 +213,7 @@ export function CanvasActionProvider({ children }: { children: React.ReactNode }
         dismissPushedContent,
         toggleSplitScreen,
         dismissExecuteAction,
+        clearNavigateAction,
         clearPending,
       }}
     >

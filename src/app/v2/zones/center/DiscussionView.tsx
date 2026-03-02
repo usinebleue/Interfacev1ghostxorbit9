@@ -58,22 +58,7 @@ export function DiscussionView() {
           )}
         </div>
 
-        {/* PHASES CREDO */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-[10px] text-muted-foreground">CREDO:</span>
-          {CREDO_PHASES.map((phase) => (
-            <Badge
-              key={phase.id}
-              variant={currentCREDOPhase === phase.id ? "default" : "outline"}
-              className={cn(
-                "text-[10px] px-1.5",
-                currentCREDOPhase === phase.id && phase.color + " text-white"
-              )}
-            >
-              {phase.id}
-            </Badge>
-          ))}
-        </div>
+        {/* Phase indicator — interne, pas de label visible */}
       </div>
 
       {/* Messages */}
@@ -86,14 +71,12 @@ export function DiscussionView() {
                 Commencez une conversation avec {botName}
               </p>
               <p className="text-xs mt-2 opacity-60 max-w-md mx-auto">
-                Dans ses reponses, {botName} propose toujours des options pour
-                creer un arbre de developpement de la pensee supporte par le
-                protocole CREDO Trissocie. L'idee est d'isoler les idees et les
-                developper en mode de branche.
+                {botName} propose des options a chaque reponse pour
+                developper vos idees en profondeur, branche par branche.
               </p>
               <div className="flex items-center justify-center gap-1 mt-3 text-xs text-muted-foreground">
                 <GitBranch className="h-3 w-3" />
-                <span>Arbre de pensee CREDO</span>
+                <span>Arbre de pensee</span>
               </div>
             </div>
           )}

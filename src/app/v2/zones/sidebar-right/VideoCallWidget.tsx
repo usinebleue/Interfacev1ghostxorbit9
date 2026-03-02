@@ -178,6 +178,65 @@ export function VideoCallWidget() {
       setCallState("connected");
       roomNameRef.current = tokenData.room_name;
 
+      // Son de connexion — "Neural Link Activated" futuriste
+      try {
+        const ac = new AudioContext();
+        const t = ac.currentTime;
+
+        // Layer 1: Sub bass sweep (montée grave → donne le feeling "power up")
+        const sub = ac.createOscillator();
+        const subGain = ac.createGain();
+        sub.type = "sine";
+        sub.frequency.setValueAtTime(60, t);
+        sub.frequency.exponentialRampToValueAtTime(180, t + 0.8);
+        sub.connect(subGain);
+        subGain.connect(ac.destination);
+        subGain.gain.setValueAtTime(0, t);
+        subGain.gain.linearRampToValueAtTime(0.2, t + 0.15);
+        subGain.gain.setValueAtTime(0.2, t + 0.6);
+        subGain.gain.exponentialRampToValueAtTime(0.001, t + 1.0);
+        sub.start(t);
+        sub.stop(t + 1.1);
+
+        // Layer 2: Frequency sweep avec filtre resonant (whoosh sci-fi)
+        const noise = ac.createOscillator();
+        const noiseFilter = ac.createBiquadFilter();
+        const noiseGain = ac.createGain();
+        noise.type = "sawtooth";
+        noise.frequency.setValueAtTime(80, t);
+        noise.frequency.exponentialRampToValueAtTime(2400, t + 0.7);
+        noise.frequency.exponentialRampToValueAtTime(400, t + 1.0);
+        noiseFilter.type = "bandpass";
+        noiseFilter.frequency.setValueAtTime(200, t);
+        noiseFilter.frequency.exponentialRampToValueAtTime(4000, t + 0.7);
+        noiseFilter.frequency.exponentialRampToValueAtTime(800, t + 1.0);
+        noiseFilter.Q.value = 8;
+        noise.connect(noiseFilter);
+        noiseFilter.connect(noiseGain);
+        noiseGain.connect(ac.destination);
+        noiseGain.gain.setValueAtTime(0, t);
+        noiseGain.gain.linearRampToValueAtTime(0.06, t + 0.1);
+        noiseGain.gain.setValueAtTime(0.06, t + 0.6);
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 1.0);
+        noise.start(t);
+        noise.stop(t + 1.1);
+
+        // Layer 3: Ton de confirmation final (chord pur — "connected")
+        [440, 554, 659].forEach((freq) => {
+          const o = ac.createOscillator();
+          const g = ac.createGain();
+          o.type = "sine";
+          o.frequency.value = freq;
+          o.connect(g);
+          g.connect(ac.destination);
+          g.gain.setValueAtTime(0, t + 0.75);
+          g.gain.linearRampToValueAtTime(0.1, t + 0.82);
+          g.gain.exponentialRampToValueAtTime(0.001, t + 1.6);
+          o.start(t + 0.75);
+          o.stop(t + 1.7);
+        });
+      } catch { /* silent fallback */ }
+
       // Start polling for voice transcripts → LiveChat
       startVoicePolling(tokenData.room_name);
 
@@ -226,6 +285,11 @@ export function VideoCallWidget() {
 
         if (data.events && data.events.length > 0) {
           for (const evt of data.events) {
+            // Canvas actions: dispatch pour TOUS les types d'events (exchange + canvas_action)
+            if (evt.canvas_actions && evt.canvas_actions.length > 0) {
+              dispatchBatchRef.current(evt.canvas_actions as CanvasAction[]);
+            }
+            // Transcript: seulement pour les exchanges
             if (evt.type === "exchange") {
               if (evt.user_text) {
                 injectRef.current("user", evt.user_text);
@@ -233,10 +297,6 @@ export function VideoCallWidget() {
               }
               if (evt.bot_text) {
                 injectRef.current("assistant", evt.bot_text, evt.agent);
-              }
-              // Voice → Canvas Bus: dispatch canvas actions from voice responses
-              if (evt.canvas_actions && evt.canvas_actions.length > 0) {
-                dispatchBatchRef.current(evt.canvas_actions as CanvasAction[]);
               }
             }
           }
