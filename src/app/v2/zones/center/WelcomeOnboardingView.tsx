@@ -113,28 +113,28 @@ export function WelcomeOnboardingView({
           </div>
         </div>
 
-        {/* Carte 3 — CREDO */}
+        {/* Carte 3 — Methode structuree */}
         <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-6 hover:bg-white/15 transition-all">
           <div className="flex items-center gap-2 mb-4">
             <Sparkles className="h-5 w-5 text-purple-400" />
             <h3 className="text-lg font-semibold text-white">
-              Protocole CREDO
+              De l'intuition a l'action
             </h3>
           </div>
           <p className="text-sm text-blue-200/80 mb-4">
-            5 phases structurees pour passer d'une intuition a un plan d'action
-            concret et mesurable.
+            CarlOS structure votre reflexion en 5 etapes pour transformer
+            chaque idee en plan d'action concret et mesurable.
           </p>
           <div className="flex items-center gap-1">
-            {CREDO_PHASES.map((p) => (
-              <div key={p.letter}>
+            {["Connecter", "Rechercher", "Exposer", "Demontrer", "Obtenir"].map((label, i) => (
+              <div key={label}>
                 <div
                   className={cn(
                     "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white",
-                    p.color
+                    ["bg-blue-500", "bg-indigo-500", "bg-violet-500", "bg-purple-500", "bg-fuchsia-500"][i]
                   )}
                 >
-                  {p.letter}
+                  {(i + 1)}
                 </div>
               </div>
             ))}

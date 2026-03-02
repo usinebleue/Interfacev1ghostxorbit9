@@ -48,6 +48,7 @@ import { useFrameMaster } from "../../context/FrameMasterContext";
 import { useCanvasActions } from "../../context/CanvasActionContext";
 import { useTextToSpeech } from "../../api/useVocal";
 import { CarlOSAvatar } from "./CarlOSAvatar";
+import { api } from "../../api/client";
 import type { CanvasAction } from "../../api/types";
 
 // ══════════════════════════════════════════════
@@ -55,7 +56,7 @@ import type { CanvasAction } from "../../api/types";
 // ══════════════════════════════════════════════
 
 const MODE_CONFIG: Record<string, { label: string; icon: typeof Zap; color: string; bg: string }> = {
-  credo: { label: "CREDO", icon: Zap, color: "text-blue-500", bg: "bg-blue-50" },
+  credo: { label: "Standard", icon: Zap, color: "text-blue-500", bg: "bg-blue-50" },
   analyse: { label: "Analyse", icon: Zap, color: "text-red-500", bg: "bg-red-50" },
   brainstorm: { label: "Brainstorm", icon: Brain, color: "text-amber-500", bg: "bg-amber-50" },
   decision: { label: "Decision", icon: Scale, color: "text-indigo-500", bg: "bg-indigo-50" },
@@ -346,7 +347,7 @@ function getThinkingSteps(mode: string): ThinkingStep[] {
   const modeSteps: Record<string, ThinkingStep[]> = {
     credo: [
       { icon: Users, label: "Consultation du C-Level...", duration: 1400 },
-      { icon: Brain, label: "Protocole CREDO active...", duration: 1200 },
+      { icon: Brain, label: "Analyse en profondeur...", duration: 1200 },
       { icon: Cpu, label: "Synthese en cours...", duration: 0 },
     ],
     analyse: [
@@ -621,6 +622,7 @@ export function LiveChat({
     threads, activeThreadId, parkThread, resumeThread, completeThread, deleteThread,
     crystals, crystallize, deleteCrystal, exportCrystals,
     videoAvatarEnabled, toggleVideoAvatar,
+    injectVoiceMessage,
   } = useChatContext();
   const { activeBotCode } = useFrameMaster();
   const { bots } = useBots();
@@ -633,6 +635,44 @@ export function LiveChat({
   const [justCrystallized, setJustCrystallized] = useState<string | null>(null);
   const [typewriterMsgId, setTypewriterMsgId] = useState<string | null>(null);
   const prevMsgCount = useRef(messages.length);
+
+  // Kit personalization — greeting + C-Level name mapping + user avatar
+  const [kitGreeting, setKitGreeting] = useState<string | null>(null);
+  const [cLevelMap, setCLevelMap] = useState<Record<string, string> | null>(null);
+  const [kitUserPhoto, setKitUserPhoto] = useState<string | null>(null);
+  const greetingDoneRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    api.getActiveKit().then(data => {
+      if (data.greeting) setKitGreeting(data.greeting);
+      if (data.c_level_mapping) setCLevelMap(data.c_level_mapping);
+      if (data.user_profile?.photo) setKitUserPhoto(data.user_profile.photo);
+    }).catch(() => {});
+  }, []);
+
+  // Inject greeting as CarlOS's first message when conversation is empty
+  useEffect(() => {
+    if (messages.length === 0 && kitGreeting && greetingDoneRef.current !== kitGreeting) {
+      greetingDoneRef.current = kitGreeting;
+      setTimeout(() => injectVoiceMessage("assistant", kitGreeting, "BCO"), 150);
+    }
+    if (messages.length > 0) {
+      greetingDoneRef.current = null;
+    }
+  }, [messages.length, kitGreeting, injectVoiceMessage]);
+
+  // Override bot name from kit C-Level mapping
+  const kitBotName = useCallback((code: string): string => {
+    if (cLevelMap && cLevelMap[code]) return cLevelMap[code];
+    return BOT_COLORS[code]?.name || code;
+  }, [cLevelMap]);
+
+  const kitBotFullName = useCallback((code: string): string => {
+    const bot = BOT_COLORS[code];
+    if (!bot) return code;
+    const name = cLevelMap?.[code] || bot.name;
+    return `${name} — ${bot.role}`;
+  }, [cLevelMap]);
 
   // Track new bot messages for typewriter effect (skip if streaming — already live)
   useEffect(() => {
@@ -670,7 +710,7 @@ export function LiveChat({
 
   // Request synthesis from CarlOS — MUST be defined before handleOptionClick
   const SYNTHESIS_PROMPTS: Record<string, string> = {
-    credo: "Synthetise en format CREDO: (C) Tension identifiee, (R) Recherche faite, (E) Expose des options, (D) Demonstration de la meilleure, (O) Obtenir — prochaines etapes concretes.",
+    credo: "Synthetise: (1) Tension identifiee, (2) Recherche faite, (3) Options exposees, (4) Meilleure option demontree, (5) Prochaines etapes concretes.",
     debat: "Synthetise le debat: Position A (arguments + forces), Position B (arguments + forces), Verdict (quelle position est la plus solide et pourquoi), Decision recommandee.",
     brainstorm: "Classe les idees par potentiel (fort/moyen/faible). Top 3 idees avec justification. Prochaine etape pour chaque top idee.",
     crise: "Plan de crise: (1) Severite 1-10, (2) Actions immediates (30 min), (3) Communication a faire, (4) Responsable de chaque action, (5) Suivi dans 24h.",
@@ -730,7 +770,7 @@ export function LiveChat({
       const count = challengeCounts[msgId] || 0;
       if (count >= 2 || isTyping) return;
       setChallengeCounts((prev) => ({ ...prev, [msgId]: count + 1 }));
-      const agentName = botFullName(agentCode || activeBotCode);
+      const agentName = kitBotFullName(agentCode || activeBotCode);
       sendMessage(
         "Je ne suis pas d'accord avec cette analyse. Defends ta position avec plus de details et des sources concretes.",
         agentCode || activeBotCode,
@@ -738,7 +778,7 @@ export function LiveChat({
         { msgType: "challenge", parentId: msgId, branchLabel: `Challenge — ${agentName}` }
       );
     },
-    [challengeCounts, sendMessage, activeBotCode, isTyping]
+    [challengeCounts, sendMessage, activeBotCode, isTyping, kitBotFullName]
   );
 
   const handleApprofondir = useCallback(
@@ -757,14 +797,14 @@ export function LiveChat({
   const handleConsulterBot = useCallback(
     (botCode: string) => {
       if (!isTyping && lastUserMessage) {
-        const botName = botFullName(botCode);
+        const botName = kitBotFullName(botCode);
         sendMessage(lastUserMessage, botCode, undefined, {
           msgType: "consultation",
           branchLabel: `Consultation — ${botName}`,
         });
       }
     },
-    [sendMessage, lastUserMessage, isTyping]
+    [sendMessage, lastUserMessage, isTyping, kitBotFullName]
   );
 
   // B.1 — Consulter MULTIPLE bots en parallele via /chat/multi
@@ -781,25 +821,25 @@ export function LiveChat({
     if (isTyping) return;
     const consultedBots = [...new Set(messages.filter(m => m.role === "assistant" && m.agent).map(m => m.agent!))];
     if (consultedBots.length < 2) return;
-    const botNames = consultedBots.map(c => botFullName(c)).join(", ");
+    const botNames = consultedBots.map(c => kitBotFullName(c)).join(", ");
     sendMessage(
       `Je challenge TOUS vos points de vue (${botNames}). Defendez vos positions avec des arguments concrets et des sources. Ou etes-vous en desaccord entre vous?`,
       "BCO", undefined,
       { msgType: "challenge", branchLabel: `Challenge collectif — ${consultedBots.length} bots` }
     );
-  }, [messages, sendMessage, isTyping]);
+  }, [messages, sendMessage, isTyping, kitBotFullName]);
 
   // Launch a formal debate between 2+ bots
   const handleDebat = useCallback(() => {
     if (isTyping || !lastUserMessage) return;
     const consultedBots = [...new Set(messages.filter(m => m.role === "assistant" && m.agent).map(m => m.agent!))];
-    const botNames = consultedBots.map(c => botFullName(c)).join(" vs ");
+    const botNames = consultedBots.map(c => kitBotFullName(c)).join(" vs ");
     sendMessage(
       `Lance un DEBAT structure entre ${botNames} sur le sujet: "${lastUserMessage}". Chaque bot defend sa position. Identifie les points de friction et propose un verdict.`,
       "BCO", undefined,
       { msgType: "challenge", branchLabel: `Debat — ${botNames}` }
     );
-  }, [messages, sendMessage, lastUserMessage, isTyping]);
+  }, [messages, sendMessage, lastUserMessage, isTyping, kitBotFullName]);
 
   // Create a new branch (sub-thread) from current discussion
   const handleNewBranch = useCallback((topic?: string) => {
@@ -882,13 +922,13 @@ export function LiveChat({
           <BotAvatar code={activeBotCode} size="lg" />
           <div>
             <div className="text-sm font-bold text-gray-800 flex items-center gap-2">
-              {botFullName(activeBotCode)}
+              {kitBotFullName(activeBotCode)}
               <span className={cn("text-[10px] font-medium flex items-center gap-1 px-2 py-0.5 rounded-full", modeInfo.color, modeInfo.bg)}>
                 <ModeIcon className="h-3 w-3" /> {modeInfo.label}
               </span>
             </div>
             <div className="text-[11px] text-gray-400">
-              Usine Bleue AI — Pipeline GHML
+              Usine Bleue AI
             </div>
           </div>
         </div>
@@ -993,7 +1033,7 @@ export function LiveChat({
                   <div className="flex-1 min-w-0">
                     <div className="text-xs font-semibold text-gray-800 truncate">{crystal.titre}</div>
                     <div className="text-[10px] text-gray-400 mt-0.5 flex items-center gap-2">
-                      <span className={cn("font-medium", botInfo?.text || "text-gray-500")}>{botInfo ? botFullName(crystal.bot) : crystal.bot}</span>
+                      <span className={cn("font-medium", botInfo?.text || "text-gray-500")}>{botInfo ? kitBotFullName(crystal.bot) : crystal.bot}</span>
                       <span>·</span>
                       <span>{crystal.mode}</span>
                       <span>·</span>
@@ -1110,7 +1150,7 @@ export function LiveChat({
                     const info = BOT_COLORS[code];
                     return (
                       <span key={code} className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white border", info?.text || "text-gray-500")}>
-                        {info ? botFullName(code) : code}
+                        {info ? kitBotFullName(code) : code}
                       </span>
                     );
                   })}
@@ -1344,7 +1384,7 @@ export function LiveChat({
                     {/* Agent name */}
                     {!isUser && agentInfo && (
                       <div className={cn("text-xs mb-2 font-semibold flex items-center gap-1.5", agentInfo.text)}>
-                        {botFullName(msg.agent || "BCO")}
+                        {kitBotFullName(msg.agent || "BCO")}
                         {isVoice && <Mic className="h-2.5 w-2.5 opacity-50" />}
                       </div>
                     )}
@@ -1434,7 +1474,7 @@ export function LiveChat({
                   </div>
                   {isUser && (
                     <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 ring-2 ring-gray-300 mt-1">
-                      <img src={USER_AVATAR} alt="Carl" className="w-full h-full object-cover" />
+                      <img src={kitUserPhoto || USER_AVATAR} alt="Vous" className="w-full h-full object-cover" />
                     </div>
                   )}
                 </div>

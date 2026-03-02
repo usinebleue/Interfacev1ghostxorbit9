@@ -286,6 +286,126 @@ export const BOT_EMOJI: Record<string, string> = {
   BCC: "📡",
 };
 
+// --- Company Kit (client switcher) ---
+
+export interface KitInfo {
+  slug: string;
+  nom: string;
+  secteur: string;
+  nb_employes: number;
+  localisation: string;
+  ticker: string;
+}
+
+export interface KitUserProfile {
+  nom: string;
+  titre: string;
+  photo: string;
+  vouvoiement: boolean;
+}
+
+// --- Dashboard KPIs par departement (depuis kit JSON) ---
+
+export interface KpiCEO {
+  score_sante_globale?: number;
+  vitaa?: Record<string, number>;
+  triangle_feu?: string;
+  piliers_actifs?: number;
+  decisions_ce_mois?: number;
+  projets_actifs?: number;
+  priorite_1?: string;
+  [key: string]: unknown;
+}
+
+export interface KpiCFO {
+  tresorerie?: number;
+  burn_rate?: number;
+  runway_mois?: number;
+  mrr?: number;
+  arr?: number;
+  marge_brute_pct?: number;
+  marge_ebitda_pct?: number;
+  revenus_milliards_usd?: number;
+  ebitda_milliards_usd?: number;
+  benefice_net_milliards_usd?: number;
+  free_cash_flow_milliards?: number;
+  alerte?: string;
+  [key: string]: unknown;
+}
+
+export interface KpiGeneric {
+  [key: string]: unknown;
+}
+
+export interface KpisDepartements {
+  CEO?: KpiCEO;
+  CFO?: KpiCFO;
+  CTO?: KpiGeneric;
+  CMO?: KpiGeneric;
+  CSO?: KpiGeneric;
+  COO?: KpiGeneric;
+  CRO?: KpiGeneric;
+  CHRO?: KpiGeneric;
+  [key: string]: KpiGeneric | undefined;
+}
+
+export interface VentesPipeline {
+  pipeline_total?: number;
+  pipeline_par_etape?: Record<string, { nb: number; valeur: number }>;
+  top_prospects?: Array<{
+    nom: string;
+    secteur?: string;
+    valeur: number;
+    etape: string;
+    probabilite?: number;
+  }>;
+  [key: string]: unknown;
+}
+
+export interface ProjetActif {
+  nom: string;
+  responsable?: string;
+  statut?: string;
+  avancement?: number;
+  deadline?: string;
+  budget?: number;
+  depense?: number;
+}
+
+export interface EntrepriseInfo {
+  nom: string;
+  secteur?: string;
+  nb_employes?: number;
+  localisation?: string;
+  ticker?: string;
+  [key: string]: unknown;
+}
+
+export interface KitActiveResponse {
+  user_id: number;
+  kit: string | null;
+  entreprise: EntrepriseInfo | null;
+  user_profile: KitUserProfile | null;
+  greeting: string;
+  c_level_mapping: Record<string, string> | null;
+  available: string[];
+  kits_info: KitInfo[];
+  // Dashboard data — Tour de Controle dynamique
+  kpis_departements?: KpisDepartements | null;
+  ventes?: VentesPipeline | null;
+  projets_actifs?: ProjetActif[] | null;
+  financier?: Record<string, unknown> | null;
+  historique_mensuel?: Array<Record<string, unknown>> | null;
+  contexte_sectoriel?: Record<string, unknown> | null;
+}
+
+export interface KitSetResponse {
+  status: string;
+  user_id: number;
+  kit: string;
+  entreprise: string;
+}
+
 // --- Canvas Actions (CREDO Trisociation → Canevas) ---
 
 export type CanvasActionType =
@@ -327,7 +447,7 @@ export const REFLECTION_MODES: {
   label: string;
   color: string;
 }[] = [
-  { id: "credo", label: "CREDO", color: "bg-blue-600" },
+  { id: "credo", label: "Standard", color: "bg-blue-600" },
   { id: "debat", label: "Debat", color: "bg-red-600" },
   { id: "brainstorm", label: "Brain", color: "bg-yellow-500" },
   { id: "crise", label: "Crise", color: "bg-orange-600" },

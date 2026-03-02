@@ -83,7 +83,7 @@ const CONTENT_TYPE_ICONS: Record<string, React.ElementType> = {
 export function CenterZone() {
   const { activeView, activeBotCode, setActiveView, navigateToDepartment } = useFrameMaster();
   const {
-    lastAction, consumeNext,
+    navigateAction, clearNavigateAction, consumeNext,
     activeWidget, activeAnnotation,
     pushedContent, credoPhases, splitScreen,
     executeAction,
@@ -95,20 +95,21 @@ export function CenterZone() {
   const [liveChatMode, setLiveChatMode] = useState("analyse");
   const [pinnedContent, setPinnedContent] = useState(false);
 
-  // --- Consommer les canvas actions navigate/execute ---
+  // --- Consommer les canvas actions navigate ---
+  // Utilise navigateAction (state dedie) au lieu de lastAction
+  // pour survivre au batching React quand plusieurs actions arrivent ensemble
   useEffect(() => {
-    if (!lastAction) return;
-    if (lastAction.type === "navigate" && lastAction.view) {
-      const params = lastAction.params as Record<string, unknown> | undefined;
-      const botCode = params?.bot as string | undefined;
-      if (botCode && (lastAction.view === "department" || lastAction.view === "detail")) {
-        navigateToDepartment(botCode, lastAction.view as ActiveView);
-      } else {
-        setActiveView(lastAction.view as ActiveView);
-      }
-      consumeNext();
+    if (!navigateAction || !navigateAction.view) return;
+    const params = navigateAction.params as Record<string, unknown> | undefined;
+    const botCode = params?.bot as string | undefined;
+    if (botCode && (navigateAction.view === "department" || navigateAction.view === "detail")) {
+      navigateToDepartment(botCode, navigateAction.view as ActiveView);
+    } else {
+      setActiveView(navigateAction.view as ActiveView);
     }
-  }, [lastAction, setActiveView, navigateToDepartment, consumeNext]);
+    clearNavigateAction();
+    consumeNext();
+  }, [navigateAction, setActiveView, navigateToDepartment, clearNavigateAction, consumeNext]);
 
   const handleStartChat = (mode: string) => {
     setLiveChatMode(mode);
@@ -152,23 +153,10 @@ export function CenterZone() {
       {/* Bande couleur identitaire du bot actif — en haut du canevas */}
       {botBand && <div className={cn("h-1 shrink-0", botBand)} />}
 
-      {/* CREDO Phase Indicator — barre fine sous la bande bot */}
+      {/* Phase indicator — interne, sans labels visibles */}
       {showCredoIndicator && (
         <div className="bg-white border-b px-3 py-1 shrink-0 flex items-center gap-3">
           <Bot className="h-3 w-3 text-gray-400" />
-          <span className="text-[10px] text-gray-400 font-medium">CREDO</span>
-          {(["bouche", "cerveau", "coeur"] as const).map((layer) => {
-            const phase = credoPhases[layer];
-            const label = CREDO_LABELS[layer]?.[phase] || phase;
-            return (
-              <div key={layer} className="flex items-center gap-1">
-                <span className="text-[9px] text-gray-400 uppercase">{layer.slice(0, 1)}</span>
-                <div className={cn("text-[9px] text-white px-1.5 py-0.5 rounded font-medium", CREDO_COLORS[phase] || "bg-gray-400")}>
-                  {label}
-                </div>
-              </div>
-            );
-          })}
           <button
             onClick={toggleSplitScreen}
             className={cn(

@@ -99,12 +99,12 @@ export function DiscussionsPanel() {
         <div className="mt-2 space-y-1">
           {/* Discussion active (messages en cours, pas encore dans un thread) */}
           {messages.length > 0 && !activeThreadId && (
-            <button
-              onClick={() => setActiveView("live-chat")}
-              className="w-full flex items-center gap-2 px-2 py-2 rounded text-xs hover:bg-blue-50 transition-colors bg-blue-50/50 border border-blue-100 cursor-pointer"
-            >
+            <div className="group flex items-center gap-2 px-2 py-2 rounded text-xs hover:bg-blue-50 transition-colors bg-blue-50/50 border border-blue-100 cursor-pointer">
               <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" />
-              <div className="flex-1 min-w-0 text-left">
+              <div
+                className="flex-1 min-w-0 text-left"
+                onClick={() => setActiveView("live-chat")}
+              >
                 <div className="text-xs font-medium text-gray-700 truncate">
                   {messages.find((m) => m.role === "user")?.content.slice(0, 40) || "Conversation"}...
                 </div>
@@ -112,7 +112,16 @@ export function DiscussionsPanel() {
                   {messages.length} messages — en cours
                 </div>
               </div>
-            </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  newConversation();
+                }}
+                className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-500 transition-all p-0.5 cursor-pointer"
+              >
+                <Trash2 className="h-3 w-3" />
+              </button>
+            </div>
           )}
 
           {/* Threads sauvegardés */}
@@ -143,17 +152,15 @@ export function DiscussionsPanel() {
                   </div>
                 </div>
                 {/* Delete — visible on hover */}
-                {thread.status !== "active" && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteThread(thread.id);
-                    }}
-                    className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-500 transition-all p-0.5 cursor-pointer"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </button>
-                )}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteThread(thread.id);
+                  }}
+                  className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-500 transition-all p-0.5 cursor-pointer"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
               </div>
             );
           })}

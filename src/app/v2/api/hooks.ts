@@ -83,15 +83,15 @@ interface ModeConfig {
 const MODE_LIVE_CONFIG: Record<string, ModeConfig> = {
   credo: {
     options: ["Approfondir cette idee", "Voir les implications", "Prochaines etapes?", "Challenger"],
-    coachingIntro: "Mode CREDO — je vais te guider de la tension jusqu'a l'action concrete. Explore les angles, challenge, et je cristallise a la fin.",
-    coachingConverge: "On a bien explore. Pret pour la synthese CREDO?",
-    synthesisPrompt: "Synthetise en format CREDO: (C) Tension identifiee, (R) Recherche faite, (E) Expose des options, (D) Demonstration de la meilleure, (O) Obtenir — prochaines etapes concretes.",
+    coachingIntro: "",
+    coachingConverge: "On a bien explore. Pret pour la synthese?",
+    synthesisPrompt: "Synthetise: (1) Tension identifiee, (2) Recherche faite, (3) Options exposees, (4) Meilleure option demontree, (5) Prochaines etapes concretes.",
     autoConsultBots: [],
     maxExchanges: 6,
   },
   debat: {
     options: ["Argument pour", "Argument contre", "Trouver un compromis", "Verdict final"],
-    coachingIntro: "Mode Debat — je vais presenter 2 positions opposees. Challenge chaque cote, pousse les arguments.",
+    coachingIntro: "",
     coachingConverge: "Les arguments sont clairs des 2 cotes. On passe au verdict?",
     synthesisPrompt: "Synthetise le debat: Position A (arguments + forces), Position B (arguments + forces), Verdict (quelle position est la plus solide et pourquoi), Decision recommandee.",
     autoConsultBots: ["BCF", "BCS"],
@@ -99,15 +99,15 @@ const MODE_LIVE_CONFIG: Record<string, ModeConfig> = {
   },
   brainstorm: {
     options: ["Plus d'idees!", "Combiner 2 idees", "Idee folle", "Assez — on trie"],
-    coachingIntro: "Mode Brainstorm — toutes les idees sont bonnes, on filtre apres. Quantite avant qualite!",
-    coachingConverge: "On a assez d'idees. On passe au tri et au clustering?",
+    coachingIntro: "",
+    coachingConverge: "On a assez d'idees. On passe au tri?",
     synthesisPrompt: "Classe les idees par potentiel (fort/moyen/faible). Top 3 idees avec justification. Prochaine etape pour chaque top idee.",
     autoConsultBots: ["BCM", "BCT"],
     maxExchanges: 5,
   },
   crise: {
     options: ["Impact immediat?", "Qui est affecte?", "Plan B", "Action dans les 30 min"],
-    coachingIntro: "Mode Crise — priorite: stabiliser la situation. Pas de place pour la nuance, il faut agir.",
+    coachingIntro: "",
     coachingConverge: "Situation evaluee. On passe au plan d'action immediat?",
     synthesisPrompt: "Plan de crise: (1) Severite 1-10, (2) Actions immediates (30 min), (3) Communication a faire, (4) Responsable de chaque action, (5) Suivi dans 24h.",
     autoConsultBots: ["BOO"],
@@ -115,7 +115,7 @@ const MODE_LIVE_CONFIG: Record<string, ModeConfig> = {
   },
   analyse: {
     options: ["Cause racine?", "Donnees manquantes", "Comparer avec un benchmark", "Conclusions?"],
-    coachingIntro: "Mode Analyse — decomposons le probleme methodiquement. Facts d'abord, opinions ensuite.",
+    coachingIntro: "",
     coachingConverge: "L'analyse est solide. On formule les conclusions?",
     synthesisPrompt: "Analyse structuree: (1) Probleme decompose, (2) Causes racines identifiees, (3) Donnees cles, (4) Conclusions, (5) Recommandations actionnables.",
     autoConsultBots: ["BCT", "BCF"],
@@ -123,7 +123,7 @@ const MODE_LIVE_CONFIG: Record<string, ModeConfig> = {
   },
   decision: {
     options: ["Quels criteres?", "Risques de chaque option", "Comparer Go vs No-Go", "Ma decision"],
-    coachingIntro: "Mode Decision — on va structurer les options et les evaluer objectivement. Pas de gut feeling sans donnees.",
+    coachingIntro: "",
     coachingConverge: "Les options sont evaluees. Pret a trancher?",
     synthesisPrompt: "Matrice de decision: Options evaluees (criteres, risques, potentiel). Recommandation avec niveau de confiance. Conditions de succes du Go. Plan B si No-Go.",
     autoConsultBots: ["BCF", "BCS"],
@@ -131,15 +131,15 @@ const MODE_LIVE_CONFIG: Record<string, ModeConfig> = {
   },
   strategie: {
     options: ["Forces et faiblesses", "Opportunites du marche", "Menaces a anticiper", "Plan d'execution"],
-    coachingIntro: "Mode Strategie — vision long terme. On regarde le terrain avant de bouger.",
+    coachingIntro: "",
     coachingConverge: "La strategie se dessine. On formalise le plan?",
-    synthesisPrompt: "Plan strategique: (1) SWOT synthetise, (2) 3 axes strategiques prioritaires, (3) Quick wins (30 jours), (4) Moyen terme (90 jours), (5) Indicateurs de succes.",
+    synthesisPrompt: "Plan strategique: (1) Forces et faiblesses, (2) 3 axes prioritaires, (3) Quick wins (30 jours), (4) Moyen terme (90 jours), (5) Indicateurs de succes.",
     autoConsultBots: ["BCS", "BCF"],
     maxExchanges: 7,
   },
   innovation: {
     options: ["Technique disruptive?", "Qui fait ca ailleurs?", "Prototype minimal", "Potentiel marche"],
-    coachingIntro: "Mode Innovation — on cherche ce qui n'existe pas encore. Aucune idee trop folle.",
+    coachingIntro: "",
     coachingConverge: "On a identifie des pistes. On selectionne la plus prometteuse?",
     synthesisPrompt: "Innovation brief: (1) Opportunite identifiee, (2) Solution proposee, (3) Differenciateur cle, (4) Premier prototype (description), (5) Marche potentiel, (6) Prochaine etape concrete.",
     autoConsultBots: ["BCT", "BCM"],
@@ -147,9 +147,9 @@ const MODE_LIVE_CONFIG: Record<string, ModeConfig> = {
   },
   deep: {
     options: ["Creuse plus profond", "Lien inattendu?", "Analogie avec un autre domaine", "Insight a retenir"],
-    coachingIntro: "Mode Deep Resonance — on plonge dans les couches profondes. Intuition + reflexion croisee.",
+    coachingIntro: "",
     coachingConverge: "Des insights profonds emergent. On cristallise?",
-    synthesisPrompt: "Deep insights: (1) Insight principal (ce qui n'etait pas evident), (2) Connexions inattendues decouvertes, (3) Question que personne ne posait, (4) Recommandation contre-intuitive, (5) Ce que ca change pour la suite.",
+    synthesisPrompt: "Insights: (1) Ce qui n'etait pas evident, (2) Connexions inattendues, (3) Question que personne ne posait, (4) Recommandation contre-intuitive, (5) Ce que ca change pour la suite.",
     autoConsultBots: ["BCS"],
     maxExchanges: 5,
   },
@@ -399,13 +399,13 @@ export function useChat() {
     saveThreads(threads);
   }, [threads]);
 
-  // Update active thread messages when messages change
+  // Update active thread messages when messages change (ne pas ecraser le titre smart)
   useEffect(() => {
     if (activeThreadId && messages.length > 0) {
       setThreads((prev) =>
         prev.map((t) =>
           t.id === activeThreadId
-            ? { ...t, messages, updatedAt: new Date().toISOString(), title: generateThreadTitle(messages) }
+            ? { ...t, messages, updatedAt: new Date().toISOString() }
             : t
         )
       );
@@ -614,8 +614,7 @@ export function useChat() {
               const userMsgs = allMsgs.filter((m) => m.role === "user");
 
               if (botCount === 1) {
-                setTimeout(() => injectCoaching(modeConf.coachingIntro), 500);
-
+                // Titre intelligent genere par CarlOS apres le 1er echange
                 generateSmartTitle(text, cleanText).then((smartTitle) => {
                   if (smartTitle) {
                     setThreads((prev) =>

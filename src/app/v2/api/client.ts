@@ -19,6 +19,8 @@ import type {
   CahierStatusResponse,
   ChatOption,
   CanvasAction,
+  KitActiveResponse,
+  KitSetResponse,
 } from "./types";
 
 // --- SSE Stream types ---
@@ -138,6 +140,18 @@ export const api = {
   /** Statut d'un job de cahier */
   getCahierStatus(jobId: string): Promise<CahierStatusResponse> {
     return apiFetch<CahierStatusResponse>(`/cahier/${jobId}`);
+  },
+
+  /** Kit entreprise actif + liste de tous les kits disponibles */
+  getActiveKit(userId = 1): Promise<KitActiveResponse> {
+    return apiFetch<KitActiveResponse>(`/kit/active?user_id=${userId}`);
+  },
+
+  /** Changer le kit entreprise actif */
+  setKit(slug: string, userId = 1): Promise<KitSetResponse> {
+    return apiFetch<KitSetResponse>(`/kit/set?user_id=${userId}&slug=${slug}`, {
+      method: "POST",
+    });
   },
 
   /** Obtenir un token LiveKit pour appel vocal/video */
