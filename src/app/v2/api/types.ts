@@ -128,11 +128,6 @@ export interface HealthResponse {
   status: string;
   version: string;
   uptime_seconds: number;
-  budget_jour_usd: number;
-  budget_max_usd: number;
-  requetes_jour: number;
-  souls_charges: number;
-  db_connectee: boolean;
 }
 
 // --- Templates ---

@@ -4,7 +4,7 @@
  */
 
 const API_BASE = "/api/v1";
-const API_KEY = "ghostx-dev-key-2026";
+const API_KEY = import.meta.env.VITE_API_KEY || "missing-key";
 
 const headers = {
   "Content-Type": "application/json",
@@ -54,11 +54,6 @@ export interface HealthResponse {
   status: string;
   version: string;
   uptime_seconds: number;
-  budget_jour_usd: number;
-  budget_max_usd: number;
-  requetes_jour: number;
-  souls_charges: number;
-  db_connectee: boolean;
 }
 
 // ══════════════════════════════════════════════
