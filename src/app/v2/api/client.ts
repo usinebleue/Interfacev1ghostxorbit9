@@ -54,7 +54,7 @@ export type StreamCallback = {
 
 // Chemin relatif — nginx reverse proxy vers FastAPI :8000
 const BASE_URL = "/api/v1";
-const API_KEY = "ghostx-dev-key-2026";
+const API_KEY = import.meta.env.VITE_API_KEY || "missing-key";
 
 async function apiFetch<T>(
   path: string,

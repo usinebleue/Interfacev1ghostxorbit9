@@ -219,7 +219,7 @@ export function MarketplacePage({ volet = "bots", onNavigate }: MarketplacePageP
           {/* Recherche */}
           <div className="flex items-center gap-2 px-3 py-2.5 border border-gray-200 rounded-lg bg-white">
             <Search className="h-4 w-4 text-gray-400" />
-            <input type="text" placeholder="Chercher un bot par industrie, fonction ou besoin..." className="flex-1 text-sm outline-none bg-transparent" readOnly />
+            <input type="text" placeholder="Chercher un bot par industrie, fonction ou besoin..." className="flex-1 text-sm outline-none bg-transparent" />
           </div>
 
           {/* Grille de bots — style CV / fiche agent */}

@@ -6,13 +6,6 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Separator } from './ui/separator';
 
-// Credentials autorisés (demo / dev)
-const VALID_USERS: Record<string, string> = {
-  "cfugere@usinebleue.ai": "GhostX2026!",
-  "carl@ghostx.ai": "GhostX2026!",
-  "demo@ghostx.ai": "DemoGhostX!",
-};
-
 interface LoginViewProps {
   onLogin?: () => void;
   onSignup?: () => void;
@@ -24,23 +17,25 @@ export function LoginView({ onLogin }: LoginViewProps) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-
-    // Petit délai pour le feel
-    setTimeout(() => {
-      const normalizedEmail = email.trim().toLowerCase();
-      const validPassword = VALID_USERS[normalizedEmail];
-
-      if (validPassword && validPassword === password) {
+    try {
+      const res = await fetch('/api/v1/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
+      });
+      if (res.ok) {
         onLogin?.();
       } else {
         setError('Email ou mot de passe invalide.');
       }
-      setLoading(false);
-    }, 400);
+    } catch {
+      setError('Erreur de connexion.');
+    }
+    setLoading(false);
   };
 
   return (

@@ -278,7 +278,7 @@ export function VideoCallWidget() {
       try {
         const res = await fetch(
           `/api/v1/voice/events/${roomName}?cursor=${pollCursorRef.current}`,
-          { headers: { "X-API-Key": "ghostx-dev-key-2026" } }
+          { headers: { "X-API-Key": import.meta.env.VITE_API_KEY || "missing-key" } }
         );
         if (!res.ok) return;
         const data = await res.json();

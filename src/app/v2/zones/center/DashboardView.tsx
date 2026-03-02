@@ -247,13 +247,26 @@ function BlocProjets({ onClick, projets }: { onClick?: () => void; projets?: Pro
 }
 
 /* ============ BLOC OUTIL : Mon Calendrier ============ */
+const MOCK_AGENDA = [
+  { heure: "09:00", titre: "Appel stratégique — Équipe direction", type: "reunion" },
+  { heure: "11:30", titre: "Revue tableau de bord Q1", type: "analyse" },
+  { heure: "14:00", titre: "Rencontre prospect — Groupe Bélanger", type: "vente" },
+  { heure: "16:30", titre: "Point hebdo CarlOS", type: "suivi" },
+];
 function BlocCalendrier({ onClick }: { onClick?: () => void }) {
-  // Le calendrier reste statique — pas de donnees de calendrier dans les kits
+  const today = new Date();
+  const label = today.toLocaleDateString("fr-CA", { weekday: "long", day: "numeric", month: "long" });
   return (
     <Card className="p-4 overflow-hidden cursor-pointer hover:ring-2 hover:ring-cyan-300 transition-shadow" onClick={onClick}>
       <BlockHeader icon={CalendarDays} title="Mon Calendrier" gradient="bg-gradient-to-r from-cyan-600 to-cyan-500" />
-      <ul className="space-y-2.5">
-        <li className="text-xs text-gray-400 italic">Calendrier — a connecter</li>
+      <p className="text-[10px] text-cyan-600 font-medium mb-2 capitalize">{label}</p>
+      <ul className="space-y-1.5">
+        {MOCK_AGENDA.map((ev, i) => (
+          <li key={i} className="flex items-start gap-2">
+            <span className="text-[10px] text-gray-400 w-10 shrink-0 mt-0.5">{ev.heure}</span>
+            <span className="text-xs text-gray-700 leading-snug">{ev.titre}</span>
+          </li>
+        ))}
       </ul>
     </Card>
   );
