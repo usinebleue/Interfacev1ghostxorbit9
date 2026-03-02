@@ -17,6 +17,7 @@ import {
   Pin,
   Loader2,
   CheckCircle2,
+  Mic,
 } from "lucide-react";
 import { cn } from "../../../components/ui/utils";
 import { useFrameMaster } from "../../context/FrameMasterContext";
@@ -78,6 +79,8 @@ const CONTENT_TYPE_ICONS: Record<string, React.ElementType> = {
   tableau: Table2,
   metriques: BarChart3,
   plan_action: FileText,
+  vocal: Mic,
+  video: Bot,
 };
 
 export function CenterZone() {
