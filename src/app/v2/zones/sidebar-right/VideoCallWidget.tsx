@@ -133,6 +133,13 @@ export function VideoCallWidget() {
       const room = new Room({
         adaptiveStream: true,
         dynacast: true,
+        reconnectPolicy: {
+          nextRetryDelayInMs: (ctx) => {
+            // 5 tentatives : 1s, 2s, 4s, 8s, 16s puis abandon
+            if (ctx.retryCount >= 5) return null;
+            return Math.min(1000 * Math.pow(2, ctx.retryCount), 16000);
+          },
+        },
       });
       roomRef.current = room;
 
@@ -156,17 +163,28 @@ export function VideoCallWidget() {
 
       room.on(RoomEvent.Disconnected, (reason?: DisconnectReason) => {
         console.log("[CarlOS Voice] Disconnected:", reason);
-        endCall();
+        // DisconnectReason 0=ClientInitiated (normal), others=network/server issues
+        if (reason !== undefined && reason !== 0) {
+          // Deconnexion inattendue — afficher l'erreur mais laisser le bouton "Reprendre"
+          setCallState("error");
+          setErrorMsg("Connexion perdue — appuyez sur Appel pour reconnecter");
+          if (timerRef.current) clearInterval(timerRef.current);
+          if (pollRef.current) clearInterval(pollRef.current);
+        } else {
+          endCall();
+        }
       });
 
       room.on(RoomEvent.Reconnecting, () => {
         console.log("[CarlOS Voice] Reconnecting...");
         setCallState("connecting");
+        setErrorMsg("Reconnexion en cours...");
       });
 
       room.on(RoomEvent.Reconnected, () => {
         console.log("[CarlOS Voice] Reconnected!");
         setCallState("connected");
+        setErrorMsg("");
       });
 
       // 3. Connect to LiveKit Cloud
