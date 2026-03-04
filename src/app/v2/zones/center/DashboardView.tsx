@@ -6,15 +6,16 @@
  */
 
 import { useEffect, useState } from "react";
-import { ArrowRight, Briefcase, DollarSign, Cpu, Megaphone, Target, CheckCircle2, CalendarDays, TrendingUp, Newspaper, BarChart3, Loader2 } from "lucide-react";
-import { Button } from "../../../components/ui/button";
+import { Briefcase, DollarSign, Cpu, Megaphone, Target, CheckCircle2, CalendarDays, TrendingUp, Newspaper, BarChart3, Loader2 } from "lucide-react";
 import { Card } from "../../../components/ui/card";
 import { Badge } from "../../../components/ui/badge";
 import { ScrollArea } from "../../../components/ui/scroll-area";
 import { cn } from "../../../components/ui/utils";
 import { useFrameMaster } from "../../context/FrameMasterContext";
+import { useCanvasActions } from "../../context/CanvasActionContext";
 import { api } from "../../api/client";
 import type { KitActiveResponse, KpisDepartements, VentesPipeline, ProjetActif, EntrepriseInfo } from "../../api/types";
+import { CarlOSPresence } from "./CarlOSPresence";
 
 /* ============ BLOCK HEADER — style gradient Bilan de Sante ============ */
 function BlockHeader({ icon: Icon, title, count, gradient }: {
@@ -363,18 +364,10 @@ function BlocStatsOps({ onClick, kpi }: { onClick?: () => void; kpi?: Record<str
   );
 }
 
-/* ============ BOT SHORTCUTS pour navigation ============ */
-const BOT_SHORTCUT: Record<string, Partial<import("../../../app/v2/api/types").BotInfo>> = {
-  BCO: { code: "BCO", nom: "CarlOS", titre: "CEO", departement: "Direction", emoji: "👔", actif: true },
-  BCF: { code: "BCF", nom: "Agent CFO", titre: "CFO", departement: "Finance", emoji: "💰", actif: true },
-  BCT: { code: "BCT", nom: "Agent CTO", titre: "CTO", departement: "Technologie", emoji: "⚙️", actif: true },
-  BCM: { code: "BCM", nom: "Agent CMO", titre: "CMO", departement: "Marketing", emoji: "📣", actif: true },
-  BCS: { code: "BCS", nom: "Agent CSO", titre: "CSO", departement: "Strategie", emoji: "🎯", actif: true },
-};
-
 /* ============ DASHBOARD VIEW ============ */
 export function DashboardView() {
-  const { setActiveView, setActiveBot } = useFrameMaster();
+  const { setActiveView } = useFrameMaster();
+  const { dispatch } = useCanvasActions();
   const [kitData, setKitData] = useState<KitActiveResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -389,17 +382,6 @@ export function DashboardView() {
   const ventes = kitData?.ventes;
   const projets = kitData?.projets_actifs;
   const contexte = kitData?.contexte_sectoriel;
-  const entreprise = kitData?.entreprise;
-  const nomEntreprise = typeof entreprise === "string" ? entreprise : entreprise?.nom;
-
-  const goToBot = (code: string) => {
-    const bot = BOT_SHORTCUT[code];
-    if (bot) {
-      setActiveBot(bot as import("../../../app/v2/api/types").BotInfo);
-      setActiveView("department");
-    }
-  };
-
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -408,59 +390,77 @@ export function DashboardView() {
     );
   }
 
-  // Construire le resume proactif CarlOS
-  const proactiveItems: string[] = [];
-  if (kpis?.CEO?.priorite_1) proactiveItems.push(String(kpis.CEO.priorite_1).slice(0, 50));
-  if (kpis?.CFO?.alerte) proactiveItems.push(String(kpis.CFO.alerte).slice(0, 50));
-  if (ventes?.pipeline_total) proactiveItems.push(`Pipeline: ${fmtMoney(ventes.pipeline_total)}`);
-  if (projets && projets.length > 0) proactiveItems.push(`${projets.length} projets actifs`);
-  const proactiveText = proactiveItems.length > 0
-    ? proactiveItems.join(". ") + "."
-    : nomEntreprise
-      ? `Instance ${nomEntreprise} active.`
-      : "Selectionnez une instance pour voir vos donnees.";
-
   return (
     <ScrollArea className="h-full">
-      <div className="p-5 space-y-4 max-w-5xl mx-auto">
+      <div className="space-y-4 max-w-5xl mx-auto px-5 py-5">
 
-        {/* Barre CarlOS proactive */}
-        <div className="flex items-center gap-3 bg-gradient-to-r from-slate-50 to-blue-50 border rounded-xl px-4 py-3">
-          <div className="w-9 h-9 rounded-full overflow-hidden ring-2 ring-blue-300 shrink-0">
-            <img src="/agents/ceo-carlos.png" alt="CarlOS" className="w-full h-full object-cover" />
+        <CarlOSPresence />
+
+        {/* Row 1 : 5 blocs C-Level — stagger animate-in */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+          <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "100ms", animationFillMode: "both" }}>
+            <BlocCEO
+              onClick={() => { dispatch({ type: "focus", layer: "cerveau", data: { title: "CarlOS — Tour de Contrôle", element_type: "kpi_ceo", data: kpis?.CEO }, bot: "BCO" }); setActiveView("live-chat"); }}
+              kpi={kpis?.CEO}
+            />
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm text-gray-800">
-              <span className="font-semibold">CarlOS:</span>{" "}
-              {proactiveText}
-            </p>
+          <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "180ms", animationFillMode: "both" }}>
+            <BlocCFO
+              onClick={() => { dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent CFO — Finances", element_type: "kpi_cfo", data: kpis?.CFO }, bot: "BCF" }); setActiveView("live-chat"); }}
+              kpi={kpis?.CFO}
+            />
           </div>
-          <Button
-            size="sm"
-            className="shrink-0 gap-1.5"
-            onClick={() => setActiveView("discussion")}
-          >
-            Repondre
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Button>
+          <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "260ms", animationFillMode: "both" }}>
+            <BlocCTO
+              onClick={() => { dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent CTO — Technologie", element_type: "kpi_cto", data: kpis?.CTO }, bot: "BCT" }); setActiveView("live-chat"); }}
+              kpi={kpis?.CTO}
+            />
+          </div>
+          <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "340ms", animationFillMode: "both" }}>
+            <BlocCMO
+              onClick={() => { dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent CMO — Marketing", element_type: "kpi_cmo", data: kpis?.CMO }, bot: "BCM" }); setActiveView("live-chat"); }}
+              kpi={kpis?.CMO}
+            />
+          </div>
+          <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "420ms", animationFillMode: "both" }}>
+            <BlocCSO
+              onClick={() => { dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent CSO — Stratégie", element_type: "kpi_cso", data: kpis?.CSO }, bot: "BCS" }); setActiveView("live-chat"); }}
+              kpi={kpis?.CSO}
+            />
+          </div>
         </div>
 
-        {/* Row 1 : 5 blocs C-Level — briefing par departement */}
+        {/* Row 2 : 5 blocs outils — stagger animate-in (décalé après row 1) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-          <BlocCEO onClick={() => goToBot("BCO")} kpi={kpis?.CEO} />
-          <BlocCFO onClick={() => goToBot("BCF")} kpi={kpis?.CFO} />
-          <BlocCTO onClick={() => goToBot("BCT")} kpi={kpis?.CTO} />
-          <BlocCMO onClick={() => goToBot("BCM")} kpi={kpis?.CMO} />
-          <BlocCSO onClick={() => goToBot("BCS")} kpi={kpis?.CSO} />
-        </div>
-
-        {/* Row 2 : 5 blocs outils — contenu reel */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-          <BlocProjets onClick={() => setActiveView("discussion")} projets={projets || undefined} />
-          <BlocCalendrier onClick={() => setActiveView("discussion")} />
-          <BlocPipeline onClick={() => setActiveView("discussion")} ventes={ventes} />
-          <BlocInfosIndustrie onClick={() => setActiveView("discussion")} contexte={contexte} />
-          <BlocStatsOps onClick={() => setActiveView("discussion")} kpi={kpis?.COO} />
+          <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "500ms", animationFillMode: "both" }}>
+            <BlocProjets
+              onClick={() => { dispatch({ type: "focus", layer: "cerveau", data: { title: "Projets Actifs", element_type: "projets", data: projets }, bot: "BCO" }); setActiveView("live-chat"); }}
+              projets={projets || undefined}
+            />
+          </div>
+          <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "580ms", animationFillMode: "both" }}>
+            <BlocCalendrier
+              onClick={() => { dispatch({ type: "focus", layer: "cerveau", data: { title: "Mon Calendrier", element_type: "calendrier", data: null }, bot: "BCO" }); setActiveView("live-chat"); }}
+            />
+          </div>
+          <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "660ms", animationFillMode: "both" }}>
+            <BlocPipeline
+              onClick={() => { dispatch({ type: "focus", layer: "cerveau", data: { title: "Pipeline Ventes", element_type: "pipeline", data: ventes }, bot: "BCO" }); setActiveView("live-chat"); }}
+              ventes={ventes}
+            />
+          </div>
+          <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "740ms", animationFillMode: "both" }}>
+            <BlocInfosIndustrie
+              onClick={() => { dispatch({ type: "focus", layer: "cerveau", data: { title: "Infos Industrie", element_type: "industrie", data: contexte }, bot: "BCS" }); setActiveView("live-chat"); }}
+              contexte={contexte}
+            />
+          </div>
+          <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "820ms", animationFillMode: "both" }}>
+            <BlocStatsOps
+              onClick={() => { dispatch({ type: "focus", layer: "cerveau", data: { title: "Opérations", element_type: "ops", data: kpis?.COO }, bot: "BOO" }); setActiveView("live-chat"); }}
+              kpi={kpis?.COO}
+            />
+          </div>
         </div>
       </div>
     </ScrollArea>

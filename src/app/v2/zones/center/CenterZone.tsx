@@ -39,6 +39,9 @@ import { InputBar } from "./InputBar";
 import { Orbit9DetailView } from "./orbit9/Orbit9DetailView";
 import { AgentSettingsView } from "./AgentSettingsView";
 import { EspaceBureauView } from "./EspaceBureauView";
+import { BluePrintView } from "./BluePrintView";
+import { BoardRoomView } from "./BoardRoomView";
+import { FocusModeLayout } from "./FocusModeLayout";
 
 /** Couleur identitaire par bot — bande fine en haut du canevas */
 const BOT_BAND_COLORS: Record<string, string> = {
@@ -90,6 +93,7 @@ export function CenterZone() {
     activeWidget, activeAnnotation,
     pushedContent, credoPhases, splitScreen,
     executeAction,
+    focusData, clearFocusMode,
     dismissWidget, dismissAnnotation,
     dismissPushedContent, toggleSplitScreen,
     dismissExecuteAction,
@@ -142,6 +146,8 @@ export function CenterZone() {
       {activeView === "orbit9-detail" && <Orbit9DetailView />}
       {activeView === "agent-settings" && <AgentSettingsView />}
       {activeView === "espace-bureau" && <EspaceBureauView />}
+      {activeView === "blueprint" && <BluePrintView />}
+      {activeView === "board-room" && <BoardRoomView />}
       {activeView === "canvas" && (
         <SmartCanvas
           onStartChat={handleStartChat}
@@ -153,8 +159,10 @@ export function CenterZone() {
 
   return (
     <div className="h-full flex flex-col bg-background overflow-hidden relative">
-      {/* Bande couleur identitaire du bot actif — en haut du canevas */}
+      {/* Bandes couleur identitaire du bot actif — haut + gauche + droite du canevas */}
       {botBand && <div className={cn("h-1 shrink-0", botBand)} />}
+      {botBand && <div className={cn("absolute left-0 top-0 bottom-0 w-1 z-10 pointer-events-none", botBand)} />}
+      {botBand && <div className={cn("absolute right-0 top-0 bottom-0 w-1 z-10 pointer-events-none", botBand)} />}
 
       {/* Phase indicator — interne, sans labels visibles */}
       {showCredoIndicator && (
@@ -173,9 +181,14 @@ export function CenterZone() {
         </div>
       )}
 
-      {/* Vue principale — split-screen ou plein ecran */}
+      {/* Vue principale — Priority 1: Focus Mode, Priority 2: split-screen, Priority 3: normal */}
       <div className="flex-1 overflow-hidden flex">
-        {splitScreen ? (
+        {focusData ? (
+          /* ── Focus Mode: element ancre + LiveChat ── */
+          <div className="flex-1 overflow-hidden">
+            <FocusModeLayout focusData={focusData} onClose={clearFocusMode} />
+          </div>
+        ) : splitScreen ? (
           <>
             {/* Gauche: Vue courante */}
             <div className="flex-1 overflow-hidden border-r border-gray-200">

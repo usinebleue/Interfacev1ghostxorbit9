@@ -56,7 +56,7 @@ export function SidebarRight({ collapsed = false }: Props) {
                 <MessageSquare className="h-4 w-4 text-blue-500" />
               </button>
             </TooltipTrigger>
-            <TooltipContent side="left">Mes Discussions</TooltipContent>
+            <TooltipContent side="left">Mes Missions</TooltipContent>
           </Tooltip>
         </div>
       </div>
@@ -84,7 +84,7 @@ export function SidebarRight({ collapsed = false }: Props) {
           {/* Separateur vert */}
           <div className="h-[2px] bg-green-400 my-3" />
 
-          {/* Section 3 — Mes Discussions */}
+          {/* Section 3 — Mes Missions */}
           <div className="mx-3 mb-1">
             <DiscussionsPanel />
           </div>

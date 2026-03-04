@@ -40,19 +40,19 @@ export const BOT_COLORS: Record<string, {
   avatar: string;
 }> = {
   BCO: { bg: "bg-blue-600", bgLight: "bg-blue-50", text: "text-blue-700", border: "border-blue-400", ring: "ring-blue-300", dot: "bg-blue-500", emoji: "\u{1F454}", name: "CarlOS", role: "CEO", avatar: "/agents/ceo-carlos.png" },
-  BCT: { bg: "bg-violet-600", bgLight: "bg-violet-50", text: "text-violet-700", border: "border-violet-400", ring: "ring-violet-300", dot: "bg-violet-500", emoji: "\u{1F4BB}", name: "Thomas", role: "CTO", avatar: "/agents/cto-thomas.png" },
-  BCF: { bg: "bg-emerald-600", bgLight: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-400", ring: "ring-emerald-300", dot: "bg-emerald-500", emoji: "\u{1F4B0}", name: "Francois", role: "CFO", avatar: "/agents/cfo-francois.png" },
-  BCM: { bg: "bg-pink-600", bgLight: "bg-pink-50", text: "text-pink-700", border: "border-pink-400", ring: "ring-pink-300", dot: "bg-pink-500", emoji: "\u{1F4E3}", name: "Sofia", role: "CMO", avatar: "/agents/cmo-sofia.png" },
-  BCS: { bg: "bg-red-600", bgLight: "bg-red-50", text: "text-red-700", border: "border-red-400", ring: "ring-red-300", dot: "bg-red-500", emoji: "\u{1F3AF}", name: "Marc", role: "CSO", avatar: "/agents/cso-marc.png" },
-  BOO: { bg: "bg-orange-600", bgLight: "bg-orange-50", text: "text-orange-700", border: "border-orange-400", ring: "ring-orange-300", dot: "bg-orange-500", emoji: "\u{2699}\u{FE0F}", name: "Lise", role: "COO", avatar: "/agents/coo-lise.png" },
-  BFA: { bg: "bg-slate-600", bgLight: "bg-slate-50", text: "text-slate-700", border: "border-slate-400", ring: "ring-slate-300", dot: "bg-slate-500", emoji: "\u{1F3ED}", name: "FactoryBot", role: "Factory", avatar: "" },
-  BHR: { bg: "bg-teal-600", bgLight: "bg-teal-50", text: "text-teal-700", border: "border-teal-400", ring: "ring-teal-300", dot: "bg-teal-500", emoji: "\u{1F91D}", name: "David", role: "CHRO", avatar: "/agents/David - CHRO.png" },
-  BIO: { bg: "bg-cyan-600", bgLight: "bg-cyan-50", text: "text-cyan-700", border: "border-cyan-400", ring: "ring-cyan-300", dot: "bg-cyan-500", emoji: "\u{1F4CA}", name: "Helene", role: "CIO", avatar: "/agents/Helene - CIO.png" },
-  BCC: { bg: "bg-rose-600", bgLight: "bg-rose-50", text: "text-rose-700", border: "border-rose-400", ring: "ring-rose-300", dot: "bg-rose-500", emoji: "\u{1F4E2}", name: "Emilie", role: "CCO", avatar: "/agents/CCO - Emilie2.png" },
-  BPO: { bg: "bg-fuchsia-600", bgLight: "bg-fuchsia-50", text: "text-fuchsia-700", border: "border-fuchsia-400", ring: "ring-fuchsia-300", dot: "bg-fuchsia-500", emoji: "\u{1F680}", name: "Alex", role: "CPO", avatar: "/agents/CPO - Alex2.png" },
-  BRO: { bg: "bg-amber-600", bgLight: "bg-amber-50", text: "text-amber-700", border: "border-amber-400", ring: "ring-amber-300", dot: "bg-amber-500", emoji: "\u{1F4C8}", name: "Julien", role: "CRO", avatar: "/agents/CRO - Julien2.png" },
-  BLE: { bg: "bg-indigo-600", bgLight: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-400", ring: "ring-indigo-300", dot: "bg-indigo-500", emoji: "\u{2696}\u{FE0F}", name: "Isabelle", role: "Legal", avatar: "/agents/CLO - Isabelle3.png" },
-  BSE: { bg: "bg-zinc-700", bgLight: "bg-zinc-50", text: "text-zinc-700", border: "border-zinc-400", ring: "ring-zinc-300", dot: "bg-zinc-500", emoji: "\u{1F6E1}\u{FE0F}", name: "SecBot", role: "CISO", avatar: "" },
+  BCT: { bg: "bg-violet-600", bgLight: "bg-violet-50", text: "text-violet-700", border: "border-violet-400", ring: "ring-violet-300", dot: "bg-violet-500", emoji: "\u{1F4BB}", name: "Thierry", role: "CTO", avatar: "/agents/cto-thierry.png" },
+  BCF: { bg: "bg-emerald-600", bgLight: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-400", ring: "ring-emerald-300", dot: "bg-emerald-500", emoji: "\u{1F4B0}", name: "Fran\u00e7ois", role: "CFO", avatar: "/agents/cfo-francois.png" },
+  BCM: { bg: "bg-pink-600", bgLight: "bg-pink-50", text: "text-pink-700", border: "border-pink-400", ring: "ring-pink-300", dot: "bg-pink-500", emoji: "\u{1F4E3}", name: "Martine", role: "CMO", avatar: "/agents/cmo-martine.png" },
+  BCS: { bg: "bg-red-600", bgLight: "bg-red-50", text: "text-red-700", border: "border-red-400", ring: "ring-red-300", dot: "bg-red-500", emoji: "\u{1F3AF}", name: "Sophie", role: "CSO", avatar: "/agents/cso-sophie.png" },
+  BOO: { bg: "bg-orange-600", bgLight: "bg-orange-50", text: "text-orange-700", border: "border-orange-400", ring: "ring-orange-300", dot: "bg-orange-500", emoji: "\u{2699}\u{FE0F}", name: "Olivier", role: "COO", avatar: "/agents/coo-olivier.png" },
+  BFA: { bg: "bg-slate-600", bgLight: "bg-slate-50", text: "text-slate-700", border: "border-slate-400", ring: "ring-slate-300", dot: "bg-slate-500", emoji: "\u{1F3ED}", name: "Fabien", role: "Production", avatar: "/agents/generated/factory-bot-profil-v1.png" },
+  BHR: { bg: "bg-teal-600", bgLight: "bg-teal-50", text: "text-teal-700", border: "border-teal-400", ring: "ring-teal-300", dot: "bg-teal-500", emoji: "\u{1F91D}", name: "H\u00e9l\u00e8ne", role: "CHRO", avatar: "/agents/chro-helene.png" },
+  BIO: { bg: "bg-cyan-600", bgLight: "bg-cyan-50", text: "text-cyan-700", border: "border-cyan-400", ring: "ring-cyan-300", dot: "bg-cyan-500", emoji: "\u{1F4CA}", name: "Isabelle", role: "CIO", avatar: "/agents/cio-isabelle.png" },
+  BCC: { bg: "bg-rose-600", bgLight: "bg-rose-50", text: "text-rose-700", border: "border-rose-400", ring: "ring-rose-300", dot: "bg-rose-500", emoji: "\u{1F4E2}", name: "Catherine", role: "CCO", avatar: "/agents/cco-catherine.png" },
+  BPO: { bg: "bg-fuchsia-600", bgLight: "bg-fuchsia-50", text: "text-fuchsia-700", border: "border-fuchsia-400", ring: "ring-fuchsia-300", dot: "bg-fuchsia-500", emoji: "\u{1F680}", name: "Philippe", role: "CPO", avatar: "/agents/cpo-philippe.png" },
+  BRO: { bg: "bg-amber-600", bgLight: "bg-amber-50", text: "text-amber-700", border: "border-amber-400", ring: "ring-amber-300", dot: "bg-amber-500", emoji: "\u{1F4C8}", name: "Rapha\u00ebl", role: "CRO", avatar: "/agents/cro-raphael.png" },
+  BLE: { bg: "bg-indigo-600", bgLight: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-400", ring: "ring-indigo-300", dot: "bg-indigo-500", emoji: "\u{2696}\u{FE0F}", name: "Louise", role: "CLO", avatar: "/agents/clo-louise.png" },
+  BSE: { bg: "bg-zinc-700", bgLight: "bg-zinc-50", text: "text-zinc-700", border: "border-zinc-400", ring: "ring-zinc-300", dot: "bg-zinc-500", emoji: "\u{1F6E1}\u{FE0F}", name: "Sébastien", role: "CISO", avatar: "" },
 };
 
 export const USER_AVATAR = "/agents/carl-fugere.jpg";

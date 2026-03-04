@@ -2,33 +2,81 @@
  * CellulesPage.tsx — Cellules Orbit9 (ex-CerclesPage + Matching absorbe)
  * Les opportunites/matching sont DANS la cellule, pas dans une page separee
  * Cross-links: Marketplace, Gouvernance
+ * WIRED: Real API via /api/v1/orbit9/members + /orbit9/matches
  */
 
+import { useEffect, useState } from "react";
 import {
   Users, Network, TrendingUp, DollarSign, Search,
   Plus, UserPlus, Eye, MessageSquare, Send, RefreshCw,
   CheckCircle2, CircleDot, Sparkles, Hand, Handshake,
-  Crown, Store,
+  Crown, Store, Video, Loader2,
 } from "lucide-react";
 import { cn } from "../../../../components/ui/utils";
 import { Card } from "../../../../components/ui/card";
 import { Badge } from "../../../../components/ui/badge";
 import { Button } from "../../../../components/ui/button";
+import { api } from "../../../api/client";
+import type { Orbit9Member, Orbit9Match } from "../../../api/types";
 
 interface CellulesPageProps {
   onNavigate?: (section: string) => void;
 }
 
 export function CellulesPage({ onNavigate }: CellulesPageProps) {
-  const members = [
-    { name: "Usinage Precision QC", sector: "Usinage CNC", status: "actif" as const, role: "Fondateur", since: "Fev 2026", avatar: "UP", bots: 6 },
-    { name: "MetalPro Inc.", sector: "Soudage robotise", status: "actif" as const, role: "Membre", since: "Fev 2026", avatar: "MP", bots: 3 },
-    { name: "AutomaTech", sector: "Integration robotique", status: "actif" as const, role: "Membre", since: "Mars 2026", avatar: "AT", bots: 6 },
-    { name: "LogiFlow", sector: "Logistique 4.0", status: "actif" as const, role: "Membre", since: "Mars 2026", avatar: "LF", bots: 1 },
-    { name: "PlastiForm", sector: "Moulage plastique", status: "invite" as const, role: "—", since: "—", avatar: "PF", bots: 0 },
-  ];
+  const [members, setMembers] = useState<Orbit9Member[]>([]);
+  const [matches, setMatches] = useState<Orbit9Match[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const pris = members.filter(m => m.status === "actif").length;
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const [membersRes, matchesRes] = await Promise.all([
+          api.listOrbit9Members(),
+          api.listOrbit9Matches(),
+        ]);
+        if (!cancelled) {
+          setMembers(membersRes.members);
+          setMatches(matchesRes.matches);
+        }
+      } catch (err) {
+        console.error("CellulesPage load error:", err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => { cancelled = true; };
+  }, []);
+
+  const actifs = members.filter(m => m.status === "actif");
+  const pris = actifs.length;
+  const maxMembers = 9;
+
+  // Discount tiers
+  const getDiscount = (n: number) => {
+    if (n >= 9) return 25;
+    if (n >= 7) return 20;
+    if (n >= 5) return 15;
+    if (n >= 3) return 10;
+    return 0;
+  };
+  const discount = getDiscount(pris);
+  const nextTier = pris < 3 ? 3 : pris < 5 ? 5 : pris < 7 ? 7 : pris < 9 ? 9 : 9;
+  const nextDiscount = getDiscount(nextTier);
+
+  // Bot-to-bot connections: n(n-1)/2
+  const connections = Math.floor(pris * (pris - 1) / 2);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
+        <span className="ml-2 text-sm text-gray-500">Chargement du reseau...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5">
@@ -40,8 +88,8 @@ export function CellulesPage({ onNavigate }: CellulesPageProps) {
             <span className="text-sm font-bold text-white">Membres</span>
           </div>
           <div className="px-3 py-2">
-            <div className="text-2xl font-bold text-emerald-600">{pris}/9</div>
-            <div className="text-[10px] text-gray-500">{9 - pris} places disponibles</div>
+            <div className="text-2xl font-bold text-emerald-600">{pris}/{maxMembers}</div>
+            <div className="text-[9px] text-gray-500">{maxMembers - pris} places disponibles</div>
           </div>
         </Card>
         <Card className="p-0 overflow-hidden">
@@ -50,8 +98,8 @@ export function CellulesPage({ onNavigate }: CellulesPageProps) {
             <span className="text-sm font-bold text-white">Rabais actif</span>
           </div>
           <div className="px-3 py-2">
-            <div className="text-2xl font-bold text-emerald-600">-15%</div>
-            <div className="text-[10px] text-gray-500">Prochain palier: -20% a 7</div>
+            <div className="text-2xl font-bold text-emerald-600">-{discount}%</div>
+            <div className="text-[9px] text-gray-500">{pris < 9 ? `Prochain palier: -${nextDiscount}% a ${nextTier}` : "Maximum atteint!"}</div>
           </div>
         </Card>
         <Card className="p-0 overflow-hidden">
@@ -60,8 +108,8 @@ export function CellulesPage({ onNavigate }: CellulesPageProps) {
             <span className="text-sm font-bold text-white">Connexions Bot-to-Bot</span>
           </div>
           <div className="px-3 py-2">
-            <div className="text-2xl font-bold text-blue-600">10</div>
-            <div className="text-[10px] text-gray-500">Loi de Metcalfe: n(n-1)/2</div>
+            <div className="text-2xl font-bold text-blue-600">{connections}</div>
+            <div className="text-[9px] text-gray-500">Loi de Metcalfe: n(n-1)/2</div>
           </div>
         </Card>
         <Card className="p-0 overflow-hidden">
@@ -70,8 +118,8 @@ export function CellulesPage({ onNavigate }: CellulesPageProps) {
             <span className="text-sm font-bold text-white">Economie collective</span>
           </div>
           <div className="px-3 py-2">
-            <div className="text-2xl font-bold text-green-600">2,700$</div>
-            <div className="text-[10px] text-gray-500">/mois pour le cercle</div>
+            <div className="text-2xl font-bold text-green-600">{(pris * 450).toLocaleString()}$</div>
+            <div className="text-[9px] text-gray-500">/mois pour le cercle</div>
           </div>
         </Card>
       </div>
@@ -93,27 +141,27 @@ export function CellulesPage({ onNavigate }: CellulesPageProps) {
             </div>
           ))}
         </div>
-        <div className="flex items-center justify-between text-[10px] text-gray-500">
+        <div className="flex items-center justify-between text-[9px] text-gray-500">
           <span>0% (solo)</span>
-          <span className="font-semibold text-emerald-600">← Vous etes ici: -15%</span>
+          <span className="font-semibold text-emerald-600">← Vous etes ici: -{discount}%</span>
           <span>-25% (9 max)</span>
         </div>
-        <p className="text-[10px] text-gray-400 mt-2 italic">Le palier atteint ne redescend JAMAIS, meme si des membres quittent le cercle.</p>
+        <p className="text-[9px] text-gray-400 mt-2 italic">Le palier atteint ne redescend JAMAIS, meme si des membres quittent le cercle.</p>
         </div>
       </div>
 
-      {/* Tableau des membres */}
+      {/* Tableau des membres — REAL DATA */}
       <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
         <div className="bg-gradient-to-r from-blue-100 to-cyan-100 px-4 py-2.5 border-b border-blue-200">
           <div className="flex items-center justify-between">
             <span className="text-sm font-bold text-blue-900">Membres de la Cellule Orbit9</span>
-            <Button size="sm" className="gap-1.5 text-xs"><UserPlus className="h-3 w-3" /> Inviter un partenaire</Button>
+            <Button size="sm" className="gap-1.5 text-xs"><UserPlus className="h-3.5 w-3.5" /> Inviter un partenaire</Button>
           </div>
         </div>
         <div className="p-4">
-        <p className="text-[10px] text-gray-400 mb-3">Max 9 membres. 1 client = 1 seule cellule. Bots collaborent automatiquement.</p>
+        <p className="text-[9px] text-gray-400 mb-3">Max 9 membres. 1 client = 1 seule cellule. Bots collaborent automatiquement.</p>
 
-        <div className="grid grid-cols-12 gap-2 px-2 py-1.5 bg-gray-50 rounded text-[10px] font-semibold text-gray-500 uppercase mb-1">
+        <div className="grid grid-cols-12 gap-2 px-2 py-1.5 bg-gray-50 rounded text-[9px] font-semibold text-gray-500 uppercase mb-1">
           <span className="col-span-4">Entreprise</span>
           <span className="col-span-2">Secteur</span>
           <span className="col-span-1">Role</span>
@@ -123,35 +171,35 @@ export function CellulesPage({ onNavigate }: CellulesPageProps) {
         </div>
 
         <div className="space-y-1">
-          {members.map((m, i) => (
-            <div key={i} className="grid grid-cols-12 gap-2 items-center p-2 rounded-lg hover:bg-gray-50 transition-colors">
+          {members.map((m) => (
+            <div key={m.id} className="grid grid-cols-12 gap-2 items-center p-2 rounded-lg hover:bg-gray-50 transition-colors">
               <div className="col-span-4 flex items-center gap-2">
-                <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold",
+                <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-[9px] font-bold",
                   m.status === "actif" ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-500"
-                )}>{m.avatar}</div>
+                )}>{m.avatar || m.nom.slice(0, 2).toUpperCase()}</div>
                 <div>
-                  <p className="text-sm font-medium text-gray-800">{m.name}</p>
-                  <p className="text-[10px] text-gray-400">Depuis {m.since}</p>
+                  <p className="text-sm font-medium text-gray-800">{m.nom}</p>
+                  <p className="text-[9px] text-gray-400">{m.ville}</p>
                 </div>
               </div>
-              <span className="col-span-2 text-xs text-gray-600">{m.sector}</span>
+              <span className="col-span-2 text-xs text-gray-600">{m.secteur}</span>
               <span className="col-span-1 text-xs text-gray-500">{m.role}</span>
-              <span className="col-span-1 text-xs text-gray-600">{m.bots > 0 ? `${m.bots} actifs` : "—"}</span>
+              <span className="col-span-1 text-xs text-gray-600">{m.nb_bots > 0 ? `${m.nb_bots} actifs` : "—"}</span>
               <div className="col-span-2">
-                <Badge variant="outline" className={cn("text-[10px]",
+                <Badge variant="outline" className={cn("text-[9px]",
                   m.status === "actif" ? "text-green-600 border-green-300 bg-green-50" : "text-amber-600 border-amber-300 bg-amber-50"
                 )}>
-                  {m.status === "actif" ? "En ligne" : "Invitation envoyee"}
+                  {m.status === "actif" ? "En ligne" : m.status === "invite" ? "Invitation envoyee" : "Inactif"}
                 </Badge>
               </div>
               <div className="col-span-2 flex gap-1">
-                <Button variant="ghost" size="sm" className="h-7 text-[10px] px-2 gap-1"><Eye className="h-3 w-3" /> Profil</Button>
-                <Button variant="ghost" size="sm" className="h-7 text-[10px] px-2 gap-1"><MessageSquare className="h-3 w-3" /></Button>
+                <Button variant="ghost" size="sm" className="h-7 text-[9px] px-2 gap-1"><Eye className="h-3.5 w-3.5" /> Profil</Button>
+                <Button variant="ghost" size="sm" className="h-7 text-[9px] px-2 gap-1"><MessageSquare className="h-3.5 w-3.5" /></Button>
               </div>
             </div>
           ))}
 
-          {Array.from({ length: 9 - members.length }).map((_, i) => (
+          {Array.from({ length: Math.max(0, maxMembers - members.length) }).map((_, i) => (
             <div key={`empty-${i}`} className="grid grid-cols-12 gap-2 items-center p-2 rounded-lg border border-dashed border-gray-200 hover:border-emerald-300 hover:bg-emerald-50/30 cursor-pointer transition-all">
               <div className="col-span-4 flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-300"><Plus className="h-4 w-4" /></div>
@@ -164,7 +212,7 @@ export function CellulesPage({ onNavigate }: CellulesPageProps) {
       </div>
       </div>
 
-      {/* ── OPPORTUNITES ACTIVES (absorbe du Matching) ── */}
+      {/* ── OPPORTUNITES ACTIVES — REAL MATCHES ── */}
       <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
         <div className="bg-gradient-to-r from-amber-100 to-orange-100 px-4 py-2.5 border-b border-amber-200">
           <div className="flex items-center justify-between">
@@ -172,11 +220,7 @@ export function CellulesPage({ onNavigate }: CellulesPageProps) {
               <Handshake className="h-4 w-4 text-amber-600" />
               <span className="text-sm font-bold text-amber-900">Opportunites actives dans la Cellule</span>
             </div>
-            <div className="flex gap-2">
-              <Badge variant="outline" className="text-[10px] cursor-pointer">Toutes</Badge>
-              <Badge variant="outline" className="text-[10px] cursor-pointer">Intra-Cellule</Badge>
-              <Badge variant="outline" className="text-[10px] cursor-pointer">Inter-Cellules</Badge>
-            </div>
+            <Badge variant="outline" className="text-[9px]">{matches.length} matchings</Badge>
           </div>
         </div>
         <div className="p-4">
@@ -190,104 +234,74 @@ export function CellulesPage({ onNavigate }: CellulesPageProps) {
           </div>
         </div>
 
-        <div className="space-y-3">
-          {[
-            {
-              title: "Robot de soudage collaboratif",
-              client: "Usinage Precision QC",
-              match: "AutomaTech",
-              score: 94,
-              budget: "125-175K$",
-              timeline: "90 jours",
-              status: "negociation" as const,
-              type: "intra",
-              missions: ["Evaluation faisabilite cobot", "Specs integration cellule", "Formation operateurs"],
-              competences: ["Expertise robotique industrielle", "Integration soudure automatisee", "Programmation cobot"],
-            },
-            {
-              title: "Certification ISO 13485 — Pharmaceutique",
-              client: "PlastiForm",
-              match: "Expert externe (reseau)",
-              score: 87,
-              budget: "12-18K$",
-              timeline: "120 jours",
-              status: "disponible" as const,
-              type: "inter",
-              missions: ["Audit documentation existante", "Gap analysis ISO 13485", "Plan de remediation"],
-              competences: ["Certification ISO", "Connaissance secteur pharmaceutique", "Audit qualite"],
-            },
-            {
-              title: "Optimisation logistique entrepot",
-              client: "MetalPro Inc.",
-              match: "LogiFlow",
-              score: 91,
-              budget: "35-55K$",
-              timeline: "60 jours",
-              status: "negociation" as const,
-              type: "intra",
-              missions: ["Analyse flux actuels", "Design nouveau layout", "Implementation WMS"],
-              competences: ["Logistique 4.0", "Systemes WMS", "Optimisation flux"],
-            },
-          ].map((opp, i) => (
-            <Card key={i} className="p-4 hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    {opp.status === "disponible" && <Badge className="bg-green-100 text-green-700 text-[9px]">NOUVELLE OPPORTUNITE</Badge>}
-                    <Badge variant="outline" className={cn("text-[9px]", opp.type === "intra" ? "text-blue-600 border-blue-300" : "text-purple-600 border-purple-300")}>{opp.type === "intra" ? "Intra-Cellule" : "Inter-Cellules"}</Badge>
-                  </div>
-                  <h4 className="text-sm font-bold text-gray-800">{opp.title}</h4>
-                  <p className="text-xs text-gray-500">{opp.client} · {opp.timeline}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-lg font-bold text-green-600">{opp.budget}</p>
-                  <p className="text-[10px] text-gray-400">Budget estime</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 mb-3">
-                <div>
-                  <p className="text-[10px] font-semibold text-gray-500 uppercase mb-1">Missions a realiser</p>
-                  {opp.missions.map((m, j) => (
-                    <div key={j} className="flex items-center gap-1.5 text-xs text-gray-600 mb-0.5">
-                      <CheckCircle2 className="h-3 w-3 text-green-500 shrink-0" /> {m}
+        {matches.length === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-6">Aucun matching en cours. Publiez un besoin pour trouver des partenaires.</p>
+        ) : (
+          <div className="space-y-3">
+            {matches.map((match) => {
+              const topCandidat = match.candidats?.[0];
+              return (
+                <Card key={match.id} className="p-4 hover:shadow-md transition-shadow">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge className={cn("text-[9px]",
+                          match.status === "complete" ? "bg-green-100 text-green-700" :
+                          match.status === "scout_needed" ? "bg-amber-100 text-amber-700" :
+                          match.status === "trisociation" ? "bg-purple-100 text-purple-700" :
+                          "bg-blue-100 text-blue-700"
+                        )}>{match.status.toUpperCase().replace("_", " ")}</Badge>
+                      </div>
+                      <h4 className="text-sm font-bold text-gray-800">{match.besoin}</h4>
+                      <p className="text-xs text-gray-500">
+                        {match.criteres.length > 0 && `Criteres: ${match.criteres.join(", ")}`}
+                      </p>
                     </div>
-                  ))}
-                </div>
-                <div>
-                  <p className="text-[10px] font-semibold text-gray-500 uppercase mb-1">Competences requises</p>
-                  {opp.competences.map((c, j) => (
-                    <div key={j} className="flex items-center gap-1.5 text-xs text-gray-600 mb-0.5">
-                      <CircleDot className="h-3 w-3 text-blue-500 shrink-0" /> {c}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-500">Match:</span>
-                  <div className="w-20 h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-blue-500 rounded-full" style={{ width: `${opp.score}%` }} />
+                    {topCandidat && (
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-blue-600">{topCandidat.score}%</p>
+                        <p className="text-[9px] text-gray-400">Meilleur match</p>
+                      </div>
+                    )}
                   </div>
-                  <span className="text-xs font-bold text-blue-600">{opp.score}%</span>
-                </div>
-                <div className="flex gap-2">
-                  {opp.status === "disponible" ? (
-                    <Button size="sm" className="text-xs gap-1 bg-green-600 hover:bg-green-700"><Hand className="h-3 w-3" /> Lever la main</Button>
-                  ) : (
-                    <Button size="sm" variant="outline" className="text-xs gap-1"><Eye className="h-3 w-3" /> Voir negociation</Button>
+
+                  {/* Candidats */}
+                  {match.candidats && match.candidats.length > 0 && (
+                    <div className="mb-3">
+                      <p className="text-[9px] font-semibold text-gray-500 uppercase mb-1">Candidats</p>
+                      {match.candidats.slice(0, 3).map((c, j) => (
+                        <div key={j} className="flex items-center gap-2 text-xs text-gray-600 mb-0.5">
+                          <div className="w-16 h-2 bg-gray-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-blue-500 rounded-full" style={{ width: `${c.score}%` }} />
+                          </div>
+                          <span className="font-medium">{c.nom}</span>
+                          <span className="text-gray-400">— {c.raison}</span>
+                        </div>
+                      ))}
+                    </div>
                   )}
-                  <Button size="sm" variant="outline" className="text-xs gap-1"><MessageSquare className="h-3 w-3" /> Details</Button>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
+
+                  <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                    <span className="text-[9px] text-gray-400">{match.candidats?.length || 0} candidat(s)</span>
+                    <div className="flex gap-2">
+                      {match.gagnant_ids.length > 0 && (
+                        <Button size="sm" className="text-xs gap-1.5 bg-purple-600 hover:bg-purple-700"><Video className="h-3.5 w-3.5" /> Trisociation</Button>
+                      )}
+                      {match.status === "scout_needed" && (
+                        <Button size="sm" variant="outline" className="text-xs gap-1.5 text-amber-700 border-amber-300"><Search className="h-3.5 w-3.5" /> Bot Scout</Button>
+                      )}
+                      <Button size="sm" variant="outline" className="text-xs gap-1.5"><Eye className="h-3.5 w-3.5" /> Details</Button>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
       </div>
       </div>
 
-      {/* Activite recente */}
+      {/* Activite recente — mock (futur: real events) */}
       <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
         <div className="bg-gradient-to-r from-gray-100 to-slate-100 px-4 py-2.5 border-b border-gray-200">
           <div className="flex items-center gap-2">
@@ -310,7 +324,7 @@ export function CellulesPage({ onNavigate }: CellulesPageProps) {
                   <AIcon className={cn("h-3.5 w-3.5", `text-${act.color}-600`)} />
                 </div>
                 <p className="text-xs text-gray-600 flex-1">{act.text}</p>
-                <span className="text-[10px] text-gray-400 shrink-0">{act.time}</span>
+                <span className="text-[9px] text-gray-400 shrink-0">{act.time}</span>
               </div>
             );
           })}
@@ -320,27 +334,24 @@ export function CellulesPage({ onNavigate }: CellulesPageProps) {
 
       {/* Cross-links */}
       <div className="grid grid-cols-2 gap-3">
-        {/* Cross-link Marketplace */}
         {onNavigate && (
           <Card className="p-3 bg-orange-50 border-orange-200 cursor-pointer hover:shadow-sm transition-shadow" onClick={() => onNavigate("marketplace")}>
             <div className="flex items-center gap-2">
               <Store className="h-4 w-4 text-orange-600" />
               <div>
                 <p className="text-xs font-bold text-orange-800">Publier un besoin sur le Marketplace</p>
-                <p className="text-[10px] text-orange-600">CarlOS preparera votre cahier et trouvera les meilleurs candidats</p>
+                <p className="text-[9px] text-orange-600">CarlOS preparera votre cahier et trouvera les meilleurs candidats</p>
               </div>
             </div>
           </Card>
         )}
-
-        {/* Cross-link Gouvernance */}
         {onNavigate && (
           <Card className="p-3 bg-violet-50 border-violet-200 cursor-pointer hover:shadow-sm transition-shadow" onClick={() => onNavigate("gouvernance")}>
             <div className="flex items-center gap-2">
               <Crown className="h-4 w-4 text-violet-600" />
               <div>
                 <p className="text-xs font-bold text-violet-800">Gouvernance de cette Cellule</p>
-                <p className="text-[10px] text-violet-600">Regles holacratiques, roles et TimeTokens</p>
+                <p className="text-[9px] text-violet-600">Regles holacratiques, roles et TimeTokens</p>
               </div>
             </div>
           </Card>
@@ -355,8 +366,8 @@ export function CellulesPage({ onNavigate }: CellulesPageProps) {
             <h3 className="text-sm font-bold text-blue-800">CarlOS — Facilitateur de Cellule Proactif</h3>
             <p className="text-xs text-blue-600 mt-1 italic">"Carl, j'ai remarque quelque chose. Tu travailles regulierement avec Automation Plus, Acier Quebec et PrecisionCNC. Si vous formiez une Cellule Orbit9, vos bots se coordonneraient et vous economiseriez TOUS 15%. Tu veux que je prepare les invitations?"</p>
             <div className="flex gap-2 mt-3">
-              <Button size="sm" className="text-xs gap-1 bg-blue-600 hover:bg-blue-700"><Send className="h-3 w-3" /> Preparer les invitations</Button>
-              <Button size="sm" variant="outline" className="text-xs gap-1 border-blue-300 text-blue-700"><Users className="h-3 w-3" /> Voir mes contacts analyses</Button>
+              <Button size="sm" className="text-xs gap-1.5 bg-blue-600 hover:bg-blue-700"><Send className="h-3.5 w-3.5" /> Preparer les invitations</Button>
+              <Button size="sm" variant="outline" className="text-xs gap-1.5 border-blue-300 text-blue-700"><Users className="h-3.5 w-3.5" /> Voir mes contacts analyses</Button>
             </div>
           </div>
         </div>

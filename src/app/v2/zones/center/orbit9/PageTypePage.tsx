@@ -27,6 +27,7 @@ export function PageTypePage() {
     { id: "composants", label: "Composants" },
     { id: "visualisations", label: "Visualisations" },
     { id: "patterns-app", label: "Patterns App" },
+    { id: "bulles-actions", label: "Bulles & Actions" },
   ];
 
   return (
@@ -459,14 +460,14 @@ export function PageTypePage() {
                     { code: "BCM", name: "CMO", color: "pink" },
                     { code: "BCS", name: "CSO", color: "red" },
                     { code: "BOO", name: "COO", color: "orange" },
-                    { code: "BFA", name: "Factory", color: "slate" },
+                    { code: "BFA", name: "Production", color: "slate" },
                     { code: "BHR", name: "CHRO", color: "teal" },
                     { code: "BIO", name: "CIO", color: "cyan" },
                     { code: "BCC", name: "CCO", color: "rose" },
                     { code: "BPO", name: "CPO", color: "fuchsia" },
                     { code: "BRO", name: "CRO", color: "amber" },
                     { code: "BLE", name: "Legal", color: "indigo" },
-                    { code: "BSE", name: "Security", color: "zinc" },
+                    { code: "BSE", name: "CISO", color: "zinc" },
                   ].map((bot) => (
                     <div key={bot.code} className="text-center">
                       <div className={cn("w-10 h-10 rounded-xl mx-auto flex items-center justify-center text-white text-[10px] font-bold", `bg-${bot.color}-600`)}>
@@ -1494,6 +1495,881 @@ export function PageTypePage() {
               </div>
             </>
           )}
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          {/* ═══ TAB 5 — BULLES & ACTIONS v2 (Taxonomie finale + Gemini) ═══ */}
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          {activeTab === "bulles-actions" && (
+            <>
+              {/* ── Intro v2 ── */}
+              <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4 text-indigo-600" />
+                    <span className="text-sm font-bold text-indigo-800">Taxonomie Bulles & Actions — v2</span>
+                  </div>
+                  <span className="text-[10px] bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full font-medium">Validée Gemini + audit complet</span>
+                </div>
+                <p className="text-xs text-indigo-700 mb-2">
+                  Chaque bulle = une responsabilité. Chaque bouton répond à : <strong>"Quelle est ma prochaine action cognitive?"</strong>
+                </p>
+                <div className="grid grid-cols-3 gap-2 text-[10px]">
+                  <div className="bg-white rounded-lg px-2 py-1.5 border border-indigo-100">
+                    <span className="font-semibold text-indigo-700">Règle #1</span>
+                    <p className="text-gray-500 mt-0.5">Max 3 boutons visibles → menu "..." pour le reste</p>
+                  </div>
+                  <div className="bg-white rounded-lg px-2 py-1.5 border border-indigo-100">
+                    <span className="font-semibold text-indigo-700">Règle #2</span>
+                    <p className="text-gray-500 mt-0.5">Jamais suggérer un bouton qui crée une boucle</p>
+                  </div>
+                  <div className="bg-white rounded-lg px-2 py-1.5 border border-indigo-100">
+                    <span className="font-semibold text-indigo-700">Naming</span>
+                    <p className="text-gray-500 mt-0.5">"Fil parallèle" ✓ · "Nuancer" (≠ Contre-argument)</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* ═══════════════════════════════════════════════════ */}
+              {/* A — CATALOGUE D'ACTIONS (référence, extensible)  */}
+              {/* ═══════════════════════════════════════════════════ */}
+              <div>
+                <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-3 flex items-center gap-2">
+                  <Zap className="h-3.5 w-3.5 text-indigo-500" /> A — Catalogue complet des actions
+                  <span className="text-[10px] text-gray-400 font-normal normal-case">— ajouter ici quand une nouvelle action émerge</span>
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Colonne 1 — Branches & Workflow */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 space-y-2">
+                    <div className="text-[10px] font-bold text-blue-700 uppercase tracking-wide">Branches & Workflow</div>
+                    {[
+                      ["🌿", "Fil parallèle", "Ouvrir un sous-fil sans quitter le principal"],
+                      ["📋", "Synthétiser", "Résumer & extraire les points clés du fil"],
+                      ["⏸", "Parker ce fil", "Mettre en pause pour revenir plus tard"],
+                      ["🎯", "Promouvoir en projet", "Transformer en action concrète (Cahier SMART)"],
+                      ["📤", "Exporter / Partager", "Copier, télécharger ou envoyer à l'équipe"],
+                    ].map(([e, l, d]) => (
+                      <div key={String(l)} className="flex items-start gap-2">
+                        <span className="text-base shrink-0 leading-none">{e}</span>
+                        <div><div className="text-[11px] font-semibold text-gray-800">{l}</div><div className="text-[10px] text-gray-400">{d}</div></div>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Colonne 2 — Confrontation & Profondeur */}
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-3 space-y-2">
+                    <div className="text-[10px] font-bold text-red-700 uppercase tracking-wide">Confrontation & Profondeur</div>
+                    {[
+                      ["⚔️", "Challenger", "Défier la réponse du bot (max 2/bulle, 4/fil)"],
+                      ["💬", "Nuancer", "Apporter une perspective alternative (≠ Contre-argument)"],
+                      ["🔀", "Fusionner", "Réconcilier plusieurs perspectives en une synthèse"],
+                      ["💬", "Débat entre bots", "Lancer un débat structuré entre 2+ bots"],
+                      ["👥", "Consulter [bot]", "Inviter un autre bot sur la question en cours"],
+                    ].map(([e, l, d]) => (
+                      <div key={String(l)} className="flex items-start gap-2">
+                        <span className="text-base shrink-0 leading-none">{e}</span>
+                        <div><div className="text-[11px] font-semibold text-gray-800">{l}</div><div className="text-[10px] text-gray-400">{d}</div></div>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Colonne 3 — Conservation & Mémoire */}
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-2">
+                    <div className="text-[10px] font-bold text-amber-700 uppercase tracking-wide">Conservation & Mémoire</div>
+                    {[
+                      ["💎", "Cristalliser", "Sauvegarder l'insight dans la banque d'idées"],
+                      ["📌", "Extraire → rapport", "Pousser vers un pré-rapport ou document"],
+                      ["🔁", "Approfondir", "Demander plus de détail sur ce point spécifique"],
+                    ].map(([e, l, d]) => (
+                      <div key={String(l)} className="flex items-start gap-2">
+                        <span className="text-base shrink-0 leading-none">{e}</span>
+                        <div><div className="text-[11px] font-semibold text-gray-800">{l}</div><div className="text-[10px] text-gray-400">{d}</div></div>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Colonne 4 — Nouvelles (Gemini) */}
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 space-y-2">
+                    <div className="text-[10px] font-bold text-emerald-700 uppercase tracking-wide flex items-center gap-1">
+                      Actions futures <span className="bg-emerald-200 text-emerald-800 px-1 rounded text-[9px]">Gemini suggest.</span>
+                    </div>
+                    {[
+                      ["⚡", "Plan d'action", "Générer un plan actionnable immédiat — Focus Card & Verdict"],
+                      ["🛡️", "Évaluer les risques", "Matrice de risques sur la situation — Normal Bot & Focus"],
+                      ["👤", "Déléguer", "Assigner à un membre de l'équipe — Synthesis & Verdict"],
+                      ["🔮", "Scénario Et si?", "Explorer des hypothèses alternatives — Normal Bot Brainstorm"],
+                    ].map(([e, l, d]) => (
+                      <div key={String(l)} className="flex items-start gap-2">
+                        <span className="text-base shrink-0 leading-none">{e}</span>
+                        <div><div className="text-[11px] font-semibold text-gray-800">{l}</div><div className="text-[10px] text-gray-400">{d}</div></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* ═══════════════════════════════════════════════════ */}
+              {/* B — OPTIONS TEXTUELLES vs BOUTONS D'ACTION         */}
+              {/* ═══════════════════════════════════════════════════ */}
+              <div>
+                <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-3 flex items-center gap-2">
+                  <MessageSquare className="h-3.5 w-3.5 text-violet-500" /> B — Options textuelles du bot vs Boutons d'action
+                </h3>
+                <div className="bg-violet-50 border border-violet-200 rounded-xl p-4 mb-3">
+                  <p className="text-xs text-violet-800 leading-relaxed">
+                    <strong>Ce sont deux niveaux distincts.</strong> Les options textuelles répondent à <em>"de quoi on parle?"</em> (contexte-spécifique, générées par le bot).
+                    Les boutons d'action répondent à <em>"comment je veux traiter ça?"</em> (toujours disponibles, structurels).
+                    Ils coexistent avec une hiérarchie visuelle claire — options en premier (plus grosses), actions en dessous (plus discrètes).
+                  </p>
+                </div>
+                {/* Mock visuel de cohabitation */}
+                <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                  <div className="flex gap-3">
+                    <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm shrink-0 mt-1 ring-2 ring-blue-300">🎩</div>
+                    <div className="bg-white border border-l-[3px] border-blue-200 border-l-blue-400 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm max-w-sm">
+                      <div className="text-xs font-semibold text-blue-700 mb-1">CarlOS — CEO</div>
+                      <p className="text-sm text-gray-700 mb-3 leading-relaxed">Le pipeline affiche $73K en attente. Y'a-t-il un prospect sur lequel on devrait accélérer?</p>
+                      {/* Options textuelles — niveau 1 (contenu) */}
+                      <div className="mb-2.5">
+                        <div className="text-[10px] text-gray-400 font-medium mb-1">Options (générées par le bot) :</div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {["Bauches — $45K", "Pourquoi ça stagne?", "Plan closing Q2"].map(o => (
+                            <button key={o} className="text-xs px-3 py-1.5 rounded-full bg-blue-50 border border-blue-300 text-blue-700 font-medium cursor-pointer hover:bg-blue-100">{o}</button>
+                          ))}
+                        </div>
+                      </div>
+                      {/* Séparateur */}
+                      <div className="border-t border-gray-100 pt-2">
+                        <div className="text-[10px] text-gray-400 font-medium mb-1">Actions (toujours disponibles) :</div>
+                        <div className="flex flex-wrap gap-1.5">
+                          <button className="text-[10px] px-2 py-1 rounded-full bg-green-50 border border-green-200 text-green-700 font-medium cursor-pointer">🌿 Fil parallèle</button>
+                          <button className="text-[10px] px-2 py-1 rounded-full bg-red-50 border border-red-200 text-red-600 font-medium cursor-pointer">⚔️ Challenger</button>
+                          <button className="text-[10px] px-2 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 font-medium cursor-pointer">💎 Cristalliser</button>
+                          <button className="text-[10px] px-2 py-1 rounded-full bg-gray-100 border border-gray-200 text-gray-500 font-medium cursor-pointer">···</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex gap-4 text-[10px]">
+                    <span className="text-green-600">✅ Deux niveaux clairs — pas de confusion</span>
+                    <span className="text-gray-400">Options au-dessus = contenu · Actions en dessous = structure</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* ══════════════════════════════ */}
+              {/* BULLE 1 — FOCUS CARD */}
+              {/* ══════════════════════════════ */}
+              {/* ═══════════════════════════════════════════════════ */}
+              {/* C — BULLES DE PRODUCTION (8 types)               */}
+              {/* ═══════════════════════════════════════════════════ */}
+              <div>
+                <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-3 flex items-center gap-2">
+                  <MessageSquare className="h-3.5 w-3.5 text-gray-500" /> C — Bulles de production
+                  <span className="text-[10px] text-gray-400 font-normal normal-case">— boutons assignés par type</span>
+                </h3>
+                <div className="space-y-4">
+
+                {/* === FOCUS CARD === */}
+                <div className="border border-blue-200 rounded-xl overflow-hidden">
+                  <div className="bg-blue-600 text-white px-4 py-2 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-sm">1 — Focus Card</span>
+                      <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">Clic dashboard → nouvelle discussion</span>
+                    </div>
+                    <span className="text-[10px] opacity-70">Rôle : ancrer + choisir sujet & mode</span>
+                  </div>
+                  <div className="p-4 bg-blue-50">
+                    <div className="flex gap-3">
+                      <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white shrink-0 ring-2 ring-blue-300 mt-1">🎩</div>
+                      <div className="bg-white border border-l-[3px] border-blue-200 border-l-blue-400 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm max-w-md">
+                        <div className="flex items-center gap-1.5 mb-2"><span className="text-xs font-bold text-blue-700">CarlOS</span><span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-600 text-white font-semibold">CEO</span></div>
+                        <div className="space-y-1 mb-2 pb-2 border-b border-gray-100 text-xs">
+                          <div className="flex justify-between"><span className="text-gray-500">Bauches inc.</span><span className="font-semibold text-blue-700">$45 000</span></div>
+                          <div className="flex justify-between"><span className="text-gray-500">Innovtech</span><span className="font-semibold text-blue-700">$28 500</span></div>
+                        </div>
+                        <p className="text-sm text-blue-800 mb-3">Le pipeline montre 73K$ en attente. Y'a-t-il un prospect à accélérer?</p>
+                        <div className="mb-2">
+                          <div className="text-[10px] text-gray-400 font-medium mb-1.5">Options (bot) :</div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {["Top opportunités", "Pourquoi ça stagne?", "Plan closing"].map(o => (
+                              <button key={o} className="text-xs px-2.5 py-1 rounded-full bg-blue-50 border border-blue-300 text-blue-700 font-medium cursor-pointer">"{o}"</button>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="border-t border-gray-100 pt-2">
+                          <div className="text-[10px] text-gray-400 font-medium mb-1.5">Actions :</div>
+                          <div className="flex flex-wrap gap-1.5">
+                            <button className="text-[10px] px-2.5 py-1 rounded-full bg-blue-50 border border-blue-300 text-blue-700 font-medium cursor-pointer">🔍 Analyser</button>
+                            <button className="text-[10px] px-2.5 py-1 rounded-full bg-indigo-50 border border-indigo-300 text-indigo-700 font-medium cursor-pointer">🎯 Décider</button>
+                            <button className="text-[10px] px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-300 text-emerald-700 font-medium cursor-pointer">⚡ Plan d'action</button>
+                          </div>
+                          <div className="flex flex-wrap gap-1 mt-1.5">
+                            <div className="text-[10px] text-gray-400 font-medium w-full mb-1">Mode :</div>
+                            {[["👁","Analyse"],["🎯","Stratégie"],["⚖️","Décision"],["🔥","Crise"]].map(([e,l]) => (
+                              <button key={String(l)} className="text-[10px] px-2 py-0.5 rounded-lg bg-white border border-gray-200 text-gray-600 font-medium cursor-pointer">{e} {l}</button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* === NORMAL BOT === */}
+                <div className="border border-gray-200 rounded-xl overflow-hidden">
+                  <div className="bg-gray-800 text-white px-4 py-2 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-sm">2 — Réponse Bot (normale)</span>
+                      <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">Réponse standard</span>
+                    </div>
+                    <span className="text-[10px] opacity-70">Rôle : traiter la réponse</span>
+                  </div>
+                  <div className="p-4 bg-gray-50">
+                    <div className="flex gap-3">
+                      <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white shrink-0 ring-2 ring-blue-300 mt-1">🎩</div>
+                      <div className="bg-white border border-l-[3px] border-gray-200 border-l-blue-400 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm max-w-md">
+                        <div className="text-xs font-semibold text-blue-700 mb-1">CarlOS — CEO</div>
+                        <p className="text-sm text-gray-700 mb-3">Sur Bauches, je recommande une approche CREDO directe — valider le budget avant d'exposer la solution tech.</p>
+                        <div className="mb-2">
+                          <div className="text-[10px] text-gray-400 font-medium mb-1.5">Options (bot) :</div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {["Approfondir les finances", "Voir les risques", "Planifier l'appel"].map(o => (
+                              <button key={o} className="text-xs px-2.5 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 font-medium cursor-pointer">"{o}"</button>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="border-t border-gray-100 pt-2">
+                          <div className="text-[10px] text-gray-400 font-medium mb-1.5">Actions :</div>
+                          <div className="flex flex-wrap gap-1.5">
+                            <button className="text-[10px] px-2.5 py-1 rounded-full bg-green-50 border border-green-200 text-green-700 font-medium cursor-pointer">🌿 Fil parallèle</button>
+                            <button className="text-[10px] px-2.5 py-1 rounded-full bg-red-50 border border-red-200 text-red-600 font-medium cursor-pointer">⚔️ Challenger</button>
+                            <button className="text-[10px] px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 font-medium cursor-pointer">💎 Cristalliser</button>
+                            <button className="text-[10px] px-2 py-1 rounded-full bg-gray-100 border border-gray-200 text-gray-500 cursor-pointer">···</button>
+                          </div>
+                          <div className="text-[10px] text-gray-400 mt-1">Menu ··· : 👥 Consulter · 🔁 Approfondir · 🛡️ Risques · 🔮 Scénario Et si?</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-2 text-[10px] text-amber-600 flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> Challenger se désactive si quota atteint (max 2/bulle, 4/fil)</div>
+                  </div>
+                </div>
+
+                {/* === CHALLENGE === */}
+                <div className="border border-red-200 rounded-xl overflow-hidden">
+                  <div className="bg-red-600 text-white px-4 py-2 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-sm">3 — Challenge</span>
+                      <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">Déjà dans la friction</span>
+                    </div>
+                    <span className="text-[10px] opacity-70">Rôle : pousser ou changer d'angle</span>
+                  </div>
+                  <div className="p-4 bg-red-50">
+                    <div className="flex items-center gap-2 mb-2 ml-11">
+                      <div className="w-2.5 h-2.5 rounded-full bg-red-400 border-2 border-red-200" />
+                      <div className="w-4 h-px bg-red-300" />
+                      <span className="text-[10px] font-semibold text-red-600 bg-red-50 px-2 py-0.5 rounded-full border border-red-200">⚔️ Challenge — CarlOS</span>
+                    </div>
+                    <div className="flex gap-3">
+                      <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white shrink-0 ring-2 ring-red-200 mt-1">🎩</div>
+                      <div className="bg-white border border-l-[3px] border-red-100 border-l-red-400 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm max-w-md">
+                        <div className="text-xs font-semibold text-blue-700 mb-1">CarlOS — CEO · Défense</div>
+                        <p className="text-sm text-gray-700 mb-3">L'approche CREDO est validée par 47 cycles réels. Le coût d'inaction si on n'engage pas Bauches cette semaine est estimé à $28K perdu au concurrent.</p>
+                        <div className="border-t border-gray-100 pt-2">
+                          <div className="text-[10px] text-gray-400 font-medium mb-1.5">Actions :</div>
+                          <div className="flex flex-wrap gap-1.5">
+                            <button className="text-[10px] px-2.5 py-1 rounded-full bg-green-50 border border-green-200 text-green-700 font-medium cursor-pointer">🌿 Fil parallèle</button>
+                            <button className="text-[10px] px-2.5 py-1 rounded-full bg-violet-50 border border-violet-200 text-violet-700 font-medium cursor-pointer">💬 Nuancer</button>
+                            <button className="text-[10px] px-2.5 py-1 rounded-full bg-cyan-50 border border-cyan-200 text-cyan-700 font-medium cursor-pointer">🌊 Deep</button>
+                          </div>
+                          <div className="text-[10px] text-gray-400 mt-1">Mode recommandé : Débat · Deep · Innovation</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-2 text-[10px] text-red-600 flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> Max 2 challenges par bulle source — bouton grisé après</div>
+                  </div>
+                </div>
+
+                {/* === CONSULTATION === */}
+                <div className="border border-violet-200 rounded-xl overflow-hidden">
+                  <div className="bg-violet-600 text-white px-4 py-2 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-sm">4 — Consultation</span>
+                      <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">Bot invité (multi-perspectives)</span>
+                    </div>
+                    <span className="text-[10px] opacity-70">Rôle : confronter ou consolider</span>
+                  </div>
+                  <div className="p-4 bg-violet-50">
+                    <div className="flex items-center gap-2 mb-2 ml-11">
+                      <div className="w-2.5 h-2.5 rounded-full bg-violet-400 border-2 border-violet-200" />
+                      <div className="w-4 h-px bg-violet-300" />
+                      <span className="text-[10px] font-semibold text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full border border-violet-200">👥 Consultation — François CFO</span>
+                    </div>
+                    <div className="flex gap-3">
+                      <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-white shrink-0 ring-2 ring-violet-200 mt-1">💰</div>
+                      <div className="bg-white border border-l-[3px] border-violet-100 border-l-emerald-400 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm max-w-md">
+                        <div className="text-xs font-semibold text-emerald-700 mb-1">François — CFO</div>
+                        <p className="text-sm text-gray-700 mb-3">Côté finances, Bauches a un DSO de 67 jours. Si on close un $45K, ça améliore le ratio de trésorerie de 12%. Je recommande d'aller vite.</p>
+                        <div className="border-t border-gray-100 pt-2">
+                          <div className="text-[10px] text-gray-400 font-medium mb-1.5">Actions :</div>
+                          <div className="flex flex-wrap gap-1.5">
+                            <button className="text-[10px] px-2.5 py-1 rounded-full bg-red-50 border border-red-200 text-red-600 font-medium cursor-pointer">⚔️ Challenger CFO</button>
+                            <button className="text-[10px] px-2.5 py-1 rounded-full bg-violet-50 border border-violet-200 text-violet-700 font-medium cursor-pointer">💬 Débat CEO vs CFO</button>
+                            <button className="text-[10px] px-2.5 py-1 rounded-full bg-teal-50 border border-teal-200 text-teal-700 font-medium cursor-pointer">🔀 Fusionner</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* === SYNTHESIS DORÉE === */}
+                <div className="border border-amber-300 rounded-xl overflow-hidden">
+                  <div className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white px-4 py-2 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-sm">5 — Synthèse (dorée)</span>
+                      <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">Conclusion du fil</span>
+                    </div>
+                    <span className="text-[10px] opacity-70">Rôle : finaliser → agir</span>
+                  </div>
+                  <div className="p-4 bg-amber-50">
+                    <div className="flex gap-3">
+                      <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white shrink-0 ring-2 ring-amber-300 mt-1">🎩</div>
+                      <div className="bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-200 rounded-2xl rounded-tl-md px-4 py-3 shadow-md max-w-md">
+                        <div className="text-xs font-bold text-amber-700 mb-2 flex items-center gap-1.5"><Sparkles className="h-3 w-3" /> Synthèse CarlOS</div>
+                        <p className="text-sm text-amber-900 mb-3">Décision : closer Bauches cette semaine (budget validé, DSO favorable, urgence concurrentielle). Plan : appel lundi → démo mardi → contrat vendredi.</p>
+                        <div className="border-t border-amber-200 pt-2">
+                          <div className="text-[10px] text-gray-400 font-medium mb-1.5">Actions — finalisation seulement :</div>
+                          <div className="flex flex-wrap gap-1.5">
+                            <button className="text-[10px] px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-300 text-emerald-700 font-medium cursor-pointer">💎 Cristalliser</button>
+                            <button className="text-[10px] px-2.5 py-1 rounded-full bg-gray-100 border border-gray-200 text-gray-700 font-medium cursor-pointer">📤 Exporter</button>
+                            <button className="text-[10px] px-2.5 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 font-medium cursor-pointer">🎯 Promouvoir en projet</button>
+                          </div>
+                          <div className="text-[10px] text-red-500 mt-1.5 flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> Pas de modes de réflexion — on est en phase de conclusion</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* === COACHING === */}
+                <div className="border border-blue-200 rounded-xl overflow-hidden">
+                  <div className="bg-blue-500 text-white px-4 py-2 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-sm">6 — Coaching</span>
+                      <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">Intervention proactive de CarlOS</span>
+                    </div>
+                    <span className="text-[10px] opacity-70">Rôle : guider le flux</span>
+                  </div>
+                  <div className="p-4 bg-blue-50">
+                    <div className="flex gap-3">
+                      <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white shrink-0 ring-2 ring-blue-300 mt-1">🎩</div>
+                      <div className="bg-blue-50 border border-blue-200 border-l-[3px] border-l-blue-400 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm max-w-md">
+                        <div className="text-xs font-semibold text-blue-700 mb-1 flex items-center gap-1"><Zap className="h-3 w-3" /> CarlOS — Coaching</div>
+                        <p className="text-sm text-blue-800 mb-3">On tourne sur le même angle depuis 6 échanges. Il n'y aura pas plus d'info ici. C'est le moment de décider ou de cristalliser.</p>
+                        <div className="text-[10px] text-gray-400 font-medium mb-1.5">Options dynamiques (CarlOS choisit) :</div>
+                        <div className="flex flex-wrap gap-1.5">
+                          <button className="text-[10px] px-2.5 py-1 rounded-full bg-white border border-blue-300 text-blue-700 font-medium cursor-pointer">Parker et nouveau fil</button>
+                          <button className="text-[10px] px-2.5 py-1 rounded-full bg-white border border-blue-300 text-blue-700 font-medium cursor-pointer">Forcer la synthèse</button>
+                          <button className="text-[10px] px-2.5 py-1 rounded-full bg-white border border-blue-300 text-blue-700 font-medium cursor-pointer">Revenir au sujet</button>
+                        </div>
+                        <div className="text-[10px] text-blue-500 mt-2">Pas de boutons d'action additionnels — CarlOS a déjà pris le contrôle</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* === VOICE === */}
+                <div className="border border-gray-200 rounded-xl overflow-hidden">
+                  <div className="bg-gray-600 text-white px-4 py-2 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-sm">7 — Voice</span>
+                      <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">Transcript vocal LiveKit</span>
+                    </div>
+                    <span className="text-[10px] opacity-70">Rôle : idem Normal Bot</span>
+                  </div>
+                  <div className="p-4 bg-gray-50">
+                    <p className="text-xs text-gray-600">Même boutons que <strong>Normal Bot</strong> + icône 🎙️ Vocal visible. Pas de traitement différent. Le transcript est injecté comme message assistant standard.</p>
+                  </div>
+                </div>
+
+                </div>
+              </div>
+
+              {/* ═══════════════════════════════════════════════════ */}
+              {/* D — BULLES SIMULATION (design ref, pas encore live) */}
+              {/* ═══════════════════════════════════════════════════ */}
+              <div>
+                <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-3 flex items-center gap-2">
+                  <Sparkles className="h-3.5 w-3.5 text-amber-500" /> D — Bulles Simulation (design ref)
+                  <span className="text-[10px] text-gray-400 font-normal normal-case">— existent dans les scénarios, pas encore dans le chat live</span>
+                </h3>
+                <div className="space-y-3">
+                  {[
+                    {
+                      num: "8", name: "Verdict Card (Go/No-Go)", color: "indigo", desc: "Conclusion structurée d'un mode Décision — matrice pondérée + consensus + plan",
+                      actions: ["⚔️ Challenger verdict (max 1)", "💬 Nuancer", "📋 Cahier SMART", "📤 Exporter"],
+                      modes: ["Débat", "Crise", "Analyse"],
+                      note: "Max 1 challenge du verdict — après : actions concrètes seulement",
+                    },
+                    {
+                      num: "9", name: "Perspectives Card (multi-bots)", color: "violet", desc: "Résultat d'une consultation simultanée de 2+ bots — perspectives juxtaposées",
+                      actions: ["⚔️ Challenger [bot]", "💬 Débat entre bots", "🔀 Fusionner", "▶ Synthétiser"],
+                      modes: ["Débat", "Analyse", "Deep"],
+                      note: "",
+                    },
+                    {
+                      num: "10", name: "Synthèse Card (riche)", color: "amber", desc: "Synthèse élaborée avec axes, données & recommandations — cahier-components",
+                      actions: ["⚔️ Challenger synthèse (max 1)", "📁 Générer document", "🎯 Promouvoir en projet"],
+                      modes: [],
+                      note: "Max 1 challenge — pas de modes de réflexion (on conclut)",
+                    },
+                    {
+                      num: "11", name: "Pré-rapport Card", color: "gray", desc: "Document structuré généré après un diagnostic — prêt à exporter",
+                      actions: ["📤 Exporter (.md / PDF)", "▶ Voir la suite"],
+                      modes: [],
+                      note: "Lecture seule — pas d'interaction cognitive",
+                    },
+                  ].map((b) => (
+                    <div key={b.num} className={cn("border rounded-xl p-3", `border-${b.color}-200 bg-${b.color}-50`)}>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className={cn("text-xs font-bold", `text-${b.color}-800`)}>{b.num} — {b.name}</span>
+                          </div>
+                          <p className="text-[10px] text-gray-500 mb-2">{b.desc}</p>
+                          <div className="flex flex-wrap gap-1.5 mb-1.5">
+                            {b.actions.map(a => (
+                              <span key={a} className="text-[10px] px-2 py-0.5 rounded-full bg-white border border-gray-200 text-gray-700 font-medium">{a}</span>
+                            ))}
+                          </div>
+                          {b.modes.length > 0 && (
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] text-gray-400 font-medium">Modes :</span>
+                              {b.modes.map(m => <span key={m} className="text-[10px] px-1.5 py-0.5 rounded bg-white border border-gray-200 text-gray-500">{m}</span>)}
+                            </div>
+                          )}
+                          {b.note && <p className="text-[10px] text-amber-600 mt-1 flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{b.note}</p>}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* ═══════════════════════════════════════════════════ */}
+              {/* E — ANTI-LOOP : 5 règles Sentinelle               */}
+              {/* ═══════════════════════════════════════════════════ */}
+              <div>
+                <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-3 flex items-center gap-2">
+                  <AlertTriangle className="h-3.5 w-3.5 text-amber-500" /> E — Règles anti-boucle (Sentinelle CarlOS)
+                  <span className="text-[10px] text-gray-400 font-normal normal-case">— validées Gemini · intervention automatique</span>
+                </h3>
+                <div className="space-y-2">
+                  {[
+                    {
+                      id: "a", trigger: "3× même question user", color: "amber",
+                      msg: "On tourne autour du même angle depuis un moment. Changeons d'approche.",
+                      actions: ["Reformuler", "Fil parallèle", "Nuancer"],
+                    },
+                    {
+                      id: "b", trigger: ">4 challenges total dans le fil", color: "red",
+                      msg: "Les positions sont claires — il n'y a rien de plus qui va sortir. C'est le moment de trancher.",
+                      actions: ["Synthèse finale", "Décider Go/No-Go", "Cristalliser"],
+                    },
+                    {
+                      id: "c", trigger: ">8 échanges bot sans synthèse", color: "orange",
+                      msg: "On a bien exploré. Veux-tu synthétiser ou passer à l'action?",
+                      actions: ["Synthétiser", "Cahier SMART", "Cristalliser et continuer"],
+                    },
+                    {
+                      id: "d", trigger: "Branche à >2 niveaux de profondeur", color: "purple",
+                      msg: "Tu es à 2+ niveaux de branche. Finalise ou remonte vers le fil principal.",
+                      actions: ["Synthétiser cette branche", "Retour au fil principal"],
+                    },
+                    {
+                      id: "e", trigger: ">20 min dans un fil sans décision (futur)", color: "gray",
+                      msg: "Ça fait 20 min sur ce sujet. On synthétise, on parke, ou on force une décision?",
+                      actions: ["Synthétiser", "Parker ce fil", "Forcer une décision"],
+                      future: true,
+                    },
+                  ].map((r) => (
+                    <div key={r.id} className={cn("border rounded-xl p-3", r.future ? "border-dashed border-gray-300 bg-gray-50 opacity-60" : `border-${r.color}-200 bg-${r.color}-50`)}>
+                      <div className="flex items-start gap-3">
+                        <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full shrink-0 mt-0.5", r.future ? "bg-gray-200 text-gray-500" : `bg-${r.color}-200 text-${r.color}-800`)}>
+                          {r.id.toUpperCase()}{r.future ? " — futur" : ""}
+                        </span>
+                        <div className="flex-1">
+                          <div className="text-[11px] font-bold text-gray-700 mb-0.5">Déclencheur : <span className="font-normal">{r.trigger}</span></div>
+                          <p className="text-[10px] text-gray-500 italic mb-2">"{r.msg}"</p>
+                          <div className="flex flex-wrap gap-1">
+                            {r.actions.map(a => (
+                              <span key={a} className="text-[10px] px-2 py-0.5 rounded-full bg-white border border-gray-200 text-gray-700 font-medium">{a}</span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* ═══════════════════════════════════════════════════ */}
+              {/* F — ACTIONS À AJOUTER (extensible)                */}
+              {/* ═══════════════════════════════════════════════════ */}
+              <div>
+                <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-3 flex items-center gap-2">
+                  <Plus className="h-3.5 w-3.5 text-emerald-500" /> F — Ajouter une nouvelle action
+                  <span className="text-[10px] text-gray-400 font-normal normal-case">— quand une nouvelle action émerge en utilisation réelle</span>
+                </h3>
+                <div className="bg-emerald-50 border border-dashed border-emerald-300 rounded-xl p-4">
+                  <p className="text-xs text-emerald-800 mb-3">Pour ajouter une action, documenter ici :</p>
+                  <div className="grid grid-cols-4 gap-2 text-[10px] mb-3">
+                    {["Emoji + Nom", "Rôle (1 phrase)", "Sur quelle(s) bulle(s)", "Règle anti-boucle si applicable"].map(h => (
+                      <div key={h} className="bg-white border border-emerald-200 rounded-lg px-2 py-1.5 font-semibold text-emerald-700">{h}</div>
+                    ))}
+                  </div>
+                  <div className="space-y-2">
+                    {[
+                      ["⚡ Plan d'action", "Générer un plan actionnable immédiat", "Focus Card · Verdict Card", "—"],
+                      ["🛡️ Évaluer les risques", "Matrice de risques sur la situation", "Focus Card · Normal Bot", "1 seul par fil"],
+                      ["👤 Déléguer", "Assigner à un membre de l'équipe", "Synthesis · Verdict Card", "—"],
+                      ["🔮 Scénario Et si?", "Explorer des hypothèses alternatives", "Normal Bot (mode Brainstorm)", "Max 2/fil"],
+                    ].map(([n, r, b, anti]) => (
+                      <div key={String(n)} className="grid grid-cols-4 gap-2 text-[10px]">
+                        <div className="bg-white border border-gray-200 rounded-lg px-2 py-1 font-medium text-gray-800">{n}</div>
+                        <div className="bg-white border border-gray-200 rounded-lg px-2 py-1 text-gray-500">{r}</div>
+                        <div className="bg-white border border-gray-200 rounded-lg px-2 py-1 text-gray-500">{b}</div>
+                        <div className="bg-white border border-gray-200 rounded-lg px-2 py-1 text-gray-400">{anti}</div>
+                      </div>
+                    ))}
+                    {/* Ligne vide pour ajout futur */}
+                    <div className="grid grid-cols-4 gap-2 text-[10px]">
+                      {["+ Nouvelle action", "...", "...", "..."].map((v, i) => (
+                        <div key={i} className="bg-emerald-50 border border-dashed border-emerald-300 rounded-lg px-2 py-1 text-emerald-400 italic">{v}</div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ══════════════════════════════════════════════════════════ */}
+              {/* G — CARLOS CHEF D'ORCHESTRE                              */}
+              {/* ══════════════════════════════════════════════════════════ */}
+              <div>
+                <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-3 flex items-center gap-2">
+                  <Crown className="h-3.5 w-3.5 text-purple-500" /> G — CarlOS Chef d'Orchestre
+                  <span className="text-[10px] text-gray-400 font-normal normal-case">— Comportements intelligents : questions d'abord + équipe 3 bots</span>
+                </h3>
+
+                {/* G.1 — Questions diagnostiques */}
+                <div className="mb-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <MessageSquare className="h-3 w-3 text-blue-500" />
+                    <span className="text-[11px] font-bold text-gray-700">G.1 — Questions diagnostiques avant de répondre</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200 font-medium">Validé Gemini ✓</span>
+                  </div>
+                  <p className="text-[10px] text-gray-400 mb-3">
+                    Règle : si message &lt; 20 mots <strong>sans contexte actionnable</strong> → CarlOS pose 2-3 questions ciblées AVANT de répondre. Objectif : aller chercher le gras autour de l'os.
+                  </p>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    {/* Mock Crise */}
+                    <div className="bg-gray-50 rounded-xl border border-gray-200 p-3">
+                      <div className="text-[10px] font-bold text-orange-600 mb-2 flex items-center gap-1">
+                        <Flame className="h-2.5 w-2.5" /> Crise — User dit "allo"
+                      </div>
+                      {/* User bubble */}
+                      <div className="flex justify-end mb-2">
+                        <div className="bg-blue-600 text-white text-[10px] rounded-xl px-2.5 py-1.5 max-w-[70%]">allo</div>
+                      </div>
+                      {/* CarlOS response */}
+                      <div className="flex gap-1.5">
+                        <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center text-white text-[8px] shrink-0 mt-0.5">🎩</div>
+                        <div className="bg-white border border-blue-100 rounded-xl px-2.5 py-2 text-[10px] text-gray-700 shadow-sm">
+                          <p className="font-semibold text-blue-700 mb-1.5">Avant d'aller plus loin :</p>
+                          <p className="mb-1">1. Quelle est la situation d'urgence?</p>
+                          <p className="mb-1">2. Impact estimé en $$ ou en clients?</p>
+                          <p>3. Actions déjà prises?</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Mock Analyse */}
+                    <div className="bg-gray-50 rounded-xl border border-gray-200 p-3">
+                      <div className="text-[10px] font-bold text-blue-600 mb-2 flex items-center gap-1">
+                        <Eye className="h-2.5 w-2.5" /> Analyse — User dit "pipeline?"
+                      </div>
+                      <div className="flex justify-end mb-2">
+                        <div className="bg-blue-600 text-white text-[10px] rounded-xl px-2.5 py-1.5 max-w-[70%]">pipeline?</div>
+                      </div>
+                      <div className="flex gap-1.5">
+                        <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center text-white text-[8px] shrink-0 mt-0.5">🎩</div>
+                        <div className="bg-white border border-blue-100 rounded-xl px-2.5 py-2 text-[10px] text-gray-700 shadow-sm">
+                          <p className="font-semibold text-blue-700 mb-1.5">Ciblons :</p>
+                          <p className="mb-1">1. Quel aspect t'inquiète — volume, conversion, vitesse?</p>
+                          <p className="mb-1">2. Sur quel horizon — Q1, Q2 ou annuel?</p>
+                          <p>3. Un prospect spécifique ou tout le pipe?</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Mock Débat */}
+                    <div className="bg-gray-50 rounded-xl border border-gray-200 p-3">
+                      <div className="text-[10px] font-bold text-violet-600 mb-2 flex items-center gap-1">
+                        <Scale className="h-2.5 w-2.5" /> Débat — User dit "débat"
+                      </div>
+                      <div className="flex justify-end mb-2">
+                        <div className="bg-blue-600 text-white text-[10px] rounded-xl px-2.5 py-1.5 max-w-[70%]">débat</div>
+                      </div>
+                      <div className="flex gap-1.5">
+                        <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center text-white text-[8px] shrink-0 mt-0.5">🎩</div>
+                        <div className="bg-white border border-blue-100 rounded-xl px-2.5 py-2 text-[10px] text-gray-700 shadow-sm">
+                          <p className="font-semibold text-blue-700 mb-1.5">Sur quoi on se bat?</p>
+                          <p className="mb-1">1. Le sujet à débattre?</p>
+                          <p className="mb-1">2. Ta position de départ?</p>
+                          <p>3. Tu veux qu'on soit 2 ou 3 dans ce débat?</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* G.2 — Équipe 3 bots */}
+                <div className="mb-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Users className="h-3 w-3 text-purple-500" />
+                    <span className="text-[11px] font-bold text-gray-700">G.2 — Composition automatique — Équipe 3 bots</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-50 text-purple-600 border border-purple-200 font-medium">Validé Gemini ✓</span>
+                  </div>
+                  <p className="text-[10px] text-gray-400 mb-3">
+                    Après les questions diagnostiques, CarlOS compose automatiquement l'équipe optimale : <strong>1 bot primaire + 2 bots angles morts</strong>. Max 3 bots actifs. L'utilisateur peut ajuster.
+                  </p>
+
+                  {/* Règle de sélection */}
+                  <div className="grid grid-cols-3 gap-2 mb-3">
+                    {[
+                      { role: "BOT PRIMAIRE", color: "purple", desc: "Expert #1 du sujet. Répond à la tension principale.", icon: "👑" },
+                      { role: "ANGLE MORT #1", color: "blue", desc: "Couvre le risque financier, légal ou RH souvent oublié.", icon: "🔭" },
+                      { role: "ANGLE MORT #2", color: "orange", desc: "Couvre l'impact opérationnel ou client.", icon: "🔭" },
+                    ].map(({ role, color, desc, icon }) => (
+                      <div key={role} className={`bg-${color}-50 border border-${color}-200 rounded-xl p-3`}>
+                        <div className={`text-[10px] font-bold text-${color}-700 mb-1`}>{icon} {role}</div>
+                        <p className={`text-[10px] text-${color}-800`}>{desc}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* ── Moteur de raisonnement ── */}
+                  <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm mb-3">
+                    <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-2.5 flex items-center gap-2">
+                      <Zap className="h-3.5 w-3.5 text-white" />
+                      <span className="text-xs font-bold text-white">Moteur de raisonnement — Comment CarlOS choisit son équipe</span>
+                      <span className="ml-auto text-[10px] bg-white/20 text-white px-2 py-0.5 rounded-full font-medium">Avenue 2 + pincée Avenue 3</span>
+                    </div>
+
+                    <div className="p-4 space-y-3">
+                      {/* Étape 1 — Scoring */}
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center text-[10px] font-bold text-purple-700 shrink-0">1</div>
+                          <span className="text-[11px] font-bold text-gray-700">Avenue 2 — Score par bot</span>
+                          <span className="text-[10px] text-gray-400">≤50ms · déterministe · sans LLM</span>
+                        </div>
+                        {/* Formule */}
+                        <div className="bg-gray-900 text-green-300 rounded-lg px-3 py-2 text-[10px] font-mono mb-2">
+                          <span className="text-gray-400"># Formule pour chacun des 12 bots :</span><br/>
+                          Score = (mots_clés_détectés × <span className="text-yellow-300">3</span>) + affinité_mode + fit_domaine<br/>
+                          <span className="text-gray-400"># → Top 3 = Bot primaire + 2 angles morts</span>
+                        </div>
+                        {/* Exemple scoring */}
+                        <div className="bg-gray-50 rounded-lg p-3">
+                          <div className="text-[10px] text-gray-400 mb-2 italic">Ex: message = "notre pipeline est brisé technologiquement"</div>
+                          <div className="space-y-1">
+                            {[
+                              { code: "BCT", name: "Thierry CTO", kw: 3, mode: 2, dom: 3, total: 8, tag: "PRIMAIRE", color: "violet", stars: "★★★" },
+                              { code: "BCF", name: "François CFO", kw: 1, mode: 1, dom: 2, total: 4, tag: "ANGLE MORT", color: "emerald", stars: "★★" },
+                              { code: "BOO", name: "Olivier COO", kw: 1, mode: 1, dom: 2, total: 4, tag: "ANGLE MORT", color: "orange", stars: "★★" },
+                              { code: "BCO", name: "CarlOS CEO", kw: 0, mode: 2, dom: 1, total: 3, tag: "écarté", color: "gray", stars: "★" },
+                            ].map(({ code, name, kw, mode, dom, total, tag, color, stars }) => (
+                              <div key={code} className={`flex items-center gap-2 text-[10px] ${color === "gray" ? "opacity-40" : ""}`}>
+                                <span className="w-16 font-mono text-gray-500">{code}</span>
+                                <span className="w-28 font-medium text-gray-700">{name}</span>
+                                <div className="flex gap-1 items-center flex-1">
+                                  <span className="text-gray-400">kw=</span><span className="font-bold text-purple-700">{kw}×3</span>
+                                  <span className="text-gray-300 mx-1">+</span>
+                                  <span className="text-gray-400">mode=</span><span className="font-bold text-blue-600">{mode}</span>
+                                  <span className="text-gray-300 mx-1">+</span>
+                                  <span className="text-gray-400">dom=</span><span className="font-bold text-indigo-600">{dom}</span>
+                                  <span className="text-gray-300 mx-1">=</span>
+                                  <span className="font-bold text-gray-800 w-4">{total}</span>
+                                  <span className="text-amber-500 ml-1">{stars}</span>
+                                </div>
+                                <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
+                                  tag === "PRIMAIRE" ? "bg-violet-100 text-violet-700" :
+                                  tag === "ANGLE MORT" ? "bg-blue-100 text-blue-700" :
+                                  "bg-gray-100 text-gray-400"
+                                }`}>{tag}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-px bg-gray-200" />
+                        <ArrowDown className="h-3 w-3 text-gray-400 shrink-0" />
+                        <div className="flex-1 h-px bg-gray-200" />
+                      </div>
+
+                      {/* Étape 2 — LLM mini */}
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] font-bold text-indigo-700 shrink-0">2</div>
+                          <span className="text-[11px] font-bold text-gray-700">Pincée Avenue 3 — Explication LLM</span>
+                          <span className="text-[10px] text-gray-400">~300ms · Gemini Flash T1 · ~$0.001/req</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          {/* Prompt envoyé */}
+                          <div>
+                            <div className="text-[10px] text-gray-400 mb-1 font-medium">Prompt micro envoyé à Gemini Flash :</div>
+                            <div className="bg-gray-900 text-green-300 rounded-lg px-3 py-2 text-[10px] font-mono leading-relaxed">
+                              <span className="text-gray-400">Explique en 1 phrase claire</span><br/>
+                              <span className="text-gray-400">pourquoi [BCT, BCF, BOO]</span><br/>
+                              <span className="text-gray-400">sont les bons bots pour:</span><br/>
+                              <span className="text-yellow-300">"pipeline techniquement brisé"</span><br/>
+                              <span className="text-gray-400">Réponse JSON:</span><br/>
+                              <span className="text-blue-300">{"{"}"raison": "..."{"}"}</span>
+                            </div>
+                          </div>
+                          {/* Réponse générée */}
+                          <div>
+                            <div className="text-[10px] text-gray-400 mb-1 font-medium">Ce que CarlOS affiche à l'utilisateur :</div>
+                            <div className="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 text-[10px] text-blue-800 leading-relaxed">
+                              <span className="font-semibold">J'ai choisi Thierry</span> car le problème est technique et il doit diagnostiquer la racine. <span className="font-semibold">François</span> couvre l'impact sur le cash-flow si ça dure. <span className="font-semibold">Olivier</span> s'assure que la production ne s'arrête pas pendant qu'on répare.
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Tableau mapping tensions → équipes */}
+                      <div className="pt-2 border-t border-gray-100">
+                        <div className="text-[10px] font-bold text-gray-600 mb-2 uppercase tracking-wide">Mapping tensions → équipes types</div>
+                        <div className="bg-white border border-gray-100 rounded-lg overflow-hidden">
+                          <div className="grid grid-cols-4 text-[9px] font-bold text-gray-400 bg-gray-50 border-b px-2 py-1.5">
+                            <div>Tension détectée</div>
+                            <div>Bot Primaire</div>
+                            <div>Angle Mort #1</div>
+                            <div>Angle Mort #2</div>
+                          </div>
+                          {[
+                            ["Pipeline / ventes / closing", "Sophie CSO 🎯", "François CFO 💰", "Martine CMO 📢"],
+                            ["Budget / tréso / coûts / DSO", "François CFO 💰", "CarlOS CEO 🎩", "Olivier COO ⚙️"],
+                            ["Serveur / tech / système brisé", "Thierry CTO 💻", "François CFO 💰", "Olivier COO ⚙️"],
+                            ["Équipe / culture / RH / conflit", "Hélène CHRO 👥", "CarlOS CEO 🎩", "Olivier COO ⚙️"],
+                            ["Marketing / marque / campagne", "Martine CMO 📢", "Sophie CSO 🎯", "François CFO 💰"],
+                            ["Stratégie / expansion / M&A", "CarlOS CEO 🎩", "Sophie CSO 🎯", "François CFO 💰"],
+                            ["Légal / conformité / risque", "Louise CLO ⚖️", "François CFO 💰", "CarlOS CEO 🎩"],
+                            ["Opérations / production / livraison", "Olivier COO ⚙️", "Thierry CTO 💻", "François CFO 💰"],
+                          ].map(([tension, p, a1, a2], i) => (
+                            <div key={String(tension)} className={`grid grid-cols-4 text-[9px] px-2 py-1.5 border-b border-gray-50 last:border-0 ${i % 2 === 0 ? "bg-white" : "bg-gray-50/40"}`}>
+                              <div className="text-gray-600 font-medium">{tension}</div>
+                              <div className="text-violet-700 font-semibold">{p}</div>
+                              <div className="text-blue-600">{a1}</div>
+                              <div className="text-indigo-600">{a2}</div>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="mt-2 text-[10px] text-gray-400">
+                          Ces équipes sont les <strong>valeurs par défaut</strong> du scoring. Le LLM peut affiner selon le contexte précis.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Mock — Pipeline techniquement brisé */}
+                  <div className="bg-gray-50 rounded-xl border border-gray-200 p-4">
+                    <div className="text-[10px] font-bold text-gray-500 mb-3 uppercase tracking-wide">Exemple — "Notre pipeline est brisé technologiquement"</div>
+                    <div className="flex gap-2 mb-3">
+                      <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs shrink-0">🎩</div>
+                      <div className="bg-white border border-blue-100 rounded-xl px-3 py-2 text-[10px] text-gray-700 shadow-sm flex-1">
+                        <p className="font-semibold text-blue-700 mb-1.5">J'ai analysé ton problème. Voici l'équipe optimale :</p>
+                        <div className="grid grid-cols-3 gap-2 mb-2">
+                          {[
+                            { emoji: "💻", name: "Thierry", role: "CTO", tag: "PRIMAIRE", color: "violet", desc: "Diagnostic technique" },
+                            { emoji: "💰", name: "François", role: "CFO", tag: "ANGLE MORT", color: "emerald", desc: "Impact financier" },
+                            { emoji: "⚙️", name: "Olivier", role: "COO", tag: "ANGLE MORT", color: "orange", desc: "Impact opérations" },
+                          ].map(({ emoji, name, role, tag, color, desc }) => (
+                            <div key={name} className={`bg-${color}-50 border border-${color}-200 rounded-lg p-2 text-center`}>
+                              <div className="text-lg mb-0.5">{emoji}</div>
+                              <div className={`text-[10px] font-bold text-${color}-700`}>{name}</div>
+                              <div className={`text-[9px] text-${color}-500`}>{role}</div>
+                              <div className={`mt-1 text-[8px] px-1.5 py-0.5 rounded-full bg-${color}-100 text-${color}-700 font-bold`}>{tag}</div>
+                              <div className={`mt-0.5 text-[9px] text-${color}-600`}>{desc}</div>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="flex gap-2">
+                          <button className="flex-1 text-[10px] py-1.5 rounded-lg bg-purple-600 text-white font-bold cursor-pointer">✓ Démarrer avec cette équipe</button>
+                          <button className="text-[10px] px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-600 cursor-pointer">Modifier</button>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-[10px] text-gray-400">→ L'utilisateur peut accepter l'équipe proposée ou l'ajuster avant de démarrer</div>
+                  </div>
+                </div>
+
+                {/* G.3 — Ajout/retrait en temps réel */}
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Settings className="h-3 w-3 text-gray-500" />
+                    <span className="text-[11px] font-bold text-gray-700">G.3 — Ajout / retrait de bots en cours de conversation</span>
+                  </div>
+                  <p className="text-[10px] text-gray-400 mb-3">
+                    Si la conversation révèle un angle mort imprévu → l'utilisateur peut ajouter un bot. Limite : toujours max 3 bots actifs simultanément. CarlOS orchestrerait qui parle.
+                  </p>
+                  <div className="bg-gray-50 rounded-xl border border-gray-200 p-4">
+                    <div className="text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-wide">Interface — Gestion de l'équipe en live</div>
+                    {/* Bots actifs */}
+                    <div className="flex items-center gap-2 mb-3 flex-wrap">
+                      <span className="text-[10px] text-gray-500 font-medium">Équipe active :</span>
+                      {[
+                        { emoji: "💻", name: "Thierry CTO", color: "violet" },
+                        { emoji: "💰", name: "François CFO", color: "emerald" },
+                      ].map(({ emoji, name, color }) => (
+                        <div key={name} className={`flex items-center gap-1.5 bg-${color}-50 border border-${color}-200 rounded-full px-2.5 py-1 text-[10px]`}>
+                          <span>{emoji}</span>
+                          <span className={`font-medium text-${color}-700`}>{name}</span>
+                          <button className={`text-${color}-400 hover:text-red-500 cursor-pointer ml-0.5`}>×</button>
+                        </div>
+                      ))}
+                      {/* Slot libre */}
+                      <div className="flex items-center gap-1 border border-dashed border-gray-300 rounded-full px-2.5 py-1 text-[10px] text-gray-400">
+                        <Plus className="h-2.5 w-2.5" /> Inviter un 3e bot
+                      </div>
+                    </div>
+                    {/* Bots disponibles */}
+                    <div className="flex flex-wrap gap-1.5">
+                      <span className="text-[10px] text-gray-400 w-full">Disponibles :</span>
+                      {[
+                        ["🎩","CarlOS CEO","blue"],["⚙️","Olivier COO","orange"],
+                        ["📢","Martine CMO","pink"],["🎯","Sophie CSO","red"],
+                      ].map(([e,n,c]) => (
+                        <button key={String(n)} className={`flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-full bg-white border border-gray-200 text-gray-600 hover:bg-${c}-50 hover:border-${c}-200 cursor-pointer transition-colors`}>
+                          <Plus className="h-2 w-2" /> {e} {n}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="mt-3 pt-2 border-t border-gray-100 flex gap-4 text-[10px]">
+                      <span className="text-green-600">✅ Max 3 bots — au-delà c'est du bruit</span>
+                      <span className="text-blue-600">✅ CarlOS orchestre qui parle — pas un chat room</span>
+                      <span className="text-amber-600">⚠️ Brief auto quand un bot rejoint la convo</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Spacer */}
+              <div className="h-4" />
+
+            </>
+          )}
+
         </div>
       </div>
     </div>

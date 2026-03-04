@@ -21,6 +21,7 @@ import { NouvellesPage } from "./NouvellesPage";
 import { EvenementsPage } from "./EvenementsPage";
 import { TrgIndustriePage } from "./TrgIndustriePage";
 import { PageTypePage } from "./PageTypePage";
+import { CarlOSPresence } from "../CarlOSPresence";
 
 // ── Groupes de sections avec sous-tabs ──
 
@@ -156,8 +157,11 @@ export function Orbit9DetailView() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-auto p-5">
-        {renderPage()}
+      <div className="flex-1 overflow-auto">
+        <div className="max-w-5xl mx-auto px-5 py-5">
+          <CarlOSPresence />
+          {renderPage()}
+        </div>
       </div>
     </div>
   );

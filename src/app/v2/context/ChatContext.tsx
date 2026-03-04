@@ -19,6 +19,7 @@ interface ChatState {
   crystals: Crystal[];
   autoTTSEnabled: boolean;
   videoAvatarEnabled: boolean;
+  activeRoster: string[];
 }
 
 interface BranchMeta {
@@ -42,6 +43,9 @@ interface ChatActions {
   exportCrystals: () => string;
   toggleAutoTTS: () => void;
   toggleVideoAvatar: () => void;
+  addBotToRoster: (code: string) => void;
+  removeBotFromRoster: (code: string) => void;
+  acceptTeamProposal: (bots: string[]) => void;
 }
 
 type ChatContextType = ChatState & ChatActions;
@@ -55,6 +59,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     sendMessage: rawSend,
     sendMultiPerspective: rawMulti,
     injectVoiceMessage,
+    injectFocusCard,
     newConversation,
     threads,
     activeThreadId,
@@ -63,9 +68,13 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     completeThread,
     deleteThread,
     setCanvasActionsCallback,
+    activeRoster,
+    addBotToRoster,
+    removeBotFromRoster,
+    acceptTeamProposal,
   } = useChat();
   const { crystals, addCrystal, deleteCrystal, exportCrystals } = useCrystals();
-  const { dispatchBatch } = useCanvasActions();
+  const { dispatchBatch, focusData, clearFocusMode } = useCanvasActions();
 
   // Connecter le hook chat au Canvas Action Bus
   useEffect(() => {
@@ -73,6 +82,21 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       dispatchBatch(actions);
     });
   }, [setCanvasActionsCallback, dispatchBatch]);
+
+  // Focus Card — clic sur un bloc du dashboard = nouvelle discussion dédiée
+  useEffect(() => {
+    if (!focusData) return;
+    // Parker la conversation en cours (si elle a des messages) et repartir à zéro
+    newConversation();
+    // Injecter la carte focus comme premier message du nouveau fil
+    injectFocusCard({
+      title: focusData.title,
+      elementType: focusData.elementType,
+      data: focusData.data,
+      bot: focusData.bot,
+    });
+    clearFocusMode();
+  }, [focusData]); // eslint-disable-line react-hooks/exhaustive-deps
   const [activeReflectionMode, setReflectionMode] =
     useState<ReflectionMode>("credo");
   const [currentCREDOPhase] = useState<CREDOPhase>("C");
@@ -160,6 +184,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         crystals,
         autoTTSEnabled,
         videoAvatarEnabled,
+        activeRoster,
         sendMessage,
         sendMultiPerspective,
         injectVoiceMessage,
@@ -174,6 +199,9 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         exportCrystals,
         toggleAutoTTS,
         toggleVideoAvatar,
+        addBotToRoster,
+        removeBotFromRoster,
+        acceptTeamProposal,
       }}
     >
       {children}

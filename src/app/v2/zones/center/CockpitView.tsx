@@ -20,19 +20,25 @@ import {
 } from "lucide-react";
 import { BOT_AVATAR } from "../../api/types";
 import { useFrameMaster } from "../../context/FrameMasterContext";
+import { useCanvasActions } from "../../context/CanvasActionContext";
+import { CarlOSPresence } from "./CarlOSPresence";
 
 /* ============ KPI GAUGE CARD — header gradient ============ */
-function KpiCard({ icon: Icon, label, value, change, changeType }: {
+function KpiCard({ icon: Icon, label, value, change, changeType, onClick }: {
   icon: React.ElementType;
   label: string;
   value: string;
   change: string;
   changeType: "up" | "down" | "stable";
+  onClick?: () => void;
 }) {
   const changeColor = changeType === "up" ? "text-green-600" : changeType === "down" ? "text-red-500" : "text-gray-500";
   const ChangeIcon = changeType === "up" ? TrendingUp : changeType === "down" ? TrendingDown : TrendingUp;
   return (
-    <Card className="p-0 overflow-hidden">
+    <Card
+      className={cn("p-0 overflow-hidden transition-shadow", onClick && "cursor-pointer hover:shadow-lg hover:ring-1 hover:ring-blue-300")}
+      onClick={onClick}
+    >
       <div className={cn("flex items-center gap-2 px-3 py-2", ROW_TONES.kpi)}>
         <Icon className="h-4 w-4 text-white" />
         <span className="text-sm font-bold text-white">{label}</span>
@@ -615,7 +621,9 @@ const ANGLE_STYLE: Record<string, { dotColor: string }> = {
   Projets: { dotColor: "bg-purple-400" },
 };
 
-function CLevelStatsRows() {
+type OnFocusFn = (title: string, elementType: string, data: unknown, bot: string) => void;
+
+function CLevelStatsRows({ onFocus }: { onFocus: OnFocusFn }) {
   return (
     <div className="space-y-6">
       {CLEVEL_LINES.map((bot) => {
@@ -625,7 +633,10 @@ function CLevelStatsRows() {
         return (
           <div key={bot.code} className="grid grid-cols-4 gap-2">
             {/* Box 1 : Identite + bulletin du bot — meme hauteur que les angles */}
-            <Card className="p-0 overflow-hidden flex flex-col">
+            <Card
+              className="p-0 overflow-hidden flex flex-col cursor-pointer hover:shadow-lg hover:ring-1 hover:ring-blue-200 transition-shadow"
+              onClick={() => onFocus(bot.nom, `cockpit_${bot.code}`, bot, bot.code)}
+            >
               <div className={cn("px-3 py-2 flex items-center gap-2", gradient)}>
                 {avatar ? (
                   <img src={avatar} alt={bot.nom} className="w-6 h-6 rounded-full object-cover ring-2 ring-white/30 shrink-0" />
@@ -666,7 +677,11 @@ function CLevelStatsRows() {
               const AngleIcon = angle.icon;
               const style = ANGLE_STYLE[angle.label] || { dotColor: "bg-gray-400" };
               return (
-                <Card key={ai} className="p-0 overflow-hidden flex flex-col">
+                <Card
+                  key={ai}
+                  className="p-0 overflow-hidden flex flex-col cursor-pointer hover:shadow-lg hover:ring-1 hover:ring-blue-200 transition-shadow"
+                  onClick={() => onFocus(`${bot.nom} — ${angle.label}`, "cockpit_angle", { bot: bot.code, angle: angle.label, stats: angle.stats }, bot.code)}
+                >
                   {/* Header angle — gradient departement */}
                   <div className={cn("px-3 py-2 flex items-center gap-2", gradient)}>
                     <div className={cn("w-2 h-2 rounded-full shrink-0", style.dotColor)} />
@@ -703,7 +718,7 @@ function CLevelStatsRows() {
 }
 
 /* ============ VUE DEPARTEMENT — 12 KPIs d'un seul bot en grand ============ */
-function DeptCockpit({ bot }: { bot: CLeveLineData }) {
+function DeptCockpit({ bot, onFocus }: { bot: CLeveLineData; onFocus: OnFocusFn }) {
   const avatar = BOT_AVATAR[bot.code];
   const gradient = BOT_GRADIENT[bot.code] || "bg-gradient-to-r from-gray-600 to-gray-500";
 
@@ -739,7 +754,11 @@ function DeptCockpit({ bot }: { bot: CLeveLineData }) {
           const AngleIcon = angle.icon;
           const style = ANGLE_STYLE[angle.label] || { dotColor: "bg-gray-400" };
           return (
-            <Card key={ai} className="p-0 overflow-hidden">
+            <Card
+              key={ai}
+              className="p-0 overflow-hidden cursor-pointer hover:shadow-lg hover:ring-1 hover:ring-blue-200 transition-shadow"
+              onClick={() => onFocus(`${bot.nom} — ${angle.label}`, "cockpit_angle", { bot: bot.code, angle: angle.label, stats: angle.stats }, bot.code)}
+            >
               {/* Header angle */}
               <div className={cn("px-4 py-2.5 flex items-center gap-2", gradient)}>
                 <div className={cn("w-2.5 h-2.5 rounded-full shrink-0", style.dotColor)} />
@@ -776,32 +795,43 @@ function DeptCockpit({ bot }: { bot: CLeveLineData }) {
 /* ============ COCKPIT VIEW — contextuel au bot actif ============ */
 export function CockpitView() {
   const { activeBotCode } = useFrameMaster();
+  const { dispatch } = useCanvasActions();
 
   // Trouver le bot actif dans les donnees
   const activeBot = activeBotCode !== "BCO"
     ? CLEVEL_LINES.find((b) => b.code === activeBotCode)
     : null;
 
+  const handleFocus = (title: string, elementType: string, data: unknown, bot: string) => {
+    dispatch({ type: "focus", layer: "bouche", data: { title, element_type: elementType, data }, bot });
+  };
+
   return (
     <ScrollArea className="h-full">
-      <div className="p-4 space-y-3 max-w-6xl mx-auto">
+      <div className="space-y-3 max-w-5xl mx-auto px-5 py-4">
+
+        <CarlOSPresence />
 
         {activeBot ? (
           /* Vue departement — 12 KPIs du bot actif seulement */
-          <DeptCockpit bot={activeBot} />
+          <DeptCockpit bot={activeBot} onFocus={handleFocus} />
         ) : (
           /* Vue CEO 360 — tous les bots */
           <>
-            {/* Row 1 : 4 KPI cards globaux */}
+            {/* Row 1 : 4 KPI cards globaux — cliquables → Focus Mode */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-              <KpiCard icon={DollarSign} label="TRG — Rendement Global" value="87%" change="+3pts vs jan" changeType="up" />
-              <KpiCard icon={Target} label="Pipeline total" value="1.0M$" change="+8% ce mois" changeType="up" />
-              <KpiCard icon={Users} label="Clients actifs" value="22" change="+5 ce mois" changeType="up" />
-              <KpiCard icon={FileText} label="Taux conversion" value="38%" change="+3pts vs jan" changeType="up" />
+              <KpiCard icon={DollarSign} label="TRG — Rendement Global" value="87%" change="+3pts vs jan" changeType="up"
+                onClick={() => handleFocus("TRG — Rendement Global", "kpi_global", { rendement: "87%", variation: "+3pts vs jan" }, "BCO")} />
+              <KpiCard icon={Target} label="Pipeline total" value="1.0M$" change="+8% ce mois" changeType="up"
+                onClick={() => handleFocus("Pipeline — Vue CEO", "pipeline", { pipeline_total: 1000000, variation: "+8% ce mois" }, "BCO")} />
+              <KpiCard icon={Users} label="Clients actifs" value="22" change="+5 ce mois" changeType="up"
+                onClick={() => handleFocus("Clients Actifs", "kpi_ceo", { clients_actifs: 22, nouveaux: "+5 ce mois" }, "BCO")} />
+              <KpiCard icon={FileText} label="Taux conversion" value="38%" change="+3pts vs jan" changeType="up"
+                onClick={() => handleFocus("Taux de Conversion", "kpi_cso", { taux_conversion: "38%", variation: "+3pts vs jan" }, "BCS")} />
             </div>
 
             {/* 12 rangees C-Level — 4 boxes par ligne (identite + 3 angles) */}
-            <CLevelStatsRows />
+            <CLevelStatsRows onFocus={handleFocus} />
           </>
         )}
 

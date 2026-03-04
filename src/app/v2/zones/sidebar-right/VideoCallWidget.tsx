@@ -14,17 +14,17 @@ import {
   PhoneOff,
   Mic,
   MicOff,
-  Video,
-  VideoOff,
   Volume2,
   VolumeX,
   Loader2,
+  Users,
+  X,
 } from "lucide-react";
 import { cn } from "../../../components/ui/utils";
 import { useFrameMaster } from "../../context/FrameMasterContext";
 import { useChatContext } from "../../context/ChatContext";
 import { useCanvasActions } from "../../context/CanvasActionContext";
-import { BOT_AVATAR, BOT_SUBTITLE } from "../../api/types";
+import { BOT_SUBTITLE } from "../../api/types";
 import type { CanvasAction } from "../../api/types";
 import { api } from "../../api/client";
 import {
@@ -56,9 +56,52 @@ const BOT_GRADIENT: Record<string, string> = {
 
 const BOT_ROLES: Record<string, string> = {
   BCO: "CEO", BCT: "CTO", BCF: "CFO", BCM: "CMO",
-  BCS: "CSO", BOO: "COO", BFA: "Factory", BHR: "CHRO",
+  BCS: "CSO", BOO: "COO", BFA: "Production", BHR: "CHRO",
   BIO: "CIO", BCC: "CCO", BPO: "CPO", BRO: "CRO",
-  BLE: "Legal", BSE: "Security",
+  BLE: "CLO", BSE: "CISO",
+};
+
+const BOT_NAMES: Record<string, string> = {
+  BCO: "CarlOS", BCT: "Thierry", BCF: "François", BCM: "Martine",
+  BCS: "Sophie", BOO: "Olivier", BFA: "Fabien", BHR: "Hélène",
+  BIO: "Isabelle", BCC: "Catherine", BPO: "Philippe", BRO: "Raphaël",
+  BLE: "Louise", BSE: "Sébastien",
+};
+
+// Images standby — originaux avec circuits neuronaux (fev 25) + Sophie v2 validée par Carl
+// object-fit: cover adapte les carrés en 16:9 automatiquement
+// PROTOCOLE: pour changer une image → modifier ICI + CarlOSAvatar.tsx + LiveChat.tsx BOT_COLORS + types.ts BOT_AVATAR
+const IMG_V = "?v=5";
+const BOT_STANDBY: Record<string, string> = {
+  BCO: `/agents/generated/ceo-carlos-standby-v3.png${IMG_V}`,
+  BCT: `/agents/generated/cto-thierry-standby-v3.png${IMG_V}`,
+  BCF: `/agents/generated/cfo-francois-standby-v3.png${IMG_V}`,
+  BCM: `/agents/generated/cmo-martine-standby-v3.png${IMG_V}`,
+  BCS: `/agents/generated/cso-sophie-standby-v3.png${IMG_V}`,
+  BOO: `/agents/generated/coo-olivier-standby-v3.png${IMG_V}`,
+  BFA: `/agents/generated/factory-bot-standby-v3.png${IMG_V}`,
+  BHR: `/agents/generated/chro-helene-standby-v3.png${IMG_V}`,
+  BIO: `/agents/generated/cio-isabelle-standby-v3.png${IMG_V}`,
+  BCC: `/agents/generated/cco-catherine-standby-v3.png${IMG_V}`,
+  BPO: `/agents/generated/cpo-philippe-standby-v3.png${IMG_V}`,
+  BRO: `/agents/generated/cro-raphael-standby-v3.png${IMG_V}`,
+  BLE: `/agents/generated/clo-louise-standby-v3.png${IMG_V}`,
+  BSE: `/agents/generated/ciso-secbot-standby-v3.png${IMG_V}`,
+};
+
+const AVATAR_CONFIG_GLOW: Record<string, string> = {
+  BCO: "rgba(59, 130, 246, 0.4)",
+  BCT: "rgba(139, 92, 246, 0.4)",
+  BCF: "rgba(16, 185, 129, 0.4)",
+  BCM: "rgba(236, 72, 153, 0.4)",
+  BCS: "rgba(239, 68, 68, 0.4)",
+  BOO: "rgba(249, 115, 22, 0.4)",
+  BHR: "rgba(20, 184, 166, 0.4)",
+  BIO: "rgba(6, 182, 212, 0.4)",
+  BCC: "rgba(244, 63, 94, 0.4)",
+  BPO: "rgba(217, 70, 239, 0.4)",
+  BRO: "rgba(245, 158, 11, 0.4)",
+  BLE: "rgba(99, 102, 241, 0.4)",
 };
 
 type CallState = "idle" | "connecting" | "connected" | "error";
@@ -78,6 +121,16 @@ export function VideoCallWidget() {
   const [isVideoCall, setIsVideoCall] = useState(false);
   const [hasVideoTrack, setHasVideoTrack] = useState(false);
 
+  // Jitsi state
+  const [jitsiOpen, setJitsiOpen] = useState(false);
+  const [jitsiRoom, setJitsiRoom] = useState("");
+
+  const openJitsi = () => {
+    const room = `ghostx-${activeBotCode.toLowerCase()}-${Date.now().toString(36)}`;
+    setJitsiRoom(room);
+    setJitsiOpen(true);
+  };
+
   // LiveKit refs
   const roomRef = useRef<Room | null>(null);
   const audioElRef = useRef<HTMLAudioElement | null>(null);
@@ -86,13 +139,14 @@ export function VideoCallWidget() {
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollCursorRef = useRef(0);
   const roomNameRef = useRef<string>("");
+  const userHangupRef = useRef(false);
 
-  const avatar = BOT_AVATAR[activeBotCode];
+  const standbyImg = BOT_STANDBY[activeBotCode] || BOT_STANDBY.BCO;
   const botName = activeBot?.nom || BOT_ROLES[activeBotCode] || "CarlOS";
   const botRole = BOT_ROLES[activeBotCode] || "Agent";
   const gradient = BOT_GRADIENT[activeBotCode] || "from-blue-600 to-blue-500";
 
-  // --- Attach remote audio tracks ---
+  // --- Attach remote audio track ---
   const attachRemoteAudio = useCallback((track: RemoteTrack) => {
     if (track.kind === Track.Kind.Audio) {
       if (!audioElRef.current) {
@@ -133,11 +187,11 @@ export function VideoCallWidget() {
       const room = new Room({
         adaptiveStream: true,
         dynacast: true,
+        disconnectOnPageLeave: false,   // Fix B.4.7 — ne pas couper si l'onglet perd le focus
         reconnectPolicy: {
           nextRetryDelayInMs: (ctx) => {
-            // 5 tentatives : 1s, 2s, 4s, 8s, 16s puis abandon
-            if (ctx.retryCount >= 5) return null;
-            return Math.min(1000 * Math.pow(2, ctx.retryCount), 16000);
+            // Reconnexion illimitee — cap a 30s entre chaque tentative (fix B.4.7)
+            return Math.min(1000 * Math.pow(2, Math.min(ctx.retryCount, 5)), 30000);
           },
         },
       });
@@ -162,12 +216,16 @@ export function VideoCallWidget() {
       });
 
       room.on(RoomEvent.Disconnected, (reason?: DisconnectReason) => {
-        console.log("[CarlOS Voice] Disconnected:", reason);
+        console.log("[CarlOS Voice] Disconnected:", reason, "userHangup:", userHangupRef.current);
+        // Si l'utilisateur a raccroché volontairement, pas d'erreur
+        if (userHangupRef.current) {
+          userHangupRef.current = false;
+          return;
+        }
         // DisconnectReason 0=ClientInitiated (normal), others=network/server issues
         if (reason !== undefined && reason !== 0) {
-          // Deconnexion inattendue — afficher l'erreur mais laisser le bouton "Reprendre"
           setCallState("error");
-          setErrorMsg("Connexion perdue — appuyez sur Appel pour reconnecter");
+          setErrorMsg("Connexion perdue — appuyez sur Discuter pour reconnecter");
           if (timerRef.current) clearInterval(timerRef.current);
           if (pollRef.current) clearInterval(pollRef.current);
         } else {
@@ -303,9 +361,12 @@ export function VideoCallWidget() {
 
         if (data.events && data.events.length > 0) {
           for (const evt of data.events) {
-            // Canvas actions: dispatch pour TOUS les types d'events (exchange + canvas_action)
+            // Canvas actions: navigate + annotate seulement (PAS push_content — la réponse va dans le chat)
             if (evt.canvas_actions && evt.canvas_actions.length > 0) {
-              dispatchBatchRef.current(evt.canvas_actions as CanvasAction[]);
+              const filtered = (evt.canvas_actions as CanvasAction[]).filter(
+                (a) => a.type !== "push_content"
+              );
+              if (filtered.length > 0) dispatchBatchRef.current(filtered);
             }
             // Transcript: seulement pour les exchanges
             if (evt.type === "exchange") {
@@ -336,6 +397,7 @@ export function VideoCallWidget() {
 
   // --- End call ---
   const endCall = useCallback(() => {
+    userHangupRef.current = true;
     if (roomRef.current) {
       roomRef.current.disconnect();
       roomRef.current = null;
@@ -387,7 +449,6 @@ export function VideoCallWidget() {
       if (pollRef.current) {
         clearInterval(pollRef.current);
       }
-      // Don't disconnect room on unmount — let user explicitly hang up
     };
   }, []);
 
@@ -403,36 +464,6 @@ export function VideoCallWidget() {
 
   return (
     <div className="space-y-2">
-      {/* Label */}
-      <div className="flex items-center gap-1.5">
-        <span className="relative flex h-1.5 w-1.5">
-          <span
-            className={cn(
-              "absolute inline-flex h-full w-full rounded-full opacity-75 animate-ping",
-              isInCall ? "bg-green-400" : "bg-gray-300"
-            )}
-          />
-          <span
-            className={cn(
-              "relative inline-flex rounded-full h-1.5 w-1.5",
-              isInCall ? "bg-green-500" : "bg-gray-400"
-            )}
-          />
-        </span>
-        <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
-          {isInCall
-            ? (isVideoCall ? "Video en cours" : "En appel")
-            : isConnecting
-              ? "Connexion..."
-              : "CarlOS Live"}
-        </span>
-        {isInCall && (
-          <span className="text-[10px] font-mono text-green-600 ml-auto">
-            {formatDuration(callDuration)}
-          </span>
-        )}
-      </div>
-
       {/* Bot video — 16:9 */}
       <div className="relative rounded-t-lg overflow-hidden aspect-video bg-gray-900">
         {/* Tavus video track — shown when available */}
@@ -447,42 +478,54 @@ export function VideoCallWidget() {
           )}
         />
 
-        {/* Gradient fallback — shown when no video track */}
+        {/* Bot standby image — belle image par département */}
+        <img
+          src={standbyImg}
+          alt={botName}
+          className={cn(
+            "absolute inset-0 w-full h-full object-cover transition-all duration-500 z-[1]",
+            hasVideoTrack && "opacity-0",
+            !isInCall && "brightness-90"
+          )}
+        />
+        {/* Business card identity — clean, no extra overlay */}
         <div className={cn(
-          "absolute inset-0 bg-gradient-to-br opacity-80 transition-opacity duration-500",
-          hasVideoTrack ? "opacity-0" : "opacity-80",
-          gradient,
-        )} />
-        <div className={cn(
-          "absolute inset-0 flex flex-col items-center justify-center transition-opacity duration-500",
+          "absolute bottom-0 left-0 right-0 z-[5] transition-opacity duration-500",
           hasVideoTrack ? "opacity-0" : "opacity-100",
         )}>
-          {avatar ? (
-            <img
-              src={avatar}
-              alt={botName}
-              className={cn(
-                "w-10 h-10 rounded-full ring-2 object-cover transition-all",
-                isInCall ? "ring-green-400 ring-[3px] animate-pulse" : "ring-white/40"
-              )}
-            />
-          ) : (
-            <div
-              className={cn(
-                "w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold transition-all",
-                isInCall ? "bg-green-500/30 ring-2 ring-green-400" : "bg-white/20"
-              )}
-            >
-              {botRole.slice(0, 2)}
+          <div className="bg-gradient-to-t from-black/80 to-transparent px-3.5 pt-10 pb-2.5">
+            <div className="text-lg text-white font-extrabold tracking-wide drop-shadow-lg leading-none">
+              {BOT_NAMES[activeBotCode] || botName}
             </div>
-          )}
-          <span className="text-[10px] text-white/90 font-medium mt-1">{botName}</span>
-          <span className="text-[8px] text-white/50 max-w-[140px] truncate text-center">
-            {isInCall
-              ? (lastTranscript ? `"${lastTranscript.slice(0, 40)}${lastTranscript.length > 40 ? "..." : ""}"` : "Ecoute...")
-              : BOT_SUBTITLE[activeBotCode] || botRole}
-          </span>
+            <div className="text-[10px] text-white/70 font-medium tracking-[0.2em] uppercase drop-shadow-md mt-1">
+              {botRole} AI · Usine Bleue
+            </div>
+            {isInCall && lastTranscript && (
+              <p className="text-[9px] text-white/50 mt-1.5 truncate italic">
+                &quot;{lastTranscript.slice(0, 50)}{lastTranscript.length > 50 ? "..." : ""}&quot;
+              </p>
+            )}
+          </div>
         </div>
+
+        {/* ── Jitsi overlay — visioconférence humain ── */}
+        {jitsiOpen && (
+          <div className="absolute inset-0 z-30 rounded-t-lg overflow-hidden">
+            <iframe
+              src={`https://meet.jit.si/${jitsiRoom}`}
+              className="w-full h-full border-0"
+              allow="camera; microphone; fullscreen; display-capture; autoplay"
+              title="Visioconférence Jitsi"
+            />
+            <button
+              onClick={() => setJitsiOpen(false)}
+              className="absolute top-1.5 right-1.5 z-40 p-1 rounded-full bg-black/50 hover:bg-black/70 text-white cursor-pointer transition-colors"
+              title="Fermer la visio"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
 
         {/* Loading Tavus avatar indicator */}
         {isVideoCall && isInCall && !hasVideoTrack && (
@@ -502,12 +545,7 @@ export function VideoCallWidget() {
           {botAudioOn ? <Volume2 className="h-3 w-3" /> : <VolumeX className="h-3 w-3" />}
         </button>
 
-        {/* Role badge — bottom left */}
-        <div className="absolute bottom-1.5 left-1.5 z-20">
-          <span className="text-[9px] text-white/70 bg-black/30 px-1.5 py-0.5 rounded">
-            {botRole}
-          </span>
-        </div>
+        {/* Role badge removed — identity is on the business card overlay */}
 
         {/* Mic status — bottom right (in call only) */}
         {isInCall && (
@@ -524,84 +562,67 @@ export function VideoCallWidget() {
         )}
       </div>
 
-      {/* Call bar — avatar Carl + presence + Appel / Video */}
-      <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-b-lg px-2.5 py-2 -mt-2">
-        {/* Avatar Carl + presence */}
-        <div className="relative shrink-0">
-          <img
-            src="/agents/carl-fugere.jpg"
-            alt="Carl"
-            className="w-7 h-7 rounded-full object-cover ring-1 ring-gray-200"
-          />
-          <span
-            className={cn(
-              "absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-[1.5px] border-white",
-              isInCall ? "bg-green-500" : "bg-gray-400"
-            )}
-          />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-[11px] font-semibold text-gray-700 leading-tight">Carl Fugere</p>
-          <p className={cn("text-[9px] font-medium", isInCall ? "text-green-600" : "text-gray-400")}>
-            {isInCall ? (isVideoCall ? "Video" : "En appel") : isConnecting ? "Connexion..." : "En ligne"}
+      {/* Call bar — status + 2 boutons principaux */}
+      <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-b-lg px-3 py-2.5 -mt-2">
+        {/* Status + label */}
+        <div className="flex-1 min-w-0 flex items-center gap-2">
+          <span className={cn(
+            "w-2 h-2 rounded-full shrink-0",
+            isInCall ? "bg-green-500" : isConnecting ? "bg-amber-400 animate-pulse" : "bg-emerald-500"
+          )} />
+          <p className={cn("text-[11px] font-semibold leading-tight", isInCall ? "text-green-600" : isConnecting ? "text-amber-500" : "text-emerald-600")}>
+            {isInCall ? (isVideoCall ? "Vidéo en cours" : "En appel vocal") : isConnecting ? "Connexion..." : "A l'écoute"}
           </p>
+          {isInCall && (
+            <span className="text-[10px] font-mono text-green-600 ml-auto">{formatDuration(callDuration)}</span>
+          )}
         </div>
 
         {/* Error message */}
         {callState === "error" && (
-          <span className="text-[8px] text-red-500 max-w-[80px] truncate" title={errorMsg}>
-            Erreur
-          </span>
+          <span className="text-[9px] text-red-500 max-w-[70px] truncate" title={errorMsg}>Erreur</span>
         )}
 
-        {/* Appel vocal */}
+        {/* Bouton Discutez avec CarlOS — appel vocal */}
         <button
           onClick={isInCall ? endCall : () => startCall(false)}
           disabled={isConnecting}
           className={cn(
-            "p-2 rounded-full transition-all cursor-pointer",
-            isInCall && !isVideoCall
-              ? "bg-red-100 text-red-600 ring-1 ring-red-300 shadow-sm hover:bg-red-200"
+            "flex items-center gap-1.5 px-3 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer shadow-sm",
+            isInCall
+              ? "bg-red-500 text-white hover:bg-red-600 shadow-red-200"
               : isConnecting
-                ? "bg-blue-50 text-blue-400 cursor-wait"
-                : isInCall
-                  ? "bg-white text-gray-300 border border-gray-100 cursor-not-allowed"
-                  : "bg-white text-gray-400 hover:bg-blue-50 hover:text-blue-500 border border-gray-200"
+                ? "bg-blue-100 text-blue-400 cursor-wait"
+                : "bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200"
           )}
-          title={isInCall ? "Raccrocher" : isConnecting ? "Connexion..." : "Appeler"}
+          title={isInCall ? "Raccrocher" : isConnecting ? "Connexion..." : `Discuter avec ${BOT_NAMES[activeBotCode] || "CarlOS"}`}
         >
-          {isConnecting && !isVideoCall ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : isInCall && !isVideoCall ? (
-            <PhoneOff className="h-3.5 w-3.5" />
+          {isConnecting ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : isInCall ? (
+            <PhoneOff className="h-4 w-4" />
           ) : (
-            <Phone className="h-3.5 w-3.5" />
+            <Phone className="h-4 w-4" />
           )}
+          <span className="hidden sm:inline">{isInCall ? "Fin" : `Discuter avec ${BOT_NAMES[activeBotCode] || "CarlOS"}`}</span>
         </button>
 
-        {/* Video — Tavus avatar */}
+        {/* Bouton Visio Jitsi — vert */}
         <button
-          onClick={isInCall && isVideoCall ? endCall : () => startCall(true)}
-          disabled={isConnecting || (isInCall && !isVideoCall)}
+          onClick={jitsiOpen ? () => setJitsiOpen(false) : openJitsi}
+          disabled={isConnecting}
           className={cn(
-            "p-2 rounded-full transition-all cursor-pointer",
-            isInCall && isVideoCall
-              ? "bg-red-100 text-red-600 ring-1 ring-red-300 shadow-sm hover:bg-red-200"
-              : isConnecting && isVideoCall
-                ? "bg-blue-50 text-blue-400 cursor-wait"
-                : isInCall
-                  ? "bg-white text-gray-300 border border-gray-100 cursor-not-allowed"
-                  : "bg-white text-gray-400 hover:bg-violet-50 hover:text-violet-500 border border-gray-200"
+            "flex items-center gap-1.5 px-3 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer shadow-sm",
+            jitsiOpen
+              ? "bg-red-500 text-white hover:bg-red-600 shadow-red-200"
+              : isConnecting
+                ? "bg-emerald-100 text-emerald-400 cursor-wait"
+                : "bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-200"
           )}
-          title={isInCall && isVideoCall ? "Raccrocher video" : isInCall ? "Raccrocher d'abord" : "Appel video"}
+          title={jitsiOpen ? "Fermer la visio" : "Vidéoconférence humain"}
         >
-          {isConnecting && isVideoCall ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : isInCall && isVideoCall ? (
-            <VideoOff className="h-3.5 w-3.5" />
-          ) : (
-            <Video className="h-3.5 w-3.5" />
-          )}
+          <Users className="h-4 w-4" />
+          <span className="hidden sm:inline">{jitsiOpen ? "Fin" : "Visio"}</span>
         </button>
       </div>
     </div>

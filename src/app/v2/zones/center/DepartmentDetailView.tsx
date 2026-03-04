@@ -357,7 +357,7 @@ const DEPT_CONFIGS: Record<string, DeptConfig> = {
       ]},
     ],
     recentFiles: [
-      { id: 1, name: "Plan maintenance Q1", progress: 80, by: "Factory", time: "3h", type: "PM" },
+      { id: 1, name: "Plan maintenance Q1", progress: 80, by: "Fabien", time: "3h", type: "PM" },
       { id: 2, name: "Specs Robot Soudure", progress: 65, by: "CTO", time: "hier", type: "SP" },
     ],
     activity: [
@@ -697,21 +697,6 @@ export function DepartmentDetailView() {
 
         {/* Tab Dashboard */}
         <TabsContent value="dashboard" className="flex-1 flex flex-col p-3 gap-2.5 min-h-0 mt-0 overflow-auto">
-          {/* Bandeau proactif */}
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg px-3 py-2 flex items-center gap-3 shrink-0">
-            {avatar ? (
-              <img src={avatar} alt={botName} className="w-7 h-7 rounded-full object-cover shrink-0" />
-            ) : (
-              <div className="w-7 h-7 bg-gray-200 rounded-full shrink-0" />
-            )}
-            <p className="text-xs text-gray-700 flex-1">
-              <b>{botName}:</b> {config.summary}
-            </p>
-            <Button size="sm" className="h-6 text-xs shrink-0 px-2" onClick={() => setActiveView("discussion")}>
-              Repondre <ArrowRight className="ml-1 h-3 w-3" />
-            </Button>
-          </div>
-
           {/* 4 widgets en grille — identique V1 */}
           <div className="grid grid-cols-4 gap-2.5 shrink-0">
             {config.widgets.map((widget, wi) => {

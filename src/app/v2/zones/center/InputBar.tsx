@@ -5,7 +5,7 @@
  * Sprint B — UX Sherpa
  */
 
-import { useState, useRef, useEffect, type KeyboardEvent } from "react";
+import { useState, useRef, useEffect, useCallback, type KeyboardEvent } from "react";
 import {
   Send,
   Paperclip,
@@ -19,7 +19,8 @@ import {
   Map,
   Sparkles,
   Brain,
-  Compass,
+  X,
+  FileText,
 } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import { Textarea } from "../../../components/ui/textarea";
@@ -49,11 +50,20 @@ const MODE_META: Partial<Record<ReflectionMode, { label: string; icon: React.Ele
 
 export function InputBar() {
   const [text, setText] = useState("");
+  const [attachedFile, setAttachedFile] = useState<File | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { sendMessage, isTyping, activeReflectionMode, setReflectionMode } =
     useChatContext();
   const { activeBotCode, activeBot, setActiveView } = useFrameMaster();
   const stt = useSpeechToText();
+
+  const handleFileAttach = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setAttachedFile(file);
+    // Reset input pour permettre re-sélection du même fichier
+    e.target.value = "";
+  }, []);
 
   const botName = activeBot?.nom || "CarlOS";
 
@@ -84,8 +94,18 @@ export function InputBar() {
   };
 
   return (
-    <div className="border-t bg-white px-4 py-3 shrink-0 space-y-2 min-h-[136px]">
-      {/* Ligne 1 : Textarea + Envoyer | Clip | Vocal/Tel/Cam */}
+    <div className="bg-white py-3 shrink-0 min-h-[136px]">
+    <div className="max-w-5xl mx-auto px-5 space-y-2">
+      {/* Input fichier caché */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        className="hidden"
+        onChange={handleFileAttach}
+        accept="*/*"
+      />
+
+      {/* Ligne 1 : Textarea + Envoyer | Clip | Vocal */}
       <div className="flex items-end gap-3">
         {/* Textarea + Envoyer ensemble */}
         <div className="flex-1 flex gap-2 items-end">
@@ -133,13 +153,41 @@ export function InputBar() {
         {/* Clip (piece jointe) */}
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-9 w-9 mb-0.5 shrink-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn(
+                "h-9 w-9 mb-0.5 shrink-0 transition-colors",
+                attachedFile && "text-blue-600 bg-blue-50 hover:bg-blue-100"
+              )}
+              onClick={() => fileInputRef.current?.click()}
+            >
               <Paperclip className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>Joindre un fichier</TooltipContent>
+          <TooltipContent>{attachedFile ? attachedFile.name : "Joindre un fichier"}</TooltipContent>
         </Tooltip>
       </div>
+
+      {/* Fichier attaché — pill avec nom + × */}
+      {attachedFile && (
+        <div className="flex items-center gap-1.5 animate-in fade-in duration-200">
+          <div className="flex items-center gap-1.5 text-xs px-2.5 py-1 bg-blue-50 border border-blue-200 rounded-full text-blue-700 max-w-[240px]">
+            <FileText className="h-3 w-3 shrink-0" />
+            <span className="truncate">{attachedFile.name}</span>
+            <span className="text-blue-400 text-[10px] shrink-0">
+              ({(attachedFile.size / 1024).toFixed(0)} Ko)
+            </span>
+          </div>
+          <button
+            onClick={() => setAttachedFile(null)}
+            className="text-gray-400 hover:text-red-500 transition-colors cursor-pointer p-0.5"
+            title="Retirer le fichier"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        </div>
+      )}
 
       {/* Indicateur micro actif */}
       {stt.isListening && (
@@ -158,8 +206,11 @@ export function InputBar() {
         <div className="text-xs text-red-500">{stt.error}</div>
       )}
 
-      {/* Ligne 2 : Modes de reflexion cliquables */}
-      <div className="flex items-center gap-1.5 flex-wrap">
+      {/* Ligne 2 : Modes de réflexion — centrés */}
+      <div className="flex items-center justify-center gap-1.5 flex-wrap">
+        <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider shrink-0 mr-0.5">
+          Mode de Réflexion :
+        </span>
         {(Object.entries(MODE_META) as [ReflectionMode, { label: string; icon: React.ElementType; color: string }][]).map(
           ([mode, meta]) => {
             const Icon = meta.icon;
@@ -182,6 +233,7 @@ export function InputBar() {
           }
         )}
       </div>
+    </div>
     </div>
   );
 }

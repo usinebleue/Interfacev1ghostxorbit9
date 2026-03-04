@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { cn } from "../../../components/ui/utils";
 import { BranchPatternsDemo } from "./BranchPatternsDemo";
+import { CarlOSPresence } from "./CarlOSPresence";
 import { DebatDemo } from "./scenarios/DebatDemo";
 import { CriseDemo } from "./scenarios/CriseDemo";
 import { BrainstormDemo } from "./scenarios/BrainstormDemo";
@@ -305,6 +306,8 @@ export function ScenarioHub() {
 
       <div className="flex-1 overflow-auto p-6">
         <div className="max-w-5xl mx-auto space-y-6">
+
+          <CarlOSPresence />
 
           {/* === SECTION 1: Flow Client / Fournisseur === */}
           <div>

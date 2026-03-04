@@ -52,6 +52,13 @@ interface CanvasActionState {
   splitScreen: boolean;
   /** Action d'execution en cours (overlay de confirmation/progress) */
   executeAction: CanvasAction | null;
+  /** Données Focus Mode — element ancre + chat dessous */
+  focusData: {
+    title: string;
+    elementType: string;
+    data: unknown;
+    bot: string;
+  } | null;
 }
 
 interface CanvasActionActions {
@@ -75,6 +82,8 @@ interface CanvasActionActions {
   clearNavigateAction: () => void;
   /** Vider la file */
   clearPending: () => void;
+  /** Quitter le Focus Mode */
+  clearFocusMode: () => void;
 }
 
 type CanvasActionContextType = CanvasActionState & CanvasActionActions;
@@ -93,6 +102,7 @@ export function CanvasActionProvider({ children }: { children: React.ReactNode }
   const [credoPhases, setCredoPhases] = useState<CredoPhases>(DEFAULT_PHASES);
   const [splitScreen, setSplitScreen] = useState(false);
   const [executeAction, setExecuteAction] = useState<CanvasAction | null>(null);
+  const [focusData, setFocusData] = useState<CanvasActionState["focusData"]>(null);
   const pendingRef = useRef<CanvasAction[]>([]);
   const historyRef = useRef<CanvasAction[]>([]);
   const [, forceUpdate] = useState(0);
@@ -152,6 +162,18 @@ export function CanvasActionProvider({ children }: { children: React.ReactNode }
         setExecuteAction(action);
         setTimeout(() => setExecuteAction(null), 6000);
         break;
+      case "focus": {
+        const d = action.data as Record<string, unknown> | undefined;
+        if (d) {
+          setFocusData({
+            title: (d.title as string) || "Mission",
+            elementType: (d.element_type as string) || "generic",
+            data: d.data,
+            bot: action.bot || "BCO",
+          });
+        }
+        break;
+      }
     }
 
     setLastAction(action);
@@ -187,6 +209,7 @@ export function CanvasActionProvider({ children }: { children: React.ReactNode }
   const toggleSplitScreen = useCallback(() => setSplitScreen((v) => !v), []);
   const dismissExecuteAction = useCallback(() => setExecuteAction(null), []);
   const clearNavigateAction = useCallback(() => setNavigateAction(null), []);
+  const clearFocusMode = useCallback(() => setFocusData(null), []);
   const clearPending = useCallback(() => {
     pendingRef.current = [];
     forceUpdate((n) => n + 1);
@@ -205,6 +228,7 @@ export function CanvasActionProvider({ children }: { children: React.ReactNode }
         credoPhases,
         splitScreen,
         executeAction,
+        focusData,
         dispatch,
         dispatchBatch,
         consumeNext,
@@ -215,6 +239,7 @@ export function CanvasActionProvider({ children }: { children: React.ReactNode }
         dismissExecuteAction,
         clearNavigateAction,
         clearPending,
+        clearFocusMode,
       }}
     >
       {children}
