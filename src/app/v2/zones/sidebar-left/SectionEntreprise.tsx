@@ -6,7 +6,7 @@
  */
 
 import { useState } from "react";
-import { ChevronDown, ChevronRight, Briefcase, DollarSign, Cpu, Factory, Settings, TrendingUp, Megaphone, Target, Users, Shield, Scale, Lightbulb } from "lucide-react";
+import { ChevronDown, ChevronRight, Briefcase, Crown, DollarSign, Cpu, Factory, Settings, TrendingUp, Megaphone, Target, Users, Shield, Scale, Lightbulb } from "lucide-react";
 import { Badge } from "../../../components/ui/badge";
 import {
   Collapsible,
@@ -85,7 +85,7 @@ const DEPT_NOTIFICATIONS: Record<string, number> = {
 export function SectionEntreprise({ collapsed }: Props) {
   const [open, setOpen] = useState(true);
   const { bots } = useBots();
-  const { activeBotCode, setActiveBot, setActiveView } = useFrameMaster();
+  const { activeBotCode, activeView, setActiveBot, setActiveView } = useFrameMaster();
 
   // Indexer les bots par code pour lookup rapide
   const botsByCode: Record<string, BotInfo> = {};
@@ -148,6 +148,18 @@ export function SectionEntreprise({ collapsed }: Props) {
             </div>
           );
         })}
+        {/* Board Room — CA robotique (en bas) */}
+        <hr className="border-gray-200 mx-1" />
+        <button
+          onClick={() => setActiveView("board-room")}
+          className={cn(
+            "w-full flex justify-center py-1.5 rounded hover:bg-accent transition-colors",
+            activeView === "board-room" && "bg-accent"
+          )}
+          title="Board Room"
+        >
+          <Crown className="h-3.5 w-3.5 text-amber-600" />
+        </button>
       </div>
     );
   }
@@ -207,6 +219,18 @@ export function SectionEntreprise({ collapsed }: Props) {
               </div>
             );
           })}
+          {/* Board Room — CA robotique (en bas) */}
+          <hr className="border-gray-200 mx-2 my-1" />
+          <button
+            onClick={() => setActiveView("board-room")}
+            className={cn(
+              "w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm hover:bg-accent transition-colors",
+              activeView === "board-room" && "bg-accent font-medium"
+            )}
+          >
+            <Crown className="h-3.5 w-3.5 shrink-0 text-amber-600" />
+            <span className="flex-1 text-left truncate">Board Room</span>
+          </button>
         </div>
       </CollapsibleContent>
     </Collapsible>

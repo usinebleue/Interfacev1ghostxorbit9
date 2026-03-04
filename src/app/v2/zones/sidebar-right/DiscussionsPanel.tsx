@@ -87,7 +87,7 @@ export function DiscussionsPanel() {
           <ChevronRight className="h-3.5 w-3.5" />
         )}
         <MessageSquare className="h-3.5 w-3.5 text-blue-500" />
-        Mes Discussions
+        Mes Missions
         {totalActive > 0 && (
           <Badge variant="secondary" className="ml-auto text-[10px] px-1.5 bg-blue-100 text-blue-700">
             {totalActive}
@@ -97,6 +97,15 @@ export function DiscussionsPanel() {
 
       <CollapsibleContent>
         <div className="mt-2 space-y-1">
+          {/* Bouton nouvelle discussion — EN PREMIER pour accès rapide */}
+          <button
+            onClick={handleNew}
+            className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 border border-blue-200 transition-colors cursor-pointer font-medium mb-2"
+          >
+            <Plus className="h-3 w-3" />
+            Nouvelle mission
+          </button>
+
           {/* Discussion active (messages en cours, pas encore dans un thread) */}
           {messages.length > 0 && !activeThreadId && (
             <div className="group flex items-center gap-2 px-2 py-2 rounded text-xs hover:bg-blue-50 transition-colors bg-blue-50/50 border border-blue-100 cursor-pointer">
@@ -175,7 +184,7 @@ export function DiscussionsPanel() {
               <p className="text-[10px] text-amber-600">
                 {staleThreads.length === 1
                   ? `"${staleThreads[0].title}" est parke depuis plus de 24h. Qu'est-ce qu'on en fait?`
-                  : `${staleThreads.length} discussions parkees depuis 24h+. On fait le menage?`
+                  : `${staleThreads.length} missions parkees depuis 24h+. On fait le menage?`
                 }
               </p>
               <div className="flex flex-wrap gap-1">
@@ -216,19 +225,10 @@ export function DiscussionsPanel() {
             </div>
           )}
 
-          {/* Bouton nouvelle discussion */}
-          <button
-            onClick={handleNew}
-            className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
-          >
-            <Plus className="h-3 w-3" />
-            Nouvelle discussion
-          </button>
-
           {/* Etat vide */}
           {threads.length === 0 && messages.length === 0 && (
             <div className="text-[10px] text-gray-400 px-2 py-2">
-              Aucune discussion. Tape dans l'InputBar pour commencer.
+              Aucune mission. Tape dans l'InputBar pour commencer.
             </div>
           )}
         </div>

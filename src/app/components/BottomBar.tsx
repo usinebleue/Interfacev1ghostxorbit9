@@ -21,7 +21,7 @@ const getStatusDot = (status: 'active' | 'working' | 'idle') => {
 const workspaceLinks = [
   { id: 'projects', label: 'Projets / Cahiers', icon: Folder },
   { id: 'documents', label: 'Mes Documents', icon: FileText },
-  { id: 'discussions', label: 'Mes Discussions', icon: MessageSquare },
+  { id: 'discussions', label: 'Mes Missions', icon: MessageSquare },
 ];
 
 interface BottomBarProps {

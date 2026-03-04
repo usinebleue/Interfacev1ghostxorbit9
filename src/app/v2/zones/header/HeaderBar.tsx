@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
-import { Gauge, Settings, LayoutDashboard, SlidersHorizontal, User, HeartPulse, Play, MessageSquare, Check, Building2, Users } from "lucide-react";
+import { Gauge, Settings, LayoutDashboard, SlidersHorizontal, HeartPulse, MessageSquare, Check, Building2, Users, Map, Play } from "lucide-react";
 import { cn } from "../../../components/ui/utils";
 import { Button } from "../../../components/ui/button";
 import {
@@ -23,7 +23,6 @@ import {
 } from "../../../components/ui/dropdown-menu";
 import { useFrameMaster } from "../../context/FrameMasterContext";
 import { useChatContext } from "../../context/ChatContext";
-import { BotPresenceIndicator } from "./BotPresenceIndicator";
 import { api } from "../../api/client";
 import type { KitInfo, KitUserProfile } from "../../api/types";
 
@@ -66,21 +65,21 @@ export function HeaderLeft({ collapsed }: { collapsed: boolean }) {
   );
 }
 
-/** Header colonne CENTRE — Bot ID + Tour de Controle / Cockpit / Reglage Bot */
+/** Header colonne CENTRE — Navigation principale */
 export function HeaderCenter() {
-  const { activeBot, activeBotCode, activeView, setActiveView } = useFrameMaster();
-  const { messages } = useChatContext();
-  const hasMessages = messages.length > 0;
-  const isInChat = activeView === "live-chat";
+  const { activeBotCode, activeView, setActiveView } = useFrameMaster();
+  const { messages, threads } = useChatContext();
+  const hasMessages = messages.length > 0 || threads.some(t => t.status !== "completed");
+  const userMsgCount = messages.filter(m => m.role === "user").length;
+  const openThreadCount = threads.filter(t => t.status !== "completed").length;
+  const parkedCount = threads.filter(t => t.status === "parked").length;
+  // Badge: nb de fils ouverts si > 0, sinon nb d'échanges user
+  const badgeCount = openThreadCount > 0 ? openThreadCount : userMsgCount;
 
   return (
     <div className="h-14 border-b border-white/10 flex items-center shrink-0" style={{ backgroundColor: UB_BLUE }}>
-      {/* Contenu header */}
-      <div className="flex-1 flex items-center justify-between px-4">
-        {/* Bot actif + Presence — gauche */}
-        <BotPresenceIndicator bot={activeBot} dark />
-
-        {/* Tour de Controle + Cockpit + Reglage Bot — droite */}
+      {/* Navigation centrée */}
+      <div className="flex-1 flex items-center justify-center px-4">
         <div className="flex items-center gap-1">
         <Tooltip>
           <TooltipTrigger asChild>
@@ -97,31 +96,36 @@ export function HeaderCenter() {
           <TooltipContent>Tour de Controle</TooltipContent>
         </Tooltip>
 
-        {/* Discussion — toujours visible quand il y a des messages */}
-        {hasMessages && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  "h-8 gap-1.5 text-xs relative",
-                  isInChat
-                    ? "text-white bg-white/15 hover:bg-white/20"
-                    : "text-blue-300 hover:text-blue-200 hover:bg-white/10"
-                )}
-                onClick={() => setActiveView("live-chat")}
-              >
-                <MessageSquare className="h-3.5 w-3.5" />
-                <span className="hidden lg:inline">Discussion</span>
-                <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-3.5 bg-blue-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5">
-                  {messages.length}
+        {/* Discussion — ouvre la liste des fils */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "h-8 gap-1.5 text-xs relative",
+                activeView === "discussion" || activeView === "live-chat"
+                  ? "text-white bg-white/15 hover:bg-white/20"
+                  : hasMessages
+                    ? "text-blue-300 hover:text-blue-200 hover:bg-white/10"
+                    : "text-white/80 hover:text-white hover:bg-white/10"
+              )}
+              onClick={() => setActiveView("discussion")}
+            >
+              <MessageSquare className="h-3.5 w-3.5" />
+              <span className="hidden lg:inline">Missions</span>
+              {badgeCount > 0 && (
+                <span className={cn(
+                  "absolute -top-0.5 -right-0.5 min-w-[14px] h-3.5 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5",
+                  parkedCount > 0 ? "bg-amber-500" : "bg-blue-500"
+                )}>
+                  {badgeCount}
                 </span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>{isInChat ? "Discussion en cours" : "Retourner a la discussion"}</TooltipContent>
-          </Tooltip>
-        )}
+              )}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Mes Missions</TooltipContent>
+        </Tooltip>
 
         <Tooltip>
           <TooltipTrigger asChild>
@@ -168,21 +172,6 @@ export function HeaderCenter() {
           <TooltipContent>Reglage de l'Agent AI</TooltipContent>
         </Tooltip>
 
-        {/* Scenarios — galerie des 9 simulations */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 gap-1.5 text-xs text-green-400 hover:text-green-300 hover:bg-white/10"
-              onClick={() => setActiveView("scenarios")}
-            >
-              <Play className="h-3.5 w-3.5" />
-              <span className="hidden lg:inline">Scenarios</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>9 simulations — Modes de reflexion GhostX</TooltipContent>
-        </Tooltip>
         </div>
       </div>
     </div>
@@ -191,7 +180,7 @@ export function HeaderCenter() {
 
 /** Header colonne DROITE — Gear (client switcher) + Profil */
 export function HeaderRight({ collapsed = false }: { collapsed?: boolean }) {
-  const { currentUser, setAuthenticated } = useFrameMaster();
+  const { currentUser, setAuthenticated, setActiveView } = useFrameMaster();
   const [kits, setKits] = useState<KitInfo[]>([]);
   const [activeSlug, setActiveSlug] = useState<string | null>(null);
   const [switching, setSwitching] = useState(false);
@@ -249,8 +238,37 @@ export function HeaderRight({ collapsed = false }: { collapsed?: boolean }) {
   }
 
   return (
-    <div className="h-14 border-b border-white/10 flex items-center justify-end px-3 gap-1 shrink-0" style={{ backgroundColor: UB_BLUE }}>
-      {/* Client Switcher — gear icon */}
+    <div className="h-14 border-b border-white/10 flex items-center justify-between px-3 shrink-0" style={{ backgroundColor: UB_BLUE }}>
+      {/* Profil utilisateur — à gauche */}
+      <DropdownMenu>
+        <DropdownMenuTrigger className="h-8 gap-2 px-2 text-white/80 hover:text-white hover:bg-white/10 inline-flex items-center rounded-md text-sm outline-none">
+            <div className="relative">
+              <img src={displayPhoto} alt={displayName} className="w-7 h-7 rounded-full object-cover ring-1 ring-white/30" />
+              <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-[#073E5A]" />
+            </div>
+            <span className="text-sm hidden xl:inline">{displayName}</span>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem>Mon profil</DropdownMenuItem>
+          <DropdownMenuItem>Mon entreprise</DropdownMenuItem>
+          <DropdownMenuItem>Abonnement</DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => setActiveView("scenarios")} className="flex items-center gap-2">
+            <Map className="h-3.5 w-3.5 text-emerald-600" />
+            <span>Tour Guidé</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setActiveView("scenarios")} className="flex items-center gap-2 text-muted-foreground">
+            <Play className="h-3.5 w-3.5" />
+            <span>Scenarios de simulation</span>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => setAuthenticated(false)}>
+            Se deconnecter
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {/* Instance corporative — à droite */}
       <DropdownMenu onOpenChange={(open) => { if (open) loadKits(); }}>
         <DropdownMenuTrigger className="h-8 gap-2 px-2 text-white/70 hover:text-white hover:bg-white/10 inline-flex items-center rounded-md text-sm outline-none">
             {activeBrand ? (
@@ -331,26 +349,6 @@ export function HeaderRight({ collapsed = false }: { collapsed?: boolean }) {
               })}
             </>
           )}
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      {/* Profil utilisateur */}
-      <DropdownMenu>
-        <DropdownMenuTrigger className="h-8 gap-2 px-2 text-white/80 hover:text-white hover:bg-white/10 inline-flex items-center rounded-md text-sm outline-none">
-            <div className="relative">
-              <img src={displayPhoto} alt={displayName} className="w-7 h-7 rounded-full object-cover ring-1 ring-white/30" />
-              <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-[#073E5A]" />
-            </div>
-            <span className="text-sm hidden xl:inline">{displayName}</span>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem>Mon profil</DropdownMenuItem>
-          <DropdownMenuItem>Mon entreprise</DropdownMenuItem>
-          <DropdownMenuItem>Abonnement</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setAuthenticated(false)}>
-            Se deconnecter
-          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

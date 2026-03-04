@@ -1,175 +1,313 @@
 /**
- * DiscussionView.tsx — Chat avec le bot actif
- * Titre discussion + Mode reflexion active (wireframe p.3)
- * Zone messages + indicateur CREDO + loading
- * Options cliquables apres chaque reponse du bot (arbre de pensee CREDO Trissocie)
- * Sprint A — Frame Master V2
+ * DiscussionView.tsx — Gestionnaire de discussions (threads)
+ * Liste organisée par statut: Active / Parquées / Terminées
+ * Phase 1.5 — Chef d'Orchestre
  */
 
-import { useRef, useEffect } from "react";
-import { ScrollArea } from "../../../components/ui/scroll-area";
-import { Badge } from "../../../components/ui/badge";
-import { Button } from "../../../components/ui/button";
-import { Skeleton } from "../../../components/ui/skeleton";
+import { useState } from "react";
+import { MessageSquare, Clock, CheckCircle, PlayCircle, PlusCircle, Trash2, ArrowRight, FolderInput, Briefcase, MessageCircle } from "lucide-react";
+import { cn } from "../../../components/ui/utils";
 import { useChatContext } from "../../context/ChatContext";
 import { useFrameMaster } from "../../context/FrameMasterContext";
-import { BOT_EMOJI, CREDO_PHASES, REFLECTION_MODES } from "../../api/types";
-import { cn } from "../../../components/ui/utils";
-import { ArrowRight, GitBranch } from "lucide-react";
+import type { Thread } from "../../api/types";
+
+// Map bot code → emoji + name (miroir de LiveChat BOT_COLORS)
+const BOT_META: Record<string, { emoji: string; name: string; color: string }> = {
+  BCO: { emoji: "👔", name: "CarlOS",    color: "text-blue-700 bg-blue-50 border-blue-200" },
+  BCT: { emoji: "💻", name: "Thierry",   color: "text-violet-700 bg-violet-50 border-violet-200" },
+  BCF: { emoji: "💰", name: "François",  color: "text-emerald-700 bg-emerald-50 border-emerald-200" },
+  BCM: { emoji: "📣", name: "Martine",   color: "text-pink-700 bg-pink-50 border-pink-200" },
+  BCS: { emoji: "🎯", name: "Sophie",    color: "text-red-700 bg-red-50 border-red-200" },
+  BOO: { emoji: "⚙️", name: "Olivier",   color: "text-orange-700 bg-orange-50 border-orange-200" },
+  BRO: { emoji: "📈", name: "Raphaël",   color: "text-cyan-700 bg-cyan-50 border-cyan-200" },
+  BHR: { emoji: "👥", name: "Hélène",    color: "text-indigo-700 bg-indigo-50 border-indigo-200" },
+  BSE: { emoji: "🛡️", name: "Sécurité",  color: "text-gray-700 bg-gray-50 border-gray-200" },
+  BLE: { emoji: "⚖️", name: "Louise",    color: "text-yellow-700 bg-yellow-50 border-yellow-200" },
+  BPO: { emoji: "💡", name: "Philippe",  color: "text-purple-700 bg-purple-50 border-purple-200" },
+};
+
+function formatRelativeTime(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+  if (mins < 2) return "À l'instant";
+  if (mins < 60) return `Il y a ${mins} min`;
+  if (hours < 24) return `Il y a ${hours}h`;
+  if (days < 7) return `Il y a ${days}j`;
+  return `Il y a ${days}j`;
+}
+
+function isStagnant(updatedAt: string): boolean {
+  return Date.now() - new Date(updatedAt).getTime() > 7 * 24 * 60 * 60 * 1000;
+}
+
+interface ThreadCardProps {
+  thread: Thread;
+  isActive?: boolean;
+  onContinuer?: () => void;
+  onReprendre?: () => void;
+  onParker?: () => void;
+  onSupprimer?: () => void;
+  onRevoir?: () => void;
+  dimmed?: boolean;
+}
+
+function ThreadCard({ thread, isActive, onContinuer, onReprendre, onParker, onSupprimer, onRevoir, dimmed }: ThreadCardProps) {
+  const bot = BOT_META[thread.primaryBot] || BOT_META.BCO;
+  const userMsgCount = thread.messages.filter(m => m.role === "user").length;
+  const stagnant = isStagnant(thread.updatedAt);
+
+  return (
+    <div className={cn(
+      "bg-white rounded-xl border p-4 transition-all",
+      isActive && "border-blue-200 shadow-sm",
+      stagnant && !dimmed && "border-red-100",
+      dimmed && "opacity-60"
+    )}>
+      <div className="flex items-start justify-between gap-3">
+        {/* Infos */}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            {/* Status dot */}
+            <span className={cn(
+              "w-2 h-2 rounded-full shrink-0",
+              isActive ? "bg-blue-500" : thread.status === "parked" ? "bg-amber-400" : "bg-gray-300"
+            )} />
+            <p className="text-sm font-semibold text-gray-800 truncate">{thread.title}</p>
+            {stagnant && !dimmed && (
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 border border-red-200 shrink-0">
+                Inactif 7j+
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 text-[11px] text-gray-400">
+            <span className={cn("flex items-center gap-0.5 px-1.5 py-0.5 rounded-full border text-[10px] font-medium", bot.color)}>
+              {bot.emoji} {bot.name}
+            </span>
+            <span>{userMsgCount} échange{userMsgCount !== 1 ? "s" : ""}</span>
+            <span>·</span>
+            <span>{formatRelativeTime(thread.updatedAt)}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-1.5 mt-3 flex-wrap">
+        {/* ACTIVE */}
+        {onContinuer && (
+          <button
+            onClick={onContinuer}
+            className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer font-medium"
+          >
+            <MessageCircle className="h-3 w-3" />
+            Continuer
+          </button>
+        )}
+        {onParker && (
+          <button
+            onClick={onParker}
+            className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-colors cursor-pointer font-medium"
+          >
+            <Clock className="h-3 w-3" />
+            Parker
+          </button>
+        )}
+
+        {/* PARQUÉES */}
+        {onReprendre && (
+          <button
+            onClick={onReprendre}
+            className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors cursor-pointer font-medium"
+          >
+            <ArrowRight className="h-3 w-3" />
+            Reprendre
+          </button>
+        )}
+
+        {/* TERMINÉES */}
+        {onRevoir && (
+          <button
+            onClick={onRevoir}
+            className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer font-medium"
+          >
+            <MessageSquare className="h-3 w-3" />
+            Revoir
+          </button>
+        )}
+
+        {/* → Projet (Sprint C — pas encore fonctionnel) */}
+        <button
+          disabled
+          className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-gray-50 text-gray-300 border border-dashed border-gray-200 cursor-not-allowed font-medium"
+          title="Promouvoir en projet — disponible dans Sprint C"
+        >
+          <Briefcase className="h-3 w-3" />
+          → Projet
+        </button>
+
+        {/* Supprimer */}
+        {onSupprimer && (
+          <button
+            onClick={onSupprimer}
+            className="flex items-center gap-1 text-xs px-2 py-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer ml-auto"
+            title="Supprimer"
+          >
+            <Trash2 className="h-3 w-3" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export function DiscussionView() {
-  const { messages, isTyping, currentCREDOPhase, activeReflectionMode, sendMessage } =
-    useChatContext();
-  const { activeBotCode, activeBot } = useFrameMaster();
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const {
+    threads, activeThreadId,
+    parkThread, resumeThread, completeThread, deleteThread, newConversation,
+  } = useChatContext();
+  const { setActiveView } = useFrameMaster();
 
-  // Auto-scroll
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isTyping]);
+  const activeThreads = threads.filter(t => t.status === "active");
+  const parkedThreads = threads.filter(t => t.status === "parked");
+  const completedThreads = threads.filter(t => t.status === "completed");
+  const total = threads.length;
 
-  const botEmoji = BOT_EMOJI[activeBotCode] || "🤖";
-  const botName = activeBot?.nom || "CarlOS";
-  const activeMode = REFLECTION_MODES.find((m) => m.id === activeReflectionMode);
+  const goToChat = () => setActiveView("live-chat");
 
-  // Quand l'utilisateur clique sur une option, on l'envoie comme message
-  const handleOptionClick = (option: string) => {
-    sendMessage(option, activeBotCode);
+  const handleContinuer = () => {
+    goToChat();
+  };
+
+  const handleReprendre = (threadId: string) => {
+    resumeThread(threadId);
+    goToChat();
+  };
+
+  const handleRevoir = (threadId: string) => {
+    resumeThread(threadId);
+    goToChat();
   };
 
   return (
-    <div className="h-full flex flex-col">
-      {/* Titre de la discussion + mode de reflexion actif (wireframe p.3) */}
-      <div className="px-4 py-2.5 border-b flex items-center justify-between shrink-0">
+    <div className="h-full flex flex-col bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b px-4 py-3 shrink-0 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold">
-            Discussion : {botName}
-          </span>
-          {activeMode && (
-            <Badge
-              className={cn(
-                "text-[10px] px-2",
-                activeMode.color,
-                "text-white"
-              )}
-            >
-              {activeMode.label}
-            </Badge>
-          )}
+          <MessageSquare className="h-4 w-4 text-blue-600" />
+          <div>
+            <div className="text-sm font-bold text-gray-800">Mes Missions</div>
+            <div className="text-xs text-gray-400">
+              {total === 0 ? "Aucune mission" : `${total} mission${total !== 1 ? "s" : ""} · ${activeThreads.length} active${activeThreads.length !== 1 ? "s" : ""}`}
+            </div>
+          </div>
         </div>
-
-        {/* Phase indicator — interne, pas de label visible */}
+        <button
+          onClick={() => { newConversation(); goToChat(); }}
+          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer font-medium"
+        >
+          <PlusCircle className="h-3.5 w-3.5" />
+          Nouvelle mission
+        </button>
       </div>
 
-      {/* Messages */}
-      <ScrollArea className="flex-1 px-4">
-        <div className="py-4 space-y-4 max-w-3xl mx-auto">
-          {messages.length === 0 && (
-            <div className="text-center py-16 text-muted-foreground">
-              <span className="text-4xl block mb-4">{botEmoji}</span>
-              <p className="text-sm font-medium">
-                Commencez une conversation avec {botName}
-              </p>
-              <p className="text-xs mt-2 opacity-60 max-w-md mx-auto">
-                {botName} propose des options a chaque reponse pour
-                developper vos idees en profondeur, branche par branche.
-              </p>
-              <div className="flex items-center justify-center gap-1 mt-3 text-xs text-muted-foreground">
-                <GitBranch className="h-3 w-3" />
-                <span>Arbre de pensee</span>
-              </div>
-            </div>
-          )}
+      {/* Contenu */}
+      <div className="flex-1 overflow-auto">
+        <div className="max-w-2xl mx-auto p-4 space-y-6 pb-12">
 
-          {messages.map((msg, idx) => (
-            <div key={msg.id}>
-              {/* Message bubble */}
-              <div
-                className={cn(
-                  "flex gap-3",
-                  msg.role === "user" ? "justify-end" : "justify-start"
-                )}
+          {total === 0 && (
+            <div className="text-center py-16 text-gray-400">
+              <MessageSquare className="h-10 w-10 mx-auto mb-3 opacity-30" />
+              <p className="text-sm font-medium">Aucune mission pour l'instant</p>
+              <p className="text-xs mt-1 opacity-70">Démarrez une mission avec votre Bot Team C-Level</p>
+              <button
+                onClick={() => { newConversation(); goToChat(); }}
+                className="mt-4 flex items-center gap-1.5 text-xs px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer font-medium mx-auto"
               >
-                {msg.role === "assistant" && (
-                  <span className="text-lg mt-1 shrink-0">{botEmoji}</span>
-                )}
-                <div
-                  className={cn(
-                    "rounded-lg px-4 py-2.5 max-w-[80%]",
-                    msg.role === "user"
-                      ? "bg-blue-600 text-white"
-                      : "bg-muted border"
-                  )}
-                >
-                  <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[10px] opacity-60">
-                      {msg.timestamp.toLocaleTimeString("fr-CA", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </span>
-                    {msg.tier && (
-                      <span className="text-[10px] opacity-40">{msg.tier}</span>
-                    )}
-                    {msg.latence_ms && (
-                      <span className="text-[10px] opacity-40">
-                        {msg.latence_ms}ms
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Options cliquables — arbre de developpement de la pensee (wireframe p.3) */}
-              {msg.role === "assistant" &&
-                msg.options &&
-                msg.options.length > 0 &&
-                idx === messages.length - 1 && (
-                  <div className="ml-9 mt-2 space-y-1.5">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <GitBranch className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-[10px] text-muted-foreground font-medium">
-                        Developper cette idee :
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {msg.options.map((option, oi) => (
-                        <Button
-                          key={oi}
-                          variant="outline"
-                          size="sm"
-                          className="h-7 text-xs px-3 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-colors"
-                          onClick={() => handleOptionClick(option)}
-                          disabled={isTyping}
-                        >
-                          {option}
-                          <ArrowRight className="ml-1 h-3 w-3 opacity-50" />
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-            </div>
-          ))}
-
-          {/* Typing indicator */}
-          {isTyping && (
-            <div className="flex gap-3">
-              <span className="text-lg mt-1">{botEmoji}</span>
-              <div className="bg-muted border rounded-lg px-4 py-3">
-                <div className="flex gap-1">
-                  <Skeleton className="w-2 h-2 rounded-full animate-bounce" />
-                  <Skeleton className="w-2 h-2 rounded-full animate-bounce [animation-delay:0.15s]" />
-                  <Skeleton className="w-2 h-2 rounded-full animate-bounce [animation-delay:0.3s]" />
-                </div>
-              </div>
+                <PlusCircle className="h-3.5 w-3.5" />
+                Lancer une mission
+              </button>
             </div>
           )}
 
-          <div ref={bottomRef} />
+          {/* ACTIVE */}
+          {activeThreads.length > 0 && (
+            <section>
+              <div className="flex items-center gap-2 mb-2">
+                <PlayCircle className="h-3.5 w-3.5 text-blue-500" />
+                <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
+                  Active ({activeThreads.length})
+                </span>
+                <div className="flex-1 h-px bg-blue-100" />
+              </div>
+              <div className="space-y-2">
+                {activeThreads.map(t => (
+                  <ThreadCard
+                    key={t.id}
+                    thread={t}
+                    isActive={t.id === activeThreadId}
+                    onContinuer={handleContinuer}
+                    onParker={t.id === activeThreadId ? parkThread : undefined}
+                    onSupprimer={() => deleteThread(t.id)}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* PARQUÉES */}
+          {parkedThreads.length > 0 && (
+            <section>
+              <div className="flex items-center gap-2 mb-2">
+                <Clock className="h-3.5 w-3.5 text-amber-500" />
+                <span className="text-xs font-bold uppercase tracking-wider text-amber-600">
+                  Parquées ({parkedThreads.length})
+                </span>
+                <div className="flex-1 h-px bg-amber-100" />
+              </div>
+              <div className="space-y-2">
+                {parkedThreads.map(t => (
+                  <ThreadCard
+                    key={t.id}
+                    thread={t}
+                    onReprendre={() => handleReprendre(t.id)}
+                    onSupprimer={() => deleteThread(t.id)}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* TERMINÉES */}
+          {completedThreads.length > 0 && (
+            <section>
+              <div className="flex items-center gap-2 mb-2">
+                <CheckCircle className="h-3.5 w-3.5 text-gray-400" />
+                <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
+                  Terminées ({completedThreads.length})
+                </span>
+                <div className="flex-1 h-px bg-gray-100" />
+              </div>
+              <div className="space-y-2">
+                {completedThreads.slice(0, 5).map(t => (
+                  <ThreadCard
+                    key={t.id}
+                    thread={t}
+                    dimmed
+                    onRevoir={() => handleRevoir(t.id)}
+                    onSupprimer={() => deleteThread(t.id)}
+                  />
+                ))}
+                {completedThreads.length > 5 && (
+                  <p className="text-[11px] text-gray-400 text-center py-1">
+                    + {completedThreads.length - 5} autres conversations terminées
+                  </p>
+                )}
+              </div>
+            </section>
+          )}
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 }

@@ -34,7 +34,7 @@ const PROD_ITEMS = [
   { id: "idees", label: "Mes Idees", icon: Sparkles },
   { id: "projets", label: "Projets", icon: FolderKanban },
   { id: "documents", label: "Documents", icon: FileText },
-  { id: "discussions", label: "Discussions", icon: MessageSquare },
+  { id: "discussions", label: "Missions", icon: MessageSquare },
   { id: "taches", label: "Taches", icon: CheckSquare },
   { id: "outils", label: "Outils", icon: Wrench },
 ];

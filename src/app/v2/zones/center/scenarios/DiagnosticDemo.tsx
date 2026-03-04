@@ -513,7 +513,7 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
                       <div className="flex gap-3">
                         <BotAvatar code="BOO" size="md" />
                         <div className="bg-white border rounded-xl rounded-tl-none px-4 py-3 shadow-sm border-l-[3px] border-l-orange-400 flex-1">
-                          <div className="text-xs text-orange-600 mb-2 font-medium">Lise (COO) — Detail du plan operationnel</div>
+                          <div className="text-xs text-orange-600 mb-2 font-medium">Olivier (COO) — Detail du plan operationnel</div>
                           <TypewriterText
                             text="Le plan en 4 phases est concu pour zero interruption de production. Voici le detail critique : Phase 2 (refrigeration) se fait exclusivement les weekends et soirs — on debranche l'ancien systeme par zone, jamais tout d'un coup. Phase 3 (cobot palettiseur) est la plus simple : le robot s'installe a cote de la ligne existante, on fait 3 jours de tests en parallele avec l'equipe manuelle, puis on bascule. Les 6 employes de palettisation sont rediriges vers le controle qualite et l'emballage secondaire — aucun licenciement. Le chevauchement des phases 2-3 et 3-4 economise 4 semaines sur le calendrier total. Risque principal : la livraison du systeme CO2 transcritique a un delai de 6-8 semaines apres commande. On anticipe ca en commandant des la confirmation des subventions."
                             speed={5}
@@ -578,7 +578,7 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
                       <div className="flex gap-3">
                         <BotAvatar code="BOO" size="md" />
                         <div className="bg-white border rounded-xl rounded-tl-none px-4 py-3 shadow-sm border-l-[3px] border-l-orange-400 flex-1">
-                          <div className="text-xs text-orange-600 mb-2 font-medium">Lise (COO) — Defense des delais</div>
+                          <div className="text-xs text-orange-600 mb-2 font-medium">Olivier (COO) — Defense des delais</div>
                           <TypewriterText
                             text="Les 20 semaines sont basees sur 42 projets similaires d'Energia Solutions. Le risque principal est le delai de livraison du systeme CO2 transcritique (6-8 semaines apres commande). On anticipe en commandant des la confirmation des subventions. Les phases 2-3 se chevauchent de 2 semaines, et 3-4 de 3 semaines — c'est la ou on gagne le temps. Si on separe les phases sans chevauchement, on tombe a 28 semaines. Buffer de 15% deja integre dans chaque phase. Le vrai bottleneck c'est l'approbation HQ : deposer avant juin 2026 est non-negociable."
                             speed={5}
@@ -595,7 +595,7 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
                       <div className="flex gap-3">
                         <BotAvatar code="BCT" size="md" />
                         <div className="bg-white border rounded-xl rounded-tl-none px-4 py-3 shadow-sm border-l-[3px] border-l-purple-400 flex-1">
-                          <div className="text-xs text-purple-600 mb-2 font-medium">Marc (CTO) — Defense des choix technologiques</div>
+                          <div className="text-xs text-purple-600 mb-2 font-medium">Thierry (CTO) — Defense des choix technologiques</div>
                           <TypewriterText
                             text="Les 3 technologies recommandees ne sont pas experimentales — elles sont eprouvees en manufacturier alimentaire. Le cobot UR10e est certifie IP67 pour les environnements alimentaires, 40,000+ unites installees dans le monde. Le systeme CO2 transcritique est le standard post-HFC en refrigeration industrielle — la reglementation canadienne interdit les HFC d'ici 2028, donc c'est inevitable. Les capteurs IoT utilisent LoRaWAN, la meme techno que chez Saputo et Agropur pour le monitoring temps reel. Le ROI de 20-24 mois est base sur 23 projets similaires — pas des projections theoriques. Le seul risque technologique : la maintenance predictive par analyse vibratoire necessite 6-8 semaines de donnees avant d'etre fiable. Pendant cette periode, on maintient la maintenance preventive classique en parallele."
                             speed={5}
@@ -661,15 +661,15 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
                           <div className="flex gap-3">
                             <BotAvatar code="BOO" size="sm" />
                             <div className="flex-1">
-                              <div className="text-xs text-orange-600 font-medium mb-1">Lise (COO)</div>
+                              <div className="text-xs text-orange-600 font-medium mb-1">Olivier (COO)</div>
                               <p className="text-sm text-gray-700">Francois a raison sur le timing, mais je souleve un point : les 6 operateurs de palettisation doivent etre formes AVANT l'arrivee du cobot, pas pendant. Ca veut dire demarrer la formation en Phase 1, pas en Phase 3. Ca ajoute un cout de 15-20K$ mais reduit le risque de resistance au changement de 80%.</p>
                             </div>
                           </div>
                           <div className="flex gap-3">
                             <BotAvatar code="BCT" size="sm" />
                             <div className="flex-1">
-                              <div className="text-xs text-purple-600 font-medium mb-1">Marc (CTO)</div>
-                              <p className="text-sm text-gray-700">D'accord avec Lise. J'ajoute que l'IoT devrait commencer en Phase 1 aussi — installer les capteurs de base des le debut permet de mesurer le "avant" pour prouver les economies a HQ. Les donnees de monitoring pre-travaux renforcent enormement le dossier de subvention.</p>
+                              <div className="text-xs text-purple-600 font-medium mb-1">Thierry (CTO)</div>
+                              <p className="text-sm text-gray-700">D'accord avec Olivier. J'ajoute que l'IoT devrait commencer en Phase 1 aussi — installer les capteurs de base des le debut permet de mesurer le "avant" pour prouver les economies a HQ. Les donnees de monitoring pre-travaux renforcent enormement le dossier de subvention.</p>
                             </div>
                           </div>
                           <div className="bg-violet-50 border border-violet-200 rounded-lg px-3 py-2.5 text-xs">
@@ -755,7 +755,7 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
                           <div className="flex gap-3">
                             <BotAvatar code="BOO" size="sm" />
                             <div className="flex-1">
-                              <div className="text-xs text-orange-600 font-medium mb-1">Lise (COO)</div>
+                              <div className="text-xs text-orange-600 font-medium mb-1">Olivier (COO)</div>
                               <p className="text-sm text-gray-700">Je suis d'accord avec Francois sur le timing. Par contre, on PEUT commencer les travaux preparatoires (audit, specs, commande equipement) avant la confirmation sans perdre l'admissibilite. C'est seulement l'installation physique qui doit attendre. Ca nous sauve 4-6 semaines sur le calendrier total.</p>
                             </div>
                           </div>

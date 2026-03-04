@@ -21,6 +21,13 @@ import type {
   MultiChatRequest,
   PerspectiveItem,
   CanvasAction,
+  TeamProposal,
+  BureauItem,
+  BureauItemCreate,
+  BureauItemUpdate,
+  PlaneTache,
+  PlaneTacheDetail,
+  PlaneTacheCreate,
 } from "./types";
 
 // Options contextuelles par defaut — arbre de developpement de la pensee (wireframe p.3)
@@ -330,6 +337,53 @@ function parseApiOptions(responseText: string): { cleanText: string; parsedOptio
   return { cleanText: cleanLines.join("\n"), parsedOptions };
 }
 
+// --- Focus Card helpers (module-level) ---
+
+const FOCUS_QUESTIONS: Record<string, string> = {
+  kpi_ceo: "Qu'est-ce qui capte ton attention dans ce tableau de bord? On explore ensemble?",
+  kpi_cfo: "Ces chiffres financiers — est-ce qu'il y a une tension ou une opportunité que tu veux déballer?",
+  kpi_cto: "Côté tech — est-ce qu'il y a un risque, une dette ou une opportunité que tu veux activer?",
+  kpi_cmo: "Marketing — qu'est-ce qui te tient le plus à coeur en ce moment dans ces données?",
+  kpi_cso: "Stratégie — qu'est-ce qui te dérange ou t'emballe dans ce portrait?",
+  pipeline: "Le pipeline — y'a-t-il un prospect ou une opportunité sur laquelle tu veux qu'on se concentre?",
+  projets: "Ces projets — lequel a le plus besoin de ton attention maintenant?",
+  calendrier: "Ton calendrier — est-ce qu'il y a un événement ou une décision imminente qu'on devrait préparer?",
+  industrie: "Ces données industrie — y'a-t-il un signal faible ou une tendance que tu veux approfondir?",
+  ops: "Opérations — où est-ce que ça bloque, ou qu'est-ce qu'on pourrait optimiser?",
+};
+
+const FOCUS_QUICK_ACTIONS: Record<string, string[]> = {
+  kpi_ceo: ["Diagnostic complet", "Points critiques", "Quick wins"],
+  kpi_cfo: ["Analyse cashflow", "Risques financiers", "Optimisations"],
+  kpi_cto: ["Audit tech", "Priorités Q2", "Risques"],
+  kpi_cmo: ["Analyse campagnes", "Pipeline leads", "Contenu"],
+  kpi_cso: ["Analyse concurrentielle", "Opportunités", "Risques"],
+  pipeline: ["Top opportunités", "Pourquoi ça stagne?", "Plan closing"],
+  projets: ["Projets en retard", "Ressources", "Livraisons"],
+  calendrier: ["Préparer la semaine", "Points importants", "Déléguer"],
+  industrie: ["Tendances clés", "Impact sur nous", "Actions"],
+  ops: ["Goulots d'étranglement", "Automatiser quoi?", "KPIs"],
+};
+
+function extractFocusItems(data: unknown): Array<{ label: string; value: string }> {
+  if (!data || typeof data !== "object") return [];
+  if (Array.isArray(data)) {
+    return (data as Array<Record<string, unknown>>)
+      .slice(0, 3)
+      .map((item) => ({
+        label: String(item.nom || item.name || item.titre || "—"),
+        value: String(item.valeur || item.value || item.statut || item.status || ""),
+      }));
+  }
+  return Object.entries(data as Record<string, unknown>)
+    .filter(([, v]) => v !== null && v !== undefined && typeof v !== "object")
+    .slice(0, 3)
+    .map(([k, v]) => ({
+      label: k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+      value: String(v),
+    }));
+}
+
 // --- useChat ---
 
 export function useChat() {
@@ -337,6 +391,8 @@ export function useChat() {
   const [isTyping, setIsTyping] = useState(false);
   const [threads, setThreads] = useState<Thread[]>(() => loadThreads());
   const [activeThreadId, setActiveThreadIdRaw] = useState<string | null>(() => loadActiveThreadId());
+  // Roster de bots actifs — max 3, CarlOS en défaut
+  const [activeRoster, setActiveRoster] = useState<string[]>(["BCO"]);
   const idCounter = useRef(0);
   const hasAutoRestored = useRef(false);
 
@@ -449,6 +505,20 @@ export function useChat() {
     },
     []
   );
+
+  // ── Injecter un message team_proposal dans le chat ──
+  const injectTeamProposal = useCallback((proposal: TeamProposal, agent: string) => {
+    const msg: ChatMessage = {
+      id: `msg-${++idCounter.current}`,
+      role: "assistant",
+      content: proposal.explication,
+      timestamp: new Date(),
+      agent,
+      msgType: "team_proposal" as MessageType,
+      teamProposal: proposal,
+    };
+    setMessages((prev) => [...prev, msg]);
+  }, []);
 
   // Track branch depth
   const currentBranchDepth = useRef(0);
@@ -596,6 +666,7 @@ export function useChat() {
                         options,
                         isStreaming: false,
                         canvasActions: visibleActions.length > 0 ? visibleActions : undefined,
+                        isDiagnostic: data.is_diagnostic || false,
                       }
                     : m
                 )
@@ -606,6 +677,13 @@ export function useChat() {
               // Canvas Actions — dispatch vers le bus
               if (data.canvas_actions && data.canvas_actions.length > 0 && canvasActionsCallbackRef.current) {
                 canvasActionsCallbackRef.current(data.canvas_actions);
+              }
+
+              // Team proposal — injecter apres la reponse du bot
+              if (data.team_proposal) {
+                setTimeout(() => {
+                  injectTeamProposal(data.team_proposal!, data.agent);
+                }, 400);
               }
 
               // Post-stream: coaching, sentinelle, drift detection
@@ -732,10 +810,18 @@ export function useChat() {
                     latence_ms: res.latence_ms,
                     options,
                     isStreaming: false,
+                    isDiagnostic: res.is_diagnostic || false,
                   }
                 : m
             )
           );
+
+          // Team proposal fallback path
+          if (res.team_proposal) {
+            setTimeout(() => {
+              injectTeamProposal(res.team_proposal!, res.agent);
+            }, 400);
+          }
         } catch (fallbackErr) {
           // Both streaming and fallback failed
           setMessages((prev) =>
@@ -755,8 +841,30 @@ export function useChat() {
         streamAbort.current = null;
       }
     },
-    [activeThreadId, messages, injectCoaching]
+    [activeThreadId, messages, injectCoaching, injectTeamProposal]
   );
+
+  // ── Roster management — max 3 bots ──
+
+  const addBotToRoster = useCallback((code: string) => {
+    setActiveRoster((prev) => {
+      if (prev.includes(code)) return prev;
+      if (prev.length >= 3) return prev; // max 3
+      return [...prev, code];
+    });
+  }, []);
+
+  const removeBotFromRoster = useCallback((code: string) => {
+    setActiveRoster((prev) => {
+      if (prev.length <= 1) return prev; // garder au moins 1 bot
+      return prev.filter((c) => c !== code);
+    });
+  }, []);
+
+  const acceptTeamProposal = useCallback((bots: string[]) => {
+    const limited = bots.slice(0, 3);
+    setActiveRoster(limited.length > 0 ? limited : ["BCO"]);
+  }, []);
 
   const newConversation = useCallback(() => {
     // Park current thread if it has messages
@@ -943,12 +1051,50 @@ export function useChat() {
     [activeThreadId]
   );
 
+  // Focus card injection — démarre TOUJOURS une nouvelle discussion dédiée à l'élément cliqué
+  // Appelé depuis ChatProvider après newConversation() (qui parke le fil en cours si nécessaire)
+  const injectFocusCard = useCallback(
+    (fd: { title: string; elementType: string; data: unknown; bot: string }) => {
+      const items = extractFocusItems(fd.data);
+      const question = FOCUS_QUESTIONS[fd.elementType] || "Qu'est-ce qu'on explore ensemble sur ce sujet?";
+      const quickActions = FOCUS_QUICK_ACTIONS[fd.elementType] || ["Analyser", "Stratégie", "Quick wins"];
+
+      const msg: ChatMessage = {
+        id: `msg-${++idCounter.current}`,
+        role: "assistant",
+        content: question,
+        timestamp: new Date(),
+        agent: fd.bot || "BCO",
+        msgType: "focus_card" as MessageType,
+        focusCardData: { title: fd.title, elementType: fd.elementType, items, quickActions },
+      };
+
+      // Nouveau thread dédié à cet élément (toujours — newConversation a déjà parké le précédent)
+      const newId = generateThreadId();
+      const thread: Thread = {
+        id: newId,
+        title: fd.title,
+        status: "active",
+        messages: [msg],
+        mode: "credo",
+        primaryBot: fd.bot || "BCO",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      setMessages([msg]);                              // remplace (pas append) — fil propre
+      setThreads((prev) => [...prev, thread]);
+      setActiveThreadId(newId);
+    },
+    [] // pas de dépendances — utilise setters fonctionnels uniquement
+  );
+
   return {
     messages,
     isTyping,
     sendMessage,
     sendMultiPerspective,
     injectVoiceMessage,
+    injectFocusCard,
     newConversation,
     threads,
     activeThreadId,
@@ -957,6 +1103,11 @@ export function useChat() {
     completeThread,
     deleteThread,
     setCanvasActionsCallback,
+    // Chef d'Orchestre
+    activeRoster,
+    addBotToRoster,
+    removeBotFromRoster,
+    acceptTeamProposal,
   };
 }
 
@@ -1022,4 +1173,292 @@ export function useCrystals() {
   }, [crystals]);
 
   return { crystals, addCrystal, deleteCrystal, exportCrystals };
+}
+
+
+// --- useTemplates — Templates Lego (bridge_documents) ---
+
+export function useTemplates() {
+  const [templates, setTemplates] = useState<import("./types").TemplateInfo[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const refresh = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    api
+      .listTemplates()
+      .then((res) => {
+        setTemplates(res.templates || []);
+        setCategories(res.categories || []);
+        setTotal(res.total || 0);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, []);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  const previewTemplate = useCallback(async (alias: string) => {
+    return api.previewTemplate(alias);
+  }, []);
+
+  const generateDocument = useCallback(async (data: import("./types").DocumentGenerateRequest) => {
+    return api.generateDocument(data);
+  }, []);
+
+  return { templates, categories, total, loading, error, refresh, previewTemplate, generateDocument };
+}
+
+
+// --- useBureau — Projets, Documents, Outils (PostgreSQL) ---
+
+export function useBureau(typeFilter?: "projet" | "document" | "outil") {
+  const [items, setItems] = useState<BureauItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const refresh = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    api
+      .listBureauItems(typeFilter)
+      .then((res) => {
+        setItems(res.items);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, [typeFilter]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  const createItem = useCallback(async (data: BureauItemCreate) => {
+    const item = await api.createBureauItem(data);
+    setItems((prev) => [item, ...prev]);
+    return item;
+  }, []);
+
+  const updateItem = useCallback(async (id: number, data: BureauItemUpdate) => {
+    const item = await api.updateBureauItem(id, data);
+    setItems((prev) => prev.map((i) => (i.id === id ? item : i)));
+    return item;
+  }, []);
+
+  const deleteItem = useCallback(async (id: number) => {
+    await api.deleteBureauItem(id);
+    setItems((prev) => prev.filter((i) => i.id !== id));
+  }, []);
+
+  const uploadFile = useCallback(async (file: File, titre?: string) => {
+    const item = await api.uploadBureauFile(file, titre);
+    setItems((prev) => [item, ...prev]);
+    return item;
+  }, []);
+
+  return { items, loading, error, refresh, createItem, updateItem, deleteItem, uploadFile };
+}
+
+
+// --- useTaches — Taches Plane.so ---
+
+export function useTaches() {
+  const [taches, setTaches] = useState<PlaneTache[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedTache, setSelectedTache] = useState<PlaneTacheDetail | null>(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+
+  const refresh = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    api
+      .listTaches()
+      .then((res) => {
+        setTaches(res.taches);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, []);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  const selectTache = useCallback(async (id: string) => {
+    setLoadingDetail(true);
+    try {
+      const detail = await api.getTache(id);
+      setSelectedTache(detail);
+    } catch (err) {
+      setSelectedTache(null);
+    } finally {
+      setLoadingDetail(false);
+    }
+  }, []);
+
+  const closeTache = useCallback(() => {
+    setSelectedTache(null);
+  }, []);
+
+  const createTache = useCallback(async (data: PlaneTacheCreate) => {
+    const result = await api.createTache(data);
+    refresh();
+    return result;
+  }, [refresh]);
+
+  const completeTache = useCallback(async (id: string) => {
+    await api.completeTache(id);
+    setTaches((prev) => prev.filter((t) => t.id !== id));
+    if (selectedTache?.id === id) setSelectedTache(null);
+  }, [selectedTache]);
+
+  const commentTache = useCallback(async (id: string, text: string) => {
+    await api.commentTache(id, text);
+    // Refresh detail if viewing this tache
+    if (selectedTache?.id === id) {
+      const detail = await api.getTache(id);
+      setSelectedTache(detail);
+    }
+  }, [selectedTache]);
+
+  return {
+    taches, loading, error, refresh,
+    selectedTache, loadingDetail, selectTache, closeTache,
+    createTache, completeTache, commentTache,
+  };
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// Decision Log — Protocole Gouvernance CarlOS (D-098)
+// ═══════════════════════════════════════════════════════════════
+
+export function useDecisionLog(filters?: {
+  bot_code?: string;
+  type_decision?: string;
+  section?: string;
+}) {
+  const [decisions, setDecisions] = useState<import("./types").DecisionLogEntry[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const refresh = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await api.listDecisions({
+        bot_code: filters?.bot_code,
+        type_decision: filters?.type_decision,
+        section: filters?.section,
+        limit: 100,
+      });
+      setDecisions(res.decisions || []);
+      setTotal(res.total || 0);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur chargement decisions");
+    } finally {
+      setLoading(false);
+    }
+  }, [filters?.bot_code, filters?.type_decision, filters?.section]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  const createDecision = useCallback(async (data: import("./types").DecisionLogCreate) => {
+    const res = await api.createDecision(data);
+    await refresh();
+    return res.id;
+  }, [refresh]);
+
+  const reverseDecision = useCallback(async (id: number) => {
+    await api.reverseDecision(id);
+    await refresh();
+  }, [refresh]);
+
+  return {
+    decisions, total, loading, error, refresh,
+    createDecision, reverseDecision,
+  };
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// useTensions — D-100 (TENSION → MISSION → DÉCISION)
+// ═══════════════════════════════════════════════════════════════
+
+export function useTensions(filters?: {
+  status?: string;
+  type_vitaa?: string;
+  intensite?: string;
+}) {
+  const [tensions, setTensions] = useState<import("./types").Tension[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const refresh = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await api.listTensions({
+        status: filters?.status,
+        type_vitaa: filters?.type_vitaa,
+        intensite: filters?.intensite,
+        limit: 100,
+      });
+      setTensions(res.tensions || []);
+      setTotal(res.total || 0);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur chargement tensions");
+    } finally {
+      setLoading(false);
+    }
+  }, [filters?.status, filters?.type_vitaa, filters?.intensite]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  const createTension = useCallback(async (data: import("./types").TensionCreate) => {
+    const res = await api.createTension(data);
+    await refresh();
+    return res;
+  }, [refresh]);
+
+  const classifyMessage = useCallback(async (message: string) => {
+    return api.classifyTension(message);
+  }, []);
+
+  const resolveTension = useCallback(async (id: number) => {
+    await api.resolveTension(id);
+    await refresh();
+  }, [refresh]);
+
+  const launchMission = useCallback(async (id: number) => {
+    const res = await api.launchMissionFromTension(id);
+    await refresh();
+    return res;
+  }, [refresh]);
+
+  return {
+    tensions, total, loading, error, refresh,
+    createTension, classifyMessage, resolveTension, launchMission,
+  };
 }

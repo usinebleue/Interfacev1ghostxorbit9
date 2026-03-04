@@ -14,6 +14,7 @@ import { cn } from "../../../components/ui/utils";
 import { useFrameMaster } from "../../context/FrameMasterContext";
 import { BOT_AVATAR, BOT_SUBTITLE } from "../../api/types";
 import { DashboardView } from "./DashboardView";
+import { CarlOSPresence } from "./CarlOSPresence";
 
 /* ============ BLOCK HEADER — meme style que DashboardView ============ */
 function BlockHeader({ icon: Icon, title, count, gradient }: {
@@ -814,40 +815,7 @@ export function DepartmentTourDeControle() {
     <ScrollArea className="h-full">
       <div className="p-5 space-y-4 max-w-5xl mx-auto">
 
-        {/* Barre proactive du bot */}
-        <div className="flex items-center gap-3 bg-gradient-to-r from-slate-50 to-blue-50 border rounded-xl px-4 py-3">
-          <div className="w-9 h-9 rounded-full overflow-hidden ring-2 ring-gray-300 shrink-0">
-            {avatar ? (
-              <img src={avatar} alt={botName} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                <Briefcase className="h-4 w-4 text-gray-500" />
-              </div>
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm text-gray-800">
-              <span className="font-semibold">{botName}:</span>{" "}
-              {config.summary}
-            </p>
-          </div>
-          <Button
-            size="sm"
-            variant="outline"
-            className="shrink-0 gap-1.5"
-            onClick={() => setActiveView("detail")}
-          >
-            <Settings className="h-3.5 w-3.5" />
-          </Button>
-          <Button
-            size="sm"
-            className="shrink-0 gap-1.5"
-            onClick={() => setActiveView("live-chat")}
-          >
-            Repondre
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Button>
-        </div>
+        <CarlOSPresence key={activeBotCode} />
 
         {/* Row 1 : 5 blocs domaine — cartes info (discussion via InputBar) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">

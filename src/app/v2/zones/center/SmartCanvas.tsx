@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { cn } from "../../../components/ui/utils";
 import { fetchSuggestions, fetchHealth, type SuggestionItem, type SuggestionsResponse, type HealthResponse } from "./carlosApi";
+import { CarlOSPresence } from "./CarlOSPresence";
 
 // Icon mapping from string names to components
 const ICON_MAP: Record<string, typeof Zap> = {
@@ -114,6 +115,8 @@ export function SmartCanvas({
   return (
     <div className="h-full overflow-auto">
       <div className="max-w-3xl mx-auto px-6 py-10 space-y-8">
+
+        <CarlOSPresence />
 
         {/* Greeting + Status */}
         <div className="space-y-4">

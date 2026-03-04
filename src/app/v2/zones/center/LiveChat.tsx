@@ -73,20 +73,20 @@ const BOT_COLORS: Record<string, {
   bg: string; bgLight: string; text: string; border: string;
   ring: string; emoji: string; name: string; role: string; avatar: string;
 }> = {
-  BCO: { bg: "bg-blue-600", bgLight: "bg-blue-50", text: "text-blue-700", border: "border-blue-400", ring: "ring-blue-300", emoji: "\u{1F454}", name: "CarlOS", role: "CEO", avatar: "/agents/ceo-carlos.png" },
-  BCT: { bg: "bg-violet-600", bgLight: "bg-violet-50", text: "text-violet-700", border: "border-violet-400", ring: "ring-violet-300", emoji: "\u{1F4BB}", name: "Thomas", role: "CTO", avatar: "/agents/cto-thomas.png" },
-  BCF: { bg: "bg-emerald-600", bgLight: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-400", ring: "ring-emerald-300", emoji: "\u{1F4B0}", name: "Fran\u00E7ois", role: "CFO", avatar: "/agents/cfo-francois.png" },
-  BCM: { bg: "bg-pink-600", bgLight: "bg-pink-50", text: "text-pink-700", border: "border-pink-400", ring: "ring-pink-300", emoji: "\u{1F4E3}", name: "Sofia", role: "CMO", avatar: "/agents/cmo-sofia.png" },
-  BCS: { bg: "bg-red-600", bgLight: "bg-red-50", text: "text-red-700", border: "border-red-400", ring: "ring-red-300", emoji: "\u{1F3AF}", name: "Marc", role: "CSO", avatar: "/agents/cso-marc.png" },
-  BOO: { bg: "bg-orange-600", bgLight: "bg-orange-50", text: "text-orange-700", border: "border-orange-400", ring: "ring-orange-300", emoji: "\u{2699}\u{FE0F}", name: "Lise", role: "COO", avatar: "/agents/coo-lise.png" },
-  BFA: { bg: "bg-slate-600", bgLight: "bg-slate-50", text: "text-slate-700", border: "border-slate-400", ring: "ring-slate-300", emoji: "\u{1F3ED}", name: "FactoryBot", role: "Factory", avatar: "" },
-  BHR: { bg: "bg-teal-600", bgLight: "bg-teal-50", text: "text-teal-700", border: "border-teal-400", ring: "ring-teal-300", emoji: "\u{1F91D}", name: "David", role: "CHRO", avatar: "/agents/David - CHRO.png" },
-  BIO: { bg: "bg-cyan-600", bgLight: "bg-cyan-50", text: "text-cyan-700", border: "border-cyan-400", ring: "ring-cyan-300", emoji: "\u{1F4CA}", name: "H\u00E9l\u00E8ne", role: "CIO", avatar: "/agents/H\u00E9l\u00E8ne - CIO.png" },
-  BCC: { bg: "bg-rose-600", bgLight: "bg-rose-50", text: "text-rose-700", border: "border-rose-400", ring: "ring-rose-300", emoji: "\u{1F4E2}", name: "\u00C9milie", role: "CCO", avatar: "/agents/CCO - \u00C9milie2.png" },
-  BPO: { bg: "bg-fuchsia-600", bgLight: "bg-fuchsia-50", text: "text-fuchsia-700", border: "border-fuchsia-400", ring: "ring-fuchsia-300", emoji: "\u{1F680}", name: "Alex", role: "CPO", avatar: "/agents/CPO - Alex2.png" },
-  BRO: { bg: "bg-amber-600", bgLight: "bg-amber-50", text: "text-amber-700", border: "border-amber-400", ring: "ring-amber-300", emoji: "\u{1F4C8}", name: "Julien", role: "CRO", avatar: "/agents/CRO - Julien2.png" },
-  BLE: { bg: "bg-indigo-600", bgLight: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-400", ring: "ring-indigo-300", emoji: "\u{2696}\u{FE0F}", name: "Isabelle", role: "Legal", avatar: "/agents/CLO - Isabelle3.png" },
-  BSE: { bg: "bg-zinc-700", bgLight: "bg-zinc-50", text: "text-zinc-700", border: "border-zinc-400", ring: "ring-zinc-300", emoji: "\u{1F6E1}\u{FE0F}", name: "SecBot", role: "CISO", avatar: "" },
+  BCO: { bg: "bg-blue-600", bgLight: "bg-blue-50", text: "text-blue-700", border: "border-blue-400", ring: "ring-blue-300", emoji: "\u{1F454}", name: "CarlOS", role: "CEO", avatar: "/agents/generated/ceo-carlos-profil-v3.png" },
+  BCT: { bg: "bg-violet-600", bgLight: "bg-violet-50", text: "text-violet-700", border: "border-violet-400", ring: "ring-violet-300", emoji: "\u{1F4BB}", name: "Thierry", role: "CTO", avatar: "/agents/generated/cto-thierry-profil-v3.png" },
+  BCF: { bg: "bg-emerald-600", bgLight: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-400", ring: "ring-emerald-300", emoji: "\u{1F4B0}", name: "Fran\u00E7ois", role: "CFO", avatar: "/agents/generated/cfo-francois-profil-v3.png" },
+  BCM: { bg: "bg-pink-600", bgLight: "bg-pink-50", text: "text-pink-700", border: "border-pink-400", ring: "ring-pink-300", emoji: "\u{1F4E3}", name: "Martine", role: "CMO", avatar: "/agents/generated/cmo-martine-profil-v3.png" },
+  BCS: { bg: "bg-red-600", bgLight: "bg-red-50", text: "text-red-700", border: "border-red-400", ring: "ring-red-300", emoji: "\u{1F3AF}", name: "Sophie", role: "CSO", avatar: "/agents/generated/cso-sophie-profil-v3.png" },
+  BOO: { bg: "bg-orange-600", bgLight: "bg-orange-50", text: "text-orange-700", border: "border-orange-400", ring: "ring-orange-300", emoji: "\u{2699}\u{FE0F}", name: "Olivier", role: "COO", avatar: "/agents/generated/coo-olivier-profil-v3.png" },
+  BFA: { bg: "bg-slate-600", bgLight: "bg-slate-50", text: "text-slate-700", border: "border-slate-400", ring: "ring-slate-300", emoji: "\u{1F3ED}", name: "Fabien", role: "Production", avatar: "/agents/generated/factory-bot-profil-v3.png" },
+  BHR: { bg: "bg-teal-600", bgLight: "bg-teal-50", text: "text-teal-700", border: "border-teal-400", ring: "ring-teal-300", emoji: "\u{1F91D}", name: "H\u00E9l\u00E8ne", role: "CHRO", avatar: "/agents/generated/chro-helene-profil-v3.png" },
+  BIO: { bg: "bg-cyan-600", bgLight: "bg-cyan-50", text: "text-cyan-700", border: "border-cyan-400", ring: "ring-cyan-300", emoji: "\u{1F4CA}", name: "Isabelle", role: "CIO", avatar: "/agents/generated/cio-isabelle-profil-v3.png" },
+  BCC: { bg: "bg-rose-600", bgLight: "bg-rose-50", text: "text-rose-700", border: "border-rose-400", ring: "ring-rose-300", emoji: "\u{1F4E2}", name: "Catherine", role: "CCO", avatar: "/agents/generated/cco-catherine-profil-v3.png" },
+  BPO: { bg: "bg-fuchsia-600", bgLight: "bg-fuchsia-50", text: "text-fuchsia-700", border: "border-fuchsia-400", ring: "ring-fuchsia-300", emoji: "\u{1F680}", name: "Philippe", role: "CPO", avatar: "/agents/generated/cpo-philippe-profil-v3.png" },
+  BRO: { bg: "bg-amber-600", bgLight: "bg-amber-50", text: "text-amber-700", border: "border-amber-400", ring: "ring-amber-300", emoji: "\u{1F4C8}", name: "Rapha\u00EBl", role: "CRO", avatar: "/agents/generated/cro-raphael-profil-v3.png" },
+  BLE: { bg: "bg-indigo-600", bgLight: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-400", ring: "ring-indigo-300", emoji: "\u{2696}\u{FE0F}", name: "Louise", role: "CLO", avatar: "/agents/generated/clo-louise-profil-v3.png" },
+  BSE: { bg: "bg-zinc-700", bgLight: "bg-zinc-50", text: "text-zinc-700", border: "border-zinc-400", ring: "ring-zinc-300", emoji: "\u{1F6E1}\u{FE0F}", name: "Sébastien", role: "CISO", avatar: "/agents/generated/ciso-secbot-profil-v3.png" },
 };
 
 const USER_AVATAR = "/agents/carl-fugere.jpg";
@@ -470,6 +470,13 @@ interface BotActionsProps {
   disabled: boolean;
   availableBots: { code: string; nom: string; titre: string }[];
   currentBotCode: string;
+  // Nouvelles actions Chef d'Orchestre
+  onNuancer: () => void;
+  onFilParallele: () => void;
+  onPlanAction: () => void;
+  onEvaluerRisques: () => void;
+  onScenarioEtSi: () => void;
+  onDeleguer: () => void;
 }
 
 function BotMessageActions({
@@ -485,6 +492,12 @@ function BotMessageActions({
   disabled,
   availableBots,
   currentBotCode,
+  onNuancer,
+  onFilParallele,
+  onPlanAction,
+  onEvaluerRisques,
+  onScenarioEtSi,
+  onDeleguer,
 }: BotActionsProps) {
   const [showConsulter, setShowConsulter] = useState(false);
   const maxChallenges = 2;
@@ -603,6 +616,145 @@ function BotMessageActions({
           )}
         </button>
       </div>
+
+      {/* Actions avancées Chef d'Orchestre — 2e rangée, visible au hover sur last msg */}
+      {isLast && (
+        <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-gray-50">
+          <span className="text-[9px] text-gray-300 font-medium uppercase tracking-wide mr-0.5">Avancé</span>
+
+          <button
+            onClick={onNuancer}
+            disabled={disabled}
+            className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-sky-50 text-sky-600 border border-sky-200 hover:bg-sky-100 transition-colors cursor-pointer disabled:opacity-50 font-medium"
+            title="Nuancer — approfondir avec nuances et limites"
+          >
+            <Scale className="h-2.5 w-2.5" /> Nuancer
+          </button>
+
+          <button
+            onClick={onFilParallele}
+            disabled={disabled}
+            className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-teal-50 text-teal-600 border border-teal-200 hover:bg-teal-100 transition-colors cursor-pointer disabled:opacity-50 font-medium"
+            title="Fil parallèle — explorer un angle non couvert"
+          >
+            <ArrowRight className="h-2.5 w-2.5" /> Fil parallèle
+          </button>
+
+          <button
+            onClick={onPlanAction}
+            disabled={disabled}
+            className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-green-50 text-green-600 border border-green-200 hover:bg-green-100 transition-colors cursor-pointer disabled:opacity-50 font-medium"
+            title="Plan d'action — étapes concrètes"
+          >
+            <Target className="h-2.5 w-2.5" /> Plan d'action
+          </button>
+
+          <button
+            onClick={onEvaluerRisques}
+            disabled={disabled}
+            className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-orange-50 text-orange-600 border border-orange-200 hover:bg-orange-100 transition-colors cursor-pointer disabled:opacity-50 font-medium"
+            title="Évaluer les risques — matrice probabilité × impact"
+          >
+            <AlertTriangle className="h-2.5 w-2.5" /> Risques
+          </button>
+
+          <button
+            onClick={onScenarioEtSi}
+            disabled={disabled}
+            className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-purple-50 text-purple-600 border border-purple-200 hover:bg-purple-100 transition-colors cursor-pointer disabled:opacity-50 font-medium"
+            title="Scénario Et si? — explorer les hypothèses"
+          >
+            <Zap className="h-2.5 w-2.5" /> Et si?
+          </button>
+
+          <button
+            onClick={onDeleguer}
+            disabled={disabled}
+            className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-100 transition-colors cursor-pointer disabled:opacity-50 font-medium"
+            title="Déléguer — créer un brief de délégation"
+          >
+            <FileText className="h-2.5 w-2.5" /> Déléguer
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════
+// TeamProposalCard — proposition d'équipe 3 bots
+// ══════════════════════════════════════════════
+
+interface TeamProposalCardProps {
+  proposal: { bots: { code: string; name: string; emoji: string; role_tag: string; raison: string }[]; explication: string };
+  onAccept: (bots: string[]) => void;
+  disabled: boolean;
+}
+
+function TeamProposalCard({ proposal, onAccept, disabled }: TeamProposalCardProps) {
+  const [accepted, setAccepted] = useState(false);
+  const roleColors: Record<string, string> = {
+    "PRIMAIRE": "bg-blue-100 text-blue-700 border-blue-300",
+    "ANGLE MORT": "bg-amber-100 text-amber-700 border-amber-300",
+  };
+
+  return (
+    <div className="animate-in fade-in slide-in-from-bottom-3 duration-700">
+      <div className="flex items-center gap-2 mb-2 ml-10">
+        <div className="w-6 h-px bg-blue-300" />
+        <span className="text-[10px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200 flex items-center gap-1">
+          <Users className="h-2.5 w-2.5" /> Équipe proposée
+        </span>
+        <div className="flex-1 h-px bg-blue-200" />
+      </div>
+      <div className="flex gap-3 ml-10">
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl rounded-tl-md px-5 py-4 shadow-md max-w-[90%] w-full">
+          <div className="text-xs font-bold text-blue-700 mb-3 flex items-center gap-1.5">
+            <Brain className="h-3.5 w-3.5" /> CarlOS compose votre équipe
+          </div>
+
+          {/* Bot cards */}
+          <div className="grid grid-cols-3 gap-2 mb-3">
+            {proposal.bots.map((bot) => {
+              const info = BOT_COLORS[bot.code];
+              return (
+                <div key={bot.code} className={cn("bg-white rounded-xl p-3 border text-center", info?.border || "border-gray-200")}>
+                  <div className="text-xl mb-1">{bot.emoji}</div>
+                  <div className={cn("text-xs font-bold mb-1", info?.text || "text-gray-700")}>{bot.name}</div>
+                  <span className={cn("text-[9px] font-semibold px-1.5 py-0.5 rounded-full border", roleColors[bot.role_tag] || "bg-gray-100 text-gray-600 border-gray-200")}>
+                    {bot.role_tag}
+                  </span>
+                  <p className="text-[10px] text-gray-500 mt-1.5 leading-tight">{bot.raison}</p>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Explication LLM */}
+          <p className="text-xs text-blue-800 leading-relaxed mb-3 italic">"{proposal.explication}"</p>
+
+          {/* Bouton accepter */}
+          <button
+            onClick={() => {
+              setAccepted(true);
+              onAccept(proposal.bots.map(b => b.code));
+            }}
+            disabled={disabled || accepted}
+            className={cn(
+              "w-full flex items-center justify-center gap-2 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer",
+              accepted
+                ? "bg-emerald-100 text-emerald-700 border border-emerald-300"
+                : "bg-blue-600 text-white hover:bg-blue-700 border border-blue-700 disabled:opacity-50"
+            )}
+          >
+            {accepted ? (
+              <><CheckCircle2 className="h-4 w-4" /> Équipe activée</>
+            ) : (
+              <><Users className="h-4 w-4" /> Activer cette équipe</>
+            )}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -623,6 +775,7 @@ export function LiveChat({
     crystals, crystallize, deleteCrystal, exportCrystals,
     videoAvatarEnabled, toggleVideoAvatar,
     injectVoiceMessage,
+    activeRoster, addBotToRoster, removeBotFromRoster, acceptTeamProposal,
   } = useChatContext();
   const { activeBotCode } = useFrameMaster();
   const { bots } = useBots();
@@ -807,6 +960,71 @@ export function LiveChat({
     [sendMessage, lastUserMessage, isTyping, kitBotFullName]
   );
 
+  // ── Nouvelles actions Chef d'Orchestre ──
+
+  const handleNuancer = useCallback((msgId: string, agent?: string) => {
+    if (!isTyping) sendMessage(
+      "Nuance cette idée avec plus de profondeur, des exemples concrets et les limites de cette approche.",
+      agent || activeBotCode, undefined,
+      { msgType: "nuancer", parentId: msgId, branchLabel: "Nuancer" }
+    );
+  }, [sendMessage, activeBotCode, isTyping]);
+
+  const handleFilParallele = useCallback((msgId: string, agent?: string) => {
+    if (!isTyping) sendMessage(
+      "Ouvre un fil de réflexion parallèle sur un angle que tu n'as pas encore exploré sur ce sujet.",
+      agent || activeBotCode, undefined,
+      { msgType: "fil_parallele", parentId: msgId, branchLabel: "Fil parallèle" }
+    );
+  }, [sendMessage, activeBotCode, isTyping]);
+
+  const handlePlanAction = useCallback((msgId: string, agent?: string) => {
+    if (!isTyping) sendMessage(
+      "Construis un plan d'action concret: étapes prioritaires, responsables, délais, ressources nécessaires.",
+      agent || activeBotCode, undefined,
+      { msgType: "plan_action", parentId: msgId, branchLabel: "Plan d'action" }
+    );
+  }, [sendMessage, activeBotCode, isTyping]);
+
+  const handleEvaluerRisques = useCallback((msgId: string, agent?: string) => {
+    if (!isTyping) sendMessage(
+      "Identifie et évalue les risques: probabilité × impact, risques critiques, mesures de mitigation.",
+      agent || activeBotCode, undefined,
+      { msgType: "evaluer_risques", parentId: msgId, branchLabel: "Évaluer risques" }
+    );
+  }, [sendMessage, activeBotCode, isTyping]);
+
+  const handleScenarioEtSi = useCallback((msgId: string, agent?: string) => {
+    if (!isTyping) sendMessage(
+      "Explore les scénarios hypothétiques: Et si on échoue? Et si ça dépasse nos attentes? Et si le marché change?",
+      agent || activeBotCode, undefined,
+      { msgType: "scenario_et_si", parentId: msgId, branchLabel: "Scénario Et si?" }
+    );
+  }, [sendMessage, activeBotCode, isTyping]);
+
+  const handleDeleguer = useCallback((msgId: string, agent?: string) => {
+    if (!isTyping) sendMessage(
+      "Crée un brief de délégation: objectif clair, responsable, livrables attendus, indicateurs de succès.",
+      agent || activeBotCode, undefined,
+      { msgType: "deleguer", parentId: msgId, branchLabel: "Déléguer" }
+    );
+  }, [sendMessage, activeBotCode, isTyping]);
+
+  const handleFusionner = useCallback(() => {
+    if (isTyping) return;
+    const consultedBots = [...new Set(messages.filter(m => m.role === "assistant" && m.agent).map(m => m.agent!))];
+    if (consultedBots.length < 2) return;
+    sendMessage(
+      "Fusionne les perspectives de tous les bots consultés en une synthèse unifiée avec les points de convergence, de divergence, et la recommandation finale.",
+      "BCO", undefined,
+      { msgType: "fusionner", branchLabel: `Fusion — ${consultedBots.length} perspectives` }
+    );
+  }, [messages, sendMessage, isTyping]);
+
+  const handleAcceptTeam = useCallback((bots: string[]) => {
+    acceptTeamProposal(bots);
+  }, [acceptTeamProposal]);
+
   // B.1 — Consulter MULTIPLE bots en parallele via /chat/multi
   const handleConsulterMulti = useCallback(
     (botCodes: string[]) => {
@@ -913,22 +1131,22 @@ export function LiveChat({
     <div className="h-full flex flex-col bg-gradient-to-b from-gray-50 to-white">
       {/* Header */}
       <div className="bg-white/80 backdrop-blur-sm border-b px-4 py-2.5 shrink-0 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           {onBack && (
             <button onClick={onBack} className="text-gray-400 hover:text-gray-600 cursor-pointer p-1 rounded-lg hover:bg-gray-100 transition-colors">
               <ArrowLeft className="h-4 w-4" />
             </button>
           )}
-          <BotAvatar code={activeBotCode} size="lg" />
           <div>
-            <div className="text-sm font-bold text-gray-800 flex items-center gap-2">
-              {kitBotFullName(activeBotCode)}
-              <span className={cn("text-[10px] font-medium flex items-center gap-1 px-2 py-0.5 rounded-full", modeInfo.color, modeInfo.bg)}>
-                <ModeIcon className="h-3 w-3" /> {modeInfo.label}
-              </span>
+            {/* Titre du fil — pas d'avatar bot (déjà dans le header global) */}
+            <div className="text-sm font-semibold text-gray-800 truncate max-w-[300px]">
+              {threads.find(t => t.id === activeThreadId)?.title || "Nouvelle mission"}
             </div>
-            <div className="text-[11px] text-gray-400">
-              Usine Bleue AI
+            <div className="text-[11px] text-gray-400 flex items-center gap-1.5">
+              {kitBotFullName(activeBotCode)}
+              <span className={cn("flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium", modeInfo.color, modeInfo.bg)}>
+                <ModeIcon className="h-2.5 w-2.5" /> {modeInfo.label}
+              </span>
             </div>
           </div>
         </div>
@@ -938,7 +1156,7 @@ export function LiveChat({
             <button
               onClick={parkThread}
               className="text-gray-400 hover:text-amber-600 cursor-pointer p-1.5 rounded-lg hover:bg-amber-50 transition-colors"
-              title="Parker cette discussion"
+              title="Parker cette mission"
             >
               <Clock className="h-3.5 w-3.5" />
             </button>
@@ -1187,11 +1405,70 @@ export function LiveChat({
                       <Plus className="h-2.5 w-2.5" />
                       Branche
                     </button>
+                    {consultedBots.length >= 2 && (
+                      <button
+                        onClick={handleFusionner}
+                        disabled={isTyping}
+                        className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-100 transition-colors cursor-pointer disabled:opacity-50 font-medium"
+                      >
+                        <Brain className="h-2.5 w-2.5" />
+                        Fusionner
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
             );
           })()}
+
+          {/* Roster de bots actifs — équipe sélectionnée par CarlOS ou par le user */}
+          {activeRoster.length > 0 && messages.length > 0 && (
+            <div className="flex items-center gap-2 py-2 px-3 bg-white/60 rounded-xl border border-gray-100">
+              <Bot className="h-3 w-3 text-gray-400 shrink-0" />
+              <span className="text-[10px] text-gray-400 font-medium shrink-0">Équipe active :</span>
+              <div className="flex gap-1.5 flex-wrap flex-1">
+                {activeRoster.map((code) => {
+                  const info = BOT_COLORS[code];
+                  return (
+                    <div key={code} className={cn(
+                      "flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white border",
+                      info?.text || "text-gray-600",
+                      info?.border ? info.border.replace("border-l-", "border-") : "border-gray-200"
+                    )}>
+                      <span>{info?.emoji || "🤖"}</span>
+                      <span>{info?.name || code}</span>
+                      {activeRoster.length > 1 && (
+                        <button
+                          onClick={() => removeBotFromRoster(code)}
+                          className="ml-0.5 text-gray-300 hover:text-red-400 transition-colors cursor-pointer"
+                          title={`Retirer ${info?.name || code}`}
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              {activeRoster.length < 3 && (
+                <div className="relative">
+                  <select
+                    onChange={(e) => { if (e.target.value) { addBotToRoster(e.target.value); e.target.value = ""; } }}
+                    className="text-[10px] text-gray-400 bg-gray-50 border border-dashed border-gray-200 rounded-full px-2 py-0.5 cursor-pointer appearance-none pr-5"
+                    defaultValue=""
+                  >
+                    <option value="" disabled>+ Bot</option>
+                    {Object.entries(BOT_COLORS)
+                      .filter(([code]) => !activeRoster.includes(code))
+                      .map(([code, info]) => (
+                        <option key={code} value={code}>{info.emoji} {info.name}</option>
+                      ))
+                    }
+                  </select>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Message bubbles */}
           {messages.map((msg, idx) => {
@@ -1203,7 +1480,77 @@ export function LiveChat({
             const isSynthesis = msg.msgType === "synthesis";
             const isCoaching = msg.msgType === "coaching";
             const isVoice = msg.msgType === "voice";
+            const isFocusCard = msg.msgType === "focus_card";
+            const isTeamProposal = msg.msgType === "team_proposal";
+            const isDiagnosticMsg = msg.isDiagnostic === true;
             const depth = msg.branchDepth || 0;
+
+            // ── Focus Card — injection depuis le dashboard (style BotBubble simulation) ──
+            if (isFocusCard) {
+              const bot = msg.agent ? (BOT_COLORS[msg.agent] || BOT_COLORS.BCO) : BOT_COLORS.BCO;
+              const fc = msg.focusCardData;
+              return (
+                <div key={msg.id} className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                  <div className="flex gap-3">
+                    <BotAvatar code={msg.agent || "BCO"} size="md" className="mt-1 shrink-0" />
+                    <div className={cn(
+                      "rounded-2xl rounded-tl-md px-5 py-4 shadow-sm max-w-[85%] border border-l-[3px]",
+                      bot.bgLight, bot.border
+                    )}>
+                      {/* Header: titre + badge role */}
+                      <div className={cn("text-xs font-bold mb-3 flex items-center gap-1.5", bot.text)}>
+                        <span className="text-base leading-none">{bot.emoji}</span>
+                        <span className="flex-1">{fc?.title || "Focus"}</span>
+                        <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full text-white shrink-0", bot.bg)}>
+                          {bot.role}
+                        </span>
+                      </div>
+                      {/* Items de données */}
+                      {fc?.items && fc.items.length > 0 && (
+                        <div className="space-y-1.5 mb-3 pb-3 border-b border-gray-200">
+                          {fc.items.map((item, i) => (
+                            <div key={i} className="flex justify-between items-center gap-4 text-xs">
+                              <span className="text-gray-500 truncate">{item.label}</span>
+                              <span className={cn("font-semibold shrink-0", bot.text)}>{item.value}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {/* Question d'ouverture — TypewriterText */}
+                      <p className={cn("text-sm leading-relaxed mb-3", bot.text)}>
+                        {typewriterMsgId === msg.id ? (
+                          <TypewriterText
+                            text={msg.content}
+                            speed={12}
+                            onComplete={() => setTypewriterMsgId(null)}
+                          />
+                        ) : (
+                          msg.content
+                        )}
+                      </p>
+                      {/* Quick actions */}
+                      {fc?.quickActions && fc.quickActions.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {fc.quickActions.map((action, i) => (
+                            <button
+                              key={i}
+                              onClick={() => handleOptionClick(action)}
+                              disabled={isTyping}
+                              className={cn(
+                                "text-xs px-3 py-1.5 rounded-full bg-white border font-medium transition-colors cursor-pointer hover:shadow-sm disabled:opacity-50",
+                                bot.border, bot.text
+                              )}
+                            >
+                              {action}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            }
 
             // ── Coaching messages — CarlOS encadrement ──
             if (isCoaching || isSystem) {
@@ -1284,6 +1631,18 @@ export function LiveChat({
                     </div>
                   </div>
                 </div>
+              );
+            }
+
+            // ── Team Proposal card ──
+            if (isTeamProposal && msg.teamProposal) {
+              return (
+                <TeamProposalCard
+                  key={msg.id}
+                  proposal={msg.teamProposal}
+                  onAccept={handleAcceptTeam}
+                  disabled={isTyping}
+                />
               );
             }
 
@@ -1386,6 +1745,11 @@ export function LiveChat({
                       <div className={cn("text-xs mb-2 font-semibold flex items-center gap-1.5", agentInfo.text)}>
                         {kitBotFullName(msg.agent || "BCO")}
                         {isVoice && <Mic className="h-2.5 w-2.5 opacity-50" />}
+                        {isDiagnosticMsg && (
+                          <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-300 ml-1">
+                            Diagnostic
+                          </span>
+                        )}
                       </div>
                     )}
 
@@ -1469,6 +1833,12 @@ export function LiveChat({
                         disabled={isTyping}
                         availableBots={bots}
                         currentBotCode={msg.agent || activeBotCode}
+                        onNuancer={() => handleNuancer(msg.id, msg.agent)}
+                        onFilParallele={() => handleFilParallele(msg.id, msg.agent)}
+                        onPlanAction={() => handlePlanAction(msg.id, msg.agent)}
+                        onEvaluerRisques={() => handleEvaluerRisques(msg.id, msg.agent)}
+                        onScenarioEtSi={() => handleScenarioEtSi(msg.id, msg.agent)}
+                        onDeleguer={() => handleDeleguer(msg.id, msg.agent)}
                       />
                     )}
                   </div>
