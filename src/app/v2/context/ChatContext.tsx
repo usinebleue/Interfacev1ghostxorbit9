@@ -84,18 +84,19 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   }, [setCanvasActionsCallback, dispatchBatch]);
 
   // Focus Card — clic sur un bloc du dashboard = nouvelle discussion dédiée
+  // focusData persiste pour garder le header gradient affiché (CenterZone → FocusModeLayout)
+  // clearFocusMode est appelé par le bouton X du header (onClose)
   useEffect(() => {
     if (!focusData) return;
     // Parker la conversation en cours (si elle a des messages) et repartir à zéro
     newConversation();
-    // Injecter la carte focus comme premier message du nouveau fil
+    // Injecter la carte focus comme premier message du nouveau fil (bulle de discussion)
     injectFocusCard({
       title: focusData.title,
       elementType: focusData.elementType,
       data: focusData.data,
       bot: focusData.bot,
     });
-    clearFocusMode();
   }, [focusData]); // eslint-disable-line react-hooks/exhaustive-deps
   const [activeReflectionMode, setReflectionMode] =
     useState<ReflectionMode>("credo");

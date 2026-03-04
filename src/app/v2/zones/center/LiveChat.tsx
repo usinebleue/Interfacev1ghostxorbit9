@@ -1485,6 +1485,9 @@ export function LiveChat({
             const isDiagnosticMsg = msg.isDiagnostic === true;
             const depth = msg.branchDepth || 0;
 
+            // Skip empty streaming messages — ThinkingAnimation is already visible
+            if (msg.isStreaming && !msg.content) return null;
+
             // ── Focus Card — injection depuis le dashboard (style BotBubble simulation) ──
             if (isFocusCard) {
               const bot = msg.agent ? (BOT_COLORS[msg.agent] || BOT_COLORS.BCO) : BOT_COLORS.BCO;
