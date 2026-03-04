@@ -7,7 +7,7 @@
  * Donnees reelles: PostgreSQL (projets, docs, outils) + Plane.so (taches) + localStorage (idees)
  */
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import {
   ArrowLeft,
   Sparkles,

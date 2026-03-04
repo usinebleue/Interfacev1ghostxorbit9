@@ -14,34 +14,68 @@ import { useFrameMaster } from "../../context/FrameMasterContext";
 
 /** Messages par vue — voix directe du bot */
 const VIEW_MESSAGES: Record<string, string> = {
-  dashboard:       "Voici votre tableau de bord exécutif. Vos C-Level ont analysé votre situation — cliquez sur un bloc pour qu'on creuse ensemble.",
-  cockpit:         "Cockpit GhostX en ligne. Vos indicateurs clés sont consolidés ici. Qu'est-ce qu'on approfondit?",
+  dashboard:       "Voici votre tableau de bord. Chaque bloc est un point d'intérêt — cliquez sur n'importe lequel et on l'explore ensemble.",
+  cockpit:         "Cockpit GhostX en ligne. Vos indicateurs clés sont consolidés ici. Cliquez sur un KPI pour qu'on creuse ensemble.",
   health:          "Je surveille la santé de votre organisation en continu. Voici un portrait transversal de vos 5 dimensions stratégiques.",
-  scenarios:       "Studio de simulation actif. Choisissez un mode de réflexion et lancez une hypothèse — je m'occupe de la modéliser.",
-  "espace-bureau": "Votre espace de travail. Projets actifs, outils et tâches sont centralisés ici.",
+  scenarios:       "Studio de simulation actif. Décrivez-moi votre hypothèse — je m'occupe de la modéliser avec l'équipe.",
   canvas:          "Canevas stratégique ouvert. Demandez-moi d'afficher ce que vous voulez — je gère le contenu en temps réel.",
-  "orbit9-detail": "Orbit9 — les 101 éléments fondamentaux de votre écosystème. Chaque point est une décision potentielle.",
   cahier:          "Voici votre cahier stratégique. Vos idées cristallisées, prêtes à passer à l'action.",
-  "agent-settings":"Configuration de votre équipe GhostX. Personnalisez mon comportement et celui de vos agents.",
-  "blueprint":     "Votre Blue Print — le schéma directeur de l'idée à la réalisation. Vos bots travaillent les sections, je génère les documents.",
-  "board-room":    "Board Room en session. Vos 6 C-Level sont réunis pour délibérer. Proposez un sujet ou lancez un débat.",
+  "agent-settings":"Configuration de votre équipe GhostX. Personnalisez le comportement de vos agents.",
+  "board-room":    "Board Room en session. Vos C-Level sont réunis. Proposez un sujet — je lance le débat et je coordonne les interventions.",
+  "war-room":      "War Room activée. Cellule de crise prête. Décrivez la situation — je mobilise l'équipe d'urgence et on passe en mode COMMAND.",
+  "think-room":    "Think Room ouverte. De la vision au Go/No-Go en 6 étapes. Partagez votre idée — je mobilise les spécialistes pour la structurer.",
 };
+
+/** Messages sous-sections Orbit9 (Mon Réseau + Mon Industrie) */
+const ORBIT9_MESSAGES: Record<string, string> = {
+  marketplace:     "Bienvenue dans le Marketplace. Explorez les membres du réseau — cliquez sur un profil pour qu'on analyse la compatibilité ensemble.",
+  cellules:        "Cellules Orbit9 — vos groupes de collaboration. Dites-moi quel type de cellule vous voulez créer et je m'occupe de qualifier les critères.",
+  jumelage:        "Jumelage Orbit9 — on va trouver vos meilleurs partenaires. Décrivez-moi ce que vous cherchez et je lance le processus de matching. Je m'occupe de tout.",
+  gouvernance:     "Protocoles de gouvernance du réseau. Consultez les règles de collaboration — je clarifie ce que vous voulez.",
+  pionniers:       "Les pionniers du réseau Orbit9. Voici les membres fondateurs qui bâtissent l'écosystème.",
+  nouvelles:       "Nouvelles de votre industrie. Je surveille les signaux pour vous — cliquez sur une nouvelle pour qu'on analyse l'impact ensemble.",
+  evenements:      "Événements à venir dans votre secteur. Dites-moi lesquels vous intéressent — je peux les ajouter à votre agenda.",
+  "trg-industrie": "Dashboard industrie — vos benchmarks sectoriels. Cliquez sur un indicateur pour qu'on compare votre performance.",
+  "page-type":     "Profil d'un membre du réseau. Voici ses données — on analyse la compatibilité?",
+};
+
+/** Messages sous-sections Mon Bureau */
+const BUREAU_MESSAGES: Record<string, string> = {
+  idees:     "Vos idées capturées. Vous avez une nouvelle idée? Dites-la moi — je la cristallise et je la classe.",
+  projets:   "Vos projets actifs. Cliquez sur un projet pour qu'on fasse le point ensemble avec le bot responsable.",
+  documents: "Vos documents. Cliquez sur un document pour qu'on le révise ensemble.",
+  outils:    "Vos outils connectés. Tout est centralisé ici.",
+  taches:    "Vos tâches actives. Cliquez sur une tâche pour qu'on avance dessus ensemble.",
+  agenda:    "Votre agenda. Dites-moi si vous voulez planifier quelque chose — je coordonne.",
+};
+
+/** Messages sous-sections Mon Blue Print */
+const BLUEPRINT_MESSAGES: Record<string, string> = {
+  live:     "Blue Print Live — construisons votre plan d'affaires ensemble. Dites-moi par quelle section commencer et je guide le processus avec les bots spécialistes.",
+  hub:      "Hub de contenu — vos templates et documents générés. Cliquez sur un élément pour qu'on l'explore.",
+  pipeline: "Pipeline d'exécution — vos étapes de réalisation. Dites-moi quelle étape vous voulez lancer.",
+};
+
+/** Message première visite — accueil enrichi */
+const FIRST_VISIT_MSG = "Bienvenue dans CarlOS! Chaque bloc que vous voyez est un point d'intérêt. "
+  + "Cliquez sur n'importe lequel — je vais inviter le bot spécialiste pour qu'on l'explore ensemble. "
+  + "Vous n'êtes jamais seul, je reste avec vous tout au long.";
 
 /** Messages d'accueil par bot pour leurs départements */
 const DEPT_MESSAGES: Record<string, string> = {
   BCO: "Bienvenue dans la direction générale. Je surveille l'ensemble de l'organisation pour vous.",
-  BCT: "Bienvenue dans mon département Technologie. Voici l'état de votre écosystème tech et vos priorités IT.",
-  BCF: "Bonjour! Je suis François, votre CFO. Voici un portrait de vos finances. Qu'est-ce qui vous préoccupe?",
-  BCM: "Martine ici, votre CMO. Bienvenue dans Marketing & Croissance. On analyse quoi aujourd'hui?",
-  BCS: "Sophie à l'appareil, votre CSO. Stratégie & Ventes — voici votre positionnement concurrentiel.",
-  BOO: "Olivier ici, votre COO. Opérations & Production — tout ce qui fait tourner la machine.",
-  BHR: "Hélène, votre CHRO. Bienvenue dans RH. Capital humain, recrutement et culture — c'est mon domaine.",
-  BIO: "Isabelle, votre CIO. Systèmes & Données — je gère l'infrastructure informationnelle de l'organisation.",
-  BCC: "Catherine, votre CCO. Communication & Marque — votre image, vos messages, votre impact.",
-  BPO: "Philippe, votre CPO. Innovation & Produits — on construit quoi de nouveau aujourd'hui?",
-  BRO: "Raphaël, votre CRO. Revenus & Croissance — pipeline, partenariats, expansion.",
-  BLE: "Louise, votre CLO. Juridique & Conformité — je m'assure qu'on reste dans les règles.",
-  BSE: "Sébastien, votre CISO. Sécurité & Cyber — vos risques numériques, sous surveillance.",
+  BCT: "Bienvenue dans mon département Technologie. Voici l'état de votre écosystème tech. Cliquez sur un élément pour qu'on en discute.",
+  BCF: "Bonjour! Je suis François, votre CFO. Voici un portrait de vos finances. Cliquez sur un bloc pour qu'on creuse ensemble.",
+  BCM: "Martine ici, votre CMO. Bienvenue dans Marketing & Croissance. Cliquez sur un élément pour qu'on l'analyse.",
+  BCS: "Sophie à l'appareil, votre CSO. Stratégie & Ventes — cliquez sur un bloc pour qu'on en discute.",
+  BOO: "Olivier ici, votre COO. Opérations & Production — cliquez sur un élément pour qu'on approfondisse.",
+  BHR: "Hélène, votre CHRO. Capital humain, recrutement et culture. Cliquez sur un bloc pour qu'on en parle.",
+  BIO: "Isabelle, votre CIO. Systèmes & Données — cliquez sur un élément pour qu'on en discute.",
+  BCC: "Catherine, votre CCO. Communication & Marque — cliquez sur un bloc pour qu'on approfondisse.",
+  BPO: "Philippe, votre CPO. Innovation & Produits — cliquez sur un élément pour qu'on explore ensemble.",
+  BRO: "Raphaël, votre CRO. Revenus & Croissance — cliquez sur un bloc pour qu'on creuse ensemble.",
+  BLE: "Louise, votre CLO. Juridique & Conformité — cliquez sur un élément pour qu'on en discute.",
+  BSE: "Sébastien, votre CISO. Sécurité & Cyber — cliquez sur un bloc pour qu'on analyse ensemble.",
 };
 
 /** Nom court par bot */
@@ -52,7 +86,7 @@ const BOT_NAMES: Record<string, string> = {
 };
 
 export function CarlOSPresence() {
-  const { activeView, activeBotCode } = useFrameMaster();
+  const { activeView, activeBotCode, activeOrbit9Section, activeEspaceSection, activeBlueprintSection } = useFrameMaster();
   const [phase, setPhase] = useState<"thinking" | "typing" | "done">("thinking");
   const [dismissed, setDismissed] = useState(false);
 
@@ -71,9 +105,21 @@ export function CarlOSPresence() {
   const botName = BOT_NAMES[botCode] || "CarlOS";
   const botAvatar = BOT_AVATAR[botCode] || BOT_AVATAR["BCO"];
   const botRole = BOT_SUBTITLE[botCode] || "Agent AI";
-  const msg = isDept
-    ? (DEPT_MESSAGES[botCode] || `Bienvenue dans mon département. Je suis ${botName}.`)
-    : (VIEW_MESSAGES[activeView] || "Je suis là pour vous accompagner.");
+
+  // Première visite → message enrichi sur le dashboard
+  const isFirstVisit = activeView === "dashboard" && !sessionStorage.getItem("carlos_visited");
+  if (isFirstVisit) sessionStorage.setItem("carlos_visited", "1");
+
+  // Résolution du message selon la vue + sous-section
+  const resolveMessage = (): string => {
+    if (isFirstVisit) return FIRST_VISIT_MSG;
+    if (isDept) return DEPT_MESSAGES[botCode] || `Bienvenue dans mon département. Je suis ${botName}. Cliquez sur un bloc pour qu'on en discute.`;
+    if (activeView === "orbit9-detail" && activeOrbit9Section) return ORBIT9_MESSAGES[activeOrbit9Section] || VIEW_MESSAGES["orbit9-detail"] || "";
+    if (activeView === "espace-bureau") return BUREAU_MESSAGES[activeEspaceSection] || VIEW_MESSAGES["espace-bureau"] || "";
+    if (activeView === "blueprint") return BLUEPRINT_MESSAGES[activeBlueprintSection] || VIEW_MESSAGES["blueprint"] || "";
+    return VIEW_MESSAGES[activeView] || "Je suis là pour vous accompagner.";
+  };
+  const msg = resolveMessage();
 
   return (
     <div className="shrink-0 px-4 pt-4 pb-2 animate-in fade-in slide-in-from-bottom-3 duration-500">

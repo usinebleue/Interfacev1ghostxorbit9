@@ -11,6 +11,7 @@ import {
   Activity,
   MessageSquare,
   Video,
+  Zap,
 } from "lucide-react";
 import { ScrollArea } from "../../../components/ui/scroll-area";
 import {
@@ -19,6 +20,7 @@ import {
   TooltipContent,
 } from "../../../components/ui/tooltip";
 import { CarlOsPulse } from "./CarlOsPulse";
+import { CarlOSInsights } from "./CarlOSInsights";
 import { VideoCallWidget } from "./VideoCallWidget";
 import { DiscussionsPanel } from "./DiscussionsPanel";
 
@@ -53,6 +55,15 @@ export function SidebarRight({ collapsed = false }: Props) {
           <Tooltip>
             <TooltipTrigger asChild>
               <button className="w-full flex justify-center py-2 rounded hover:bg-accent transition-colors">
+                <Zap className="h-4 w-4 text-amber-500" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="left">CarlOS Insights</TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button className="w-full flex justify-center py-2 rounded hover:bg-accent transition-colors">
                 <MessageSquare className="h-4 w-4 text-blue-500" />
               </button>
             </TooltipTrigger>
@@ -79,6 +90,11 @@ export function SidebarRight({ collapsed = false }: Props) {
           {/* Section 2 — CarlOS Pulse */}
           <div className="mx-3 mb-1">
             <CarlOsPulse />
+          </div>
+
+          {/* Section 2.5 — CarlOS Insights (coaching proactif) */}
+          <div className="mx-3 mt-2 mb-1">
+            <CarlOSInsights />
           </div>
 
           {/* Separateur vert */}

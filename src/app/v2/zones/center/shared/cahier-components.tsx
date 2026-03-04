@@ -787,7 +787,7 @@ export function IntegratorCard({ integrator, rank, animate, delay = 0 }: {
 }
 
 export function JumelageSessionAnimation({ questions, onComplete }: {
-  questions: typeof SIM_ACTE2.jumelageQuestions;
+  questions: { question: string; reponses: { integrateur?: string; nom?: string; reponse: string; score: number }[] }[];
   onComplete: () => void;
 }) {
   const [currentQ, setCurrentQ] = useState(0);
@@ -857,7 +857,7 @@ export function JumelageSessionAnimation({ questions, onComplete }: {
                       <div key={ri} className="animate-in fade-in slide-in-from-left-2 duration-300">
                         <div className="flex items-center gap-2 bg-white border rounded-lg px-3 py-2">
                           <div className="flex-1">
-                            <div className="text-xs font-semibold text-gray-700">{r.integrateur}</div>
+                            <div className="text-xs font-semibold text-gray-700">{r.integrateur || r.nom}</div>
                             <div className="text-xs text-gray-500 mt-0.5 line-clamp-2">{r.reponse}</div>
                           </div>
                           <div className={cn(
@@ -887,8 +887,8 @@ export function JumelageSessionAnimation({ questions, onComplete }: {
 }
 
 export function ScoringAnimation({ categories, results, onComplete }: {
-  categories: typeof SIM_ACTE2.scoringCategories;
-  results: typeof SIM_ACTE2.scoringResults;
+  categories: { label: string; weight: string }[];
+  results: { nom: string; scores: number[]; total: number }[];
   onComplete: () => void;
 }) {
   const [visibleRow, setVisibleRow] = useState(0);

@@ -41,7 +41,7 @@ const RESOLUTIONS = [
 ];
 
 export function BoardRoomView() {
-  const { setActiveView } = useFrameMaster();
+  const { setActiveView, navigateToChat } = useFrameMaster();
 
   return (
     <div className="h-full flex flex-col bg-gray-50">
@@ -154,10 +154,10 @@ export function BoardRoomView() {
           {/* Action — bouton lancer debat (design system: footer action pattern) */}
           <div className="bg-gray-50 px-4 py-4 border rounded-xl flex items-center justify-center">
             <button
-              onClick={() => setActiveView("live-chat")}
+              onClick={() => navigateToChat("board-room")}
               className="text-xs bg-amber-600 text-white px-4 py-2 rounded-full flex items-center gap-1.5 hover:bg-amber-700 font-medium cursor-pointer"
             >
-              <MessageSquare className="h-3.5 w-3.5" /> Lancer un debat
+              <MessageSquare className="h-3.5 w-3.5" /> Lancer la session
             </button>
           </div>
         </div>

@@ -75,7 +75,7 @@ function TabLive() {
 
   useEffect(() => {
     api.commandMissions(20)
-      .then(setMissions)
+      .then((res) => setMissions(Array.isArray(res) ? res : (res as Record<string, unknown>).missions as Record<string, unknown>[] || []))
       .catch(() => setMissions([]))
       .finally(() => setLoading(false));
   }, []);
@@ -198,8 +198,8 @@ function TabHub() {
 
   useEffect(() => {
     Promise.all([
-      api.templates().catch(() => ({ templates: [], total: 0, categories: [] })),
-      api.bureauList("document").catch(() => ({ items: [] })),
+      api.listTemplates().catch(() => ({ templates: [], total: 0, categories: [] })),
+      api.listBureauItems("document").catch(() => ({ items: [] })),
     ]).then(([tplRes, docRes]) => {
       setTemplates(tplRes.templates);
       setCategories(tplRes.categories);
