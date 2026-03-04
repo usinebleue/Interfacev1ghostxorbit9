@@ -11,7 +11,7 @@ import { Card } from "../../../components/ui/card";
 import { Badge } from "../../../components/ui/badge";
 import { ScrollArea } from "../../../components/ui/scroll-area";
 import { cn } from "../../../components/ui/utils";
-import { useFrameMaster } from "../../context/FrameMasterContext";
+
 import { useCanvasActions } from "../../context/CanvasActionContext";
 import { api } from "../../api/client";
 import type { KitActiveResponse, KpisDepartements, VentesPipeline, ProjetActif, EntrepriseInfo } from "../../api/types";
@@ -366,7 +366,7 @@ function BlocStatsOps({ onClick, kpi }: { onClick?: () => void; kpi?: Record<str
 
 /* ============ DASHBOARD VIEW ============ */
 export function DashboardView() {
-  const { setActiveView } = useFrameMaster();
+  // Focus: dispatch "focus" → CenterZone affiche FocusModeLayout (header gradient + LiveChat)
   const { dispatch } = useCanvasActions();
   const [kitData, setKitData] = useState<KitActiveResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -400,31 +400,31 @@ export function DashboardView() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
           <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "100ms", animationFillMode: "both" }}>
             <BlocCEO
-              onClick={() => { dispatch({ type: "focus", layer: "cerveau", data: { title: "CarlOS — Tour de Contrôle", element_type: "kpi_ceo", data: kpis?.CEO }, bot: "BCO" }); setActiveView("live-chat"); }}
+              onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "CarlOS — Tour de Contrôle", element_type: "kpi_ceo", data: kpis?.CEO }, bot: "BCO" })}
               kpi={kpis?.CEO}
             />
           </div>
           <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "180ms", animationFillMode: "both" }}>
             <BlocCFO
-              onClick={() => { dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent CFO — Finances", element_type: "kpi_cfo", data: kpis?.CFO }, bot: "BCF" }); setActiveView("live-chat"); }}
+              onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent CFO — Finances", element_type: "kpi_cfo", data: kpis?.CFO }, bot: "BCF" })}
               kpi={kpis?.CFO}
             />
           </div>
           <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "260ms", animationFillMode: "both" }}>
             <BlocCTO
-              onClick={() => { dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent CTO — Technologie", element_type: "kpi_cto", data: kpis?.CTO }, bot: "BCT" }); setActiveView("live-chat"); }}
+              onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent CTO — Technologie", element_type: "kpi_cto", data: kpis?.CTO }, bot: "BCT" })}
               kpi={kpis?.CTO}
             />
           </div>
           <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "340ms", animationFillMode: "both" }}>
             <BlocCMO
-              onClick={() => { dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent CMO — Marketing", element_type: "kpi_cmo", data: kpis?.CMO }, bot: "BCM" }); setActiveView("live-chat"); }}
+              onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent CMO — Marketing", element_type: "kpi_cmo", data: kpis?.CMO }, bot: "BCM" })}
               kpi={kpis?.CMO}
             />
           </div>
           <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "420ms", animationFillMode: "both" }}>
             <BlocCSO
-              onClick={() => { dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent CSO — Stratégie", element_type: "kpi_cso", data: kpis?.CSO }, bot: "BCS" }); setActiveView("live-chat"); }}
+              onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent CSO — Stratégie", element_type: "kpi_cso", data: kpis?.CSO }, bot: "BCS" })}
               kpi={kpis?.CSO}
             />
           </div>
@@ -434,30 +434,30 @@ export function DashboardView() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
           <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "500ms", animationFillMode: "both" }}>
             <BlocProjets
-              onClick={() => { dispatch({ type: "focus", layer: "cerveau", data: { title: "Projets Actifs", element_type: "projets", data: projets }, bot: "BCO" }); setActiveView("live-chat"); }}
+              onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Projets Actifs", element_type: "projets", data: projets }, bot: "BCO" })}
               projets={projets || undefined}
             />
           </div>
           <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "580ms", animationFillMode: "both" }}>
             <BlocCalendrier
-              onClick={() => { dispatch({ type: "focus", layer: "cerveau", data: { title: "Mon Calendrier", element_type: "calendrier", data: null }, bot: "BCO" }); setActiveView("live-chat"); }}
+              onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Mon Calendrier", element_type: "calendrier", data: null }, bot: "BCO" })}
             />
           </div>
           <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "660ms", animationFillMode: "both" }}>
             <BlocPipeline
-              onClick={() => { dispatch({ type: "focus", layer: "cerveau", data: { title: "Pipeline Ventes", element_type: "pipeline", data: ventes }, bot: "BCO" }); setActiveView("live-chat"); }}
+              onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Pipeline Ventes", element_type: "pipeline", data: ventes }, bot: "BCO" })}
               ventes={ventes}
             />
           </div>
           <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "740ms", animationFillMode: "both" }}>
             <BlocInfosIndustrie
-              onClick={() => { dispatch({ type: "focus", layer: "cerveau", data: { title: "Infos Industrie", element_type: "industrie", data: contexte }, bot: "BCS" }); setActiveView("live-chat"); }}
+              onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Infos Industrie", element_type: "industrie", data: contexte }, bot: "BCS" })}
               contexte={contexte}
             />
           </div>
           <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "820ms", animationFillMode: "both" }}>
             <BlocStatsOps
-              onClick={() => { dispatch({ type: "focus", layer: "cerveau", data: { title: "Opérations", element_type: "ops", data: kpis?.COO }, bot: "BOO" }); setActiveView("live-chat"); }}
+              onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Opérations", element_type: "ops", data: kpis?.COO }, bot: "BOO" })}
               kpi={kpis?.COO}
             />
           </div>

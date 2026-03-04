@@ -118,6 +118,12 @@ export function CenterZone() {
     consumeNext();
   }, [navigateAction, setActiveView, navigateToDepartment, clearNavigateAction, consumeNext]);
 
+  // Quitter le Focus Mode automatiquement quand on navigue via sidebar
+  useEffect(() => {
+    if (focusData) clearFocusMode();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeView]);
+
   const handleStartChat = (mode: string) => {
     setLiveChatMode(mode);
     setActiveView("live-chat");
@@ -209,8 +215,8 @@ export function CenterZone() {
         )}
       </div>
 
-      {/* Overlay: Push Content Panel (slide-in depuis la droite) */}
-      {pushedContent && (
+      {/* Overlay: Push Content Panel (slide-in depuis la droite) — masqué en Focus Mode */}
+      {pushedContent && !focusData && (
         <div className={cn(
           "absolute top-12 right-3 z-50 w-80 max-h-[60vh] animate-in slide-in-from-right-4 duration-300",
           pinnedContent ? "opacity-100" : "opacity-95 hover:opacity-100"
@@ -270,8 +276,8 @@ export function CenterZone() {
         </div>
       )}
 
-      {/* Overlay: Execute Action (confirmation/progress) */}
-      {executeAction && (
+      {/* Overlay: Execute Action (confirmation/progress) — masqué en Focus Mode */}
+      {executeAction && !focusData && (
         <div className="absolute bottom-16 right-4 z-50 animate-in slide-in-from-right-4 duration-300">
           <div className="bg-gradient-to-r from-green-600 to-emerald-500 rounded-xl shadow-xl px-4 py-3 max-w-sm">
             <div className="flex items-center gap-3">
@@ -301,8 +307,8 @@ export function CenterZone() {
         </div>
       )}
 
-      {/* Overlay: Widget contextuel CarlOS (Cerveau/action) */}
-      {activeWidget && (
+      {/* Overlay: Widget contextuel CarlOS (Cerveau/action) — masqué en Focus Mode */}
+      {activeWidget && !focusData && (
         <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-4 duration-300">
           <div className="bg-white border border-blue-200 rounded-xl shadow-lg px-4 py-3 max-w-md">
             <div className="flex items-start gap-2">
@@ -325,8 +331,8 @@ export function CenterZone() {
         </div>
       )}
 
-      {/* Overlay: Annotation (Coeur/highlight) */}
-      {activeAnnotation && (
+      {/* Overlay: Annotation (Coeur/highlight) — masqué en Focus Mode */}
+      {activeAnnotation && !focusData && (
         <div className="absolute top-14 right-4 z-40 animate-in slide-in-from-right-4 duration-300">
           <div className={cn(
             "border rounded-lg shadow-md px-3 py-2 max-w-xs",
