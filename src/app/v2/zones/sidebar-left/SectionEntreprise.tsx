@@ -6,7 +6,7 @@
  */
 
 import { useState } from "react";
-import { ChevronDown, ChevronRight, Briefcase, Crown, DollarSign, Cpu, Factory, Settings, TrendingUp, Megaphone, Target, Users, Shield, Scale, Lightbulb } from "lucide-react";
+import { ChevronDown, ChevronRight, Briefcase, DollarSign, Cpu, Factory, Settings, TrendingUp, Megaphone, Target, Users, Shield, Scale, Lightbulb, Activity } from "lucide-react";
 import { Badge } from "../../../components/ui/badge";
 import {
   Collapsible,
@@ -148,17 +148,17 @@ export function SectionEntreprise({ collapsed }: Props) {
             </div>
           );
         })}
-        {/* Board Room — CA robotique (en bas) */}
+        {/* Blue Print — systeme nerveux central */}
         <hr className="border-gray-200 mx-1" />
         <button
-          onClick={() => setActiveView("board-room")}
+          onClick={() => setActiveView("blueprint")}
           className={cn(
             "w-full flex justify-center py-1.5 rounded hover:bg-accent transition-colors",
-            activeView === "board-room" && "bg-accent"
+            activeView === "blueprint" && "bg-accent"
           )}
-          title="Board Room"
+          title="Blue Print"
         >
-          <Crown className="h-3.5 w-3.5 text-amber-600" />
+          <Activity className="h-3.5 w-3.5 text-cyan-500" />
         </button>
       </div>
     );
@@ -172,7 +172,7 @@ export function SectionEntreprise({ collapsed }: Props) {
         ) : (
           <ChevronRight className="h-3 w-3" />
         )}
-        Mon Entreprise
+        Mon Équipe
         <Badge variant="secondary" className="ml-auto text-[10px] px-1.5">
           {DEPARTEMENTS.length}
         </Badge>
@@ -219,17 +219,17 @@ export function SectionEntreprise({ collapsed }: Props) {
               </div>
             );
           })}
-          {/* Board Room — CA robotique (en bas) */}
+          {/* Blue Print — systeme nerveux central */}
           <hr className="border-gray-200 mx-2 my-1" />
           <button
-            onClick={() => setActiveView("board-room")}
+            onClick={() => setActiveView("blueprint")}
             className={cn(
               "w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm hover:bg-accent transition-colors",
-              activeView === "board-room" && "bg-accent font-medium"
+              activeView === "blueprint" && "bg-accent font-medium"
             )}
           >
-            <Crown className="h-3.5 w-3.5 shrink-0 text-amber-600" />
-            <span className="flex-1 text-left truncate">Board Room</span>
+            <Activity className="h-3.5 w-3.5 shrink-0 text-cyan-500" />
+            <span className="flex-1 text-left truncate">Blue Print</span>
           </button>
         </div>
       </CollapsibleContent>

@@ -28,6 +28,9 @@ export interface ChatRequest {
   msg_type?: string;
   parent_id?: string;
   branch_depth?: number;
+  // D-101 — GPS du Flow
+  active_view?: string;
+  active_sub_section?: string;
 }
 
 // --- Équipe 3 Bots (Chef d'Orchestre) ---
@@ -65,6 +68,14 @@ export interface ChatResponse {
   // G — Chef d'Orchestre
   team_proposal?: TeamProposal | null;
   is_diagnostic?: boolean;
+  // D-101 — GPS du Flow
+  flow_type?: "data" | "action" | null;
+  flow_step?: string | null;
+  flow_bot_primaire?: string | null;
+  // D-101 — Cascade tensions (suggestions de branches vers d'autres sections)
+  cascade_suggestions?: CascadeSuggestion[];
+  // D-108 — Contexte de bulle dynamique (footer enrichi)
+  bubble_context?: BubbleContext | null;
 }
 
 // --- Multi-Perspectives ---
@@ -271,6 +282,8 @@ export interface ChatMessage {
   // G — Chef d'Orchestre
   teamProposal?: TeamProposal;   // msgType === "team_proposal"
   isDiagnostic?: boolean;        // CarlOS a posé des questions au lieu de répondre
+  // D-108 — Contexte dynamique (footer enrichi)
+  bubbleContext?: BubbleContext;
 }
 
 // --- Crystal (idee cristallisee) ---
@@ -299,6 +312,124 @@ export interface Thread {
   primaryBot: string;
   createdAt: string;
   updatedAt: string;
+  // D-101 — GPS du Flow: lien vers la mission parente
+  missionId?: string;
+  flowSection?: string;     // "finance", "board-room", etc.
+  flowType?: "data" | "action" | "mode_branch";
+}
+
+// ─── Missions — structure hiérarchique ───
+// Mission = objectif stratégique qui contient N discussions (threads)
+// Nomenclature: Mission > Discussion > Branche
+
+export type MissionStatus = "active" | "en_cours" | "en_attente" | "completee" | "archivee";
+export type ChantierStatus = "active" | "en_attente" | "complete" | "archive";
+export type ChantierHeat = "brule" | "couve" | "meurt" | "inconnu";
+export type EtatCroissance = "inconnu" | "demarrage" | "croissance" | "maturite";
+export type OnboardingStep = "accueil" | "identite" | "croissance" | "vitaa" | "herrmann" | "objectifs" | "chantiers" | "complete";
+export type MemberType = "manufacturier" | "fournisseur" | "expert_solo" | "entreprise_pro" | "";
+
+// ─── Scores VITAA ───
+export interface ScoresVITAA {
+  vente: number;
+  idee: number;
+  temps: number;
+  argent: number;
+  actif: number;
+}
+
+// ─── Profil Herrmann ───
+export interface ProfilHerrmann {
+  bleu: number;     // analytique
+  vert: number;     // organisé
+  rouge: number;    // relationnel
+  jaune: number;    // visionnaire
+}
+
+// ─── Diagnostic Vivant (D-108) ───
+// Se raffine à CHAQUE interaction. Session 1 = 10%, Session 50 = 90%.
+export interface DiagnosticVivant {
+  id: number;
+  userId: number;
+  memberType: MemberType;
+  secteur: string;
+  etatCroissance: EtatCroissance;
+  scoresVitaa: ScoresVITAA;
+  chaleur: ChantierHeat;
+  profilHerrmann: ProfilHerrmann;
+  objectifImmediat: string;
+  vision12Mois: string;
+  deltaNotes: string;
+  precisionPct: number;          // 0-100 — combien CarlOS connait le user
+  onboardingComplete: boolean;
+  onboardingStep: OnboardingStep;
+  contexte: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ─── Chantier (D-108) ───
+// Stratégique — semaines/mois. Trié par chaleur VITAA dans la sidebar.
+// Ex: "Expansion marché US", "Certification ISO", "Transformation numérique"
+export interface Chantier {
+  id: number;
+  userId: number;
+  titre: string;
+  description: string;
+  chaleur: ChantierHeat;
+  scoresVitaa: ScoresVITAA;
+  progression: number;           // 0-100 (moyenne des missions)
+  status: ChantierStatus;
+  botCodes: string[];            // bots impliqués (multi-département)
+  sectionPrimaire?: string;
+  source: "onboarding" | "tension" | "manuel";
+  missions: Mission[];           // populated frontend-side
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ─── Mission (D-108) ───
+// Tactique — jours/semaines. Rattachée à un chantier ou libre.
+// Ex: "Étude de marché US", "Recruter VP Ventes", "Audit fournisseurs"
+export interface Mission {
+  id: number;
+  userId: number;
+  chantierId?: number | null;    // null = mission libre
+  titre: string;
+  description: string;
+  status: MissionStatus;
+  progression: number;           // 0-100
+  botPrimaire: string;
+  section?: string;
+  flowType?: "data" | "action" | "mode_branch";
+  tensionId?: number | null;
+  commandMissionId?: number | null;
+  threadIds: string[];           // discussions (frontend thread UUIDs)
+  priorite: number;              // 0-100
+  contexte: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+  completedAt?: string | null;
+}
+
+// ─── Contexte de bulle dynamique ───
+// Footer enrichi par bulle : GPS section, CREDO phase, mode réflexion, mission
+export interface BubbleContext {
+  section?: string | null;
+  flow_type?: "data" | "action" | null;
+  flow_step?: string | null;
+  credo_phase?: string | null;
+  mode?: string | null;
+  is_branch?: boolean;
+  precision_pct?: number;
+  chantier_nom?: string | null;
+}
+
+export interface CascadeSuggestion {
+  target_section: string;
+  message: string;
+  view: string;
+  sub_section: string;
 }
 
 // --- Avatar Map (vrais fichiers dans /public/agents/) ---
@@ -740,6 +871,42 @@ export interface Orbit9MatchListResponse {
 export interface Orbit9CelluleListResponse {
   cellules: Orbit9Cellule[];
   total: number;
+}
+
+// --- Jumelage Live (questions + scoring detaille) ---
+
+export interface JumelageReponse {
+  member_id: number;
+  nom: string;
+  reponse: string;
+  score: number;
+}
+
+export interface JumelageQuestion {
+  id: number;
+  question: string;
+  reponses: JumelageReponse[];
+}
+
+export interface JumelageQuestionsResponse {
+  questions: JumelageQuestion[];
+}
+
+export interface ScoringCategory {
+  label: string;
+  weight: string;
+}
+
+export interface ScoringResult {
+  nom: string;
+  member_id: number;
+  scores: number[];
+  total: number;
+}
+
+export interface JumelageScoringResponse {
+  categories: ScoringCategory[];
+  results: ScoringResult[];
 }
 
 // --- Reflection Modes ---

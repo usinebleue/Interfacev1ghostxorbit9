@@ -21,6 +21,7 @@ import { NouvellesPage } from "./NouvellesPage";
 import { EvenementsPage } from "./EvenementsPage";
 import { TrgIndustriePage } from "./TrgIndustriePage";
 import { PageTypePage } from "./PageTypePage";
+import { JumelageLivePage } from "./JumelageLivePage";
 import { CarlOSPresence } from "../CarlOSPresence";
 
 // ── Groupes de sections avec sous-tabs ──
@@ -45,6 +46,7 @@ const SECTION_TITLES: Record<string, string> = {
   marketplace: "Marketplace",
   "marketplace-cahiers": "Marketplace",
   cellules: "Cellules Orbit9",
+  jumelage: "Jumelage Live",
   gouvernance: "Gouvernance",
   pionniers: "Pionniers Bleus",
   evenements: "Evenements",
@@ -57,6 +59,7 @@ const SECTION_SUBTITLES: Record<string, string> = {
   marketplace: "Trouvez des bots specialises ou repondez aux opportunites du reseau",
   "marketplace-cahiers": "Trouvez des bots specialises ou repondez aux opportunites du reseau",
   cellules: "Mon Reseau Orbit 9",
+  jumelage: "Trouvez le partenaire ideal dans votre reseau",
   gouvernance: "Mon Reseau Orbit 9",
   pionniers: "Mon Reseau Orbit 9",
 };
@@ -86,6 +89,8 @@ export function Orbit9DetailView() {
         return <MarketplacePage volet="cahiers" onNavigate={handleNavigate} />;
       case "cellules":
         return <CellulesPage onNavigate={handleNavigate} />;
+      case "jumelage":
+        return <JumelageLivePage onNavigate={handleNavigate} />;
       case "gouvernance":
         return <GouvernancePage onNavigate={handleNavigate} />;
       case "pionniers":

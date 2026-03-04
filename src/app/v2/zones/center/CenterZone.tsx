@@ -41,6 +41,8 @@ import { AgentSettingsView } from "./AgentSettingsView";
 import { EspaceBureauView } from "./EspaceBureauView";
 import { BluePrintView } from "./BluePrintView";
 import { BoardRoomView } from "./BoardRoomView";
+import { WarRoomView } from "./WarRoomView";
+import { ThinkRoomView } from "./ThinkRoomView";
 import { FocusModeLayout } from "./FocusModeLayout";
 
 /** Couleur identitaire par bot — bande fine en haut du canevas */
@@ -154,6 +156,8 @@ export function CenterZone() {
       {activeView === "espace-bureau" && <EspaceBureauView />}
       {activeView === "blueprint" && <BluePrintView />}
       {activeView === "board-room" && <BoardRoomView />}
+      {activeView === "war-room" && <WarRoomView />}
+      {activeView === "think-room" && <ThinkRoomView />}
       {activeView === "canvas" && (
         <SmartCanvas
           onStartChat={handleStartChat}

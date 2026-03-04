@@ -107,8 +107,8 @@ const AVATAR_CONFIG_GLOW: Record<string, string> = {
 type CallState = "idle" | "connecting" | "connected" | "error";
 
 export function VideoCallWidget() {
-  const { activeBotCode, activeBot } = useFrameMaster();
-  const { injectVoiceMessage } = useChatContext();
+  const { activeBotCode, activeBot, activeView, setActiveView } = useFrameMaster();
+  const { injectVoiceMessage, newConversation } = useChatContext();
   const { dispatchBatch } = useCanvasActions();
 
   // Call state
@@ -178,6 +178,9 @@ export function VideoCallWidget() {
     setCallDuration(0);
     setIsVideoCall(withVideo);
     setHasVideoTrack(false);
+
+    // Nouvelle conversation — pas de vieux messages dans le chat
+    newConversation();
 
     try {
       // 1. Get LiveKit token from our API
@@ -332,13 +335,18 @@ export function VideoCallWidget() {
         setErrorMsg("");
       }, 3000);
     }
-  }, [activeBotCode, callState, attachRemoteAudio, attachRemoteVideo]);
+  }, [activeBotCode, callState, attachRemoteAudio, attachRemoteVideo, newConversation]);
 
   // --- Polling voice transcript listener ---
   const injectRef = useRef(injectVoiceMessage);
   injectRef.current = injectVoiceMessage;
   const dispatchBatchRef = useRef(dispatchBatch);
   dispatchBatchRef.current = dispatchBatch;
+  const setActiveViewRef = useRef(setActiveView);
+  setActiveViewRef.current = setActiveView;
+  const activeViewRef = useRef(activeView);
+  activeViewRef.current = activeView;
+  const hasAutoSwitchedRef = useRef(false);
 
   const startVoicePolling = useCallback((roomName: string) => {
     // Stop any existing polling
@@ -370,6 +378,11 @@ export function VideoCallWidget() {
             }
             // Transcript: seulement pour les exchanges
             if (evt.type === "exchange") {
+              // Auto-switch vers live-chat si pas deja dessus (vocal = tout dans le chat)
+              if (!hasAutoSwitchedRef.current && activeViewRef.current !== "live-chat") {
+                setActiveViewRef.current("live-chat");
+                hasAutoSwitchedRef.current = true;
+              }
               if (evt.user_text) {
                 injectRef.current("user", evt.user_text);
                 setLastTranscript(evt.user_text);
@@ -412,6 +425,7 @@ export function VideoCallWidget() {
       timerRef.current = null;
     }
     stopVoicePolling();
+    hasAutoSwitchedRef.current = false;
     roomNameRef.current = "";
     setCallState("idle");
     setCallDuration(0);

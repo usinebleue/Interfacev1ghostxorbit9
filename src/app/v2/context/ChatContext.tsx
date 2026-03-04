@@ -7,6 +7,7 @@ import { createContext, useContext, useState, useCallback, useEffect, useRef } f
 import { useChat, useCrystals } from "../api/hooks";
 import { useTextToSpeech } from "../api/useVocal";
 import { useCanvasActions } from "./CanvasActionContext";
+import { useFrameMaster } from "./FrameMasterContext";
 import type { ChatMessage, ReflectionMode, CREDOPhase, Thread, MessageType, Crystal } from "../api/types";
 
 interface ChatState {
@@ -75,6 +76,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   } = useChat();
   const { crystals, addCrystal, deleteCrystal, exportCrystals } = useCrystals();
   const { dispatchBatch, focusData, clearFocusMode } = useCanvasActions();
+  const { activeView, activeBotCode, activeOrbit9Section, activeEspaceSection, activeBlueprintSection, chatSourceView } = useFrameMaster();
 
   // Connecter le hook chat au Canvas Action Bus
   useEffect(() => {
@@ -116,8 +118,10 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     prevMsgCountRef.current = messages.length;
 
     const lastMsg = messages[messages.length - 1];
-    if (lastMsg && lastMsg.role === "assistant" && lastMsg.content && !lastMsg.isStreaming) {
+    if (lastMsg && lastMsg.role === "assistant" && lastMsg.content && !lastMsg.isStreaming
+        && lastMsg.msgType !== "voice") {
       // Petit delai pour laisser le rendu finir
+      // Skip voice messages — deja parles par ElevenLabs via LiveKit
       setTimeout(() => tts.speak(lastMsg.content, lastMsg.id), 300);
     }
   }, [messages, autoTTSEnabled, tts]);
@@ -133,12 +137,28 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     setVideoAvatarEnabled((prev) => !prev);
   }, []);
 
-  // Wrap sendMessage to inject active reflection mode + branch meta
+  // D-101 — Résoudre la sous-section active pour le GPS du Flow
+  const resolveSubSection = useCallback((): string | undefined => {
+    if (activeView === "department") return activeBotCode; // BCO→direction, BCF→finance, etc.
+    if (activeView === "orbit9-detail") return activeOrbit9Section || undefined;
+    if (activeView === "espace-bureau") return activeEspaceSection;
+    if (activeView === "blueprint") return activeBlueprintSection;
+    return undefined;
+  }, [activeView, activeBotCode, activeOrbit9Section, activeEspaceSection, activeBlueprintSection]);
+
+  // Wrap sendMessage to inject active reflection mode + GPS du Flow context
   const sendMessage = useCallback(
     async (text: string, agent?: string, ghost?: string, meta?: BranchMeta) => {
-      await rawSend(text, agent, ghost, activeReflectionMode, meta);
+      const subSection = resolveSubSection();
+      // D-109: Si on vient d'une Room, utiliser chatSourceView comme active_view
+      const effectiveView = chatSourceView || activeView;
+      await rawSend(text, agent, ghost, activeReflectionMode, {
+        ...meta,
+        activeView: effectiveView,
+        activeSubSection: chatSourceView ? undefined : subSection,
+      });
     },
-    [rawSend, activeReflectionMode]
+    [rawSend, activeReflectionMode, activeView, resolveSubSection, chatSourceView]
   );
 
   // B.1 — Multi-perspectives wrapper

@@ -367,15 +367,25 @@ const FOCUS_QUICK_ACTIONS: Record<string, string[]> = {
 
 function extractFocusItems(data: unknown): Array<{ label: string; value: string }> {
   if (!data || typeof data !== "object") return [];
+  // Blocs département: { items: [{ primary, secondary, value, pct }] }
+  const d = data as Record<string, unknown>;
+  if (Array.isArray(d.items)) {
+    return (d.items as Array<Record<string, unknown>>)
+      .slice(0, 3)
+      .map((item) => ({
+        label: String(item.primary || "—"),
+        value: String(item.value || (item.pct !== undefined ? `${item.pct}%` : item.secondary || "")),
+      }));
+  }
   if (Array.isArray(data)) {
     return (data as Array<Record<string, unknown>>)
       .slice(0, 3)
       .map((item) => ({
-        label: String(item.nom || item.name || item.titre || "—"),
+        label: String(item.nom || item.name || item.titre || item.primary || "—"),
         value: String(item.valeur || item.value || item.statut || item.status || ""),
       }));
   }
-  return Object.entries(data as Record<string, unknown>)
+  return Object.entries(d)
     .filter(([, v]) => v !== null && v !== undefined && typeof v !== "object")
     .slice(0, 3)
     .map(([k, v]) => ({
@@ -533,7 +543,7 @@ export function useChat() {
       agent?: string,
       ghost?: string,
       mode?: string,
-      meta?: { msgType?: MessageType; parentId?: string; branchLabel?: string }
+      meta?: { msgType?: MessageType; parentId?: string; branchLabel?: string; activeView?: string; activeSubSection?: string }
     ) => {
       const msgType = meta?.msgType || "normal";
       const branchDepth = msgType === "challenge" || msgType === "consultation"
@@ -593,6 +603,9 @@ export function useChat() {
         msg_type: msgType !== "normal" ? msgType : undefined,
         parent_id: meta?.parentId,
         branch_depth: branchDepth,
+        // D-101 — GPS du Flow
+        active_view: meta?.activeView,
+        active_sub_section: meta?.activeSubSection,
       };
 
       // Create placeholder bot message for streaming
@@ -667,6 +680,7 @@ export function useChat() {
                         isStreaming: false,
                         canvasActions: visibleActions.length > 0 ? visibleActions : undefined,
                         isDiagnostic: data.is_diagnostic || false,
+                        bubbleContext: data.bubble_context || undefined,
                       }
                     : m
                 )

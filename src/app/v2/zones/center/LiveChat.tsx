@@ -49,11 +49,34 @@ import { useCanvasActions } from "../../context/CanvasActionContext";
 import { useTextToSpeech } from "../../api/useVocal";
 import { CarlOSAvatar } from "./CarlOSAvatar";
 import { api } from "../../api/client";
-import type { CanvasAction } from "../../api/types";
+import type { CanvasAction, BubbleContext } from "../../api/types";
 
 // ══════════════════════════════════════════════
 // Config
 // ══════════════════════════════════════════════
+
+// D-108 — Actions avancées autorisées par mode de réflexion
+// Les protocoles éliminent les actions non-logiques dans le contexte actif
+const MODE_ALLOWED_ACTIONS: Record<string, Set<string>> = {
+  credo:      new Set(["nuancer", "fil_parallele", "plan_action", "risques", "et_si", "deleguer"]),
+  crise:      new Set(["plan_action", "risques", "deleguer"]),              // Urgence: agir, pas rêver
+  brainstorm: new Set(["et_si", "nuancer", "fil_parallele"]),               // Créativité: explorer
+  analyse:    new Set(["risques", "plan_action", "nuancer"]),               // Rigueur: comprendre
+  debat:      new Set(["nuancer", "fil_parallele"]),                        // Dialectique: confronter
+  innovation: new Set(["et_si", "fil_parallele", "nuancer"]),              // 6 Chapeaux: diverger
+  decision:   new Set(["plan_action", "risques", "deleguer"]),             // Exécutif: trancher
+  strategie:  new Set(["plan_action", "risques", "et_si", "deleguer", "nuancer", "fil_parallele"]), // Tout
+  deep:       new Set(["nuancer", "fil_parallele"]),                       // Profondeur: spirale
+};
+
+// Labels CREDO phase pour le footer
+const CREDO_PHASE_CONFIG: Record<string, { label: string; color: string }> = {
+  C: { label: "Connecter", color: "bg-blue-400" },
+  R: { label: "Rechercher", color: "bg-purple-400" },
+  E: { label: "Exposer", color: "bg-amber-400" },
+  D: { label: "Démontrer", color: "bg-green-400" },
+  O: { label: "Obtenir", color: "bg-red-400" },
+};
 
 const MODE_CONFIG: Record<string, { label: string; icon: typeof Zap; color: string; bg: string }> = {
   credo: { label: "Standard", icon: Zap, color: "text-blue-500", bg: "bg-blue-50" },
@@ -66,6 +89,63 @@ const MODE_CONFIG: Record<string, { label: string; icon: typeof Zap; color: stri
   innovation: { label: "Innovation", icon: Sparkles, color: "text-fuchsia-500", bg: "bg-fuchsia-50" },
   deep: { label: "Deep Resonance", icon: Brain, color: "text-cyan-500", bg: "bg-cyan-50" },
 };
+
+// ══════════════════════════════════════════════
+// BubbleFooterContext — breadcrumb contextuel par bulle
+// D-108 — Section GPS + phase CREDO + mode réflexion + mission/chantier
+// ══════════════════════════════════════════════
+
+function BubbleFooterContext({ ctx }: { ctx?: BubbleContext }) {
+  if (!ctx) return <div className="flex-1" />;
+
+  const phase = ctx.credo_phase ? CREDO_PHASE_CONFIG[ctx.credo_phase] : null;
+  const mode = ctx.mode && ctx.mode !== "credo" ? MODE_CONFIG[ctx.mode] : null;
+
+  return (
+    <div className="flex items-center gap-1.5 flex-1 overflow-hidden">
+      {/* Section GPS */}
+      {ctx.section && (
+        <span className="text-[9px] text-gray-400 font-medium bg-gray-50 px-1.5 py-0.5 rounded truncate max-w-[80px]" title={ctx.section}>
+          {ctx.section}
+        </span>
+      )}
+
+      {/* Phase CREDO dot + label */}
+      {phase && (
+        <span className="flex items-center gap-0.5">
+          <span className={cn("w-1.5 h-1.5 rounded-full", phase.color)} />
+          <span className="text-[9px] text-gray-400">{phase.label}</span>
+        </span>
+      )}
+
+      {/* Mode réflexion */}
+      {mode && (
+        <span className={cn("text-[9px] font-medium px-1.5 py-0.5 rounded", mode.bg, mode.color)}>
+          {mode.label}
+        </span>
+      )}
+
+      {/* Branch indicator */}
+      {ctx.is_branch && (
+        <span className="text-[9px] text-violet-400">
+          <ArrowRight className="h-2.5 w-2.5 inline" />
+        </span>
+      )}
+
+      {/* Chantier */}
+      {ctx.chantier_nom && (
+        <span className="text-[9px] text-amber-500 font-medium truncate max-w-[70px]" title={ctx.chantier_nom}>
+          {ctx.chantier_nom}
+        </span>
+      )}
+
+      {/* Precision % */}
+      {ctx.precision_pct != null && ctx.precision_pct > 0 && (
+        <span className="text-[9px] text-gray-300 ml-auto">{ctx.precision_pct}%</span>
+      )}
+    </div>
+  );
+}
 
 // ── Bot identity — photos, couleurs, noms (meme config que simulations) ──
 
@@ -458,7 +538,7 @@ function ThinkingAnimation({ mode, botCode }: { mode: string; botCode?: string }
 // ══════════════════════════════════════════════
 
 interface BotActionsProps {
-  msg: { id: string; content: string; agent?: string; options?: string[] };
+  msg: { id: string; content: string; agent?: string; options?: string[]; bubbleContext?: BubbleContext };
   isLast: boolean;
   challengeCount: number;
   onOptionClick: (text: string) => void;
@@ -617,66 +697,46 @@ function BotMessageActions({
         </button>
       </div>
 
-      {/* Actions avancées Chef d'Orchestre — 2e rangée, visible au hover sur last msg */}
-      {isLast && (
-        <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-gray-50">
-          <span className="text-[9px] text-gray-300 font-medium uppercase tracking-wide mr-0.5">Avancé</span>
+      {/* Actions avancées Chef d'Orchestre — 2e rangée, filtrée par protocole actif (D-108) */}
+      {isLast && (() => {
+        const activeMode = msg.bubbleContext?.mode || "credo";
+        const allowed = MODE_ALLOWED_ACTIONS[activeMode] || MODE_ALLOWED_ACTIONS.credo;
+        const modeLabel = activeMode !== "credo" && MODE_CONFIG[activeMode]
+          ? MODE_CONFIG[activeMode].label
+          : "Avancé";
 
-          <button
-            onClick={onNuancer}
-            disabled={disabled}
-            className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-sky-50 text-sky-600 border border-sky-200 hover:bg-sky-100 transition-colors cursor-pointer disabled:opacity-50 font-medium"
-            title="Nuancer — approfondir avec nuances et limites"
-          >
-            <Scale className="h-2.5 w-2.5" /> Nuancer
-          </button>
+        // All possible actions — filtré par le protocole actif
+        const actions = [
+          { key: "nuancer",        show: allowed.has("nuancer"),        onClick: onNuancer,        icon: Scale,           label: "Nuancer",       title: "Nuancer — approfondir avec nuances et limites",  colors: "bg-sky-50 text-sky-600 border-sky-200 hover:bg-sky-100" },
+          { key: "fil_parallele",  show: allowed.has("fil_parallele"),  onClick: onFilParallele,   icon: ArrowRight,      label: "Fil parallèle", title: "Fil parallèle — explorer un angle non couvert",  colors: "bg-teal-50 text-teal-600 border-teal-200 hover:bg-teal-100" },
+          { key: "plan_action",    show: allowed.has("plan_action"),    onClick: onPlanAction,      icon: Target,          label: "Plan d'action", title: "Plan d'action — étapes concrètes",              colors: "bg-green-50 text-green-600 border-green-200 hover:bg-green-100" },
+          { key: "risques",        show: allowed.has("risques"),        onClick: onEvaluerRisques,  icon: AlertTriangle,   label: "Risques",       title: "Évaluer les risques — probabilité × impact",    colors: "bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100" },
+          { key: "et_si",          show: allowed.has("et_si"),          onClick: onScenarioEtSi,    icon: Zap,             label: "Et si?",        title: "Scénario Et si? — explorer les hypothèses",     colors: "bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100" },
+          { key: "deleguer",       show: allowed.has("deleguer"),       onClick: onDeleguer,        icon: FileText,        label: "Déléguer",      title: "Déléguer — créer un brief de délégation",       colors: "bg-indigo-50 text-indigo-600 border-indigo-200 hover:bg-indigo-100" },
+        ].filter(a => a.show);
 
-          <button
-            onClick={onFilParallele}
-            disabled={disabled}
-            className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-teal-50 text-teal-600 border border-teal-200 hover:bg-teal-100 transition-colors cursor-pointer disabled:opacity-50 font-medium"
-            title="Fil parallèle — explorer un angle non couvert"
-          >
-            <ArrowRight className="h-2.5 w-2.5" /> Fil parallèle
-          </button>
+        if (actions.length === 0) return null;
 
-          <button
-            onClick={onPlanAction}
-            disabled={disabled}
-            className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-green-50 text-green-600 border border-green-200 hover:bg-green-100 transition-colors cursor-pointer disabled:opacity-50 font-medium"
-            title="Plan d'action — étapes concrètes"
-          >
-            <Target className="h-2.5 w-2.5" /> Plan d'action
-          </button>
-
-          <button
-            onClick={onEvaluerRisques}
-            disabled={disabled}
-            className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-orange-50 text-orange-600 border border-orange-200 hover:bg-orange-100 transition-colors cursor-pointer disabled:opacity-50 font-medium"
-            title="Évaluer les risques — matrice probabilité × impact"
-          >
-            <AlertTriangle className="h-2.5 w-2.5" /> Risques
-          </button>
-
-          <button
-            onClick={onScenarioEtSi}
-            disabled={disabled}
-            className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-purple-50 text-purple-600 border border-purple-200 hover:bg-purple-100 transition-colors cursor-pointer disabled:opacity-50 font-medium"
-            title="Scénario Et si? — explorer les hypothèses"
-          >
-            <Zap className="h-2.5 w-2.5" /> Et si?
-          </button>
-
-          <button
-            onClick={onDeleguer}
-            disabled={disabled}
-            className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-100 transition-colors cursor-pointer disabled:opacity-50 font-medium"
-            title="Déléguer — créer un brief de délégation"
-          >
-            <FileText className="h-2.5 w-2.5" /> Déléguer
-          </button>
-        </div>
-      )}
+        return (
+          <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-gray-50">
+            <span className="text-[9px] text-gray-300 font-medium uppercase tracking-wide mr-0.5">{modeLabel}</span>
+            {actions.map(a => (
+              <button
+                key={a.key}
+                onClick={a.onClick}
+                disabled={disabled}
+                className={cn(
+                  "flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-full border transition-colors cursor-pointer disabled:opacity-50 font-medium",
+                  a.colors
+                )}
+                title={a.title}
+              >
+                <a.icon className="h-2.5 w-2.5" /> {a.label}
+              </button>
+            ))}
+          </div>
+        );
+      })()}
     </div>
   );
 }
@@ -1787,10 +1847,11 @@ export function LiveChat({
                       <CanvasActionBadges actions={msg.canvasActions} />
                     )}
 
-                    {/* Bot actions — TTS + copy */}
+                    {/* Bot actions — TTS + copy + contexte dynamique */}
                     {!isUser && (
                       <div className="mt-3 pt-2 border-t border-gray-50 flex items-center justify-between">
-                        <div />
+                        {/* D-108 — Footer contextuel dynamique (section, CREDO, mode, mission) */}
+                        <BubbleFooterContext ctx={msg.bubbleContext} />
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           {tts.isSupported && (
                             <button

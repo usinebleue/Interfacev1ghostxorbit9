@@ -12,6 +12,7 @@ import { Badge } from "../../../components/ui/badge";
 import { ScrollArea } from "../../../components/ui/scroll-area";
 import { cn } from "../../../components/ui/utils";
 import { useFrameMaster } from "../../context/FrameMasterContext";
+import { useCanvasActions } from "../../context/CanvasActionContext";
 import { BOT_AVATAR, BOT_SUBTITLE } from "../../api/types";
 import { DashboardView } from "./DashboardView";
 import { CarlOSPresence } from "./CarlOSPresence";
@@ -781,6 +782,7 @@ const DEPT_TDC: Record<string, DeptTdcConfig> = {
 /* ============ COMPOSANT PRINCIPAL ============ */
 export function DepartmentTourDeControle() {
   const { activeBotCode, activeBot, setActiveView } = useFrameMaster();
+  const { dispatch } = useCanvasActions();
 
   // BCO (Direction) = meme Tour de Controle que le home
   if (activeBotCode === "BCO") {
@@ -811,23 +813,41 @@ export function DepartmentTourDeControle() {
   const subtitle = BOT_SUBTITLE[activeBotCode] || config.botName;
   const botName = activeBot?.nom || config.botName;
 
+  const handleBlocClick = (bloc: BlocConfig) => {
+    const elementType = bloc.title.toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, "_");
+
+    dispatch({
+      type: "focus",
+      layer: "cerveau",
+      data: {
+        title: `${config.botName} — ${bloc.title}`,
+        element_type: elementType,
+        data: { items: bloc.items },
+      },
+      bot: activeBotCode,
+    });
+    setActiveView("live-chat");
+  };
+
   return (
     <ScrollArea className="h-full">
       <div className="p-5 space-y-4 max-w-5xl mx-auto">
 
         <CarlOSPresence key={activeBotCode} />
 
-        {/* Row 1 : 5 blocs domaine — cartes info (discussion via InputBar) */}
+        {/* Row 1 : 5 blocs domaine — cliquables → Focus Mode */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
           {config.row1.map((bloc, i) => (
-            <Bloc key={i} config={bloc} />
+            <Bloc key={i} config={bloc} onClick={() => handleBlocClick(bloc)} />
           ))}
         </div>
 
-        {/* Row 2 : 5 blocs outils (Taches, Agenda, KPIs, Veille, Benchmarks) */}
+        {/* Row 2 : 5 blocs outils — cliquables → Focus Mode */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
           {config.row2.map((bloc, i) => (
-            <Bloc key={i} config={bloc} />
+            <Bloc key={i} config={bloc} onClick={() => handleBlocClick(bloc)} />
           ))}
         </div>
       </div>

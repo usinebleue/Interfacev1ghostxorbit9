@@ -43,6 +43,10 @@ import type {
   Orbit9Cellule,
   Orbit9CelluleListResponse,
   TrisociationResponse,
+  JumelageQuestionsResponse,
+  JumelageScoringResponse,
+  BubbleContext,
+  CascadeSuggestion,
 } from "./types";
 
 // --- SSE Stream types ---
@@ -68,6 +72,14 @@ export interface StreamDoneEvent {
   canvas_actions?: CanvasAction[];
   team_proposal?: TeamProposal | null;
   is_diagnostic?: boolean;
+  // D-101 — GPS du Flow
+  flow_type?: "data" | "action" | null;
+  flow_step?: string | null;
+  flow_bot_primaire?: string | null;
+  // D-101 — Cascade tensions
+  cascade_suggestions?: CascadeSuggestion[];
+  // D-108 — Contexte de bulle dynamique
+  bubble_context?: BubbleContext | null;
 }
 
 export type StreamCallback = {
@@ -461,6 +473,20 @@ export const api = {
   /** Demarrer une Trisociation LiveKit */
   startTrisociation(matchId: number): Promise<TrisociationResponse> {
     return apiFetch<TrisociationResponse>(`/orbit9/trisociation/start?match_id=${matchId}`, {
+      method: "POST",
+    });
+  },
+
+  /** Generer les 5 questions de jumelage contextuelles */
+  generateJumelageQuestions(matchId: number): Promise<JumelageQuestionsResponse> {
+    return apiFetch<JumelageQuestionsResponse>(`/orbit9/matches/${matchId}/jumelage-questions`, {
+      method: "POST",
+    });
+  },
+
+  /** Generer le scoring detaille 8 categories */
+  generateJumelageScoring(matchId: number): Promise<JumelageScoringResponse> {
+    return apiFetch<JumelageScoringResponse>(`/orbit9/matches/${matchId}/score-detail`, {
       method: "POST",
     });
   },

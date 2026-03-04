@@ -220,7 +220,12 @@ export function CellulesPage({ onNavigate }: CellulesPageProps) {
               <Handshake className="h-4 w-4 text-amber-600" />
               <span className="text-sm font-bold text-amber-900">Opportunites actives dans la Cellule</span>
             </div>
-            <Badge variant="outline" className="text-[9px]">{matches.length} matchings</Badge>
+            <div className="flex items-center gap-2">
+              <Button size="sm" className="gap-1.5 text-xs bg-amber-600 hover:bg-amber-700" onClick={() => onNavigate?.("jumelage")}>
+                <Sparkles className="h-3.5 w-3.5" /> Lancer un jumelage
+              </Button>
+              <Badge variant="outline" className="text-[9px]">{matches.length} matchings</Badge>
+            </div>
           </div>
         </div>
         <div className="p-4">
@@ -285,7 +290,7 @@ export function CellulesPage({ onNavigate }: CellulesPageProps) {
                     <span className="text-[9px] text-gray-400">{match.candidats?.length || 0} candidat(s)</span>
                     <div className="flex gap-2">
                       {match.gagnant_ids.length > 0 && (
-                        <Button size="sm" className="text-xs gap-1.5 bg-purple-600 hover:bg-purple-700"><Video className="h-3.5 w-3.5" /> Trisociation</Button>
+                        <Button size="sm" className="text-xs gap-1.5 bg-purple-600 hover:bg-purple-700" onClick={() => onNavigate?.("jumelage")}><Video className="h-3.5 w-3.5" /> Trisociation</Button>
                       )}
                       {match.status === "scout_needed" && (
                         <Button size="sm" variant="outline" className="text-xs gap-1.5 text-amber-700 border-amber-300"><Search className="h-3.5 w-3.5" /> Bot Scout</Button>
