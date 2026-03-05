@@ -11,6 +11,7 @@ import { BOT_EMOJI } from "../api/types";
 import { CenterZone } from "../zones/center/CenterZone";
 import { MobileTabBar } from "../mobile/MobileTabBar";
 import { MobileMenu } from "../mobile/MobileMenu";
+import { MobileCallFAB } from "../mobile/MobileCallFAB";
 
 export function FrameMasterMobile() {
   const { activeBotCode, activeBot } = useFrameMaster();
@@ -46,6 +47,9 @@ export function FrameMasterMobile() {
       <div className="flex-1 overflow-hidden">
         <CenterZone />
       </div>
+
+      {/* FAB appel vocal — Ray-Ban Meta / mobile */}
+      <MobileCallFAB />
 
       {/* Bottom tab bar */}
       <MobileTabBar />
