@@ -8,7 +8,6 @@
 import { useState, useEffect } from "react";
 import {
   X,
-  SplitSquareHorizontal,
   FileText,
   BarChart3,
   ListOrdered,
@@ -18,6 +17,7 @@ import {
   Loader2,
   CheckCircle2,
   Mic,
+  RotateCcw,
 } from "lucide-react";
 import { cn } from "../../../components/ui/utils";
 import { useFrameMaster } from "../../context/FrameMasterContext";
@@ -35,7 +35,7 @@ import { ScenarioHub } from "./ScenarioHub";
 import { LiveChat } from "./LiveChat";
 import { SmartCanvas } from "./SmartCanvas";
 import { DepartmentDetailView } from "./DepartmentDetailView";
-import { InputBar } from "./InputBar";
+// InputBar moved to SidebarRight (Sprint Final V1)
 import { Orbit9DetailView } from "./orbit9/Orbit9DetailView";
 import { AgentSettingsView } from "./AgentSettingsView";
 import { EspaceBureauView } from "./EspaceBureauView";
@@ -43,7 +43,9 @@ import { BluePrintView } from "./BluePrintView";
 import { BoardRoomView } from "./BoardRoomView";
 import { WarRoomView } from "./WarRoomView";
 import { ThinkRoomView } from "./ThinkRoomView";
+import { MesChantiersView } from "./MesChantiersView";
 import { FocusModeLayout } from "./FocusModeLayout";
+import { useFlowGPS } from "../../api/hooks";
 
 /** Couleur identitaire par bot — bande fine en haut du canevas */
 const BOT_BAND_COLORS: Record<string, string> = {
@@ -55,8 +57,8 @@ const BOT_BAND_COLORS: Record<string, string> = {
   BOO: "bg-orange-500",
   BFA: "bg-slate-400",
   BHR: "bg-teal-500",
-  BIO: "bg-cyan-500",
-  BCC: "bg-rose-500",
+  BIO: "bg-rose-500",
+  BCC: "bg-cyan-500",
   BPO: "bg-fuchsia-500",
   BRO: "bg-amber-500",
   BLE: "bg-indigo-500",
@@ -88,20 +90,64 @@ const CONTENT_TYPE_ICONS: Record<string, React.ElementType> = {
   video: Bot,
 };
 
+/** FlowProgressBar — barre de progression pour sections ACTION */
+function FlowProgressBar({ sectionKey }: { sectionKey: string }) {
+  const { steps, currentStepIndex, isAction, completed, reset } = useFlowGPS(sectionKey);
+  if (!isAction || steps.length === 0) return null;
+
+  return (
+    <div className="bg-white border-b px-4 py-2 shrink-0 flex items-center gap-2">
+      {steps.map((step, i) => {
+        const isDone = i < currentStepIndex || completed;
+        const isCurrent = i === currentStepIndex && !completed;
+        return (
+          <div key={i} className="flex items-center gap-1.5">
+            {i > 0 && (
+              <div className={cn("w-6 h-0.5 rounded-full", isDone ? "bg-green-300" : "bg-gray-200")} />
+            )}
+            <span className={cn(
+              "text-[9px] px-2.5 py-1 rounded-full font-medium whitespace-nowrap transition-all",
+              isDone && "bg-green-100 text-green-700",
+              isCurrent && "bg-blue-100 text-blue-700 ring-1 ring-blue-300",
+              !isDone && !isCurrent && "bg-gray-50 text-gray-400"
+            )}>
+              {step}
+            </span>
+          </div>
+        );
+      })}
+      {currentStepIndex > 0 && !completed && (
+        <button
+          onClick={reset}
+          className="ml-auto text-gray-400 hover:text-gray-600 cursor-pointer p-1 rounded hover:bg-gray-100 transition-colors"
+          title="Recommencer"
+        >
+          <RotateCcw className="h-3.5 w-3.5" />
+        </button>
+      )}
+      {completed && (
+        <span className="ml-auto flex items-center gap-1 text-[9px] text-green-600 font-medium">
+          <CheckCircle2 className="h-3.5 w-3.5" /> Termine
+        </span>
+      )}
+    </div>
+  );
+}
+
 export function CenterZone() {
   const { activeView, activeBotCode, setActiveView, navigateToDepartment } = useFrameMaster();
   const {
     navigateAction, clearNavigateAction, consumeNext,
     activeWidget, activeAnnotation,
-    pushedContent, credoPhases, splitScreen,
+    pushedContent, credoPhases,
     executeAction,
     focusData, clearFocusMode,
     dismissWidget, dismissAnnotation,
-    dismissPushedContent, toggleSplitScreen,
+    dismissPushedContent,
     dismissExecuteAction,
   } = useCanvasActions();
   const botBand = BOT_BAND_COLORS[activeBotCode];
-  const [liveChatMode, setLiveChatMode] = useState("analyse");
+  // liveChatMode removed — chat is in sidebar now
   const [pinnedContent, setPinnedContent] = useState(false);
 
   // --- Consommer les canvas actions navigate ---
@@ -126,8 +172,8 @@ export function CenterZone() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeView]);
 
-  const handleStartChat = (mode: string) => {
-    setLiveChatMode(mode);
+  const handleStartChat = (_mode: string) => {
+    // Chat is now always visible in sidebar — just signal the canvas
     setActiveView("live-chat");
   };
 
@@ -145,12 +191,7 @@ export function CenterZone() {
       {activeView === "cahier" && <CahierSmartDemo />}
       {activeView === "scenarios" && <ScenarioHub />}
       {activeView === "detail" && <DepartmentDetailView />}
-      {activeView === "live-chat" && (
-        <LiveChat
-          initialMode={liveChatMode}
-          onBack={() => setActiveView("department")}
-        />
-      )}
+      {activeView === "live-chat" && <LiveChat />}
       {activeView === "orbit9-detail" && <Orbit9DetailView />}
       {activeView === "agent-settings" && <AgentSettingsView />}
       {activeView === "espace-bureau" && <EspaceBureauView />}
@@ -158,6 +199,7 @@ export function CenterZone() {
       {activeView === "board-room" && <BoardRoomView />}
       {activeView === "war-room" && <WarRoomView />}
       {activeView === "think-room" && <ThinkRoomView />}
+      {activeView === "mes-chantiers" && <MesChantiersView />}
       {activeView === "canvas" && (
         <SmartCanvas
           onStartChat={handleStartChat}
@@ -174,44 +216,23 @@ export function CenterZone() {
       {botBand && <div className={cn("absolute left-0 top-0 bottom-0 w-1 z-10 pointer-events-none", botBand)} />}
       {botBand && <div className={cn("absolute right-0 top-0 bottom-0 w-1 z-10 pointer-events-none", botBand)} />}
 
+      {/* Flow GPS bar — progression par etapes pour sections ACTION */}
+      <FlowProgressBar sectionKey={activeView} />
+
       {/* Phase indicator — interne, sans labels visibles */}
       {showCredoIndicator && (
         <div className="bg-white border-b px-3 py-1 shrink-0 flex items-center gap-3">
-          <Bot className="h-3 w-3 text-gray-400" />
-          <button
-            onClick={toggleSplitScreen}
-            className={cn(
-              "ml-auto p-1 rounded transition-colors cursor-pointer",
-              splitScreen ? "bg-blue-100 text-blue-600" : "text-gray-300 hover:text-gray-500 hover:bg-gray-100"
-            )}
-            title="Split-screen"
-          >
-            <SplitSquareHorizontal className="h-3.5 w-3.5" />
-          </button>
+          <Bot className="h-3.5 w-3.5 text-gray-400" />
         </div>
       )}
 
       {/* Vue principale — Priority 1: Focus Mode, Priority 2: split-screen, Priority 3: normal */}
       <div className="flex-1 overflow-hidden flex">
         {focusData ? (
-          /* ── Focus Mode: element ancre + LiveChat ── */
+          /* ── Focus Mode: element ancre plein canvas (chat dans sidebar) ── */
           <div className="flex-1 overflow-hidden">
             <FocusModeLayout focusData={focusData} onClose={clearFocusMode} />
           </div>
-        ) : splitScreen ? (
-          <>
-            {/* Gauche: Vue courante */}
-            <div className="flex-1 overflow-hidden border-r border-gray-200">
-              {renderMainView()}
-            </div>
-            {/* Droite: LiveChat */}
-            <div className="w-[400px] overflow-hidden shrink-0">
-              <LiveChat
-                initialMode={liveChatMode}
-                onBack={() => toggleSplitScreen()}
-              />
-            </div>
-          </>
         ) : (
           <div className="flex-1 overflow-hidden">
             {renderMainView()}
@@ -219,8 +240,9 @@ export function CenterZone() {
         )}
       </div>
 
-      {/* Overlay: Push Content Panel (slide-in depuis la droite) — masqué en Focus Mode */}
-      {pushedContent && !focusData && (
+      {/* Overlay: Push Content Panel — DESACTIVE (Carl: "enlever tous les pop-ups, aucun agent ne repond par pop-up") */}
+      {/* Reactiver quand on aura un systeme d'urgences/alertes CarlOS */}
+      {false && pushedContent && !focusData && (
         <div className={cn(
           "absolute top-12 right-3 z-50 w-80 max-h-[60vh] animate-in slide-in-from-right-4 duration-300",
           pinnedContent ? "opacity-100" : "opacity-95 hover:opacity-100"
@@ -280,8 +302,8 @@ export function CenterZone() {
         </div>
       )}
 
-      {/* Overlay: Execute Action (confirmation/progress) — masqué en Focus Mode */}
-      {executeAction && !focusData && (
+      {/* Overlay: Execute Action — DESACTIVE (Carl: pas de pop-ups) */}
+      {false && executeAction && !focusData && (
         <div className="absolute bottom-16 right-4 z-50 animate-in slide-in-from-right-4 duration-300">
           <div className="bg-gradient-to-r from-green-600 to-emerald-500 rounded-xl shadow-xl px-4 py-3 max-w-sm">
             <div className="flex items-center gap-3">
@@ -311,8 +333,8 @@ export function CenterZone() {
         </div>
       )}
 
-      {/* Overlay: Widget contextuel CarlOS (Cerveau/action) — masqué en Focus Mode */}
-      {activeWidget && !focusData && (
+      {/* Overlay: Widget contextuel CarlOS — DESACTIVE (Carl: pas de pop-ups) */}
+      {false && activeWidget && !focusData && (
         <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-4 duration-300">
           <div className="bg-white border border-blue-200 rounded-xl shadow-lg px-4 py-3 max-w-md">
             <div className="flex items-start gap-2">
@@ -335,8 +357,8 @@ export function CenterZone() {
         </div>
       )}
 
-      {/* Overlay: Annotation (Coeur/highlight) — masqué en Focus Mode */}
-      {activeAnnotation && !focusData && (
+      {/* Overlay: Annotation — DESACTIVE (Carl: pas de pop-ups) */}
+      {false && activeAnnotation && !focusData && (
         <div className="absolute top-14 right-4 z-40 animate-in slide-in-from-right-4 duration-300">
           <div className={cn(
             "border rounded-lg shadow-md px-3 py-2 max-w-xs",
@@ -372,8 +394,6 @@ export function CenterZone() {
         </div>
       )}
 
-      {/* InputBar fixe en bas — toujours visible */}
-      <InputBar />
     </div>
   );
 }

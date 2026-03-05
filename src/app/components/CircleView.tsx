@@ -136,7 +136,7 @@ const activities: CircleActivity[] = [
     type: 'deal',
     time: 'Il y a 2h',
     title: 'DEAL FACILITÉ',
-    description: 'AutoPlus ↔ MétalPro\nRobot soudure, 185K$\nCommission GhostX: 5,550$ (3%)',
+    description: 'AutoPlus ↔ MétalPro\nRobot soudure, 185K$\nCommission CarlOS: 5,550$ (3%)',
   },
   {
     id: '2',

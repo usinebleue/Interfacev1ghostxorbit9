@@ -49,7 +49,7 @@ const franchiseGenerations: FranchiseGeneration[] = [
   { version: '2.0', name: 'Uber', description: '(même app, chauffeurs locaux)', color: 'bg-blue-100 text-blue-700' },
   { version: '3.0', name: 'Shopify', description: '(même outil, stores uniques)', color: 'bg-green-100 text-green-700' },
   { version: '4.0', name: 'Airbnb', description: '(réseau + expériences locales)', color: 'bg-purple-100 text-purple-700' },
-  { version: '5.0', name: 'GhostX Orbit9', description: '(réseau + bots + co-création)', color: 'bg-gradient-to-r from-orange-500 to-red-500 text-white' },
+  { version: '5.0', name: 'CarlOS Orbit9', description: '(réseau + bots + co-création)', color: 'bg-gradient-to-r from-orange-500 to-red-500 text-white' },
 ];
 
 const networkStages: NetworkStage[] = [
@@ -95,12 +95,12 @@ const networkStages: NetworkStage[] = [
     stage: 4,
     title: 'OS ÉCONOMIQUE (infrastructure)',
     emoji: '⚡',
-    description: 'GhostX = le système d\'exploitation',
+    description: 'CarlOS = le système d\'exploitation',
     features: [
       'Smart Contracts (Ethereum/Polygon)',
       'IPTokens (protection PI automatique)',
       'Économie fragmentée sur rails AI',
-      'GhostX est INDISPENSABLE',
+      'CarlOS est INDISPENSABLE',
     ],
     value: 'infrastructure complète',
   },
@@ -280,7 +280,7 @@ export function FranchiseView({ onBack }: FranchiseViewProps) {
                 {/* En-tête */}
                 <div className="grid grid-cols-12 gap-4 p-4 bg-green-100 font-semibold text-sm">
                   <div className="col-span-1">ÉTAGE</div>
-                  <div className="col-span-5">REVENUE GHOSTX</div>
+                  <div className="col-span-5">REVENUE CARLOS</div>
                   <div className="col-span-6">EXEMPLE (1 cercle de 9)</div>
                 </div>
 
@@ -468,10 +468,10 @@ export function FranchiseView({ onBack }: FranchiseViewProps) {
               </div>
               <div className="flex-1">
                 <h3 className="text-sm font-bold mb-3">
-                  GhostX = L'OS de l'économie fragmentée
+                  CarlOS = L'OS de l'économie fragmentée
                 </h3>
                 <p className="text-white/90 leading-relaxed mb-4">
-                  Comme Windows pour les PC ou iOS pour les iPhone, GhostX devient 
+                  Comme Windows pour les PC ou iOS pour les iPhone, CarlOS devient
                   l'infrastructure indispensable qui fait fonctionner l'économie des PME. 
                   Plus il y a de cercles, plus le réseau a de la valeur. Effet de réseau 
                   exponentiel × intelligence artificielle = position monopolistique défendable.

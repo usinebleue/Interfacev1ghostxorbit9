@@ -12,7 +12,6 @@ import {
   DollarSign, Cpu, Megaphone,
 } from "lucide-react";
 import { cn } from "../../../components/ui/utils";
-import { LiveChat } from "./LiveChat";
 import { BOT_AVATAR } from "../../api/types";
 
 // ── Types ──────────────────────────────────────────────────
@@ -34,8 +33,8 @@ const BOT_GRADIENTS: Record<string, string> = {
   BCS: "from-red-600 to-red-500",
   BOO: "from-orange-600 to-orange-500",
   BHR: "from-teal-600 to-teal-500",
-  BIO: "from-cyan-600 to-cyan-500",
-  BCC: "from-rose-600 to-rose-500",
+  BIO: "from-rose-600 to-rose-500",
+  BCC: "from-cyan-600 to-cyan-500",
   BPO: "from-fuchsia-600 to-fuchsia-500",
   BRO: "from-amber-600 to-amber-500",
   BLE: "from-indigo-600 to-indigo-500",
@@ -123,7 +122,7 @@ export function FocusModeLayout({
             <span className="text-[9px] font-medium text-gray-500">
               {({
                 BCT: "Thierry", BCF: "François", BCM: "Martine", BCS: "Sophie",
-                BOO: "Olivier", BHR: "Hélène", BIO: "Isabelle", BCC: "Catherine",
+                BOO: "Olivier", BHR: "Hélène", BIO: "Inès", BCC: "Catherine",
                 BPO: "Philippe", BRO: "Raphaël", BLE: "Louise", BSE: "Sébastien",
               } as Record<string, string>)[focusData.bot] || focusData.bot}
             </span>
@@ -132,11 +131,17 @@ export function FocusModeLayout({
         </div>
       )}
 
-      {/* ── LiveChat — occupe tout l'espace restant ─────── */}
-      {/* Les données KPI apparaissent comme bulle focus card (injectFocusCard) */}
-      {/* Les modes de réflexion sont natifs au LiveChat (pas de doublon) */}
-      <div className="flex-1 overflow-hidden">
-        <LiveChat onBack={onClose} />
+      {/* ── Contenu focus — plein canvas, chat dans sidebar droit ─────── */}
+      <div className="flex-1 overflow-hidden flex items-center justify-center bg-gray-50/50">
+        <div className="text-center space-y-3 max-w-md px-6">
+          <div className={cn("w-16 h-16 rounded-2xl mx-auto flex items-center justify-center bg-gradient-to-br text-white shadow-lg", gradient)}>
+            <ElementIcon className="h-8 w-8" />
+          </div>
+          <h3 className="text-lg font-bold text-gray-800">{focusData.title}</h3>
+          <p className="text-sm text-gray-500">
+            Utilise le chat dans le sidebar droit pour interagir avec {typeLabel}.
+          </p>
+        </div>
       </div>
     </div>
   );

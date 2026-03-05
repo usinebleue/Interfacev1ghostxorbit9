@@ -1,28 +1,24 @@
 /**
- * SidebarRight.tsx — Sidebar droite V3
- * 1. CarlOS Live — video bot + controles communication (unifie)
- * 2. CarlOS Pulse — alertes intelligentes
- * 3. Mes Discussions — threads actifs/parkes
- * Mon Espace = deplace dans sidebar gauche (Mon Bureau)
- * Sprint B — Reorganisation sidebar droite
+ * SidebarRight.tsx — Sidebar droite V5
+ * Sprint Final V1 — Chatbox input + Communication dans le sidebar droit
+ * Layout: Pulse(thin) → Video → InputBar(chatbox) → Missions/Chantiers/Discussions
+ * NOTE: PAS de bulles/messages ici — juste la zone de texte (vocal Carl 21:18)
  */
 
 import {
   Activity,
   MessageSquare,
   Video,
-  Zap,
 } from "lucide-react";
-import { ScrollArea } from "../../../components/ui/scroll-area";
 import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
 } from "../../../components/ui/tooltip";
 import { CarlOsPulse } from "./CarlOsPulse";
-import { CarlOSInsights } from "./CarlOSInsights";
 import { VideoCallWidget } from "./VideoCallWidget";
 import { DiscussionsPanel } from "./DiscussionsPanel";
+import { InputBar } from "../center/InputBar";
 
 interface Props {
   collapsed?: boolean;
@@ -55,15 +51,6 @@ export function SidebarRight({ collapsed = false }: Props) {
           <Tooltip>
             <TooltipTrigger asChild>
               <button className="w-full flex justify-center py-2 rounded hover:bg-accent transition-colors">
-                <Zap className="h-4 w-4 text-amber-500" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="left">CarlOS Insights</TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button className="w-full flex justify-center py-2 rounded hover:bg-accent transition-colors">
                 <MessageSquare className="h-4 w-4 text-blue-500" />
               </button>
             </TooltipTrigger>
@@ -74,38 +61,34 @@ export function SidebarRight({ collapsed = false }: Props) {
     );
   }
 
-  // Mode ouvert — 3 sections, tout scroll ensemble
+  // Mode ouvert — Pulse → Video → InputBar(chatbox) → Missions/Chantiers/Discussions
   return (
     <div className="h-full flex flex-col bg-white overflow-hidden">
-      <ScrollArea className="flex-1 min-h-0">
-        <div className="pt-4 pb-4">
-          {/* Section 1 — CarlOS Live (video + controles) */}
-          <div className="mx-3 mb-1">
-            <VideoCallWidget />
-          </div>
+      {/* Pulse — bande mince */}
+      <div className="px-3 py-1 shrink-0">
+        <CarlOsPulse compact />
+      </div>
 
-          {/* Separateur */}
-          <div className="h-[2px] bg-gradient-to-r from-green-400 via-blue-400 to-purple-400 my-3" />
+      {/* Video/Voice */}
+      <div className="mx-3 shrink-0">
+        <VideoCallWidget />
+      </div>
 
-          {/* Section 2 — CarlOS Pulse */}
-          <div className="mx-3 mb-1">
-            <CarlOsPulse />
-          </div>
+      {/* Separator */}
+      <div className="h-[2px] bg-gradient-to-r from-green-400 via-blue-400 to-purple-400 mx-3 my-1 shrink-0" />
 
-          {/* Section 2.5 — CarlOS Insights (coaching proactif) */}
-          <div className="mx-3 mt-2 mb-1">
-            <CarlOSInsights />
-          </div>
+      {/* Chatbox — juste la zone de texte, PAS de bulles */}
+      <div className="shrink-0 mx-3 my-1">
+        <InputBar compact />
+      </div>
 
-          {/* Separateur vert */}
-          <div className="h-[2px] bg-green-400 my-3" />
+      {/* Separator */}
+      <div className="h-[1px] bg-gray-200 mx-3 shrink-0" />
 
-          {/* Section 3 — Mes Missions */}
-          <div className="mx-3 mb-1">
-            <DiscussionsPanel />
-          </div>
-        </div>
-      </ScrollArea>
+      {/* Missions/Chantiers/Discussions — prend le reste de l'espace */}
+      <div className="flex-1 min-h-0 overflow-auto mx-3 py-2">
+        <DiscussionsPanel />
+      </div>
     </div>
   );
 }

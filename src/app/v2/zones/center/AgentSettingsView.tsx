@@ -191,7 +191,7 @@ const BOT_STANDBY: Record<string, string> = {
   BOO: "/agents/generated/coo-olivier-standby-v3.png",
   BFA: "/agents/generated/factory-bot-standby-v3.png",
   BHR: "/agents/generated/chro-helene-standby-v3.png",
-  BIO: "/agents/generated/cio-isabelle-standby-v3.png",
+  BIO: "/agents/generated/cino-ines-standby-v3.png",
   BCC: "/agents/generated/cco-catherine-standby-v3.png",
   BPO: "/agents/generated/cpo-philippe-standby-v3.png",
   BRO: "/agents/generated/cro-raphael-standby-v3.png",
@@ -328,7 +328,7 @@ export function AgentSettingsView() {
 
       {/* ── Contenu scrollable ── */}
       <div className="flex-1 overflow-auto">
-        <div className="max-w-5xl mx-auto px-5 py-4 pb-16 space-y-4">
+        <div className="max-w-5xl mx-auto px-10 py-5 pb-16 space-y-4">
 
           <CarlOSPresence />
 

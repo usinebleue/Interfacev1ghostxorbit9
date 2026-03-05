@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
-import { Gauge, Settings, LayoutDashboard, SlidersHorizontal, HeartPulse, MessageSquare, Check, Building2, Users, Map, Play } from "lucide-react";
+import { Gauge, Settings, LayoutDashboard, SlidersHorizontal, HeartPulse, Check, Building2, Users, Map, Play, MessageSquare } from "lucide-react";
 import { cn } from "../../../components/ui/utils";
 import { Button } from "../../../components/ui/button";
 import {
@@ -22,7 +22,6 @@ import {
   DropdownMenuTrigger,
 } from "../../../components/ui/dropdown-menu";
 import { useFrameMaster } from "../../context/FrameMasterContext";
-import { useChatContext } from "../../context/ChatContext";
 import { api } from "../../api/client";
 import type { KitInfo, KitUserProfile } from "../../api/types";
 
@@ -52,126 +51,75 @@ function getKitBrand(slug: string) {
   return KIT_BRAND[slug] || { color: "#6B7280", initials: slug.slice(0, 2).toUpperCase() };
 }
 
-/** Header colonne GAUCHE — Logo Usine Bleue */
+/** Header colonne GAUCHE — Logo Usine Bleue (click → dashboard) */
 export function HeaderLeft({ collapsed }: { collapsed: boolean }) {
+  const { navigateToDepartment } = useFrameMaster();
+
+  const handleLogoClick = () => {
+    navigateToDepartment("BCO", "dashboard");
+  };
+
   return (
     <div className="h-14 border-b border-white/10 flex items-center justify-center px-3 shrink-0" style={{ backgroundColor: UB_BLUE }}>
       {collapsed ? (
-        <img src="/logo-usine-bleue-icon.png" alt="Usine Bleue" className="h-7 object-contain" />
+        <img src="/logo-usine-bleue-icon.png" alt="Usine Bleue" className="h-7 object-contain cursor-pointer" onClick={handleLogoClick} />
       ) : (
-        <img src="/logo-usine-bleue.png" alt="Usine Bleue" className="h-8 object-contain" />
+        <img src="/logo-usine-bleue.png" alt="Usine Bleue" className="h-8 object-contain cursor-pointer" onClick={handleLogoClick} />
       )}
     </div>
   );
 }
 
-/** Header colonne CENTRE — Navigation principale */
+/** Header colonne CENTRE — Navigation principale (5 boutons) */
 export function HeaderCenter() {
   const { activeBotCode, activeView, setActiveView } = useFrameMaster();
-  const { messages, threads } = useChatContext();
-  const hasMessages = messages.length > 0 || threads.some(t => t.status !== "completed");
-  const userMsgCount = messages.filter(m => m.role === "user").length;
-  const openThreadCount = threads.filter(t => t.status !== "completed").length;
-  const parkedCount = threads.filter(t => t.status === "parked").length;
-  // Badge: nb de fils ouverts si > 0, sinon nb d'échanges user
-  const badgeCount = openThreadCount > 0 ? openThreadCount : userMsgCount;
+
+  const NAV_ITEMS = [
+    { id: "tour", label: "Tour de Controle", icon: LayoutDashboard, tooltip: "Tour de Controle",
+      onClick: () => setActiveView(activeBotCode === "BCO" ? "dashboard" : "department"),
+      isActive: activeView === "dashboard" || activeView === "department" },
+    { id: "cockpit", label: "Cockpit", icon: Gauge, tooltip: "Cockpit",
+      onClick: () => setActiveView("cockpit"),
+      isActive: activeView === "cockpit" },
+    { id: "discussions", label: "Mes Discussions", icon: MessageSquare, tooltip: "Mes Discussions — Missions et Chantiers",
+      onClick: () => setActiveView("mes-chantiers"),
+      isActive: activeView === "mes-chantiers" },
+    { id: "health", label: "Sante Globale", icon: HeartPulse, tooltip: "Sante Globale de l'entreprise",
+      onClick: () => setActiveView("health"),
+      isActive: activeView === "health" },
+    { id: "settings", label: "Reglage Agent AI", icon: SlidersHorizontal, tooltip: "Reglage de l'Agent AI",
+      onClick: () => setActiveView("agent-settings"),
+      isActive: activeView === "agent-settings" },
+  ] as const;
 
   return (
     <div className="h-14 border-b border-white/10 flex items-center shrink-0" style={{ backgroundColor: UB_BLUE }}>
-      {/* Navigation centrée */}
-      <div className="flex-1 flex items-center justify-center px-4">
-        <div className="flex items-center gap-1">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 gap-1.5 text-xs text-white/80 hover:text-white hover:bg-white/10"
-              onClick={() => setActiveView(activeBotCode === "BCO" ? "dashboard" : "department")}
-            >
-              <LayoutDashboard className="h-3.5 w-3.5" />
-              <span className="hidden lg:inline">Tour de Controle</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Tour de Controle</TooltipContent>
-        </Tooltip>
-
-        {/* Discussion — ouvre la liste des fils */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className={cn(
-                "h-8 gap-1.5 text-xs relative",
-                activeView === "discussion" || activeView === "live-chat"
-                  ? "text-white bg-white/15 hover:bg-white/20"
-                  : hasMessages
-                    ? "text-blue-300 hover:text-blue-200 hover:bg-white/10"
-                    : "text-white/80 hover:text-white hover:bg-white/10"
-              )}
-              onClick={() => setActiveView("discussion")}
-            >
-              <MessageSquare className="h-3.5 w-3.5" />
-              <span className="hidden lg:inline">Missions</span>
-              {badgeCount > 0 && (
-                <span className={cn(
-                  "absolute -top-0.5 -right-0.5 min-w-[14px] h-3.5 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5",
-                  parkedCount > 0 ? "bg-amber-500" : "bg-blue-500"
-                )}>
-                  {badgeCount}
-                </span>
-              )}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Mes Missions</TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 gap-1.5 text-xs text-white/80 hover:text-white hover:bg-white/10"
-              onClick={() => setActiveView("cockpit")}
-            >
-              <Gauge className="h-3.5 w-3.5" />
-              <span className="hidden lg:inline">Cockpit</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Cockpit</TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 gap-1.5 text-xs text-white/80 hover:text-white hover:bg-white/10"
-              onClick={() => setActiveView("health")}
-            >
-              <HeartPulse className="h-3.5 w-3.5" />
-              <span className="hidden lg:inline">Sante Globale</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Sante Globale de l'entreprise</TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 gap-1.5 text-xs text-white/80 hover:text-white hover:bg-white/10"
-              onClick={() => setActiveView("agent-settings")}
-            >
-              <SlidersHorizontal className="h-3.5 w-3.5" />
-              <span className="hidden lg:inline">Reglage Agent AI</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Reglage de l'Agent AI</TooltipContent>
-        </Tooltip>
-
+      <div className="flex-1 flex items-center justify-center px-2">
+        <div className="flex items-center gap-0.5">
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Tooltip key={item.id}>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "h-8 gap-1.5 text-xs cursor-pointer",
+                      item.isActive
+                        ? "text-white bg-white/15 hover:bg-white/20"
+                        : "text-white/80 hover:text-white hover:bg-white/10"
+                    )}
+                    onClick={item.onClick}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    <span className="hidden xl:inline">{item.label}</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{item.tooltip}</TooltipContent>
+              </Tooltip>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -249,9 +197,9 @@ export function HeaderRight({ collapsed = false }: { collapsed?: boolean }) {
             <span className="text-sm hidden xl:inline">{displayName}</span>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem>Mon profil</DropdownMenuItem>
-          <DropdownMenuItem>Mon entreprise</DropdownMenuItem>
-          <DropdownMenuItem>Abonnement</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setActiveView("espace-bureau")}>Mon profil</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setActiveView("espace-bureau")}>Mon entreprise</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setActiveView("espace-bureau")}>Abonnement</DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => setActiveView("scenarios")} className="flex items-center gap-2">
             <Map className="h-3.5 w-3.5 text-emerald-600" />

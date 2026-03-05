@@ -244,7 +244,7 @@ function generateThreadId(): string {
 /** Titre temporaire — nettoyage basique en attendant le titre IA */
 function generateThreadTitle(messages: ChatMessage[]): string {
   const firstUser = messages.find((m) => m.role === "user");
-  if (!firstUser) return "Nouvelle conversation";
+  if (!firstUser) return "Nouvelle discussion";
 
   let text = firstUser.content;
 
@@ -264,7 +264,7 @@ function generateThreadTitle(messages: ChatMessage[]): string {
 
   // Premiere phrase seulement
   const firstSentence = text.split(/[.!?\n]/)[0].trim();
-  return firstSentence.length > 50 ? firstSentence.slice(0, 47) + "..." : firstSentence || "Nouvelle conversation";
+  return firstSentence.length > 50 ? firstSentence.slice(0, 47) + "..." : firstSentence || "Nouvelle discussion";
 }
 
 /**
@@ -681,6 +681,8 @@ export function useChat() {
                         canvasActions: visibleActions.length > 0 ? visibleActions : undefined,
                         isDiagnostic: data.is_diagnostic || false,
                         bubbleContext: data.bubble_context || undefined,
+                        cascadeSuggestions: data.cascade_suggestions?.length ? data.cascade_suggestions : undefined,
+                        scaffoldProgress: data.scaffold_progress || undefined,
                       }
                     : m
                 )
@@ -825,6 +827,8 @@ export function useChat() {
                     options,
                     isStreaming: false,
                     isDiagnostic: res.is_diagnostic || false,
+                    cascadeSuggestions: res.cascade_suggestions?.length ? res.cascade_suggestions : undefined,
+                    scaffoldProgress: res.scaffold_progress || undefined,
                   }
                 : m
             )
@@ -1475,4 +1479,450 @@ export function useTensions(filters?: {
     tensions, total, loading, error, refresh,
     createTension, classifyMessage, resolveTension, launchMission,
   };
+}
+
+// ══════════════════════════════════════════════
+// Flow GPS — progression par etapes pour sections ACTION
+// ══════════════════════════════════════════════
+
+// Configs par section ACTION (fallback si API pas disponible)
+const FLOW_CONFIGS: Record<string, { steps: string[]; flowType: string }> = {
+  "board-room": { steps: ["Accueil", "Ordre du jour", "Debat CA", "Vote", "Decisions"], flowType: "action" },
+  "jumelage": { steps: ["Accueil", "Profil", "Matching", "Rencontre", "Suivi"], flowType: "action" },
+  "blueprint": { steps: ["Brief", "Analyse", "Modele", "Validation", "Livraison"], flowType: "action" },
+  "scenarios": { steps: ["Contexte", "Hypotheses", "Simulation", "Resultats", "Decision"], flowType: "action" },
+  "cellules": { steps: ["Objectif", "Membres", "Mandat", "Lancement"], flowType: "action" },
+  "pipeline": { steps: ["Prospect", "Qualification", "Proposition", "Negociation", "Cloture"], flowType: "action" },
+};
+
+const ACTION_SECTIONS = new Set(Object.keys(FLOW_CONFIGS));
+
+export function useFlowGPS(sectionKey: string) {
+  const isAction = ACTION_SECTIONS.has(sectionKey);
+  const localConfig = FLOW_CONFIGS[sectionKey];
+
+  const [steps, setSteps] = useState<string[]>(localConfig?.steps || []);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [completed, setCompleted] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // Try to fetch from API on mount
+  useEffect(() => {
+    if (!isAction) return;
+    api.flowGetStep(sectionKey)
+      .then((data) => {
+        setCurrentStepIndex(data.step_index);
+        setCompleted(data.completed);
+      })
+      .catch(() => { /* API not available, use local state */ });
+
+    api.flowGetConfig(sectionKey)
+      .then((data) => {
+        if (data.steps?.length) setSteps(data.steps);
+      })
+      .catch(() => { /* fallback to FLOW_CONFIGS */ });
+  }, [sectionKey, isAction]);
+
+  const advance = useCallback(async () => {
+    if (completed || loading) return;
+    setLoading(true);
+    try {
+      const data = await api.flowAdvance(sectionKey);
+      setCurrentStepIndex(data.step_index);
+      setCompleted(data.completed);
+    } catch {
+      // Fallback: local advance
+      setCurrentStepIndex((prev) => {
+        const next = Math.min(prev + 1, steps.length - 1);
+        if (next >= steps.length - 1) setCompleted(true);
+        return next;
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [sectionKey, completed, loading, steps.length]);
+
+  const reset = useCallback(async () => {
+    setLoading(true);
+    try {
+      await api.flowReset(sectionKey);
+    } catch { /* fallback */ }
+    setCurrentStepIndex(0);
+    setCompleted(false);
+    setLoading(false);
+  }, [sectionKey]);
+
+  const refreshStep = useCallback(async () => {
+    try {
+      const data = await api.flowGetStep(sectionKey);
+      setCurrentStepIndex(data.step_index);
+      setCompleted(data.completed);
+    } catch { /* ignore */ }
+  }, [sectionKey]);
+
+  return {
+    steps,
+    currentStep: steps[currentStepIndex] || "",
+    currentStepIndex,
+    totalSteps: steps.length,
+    progressPct: steps.length > 0 ? Math.round((currentStepIndex / (steps.length - 1)) * 100) : 0,
+    isAction,
+    completed,
+    loading,
+    advance,
+    reset,
+    refreshStep,
+  };
+}
+
+// ══════════════════════════════════════════════
+// Chantiers & Missions hooks
+// ══════════════════════════════════════════════
+
+export function useChantiers() {
+  const [chantiers, setChantiers] = useState<import("./types").Chantier[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await api.listChantiers();
+      // Trier: brule → couve → meurt
+      const order: Record<string, number> = { brule: 0, couve: 1, meurt: 2 };
+      setChantiers((data.chantiers || []).sort((a, b) => (order[a.chaleur] ?? 3) - (order[b.chaleur] ?? 3)));
+    } catch {
+      setChantiers([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { refresh(); }, [refresh]);
+
+  const create = useCallback(async (titre: string, chaleur: string = "couve") => {
+    const ch = await api.createChantier({ titre, chaleur });
+    await refresh();
+    return ch;
+  }, [refresh]);
+
+  const remove = useCallback(async (id: number) => {
+    await api.deleteChantier(id);
+    await refresh();
+  }, [refresh]);
+
+  return { chantiers, loading, refresh, create, remove };
+}
+
+export function useMissions(chantierId?: number) {
+  const [missions, setMissions] = useState<import("./types").Mission[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await api.listMissions(chantierId);
+      setMissions(data.missions || []);
+    } catch {
+      setMissions([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [chantierId]);
+
+  useEffect(() => { refresh(); }, [refresh]);
+
+  const create = useCallback(async (titre: string, botPrimaire?: string) => {
+    const m = await api.createMission({ titre, chantier_id: chantierId, bot_primaire: botPrimaire });
+    await refresh();
+    return m;
+  }, [chantierId, refresh]);
+
+  const remove = useCallback(async (id: number) => {
+    await api.deleteMission(id);
+    await refresh();
+  }, [refresh]);
+
+  return { missions, loading, refresh, create, remove };
+}
+
+// ══════════════════════════════════════════════
+// useCommandMission — BLOC 1 : polling COMMAND status
+// ══════════════════════════════════════════════
+
+export function useCommandMission(missionId: number | null) {
+  const [status, setStatus] = useState<import("./types").CommandStatusResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const startPolling = useCallback(() => {
+    if (!missionId) return;
+    setLoading(true);
+
+    const poll = async () => {
+      try {
+        const data = await api.commandStatus(missionId);
+        setStatus(data);
+        if (data.completed || data.error) {
+          // Stop polling once complete
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+          }
+          setLoading(false);
+        }
+      } catch {
+        setLoading(false);
+      }
+    };
+
+    poll(); // immediate first poll
+    intervalRef.current = setInterval(poll, 3000);
+  }, [missionId]);
+
+  // Auto-start polling when missionId changes
+  useEffect(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    if (missionId) {
+      startPolling();
+    } else {
+      setStatus(null);
+      setLoading(false);
+    }
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [missionId, startPolling]);
+
+  const launch = useCallback(async (message: string, urgency = "routine") => {
+    const res = await api.commandStart(message, urgency);
+    return res.mission_id;
+  }, []);
+
+  return { status, loading, launch };
+}
+
+
+// ══════════════════════════════════════════════
+// useModeBranch — BLOC 2 : fork mode autonome
+// ══════════════════════════════════════════════
+
+export function useModeBranch() {
+  const [activeBranch, setActiveBranch] = useState<Record<string, unknown> | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  // Check if there's an active branch on mount
+  useEffect(() => {
+    api.flowBranchStatus(1)
+      .then((data) => {
+        if (data.has_active_branch && data.branch) {
+          setActiveBranch(data.branch);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const branch = useCallback(async (mode: string, credoPhase?: string, credoSection?: string) => {
+    setLoading(true);
+    try {
+      const res = await api.flowBranch({ mode, user_id: 1, credo_phase: credoPhase, credo_section: credoSection });
+      if (res.ok) setActiveBranch(res.branch);
+      return res;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const advance = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await api.flowBranchAdvance(1);
+      if (res.completed) {
+        setActiveBranch(null);
+      } else if (res.branch) {
+        setActiveBranch(res.branch);
+      }
+      return res;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const complete = useCallback(async () => {
+    setLoading(true);
+    try {
+      await api.flowBranchComplete(1);
+      setActiveBranch(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const cancel = useCallback(async () => {
+    setLoading(true);
+    try {
+      await api.flowBranchCancel(1);
+      setActiveBranch(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  return { activeBranch, loading, branch, advance, complete, cancel };
+}
+
+
+// ══════════════════════════════════════════════
+// useBriefings — BLOC 3 : briefings compiles
+// ══════════════════════════════════════════════
+
+export function useBriefings() {
+  const [briefings, setBriefings] = useState<import("./types").Briefing[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [compiling, setCompiling] = useState(false);
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await api.listBriefings();
+      setBriefings(res.briefings || []);
+    } catch {
+      setBriefings([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { refresh(); }, [refresh]);
+
+  const compileDaily = useCallback(async () => {
+    setCompiling(true);
+    try {
+      const res = await api.compileDaily();
+      await refresh();
+      return res;
+    } finally {
+      setCompiling(false);
+    }
+  }, [refresh]);
+
+  const compileBoardMeeting = useCallback(async () => {
+    setCompiling(true);
+    try {
+      const res = await api.compileBoardMeeting();
+      await refresh();
+      return res;
+    } finally {
+      setCompiling(false);
+    }
+  }, [refresh]);
+
+  return { briefings, loading, compiling, refresh, compileDaily, compileBoardMeeting };
+}
+
+
+// ══════════════════════════════════════════════
+// useSuggestions — BLOC 4 : suggestions proactives
+// ══════════════════════════════════════════════
+
+export function useSuggestions() {
+  const [data, setData] = useState<import("./types").SuggestionsResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.suggestions(1)
+      .then(setData)
+      .catch(() => setData(null))
+      .finally(() => setLoading(false));
+  }, []);
+
+  return { data, loading };
+}
+
+
+// ══════════════════════════════════════════════
+// useQuestionnaire — BLOC 6 : questionnaire diagnostic
+// ══════════════════════════════════════════════
+
+export function useQuestionnaire() {
+  const [inSession, setInSession] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [lastResponse, setLastResponse] = useState<string | null>(null);
+
+  const start = useCallback(async (clientSlug?: string) => {
+    setLoading(true);
+    try {
+      const texte = clientSlug || "";
+      const res = await api.questionnaire("/questionnaire", texte);
+      setLastResponse(res.reponse);
+      setInSession(res.en_session);
+      return res;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const answer = useCallback(async (text: string) => {
+    setLoading(true);
+    try {
+      const res = await api.questionnaire("/questionnaire", text);
+      setLastResponse(res.reponse);
+      setInSession(res.en_session);
+      return res;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  return { inSession, loading, lastResponse, start, answer };
+}
+
+
+// ══════════════════════════════════════════════
+// useCahierPdf — BLOC 5 : generation + download cahier
+// ══════════════════════════════════════════════
+
+export function useCahierPdf() {
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [status, setStatus] = useState<import("./types").CahierStatusResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const generate = useCallback(async (clientSlug: string) => {
+    setLoading(true);
+    try {
+      const res = await api.startCahier({ client_slug: clientSlug });
+      setJobId(res.job_id);
+      return res.job_id;
+    } catch {
+      setLoading(false);
+      return null;
+    }
+  }, []);
+
+  // Poll status when jobId is set
+  useEffect(() => {
+    if (!jobId) return;
+    const poll = async () => {
+      try {
+        const s = await api.getCahierStatus(jobId);
+        setStatus(s);
+        if (s.status === "ready" || s.status === "error") {
+          if (intervalRef.current) clearInterval(intervalRef.current);
+          setLoading(false);
+        }
+      } catch {
+        setLoading(false);
+      }
+    };
+    poll();
+    intervalRef.current = setInterval(poll, 5000);
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, [jobId]);
+
+  const downloadUrl = jobId ? api.cahierDownloadUrl(jobId) : null;
+
+  return { jobId, status, loading, generate, downloadUrl };
 }

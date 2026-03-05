@@ -128,9 +128,9 @@ export function FrameMaster() {
 
         {/* SIDEBAR DROITE — Header Profil + Contexte (meme pattern collapse que gauche) */}
         <ResizablePanel
-          defaultSize={20}
+          defaultSize={22}
           minSize={4}
-          maxSize={30}
+          maxSize={35}
           collapsible
           collapsedSize={4}
           onCollapse={() => setRightCollapsed(true)}

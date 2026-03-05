@@ -294,7 +294,7 @@ export function AITeamView({ onBack }: AITeamViewProps) {
                   GHOSTS DISPONIBLES (Modèles Cognitifs)
                 </h2>
                 <p className="text-sm text-gray-600">
-                  Les 12 Ghosts de GhostX — Active-les pour changer la perspective de tes bots :
+                  Les 12 Ghosts de CarlOS — Active-les pour changer la perspective de tes bots :
                 </p>
               </div>
 

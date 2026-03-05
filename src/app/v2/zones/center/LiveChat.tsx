@@ -43,7 +43,7 @@ import {
 } from "lucide-react";
 import { cn } from "../../../components/ui/utils";
 import { useChatContext } from "../../context/ChatContext";
-import { useBots } from "../../api/hooks";
+import { useBots, useCommandMission, useModeBranch } from "../../api/hooks";
 import { useFrameMaster } from "../../context/FrameMasterContext";
 import { useCanvasActions } from "../../context/CanvasActionContext";
 import { useTextToSpeech } from "../../api/useVocal";
@@ -139,6 +139,44 @@ function BubbleFooterContext({ ctx }: { ctx?: BubbleContext }) {
         </span>
       )}
 
+      {/* S43 — COMMAND QC Sentinel feedback */}
+      {ctx.command_active && (
+        <span className="flex items-center gap-0.5 ml-1">
+          <span className={cn(
+            "w-1.5 h-1.5 rounded-full",
+            ctx.command_urgency === "crisis" ? "bg-red-500 animate-pulse" :
+            ctx.command_urgency === "tactical" ? "bg-amber-500" : "bg-blue-400"
+          )} />
+          <span className="text-[9px] text-gray-500 font-medium">COMMAND</span>
+        </span>
+      )}
+      {ctx.command_qc && (
+        <span className="group relative flex items-center gap-0.5 ml-1">
+          <span className={cn(
+            "text-[9px] font-medium px-1 py-0.5 rounded",
+            ctx.command_qc.checks_passed === ctx.command_qc.checks_total
+              ? "bg-emerald-50 text-emerald-600"
+              : ctx.command_qc.checks_passed > 0
+                ? "bg-amber-50 text-amber-600"
+                : "bg-red-50 text-red-600"
+          )}>
+            VERITE {ctx.command_qc.checks_passed}/{ctx.command_qc.checks_total}
+          </span>
+          {ctx.command_qc.retries != null && ctx.command_qc.retries > 0 && (
+            <span className="text-[9px] text-amber-500">↻{ctx.command_qc.retries}</span>
+          )}
+          {/* QC Tooltip détaillé */}
+          {ctx.command_qc.warnings && ctx.command_qc.warnings.length > 0 && (
+            <div className="absolute bottom-full left-0 mb-1 px-2 py-1.5 bg-gray-800 text-white text-[9px] rounded max-w-[200px] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+              <div className="font-semibold mb-0.5">QC {ctx.command_qc.stage}</div>
+              {ctx.command_qc.warnings.map((w, i) => (
+                <div key={i} className="text-gray-300">• {w}</div>
+              ))}
+            </div>
+          )}
+        </span>
+      )}
+
       {/* Precision % */}
       {ctx.precision_pct != null && ctx.precision_pct > 0 && (
         <span className="text-[9px] text-gray-300 ml-auto">{ctx.precision_pct}%</span>
@@ -159,10 +197,10 @@ const BOT_COLORS: Record<string, {
   BCM: { bg: "bg-pink-600", bgLight: "bg-pink-50", text: "text-pink-700", border: "border-pink-400", ring: "ring-pink-300", emoji: "\u{1F4E3}", name: "Martine", role: "CMO", avatar: "/agents/generated/cmo-martine-profil-v3.png" },
   BCS: { bg: "bg-red-600", bgLight: "bg-red-50", text: "text-red-700", border: "border-red-400", ring: "ring-red-300", emoji: "\u{1F3AF}", name: "Sophie", role: "CSO", avatar: "/agents/generated/cso-sophie-profil-v3.png" },
   BOO: { bg: "bg-orange-600", bgLight: "bg-orange-50", text: "text-orange-700", border: "border-orange-400", ring: "ring-orange-300", emoji: "\u{2699}\u{FE0F}", name: "Olivier", role: "COO", avatar: "/agents/generated/coo-olivier-profil-v3.png" },
-  BFA: { bg: "bg-slate-600", bgLight: "bg-slate-50", text: "text-slate-700", border: "border-slate-400", ring: "ring-slate-300", emoji: "\u{1F3ED}", name: "Fabien", role: "Production", avatar: "/agents/generated/factory-bot-profil-v3.png" },
+  BFA: { bg: "bg-slate-600", bgLight: "bg-slate-50", text: "text-slate-700", border: "border-slate-400", ring: "ring-slate-300", emoji: "\u{1F3ED}", name: "Fabien", role: "CPO", avatar: "/agents/generated/factory-bot-profil-v3.png" },
   BHR: { bg: "bg-teal-600", bgLight: "bg-teal-50", text: "text-teal-700", border: "border-teal-400", ring: "ring-teal-300", emoji: "\u{1F91D}", name: "H\u00E9l\u00E8ne", role: "CHRO", avatar: "/agents/generated/chro-helene-profil-v3.png" },
-  BIO: { bg: "bg-cyan-600", bgLight: "bg-cyan-50", text: "text-cyan-700", border: "border-cyan-400", ring: "ring-cyan-300", emoji: "\u{1F4CA}", name: "Isabelle", role: "CIO", avatar: "/agents/generated/cio-isabelle-profil-v3.png" },
-  BCC: { bg: "bg-rose-600", bgLight: "bg-rose-50", text: "text-rose-700", border: "border-rose-400", ring: "ring-rose-300", emoji: "\u{1F4E2}", name: "Catherine", role: "CCO", avatar: "/agents/generated/cco-catherine-profil-v3.png" },
+  BIO: { bg: "bg-rose-600", bgLight: "bg-rose-50", text: "text-rose-700", border: "border-rose-400", ring: "ring-rose-300", emoji: "\u{1F4CA}", name: "Inès", role: "CINO", avatar: "/agents/generated/cino-ines-profil-v3.png" },
+  BCC: { bg: "bg-cyan-600", bgLight: "bg-cyan-50", text: "text-cyan-700", border: "border-cyan-400", ring: "ring-cyan-300", emoji: "\u{1F4E2}", name: "Catherine", role: "CCO", avatar: "/agents/generated/cco-catherine-profil-v3.png" },
   BPO: { bg: "bg-fuchsia-600", bgLight: "bg-fuchsia-50", text: "text-fuchsia-700", border: "border-fuchsia-400", ring: "ring-fuchsia-300", emoji: "\u{1F680}", name: "Philippe", role: "CPO", avatar: "/agents/generated/cpo-philippe-profil-v3.png" },
   BRO: { bg: "bg-amber-600", bgLight: "bg-amber-50", text: "text-amber-700", border: "border-amber-400", ring: "ring-amber-300", emoji: "\u{1F4C8}", name: "Rapha\u00EBl", role: "CRO", avatar: "/agents/generated/cro-raphael-profil-v3.png" },
   BLE: { bg: "bg-indigo-600", bgLight: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-400", ring: "ring-indigo-300", emoji: "\u{2696}\u{FE0F}", name: "Louise", role: "CLO", avatar: "/agents/generated/clo-louise-profil-v3.png" },
@@ -534,6 +572,298 @@ function ThinkingAnimation({ mode, botCode }: { mode: string; botCode?: string }
 }
 
 // ══════════════════════════════════════════════
+// Cascade Suggestions — pilules inter-departements
+// ══════════════════════════════════════════════
+
+function CascadeSuggestionsCard({ suggestions }: { suggestions: import("../../api/types").CascadeSuggestion[] }) {
+  const { navigateToDepartment } = useFrameMaster();
+
+  if (!suggestions || suggestions.length === 0) return null;
+
+  return (
+    <div className="flex flex-wrap gap-1.5 mt-2">
+      {suggestions.map((s, i) => (
+        <button
+          key={i}
+          onClick={() => navigateToDepartment(s.target_section, s.view as "department" | "detail")}
+          className="flex items-center gap-1 text-[9px] px-2 py-1 rounded-full border font-medium bg-emerald-50 border-emerald-200 hover:bg-emerald-100 text-emerald-700 transition-colors cursor-pointer"
+        >
+          <ArrowRight className="h-2.5 w-2.5" />
+          {s.message}
+          <ChevronRight className="h-2.5 w-2.5 opacity-50" />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════
+// COMMAND Progress Card — mission en cours (BLOC 1)
+// ══════════════════════════════════════════════
+
+const COMMAND_STAGE_CONFIG: Record<string, { label: string; color: string; bgColor: string }> = {
+  scan: { label: "SCAN", color: "text-blue-600", bgColor: "bg-blue-500" },
+  strategy: { label: "STRATEGIE", color: "text-violet-600", bgColor: "bg-violet-500" },
+  execution: { label: "EXECUTION", color: "text-orange-600", bgColor: "bg-orange-500" },
+  bilan: { label: "BILAN", color: "text-emerald-600", bgColor: "bg-emerald-500" },
+};
+
+const COMMAND_STAGES_ORDER = ["scan", "strategy", "execution", "bilan"];
+
+function CommandProgressCard({ status }: { status: import("../../api/types").CommandStatusResponse }) {
+  const stageIdx = COMMAND_STAGES_ORDER.indexOf(status.stage);
+
+  return (
+    <div className="flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
+      <BotAvatar code="BCO" size="md" className="mt-1" />
+      <div className="bg-gradient-to-br from-slate-50 to-blue-50 border border-blue-200 border-l-[3px] border-l-blue-500 rounded-2xl rounded-tl-md px-5 py-4 shadow-sm max-w-[85%] w-full">
+        <div className="text-xs font-bold text-blue-700 mb-3 flex items-center gap-1.5">
+          <Cpu className="h-3.5 w-3.5 animate-pulse" /> COMMAND en cours
+          {status.error && <span className="text-red-500 ml-2">Erreur</span>}
+        </div>
+
+        {/* 4 stages horizontaux */}
+        <div className="flex items-center gap-1 mb-3">
+          {COMMAND_STAGES_ORDER.map((stage, i) => {
+            const conf = COMMAND_STAGE_CONFIG[stage];
+            const isActive = i === stageIdx && !status.completed;
+            const isDone = i < stageIdx || status.completed;
+            return (
+              <div key={stage} className="flex-1 flex flex-col items-center gap-1">
+                <div className={cn(
+                  "w-full h-1.5 rounded-full transition-all duration-500",
+                  isDone ? conf.bgColor : isActive ? `${conf.bgColor} animate-pulse` : "bg-gray-200"
+                )} />
+                <span className={cn(
+                  "text-[9px] font-semibold",
+                  isDone ? conf.color : isActive ? conf.color : "text-gray-300"
+                )}>
+                  {conf.label}
+                  {isDone && " ✓"}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Mini-résumés des stages complétés */}
+        {Object.entries(status.stage_results || {}).map(([stage, result]) => {
+          const conf = COMMAND_STAGE_CONFIG[stage];
+          const r = result as Record<string, unknown>;
+          const content = (r?.content as string) || (r?.summary as string) || "";
+          if (!content || !conf) return null;
+          return (
+            <div key={stage} className="text-[9px] text-gray-500 mb-1 flex items-start gap-1.5">
+              <span className={cn("font-semibold shrink-0", conf.color)}>{conf.label}:</span>
+              <span className="truncate">{content.slice(0, 80)}...</span>
+            </div>
+          );
+        })}
+
+        {status.completed && status.summary && (
+          <div className="mt-2 pt-2 border-t border-blue-200">
+            <div className="text-xs text-blue-800 font-medium">Bilan final</div>
+            <p className="text-xs text-gray-600 leading-relaxed mt-1">{status.summary.slice(0, 200)}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════
+// COMMAND Launch Banner — affiche quand command_active detected (BLOC 1)
+// ══════════════════════════════════════════════
+
+function CommandLaunchBanner({ ctx, onLaunch, disabled }: {
+  ctx: BubbleContext;
+  onLaunch: () => void;
+  disabled: boolean;
+}) {
+  if (!ctx.command_active) return null;
+
+  const urgencyColors: Record<string, { bg: string; text: string; border: string }> = {
+    crisis: { bg: "bg-red-50", text: "text-red-700", border: "border-red-300" },
+    tactical: { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-300" },
+    routine: { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-300" },
+  };
+  const uc = urgencyColors[ctx.command_urgency || "routine"] || urgencyColors.routine;
+
+  return (
+    <div className={cn("flex items-center gap-2 px-3 py-2 rounded-lg border mt-2", uc.bg, uc.border)}>
+      <Cpu className={cn("h-3.5 w-3.5 shrink-0", uc.text)} />
+      <span className={cn("text-xs font-medium flex-1", uc.text)}>
+        COMMAND detecte — orchestration multi-bot disponible
+      </span>
+      <button
+        onClick={onLaunch}
+        disabled={disabled}
+        className={cn(
+          "text-[9px] px-3 py-1 rounded-full font-semibold transition-colors cursor-pointer disabled:opacity-50",
+          "bg-blue-600 text-white hover:bg-blue-700"
+        )}
+      >
+        Lancer l'analyse
+      </button>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════
+// Suggestions Welcome — pilules debut de session (BLOC 4)
+// ══════════════════════════════════════════════
+
+function SuggestionsWelcome({ onSelect, disabled }: {
+  onSelect: (text: string, mode?: string) => void;
+  disabled: boolean;
+}) {
+  const [data, setData] = useState<import("../../api/types").SuggestionsResponse | null>(null);
+
+  useEffect(() => {
+    api.suggestions(1).then(setData).catch(() => {});
+  }, []);
+
+  if (!data) return null;
+
+  const iconMap: Record<string, typeof Zap> = {
+    zap: Zap, brain: Brain, scale: Scale, "alert-triangle": AlertTriangle,
+    target: Target, swords: Swords, sparkles: Sparkles, play: ArrowRight,
+  };
+
+  const colorMap: Record<string, string> = {
+    red: "bg-red-50 border-red-200 text-red-700 hover:bg-red-100",
+    amber: "bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100",
+    indigo: "bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100",
+    emerald: "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100",
+    violet: "bg-violet-50 border-violet-200 text-violet-700 hover:bg-violet-100",
+    blue: "bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100",
+  };
+
+  return (
+    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-3 duration-700">
+      <div className="text-center">
+        <p className="text-sm text-gray-600 leading-relaxed">{data.greeting}</p>
+      </div>
+      <div className="flex flex-wrap gap-2 justify-center">
+        {data.suggestions.map((s) => {
+          const Icon = iconMap[s.icon] || Zap;
+          const colors = colorMap[s.color] || colorMap.blue;
+          return (
+            <button
+              key={s.id}
+              onClick={() => onSelect(s.description, s.mode || undefined)}
+              disabled={disabled}
+              className={cn(
+                "flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl border font-medium transition-colors cursor-pointer disabled:opacity-50",
+                colors
+              )}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {s.label}
+            </button>
+          );
+        })}
+      </div>
+      {data.active_projects.length > 0 && (
+        <div className="flex flex-wrap gap-2 justify-center pt-1">
+          <span className="text-[9px] text-gray-400 font-medium">Projets :</span>
+          {data.active_projects.map((p) => (
+            <button
+              key={p.slug}
+              onClick={() => onSelect(`Parlons du projet ${p.nom} — ${p.secteur}`)}
+              disabled={disabled}
+              className="text-[9px] px-2.5 py-1 rounded-full bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer font-medium"
+            >
+              {p.nom}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════
+// Mode Bar — barre de 8 modes dans le header (BLOC 2)
+// ══════════════════════════════════════════════
+
+function ModeBar({ activeMode, onSelectMode, activeBranch, onAdvance, onComplete, onCancel, loading, disabled }: {
+  activeMode: string;
+  onSelectMode: (mode: string) => void;
+  activeBranch: Record<string, unknown> | null;
+  onAdvance: () => void;
+  onComplete: () => void;
+  onCancel: () => void;
+  loading: boolean;
+  disabled: boolean;
+}) {
+  const modes = [
+    { id: "brainstorm", label: "Brain", icon: Brain, color: "text-amber-600 bg-amber-50 border-amber-200" },
+    { id: "crise", label: "Crise", icon: AlertTriangle, color: "text-red-600 bg-red-50 border-red-200" },
+    { id: "decision", label: "Decision", icon: Scale, color: "text-indigo-600 bg-indigo-50 border-indigo-200" },
+    { id: "analyse", label: "Analyse", icon: Search, color: "text-green-600 bg-green-50 border-green-200" },
+    { id: "strategie", label: "Strat.", icon: Target, color: "text-emerald-600 bg-emerald-50 border-emerald-200" },
+    { id: "innovation", label: "Innov.", icon: Sparkles, color: "text-fuchsia-600 bg-fuchsia-50 border-fuchsia-200" },
+    { id: "deep", label: "Deep", icon: Brain, color: "text-cyan-600 bg-cyan-50 border-cyan-200" },
+    { id: "debat", label: "Debat", icon: MessageSquare, color: "text-violet-600 bg-violet-50 border-violet-200" },
+  ];
+
+  return (
+    <div className="bg-white/60 border-b px-3 py-1.5 shrink-0">
+      {/* Mode buttons */}
+      <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
+        {modes.map((m) => {
+          const MIcon = m.icon;
+          const isActive = activeMode === m.id;
+          return (
+            <button
+              key={m.id}
+              onClick={() => onSelectMode(m.id)}
+              disabled={disabled}
+              className={cn(
+                "flex items-center gap-1 text-[9px] px-2 py-1 rounded-full border font-medium transition-all cursor-pointer disabled:opacity-50 shrink-0",
+                isActive ? cn(m.color, "shadow-sm") : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50"
+              )}
+            >
+              <MIcon className="h-3.5 w-3.5" />
+              {m.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Active branch indicator */}
+      {activeBranch && (
+        <div className="flex items-center gap-2 mt-1.5 px-1">
+          <div className="flex-1 flex items-center gap-2">
+            <span className="text-[9px] font-semibold text-blue-600">
+              Mode {String(activeBranch.mode || "").toUpperCase()} — Etape {Number(activeBranch.step_index || 0) + 1}/{Number(activeBranch.total_steps || 0)}
+            </span>
+            <div className="flex-1 h-1 rounded-full bg-gray-200 max-w-[100px]">
+              <div
+                className="h-full rounded-full bg-blue-500 transition-all"
+                style={{ width: `${Number(activeBranch.total_steps || 1) > 0 ? ((Number(activeBranch.step_index || 0) + 1) / Number(activeBranch.total_steps || 1)) * 100 : 0}%` }}
+              />
+            </div>
+          </div>
+          <div className="flex items-center gap-1">
+            <button onClick={onAdvance} disabled={loading} className="text-[9px] px-2 py-0.5 rounded bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 cursor-pointer font-medium disabled:opacity-50">
+              Avancer
+            </button>
+            <button onClick={onComplete} disabled={loading} className="text-[9px] px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 cursor-pointer font-medium disabled:opacity-50">
+              Terminer
+            </button>
+            <button onClick={onCancel} disabled={loading} className="text-[9px] px-2 py-0.5 rounded bg-gray-50 text-gray-500 border border-gray-200 hover:bg-gray-100 cursor-pointer font-medium disabled:opacity-50">
+              Annuler
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════
 // Bot Message Actions — options cliquables + Challenger/Approfondir/Consulter
 // ══════════════════════════════════════════════
 
@@ -621,7 +951,7 @@ function BotMessageActions({
           )}
           title={canChallenge ? "Challenger cette reponse" : `Max ${maxChallenges} challenges atteint`}
         >
-          <Swords className="h-3 w-3" />
+          <Swords className="h-3.5 w-3.5" />
           Challenger
           {challengeCount > 0 && (
             <span className="text-[9px] opacity-60">({challengeCount}/{maxChallenges})</span>
@@ -634,7 +964,7 @@ function BotMessageActions({
           disabled={disabled}
           className="flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-colors cursor-pointer disabled:opacity-50 font-medium"
         >
-          <Maximize2 className="h-3 w-3" />
+          <Maximize2 className="h-3.5 w-3.5" />
           Approfondir
         </button>
 
@@ -645,9 +975,9 @@ function BotMessageActions({
             disabled={disabled}
             className="flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100 transition-colors cursor-pointer disabled:opacity-50 font-medium"
           >
-            <Users className="h-3 w-3" />
+            <Users className="h-3.5 w-3.5" />
             Consulter
-            <ChevronDown className={cn("h-3 w-3 transition-transform", showConsulter && "rotate-180")} />
+            <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", showConsulter && "rotate-180")} />
           </button>
 
           {/* Bot dropdown */}
@@ -690,9 +1020,9 @@ function BotMessageActions({
           )}
         >
           {crystallized ? (
-            <><Check className="h-3 w-3" /> Cristallise</>
+            <><Check className="h-3.5 w-3.5" /> Cristallise</>
           ) : (
-            <><Bookmark className="h-3 w-3" /> Cristalliser</>
+            <><Bookmark className="h-3.5 w-3.5" /> Cristalliser</>
           )}
         </button>
       </div>
@@ -825,9 +1155,11 @@ function TeamProposalCard({ proposal, onAccept, disabled }: TeamProposalCardProp
 
 export function LiveChat({
   onBack,
+  compact = false,
 }: {
   initialMode?: string;
   onBack?: () => void;
+  compact?: boolean;
 }) {
   const {
     messages, isTyping, activeReflectionMode, newConversation, sendMessage, sendMultiPerspective,
@@ -848,6 +1180,20 @@ export function LiveChat({
   const [justCrystallized, setJustCrystallized] = useState<string | null>(null);
   const [typewriterMsgId, setTypewriterMsgId] = useState<string | null>(null);
   const prevMsgCount = useRef(messages.length);
+
+  // COMMAND mission tracking (BLOC 1)
+  const command = useCommandMission();
+
+  // Mode branch tracking (BLOC 2)
+  const modeBranch = useModeBranch();
+
+  const handleCommandLaunch = useCallback((message: string) => {
+    if (!isTyping) command.launch(message);
+  }, [isTyping, command]);
+
+  const handleModeSelect = useCallback((mode: string) => {
+    if (!isTyping) modeBranch.branch(mode);
+  }, [isTyping, modeBranch]);
 
   // Kit personalization — greeting + C-Level name mapping + user avatar
   const [kitGreeting, setKitGreeting] = useState<string | null>(null);
@@ -1190,24 +1536,25 @@ export function LiveChat({
   return (
     <div className="h-full flex flex-col bg-gradient-to-b from-gray-50 to-white">
       {/* Header */}
-      <div className="bg-white/80 backdrop-blur-sm border-b px-4 py-2.5 shrink-0 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          {onBack && (
+      <div className={cn("bg-white/80 backdrop-blur-sm border-b shrink-0 flex items-center justify-between", compact ? "px-3 py-1.5" : "px-4 py-2.5")}>
+        <div className="flex items-center gap-2 min-w-0">
+          {onBack && !compact && (
             <button onClick={onBack} className="text-gray-400 hover:text-gray-600 cursor-pointer p-1 rounded-lg hover:bg-gray-100 transition-colors">
               <ArrowLeft className="h-4 w-4" />
             </button>
           )}
-          <div>
-            {/* Titre du fil — pas d'avatar bot (déjà dans le header global) */}
-            <div className="text-sm font-semibold text-gray-800 truncate max-w-[300px]">
+          <div className="min-w-0">
+            <div className={cn("font-semibold text-gray-800 truncate", compact ? "text-xs max-w-[160px]" : "text-sm max-w-[300px]")}>
               {threads.find(t => t.id === activeThreadId)?.title || "Nouvelle mission"}
             </div>
+            {!compact && (
             <div className="text-[11px] text-gray-400 flex items-center gap-1.5">
               {kitBotFullName(activeBotCode)}
-              <span className={cn("flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium", modeInfo.color, modeInfo.bg)}>
+              <span className={cn("flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-medium", modeInfo.color, modeInfo.bg)}>
                 <ModeIcon className="h-2.5 w-2.5" /> {modeInfo.label}
               </span>
             </div>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -1261,7 +1608,7 @@ export function LiveChat({
             <button
               onClick={newConversation}
               className="text-gray-400 hover:text-gray-600 cursor-pointer p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
-              title="Nouvelle conversation"
+              title="Nouvelle discussion"
             >
               <Plus className="h-3.5 w-3.5" />
             </button>
@@ -1277,6 +1624,20 @@ export function LiveChat({
       {/* Avatar video CarlOS */}
       {videoAvatarEnabled && (
         <CarlOSAvatar onClose={toggleVideoAvatar} />
+      )}
+
+      {/* Mode Bar — 8 modes autonomes (BLOC 2) */}
+      {!compact && (
+        <ModeBar
+          activeMode={activeReflectionMode}
+          onSelectMode={handleModeSelect}
+          activeBranch={modeBranch.state as Record<string, unknown> | null}
+          onAdvance={modeBranch.advance}
+          onComplete={modeBranch.complete}
+          onCancel={modeBranch.cancel}
+          loading={modeBranch.loading}
+          disabled={isTyping}
+        />
       )}
 
       {/* Mes Idees panel */}
@@ -1395,9 +1756,9 @@ export function LiveChat({
 
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-auto">
-        <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
+        <div className={cn(compact ? "px-3 py-4 space-y-3" : "max-w-3xl mx-auto px-4 py-6 space-y-5")}>
 
-          {/* Empty state */}
+          {/* Empty state + Suggestions Welcome (BLOC 4) */}
           {messages.length === 0 && !isTyping && (
             <div className="flex justify-center py-16">
               <div className="text-center space-y-5 max-w-md">
@@ -1411,8 +1772,17 @@ export function LiveChat({
                     CarlOS et ses specialistes analysent en temps reel.
                   </p>
                 </div>
+                <SuggestionsWelcome
+                  onSelect={(text) => sendMessage(text, activeBotCode)}
+                  disabled={isTyping}
+                />
               </div>
             </div>
+          )}
+
+          {/* COMMAND Progress Card — mission en cours (BLOC 1) */}
+          {command.status && !command.status.completed && (
+            <CommandProgressCard status={command.status} />
           )}
 
           {/* Bots consultes — breadcrumb multi-perspectives + actions collectives */}
@@ -1816,6 +2186,54 @@ export function LiveChat({
                       </div>
                     )}
 
+                    {/* S43 — Scaffold Bandeau "Cadrage en cours" */}
+                    {!isUser && msg.scaffoldProgress && msg.scaffoldProgress.completude < 3 && (
+                      <div className="mb-2 px-3 py-2 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-[9px] font-semibold text-blue-700 uppercase tracking-wider">
+                            VERITE {msg.scaffoldProgress.completude}/3
+                          </span>
+                          <span className="text-[9px] text-blue-500">
+                            {msg.scaffoldProgress.completude === 0 ? "En attente de contexte" :
+                             msg.scaffoldProgress.completude === 1 ? "Bon debut" : "Presque complet"}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {[
+                            { key: "ancrage", label: "Contexte", filled: msg.scaffoldProgress.ancrage },
+                            { key: "intention", label: "Objectif", filled: msg.scaffoldProgress.intention },
+                            { key: "contraintes", label: "Limites", filled: msg.scaffoldProgress.contraintes },
+                          ].map((slot) => (
+                            <div key={slot.key} className="group relative flex items-center gap-1">
+                              <span
+                                className={cn(
+                                  "w-2 h-2 rounded-full transition-all duration-500 ease-out",
+                                  slot.filled
+                                    ? "bg-emerald-500 scale-125 shadow-[0_0_6px_rgba(16,185,129,0.4)]"
+                                    : "bg-gray-300 scale-100"
+                                )}
+                              />
+                              <span className={cn(
+                                "text-[9px] transition-colors duration-300",
+                                slot.filled ? "text-emerald-700 font-medium" : "text-gray-400"
+                              )}>
+                                {slot.label} {slot.filled ? "✓" : ""}
+                              </span>
+                              {/* Tooltip */}
+                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-gray-800 text-white text-[9px] rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                                {slot.filled
+                                  ? `${slot.label} — capté`
+                                  : slot.key === "ancrage" ? "Secteur, taille, CA..."
+                                    : slot.key === "intention" ? "Objectif précis visé"
+                                    : "Budget, délai, interdits"
+                                }
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Content — streaming live OR typewriter on latest bot response */}
                     {!isUser ? (
                       msg.isStreaming ? (
@@ -1847,12 +2265,17 @@ export function LiveChat({
                       <CanvasActionBadges actions={msg.canvasActions} />
                     )}
 
+                    {/* Cascade Suggestions — pilules inter-departements */}
+                    {!isUser && msg.cascadeSuggestions && msg.cascadeSuggestions.length > 0 && (
+                      <CascadeSuggestionsCard suggestions={msg.cascadeSuggestions} />
+                    )}
+
                     {/* Bot actions — TTS + copy + contexte dynamique */}
                     {!isUser && (
-                      <div className="mt-3 pt-2 border-t border-gray-50 flex items-center justify-between">
+                      <div className="mt-3 pt-2 border-t border-gray-100 flex items-center justify-between">
                         {/* D-108 — Footer contextuel dynamique (section, CREDO, mode, mission) */}
                         <BubbleFooterContext ctx={msg.bubbleContext} />
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center gap-1">
                           {tts.isSupported && (
                             <button
                               onClick={() => tts.toggleSpeak(msg.content, msg.id)}
@@ -1860,19 +2283,19 @@ export function LiveChat({
                                 "cursor-pointer p-1 rounded transition-colors",
                                 tts.speakingMsgId === msg.id
                                   ? "text-blue-500 hover:text-blue-700"
-                                  : "text-gray-300 hover:text-gray-500"
+                                  : "text-gray-400 hover:text-gray-600"
                               )}
                               title={tts.speakingMsgId === msg.id ? "Arreter" : "Ecouter"}
                             >
-                              {tts.speakingMsgId === msg.id ? <VolumeX className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
+                              {tts.speakingMsgId === msg.id ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
                             </button>
                           )}
                           <button
                             onClick={() => copy(msg.id, msg.content)}
-                            className="text-gray-300 hover:text-gray-500 cursor-pointer p-1 rounded transition-colors"
+                            className="text-gray-400 hover:text-gray-600 cursor-pointer p-1 rounded transition-colors"
                             title="Copier"
                           >
-                            {copied === msg.id ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                            {copied === msg.id ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
                           </button>
                         </div>
                       </div>
@@ -1903,6 +2326,15 @@ export function LiveChat({
                         onEvaluerRisques={() => handleEvaluerRisques(msg.id, msg.agent)}
                         onScenarioEtSi={() => handleScenarioEtSi(msg.id, msg.agent)}
                         onDeleguer={() => handleDeleguer(msg.id, msg.agent)}
+                      />
+                    )}
+
+                    {/* COMMAND Launch Banner — quand command_active detecte (BLOC 1) */}
+                    {!isUser && msg.bubbleContext?.command_active && msg.id === lastBotMsgId && (
+                      <CommandLaunchBanner
+                        ctx={msg.bubbleContext}
+                        onLaunch={() => handleCommandLaunch(msg.content)}
+                        disabled={isTyping || command.loading}
                       />
                     )}
                   </div>

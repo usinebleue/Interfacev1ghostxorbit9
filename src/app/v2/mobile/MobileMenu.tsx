@@ -26,7 +26,7 @@ export function MobileMenu({ open, onClose }: Props) {
             <div className="w-6 h-6 bg-gradient-to-br from-blue-600 to-purple-600 rounded flex items-center justify-center">
               <span className="text-[10px] font-bold text-white">UB</span>
             </div>
-            GhostX
+            CarlOS
           </SheetTitle>
         </SheetHeader>
         <div className="flex-1 overflow-auto">

@@ -46,8 +46,8 @@ const BOT_GRADIENT: Record<string, string> = {
   BOO: "from-orange-600 to-orange-500",
   BFA: "from-slate-600 to-slate-500",
   BHR: "from-teal-600 to-teal-500",
-  BIO: "from-cyan-600 to-cyan-500",
-  BCC: "from-rose-600 to-rose-500",
+  BIO: "from-rose-600 to-rose-500",
+  BCC: "from-cyan-600 to-cyan-500",
   BPO: "from-fuchsia-600 to-fuchsia-500",
   BRO: "from-amber-600 to-amber-500",
   BLE: "from-indigo-600 to-indigo-500",
@@ -56,15 +56,15 @@ const BOT_GRADIENT: Record<string, string> = {
 
 const BOT_ROLES: Record<string, string> = {
   BCO: "CEO", BCT: "CTO", BCF: "CFO", BCM: "CMO",
-  BCS: "CSO", BOO: "COO", BFA: "Production", BHR: "CHRO",
-  BIO: "CIO", BCC: "CCO", BPO: "CPO", BRO: "CRO",
+  BCS: "CSO", BOO: "COO", BFA: "CPO", BHR: "CHRO",
+  BIO: "CINO", BCC: "CCO", BPO: "CPO", BRO: "CRO",
   BLE: "CLO", BSE: "CISO",
 };
 
 const BOT_NAMES: Record<string, string> = {
   BCO: "CarlOS", BCT: "Thierry", BCF: "François", BCM: "Martine",
   BCS: "Sophie", BOO: "Olivier", BFA: "Fabien", BHR: "Hélène",
-  BIO: "Isabelle", BCC: "Catherine", BPO: "Philippe", BRO: "Raphaël",
+  BIO: "Inès", BCC: "Catherine", BPO: "Philippe", BRO: "Raphaël",
   BLE: "Louise", BSE: "Sébastien",
 };
 
@@ -81,7 +81,7 @@ const BOT_STANDBY: Record<string, string> = {
   BOO: `/agents/generated/coo-olivier-standby-v3.png${IMG_V}`,
   BFA: `/agents/generated/factory-bot-standby-v3.png${IMG_V}`,
   BHR: `/agents/generated/chro-helene-standby-v3.png${IMG_V}`,
-  BIO: `/agents/generated/cio-isabelle-standby-v3.png${IMG_V}`,
+  BIO: `/agents/generated/cino-ines-standby-v3.png${IMG_V}`,
   BCC: `/agents/generated/cco-catherine-standby-v3.png${IMG_V}`,
   BPO: `/agents/generated/cpo-philippe-standby-v3.png${IMG_V}`,
   BRO: `/agents/generated/cro-raphael-standby-v3.png${IMG_V}`,
@@ -97,8 +97,8 @@ const AVATAR_CONFIG_GLOW: Record<string, string> = {
   BCS: "rgba(239, 68, 68, 0.4)",
   BOO: "rgba(249, 115, 22, 0.4)",
   BHR: "rgba(20, 184, 166, 0.4)",
-  BIO: "rgba(6, 182, 212, 0.4)",
-  BCC: "rgba(244, 63, 94, 0.4)",
+  BIO: "rgba(244, 63, 94, 0.4)",
+  BCC: "rgba(6, 182, 212, 0.4)",
   BPO: "rgba(217, 70, 239, 0.4)",
   BRO: "rgba(245, 158, 11, 0.4)",
   BLE: "rgba(99, 102, 241, 0.4)",
@@ -511,7 +511,7 @@ export function VideoCallWidget() {
             <div className="text-lg text-white font-extrabold tracking-wide drop-shadow-lg leading-none">
               {BOT_NAMES[activeBotCode] || botName}
             </div>
-            <div className="text-[10px] text-white/70 font-medium tracking-[0.2em] uppercase drop-shadow-md mt-1">
+            <div className="text-[9px] text-white/70 font-medium tracking-[0.2em] uppercase drop-shadow-md mt-1">
               {botRole} AI · Usine Bleue
             </div>
             {isInCall && lastTranscript && (

@@ -114,7 +114,7 @@ export function SmartCanvas({
 
   return (
     <div className="h-full overflow-auto">
-      <div className="max-w-3xl mx-auto px-6 py-10 space-y-8">
+      <div className="max-w-3xl mx-auto px-10 py-5 space-y-8">
 
         <CarlOSPresence />
 

@@ -502,7 +502,7 @@ const DEPT_CONFIGS: Record<string, DeptConfig> = {
         { id: 3, primary: "Sante securite travail", secondary: "Rapport annuel a deposer", value: "Mars" },
       ]},
       { title: "PROPRIETE INTELLECTUELLE", icon: Target, iconColor: "text-purple-500", items: [
-        { id: 1, primary: "Marque GhostX", secondary: "Deposee Canada + US", tag: "ok" },
+        { id: 1, primary: "Marque CarlOS", secondary: "Deposee Canada + US", tag: "ok" },
         { id: 2, primary: "Brevet GHML", secondary: "En preparation · Q2", progress: 25 },
       ]},
       { title: "ASSURANCES", icon: DollarSign, iconColor: "text-orange-500", items: [
@@ -598,7 +598,7 @@ const DEPT_CONFIGS: Record<string, DeptConfig> = {
   },
   BCC: {
     name: "Communication", color: "text-rose-600", ringColor: "ring-rose-500",
-    summary: "Strategie comm Q2 en prep. 2 communiques planifies. Branding GhostX en cours.",
+    summary: "Strategie comm Q2 en prep. 2 communiques planifies. Branding CarlOS en cours.",
     kpis: [
       { label: "Communiques", value: "2" },
       { label: "Medias", value: "5 contacts" },
@@ -607,12 +607,12 @@ const DEPT_CONFIGS: Record<string, DeptConfig> = {
     ],
     widgets: [
       { title: "COMMUNICATIONS", icon: Megaphone, iconColor: "text-rose-500", badge: "2", items: [
-        { id: 1, primary: "Communique lancement GhostX", secondary: "Draft V2 · Revue requise", progress: 70 },
+        { id: 1, primary: "Communique lancement CarlOS", secondary: "Draft V2 · Revue requise", progress: 70 },
         { id: 2, primary: "Newsletter Q1 investisseurs", secondary: "Planifie 10 mars", progress: 20 },
         { id: 3, primary: "Temoignage client FabriquePro", secondary: "Video en montage", progress: 55 },
       ]},
       { title: "BRANDING & IMAGE", icon: Target, iconColor: "text-blue-500", items: [
-        { id: 1, primary: "Charte graphique GhostX", secondary: "Finalisation couleurs + typo", progress: 85 },
+        { id: 1, primary: "Charte graphique CarlOS", secondary: "Finalisation couleurs + typo", progress: 85 },
         { id: 2, primary: "Site web ghostx.ai", secondary: "Redesign planifie · Sprint C" },
         { id: 3, primary: "Kit media presse", secondary: "A creer · Q2" },
       ]},
@@ -627,10 +627,10 @@ const DEPT_CONFIGS: Record<string, DeptConfig> = {
       ]},
     ],
     recentFiles: [
-      { id: 1, name: "Communique GhostX V2", progress: 70, by: "CCO", time: "2h", type: "CO" },
+      { id: 1, name: "Communique CarlOS V2", progress: 70, by: "CCO", time: "2h", type: "CO" },
     ],
     activity: [
-      { id: 1, text: "Draft communique GhostX V2 soumis", time: "2h" },
+      { id: 1, text: "Draft communique CarlOS V2 soumis", time: "2h" },
       { id: 2, text: "45 inscrits au webinaire", time: "hier" },
     ],
   },
@@ -696,7 +696,7 @@ export function DepartmentDetailView() {
         </div>
 
         {/* Tab Dashboard */}
-        <TabsContent value="dashboard" className="flex-1 flex flex-col p-3 gap-2.5 min-h-0 mt-0 overflow-auto">
+        <TabsContent value="dashboard" className="flex-1 flex flex-col px-10 py-5 gap-2.5 min-h-0 mt-0 overflow-auto">
           {/* 4 widgets en grille — identique V1 */}
           <div className="grid grid-cols-4 gap-2.5 shrink-0">
             {config.widgets.map((widget, wi) => {

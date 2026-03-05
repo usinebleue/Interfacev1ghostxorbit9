@@ -37,6 +37,7 @@ const ESPACE_ITEMS: { id: EspaceSection; label: string; icon: React.ElementType;
   { id: "outils", label: "Outils", icon: Wrench, color: "text-orange-500" },
   { id: "taches", label: "Taches", icon: CheckSquare, color: "text-purple-500" },
   { id: "agenda", label: "Agenda", icon: CalendarDays, color: "text-rose-500" },
+  { id: "templates", label: "Templates", icon: FileText, color: "text-cyan-500" },
 ];
 
 export function SectionEspaceBureau({ collapsed }: Props) {

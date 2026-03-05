@@ -241,7 +241,7 @@ function exportMatchingMarkdown() {
     SIM_ACTE2.winnerMessage,
     "",
     "---",
-    "Genere par CarlOS (GhostX) — Jumelage SMART AI",
+    "Généré par CarlOS — Jumelage SMART AI",
   ];
 
   const content = lines.join("\n");

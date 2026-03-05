@@ -35,7 +35,7 @@ const DEPARTEMENTS: { label: string; icon: React.ElementType; code: string }[] =
   { label: "RH", icon: Users, code: "BHR" },
   { label: "Securite", icon: Shield, code: "BSE" },
   { label: "Legal", icon: Scale, code: "BLE" },
-  { label: "Innovation", icon: Lightbulb, code: "BPO" },
+  { label: "Innovation", icon: Lightbulb, code: "BIO" },
 ];
 
 // Couleur identitaire par bot — ligne sous le departement actif
@@ -51,7 +51,7 @@ const BOT_COLOR: Record<string, string> = {
   BHR: "bg-teal-600",
   BSE: "bg-zinc-700",
   BLE: "bg-indigo-600",
-  BPO: "bg-fuchsia-600",
+  BIO: "bg-rose-600",
 };
 
 // Couleur identitaire pour les icones sidebar (Design System: sidebar = couleur)
@@ -70,17 +70,9 @@ const BOT_ICON_COLOR: Record<string, string> = {
   BPO: "text-fuchsia-600",
 };
 
-// Notifications simulees par departement (taches completees, alertes, approbations)
-// TODO: brancher sur l'API quand le backend sera pret
-const DEPT_NOTIFICATIONS: Record<string, number> = {
-  BCO: 3,   // 3 decisions en attente
-  BCF: 1,   // 1 rapport a approuver
-  BCT: 2,   // 2 deploiements termines
-  BOO: 5,   // 5 alertes production
-  BRO: 2,   // 2 deals a valider
-  BHR: 1,   // 1 embauche a confirmer
-  BSE: 4,   // 4 alertes securite
-};
+// Notifications par departement — desactivees tant que pas branchees au backend
+// Carl: "je ne sais toujours pas à quoi va servir ce chiffre-là, on les fait apparaître juste quand ils vont marcher pour de vrai"
+const DEPT_NOTIFICATIONS: Record<string, number> = {};
 
 export function SectionEntreprise({ collapsed }: Props) {
   const [open, setOpen] = useState(true);

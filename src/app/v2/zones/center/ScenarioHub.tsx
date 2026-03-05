@@ -297,14 +297,14 @@ export function ScenarioHub() {
 
   return (
     <div className="h-full flex flex-col bg-gray-50">
-      <div className="bg-white border-b px-6 py-4 shrink-0">
+      <div className="bg-white border-b px-10 py-5 shrink-0">
         <h1 className="text-lg font-bold text-gray-900">Scenarios de simulation</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
-          12 modes de reflexion GhostX — chaque scenario simule un type de discussion avec la Bot Team
+          12 modes de réflexion CarlOS — chaque scenario simule un type de discussion avec la Bot Team
         </p>
       </div>
 
-      <div className="flex-1 overflow-auto p-6">
+      <div className="flex-1 overflow-auto px-10 py-5">
         <div className="max-w-5xl mx-auto space-y-6">
 
           <CarlOSPresence />
