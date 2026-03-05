@@ -649,6 +649,87 @@ export const api = {
     return `${BASE_URL}/cahier/${jobId}/download`;
   },
 
+  // ── DIAGNOSTIC ───────────────────────────────────────────────
+
+  /** Recuperer le diagnostic actif */
+  getDiagnostic(clientSlug = "usine-bleue"): Promise<import("./types").DiagnosticResponse> {
+    return apiFetch(`/diagnostic?client_slug=${clientSlug}`);
+  },
+
+  /** Lancer un diagnostic */
+  createDiagnostic(req: import("./types").DiagnosticRequest): Promise<import("./types").DiagnosticResponse> {
+    return apiFetch("/diagnostic", {
+      method: "POST",
+      body: JSON.stringify(req),
+    });
+  },
+
+  // ── CALENDAR ─────────────────────────────────────────────────
+
+  /** Evenements du jour */
+  calendarToday(): Promise<{ events: import("./types").CalendarEvent[] }> {
+    return apiFetch("/calendar/today");
+  },
+
+  /** Creneaux libres */
+  calendarFree(date?: string): Promise<{ slots: import("./types").CalendarFreeSlot[] }> {
+    const q = date ? `?date=${date}` : "";
+    return apiFetch(`/calendar/free${q}`);
+  },
+
+  /** Creer un evenement */
+  calendarCreate(req: import("./types").CalendarCreateRequest): Promise<import("./types").CalendarEvent> {
+    return apiFetch("/calendar/create", {
+      method: "POST",
+      body: JSON.stringify(req),
+    });
+  },
+
+  // ── PHONE / SMS ──────────────────────────────────────────────
+
+  /** Lancer un appel sortant */
+  phoneOutbound(req: import("./types").PhoneOutboundRequest): Promise<import("./types").PhoneOutboundResponse> {
+    return apiFetch("/phone/outbound", {
+      method: "POST",
+      body: JSON.stringify(req),
+    });
+  },
+
+  /** Verifier si un appel est actif */
+  phoneActiveRoom(): Promise<import("./types").PhoneActiveRoomResponse> {
+    return apiFetch("/phone/active-room");
+  },
+
+  /** Envoyer un SMS */
+  smsSend(req: import("./types").SmsRequest): Promise<import("./types").SmsResponse> {
+    return apiFetch("/sms/send", {
+      method: "POST",
+      body: JSON.stringify(req),
+    });
+  },
+
+  // ── ORBIT9 QUALIFICATION ─────────────────────────────────────
+
+  /** Etat de qualification d'un membre */
+  orbit9QualificationGet(memberId: number): Promise<import("./types").QualificationState> {
+    return apiFetch(`/orbit9/qualification/${memberId}`);
+  },
+
+  /** Avancer la qualification d'un membre */
+  orbit9QualificationAdvance(memberId: number): Promise<import("./types").QualificationState> {
+    return apiFetch(`/orbit9/qualification/${memberId}`, { method: "POST" });
+  },
+
+  // ── COMMAND DETECT ───────────────────────────────────────────
+
+  /** Detecter si un message necessite COMMAND */
+  commandDetect(message: string, userId = 1): Promise<import("./types").CommandDetectResponse> {
+    return apiFetch("/command/detect", {
+      method: "POST",
+      body: JSON.stringify({ message, user_id: userId }),
+    });
+  },
+
   /** Chat avec streaming SSE — tokens en temps reel */
   chatStream(req: ChatRequest, callbacks: StreamCallback): AbortController {
     const controller = new AbortController();
