@@ -274,7 +274,7 @@ export function PioneersView({ onBack }: PioneersViewProps) {
             <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-6 border-2 border-green-200">
               <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
                 <DollarSign className="h-4 w-4 text-green-600" />
-                REVENUE GHOSTX DU CERCLE :
+                REVENUE CARLOS DU CERCLE :
               </h3>
               
               <div className="space-y-3 mb-4">

@@ -47,6 +47,14 @@ import type {
   JumelageScoringResponse,
   BubbleContext,
   CascadeSuggestion,
+  Chantier,
+  Mission,
+  CommandStartResponse,
+  CommandStatusResponse,
+  BriefingListResponse,
+  SuggestionsResponse,
+  QuestionnaireResponse,
+  ModeBranchRequest,
 } from "./types";
 
 // --- SSE Stream types ---
@@ -489,6 +497,156 @@ export const api = {
     return apiFetch<JumelageScoringResponse>(`/orbit9/matches/${matchId}/score-detail`, {
       method: "POST",
     });
+  },
+
+  // ── FLOW GPS (sections ACTION — progression par etapes) ─────
+
+  /** Recuperer la config du flow pour une section ACTION */
+  flowGetConfig(sectionKey: string): Promise<{ section: string; steps: string[]; flow_type: string }> {
+    return apiFetch(`/flow/${sectionKey}/config`);
+  },
+
+  /** Recuperer l'etape courante du flow */
+  flowGetStep(sectionKey: string): Promise<{ section: string; current_step: string; step_index: number; total_steps: number; completed: boolean }> {
+    return apiFetch(`/flow/${sectionKey}/step`);
+  },
+
+  /** Avancer le flow d'une etape */
+  flowAdvance(sectionKey: string): Promise<{ section: string; current_step: string; step_index: number; total_steps: number; completed: boolean }> {
+    return apiFetch(`/flow/${sectionKey}/advance`, { method: "POST" });
+  },
+
+  /** Remettre le flow a zero */
+  flowReset(sectionKey: string): Promise<{ section: string; current_step: string; step_index: number }> {
+    return apiFetch(`/flow/${sectionKey}/reset`, { method: "POST" });
+  },
+
+  // ── CHANTIERS & MISSIONS ──────────────────────────────────
+
+  /** Lister les chantiers */
+  listChantiers(): Promise<{ chantiers: Chantier[] }> {
+    return apiFetch<Chantier[]>("/chantiers").then(list => ({ chantiers: list }));
+  },
+
+  /** Creer un chantier */
+  createChantier(data: { titre: string; chaleur?: string }): Promise<{ status: string; id: number }> {
+    return apiFetch("/chantiers", { method: "POST", body: JSON.stringify(data) });
+  },
+
+  /** Supprimer un chantier (archive) */
+  deleteChantier(chantierId: number): Promise<{ status: string }> {
+    return apiFetch(`/chantiers/${chantierId}`, { method: "DELETE" });
+  },
+
+  /** Lister les missions */
+  listMissions(chantierId?: number): Promise<{ missions: Mission[] }> {
+    const qs = chantierId ? `?chantier_id=${chantierId}` : "";
+    return apiFetch<Mission[]>(`/missions-user${qs}`).then(list => ({ missions: list }));
+  },
+
+  /** Creer une mission */
+  createMission(data: { titre: string; chantier_id?: number; bot_primaire?: string }): Promise<{ status: string; id: number }> {
+    return apiFetch("/missions-user", { method: "POST", body: JSON.stringify(data) });
+  },
+
+  /** Supprimer une mission (archive) */
+  deleteMission(missionId: number): Promise<{ status: string }> {
+    return apiFetch(`/missions-user/${missionId}`, { method: "DELETE" });
+  },
+
+  /** Lier un thread a une mission */
+  linkThreadToMission(missionId: number, threadId: string): Promise<{ ok: boolean }> {
+    return apiFetch(`/missions-user/${missionId}/thread`, { method: "POST", body: JSON.stringify({ thread_id: threadId }) });
+  },
+
+  // ── COMMAND (BLOC 1) ──────────────────────────────────────
+
+  /** Lancer une mission COMMAND */
+  commandStart(message: string, urgency = "routine", scanBots?: string[]): Promise<CommandStartResponse> {
+    return apiFetch<CommandStartResponse>("/command/start", {
+      method: "POST",
+      body: JSON.stringify({ message, urgency, scan_bots: scanBots || [] }),
+    });
+  },
+
+  /** Status d'une mission COMMAND en cours */
+  commandStatus(missionId: number): Promise<CommandStatusResponse> {
+    return apiFetch<CommandStatusResponse>(`/command/status/${missionId}`);
+  },
+
+  /** Lister les missions COMMAND recentes (deja existe mais on ajoute le typing) */
+  commandMissionsList(limit = 20): Promise<{ missions: CommandStatusResponse[]; total: number }> {
+    return apiFetch(`/command/missions?limit=${limit}`);
+  },
+
+  // ── MODES AUTONOMES (BLOC 2) ────────────────────────────────
+
+  /** Creer une branche de mode autonome */
+  flowBranch(req: ModeBranchRequest): Promise<{ ok: boolean; branch: Record<string, unknown> }> {
+    return apiFetch("/flow/branch", { method: "POST", body: JSON.stringify(req) });
+  },
+
+  /** Avancer dans la branche active */
+  flowBranchAdvance(userId = 1): Promise<{ completed: boolean; branch?: Record<string, unknown>; resume?: Record<string, unknown> }> {
+    return apiFetch(`/flow/branch/advance?user_id=${userId}`, { method: "POST" });
+  },
+
+  /** Status de la branche active */
+  flowBranchStatus(userId = 1): Promise<{ has_active_branch: boolean; branch: Record<string, unknown> | null }> {
+    return apiFetch(`/flow/branch/status?user_id=${userId}`);
+  },
+
+  /** Completer la branche active */
+  flowBranchComplete(userId = 1): Promise<{ ok: boolean; resume: Record<string, unknown> }> {
+    return apiFetch(`/flow/branch/complete?user_id=${userId}`, { method: "POST" });
+  },
+
+  /** Annuler la branche active */
+  flowBranchCancel(userId = 1): Promise<{ ok: boolean; resume: Record<string, unknown> }> {
+    return apiFetch(`/flow/branch/cancel?user_id=${userId}`, { method: "POST" });
+  },
+
+  // ── BRIEFINGS (BLOC 3) ─────────────────────────────────────
+
+  /** Lister les briefings compiles */
+  listBriefings(botCode?: string, typeBriefing?: string, limit = 20): Promise<BriefingListResponse> {
+    const params = new URLSearchParams();
+    if (botCode) params.set("bot_code", botCode);
+    if (typeBriefing) params.set("type_briefing", typeBriefing);
+    params.set("limit", String(limit));
+    return apiFetch<BriefingListResponse>(`/command/briefings?${params}`);
+  },
+
+  /** Compiler les briefings daily */
+  compileDaily(): Promise<{ status: string; briefing_ids: number[]; count: number }> {
+    return apiFetch("/command/compile/daily", { method: "POST" });
+  },
+
+  /** Compiler le briefing Board Meeting */
+  compileBoardMeeting(): Promise<{ status: string; briefing_id?: number; message?: string }> {
+    return apiFetch("/command/compile/board-meeting", { method: "POST" });
+  },
+
+  // ── SUGGESTIONS (BLOC 4) ───────────────────────────────────
+
+  /** Suggestions proactives pour le canvas */
+  suggestions(userId = 1): Promise<SuggestionsResponse> {
+    return apiFetch<SuggestionsResponse>(`/suggestions?user_id=${userId}`);
+  },
+
+  // ── QUESTIONNAIRE (BLOC 6) ─────────────────────────────────
+
+  /** Envoyer une action questionnaire */
+  questionnaire(commande: string, texte = "", userId = 1): Promise<QuestionnaireResponse> {
+    return apiFetch<QuestionnaireResponse>("/questionnaire", {
+      method: "POST",
+      body: JSON.stringify({ commande, texte, user_id: userId }),
+    });
+  },
+
+  /** URL de telechargement d'un cahier PDF */
+  cahierDownloadUrl(jobId: string): string {
+    return `${BASE_URL}/cahier/${jobId}/download`;
   },
 
   /** Chat avec streaming SSE — tokens en temps reel */

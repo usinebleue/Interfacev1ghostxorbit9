@@ -6,15 +6,16 @@
  */
 
 import { useEffect, useState } from "react";
-import { Briefcase, DollarSign, Cpu, Megaphone, Target, CheckCircle2, CalendarDays, TrendingUp, Newspaper, BarChart3, Loader2 } from "lucide-react";
+import { Briefcase, DollarSign, Cpu, Megaphone, Target, Loader2, Settings, Users, Lightbulb, HeartHandshake, Package, ShieldAlert, Scale, Zap } from "lucide-react";
 import { Card } from "../../../components/ui/card";
 import { Badge } from "../../../components/ui/badge";
 import { ScrollArea } from "../../../components/ui/scroll-area";
 import { cn } from "../../../components/ui/utils";
 
 import { useCanvasActions } from "../../context/CanvasActionContext";
+import { useChatContext } from "../../context/ChatContext";
 import { api } from "../../api/client";
-import type { KitActiveResponse, KpisDepartements, VentesPipeline, ProjetActif, EntrepriseInfo } from "../../api/types";
+import type { KitActiveResponse } from "../../api/types";
 import { CarlOSPresence } from "./CarlOSPresence";
 
 /* ============ BLOCK HEADER — style gradient Bilan de Sante ============ */
@@ -81,7 +82,7 @@ function BlocCEO({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string, 
   }
   return (
     <Card className="p-4 overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-300 transition-shadow" onClick={onClick}>
-      <BlockHeader icon={Briefcase} title="CarlOS" count={items.length} gradient="bg-gradient-to-r from-blue-600 to-blue-500" />
+      <BlockHeader icon={Briefcase} title="CarlOS — CEO" count={items.length} gradient="bg-gradient-to-r from-blue-600 to-blue-500" />
       <ul className="space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
           <li key={i} className="text-xs text-gray-800">
@@ -115,7 +116,7 @@ function BlocCFO({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string, 
   if (items.length === 0) items.push({ label: "Finances", value: "—", valueColor: "", sub: "Aucune donnee" });
   return (
     <Card className="p-4 overflow-hidden cursor-pointer hover:ring-2 hover:ring-emerald-300 transition-shadow" onClick={onClick}>
-      <BlockHeader icon={DollarSign} title="Agent CFO" count={items.length > 1 ? items.length : undefined} gradient="bg-gradient-to-r from-emerald-600 to-emerald-500" />
+      <BlockHeader icon={DollarSign} title="François — CFO" count={items.length > 1 ? items.length : undefined} gradient="bg-gradient-to-r from-emerald-600 to-emerald-500" />
       <ul className="space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
           <li key={i} className="text-xs text-gray-800">
@@ -144,7 +145,7 @@ function BlocCTO({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string, 
   if (items.length === 0) items.push({ label: "Tech", value: "—", sub: "Aucune donnee" });
   return (
     <Card className="p-4 overflow-hidden cursor-pointer hover:ring-2 hover:ring-violet-300 transition-shadow" onClick={onClick}>
-      <BlockHeader icon={Cpu} title="Agent CTO" gradient="bg-gradient-to-r from-violet-600 to-violet-500" />
+      <BlockHeader icon={Cpu} title="Thierry — CTO" gradient="bg-gradient-to-r from-violet-600 to-violet-500" />
       <ul className="space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
           <li key={i} className="text-xs text-gray-800">
@@ -178,7 +179,7 @@ function BlocCMO({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string, 
   if (items.length === 0) items.push({ label: "Marketing", value: "—", valueColor: "", sub: "Aucune donnee" });
   return (
     <Card className="p-4 overflow-hidden cursor-pointer hover:ring-2 hover:ring-pink-300 transition-shadow" onClick={onClick}>
-      <BlockHeader icon={Megaphone} title="Agent CMO" gradient="bg-gradient-to-r from-pink-600 to-pink-500" />
+      <BlockHeader icon={Megaphone} title="Martine — CMO" gradient="bg-gradient-to-r from-pink-600 to-pink-500" />
       <ul className="space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
           <li key={i} className="text-xs text-gray-800">
@@ -206,7 +207,7 @@ function BlocCSO({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string, 
   if (items.length === 0) items.push({ label: "Strategie", detail: "—", sub: "Aucune donnee" });
   return (
     <Card className="p-4 overflow-hidden cursor-pointer hover:ring-2 hover:ring-red-300 transition-shadow" onClick={onClick}>
-      <BlockHeader icon={Target} title="Agent CSO" gradient="bg-gradient-to-r from-red-600 to-red-500" />
+      <BlockHeader icon={Target} title="Sophie — CSO" gradient="bg-gradient-to-r from-red-600 to-red-500" />
       <ul className="space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
           <li key={i} className="text-xs text-gray-800">
@@ -219,116 +220,25 @@ function BlocCSO({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string, 
   );
 }
 
-/* ============ BLOC OUTIL : Projets Actifs ============ */
-function BlocProjets({ onClick, projets }: { onClick?: () => void; projets?: ProjetActif[] }) {
-  const items = (projets || []).slice(0, 3);
-  return (
-    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-2 hover:ring-green-300 transition-shadow" onClick={onClick}>
-      <BlockHeader icon={CheckCircle2} title="Projets Actifs" count={projets?.length} gradient="bg-gradient-to-r from-green-600 to-green-500" />
-      <ul className="space-y-2.5">
-        {items.length > 0 ? items.map((item, i) => (
-          <li key={i}>
-            <div className="flex items-center justify-between mb-0.5">
-              <p className="text-xs text-gray-800 font-medium truncate">{item.nom}</p>
-              {item.avancement !== undefined && <span className="text-xs font-bold text-gray-700 shrink-0">{item.avancement}%</span>}
-            </div>
-            {item.avancement !== undefined && (
-              <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full bg-green-500 rounded-full" style={{ width: `${item.avancement}%` }} />
-              </div>
-            )}
-            <p className="text-[11px] text-gray-400">{item.responsable || ""}{item.deadline ? ` · ${item.deadline}` : ""}</p>
-          </li>
-        )) : (
-          <li className="text-xs text-gray-400">Aucun projet actif</li>
-        )}
-      </ul>
-    </Card>
-  );
-}
-
-/* ============ BLOC OUTIL : Mon Calendrier ============ */
-const MOCK_AGENDA = [
-  { heure: "09:00", titre: "Appel stratégique — Équipe direction", type: "reunion" },
-  { heure: "11:30", titre: "Revue tableau de bord Q1", type: "analyse" },
-  { heure: "14:00", titre: "Rencontre prospect — Groupe Bélanger", type: "vente" },
-  { heure: "16:30", titre: "Point hebdo CarlOS", type: "suivi" },
-];
-function BlocCalendrier({ onClick }: { onClick?: () => void }) {
-  const today = new Date();
-  const label = today.toLocaleDateString("fr-CA", { weekday: "long", day: "numeric", month: "long" });
-  return (
-    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-2 hover:ring-cyan-300 transition-shadow" onClick={onClick}>
-      <BlockHeader icon={CalendarDays} title="Mon Calendrier" gradient="bg-gradient-to-r from-cyan-600 to-cyan-500" />
-      <p className="text-[10px] text-cyan-600 font-medium mb-2 capitalize">{label}</p>
-      <ul className="space-y-1.5">
-        {MOCK_AGENDA.map((ev, i) => (
-          <li key={i} className="flex items-start gap-2">
-            <span className="text-[10px] text-gray-400 w-10 shrink-0 mt-0.5">{ev.heure}</span>
-            <span className="text-xs text-gray-700 leading-snug">{ev.titre}</span>
-          </li>
-        ))}
-      </ul>
-    </Card>
-  );
-}
-
-/* ============ BLOC OUTIL : Mon Pipeline ============ */
-function BlocPipeline({ onClick, ventes }: { onClick?: () => void; ventes?: VentesPipeline | null }) {
-  const prospects = ventes?.top_prospects?.slice(0, 3) || [];
-  return (
-    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-2 hover:ring-amber-300 transition-shadow" onClick={onClick}>
-      <BlockHeader icon={TrendingUp} title="Pipeline" gradient="bg-gradient-to-r from-amber-600 to-amber-500" />
-      {ventes?.pipeline_total !== undefined && (
-        <div className="text-sm font-bold text-gray-800 mb-2">{fmtMoney(ventes.pipeline_total)} total</div>
-      )}
-      <ul className="space-y-3">
-        {prospects.length > 0 ? prospects.map((item, i) => (
-          <li key={i}>
-            <div className="flex items-center justify-between mb-0.5">
-              <div className="min-w-0">
-                <p className="text-xs text-gray-800 font-medium truncate">{item.nom}</p>
-                <p className="text-[11px] text-gray-400">{item.etape}{item.secteur ? ` · ${item.secteur}` : ""}</p>
-              </div>
-              <span className="text-xs font-bold text-gray-700 shrink-0">{fmtMoney(item.valeur)}</span>
-            </div>
-            {item.probabilite !== undefined && (
-              <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full bg-amber-500 rounded-full" style={{ width: `${item.probabilite * 100}%` }} />
-              </div>
-            )}
-          </li>
-        )) : (
-          <li className="text-xs text-gray-400">Aucune donnee pipeline</li>
-        )}
-      </ul>
-    </Card>
-  );
-}
-
-/* ============ BLOC OUTIL : Infos Industrie ============ */
-function BlocInfosIndustrie({ onClick, contexte }: { onClick?: () => void; contexte?: Record<string, unknown> | null }) {
-  const items: Array<{ title: string; source: string }> = [];
-  if (contexte) {
-    if (contexte.marche) items.push({ title: String(contexte.marche).slice(0, 60), source: "Secteur" });
-    if (contexte.taille_globale_2025_gusd) items.push({ title: `Marche mondial: ${contexte.taille_globale_2025_gusd}G$ US`, source: `CAGR ${contexte.cagr_pct || "N/A"}` });
-    if (Array.isArray(contexte.tendances_majeures)) {
-      (contexte.tendances_majeures as string[]).slice(0, 2).forEach(t => {
-        items.push({ title: t.split(" — ")[0].slice(0, 50), source: "Tendance" });
-      });
-    }
+/* ============ BLOC C-LEVEL : Agent COO ============ */
+function BlocCOO({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string, unknown> }) {
+  const items: Array<{ label: string; value: string; sub: string }> = [];
+  if (kpi) {
+    if (kpi.satisfaction_client !== undefined) items.push({ label: "Satisfaction client", value: `${kpi.satisfaction_client}/10`, sub: "" });
+    if (kpi.processus_documentes_pct !== undefined) items.push({ label: "Processus doc.", value: fmtPct(Number(kpi.processus_documentes_pct)), sub: "" });
+    if (kpi.tickets_support_mois !== undefined) items.push({ label: "Tickets support", value: String(kpi.tickets_support_mois), sub: "" });
+    if (kpi.nb_sites !== undefined) items.push({ label: "Sites", value: Number(kpi.nb_sites).toLocaleString(), sub: kpi.nb_pays ? `${kpi.nb_pays} pays` : "" });
+    if (kpi.programme_efficience) items.push({ label: "Programme", value: String(kpi.programme_efficience).slice(0, 30), sub: "" });
   }
-  if (items.length === 0) items.push({ title: "Aucune donnee sectorielle", source: "" });
+  if (items.length === 0) items.push({ label: "Operations", value: "—", sub: "Aucune donnee" });
   return (
-    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-2 hover:ring-indigo-300 transition-shadow" onClick={onClick}>
-      <BlockHeader icon={Newspaper} title="Infos Industrie" gradient="bg-gradient-to-r from-indigo-600 to-indigo-500" />
+    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-2 hover:ring-orange-300 transition-shadow" onClick={onClick}>
+      <BlockHeader icon={Settings} title="Olivier — COO" gradient="bg-gradient-to-r from-orange-600 to-orange-500" />
       <ul className="space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
-          <li key={i} className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <p className="text-xs text-gray-800 font-medium">{item.title}</p>
-              {item.source && <p className="text-[11px] text-gray-400">{item.source}</p>}
-            </div>
+          <li key={i} className="text-xs text-gray-800">
+            <div className="flex justify-between"><span className="font-medium">{item.label}</span><span className="font-bold">{item.value}</span></div>
+            {item.sub && <p className="text-[11px] text-gray-400">{item.sub}</p>}
           </li>
         ))}
       </ul>
@@ -336,27 +246,145 @@ function BlocInfosIndustrie({ onClick, contexte }: { onClick?: () => void; conte
   );
 }
 
-/* ============ BLOC OUTIL : Stats Operations ============ */
-function BlocStatsOps({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string, unknown> }) {
-  const items: Array<{ label: string; value: string; trend: "up" | "down" | "stable" }> = [];
+/* ============ BLOC C-LEVEL : Agent RH ============ */
+function BlocRH({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string, unknown> }) {
+  const items: Array<{ label: string; value: string; sub: string }> = [];
   if (kpi) {
-    if (kpi.satisfaction_client !== undefined) items.push({ label: "Satisfaction client", value: `${kpi.satisfaction_client}/10`, trend: "up" });
-    if (kpi.tickets_support_mois !== undefined) items.push({ label: "Tickets support", value: String(kpi.tickets_support_mois), trend: "stable" });
-    if (kpi.processus_documentes_pct !== undefined) items.push({ label: "Processus doc.", value: fmtPct(Number(kpi.processus_documentes_pct)), trend: "up" });
-    if (kpi.nb_sites !== undefined) items.push({ label: "Sites", value: Number(kpi.nb_sites).toLocaleString(), trend: "stable" });
-    if (kpi.volume_carburant_gallons !== undefined) items.push({ label: "Volume carburant", value: `${(Number(kpi.volume_carburant_gallons) / 1e9).toFixed(1)}G gal`, trend: "stable" });
-    if (kpi.programme_efficience) items.push({ label: "Programme", value: String(kpi.programme_efficience).slice(0, 25), trend: "up" });
+    if (kpi.nb_employes !== undefined) items.push({ label: "Employes", value: Number(kpi.nb_employes).toLocaleString(), sub: "" });
+    if (kpi.taux_roulement_pct !== undefined) items.push({ label: "Roulement", value: fmtPct(Number(kpi.taux_roulement_pct)), sub: "" });
+    if (kpi.postes_ouverts !== undefined) items.push({ label: "Postes ouverts", value: String(kpi.postes_ouverts), sub: "" });
+    if (kpi.score_engagement !== undefined) items.push({ label: "Engagement", value: `${kpi.score_engagement}/10`, sub: "" });
   }
-  if (items.length === 0) items.push({ label: "Operations", value: "—", trend: "stable" });
-  const trendColor = { up: "text-green-600", down: "text-red-500", stable: "text-gray-600" };
+  if (items.length === 0) items.push({ label: "Ressources humaines", value: "—", sub: "Aucune donnee" });
+  return (
+    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-2 hover:ring-teal-300 transition-shadow" onClick={onClick}>
+      <BlockHeader icon={Users} title="Hélène — CHRO" gradient="bg-gradient-to-r from-teal-600 to-teal-500" />
+      <ul className="space-y-2.5">
+        {items.slice(0, 3).map((item, i) => (
+          <li key={i} className="text-xs text-gray-800">
+            <div className="flex justify-between"><span className="font-medium">{item.label}</span><span className="font-bold">{item.value}</span></div>
+            {item.sub && <p className="text-[11px] text-gray-400">{item.sub}</p>}
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
+/* ============ BLOC C-LEVEL : Agent Innovation ============ */
+function BlocInnovation({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string, unknown> }) {
+  const items: Array<{ label: string; value: string; sub: string }> = [];
+  if (kpi) {
+    if (kpi.projets_rd !== undefined) items.push({ label: "Projets R&D", value: String(kpi.projets_rd), sub: "" });
+    if (kpi.brevets !== undefined) items.push({ label: "Brevets", value: String(kpi.brevets), sub: "" });
+    if (kpi.budget_innovation_pct !== undefined) items.push({ label: "Budget innov.", value: fmtPct(Number(kpi.budget_innovation_pct)), sub: "" });
+  }
+  if (items.length === 0) items.push({ label: "Innovation", value: "—", sub: "Aucune donnee" });
+  return (
+    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-2 hover:ring-rose-300 transition-shadow" onClick={onClick}>
+      <BlockHeader icon={Lightbulb} title="Inès — CINO" gradient="bg-gradient-to-r from-rose-600 to-rose-500" />
+      <ul className="space-y-2.5">
+        {items.slice(0, 3).map((item, i) => (
+          <li key={i} className="text-xs text-gray-800">
+            <div className="flex justify-between"><span className="font-medium">{item.label}</span><span className="font-bold">{item.value}</span></div>
+            {item.sub && <p className="text-[11px] text-gray-400">{item.sub}</p>}
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
+/* ============ BLOC C-LEVEL : Agent Securite ============ */
+function BlocClients({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string, unknown> }) {
+  const items: Array<{ label: string; value: string; sub: string }> = [];
+  if (kpi) {
+    if (kpi.nps !== undefined) items.push({ label: "NPS", value: String(kpi.nps), sub: "" });
+    if (kpi.clients_actifs !== undefined) items.push({ label: "Clients actifs", value: Number(kpi.clients_actifs).toLocaleString(), sub: "" });
+    if (kpi.taux_retention_pct !== undefined) items.push({ label: "Retention", value: fmtPct(Number(kpi.taux_retention_pct)), sub: "" });
+    if (kpi.satisfaction_client !== undefined) items.push({ label: "Satisfaction", value: `${kpi.satisfaction_client}/10`, sub: "" });
+  }
+  if (items.length === 0) items.push({ label: "Securite & Conformite", value: "—", sub: "Aucune donnee" });
+  return (
+    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-2 hover:ring-zinc-300 transition-shadow" onClick={onClick}>
+      <BlockHeader icon={HeartHandshake} title="Sébastien — CISO" gradient="bg-gradient-to-r from-zinc-600 to-zinc-500" />
+      <ul className="space-y-2.5">
+        {items.slice(0, 3).map((item, i) => (
+          <li key={i} className="text-xs text-gray-800">
+            <div className="flex justify-between"><span className="font-medium">{item.label}</span><span className="font-bold">{item.value}</span></div>
+            {item.sub && <p className="text-[11px] text-gray-400">{item.sub}</p>}
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
+/* ============ BLOC C-LEVEL : Agent Usine / Produit ============ */
+function BlocProduit({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string, unknown> }) {
+  const items: Array<{ label: string; value: string; sub: string }> = [];
+  if (kpi) {
+    if (kpi.produits_actifs !== undefined) items.push({ label: "Produits actifs", value: String(kpi.produits_actifs), sub: "" });
+    if (kpi.roadmap_items !== undefined) items.push({ label: "Items roadmap", value: String(kpi.roadmap_items), sub: "" });
+    if (kpi.adoption_pct !== undefined) items.push({ label: "Adoption", value: fmtPct(Number(kpi.adoption_pct)), sub: "" });
+  }
+  if (items.length === 0) items.push({ label: "Usine & Produit", value: "—", sub: "Aucune donnee" });
   return (
     <Card className="p-4 overflow-hidden cursor-pointer hover:ring-2 hover:ring-slate-300 transition-shadow" onClick={onClick}>
-      <BlockHeader icon={BarChart3} title="Operations" gradient="bg-gradient-to-r from-slate-600 to-slate-500" />
+      <BlockHeader icon={Package} title="Fabien — CPO" gradient="bg-gradient-to-r from-slate-600 to-slate-500" />
       <ul className="space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
-          <li key={i} className="flex items-center justify-between">
-            <p className="text-xs text-gray-800">{item.label}</p>
-            <span className={cn("text-xs font-bold", trendColor[item.trend])}>{item.value}</span>
+          <li key={i} className="text-xs text-gray-800">
+            <div className="flex justify-between"><span className="font-medium">{item.label}</span><span className="font-bold">{item.value}</span></div>
+            {item.sub && <p className="text-[11px] text-gray-400">{item.sub}</p>}
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
+/* ============ BLOC C-LEVEL : Agent Risques ============ */
+function BlocRisques({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string, unknown> }) {
+  const items: Array<{ label: string; value: string; sub: string }> = [];
+  if (kpi) {
+    if (kpi.risques_critiques !== undefined) items.push({ label: "Risques critiques", value: String(kpi.risques_critiques), sub: "" });
+    if (kpi.conformite_pct !== undefined) items.push({ label: "Conformite", value: fmtPct(Number(kpi.conformite_pct)), sub: "" });
+    if (kpi.incidents_mois !== undefined) items.push({ label: "Incidents ce mois", value: String(kpi.incidents_mois), sub: "" });
+  }
+  if (items.length === 0) items.push({ label: "Risques", value: "—", sub: "Aucune donnee" });
+  return (
+    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-2 hover:ring-amber-300 transition-shadow" onClick={onClick}>
+      <BlockHeader icon={ShieldAlert} title="Raphaël — CRO" gradient="bg-gradient-to-r from-amber-600 to-amber-500" />
+      <ul className="space-y-2.5">
+        {items.slice(0, 3).map((item, i) => (
+          <li key={i} className="text-xs text-gray-800">
+            <div className="flex justify-between"><span className="font-medium">{item.label}</span><span className="font-bold">{item.value}</span></div>
+            {item.sub && <p className="text-[11px] text-gray-400">{item.sub}</p>}
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
+/* ============ BLOC C-LEVEL : Agent Legal ============ */
+function BlocLegal({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string, unknown> }) {
+  const items: Array<{ label: string; value: string; sub: string }> = [];
+  if (kpi) {
+    if (kpi.contrats_actifs !== undefined) items.push({ label: "Contrats actifs", value: String(kpi.contrats_actifs), sub: "" });
+    if (kpi.litiges !== undefined) items.push({ label: "Litiges", value: String(kpi.litiges), sub: "" });
+    if (kpi.conformite_rgpd !== undefined) items.push({ label: "RGPD", value: String(kpi.conformite_rgpd), sub: "" });
+  }
+  if (items.length === 0) items.push({ label: "Legal", value: "—", sub: "Aucune donnee" });
+  return (
+    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-2 hover:ring-indigo-300 transition-shadow" onClick={onClick}>
+      <BlockHeader icon={Scale} title="Louise — CLO" gradient="bg-gradient-to-r from-indigo-600 to-indigo-500" />
+      <ul className="space-y-2.5">
+        {items.slice(0, 3).map((item, i) => (
+          <li key={i} className="text-xs text-gray-800">
+            <div className="flex justify-between"><span className="font-medium">{item.label}</span><span className="font-bold">{item.value}</span></div>
+            {item.sub && <p className="text-[11px] text-gray-400">{item.sub}</p>}
           </li>
         ))}
       </ul>
@@ -368,6 +396,7 @@ function BlocStatsOps({ onClick, kpi }: { onClick?: () => void; kpi?: Record<str
 export function DashboardView() {
   // Focus: dispatch "focus" → CenterZone affiche FocusModeLayout (header gradient + LiveChat)
   const { dispatch } = useCanvasActions();
+  const { sendMessage } = useChatContext();
   const [kitData, setKitData] = useState<KitActiveResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -379,9 +408,6 @@ export function DashboardView() {
   }, []);
 
   const kpis = kitData?.kpis_departements;
-  const ventes = kitData?.ventes;
-  const projets = kitData?.projets_actifs;
-  const contexte = kitData?.contexte_sectoriel;
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -392,76 +418,68 @@ export function DashboardView() {
 
   return (
     <ScrollArea className="h-full">
-      <div className="space-y-4 max-w-5xl mx-auto px-5 py-5">
+      <div className="space-y-4 mx-auto px-10 py-5">
 
         <CarlOSPresence />
 
-        {/* Row 1 : 5 blocs C-Level — stagger animate-in */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+        {/* Grille 12 bots Bot Team CarlOS — 4 colonnes, 3 rangées */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "100ms", animationFillMode: "both" }}>
-            <BlocCEO
-              onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "CarlOS — Tour de Contrôle", element_type: "kpi_ceo", data: kpis?.CEO }, bot: "BCO" })}
-              kpi={kpis?.CEO}
-            />
+            <BlocCEO onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "CarlOS — Direction", element_type: "kpi_ceo", data: kpis?.CEO }, bot: "BCO" })} kpi={kpis?.CEO} />
           </div>
-          <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "180ms", animationFillMode: "both" }}>
-            <BlocCFO
-              onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent CFO — Finances", element_type: "kpi_cfo", data: kpis?.CFO }, bot: "BCF" })}
-              kpi={kpis?.CFO}
-            />
+          <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "150ms", animationFillMode: "both" }}>
+            <BlocCFO onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent CFO — Finances", element_type: "kpi_cfo", data: kpis?.CFO }, bot: "BCF" })} kpi={kpis?.CFO} />
           </div>
-          <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "260ms", animationFillMode: "both" }}>
-            <BlocCTO
-              onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent CTO — Technologie", element_type: "kpi_cto", data: kpis?.CTO }, bot: "BCT" })}
-              kpi={kpis?.CTO}
-            />
+          <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "200ms", animationFillMode: "both" }}>
+            <BlocCTO onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent CTO — Technologie", element_type: "kpi_cto", data: kpis?.CTO }, bot: "BCT" })} kpi={kpis?.CTO} />
           </div>
-          <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "340ms", animationFillMode: "both" }}>
-            <BlocCMO
-              onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent CMO — Marketing", element_type: "kpi_cmo", data: kpis?.CMO }, bot: "BCM" })}
-              kpi={kpis?.CMO}
-            />
+          <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "250ms", animationFillMode: "both" }}>
+            <BlocCMO onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent CMO — Marketing", element_type: "kpi_cmo", data: kpis?.CMO }, bot: "BCM" })} kpi={kpis?.CMO} />
           </div>
-          <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "420ms", animationFillMode: "both" }}>
-            <BlocCSO
-              onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent CSO — Stratégie", element_type: "kpi_cso", data: kpis?.CSO }, bot: "BCS" })}
-              kpi={kpis?.CSO}
-            />
+          <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "300ms", animationFillMode: "both" }}>
+            <BlocCSO onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent CSO — Strategie", element_type: "kpi_cso", data: kpis?.CSO }, bot: "BCS" })} kpi={kpis?.CSO} />
+          </div>
+          <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "350ms", animationFillMode: "both" }}>
+            <BlocCOO onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent COO — Operations", element_type: "kpi_coo", data: kpis?.COO }, bot: "BOO" })} kpi={kpis?.COO} />
+          </div>
+          <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "400ms", animationFillMode: "both" }}>
+            <BlocRH onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent RH — Ressources Humaines", element_type: "kpi_rh", data: kpis?.RH }, bot: "BHR" })} kpi={kpis?.RH} />
+          </div>
+          <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "450ms", animationFillMode: "both" }}>
+            <BlocInnovation onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent Innovation", element_type: "kpi_innovation", data: kpis?.IO }, bot: "BIO" })} kpi={kpis?.IO} />
+          </div>
+          <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "500ms", animationFillMode: "both" }}>
+            <BlocClients onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent Securite", element_type: "kpi_securite", data: kpis?.SE }, bot: "BSE" })} kpi={kpis?.SE} />
+          </div>
+          <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "550ms", animationFillMode: "both" }}>
+            <BlocProduit onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent Usine & Produit", element_type: "kpi_usine", data: kpis?.FA }, bot: "BFA" })} kpi={kpis?.FA} />
+          </div>
+          <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "600ms", animationFillMode: "both" }}>
+            <BlocRisques onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent Risques", element_type: "kpi_risques", data: kpis?.RO }, bot: "BRO" })} kpi={kpis?.RO} />
+          </div>
+          <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "650ms", animationFillMode: "both" }}>
+            <BlocLegal onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent Legal", element_type: "kpi_legal", data: kpis?.LE }, bot: "BLE" })} kpi={kpis?.LE} />
           </div>
         </div>
 
-        {/* Row 2 : 5 blocs outils — stagger animate-in (décalé après row 1) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-          <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "500ms", animationFillMode: "both" }}>
-            <BlocProjets
-              onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Projets Actifs", element_type: "projets", data: projets }, bot: "BCO" })}
-              projets={projets || undefined}
-            />
+        {/* Diagnostic Express — entry point questionnaire (BLOC 6) */}
+        <Card className="p-4 flex items-center gap-4 hover:shadow-md transition-shadow cursor-pointer animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "700ms", animationFillMode: "both" }}
+          onClick={() => {
+            sendMessage("/questionnaire start", "BCO");
+            dispatch({ type: "focus", layer: "cerveau", data: { title: "Diagnostic Express", element_type: "questionnaire", data: {} }, bot: "BCO" });
+          }}
+        >
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shrink-0 shadow-lg">
+            <Zap className="h-5 w-5 text-white" />
           </div>
-          <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "580ms", animationFillMode: "both" }}>
-            <BlocCalendrier
-              onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Mon Calendrier", element_type: "calendrier", data: null }, bot: "BCO" })}
-            />
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-bold text-gray-800">Diagnostic Express</h3>
+            <p className="text-[9px] text-gray-400 mt-0.5">CarlOS analyse votre entreprise en 4 phases — reponses personnalisees</p>
           </div>
-          <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "660ms", animationFillMode: "both" }}>
-            <BlocPipeline
-              onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Pipeline Ventes", element_type: "pipeline", data: ventes }, bot: "BCO" })}
-              ventes={ventes}
-            />
-          </div>
-          <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "740ms", animationFillMode: "both" }}>
-            <BlocInfosIndustrie
-              onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Infos Industrie", element_type: "industrie", data: contexte }, bot: "BCS" })}
-              contexte={contexte}
-            />
-          </div>
-          <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "820ms", animationFillMode: "both" }}>
-            <BlocStatsOps
-              onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Opérations", element_type: "ops", data: kpis?.COO }, bot: "BOO" })}
-              kpi={kpis?.COO}
-            />
-          </div>
-        </div>
+          <span className="text-[9px] px-2.5 py-1 rounded-full bg-amber-50 text-amber-600 border border-amber-200 font-semibold shrink-0">
+            Lancer
+          </span>
+        </Card>
       </div>
     </ScrollArea>
   );

@@ -44,11 +44,11 @@ export function WelcomeOnboardingView({
         <div className="inline-flex items-center gap-3 mb-4">
           <Sparkles className="h-8 w-8 text-blue-400" />
           <h1 className="text-4xl font-bold text-white tracking-tight">
-            Ghost<span className="text-blue-400">X</span>
+            Carl<span className="text-blue-400">OS</span>
           </h1>
         </div>
         <p className="text-xl text-blue-200 font-medium">
-          Comment GhostX developpe vos idees
+          Comment CarlOS developpe vos idees
         </p>
         <p className="text-sm text-blue-300/60 mt-2 max-w-md mx-auto">
           Decouvrez comment une equipe de dirigeants IA collabore pour

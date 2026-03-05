@@ -19,7 +19,7 @@ export function downloadFile(content: string, filename: string, mimeType = "text
 
 /** Export generique en Markdown */
 export function exportMarkdown(title: string, sections: { heading: string; content: string }[]) {
-  const lines = [`# ${title}`, ``, `> Exporte depuis GhostX — ${new Date().toLocaleString("fr-CA")}`, ``];
+  const lines = [`# ${title}`, ``, `> Exporté depuis CarlOS — ${new Date().toLocaleString("fr-CA")}`, ``];
 
   for (const section of sections) {
     lines.push(`## ${section.heading}`, ``);
@@ -36,7 +36,7 @@ export function exportJSON(title: string, data: Record<string, unknown>) {
   const payload = {
     title,
     exportedAt: new Date().toISOString(),
-    source: "GhostX Simulation",
+    source: "CarlOS Simulation",
     data,
   };
   const json = JSON.stringify(payload, null, 2);

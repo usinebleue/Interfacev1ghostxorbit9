@@ -675,7 +675,7 @@ const DEPT_TDC: Record<string, DeptTdcConfig> = {
       ]},
       { icon: FileText, title: "Propriete Intel.", gradient: "bg-gradient-to-r from-blue-600 to-blue-500", ringColor: "hover:ring-blue-300", items: [
         { primary: "GHML — marque deposee", secondary: "Enregistree OPIC · 2025" },
-        { primary: "GhostX — brevet pending", secondary: "Soumis · En examen" },
+        { primary: "CarlOS — brevet pending", secondary: "Soumis · En examen" },
         { primary: "Orbit9 — marque", secondary: "A deposer · Q2 2026" },
       ]},
       { icon: AlertTriangle, title: "Litiges", gradient: "bg-gradient-to-r from-blue-500 to-cyan-500", ringColor: "hover:ring-cyan-300", items: [
@@ -795,7 +795,7 @@ export function DepartmentTourDeControle() {
   if (!config) {
     return (
       <ScrollArea className="h-full">
-        <div className="p-5 max-w-5xl mx-auto">
+        <div className="px-10 py-5 max-w-5xl mx-auto">
           <div className="flex items-center gap-3 bg-gradient-to-r from-slate-50 to-gray-50 border rounded-xl px-4 py-3">
             <div className="w-9 h-9 bg-gray-200 rounded-full flex items-center justify-center">
               <Briefcase className="h-4 w-4 text-gray-500" />
@@ -833,7 +833,7 @@ export function DepartmentTourDeControle() {
 
   return (
     <ScrollArea className="h-full">
-      <div className="p-5 space-y-4 max-w-5xl mx-auto">
+      <div className="px-10 py-5 space-y-4 max-w-5xl mx-auto">
 
         <CarlOSPresence key={activeBotCode} />
 

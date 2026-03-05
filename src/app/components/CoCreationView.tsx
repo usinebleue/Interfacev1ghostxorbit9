@@ -70,7 +70,7 @@ const projects: CoCreationProject[] = [
     progress: 52,
     partners: [
       { id: '1', name: 'MétalPro', role: 'Usinage', vitaaShare: 28.0, timeTokens: 348, color: '#3b82f6' },
-      { id: '2', name: 'GhostX', role: 'Idée+Match', vitaaShare: 25.2, timeTokens: 312, color: '#8b5cf6' },
+      { id: '2', name: 'CarlOS', role: 'Idée+Match', vitaaShare: 25.2, timeTokens: 312, color: '#8b5cf6' },
       { id: '3', name: 'MedDesign', role: 'Design', vitaaShare: 18.4, timeTokens: 228, color: '#10b981' },
       { id: '4', name: 'FinanceVert', role: 'Capital', vitaaShare: 15.8, timeTokens: 196, color: '#f59e0b' },
       { id: '5', name: 'QualitéPlus', role: 'ISO 13485', vitaaShare: 12.6, timeTokens: 156, color: '#ef4444' },
@@ -84,7 +84,7 @@ const projects: CoCreationProject[] = [
     activities: [
       'CTO↔CTO: Specs prototype alignées',
       'CFO↔CFO: Budget Phase 2 validé',
-      'GhostX: 2 brevets déposés (IPToken)',
+      'CarlOS: 2 brevets déposés (IPToken)',
     ],
   },
   {
@@ -97,7 +97,7 @@ const projects: CoCreationProject[] = [
     progress: 25,
     partners: [
       { id: '1', name: 'AutoPlus', role: 'Robotique', vitaaShare: 35.0, timeTokens: 238, color: '#3b82f6' },
-      { id: '2', name: 'GhostX', role: 'Coordination', vitaaShare: 30.0, timeTokens: 204, color: '#8b5cf6' },
+      { id: '2', name: 'CarlOS', role: 'Coordination', vitaaShare: 30.0, timeTokens: 204, color: '#8b5cf6' },
       { id: '3', name: 'AcierQC', role: 'Production', vitaaShare: 35.0, timeTokens: 238, color: '#10b981' },
     ],
     phases: [
@@ -107,7 +107,7 @@ const projects: CoCreationProject[] = [
     ],
     activities: [
       'COO↔COO: Process mapping complété',
-      'GhostX: Subvention MEDTEQ identifiée',
+      'CarlOS: Subvention MEDTEQ identifiée',
     ],
   },
 ];
@@ -189,7 +189,7 @@ export function CoCreationView({ onBack }: CoCreationViewProps) {
                       </div>
                       <div>
                         <span className="text-gray-600">Partenaires: </span>
-                        <span className="font-semibold">{currentProject.partnerCount} + GhostX</span>
+                        <span className="font-semibold">{currentProject.partnerCount} + CarlOS</span>
                       </div>
                       <div>
                         <span className="text-gray-600">Valeur estimée: </span>
@@ -317,7 +317,7 @@ export function CoCreationView({ onBack }: CoCreationViewProps) {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-xl">💡</span>
-                        <h3 className="text-sm font-semibold">DÉTECTÉE PAR GHOSTX</h3>
+                        <h3 className="text-sm font-semibold">DÉTECTÉE PAR CARLOS</h3>
                       </div>
                       <p className="text-sm text-gray-700 leading-relaxed mb-4">
                         "{opp.description}"

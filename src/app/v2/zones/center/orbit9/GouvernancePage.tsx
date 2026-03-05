@@ -204,7 +204,7 @@ export function GouvernancePage({ onNavigate }: GouvernancePageProps) {
                 </div>
               </div>
               <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-                <p className="text-xs font-bold text-green-700 mb-2">Solution GhostX</p>
+                <p className="text-xs font-bold text-green-700 mb-2">Solution CarlOS</p>
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-1.5 text-[10px] text-green-600"><Check className="h-3 w-3 shrink-0" /> Bots trackent automatiquement</div>
                   <div className="flex items-center gap-1.5 text-[10px] text-green-600"><Check className="h-3 w-3 shrink-0" /> CTO Bot mesure les heures de dev</div>

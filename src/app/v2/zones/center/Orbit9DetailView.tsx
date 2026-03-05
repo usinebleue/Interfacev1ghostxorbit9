@@ -533,7 +533,7 @@ function GouvernancePage() {
                 </div>
               </div>
               <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-                <p className="text-xs font-bold text-green-700 mb-2">Solution GhostX</p>
+                <p className="text-xs font-bold text-green-700 mb-2">Solution CarlOS</p>
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-1.5 text-[10px] text-green-600"><Check className="h-3 w-3 shrink-0" /> Bots trackent automatiquement</div>
                   <div className="flex items-center gap-1.5 text-[10px] text-green-600"><Check className="h-3 w-3 shrink-0" /> CTO Bot mesure les heures de dev</div>
@@ -1381,7 +1381,7 @@ export function Orbit9DetailView() {
 
       {/* Content */}
       <div className="flex-1 overflow-auto">
-        <div className="max-w-5xl mx-auto px-5 py-5">
+        <div className="max-w-5xl mx-auto px-10 py-5">
           <Renderer />
         </div>
       </div>

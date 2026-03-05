@@ -1,6 +1,6 @@
 /**
  * PageTypePage.tsx — Page Type / Normes Graphiques V4
- * Reference officielle GhostX — Ligne directrice extraite des 11 simulations
+ * Référence officielle CarlOS — Ligne directrice extraite des 11 simulations
  * 4 onglets: Ligne Directrice | Composants | Visualisations | Patterns App
  */
 
@@ -38,7 +38,7 @@ export function PageTypePage() {
           <Palette className="h-4 w-4 text-indigo-600" />
           <div>
             <div className="text-sm font-bold text-gray-800">Page Type — Normes Graphiques</div>
-            <div className="text-xs text-gray-500">Reference officielle GhostX</div>
+            <div className="text-xs text-gray-500">Référence officielle CarlOS</div>
           </div>
         </div>
         <div className="flex gap-1">
@@ -462,8 +462,8 @@ export function PageTypePage() {
                     { code: "BOO", name: "COO", color: "orange" },
                     { code: "BFA", name: "Production", color: "slate" },
                     { code: "BHR", name: "CHRO", color: "teal" },
-                    { code: "BIO", name: "CIO", color: "cyan" },
-                    { code: "BCC", name: "CCO", color: "rose" },
+                    { code: "BIO", name: "CINO", color: "rose" },
+                    { code: "BCC", name: "CCO", color: "cyan" },
                     { code: "BPO", name: "CPO", color: "fuchsia" },
                     { code: "BRO", name: "CRO", color: "amber" },
                     { code: "BLE", name: "Legal", color: "indigo" },

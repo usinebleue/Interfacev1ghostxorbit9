@@ -54,7 +54,7 @@ export function LoginView({ onLogin }: LoginViewProps) {
                 Usine Bleue AI
               </h1>
               <p className="text-lg text-gray-600">
-                GhostX — Votre C-Suite AI
+                Usine Bleue AI — Votre C-Suite AI
               </p>
             </div>
           </div>
@@ -135,7 +135,7 @@ export function LoginView({ onLogin }: LoginViewProps) {
 
           {/* Footer */}
           <div className="text-center text-xs text-gray-500">
-            <p>Acces reserve — GhostX par Usine Bleue AI</p>
+            <p>Acces reserve — Usine Bleue AI</p>
           </div>
         </div>
       </Card>

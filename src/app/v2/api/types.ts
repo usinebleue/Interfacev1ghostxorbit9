@@ -76,6 +76,17 @@ export interface ChatResponse {
   cascade_suggestions?: CascadeSuggestion[];
   // D-108 — Contexte de bulle dynamique (footer enrichi)
   bubble_context?: BubbleContext | null;
+  // S43 — Scaffold progress (anti-hallucination)
+  scaffold_progress?: ScaffoldProgress | null;
+}
+
+// --- Scaffold (Anti-Hallucination) ---
+
+export interface ScaffoldProgress {
+  ancrage: boolean;
+  intention: boolean;
+  contraintes: boolean;
+  completude: number;  // 0, 1, 2 ou 3
 }
 
 // --- Multi-Perspectives ---
@@ -251,7 +262,9 @@ export type MessageType =
   | "deleguer"       // G — Gemini: brief de delegation
   | "scenario_et_si" // G — Gemini: scenarios hypothetiques
   | "fusionner"      // G — Gemini: fusion perspectives multi-bot
-  | "fil_parallele"; // G — Gemini: fil de reflexion parallele
+  | "fil_parallele"  // G — Gemini: fil de reflexion parallele
+  | "command_progress" // COMMAND — progress card pendant execution
+  | "command_stage";   // COMMAND — resultat d'un stage termine
 
 export interface ChatMessage {
   id: string;
@@ -284,6 +297,10 @@ export interface ChatMessage {
   isDiagnostic?: boolean;        // CarlOS a posé des questions au lieu de répondre
   // D-108 — Contexte dynamique (footer enrichi)
   bubbleContext?: BubbleContext;
+  // Cascade suggestions inter-departements
+  cascadeSuggestions?: CascadeSuggestion[];
+  // S43 — Scaffold progress
+  scaffoldProgress?: ScaffoldProgress;
 }
 
 // --- Crystal (idee cristallisee) ---
@@ -371,45 +388,47 @@ export interface DiagnosticVivant {
 // ─── Chantier (D-108) ───
 // Stratégique — semaines/mois. Trié par chaleur VITAA dans la sidebar.
 // Ex: "Expansion marché US", "Certification ISO", "Transformation numérique"
+// NOTE: field names match the API response (snake_case)
 export interface Chantier {
   id: number;
-  userId: number;
+  user_id?: number;
   titre: string;
   description: string;
   chaleur: ChantierHeat;
-  scoresVitaa: ScoresVITAA;
+  scores_vitaa?: ScoresVITAA;
   progression: number;           // 0-100 (moyenne des missions)
   status: ChantierStatus;
-  botCodes: string[];            // bots impliqués (multi-département)
-  sectionPrimaire?: string;
-  source: "onboarding" | "tension" | "manuel";
-  missions: Mission[];           // populated frontend-side
-  createdAt: string;
-  updatedAt: string;
+  bot_codes?: string[];          // bots impliqués (multi-département)
+  section_primaire?: string;
+  source?: "onboarding" | "tension" | "manuel";
+  missions?: Mission[];          // populated frontend-side
+  created_at: string;
+  updated_at: string;
 }
 
 // ─── Mission (D-108) ───
 // Tactique — jours/semaines. Rattachée à un chantier ou libre.
 // Ex: "Étude de marché US", "Recruter VP Ventes", "Audit fournisseurs"
+// NOTE: field names match the API response (snake_case)
 export interface Mission {
   id: number;
-  userId: number;
-  chantierId?: number | null;    // null = mission libre
+  user_id?: number;
+  chantier_id?: number | null;   // null = mission libre
   titre: string;
   description: string;
   status: MissionStatus;
   progression: number;           // 0-100
-  botPrimaire: string;
+  bot_primaire: string;
   section?: string;
-  flowType?: "data" | "action" | "mode_branch";
-  tensionId?: number | null;
-  commandMissionId?: number | null;
-  threadIds: string[];           // discussions (frontend thread UUIDs)
+  flow_type?: "data" | "action" | "mode_branch";
+  tension_id?: number | null;
+  command_mission_id?: number | null;
+  thread_ids: string[];          // discussions (frontend thread UUIDs)
   priorite: number;              // 0-100
-  contexte: Record<string, unknown>;
-  createdAt: string;
-  updatedAt: string;
-  completedAt?: string | null;
+  contexte?: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+  completed_at?: string | null;
 }
 
 // ─── Contexte de bulle dynamique ───
@@ -423,6 +442,19 @@ export interface BubbleContext {
   is_branch?: boolean;
   precision_pct?: number;
   chantier_nom?: string | null;
+  // S43 — QC Sentinel feedback
+  command_active?: boolean;
+  command_urgency?: string;
+  command_bots?: string[];
+  command_qc?: CommandQCStatus;
+}
+
+export interface CommandQCStatus {
+  stage: string;           // "scan" | "strategy" | "execution" | "bilan" | "done"
+  checks_passed: number;
+  checks_total: number;
+  warnings?: string[];
+  retries?: number;
 }
 
 export interface CascadeSuggestion {
@@ -431,6 +463,7 @@ export interface CascadeSuggestion {
   view: string;
   sub_section: string;
 }
+
 
 // --- Avatar Map (vrais fichiers dans /public/agents/) ---
 
@@ -443,7 +476,7 @@ export const BOT_AVATAR: Record<string, string> = {
   BOO: "/agents/generated/coo-olivier-profil-v3.png",
   BFA: "/agents/generated/factory-bot-profil-v3.png",
   BHR: "/agents/generated/chro-helene-profil-v3.png",
-  BIO: "/agents/generated/cio-isabelle-profil-v3.png",
+  BIO: "/agents/generated/cino-ines-profil-v3.png",
   BCC: "/agents/generated/cco-catherine-profil-v3.png",
   BPO: "/agents/generated/cpo-philippe-profil-v3.png",
   BRO: "/agents/generated/cro-raphael-profil-v3.png",
@@ -907,6 +940,111 @@ export interface ScoringResult {
 export interface JumelageScoringResponse {
   categories: ScoringCategory[];
   results: ScoringResult[];
+}
+
+// --- COMMAND Mission (BLOC 1) ---
+
+export interface CommandStartRequest {
+  message: string;
+  urgency?: "routine" | "tactical" | "crisis";
+  scan_bots?: string[];
+  user_id?: number;
+}
+
+export interface CommandStartResponse {
+  mission_id: number;
+  status: string;
+  scan_bots: string[];
+  urgency: string;
+}
+
+export interface CommandStatusResponse {
+  id: number;
+  stage: string;
+  message_original: string;
+  scan_bots: string[];
+  stage_results: Record<string, unknown>;
+  summary: string;
+  completed: boolean;
+  error: string | null;
+  started_at: string;
+  completed_at: string | null;
+}
+
+export type CommandStageKey = "scan" | "strategy" | "execution" | "bilan";
+
+export interface CommandMissionListResponse {
+  missions: CommandStatusResponse[];
+  total: number;
+}
+
+// --- Mode Branch (BLOC 2) ---
+
+export interface ModeBranchRequest {
+  mode: string;
+  user_id?: number;
+  credo_phase?: string;
+  credo_section?: string;
+}
+
+export interface ModeBranchState {
+  mode: string;
+  current_step: string;
+  step_index: number;
+  total_steps: number;
+  steps: string[];
+}
+
+// --- Briefings (BLOC 3) ---
+
+export interface Briefing {
+  id: number;
+  bot_code: string;
+  type_briefing: string;
+  titre: string;
+  contenu: string;
+  data: Record<string, unknown>;
+  periode_debut: string | null;
+  periode_fin: string | null;
+  created_at: string;
+}
+
+export interface BriefingListResponse {
+  briefings: Briefing[];
+  total: number;
+}
+
+// --- Suggestions (BLOC 4) ---
+
+export interface SuggestionItem {
+  id: string;
+  label: string;
+  description: string;
+  icon: string;
+  color: string;
+  mode: string | null;
+  action: string;
+  priority: number;
+}
+
+export interface SuggestionsResponse {
+  greeting: string;
+  suggestions: SuggestionItem[];
+  active_projects: Array<{ slug: string; nom: string; secteur: string; stage: string }>;
+  session_count: number;
+}
+
+// --- Questionnaire (BLOC 6) ---
+
+export interface QuestionnaireRequest {
+  commande?: string;
+  texte: string;
+  user_id?: number;
+}
+
+export interface QuestionnaireResponse {
+  reponse: string;
+  en_session: boolean;
 }
 
 // --- Reflection Modes ---

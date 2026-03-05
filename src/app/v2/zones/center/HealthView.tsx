@@ -119,7 +119,7 @@ export function HealthView() {
 
   return (
     <ScrollArea className="h-full">
-      <div className="max-w-5xl mx-auto px-5 py-3 space-y-2.5 pb-12">
+      <div className="max-w-5xl mx-auto px-10 py-5 space-y-2.5 pb-12">
 
         <CarlOSPresence />
 

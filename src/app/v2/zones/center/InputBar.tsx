@@ -48,7 +48,7 @@ const MODE_META: Partial<Record<ReflectionMode, { label: string; icon: React.Ele
   deep: { label: "Deep", icon: Brain, color: "bg-cyan-600" },
 };
 
-export function InputBar() {
+export function InputBar({ compact = false }: { compact?: boolean }) {
   const [text, setText] = useState("");
   const [attachedFile, setAttachedFile] = useState<File | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -94,8 +94,8 @@ export function InputBar() {
   };
 
   return (
-    <div className="bg-white py-3 shrink-0 min-h-[136px]">
-    <div className="max-w-5xl mx-auto px-5 space-y-2">
+    <div className={cn("bg-white shrink-0", compact ? "py-3 px-3" : "py-3 min-h-[136px]")}>
+    <div className={cn("space-y-2", !compact && "max-w-5xl mx-auto px-5")}>
       {/* Input fichier caché */}
       <input
         ref={fileInputRef}
@@ -105,69 +105,116 @@ export function InputBar() {
         accept="*/*"
       />
 
-      {/* Ligne 1 : Textarea + Envoyer | Clip | Vocal */}
-      <div className="flex items-end gap-3">
-        {/* Textarea + Envoyer ensemble */}
-        <div className="flex-1 flex gap-2 items-end">
+      {compact ? (
+        /* ===== COMPACT: Textarea pleine largeur + bande boutons en bas ===== */
+        <div className="space-y-2">
           <Textarea
             ref={textareaRef}
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={`Exprime une tension, lance une idee, pose une question a ${botName}...`}
-            className="min-h-[72px] max-h-[180px] resize-none flex-1 text-sm"
-            rows={3}
+            className="max-h-[180px] resize-none w-full text-sm min-h-[100px]"
+            rows={4}
             disabled={isTyping}
           />
-          <Button
-            size="icon"
-            className="h-10 w-10 bg-blue-600 hover:bg-blue-700 shrink-0 mb-0.5"
-            onClick={handleSend}
-            disabled={!text.trim() || isTyping}
-          >
-            <Send className="h-4 w-4" />
-          </Button>
+          {/* Bande de 3 boutons — Send + Vocal + Clip */}
+          <div className="flex items-center gap-2">
+            <Button
+              className="flex-1 h-9 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium gap-1.5"
+              onClick={handleSend}
+              disabled={!text.trim() || isTyping}
+            >
+              <Send className="h-3.5 w-3.5" /> Envoyer
+            </Button>
+            {stt.isSupported && (
+              <Button
+                variant="outline"
+                className={cn(
+                  "flex-1 h-9 text-xs font-medium gap-1.5",
+                  stt.isListening && "bg-red-50 text-red-600 border-red-300 ring-2 ring-red-200 animate-pulse"
+                )}
+                onClick={stt.toggleListening}
+                disabled={isTyping}
+              >
+                {stt.isListening ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
+                {stt.isListening ? "Stop" : "Vocal"}
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              className={cn(
+                "flex-1 h-9 text-xs font-medium gap-1.5",
+                attachedFile && "text-blue-600 bg-blue-50 border-blue-300"
+              )}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Paperclip className="h-3.5 w-3.5" /> Fichier
+            </Button>
+          </div>
         </div>
+      ) : (
+        /* ===== FULL: Layout original — Textarea + boutons à droite ===== */
+        <div className="flex items-end gap-3">
+          <div className="flex-1 flex gap-2 items-end">
+            <Textarea
+              ref={textareaRef}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={`Exprime une tension, lance une idee, pose une question a ${botName}...`}
+              className="max-h-[180px] resize-none flex-1 text-sm min-h-[72px]"
+              rows={3}
+              disabled={isTyping}
+            />
+            <Button
+              size="icon"
+              className="h-10 w-10 bg-blue-600 hover:bg-blue-700 shrink-0 mb-0.5"
+              onClick={handleSend}
+              disabled={!text.trim() || isTyping}
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
 
-        {/* Micro — Speech-to-Text */}
-        {stt.isSupported && (
+          {stt.isSupported && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    "h-9 w-9 mb-0.5 shrink-0 transition-all",
+                    stt.isListening && "bg-red-50 text-red-600 hover:bg-red-100 ring-2 ring-red-300 animate-pulse"
+                  )}
+                  onClick={stt.toggleListening}
+                  disabled={isTyping}
+                >
+                  {stt.isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{stt.isListening ? "Arreter l'ecoute" : "Parler a " + botName}</TooltipContent>
+            </Tooltip>
+          )}
+
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
                 className={cn(
-                  "h-9 w-9 mb-0.5 shrink-0 transition-all",
-                  stt.isListening && "bg-red-50 text-red-600 hover:bg-red-100 ring-2 ring-red-300 animate-pulse"
+                  "h-9 w-9 mb-0.5 shrink-0 transition-colors",
+                  attachedFile && "text-blue-600 bg-blue-50 hover:bg-blue-100"
                 )}
-                onClick={stt.toggleListening}
-                disabled={isTyping}
+                onClick={() => fileInputRef.current?.click()}
               >
-                {stt.isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                <Paperclip className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>{stt.isListening ? "Arreter l'ecoute" : "Parler a " + botName}</TooltipContent>
+            <TooltipContent>{attachedFile ? attachedFile.name : "Joindre un fichier"}</TooltipContent>
           </Tooltip>
-        )}
-
-        {/* Clip (piece jointe) */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className={cn(
-                "h-9 w-9 mb-0.5 shrink-0 transition-colors",
-                attachedFile && "text-blue-600 bg-blue-50 hover:bg-blue-100"
-              )}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Paperclip className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>{attachedFile ? attachedFile.name : "Joindre un fichier"}</TooltipContent>
-        </Tooltip>
-      </div>
+        </div>
+      )}
 
       {/* Fichier attaché — pill avec nom + × */}
       {attachedFile && (
@@ -206,8 +253,8 @@ export function InputBar() {
         <div className="text-xs text-red-500">{stt.error}</div>
       )}
 
-      {/* Ligne 2 : Modes de réflexion — centrés */}
-      <div className="flex items-center justify-center gap-1.5 flex-wrap">
+      {/* Ligne 2 : Modes de réflexion — centrés (masqués en compact) */}
+      {!compact && <div className="flex items-center justify-center gap-1.5 flex-wrap">
         <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider shrink-0 mr-0.5">
           Mode de Réflexion :
         </span>
@@ -232,7 +279,7 @@ export function InputBar() {
             );
           }
         )}
-      </div>
+      </div>}
     </div>
     </div>
   );

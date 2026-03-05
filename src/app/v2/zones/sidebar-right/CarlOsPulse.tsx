@@ -58,7 +58,7 @@ const PULSE_CONFIG: Record<
   },
 };
 
-export function CarlOsPulse() {
+export function CarlOsPulse({ compact = false }: { compact?: boolean }) {
   const [open, setOpen] = useState(true);
 
   // TODO: brancher sur l'API /api/v1/pulse — pour l'instant, liste vide par defaut
@@ -71,6 +71,34 @@ export function CarlOsPulse() {
 
   const criticalCount = items.filter((i) => i.type === "critical").length;
   const totalCount = items.length;
+
+  // Feu de circulation — vert/jaune/rouge
+  const suggestionCount = items.filter((i) => i.type === "suggestion").length;
+  const statusColor = criticalCount > 0 ? "red" : suggestionCount > 0 ? "amber" : "green";
+  const statusDot = criticalCount > 0 ? "bg-red-500" : suggestionCount > 0 ? "bg-amber-400 animate-pulse" : "bg-green-500 animate-pulse";
+  const statusText = criticalCount > 0
+    ? `${criticalCount} urgence${criticalCount > 1 ? "s" : ""}`
+    : suggestionCount > 0
+      ? `${suggestionCount} action${suggestionCount > 1 ? "s" : ""} requise${suggestionCount > 1 ? "s" : ""}`
+      : "Tout est calme";
+  const statusTextColor = criticalCount > 0 ? "text-red-600" : suggestionCount > 0 ? "text-amber-600" : "text-green-600";
+
+  // Mode compact — une seule ligne horizontale ~28px
+  if (compact) {
+    return (
+      <div className="flex items-center gap-2 h-7">
+        <span className={cn("w-2.5 h-2.5 rounded-full shrink-0", statusDot)} />
+        <span className={cn("text-[11px] font-semibold truncate", statusTextColor)}>
+          {statusText}
+        </span>
+        {criticalCount > 0 && (
+          <Badge variant="destructive" className="text-[9px] px-1 py-0 h-4 ml-auto shrink-0">
+            {criticalCount} urgent
+          </Badge>
+        )}
+      </div>
+    );
+  }
 
   // Si aucun item, afficher juste le header avec "Tout est calme"
   return (
@@ -108,9 +136,9 @@ export function CarlOsPulse() {
       <CollapsibleContent>
         <div className="mt-2 space-y-1">
           {items.length === 0 ? (
-            <div className="flex items-center gap-2 px-2 py-2 text-xs text-gray-400">
-              <CheckCircle2 className="h-3.5 w-3.5 text-green-400" />
-              Tout est calme — CarlOS veille.
+            <div className="flex items-center gap-2 px-2 py-2 text-xs">
+              <span className={cn("w-2 h-2 rounded-full shrink-0", statusDot)} />
+              <span className={statusTextColor}>{statusText} — CarlOS veille.</span>
             </div>
           ) : (
             items.map((item) => {

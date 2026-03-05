@@ -135,7 +135,7 @@ const layers = [
     number: 4,
     title: 'Franchise 5.0',
     price: 'Écosystème',
-    description: 'Co-création + VITAA + TimeTokens + Smart Contracts → GhostX = OS de l\'économie fragmentée',
+    description: 'Co-création + VITAA + TimeTokens + Smart Contracts → CarlOS = OS de l\'économie fragmentée',
     color: 'bg-orange-50 border-orange-300',
     badge: 'bg-orange-600',
   },
@@ -173,7 +173,7 @@ export function RoadmapView({ onBack }: RoadmapViewProps) {
                   <Layers className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-sm font-bold">GHOSTX = Netflix du conseil stratégique</h2>
+                  <h2 className="text-sm font-bold">CARLOS = Netflix du conseil stratégique</h2>
                   <p className="text-sm text-gray-600">La vision en 4 couches</p>
                 </div>
               </div>

@@ -6,11 +6,13 @@
 import { createContext, useContext, useState, useCallback, useRef, useEffect } from "react";
 import type { BotInfo } from "../api/types";
 
-export type ActiveView = "dashboard" | "cockpit" | "health" | "department" | "detail" | "discussion" | "branches" | "cahier" | "scenarios" | "live-chat" | "canvas" | "orbit9-detail" | "agent-settings" | "espace-bureau" | "blueprint" | "board-room" | "war-room" | "think-room";
+export type ActiveView = "dashboard" | "cockpit" | "health" | "department" | "detail" | "discussion" | "branches" | "cahier" | "scenarios" | "live-chat" | "canvas" | "orbit9-detail" | "agent-settings" | "espace-bureau" | "blueprint" | "board-room" | "war-room" | "think-room" | "mes-chantiers";
 
-export type EspaceSection = "idees" | "projets" | "documents" | "taches" | "outils" | "agenda";
+export type EspaceSection = "idees" | "projets" | "documents" | "taches" | "outils" | "agenda" | "templates";
 
 export type BlueprintSection = "live" | "hub" | "pipeline";
+
+export type DiscussionTab = "chantiers" | "missions" | "discussions";
 
 interface FrameMasterState {
   activeBot: BotInfo | null;
@@ -19,6 +21,7 @@ interface FrameMasterState {
   activeOrbit9Section: string | null;
   activeEspaceSection: EspaceSection;
   activeBlueprintSection: BlueprintSection;
+  activeDiscussionTab: DiscussionTab;
   /** D-109 — Source view quand on ouvre le LiveChat depuis une Room */
   chatSourceView: string | null;
   leftSidebarCollapsed: boolean;
@@ -43,6 +46,7 @@ interface FrameMasterActions {
   navigateOrbit9: (sectionId: string) => void;
   navigateEspace: (section: EspaceSection) => void;
   navigateBlueprint: (section: BlueprintSection) => void;
+  navigateDiscussionTab: (tab: DiscussionTab) => void;
   /** D-109 — Ouvre le LiveChat avec contexte de la source (board-room, war-room, etc.) */
   navigateToChat: (sourceView: string) => void;
   // Registre pour le panel imperatif
@@ -64,6 +68,7 @@ export function FrameMasterProvider({
   const [activeOrbit9Section, setActiveOrbit9Section] = useState<string | null>(null);
   const [activeEspaceSection, setActiveEspaceSection] = useState<EspaceSection>("idees");
   const [activeBlueprintSection, setActiveBlueprintSection] = useState<BlueprintSection>("live");
+  const [activeDiscussionTab, setActiveDiscussionTab] = useState<DiscussionTab>("discussions");
   const [chatSourceView, setChatSourceView] = useState<string | null>(null);
   const [leftSidebarCollapsed, setLeftCollapsed] = useState(false);
   const [rightSidebarCollapsed, setRightCollapsed] = useState(false);
@@ -118,6 +123,10 @@ export function FrameMasterProvider({
     setActiveView("blueprint");
   }, []);
 
+  const navigateDiscussionTab = useCallback((tab: DiscussionTab) => {
+    setActiveDiscussionTab(tab);
+  }, []);
+
   const navigateToChat = useCallback((sourceView: string) => {
     setChatSourceView(sourceView);
     setActiveView("live-chat");
@@ -157,6 +166,7 @@ export function FrameMasterProvider({
         activeOrbit9Section,
         activeEspaceSection,
         activeBlueprintSection,
+        activeDiscussionTab,
         chatSourceView,
         leftSidebarCollapsed,
         rightSidebarCollapsed,
@@ -176,6 +186,7 @@ export function FrameMasterProvider({
         navigateOrbit9,
         navigateEspace,
         navigateBlueprint,
+        navigateDiscussionTab,
         navigateToChat,
         registerLeftPanel,
       }}

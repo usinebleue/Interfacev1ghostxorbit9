@@ -15,12 +15,12 @@ import { useFrameMaster } from "../../context/FrameMasterContext";
 /** Messages par vue — voix directe du bot */
 const VIEW_MESSAGES: Record<string, string> = {
   dashboard:       "Voici votre tableau de bord. Chaque bloc est un point d'intérêt — cliquez sur n'importe lequel et on l'explore ensemble.",
-  cockpit:         "Cockpit GhostX en ligne. Vos indicateurs clés sont consolidés ici. Cliquez sur un KPI pour qu'on creuse ensemble.",
+  cockpit:         "Cockpit CarlOS en ligne. Vos indicateurs clés sont consolidés ici. Cliquez sur un KPI pour qu'on creuse ensemble.",
   health:          "Je surveille la santé de votre organisation en continu. Voici un portrait transversal de vos 5 dimensions stratégiques.",
   scenarios:       "Studio de simulation actif. Décrivez-moi votre hypothèse — je m'occupe de la modéliser avec l'équipe.",
   canvas:          "Canevas stratégique ouvert. Demandez-moi d'afficher ce que vous voulez — je gère le contenu en temps réel.",
   cahier:          "Voici votre cahier stratégique. Vos idées cristallisées, prêtes à passer à l'action.",
-  "agent-settings":"Configuration de votre équipe GhostX. Personnalisez le comportement de vos agents.",
+  "agent-settings":"Configuration de votre Bot Team. Personnalisez le comportement de vos agents.",
   "board-room":    "Board Room en session. Vos C-Level sont réunis. Proposez un sujet — je lance le débat et je coordonne les interventions.",
   "war-room":      "War Room activée. Cellule de crise prête. Décrivez la situation — je mobilise l'équipe d'urgence et on passe en mode COMMAND.",
   "think-room":    "Think Room ouverte. De la vision au Go/No-Go en 6 étapes. Partagez votre idée — je mobilise les spécialistes pour la structurer.",
@@ -70,7 +70,7 @@ const DEPT_MESSAGES: Record<string, string> = {
   BCS: "Sophie à l'appareil, votre CSO. Stratégie & Ventes — cliquez sur un bloc pour qu'on en discute.",
   BOO: "Olivier ici, votre COO. Opérations & Production — cliquez sur un élément pour qu'on approfondisse.",
   BHR: "Hélène, votre CHRO. Capital humain, recrutement et culture. Cliquez sur un bloc pour qu'on en parle.",
-  BIO: "Isabelle, votre CIO. Systèmes & Données — cliquez sur un élément pour qu'on en discute.",
+  BIO: "Inès, votre CINO. Innovation & Données — cliquez sur un élément pour qu'on en discute.",
   BCC: "Catherine, votre CCO. Communication & Marque — cliquez sur un bloc pour qu'on approfondisse.",
   BPO: "Philippe, votre CPO. Innovation & Produits — cliquez sur un élément pour qu'on explore ensemble.",
   BRO: "Raphaël, votre CRO. Revenus & Croissance — cliquez sur un bloc pour qu'on creuse ensemble.",
@@ -81,7 +81,7 @@ const DEPT_MESSAGES: Record<string, string> = {
 /** Nom court par bot */
 const BOT_NAMES: Record<string, string> = {
   BCO: "CarlOS", BCT: "Thierry", BCF: "François", BCM: "Martine",
-  BCS: "Sophie", BOO: "Olivier", BHR: "Hélène", BIO: "Isabelle",
+  BCS: "Sophie", BOO: "Olivier", BHR: "Hélène", BIO: "Inès",
   BCC: "Catherine", BPO: "Philippe", BRO: "Raphaël", BLE: "Louise", BSE: "Sébastien",
 };
 

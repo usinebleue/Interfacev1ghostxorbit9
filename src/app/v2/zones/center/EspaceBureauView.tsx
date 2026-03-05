@@ -56,7 +56,7 @@ import type { EspaceSection } from "../../context/FrameMasterContext";
 import { useChatContext } from "../../context/ChatContext";
 import { BOT_AVATAR } from "../../api/types";
 import type { BureauItemCreate, PlaneTacheCreate, TemplatePreview } from "../../api/types";
-import { useBureau, useTaches, useTemplates } from "../../api/hooks";
+import { useBureau, useTaches, useTemplates, useCahierPdf } from "../../api/hooks";
 import { api } from "../../api/client";
 import { CarlOSPresence } from "../center/CarlOSPresence";
 import { DocumentWorkflow } from "../center/DocumentWorkflow";
@@ -70,6 +70,7 @@ const ESPACE_TABS: { id: EspaceSection; label: string; icon: React.ElementType }
   { id: "outils", label: "Outils", icon: Wrench },
   { id: "taches", label: "Taches", icon: CheckSquare },
   { id: "agenda", label: "Agenda", icon: CalendarDays },
+  { id: "templates", label: "Templates", icon: FileText },
 ];
 
 // ── Tag color helper ──
@@ -161,6 +162,8 @@ function BandeauProactif({ message, section }: { message: string; section: Espac
     documents: "from-green-500 to-emerald-500",
     outils: "from-orange-500 to-red-500",
     taches: "from-purple-500 to-violet-500",
+    agenda: "from-rose-500 to-pink-500",
+    templates: "from-cyan-500 to-teal-500",
   };
 
   return (
@@ -815,7 +818,7 @@ function ListingPage({ section }: { section: EspaceSection }) {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-4 space-y-4 pb-12">
+    <div className="max-w-4xl mx-auto px-10 py-5 space-y-4 pb-12">
       {(section === "idees" || section === "projets") && (
         <BandeauProactif message={bandeauMessages[section]} section={section} />
       )}
@@ -1088,6 +1091,7 @@ function DocumentsPage() {
   const [docTab, setDocTab] = useState<"generes" | "templates" | "importes">("generes");
   const { items: allDocs, loading, error, uploadFile, refresh: refreshDocs } = useBureau("document");
   const { templates, categories, total: templateTotal, loading: loadingTemplates } = useTemplates();
+  const cahier = useCahierPdf();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -1172,11 +1176,46 @@ function DocumentsPage() {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto p-4 space-y-4 pb-12">
+    <div className="max-w-4xl mx-auto px-10 py-5 space-y-4 pb-12">
       <BandeauProactif
         message={`${allDocs.length} document${allDocs.length !== 1 ? "s" : ""}, ${templateTotal} templates disponibles.`}
         section="documents"
       />
+
+      {/* Cahier PDF — generation complete (BLOC 5) */}
+      <Card className="p-3 flex items-center gap-3">
+        <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+          <FileText className="h-4 w-4 text-blue-600" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="text-xs font-bold text-gray-800">Cahier SMART</h3>
+          <p className="text-[9px] text-gray-400">Generer le cahier complet de votre projet en PDF</p>
+        </div>
+        {cahier.status === "ready" && cahier.downloadUrl ? (
+          <a
+            href={cahier.downloadUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[9px] px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 transition-colors cursor-pointer font-semibold"
+          >
+            Telecharger PDF
+          </a>
+        ) : cahier.status === "generating" ? (
+          <span className="text-[9px] px-3 py-1.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200 font-medium flex items-center gap-1">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" /> Generation...
+          </span>
+        ) : cahier.status === "error" ? (
+          <span className="text-[9px] text-red-500 font-medium">Erreur</span>
+        ) : (
+          <button
+            onClick={() => cahier.generate("usine-bleue")}
+            disabled={cahier.status === "generating"}
+            className="text-[9px] px-3 py-1.5 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer font-semibold disabled:opacity-50"
+          >
+            Generer Cahier
+          </button>
+        )}
+      </Card>
 
       {/* Sub-tabs internes */}
       <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit">
@@ -1433,7 +1472,7 @@ function TachesPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-4 space-y-4 pb-12">
+    <div className="max-w-4xl mx-auto px-10 py-5 space-y-4 pb-12">
       <div className="flex items-center justify-between">
         <BandeauProactif
           message={loading ? "Chargement des taches..." : `${taches.length} tache${taches.length !== 1 ? "s" : ""} ouverte${taches.length !== 1 ? "s" : ""} dans Plane.so`}
@@ -1549,7 +1588,7 @@ function AgendaPage() {
   const JOURS = ["Lun", "Mar", "Mer", "Jeu", "Ven"];
 
   return (
-    <div className="max-w-4xl mx-auto p-4 space-y-4 pb-12">
+    <div className="max-w-4xl mx-auto px-10 py-5 space-y-4 pb-12">
       {/* Semaine en cours */}
       <div className="flex items-center justify-between">
         <div className="text-sm font-bold text-gray-800">Semaine du 3 mars 2026</div>
@@ -1601,6 +1640,151 @@ function AgendaPage() {
 }
 
 // ══════════════════════════════════════════
+// Templates Page — Parcourir + generer des documents
+// ══════════════════════════════════════════
+
+function TemplatesPage() {
+  const { templates, categories, loading, previewTemplate, generateDocument } = useTemplates();
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [previewData, setPreviewData] = useState<TemplatePreview | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [generating, setGenerating] = useState<string | null>(null);
+
+  const filtered = activeCategory
+    ? templates.filter((t) => t.categorie === activeCategory)
+    : templates;
+
+  const handlePreview = async (alias: string) => {
+    const data = await previewTemplate(alias);
+    if (data) {
+      setPreviewData(data);
+      setPreviewOpen(true);
+    }
+  };
+
+  const handleGenerate = async (alias: string) => {
+    setGenerating(alias);
+    try {
+      const res = await generateDocument(alias);
+      if (res?.download_url) {
+        window.open(res.download_url, "_blank");
+      }
+    } finally {
+      setGenerating(null);
+    }
+  };
+
+  // Gradient par categorie
+  const CAT_GRADIENTS: Record<string, string> = {
+    FACTORY: "from-slate-500 to-slate-600",
+    CEO: "from-blue-500 to-blue-600",
+    CTO: "from-violet-500 to-violet-600",
+    CFO: "from-emerald-500 to-emerald-600",
+    CMO: "from-pink-500 to-pink-600",
+    CSO: "from-red-500 to-red-600",
+    COO: "from-orange-500 to-orange-600",
+  };
+
+  return (
+    <div className="space-y-4">
+      <BandeauProactif message={`${templates.length} templates disponibles — generez vos documents en un clic.`} section="templates" />
+
+      {/* Filtre par categorie */}
+      <div className="flex gap-1.5 flex-wrap">
+        <button
+          onClick={() => setActiveCategory(null)}
+          className={cn(
+            "text-[9px] px-2.5 py-1 rounded-full font-medium transition-all cursor-pointer",
+            !activeCategory ? "bg-gray-900 text-white" : "text-gray-500 bg-gray-100 hover:bg-gray-200"
+          )}
+        >
+          Tous ({templates.length})
+        </button>
+        {categories.map((cat) => (
+          <button
+            key={cat}
+            onClick={() => setActiveCategory(cat === activeCategory ? null : cat)}
+            className={cn(
+              "text-[9px] px-2.5 py-1 rounded-full font-medium transition-all cursor-pointer",
+              activeCategory === cat ? "bg-gray-900 text-white" : "text-gray-500 bg-gray-100 hover:bg-gray-200"
+            )}
+          >
+            {cat} ({templates.filter((t) => t.categorie === cat).length})
+          </button>
+        ))}
+      </div>
+
+      {/* Grille de templates */}
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+        </div>
+      ) : filtered.length === 0 ? (
+        <EmptyState icon={FileText} text="Aucun template" sub="Les templates seront charges depuis le serveur" />
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          {filtered.map((tpl) => {
+            const gradient = CAT_GRADIENTS[tpl.categorie] || "from-gray-500 to-gray-600";
+            return (
+              <Card key={tpl.alias} className="overflow-hidden">
+                <div className={cn("bg-gradient-to-r px-3 py-2", gradient)}>
+                  <span className="text-[9px] font-bold text-white/80">{tpl.categorie}</span>
+                  <p className="text-xs font-semibold text-white truncate mt-0.5">{tpl.nom}</p>
+                </div>
+                <div className="px-3 py-2 flex items-center gap-2">
+                  <button
+                    onClick={() => handlePreview(tpl.alias)}
+                    className="flex items-center gap-1 text-[9px] px-2 py-1 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 cursor-pointer font-medium transition-colors"
+                  >
+                    <Eye className="h-3.5 w-3.5" /> Apercu
+                  </button>
+                  <button
+                    onClick={() => handleGenerate(tpl.alias)}
+                    disabled={generating === tpl.alias}
+                    className="flex items-center gap-1 text-[9px] px-2 py-1 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 cursor-pointer font-medium transition-colors disabled:opacity-50"
+                  >
+                    {generating === tpl.alias ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Download className="h-3.5 w-3.5" />
+                    )}
+                    Generer
+                  </button>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Preview Dialog */}
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle>{previewData?.nom || "Apercu"}</DialogTitle>
+            <DialogDescription>Apercu du template — les placeholders seront remplaces a la generation.</DialogDescription>
+          </DialogHeader>
+          <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed border rounded-lg p-4 bg-gray-50 max-h-[50vh] overflow-auto">
+            {previewData?.contenu || "Chargement..."}
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => {
+                if (previewData?.alias) handleGenerate(previewData.alias);
+                setPreviewOpen(false);
+              }}
+              className="flex items-center gap-1.5 text-xs px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 cursor-pointer font-medium transition-colors"
+            >
+              <Download className="h-3.5 w-3.5" /> Generer ce document
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════
 // MAIN VIEW — EspaceBureauView
 // ══════════════════════════════════════════
 
@@ -1621,6 +1805,8 @@ export function EspaceBureauView() {
         return <TachesPage />;
       case "agenda":
         return <AgendaPage />;
+      case "templates":
+        return <TemplatesPage />;
       default:
         return <ListingPage section="idees" />;
     }

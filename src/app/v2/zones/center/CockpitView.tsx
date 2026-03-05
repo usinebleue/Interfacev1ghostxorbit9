@@ -22,6 +22,7 @@ import { BOT_AVATAR } from "../../api/types";
 import { useFrameMaster } from "../../context/FrameMasterContext";
 import { useCanvasActions } from "../../context/CanvasActionContext";
 import { CarlOSPresence } from "./CarlOSPresence";
+import { useBriefings } from "../../api/hooks";
 
 /* ============ KPI GAUGE CARD — header gradient ============ */
 function KpiCard({ icon: Icon, label, value, change, changeType, onClick }: {
@@ -139,7 +140,7 @@ const CLEVEL_LINES: CLeveLineData[] = [
         { label: "Formation heures", value: "24h/an", icon: GraduationCap, trend: "up" },
       ]},
       { label: "Projets", icon: Target, maj: "26 fev", stats: [
-        { label: "GhostX plateforme", value: "72%", icon: Cpu, trend: "up" },
+        { label: "CarlOS plateforme", value: "72%", icon: Cpu, trend: "up" },
         { label: "Orbit9 reseau", value: "45%", icon: Globe, trend: "up" },
         { label: "REAI expansion", value: "130+", icon: Building2, trend: "up" },
         { label: "Interface V2", value: "85%", icon: LayoutDashboard, trend: "up" },
@@ -792,6 +793,70 @@ function DeptCockpit({ bot, onFocus }: { bot: CLeveLineData; onFocus: OnFocusFn 
   );
 }
 
+/* ============ BRIEFINGS PANEL — Daily + Board Meeting (BLOC 3) ============ */
+function BriefingsPanel() {
+  const { briefings, loading, error, compileDaily, compileBoard, compiling } = useBriefings();
+
+  return (
+    <Card className="p-4">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <FileText className="h-4 w-4 text-blue-600" />
+          <span className="text-sm font-semibold text-gray-800">Briefings Compiles</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={compileDaily}
+            disabled={compiling}
+            className="text-[9px] px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 transition-colors cursor-pointer font-medium disabled:opacity-50"
+          >
+            {compiling ? "..." : "Compiler Daily"}
+          </button>
+          <button
+            onClick={compileBoard}
+            disabled={compiling}
+            className="text-[9px] px-2.5 py-1 rounded-full bg-violet-50 text-violet-600 border border-violet-200 hover:bg-violet-100 transition-colors cursor-pointer font-medium disabled:opacity-50"
+          >
+            {compiling ? "..." : "Board Meeting"}
+          </button>
+        </div>
+      </div>
+
+      {error && (
+        <p className="text-[9px] text-red-500 mb-2">{error}</p>
+      )}
+
+      {loading && briefings.length === 0 && (
+        <p className="text-xs text-gray-400 py-4 text-center">Chargement...</p>
+      )}
+
+      {!loading && briefings.length === 0 && (
+        <p className="text-xs text-gray-400 py-4 text-center">Aucun briefing compile. Cliquez pour generer.</p>
+      )}
+
+      <div className="space-y-2 max-h-[300px] overflow-auto">
+        {briefings.map((b) => (
+          <div key={b.id} className="p-3 rounded-lg bg-gray-50 border border-gray-100">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-semibold text-gray-700">{b.titre}</span>
+              <span className={cn(
+                "text-[9px] px-1.5 py-0.5 rounded-full font-medium",
+                b.type_briefing === "daily" ? "bg-blue-50 text-blue-600" : "bg-violet-50 text-violet-600"
+              )}>
+                {b.type_briefing === "daily" ? "Daily" : "Board"}
+              </span>
+            </div>
+            <p className="text-[11px] text-gray-500 line-clamp-3 leading-relaxed">{b.contenu}</p>
+            <div className="text-[9px] text-gray-400 mt-1.5">
+              {new Date(b.created_at).toLocaleDateString("fr-CA")}
+            </div>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
 /* ============ COCKPIT VIEW — contextuel au bot actif ============ */
 export function CockpitView() {
   const { activeBotCode } = useFrameMaster();
@@ -808,7 +873,7 @@ export function CockpitView() {
 
   return (
     <ScrollArea className="h-full">
-      <div className="space-y-3 max-w-5xl mx-auto px-5 py-4">
+      <div className="space-y-3 max-w-5xl mx-auto px-10 py-5">
 
         <CarlOSPresence />
 
@@ -832,6 +897,9 @@ export function CockpitView() {
 
             {/* 12 rangees C-Level — 4 boxes par ligne (identite + 3 angles) */}
             <CLevelStatsRows onFocus={handleFocus} />
+
+            {/* Briefings Compiles (BLOC 3) */}
+            <BriefingsPanel />
           </>
         )}
 

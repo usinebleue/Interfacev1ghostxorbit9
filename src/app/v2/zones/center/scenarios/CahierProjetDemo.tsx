@@ -43,7 +43,7 @@ function generateMarkdown(): string {
 
   let md = `# Cahier de Projet SMART\n`;
   md += `## Aliments Boreal inc.\n`;
-  md += `**Genere par CarlOS (GhostX) — ${new Date().toLocaleDateString("fr-CA")}**\n\n`;
+  md += `**Généré par CarlOS — ${new Date().toLocaleDateString("fr-CA")}**\n\n`;
   md += `---\n\n`;
 
   for (const sec of sections) {
@@ -123,7 +123,7 @@ function generateMarkdown(): string {
   for (const m of metrics) {
     md += `- **${m.label}** : ${m.value}\n`;
   }
-  md += `\n---\n*Document genere automatiquement par CarlOS (GhostX)*\n`;
+  md += `\n---\n*Document généré automatiquement par CarlOS*\n`;
 
   return md;
 }
@@ -708,7 +708,7 @@ export function CahierProjetDemo({ onTransition }: { onTransition?: (target: str
                   if (typeof navigator !== "undefined" && navigator.share) {
                     navigator.share({
                       title: "Cahier de Projet SMART — Aliments Boreal inc.",
-                      text: "Cahier genere par CarlOS (GhostX) — 7 sections, 592K$ subventions, ROI 22 mois",
+                      text: "Cahier généré par CarlOS — 7 sections, 592K$ subventions, ROI 22 mois",
                     }).catch(() => {});
                   }
                 }}
@@ -793,7 +793,7 @@ export function CahierProjetDemo({ onTransition }: { onTransition?: (target: str
             </p>
             <div className="flex items-center gap-2 text-white/60 text-xs">
               <Sparkles className="h-3.5 w-3.5" />
-              <span>Propulse par GhostX — 14 agents AI, 36 teintures cognitives</span>
+              <span>Propulsé par CarlOS — 14 agents AI, 36 teintures cognitives</span>
             </div>
           </div>
 
