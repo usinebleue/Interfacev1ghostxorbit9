@@ -2,6 +2,12 @@
  * DocumentWorkflow.tsx — Flow interactif bloc par bloc pour Document Lego Phase 2
  * 4 etapes: Briefing → Edition bloc par bloc → Revision → Export
  * CarlOS peut challenger ou completer chaque section via chatStream
+ *
+ * TODO: PageLayout migration — This component is rendered inside a fixed overlay
+ * (fixed inset-0 z-50 bg-white overflow-auto in EspaceBureauView.tsx), not as a
+ * standard page view. It has its own inline header with back button + StepIndicator.
+ * Migration to PageLayout would require reworking the overlay context in
+ * EspaceBureauView.tsx as well. Skipping for now.
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
@@ -518,7 +524,7 @@ export function DocumentWorkflow({
   }, [assembleMarkdown, placeholderValues, templateAlias, client, onDocumentGenerated]);
 
   return (
-    <div className="max-w-4xl mx-auto p-4 space-y-4 pb-12">
+    <div className="max-w-4xl mx-auto px-10 py-5 space-y-4 pb-12">
       {/* Header */}
       <div className="flex items-center gap-3">
         <button

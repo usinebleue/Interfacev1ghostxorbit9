@@ -518,7 +518,7 @@ export function DeepResonanceDemo({
 
       {/* Scrollable content — lots of space, calm pacing */}
       <div ref={scrollRef} className="flex-1 overflow-auto">
-        <div className="max-w-2xl mx-auto p-6 space-y-6 pb-16">
+        <div className="max-w-2xl mx-auto px-10 py-5 space-y-6 pb-16">
           {/* ===== STAGE 0 — Start button ===== */}
           {stage === 0 && (
             <div className="flex justify-center py-24">

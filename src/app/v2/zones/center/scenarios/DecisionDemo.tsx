@@ -471,6 +471,7 @@ export function DecisionDemo({ onComplete, onTransition: onTransitionProp }: {
     setIntroTyped(false);
   };
 
+  // TODO: migrate to PageLayout (needs scrollRef support)
   return (
     <div className="h-full flex flex-col bg-gray-50">
       {/* Header */}
@@ -496,7 +497,7 @@ export function DecisionDemo({ onComplete, onTransition: onTransitionProp }: {
       </div>
 
       {/* Content */}
-      <div ref={scrollRef} className="flex-1 overflow-auto px-4 py-4 space-y-4">
+      <div ref={scrollRef} className="flex-1 overflow-auto px-10 py-5 space-y-4">
 
         {/* Stage 0 — Start button */}
         {stage === 0 && (

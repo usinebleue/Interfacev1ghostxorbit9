@@ -7,8 +7,8 @@
  */
 
 import {
-  ArrowLeft, Newspaper, Calendar, Globe,
-  Bot, Hand, Store, Briefcase,
+  Newspaper, Calendar, Globe,
+  Bot, Store, Briefcase,
 } from "lucide-react";
 import { cn } from "../../../../components/ui/utils";
 import { useFrameMaster } from "../../../context/FrameMasterContext";
@@ -22,7 +22,8 @@ import { EvenementsPage } from "./EvenementsPage";
 import { TrgIndustriePage } from "./TrgIndustriePage";
 import { PageTypePage } from "./PageTypePage";
 import { JumelageLivePage } from "./JumelageLivePage";
-import { CarlOSPresence } from "../CarlOSPresence";
+import { PageLayout } from "../layouts/PageLayout";
+import { PageHeader } from "../layouts/PageHeader";
 
 // ── Groupes de sections avec sous-tabs ──
 
@@ -111,63 +112,49 @@ export function Orbit9DetailView() {
   // Determine which sub-tabs to show (same pattern for both TRG and Marketplace)
   const activeTabs = isTrg ? TRG_TABS : isMarketplace ? MARKETPLACE_TABS : null;
 
+  // Pick icon based on section group
+  const headerIcon = isMarketplace ? Store : isTrg ? Globe : Briefcase;
+  const headerIconColor = isMarketplace ? "text-orange-500" : isTrg ? "text-blue-600" : "text-indigo-600";
+
   return (
-    <div className="h-full flex flex-col overflow-hidden">
-      {/* Header — barre d'action du Canvas */}
-      <div className="bg-white border-b px-4 py-3 shrink-0">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setActiveView("department")}
-            className="text-gray-400 hover:text-gray-600 cursor-pointer p-1 rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </button>
-          <div className="flex items-center gap-2">
-            {isMarketplace && <Store className="h-4 w-4 text-orange-500" />}
-            <div>
-              <h1 className="text-sm font-bold text-gray-900">
-                {isTrg ? "Mon Industrie" : sectionTitle}
-              </h1>
-              <p className="text-[10px] text-gray-400">
-                {isTrg ? "Statistiques et tendances du secteur manufacturier" : sectionSubtitle}
-              </p>
-            </div>
-          </div>
-
-          {/* Sous-tabs a droite du titre — meme logique pour TRG et Marketplace */}
-          {activeTabs && (
-            <div className="flex gap-1 ml-auto">
-              {activeTabs.map((tab) => {
-                const TIcon = tab.icon;
-                const isActive = tab.id === sectionId;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => navigateOrbit9(tab.id)}
-                    className={cn(
-                      "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
-                      isActive
-                        ? "bg-gray-900 text-white shadow-sm"
-                        : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-                    )}
-                  >
-                    <TIcon className="h-3.5 w-3.5" />
-                    {tab.label}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 overflow-auto">
-        <div className="max-w-5xl mx-auto px-5 py-5">
-          <CarlOSPresence />
-          {renderPage()}
-        </div>
-      </div>
-    </div>
+    <PageLayout
+      maxWidth="5xl"
+      header={
+        <PageHeader
+          icon={headerIcon}
+          iconColor={headerIconColor}
+          title={isTrg ? "Mon Industrie" : sectionTitle}
+          subtitle={isTrg ? "Statistiques et tendances du secteur manufacturier" : sectionSubtitle}
+          onBack={() => setActiveView("department")}
+          rightSlot={
+            activeTabs ? (
+              <>
+                {activeTabs.map((tab) => {
+                  const TIcon = tab.icon;
+                  const isActive = tab.id === sectionId;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => navigateOrbit9(tab.id)}
+                      className={cn(
+                        "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
+                        isActive
+                          ? "bg-gray-900 text-white shadow-sm"
+                          : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                      )}
+                    >
+                      <TIcon className="h-3.5 w-3.5" />
+                      {tab.label}
+                    </button>
+                  );
+                })}
+              </>
+            ) : undefined
+          }
+        />
+      }
+    >
+      {renderPage()}
+    </PageLayout>
   );
 }

@@ -18,6 +18,8 @@ import { cn } from "../../../../components/ui/utils";
 import { Card } from "../../../../components/ui/card";
 import { Badge } from "../../../../components/ui/badge";
 import { Button } from "../../../../components/ui/button";
+import { PageLayout } from "../layouts/PageLayout";
+import { PageHeader } from "../layouts/PageHeader";
 
 export function PageTypePage() {
   const [activeTab, setActiveTab] = useState("ligne-directrice");
@@ -31,37 +33,36 @@ export function PageTypePage() {
   ];
 
   return (
-    <div className="h-full flex flex-col bg-gray-50">
-      {/* Header — gold standard structure */}
-      <div className="bg-white border-b px-4 py-3 shrink-0 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Palette className="h-4 w-4 text-indigo-600" />
-          <div>
-            <div className="text-sm font-bold text-gray-800">Page Type — Normes Graphiques</div>
-            <div className="text-xs text-gray-500">Référence officielle CarlOS</div>
-          </div>
-        </div>
-        <div className="flex gap-1">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                "px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
-                activeTab === tab.id
-                  ? "bg-gray-900 text-white shadow-sm"
-                  : "text-gray-500 hover:bg-gray-100"
-              )}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Contenu scrollable */}
-      <div className="flex-1 overflow-auto">
-        <div className="max-w-4xl mx-auto p-4 space-y-4 pb-12">
+    <PageLayout
+      maxWidth="4xl"
+      showPresence={false}
+      header={
+        <PageHeader
+          icon={Palette}
+          iconColor="text-indigo-600"
+          title="Page Type — Normes Graphiques"
+          subtitle="Référence officielle CarlOS"
+          rightSlot={
+            <>
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
+                    activeTab === tab.id
+                      ? "bg-gray-900 text-white shadow-sm"
+                      : "text-gray-500 hover:bg-gray-100"
+                  )}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </>
+          }
+        />
+      }
+    >
 
           {/* ═══════════════════════════════════════════════════════════════ */}
           {/* ═══ TAB 1 — LIGNE DIRECTRICE ═══ */}
@@ -2370,8 +2371,6 @@ export function PageTypePage() {
             </>
           )}
 
-        </div>
-      </div>
-    </div>
+    </PageLayout>
   );
 }

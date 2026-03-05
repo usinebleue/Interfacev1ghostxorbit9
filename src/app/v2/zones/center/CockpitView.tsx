@@ -6,7 +6,6 @@
  */
 
 import { Card } from "../../../components/ui/card";
-import { ScrollArea } from "../../../components/ui/scroll-area";
 import { cn } from "../../../components/ui/utils";
 import {
   TrendingUp, TrendingDown, DollarSign, Users, FileText, Target,
@@ -21,8 +20,8 @@ import {
 import { BOT_AVATAR } from "../../api/types";
 import { useFrameMaster } from "../../context/FrameMasterContext";
 import { useCanvasActions } from "../../context/CanvasActionContext";
-import { CarlOSPresence } from "./CarlOSPresence";
 import { useBriefings } from "../../api/hooks";
+import { PageLayout } from "./layouts/PageLayout";
 
 /* ============ KPI GAUGE CARD — header gradient ============ */
 function KpiCard({ icon: Icon, label, value, change, changeType, onClick }: {
@@ -872,10 +871,7 @@ export function CockpitView() {
   };
 
   return (
-    <ScrollArea className="h-full">
-      <div className="space-y-3 max-w-5xl mx-auto px-10 py-5">
-
-        <CarlOSPresence />
+    <PageLayout maxWidth="5xl" spacing="space-y-3">
 
         {activeBot ? (
           /* Vue departement — 12 KPIs du bot actif seulement */
@@ -903,7 +899,6 @@ export function CockpitView() {
           </>
         )}
 
-      </div>
-    </ScrollArea>
+    </PageLayout>
   );
 }

@@ -22,11 +22,10 @@ import {
 } from "lucide-react";
 import { Card } from "../../../components/ui/card";
 import { Badge } from "../../../components/ui/badge";
-import { ScrollArea } from "../../../components/ui/scroll-area";
 import { cn } from "../../../components/ui/utils";
 import { useChantiers, useMissions } from "../../api/hooks";
 import { useChatContext } from "../../context/ChatContext";
-import { CarlOSPresence } from "./CarlOSPresence";
+import { PageLayout } from "./layouts/PageLayout";
 
 // ── Config ──
 
@@ -152,10 +151,7 @@ export function MesChantiersView() {
   };
 
   return (
-    <ScrollArea className="h-full">
-      <div className="px-10 py-5 space-y-4 max-w-5xl mx-auto">
-
-        <CarlOSPresence />
+    <PageLayout maxWidth="5xl">
 
         {/* Tabs — miroir sidebar droite */}
         <div className="flex items-center gap-1 border-b border-gray-200">
@@ -388,7 +384,6 @@ export function MesChantiersView() {
           </div>
         )}
 
-      </div>
-    </ScrollArea>
+    </PageLayout>
   );
 }

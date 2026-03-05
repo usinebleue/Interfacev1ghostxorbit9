@@ -8,7 +8,6 @@
 
 import { useState } from "react";
 import {
-  ArrowLeft,
   Bot,
   Target,
   Zap,
@@ -40,7 +39,8 @@ import { Badge } from "../../../components/ui/badge";
 import { cn } from "../../../components/ui/utils";
 import { useFrameMaster } from "../../context/FrameMasterContext";
 import { BOT_AVATAR, BOT_SUBTITLE } from "../../api/types";
-import { CarlOSPresence } from "./CarlOSPresence";
+import { PageLayout } from "./layouts/PageLayout";
+import { PageHeader } from "./layouts/PageHeader";
 
 // ── Archétypes cognitifs ──
 
@@ -310,27 +310,19 @@ export function AgentSettingsView() {
   }
 
   return (
-    <div className="h-full flex flex-col bg-gray-50">
-
-      {/* ── Header compact ── */}
-      <div className="bg-white border-b px-4 py-2 shrink-0">
-        <div className="flex items-center gap-2">
-          <button onClick={() => setActiveView("department")}
-            className="text-gray-400 hover:text-gray-600 cursor-pointer p-1 rounded-lg hover:bg-gray-100">
-            <ArrowLeft className="h-4 w-4" />
-          </button>
-          <div className="text-sm font-bold text-gray-800">Profil Agent AI</div>
-          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300 text-[10px] ml-auto">
+    <PageLayout maxWidth="5xl" spacing="space-y-4" header={
+      <PageHeader
+        icon={Bot}
+        iconColor="text-blue-600"
+        title="Profil Agent AI"
+        onBack={() => setActiveView("department")}
+        rightSlot={
+          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300 text-[9px]">
             En ligne
           </Badge>
-        </div>
-      </div>
-
-      {/* ── Contenu scrollable ── */}
-      <div className="flex-1 overflow-auto">
-        <div className="max-w-5xl mx-auto px-10 py-5 pb-16 space-y-4">
-
-          <CarlOSPresence />
+        }
+      />
+    }>
 
           {/* ══ BANNER — Image standby 16:9 avec overlay identité ══ */}
           <div className="relative rounded-xl overflow-hidden shadow-sm">
@@ -739,8 +731,6 @@ export function AgentSettingsView() {
             </div>
           </div>
 
-        </div>
-      </div>
-    </div>
+    </PageLayout>
   );
 }

@@ -9,14 +9,13 @@ import { useEffect, useState } from "react";
 import { Briefcase, DollarSign, Cpu, Megaphone, Target, Loader2, Settings, Users, Lightbulb, HeartHandshake, Package, ShieldAlert, Scale, Zap } from "lucide-react";
 import { Card } from "../../../components/ui/card";
 import { Badge } from "../../../components/ui/badge";
-import { ScrollArea } from "../../../components/ui/scroll-area";
 import { cn } from "../../../components/ui/utils";
 
 import { useCanvasActions } from "../../context/CanvasActionContext";
 import { useChatContext } from "../../context/ChatContext";
 import { api } from "../../api/client";
 import type { KitActiveResponse } from "../../api/types";
-import { CarlOSPresence } from "./CarlOSPresence";
+import { PageLayout } from "./layouts/PageLayout";
 
 /* ============ BLOCK HEADER — style gradient Bilan de Sante ============ */
 function BlockHeader({ icon: Icon, title, count, gradient }: {
@@ -417,10 +416,7 @@ export function DashboardView() {
   }
 
   return (
-    <ScrollArea className="h-full">
-      <div className="space-y-4 mx-auto px-10 py-5">
-
-        <CarlOSPresence />
+    <PageLayout maxWidth="5xl">
 
         {/* Grille 12 bots Bot Team CarlOS — 4 colonnes, 3 rangées */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
@@ -480,7 +476,6 @@ export function DashboardView() {
             Lancer
           </span>
         </Card>
-      </div>
-    </ScrollArea>
+    </PageLayout>
   );
 }

@@ -4,6 +4,7 @@
  * Animations : thinking steps, typewriter text, bot consulting
  * Sprint A — Frame Master V2
  */
+// TODO: migrate to PageLayout (needs scrollRef support)
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
@@ -1121,7 +1122,7 @@ export function BranchPatternsDemo({ onComplete }: { onComplete?: () => void } =
       </div>
 
       <div ref={scrollRef} className="flex-1 overflow-auto">
-        <div className="max-w-4xl mx-auto p-4 space-y-4 pb-12">
+        <div className="max-w-4xl mx-auto px-10 py-5 space-y-4 pb-12">
 
           {/* ===== STAGE 0 — Start ===== */}
           {stage === 0 && (

@@ -33,45 +33,8 @@ interface SentinelAlert {
   time: string;
 }
 
-// Alertes simulees du Bot Sentinel (BSE)
-// TODO: brancher sur l'API /api/v1/sentinel/alerts
-const SENTINEL_ALERTS: SentinelAlert[] = [
-  {
-    id: "s1",
-    message: "Tentative de connexion suspecte detectee",
-    severity: "critical",
-    dept: "Securite",
-    time: "il y a 12 min",
-  },
-  {
-    id: "s2",
-    message: "Budget marketing depasse de 15%",
-    severity: "warning",
-    dept: "Finance",
-    time: "il y a 34 min",
-  },
-  {
-    id: "s3",
-    message: "Deploiement CTO en attente d'approbation",
-    severity: "warning",
-    dept: "Technologie",
-    time: "il y a 1h",
-  },
-  {
-    id: "s4",
-    message: "Backup base de donnees complete",
-    severity: "resolved",
-    dept: "Systemes",
-    time: "il y a 2h",
-  },
-  {
-    id: "s5",
-    message: "3 contrats en attente de signature",
-    severity: "info",
-    dept: "Legal",
-    time: "il y a 3h",
-  },
-];
+// Alertes Sentinel — vide par defaut, a brancher sur API /api/v1/sentinel/alerts
+const SENTINEL_ALERTS: SentinelAlert[] = [];
 
 const SEVERITY_CONFIG: Record<
   AlertSeverity,
@@ -147,35 +110,41 @@ export function ActiveAgentsPanel() {
 
       <CollapsibleContent>
         <div className="mt-2 space-y-1">
-          {SENTINEL_ALERTS.map((alert) => {
-            const config = SEVERITY_CONFIG[alert.severity];
-            const Icon = config.icon;
-
-            return (
-              <div
-                key={alert.id}
-                className={cn(
-                  "flex items-start gap-2 px-2 py-1.5 rounded text-xs transition-colors cursor-pointer hover:opacity-80",
-                  config.bg
-                )}
-              >
-                <Icon
-                  className={cn("h-3.5 w-3.5 shrink-0 mt-0.5", config.color)}
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="text-gray-700 leading-tight truncate">
-                    {alert.message}
-                  </p>
-                  <p className="text-[10px] text-gray-400 mt-0.5">
-                    {alert.dept} &middot; {alert.time}
-                  </p>
+          {SENTINEL_ALERTS.length === 0 ? (
+            <div className="flex items-center gap-2 px-2 py-2 rounded text-xs bg-green-50">
+              <CheckCircle2 className="h-3.5 w-3.5 text-green-600 shrink-0" />
+              <p className="text-green-700">Aucune alerte — systeme stable</p>
+            </div>
+          ) : (
+            SENTINEL_ALERTS.map((alert) => {
+              const config = SEVERITY_CONFIG[alert.severity];
+              const Icon = config.icon;
+              return (
+                <div
+                  key={alert.id}
+                  className={cn(
+                    "flex items-start gap-2 px-2 py-1.5 rounded text-xs transition-colors cursor-pointer hover:opacity-80",
+                    config.bg
+                  )}
+                >
+                  <Icon
+                    className={cn("h-3.5 w-3.5 shrink-0 mt-0.5", config.color)}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-gray-700 leading-tight truncate">
+                      {alert.message}
+                    </p>
+                    <p className="text-[9px] text-gray-400 mt-0.5">
+                      {alert.dept} &middot; {alert.time}
+                    </p>
+                  </div>
+                  <span
+                    className={cn("w-1.5 h-1.5 rounded-full mt-1.5 shrink-0", config.dot)}
+                  />
                 </div>
-                <span
-                  className={cn("w-1.5 h-1.5 rounded-full mt-1.5 shrink-0", config.dot)}
-                />
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
       </CollapsibleContent>
     </Collapsible>

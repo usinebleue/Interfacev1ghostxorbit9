@@ -164,6 +164,7 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
     downloadFile(md, `pre-rapport-${rapport.profil.nom.replace(/[^a-zA-Z0-9]/g, "-").toLowerCase()}-${Date.now()}.md`, "text/markdown");
   };
 
+  // TODO: migrate to PageLayout (needs scrollRef support)
   return (
     <div className="h-full flex flex-col bg-gray-50">
       {/* Header bar */}
@@ -202,7 +203,7 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
 
       {/* Scrollable content */}
       <div ref={scrollRef} className="flex-1 overflow-auto">
-        <div className="max-w-4xl mx-auto p-4 space-y-4 pb-12">
+        <div className="max-w-4xl mx-auto px-10 py-5 space-y-4 pb-12">
 
           {/* ===== STAGE 0 — Hero card ===== */}
           {stage === 0 && (
