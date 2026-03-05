@@ -240,9 +240,8 @@ export function CenterZone() {
         )}
       </div>
 
-      {/* Overlay: Push Content Panel — DESACTIVE (Carl: "enlever tous les pop-ups, aucun agent ne repond par pop-up") */}
-      {/* Reactiver quand on aura un systeme d'urgences/alertes CarlOS */}
-      {false && pushedContent && !focusData && (
+      {/* Overlay: Push Content Panel — Actif pour Dev Channel (Claude Code → Carl) */}
+      {pushedContent && !focusData && (
         <div className={cn(
           "absolute top-12 right-3 z-50 w-80 max-h-[60vh] animate-in slide-in-from-right-4 duration-300",
           pinnedContent ? "opacity-100" : "opacity-95 hover:opacity-100"
