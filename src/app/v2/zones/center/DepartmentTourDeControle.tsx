@@ -9,13 +9,12 @@ import { ArrowRight, Settings } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import { Card } from "../../../components/ui/card";
 import { Badge } from "../../../components/ui/badge";
-import { ScrollArea } from "../../../components/ui/scroll-area";
 import { cn } from "../../../components/ui/utils";
 import { useFrameMaster } from "../../context/FrameMasterContext";
 import { useCanvasActions } from "../../context/CanvasActionContext";
 import { BOT_AVATAR, BOT_SUBTITLE } from "../../api/types";
 import { DashboardView } from "./DashboardView";
-import { CarlOSPresence } from "./CarlOSPresence";
+import { PageLayout } from "./layouts/PageLayout";
 
 /* ============ BLOCK HEADER — meme style que DashboardView ============ */
 function BlockHeader({ icon: Icon, title, count, gradient }: {
@@ -794,8 +793,7 @@ export function DepartmentTourDeControle() {
   // Fallback si pas de config pour ce departement
   if (!config) {
     return (
-      <ScrollArea className="h-full">
-        <div className="px-10 py-5 max-w-5xl mx-auto">
+      <PageLayout maxWidth="5xl">
           <div className="flex items-center gap-3 bg-gradient-to-r from-slate-50 to-gray-50 border rounded-xl px-4 py-3">
             <div className="w-9 h-9 bg-gray-200 rounded-full flex items-center justify-center">
               <Briefcase className="h-4 w-4 text-gray-500" />
@@ -804,8 +802,7 @@ export function DepartmentTourDeControle() {
               Tour de Controle en cours de configuration pour ce departement.
             </p>
           </div>
-        </div>
-      </ScrollArea>
+      </PageLayout>
     );
   }
 
@@ -832,10 +829,7 @@ export function DepartmentTourDeControle() {
   };
 
   return (
-    <ScrollArea className="h-full">
-      <div className="px-10 py-5 space-y-4 max-w-5xl mx-auto">
-
-        <CarlOSPresence key={activeBotCode} />
+    <PageLayout maxWidth="5xl">
 
         {/* Row 1 : 5 blocs domaine — cliquables → Focus Mode */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
@@ -850,7 +844,6 @@ export function DepartmentTourDeControle() {
             <Bloc key={i} config={bloc} onClick={() => handleBlocClick(bloc)} />
           ))}
         </div>
-      </div>
-    </ScrollArea>
+    </PageLayout>
   );
 }

@@ -1756,7 +1756,7 @@ export function LiveChat({
 
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-auto">
-        <div className={cn(compact ? "px-3 py-4 space-y-3" : "max-w-3xl mx-auto px-4 py-6 space-y-5")}>
+        <div className={cn(compact ? "px-3 py-4 space-y-3" : "max-w-3xl mx-auto px-10 py-5 space-y-5")}>
 
           {/* Empty state + Suggestions Welcome (BLOC 4) */}
           {messages.length === 0 && !isTyping && (

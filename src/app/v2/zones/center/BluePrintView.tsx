@@ -12,7 +12,9 @@
  */
 
 import { useState, useEffect } from "react";
-import { ArrowLeft, Activity, FileText, GitBranch, LayoutGrid, Clock, ArrowRight, Zap, Users, Loader2, AlertCircle } from "lucide-react";
+import { Activity, FileText, GitBranch, LayoutGrid, Clock, ArrowRight, Zap, Users, Loader2, AlertCircle } from "lucide-react";
+import { PageLayout } from "./layouts/PageLayout";
+import { PageHeader } from "./layouts/PageHeader";
 import { Card } from "../../../components/ui/card";
 import { Badge } from "../../../components/ui/badge";
 import { cn } from "../../../components/ui/utils";
@@ -21,7 +23,6 @@ import type { BlueprintSection } from "../../context/FrameMasterContext";
 import { BOT_AVATAR } from "../../api/types";
 import type { TemplateInfo, BureauItem } from "../../api/types";
 import { api } from "../../api/client";
-import { CarlOSPresence } from "./CarlOSPresence";
 
 // ── Sub-tabs config (pattern Orbit9DetailView) ──
 
@@ -435,58 +436,44 @@ export function BluePrintView() {
   const { activeBlueprintSection, navigateBlueprint, setActiveView } = useFrameMaster();
 
   return (
-    <div className="h-full flex flex-col bg-gray-50">
-      {/* Header bar — bg-white border-b (design system) */}
-      <div className="bg-white border-b px-4 py-3 shrink-0">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setActiveView("department")}
-            className="text-gray-400 hover:text-gray-600 cursor-pointer p-1 rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </button>
-          <div className="flex items-center gap-2">
-            <LayoutGrid className="h-4 w-4 text-blue-600" />
-            <div>
-              <div className="text-sm font-bold text-gray-800">Mon Blue Print</div>
-              <div className="text-xs text-muted-foreground">Schema directeur — de l'idee a la realisation</div>
-            </div>
-          </div>
-
-          {/* Sub-tabs a droite (pattern Orbit9DetailView) */}
-          <div className="flex gap-1 ml-auto">
-            {BLUEPRINT_TABS.map((tab) => {
-              const TIcon = tab.icon;
-              const isActive = tab.id === activeBlueprintSection;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => navigateBlueprint(tab.id)}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
-                    isActive
-                      ? "bg-gray-900 text-white shadow-sm"
-                      : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-                  )}
-                >
-                  <TIcon className="h-3.5 w-3.5" />
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Contenu scrollable — design system: max-w-4xl mx-auto p-4 pb-12 */}
-      <div className="flex-1 overflow-auto">
-        <CarlOSPresence />
-        <div className="max-w-4xl mx-auto px-10 py-5 space-y-4 pb-12">
-          {activeBlueprintSection === "live" && <TabLive />}
-          {activeBlueprintSection === "hub" && <TabHub />}
-          {activeBlueprintSection === "pipeline" && <TabPipeline />}
-        </div>
-      </div>
-    </div>
+    <PageLayout
+      maxWidth="4xl"
+      header={
+        <PageHeader
+          icon={LayoutGrid}
+          iconColor="text-blue-600"
+          title="Mon Blue Print"
+          subtitle="Schema directeur — de l'idee a la realisation"
+          onBack={() => setActiveView("department")}
+          rightSlot={
+            <>
+              {BLUEPRINT_TABS.map((tab) => {
+                const TIcon = tab.icon;
+                const isActive = tab.id === activeBlueprintSection;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => navigateBlueprint(tab.id)}
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
+                      isActive
+                        ? "bg-gray-900 text-white shadow-sm"
+                        : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                    )}
+                  >
+                    <TIcon className="h-3.5 w-3.5" />
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </>
+          }
+        />
+      }
+    >
+      {activeBlueprintSection === "live" && <TabLive />}
+      {activeBlueprintSection === "hub" && <TabHub />}
+      {activeBlueprintSection === "pipeline" && <TabPipeline />}
+    </PageLayout>
   );
 }

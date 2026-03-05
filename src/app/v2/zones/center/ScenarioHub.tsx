@@ -29,7 +29,8 @@ import {
 } from "lucide-react";
 import { cn } from "../../../components/ui/utils";
 import { BranchPatternsDemo } from "./BranchPatternsDemo";
-import { CarlOSPresence } from "./CarlOSPresence";
+import { PageLayout } from "./layouts/PageLayout";
+import { PageHeader } from "./layouts/PageHeader";
 import { DebatDemo } from "./scenarios/DebatDemo";
 import { CriseDemo } from "./scenarios/CriseDemo";
 import { BrainstormDemo } from "./scenarios/BrainstormDemo";
@@ -296,68 +297,64 @@ export function ScenarioHub() {
   }
 
   return (
-    <div className="h-full flex flex-col bg-gray-50">
-      <div className="bg-white border-b px-10 py-5 shrink-0">
-        <h1 className="text-lg font-bold text-gray-900">Scenarios de simulation</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          12 modes de réflexion CarlOS — chaque scenario simule un type de discussion avec la Bot Team
-        </p>
-      </div>
-
-      <div className="flex-1 overflow-auto px-10 py-5">
-        <div className="max-w-5xl mx-auto space-y-6">
-
-          <CarlOSPresence />
-
-          {/* === SECTION 1: Flow Client / Fournisseur === */}
-          <div>
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center">
-                <ArrowLeft className="h-4 w-4 text-white rotate-180" />
-              </div>
-              <div>
-                <h2 className="text-sm font-bold text-gray-800">Pipeline Client / Fournisseur</h2>
-                <p className="text-xs text-gray-500">Le flow complet : du diagnostic au cahier de projet livrable</p>
-              </div>
-              <div className="flex items-center gap-1 ml-auto text-[10px] text-gray-400">
-                <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">1</span>
-                <ChevronRight className="h-3 w-3" />
-                <span className="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">2</span>
-                <ChevronRight className="h-3 w-3" />
-                <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">3</span>
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              {FLOW_SCENARIOS.map(s => (
-                <ScenarioCardButton key={s.id} scenario={s} onNavigate={navigateTo} />
-              ))}
-            </div>
+    <PageLayout
+      maxWidth="5xl"
+      spacing="space-y-6"
+      header={
+        <PageHeader
+          icon={GitBranch}
+          iconColor="text-blue-600"
+          title="Scenarios de simulation"
+          subtitle="12 modes de réflexion CarlOS — chaque scenario simule un type de discussion avec la Bot Team"
+        />
+      }
+    >
+      {/* === SECTION 1: Flow Client / Fournisseur === */}
+      <div>
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center">
+            <ArrowLeft className="h-4 w-4 text-white rotate-180" />
           </div>
-
-          {/* === Separator === */}
-          <div className="border-t border-gray-200" />
-
-          {/* === SECTION 2: Modes de reflexion === */}
           <div>
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-600 to-purple-600 flex items-center justify-center">
-                <Brain className="h-4 w-4 text-white" />
-              </div>
-              <div>
-                <h2 className="text-sm font-bold text-gray-800">Modes de reflexion</h2>
-                <p className="text-xs text-gray-500">8+1 outils de reflexion utilisables a tout moment dans le flow</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              {MODE_SCENARIOS.map(s => (
-                <ScenarioCardButton key={s.id} scenario={s} onNavigate={navigateTo} />
-              ))}
-            </div>
+            <h2 className="text-sm font-bold text-gray-800">Pipeline Client / Fournisseur</h2>
+            <p className="text-xs text-gray-500">Le flow complet : du diagnostic au cahier de projet livrable</p>
           </div>
-
+          <div className="flex items-center gap-1 ml-auto text-[9px] text-gray-400">
+            <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">1</span>
+            <ChevronRight className="h-3.5 w-3.5" />
+            <span className="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">2</span>
+            <ChevronRight className="h-3.5 w-3.5" />
+            <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">3</span>
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-4">
+          {FLOW_SCENARIOS.map(s => (
+            <ScenarioCardButton key={s.id} scenario={s} onNavigate={navigateTo} />
+          ))}
         </div>
       </div>
-    </div>
+
+      {/* === Separator === */}
+      <div className="border-t border-gray-200" />
+
+      {/* === SECTION 2: Modes de reflexion === */}
+      <div>
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-600 to-purple-600 flex items-center justify-center">
+            <Brain className="h-4 w-4 text-white" />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold text-gray-800">Modes de reflexion</h2>
+            <p className="text-xs text-gray-500">8+1 outils de reflexion utilisables a tout moment dans le flow</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-4">
+          {MODE_SCENARIOS.map(s => (
+            <ScenarioCardButton key={s.id} scenario={s} onNavigate={navigateTo} />
+          ))}
+        </div>
+      </div>
+    </PageLayout>
   );
 }
 

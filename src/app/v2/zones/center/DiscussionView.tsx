@@ -10,6 +10,8 @@ import { cn } from "../../../components/ui/utils";
 import { useChatContext } from "../../context/ChatContext";
 import { useFrameMaster } from "../../context/FrameMasterContext";
 import type { Thread } from "../../api/types";
+import { PageLayout } from "./layouts/PageLayout";
+import { PageHeader } from "./layouts/PageHeader";
 
 // Map bot code → emoji + name (miroir de LiveChat BOT_COLORS)
 const BOT_META: Record<string, { emoji: string; name: string; color: string }> = {
@@ -190,30 +192,23 @@ export function DiscussionView() {
   };
 
   return (
-    <div className="h-full flex flex-col bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b px-4 py-3 shrink-0 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <MessageSquare className="h-4 w-4 text-blue-600" />
-          <div>
-            <div className="text-sm font-bold text-gray-800">Mes Missions</div>
-            <div className="text-xs text-gray-400">
-              {total === 0 ? "Aucune mission" : `${total} mission${total !== 1 ? "s" : ""} · ${activeThreads.length} active${activeThreads.length !== 1 ? "s" : ""}`}
-            </div>
-          </div>
-        </div>
-        <button
-          onClick={() => { newConversation(); goToChat(); }}
-          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer font-medium"
-        >
-          <PlusCircle className="h-3.5 w-3.5" />
-          Nouvelle mission
-        </button>
-      </div>
-
-      {/* Contenu */}
-      <div className="flex-1 overflow-auto">
-        <div className="max-w-2xl mx-auto p-4 space-y-6 pb-12">
+    <PageLayout maxWidth="2xl" showPresence={false} spacing="space-y-6" header={
+      <PageHeader
+        icon={MessageSquare}
+        iconColor="text-blue-600"
+        title="Mes Missions"
+        subtitle={total === 0 ? "Aucune mission" : `${total} mission${total !== 1 ? "s" : ""} · ${activeThreads.length} active${activeThreads.length !== 1 ? "s" : ""}`}
+        rightSlot={
+          <button
+            onClick={() => { newConversation(); goToChat(); }}
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer font-medium"
+          >
+            <PlusCircle className="h-3.5 w-3.5" />
+            Nouvelle mission
+          </button>
+        }
+      />
+    }>
 
           {total === 0 && (
             <div className="text-center py-16 text-gray-400">
@@ -306,8 +301,6 @@ export function DiscussionView() {
               </div>
             </section>
           )}
-        </div>
-      </div>
-    </div>
+    </PageLayout>
   );
 }

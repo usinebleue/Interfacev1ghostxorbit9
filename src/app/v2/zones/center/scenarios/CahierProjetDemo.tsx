@@ -238,7 +238,7 @@ export function CahierProjetDemo({ onTransition }: { onTransition?: (target: str
   return (
     <div
       ref={scrollRef}
-      className="flex flex-col gap-4 p-4 max-h-[calc(100vh-120px)] overflow-y-auto"
+      className="flex flex-col gap-4 px-10 py-5 max-h-[calc(100vh-120px)] overflow-y-auto"
     >
       {/* ===== STAGE 0: Hero card ===== */}
       {stage >= 0 && (

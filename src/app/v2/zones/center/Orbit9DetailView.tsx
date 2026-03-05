@@ -7,7 +7,7 @@
 
 import { useState } from "react";
 import {
-  ArrowLeft, Search, Handshake, Crown, Rocket, Store, Calendar,
+  Search, Handshake, Crown, Rocket, Store, Calendar,
   Newspaper, Gauge, Globe, Users, TrendingUp, Shield, Zap,
   CheckCircle2, Clock, DollarSign, Target, Star, ArrowRight,
   BarChart3, Building2, Factory, Wrench, GraduationCap, Network,
@@ -23,6 +23,8 @@ import { useFrameMaster } from "../../context/FrameMasterContext";
 import { Card } from "../../../components/ui/card";
 import { Badge } from "../../../components/ui/badge";
 import { Button } from "../../../components/ui/button";
+import { PageLayout } from "./layouts/PageLayout";
+import { PageHeader } from "./layouts/PageHeader";
 
 // ── Sections Orbit9 (sidebar direct) + TRG Industries (section separee) ──
 
@@ -1332,59 +1334,50 @@ export function Orbit9DetailView() {
   const isTrg = TRG_SECTIONS.has(sectionId);
   const sectionTitle = SECTION_TITLES[sectionId] || "Orbit9";
 
+  const headerIcon = isTrg ? Globe : Briefcase;
+  const headerIconColor = isTrg ? "text-blue-600" : "text-indigo-600";
+
   return (
-    <div className="h-full flex flex-col overflow-hidden">
-      {/* Header */}
-      <div className="bg-white border-b px-4 py-3 shrink-0">
-        <div className="flex items-center gap-3 mb-1">
-          <button
-            onClick={() => setActiveView("department")}
-            className="text-gray-400 hover:text-gray-600 cursor-pointer p-1 rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </button>
-          <div>
-            <h1 className="text-sm font-bold text-gray-900">
-              {isTrg ? "Mon Industrie" : sectionTitle}
-            </h1>
-            <p className="text-[10px] text-gray-400">
-              {isTrg ? "Statistiques et tendances du secteur manufacturier" : "Mon Reseau"}
-            </p>
-          </div>
-        </div>
-
-        {/* Sous-tabs — seulement pour TRG Industries */}
-        {isTrg && (
-          <div className="flex gap-1 mt-2">
-            {TRG_TABS.map((tab) => {
-              const TIcon = tab.icon;
-              const isActive = tab.id === sectionId;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => navigateOrbit9(tab.id)}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
-                    isActive
-                      ? "bg-gray-900 text-white shadow-sm"
-                      : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-                  )}
-                >
-                  <TIcon className="h-3.5 w-3.5" />
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 overflow-auto">
-        <div className="max-w-5xl mx-auto px-10 py-5">
-          <Renderer />
-        </div>
-      </div>
-    </div>
+    <PageLayout
+      maxWidth="5xl"
+      showPresence={false}
+      header={
+        <>
+          <PageHeader
+            icon={headerIcon}
+            iconColor={headerIconColor}
+            title={isTrg ? "Mon Industrie" : sectionTitle}
+            subtitle={isTrg ? "Statistiques et tendances du secteur manufacturier" : "Mon Reseau"}
+            onBack={() => setActiveView("department")}
+          />
+          {/* Sous-tabs — seulement pour TRG Industries */}
+          {isTrg && (
+            <div className="flex gap-1 mt-2">
+              {TRG_TABS.map((tab) => {
+                const TIcon = tab.icon;
+                const isActive = tab.id === sectionId;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => navigateOrbit9(tab.id)}
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
+                      isActive
+                        ? "bg-gray-900 text-white shadow-sm"
+                        : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                    )}
+                  >
+                    <TIcon className="h-3.5 w-3.5" />
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </>
+      }
+    >
+      <Renderer />
+    </PageLayout>
   );
 }

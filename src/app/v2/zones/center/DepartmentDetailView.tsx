@@ -841,7 +841,7 @@ export function DepartmentDetailView() {
         </TabsContent>
 
         {/* Tab Reglages */}
-        <TabsContent value="settings" className="flex-1 p-4 mt-0 overflow-auto">
+        <TabsContent value="settings" className="flex-1 px-10 py-5 mt-0 overflow-auto">
           <div className="max-w-2xl mx-auto space-y-4">
             <Card className="p-4">
               <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">

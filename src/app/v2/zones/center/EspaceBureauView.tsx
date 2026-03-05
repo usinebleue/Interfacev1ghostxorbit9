@@ -1686,7 +1686,7 @@ function TemplatesPage() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="max-w-4xl mx-auto px-10 py-5 space-y-4 pb-12">
       <BandeauProactif message={`${templates.length} templates disponibles — generez vos documents en un clic.`} section="templates" />
 
       {/* Filtre par categorie */}
@@ -1812,8 +1812,9 @@ export function EspaceBureauView() {
     }
   };
 
+  // TODO: migrate to PageLayout (each sub-tab has its own scroll container — special structure)
   return (
-    <div className="h-full flex flex-col overflow-hidden">
+    <div className="h-full flex flex-col overflow-hidden bg-gray-50">
       {/* Header — barre d'action du Canvas (pattern Orbit9DetailView) */}
       <div className="bg-white border-b px-4 py-3 shrink-0">
         <div className="flex items-center gap-3">

@@ -4,7 +4,7 @@
  * Sprint B — B.1 cristallisation live
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ChevronDown,
   ChevronRight,
@@ -17,6 +17,8 @@ import {
   Trash2,
   Maximize2,
 } from "lucide-react";
+import { api } from "../../api/client";
+import type { BureauItem, PlaneTache } from "../../api/types";
 import {
   Collapsible,
   CollapsibleContent,
@@ -54,23 +56,18 @@ export function MonEspace() {
     setOpenItems((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  // Mock data pour les sections (demo — a remplacer par API)
-  const mockProjets = [
-    { id: "p1", titre: "Expansion Ontario", status: "En cours", bot: "BCS", date: "2026-02-27" },
-    { id: "p2", titre: "Nouveau produit composite", status: "Planification", bot: "BPO", date: "2026-02-25" },
-    { id: "p3", titre: "Migration ERP", status: "En attente", bot: "BCT", date: "2026-02-20" },
-  ];
-  const mockDocuments = [
-    { id: "d1", titre: "Cahier SMART — Expansion ON", type: "PDF", date: "2026-02-27" },
-    { id: "d2", titre: "Analyse financiere Q1", type: "XLSX", date: "2026-02-26" },
-    { id: "d3", titre: "Plan marketing 2026", type: "PDF", date: "2026-02-24" },
-  ];
-  const mockTaches = [
-    { id: "t1", titre: "Valider soumission ABC Corp", urgence: "haute", bot: "BCF", deadline: "Aujourd'hui" },
-    { id: "t2", titre: "Revoir contrat fournisseur", urgence: "moyenne", bot: "BLE", deadline: "Demain" },
-    { id: "t3", titre: "Approuver budget formation", urgence: "basse", bot: "BHR", deadline: "5 mars" },
-    { id: "t4", titre: "Mettre a jour pricing Q2", urgence: "moyenne", bot: "BRO", deadline: "3 mars" },
-  ];
+  // Donnees reelles depuis API
+  const [projets, setProjets] = useState<BureauItem[]>([]);
+  const [documents, setDocuments] = useState<BureauItem[]>([]);
+  const [taches, setTaches] = useState<PlaneTache[]>([]);
+
+  useEffect(() => {
+    api.listBureauItems("projet").then((r) => setProjets(r.items)).catch(() => {});
+    api.listBureauItems("document").then((r) => setDocuments(r.items)).catch(() => {});
+    api.listTaches().then((r) => setTaches(r.taches)).catch(() => {});
+  }, []);
+
+  // Outils statiques (pas encore en DB)
   const mockOutils = [
     { id: "o1", titre: "Calculateur ROI", description: "Estimer le retour sur investissement" },
     { id: "o2", titre: "Estimateur TRS/OEE", description: "Taux de rendement synthetique" },
@@ -80,9 +77,9 @@ export function MonEspace() {
   // Count items per section — crystals go into "idees"
   const sectionCounts: Record<string, number> = {
     idees: crystals.length,
-    projets: mockProjets.length,
-    documents: mockDocuments.length,
-    taches: mockTaches.length,
+    projets: projets.length,
+    documents: documents.length,
+    taches: taches.length,
     outils: mockOutils.length,
   };
   const totalItems = Object.values(sectionCounts).reduce((a, b) => a + b, 0);
@@ -175,46 +172,55 @@ export function MonEspace() {
                         ))
                       )
                     ) : section.id === "projets" ? (
-                      mockProjets.map((p) => (
-                        <div key={p.id} onClick={() => navigateEspace("projets")} className="text-xs py-1.5 border-l-2 border-blue-200 pl-2 hover:border-blue-500 hover:text-gray-900 transition-colors cursor-pointer">
-                          <div className="font-medium text-gray-800 truncate">{p.titre}</div>
-                          <div className="text-[10px] text-gray-400 mt-0.5 flex items-center gap-1.5">
-                            <span className={cn(
-                              "px-1 py-0.5 rounded text-[9px] font-medium",
-                              p.status === "En cours" ? "bg-blue-100 text-blue-700" :
-                              p.status === "Planification" ? "bg-amber-100 text-amber-700" :
-                              "bg-gray-100 text-gray-500"
-                            )}>{p.status}</span>
-                            <span>{p.bot}</span>
+                      projets.length === 0 ? (
+                        <p className="text-[9px] text-gray-400 py-1">{section.emptyMessage}</p>
+                      ) : (
+                        projets.slice(0, 5).map((p) => (
+                          <div key={p.id} onClick={() => navigateEspace("projets")} className="text-xs py-1.5 border-l-2 border-blue-200 pl-2 hover:border-blue-500 hover:text-gray-900 transition-colors cursor-pointer">
+                            <div className="font-medium text-gray-800 truncate">{p.titre}</div>
+                            <div className="text-[9px] text-gray-400 mt-0.5 flex items-center gap-1.5">
+                              <span className={cn(
+                                "px-1 py-0.5 rounded text-[9px] font-medium",
+                                p.status === "actif" ? "bg-blue-100 text-blue-700" :
+                                p.status === "planification" ? "bg-amber-100 text-amber-700" :
+                                "bg-gray-100 text-gray-500"
+                              )}>{p.status}</span>
+                              {p.bot && <span>{p.bot}</span>}
+                            </div>
                           </div>
-                        </div>
-                      ))
+                        ))
+                      )
                     ) : section.id === "documents" ? (
-                      mockDocuments.map((d) => (
-                        <div key={d.id} onClick={() => navigateEspace("documents")} className="text-xs py-1.5 border-l-2 border-green-200 pl-2 hover:border-green-500 hover:text-gray-900 transition-colors cursor-pointer">
-                          <div className="font-medium text-gray-800 truncate">{d.titre}</div>
-                          <div className="text-[10px] text-gray-400 mt-0.5">
-                            {d.type} — {d.date}
+                      documents.length === 0 ? (
+                        <p className="text-[9px] text-gray-400 py-1">{section.emptyMessage}</p>
+                      ) : (
+                        documents.slice(0, 5).map((d) => (
+                          <div key={d.id} onClick={() => navigateEspace("documents")} className="text-xs py-1.5 border-l-2 border-green-200 pl-2 hover:border-green-500 hover:text-gray-900 transition-colors cursor-pointer">
+                            <div className="font-medium text-gray-800 truncate">{d.titre}</div>
+                            <div className="text-[9px] text-gray-400 mt-0.5">
+                              {new Date(d.created_at).toLocaleDateString("fr-CA")}
+                            </div>
                           </div>
-                        </div>
-                      ))
+                        ))
+                      )
                     ) : section.id === "taches" ? (
-                      mockTaches.map((t) => (
-                        <div key={t.id} onClick={() => navigateEspace("taches")} className="text-xs py-1.5 border-l-2 pl-2 hover:text-gray-900 transition-colors cursor-pointer" style={{
-                          borderColor: t.urgence === "haute" ? "#ef4444" : t.urgence === "moyenne" ? "#f59e0b" : "#d1d5db"
-                        }}>
-                          <div className="font-medium text-gray-800 truncate">{t.titre}</div>
-                          <div className="text-[10px] text-gray-400 mt-0.5 flex items-center gap-1.5">
-                            <span className={cn(
-                              "px-1 py-0.5 rounded text-[9px] font-medium",
-                              t.urgence === "haute" ? "bg-red-100 text-red-700" :
-                              t.urgence === "moyenne" ? "bg-amber-100 text-amber-700" :
-                              "bg-gray-100 text-gray-500"
-                            )}>{t.deadline}</span>
-                            <span>{t.bot}</span>
+                      taches.length === 0 ? (
+                        <p className="text-[9px] text-gray-400 py-1">{section.emptyMessage}</p>
+                      ) : (
+                        taches.slice(0, 5).map((t) => (
+                          <div key={t.id} onClick={() => navigateEspace("taches")} className="text-xs py-1.5 border-l-2 border-purple-200 pl-2 hover:border-purple-500 hover:text-gray-900 transition-colors cursor-pointer">
+                            <div className="font-medium text-gray-800 truncate">{t.name}</div>
+                            <div className="text-[9px] text-gray-400 mt-0.5 flex items-center gap-1.5">
+                              <span className={cn(
+                                "px-1 py-0.5 rounded text-[9px] font-medium",
+                                t.priority === "urgent" ? "bg-red-100 text-red-700" :
+                                t.priority === "high" ? "bg-amber-100 text-amber-700" :
+                                "bg-gray-100 text-gray-500"
+                              )}>{t.priority}</span>
+                            </div>
                           </div>
-                        </div>
-                      ))
+                        ))
+                      )
                     ) : section.id === "outils" ? (
                       mockOutils.map((o) => (
                         <div key={o.id} onClick={() => navigateEspace("outils")} className="text-xs py-1.5 border-l-2 border-orange-200 pl-2 hover:border-orange-500 hover:text-gray-900 transition-colors cursor-pointer">

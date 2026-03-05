@@ -5,7 +5,6 @@
  */
 
 import { Badge } from "../../../components/ui/badge";
-import { ScrollArea } from "../../../components/ui/scroll-area";
 import { Card } from "../../../components/ui/card";
 import { cn } from "../../../components/ui/utils";
 import {
@@ -29,7 +28,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { useCanvasActions } from "../../context/CanvasActionContext";
-import { CarlOSPresence } from "./CarlOSPresence";
+import { PageLayout } from "./layouts/PageLayout";
 
 /* ============ VITAA DATA ============ */
 const VITAA = [
@@ -118,10 +117,7 @@ export function HealthView() {
   };
 
   return (
-    <ScrollArea className="h-full">
-      <div className="max-w-5xl mx-auto px-10 py-5 space-y-2.5 pb-12">
-
-        <CarlOSPresence />
+    <PageLayout maxWidth="5xl" spacing="space-y-2.5">
 
         {/* ── 4 KPI cards ── */}
         <div className="grid grid-cols-4 gap-2.5">
@@ -343,7 +339,6 @@ export function HealthView() {
           </div>
         </div>
 
-      </div>
-    </ScrollArea>
+    </PageLayout>
   );
 }

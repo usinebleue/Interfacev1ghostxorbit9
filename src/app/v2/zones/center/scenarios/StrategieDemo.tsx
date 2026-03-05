@@ -861,6 +861,7 @@ export function StrategieDemo({
     setCeoIntroDone(false);
   };
 
+  // TODO: migrate to PageLayout (needs scrollRef support)
   return (
     <div className="h-full flex flex-col bg-gray-50">
       {/* Header bar */}
@@ -886,7 +887,7 @@ export function StrategieDemo({
 
       {/* Scrollable content */}
       <div ref={scrollRef} className="flex-1 overflow-auto">
-        <div className="max-w-4xl mx-auto p-4 space-y-4 pb-12">
+        <div className="max-w-4xl mx-auto px-10 py-5 space-y-4 pb-12">
           {/* ===== STAGE 0 — Start button ===== */}
           {stage === 0 && (
             <div className="flex justify-center py-16">
