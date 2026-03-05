@@ -22,9 +22,12 @@ import { SidebarLeft } from "../zones/sidebar-left/SidebarLeft";
 import { CenterZone } from "../zones/center/CenterZone";
 import { SidebarRight } from "../zones/sidebar-right/SidebarRight";
 import { FrameMasterMobile } from "./FrameMasterMobile";
+import { useGlassesEvents } from "../hooks/useGlassesEvents";
 
 export function FrameMaster() {
   const isMobile = useIsMobile();
+  // Poll glasses push events (Ray-Ban Meta → frontend canvas actions)
+  useGlassesEvents(1, true);
   const {
     leftSidebarCollapsed,
     setLeftCollapsed,
