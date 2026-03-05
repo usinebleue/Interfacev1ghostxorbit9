@@ -1926,3 +1926,215 @@ export function useCahierPdf() {
 
   return { jobId, status, loading, generate, downloadUrl };
 }
+
+// ══════════════════════════════════════════════
+// useDiagnostic — GET/POST /diagnostic
+// ══════════════════════════════════════════════
+
+export function useDiagnostic() {
+  const [diagnostic, setDiagnostic] = useState<import("./types").DiagnosticResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetch = useCallback(async (clientSlug = "usine-bleue") => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await api.getDiagnostic(clientSlug);
+      setDiagnostic(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur diagnostic");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const create = useCallback(async (clientSlug = "usine-bleue", type = "express") => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await api.createDiagnostic({ client_slug: clientSlug, type });
+      setDiagnostic(data);
+      return data;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur creation diagnostic");
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  return { diagnostic, loading, error, fetch, create };
+}
+
+// ══════════════════════════════════════════════
+// useCalendar — GET/POST /calendar/*
+// ══════════════════════════════════════════════
+
+export function useCalendar() {
+  const [events, setEvents] = useState<import("./types").CalendarEvent[]>([]);
+  const [slots, setSlots] = useState<import("./types").CalendarFreeSlot[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchToday = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await api.calendarToday();
+      setEvents(data.events || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Calendrier indisponible");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const fetchFree = useCallback(async (date?: string) => {
+    setLoading(true);
+    try {
+      const data = await api.calendarFree(date);
+      setSlots(data.slots || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur creneaux");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const create = useCallback(async (req: import("./types").CalendarCreateRequest) => {
+    setLoading(true);
+    try {
+      const ev = await api.calendarCreate(req);
+      setEvents(prev => [...prev, ev]);
+      return ev;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur creation evenement");
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  return { events, slots, loading, error, fetchToday, fetchFree, create };
+}
+
+// ══════════════════════════════════════════════
+// usePhone — phone outbound + active room + SMS
+// ══════════════════════════════════════════════
+
+export function usePhone() {
+  const [activeRoom, setActiveRoom] = useState<import("./types").PhoneActiveRoomResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const checkActiveRoom = useCallback(async () => {
+    try {
+      const data = await api.phoneActiveRoom();
+      setActiveRoom(data);
+      return data;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur telephone");
+      return null;
+    }
+  }, []);
+
+  const callOutbound = useCallback(async (to: string, botCode = "BCO") => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await api.phoneOutbound({ to, bot_code: botCode });
+      return data;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur appel sortant");
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const sendSms = useCallback(async (to: string, body: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await api.smsSend({ to, body });
+      return data;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur SMS");
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  return { activeRoom, loading, error, checkActiveRoom, callOutbound, sendSms };
+}
+
+// ══════════════════════════════════════════════
+// useOrbit9Qualification — GET/POST /orbit9/qualification/{id}
+// ══════════════════════════════════════════════
+
+export function useOrbit9Qualification(memberId: number | null) {
+  const [state, setState] = useState<import("./types").QualificationState | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetch = useCallback(async () => {
+    if (!memberId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await api.orbit9QualificationGet(memberId);
+      setState(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur qualification");
+    } finally {
+      setLoading(false);
+    }
+  }, [memberId]);
+
+  useEffect(() => {
+    if (memberId) fetch();
+  }, [memberId, fetch]);
+
+  const advance = useCallback(async () => {
+    if (!memberId) return null;
+    setLoading(true);
+    try {
+      const data = await api.orbit9QualificationAdvance(memberId);
+      setState(data);
+      return data;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur avancement");
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, [memberId]);
+
+  return { state, loading, error, fetch, advance };
+}
+
+// ══════════════════════════════════════════════
+// useCommandDetect — POST /command/detect
+// ══════════════════════════════════════════════
+
+export function useCommandDetect() {
+  const [result, setResult] = useState<import("./types").CommandDetectResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const detect = useCallback(async (message: string) => {
+    setLoading(true);
+    try {
+      const data = await api.commandDetect(message);
+      setResult(data);
+      return data;
+    } catch {
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  return { result, loading, detect };
+}

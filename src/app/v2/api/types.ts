@@ -1088,3 +1088,103 @@ export const CREDO_PHASES: { id: CREDOPhase; label: string; color: string }[] =
     { id: "D", label: "Demontrer", color: "bg-green-500" },
     { id: "O", label: "Obtenir", color: "bg-red-500" },
   ];
+
+// --- Diagnostic (GET/POST /diagnostic) ---
+
+export interface DiagnosticRequest {
+  user_id?: number;
+  client_slug?: string;
+  type?: string;
+}
+
+export interface DiagnosticResponse {
+  id?: number;
+  client_slug: string;
+  type: string;
+  scores: Record<string, number>;
+  triangle_feu: string;
+  recommandations: string[];
+  created_at?: string;
+}
+
+// --- Calendar (3 endpoints) ---
+
+export interface CalendarEvent {
+  id?: string;
+  summary: string;
+  start: string;
+  end: string;
+  description?: string;
+  location?: string;
+}
+
+export interface CalendarFreeSlot {
+  start: string;
+  end: string;
+  duration_minutes: number;
+}
+
+export interface CalendarCreateRequest {
+  summary: string;
+  start: string;
+  end: string;
+  description?: string;
+  attendees?: string[];
+}
+
+// --- Phone / SMS ---
+
+export interface PhoneOutboundRequest {
+  to: string;
+  bot_code?: string;
+  user_id?: number;
+}
+
+export interface PhoneOutboundResponse {
+  status: string;
+  room_name?: string;
+  call_sid?: string;
+}
+
+export interface PhoneActiveRoomResponse {
+  active: boolean;
+  room_name?: string;
+  bot_code?: string;
+  started_at?: string;
+}
+
+export interface SmsRequest {
+  to: string;
+  body: string;
+  user_id?: number;
+}
+
+export interface SmsResponse {
+  status: string;
+  message_sid?: string;
+}
+
+// --- Orbit9 Qualification ---
+
+export interface QualificationState {
+  member_id: number;
+  current_step: number;
+  total_steps: number;
+  steps_completed: string[];
+  steps_remaining: string[];
+  completed: boolean;
+}
+
+// --- Command Detect ---
+
+export interface CommandDetectRequest {
+  message: string;
+  user_id?: number;
+}
+
+export interface CommandDetectResponse {
+  command_active: boolean;
+  urgency: string;
+  scan_bots: string[];
+  raison: string;
+}
