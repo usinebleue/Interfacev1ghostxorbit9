@@ -9,14 +9,12 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import {
-  ArrowLeft,
   Sparkles,
   FolderKanban,
   FileText,
   Wrench,
   CheckSquare,
   CalendarDays,
-  Briefcase,
   Search,
   Plus,
   Upload,
@@ -39,6 +37,14 @@ import {
   ChevronRight,
   Eye,
   PenLine,
+  Calculator,
+  Zap,
+  Ruler,
+  DollarSign,
+  BarChart3,
+  Package,
+  Gauge,
+  Scale,
 } from "lucide-react";
 import { Card } from "../../../components/ui/card";
 import { Badge } from "../../../components/ui/badge";
@@ -56,7 +62,7 @@ import type { EspaceSection } from "../../context/FrameMasterContext";
 import { useChatContext } from "../../context/ChatContext";
 import { BOT_AVATAR } from "../../api/types";
 import type { BureauItemCreate, PlaneTacheCreate, TemplatePreview } from "../../api/types";
-import { useBureau, useTaches, useTemplates, useCahierPdf } from "../../api/hooks";
+import { useBureau, useTaches, useTemplates, useIdees } from "../../api/hooks";
 import { api } from "../../api/client";
 import { CarlOSPresence } from "../center/CarlOSPresence";
 import { DocumentWorkflow } from "../center/DocumentWorkflow";
@@ -65,12 +71,10 @@ import { DocumentWorkflow } from "../center/DocumentWorkflow";
 
 const ESPACE_TABS: { id: EspaceSection; label: string; icon: React.ElementType }[] = [
   { id: "idees", label: "Idees", icon: Sparkles },
-  { id: "projets", label: "Projets", icon: FolderKanban },
   { id: "documents", label: "Documents", icon: FileText },
   { id: "outils", label: "Outils", icon: Wrench },
   { id: "taches", label: "Taches", icon: CheckSquare },
   { id: "agenda", label: "Agenda", icon: CalendarDays },
-  { id: "templates", label: "Templates", icon: FileText },
 ];
 
 // ── Tag color helper ──
@@ -125,6 +129,44 @@ const TEMPLATE_COLORS: Record<string, string> = {
   "Legal": "from-indigo-600 to-indigo-500",
   "Innovation": "from-violet-600 to-violet-500",
   "Diagnostic": "from-cyan-600 to-cyan-500",
+};
+
+// Mapping categorie template → bot code (pour avatar)
+const CAT_TO_BOT: Record<string, string> = {
+  "CEO": "BCO", "CTO": "BCT", "CFO": "BCF", "CMO": "BCM",
+  "CSO": "BCS", "COO": "BOO", "FACTORY": "BFA", "INTERNE-UB": "BCO",
+};
+
+// ── Bot gradients + labels (pattern Pipeline — MesChantiersView) ──
+
+const BOT_GRADIENTS: Record<string, string> = {
+  BCO: "from-blue-600 to-blue-500",
+  BCT: "from-violet-600 to-violet-500",
+  BCF: "from-emerald-600 to-emerald-500",
+  BCM: "from-pink-600 to-pink-500",
+  BCS: "from-red-600 to-red-500",
+  BOO: "from-orange-600 to-orange-500",
+  BFA: "from-amber-600 to-amber-500",
+  BHR: "from-teal-600 to-teal-500",
+  BIO: "from-rose-600 to-rose-500",
+  BRO: "from-amber-600 to-amber-500",
+  BLE: "from-indigo-600 to-indigo-500",
+  BSE: "from-gray-600 to-gray-500",
+};
+
+const BOT_LABELS: Record<string, { label: string; short: string }> = {
+  BCO: { label: "CarlOS", short: "CEO" },
+  BCT: { label: "Thierry", short: "CTO" },
+  BCF: { label: "Francois", short: "CFO" },
+  BCM: { label: "Martine", short: "CMO" },
+  BCS: { label: "Sophie", short: "CSO" },
+  BOO: { label: "Olivier", short: "COO" },
+  BFA: { label: "Fabien", short: "CPO" },
+  BHR: { label: "Helene", short: "CHRO" },
+  BIO: { label: "Ines", short: "CINO" },
+  BRO: { label: "Raphael", short: "CRO" },
+  BLE: { label: "Louise", short: "CLO" },
+  BSE: { label: "Sebastien", short: "CISO" },
 };
 
 const FILE_ICONS: Record<string, React.ElementType> = {
@@ -723,194 +765,150 @@ function EmptyState({ icon: Icon, text, sub }: { icon: React.ElementType; text: 
 }
 
 // ══════════════════════════════════════════
-// LISTING PAGE (Idees, Projets, Outils)
+// IDEES PAGE — Style Pipeline harmonisé
 // ══════════════════════════════════════════
 
-function ListingPage({ section }: { section: EspaceSection }) {
-  const { crystals, addCrystal } = useChatContext();
+function IdeesPage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [showAddDialog, setShowAddDialog] = useState(false);
   const [showAddIdeeDialog, setShowAddIdeeDialog] = useState(false);
+  const [botFilter, setBotFilter] = useState<string | null>(null);
+  const ideesHook = useIdees();
 
-  const projetsHook = useBureau("projet");
-  const outilsHook = useBureau("outil");
-
-  const handleCreateBureau = async (data: BureauItemCreate) => {
-    if (section === "projets") {
-      await projetsHook.createItem(data);
-    } else if (section === "outils") {
-      await outilsHook.createItem(data);
-    }
+  const handleAddIdee = async (titre: string, contenu: string) => {
+    await ideesHook.create({ titre, contenu: contenu || titre, source: "Manuel", bot: "BCO" });
   };
 
-  const handleAddIdee = (titre: string, contenu: string) => {
-    addCrystal({
-      titre,
-      contenu: contenu || titre,
-      source: "Manuel",
-      bot: "BCO",
-      mode: "brainstorm",
-      tags: ["manuel"],
-    });
-  };
+  const allIdees = ideesHook.idees;
+  const idees = botFilter ? allIdees.filter(c => c.bot === botFilter) : allIdees;
 
-  // Build config per section
-  const getConfig = () => {
-    if (section === "idees") {
-      return {
-        color: "amber",
-        headerGradient: "from-amber-600 to-amber-500",
-        loading: false,
-        error: null as string | null,
-        items: crystals.map((c) => ({
-          id: c.id,
-          titre: c.titre,
-          description: c.contenu.slice(0, 120),
-          bot: c.bot,
-          date: new Date(c.date).toLocaleDateString("fr-CA"),
-          tags: [c.mode || "brainstorm"],
-        })),
-      };
-    } else if (section === "projets") {
-      return {
-        color: "blue",
-        headerGradient: "from-blue-600 to-blue-500",
-        loading: projetsHook.loading,
-        error: projetsHook.error,
-        items: projetsHook.items.map((p) => ({
-          id: String(p.id),
-          titre: p.titre,
-          description: p.description,
-          bot: p.bot || undefined,
-          date: p.created_at ? new Date(p.created_at).toLocaleDateString("fr-CA") : undefined,
-          tags: p.tags.length > 0 ? p.tags : [p.status || "actif"],
-        })),
-      };
-    } else {
-      return {
-        color: "orange",
-        headerGradient: "from-orange-600 to-orange-500",
-        loading: outilsHook.loading,
-        error: outilsHook.error,
-        items: outilsHook.items.map((o) => ({
-          id: String(o.id),
-          titre: o.titre,
-          description: o.description,
-          bot: o.bot || undefined,
-          tags: o.tags.length > 0 ? o.tags : [],
-        })),
-      };
-    }
-  };
-
-  const config = getConfig();
-
-  const bandeauMessages: Record<string, string> = {
-    idees: crystals.length > 0
-      ? `${crystals.length} idee${crystals.length > 1 ? "s" : ""} cristallisee${crystals.length > 1 ? "s" : ""} depuis vos conversations. Explorez ou relancez un sujet.`
-      : "Cristallisez des reponses de CarlOS pour les retrouver ici. Cliquez sur l'icone cristal dans le LiveChat.",
-    projets: config.items.length > 0
-      ? `${config.items.length} projet${config.items.length > 1 ? "s" : ""} dans votre bureau.`
-      : "Creez votre premier projet pour commencer a organiser votre travail.",
-    outils: config.items.length > 0
-      ? `${config.items.length} outil${config.items.length > 1 ? "s" : ""} disponible${config.items.length > 1 ? "s" : ""}.`
-      : "Ajoutez des outils pour retrouver vos calculateurs et templates.",
-  };
+  // Compteurs par bot pour les filter pills
+  const botCounts = allIdees.reduce((acc, c) => {
+    const b = c.bot || "BCO";
+    acc[b] = (acc[b] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+  const activeBots = Object.keys(botCounts).sort();
 
   return (
     <div className="max-w-4xl mx-auto px-10 py-5 space-y-4 pb-12">
-      {(section === "idees" || section === "projets") && (
-        <BandeauProactif message={bandeauMessages[section]} section={section} />
-      )}
       <SearchBar
-        placeholder={`Rechercher dans ${section === "idees" ? "les idees" : section === "projets" ? "les projets" : "les outils"}...`}
+        placeholder="Rechercher dans les idees..."
         viewMode={viewMode}
-        onToggleView={() => setViewMode((v) => (v === "grid" ? "list" : "grid"))}
-        onAdd={() => section === "idees" ? setShowAddIdeeDialog(true) : setShowAddDialog(true)}
-        addLabel={section === "idees" ? "Idee" : section === "projets" ? "Projet" : "Outil"}
+        onToggleView={() => setViewMode(v => v === "grid" ? "list" : "grid")}
+        onAdd={() => setShowAddIdeeDialog(true)}
+        addLabel="Idee"
       />
 
-      {config.error && <ErrorBanner message={config.error} />}
-      {config.loading ? (
+      {/* Filter pills par bot (pattern Pipeline) */}
+      {activeBots.length > 1 && (
+        <div className="flex gap-1.5 flex-wrap">
+          <button
+            onClick={() => setBotFilter(null)}
+            className={cn("text-[9px] px-2.5 py-1 rounded-full font-medium transition-all cursor-pointer flex items-center gap-1",
+              !botFilter ? "bg-gray-900 text-white" : "text-gray-500 bg-gray-100 hover:bg-gray-200")}
+          >
+            Toutes ({allIdees.length})
+          </button>
+          {activeBots.map(bot => {
+            const avatar = BOT_AVATAR[bot];
+            const info = BOT_LABELS[bot];
+            return (
+              <button key={bot} onClick={() => setBotFilter(bot === botFilter ? null : bot)}
+                className={cn("text-[9px] px-2.5 py-1 rounded-full font-medium transition-all cursor-pointer flex items-center gap-1",
+                  botFilter === bot ? "bg-gray-900 text-white" : "text-gray-500 bg-gray-100 hover:bg-gray-200")}
+              >
+                {avatar && <img src={avatar} alt={bot} className="w-3.5 h-3.5 rounded-full object-cover" />}
+                {info?.label || bot} ({botCounts[bot]})
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {ideesHook.loading ? (
         <LoadingSpinner />
-      ) : config.items.length === 0 ? (
+      ) : idees.length === 0 ? (
         <EmptyState
-          icon={section === "idees" ? Sparkles : section === "projets" ? FolderKanban : Wrench}
-          text="Aucun element pour l'instant"
-          sub={section === "idees" ? "Cristallisez des reponses ou ajoutez une idee manuellement" : "Cliquez sur + pour ajouter"}
+          icon={Sparkles}
+          text={botFilter ? "Aucune idee de cet agent" : "Aucune idee pour l'instant"}
+          sub="Discutez avec CarlOS — vos idees seront classees ici automatiquement"
         />
       ) : viewMode === "grid" ? (
-        /* ── Vue grille ── */
-        <div className="grid grid-cols-3 gap-2.5">
-          {config.items.map((item) => (
-            <Card key={item.id} className="p-0 overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
-              <div className={cn("px-3 py-2 bg-gradient-to-r", config.headerGradient)}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    {section === "idees" && <Sparkles className="h-3.5 w-3.5 text-white" />}
-                    {section === "projets" && <FolderKanban className="h-3.5 w-3.5 text-white" />}
-                    {section === "outils" && <Wrench className="h-3.5 w-3.5 text-white" />}
-                    <span className="text-[10px] font-medium text-white/80 uppercase">{section.slice(0, -1)}</span>
-                  </div>
-                  {item.bot && (
-                    <Badge className="text-[9px] bg-white/20 text-white border-0">{item.bot}</Badge>
-                  )}
-                </div>
-              </div>
-              <div className="p-3">
-                <h3 className="text-xs font-bold text-gray-800 truncate">{item.titre}</h3>
-                {item.description && (
-                  <p className="text-[10px] text-gray-500 mt-1 line-clamp-2">{item.description}</p>
-                )}
-                <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                  {item.tags.map((tag) => (
-                    <span key={tag} className={cn("text-[9px] px-1.5 py-0.5 rounded font-medium", TAG_COLORS[tag] || "bg-gray-100 text-gray-600")}>
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-                {item.date && (
-                  <div className="flex items-center gap-1 mt-2 text-[10px] text-gray-400">
-                    <Clock className="h-3 w-3" />
-                    {item.date}
-                  </div>
-                )}
-              </div>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        /* ── Vue liste ── */
-        <div className="space-y-1.5">
-          {config.items.map((item) => {
-            const SectionIcon = section === "idees" ? Sparkles : section === "projets" ? FolderKanban : Wrench;
-            const iconBg = section === "idees" ? "bg-amber-50" : section === "projets" ? "bg-blue-50" : "bg-orange-50";
-            const iconColor = section === "idees" ? "text-amber-600" : section === "projets" ? "text-blue-600" : "text-orange-600";
+        /* ── Vue grille — gradient header par bot (pattern Pipeline) ── */
+        <div className="grid grid-cols-2 gap-3">
+          {idees.map(c => {
+            const bot = c.bot || "BCO";
+            const gradient = BOT_GRADIENTS[bot] || "from-amber-600 to-amber-500";
+            const avatar = BOT_AVATAR[bot];
+            const info = BOT_LABELS[bot];
+            const tags = c.tags && c.tags.length > 0 ? c.tags : [c.mode || "brainstorm"];
+            const date = c.created_at ? new Date(c.created_at).toLocaleDateString("fr-CA", { day: "numeric", month: "short" }) : "";
             return (
-              <Card key={item.id} className="p-3 hover:shadow-md transition-shadow cursor-pointer">
-                <div className="flex items-center gap-3">
-                  <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", iconBg)}>
-                    <SectionIcon className={cn("h-4 w-4", iconColor)} />
-                  </div>
+              <Card key={c.id} className="p-0 overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
+                <div className={cn("bg-gradient-to-r px-3 py-2.5 flex items-center gap-2.5", gradient)}>
+                  {avatar ? (
+                    <img src={avatar} alt={bot} className="w-7 h-7 rounded-lg object-cover border-2 border-white/30 shrink-0" />
+                  ) : (
+                    <div className="w-7 h-7 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
+                      <Sparkles className="h-3.5 w-3.5 text-white" />
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-xs font-bold text-gray-800 truncate">{item.titre}</h3>
-                    {item.description && (
-                      <p className="text-[10px] text-gray-500 mt-0.5 truncate">{item.description}</p>
-                    )}
+                    <span className="text-xs font-bold text-white">{info?.label || bot}</span>
+                    <span className="text-[9px] text-white/60 ml-1.5">{info?.short}</span>
                   </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    {item.tags.map((tag) => (
+                  {date && <span className="text-[9px] text-white/60">{date}</span>}
+                </div>
+                <div className="p-3 space-y-1.5">
+                  <h3 className="text-xs font-bold text-gray-800 line-clamp-2">{c.titre}</h3>
+                  {c.contenu && (
+                    <p className="text-[9px] text-gray-500 line-clamp-2">{(c.contenu || "").slice(0, 120)}</p>
+                  )}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {tags.map(tag => (
                       <span key={tag} className={cn("text-[9px] px-1.5 py-0.5 rounded font-medium", TAG_COLORS[tag] || "bg-gray-100 text-gray-600")}>
                         {tag}
                       </span>
                     ))}
                   </div>
-                  {item.bot && (
-                    <Badge variant="outline" className="text-[9px] shrink-0">{item.bot}</Badge>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      ) : (
+        /* ── Vue liste — avatar bot + badges (pattern Pipeline) ── */
+        <div className="space-y-1.5">
+          {idees.map(c => {
+            const bot = c.bot || "BCO";
+            const avatar = BOT_AVATAR[bot];
+            const info = BOT_LABELS[bot];
+            const tags = c.tags && c.tags.length > 0 ? c.tags : [c.mode || "brainstorm"];
+            const date = c.created_at ? new Date(c.created_at).toLocaleDateString("fr-CA", { day: "numeric", month: "short" }) : "";
+            return (
+              <Card key={c.id} className="px-4 py-3 hover:shadow-md transition-shadow cursor-pointer">
+                <div className="flex items-center gap-3">
+                  {avatar ? (
+                    <img src={avatar} alt={bot} className="w-8 h-8 rounded-lg object-cover shrink-0" />
+                  ) : (
+                    <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center shrink-0">
+                      <Sparkles className="h-4 w-4 text-amber-600" />
+                    </div>
                   )}
-                  {item.date && (
-                    <span className="text-[10px] text-gray-400 shrink-0">{item.date}</span>
-                  )}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-xs font-bold text-gray-800 truncate">{c.titre}</h3>
+                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                      <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4">{info?.label || bot}</Badge>
+                      {date && <span className="text-[9px] text-gray-400">{date}</span>}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {tags.map(tag => (
+                      <span key={tag} className={cn("text-[9px] px-1.5 py-0.5 rounded font-medium", TAG_COLORS[tag] || "bg-gray-100 text-gray-600")}>
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </Card>
             );
@@ -918,22 +916,11 @@ function ListingPage({ section }: { section: EspaceSection }) {
         </div>
       )}
 
-      {/* Dialogs */}
-      {(section === "projets" || section === "outils") && (
-        <AddBureauItemDialog
-          open={showAddDialog}
-          onClose={() => setShowAddDialog(false)}
-          type={section === "projets" ? "projet" : "outil"}
-          onCreate={handleCreateBureau}
-        />
-      )}
-      {section === "idees" && (
-        <AddIdeeDialog
-          open={showAddIdeeDialog}
-          onClose={() => setShowAddIdeeDialog(false)}
-          onAdd={handleAddIdee}
-        />
-      )}
+      <AddIdeeDialog
+        open={showAddIdeeDialog}
+        onClose={() => setShowAddIdeeDialog(false)}
+        onAdd={handleAddIdee}
+      />
     </div>
   );
 }
@@ -1091,7 +1078,7 @@ function DocumentsPage() {
   const [docTab, setDocTab] = useState<"generes" | "templates" | "importes">("generes");
   const { items: allDocs, loading, error, uploadFile, refresh: refreshDocs } = useBureau("document");
   const { templates, categories, total: templateTotal, loading: loadingTemplates } = useTemplates();
-  const cahier = useCahierPdf();
+  const [tplCatFilter, setTplCatFilter] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -1177,46 +1164,6 @@ function DocumentsPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-10 py-5 space-y-4 pb-12">
-      <BandeauProactif
-        message={`${allDocs.length} document${allDocs.length !== 1 ? "s" : ""}, ${templateTotal} templates disponibles.`}
-        section="documents"
-      />
-
-      {/* Cahier PDF — generation complete (BLOC 5) */}
-      <Card className="p-3 flex items-center gap-3">
-        <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
-          <FileText className="h-4 w-4 text-blue-600" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="text-xs font-bold text-gray-800">Cahier SMART</h3>
-          <p className="text-[9px] text-gray-400">Generer le cahier complet de votre projet en PDF</p>
-        </div>
-        {cahier.status === "ready" && cahier.downloadUrl ? (
-          <a
-            href={cahier.downloadUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[9px] px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 transition-colors cursor-pointer font-semibold"
-          >
-            Telecharger PDF
-          </a>
-        ) : cahier.status === "generating" ? (
-          <span className="text-[9px] px-3 py-1.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200 font-medium flex items-center gap-1">
-            <Loader2 className="h-3.5 w-3.5 animate-spin" /> Generation...
-          </span>
-        ) : cahier.status === "error" ? (
-          <span className="text-[9px] text-red-500 font-medium">Erreur</span>
-        ) : (
-          <button
-            onClick={() => cahier.generate("usine-bleue")}
-            disabled={cahier.status === "generating"}
-            className="text-[9px] px-3 py-1.5 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer font-semibold disabled:opacity-50"
-          >
-            Generer Cahier
-          </button>
-        )}
-      </Card>
-
       {/* Sub-tabs internes */}
       <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit">
         {DOC_TABS.map((tab) => (
@@ -1237,99 +1184,167 @@ function DocumentsPage() {
 
       {error && <ErrorBanner message={error} />}
 
-      {/* Mes Documents */}
+      {/* Mes Documents — style Pipeline harmonise */}
       {docTab === "generes" && (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {loading ? (
             <LoadingSpinner />
           ) : generes.length === 0 ? (
             <EmptyState icon={FileText} text="Aucun document genere" sub="Les documents generes par CarlOS apparaitront ici" />
           ) : (
-            generes.map((doc) => {
-              const meta = doc.metadata as Record<string, string>;
-              const fileType = meta?.file_type || "PDF";
-              const FIcon = FILE_ICONS[fileType] || FileText;
-              // Documents generes → utiliser /documents/download au lieu de /bureau/download
-              const downloadUrl = meta?.source === "documents_generes" && meta?.file_path
-                ? api.documentDownloadUrl(meta.file_path)
-                : meta?.file_path
-                  ? api.bureauDownloadUrl(meta.file_path)
-                  : null;
-              return (
-                <Card key={doc.id} className="p-3 hover:shadow-md transition-shadow cursor-pointer">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-green-50 flex items-center justify-center shrink-0">
-                      <FIcon className="h-4 w-4 text-green-600" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-xs font-bold text-gray-800 truncate">{doc.titre}</h3>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[10px] text-gray-400">{fileType}</span>
-                        <span className="text-[10px] text-gray-300">|</span>
-                        <span className="text-[10px] text-gray-400">{meta?.taille || ""}</span>
-                        <span className="text-[10px] text-gray-300">|</span>
-                        <span className="text-[10px] text-gray-400">
-                          {doc.created_at ? new Date(doc.created_at).toLocaleDateString("fr-CA") : ""}
-                        </span>
+            <div className="grid grid-cols-2 gap-3">
+              {generes.map((doc) => {
+                const meta = doc.metadata as Record<string, string>;
+                const fileType = meta?.file_type || "PDF";
+                const bot = doc.bot || "BCO";
+                const gradient = BOT_GRADIENTS[bot] || "from-green-600 to-green-500";
+                const avatar = BOT_AVATAR[bot];
+                const info = BOT_LABELS[bot];
+                const downloadUrl = meta?.source === "documents_generes" && meta?.file_path
+                  ? api.documentDownloadUrl(meta.file_path)
+                  : meta?.file_path
+                    ? api.bureauDownloadUrl(meta.file_path)
+                    : null;
+                const date = doc.created_at ? new Date(doc.created_at).toLocaleDateString("fr-CA", { day: "numeric", month: "short" }) : "";
+                return (
+                  <Card key={doc.id} className="p-0 overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
+                    <div className={cn("bg-gradient-to-r px-3 py-2.5 flex items-center gap-2.5", gradient)}>
+                      {avatar ? (
+                        <img src={avatar} alt={bot} className="w-7 h-7 rounded-lg object-cover border-2 border-white/30 shrink-0" />
+                      ) : (
+                        <div className="w-7 h-7 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
+                          <FileText className="h-3.5 w-3.5 text-white" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <span className="text-xs font-bold text-white">{info?.label || bot}</span>
+                        <span className="text-[9px] text-white/60 ml-1.5">{info?.short}</span>
                       </div>
+                      <Badge className="text-[9px] bg-white/20 text-white border-0">{fileType}</Badge>
                     </div>
-                    {doc.bot && (
-                      <Badge className="text-[9px] bg-green-50 text-green-700 border-green-200" variant="outline">{doc.bot}</Badge>
-                    )}
-                    {downloadUrl && (
-                      <a
-                        href={downloadUrl}
-                        className="p-1.5 hover:bg-gray-100 rounded-lg"
-                        title="Telecharger"
-                      >
-                        <Download className="h-3.5 w-3.5 text-gray-400" />
-                      </a>
-                    )}
-                  </div>
-                </Card>
-              );
-            })
+                    <div className="p-3 space-y-1.5">
+                      <h3 className="text-xs font-bold text-gray-800 line-clamp-2">{doc.titre}</h3>
+                      {doc.description && (
+                        <p className="text-[9px] text-gray-500 line-clamp-2">{doc.description}</p>
+                      )}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          {meta?.taille && <span className="text-[9px] text-gray-400">{meta.taille}</span>}
+                          {date && <span className="text-[9px] text-gray-400">{date}</span>}
+                        </div>
+                        {downloadUrl && (
+                          <a
+                            href={downloadUrl}
+                            onClick={(e) => e.stopPropagation()}
+                            className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+                            title="Telecharger"
+                          >
+                            <Download className="h-3.5 w-3.5 text-gray-400" />
+                          </a>
+                        )}
+                      </div>
+                      {doc.tags.length > 0 && (
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {doc.tags.map(tag => (
+                            <span key={tag} className={cn("text-[9px] px-1.5 py-0.5 rounded font-medium", TAG_COLORS[tag] || "bg-gray-100 text-gray-600")}>
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
           )}
         </div>
       )}
 
-      {/* Templates — donnees reelles bridge_documents */}
+      {/* Templates — cartes riches par document (style Pipeline) */}
       {docTab === "templates" && (
         <div className="space-y-3">
           {loadingTemplates ? (
             <LoadingSpinner />
-          ) : templatesByCategory.length === 0 ? (
+          ) : templates.length === 0 ? (
             <EmptyState icon={FileText} text="Aucun template disponible" sub="Les templates seront charges depuis le serveur" />
-          ) : (
-            templatesByCategory.map((cat) => (
-              <Card key={cat.categorie} className="p-0 overflow-hidden">
-                <div className={cn("flex items-center gap-2 px-3 py-2 bg-gradient-to-r", TEMPLATE_COLORS[cat.categorie] || "from-gray-600 to-gray-500")}>
-                  <FileText className="h-4 w-4 text-white" />
-                  <span className="text-sm font-bold text-white">{cat.categorie}</span>
-                  <Badge className="text-[9px] bg-white/20 text-white border-0 ml-auto">{cat.items.length}</Badge>
-                </div>
-                <div className="p-2.5">
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {cat.items.map((t) => (
-                      <button
-                        key={t.alias}
-                        onClick={() => handleTemplateClick(t.alias)}
-                        className="flex items-center gap-2 px-2.5 py-2 rounded-lg text-left bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer border border-gray-100 group"
-                      >
-                        <FileText className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-                        <span className="text-xs text-gray-700 truncate flex-1">{t.nom}</span>
-                        <Eye className="h-3 w-3 text-gray-300 group-hover:text-gray-500 shrink-0" />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </Card>
-            ))
-          )}
+          ) : (<>
+            {/* Filtre pills par agent */}
+            <div className="flex gap-1.5 flex-wrap">
+              <button
+                onClick={() => setTplCatFilter(null)}
+                className={cn("text-[9px] px-2.5 py-1 rounded-full font-medium transition-all cursor-pointer flex items-center gap-1", !tplCatFilter ? "bg-gray-900 text-white" : "text-gray-500 bg-gray-100 hover:bg-gray-200")}
+              >
+                Tous ({templateTotal})
+              </button>
+              {categories.map(cat => {
+                const botCode = CAT_TO_BOT[cat];
+                const avatar = botCode ? BOT_AVATAR[botCode] : null;
+                const info = botCode ? BOT_LABELS[botCode] : null;
+                return (
+                  <button key={cat} onClick={() => setTplCatFilter(cat === tplCatFilter ? null : cat)}
+                    className={cn("text-[9px] px-2.5 py-1 rounded-full font-medium transition-all cursor-pointer flex items-center gap-1", tplCatFilter === cat ? "bg-gray-900 text-white" : "text-gray-500 bg-gray-100 hover:bg-gray-200")}
+                  >
+                    {avatar && <img src={avatar} alt={cat} className="w-3.5 h-3.5 rounded-full object-cover" />}
+                    {info?.label || cat} ({templates.filter(t => t.categorie === cat).length})
+                  </button>
+                );
+              })}
+            </div>
+            {/* Grille cartes individuelles par template */}
+            <div className="grid grid-cols-2 gap-3">
+              {templates.filter(t => !tplCatFilter || t.categorie === tplCatFilter).map((t) => {
+                const botCode = CAT_TO_BOT[t.categorie];
+                const gradient = TEMPLATE_COLORS[t.categorie] || "from-gray-600 to-gray-500";
+                const avatar = botCode ? BOT_AVATAR[botCode] : null;
+                const info = botCode ? BOT_LABELS[botCode] : null;
+                // Extraire un apercu du nom pour donner du contexte
+                const parts = t.nom.split(" — ");
+                const mainTitle = parts[0] || t.nom;
+                const subTitle = parts.length > 1 ? parts.slice(1).join(" — ") : null;
+                return (
+                  <Card
+                    key={t.alias}
+                    className="p-0 overflow-hidden hover:shadow-md transition-shadow cursor-pointer group"
+                    onClick={() => handleTemplateClick(t.alias)}
+                  >
+                    <div className={cn("bg-gradient-to-r px-3 py-2.5 flex items-center gap-2.5", gradient)}>
+                      {avatar ? (
+                        <img src={avatar} alt={t.categorie} className="w-7 h-7 rounded-lg object-cover border-2 border-white/30 shrink-0" />
+                      ) : (
+                        <div className="w-7 h-7 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
+                          <FileText className="h-3.5 w-3.5 text-white" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <span className="text-xs font-bold text-white">{info?.label || t.categorie}</span>
+                        <span className="text-[9px] text-white/60 ml-1.5">{info?.short || ""}</span>
+                      </div>
+                      <Eye className="h-3.5 w-3.5 text-white/40 group-hover:text-white/80 transition-colors shrink-0" />
+                    </div>
+                    <div className="p-3 space-y-1.5">
+                      <h3 className="text-xs font-bold text-gray-800 line-clamp-2">{mainTitle}</h3>
+                      {subTitle && (
+                        <p className="text-[9px] text-gray-500 leading-relaxed">{subTitle}</p>
+                      )}
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-violet-50 text-violet-700 font-medium">{t.categorie}</span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-gray-50 text-gray-500">PDF</span>
+                        <span className="text-[9px] text-gray-400 ml-auto flex items-center gap-0.5 group-hover:text-gray-600 transition-colors">
+                          <ChevronRight className="h-3.5 w-3.5" />
+                          Generer
+                        </span>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          </>)}
         </div>
       )}
 
-      {/* Importes */}
+      {/* Importes — style harmonise */}
       {docTab === "importes" && (
         <div className="space-y-4">
           {/* Upload zone */}
@@ -1337,17 +1352,17 @@ function DocumentsPage() {
             onClick={() => fileInputRef.current?.click()}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
-            className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-blue-400 hover:bg-blue-50/30 transition-colors cursor-pointer"
+            className="border-2 border-dashed border-gray-300 rounded-xl p-5 text-center hover:border-blue-400 hover:bg-blue-50/30 transition-colors cursor-pointer"
           >
             {uploading ? (
-              <Loader2 className="h-8 w-8 text-blue-500 mx-auto mb-2 animate-spin" />
+              <Loader2 className="h-6 w-6 text-blue-500 mx-auto mb-2 animate-spin" />
             ) : (
-              <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+              <Upload className="h-6 w-6 text-gray-400 mx-auto mb-2" />
             )}
-            <p className="text-sm text-gray-600 font-medium">
-              {uploading ? "Telechargement en cours..." : "Glissez vos fichiers ici"}
+            <p className="text-xs text-gray-600 font-medium">
+              {uploading ? "Telechargement en cours..." : "Glissez vos fichiers ici ou cliquez"}
             </p>
-            <p className="text-[10px] text-gray-400 mt-1">PDF, DOCX, XLSX, images — max 50 MB</p>
+            <p className="text-[9px] text-gray-400 mt-1">PDF, DOCX, XLSX, images — max 50 MB</p>
             <input
               ref={fileInputRef}
               type="file"
@@ -1358,51 +1373,49 @@ function DocumentsPage() {
             />
           </div>
 
-          {/* Liste fichiers importes */}
+          {/* Grille fichiers importes — style Pipeline */}
           {loading ? (
             <LoadingSpinner />
           ) : importes.length === 0 ? (
             <EmptyState icon={Upload} text="Aucun fichier importe" sub="Glissez-deposez ou cliquez pour importer" />
           ) : (
-            <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-3">
               {importes.map((doc) => {
                 const meta = doc.metadata as Record<string, string>;
                 const fileType = meta?.file_type || "FILE";
                 const FIcon = FILE_ICONS[fileType] || File;
+                const date = doc.created_at ? new Date(doc.created_at).toLocaleDateString("fr-CA", { day: "numeric", month: "short" }) : "";
                 return (
-                  <Card key={doc.id} className="p-3 hover:shadow-md transition-shadow cursor-pointer">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
-                        <FIcon className="h-4 w-4 text-blue-600" />
+                  <Card key={doc.id} className="p-0 overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
+                    <div className="bg-gradient-to-r from-slate-600 to-slate-500 px-3 py-2.5 flex items-center gap-2.5">
+                      <div className="w-7 h-7 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
+                        <FIcon className="h-3.5 w-3.5 text-white" />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-xs font-bold text-gray-800 truncate">{doc.titre}</h3>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[10px] text-gray-400">{fileType}</span>
-                          <span className="text-[10px] text-gray-300">|</span>
-                          <span className="text-[10px] text-gray-400">{meta?.taille || ""}</span>
-                          <span className="text-[10px] text-gray-300">|</span>
-                          <span className="text-[10px] text-gray-400">
-                            {doc.created_at ? new Date(doc.created_at).toLocaleDateString("fr-CA") : ""}
-                          </span>
+                      <span className="text-xs font-bold text-white flex-1 truncate">{fileType}</span>
+                      {date && <span className="text-[9px] text-white/60">{date}</span>}
+                    </div>
+                    <div className="p-3 space-y-1.5">
+                      <h3 className="text-xs font-bold text-gray-800 line-clamp-2">{doc.titre}</h3>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {meta?.taille && <span className="text-[9px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 font-medium">{meta.taille}</span>}
+                          {doc.tags.map(tag => (
+                            <span key={tag} className={cn("text-[9px] px-1.5 py-0.5 rounded font-medium", TAG_COLORS[tag] || "bg-gray-100 text-gray-600")}>
+                              {tag}
+                            </span>
+                          ))}
                         </div>
+                        {meta?.file_path && (
+                          <a
+                            href={api.bureauDownloadUrl(meta.file_path)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+                            title="Telecharger"
+                          >
+                            <Download className="h-3.5 w-3.5 text-gray-400" />
+                          </a>
+                        )}
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        {doc.tags.map((tag) => (
-                          <span key={tag} className={cn("text-[9px] px-1.5 py-0.5 rounded font-medium", TAG_COLORS[tag] || "bg-gray-100 text-gray-600")}>
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                      {meta?.file_path && (
-                        <a
-                          href={api.bureauDownloadUrl(meta.file_path)}
-                          className="p-1.5 hover:bg-gray-100 rounded-lg"
-                          title="Telecharger"
-                        >
-                          <Download className="h-3.5 w-3.5 text-gray-400" />
-                        </a>
-                      )}
                     </div>
                   </Card>
                 );
@@ -1473,13 +1486,6 @@ function TachesPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-10 py-5 space-y-4 pb-12">
-      <div className="flex items-center justify-between">
-        <BandeauProactif
-          message={loading ? "Chargement des taches..." : `${taches.length} tache${taches.length !== 1 ? "s" : ""} ouverte${taches.length !== 1 ? "s" : ""} dans Plane.so`}
-          section="taches"
-        />
-      </div>
-
       <div className="flex justify-end">
         <button
           onClick={() => setShowAddDialog(true)}
@@ -1649,10 +1655,66 @@ function TemplatesPage() {
   const [previewData, setPreviewData] = useState<TemplatePreview | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [generating, setGenerating] = useState<string | null>(null);
+  const [templateTab, setTemplateTab] = useState<"generateur" | "bibliotheque" | "diagnostics">("generateur");
+  const [diagnosticsEnrichis, setDiagnosticsEnrichis] = useState<import("../../api/types").DiagnosticCatalogue[]>([]);
+  const [templatesDoc, setTemplatesDoc] = useState<import("../../api/types").TemplateDocumentaire[]>([]);
+  const [diagFilter, setDiagFilter] = useState<string | null>(null);
+  const [libFilter, setLibFilter] = useState<string | null>(null);
+
+  useEffect(() => {
+    api.listDiagnosticsEnrichis().then(d => setDiagnosticsEnrichis(d || [])).catch(() => {});
+    api.listTemplatesDocumentaires().then(d => setTemplatesDoc(d || [])).catch(() => {});
+  }, []);
 
   const filtered = activeCategory
     ? templates.filter((t) => t.categorie === activeCategory)
     : templates;
+
+  // Group diagnostics by department
+  const DEPT_LABELS: Record<string, { label: string; gradient: string }> = {
+    direction: { label: "Direction (CEO)", gradient: "from-slate-700 to-slate-600" },
+    finance: { label: "Finance (CFO)", gradient: "from-emerald-600 to-teal-500" },
+    technologie: { label: "Technologie (CTO)", gradient: "from-blue-700 to-indigo-600" },
+    marketing: { label: "Marketing (CMO)", gradient: "from-fuchsia-600 to-pink-500" },
+    strategie: { label: "Strategie (CSO)", gradient: "from-violet-700 to-purple-600" },
+    operations: { label: "Operations (COO)", gradient: "from-orange-600 to-orange-500" },
+    production: { label: "Production (CPO)", gradient: "from-slate-600 to-slate-500" },
+    rh: { label: "RH (CHRO)", gradient: "from-teal-600 to-teal-500" },
+    innovation: { label: "Innovation (CINO)", gradient: "from-rose-600 to-rose-500" },
+    ventes: { label: "Ventes (CRO)", gradient: "from-amber-600 to-amber-500" },
+    legal: { label: "Legal (CLO)", gradient: "from-indigo-600 to-indigo-500" },
+    securite: { label: "Securite (CISO)", gradient: "from-zinc-700 to-zinc-600" },
+  };
+
+  const INDUSTRIE_LABELS: Record<string, string> = {
+    manufacturier: "Manufacturier",
+    agroalimentaire: "Agroalimentaire",
+    construction: "Construction",
+    services: "Services professionnels",
+    distribution: "Distribution",
+    technologie: "Technologie / SaaS",
+    ressources: "Ressources naturelles",
+    sante: "Sante / Sciences de la vie",
+    transport: "Transport / Logistique",
+    social: "Economie sociale",
+  };
+
+  const diagDepts = [...new Set(diagnosticsEnrichis.map(d => d.departement))];
+
+  const filteredDiag = diagFilter
+    ? diagnosticsEnrichis.filter(d => d.departement === diagFilter)
+    : diagnosticsEnrichis;
+
+  // Bibliotheque: group by department
+  const LIB_DEPT_MAP: Record<string, string> = {
+    BCO: "direction", BCT: "technologie", BCF: "finance", BCM: "marketing",
+    BCS: "strategie", BOO: "operations", BFA: "production", BHR: "rh",
+    BIO: "innovation", BRO: "ventes", BLE: "legal", BSE: "securite",
+  };
+  const libDepts = [...new Set(templatesDoc.map(t => t.departement))];
+  const filteredLib = libFilter
+    ? templatesDoc.filter(t => t.departement === libFilter)
+    : templatesDoc;
 
   const handlePreview = async (alias: string) => {
     const data = await previewTemplate(alias);
@@ -1687,8 +1749,183 @@ function TemplatesPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-10 py-5 space-y-4 pb-12">
-      <BandeauProactif message={`${templates.length} templates disponibles — generez vos documents en un clic.`} section="templates" />
+      {/* Tab switcher: Generateur | Bibliotheque | Diagnostics */}
+      <div className="flex gap-2 border-b border-gray-100 pb-2">
+        <button
+          onClick={() => setTemplateTab("generateur")}
+          className={cn(
+            "text-xs px-3 py-1.5 rounded-t-lg font-medium transition-colors cursor-pointer",
+            templateTab === "generateur" ? "bg-blue-50 text-blue-700 border-b-2 border-blue-600" : "text-gray-500 hover:bg-gray-50"
+          )}
+        >
+          <div className="flex items-center gap-1.5">
+            <Download className="h-3.5 w-3.5" />
+            Generateur ({templates.length})
+          </div>
+        </button>
+        <button
+          onClick={() => setTemplateTab("bibliotheque")}
+          className={cn(
+            "text-xs px-3 py-1.5 rounded-t-lg font-medium transition-colors cursor-pointer",
+            templateTab === "bibliotheque" ? "bg-violet-50 text-violet-700 border-b-2 border-violet-600" : "text-gray-500 hover:bg-gray-50"
+          )}
+        >
+          <div className="flex items-center gap-1.5">
+            <FileText className="h-3.5 w-3.5" />
+            Bibliotheque ({templatesDoc.length})
+          </div>
+        </button>
+        <button
+          onClick={() => setTemplateTab("diagnostics")}
+          className={cn(
+            "text-xs px-3 py-1.5 rounded-t-lg font-medium transition-colors cursor-pointer",
+            templateTab === "diagnostics" ? "bg-cyan-50 text-cyan-700 border-b-2 border-cyan-600" : "text-gray-500 hover:bg-gray-50"
+          )}
+        >
+          <div className="flex items-center gap-1.5">
+            <Search className="h-3.5 w-3.5" />
+            Diagnostics ({diagnosticsEnrichis.length})
+          </div>
+        </button>
+      </div>
 
+      {/* ── DIAGNOSTICS TAB ── */}
+      {templateTab === "diagnostics" && (
+        <div className="space-y-4">
+          {/* Filtres par departement */}
+          <div className="flex gap-1.5 flex-wrap">
+            <button
+              onClick={() => setDiagFilter(null)}
+              className={cn("text-[9px] px-2.5 py-1 rounded-full font-medium transition-all cursor-pointer", !diagFilter ? "bg-gray-900 text-white" : "text-gray-500 bg-gray-100 hover:bg-gray-200")}
+            >
+              Tous ({diagnosticsEnrichis.length})
+            </button>
+            {diagDepts.map(dept => (
+              <button key={dept} onClick={() => setDiagFilter(dept === diagFilter ? null : dept)}
+                className={cn("text-[9px] px-2.5 py-1 rounded-full font-medium transition-all cursor-pointer", diagFilter === dept ? "bg-gray-900 text-white" : "text-gray-500 bg-gray-100 hover:bg-gray-200")}
+              >
+                {DEPT_LABELS[dept]?.label || dept} ({diagnosticsEnrichis.filter(d => d.departement === dept).length})
+              </button>
+            ))}
+          </div>
+
+          {/* Grille diagnostics enrichis */}
+          <div className="grid grid-cols-2 gap-3">
+            {filteredDiag.map(diag => {
+              const deptCfg = DEPT_LABELS[diag.departement];
+              const gradient = diag.gradient || deptCfg?.gradient || "from-gray-500 to-gray-600";
+              const dpCount = diag.data_points?.length || 0;
+              return (
+                <Card key={diag.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                  <div className={cn("bg-gradient-to-r px-3 py-2.5", gradient)}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] font-bold text-white/70 uppercase">{deptCfg?.label || diag.departement}</span>
+                      {dpCount > 0 && <span className="text-[9px] bg-white/20 text-white px-1.5 py-0.5 rounded-full">{dpCount} indicateurs</span>}
+                    </div>
+                    <p className="text-xs font-semibold text-white mt-0.5 truncate">{diag.titre}</p>
+                  </div>
+                  <div className="px-3 py-2.5 space-y-2">
+                    <p className="text-[9px] text-gray-500 line-clamp-2 leading-relaxed">{diag.description}</p>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-50 text-cyan-700 font-medium">{diag.duree_minutes} min</span>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-gray-50 text-gray-500">{diag.nb_questions} questions</span>
+                      <span className="text-[9px] text-gray-400 ml-auto">{diag.bot_primaire}</span>
+                    </div>
+                    {diag.valeur_potentielle && (
+                      <p className="text-[9px] text-emerald-600 leading-relaxed line-clamp-1">
+                        {diag.valeur_potentielle}
+                      </p>
+                    )}
+                    {diag.gaps_typiques && diag.gaps_typiques.length > 0 && (
+                      <div className="text-[9px] text-amber-600 bg-amber-50 rounded px-2 py-1">
+                        Gap: {diag.gaps_typiques[0].gap.slice(0, 80)}...
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+          {filteredDiag.length === 0 && (
+            <EmptyState icon={Search} text="Aucun diagnostic" sub="Les diagnostics seront charges depuis le serveur" />
+          )}
+        </div>
+      )}
+
+      {/* ── BIBLIOTHEQUE TAB ── */}
+      {templateTab === "bibliotheque" && (
+        <div className="space-y-4">
+          {/* Filtres par departement */}
+          <div className="flex gap-1.5 flex-wrap">
+            <button
+              onClick={() => setLibFilter(null)}
+              className={cn("text-[9px] px-2.5 py-1 rounded-full font-medium transition-all cursor-pointer", !libFilter ? "bg-gray-900 text-white" : "text-gray-500 bg-gray-100 hover:bg-gray-200")}
+            >
+              Tous ({templatesDoc.length})
+            </button>
+            {libDepts.map(dept => {
+              const deptKey = LIB_DEPT_MAP[dept] || dept.toLowerCase();
+              return (
+                <button key={dept} onClick={() => setLibFilter(dept === libFilter ? null : dept)}
+                  className={cn("text-[9px] px-2.5 py-1 rounded-full font-medium transition-all cursor-pointer", libFilter === dept ? "bg-gray-900 text-white" : "text-gray-500 bg-gray-100 hover:bg-gray-200")}
+                >
+                  {DEPT_LABELS[deptKey]?.label || dept} ({templatesDoc.filter(t => t.departement === dept).length})
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Grille templates documentaires */}
+          <div className="grid grid-cols-2 gap-3">
+            {filteredLib.map(tpl => {
+              const deptKey = LIB_DEPT_MAP[tpl.departement] || tpl.departement.toLowerCase();
+              const deptCfg = DEPT_LABELS[deptKey];
+              const gradient = deptCfg?.gradient || "from-gray-500 to-gray-600";
+              const nbSections = tpl.sections?.length || 0;
+              return (
+                <Card key={tpl.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                  <div className={cn("bg-gradient-to-r px-3 py-2.5", gradient)}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] font-bold text-white/70 uppercase">{deptCfg?.label || tpl.departement}</span>
+                      <span className="text-[9px] bg-white/20 text-white px-1.5 py-0.5 rounded-full">{tpl.categorie}</span>
+                    </div>
+                    <p className="text-xs font-semibold text-white mt-0.5 truncate">{tpl.titre}</p>
+                  </div>
+                  <div className="px-3 py-2.5 space-y-2">
+                    <p className="text-[9px] text-gray-500 line-clamp-2 leading-relaxed">{tpl.description}</p>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-violet-50 text-violet-700 font-medium">{tpl.pages_estimees} pages</span>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-gray-50 text-gray-500">{tpl.frequence}</span>
+                      {nbSections > 0 && <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600">{nbSections} sections</span>}
+                    </div>
+                    {tpl.sections && tpl.sections.length > 0 && (
+                      <div className="text-[9px] text-gray-400 leading-relaxed">
+                        {tpl.sections.slice(0, 3).map((s, i) => (
+                          <span key={i}>{i > 0 ? " · " : ""}{s.titre_section}</span>
+                        ))}
+                        {tpl.sections.length > 3 && <span className="text-gray-300"> +{tpl.sections.length - 3}</span>}
+                      </div>
+                    )}
+                    {tpl.tags && tpl.tags.length > 0 && (
+                      <div className="flex gap-1 flex-wrap">
+                        {tpl.tags.slice(0, 3).map(tag => (
+                          <span key={tag} className="text-[9px] text-gray-400">{tag}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+          {filteredLib.length === 0 && (
+            <EmptyState icon={FileText} text="Aucun template" sub="Les templates documentaires seront charges depuis le serveur" />
+          )}
+        </div>
+      )}
+
+      {/* ── GENERATEUR TAB ── */}
+      {templateTab === "generateur" && (<>
       {/* Filtre par categorie */}
       <div className="flex gap-1.5 flex-wrap">
         <button
@@ -1757,6 +1994,8 @@ function TemplatesPage() {
         </div>
       )}
 
+      </>)}
+
       {/* Preview Dialog */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-auto">
@@ -1785,22 +2024,177 @@ function TemplatesPage() {
 }
 
 // ══════════════════════════════════════════
+// OUTILS PAGE — Calculateurs manufacturiers intégrés
+// ══════════════════════════════════════════
+
+const OUTILS_MANUFACTURIERS = [
+  {
+    id: "oee",
+    titre: "Calculateur OEE / TRS",
+    description: "Mesure le Taux de Rendement Synthetique: disponibilite x performance x qualite. Benchmarks World Class (85%+) et analyse des 6 grandes pertes.",
+    icon: Gauge,
+    bot: "BFA",
+    color: "from-emerald-600 to-emerald-500",
+    iconBg: "bg-emerald-50",
+    iconColor: "text-emerald-600",
+    tags: ["production", "performance"],
+    prompt: "Je veux calculer mon OEE (TRS). Guide-moi etape par etape pour entrer ma disponibilite, performance et qualite.",
+  },
+  {
+    id: "roi",
+    titre: "Calculateur ROI automatisation",
+    description: "Calcule le retour sur investissement d'un projet d'automatisation: payback, VAN, TRI, flux de tresorerie sur 5 ans.",
+    icon: BarChart3,
+    bot: "BFA",
+    color: "from-blue-600 to-blue-500",
+    iconBg: "bg-blue-50",
+    iconColor: "text-blue-600",
+    tags: ["finance", "automatisation"],
+    prompt: "Je veux calculer le ROI d'un projet d'automatisation. Guide-moi pour entrer l'investissement, les gains annuels et la duree.",
+  },
+  {
+    id: "materiaux",
+    titre: "Prix des materiaux industriels",
+    description: "Reference des prix: acier (HRC, CRC, inox 304/316), aluminium (6061, 7075), cuivre, laiton, titane, plastiques techniques.",
+    icon: Package,
+    bot: "BFA",
+    color: "from-amber-600 to-amber-500",
+    iconBg: "bg-amber-50",
+    iconColor: "text-amber-600",
+    tags: ["matieres-premieres", "approvisionnement"],
+    prompt: "Montre-moi les prix de reference des materiaux industriels. J'ai besoin de comparer les couts.",
+  },
+  {
+    id: "convertir",
+    titre: "Convertisseur d'unites industrielles",
+    description: "40+ conversions: longueur (mm/in), poids (kg/lb), pression (psi/bar), temperature, couple, debit, vitesse, puissance.",
+    icon: Ruler,
+    bot: "BFA",
+    color: "from-violet-600 to-violet-500",
+    iconBg: "bg-violet-50",
+    iconColor: "text-violet-600",
+    tags: ["conversion", "unites"],
+    prompt: "J'ai besoin de convertir des unites industrielles. Quelles conversions sont disponibles?",
+  },
+  {
+    id: "energie",
+    titre: "Calculateur cout energetique",
+    description: "Estime les couts d'electricite selon les tarifs Hydro-Quebec 2025-2026: tarif G, M et LG avec puissance et consommation.",
+    icon: Zap,
+    bot: "BFA",
+    color: "from-yellow-600 to-yellow-500",
+    iconBg: "bg-yellow-50",
+    iconColor: "text-yellow-600",
+    tags: ["energie", "couts"],
+    prompt: "Je veux calculer mes couts energetiques avec les tarifs Hydro-Quebec. Guide-moi pour entrer ma puissance et ma consommation.",
+  },
+  {
+    id: "gains",
+    titre: "Calculateur de gains manufacturier",
+    description: "Analyse complete des gains potentiels: pertes d'opportunites, capacite, personnel, retention, qualite, volume. Budget et ROI 5 ans.",
+    icon: DollarSign,
+    bot: "BFA",
+    color: "from-green-600 to-green-500",
+    iconBg: "bg-green-50",
+    iconColor: "text-green-600",
+    tags: ["finance", "gains"],
+    prompt: "Je veux analyser les gains potentiels d'un projet manufacturier. Guide-moi a travers les 6 categories de gains.",
+  },
+  {
+    id: "estimation",
+    titre: "Estimateur de couts de projet",
+    description: "Estimation par postes: main-d'oeuvre, materiaux, equipements, sous-traitance. Majoration frais generaux, profit et contingence.",
+    icon: Calculator,
+    bot: "BFA",
+    color: "from-slate-600 to-slate-500",
+    iconBg: "bg-slate-50",
+    iconColor: "text-slate-600",
+    tags: ["estimation", "budget"],
+    prompt: "J'ai besoin d'estimer les couts d'un projet manufacturier. Guide-moi pour batir l'estimation par postes.",
+  },
+  {
+    id: "qualite",
+    titre: "Audit qualite et conformite",
+    description: "Verification de conformite ISO 13485, FDA 21 CFR 820. KPIs qualite: FPY, taux de non-conformite, efficacite CAPA.",
+    icon: Scale,
+    bot: "BFA",
+    color: "from-red-600 to-red-500",
+    iconBg: "bg-red-50",
+    iconColor: "text-red-600",
+    tags: ["qualite", "conformite"],
+    prompt: "Je veux faire un audit qualite de mon processus de production. Quels KPIs et standards devrions-nous verifier?",
+  },
+];
+
+function OutilsPage() {
+  const { navigateToDepartment } = useFrameMaster();
+  const { newConversation, sendMessage } = useChatContext();
+
+  const handleToolClick = (outil: typeof OUTILS_MANUFACTURIERS[0]) => {
+    navigateToDepartment(outil.bot, "live-chat");
+    newConversation();
+    setTimeout(() => {
+      sendMessage(outil.prompt);
+    }, 300);
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto px-10 py-5 space-y-4 pb-12">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {OUTILS_MANUFACTURIERS.map((outil) => {
+          const Icon = outil.icon;
+          return (
+            <Card
+              key={outil.id}
+              className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => handleToolClick(outil)}
+            >
+              {/* Gradient header */}
+              <div className={cn("flex items-center gap-2.5 px-4 py-2.5 bg-gradient-to-r", outil.color)}>
+                <div className="w-7 h-7 bg-white/20 rounded-lg flex items-center justify-center">
+                  <Icon className="h-3.5 w-3.5 text-white" />
+                </div>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-white flex-1 truncate">{outil.titre}</h3>
+                <Badge className="text-[9px] bg-white/20 text-white border-0">Fabien — CPO</Badge>
+              </div>
+              {/* Body */}
+              <div className="px-4 py-3 space-y-2">
+                <p className="text-[9px] text-gray-500 line-clamp-2">{outil.description}</p>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {outil.tags.map((tag) => (
+                    <span key={tag} className={cn("text-[9px] px-1.5 py-0.5 rounded font-medium", TAG_COLORS[tag] || "bg-gray-100 text-gray-600")}>
+                      {tag}
+                    </span>
+                  ))}
+                  <span className="text-[9px] text-gray-400 ml-auto flex items-center gap-0.5">
+                    <ChevronRight className="h-3.5 w-3.5" />
+                    Lancer
+                  </span>
+                </div>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════
 // MAIN VIEW — EspaceBureauView
 // ══════════════════════════════════════════
 
 export function EspaceBureauView() {
-  const { activeEspaceSection, setActiveView, navigateEspace } = useFrameMaster();
+  const { activeEspaceSection, navigateEspace } = useFrameMaster();
 
   const renderPage = () => {
     switch (activeEspaceSection) {
       case "idees":
-        return <ListingPage section="idees" />;
-      case "projets":
-        return <ListingPage section="projets" />;
+        return <IdeesPage />;
       case "documents":
         return <DocumentsPage />;
       case "outils":
-        return <ListingPage section="outils" />;
+        return <OutilsPage />;
       case "taches":
         return <TachesPage />;
       case "agenda":
@@ -1808,58 +2202,80 @@ export function EspaceBureauView() {
       case "templates":
         return <TemplatesPage />;
       default:
-        return <ListingPage section="idees" />;
+        return <IdeesPage />;
     }
   };
 
-  // TODO: migrate to PageLayout (each sub-tab has its own scroll container — special structure)
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-gray-50">
-      {/* Header — barre d'action du Canvas (pattern Orbit9DetailView) */}
-      <div className="bg-white border-b px-4 py-3 shrink-0">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setActiveView("department")}
-            className="text-gray-400 hover:text-gray-600 cursor-pointer p-1 rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </button>
-          <div className="flex items-center gap-2">
-            <Briefcase className="h-4 w-4 text-orange-500" />
-            <div>
-              <h1 className="text-sm font-bold text-gray-900">Mon Espace Bureau</h1>
-              <p className="text-[10px] text-gray-400">Idees, projets, documents, outils, taches et agenda</p>
-            </div>
-          </div>
-
-          {/* Sub-tabs a droite (pattern Orbit9DetailView) */}
-          <div className="flex gap-1 ml-auto">
-            {ESPACE_TABS.map((tab) => {
-              const TIcon = tab.icon;
-              const isActive = tab.id === activeEspaceSection;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => navigateEspace(tab.id)}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
-                    isActive
-                      ? "bg-gray-900 text-white shadow-sm"
-                      : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-                  )}
-                >
-                  <TIcon className="h-3.5 w-3.5" />
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Content */}
+    <div className="h-full flex flex-col bg-gray-50">
       <div className="flex-1 overflow-auto">
         <CarlOSPresence />
+        {/* Navigation Ressources — rectangle gradient (pattern Pionniers) */}
+        <div className="max-w-4xl mx-auto px-10 pt-5">
+          {(() => {
+            const RESSOURCE_GRADIENTS: Record<string, string> = {
+              idees: "from-amber-600 to-yellow-600",
+              documents: "from-green-600 to-teal-600",
+              outils: "from-orange-600 to-amber-600",
+              taches: "from-purple-600 to-violet-600",
+              agenda: "from-rose-600 to-pink-600",
+            };
+            const RESSOURCE_TITLES: Record<string, string> = {
+              idees: "Idees",
+              documents: "Documents",
+              outils: "Outils",
+              taches: "Taches",
+              agenda: "Agenda",
+            };
+            const RESSOURCE_SUBS: Record<string, string> = {
+              idees: "Idees capturees par CarlOS durant vos conversations",
+              documents: "Documents generes, templates et fichiers importes",
+              outils: "Calculateurs et outils manufacturiers integres",
+              taches: "Taches et to-do synchronises avec Plane.so",
+              agenda: "Calendrier unifie — echeances et evenements",
+            };
+            const gradient = RESSOURCE_GRADIENTS[activeEspaceSection] || RESSOURCE_GRADIENTS.idees;
+            const title = RESSOURCE_TITLES[activeEspaceSection] || RESSOURCE_TITLES.idees;
+            const sub = RESSOURCE_SUBS[activeEspaceSection] || RESSOURCE_SUBS.idees;
+            const ActiveIcon = ESPACE_TABS.find(t => t.id === activeEspaceSection)?.icon || Sparkles;
+            return (
+              <div className={cn("bg-gradient-to-r rounded-xl p-4 transition-all", gradient)}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
+                      <ActiveIcon className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-bold text-white">{title}</h2>
+                      <p className="text-sm text-white/70 leading-relaxed">{sub}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-1.5">
+                    {ESPACE_TABS.map((tab) => {
+                      const TIcon = tab.icon;
+                      const isActive = tab.id === activeEspaceSection;
+                      return (
+                        <button
+                          key={tab.id}
+                          onClick={() => navigateEspace(tab.id)}
+                          className={cn(
+                            "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
+                            isActive
+                              ? "bg-white/25 text-white shadow-sm"
+                              : "text-white/60 hover:bg-white/10 hover:text-white/90"
+                          )}
+                      >
+                        <TIcon className="h-3.5 w-3.5" />
+                        {tab.label}
+                      </button>
+                    );
+                  })}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+        </div>
         {renderPage()}
       </div>
     </div>

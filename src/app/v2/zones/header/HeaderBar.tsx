@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
-import { Gauge, Settings, LayoutDashboard, SlidersHorizontal, HeartPulse, Check, Building2, Users, Map, Play, MessageSquare } from "lucide-react";
+import { Gauge, Settings, LayoutDashboard, SlidersHorizontal, HeartPulse, Check, Building2, Users, Map, Play, MessageSquare, Layers } from "lucide-react";
 import { cn } from "../../../components/ui/utils";
 import { Button } from "../../../components/ui/button";
 import {
@@ -81,7 +81,7 @@ export function HeaderCenter() {
     { id: "cockpit", label: "Cockpit", icon: Gauge, tooltip: "Cockpit",
       onClick: () => setActiveView("cockpit"),
       isActive: activeView === "cockpit" },
-    { id: "discussions", label: "Mes Discussions", icon: MessageSquare, tooltip: "Mes Discussions — Missions et Chantiers",
+    { id: "discussions", label: "Mon Pipeline", icon: Layers, tooltip: "Pipeline — Chantiers, Projets, Missions, Discussions",
       onClick: () => setActiveView("mes-chantiers"),
       isActive: activeView === "mes-chantiers" },
     { id: "health", label: "Sante Globale", icon: HeartPulse, tooltip: "Sante Globale de l'entreprise",

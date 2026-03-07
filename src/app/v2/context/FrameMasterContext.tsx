@@ -12,7 +12,7 @@ export type EspaceSection = "idees" | "projets" | "documents" | "taches" | "outi
 
 export type BlueprintSection = "live" | "hub" | "pipeline";
 
-export type DiscussionTab = "chantiers" | "missions" | "discussions";
+export type DiscussionTab = "chantiers" | "projets" | "missions" | "discussions";
 
 interface FrameMasterState {
   activeBot: BotInfo | null;

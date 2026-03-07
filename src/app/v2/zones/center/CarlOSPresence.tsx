@@ -24,6 +24,7 @@ const VIEW_MESSAGES: Record<string, string> = {
   "board-room":    "Board Room en session. Vos C-Level sont réunis. Proposez un sujet — je lance le débat et je coordonne les interventions.",
   "war-room":      "War Room activée. Cellule de crise prête. Décrivez la situation — je mobilise l'équipe d'urgence et on passe en mode COMMAND.",
   "think-room":    "Think Room ouverte. De la vision au Go/No-Go en 6 étapes. Partagez votre idée — je mobilise les spécialistes pour la structurer.",
+  "mes-chantiers": "Voici votre pipeline complet: Discussions, Missions, Projets, Chantiers. Je garde un oeil sur tout — rien ne traine sans verdict.",
 };
 
 /** Messages sous-sections Orbit9 (Mon Réseau + Mon Industrie) */
@@ -39,14 +40,14 @@ const ORBIT9_MESSAGES: Record<string, string> = {
   "page-type":     "Profil d'un membre du réseau. Voici ses données — on analyse la compatibilité?",
 };
 
-/** Messages sous-sections Mon Bureau */
+/** Messages sous-sections Ressources */
 const BUREAU_MESSAGES: Record<string, string> = {
-  idees:     "Vos idées capturées. Vous avez une nouvelle idée? Dites-la moi — je la cristallise et je la classe.",
-  projets:   "Vos projets actifs. Cliquez sur un projet pour qu'on fasse le point ensemble avec le bot responsable.",
+  idees:     "Vos idées capturées. Vous avez une nouvelle idée? Dites-la moi — je la cristallise et je la classe. Chaque idée peut être rattachée à un projet ou un chantier.",
   documents: "Vos documents. Cliquez sur un document pour qu'on le révise ensemble.",
   outils:    "Vos outils connectés. Tout est centralisé ici.",
   taches:    "Vos tâches actives. Cliquez sur une tâche pour qu'on avance dessus ensemble.",
   agenda:    "Votre agenda. Dites-moi si vous voulez planifier quelque chose — je coordonne.",
+  templates: "Vos templates de documents. Générez un document en un clic — je remplis les champs avec les données de votre entreprise.",
 };
 
 /** Messages sous-sections Mon Blue Print */
@@ -71,8 +72,6 @@ const DEPT_MESSAGES: Record<string, string> = {
   BOO: "Olivier ici, votre COO. Opérations & Production — cliquez sur un élément pour qu'on approfondisse.",
   BHR: "Hélène, votre CHRO. Capital humain, recrutement et culture. Cliquez sur un bloc pour qu'on en parle.",
   BIO: "Inès, votre CINO. Innovation & Données — cliquez sur un élément pour qu'on en discute.",
-  BCC: "Catherine, votre CCO. Communication & Marque — cliquez sur un bloc pour qu'on approfondisse.",
-  BPO: "Philippe, votre CPO. Innovation & Produits — cliquez sur un élément pour qu'on explore ensemble.",
   BRO: "Raphaël, votre CRO. Revenus & Croissance — cliquez sur un bloc pour qu'on creuse ensemble.",
   BLE: "Louise, votre CLO. Juridique & Conformité — cliquez sur un élément pour qu'on en discute.",
   BSE: "Sébastien, votre CISO. Sécurité & Cyber — cliquez sur un bloc pour qu'on analyse ensemble.",
@@ -82,7 +81,7 @@ const DEPT_MESSAGES: Record<string, string> = {
 const BOT_NAMES: Record<string, string> = {
   BCO: "CarlOS", BCT: "Thierry", BCF: "François", BCM: "Martine",
   BCS: "Sophie", BOO: "Olivier", BHR: "Hélène", BIO: "Inès",
-  BCC: "Catherine", BPO: "Philippe", BRO: "Raphaël", BLE: "Louise", BSE: "Sébastien",
+  BFA: "Fabien", BRO: "Raphaël", BLE: "Louise", BSE: "Sébastien",
 };
 
 export function CarlOSPresence() {

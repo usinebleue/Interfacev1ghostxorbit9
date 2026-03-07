@@ -6,13 +6,15 @@
  */
 
 import { useEffect, useState } from "react";
-import { Briefcase, DollarSign, Cpu, Megaphone, Target, Loader2, Settings, Users, Lightbulb, HeartHandshake, Package, ShieldAlert, Scale, Zap } from "lucide-react";
+import { Briefcase, DollarSign, Cpu, Megaphone, Target, Loader2, Settings, Users, Lightbulb, HeartHandshake, Package, ShieldAlert, Scale, Zap, MessageSquare, Flame } from "lucide-react";
 import { Card } from "../../../components/ui/card";
 import { Badge } from "../../../components/ui/badge";
 import { cn } from "../../../components/ui/utils";
 
 import { useCanvasActions } from "../../context/CanvasActionContext";
 import { useChatContext } from "../../context/ChatContext";
+import { useFrameMaster } from "../../context/FrameMasterContext";
+import { useChantiers, useMissions } from "../../api/hooks";
 import { api } from "../../api/client";
 import type { KitActiveResponse } from "../../api/types";
 import { PageLayout } from "./layouts/PageLayout";
@@ -395,7 +397,10 @@ function BlocLegal({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string
 export function DashboardView() {
   // Focus: dispatch "focus" → CenterZone affiche FocusModeLayout (header gradient + LiveChat)
   const { dispatch } = useCanvasActions();
-  const { sendMessage } = useChatContext();
+  const { sendMessage, threads } = useChatContext();
+  const { navigateDiscussionTab, setActiveView } = useFrameMaster();
+  const { chantiers } = useChantiers();
+  const { missions } = useMissions();
   const [kitData, setKitData] = useState<KitActiveResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -407,6 +412,24 @@ export function DashboardView() {
   }, []);
 
   const kpis = kitData?.kpis_departements;
+
+  // Pipeline stats
+  const activeThreads = threads.filter(t => t.status === "active");
+  const parkedThreads = threads.filter(t => t.status === "parked");
+  const missionsEnCours = missions.filter(m => m.status === "active" || m.status === "en_cours");
+  const missionsEnAttente = missions.filter(m => m.status === "en_attente");
+  const missionsCompletees = missions.filter(m => m.status === "completee");
+  const chantiersBrule = chantiers.filter(ch => ch.chaleur === "brule");
+  const chantiersCouve = chantiers.filter(ch => ch.chaleur === "couve");
+  const avgProgression = chantiers.length > 0
+    ? Math.round(chantiers.reduce((sum, ch) => sum + (ch.progression || 0), 0) / chantiers.length)
+    : 0;
+
+  const navigateTo = (tab: "discussions" | "missions" | "chantiers") => {
+    navigateDiscussionTab(tab);
+    setActiveView("mes-chantiers");
+  };
+
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -417,6 +440,58 @@ export function DashboardView() {
 
   return (
     <PageLayout maxWidth="5xl">
+
+        {/* Pipeline KPI — 3 box: Discussions | Missions | Chantiers */}
+        <div className="grid grid-cols-3 gap-3 animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "50ms", animationFillMode: "both" }}>
+          {/* Box Discussions */}
+          <Card className="p-0 overflow-hidden hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigateTo("discussions")}>
+            <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-violet-600 to-violet-500">
+              <MessageSquare className="h-4 w-4 text-white" />
+              <span className="text-sm font-bold text-white">Discussions</span>
+            </div>
+            <div className="px-3 py-2 space-y-1">
+              <div className="text-2xl font-bold text-violet-600">{activeThreads.length}</div>
+              <div className="text-[9px] text-gray-400">active{activeThreads.length !== 1 ? "s" : ""}</div>
+              {parkedThreads.length > 0 && (
+                <div className="text-[9px] text-amber-500">{parkedThreads.length} parkee{parkedThreads.length !== 1 ? "s" : ""}</div>
+              )}
+            </div>
+          </Card>
+
+          {/* Box Missions */}
+          <Card className="p-0 overflow-hidden hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigateTo("missions")}>
+            <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-500">
+              <Target className="h-4 w-4 text-white" />
+              <span className="text-sm font-bold text-white">Missions</span>
+            </div>
+            <div className="px-3 py-2 space-y-1">
+              <div className="text-2xl font-bold text-blue-600">{missionsEnCours.length}</div>
+              <div className="text-[9px] text-gray-400">en cours</div>
+              <div className="flex items-center gap-2 text-[9px]">
+                {missionsEnAttente.length > 0 && <span className="text-amber-500">{missionsEnAttente.length} en attente</span>}
+                {missionsCompletees.length > 0 && <span className="text-gray-400">{missionsCompletees.length} terminee{missionsCompletees.length !== 1 ? "s" : ""}</span>}
+              </div>
+            </div>
+          </Card>
+
+          {/* Box Chantiers */}
+          <Card className="p-0 overflow-hidden hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigateTo("chantiers")}>
+            <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-amber-600 to-orange-500">
+              <Flame className="h-4 w-4 text-white" />
+              <span className="text-sm font-bold text-white">Chantiers</span>
+            </div>
+            <div className="px-3 py-2 space-y-1">
+              <div className="text-2xl font-bold text-amber-600">{chantiers.length}</div>
+              <div className="text-[9px] text-gray-400">
+                {chantiersBrule.length > 0 && <span className="text-red-500">{chantiersBrule.length} brule{chantiersBrule.length !== 1 ? "nt" : ""} </span>}
+                {chantiersCouve.length > 0 && <span className="text-amber-500">{chantiersCouve.length} couve{chantiersCouve.length !== 1 ? "nt" : ""}</span>}
+              </div>
+              {chantiers.length > 0 && (
+                <div className="text-[9px] text-gray-400">progression {avgProgression}%</div>
+              )}
+            </div>
+          </Card>
+        </div>
 
         {/* Grille 12 bots Bot Team CarlOS — 4 colonnes, 3 rangées */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">

@@ -1,9 +1,10 @@
 /**
  * HealthView.tsx — Sante Globale de l'entreprise
- * Layout: 4 KPI cards + VITAA|QuickWins + Diagnostics Hero + Benchmark|Depts
+ * 3 Tabs: Etat de sante | Diagnostics | Par departement
  * Double bot supprime — CarlOSPresence gere le bandeau d'accueil
  */
 
+import { useState, useEffect } from "react";
 import { Badge } from "../../../components/ui/badge";
 import { Card } from "../../../components/ui/card";
 import { cn } from "../../../components/ui/utils";
@@ -12,23 +13,52 @@ import {
   AlertTriangle,
   TrendingUp,
   Flame,
-  ShieldCheck,
-  Cpu,
-  Factory,
-  Truck,
-  Package,
-  Zap,
   BarChart3,
   CheckCircle2,
-  Clock,
   Eye,
   Users,
   Target,
-  FileSearch,
-  ArrowRight,
+  Activity,
+  Stethoscope,
+  LayoutGrid,
 } from "lucide-react";
 import { useCanvasActions } from "../../context/CanvasActionContext";
 import { PageLayout } from "./layouts/PageLayout";
+import { BOT_AVATAR } from "../../api/types";
+import { api } from "../../api/client";
+import type { DiagnosticCatalogue } from "../../api/types";
+
+/* ============ BOT GRADIENTS (same as Pipeline) ============ */
+const BOT_GRADIENTS: Record<string, string> = {
+  BCO: "from-blue-600 to-blue-500",
+  BCT: "from-violet-600 to-violet-500",
+  BCF: "from-emerald-600 to-emerald-500",
+  BCM: "from-pink-600 to-pink-500",
+  BCS: "from-red-600 to-red-500",
+  BOO: "from-orange-600 to-orange-500",
+  BFA: "from-amber-600 to-amber-500",
+  BHR: "from-teal-600 to-teal-500",
+  BIO: "from-rose-600 to-rose-500",
+  BRO: "from-amber-600 to-amber-500",
+  BLE: "from-indigo-600 to-indigo-500",
+  BSE: "from-gray-600 to-gray-500",
+};
+
+/* ============ DEPT LABELS ============ */
+const DEPT_LABELS: Record<string, { label: string; gradient: string; bot: string }> = {
+  direction:   { label: "Direction (CEO)",     gradient: "from-slate-700 to-slate-600",   bot: "BCO" },
+  finance:     { label: "Finance (CFO)",       gradient: "from-emerald-600 to-teal-500",  bot: "BCF" },
+  technologie: { label: "Technologie (CTO)",   gradient: "from-blue-700 to-indigo-600",   bot: "BCT" },
+  marketing:   { label: "Marketing (CMO)",     gradient: "from-fuchsia-600 to-pink-500",  bot: "BCM" },
+  strategie:   { label: "Strategie (CSO)",     gradient: "from-violet-700 to-purple-600", bot: "BCS" },
+  operations:  { label: "Operations (COO)",    gradient: "from-orange-600 to-orange-500", bot: "BOO" },
+  production:  { label: "Production (CPO)",    gradient: "from-slate-600 to-slate-500",   bot: "BFA" },
+  rh:          { label: "RH (CHRO)",           gradient: "from-teal-600 to-teal-500",     bot: "BHR" },
+  innovation:  { label: "Innovation (CINO)",   gradient: "from-rose-600 to-rose-500",     bot: "BIO" },
+  ventes:      { label: "Ventes (CRO)",        gradient: "from-amber-600 to-amber-500",   bot: "BRO" },
+  legal:       { label: "Legal (CLO)",         gradient: "from-indigo-600 to-indigo-500", bot: "BLE" },
+  securite:    { label: "Securite (CISO)",     gradient: "from-zinc-700 to-zinc-600",     bot: "BSE" },
+};
 
 /* ============ VITAA DATA ============ */
 const VITAA = [
@@ -42,16 +72,6 @@ const VITAA = [
 const SCORE_GLOBAL = Math.round(VITAA.reduce((s, p) => s + p.score, 0) / VITAA.length);
 const CRITIQUES = VITAA.filter(p => p.score < 50).length;
 const TRIANGLE_STATUS = CRITIQUES >= 3 ? "BRULE" : CRITIQUES === 2 ? "COUVE" : CRITIQUES === 1 ? "MEURT" : "SAIN";
-
-/* ============ DIAGNOSTICS — avec gradient per-card ============ */
-const DIAGNOSTICS = [
-  { id: "ia",         title: "IA & Automatisation", desc: "Maturite IA, processus automatisables",    icon: Cpu,       status: "disponible" as const, duration: "20 min", value: "5-15K$",          gradient: "from-violet-600 to-indigo-500" },
-  { id: "securite",   title: "Securite",             desc: "Cybersecurite, conformite NIST/ISO",       icon: ShieldCheck, status: "disponible" as const, duration: "30 min", value: "Actifs critiques", gradient: "from-red-600 to-rose-500" },
-  { id: "robotique",  title: "Robotique & 4.0",      desc: "Potentiel robotisation, ROI cellule",      icon: Factory,   status: "disponible" as const, duration: "25 min", value: "ROI 18 mois",      gradient: "from-blue-600 to-cyan-500" },
-  { id: "logistique", title: "Logistique",            desc: "Approvisionnement, stocks, flux",          icon: Truck,     status: "disponible" as const, duration: "20 min", value: "-10-25%",          gradient: "from-emerald-600 to-teal-500" },
-  { id: "emballage",  title: "Fins de Lignes",        desc: "Efficacite, defauts, emballage",           icon: Package,   status: "bientot"    as const, duration: "15 min", value: "+15-30%",          gradient: "from-orange-500 to-amber-400" },
-  { id: "energie",    title: "Energetique",           desc: "Consommation, subventions",                icon: Zap,       status: "bientot"    as const, duration: "15 min", value: "-8-20%",           gradient: "from-amber-600 to-yellow-500" },
-];
 
 /* ============ QUICK WINS ============ */
 const QUICK_WINS = [
@@ -92,7 +112,7 @@ function KpiCard({ icon: Icon, label, value, sub, gradient, onClick }: {
       </div>
       <div className="px-3 py-2">
         <div className="text-2xl font-bold text-gray-900">{value}</div>
-        <div className="text-[10px] text-gray-500">{sub}</div>
+        <div className="text-[9px] text-gray-500">{sub}</div>
       </div>
     </Card>
   );
@@ -100,7 +120,7 @@ function KpiCard({ icon: Icon, label, value, sub, gradient, onClick }: {
 
 /* Mapping pilier VITAA → bot */
 const VITAA_BOT: Record<string, string> = {
-  Vente: "BCS", Idee: "BPO", Temps: "BOO", Argent: "BCF", Actif: "BOO",
+  Vente: "BCS", Idee: "BIO", Temps: "BOO", Argent: "BCF", Actif: "BOO",
 };
 
 /* Mapping role → bot code */
@@ -108,16 +128,96 @@ const QW_BOT_CODE: Record<string, string> = {
   CFO: "BCF", CTO: "BCT", COO: "BOO", CEO: "BCO", CRO: "BRO",
 };
 
+/* ============ TABS ============ */
+type HealthTab = "etat" | "diagnostics" | "departements";
+const HEALTH_TABS: { id: HealthTab; label: string; icon: React.ElementType }[] = [
+  { id: "etat", label: "Etat de sante", icon: Activity },
+  { id: "diagnostics", label: "Diagnostics", icon: Stethoscope },
+  { id: "departements", label: "Par departement", icon: LayoutGrid },
+];
+
 /* ============ HEALTH VIEW ============ */
 export function HealthView() {
   const { dispatch } = useCanvasActions();
+  const [activeTab, setActiveTab] = useState<HealthTab>("etat");
+  const [diagnosticsEnrichis, setDiagnosticsEnrichis] = useState<DiagnosticCatalogue[]>([]);
+  const [diagFilter, setDiagFilter] = useState<string | null>(null);
+  const [diagBotFilter, setDiagBotFilter] = useState<string | null>(null);
+
+  useEffect(() => {
+    api.listDiagnosticsEnrichis().then(d => setDiagnosticsEnrichis(d || [])).catch(() => {});
+  }, []);
 
   const handleFocus = (title: string, elementType: string, data: unknown, bot = "BCO") => {
     dispatch({ type: "focus", layer: "bouche", data: { title, element_type: elementType, data }, bot });
   };
 
+  // Diagnostics filtered
+  const diagDepts = [...new Set(diagnosticsEnrichis.map(d => d.departement))].sort();
+  const diagBots = [...new Set(diagnosticsEnrichis.map(d => d.bot_primaire))].sort();
+  const filteredDiag = diagnosticsEnrichis
+    .filter(d => !diagFilter || d.departement === diagFilter)
+    .filter(d => !diagBotFilter || d.bot_primaire === diagBotFilter);
+
+  // Group by department
+  const diagByDept = diagDepts.map(dept => ({
+    dept,
+    items: diagnosticsEnrichis.filter(d => d.departement === dept),
+  }));
+
   return (
     <PageLayout maxWidth="5xl" spacing="space-y-2.5">
+
+        {/* ── GRADIENT HEADER + TABS (Pipeline pattern) ── */}
+        <div className={cn("bg-gradient-to-r rounded-xl p-4 transition-all duration-300",
+          activeTab === "etat" ? "from-orange-600 to-amber-500" :
+          activeTab === "diagnostics" ? "from-violet-600 to-purple-500" :
+          "from-emerald-600 to-teal-500"
+        )}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center">
+                <Heart className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-white">Sante Globale</h2>
+                <p className="text-sm text-white/70">
+                  {activeTab === "etat" ? "Vue d'ensemble de votre entreprise" :
+                   activeTab === "diagnostics" ? `${diagnosticsEnrichis.length} diagnostics disponibles` :
+                   `${diagByDept.length} departements analyses`}
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-1.5">
+              {HEALTH_TABS.map(tab => {
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={cn(
+                      "px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5",
+                      activeTab === tab.id
+                        ? "bg-white/25 text-white shadow-sm"
+                        : "text-white/60 hover:bg-white/10 hover:text-white/80"
+                    )}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    {tab.label}
+                    {tab.id === "diagnostics" && diagnosticsEnrichis.length > 0 && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/20">{diagnosticsEnrichis.length}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* ══════════════════════════════════════════ */}
+        {/* TAB 1 — ETAT DE SANTE ACTUEL              */}
+        {/* ══════════════════════════════════════════ */}
+        {activeTab === "etat" && (<>
 
         {/* ── 4 KPI cards ── */}
         <div className="grid grid-cols-4 gap-2.5">
@@ -162,7 +262,7 @@ export function HealthView() {
           <div className="col-span-3 bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
             <div className="bg-gradient-to-r from-orange-50 to-amber-50 px-3 py-1.5 border-b border-orange-100 flex items-center gap-1.5">
               <Heart className="h-3.5 w-3.5 text-orange-500" />
-              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-700 flex-1">VITAA — Toi vs Secteur</span>
+              <span className="text-[9px] font-bold uppercase tracking-wider text-gray-700 flex-1">VITAA — Toi vs Secteur</span>
               <span className="flex items-center gap-1 text-[9px] text-gray-400"><span className="w-1.5 h-1.5 rounded-full bg-gray-300" /> Secteur</span>
               <span className="flex items-center gap-1 text-[9px] text-gray-400 ml-2"><span className="w-1.5 h-1.5 rounded-full bg-blue-500" /> Toi</span>
             </div>
@@ -177,7 +277,7 @@ export function HealthView() {
                     <div className={cn("w-5 h-5 rounded flex items-center justify-center text-white text-[9px] font-bold shrink-0", p.color)}>{p.letter}</div>
                     <span className="text-xs font-medium text-gray-800 flex-1">{p.label}</span>
                     <span className={cn("text-xs font-bold", p.score >= p.avg ? "text-green-600" : "text-red-600")}>{p.score}</span>
-                    <span className="text-[10px] text-gray-400 w-8">/ {p.avg}</span>
+                    <span className="text-[9px] text-gray-400 w-8">/ {p.avg}</span>
                     <Badge variant="outline" className={cn("text-[8px] px-1",
                       p.score < 35 ? "text-red-600 bg-red-50 border-red-200" :
                       p.score < 50 ? "text-amber-600 bg-amber-50 border-amber-200" :
@@ -197,7 +297,7 @@ export function HealthView() {
           <div className="col-span-2 bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
             <div className="bg-gradient-to-r from-red-50 to-rose-50 border-b border-red-100 px-2.5 py-1.5 flex items-center gap-1.5">
               <AlertTriangle className="h-3.5 w-3.5 text-red-500" />
-              <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-700 flex-1">Actions Prioritaires</h3>
+              <h3 className="text-[9px] font-bold uppercase tracking-wider text-gray-700 flex-1">Actions Prioritaires</h3>
               <Badge variant="destructive" className="text-[9px] px-1 py-0 h-3.5">{QUICK_WINS.length}</Badge>
             </div>
             <div className="p-2.5 space-y-1.5">
@@ -214,7 +314,7 @@ export function HealthView() {
                     )} />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-gray-800 group-hover:text-red-700 leading-tight font-medium">{qw.text}</p>
-                      <p className="text-[10px] text-gray-400 mt-0.5">{qw.bot} · <span className={cn(
+                      <p className="text-[9px] text-gray-400 mt-0.5">{qw.bot} · <span className={cn(
                         "font-medium",
                         qw.priority === "critique" ? "text-red-500" : qw.priority === "haute" ? "text-amber-500" : "text-blue-400"
                       )}>{qw.priority}</span></p>
@@ -226,63 +326,6 @@ export function HealthView() {
           </div>
         </div>
 
-        {/* ── Diagnostics HERO — full width, cartes gradient sexy ── */}
-        <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
-          <div className="bg-gradient-to-r from-violet-50 to-purple-50 border-b border-violet-100 px-3 py-2 flex items-center gap-2">
-            <FileSearch className="h-4 w-4 text-violet-600" />
-            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-700 flex-1">Diagnostics Strategiques</h3>
-            <Badge variant="outline" className="text-[9px] px-1.5 text-violet-600 border-violet-300">
-              {DIAGNOSTICS.filter(d => d.status === "disponible").length} disponibles
-            </Badge>
-          </div>
-          <div className="p-3 grid grid-cols-3 gap-3">
-            {DIAGNOSTICS.map((diag) => {
-              const Icon = diag.icon;
-              const isDispo = diag.status === "disponible";
-              return (
-                <div
-                  key={diag.id}
-                  className={cn(
-                    "rounded-xl overflow-hidden border transition-all duration-200",
-                    isDispo
-                      ? "cursor-pointer hover:shadow-xl hover:-translate-y-0.5 border-transparent shadow-md"
-                      : "opacity-55 border-gray-200 shadow-sm"
-                  )}
-                  onClick={() => isDispo && handleFocus(`Diagnostic ${diag.title}`, "diagnostic", diag, "BCO")}
-                >
-                  {/* Gradient header */}
-                  <div className={cn("bg-gradient-to-r px-3 py-3 flex items-center gap-2.5", diag.gradient)}>
-                    <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-                      <Icon className="h-5 w-5 text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-white leading-tight">{diag.title}</p>
-                      <p className="text-[10px] text-white/70 mt-0.5 leading-tight">{diag.desc}</p>
-                    </div>
-                  </div>
-                  {/* Body */}
-                  <div className="bg-white px-3 py-2.5 flex items-center gap-2">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-gray-900">{diag.value}</p>
-                      <div className="flex items-center gap-1 mt-0.5">
-                        <Clock className="h-3 w-3 text-gray-400" />
-                        <span className="text-[10px] text-gray-500">{diag.duration}</span>
-                      </div>
-                    </div>
-                    {isDispo ? (
-                      <div className="flex items-center gap-1 bg-gray-900 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg shrink-0">
-                        Lancer <ArrowRight className="h-3 w-3" />
-                      </div>
-                    ) : (
-                      <Badge variant="outline" className="text-[9px] text-gray-400 border-gray-200 shrink-0">Bientot</Badge>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
         {/* ── Benchmark + Departements (2 cols) ── */}
         <div className="grid grid-cols-2 gap-2.5">
 
@@ -290,7 +333,7 @@ export function HealthView() {
           <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100 px-2.5 py-1.5 flex items-center gap-1.5">
               <BarChart3 className="h-3.5 w-3.5 text-blue-500" />
-              <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-700 flex-1">Benchmark</h3>
+              <h3 className="text-[9px] font-bold uppercase tracking-wider text-gray-700 flex-1">Benchmark</h3>
             </div>
             <div className="p-2.5 space-y-1">
               {[
@@ -305,7 +348,7 @@ export function HealthView() {
                       <BIcon className={cn("h-4 w-4 shrink-0", bm.iconColor)} />
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-medium text-gray-800 group-hover:text-blue-600">{bm.title}</p>
-                        <p className="text-[10px] text-gray-400">{bm.desc}</p>
+                        <p className="text-[9px] text-gray-400">{bm.desc}</p>
                       </div>
                       <Eye className="h-3.5 w-3.5 text-gray-300 group-hover:text-blue-500 shrink-0" />
                     </div>
@@ -319,7 +362,7 @@ export function HealthView() {
           <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
             <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-b border-green-100 px-2.5 py-1.5 flex items-center gap-1.5">
               <Target className="h-3.5 w-3.5 text-green-500" />
-              <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-700 flex-1">Departements</h3>
+              <h3 className="text-[9px] font-bold uppercase tracking-wider text-gray-700 flex-1">Departements</h3>
             </div>
             <div className="p-2.5 space-y-1">
               {DEPT_SCORES.map((d) => {
@@ -327,17 +370,186 @@ export function HealthView() {
                 const textColor = d.score >= 80 ? "text-green-600" : d.score >= 60 ? "text-amber-600" : "text-red-600";
                 return (
                   <div key={d.label} className="flex items-center gap-1.5">
-                    <span className="text-[10px] text-gray-700 w-16 truncate">{d.label}</span>
+                    <span className="text-[9px] text-gray-700 w-16 truncate">{d.label}</span>
                     <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                       <div className={cn("h-full rounded-full", color)} style={{ width: `${d.score}%` }} />
                     </div>
-                    <span className={cn("text-[10px] font-bold w-7 text-right", textColor)}>{d.score}</span>
+                    <span className={cn("text-[9px] font-bold w-7 text-right", textColor)}>{d.score}</span>
                   </div>
                 );
               })}
             </div>
           </div>
         </div>
+
+        </>)}
+
+        {/* ══════════════════════════════════════════ */}
+        {/* TAB 2 — DIAGNOSTICS (43 enrichis from API) */}
+        {/* ══════════════════════════════════════════ */}
+        {activeTab === "diagnostics" && (
+          <div className="space-y-3">
+            {/* Filtre par departement */}
+            <div className="flex gap-1.5 flex-wrap">
+              <button
+                onClick={() => setDiagFilter(null)}
+                className={cn("text-[9px] px-2.5 py-1 rounded-full font-medium transition-all cursor-pointer", !diagFilter ? "bg-gray-900 text-white" : "text-gray-500 bg-gray-100 hover:bg-gray-200")}
+              >
+                Tous ({diagnosticsEnrichis.length})
+              </button>
+              {diagDepts.map(dept => (
+                <button key={dept} onClick={() => setDiagFilter(dept === diagFilter ? null : dept)}
+                  className={cn("text-[9px] px-2.5 py-1 rounded-full font-medium transition-all cursor-pointer", diagFilter === dept ? "bg-gray-900 text-white" : "text-gray-500 bg-gray-100 hover:bg-gray-200")}
+                >
+                  {DEPT_LABELS[dept]?.label || dept} ({diagnosticsEnrichis.filter(d => d.departement === dept).length})
+                </button>
+              ))}
+            </div>
+
+            {/* Filtre par bot (agent AI) */}
+            <div className="flex gap-1.5 flex-wrap">
+              <span className="text-[9px] text-gray-400 font-medium py-1">Agent AI:</span>
+              <button
+                onClick={() => setDiagBotFilter(null)}
+                className={cn("text-[9px] px-2.5 py-1 rounded-full font-medium transition-all cursor-pointer", !diagBotFilter ? "bg-blue-600 text-white" : "text-gray-500 bg-gray-100 hover:bg-gray-200")}
+              >
+                Tous
+              </button>
+              {diagBots.map(bot => {
+                const avatar = BOT_AVATAR[bot];
+                return (
+                  <button key={bot} onClick={() => setDiagBotFilter(bot === diagBotFilter ? null : bot)}
+                    className={cn("text-[9px] px-2.5 py-1 rounded-full font-medium transition-all cursor-pointer flex items-center gap-1", diagBotFilter === bot ? "bg-blue-600 text-white" : "text-gray-500 bg-gray-100 hover:bg-gray-200")}
+                  >
+                    {avatar && <img src={avatar} alt={bot} className="w-3.5 h-3.5 rounded-full object-cover" />}
+                    {bot} ({diagnosticsEnrichis.filter(d => d.bot_primaire === bot).length})
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Grille diagnostics */}
+            <div className="grid grid-cols-2 gap-3">
+              {filteredDiag.map(diag => {
+                const deptCfg = DEPT_LABELS[diag.departement];
+                const gradient = diag.gradient || deptCfg?.gradient || "from-gray-500 to-gray-600";
+                const botGradient = BOT_GRADIENTS[diag.bot_primaire] || gradient;
+                const botAvatar = BOT_AVATAR[diag.bot_primaire];
+                const dpCount = diag.data_points?.length || 0;
+                return (
+                  <Card key={diag.id} className="overflow-hidden hover:shadow-lg transition-all cursor-pointer group" onClick={() => handleFocus(`Diagnostic ${diag.titre}`, "diagnostic_enrichi", diag, diag.bot_primaire)}>
+                    <div className={cn("bg-gradient-to-r px-3 py-2.5 flex items-center gap-2.5", botGradient)}>
+                      {botAvatar ? (
+                        <img src={botAvatar} alt={diag.bot_primaire} className="w-8 h-8 rounded-lg object-cover shrink-0 ring-1 ring-white/30" />
+                      ) : (
+                        <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
+                          <Stethoscope className="h-4 w-4 text-white" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-white truncate">{diag.titre}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="text-[9px] text-white/60">{deptCfg?.label || diag.departement}</span>
+                          <span className="text-[9px] text-white/40">— Leader</span>
+                        </div>
+                      </div>
+                      {dpCount > 0 && <span className="text-[9px] bg-white/20 text-white px-1.5 py-0.5 rounded-full shrink-0">{dpCount} indicateurs</span>}
+                    </div>
+                    <div className="px-3 py-2.5 space-y-2">
+                      <p className="text-[9px] text-gray-500 line-clamp-2 leading-relaxed">{diag.description}</p>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-50 text-cyan-700 font-medium">{diag.duree_minutes} min</span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-gray-50 text-gray-500">{diag.nb_questions} questions</span>
+                      </div>
+                      {diag.valeur_potentielle && (
+                        <p className="text-[9px] text-emerald-600 leading-relaxed line-clamp-1">{diag.valeur_potentielle}</p>
+                      )}
+                      {diag.gaps_typiques && diag.gaps_typiques.length > 0 && (
+                        <div className="text-[9px] text-amber-600 bg-amber-50 rounded px-2 py-1">
+                          Gap: {diag.gaps_typiques[0].gap.slice(0, 80)}...
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+            {filteredDiag.length === 0 && (
+              <div className="text-center py-12">
+                <Stethoscope className="h-5 w-5 text-gray-300 mx-auto mb-2" />
+                <p className="text-sm text-gray-500">Aucun diagnostic trouve</p>
+                <p className="text-[9px] text-gray-400 mt-1">Modifiez les filtres pour voir les diagnostics disponibles</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════ */}
+        {/* TAB 3 — PAR DEPARTEMENT (grouped)          */}
+        {/* ══════════════════════════════════════════ */}
+        {activeTab === "departements" && (
+          <div className="space-y-4">
+            {diagByDept.length === 0 ? (
+              <div className="text-center py-12">
+                <LayoutGrid className="h-5 w-5 text-gray-300 mx-auto mb-2" />
+                <p className="text-sm text-gray-500">Chargement des diagnostics...</p>
+              </div>
+            ) : (
+              diagByDept.map(({ dept, items }) => {
+                const deptCfg = DEPT_LABELS[dept];
+                const gradient = deptCfg?.gradient || "from-gray-500 to-gray-600";
+                const botCode = deptCfg?.bot || "BCO";
+                const botAvatar = BOT_AVATAR[botCode];
+                return (
+                  <div key={dept} className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+                    {/* Department header */}
+                    <div className={cn("bg-gradient-to-r px-4 py-3 flex items-center gap-3", gradient)}>
+                      {botAvatar ? (
+                        <img src={botAvatar} alt={botCode} className="w-9 h-9 rounded-lg object-cover shrink-0 ring-1 ring-white/30" />
+                      ) : (
+                        <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
+                          <LayoutGrid className="h-4 w-4 text-white" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-bold text-white">{deptCfg?.label || dept}</h3>
+                        <p className="text-[9px] text-white/60">{items.length} diagnostic{items.length !== 1 ? "s" : ""} disponible{items.length !== 1 ? "s" : ""}</p>
+                      </div>
+                      <Badge className="text-[9px] bg-white/20 text-white border-0">{items.length}</Badge>
+                    </div>
+                    {/* Diagnostic cards inside department */}
+                    <div className="p-3 grid grid-cols-2 gap-2.5">
+                      {items.map(diag => (
+                        <Card
+                          key={diag.id}
+                          className="p-3 hover:shadow-md transition-shadow cursor-pointer group border border-gray-100"
+                          onClick={() => handleFocus(`Diagnostic ${diag.titre}`, "diagnostic_enrichi", diag, diag.bot_primaire)}
+                        >
+                          <div className="flex items-start gap-2.5">
+                            <div className={cn("w-7 h-7 rounded-lg bg-gradient-to-r flex items-center justify-center shrink-0 mt-0.5", BOT_GRADIENTS[diag.bot_primaire] || "from-gray-500 to-gray-600")}>
+                              <Stethoscope className="h-3.5 w-3.5 text-white" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-xs font-bold text-gray-800 truncate group-hover:text-blue-600">{diag.titre}</h4>
+                              <p className="text-[9px] text-gray-500 line-clamp-2 leading-relaxed mt-0.5">{diag.description}</p>
+                              <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                                <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-50 text-cyan-700 font-medium">{diag.duree_minutes} min</span>
+                                <span className="text-[9px] px-1.5 py-0.5 rounded bg-gray-50 text-gray-500">{diag.nb_questions} q.</span>
+                                {diag.data_points?.length > 0 && (
+                                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-violet-50 text-violet-600">{diag.data_points.length} KPIs</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        )}
 
     </PageLayout>
   );

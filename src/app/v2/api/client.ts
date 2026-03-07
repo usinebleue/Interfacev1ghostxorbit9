@@ -48,13 +48,23 @@ import type {
   BubbleContext,
   CascadeSuggestion,
   Chantier,
+  Projet,
+  Idee,
   Mission,
+  Discussion,
+  PlaybookSummary,
+  PlaybookDeployResult,
   CommandStartResponse,
   CommandStatusResponse,
   BriefingListResponse,
   SuggestionsResponse,
   QuestionnaireResponse,
   ModeBranchRequest,
+  DiagnosticCatalogue,
+  GapFournisseur,
+  MissionCatalogue,
+  TemplateProjetCatalogue,
+  TemplateDocumentaire,
 } from "./types";
 
 // --- SSE Stream types ---
@@ -219,9 +229,13 @@ export const api = {
   // --- Bureau (Espace Bureau) ---
 
   /** Lister les items bureau (projets, documents, outils) */
-  listBureauItems(typeFilter?: string): Promise<BureauListResponse> {
-    const qs = typeFilter ? `?type_item=${typeFilter}` : "";
-    return apiFetch<BureauListResponse>(`/bureau${qs}`);
+  listBureauItems(typeFilter?: string, missionId?: number, chantierId?: number): Promise<BureauListResponse> {
+    const params = new URLSearchParams();
+    if (typeFilter) params.set("type_item", typeFilter);
+    if (missionId) params.set("mission_id", String(missionId));
+    if (chantierId) params.set("chantier_id", String(chantierId));
+    const qs = params.toString();
+    return apiFetch<BureauListResponse>(`/bureau${qs ? `?${qs}` : ""}`);
   },
 
   /** Creer un item bureau */
@@ -528,9 +542,28 @@ export const api = {
     return apiFetch<Chantier[]>("/chantiers").then(list => ({ chantiers: list }));
   },
 
-  /** Creer un chantier */
-  createChantier(data: { titre: string; chaleur?: string }): Promise<{ status: string; id: number }> {
+  /** Creer un chantier (briefing complet) */
+  createChantier(data: {
+    titre: string;
+    description?: string;
+    chaleur?: string;
+    bot_codes?: string[];
+    section_primaire?: string;
+    type_chantier?: string;
+    tags?: string[];
+    objectifs?: string[];
+    echeance?: string;
+    budget_estime?: string;
+    indicateurs_cles?: string[];
+    risques?: string[];
+    participants?: Array<{ type: string; code?: string; nom?: string; role: string }>;
+  }): Promise<{ status: string; id: number }> {
     return apiFetch("/chantiers", { method: "POST", body: JSON.stringify(data) });
+  },
+
+  /** Modifier un chantier */
+  updateChantier(chantierId: number, data: Record<string, unknown>): Promise<{ status: string }> {
+    return apiFetch(`/chantiers/${chantierId}`, { method: "PUT", body: JSON.stringify(data) });
   },
 
   /** Supprimer un chantier (archive) */
@@ -538,14 +571,77 @@ export const api = {
     return apiFetch(`/chantiers/${chantierId}`, { method: "DELETE" });
   },
 
-  /** Lister les missions */
-  listMissions(chantierId?: number): Promise<{ missions: Mission[] }> {
-    const qs = chantierId ? `?chantier_id=${chantierId}` : "";
-    return apiFetch<Mission[]>(`/missions-user${qs}`).then(list => ({ missions: list }));
+  /** Assigner un lot de missions orphelines à un chantier */
+  assignMissionsToChantier(chantierId: number, missionIds: number[]): Promise<{ status: string; count: number }> {
+    return apiFetch(`/chantiers/${chantierId}/assign-missions`, {
+      method: "POST",
+      body: JSON.stringify({ mission_ids: missionIds }),
+    });
   },
 
-  /** Creer une mission */
-  createMission(data: { titre: string; chantier_id?: number; bot_primaire?: string }): Promise<{ status: string; id: number }> {
+  // ── PROJETS (Espace Unifié) ─────────────────────────────
+
+  /** Lister les projets */
+  listProjets(chantierId?: number): Promise<Projet[]> {
+    const params = new URLSearchParams();
+    if (chantierId) params.set("chantier_id", String(chantierId));
+    const qs = params.toString();
+    return apiFetch<Projet[]>(`/projets${qs ? `?${qs}` : ""}`);
+  },
+
+  /** Obtenir un projet avec ses missions */
+  getProjet(projetId: number): Promise<Projet & { missions: Mission[] }> {
+    return apiFetch(`/projets/${projetId}`);
+  },
+
+  /** Creer un projet */
+  createProjet(data: {
+    titre: string;
+    description?: string;
+    chantier_id?: number;
+    bot_primaire?: string;
+    bot_codes?: string[];
+    participants?: Array<{ type: string; code?: string; nom?: string; role: string }>;
+    objectifs?: string[];
+    echeance?: string;
+    tags?: string[];
+  }): Promise<{ status: string; id: number }> {
+    return apiFetch("/projets", { method: "POST", body: JSON.stringify(data) });
+  },
+
+  /** Modifier un projet */
+  updateProjet(projetId: number, data: Record<string, unknown>): Promise<{ status: string }> {
+    return apiFetch(`/projets/${projetId}`, { method: "PUT", body: JSON.stringify(data) });
+  },
+
+  /** Supprimer un projet (archive) */
+  deleteProjet(projetId: number): Promise<{ status: string }> {
+    return apiFetch(`/projets/${projetId}`, { method: "DELETE" });
+  },
+
+  // ── MISSIONS ────────────────────────────────────────────
+
+  /** Lister les missions */
+  listMissions(chantierId?: number, projetId?: number): Promise<{ missions: Mission[] }> {
+    const params = new URLSearchParams();
+    if (chantierId) params.set("chantier_id", String(chantierId));
+    if (projetId) params.set("projet_id", String(projetId));
+    const qs = params.toString();
+    return apiFetch<Mission[]>(`/missions-user${qs ? `?${qs}` : ""}`).then(list => ({ missions: list }));
+  },
+
+  /** Creer une mission (briefing complet) */
+  createMission(data: {
+    titre: string;
+    description?: string;
+    chantier_id?: number;
+    projet_id?: number;
+    bot_primaire?: string;
+    priorite?: number;
+    participants?: Array<{ type: string; code?: string; nom?: string; role: string }>;
+    tags?: string[];
+    contexte?: Record<string, unknown>;
+  }): Promise<{ status: string; id: number }> {
     return apiFetch("/missions-user", { method: "POST", body: JSON.stringify(data) });
   },
 
@@ -557,6 +653,121 @@ export const api = {
   /** Lier un thread a une mission */
   linkThreadToMission(missionId: number, threadId: string): Promise<{ ok: boolean }> {
     return apiFetch(`/missions-user/${missionId}/thread`, { method: "POST", body: JSON.stringify({ thread_id: threadId }) });
+  },
+
+  // ── IDEES (migration Crystals localStorage → DB) ────────
+
+  /** Lister les idées */
+  listIdees(filters?: { chantier_id?: number; projet_id?: number; mission_id?: number }): Promise<Idee[]> {
+    const params = new URLSearchParams();
+    if (filters?.chantier_id) params.set("chantier_id", String(filters.chantier_id));
+    if (filters?.projet_id) params.set("projet_id", String(filters.projet_id));
+    if (filters?.mission_id) params.set("mission_id", String(filters.mission_id));
+    const qs = params.toString();
+    return apiFetch<Idee[]>(`/idees${qs ? `?${qs}` : ""}`);
+  },
+
+  /** Creer une idée */
+  createIdee(data: {
+    titre: string;
+    contenu?: string;
+    source?: string;
+    bot?: string;
+    mode?: string;
+    tags?: string[];
+    chantier_id?: number;
+    projet_id?: number;
+    mission_id?: number;
+  }): Promise<{ status: string; id: number }> {
+    return apiFetch("/idees", { method: "POST", body: JSON.stringify(data) });
+  },
+
+  /** Supprimer une idée */
+  deleteIdee(ideeId: number): Promise<{ status: string }> {
+    return apiFetch(`/idees/${ideeId}`, { method: "DELETE" });
+  },
+
+  // ── PLAYBOOKS ───────────────────────────────────────────────
+
+  listPlaybooks(): Promise<PlaybookSummary[]> {
+    return apiFetch("/playbooks");
+  },
+
+  deployPlaybook(playbookId: string): Promise<PlaybookDeployResult> {
+    return apiFetch(`/playbooks/deploy/${playbookId}`, { method: "POST" });
+  },
+
+  // ── CATALOGUES (diagnostics, missions, templates projets) ──
+
+  listDiagnosticsUniversels(): Promise<DiagnosticCatalogue[]> {
+    return apiFetch("/diagnostics/catalogue/universels");
+  },
+
+  listDiagnosticsSectoriels(industrie?: string): Promise<DiagnosticCatalogue[]> {
+    const qs = industrie ? `?industrie=${industrie}` : "";
+    return apiFetch(`/diagnostics/catalogue/sectoriels${qs}`);
+  },
+
+  listGapsFournisseurs(departement?: string): Promise<GapFournisseur[]> {
+    const qs = departement ? `?departement=${departement}` : "";
+    return apiFetch(`/diagnostics/catalogue/gaps${qs}`);
+  },
+
+  listMissionsCatalogue(): Promise<MissionCatalogue[]> {
+    return apiFetch("/missions/catalogue");
+  },
+
+  listTemplatesProjetsCatalogue(): Promise<TemplateProjetCatalogue[]> {
+    return apiFetch("/templates-projets/catalogue");
+  },
+
+  listDiagnosticsEnrichis(departement?: string): Promise<DiagnosticCatalogue[]> {
+    const qs = departement ? `?departement=${departement}` : "";
+    return apiFetch(`/diagnostics/catalogue/enrichis${qs}`);
+  },
+
+  listTemplatesDocumentaires(departement?: string, categorie?: string): Promise<TemplateDocumentaire[]> {
+    const params = new URLSearchParams();
+    if (departement) params.set("departement", departement);
+    if (categorie) params.set("categorie", categorie);
+    const qs = params.toString() ? `?${params.toString()}` : "";
+    return apiFetch(`/templates-documentaires/catalogue${qs}`);
+  },
+
+  // ── DISCUSSIONS (persistance metadonnees) ─────────────────
+
+  /** Lister les discussions */
+  listDiscussions(status?: string): Promise<Discussion[]> {
+    const qs = status ? `?status=${status}` : "";
+    return apiFetch<Discussion[]>(`/discussions${qs}`);
+  },
+
+  /** Creer/enregistrer une discussion */
+  createDiscussion(data: { external_id: string; titre?: string; bot_primaire?: string; section?: string; flow_type?: string }): Promise<{ status: string; id: number }> {
+    return apiFetch("/discussions", { method: "POST", body: JSON.stringify(data) });
+  },
+
+  /** Mettre a jour une discussion */
+  updateDiscussion(discussionId: number, data: Record<string, unknown>): Promise<{ status: string }> {
+    return apiFetch(`/discussions/${discussionId}`, { method: "PUT", body: JSON.stringify(data) });
+  },
+
+  /** Promouvoir une discussion en mission */
+  promoteDiscussion(discussionId: number, titreMission?: string): Promise<{ status: string; mission_id: number }> {
+    return apiFetch(`/discussions/${discussionId}/promote`, {
+      method: "POST",
+      body: JSON.stringify({ titre_mission: titreMission }),
+    });
+  },
+
+  /** Archiver une discussion */
+  archiveDiscussion(discussionId: number): Promise<{ status: string }> {
+    return apiFetch(`/discussions/${discussionId}/archive`, { method: "POST" });
+  },
+
+  /** Discussions stagnantes */
+  staleDiscussions(heures = 48): Promise<Discussion[]> {
+    return apiFetch<Discussion[]>(`/discussions/stale?heures=${heures}`);
   },
 
   // ── COMMAND (BLOC 1) ──────────────────────────────────────
