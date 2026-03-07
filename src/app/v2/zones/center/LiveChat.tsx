@@ -1317,11 +1317,30 @@ export function LiveChat({
           if (orig) sendMessage(`Recentrons-nous: ${orig.content}`, activeBotCode);
           return;
         }
+        // Phase 2B — Promouvoir la discussion en mission
+        case "Oui, creer la mission": {
+          if (!activeThreadId) return;
+          const thread = threads.find((t) => t.id === activeThreadId);
+          const titre = thread?.title || "Nouvelle mission";
+          api.createMission({ titre, bot_primaire: activeBotCode })
+            .then((res) => {
+              if (res?.id) {
+                api.linkThreadToMission(res.id, activeThreadId!).catch(() => {});
+              }
+            })
+            .catch(() => {});
+          sendMessage("Mission creee. Je vais suivre l'avancement de ce sujet.", activeBotCode);
+          return;
+        }
+        case "Pas encore":
+        case "Non merci":
+          // Dismiss nudge — just continue
+          return;
         default:
           sendMessage(text, activeBotCode);
       }
     },
-    [sendMessage, activeBotCode, isTyping, messages, parkThread, handleSynthesis]
+    [sendMessage, activeBotCode, isTyping, messages, parkThread, handleSynthesis, activeThreadId, threads]
   );
 
   const handleChallenge = useCallback(

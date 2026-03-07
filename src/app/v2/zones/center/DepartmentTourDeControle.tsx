@@ -5,14 +5,17 @@
  * Sprint A — Frame Master V2
  */
 
-import { ArrowRight, Settings } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowRight, Settings, Stethoscope } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import { Card } from "../../../components/ui/card";
 import { Badge } from "../../../components/ui/badge";
 import { cn } from "../../../components/ui/utils";
 import { useFrameMaster } from "../../context/FrameMasterContext";
 import { useCanvasActions } from "../../context/CanvasActionContext";
-import { BOT_AVATAR, BOT_SUBTITLE } from "../../api/types";
+import { BOT_SUBTITLE } from "../../api/types";
+import { api } from "../../api/client";
+import type { Mission, DiagnosticCatalogue, TemplateDocumentaire } from "../../api/types";
 import { DashboardView } from "./DashboardView";
 import { PageLayout } from "./layouts/PageLayout";
 
@@ -113,6 +116,45 @@ type DeptTdcConfig = {
   summary: string;
   row1: BlocConfig[];
   row2: BlocConfig[];
+};
+
+/* ============ TABS DEPARTEMENT (Pipeline pattern) ============ */
+type DeptViewTab = "overview" | "pipeline" | "documents" | "diagnostics";
+const DEPT_VIEW_TABS: { id: DeptViewTab; label: string; icon: React.ElementType }[] = [
+  { id: "overview", label: "Vue d'ensemble", icon: BarChart3 },
+  { id: "pipeline", label: "Pipeline", icon: Target },
+  { id: "documents", label: "Documents", icon: FileText },
+  { id: "diagnostics", label: "Diagnostics", icon: Stethoscope },
+];
+
+const DEPT_HEADER_GRADIENT: Record<string, string> = {
+  BCF: "from-emerald-600 to-emerald-500",
+  BCT: "from-violet-600 to-violet-500",
+  BFA: "from-slate-700 to-slate-600",
+  BOO: "from-orange-600 to-orange-500",
+  BRO: "from-amber-600 to-amber-500",
+  BCM: "from-pink-600 to-pink-500",
+  BCS: "from-red-600 to-red-500",
+  BHR: "from-teal-600 to-teal-500",
+  BSE: "from-zinc-700 to-zinc-600",
+  BLE: "from-indigo-600 to-indigo-500",
+  BIO: "from-rose-600 to-rose-500",
+  BPO: "from-fuchsia-600 to-fuchsia-500",
+};
+
+/* Icon par departement pour le header gradient */
+const DEPT_ICON: Record<string, React.ElementType> = {
+  BCF: DollarSign, BCT: Cpu, BFA: Factory, BOO: Settings,
+  BRO: TrendingUp, BCM: Megaphone, BCS: Target, BHR: Users,
+  BSE: ShieldCheck, BLE: Scale, BIO: Lightbulb,
+};
+
+/* Mapping bot code → department key for diagnostics */
+const BOT_TO_DEPT: Record<string, string> = {
+  BCO: "direction", BCT: "technologie", BCF: "finance", BCM: "marketing",
+  BCS: "strategie", BOO: "operations", BFA: "production", BHR: "rh",
+  BIO: "innovation", BRO: "ventes", BLE: "legal", BSE: "securite",
+  BPO: "innovation",
 };
 
 const DEPT_TDC: Record<string, DeptTdcConfig> = {
@@ -717,9 +759,9 @@ const DEPT_TDC: Record<string, DeptTdcConfig> = {
     ],
   },
 
-  /* --- INNOVATION (BPO) --- */
-  BPO: {
-    botName: "Agent CPO",
+  /* --- INNOVATION (BIO — Inès / CINO) --- */
+  BIO: {
+    botName: "Agent CINO",
     summary: "3 projets R&D actifs. 1 brevet en examen. Prototype IA vision en test.",
     row1: [
       { icon: Lightbulb, title: "Projets R&D", gradient: "bg-gradient-to-r from-fuchsia-700 to-fuchsia-600", ringColor: "hover:ring-fuchsia-300", count: 3, items: [
@@ -782,6 +824,21 @@ const DEPT_TDC: Record<string, DeptTdcConfig> = {
 export function DepartmentTourDeControle() {
   const { activeBotCode, activeBot, setActiveView } = useFrameMaster();
   const { dispatch } = useCanvasActions();
+  const [deptTab, setDeptTab] = useState<DeptViewTab>("overview");
+  const [missions, setMissions] = useState<Mission[]>([]);
+  const [diagnostics, setDiagnostics] = useState<DiagnosticCatalogue[]>([]);
+  const [templates, setTemplates] = useState<TemplateDocumentaire[]>([]);
+
+  // Load data for Pipeline / Documents / Diagnostics tabs
+  // MUST be before any early return (React hooks rules)
+  useEffect(() => {
+    if (activeBotCode === "BCO") return;
+    setDeptTab("overview");
+    const deptKey = BOT_TO_DEPT[activeBotCode] || "";
+    api.listMissions().then(r => setMissions((r.missions || []).filter(m => m.bot_primaire === activeBotCode))).catch(() => {});
+    api.listDiagnosticsEnrichis(deptKey).then(d => setDiagnostics(d || [])).catch(() => {});
+    api.listTemplatesDocumentaires(activeBotCode).then(t => setTemplates(t || [])).catch(() => {});
+  }, [activeBotCode]);
 
   // BCO (Direction) = meme Tour de Controle que le home
   if (activeBotCode === "BCO") {
@@ -806,9 +863,8 @@ export function DepartmentTourDeControle() {
     );
   }
 
-  const avatar = BOT_AVATAR[activeBotCode];
   const subtitle = BOT_SUBTITLE[activeBotCode] || config.botName;
-  const botName = activeBot?.nom || config.botName;
+  const headerGradient = DEPT_HEADER_GRADIENT[activeBotCode] || "from-slate-600 to-slate-500";
 
   const handleBlocClick = (bloc: BlocConfig) => {
     const elementType = bloc.title.toLowerCase()
@@ -828,22 +884,198 @@ export function DepartmentTourDeControle() {
     setActiveView("live-chat");
   };
 
+  const handleFocus = (title: string, elementType: string, data: unknown) => {
+    dispatch({ type: "focus", layer: "cerveau", data: { title, element_type: elementType, data }, bot: activeBotCode });
+    setActiveView("live-chat");
+  };
+
   return (
-    <PageLayout maxWidth="5xl">
+    <PageLayout maxWidth="5xl" spacing="space-y-2.5">
 
-        {/* Row 1 : 5 blocs domaine — cliquables → Focus Mode */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-          {config.row1.map((bloc, i) => (
-            <Bloc key={i} config={bloc} onClick={() => handleBlocClick(bloc)} />
-          ))}
+        {/* ── GRADIENT HEADER + TABS (Pipeline pattern) ── */}
+        <div className={cn("bg-gradient-to-r rounded-xl p-4 transition-all duration-300", headerGradient)}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {(() => { const DeptIcon = DEPT_ICON[activeBotCode]; return DeptIcon ? (
+                <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center">
+                  <DeptIcon className="h-5 w-5 text-white" />
+                </div>
+              ) : null; })()}
+              <h2 className="text-lg font-bold text-white">{subtitle}</h2>
+            </div>
+            <div className="flex gap-1.5">
+              {DEPT_VIEW_TABS.map(tab => {
+                const Icon = tab.icon;
+                const count = tab.id === "pipeline" ? missions.length
+                  : tab.id === "documents" ? templates.length
+                  : tab.id === "diagnostics" ? diagnostics.length
+                  : undefined;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setDeptTab(tab.id)}
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
+                      deptTab === tab.id
+                        ? "bg-white/25 text-white shadow-sm"
+                        : "text-white/60 hover:bg-white/10 hover:text-white/80"
+                    )}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    {tab.label}
+                    {count !== undefined && count > 0 && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/20 font-bold">{count}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
-        {/* Row 2 : 5 blocs outils — cliquables → Focus Mode */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-          {config.row2.map((bloc, i) => (
-            <Bloc key={i} config={bloc} onClick={() => handleBlocClick(bloc)} />
-          ))}
-        </div>
+        {/* ══════════════════════════════════════════ */}
+        {/* TAB 1 — VUE D'ENSEMBLE (10 blocs)         */}
+        {/* ══════════════════════════════════════════ */}
+        {deptTab === "overview" && (<>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+            {config.row1.map((bloc, i) => (
+              <Bloc key={i} config={bloc} onClick={() => handleBlocClick(bloc)} />
+            ))}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+            {config.row2.map((bloc, i) => (
+              <Bloc key={i} config={bloc} onClick={() => handleBlocClick(bloc)} />
+            ))}
+          </div>
+        </>)}
+
+        {/* ══════════════════════════════════════════ */}
+        {/* TAB 2 — PIPELINE (Missions du departement) */}
+        {/* ══════════════════════════════════════════ */}
+        {deptTab === "pipeline" && (
+          <div className="space-y-3">
+            {missions.length === 0 ? (
+              <div className="text-center py-12">
+                <Target className="h-5 w-5 text-gray-300 mx-auto mb-2" />
+                <p className="text-sm text-gray-500">Aucune mission pour ce departement</p>
+                <p className="text-[9px] text-gray-400 mt-1">Les missions creees avec cet agent apparaitront ici</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                {missions.map(m => (
+                  <Card
+                    key={m.id}
+                    className="p-0 overflow-hidden hover:shadow-lg transition-all cursor-pointer group"
+                    onClick={() => handleFocus(`Mission: ${m.titre}`, "mission", m)}
+                  >
+                    <div className={cn("bg-gradient-to-r px-3 py-2.5", headerGradient)}>
+                      <p className="text-xs font-bold text-white truncate">{m.titre}</p>
+                      <span className="text-[9px] text-white/60">{m.status || "active"}</span>
+                    </div>
+                    <div className="px-3 py-2.5">
+                      <p className="text-[9px] text-gray-500 line-clamp-2">{m.description || "Pas de description"}</p>
+                      <div className="flex items-center gap-1.5 mt-2">
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 font-medium">{m.bot_primaire}</span>
+                        {m.chaleur && (
+                          <span className="text-[9px]">{m.chaleur === "brule" ? "🔥" : m.chaleur === "couve" ? "🟡" : "⚪"}</span>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════ */}
+        {/* TAB 3 — DOCUMENTS (Templates du departement) */}
+        {/* ══════════════════════════════════════════ */}
+        {deptTab === "documents" && (
+          <div className="space-y-3">
+            {templates.length === 0 ? (
+              <div className="text-center py-12">
+                <FileText className="h-5 w-5 text-gray-300 mx-auto mb-2" />
+                <p className="text-sm text-gray-500">Aucun template pour ce departement</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                {templates.map(t => (
+                  <Card
+                    key={t.id}
+                    className="p-0 overflow-hidden hover:shadow-lg transition-all cursor-pointer group"
+                    onClick={() => handleFocus(`Template: ${t.titre}`, "template_documentaire", t)}
+                  >
+                    <div className={cn("bg-gradient-to-r px-3 py-2.5 flex items-center justify-between", headerGradient)}>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-white truncate">{t.titre}</p>
+                        <span className="text-[9px] text-white/60">{t.categorie}</span>
+                      </div>
+                      {t.pages_estimees && (
+                        <span className="text-[9px] bg-white/20 text-white px-1.5 py-0.5 rounded-full shrink-0">{t.pages_estimees} p.</span>
+                      )}
+                    </div>
+                    <div className="px-3 py-2.5 space-y-1.5">
+                      <p className="text-[9px] text-gray-500 line-clamp-2 leading-relaxed">{t.description}</p>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 font-medium">{t.frequence}</span>
+                        {t.niveau_hierarchie && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-gray-50 text-gray-500">{t.niveau_hierarchie}</span>
+                        )}
+                        {t.sections && t.sections.length > 0 && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-violet-50 text-violet-600">{t.sections.length} sections</span>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════ */}
+        {/* TAB 4 — DIAGNOSTICS (par departement)      */}
+        {/* ══════════════════════════════════════════ */}
+        {deptTab === "diagnostics" && (
+          <div className="space-y-3">
+            {diagnostics.length === 0 ? (
+              <div className="text-center py-12">
+                <Stethoscope className="h-5 w-5 text-gray-300 mx-auto mb-2" />
+                <p className="text-sm text-gray-500">Aucun diagnostic pour ce departement</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                {diagnostics.map(diag => (
+                  <Card
+                    key={diag.id}
+                    className="p-0 overflow-hidden hover:shadow-lg transition-all cursor-pointer group"
+                    onClick={() => handleFocus(`Diagnostic: ${diag.titre}`, "diagnostic_enrichi", diag)}
+                  >
+                    <div className={cn("bg-gradient-to-r px-3 py-2.5 flex items-center justify-between", headerGradient)}>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-white truncate">{diag.titre}</p>
+                      </div>
+                      {(diag.data_points?.length || 0) > 0 && (
+                        <span className="text-[9px] bg-white/20 text-white px-1.5 py-0.5 rounded-full shrink-0">{diag.data_points?.length} KPIs</span>
+                      )}
+                    </div>
+                    <div className="px-3 py-2.5 space-y-1.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-50 text-cyan-700 font-medium">{diag.duree_minutes} min</span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-gray-50 text-gray-500">{diag.nb_questions} questions</span>
+                      </div>
+                      {diag.valeur_potentielle && (
+                        <p className="text-[9px] text-emerald-600 line-clamp-1">{diag.valeur_potentielle}</p>
+                      )}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
     </PageLayout>
   );
 }

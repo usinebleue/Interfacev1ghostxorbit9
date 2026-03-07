@@ -5,7 +5,7 @@
  */
 
 import { useState } from "react";
-import { MessageSquare, Clock, CheckCircle, PlayCircle, PlusCircle, Trash2, ArrowRight, FolderInput, Briefcase, MessageCircle } from "lucide-react";
+import { MessageSquare, Clock, CheckCircle, PlayCircle, PlusCircle, Trash2, ArrowRight, MessageCircle } from "lucide-react";
 import { cn } from "../../../components/ui/utils";
 import { useChatContext } from "../../context/ChatContext";
 import { useFrameMaster } from "../../context/FrameMasterContext";
@@ -25,7 +25,6 @@ const BOT_META: Record<string, { emoji: string; name: string; color: string }> =
   BHR: { emoji: "👥", name: "Hélène",    color: "text-indigo-700 bg-indigo-50 border-indigo-200" },
   BSE: { emoji: "🛡️", name: "Sécurité",  color: "text-gray-700 bg-gray-50 border-gray-200" },
   BLE: { emoji: "⚖️", name: "Louise",    color: "text-yellow-700 bg-yellow-50 border-yellow-200" },
-  BPO: { emoji: "💡", name: "Philippe",  color: "text-purple-700 bg-purple-50 border-purple-200" },
 };
 
 function formatRelativeTime(dateStr: string): string {
@@ -138,16 +137,6 @@ function ThreadCard({ thread, isActive, onContinuer, onReprendre, onParker, onSu
           </button>
         )}
 
-        {/* → Projet (Sprint C — pas encore fonctionnel) */}
-        <button
-          disabled
-          className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-gray-50 text-gray-300 border border-dashed border-gray-200 cursor-not-allowed font-medium"
-          title="Promouvoir en projet — disponible dans Sprint C"
-        >
-          <Briefcase className="h-3 w-3" />
-          → Projet
-        </button>
-
         {/* Supprimer */}
         {onSupprimer && (
           <button
@@ -196,15 +185,15 @@ export function DiscussionView() {
       <PageHeader
         icon={MessageSquare}
         iconColor="text-blue-600"
-        title="Mes Missions"
-        subtitle={total === 0 ? "Aucune mission" : `${total} mission${total !== 1 ? "s" : ""} · ${activeThreads.length} active${activeThreads.length !== 1 ? "s" : ""}`}
+        title="Mes Discussions"
+        subtitle={total === 0 ? "Aucune discussion" : `${total} discussion${total !== 1 ? "s" : ""} · ${activeThreads.length} active${activeThreads.length !== 1 ? "s" : ""}`}
         rightSlot={
           <button
             onClick={() => { newConversation(); goToChat(); }}
             className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer font-medium"
           >
             <PlusCircle className="h-3.5 w-3.5" />
-            Nouvelle mission
+            Nouvelle discussion
           </button>
         }
       />
@@ -213,14 +202,14 @@ export function DiscussionView() {
           {total === 0 && (
             <div className="text-center py-16 text-gray-400">
               <MessageSquare className="h-10 w-10 mx-auto mb-3 opacity-30" />
-              <p className="text-sm font-medium">Aucune mission pour l'instant</p>
-              <p className="text-xs mt-1 opacity-70">Démarrez une mission avec votre Bot Team C-Level</p>
+              <p className="text-sm font-medium">Aucune discussion pour l'instant</p>
+              <p className="text-xs mt-1 opacity-70">Démarrez une discussion avec votre Bot Team C-Level</p>
               <button
                 onClick={() => { newConversation(); goToChat(); }}
                 className="mt-4 flex items-center gap-1.5 text-xs px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer font-medium mx-auto"
               >
                 <PlusCircle className="h-3.5 w-3.5" />
-                Lancer une mission
+                Lancer une discussion
               </button>
             </div>
           )}

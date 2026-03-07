@@ -480,6 +480,8 @@ export function useChat() {
 
   // ── Suspension Intelligente — drift detection ──
   const driftWarningCount = useRef(0);
+  // Phase 2B — Track mission nudge (avoid repeating)
+  const missionNudgeShownAt = useRef(0); // msg count when nudge was shown
 
   function detectDrift(originalTension: string, currentMsg: string): boolean {
     // Extract significant words (>3 chars, not stopwords)
@@ -591,6 +593,19 @@ export function useChat() {
         };
         setThreads((prev) => [...prev, thread]);
         setActiveThreadId(newId);
+
+        // Phase 1B — Auto-link thread to pending mission (from MesChantiersView)
+        try {
+          const pendingMissionId = sessionStorage.getItem("ghostx-pending-mission-link");
+          if (pendingMissionId) {
+            sessionStorage.removeItem("ghostx-pending-mission-link");
+            // Set missionId on the thread locally
+            setThreads((prev) =>
+              prev.map((t) => t.id === newId ? { ...t, missionId: pendingMissionId } : t)
+            );
+            api.linkThreadToMission(parseInt(pendingMissionId), newId).catch(() => {});
+          }
+        } catch { /* noop */ }
       }
 
       const req: ChatRequest = {
@@ -779,6 +794,36 @@ export function useChat() {
                     }, 600);
                   }
                 }
+              }
+
+              // Phase 2B — Nudge "en faire une mission?" apres 5+ messages user sans mission liee
+              const currentThread = threads.find((t) => t.id === activeThreadId);
+              if (
+                userMsgs.length >= 5 &&
+                msgType === "normal" &&
+                !currentThread?.missionId &&
+                missionNudgeShownAt.current === 0
+              ) {
+                missionNudgeShownAt.current = userMsgs.length;
+                setTimeout(() => {
+                  injectCoaching(
+                    "On a bien explore ce sujet. Tu veux en faire une mission? Ca va me permettre de suivre l'avancement.",
+                    ["Oui, creer la mission", "Pas encore"]
+                  );
+                }, 800);
+              } else if (
+                userMsgs.length >= 10 &&
+                !currentThread?.missionId &&
+                missionNudgeShownAt.current > 0 &&
+                missionNudgeShownAt.current <= 5
+              ) {
+                missionNudgeShownAt.current = userMsgs.length;
+                setTimeout(() => {
+                  injectCoaching(
+                    "Cette discussion a du contenu solide. On la structure en mission pour ne rien perdre?",
+                    ["Oui, creer la mission", "Non merci"]
+                  );
+                }, 800);
               }
 
               resolve();
@@ -1613,17 +1658,21 @@ export function useChantiers() {
   return { chantiers, loading, refresh, create, remove };
 }
 
-export function useMissions(chantierId?: number) {
-  const [missions, setMissions] = useState<import("./types").Mission[]>([]);
+// ══════════════════════════════════════════════
+// useProjets — CRUD projets (Espace Unifié)
+// ══════════════════════════════════════════════
+
+export function useProjets(chantierId?: number) {
+  const [projets, setProjets] = useState<import("./types").Projet[]>([]);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await api.listMissions(chantierId);
-      setMissions(data.missions || []);
+      const data = await api.listProjets(chantierId);
+      setProjets(Array.isArray(data) ? data : []);
     } catch {
-      setMissions([]);
+      setProjets([]);
     } finally {
       setLoading(false);
     }
@@ -1631,11 +1680,79 @@ export function useMissions(chantierId?: number) {
 
   useEffect(() => { refresh(); }, [refresh]);
 
+  const create = useCallback(async (data: import("./types").ProjetCreate) => {
+    const result = await api.createProjet({ ...data, chantier_id: data.chantier_id ?? chantierId });
+    await refresh();
+    return result;
+  }, [chantierId, refresh]);
+
+  const remove = useCallback(async (id: number) => {
+    await api.deleteProjet(id);
+    await refresh();
+  }, [refresh]);
+
+  return { projets, loading, refresh, create, remove };
+}
+
+// ══════════════════════════════════════════════
+// useIdees — CRUD idees (migration Crystals → DB)
+// ══════════════════════════════════════════════
+
+export function useIdees(filters?: { chantier_id?: number; projet_id?: number; mission_id?: number }) {
+  const [idees, setIdees] = useState<import("./types").Idee[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await api.listIdees(filters);
+      setIdees(Array.isArray(data) ? data : []);
+    } catch {
+      setIdees([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [filters?.chantier_id, filters?.projet_id, filters?.mission_id]);
+
+  useEffect(() => { refresh(); }, [refresh]);
+
+  const create = useCallback(async (data: import("./types").IdeeCreate) => {
+    const result = await api.createIdee(data);
+    await refresh();
+    return result;
+  }, [refresh]);
+
+  const remove = useCallback(async (id: number) => {
+    await api.deleteIdee(id);
+    await refresh();
+  }, [refresh]);
+
+  return { idees, loading, refresh, create, remove };
+}
+
+export function useMissions(chantierId?: number, projetId?: number) {
+  const [missions, setMissions] = useState<import("./types").Mission[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await api.listMissions(chantierId, projetId);
+      setMissions(data.missions || []);
+    } catch {
+      setMissions([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [chantierId, projetId]);
+
+  useEffect(() => { refresh(); }, [refresh]);
+
   const create = useCallback(async (titre: string, botPrimaire?: string) => {
-    const m = await api.createMission({ titre, chantier_id: chantierId, bot_primaire: botPrimaire });
+    const m = await api.createMission({ titre, chantier_id: chantierId, projet_id: projetId, bot_primaire: botPrimaire });
     await refresh();
     return m;
-  }, [chantierId, refresh]);
+  }, [chantierId, projetId, refresh]);
 
   const remove = useCallback(async (id: number) => {
     await api.deleteMission(id);
@@ -1643,6 +1760,52 @@ export function useMissions(chantierId?: number) {
   }, [refresh]);
 
   return { missions, loading, refresh, create, remove };
+}
+
+// ══════════════════════════════════════════════
+// useDiscussions — persistance metadonnees discussions
+// ══════════════════════════════════════════════
+
+export function useDiscussions(status?: string) {
+  const [discussions, setDiscussions] = useState<import("./types").Discussion[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await api.listDiscussions(status);
+      setDiscussions(Array.isArray(data) ? data : []);
+    } catch {
+      setDiscussions([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [status]);
+
+  useEffect(() => { refresh(); }, [refresh]);
+
+  const create = useCallback(async (externalId: string, titre?: string, botPrimaire?: string) => {
+    const result = await api.createDiscussion({
+      external_id: externalId,
+      titre: titre || "Discussion sans titre",
+      bot_primaire: botPrimaire,
+    });
+    await refresh();
+    return result;
+  }, [refresh]);
+
+  const promote = useCallback(async (discussionId: number, titreMission?: string) => {
+    const result = await api.promoteDiscussion(discussionId, titreMission);
+    await refresh();
+    return result;
+  }, [refresh]);
+
+  const archive = useCallback(async (discussionId: number) => {
+    await api.archiveDiscussion(discussionId);
+    await refresh();
+  }, [refresh]);
+
+  return { discussions, loading, refresh, create, promote, archive };
 }
 
 // ══════════════════════════════════════════════

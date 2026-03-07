@@ -340,7 +340,7 @@ export interface Thread {
 // Nomenclature: Mission > Discussion > Branche
 
 export type MissionStatus = "active" | "en_cours" | "en_attente" | "completee" | "archivee";
-export type ChantierStatus = "active" | "en_attente" | "complete" | "archive";
+export type ChantierStatus = "active" | "en_attente" | "completee" | "archivee";
 export type ChantierHeat = "brule" | "couve" | "meurt" | "inconnu";
 export type EtatCroissance = "inconnu" | "demarrage" | "croissance" | "maturite";
 export type OnboardingStep = "accueil" | "identite" | "croissance" | "vitaa" | "herrmann" | "objectifs" | "chantiers" | "complete";
@@ -385,16 +385,27 @@ export interface DiagnosticVivant {
   updatedAt: string;
 }
 
+// ─── Participant (Espace Unifié — multi-participants bots + humains) ───
+export interface Participant {
+  type: "bot" | "humain";
+  code?: string;    // bot code (BCO, BCT...) — seulement si type=bot
+  nom?: string;     // human name — seulement si type=humain
+  role: string;     // "pilote" | "sponsor" | "responsable" | "support" | "observateur"
+}
+
 // ─── Chantier (D-108) ───
 // Stratégique — semaines/mois. Trié par chaleur VITAA dans la sidebar.
 // Ex: "Expansion marché US", "Certification ISO", "Transformation numérique"
 // NOTE: field names match the API response (snake_case)
+export type ChantierType = "strategique" | "technologique" | "organisationnel" | "culturel" | "environnemental" | "operationnel";
+
 export interface Chantier {
   id: number;
   user_id?: number;
   titre: string;
   description: string;
   chaleur: ChantierHeat;
+  type_chantier?: ChantierType;
   scores_vitaa?: ScoresVITAA;
   progression: number;           // 0-100 (moyenne des missions)
   status: ChantierStatus;
@@ -402,8 +413,53 @@ export interface Chantier {
   section_primaire?: string;
   source?: "onboarding" | "tension" | "manuel";
   missions?: Mission[];          // populated frontend-side
+  tags?: string[];
+  objectifs?: string[];
+  echeance?: string | null;
+  budget_estime?: string;
+  indicateurs_cles?: string[];
+  risques?: string[];
+  participants?: Participant[];
+  missions_count?: number;
   created_at: string;
   updated_at: string;
+}
+
+// ─── Projet (Espace Unifié — niveau organisationnel) ───
+export interface Projet {
+  id: number;
+  user_id?: number;
+  chantier_id?: number | null;
+  titre: string;
+  description: string;
+  status: string;
+  progression: number;
+  bot_primaire: string;
+  bot_codes?: string[];
+  participants?: Participant[];
+  objectifs?: string[];
+  echeance?: string | null;
+  tags?: string[];
+  section?: string;
+  source?: string;
+  contexte?: Record<string, unknown>;
+  missions_count?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProjetCreate {
+  titre: string;
+  description?: string;
+  chantier_id?: number;
+  bot_primaire?: string;
+  bot_codes?: string[];
+  participants?: Participant[];
+  objectifs?: string[];
+  echeance?: string;
+  tags?: string[];
+  section?: string;
+  contexte?: Record<string, unknown>;
 }
 
 // ─── Mission (D-108) ───
@@ -414,6 +470,7 @@ export interface Mission {
   id: number;
   user_id?: number;
   chantier_id?: number | null;   // null = mission libre
+  projet_id?: number | null;     // null = skip-level
   titre: string;
   description: string;
   status: MissionStatus;
@@ -425,10 +482,37 @@ export interface Mission {
   command_mission_id?: number | null;
   thread_ids: string[];          // discussions (frontend thread UUIDs)
   priorite: number;              // 0-100
+  participants?: Participant[];
+  tags?: string[];
   contexte?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
   completed_at?: string | null;
+}
+
+// ─── Discussion (metadonnees persistees — messages en localStorage) ───
+// Pipeline: Discussion → Mission → Chantier
+
+export type DiscussionStatus = "active" | "parked" | "closed_promoted" | "closed_archived";
+
+export interface Discussion {
+  id: number;
+  user_id?: number;
+  external_id: string;           // UUID du thread frontend
+  titre: string;
+  status: DiscussionStatus;
+  mission_id?: number | null;    // rempli quand promue
+  bot_primaire: string;
+  section?: string;
+  flow_type?: "data" | "action" | "mode_branch";
+  message_count: number;
+  last_user_message_at?: string | null;
+  participants?: Participant[];
+  tags?: string[];
+  contexte?: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+  closed_at?: string | null;
 }
 
 // ─── Contexte de bulle dynamique ───
@@ -495,7 +579,7 @@ export const BOT_SUBTITLE: Record<string, string> = {
   BOO: "Operations & Production",
   BFA: "Automatisation & Usine",
   BHR: "Ressources Humaines",
-  BIO: "Systemes & Donnees",
+  BIO: "Innovation & R&D",
   BCC: "Communication & Marque",
   BPO: "Innovation & Produits",
   BRO: "Revenus & Croissance",
@@ -669,29 +753,201 @@ export interface CanvasAction {
   bot?: string;                  // bot source (BCO, BCT, etc.)
 }
 
+// --- Idee (migration Crystals localStorage → PostgreSQL) ---
+
+export interface Idee {
+  id: number;
+  titre: string;
+  contenu: string;
+  source: string;
+  bot: string;
+  mode: string;
+  tags: string[];
+  chantier_id?: number | null;
+  projet_id?: number | null;
+  mission_id?: number | null;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface IdeeCreate {
+  titre: string;
+  contenu?: string;
+  source?: string;
+  bot?: string;
+  mode?: string;
+  tags?: string[];
+  chantier_id?: number;
+  projet_id?: number;
+  mission_id?: number;
+}
+
+// --- Playbooks ---
+
+export interface PlaybookSummary {
+  id: string;
+  type_chantier: string;
+  titre_template: string;
+  description: string;
+  bots_suggeres: string[];
+  nb_projets: number;
+  nb_missions: number;
+}
+
+export interface PlaybookDeployResult {
+  status: string;
+  chantier_id: number;
+  projets: { id: number; titre: string }[];
+  missions: { id: number; titre: string; projet_id: number }[];
+  playbook_id: string;
+}
+
+// --- Catalogues (Diagnostics, Missions, Templates Projets) ---
+
+export interface DiagnosticDataPoint {
+  cle: string;
+  label: string;
+  type: string;
+  options?: string[];
+  benchmark_industrie: string;
+  critique: boolean;
+  unite: string;
+}
+
+export interface DiagnosticGap {
+  gap: string;
+  impact: string;
+  fournisseurs_types: string[];
+  chantier_suggere: string;
+  playbook_suggere: string;
+}
+
+export interface DiagnosticDocument {
+  type: string;
+  titre: string;
+  description: string;
+  pages_estimees?: number;
+}
+
+export interface DiagnosticCatalogue {
+  id: string;
+  titre: string;
+  description: string;
+  departement: string;
+  bot_primaire: string;
+  bots_support: string[];
+  industrie: string | null;
+  duree_minutes: number;
+  nb_questions: number;
+  valeur_potentielle: string;
+  gradient: string;
+  data_points: DiagnosticDataPoint[];
+  gaps_typiques: DiagnosticGap[];
+  documents_generes: DiagnosticDocument[];
+}
+
+export interface GapFournisseur {
+  id: string;
+  titre: string;
+  description: string;
+  departement: string;
+  bot_primaire: string;
+  industrie: string | null;
+  gaps: Array<{
+    gap: string;
+    impact: string;
+    score_urgence?: number;
+    fournisseurs_types: string[];
+    budget_typique?: string;
+    delai_typique?: string;
+  }>;
+}
+
+export interface MissionCatalogue {
+  id: string;
+  titre: string;
+  description: string;
+  bot_primaire: string;
+  bots_support: string[];
+  categorie: string;
+  taches_types: string[];
+  documents_suggeres: Array<{ type: string; titre: string; description: string }>;
+  frequence_typique: string;
+  duree_typique: string;
+}
+
+export interface TemplateProjetCatalogue {
+  id: string;
+  titre: string;
+  description: string;
+  type_chantier_typique: string;
+  industrie: string | null;
+  bot_primaire: string;
+  bots_support: string[];
+  missions_suggerees: Array<{
+    titre: string;
+    description: string;
+    bot_primaire: string;
+    taches_types: string[];
+    documents_suggeres: Array<{ type: string; titre: string; description: string }>;
+  }>;
+  kpis: string[];
+  duree_estimee: string;
+}
+
+export interface TemplateDocSection {
+  ordre: number;
+  titre_section: string;
+  description: string;
+  type_contenu: string;
+  champs_cles: string[];
+  exemple_contenu: string;
+}
+
+export interface TemplateDocumentaire {
+  id: string;
+  departement: string;
+  titre: string;
+  description: string;
+  categorie: string;
+  frequence: string;
+  pages_estimees: string;
+  niveau_hierarchie: string;
+  sections: TemplateDocSection[];
+  tags: string[];
+  documents_lies: string[];
+  source_donnees: string;
+}
+
 // --- Bureau (Espace Bureau) ---
 
 export interface BureauItem {
   id: number;
-  type_item: "projet" | "document" | "outil";
+  type_item: "document" | "outil";
   titre: string;
   description: string;
   status: string;
   bot: string | null;
   tags: string[];
   metadata: Record<string, unknown>;
+  mission_id?: number | null;
+  chantier_id?: number | null;
+  projet_id?: number | null;
   created_at: string;
   updated_at: string;
 }
 
 export interface BureauItemCreate {
-  type_item: "projet" | "document" | "outil";
+  type_item: "document" | "outil";
   titre: string;
   description?: string;
   status?: string;
   bot?: string;
   tags?: string[];
   metadata?: Record<string, unknown>;
+  mission_id?: number;
+  chantier_id?: number;
+  projet_id?: number;
 }
 
 export interface BureauItemUpdate {
@@ -701,6 +957,9 @@ export interface BureauItemUpdate {
   bot?: string;
   tags?: string[];
   metadata?: Record<string, unknown>;
+  mission_id?: number;
+  chantier_id?: number;
+  projet_id?: number;
 }
 
 export interface BureauListResponse {
