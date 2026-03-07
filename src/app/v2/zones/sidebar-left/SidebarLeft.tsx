@@ -14,6 +14,7 @@ import { SectionRooms } from "./SectionRooms";
 import { SectionEntreprise } from "./SectionEntreprise";
 import { SectionOrbit9 } from "./SectionOrbit9";
 import { SectionTrgIndustries } from "./SectionTrgIndustries";
+import { SectionMasterGHML } from "./SectionMasterGHML";
 import { cn } from "../../../components/ui/utils";
 
 export function SidebarLeft() {
@@ -34,6 +35,8 @@ export function SidebarLeft() {
           <SectionOrbit9 collapsed={collapsed} />
           <Separator className="my-2" />
           <SectionTrgIndustries collapsed={collapsed} />
+          <Separator className="my-2" />
+          <SectionMasterGHML collapsed={collapsed} />
         </div>
       </ScrollArea>
 

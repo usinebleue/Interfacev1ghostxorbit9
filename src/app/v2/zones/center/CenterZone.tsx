@@ -45,6 +45,33 @@ import { WarRoomView } from "./WarRoomView";
 import { ThinkRoomView } from "./ThinkRoomView";
 import { MesChantiersView } from "./MesChantiersView";
 import { FocusModeLayout } from "./FocusModeLayout";
+import { PageTypePage } from "./orbit9/PageTypePage";
+import { BibleTechniquePage } from "./orbit9/BibleTechniquePage";
+import { BibleGHMLPage } from "./orbit9/BibleGHMLPage";
+import { MasterRoadmapPage } from "./orbit9/MasterRoadmapPage";
+import { MasterStrategiePage } from "./orbit9/MasterStrategiePage";
+import { MasterOrbit9Page } from "./orbit9/MasterOrbit9Page";
+import { MasterCommunicationPage } from "./orbit9/MasterCommunicationPage";
+import { MasterDettePage } from "./orbit9/MasterDettePage";
+import { MasterRoutinePage } from "./orbit9/MasterRoutinePage";
+import { MasterMinedorPage } from "./orbit9/MasterMinedorPage";
+import { MasterTrainingPage } from "./orbit9/MasterTrainingPage";
+import { MasterProfilsPage } from "./orbit9/MasterProfilsPage";
+import { MasterParcoursPage } from "./orbit9/MasterParcoursPage";
+import { MasterProtocolesPage } from "./orbit9/MasterProtocolesPage";
+import { MasterVisionAffairesPage } from "./orbit9/MasterVisionAffairesPage";
+import { MasterNavigationPage } from "./orbit9/MasterNavigationPage";
+import { MasterAnglesMortsPage } from "./orbit9/MasterAnglesMortsPage";
+import { MasterCapacitesPage } from "./orbit9/MasterCapacitesPage";
+import { MasterInstanceFondsPage } from "./orbit9/MasterInstanceFondsPage";
+import MasterDiagnosticsPage from "./orbit9/MasterDiagnosticsPage";
+import MasterPlaybooksPage from "./orbit9/MasterPlaybooksPage";
+import MasterBibliothequeExecPage from "./orbit9/MasterBibliothequeExecPage";
+import MasterMarketing360Page from "./orbit9/MasterMarketing360Page";
+import MasterGuidesLegauxPage from "./orbit9/MasterGuidesLegauxPage";
+import MasterCortexRobotPage from "./orbit9/MasterCortexRobotPage";
+import MasterHydroQuebecPage from "./orbit9/MasterHydroQuebecPage";
+import MasterTableauPeriodiquePage from "./orbit9/MasterTableauPeriodiquePage";
 import { useFlowGPS } from "../../api/hooks";
 
 /** Couleur identitaire par bot — bande fine en haut du canevas */
@@ -200,6 +227,33 @@ export function CenterZone() {
       {activeView === "war-room" && <WarRoomView />}
       {activeView === "think-room" && <ThinkRoomView />}
       {activeView === "mes-chantiers" && <MesChantiersView />}
+      {activeView === "bible-visuelle" && <PageTypePage />}
+      {activeView === "bible-technique" && <BibleTechniquePage />}
+      {activeView === "bible-ghml" && <BibleGHMLPage />}
+      {activeView === "master-roadmap" && <MasterRoadmapPage />}
+      {activeView === "master-strategie" && <MasterStrategiePage />}
+      {activeView === "master-orbit9" && <MasterOrbit9Page />}
+      {activeView === "master-communication" && <MasterCommunicationPage />}
+      {activeView === "master-dette" && <MasterDettePage />}
+      {activeView === "master-routine" && <MasterRoutinePage />}
+      {activeView === "master-minedor" && <MasterMinedorPage />}
+      {activeView === "master-training" && <MasterTrainingPage />}
+      {activeView === "master-profils" && <MasterProfilsPage />}
+      {activeView === "master-parcours" && <MasterParcoursPage />}
+      {activeView === "master-protocoles" && <MasterProtocolesPage />}
+      {activeView === "master-vision-affaires" && <MasterVisionAffairesPage />}
+      {activeView === "master-navigation" && <MasterNavigationPage />}
+      {activeView === "master-angles-morts" && <MasterAnglesMortsPage />}
+      {activeView === "master-capacites" && <MasterCapacitesPage />}
+      {activeView === "master-instance-fonds" && <MasterInstanceFondsPage />}
+      {activeView === "master-diagnostics" && <MasterDiagnosticsPage />}
+      {activeView === "master-playbooks" && <MasterPlaybooksPage />}
+      {activeView === "master-bibliotheque-exec" && <MasterBibliothequeExecPage />}
+      {activeView === "master-marketing-360" && <MasterMarketing360Page />}
+      {activeView === "master-guides-legaux" && <MasterGuidesLegauxPage />}
+      {activeView === "master-cortex-robot" && <MasterCortexRobotPage />}
+      {activeView === "master-hydro-quebec" && <MasterHydroQuebecPage />}
+      {activeView === "master-tableau-periodique" && <MasterTableauPeriodiquePage />}
       {activeView === "canvas" && (
         <SmartCanvas
           onStartChat={handleStartChat}
