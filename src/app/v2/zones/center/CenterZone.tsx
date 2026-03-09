@@ -58,8 +58,6 @@ import { MasterMinedorPage } from "./orbit9/MasterMinedorPage";
 import { MasterTrainingPage } from "./orbit9/MasterTrainingPage";
 import { MasterProfilsPage } from "./orbit9/MasterProfilsPage";
 import { MasterParcoursPage } from "./orbit9/MasterParcoursPage";
-import { MasterProtocolesPage } from "./orbit9/MasterProtocolesPage";
-import { MasterVisionAffairesPage } from "./orbit9/MasterVisionAffairesPage";
 import { MasterNavigationPage } from "./orbit9/MasterNavigationPage";
 import { MasterAnglesMortsPage } from "./orbit9/MasterAnglesMortsPage";
 import { MasterCapacitesPage } from "./orbit9/MasterCapacitesPage";
@@ -71,7 +69,11 @@ import MasterMarketing360Page from "./orbit9/MasterMarketing360Page";
 import MasterGuidesLegauxPage from "./orbit9/MasterGuidesLegauxPage";
 import MasterCortexRobotPage from "./orbit9/MasterCortexRobotPage";
 import MasterHydroQuebecPage from "./orbit9/MasterHydroQuebecPage";
-import MasterTableauPeriodiquePage from "./orbit9/MasterTableauPeriodiquePage";
+import { MasterFlowsPage } from "./orbit9/MasterFlowsPage";
+import { MasterCartographieIndustriellePage } from "./orbit9/MasterCartographieIndustriellePage";
+import { MasterOracle9ConceptPage } from "./orbit9/MasterOracle9Page";
+import { MasterBibleVisuelleLivePage } from "./orbit9/MasterBibleVisuelleLivePage";
+import { MasterBibleVisuelCiblePage } from "./orbit9/MasterBibleVisuelCiblePage";
 import { useFlowGPS } from "../../api/hooks";
 
 /** Couleur identitaire par bot — bande fine en haut du canevas */
@@ -240,8 +242,6 @@ export function CenterZone() {
       {activeView === "master-training" && <MasterTrainingPage />}
       {activeView === "master-profils" && <MasterProfilsPage />}
       {activeView === "master-parcours" && <MasterParcoursPage />}
-      {activeView === "master-protocoles" && <MasterProtocolesPage />}
-      {activeView === "master-vision-affaires" && <MasterVisionAffairesPage />}
       {activeView === "master-navigation" && <MasterNavigationPage />}
       {activeView === "master-angles-morts" && <MasterAnglesMortsPage />}
       {activeView === "master-capacites" && <MasterCapacitesPage />}
@@ -253,7 +253,11 @@ export function CenterZone() {
       {activeView === "master-guides-legaux" && <MasterGuidesLegauxPage />}
       {activeView === "master-cortex-robot" && <MasterCortexRobotPage />}
       {activeView === "master-hydro-quebec" && <MasterHydroQuebecPage />}
-      {activeView === "master-tableau-periodique" && <MasterTableauPeriodiquePage />}
+      {activeView === "master-flows" && <MasterFlowsPage />}
+      {activeView === "master-cartographie" && <MasterCartographieIndustriellePage />}
+      {activeView === "master-oracle9" && <MasterOracle9ConceptPage />}
+      {activeView === "master-bible-live" && <MasterBibleVisuelleLivePage />}
+      {activeView === "bible-visuelle-cible" && <MasterBibleVisuelCiblePage />}
       {activeView === "canvas" && (
         <SmartCanvas
           onStartChat={handleStartChat}
