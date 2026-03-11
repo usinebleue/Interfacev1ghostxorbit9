@@ -11,10 +11,18 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { FrameMaster } from "./layout/FrameMaster";
 import { LoginView } from "../components/LoginView";
 import { WelcomeOnboardingView } from "./zones/center/WelcomeOnboardingView";
+import { MeetingGuestPage } from "./zones/center/MeetingGuestPage";
 
 function AppRouter() {
   const { isAuthenticated, isOnboarded, setAuthenticated, setOnboarded } =
     useFrameMaster();
+
+  // Route bypass: /meeting/{slug} = page guest externe (pas d'auth)
+  const path = window.location.pathname;
+  const meetingMatch = path.match(/^\/meeting\/([a-z0-9]+)$/);
+  if (meetingMatch) {
+    return <MeetingGuestPage slug={meetingMatch[1]} />;
+  }
 
   if (!isAuthenticated) {
     return <LoginView onLogin={() => setAuthenticated(true)} />;

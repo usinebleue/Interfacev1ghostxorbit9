@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   Lightbulb,
   DoorOpen,
+  Video,
 } from "lucide-react";
 import {
   Collapsible,
@@ -28,6 +29,7 @@ interface Props {
 }
 
 const ROOM_ITEMS: { id: ActiveView; label: string; icon: React.ElementType; color: string }[] = [
+  { id: "meeting-room", label: "Réunion CarlOS", icon: Video, color: "text-blue-600" },
   { id: "board-room", label: "Board Room", icon: Crown, color: "text-amber-600" },
   { id: "war-room", label: "War Room", icon: AlertTriangle, color: "text-red-500" },
   { id: "think-room", label: "Think Room", icon: Lightbulb, color: "text-amber-500" },

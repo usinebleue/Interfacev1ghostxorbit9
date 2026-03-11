@@ -74,6 +74,19 @@ import { MasterCartographieIndustriellePage } from "./orbit9/MasterCartographieI
 import { MasterOracle9ConceptPage } from "./orbit9/MasterOracle9Page";
 import { MasterBibleVisuelleLivePage } from "./orbit9/MasterBibleVisuelleLivePage";
 import { MasterBibleVisuelCiblePage } from "./orbit9/MasterBibleVisuelCiblePage";
+import { MasterBibleOfficielle } from "./orbit9/MasterBibleOfficielle";
+import { FlowUsineBleuePage } from "./orbit9/FlowUsineBleuePage";
+import { AnimationShowcasePage } from "./orbit9/AnimationShowcasePage";
+import { AgentGalleryPage } from "./orbit9/AgentGalleryPage";
+import { AccueilHeroPage } from "./orbit9/AccueilHeroPage";
+import { PlaybookUsineBleuePage } from "./orbit9/PlaybookUsineBleuePage";
+import { BlueprintReseauPage } from "./orbit9/BlueprintReseauPage";
+import { FESidebarDroitePage } from "./orbit9/FESidebarDroitePage";
+import { FEMonReseauPage } from "./orbit9/FEMonReseauPage";
+import { CarlosCodesView } from "./CarlosCodesView";
+import { DiagnosticIAPage } from "./diagnostic/DiagnosticIAPage";
+import { DiagnosticHubPage } from "./diagnostic/DiagnosticHubPage";
+import { MeetingRoomView } from "./MeetingRoomView";
 import { useFlowGPS } from "../../api/hooks";
 
 /** Couleur identitaire par bot — bande fine en haut du canevas */
@@ -258,6 +271,19 @@ export function CenterZone() {
       {activeView === "master-oracle9" && <MasterOracle9ConceptPage />}
       {activeView === "master-bible-live" && <MasterBibleVisuelleLivePage />}
       {activeView === "bible-visuelle-cible" && <MasterBibleVisuelCiblePage />}
+      {activeView === "bible-officielle" && <MasterBibleOfficielle />}
+      {activeView === "flow-usine-bleue" && <FlowUsineBleuePage />}
+      {activeView === "animation-showcase" && <AnimationShowcasePage />}
+      {activeView === "agent-gallery" && <AgentGalleryPage />}
+      {activeView === "accueil-hero" && <AccueilHeroPage />}
+      {activeView === "playbook-usine-bleue" && <PlaybookUsineBleuePage />}
+      {activeView === "blueprint-reseau" && <BlueprintReseauPage />}
+      {activeView === "fe-sidebar-droite" && <FESidebarDroitePage />}
+      {activeView === "fe-mon-reseau" && <FEMonReseauPage />}
+      {activeView === "carlos-codes" && <CarlosCodesView />}
+      {activeView === "diagnostic-ia" && <DiagnosticIAPage />}
+      {activeView === "diagnostic-hub" && <DiagnosticHubPage />}
+      {activeView === "meeting-room" && <MeetingRoomView />}
       {activeView === "canvas" && (
         <SmartCanvas
           onStartChat={handleStartChat}
