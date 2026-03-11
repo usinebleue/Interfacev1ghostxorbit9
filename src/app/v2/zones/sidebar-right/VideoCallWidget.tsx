@@ -28,6 +28,8 @@ import { useFrameMaster } from "../../context/FrameMasterContext";
 import { useChatContext } from "../../context/ChatContext";
 import { useCanvasActions } from "../../context/CanvasActionContext";
 import { BOT_SUBTITLE } from "../../api/types";
+import { AGENTS } from "../center/orbit9/AgentGalleryPage";
+import type { AgentConfig } from "../center/orbit9/AgentGalleryPage";
 import type { CanvasAction } from "../../api/types";
 import { api } from "../../api/client";
 import {
@@ -449,6 +451,19 @@ export function VideoCallWidget() {
       setCallState("connected");
       roomNameRef.current = tokenData.room_name;
 
+      // B.4.7 — Frontend heartbeat via data channel (keeps WebRTC alive)
+      const heartbeatInterval = setInterval(async () => {
+        try {
+          if (room.state === "connected") {
+            await room.localParticipant.publishData(
+              new TextEncoder().encode('{"type":"heartbeat"}'),
+              { reliable: true }
+            );
+          }
+        } catch { /* room closed */ }
+      }, 25_000);
+      room.on(RoomEvent.Disconnected, () => clearInterval(heartbeatInterval));
+
       // Son de connexion — "Neural Link Activated" futuriste
       try {
         const ac = new AudioContext();
@@ -684,16 +699,84 @@ export function VideoCallWidget() {
           )}
         />
 
-        {/* Bot standby image — belle image par département */}
-        <img
-          src={standbyImg}
-          alt={botName}
-          className={cn(
-            "absolute inset-0 w-full h-full object-cover transition-all duration-500 z-[1]",
-            hasVideoTrack && "opacity-0",
-            !isInCall && "brightness-90"
-          )}
-        />
+        {/* Bot standby — version animee FE4B (circuits SVG + waveform) */}
+        {(() => {
+          const agentData = AGENTS.find(a => a.code === activeBotCode);
+          const pid = activeBotCode.toLowerCase();
+          return (
+            <div className={cn(
+              "absolute inset-0 w-full h-full transition-all duration-500 z-[1]",
+              hasVideoTrack && "opacity-0",
+              !isInCall && "brightness-90"
+            )}>
+              {/* Photo de base */}
+              <img
+                src={standbyImg}
+                alt={botName}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+              {/* SVG Overlay — Circuit Dots + Unique Element */}
+              {agentData && (
+                <svg
+                  viewBox="0 0 330 185"
+                  preserveAspectRatio="xMidYMid slice"
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    width: "100%",
+                    height: "100%",
+                    zIndex: 3,
+                    mixBlendMode: "screen",
+                    pointerEvents: "none",
+                  }}
+                >
+                  <defs>
+                    <filter id="ag-glow-sb">
+                      <feGaussianBlur stdDeviation="1.2" result="blur" />
+                      <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                    </filter>
+                  </defs>
+                  {/* Suit Circuit Paths */}
+                  {agentData.suitPaths.map((d, i) => (
+                    <path key={`sb-${pid}-p${i}`} id={`sb-${pid}-p${i}`} d={d} fill="none" stroke="none" />
+                  ))}
+                  {/* Traveling Dots */}
+                  {agentData.suitPaths.map((_, i) => {
+                    const dur1 = 5.4 + (i % 5) * 0.5;
+                    const begin1 = (i * 0.7) % 4;
+                    const begin2 = begin1 + dur1 * 0.5;
+                    return (
+                      <g key={`sb-${pid}-dots-${i}`}>
+                        <circle r="0.7" fill={agentData.dotColor} filter="url(#ag-glow-sb)" opacity="0.7">
+                          <animateMotion dur={`${dur1}s`} repeatCount="indefinite" begin={`${begin1}s`}>
+                            <mpath href={`#sb-${pid}-p${i}`} />
+                          </animateMotion>
+                        </circle>
+                        {i % 2 === 0 && (
+                          <circle r="0.5" fill={agentData.dotColorLight} filter="url(#ag-glow-sb)" opacity="0.5">
+                            <animateMotion dur={`${dur1}s`} repeatCount="indefinite" begin={`${begin2}s`}>
+                              <mpath href={`#sb-${pid}-p${i}`} />
+                            </animateMotion>
+                          </circle>
+                        )}
+                      </g>
+                    );
+                  })}
+                  {/* Unique Element */}
+                  {agentData.uniqueElement}
+                </svg>
+              )}
+              {/* Vignette */}
+              <div style={{
+                position: "absolute",
+                inset: 0,
+                zIndex: 4,
+                background: "radial-gradient(ellipse at center, transparent 40%, rgba(10,14,26,0.3) 100%)",
+                pointerEvents: "none",
+              }} />
+            </div>
+          );
+        })()}
         {/* Business card identity + voice waveform overlay */}
         <div className={cn(
           "absolute bottom-0 left-0 right-0 z-[5] transition-opacity duration-500",

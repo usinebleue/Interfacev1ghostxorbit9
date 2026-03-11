@@ -16,8 +16,8 @@ import type { CanvasAction } from "../api/types";
 const SECTION_TO_VIEW: Record<string, string> = {
   dashboard: "dashboard",
   cockpit: "cockpit",
-  sante: "diagnostic-hub",
-  health: "diagnostic-hub",
+  sante: "health",
+  health: "health",
   bureau: "espace-bureau",
   "mon bureau": "espace-bureau",
   blueprint: "blueprint",

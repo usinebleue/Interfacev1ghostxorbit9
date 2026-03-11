@@ -28,6 +28,14 @@ export function LoginView({ onLogin }: LoginViewProps) {
         body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
       });
       if (res.ok) {
+        const data = await res.json();
+        // Store JWT tokens
+        if (data.access_token) {
+          try {
+            localStorage.setItem('ghostx-jwt', data.access_token);
+            if (data.refresh_token) localStorage.setItem('ghostx-jwt-refresh', data.refresh_token);
+          } catch { /* noop */ }
+        }
         onLogin?.();
       } else {
         setError('Email ou mot de passe invalide.');

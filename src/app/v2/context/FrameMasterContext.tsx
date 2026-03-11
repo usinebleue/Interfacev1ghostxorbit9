@@ -6,13 +6,13 @@
 import { createContext, useContext, useState, useCallback, useRef, useEffect } from "react";
 import type { BotInfo } from "../api/types";
 
-export type ActiveView = "dashboard" | "cockpit" | "health" | "department" | "detail" | "discussion" | "branches" | "cahier" | "scenarios" | "live-chat" | "canvas" | "orbit9-detail" | "agent-settings" | "espace-bureau" | "blueprint" | "board-room" | "war-room" | "think-room" | "mes-chantiers" | "bible-visuelle" | "bible-technique" | "bible-ghml" | "master-roadmap" | "master-strategie" | "master-orbit9" | "master-communication" | "master-dette" | "master-routine" | "master-minedor" | "master-training" | "master-profils" | "master-parcours" | "master-navigation" | "master-angles-morts" | "master-capacites" | "master-instance-fonds" | "master-diagnostics" | "master-playbooks" | "master-bibliotheque-exec" | "master-marketing-360" | "master-guides-legaux" | "master-cortex-robot" | "master-hydro-quebec" | "master-flows" | "master-cartographie" | "master-oracle9" | "master-bible-live" | "bible-visuelle-cible" | "flow-usine-bleue" | "animation-showcase" | "agent-gallery" | "playbook-usine-bleue" | "fe-sidebar-droite" | "blueprint-reseau" | "fe-mon-reseau" | "accueil-hero" | "bible-officielle" | "carlos-codes" | "diagnostic-ia" | "diagnostic-hub" | "meeting-room";
+export type ActiveView = "dashboard" | "cockpit" | "health" | "department" | "detail" | "discussion" | "branches" | "cahier" | "scenarios" | "live-chat" | "canvas" | "orbit9-detail" | "agent-settings" | "espace-bureau" | "blueprint" | "board-room" | "war-room" | "think-room" | "mes-chantiers" | "bible-visuelle" | "bible-technique" | "bible-ghml" | "master-roadmap" | "master-strategie" | "master-orbit9" | "master-communication" | "master-dette" | "master-routine" | "master-minedor" | "master-training" | "master-profils" | "master-parcours" | "master-navigation" | "master-angles-morts" | "master-capacites" | "master-instance-fonds" | "master-diagnostics" | "master-playbooks" | "master-bibliotheque-exec" | "master-marketing-360" | "master-guides-legaux" | "master-cortex-robot" | "master-hydro-quebec" | "master-flows" | "master-cartographie" | "master-oracle9" | "master-bible-live" | "bible-visuelle-cible" | "flow-usine-bleue" | "animation-showcase" | "agent-gallery" | "playbook-usine-bleue" | "fe-sidebar-droite" | "blueprint-reseau" | "fe-mon-reseau" | "accueil-hero" | "bible-officielle" | "carlos-codes" | "diagnostic-ia" | "meeting-room" | "status";
 
 export type EspaceSection = "idees" | "projets" | "documents" | "taches" | "outils" | "agenda" | "templates";
 
 export type BlueprintSection = "live" | "hub" | "pipeline";
 
-export type DiscussionTab = "chantiers" | "projets" | "missions" | "discussions";
+export type DiscussionTab = "overview" | "timeline" | "chantiers" | "projets" | "missions" | "taches" | "opportunites" | "equipes" | "discussions";
 
 interface FrameMasterState {
   activeBot: BotInfo | null;
@@ -68,7 +68,7 @@ export function FrameMasterProvider({
   const [activeOrbit9Section, setActiveOrbit9Section] = useState<string | null>(null);
   const [activeEspaceSection, setActiveEspaceSection] = useState<EspaceSection>("idees");
   const [activeBlueprintSection, setActiveBlueprintSection] = useState<BlueprintSection>("live");
-  const [activeDiscussionTab, setActiveDiscussionTab] = useState<DiscussionTab>("discussions");
+  const [activeDiscussionTab, setActiveDiscussionTab] = useState<DiscussionTab>("overview");
   const [chatSourceView, setChatSourceView] = useState<string | null>(null);
   const [leftSidebarCollapsed, setLeftCollapsed] = useState(false);
   const [rightSidebarCollapsed, setRightCollapsed] = useState(false);

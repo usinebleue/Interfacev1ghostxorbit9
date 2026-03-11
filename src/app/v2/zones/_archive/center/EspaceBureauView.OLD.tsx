@@ -1466,6 +1466,7 @@ function TachesPage() {
     createTache, completeTache, commentTache,
   } = useTaches();
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [tacheSubTab, setTacheSubTab] = useState<"perso" | "projet">("perso");
 
   // Categoriser par priorite
   const urgentes = taches.filter((t) => t.priority === "urgent");
@@ -1486,63 +1487,106 @@ function TachesPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-10 py-5 space-y-4 pb-12">
-      <div className="flex justify-end">
-        <button
-          onClick={() => setShowAddDialog(true)}
-          className="flex items-center gap-1.5 px-3 py-2 text-xs text-white bg-gray-900 rounded-lg hover:bg-gray-800 cursor-pointer transition-colors"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          Nouvelle tache
-        </button>
+      {/* Sub-tabs: Mes Taches | Taches Projet (C.14) */}
+      <div className="flex items-center justify-between">
+        <div className="flex gap-1.5">
+          <button
+            onClick={() => setTacheSubTab("perso")}
+            className={cn("px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5",
+              tacheSubTab === "perso" ? "bg-gray-900 text-white" : "text-gray-500 bg-gray-100 hover:bg-gray-200"
+            )}
+          >
+            <CheckSquare className="h-3.5 w-3.5" />
+            Mes Taches
+            {taches.length > 0 && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/20">{taches.length}</span>}
+          </button>
+          <button
+            onClick={() => setTacheSubTab("projet")}
+            className={cn("px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5",
+              tacheSubTab === "projet" ? "bg-gray-900 text-white" : "text-gray-500 bg-gray-100 hover:bg-gray-200"
+            )}
+          >
+            <FolderKanban className="h-3.5 w-3.5" />
+            Taches Projet
+          </button>
+        </div>
+        {tacheSubTab === "perso" && (
+          <button
+            onClick={() => setShowAddDialog(true)}
+            className="flex items-center gap-1.5 px-3 py-2 text-xs text-white bg-gray-900 rounded-lg hover:bg-gray-800 cursor-pointer transition-colors"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Nouvelle tache
+          </button>
+        )}
       </div>
 
-      {error && <ErrorBanner message={error} />}
+      {/* Sub-tab: Mes Taches (Plane.so) */}
+      {tacheSubTab === "perso" && (<>
+        {error && <ErrorBanner message={error} />}
 
-      {loading ? (
-        <LoadingSpinner />
-      ) : taches.length === 0 ? (
-        <EmptyState icon={CheckSquare} text="Aucune tache ouverte" sub="Creez une tache ou attendez que Plane.so se synchronise" />
-      ) : (
-        <div className="grid grid-cols-4 gap-3">
-          {widgets.map((w) => {
-            const WIcon = w.icon;
-            return (
-              <Card key={w.title} className="p-0 overflow-hidden">
-                <div className={cn("flex items-center gap-2 px-3 py-2 bg-gradient-to-r", w.gradient)}>
-                  <WIcon className="h-4 w-4 text-white" />
-                  <span className="text-sm font-bold text-white">{w.title}</span>
-                  <span className="ml-auto text-xs bg-white/25 text-white rounded-full px-1.5 py-0.5 font-bold">{w.items.length}</span>
-                </div>
-                <div className="p-2 space-y-1">
-                  {w.items.length === 0 ? (
-                    <p className="text-[10px] text-gray-400 py-2 text-center">Aucune tache</p>
-                  ) : (
-                    w.items.map((t) => (
-                      <div
-                        key={t.id}
-                        onClick={() => selectTache(t.id)}
-                        className={cn("px-2.5 py-2 rounded-lg border-l-[3px] bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer", w.borderColor)}
-                      >
-                        <p className="text-xs font-medium text-gray-800 truncate">{t.name}</p>
-                        <div className="flex items-center gap-1.5 mt-1">
-                          {t.labels.length > 0 && (
-                            <>
-                              <Bot className="h-3 w-3 text-gray-400" />
-                              <span className="text-[10px] text-gray-400">{t.labels[0]}</span>
-                              <span className="text-[10px] text-gray-300">|</span>
-                            </>
-                          )}
-                          <span className="text-[10px] text-gray-400">
-                            #{t.sequence_id}
-                          </span>
+        {loading ? (
+          <LoadingSpinner />
+        ) : taches.length === 0 ? (
+          <EmptyState icon={CheckSquare} text="Aucune tache ouverte" sub="Creez une tache ou attendez que Plane.so se synchronise" />
+        ) : (
+          <div className="grid grid-cols-4 gap-3">
+            {widgets.map((w) => {
+              const WIcon = w.icon;
+              return (
+                <Card key={w.title} className="p-0 overflow-hidden">
+                  <div className={cn("flex items-center gap-2 px-3 py-2 bg-gradient-to-r", w.gradient)}>
+                    <WIcon className="h-4 w-4 text-white" />
+                    <span className="text-sm font-bold text-white">{w.title}</span>
+                    <span className="ml-auto text-xs bg-white/25 text-white rounded-full px-1.5 py-0.5 font-bold">{w.items.length}</span>
+                  </div>
+                  <div className="p-2 space-y-1">
+                    {w.items.length === 0 ? (
+                      <p className="text-[9px] text-gray-400 py-2 text-center">Aucune tache</p>
+                    ) : (
+                      w.items.map((t) => (
+                        <div
+                          key={t.id}
+                          onClick={() => selectTache(t.id)}
+                          className={cn("px-2.5 py-2 rounded-lg border-l-[3px] bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer", w.borderColor)}
+                        >
+                          <p className="text-xs font-medium text-gray-800 truncate">{t.name}</p>
+                          <div className="flex items-center gap-1.5 mt-1">
+                            {t.labels.length > 0 && (
+                              <>
+                                <Bot className="h-3.5 w-3.5 text-gray-400" />
+                                <span className="text-[9px] text-gray-400">{t.labels[0]}</span>
+                                <span className="text-[9px] text-gray-300">|</span>
+                              </>
+                            )}
+                            <span className="text-[9px] text-gray-400">
+                              #{t.sequence_id}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </Card>
-            );
-          })}
+                      ))
+                    )}
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </>)}
+
+      {/* Sub-tab: Taches Projet (from Blueprint JSON) */}
+      {tacheSubTab === "projet" && (
+        <div className="text-center py-16 space-y-4">
+          <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto">
+            <FolderKanban className="h-8 w-8 text-purple-500" />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-gray-800">Taches Projet</h3>
+            <p className="text-sm text-gray-500 mt-1 max-w-md mx-auto">
+              Les taches extraites de votre Blueprint sont accessibles dans la section Blueprint &gt; Taches.
+              CarlOS synchronisera automatiquement vos taches projet ici.
+            </p>
+          </div>
         </div>
       )}
 

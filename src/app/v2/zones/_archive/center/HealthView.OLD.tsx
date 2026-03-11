@@ -1,7 +1,8 @@
 /**
- * HealthView.tsx — Sante Globale de l'entreprise
- * 3 Tabs: Etat de sante | Diagnostics | Par departement
- * Double bot supprime — CarlOSPresence gere le bandeau d'accueil
+ * HealthView.tsx — Sante Globale de l'entreprise (unifie)
+ * 4 Tabs: Etat de sante | Diagnostics | Resultats | Reference
+ * Merge HealthView + DiagnosticHubPage en une seule vue
+ * Sprint C — Phase 4
  */
 
 import { useState, useEffect } from "react";
@@ -21,12 +22,20 @@ import {
   Activity,
   Stethoscope,
   LayoutGrid,
+  Zap,
+  BookOpen,
 } from "lucide-react";
+import {
+  Radar as RechartsRadar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
+  ResponsiveContainer,
+} from "recharts";
 import { useCanvasActions } from "../../context/CanvasActionContext";
 import { PageLayout } from "./layouts/PageLayout";
 import { BOT_AVATAR } from "../../api/types";
 import { api } from "../../api/client";
-import type { DiagnosticCatalogue } from "../../api/types";
+import type { DiagnosticCatalogue, DiagnosticIA } from "../../api/types";
+import { DiagnosticIAPage } from "./diagnostic/DiagnosticIAPage";
+import { getNiveau } from "./diagnostic/diagnostic-questions";
 
 /* ============ BOT GRADIENTS (same as Pipeline) ============ */
 const BOT_GRADIENTS: Record<string, string> = {
@@ -129,11 +138,12 @@ const QW_BOT_CODE: Record<string, string> = {
 };
 
 /* ============ TABS ============ */
-type HealthTab = "etat" | "diagnostics" | "departements";
+type HealthTab = "etat" | "diagnostics-ia" | "resultats" | "reference";
 const HEALTH_TABS: { id: HealthTab; label: string; icon: React.ElementType }[] = [
   { id: "etat", label: "Etat de sante", icon: Activity },
-  { id: "diagnostics", label: "Diagnostics", icon: Stethoscope },
-  { id: "departements", label: "Par departement", icon: LayoutGrid },
+  { id: "diagnostics-ia", label: "Diagnostics", icon: Stethoscope },
+  { id: "resultats", label: "Resultats", icon: BarChart3 },
+  { id: "reference", label: "Reference", icon: BookOpen },
 ];
 
 /* ============ HEALTH VIEW ============ */
@@ -143,10 +153,26 @@ export function HealthView() {
   const [diagnosticsEnrichis, setDiagnosticsEnrichis] = useState<DiagnosticCatalogue[]>([]);
   const [diagFilter, setDiagFilter] = useState<string | null>(null);
   const [diagBotFilter, setDiagBotFilter] = useState<string | null>(null);
+  const [lastDiag, setLastDiag] = useState<DiagnosticIA | null>(null);
+  const [totalCompleted, setTotalCompleted] = useState(0);
+  const [diagLoading, setDiagLoading] = useState(true);
 
   useEffect(() => {
     api.listDiagnosticsEnrichis().then(d => setDiagnosticsEnrichis(d || [])).catch(() => {});
   }, []);
+
+  // Load completed diagnostics for Resultats tab
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await api.diagnosticIAList(1, "complete");
+        const items = data.items || [];
+        setTotalCompleted(items.length);
+        if (items.length > 0) setLastDiag(items[items.length - 1]);
+      } catch { /* silent */ }
+      finally { setDiagLoading(false); }
+    })();
+  }, [activeTab]);
 
   const handleFocus = (title: string, elementType: string, data: unknown, bot = "CEOB") => {
     dispatch({ type: "focus", layer: "bouche", data: { title, element_type: elementType, data }, bot });
@@ -165,13 +191,26 @@ export function HealthView() {
     items: diagnosticsEnrichis.filter(d => d.departement === dept),
   }));
 
+  // Resultats tab — radar + gaps + ghost team from lastDiag
+  const niveau = lastDiag ? getNiveau(lastDiag.score_dia) : null;
+  const radarData = lastDiag?.scores_departements
+    ? Object.entries(lastDiag.scores_departements).map(([key, score]) => ({
+        dept: DEPT_LABELS[key]?.label?.split(" ")[0] || key,
+        score,
+        fullMark: 100,
+      }))
+    : [];
+  const topGaps = lastDiag?.top_gaps?.slice(0, 3) || [];
+  const ghostTeam = lastDiag?.ghost_team?.slice(0, 3) || [];
+
   return (
     <PageLayout maxWidth="5xl" spacing="space-y-2.5">
 
         {/* ── GRADIENT HEADER + TABS (Pipeline pattern) ── */}
         <div className={cn("bg-gradient-to-r rounded-xl p-4 transition-all duration-300",
           activeTab === "etat" ? "from-orange-600 to-amber-500" :
-          activeTab === "diagnostics" ? "from-violet-600 to-purple-500" :
+          activeTab === "diagnostics-ia" ? "from-violet-600 to-purple-500" :
+          activeTab === "resultats" ? "from-blue-600 to-indigo-500" :
           "from-emerald-600 to-teal-500"
         )}>
           <div className="flex items-center justify-between">
@@ -183,8 +222,9 @@ export function HealthView() {
                 <h2 className="text-lg font-bold text-white">Sante Globale</h2>
                 <p className="text-sm text-white/70">
                   {activeTab === "etat" ? "Vue d'ensemble de votre entreprise" :
-                   activeTab === "diagnostics" ? `${diagnosticsEnrichis.length} diagnostics disponibles` :
-                   `${diagByDept.length} departements analyses`}
+                   activeTab === "diagnostics-ia" ? "Lancez et gerez vos diagnostics" :
+                   activeTab === "resultats" ? `${totalCompleted} diagnostic${totalCompleted !== 1 ? "s" : ""} complete${totalCompleted !== 1 ? "s" : ""}` :
+                   `${diagnosticsEnrichis.length} diagnostics disponibles`}
                 </p>
               </div>
             </div>
@@ -204,8 +244,11 @@ export function HealthView() {
                   >
                     <Icon className="h-3.5 w-3.5" />
                     {tab.label}
-                    {tab.id === "diagnostics" && diagnosticsEnrichis.length > 0 && (
+                    {tab.id === "reference" && diagnosticsEnrichis.length > 0 && (
                       <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/20">{diagnosticsEnrichis.length}</span>
+                    )}
+                    {tab.id === "resultats" && totalCompleted > 0 && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/20">{totalCompleted}</span>
                     )}
                   </button>
                 );
@@ -385,109 +428,212 @@ export function HealthView() {
         </>)}
 
         {/* ══════════════════════════════════════════ */}
-        {/* TAB 2 — DIAGNOSTICS (43 enrichis from API) */}
+        {/* TAB 2 — DIAGNOSTICS IA (wizard integre)    */}
         {/* ══════════════════════════════════════════ */}
-        {activeTab === "diagnostics" && (
-          <div className="space-y-3">
-            {/* Filtre par departement */}
-            <div className="flex gap-1.5 flex-wrap">
-              <button
-                onClick={() => setDiagFilter(null)}
-                className={cn("text-[9px] px-2.5 py-1 rounded-full font-medium transition-all cursor-pointer", !diagFilter ? "bg-gray-900 text-white" : "text-gray-500 bg-gray-100 hover:bg-gray-200")}
-              >
-                Tous ({diagnosticsEnrichis.length})
-              </button>
-              {diagDepts.map(dept => (
-                <button key={dept} onClick={() => setDiagFilter(dept === diagFilter ? null : dept)}
-                  className={cn("text-[9px] px-2.5 py-1 rounded-full font-medium transition-all cursor-pointer", diagFilter === dept ? "bg-gray-900 text-white" : "text-gray-500 bg-gray-100 hover:bg-gray-200")}
-                >
-                  {DEPT_LABELS[dept]?.label || dept} ({diagnosticsEnrichis.filter(d => d.departement === dept).length})
-                </button>
-              ))}
-            </div>
-
-            {/* Filtre par bot (agent AI) */}
-            <div className="flex gap-1.5 flex-wrap">
-              <span className="text-[9px] text-gray-400 font-medium py-1">Agent AI:</span>
-              <button
-                onClick={() => setDiagBotFilter(null)}
-                className={cn("text-[9px] px-2.5 py-1 rounded-full font-medium transition-all cursor-pointer", !diagBotFilter ? "bg-blue-600 text-white" : "text-gray-500 bg-gray-100 hover:bg-gray-200")}
-              >
-                Tous
-              </button>
-              {diagBots.map(bot => {
-                const avatar = BOT_AVATAR[bot];
-                return (
-                  <button key={bot} onClick={() => setDiagBotFilter(bot === diagBotFilter ? null : bot)}
-                    className={cn("text-[9px] px-2.5 py-1 rounded-full font-medium transition-all cursor-pointer flex items-center gap-1", diagBotFilter === bot ? "bg-blue-600 text-white" : "text-gray-500 bg-gray-100 hover:bg-gray-200")}
-                  >
-                    {avatar && <img src={avatar} alt={bot} className="w-3.5 h-3.5 rounded-full object-cover" />}
-                    {bot} ({diagnosticsEnrichis.filter(d => d.bot_primaire === bot).length})
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Grille diagnostics */}
-            <div className="grid grid-cols-2 gap-3">
-              {filteredDiag.map(diag => {
-                const deptCfg = DEPT_LABELS[diag.departement];
-                const gradient = diag.gradient || deptCfg?.gradient || "from-gray-500 to-gray-600";
-                const botGradient = BOT_GRADIENTS[diag.bot_primaire] || gradient;
-                const botAvatar = BOT_AVATAR[diag.bot_primaire];
-                const dpCount = diag.data_points?.length || 0;
-                return (
-                  <Card key={diag.id} className="overflow-hidden hover:shadow-lg transition-all cursor-pointer group" onClick={() => handleFocus(`Diagnostic ${diag.titre}`, "diagnostic_enrichi", diag, diag.bot_primaire)}>
-                    <div className={cn("bg-gradient-to-r px-3 py-2.5 flex items-center gap-2.5", botGradient)}>
-                      {botAvatar ? (
-                        <img src={botAvatar} alt={diag.bot_primaire} className="w-8 h-8 rounded-lg object-cover shrink-0 ring-1 ring-white/30" />
-                      ) : (
-                        <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
-                          <Stethoscope className="h-4 w-4 text-white" />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-white truncate">{diag.titre}</p>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="text-[9px] text-white/60">{deptCfg?.label || diag.departement}</span>
-                          <span className="text-[9px] text-white/40">— Leader</span>
-                        </div>
-                      </div>
-                      {dpCount > 0 && <span className="text-[9px] bg-white/20 text-white px-1.5 py-0.5 rounded-full shrink-0">{dpCount} indicateurs</span>}
-                    </div>
-                    <div className="px-3 py-2.5 space-y-2">
-                      <p className="text-[9px] text-gray-500 line-clamp-2 leading-relaxed">{diag.description}</p>
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-50 text-cyan-700 font-medium">{diag.duree_minutes} min</span>
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-gray-50 text-gray-500">{diag.nb_questions} questions</span>
-                      </div>
-                      {diag.valeur_potentielle && (
-                        <p className="text-[9px] text-emerald-600 leading-relaxed line-clamp-1">{diag.valeur_potentielle}</p>
-                      )}
-                      {diag.gaps_typiques && diag.gaps_typiques.length > 0 && (
-                        <div className="text-[9px] text-amber-600 bg-amber-50 rounded px-2 py-1">
-                          Gap: {diag.gaps_typiques[0].gap.slice(0, 80)}...
-                        </div>
-                      )}
-                    </div>
-                  </Card>
-                );
-              })}
-            </div>
-            {filteredDiag.length === 0 && (
-              <div className="text-center py-12">
-                <Stethoscope className="h-5 w-5 text-gray-300 mx-auto mb-2" />
-                <p className="text-sm text-gray-500">Aucun diagnostic trouve</p>
-                <p className="text-[9px] text-gray-400 mt-1">Modifiez les filtres pour voir les diagnostics disponibles</p>
-              </div>
-            )}
-          </div>
+        {activeTab === "diagnostics-ia" && (
+          <DiagnosticIAPage />
         )}
 
         {/* ══════════════════════════════════════════ */}
-        {/* TAB 3 — PAR DEPARTEMENT (grouped)          */}
+        {/* TAB 3 — RESULTATS (dernier diagnostic)     */}
         {/* ══════════════════════════════════════════ */}
-        {activeTab === "departements" && (
+        {activeTab === "resultats" && (
+          <>
+            {diagLoading ? (
+              <div className="text-center py-12">
+                <Stethoscope className="h-5 w-5 text-gray-300 mx-auto mb-2 animate-pulse" />
+                <p className="text-sm text-gray-500">Chargement...</p>
+              </div>
+            ) : !lastDiag ? (
+              <div className="text-center py-16 space-y-4">
+                <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto">
+                  <Stethoscope className="h-8 w-8 text-blue-500" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-800">Aucun diagnostic complete</h3>
+                  <p className="text-sm text-gray-500 mt-1 max-w-md mx-auto">
+                    Lancez votre premier diagnostic pour obtenir une vue complete de la sante de votre entreprise.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setActiveTab("diagnostics-ia")}
+                  className="px-6 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors cursor-pointer"
+                >
+                  Lancer un diagnostic
+                </button>
+              </div>
+            ) : (
+              <>
+                {/* 4 KPI cards */}
+                <div className="grid grid-cols-4 gap-2.5">
+                  <KpiCard
+                    icon={Target}
+                    label="Score DIA"
+                    value={`${lastDiag.score_dia}/100`}
+                    sub="Score global du dernier diagnostic"
+                    gradient="bg-gradient-to-r from-blue-600 to-blue-500"
+                    onClick={() => handleFocus("Score DIA", "diagnostic_score", lastDiag, "CEOB")}
+                  />
+                  <KpiCard
+                    icon={TrendingUp}
+                    label="Niveau"
+                    value={niveau?.label || "—"}
+                    sub={niveau?.description || ""}
+                    gradient={`bg-gradient-to-r ${
+                      (lastDiag.score_dia || 0) >= 80 ? "from-blue-600 to-blue-500" :
+                      (lastDiag.score_dia || 0) >= 60 ? "from-green-600 to-green-500" :
+                      (lastDiag.score_dia || 0) >= 40 ? "from-yellow-600 to-yellow-500" :
+                      "from-red-600 to-red-500"
+                    }`}
+                    onClick={() => handleFocus("Niveau Diagnostic", "diagnostic_niveau", { niveau, lastDiag }, "CEOB")}
+                  />
+                  <KpiCard
+                    icon={BarChart3}
+                    label="Diagnostics"
+                    value={String(totalCompleted)}
+                    sub={`diagnostic${totalCompleted !== 1 ? "s" : ""} complete${totalCompleted !== 1 ? "s" : ""}`}
+                    gradient="bg-gradient-to-r from-violet-600 to-violet-500"
+                  />
+                  <KpiCard
+                    icon={AlertTriangle}
+                    label="Gap non exploite"
+                    value={`${100 - (lastDiag.score_sei || 0)}%`}
+                    sub="Potentiel d'amelioration SEI"
+                    gradient="bg-gradient-to-r from-amber-600 to-amber-500"
+                    onClick={() => handleFocus("Gap SEI", "diagnostic_sei", lastDiag, "CEOB")}
+                  />
+                </div>
+
+                {/* Radar + Gaps */}
+                <div className="grid grid-cols-5 gap-2.5">
+                  {/* Radar — col-span-3 */}
+                  <div className="col-span-3 bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-3 py-1.5 border-b border-blue-100 flex items-center gap-1.5">
+                      <Activity className="h-3.5 w-3.5 text-blue-500" />
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-gray-700">Radar departements</span>
+                    </div>
+                    {radarData.length > 0 ? (
+                      <div className="p-2.5" style={{ height: 280 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="75%">
+                            <PolarGrid stroke="#e5e7eb" />
+                            <PolarAngleAxis dataKey="dept" tick={{ fontSize: 10, fill: "#6b7280" }} />
+                            <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fontSize: 9 }} />
+                            <RechartsRadar dataKey="score" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.2} strokeWidth={2} />
+                          </RadarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    ) : (
+                      <div className="p-6 text-center text-sm text-gray-400">Pas de donnees radar</div>
+                    )}
+                  </div>
+
+                  {/* Gaps + Ghost Team — col-span-2 */}
+                  <div className="col-span-2 bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+                    <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-100 px-2.5 py-1.5 flex items-center gap-1.5">
+                      <Zap className="h-3.5 w-3.5 text-amber-500" />
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-gray-700">Top Gaps — Actions prioritaires</span>
+                    </div>
+                    <div className="p-2.5 space-y-2">
+                      {topGaps.length > 0 ? topGaps.map((gap, i) => (
+                        <div key={i} className="flex items-start gap-2 p-2 rounded-lg bg-white border cursor-pointer hover:shadow-sm"
+                          onClick={() => handleFocus(`Gap: ${gap.label}`, "diagnostic_gap", gap, gap.botCode || "CEOB")}
+                        >
+                          <img
+                            src={BOT_AVATAR[gap.botCode] || BOT_AVATAR["CEOB"]}
+                            alt={gap.botCode}
+                            className="w-7 h-7 rounded-lg object-cover shrink-0 ring-1 ring-gray-200"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs font-medium text-gray-800">{gap.label}</div>
+                            <div className="flex items-center gap-1.5 mt-1">
+                              <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                <div
+                                  className={cn("h-full rounded-full", gap.score < 40 ? "bg-red-400" : gap.score < 60 ? "bg-amber-400" : "bg-green-400")}
+                                  style={{ width: `${gap.score}%` }}
+                                />
+                              </div>
+                              <span className="text-[9px] font-bold text-gray-600">{gap.score}/100</span>
+                            </div>
+                          </div>
+                        </div>
+                      )) : (
+                        <p className="text-xs text-gray-400 text-center py-4">Aucun gap identifie</p>
+                      )}
+
+                      {/* Ghost Team recommandee */}
+                      {ghostTeam.length > 0 && (
+                        <div className="mt-2 pt-2 border-t">
+                          <p className="text-[9px] font-bold uppercase tracking-wider text-gray-500 mb-1.5">Ghost Team recommandee</p>
+                          <div className="flex gap-1.5">
+                            {ghostTeam.map((bot, i) => (
+                              <div key={i} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-50 border border-blue-100">
+                                <img
+                                  src={BOT_AVATAR[bot.botCode] || BOT_AVATAR["CEOB"]}
+                                  alt={bot.botCode}
+                                  className="w-5 h-5 rounded-full object-cover"
+                                />
+                                <span className="text-[9px] font-medium text-blue-700">{bot.botCode}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Scores par departement */}
+                {lastDiag.scores_departements && (
+                  <div className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">
+                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-b border-green-100 px-2.5 py-1.5 flex items-center gap-1.5">
+                      <Target className="h-3.5 w-3.5 text-green-500" />
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-gray-700">Scores par departement</span>
+                    </div>
+                    <div className="p-2.5 space-y-1.5">
+                      {Object.entries(lastDiag.scores_departements)
+                        .sort(([, a], [, b]) => b - a)
+                        .map(([key, score]) => {
+                          const cfg = DEPT_LABELS[key];
+                          const botCode = cfg?.bot || "CEOB";
+                          return (
+                            <div key={key} className="flex items-center gap-3 bg-white border rounded-lg px-3 py-2 cursor-pointer hover:shadow-sm"
+                              onClick={() => handleFocus(`${cfg?.label || key} — Score ${score}/100`, "dept_score", { key, score, cfg }, botCode)}
+                            >
+                              <img
+                                src={BOT_AVATAR[botCode] || BOT_AVATAR["CEOB"]}
+                                alt={botCode}
+                                className="w-7 h-7 rounded-lg object-cover shrink-0 ring-1 ring-gray-200"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between mb-0.5">
+                                  <span className="text-xs font-bold text-gray-800">{cfg?.label || key}</span>
+                                  <span className={cn("text-xs font-bold",
+                                    score >= 70 ? "text-green-600" : score >= 40 ? "text-amber-600" : "text-red-600"
+                                  )}>{score}/100</span>
+                                </div>
+                                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                  <div
+                                    className={cn("h-full rounded-full", score >= 70 ? "bg-green-400" : score >= 40 ? "bg-amber-400" : "bg-red-400")}
+                                    style={{ width: `${score}%` }}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </>
+        )}
+
+        {/* ══════════════════════════════════════════ */}
+        {/* TAB 4 — REFERENCE (catalogue diagnostics)  */}
+        {/* ══════════════════════════════════════════ */}
+        {activeTab === "reference" && (
           <div className="space-y-4">
             {diagByDept.length === 0 ? (
               <div className="text-center py-12">

@@ -10,7 +10,7 @@ import {
   X,
   FileText,
   BarChart3,
-  ListOrdered,
+  ListChecks,
   Table2,
   Bot,
   Pin,
@@ -26,7 +26,7 @@ import type { ActiveView } from "../../context/FrameMasterContext";
 import { BOT_AVATAR } from "../../api/types";
 import { DashboardView } from "./DashboardView";
 import { CockpitView } from "./CockpitView";
-import { HealthView } from "./HealthView";
+import { SanteGlobaleView } from "./SanteGlobaleView";
 import { DepartmentTourDeControle } from "./DepartmentTourDeControle";
 import { DiscussionView } from "./DiscussionView";
 import { BranchPatternsDemo } from "./BranchPatternsDemo";
@@ -38,12 +38,12 @@ import { DepartmentDetailView } from "./DepartmentDetailView";
 // InputBar moved to SidebarRight (Sprint Final V1)
 import { Orbit9DetailView } from "./orbit9/Orbit9DetailView";
 import { AgentSettingsView } from "./AgentSettingsView";
-import { EspaceBureauView } from "./EspaceBureauView";
-import { BluePrintView } from "./BluePrintView";
+import { MonBureauView } from "./MonBureauView";
+import { BlueprintLiveView } from "./BlueprintLiveView";
 import { BoardRoomView } from "./BoardRoomView";
 import { WarRoomView } from "./WarRoomView";
 import { ThinkRoomView } from "./ThinkRoomView";
-import { MesChantiersView } from "./MesChantiersView";
+import { BlueprintGestionView } from "./BlueprintGestionView";
 import { FocusModeLayout } from "./FocusModeLayout";
 import { PageTypePage } from "./orbit9/PageTypePage";
 import { BibleTechniquePage } from "./orbit9/BibleTechniquePage";
@@ -79,14 +79,15 @@ import { FlowUsineBleuePage } from "./orbit9/FlowUsineBleuePage";
 import { AnimationShowcasePage } from "./orbit9/AnimationShowcasePage";
 import { AgentGalleryPage } from "./orbit9/AgentGalleryPage";
 import { AccueilHeroPage } from "./orbit9/AccueilHeroPage";
-import { PlaybookUsineBleuePage } from "./orbit9/PlaybookUsineBleuePage";
+import { BlueprintPlanView } from "./BlueprintPlanView";
 import { BlueprintReseauPage } from "./orbit9/BlueprintReseauPage";
 import { FESidebarDroitePage } from "./orbit9/FESidebarDroitePage";
 import { FEMonReseauPage } from "./orbit9/FEMonReseauPage";
 import { CarlosCodesView } from "./CarlosCodesView";
 import { DiagnosticIAPage } from "./diagnostic/DiagnosticIAPage";
-import { DiagnosticHubPage } from "./diagnostic/DiagnosticHubPage";
+// DiagnosticHubPage absorbed into SanteGlobaleView (Sprint C Phase 4) — archived
 import { ConferenceAIView } from "./ConferenceAIView";
+import { StatusView } from "./StatusView";
 import { useFlowGPS } from "../../api/hooks";
 
 /** Couleur identitaire par bot — bande fine en haut du canevas */
@@ -122,7 +123,7 @@ const CREDO_COLORS: Record<string, string> = {
 
 /** Icone par type de contenu pousse */
 const CONTENT_TYPE_ICONS: Record<string, React.ElementType> = {
-  recommendations: ListOrdered,
+  recommendations: ListChecks,
   tableau: Table2,
   metriques: BarChart3,
   plan_action: FileText,
@@ -224,7 +225,7 @@ export function CenterZone() {
     <>
       {activeView === "dashboard" && <DashboardView />}
       {activeView === "cockpit" && <CockpitView />}
-      {activeView === "health" && <HealthView />}
+      {activeView === "health" && <SanteGlobaleView />}
       {activeView === "department" && <DepartmentTourDeControle />}
       {activeView === "discussion" && <DiscussionView />}
       {activeView === "branches" && <BranchPatternsDemo />}
@@ -234,12 +235,12 @@ export function CenterZone() {
       {activeView === "live-chat" && <LiveChat />}
       {activeView === "orbit9-detail" && <Orbit9DetailView />}
       {activeView === "agent-settings" && <AgentSettingsView />}
-      {activeView === "espace-bureau" && <EspaceBureauView />}
-      {activeView === "blueprint" && <BluePrintView />}
+      {activeView === "espace-bureau" && <MonBureauView />}
+      {activeView === "blueprint" && <BlueprintLiveView />}
       {activeView === "board-room" && <BoardRoomView />}
       {activeView === "war-room" && <WarRoomView />}
       {activeView === "think-room" && <ThinkRoomView />}
-      {activeView === "mes-chantiers" && <MesChantiersView />}
+      {activeView === "mes-chantiers" && <BlueprintGestionView />}
       {activeView === "bible-visuelle" && <PageTypePage />}
       {activeView === "bible-technique" && <BibleTechniquePage />}
       {activeView === "bible-ghml" && <BibleGHMLPage />}
@@ -274,14 +275,15 @@ export function CenterZone() {
       {activeView === "animation-showcase" && <AnimationShowcasePage />}
       {activeView === "agent-gallery" && <AgentGalleryPage />}
       {activeView === "accueil-hero" && <AccueilHeroPage />}
-      {activeView === "playbook-usine-bleue" && <PlaybookUsineBleuePage />}
+      {activeView === "playbook-usine-bleue" && <BlueprintPlanView />}
       {activeView === "blueprint-reseau" && <BlueprintReseauPage />}
       {activeView === "fe-sidebar-droite" && <FESidebarDroitePage />}
       {activeView === "fe-mon-reseau" && <FEMonReseauPage />}
       {activeView === "carlos-codes" && <CarlosCodesView />}
       {activeView === "diagnostic-ia" && <DiagnosticIAPage />}
-      {activeView === "diagnostic-hub" && <DiagnosticHubPage />}
+      {/* diagnostic-hub absorbed into health view (Sprint C Phase 4) */}
       {activeView === "meeting-room" && <ConferenceAIView />}
+      {activeView === "status" && <StatusView />}
       {activeView === "canvas" && (
         <SmartCanvas
           onStartChat={handleStartChat}
