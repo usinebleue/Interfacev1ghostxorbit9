@@ -5,9 +5,10 @@
  * Sprint B — D-109 restructuration
  */
 
-import { Settings } from "lucide-react";
+import { Settings, Stethoscope } from "lucide-react";
 import { ScrollArea } from "../../../components/ui/scroll-area";
 import { Separator } from "../../../components/ui/separator";
+import { Badge } from "../../../components/ui/badge";
 import { useFrameMaster } from "../../context/FrameMasterContext";
 import { SectionEspaceBureau } from "./SectionEspaceBureau";
 import { SectionRooms } from "./SectionRooms";
@@ -26,6 +27,28 @@ export function SidebarLeft() {
       {/* 5 sections scrollables */}
       <ScrollArea className="flex-1 min-h-0">
         <div className="py-2">
+          {/* Diagnostic Hub — PRIME SPOT */}
+          <div className="px-2 mb-2">
+            <button
+              onClick={() => setActiveView("diagnostic-hub")}
+              className={cn(
+                "w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
+                activeView === "diagnostic-hub"
+                  ? "bg-blue-600 text-white shadow-md"
+                  : "bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 hover:from-blue-100 hover:to-indigo-100 border border-blue-200"
+              )}
+              title="Diagnostic Hub"
+            >
+              {collapsed ? (
+                <Stethoscope className="h-4 w-4 mx-auto" />
+              ) : (
+                <>
+                  <Stethoscope className="h-4 w-4 shrink-0" />
+                  <span className="truncate">Diagnostic Hub</span>
+                </>
+              )}
+            </button>
+          </div>
           <SectionEspaceBureau collapsed={collapsed} />
           <Separator className="my-2" />
           <SectionRooms collapsed={collapsed} />

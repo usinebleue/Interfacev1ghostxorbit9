@@ -1,13 +1,14 @@
 /**
- * SidebarRight.tsx — Sidebar droite V5
- * Sprint Final V1 — Chatbox input + Communication dans le sidebar droit
- * Layout: Pulse(thin) → Video → InputBar(chatbox) → Missions/Chantiers/Discussions
- * NOTE: PAS de bulles/messages ici — juste la zone de texte (vocal Carl 21:18)
+ * SidebarRight.tsx — Sidebar droite V7
+ * Layout: Pulse → Video → Tabs (Chat | Memoire) → contenu
+ * CarlOS = cerveau unique — chat + memoire cross-canal dans le meme sidebar
  */
 
+import { useState } from "react";
 import {
   Activity,
   MessageSquare,
+  Brain,
   Video,
 } from "lucide-react";
 import {
@@ -15,16 +16,21 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "../../../components/ui/tooltip";
+import { cn } from "../../../components/ui/utils";
 import { CarlOsPulse } from "./CarlOsPulse";
 import { VideoCallWidget } from "./VideoCallWidget";
-import { DiscussionsPanel } from "./DiscussionsPanel";
-import { InputBar } from "../center/InputBar";
+import { ChatBox } from "./ChatBox";
+import { MemoryPanel } from "./MemoryPanel";
 
 interface Props {
   collapsed?: boolean;
 }
 
+type SidebarTab = "chat" | "memory";
+
 export function SidebarRight({ collapsed = false }: Props) {
+  const [activeTab, setActiveTab] = useState<SidebarTab>("chat");
+
   // Mode collapsed — icones seulement
   if (collapsed) {
     return (
@@ -54,14 +60,23 @@ export function SidebarRight({ collapsed = false }: Props) {
                 <MessageSquare className="h-4 w-4 text-blue-500" />
               </button>
             </TooltipTrigger>
-            <TooltipContent side="left">Mes Missions</TooltipContent>
+            <TooltipContent side="left">Chat CarlOS</TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button className="w-full flex justify-center py-2 rounded hover:bg-accent transition-colors">
+                <Brain className="h-4 w-4 text-purple-500" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="left">Memoire</TooltipContent>
           </Tooltip>
         </div>
       </div>
     );
   }
 
-  // Mode ouvert — Pulse → Video → InputBar(chatbox) → Missions/Chantiers/Discussions
+  // Mode ouvert — Pulse → Video → Tabs → Content
   return (
     <div className="h-full flex flex-col bg-white overflow-hidden">
       {/* Pulse — bande mince */}
@@ -74,20 +89,33 @@ export function SidebarRight({ collapsed = false }: Props) {
         <VideoCallWidget />
       </div>
 
-      {/* Separator */}
-      <div className="h-[2px] bg-gradient-to-r from-green-400 via-blue-400 to-purple-400 mx-3 my-1 shrink-0" />
-
-      {/* Chatbox — juste la zone de texte, PAS de bulles */}
-      <div className="shrink-0 mx-3 my-1">
-        <InputBar compact />
+      {/* Tab switcher — Chat | Memoire */}
+      <div className="flex items-center gap-1 px-2 py-1 border-b border-t shrink-0">
+        <button
+          onClick={() => setActiveTab("chat")}
+          className={cn(
+            "flex items-center gap-1 px-2.5 py-1 rounded text-[9px] font-medium transition-colors",
+            activeTab === "chat" ? "bg-gray-900 text-white" : "text-gray-500 hover:bg-gray-100"
+          )}
+        >
+          <MessageSquare className="h-3.5 w-3.5" />
+          Chat
+        </button>
+        <button
+          onClick={() => setActiveTab("memory")}
+          className={cn(
+            "flex items-center gap-1 px-2.5 py-1 rounded text-[9px] font-medium transition-colors",
+            activeTab === "memory" ? "bg-gray-900 text-white" : "text-gray-500 hover:bg-gray-100"
+          )}
+        >
+          <Brain className="h-3.5 w-3.5" />
+          Memoire
+        </button>
       </div>
 
-      {/* Separator */}
-      <div className="h-[1px] bg-gray-200 mx-3 shrink-0" />
-
-      {/* Missions/Chantiers/Discussions — prend le reste de l'espace */}
-      <div className="flex-1 min-h-0 overflow-auto mx-3 py-2">
-        <DiscussionsPanel />
+      {/* Content — Chat ou Memoire */}
+      <div className="flex-1 overflow-hidden">
+        {activeTab === "chat" ? <ChatBox /> : <MemoryPanel />}
       </div>
     </div>
   );

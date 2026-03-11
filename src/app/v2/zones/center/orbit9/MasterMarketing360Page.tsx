@@ -78,7 +78,7 @@ export default function MasterMarketing360Page() {
         title="Stratégie Marketing GhostX 360"
         subtitle="Funnel viral + Campagne « Les GhostX Parlent » + Tournée Pionniers"
         gradient="from-pink-600 to-rose-500"
-        icon={<Megaphone className="h-5 w-5" />}
+        icon={Megaphone}
       />
 
       {/* ── Positionnement ── */}
@@ -94,7 +94,7 @@ export default function MasterMarketing360Page() {
 
       {/* ── Funnel GhostX ── */}
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">Le Funnel GhostX — De la Viralité à la Rétention</h2>
+        <h2 className="text-lg font-semibold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">E.4.1</span>Le Funnel GhostX — De la Viralité à la Rétention</h2>
         <div className="space-y-3">
           {FUNNEL.map((f) => (
             <div key={f.step} className="flex items-start gap-3">
@@ -117,7 +117,7 @@ export default function MasterMarketing360Page() {
 
       {/* ── 5 Mécanismes Viraux ── */}
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">5 Mécanismes Viraux</h2>
+        <h2 className="text-lg font-semibold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">E.4.2</span>5 Mécanismes Viraux</h2>
         <div className="space-y-3">
           {VIRAL_MECHANISMS.map((v) => (
             <Card key={v.num} className="p-3">
@@ -136,7 +136,7 @@ export default function MasterMarketing360Page() {
 
       {/* ── Campagne « Les GhostX Parlent » ── */}
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">Campagne « Les GhostX Parlent » — Le Tableau Périodique Prend Vie</h2>
+        <h2 className="text-lg font-semibold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">E.4.3</span>Campagne « Les GhostX Parlent » — Le Tableau Périodique Prend Vie</h2>
         <div className="space-y-3 mb-6">
           {CAMPAIGN_VOIES.map((v) => (
             <Card key={v.voie} className="p-3">
@@ -152,7 +152,7 @@ export default function MasterMarketing360Page() {
         <Card className="p-4 bg-gray-50">
           <div className="flex items-center gap-2 mb-2">
             <Video className="h-4 w-4 text-gray-500" />
-            <h3 className="text-sm font-semibold text-gray-800">Vidéo Flagship : Tesla (G9) — Script Veo3</h3>
+            <h3 className="text-sm font-semibold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">E.4.3.1</span>Vidéo Flagship : Tesla (G9) — Script Veo3</h3>
           </div>
           <p className="text-xs text-gray-600 italic mb-2">
             SETTING : Laboratoire de Colorado Springs, 1899. Éclairs dans les bobines.
@@ -170,7 +170,7 @@ export default function MasterMarketing360Page() {
 
       {/* ── Roadmap Marketing 12 Mois ── */}
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">Roadmap Marketing 12 Mois</h2>
+        <h2 className="text-lg font-semibold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">E.4.4</span>Roadmap Marketing 12 Mois</h2>
         <div className="space-y-2">
           {ROADMAP_MARKETING.map((r) => (
             <Card key={r.period} className="p-3">
@@ -189,10 +189,10 @@ export default function MasterMarketing360Page() {
 
       {/* ── Tournée du Bâton de Pèlerin ── */}
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-800 mb-2">Tournée du Bâton de Pèlerin — 30 Jours Chrono</h2>
+        <h2 className="text-lg font-semibold text-gray-800 mb-2"><span className="text-[9px] font-bold text-gray-400 mr-1">E.4.5</span>Tournée du Bâton de Pèlerin — 30 Jours Chrono</h2>
         <p className="text-sm text-gray-500 mb-4">9 places. 9 leaders. 5 secteurs. 30 jours. Les portes ferment.</p>
 
-        <h3 className="text-sm font-semibold text-gray-700 mb-3">4 Leviers FOMO</h3>
+        <h3 className="text-sm font-semibold text-gray-700 mb-3"><span className="text-[9px] font-bold text-gray-400 mr-1">E.4.5.1</span>4 Leviers FOMO</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
           {FOMO_LEVERS.map((l) => (
             <Card key={l.lever} className="p-3">
@@ -202,7 +202,7 @@ export default function MasterMarketing360Page() {
           ))}
         </div>
 
-        <h3 className="text-sm font-semibold text-gray-700 mb-3">Calendrier 5 Semaines</h3>
+        <h3 className="text-sm font-semibold text-gray-700 mb-3"><span className="text-[9px] font-bold text-gray-400 mr-1">E.4.5.2</span>Calendrier 5 Semaines</h3>
         <div className="space-y-2">
           {TOURNEE_SEMAINES.map((s) => (
             <div key={s.sem} className="flex items-start gap-3">
@@ -221,7 +221,7 @@ export default function MasterMarketing360Page() {
       {/* ── Cadre Juridique ── */}
       <SectionDivider />
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-800 mb-3">Cadre Juridique — Rogers v. Grimaldi</h2>
+        <h2 className="text-lg font-semibold text-gray-800 mb-3"><span className="text-[9px] font-bold text-gray-400 mr-1">E.4.6</span>Cadre Juridique — Rogers v. Grimaldi</h2>
         <Card className="p-3">
           <div className="space-y-2">
             <div className="flex items-start gap-2">

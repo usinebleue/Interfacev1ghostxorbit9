@@ -86,7 +86,7 @@ import { FEMonReseauPage } from "./orbit9/FEMonReseauPage";
 import { CarlosCodesView } from "./CarlosCodesView";
 import { DiagnosticIAPage } from "./diagnostic/DiagnosticIAPage";
 import { DiagnosticHubPage } from "./diagnostic/DiagnosticHubPage";
-import { MeetingRoomView } from "./MeetingRoomView";
+import { ConferenceAIView } from "./ConferenceAIView";
 import { useFlowGPS } from "../../api/hooks";
 
 /** Couleur identitaire par bot — bande fine en haut du canevas */
@@ -283,7 +283,7 @@ export function CenterZone() {
       {activeView === "carlos-codes" && <CarlosCodesView />}
       {activeView === "diagnostic-ia" && <DiagnosticIAPage />}
       {activeView === "diagnostic-hub" && <DiagnosticHubPage />}
-      {activeView === "meeting-room" && <MeetingRoomView />}
+      {activeView === "meeting-room" && <ConferenceAIView />}
       {activeView === "canvas" && (
         <SmartCanvas
           onStartChat={handleStartChat}

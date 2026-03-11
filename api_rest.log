@@ -1,0 +1,7 @@
+2026-03-09 10:38:21,895 [bridge.context_builder] INFO: Memoire Carl chargee: 3023 chars
+2026-03-09 10:38:21,900 [btml.tableau_periodique] INFO: Tableau Périodique initialisé : 232 éléments
+2026-03-09 10:38:21,912 [bridge.gdocs] INFO: 🔑 OAuth2 user credentials loaded
+2026-03-09 10:38:21,913 [googleapiclient.discovery_cache] INFO: file_cache is only supported with oauth2client<4.0.0
+2026-03-09 10:38:21,916 [googleapiclient.discovery_cache] INFO: file_cache is only supported with oauth2client<4.0.0
+2026-03-09 10:38:21,918 [bridge.gdocs] INFO: 📄 BridgeGDocs initialisé
+2026-03-09 10:38:23,091 [bridge.plane] INFO: BridgePlane init OK — workspace=usine-bleue-ai

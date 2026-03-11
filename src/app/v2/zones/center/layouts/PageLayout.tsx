@@ -25,7 +25,7 @@ interface PageLayoutProps {
 export function PageLayout({
   children,
   maxWidth = "4xl",
-  showPresence = true,
+  showPresence = false,
   header,
   spacing = "space-y-4",
 }: PageLayoutProps) {

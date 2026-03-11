@@ -100,7 +100,7 @@ export function MasterDettePage() {
       {/* 1. Vue d'Ensemble */}
       {/* ============================================================ */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Vue d'Ensemble</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">C.5.1</span>Vue d'Ensemble</h3>
 
         <Card className="p-4 bg-rose-50 border-rose-200 shadow-sm">
           <div className="flex items-start gap-3">
@@ -146,7 +146,7 @@ export function MasterDettePage() {
       {/* ============================================================ */}
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-base font-bold text-gray-800">Volet 1 — BTML &rarr; GHML Rename</h3>
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">C.5.2</span>Volet 1 — BTML &rarr; GHML Rename</h3>
           <StatusBadge status="en-retard" />
           <Badge variant="outline" className="text-[9px] font-bold">Sprint 7-8</Badge>
         </div>
@@ -193,7 +193,7 @@ export function MasterDettePage() {
       {/* ============================================================ */}
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-base font-bold text-gray-800">Volet 2 — Eliminer BCC + BPO</h3>
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">C.5.3</span>Volet 2 — Eliminer BCC + BPO</h3>
           <StatusBadge status="a-faire" />
         </div>
         <p className="text-xs text-gray-400 mb-3">
@@ -249,7 +249,7 @@ export function MasterDettePage() {
       {/* ============================================================ */}
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-base font-bold text-gray-800">Volet 3 — Appellations Incoherentes</h3>
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">C.5.4</span>Volet 3 — Appellations Incoherentes</h3>
           <StatusBadge status="a-faire" />
         </div>
         <p className="text-xs text-gray-400 mb-3">
@@ -288,7 +288,7 @@ export function MasterDettePage() {
       {/* ============================================================ */}
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-base font-bold text-gray-800">Volet 4 — Refonte Nomenclature</h3>
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">C.5.5</span>Volet 4 — Refonte Nomenclature</h3>
           <StatusBadge status="futur" />
         </div>
         <p className="text-xs text-gray-400 mb-3">
@@ -356,7 +356,7 @@ export function MasterDettePage() {
       {/* ============================================================ */}
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-base font-bold text-gray-800">Volet 5 — Purge Styles CSS</h3>
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">C.5.6</span>Volet 5 — Purge Styles CSS</h3>
           <StatusBadge status="a-faire" />
           <Badge variant="outline" className="text-[9px] font-bold">S44</Badge>
         </div>
@@ -402,7 +402,7 @@ export function MasterDettePage() {
       {/* ============================================================ */}
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-base font-bold text-gray-800">Incoherences Systeme Connues</h3>
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">C.5.7</span>Incoherences Systeme Connues</h3>
         </div>
 
         <div className="space-y-2">
@@ -446,7 +446,7 @@ export function MasterDettePage() {
       {/* 8. Plan d'Execution */}
       {/* ============================================================ */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Plan d'Execution</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">C.5.8</span>Plan d'Execution</h3>
         <p className="text-xs text-gray-400 mb-3">
           Checklist ordonnee — volets 1-3 + 5 dans un sprint, volet 4 en sprint separe
         </p>
@@ -487,7 +487,7 @@ export function MasterDettePage() {
       {/* ============================================================ */}
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-base font-bold text-gray-800">Fichiers Critiques</h3>
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">C.5.9</span>Fichiers Critiques</h3>
           <Badge variant="outline" className="text-[9px] font-bold bg-red-50 text-red-600 border-red-200">NE PAS toucher sans backup</Badge>
         </div>
         <p className="text-xs text-gray-400 mb-3">

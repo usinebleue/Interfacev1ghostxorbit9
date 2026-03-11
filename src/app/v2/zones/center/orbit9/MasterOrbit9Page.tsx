@@ -7,7 +7,7 @@
 import {
   Network, Database, Users, ShoppingBag, Scale, Coins,
   Handshake, CheckCircle2, ArrowRight, AlertTriangle,
-  Clock, Zap, Shield, Globe, Brain, Layers,
+  Clock, Zap, Shield, Globe, Brain, Layers, Package, Store,
 } from "lucide-react";
 import { cn } from "../../../../components/ui/utils";
 import { Card } from "../../../../components/ui/card";
@@ -95,7 +95,7 @@ export function MasterOrbit9Page() {
       {/* 1. Orbit9 en Bref */}
       {/* ============================================================ */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Orbit9 en Bref</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">E.1.1</span>Orbit9 en Bref</h3>
         <p className="text-xs text-gray-400 mb-3">
           Moteur de developpement economique collaboratif — le coeur du reseau GhostX
         </p>
@@ -158,7 +158,7 @@ export function MasterOrbit9Page() {
       {/* ============================================================ */}
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-base font-bold text-gray-800">Matching Engine</h3>
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">E.1.2</span>Matching Engine</h3>
           <StatusBadge status="live" />
         </div>
         <p className="text-xs text-gray-400 mb-3">
@@ -184,7 +184,7 @@ export function MasterOrbit9Page() {
         <Card className="p-4 bg-white border border-gray-100 shadow-sm">
           <div className="flex items-center gap-2 mb-3">
             <Network className="h-4 w-4 text-orange-500" />
-            <span className="font-bold text-sm text-gray-800">Endpoints Orbit9</span>
+            <span className="font-bold text-sm text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">E.1.2.1</span>Endpoints Orbit9</span>
             <span className="text-[9px] text-gray-400">{ORBIT9_ENDPOINTS.length} endpoints</span>
           </div>
           <div className="space-y-1.5">
@@ -211,7 +211,7 @@ export function MasterOrbit9Page() {
       {/* 3. Cellules de Collaboration */}
       {/* ============================================================ */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Cellules de Collaboration</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">E.1.3</span>Cellules de Collaboration</h3>
         <p className="text-xs text-gray-400 mb-3">
           Unite de base du reseau Orbit9 — groupement de membres complementaires
         </p>
@@ -248,10 +248,98 @@ export function MasterOrbit9Page() {
       <SectionDivider />
 
       {/* ============================================================ */}
+      {/* 3.5 Intelligence du Matching — Enrichissements Orbit9 V2.5 */}
+      {/* ============================================================ */}
+      <div>
+        <h3 className="text-base font-bold text-gray-800 mb-4">
+          <span className="text-[9px] font-bold text-gray-400 mr-1">E.1.3.5</span>
+          Intelligence du Matching — Orbit9 V2.5
+        </h3>
+        <p className="text-xs text-gray-400 mb-3">
+          Variables comportementales avancees pour depasser le matching transactionnel (Volet 5)
+        </p>
+
+        <div className="space-y-3">
+          {[
+            {
+              variable: "Delta de Maturite Numerique",
+              desc: "18% des usines sont en mode exploration (processus manuels). Imposer un systeme IA avance a une usine papier = echec garanti. L'algo penalise les ecarts de maturite trop grands.",
+              impact: "Critique",
+              action: "Penaliser fournisseurs 'solution pure' si client stade 1-2. Privilegier accompagnement + gestion du changement.",
+              icon: Layers,
+              color: "violet",
+            },
+            {
+              variable: "Coefficient de Charge RH",
+              desc: "52% des fournisseurs citent le manque de RH comme obstacle #1. Un fournisseur parfait mais sature = risque operationnel inacceptable.",
+              impact: "Haut",
+              action: "Interroger periodiquement les delais de livraison. Delai long = devaluation temporaire du score de disponibilite.",
+              icon: Users,
+              color: "blue",
+            },
+            {
+              variable: "Coopetition (Cellules Composees)",
+              desc: "53% des acteurs collaborent avec des concurrents directs. L'IA doit orchestrer ces alliances proactivement pour combler les gaps.",
+              impact: "Haut",
+              action: "Suggerer des consortiums: ex. specialiste vision artificielle + expert prehension robotique = offre integree pour donneur d'ordres.",
+              icon: Handshake,
+              color: "emerald",
+            },
+            {
+              variable: "Maillage Compose (GearsHub)",
+              desc: "63% de l'equipement lourd est importe. 83% de l'integration est locale. Le matching doit coupler fournisseur etranger + integrateur QC.",
+              impact: "Haut",
+              action: "Quand technologie absente localement: recommander fabricant etranger (GearsHub) + integrateur QC (Usine Bleue) en duo.",
+              icon: Globe,
+              color: "orange",
+            },
+            {
+              variable: "Capacite d'Investissement",
+              desc: "TPE: ~0.3M$ moyen. MGE: ~12M$. Ne pas jumeler un projet 5M$ avec un fournisseur TPE plafonné a 300K$.",
+              impact: "Haut",
+              action: "Regle d'exclusion financiere integree dans le scoring. Budget historique + capacite projetee = variables quantitatives.",
+              icon: Scale,
+              color: "amber",
+            },
+          ].map((v) => {
+            const VIcon = v.icon;
+            return (
+              <Card key={v.variable} className="p-4 bg-white border border-gray-100 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", `bg-${v.color}-100`)}>
+                    <VIcon className={cn("h-4 w-4", `text-${v.color}-600`)} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-bold text-gray-700">{v.variable}</span>
+                      <span className={cn(
+                        "text-[9px] font-bold px-1.5 py-0.5 rounded",
+                        v.impact === "Critique" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
+                      )}>Impact: {v.impact}</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mb-1">{v.desc}</p>
+                    <p className="text-[9px] text-gray-400"><span className="font-bold">Action:</span> {v.action}</p>
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+
+        <Card className="p-3 bg-orange-50 border-orange-200 mt-3">
+          <div className="text-[9px] text-orange-700 text-center">
+            <span className="font-bold">Source:</span> Orbit9 V2.5 — Volets 3, 5 & 7 — Architecture de donnees et modelisation algorithmique (mars 2026, 22 sources)
+          </div>
+        </Card>
+      </div>
+
+      <SectionDivider />
+
+      {/* ============================================================ */}
       {/* 4. Marketplace */}
       {/* ============================================================ */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Marketplace</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">E.1.4</span>Marketplace</h3>
         <p className="text-xs text-gray-400 mb-3">
           2 volets dans l'interface — Bots & Agents + Opportunites
         </p>
@@ -263,7 +351,7 @@ export function MasterOrbit9Page() {
                 <Brain className="h-4 w-4 text-violet-600" />
               </div>
               <div>
-                <div className="font-bold text-xs text-gray-700">Bots & Agents</div>
+                <div className="font-bold text-xs text-gray-700"><span className="text-[9px] font-bold text-gray-400 mr-1">E.1.4.1</span>Bots & Agents</div>
                 <div className="text-[9px] text-gray-400">Catalogue des bots specialises</div>
               </div>
             </div>
@@ -289,7 +377,7 @@ export function MasterOrbit9Page() {
                 <ShoppingBag className="h-4 w-4 text-emerald-600" />
               </div>
               <div>
-                <div className="font-bold text-xs text-gray-700">Opportunites</div>
+                <div className="font-bold text-xs text-gray-700"><span className="text-[9px] font-bold text-gray-400 mr-1">E.1.4.2</span>Opportunites</div>
                 <div className="text-[9px] text-gray-400">Cahiers d'appel d'offres</div>
               </div>
             </div>
@@ -309,6 +397,97 @@ export function MasterOrbit9Page() {
             </div>
           </Card>
         </div>
+
+        {/* E.1.4.3 — API Catalogue & Marketplace Transactionnelle */}
+        <Card className="p-4 bg-gradient-to-r from-blue-50 to-violet-50 border border-blue-200 mt-4">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center">
+              <Package className="h-4 w-4 text-blue-600" />
+            </div>
+            <div>
+              <div className="font-bold text-xs text-gray-700">
+                <span className="text-[9px] font-bold text-gray-400 mr-1">E.1.4.3</span>
+                API Catalogue Client & Marketplace Transactionnelle
+              </div>
+              <div className="text-[9px] text-gray-400">Concept en maturation — 2 phases de deploiement</div>
+            </div>
+            <Badge variant="outline" className="text-[9px] font-bold bg-amber-50 text-amber-700 border-amber-200 ml-auto">A DEVELOPPER</Badge>
+          </div>
+
+          <div className="space-y-3">
+            {/* Phase 1 */}
+            <div className="bg-white rounded-lg p-3 border border-gray-100">
+              <div className="flex items-center gap-2 mb-2">
+                <Database className="h-3.5 w-3.5 text-blue-500" />
+                <span className="text-xs font-bold text-gray-700">Phase 1 — API Catalogue Client</span>
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">Extension naturelle</span>
+              </div>
+              <p className="text-xs text-gray-500 mb-2">
+                Apres quelques mois d'utilisation, structurer le catalogue produits/services de chaque client en API.
+                Les 12 bots C-Level accedent au catalogue — recommandations chirurgicales.
+              </p>
+              <div className="space-y-1">
+                {[
+                  "Schema catalogue standardise (SKU, specs, prix, capacites, certifications)",
+                  "Endpoint d'ingestion (API REST ou import CSV/Excel)",
+                  "Orbit9 matche des produits/besoins — pas juste des profils d'entreprises",
+                  "Les diagnostics VITAA identifient des gaps → match avec catalogues du reseau",
+                ].map((item, i) => (
+                  <div key={i} className="flex items-start gap-1.5">
+                    <ArrowRight className="h-3.5 w-3.5 text-blue-400 shrink-0 mt-0.5" />
+                    <span className="text-xs text-gray-600">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Phase 2 */}
+            <div className="bg-white rounded-lg p-3 border border-gray-100">
+              <div className="flex items-center gap-2 mb-2">
+                <Store className="h-3.5 w-3.5 text-violet-500" />
+                <span className="text-xs font-bold text-gray-700">Phase 2 — Marketplace Transactionnelle</span>
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-violet-100 text-violet-700">Si hypothese validee</span>
+              </div>
+              <p className="text-xs text-gray-500 mb-2">
+                Si les matchs Orbit9 generent des transactions reelles, activer le layer transactionnel.
+                GhostX passe de SaaS consultation a plateforme transactionnelle avec network effects.
+              </p>
+              <div className="space-y-1">
+                {[
+                  "Distributeurs en automatisation = canal de distribution organique via cellules Orbit9",
+                  "Diagnostics VITAA → gaps identifies → match avec equipementiers/integrateurs du reseau",
+                  "Layer transactionnel : soumission, suivi, commission sur la velocite generee",
+                  "Tier premium distributeur pour acces au flux de leads qualifies par VITAA",
+                ].map((item, i) => (
+                  <div key={i} className="flex items-start gap-1.5">
+                    <ArrowRight className="h-3.5 w-3.5 text-violet-400 shrink-0 mt-0.5" />
+                    <span className="text-xs text-gray-600">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Flywheel */}
+            <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+              <div className="flex items-center gap-2 mb-2">
+                <Zap className="h-3.5 w-3.5 text-amber-500" />
+                <span className="text-xs font-bold text-gray-700">Flywheel — Effet de reseau auto-renforçant</span>
+              </div>
+              <div className="text-xs text-gray-500 text-center">
+                PME utilise GhostX → diagnostics VITAA identifient les gaps → gaps matchent avec catalogues distributeurs
+                → transaction facilitee → les 2 parties restent (valeur prouvee) → leurs donnees enrichissent le reseau
+                → meilleur matching → plus de transactions
+              </div>
+            </div>
+
+            {/* Déjà builté */}
+            <div className="text-[9px] text-gray-400">
+              <span className="font-bold">Deja builte pour supporter :</span> Orbit9 matching engine (15 endpoints), cellules trisociation,
+              company kits JSON, COMMAND engine. <span className="font-bold">A ajouter :</span> schema catalogue, endpoint ingestion,
+              matching produit↔besoin, layer transactionnel.
+            </div>
+          </div>
+        </Card>
       </div>
 
       <SectionDivider />
@@ -318,7 +497,7 @@ export function MasterOrbit9Page() {
       {/* ============================================================ */}
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-base font-bold text-gray-800">Gouvernance</h3>
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">E.1.5</span>Gouvernance</h3>
           <Badge variant="outline" className="text-[9px] font-bold">D-098</Badge>
           <StatusBadge status="live" />
         </div>
@@ -329,7 +508,7 @@ export function MasterOrbit9Page() {
         <Card className="p-4 bg-white border border-gray-100 shadow-sm mb-3">
           <div className="flex items-center gap-2 mb-3">
             <Scale className="h-4 w-4 text-violet-500" />
-            <span className="font-bold text-sm text-gray-800">Decision Log</span>
+            <span className="font-bold text-sm text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">E.1.5.1</span>Decision Log</span>
             <span className="text-[9px] text-gray-400">4 endpoints</span>
           </div>
           <div className="space-y-1.5">
@@ -355,7 +534,7 @@ export function MasterOrbit9Page() {
           <Card className="p-3 bg-white border border-gray-100">
             <div className="flex items-center gap-2 mb-2">
               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-              <span className="font-bold text-xs text-gray-700">Phase 1 — DONE</span>
+              <span className="font-bold text-xs text-gray-700"><span className="text-[9px] font-bold text-gray-400 mr-1">E.1.5.2</span>Phase 1 — DONE</span>
             </div>
             <div className="space-y-1 text-xs text-gray-500">
               <div>Table decision_log PostgreSQL</div>
@@ -368,7 +547,7 @@ export function MasterOrbit9Page() {
           <Card className="p-3 bg-blue-50 border-blue-200">
             <div className="flex items-center gap-2 mb-2">
               <Clock className="h-3.5 w-3.5 text-blue-600" />
-              <span className="font-bold text-xs text-blue-700">Board Room CA Robotique</span>
+              <span className="font-bold text-xs text-blue-700"><span className="text-[9px] font-bold text-gray-400 mr-1">E.1.5.3</span>Board Room CA Robotique</span>
               <Badge variant="outline" className="text-[9px] font-bold">D-099</Badge>
             </div>
             <div className="space-y-1 text-xs text-blue-600">
@@ -387,7 +566,7 @@ export function MasterOrbit9Page() {
       {/* ============================================================ */}
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-base font-bold text-gray-800">TimeTokens</h3>
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">E.1.6</span>TimeTokens</h3>
           <Badge variant="outline" className="text-[9px] font-bold">V1</Badge>
         </div>
         <p className="text-xs text-gray-400 mb-3">
@@ -436,7 +615,7 @@ export function MasterOrbit9Page() {
       {/* 7. Jumelage Live */}
       {/* ============================================================ */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Jumelage Live</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">E.1.7</span>Jumelage Live</h3>
         <p className="text-xs text-gray-400 mb-3">
           Interface de matching en temps reel avec trisociation LiveKit
         </p>
@@ -478,6 +657,107 @@ export function MasterOrbit9Page() {
               <span>Qualification pipeline: 5 etapes progressives a implementer</span>
             </div>
           </div>
+        </Card>
+      </div>
+      {/* ── Franchise Intelligente 5.0 ── */}
+      <div className="border-t border-gray-100 pt-6 mt-6">
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">E.1.8</span>Franchise Intelligente 5.0 — Modele Orbit9</h3>
+        <p className="text-xs text-gray-400 mb-4">
+          GhostX reinvente la franchise : les BOTS font le travail, les humains DECIDENT et PROFITENT.
+          Chaque cercle Orbit9 est une franchise intelligente auto-suffisante.
+        </p>
+
+        <div className="space-y-3 mb-6">
+          {[
+            {
+              etage: "1", name: "UNE ENTREPRISE (outil)",
+              desc: "Mon entreprise + 12 bots C-Level. Je paie mon abo, mes bots travaillent.",
+              valeur: "Productivite individuelle",
+              icon: "🏭",
+              color: "bg-blue-50 border-blue-200",
+            },
+            {
+              etage: "2", name: "UN CERCLE (plateforme)",
+              desc: "Mon cercle (max 9 entreprises). Bots coordonnes entre partenaires. Matching Engine trouve les deals.",
+              valeur: "Productivite + collaboration + rabais collectif (-25%)",
+              icon: "🌐",
+              color: "bg-emerald-50 border-emerald-200",
+            },
+            {
+              etage: "3", name: "RESEAU DE CERCLES (ecosysteme)",
+              desc: "Cercles interconnectes. Matching inter-cercles, co-creations multi-cercles, VITAA + TimeTokens.",
+              valeur: "Productivite + collaboration + innovation",
+              icon: "🌍",
+              color: "bg-amber-50 border-amber-200",
+            },
+            {
+              etage: "4", name: "OS ECONOMIQUE (infrastructure)",
+              desc: "GhostX = systeme d'exploitation. Smart Contracts, IPTokens (protection PI), economie fragmentee sur rails IA.",
+              valeur: "GhostX devient INDISPENSABLE",
+              icon: "⚡",
+              color: "bg-violet-50 border-violet-200",
+            },
+          ].map((e) => (
+            <Card key={e.etage} className={cn("p-4 border", e.color)}>
+              <div className="flex items-start gap-3">
+                <span className="text-xl">{e.icon}</span>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-bold text-gray-800">Etage {e.etage} — {e.name}</span>
+                  </div>
+                  <p className="text-xs text-gray-600 mb-1">{e.desc}</p>
+                  <p className="text-[9px] text-gray-500 italic">Valeur : {e.valeur}</p>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+
+        {/* Revenus par étage */}
+        <Card className="p-4 bg-gray-50 border border-gray-200">
+          <div className="flex items-center gap-2 mb-3">
+            <Coins className="h-4 w-4 text-emerald-500" />
+            <span className="text-sm font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">E.1.8.1</span>Revenus par Etage (1 cercle de 9)</span>
+          </div>
+          <div className="space-y-1.5 mb-3">
+            {[
+              { etage: "1", source: "Abonnement (fixe)", montant: "9 × 2,246$ = 20,214$/mois" },
+              { etage: "2", source: "Performance (%)", montant: "~12,000$/mois (sur economies)" },
+              { etage: "3", source: "Deals cercle (%)", montant: "~4,500$/mois (sur transactions)" },
+              { etage: "4", source: "Co-creation (part)", montant: "~5,000$/mois (sur innovations)" },
+            ].map((r) => (
+              <div key={r.etage} className="flex items-center gap-3">
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 min-w-[16px] text-center">{r.etage}</span>
+                <span className="text-xs text-gray-600 min-w-[120px]">{r.source}</span>
+                <span className="text-xs font-medium text-gray-800">{r.montant}</span>
+              </div>
+            ))}
+          </div>
+          <div className="p-2 bg-emerald-50 rounded border border-emerald-100">
+            <p className="text-xs font-bold text-emerald-700 text-center">
+              Total par cercle : ~41,714$/mois = ~500K$/an
+            </p>
+          </div>
+          <div className="grid grid-cols-3 gap-2 mt-3">
+            {[
+              { an: "An 1", cercles: "10 cercles", rev: "4.2M$/an" },
+              { an: "An 2", cercles: "50 cercles", rev: "18M$/an" },
+              { an: "An 3", cercles: "200 cercles", rev: "60M$/an" },
+            ].map((p) => (
+              <div key={p.an} className="p-2 bg-white rounded border border-gray-100 text-center">
+                <div className="text-[9px] font-bold text-gray-500 uppercase">{p.an}</div>
+                <div className="text-xs font-bold text-gray-800">{p.rev}</div>
+                <div className="text-[9px] text-gray-400">{p.cercles}</div>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        {/* Difference fondamentale */}
+        <Card className="p-3 mt-4 bg-violet-50 border border-violet-100">
+          <p className="text-xs text-violet-700 italic text-center">
+            Franchises 1-4 : les humains font le travail. Franchise 5.0 : les BOTS font le travail, les humains DECIDENT et PROFITENT.
+          </p>
         </Card>
       </div>
     </PageLayout>

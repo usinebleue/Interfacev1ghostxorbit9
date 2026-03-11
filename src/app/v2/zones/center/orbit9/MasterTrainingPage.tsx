@@ -204,7 +204,7 @@ export function MasterTrainingPage() {
       {/* SECTION 1 — Vue d'Ensemble */}
       {/* ============================================================ */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Vue d'Ensemble</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">D.2.1</span>Vue d'Ensemble</h3>
 
         <Card className="p-5 bg-gradient-to-br from-teal-50 to-white border border-teal-100 shadow-sm">
           <div className="flex items-start gap-3 mb-4">
@@ -248,7 +248,7 @@ export function MasterTrainingPage() {
       {/* ============================================================ */}
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-base font-bold text-gray-800">SOUL Files — Identites Bot</h3>
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">D.2.2</span>SOUL Files — Identites Bot</h3>
           <StatusBadge status="actif" />
         </div>
         <p className="text-xs text-gray-400 mb-4">
@@ -296,7 +296,7 @@ export function MasterTrainingPage() {
       {/* ============================================================ */}
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-base font-bold text-gray-800">Modules Operationnels</h3>
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">D.2.3</span>Modules Operationnels</h3>
           <StatusBadge status="actif" />
         </div>
         <p className="text-xs text-gray-400 mb-4">
@@ -330,7 +330,7 @@ export function MasterTrainingPage() {
       {/* ============================================================ */}
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-base font-bold text-gray-800">Documents Strategiques</h3>
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">D.2.4</span>Documents Strategiques</h3>
           <StatusBadge status="actif" />
         </div>
         <p className="text-xs text-gray-400 mb-4">
@@ -359,7 +359,7 @@ export function MasterTrainingPage() {
       {/* ============================================================ */}
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-base font-bold text-gray-800">Company Kits — Training Data Reel</h3>
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">D.2.5</span>Company Kits — Training Data Reel</h3>
           <StatusBadge status="actif" />
         </div>
         <p className="text-xs text-gray-400 mb-4">
@@ -416,7 +416,7 @@ export function MasterTrainingPage() {
       {/* ============================================================ */}
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-base font-bold text-gray-800">Protocoles de Developpement</h3>
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">D.2.6</span>Protocoles de Developpement</h3>
           <StatusBadge status="actif" />
         </div>
         <p className="text-xs text-gray-400 mb-4">
@@ -451,7 +451,7 @@ export function MasterTrainingPage() {
       {/* SECTION 7 — Strategie d'Acquisition de Donnees */}
       {/* ============================================================ */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Strategie d'Acquisition de Donnees</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">D.2.7</span>Strategie d'Acquisition de Donnees</h3>
         <p className="text-xs text-gray-400 mb-4">
           Ce qu'on a vs ce qu'il manque pour atteindre la qualite de reponse Pioneer-Ready.
         </p>
@@ -517,7 +517,7 @@ export function MasterTrainingPage() {
       {/* SECTION 8 — Validation des Outputs */}
       {/* ============================================================ */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Validation des Outputs</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">D.2.8</span>Validation des Outputs</h3>
         <p className="text-xs text-gray-400 mb-4">
           Comment tester et valider les reponses des agents CarlOS — 5 niveaux de verification.
         </p>

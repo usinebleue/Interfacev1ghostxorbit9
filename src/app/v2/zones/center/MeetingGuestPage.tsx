@@ -39,10 +39,32 @@ interface Props {
 
 const API_KEY = import.meta.env.VITE_API_KEY || "";
 
+// Noms humains des bots
+const BOT_NAMES: Record<string, string> = {
+  BCO: "CarlOS (CEO)", BCT: "Alex (CTO)", BCF: "François (CFO)",
+  BCM: "Sophie (CMO)", BCS: "Simon (CSO)", BOO: "Julie (COO)",
+  BFA: "Denis (Usine)", BHR: "Marie (RH)", BIO: "Inès (Innovation)",
+  BRO: "Pierre (Ventes)", BLE: "Laurent (Légal)", BSE: "Samuel (Sécurité)",
+};
+
+// Labels humains pour les types
+const TYPE_LABELS: Record<string, string> = {
+  podcast: "Podcast — Table Ronde", board: "Conseil d'Administration",
+  client: "Rencontre Client", brainstorm: "Brainstorm",
+  strategie: "Session Stratégie", innovation: "Session Innovation",
+  crise: "Mode Crise", debat: "Débat", analyse: "Analyse",
+  decision: "Prise de Décision", diagnostic: "Diagnostic VITAA",
+  aiguillage: "Aiguillage", resonance: "Deep Resonance",
+  credo: "Protocole CREDO", travail: "Réunion de Travail",
+  onboarding: "Onboarding", capsule: "Capsule Bot-à-Bot",
+};
+
 export function MeetingGuestPage({ slug }: Props) {
   const [status, setStatus] = useState<GuestStatus>("join");
   const [displayName, setDisplayName] = useState("");
   const [meetingTitle, setMeetingTitle] = useState("");
+  const [meetingType, setMeetingType] = useState("");
+  const [botCodes, setBotCodes] = useState<string[]>([]);
   const [participants, setParticipants] = useState<Map<string, ParticipantInfo>>(new Map());
   const [micEnabled, setMicEnabled] = useState(true);
   const [cameraEnabled, setCameraEnabled] = useState(false);
@@ -56,6 +78,8 @@ export function MeetingGuestPage({ slug }: Props) {
       .then(r => r.ok ? r.json() : Promise.reject("Meeting non trouvé"))
       .then(data => {
         setMeetingTitle(data.title || "Réunion");
+        setMeetingType(data.meeting_type || "");
+        setBotCodes(data.bot_codes || [data.bot_code || "BCO"]);
         if (data.status === "ended") {
           setError("Cette réunion est terminée.");
           setStatus("ended");
@@ -207,6 +231,25 @@ export function MeetingGuestPage({ slug }: Props) {
             )}
           </div>
 
+          {/* Meeting info */}
+          {meetingType && (
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-4 mb-4 text-white text-center">
+              <p className="text-xs opacity-80 mb-1">{TYPE_LABELS[meetingType] || meetingType}</p>
+              {botCodes.length > 0 && (
+                <div className="flex flex-wrap justify-center gap-2 mt-3">
+                  {botCodes.map(code => (
+                    <span key={code} className="inline-flex items-center gap-1 px-2.5 py-1 bg-white/20 rounded-full text-xs">
+                      <span className="w-4 h-4 bg-white/30 rounded-full flex items-center justify-center text-[8px] font-bold">
+                        {(BOT_NAMES[code] || code)[0]}
+                      </span>
+                      {BOT_NAMES[code] || code}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Join card */}
           <div className="bg-white border rounded-xl p-6 shadow-sm">
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -236,7 +279,7 @@ export function MeetingGuestPage({ slug }: Props) {
           </div>
 
           <p className="text-xs text-gray-400 text-center mt-4">
-            Propulsé par Usine Bleue AI
+            Propulsé par CarlOS — Usine Bleue AI
           </p>
         </div>
       </div>
@@ -275,11 +318,26 @@ export function MeetingGuestPage({ slug }: Props) {
   // ── ENDED ──
   if (status === "ended") {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center p-4">
+        <div className="text-center max-w-md">
           <h2 className="text-lg font-semibold text-gray-700 mb-2">Réunion terminée</h2>
-          <p className="text-sm text-gray-500 mb-4">Merci pour votre participation!</p>
-          <p className="text-xs text-gray-400">Propulsé par Usine Bleue AI</p>
+          <p className="text-sm text-gray-500 mb-6">Merci pour votre participation!</p>
+
+          {/* CTA */}
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-6 text-white mb-6">
+            <h3 className="text-base font-bold mb-2">Cette rencontre a été animée par CarlOS</h3>
+            <p className="text-sm opacity-90 mb-4">Votre CEO Bot IA — Essayez gratuitement.</p>
+            <a
+              href={`/signup?ref=meeting-${slug}`}
+              className="inline-block px-6 py-2.5 bg-white text-blue-600 rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors"
+            >
+              Créer mon compte gratuit
+            </a>
+          </div>
+
+          <p className="text-xs text-gray-400">
+            Propulsé par CarlOS — Usine Bleue AI
+          </p>
         </div>
       </div>
     );

@@ -116,7 +116,7 @@ export function SmartCanvas({
     <div className="h-full overflow-auto">
       <div className="max-w-3xl mx-auto px-10 py-5 space-y-8">
 
-        <CarlOSPresence />
+        {/* CarlOS Presence retire — sera dans le slider droite (sprint futur) */}
 
         {/* Greeting + Status */}
         <div className="space-y-4">

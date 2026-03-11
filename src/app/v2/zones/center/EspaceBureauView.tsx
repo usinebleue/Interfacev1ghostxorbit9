@@ -2209,7 +2209,7 @@ export function EspaceBureauView() {
   return (
     <div className="h-full flex flex-col bg-gray-50">
       <div className="flex-1 overflow-auto">
-        <CarlOSPresence />
+        {/* CarlOS Presence retire — sera dans le slider droite (sprint futur) */}
         {/* Navigation Ressources — rectangle gradient (pattern Pionniers) */}
         <div className="max-w-4xl mx-auto px-10 pt-5">
           {(() => {

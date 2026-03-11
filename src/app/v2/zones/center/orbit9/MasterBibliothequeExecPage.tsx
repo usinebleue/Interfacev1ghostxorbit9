@@ -112,12 +112,12 @@ export default function MasterBibliothequeExecPage() {
         title="Bibliothèque d'Exécution GhostX"
         subtitle={`${totalTasks}+ tâches C-Level × 3 modèles × 150 rôles × Protocole DOMINO × FORGE`}
         gradient="from-indigo-600 to-violet-500"
-        icon={<Library className="h-5 w-5" />}
+        icon={Library}
       />
 
       {/* ── 3 Modèles d'Entreprise ── */}
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">3 Modèles d'Organisation Archétypaux</h2>
+        <h2 className="text-lg font-semibold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">F.3.1</span>3 Modèles d'Organisation Archétypaux</h2>
         <div className="grid grid-cols-1 gap-4">
           {THREE_MODELS.map((m) => {
             const Icon = m.icon;
@@ -166,7 +166,7 @@ export default function MasterBibliothequeExecPage() {
 
       {/* ── 12 Postes C-Level ── */}
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-800 mb-2">12 Postes C-Level — Tâches Automatisables</h2>
+        <h2 className="text-lg font-semibold text-gray-800 mb-2"><span className="text-[9px] font-bold text-gray-400 mr-1">F.3.2</span>12 Postes C-Level — Tâches Automatisables</h2>
         <p className="text-sm text-gray-500 mb-4">
           {totalTasks}+ tâches récurrentes documentées. ★★★ = candidat prioritaire pour automatisation CarlOS.
         </p>
@@ -195,7 +195,7 @@ export default function MasterBibliothequeExecPage() {
 
       {/* ── Réunions Transversales ── */}
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">8 Types de Réunions Transversales</h2>
+        <h2 className="text-lg font-semibold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">F.3.3</span>8 Types de Réunions Transversales</h2>
         <div className="space-y-2">
           {MEETING_TYPES.map((m) => (
             <Card key={m.name} className="p-3">
@@ -219,7 +219,7 @@ export default function MasterBibliothequeExecPage() {
 
       {/* ── Bibliothèque Documentaire ── */}
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">Bibliothèque Documentaire par Modèle</h2>
+        <h2 className="text-lg font-semibold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">F.3.4</span>Bibliothèque Documentaire par Modèle</h2>
         <div className="grid grid-cols-1 gap-4">
           {DOC_LIBRARY.map((cat) => (
             <Card key={cat.category} className="p-4">
@@ -241,7 +241,7 @@ export default function MasterBibliothequeExecPage() {
 
       {/* ── Cycle de Vie Projet — Modèle C ── */}
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">Cycle de Vie Complet — Projet d'Intégration (Modèle C)</h2>
+        <h2 className="text-lg font-semibold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">F.3.5</span>Cycle de Vie Complet — Projet d'Intégration (Modèle C)</h2>
         <div className="space-y-2">
           {CYCLE_VIE_C.map((p) => (
             <div key={p.phase} className="flex items-start gap-3">

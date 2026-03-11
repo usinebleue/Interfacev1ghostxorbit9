@@ -112,8 +112,11 @@ export function CarlOSAvatar({ onClose }: Props) {
           )}
         />
 
-        {/* Gradient overlay bottom — pour lisibilité du texte */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+        {/* Gradient overlay bottom — pour lisibilité audio bars */}
+        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+
+        {/* Gradient overlay top — pour lisibilité identité */}
+        <div className="absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-black/50 to-transparent" />
 
         {/* Color accent overlay top — couleur du bot */}
         <div className={cn(
@@ -134,72 +137,95 @@ export function CarlOSAvatar({ onClose }: Props) {
         )}
       </div>
 
-      {/* ===== TOOLBAR ===== */}
-      <div className="relative z-20 flex items-center justify-between px-4 py-2">
-        <div className="flex items-center gap-2">
-          {/* Status indicator */}
-          <span className="relative flex h-2.5 w-2.5">
-            <span className={cn(
-              "absolute inline-flex h-full w-full rounded-full opacity-75",
-              isSpeaking ? "bg-green-400 animate-ping" : isTyping ? "bg-amber-400 animate-ping" : "bg-white/30"
-            )} />
-            <span className={cn(
-              "relative inline-flex rounded-full h-2.5 w-2.5",
-              isSpeaking ? "bg-green-400" : isTyping ? "bg-amber-400" : "bg-white/40"
-            )} />
-          </span>
+      {/* ===== TOP LEFT: Identité agent (overlay sur l'image) ===== */}
+      <div className="absolute top-0 left-0 z-20 px-3 py-2.5 flex items-start gap-2.5">
+        {/* Photo profil ronde mini */}
+        <div
+          className={cn(
+            "w-9 h-9 rounded-full overflow-hidden border-2 shrink-0 transition-all duration-300",
+            isSpeaking ? "border-green-400/80" : "border-white/40"
+          )}
+          style={{
+            boxShadow: isSpeaking
+              ? `0 0 10px ${config.glowColor}`
+              : "0 2px 8px rgba(0,0,0,0.4)",
+          }}
+        >
+          <img src={config.photo} alt={config.name} className="w-full h-full object-cover" />
+        </div>
 
-          {/* Bot name + role */}
-          <span className="text-[11px] font-bold text-white/90 uppercase tracking-widest drop-shadow-md">
-            {config.name} — {config.role}
-          </span>
+        <div className="flex flex-col gap-0.5 pt-0.5">
+          {/* Nom + Rôle */}
+          <div className="flex items-center gap-1.5">
+            <span className="relative flex h-2 w-2 shrink-0">
+              <span className={cn(
+                "absolute inline-flex h-full w-full rounded-full opacity-75",
+                isSpeaking ? "bg-green-400 animate-ping" : isTyping ? "bg-amber-400 animate-ping" : "bg-white/20"
+              )} />
+              <span className={cn(
+                "relative inline-flex rounded-full h-2 w-2",
+                isSpeaking ? "bg-green-400" : isTyping ? "bg-amber-400" : "bg-white/40"
+              )} />
+            </span>
+            <span className="text-[12px] font-bold text-white/95 uppercase tracking-wider drop-shadow-lg">
+              {config.name}
+            </span>
+            <span className="text-[9px] font-semibold text-white/50 uppercase tracking-widest drop-shadow-md">
+              {config.role}
+            </span>
+          </div>
 
-          {/* Speaking indicator */}
+          {/* Speaking / Thinking indicator */}
           {isSpeaking && (
-            <span className="text-[10px] text-green-300 font-semibold animate-pulse drop-shadow-md flex items-center gap-1">
-              <Radio className="h-3 w-3" /> En direct
+            <span className="text-[9px] text-green-300 font-semibold animate-pulse drop-shadow-md flex items-center gap-1">
+              <Radio className="h-2.5 w-2.5" /> En direct
             </span>
           )}
           {isTyping && !isSpeaking && (
-            <span className="text-[10px] text-amber-300 font-semibold animate-pulse drop-shadow-md flex items-center gap-1">
-              <Sparkles className="h-3 w-3" /> Réflexion...
+            <span className="text-[9px] text-amber-300 font-semibold animate-pulse drop-shadow-md flex items-center gap-1">
+              <Sparkles className="h-2.5 w-2.5" /> Réflexion...
+            </span>
+          )}
+          {!isSpeaking && !isTyping && (
+            <span className="text-[9px] text-white/35 font-medium drop-shadow-md flex items-center gap-1">
+              <Video className="h-2.5 w-2.5" /> En attente
             </span>
           )}
         </div>
+      </div>
 
-        <div className="flex items-center gap-1">
-          <button
-            onClick={toggleAutoTTS}
-            className={cn(
-              "p-1.5 rounded-lg transition-colors cursor-pointer",
-              autoTTSEnabled ? "text-green-300 bg-green-500/20 backdrop-blur-sm" : "text-white/40 hover:text-white/70"
-            )}
-            title={autoTTSEnabled ? "Desactiver la voix auto" : "Activer la voix auto"}
-          >
-            {autoTTSEnabled ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
-          </button>
+      {/* ===== TOP RIGHT: Contrôles ===== */}
+      <div className="absolute top-0 right-0 z-20 px-2 py-2 flex items-center gap-1">
+        <button
+          onClick={toggleAutoTTS}
+          className={cn(
+            "p-1.5 rounded-lg transition-colors cursor-pointer",
+            autoTTSEnabled ? "text-green-300 bg-green-500/20 backdrop-blur-sm" : "text-white/40 hover:text-white/70"
+          )}
+          title={autoTTSEnabled ? "Desactiver la voix auto" : "Activer la voix auto"}
+        >
+          {autoTTSEnabled ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
+        </button>
 
-          <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="p-1.5 text-white/40 hover:text-white/70 rounded-lg transition-colors cursor-pointer"
-            title={isExpanded ? "Reduire" : "Agrandir"}
-          >
-            {isExpanded ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
-          </button>
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="p-1.5 text-white/40 hover:text-white/70 rounded-lg transition-colors cursor-pointer"
+          title={isExpanded ? "Reduire" : "Agrandir"}
+        >
+          {isExpanded ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+        </button>
 
-          <button
-            onClick={onClose}
-            className="p-1.5 text-white/40 hover:text-white/70 rounded-lg transition-colors cursor-pointer"
-            title="Fermer"
-          >
-            <VideoOff className="h-3.5 w-3.5" />
-          </button>
-        </div>
+        <button
+          onClick={onClose}
+          className="p-1.5 text-white/40 hover:text-white/70 rounded-lg transition-colors cursor-pointer"
+          title="Fermer"
+        >
+          <VideoOff className="h-3.5 w-3.5" />
+        </button>
       </div>
 
       {/* ===== CENTER: Profile photo flottante quand il parle ===== */}
       <div className="flex-1 relative z-10 flex items-center justify-center">
-        {/* Profile photo — visible quand il parle ou réfléchit */}
         <div className={cn(
           "transition-all duration-500",
           isSpeaking || isTyping ? "opacity-100 scale-100" : "opacity-0 scale-90"
@@ -254,41 +280,38 @@ export function CarlOSAvatar({ onClose }: Props) {
         </div>
       </div>
 
-      {/* ===== BOTTOM: Sous-titre + Audio bars ===== */}
-      <div className="relative z-20 px-4 pb-2 space-y-1.5">
-        {/* Sous-titre — dernier message bot */}
-        {lastBotMsg && (
-          <p className="text-white/70 text-[11px] leading-relaxed line-clamp-2 text-center drop-shadow-md px-8">
-            {lastBotMsg.content.slice(0, 200)}
-            {lastBotMsg.content.length > 200 && "..."}
+      {/* ===== BOTTOM: Audio visualizer pleine largeur ===== */}
+      <div className="absolute bottom-0 inset-x-0 z-20 px-3 pb-2 pt-4">
+        {/* Sous-titre compact — seulement quand il parle */}
+        {isSpeaking && lastBotMsg && (
+          <p className="text-white/60 text-[9px] leading-relaxed line-clamp-1 text-center drop-shadow-md px-6 mb-1.5">
+            {lastBotMsg.content.slice(0, 120)}
+            {lastBotMsg.content.length > 120 && "..."}
           </p>
         )}
 
-        {/* Status badge central */}
-        {!isSpeaking && !isTyping && (
-          <div className="flex justify-center">
-            <div className="flex items-center gap-1.5 text-[10px] text-white/50 font-medium bg-white/5 backdrop-blur-sm rounded-full px-3 py-1">
-              <Video className="h-3 w-3" /> En attente
-            </div>
-          </div>
-        )}
-
-        {/* Audio visualizer */}
-        <div className="flex items-end justify-center gap-[2px] h-5">
-          {Array.from({ length: 40 }).map((_, i) => {
+        {/* Audio visualizer — pleine largeur, barres plus hautes */}
+        <div className="flex items-end justify-center gap-[1.5px] h-8 w-full">
+          {Array.from({ length: 60 }).map((_, i) => {
             const barHeight = isSpeaking
-              ? 2 + Math.sin(Date.now() / 180 + i * 0.4) * audioLevel * 14
+              ? 3 + Math.sin(Date.now() / 150 + i * 0.35) * audioLevel * 22
               : isTyping
-                ? 2 + Math.sin(Date.now() / 500 + i * 0.3) * 3
+                ? 2 + Math.sin(Date.now() / 500 + i * 0.25) * 4
                 : 1.5;
             return (
               <div
                 key={i}
                 className={cn(
-                  "w-[2px] rounded-full transition-all duration-75",
-                  isSpeaking ? "bg-green-400/70" : isTyping ? "bg-amber-400/30" : "bg-white/10"
+                  "rounded-full transition-all duration-75 shrink-0",
+                  isSpeaking ? "bg-green-400/80" : isTyping ? "bg-amber-400/30" : "bg-white/8"
                 )}
-                style={{ height: `${Math.max(1.5, barHeight)}px` }}
+                style={{
+                  height: `${Math.max(1.5, barHeight)}px`,
+                  width: "2px",
+                  boxShadow: isSpeaking && barHeight > 10
+                    ? `0 0 4px ${config.glowColor.replace("0.6", "0.3")}`
+                    : "none",
+                }}
               />
             );
           })}

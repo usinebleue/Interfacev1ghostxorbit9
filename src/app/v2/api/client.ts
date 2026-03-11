@@ -1125,4 +1125,26 @@ export const api = {
   meetingPodcastRegenerate(slug: string): Promise<{ ok: boolean }> {
     return apiFetch(`/meetings/${slug}/podcast/regenerate`, { method: "POST" });
   },
+
+  meetingInvite(slug: string, req: { emails: string[]; message?: string; scheduled_at?: string }): Promise<{ slug: string; invitations: any[] }> {
+    return apiFetch(`/meetings/${slug}/invite`, {
+      method: "POST",
+      body: JSON.stringify(req),
+    });
+  },
+
+  meetingInvitations(slug: string): Promise<{ slug: string; invitations: any[]; total: number }> {
+    return apiFetch(`/meetings/${slug}/invitations`);
+  },
+
+  calendarSlots(date: string): Promise<{ date: string; slots: any[]; total: number }> {
+    return apiFetch(`/calendar/slots?date=${date}`);
+  },
+
+  calendarCreateEvent(req: { meeting_slug: string; date: string; heure: string; duree?: number; attendees?: string[] }): Promise<any> {
+    return apiFetch("/calendar/event", {
+      method: "POST",
+      body: JSON.stringify(req),
+    });
+  },
 };

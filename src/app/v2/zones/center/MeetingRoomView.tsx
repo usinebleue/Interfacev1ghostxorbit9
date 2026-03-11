@@ -58,13 +58,18 @@ interface ParticipantInfo {
   isSpeaking?: boolean;
 }
 
-export function MeetingRoomView() {
+interface MeetingRoomProps {
+  meetingType?: string;
+  meetingTitle?: string;
+}
+
+export function MeetingRoomView({ meetingType, meetingTitle: initialTitle }: MeetingRoomProps) {
   const { setActiveView } = useFrameMaster();
 
   // State
   const [meetingStatus, setMeetingStatus] = useState<MeetingStatus>("idle");
   const [meetingData, setMeetingData] = useState<MeetingData | null>(null);
-  const [meetingTitle, setMeetingTitle] = useState("Réunion Pioneer");
+  const [meetingTitle, setMeetingTitle] = useState(initialTitle || "Réunion Pioneer");
   const [participants, setParticipants] = useState<Map<string, ParticipantInfo>>(new Map());
   const [transcript, setTranscript] = useState<TranscriptEntry[]>([]);
   const [micEnabled, setMicEnabled] = useState(true);
@@ -77,7 +82,6 @@ export function MeetingRoomView() {
   // Refs
   const roomRef = useRef<Room | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const pollCursorRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
 
@@ -119,7 +123,7 @@ export function MeetingRoomView() {
   const handleCreate = useCallback(async () => {
     setMeetingStatus("creating");
     try {
-      const data = await api.meetingCreate({ title: meetingTitle });
+      const data = await api.meetingCreate({ title: meetingTitle, meeting_type: meetingType });
       setMeetingData(data);
       setMeetingStatus("connecting");
 
@@ -193,8 +197,8 @@ export function MeetingRoomView() {
       setMeetingStatus("live");
       setIsRecording(false);
 
-      // Start transcript polling
-      startTranscriptPolling(data.room_name);
+      // Start transcript polling (uses slug, not room_name)
+      startTranscriptPolling(data.slug);
 
       // Start the meeting (recording)
       api.meetingStart(data.slug).then(() => {
@@ -207,40 +211,20 @@ export function MeetingRoomView() {
     }
   }, [meetingTitle]);
 
-  // Transcript polling (reuse voice events pattern)
-  const startTranscriptPolling = useCallback((roomName: string) => {
-    pollCursorRef.current = 0;
+  // Transcript polling — reads from meetings DB via /meetings/{slug}/transcript
+  const startTranscriptPolling = useCallback((slug: string) => {
     pollRef.current = setInterval(async () => {
       try {
-        const res = await fetch(
-          `/api/v1/voice/events/${roomName}?cursor=${pollCursorRef.current}`,
-          { headers: { "X-API-Key": import.meta.env.VITE_API_KEY || "" } }
-        );
-        if (!res.ok) return;
-        const data = await res.json();
-        if (data.events?.length > 0) {
-          for (const evt of data.events) {
-            if (evt.type === "exchange") {
-              if (evt.user_text) {
-                setTranscript(prev => [...prev, {
-                  speaker: "Participant",
-                  text: evt.user_text,
-                  timestamp: Date.now() / 1000,
-                }]);
-              }
-              if (evt.bot_text) {
-                setTranscript(prev => [...prev, {
-                  speaker: `CarlOS`,
-                  text: evt.bot_text,
-                  timestamp: Date.now() / 1000,
-                }]);
-              }
-            }
-          }
-          pollCursorRef.current = data.cursor;
+        const res = await api.meetingTranscript(slug);
+        if (res.entries?.length > 0) {
+          setTranscript(res.entries.map((e: any) => ({
+            speaker: e.speaker === "user" ? "Participant" : (e.speaker || "CarlOS"),
+            text: e.text,
+            timestamp: e.timestamp || Date.now() / 1000,
+          })));
         }
       } catch { /* silent */ }
-    }, 2000);
+    }, 3000);
   }, []);
 
   // End meeting
@@ -317,7 +301,7 @@ export function MeetingRoomView() {
       roomRef.current = room;
       setParticipants(new Map([["host-1", { identity: "host-1", name: "Carl (Vous)" }]]));
       setMeetingStatus("live");
-      startTranscriptPolling(data.room_name);
+      startTranscriptPolling(data.slug);
     } catch (err) {
       console.error("Resume failed:", err);
     }

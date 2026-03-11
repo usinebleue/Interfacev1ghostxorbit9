@@ -8,6 +8,8 @@ import {
   Radio, Mic, Video, Phone, ArrowRight, CheckCircle2,
   AlertTriangle, Clock, MonitorSpeaker, Wifi, Zap,
   Navigation, MessageSquare, Volume2, PhoneCall,
+  Users, Glasses, Smartphone, Eye, MapPin, Camera,
+  Youtube, Search, Database, Image,
 } from "lucide-react";
 import { cn } from "../../../../components/ui/utils";
 import { Card } from "../../../../components/ui/card";
@@ -83,7 +85,7 @@ export function MasterCommunicationPage() {
       {/* 1. Vue d'Ensemble du Pipeline */}
       {/* ============================================================ */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Vue d'Ensemble du Pipeline</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">C.1.1</span>Vue d'Ensemble du Pipeline</h3>
         <p className="text-xs text-gray-400 mb-3">
           Pipeline vocal complet — de la voix utilisateur a la reponse audio CarlOS
         </p>
@@ -115,7 +117,7 @@ export function MasterCommunicationPage() {
       {/* ============================================================ */}
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-base font-bold text-gray-800">Voice Pipeline</h3>
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">C.1.2</span>Voice Pipeline</h3>
           <StatusBadge status="live" />
         </div>
         <p className="text-xs text-gray-400 mb-3">
@@ -169,7 +171,7 @@ export function MasterCommunicationPage() {
       {/* ============================================================ */}
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-base font-bold text-gray-800">Video Avatar</h3>
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">C.1.3</span>Video Avatar</h3>
           <StatusBadge status="live" />
         </div>
         <p className="text-xs text-gray-400 mb-3">
@@ -199,7 +201,7 @@ export function MasterCommunicationPage() {
       {/* ============================================================ */}
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-base font-bold text-gray-800">Canvas Auto-Navigation</h3>
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">C.1.4</span>Canvas Auto-Navigation</h3>
           <StatusBadge status="live" />
         </div>
         <p className="text-xs text-gray-400 mb-3">
@@ -238,7 +240,7 @@ export function MasterCommunicationPage() {
       {/* ============================================================ */}
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-base font-bold text-gray-800">Pont Vocal &rarr; LiveChat</h3>
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">C.1.5</span>Pont Vocal &rarr; LiveChat</h3>
           <StatusBadge status="live" />
         </div>
         <p className="text-xs text-gray-400 mb-3">
@@ -289,7 +291,7 @@ export function MasterCommunicationPage() {
       {/* ============================================================ */}
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-base font-bold text-gray-800">Telephonie</h3>
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">C.1.6</span>Telephonie</h3>
           <StatusBadge status="en-cours" />
           <Badge variant="outline" className="text-[9px] font-bold">D-097</Badge>
         </div>
@@ -336,7 +338,7 @@ export function MasterCommunicationPage() {
       {/* 7. 12 Voix ElevenLabs (S42) */}
       {/* ============================================================ */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">12 Voix ElevenLabs</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">C.1.7</span>12 Voix ElevenLabs</h3>
         <p className="text-xs text-gray-400 mb-3">
           1 voix distincte par bot C-Level — model <code className="bg-gray-100 px-1 py-0.5 rounded font-mono">eleven_multilingual_v2</code> — source: <code className="bg-gray-100 px-1 py-0.5 rounded font-mono">carlos_livekit_agent.py BOT_VOICES</code>
         </p>
@@ -370,12 +372,376 @@ export function MasterCommunicationPage() {
       <SectionDivider />
 
       {/* ============================================================ */}
-      {/* 8. Problemes Connus */}
+      {/* 8. Conference & Meetings (LIVE) */}
+      {/* ============================================================ */}
+      <div>
+        <div className="flex items-center gap-2 mb-4">
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">C.1.8</span>Conference &amp; Meetings</h3>
+          <StatusBadge status="live" />
+          <Badge variant="outline" className="text-[9px] font-bold">B.5</Badge>
+        </div>
+        <p className="text-xs text-gray-400 mb-3">
+          CarlOS est present dans les meetings — transcription, synthese, suivi des decisions en temps reel
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <Card className="p-4 bg-white border border-gray-100 shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <Users className="h-4 w-4 text-blue-500" />
+              <span className="font-bold text-xs text-gray-700"><span className="text-[9px] font-bold text-gray-400 mr-1">C.1.8.1</span>CarlOS dans les Meetings</span>
+            </div>
+            <div className="space-y-1.5 text-xs text-gray-600">
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                <span>Rejoint automatiquement les rooms LiveKit conference</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                <span>Transcription meeting en temps reel (Deepgram STT)</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                <span>Synthese automatique post-meeting</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                <span>Extraction decisions + actions dans le LiveChat</span>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-4 bg-white border border-gray-100 shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <MessageSquare className="h-4 w-4 text-violet-500" />
+              <span className="font-bold text-xs text-gray-700"><span className="text-[9px] font-bold text-gray-400 mr-1">C.1.8.2</span>Integration Plateforme</span>
+            </div>
+            <div className="space-y-1.5 text-xs text-gray-600">
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                <span>Transcripts accessibles dans Mon Bureau &rarr; Documents</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                <span>CarlOS intervient si sollicite pendant la reunion</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                <span>Suggestions contextuelles basees sur le sujet en cours</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                <span>Utilisation dans Board Room, War Room, Think Room</span>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </div>
+
+      <SectionDivider />
+
+      {/* ============================================================ */}
+      {/* 9. CarlOS Vision — Ray-Ban Meta (LIVE) */}
+      {/* ============================================================ */}
+      <div>
+        <div className="flex items-center gap-2 mb-4">
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">C.1.9</span>CarlOS Vision — Ray-Ban Meta</h3>
+          <StatusBadge status="live" />
+          <Badge variant="outline" className="text-[9px] font-bold">S45</Badge>
+        </div>
+        <p className="text-xs text-gray-400 mb-3">
+          Les lunettes Ray-Ban Meta comme interface vision pour CarlOS — push-to-screen en temps reel
+        </p>
+
+        <Card className="p-4 bg-white border border-gray-100 shadow-sm">
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            {[
+              { label: "Ray-Ban Meta", color: "bg-gray-800 text-white" },
+              { label: "Camera + Mic", color: "bg-blue-100 text-blue-700" },
+              { label: "Meta AI API", color: "bg-violet-100 text-violet-700" },
+              { label: "CarlOS Vision", color: "bg-orange-100 text-orange-700" },
+              { label: "Canvas Actions", color: "bg-emerald-100 text-emerald-700" },
+            ].map((step, i) => (
+              <div key={step.label} className="flex items-center gap-1.5">
+                <span className={cn("text-[9px] font-bold px-2 py-1 rounded", step.color)}>{step.label}</span>
+                {i < 4 && <ArrowRight className="h-3.5 w-3.5 text-gray-300" />}
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="space-y-1.5 text-xs text-gray-600">
+              <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wide mb-1">Capture</div>
+              <div className="flex items-center gap-1.5">
+                <Glasses className="h-3.5 w-3.5 text-gray-600 shrink-0" />
+                <span>Photo/video via commande vocale</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Camera className="h-3.5 w-3.5 text-gray-600 shrink-0" />
+                <span>Analyse visuelle en temps reel</span>
+              </div>
+            </div>
+            <div className="space-y-1.5 text-xs text-gray-600">
+              <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wide mb-1">Traitement</div>
+              <div className="flex items-center gap-1.5">
+                <Eye className="h-3.5 w-3.5 text-violet-500 shrink-0" />
+                <span>CarlOS interprete ce que l'utilisateur voit</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Zap className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                <span>Contexte enrichi par le profil entreprise</span>
+              </div>
+            </div>
+            <div className="space-y-1.5 text-xs text-gray-600">
+              <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wide mb-1">Action</div>
+              <div className="flex items-center gap-1.5">
+                <Navigation className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                <span>Push-to-screen: resultats sur le canvas</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <MessageSquare className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                <span>Reponse vocale via ElevenLabs TTS</span>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-3 bg-gray-50 border-gray-200 mt-3">
+          <div className="text-xs text-gray-600 italic">
+            "Les lunettes deviennent les yeux de CarlOS sur le terrain — chaque visite d'usine, chaque rencontre client est enrichie par l'intelligence collective des 12 agents."
+          </div>
+        </Card>
+      </div>
+
+      <SectionDivider />
+
+      {/* ============================================================ */}
+      {/* 10. App Mobile Usine Bleue (A FAIRE) */}
+      {/* ============================================================ */}
+      <div>
+        <div className="flex items-center gap-2 mb-4">
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">C.1.10</span>App Mobile Usine Bleue</h3>
+          <StatusBadge status="a-faire" />
+        </div>
+        <p className="text-xs text-gray-400 mb-3">
+          Application mobile native incluant le module CarlOS Vision + visites SMART
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <Card className="p-4 bg-white border border-gray-100 shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <Smartphone className="h-4 w-4 text-blue-500" />
+              <span className="font-bold text-xs text-gray-700"><span className="text-[9px] font-bold text-gray-400 mr-1">C.1.10.1</span>CarlOS Mobile</span>
+            </div>
+            <div className="space-y-1 text-xs text-gray-500">
+              <div>LiveChat vocal + texte</div>
+              <div>Acces aux 12 departements</div>
+              <div>Notifications push intelligentes</div>
+              <div>Mon Bureau + Mes Chantiers</div>
+            </div>
+          </Card>
+
+          <Card className="p-4 bg-white border border-gray-100 shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <Eye className="h-4 w-4 text-violet-500" />
+              <span className="font-bold text-xs text-gray-700"><span className="text-[9px] font-bold text-gray-400 mr-1">C.1.10.2</span>Module Vision</span>
+            </div>
+            <div className="space-y-1 text-xs text-gray-500">
+              <div>Camera du telephone = yeux de CarlOS</div>
+              <div>Analyse visuelle en temps reel</div>
+              <div>Scan equipements, documents, espaces</div>
+              <div>Integration Ray-Ban Meta en complement</div>
+            </div>
+          </Card>
+
+          <Card className="p-4 bg-white border border-gray-100 shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <MapPin className="h-4 w-4 text-emerald-500" />
+              <span className="font-bold text-xs text-gray-700"><span className="text-[9px] font-bold text-gray-400 mr-1">C.1.10.3</span>Visites SMART</span>
+            </div>
+            <div className="space-y-1 text-xs text-gray-500">
+              <div>Checklist visite usine guidee par CarlOS</div>
+              <div>Photos geolocalisees + annotations IA</div>
+              <div>Rapport automatique post-visite</div>
+              <div>Diagnostic terrain lie aux 54 diagnostics</div>
+            </div>
+          </Card>
+        </div>
+
+        <Card className="p-3 bg-blue-50 border-blue-200 mt-3">
+          <div className="space-y-1 text-xs text-blue-700">
+            <div className="font-bold">Pipeline Vision Mobile</div>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {[
+                "Camera/Photo",
+                "Upload API",
+                "CarlOS Vision (Gemini multimodal)",
+                "Analyse + Recommandations",
+                "Push vers Canvas/LiveChat",
+              ].map((step, i) => (
+                <div key={step} className="flex items-center gap-1.5">
+                  <span className="text-[9px] font-medium bg-blue-100 px-1.5 py-0.5 rounded">{step}</span>
+                  {i < 4 && <ArrowRight className="h-3.5 w-3.5 text-blue-300" />}
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      <SectionDivider />
+
+      {/* ============================================================ */}
+      {/* 11. Video Intelligence — YouTube Embed (A FAIRE) */}
+      {/* ============================================================ */}
+      <div>
+        <div className="flex items-center gap-2 mb-4">
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">C.1.11</span>Video Intelligence — YouTube Embed</h3>
+          <StatusBadge status="a-faire" />
+        </div>
+        <p className="text-xs text-gray-400 mb-3">
+          CarlOS affiche des videos pertinentes dans l'espace 16:9 de l'agent (sidebar droite) — robots collaboratifs, equipements d'automatisation, demos terrain
+        </p>
+
+        {/* Pipeline flow */}
+        <Card className="p-4 bg-white border border-gray-100 shadow-sm mb-3">
+          <div className="flex flex-wrap items-center gap-2">
+            {[
+              { label: "Conversation", color: "bg-blue-100 text-blue-700" },
+              { label: "Detection contexte", color: "bg-violet-100 text-violet-700" },
+              { label: "Bibliotheque curatee", color: "bg-emerald-100 text-emerald-700" },
+              { label: "Fallback YouTube API", color: "bg-orange-100 text-orange-700" },
+              { label: "Embed 16:9 agent", color: "bg-pink-100 text-pink-700" },
+            ].map((step, i) => (
+              <div key={step.label} className="flex items-center gap-1.5">
+                <span className={cn("text-[9px] font-bold px-2 py-1 rounded", step.color)}>{step.label}</span>
+                {i < 4 && <ArrowRight className="h-3.5 w-3.5 text-gray-300" />}
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {/* Source 1 — Bibliotheque curatee */}
+          <Card className="p-4 bg-white border border-gray-100 shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <Database className="h-4 w-4 text-emerald-500" />
+              <span className="font-bold text-xs text-gray-700"><span className="text-[9px] font-bold text-gray-400 mr-1">C.1.11.1</span>Bibliotheque Curatee (prioritaire)</span>
+            </div>
+            <div className="space-y-1.5 text-xs text-gray-600">
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                <span>~50-100 videos YouTube par categorie</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                <span>Cobots (UR, Fanuc, ABB, KUKA), AGV, soudage, palettisation</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                <span>JSON: titre + videoId + tags + marque + application</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                <span>Matching par mots-cles de la conversation</span>
+              </div>
+            </div>
+          </Card>
+
+          {/* Source 2 — YouTube Search API */}
+          <Card className="p-4 bg-white border border-gray-100 shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <Search className="h-4 w-4 text-orange-500" />
+              <span className="font-bold text-xs text-gray-700"><span className="text-[9px] font-bold text-gray-400 mr-1">C.1.11.2</span>YouTube Data API v3 (fallback)</span>
+            </div>
+            <div className="space-y-1.5 text-xs text-gray-600">
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                <span>Meme projet Google Cloud que Gemini</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                <span>Quota gratuit: ~100 recherches/jour</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                <span>Recherche dynamique quand la bibliotheque n'a pas de match</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                <span>Qualite variable — filtrage par pertinence + duree</span>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* Affichage — Espace 16:9 Agent */}
+        <Card className="p-4 bg-gradient-to-br from-red-50 to-white border border-red-100 shadow-sm mt-3">
+          <div className="flex items-center gap-2 mb-3">
+            <Image className="h-4 w-4 text-red-500" />
+            <span className="text-sm font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">C.1.11.3</span>Affichage — Espace 16:9 de l'Agent</span>
+          </div>
+          <p className="text-xs text-gray-600 mb-3">
+            Le meme espace qui affiche l'image standby de l'agent (ex: ceo-carlos-standby.png) devient un player YouTube embed quand CarlOS pousse une video.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="p-3 bg-white rounded-lg border border-gray-100">
+              <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wide mb-2">Mode Normal</div>
+              <div className="aspect-video bg-gray-100 rounded flex items-center justify-center">
+                <div className="text-center">
+                  <Users className="h-6 w-6 text-gray-300 mx-auto mb-1" />
+                  <span className="text-[9px] text-gray-400">Image standby agent 16:9</span>
+                </div>
+              </div>
+            </div>
+            <div className="p-3 bg-white rounded-lg border border-red-100">
+              <div className="text-[9px] font-bold text-red-500 uppercase tracking-wide mb-2">Mode Video Active</div>
+              <div className="aspect-video bg-gray-900 rounded flex items-center justify-center">
+                <div className="text-center">
+                  <Youtube className="h-6 w-6 text-red-500 mx-auto mb-1" />
+                  <span className="text-[9px] text-gray-300">YouTube embed iframe</span>
+                  <div className="text-[9px] text-gray-500 mt-0.5">ex: "Cobot UR10e — Pick &amp; Place"</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* Categories bibliotheque */}
+        <Card className="p-4 bg-white border border-gray-100 shadow-sm mt-3">
+          <div className="flex items-center gap-2 mb-3">
+            <Youtube className="h-4 w-4 text-red-500" />
+            <span className="text-sm font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">C.1.11.4</span>Categories Bibliotheque Video</span>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {[
+              "Cobots (UR, Fanuc, ABB, KUKA)",
+              "AGV / AMR",
+              "Soudage robotise",
+              "Palettisation",
+              "Vision industrielle",
+              "Pick & Place",
+              "Convoyeurs intelligents",
+              "Inspection qualite",
+              "Assemblage automatise",
+              "IoT / Industrie 4.0",
+              "Securite machine",
+              "Maintenance predictive",
+            ].map((cat) => (
+              <span key={cat} className="text-[9px] font-medium bg-red-50 text-red-700 border border-red-100 px-2 py-1 rounded">{cat}</span>
+            ))}
+          </div>
+        </Card>
+      </div>
+
+      <SectionDivider />
+
+      {/* ============================================================ */}
+      {/* 12. Problemes Connus */}
       {/* ============================================================ */}
       <div>
         <div className="flex items-center gap-2 mb-4">
           <AlertTriangle className="h-4 w-4 text-red-500" />
-          <h3 className="text-base font-bold text-gray-800">Problemes Connus</h3>
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">C.1.12</span>Problemes Connus</h3>
         </div>
 
         <div className="space-y-2">

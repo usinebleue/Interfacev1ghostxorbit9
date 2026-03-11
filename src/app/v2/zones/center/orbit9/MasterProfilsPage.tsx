@@ -194,7 +194,7 @@ export function MasterProfilsPage() {
       {/* SECTION 1 — Vue d'Ensemble */}
       {/* ============================================================ */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Vue d'Ensemble</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">E.2.1</span>Vue d'Ensemble</h3>
 
         <Card className="p-5 bg-gradient-to-br from-gray-50 to-white border border-gray-100 shadow-sm">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -260,7 +260,7 @@ export function MasterProfilsPage() {
       {/* ============================================================ */}
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-base font-bold text-gray-800">Profil Patient Zero — Usine Bleue AI</h3>
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">E.2.2</span>Profil Patient Zero — Usine Bleue AI</h3>
           <StatusBadge status="complet" />
         </div>
 
@@ -335,7 +335,7 @@ export function MasterProfilsPage() {
       {/* ============================================================ */}
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-base font-bold text-gray-800">Demo Primaire — Aliments Boreal Inc.</h3>
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">E.2.3</span>Demo Primaire — Aliments Boreal Inc.</h3>
           <StatusBadge status="complet" />
         </div>
 
@@ -426,7 +426,7 @@ export function MasterProfilsPage() {
       {/* ============================================================ */}
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-base font-bold text-gray-800">Profil Secondaire — Acier Plus Fabrication</h3>
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">E.2.4</span>Profil Secondaire — Acier Plus Fabrication</h3>
           <StatusBadge status="complet" />
         </div>
 
@@ -490,7 +490,7 @@ export function MasterProfilsPage() {
       {/* ============================================================ */}
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-base font-bold text-gray-800">Entreprises Quebec — Donnees Publiques</h3>
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">E.2.5</span>Entreprises Quebec — Donnees Publiques</h3>
           <StatusBadge status="partiel" />
         </div>
         <p className="text-xs text-gray-400 mb-4">
@@ -532,7 +532,7 @@ export function MasterProfilsPage() {
       {/* ============================================================ */}
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-base font-bold text-gray-800">Integrateurs Simules</h3>
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">E.2.6</span>Integrateurs Simules</h3>
           <StatusBadge status="complet" />
         </div>
         <p className="text-xs text-gray-400 mb-4">
@@ -587,7 +587,7 @@ export function MasterProfilsPage() {
       {/* ============================================================ */}
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-base font-bold text-gray-800">Scenarios de Demo Actifs</h3>
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">E.2.7</span>Scenarios de Demo Actifs</h3>
           <StatusBadge status="complet" />
         </div>
         <p className="text-xs text-gray-400 mb-4">
@@ -625,7 +625,7 @@ export function MasterProfilsPage() {
       {/* SECTION 8 — Cibles de Demo — A Monter */}
       {/* ============================================================ */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Cibles de Demo — A Monter</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">E.2.8</span>Cibles de Demo — A Monter</h3>
         <p className="text-xs text-gray-400 mb-4">
           Segments de marche a preparer pour les futures demos.
         </p>
@@ -660,7 +660,7 @@ export function MasterProfilsPage() {
       {/* SECTION 9 — Donnees Manquantes pour Demos */}
       {/* ============================================================ */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Donnees Manquantes pour Demos</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">E.2.9</span>Donnees Manquantes pour Demos</h3>
         <p className="text-xs text-gray-400 mb-4">
           Elements a collecter pour renforcer la credibilite des demos.
         </p>
