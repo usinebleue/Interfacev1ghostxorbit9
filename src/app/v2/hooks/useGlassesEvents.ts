@@ -48,17 +48,17 @@ const SECTION_TO_VIEW: Record<string, string> = {
 
 /** Mapping section → bot code pour les departements */
 const SECTION_TO_BOT: Record<string, string> = {
-  ventes: "BCS",
-  strategie: "BCS",
-  production: "BOO",
-  operations: "BOO",
-  marketing: "BCM",
-  finance: "BCF",
-  rh: "BHR",
-  technologie: "BCT",
-  innovation: "BIO",
-  securite: "BSE",
-  legal: "BLE",
+  ventes: "CSOB",
+  strategie: "CSOB",
+  production: "COOB",
+  operations: "COOB",
+  marketing: "CMOB",
+  finance: "CFOB",
+  rh: "CHROB",
+  technologie: "CTOB",
+  innovation: "CINOB",
+  securite: "CISOB",
+  legal: "CLOB",
 };
 
 interface GlassesEvent {
@@ -122,7 +122,7 @@ function eventToCanvasAction(evt: GlassesEvent): CanvasAction | null {
         layer: "bouche",
         view,
         params: botCode ? { bot: botCode } : undefined,
-        bot: "BCO",
+        bot: "CEOB",
         priority: "high",
       };
     }
@@ -136,7 +136,7 @@ function eventToCanvasAction(evt: GlassesEvent): CanvasAction | null {
           content_types: ["text"],
           full_length: (evt.content || "").length,
         },
-        bot: "BCO",
+        bot: "CEOB",
         priority: "high",
       };
     case "show_kpi": {
@@ -147,7 +147,7 @@ function eventToCanvasAction(evt: GlassesEvent): CanvasAction | null {
         layer: "bouche",
         view: "department",
         params: botCode ? { bot: botCode } : undefined,
-        bot: "BCO",
+        bot: "CEOB",
         priority: "high",
       };
     }

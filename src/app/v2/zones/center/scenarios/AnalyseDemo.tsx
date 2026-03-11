@@ -398,7 +398,7 @@ function EvidenceCards({
   return (
     <div className="ml-11 space-y-3">
       <div className="flex items-center gap-2 mb-2">
-        <BotAvatar code="BCT" size="sm" />
+        <BotAvatar code="CTOB" size="sm" />
         <span className="text-xs font-semibold text-violet-700">
           Thierry (CTO) — Donnees d'analyse
         </span>
@@ -528,7 +528,7 @@ function SyntheseCard({
               5 Pourquoi + Ishikawa — Cause racine identifiee
             </div>
           </div>
-          <BotAvatar code="BCO" size="sm" />
+          <BotAvatar code="CEOB" size="sm" />
         </div>
 
         <div className="p-4 space-y-4">
@@ -621,7 +621,7 @@ function SyntheseCard({
           {conclusionVisible && (
             <div className="bg-gradient-to-r from-cyan-50 to-teal-50 border border-cyan-200 rounded-lg px-4 py-3 animate-in fade-in duration-700">
               <div className="flex items-start gap-2">
-                <BotAvatar code="BCO" size="sm" className="mt-0.5" />
+                <BotAvatar code="CEOB" size="sm" className="mt-0.5" />
                 <div>
                   <div className="text-xs font-semibold text-cyan-700 mb-1">
                     Conclusion CarlOS
@@ -748,7 +748,7 @@ export function AnalyseDemo({
               steps={ANALYSE_DATA.ceoThinking}
               botEmoji=""
               botName="CarlOS (CEO)"
-              botCode="BCO"
+              botCode="CEOB"
               onComplete={() => {
                 setPhase("R");
                 setStage(2);
@@ -759,7 +759,7 @@ export function AnalyseDemo({
           {/* ===== STAGE 2 — CEO intro ===== */}
           {stage >= 2 && (
             <BotBubble
-              code="BCO"
+              code="CEOB"
               text={ANALYSE_DATA.ceoIntro}
               phaseLabel="Mode Analyse"
               time="10:33"
@@ -848,7 +848,7 @@ export function AnalyseDemo({
               steps={ANALYSE_DATA.syntheseThinking}
               botEmoji=""
               botName="CarlOS (CEO)"
-              botCode="BCO"
+              botCode="CEOB"
               onComplete={() => {
                 setPhase("O");
                 setStage(7);

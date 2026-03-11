@@ -34,18 +34,18 @@ const HUB_TABS: { id: HubTab; label: string; icon: React.ElementType }[] = [
 
 // ── Dept display config ──
 const DEPT_DISPLAY: Record<string, { label: string; gradient: string; bot: string }> = {
-  direction:   { label: "Direction (CEO)",     gradient: "from-slate-700 to-slate-600",   bot: "BCO" },
-  finance:     { label: "Finance (CFO)",       gradient: "from-emerald-600 to-teal-500",  bot: "BCF" },
-  technologie: { label: "Technologie (CTO)",   gradient: "from-blue-700 to-indigo-600",   bot: "BCT" },
-  marketing:   { label: "Marketing (CMO)",     gradient: "from-fuchsia-600 to-pink-500",  bot: "BCM" },
-  strategie:   { label: "Stratégie (CSO)",     gradient: "from-violet-700 to-purple-600", bot: "BCS" },
-  operations:  { label: "Opérations (COO)",    gradient: "from-orange-600 to-orange-500", bot: "BOO" },
-  production:  { label: "Production (CPO)",    gradient: "from-slate-600 to-slate-500",   bot: "BFA" },
-  rh:          { label: "RH (CHRO)",           gradient: "from-teal-600 to-teal-500",     bot: "BHR" },
-  innovation:  { label: "Innovation (CINO)",   gradient: "from-rose-600 to-rose-500",     bot: "BIO" },
-  ventes:      { label: "Ventes (CRO)",        gradient: "from-amber-600 to-amber-500",   bot: "BRO" },
-  legal:       { label: "Légal (CLO)",         gradient: "from-indigo-600 to-indigo-500", bot: "BLE" },
-  securite:    { label: "Sécurité (CISO)",     gradient: "from-zinc-700 to-zinc-600",     bot: "BSE" },
+  direction:   { label: "Direction (CEO)",     gradient: "from-slate-700 to-slate-600",   bot: "CEOB" },
+  finance:     { label: "Finance (CFO)",       gradient: "from-emerald-600 to-teal-500",  bot: "CFOB" },
+  technologie: { label: "Technologie (CTO)",   gradient: "from-blue-700 to-indigo-600",   bot: "CTOB" },
+  marketing:   { label: "Marketing (CMO)",     gradient: "from-fuchsia-600 to-pink-500",  bot: "CMOB" },
+  strategie:   { label: "Stratégie (CSO)",     gradient: "from-violet-700 to-purple-600", bot: "CSOB" },
+  operations:  { label: "Opérations (COO)",    gradient: "from-orange-600 to-orange-500", bot: "COOB" },
+  production:  { label: "Production (CPO)",    gradient: "from-slate-600 to-slate-500",   bot: "CPOB" },
+  rh:          { label: "RH (CHRO)",           gradient: "from-teal-600 to-teal-500",     bot: "CHROB" },
+  innovation:  { label: "Innovation (CINO)",   gradient: "from-rose-600 to-rose-500",     bot: "CINOB" },
+  ventes:      { label: "Ventes (CRO)",        gradient: "from-amber-600 to-amber-500",   bot: "CROB" },
+  legal:       { label: "Légal (CLO)",         gradient: "from-indigo-600 to-indigo-500", bot: "CLOB" },
+  securite:    { label: "Sécurité (CISO)",     gradient: "from-zinc-700 to-zinc-600",     bot: "CISOB" },
 };
 
 // ── KPI Card ──
@@ -266,7 +266,7 @@ export function DiagnosticHubPage() {
                     {topGaps.length > 0 ? topGaps.map((gap, i) => (
                       <div key={i} className="flex items-start gap-2 p-2 rounded-lg bg-white border">
                         <img
-                          src={BOT_AVATAR[gap.botCode] || BOT_AVATAR["BCO"]}
+                          src={BOT_AVATAR[gap.botCode] || BOT_AVATAR["CEOB"]}
                           alt={gap.botCode}
                           className="w-7 h-7 rounded-lg object-cover shrink-0 ring-1 ring-gray-200"
                         />
@@ -295,7 +295,7 @@ export function DiagnosticHubPage() {
                           {ghostTeam.map((bot, i) => (
                             <div key={i} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-50 border border-blue-100">
                               <img
-                                src={BOT_AVATAR[bot.botCode] || BOT_AVATAR["BCO"]}
+                                src={BOT_AVATAR[bot.botCode] || BOT_AVATAR["CEOB"]}
                                 alt={bot.botCode}
                                 className="w-5 h-5 rounded-full object-cover"
                               />
@@ -352,11 +352,11 @@ export function DiagnosticHubPage() {
                 .sort(([, a], [, b]) => b - a)
                 .map(([key, score]) => {
                   const cfg = DEPT_DISPLAY[key];
-                  const botCode = cfg?.bot || "BCO";
+                  const botCode = cfg?.bot || "CEOB";
                   return (
                     <div key={key} className="flex items-center gap-3 bg-white border rounded-lg px-4 py-3">
                       <img
-                        src={BOT_AVATAR[botCode] || BOT_AVATAR["BCO"]}
+                        src={BOT_AVATAR[botCode] || BOT_AVATAR["CEOB"]}
                         alt={botCode}
                         className="w-8 h-8 rounded-lg object-cover shrink-0 ring-1 ring-gray-200"
                       />

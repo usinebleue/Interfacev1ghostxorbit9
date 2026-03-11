@@ -213,7 +213,7 @@ export const ANALYSE_DATA = {
     {
       title: "Ecart prix/cout cumule",
       icon: TrendingDown,
-      botCode: "BCT",
+      botCode: "CTOB",
       content: "L'ecart entre le cout reel des matieres et le prix facture s'est accumule lineairement. Chaque mois sans ajustement a coute en moyenne 27K$ de marge perdue.",
       dataPoints: [
         { label: "Marge Q1 2024", value: "42.1%", trend: "neutral" as const },
@@ -229,7 +229,7 @@ export const ANALYSE_DATA = {
     {
       title: "Benchmark sectoriel",
       icon: BarChart3,
-      botCode: "BCT",
+      botCode: "CTOB",
       content: "Les PME manufacturieres comparables maintiennent des marges de 35-40%. Le recul a 31% place l'entreprise sous le seuil critique de 33% identifie par le CRIQ comme zone de danger.",
       dataPoints: [
         { label: "Moyenne secteur", value: "37.2%", trend: "neutral" as const },
@@ -245,7 +245,7 @@ export const ANALYSE_DATA = {
     {
       title: "Impact rebut + OT",
       icon: DollarSign,
-      botCode: "BCT",
+      botCode: "CTOB",
       content: "Au-dela des matieres, deux facteurs aggravent la situation : le taux de rebut en hausse (3.2 points) et les heures supplementaires non facturees representent ensemble 4.1 points de marge perdus.",
       dataPoints: [
         { label: "Cout rebut additionnel", value: "187K$/an", trend: "down" as const },

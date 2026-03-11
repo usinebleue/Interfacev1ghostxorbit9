@@ -122,7 +122,7 @@ const FLOW_ACCOMPAGNEMENT: FlowDef[] = [
       { label: "Estimation gains", color: "bg-emerald-100 text-emerald-700", icon: DollarSign },
       { label: "Rapport virtuel", color: "bg-green-100 text-green-700", icon: FileText },
     ],
-    bots: ["BCO", "BFA", "BOO"],
+    bots: ["CEOB", "CPOB", "COOB"],
     gate: "GO / NO-GO → Phase 2",
     notes: "Acteurs: Client + Usine Bleue expert neutre",
   },
@@ -224,7 +224,7 @@ const FLOW_ACCOMPAGNEMENT: FlowDef[] = [
       { label: "S3 Concept prelim.", color: "bg-amber-100 text-amber-700", icon: Lightbulb, duration: "Membre 70%" },
       { label: "S4 Budget & Subventions", color: "bg-green-100 text-green-700", icon: DollarSign, duration: "UB 70%" },
     ],
-    bots: ["BCO", "BCF", "BOO", "BFA"],
+    bots: ["CEOB", "CFOB", "COOB", "CPOB"],
     gate: "Livrable: Cahier complet → Activation financement",
     notes: "S4 declenche le flow Subventions en parallele",
   },
@@ -248,7 +248,7 @@ const FLOW_SUBVENTIONS: FlowDef[] = [
       { label: "Suivi & tracking", color: "bg-teal-100 text-teal-700", icon: Clock },
       { label: "Obtention → 10% UB", color: "bg-green-100 text-green-700", icon: DollarSign },
     ],
-    bots: ["BCF"],
+    bots: ["CFOB"],
     notes: "16 programmes actifs: ESSOR, Audit 4.0, Productivite Innovation, OTN, PARI-CNRC, RS&DE, CanExport, HQ Energie, FLI, PRU...",
   },
   {
@@ -306,7 +306,7 @@ const FLOW_BILAN: FlowDef[] = [
       { label: "Extraction opportuniste", color: "bg-amber-100 text-amber-700", icon: Search },
       { label: "Benchmarking temps reel", color: "bg-green-100 text-green-700", icon: Gauge },
     ],
-    bots: ["BCO"],
+    bots: ["CEOB"],
     notes: "Gemini Flash genere questions conversationnelles, max 2-3 phrases par echange",
   },
   {
@@ -351,7 +351,7 @@ const FLOW_ACTION: FlowDef[] = [
       { label: "Synthese CEO", color: "bg-amber-100 text-amber-700", icon: Brain },
       { label: "Decision → Decision Log", color: "bg-green-100 text-green-700", icon: Vote },
     ],
-    bots: ["BCO", "CSO", "BCF"],
+    bots: ["CEOB", "CSO", "CFOB"],
   },
   {
     id: "4.2",
@@ -366,7 +366,7 @@ const FLOW_ACTION: FlowDef[] = [
       { label: "Suivi temps reel", color: "bg-blue-100 text-blue-700", icon: Clock },
       { label: "Post-mortem + lecons", color: "bg-green-100 text-green-700", icon: FileText },
     ],
-    bots: ["BCO", "BOO", "BCS", "BCF"],
+    bots: ["CEOB", "COOB", "CSOB", "CFOB"],
     notes: "3 horizons: immediat (24h), court terme (1 sem), stabilisation (1 mois)",
   },
   {
@@ -382,7 +382,7 @@ const FLOW_ACTION: FlowDef[] = [
       { label: "Roadmap detaillee", color: "bg-teal-100 text-teal-700", icon: Clock },
       { label: "Go / Conditionnel / No-Go", color: "bg-green-100 text-green-700", icon: CheckCircle2 },
     ],
-    bots: ["BCO", "BCS", "BCT", "BCF"],
+    bots: ["CEOB", "CSOB", "CTOB", "CFOB"],
     notes: "Modes Innovation + Decision actives automatiquement",
   },
   {
@@ -397,7 +397,7 @@ const FLOW_ACTION: FlowDef[] = [
       { label: "Trisociation trio", color: "bg-amber-100 text-amber-700", icon: Sparkles },
       { label: "Actions + suivi", color: "bg-green-100 text-green-700", icon: CheckCircle2 },
     ],
-    bots: ["BCO", "BCS", "BRO"],
+    bots: ["CEOB", "CSOB", "CROB"],
     notes: "Scoring Gemini Flash + session LiveKit trisociation",
   },
   {
@@ -412,7 +412,7 @@ const FLOW_ACTION: FlowDef[] = [
       { label: "Projections financieres", color: "bg-amber-100 text-amber-700", icon: DollarSign },
       { label: "Document → Mes Documents", color: "bg-green-100 text-green-700", icon: FileText },
     ],
-    bots: ["BCO", "BCF", "BCS"],
+    bots: ["CEOB", "CFOB", "CSOB"],
   },
   {
     id: "4.6",
@@ -426,7 +426,7 @@ const FLOW_ACTION: FlowDef[] = [
       { label: "Comparaison cote-a-cote", color: "bg-amber-100 text-amber-700", icon: BarChart3 },
       { label: "Decision + plan execution", color: "bg-green-100 text-green-700", icon: Rocket },
     ],
-    bots: ["BCS", "BCO", "BCF"],
+    bots: ["CSOB", "CEOB", "CFOB"],
   },
   {
     id: "4.7",
@@ -439,7 +439,7 @@ const FLOW_ACTION: FlowDef[] = [
       { label: "Validation membres", color: "bg-amber-100 text-amber-700", icon: CheckCircle2 },
       { label: "Lancement + 1ere trisociation", color: "bg-green-100 text-green-700", icon: Rocket },
     ],
-    bots: ["BCO", "BOO", "BHR"],
+    bots: ["CEOB", "COOB", "CHROB"],
   },
   {
     id: "4.8",
@@ -453,7 +453,7 @@ const FLOW_ACTION: FlowDef[] = [
       { label: "Execution parallele", color: "bg-amber-100 text-amber-700", icon: Play },
       { label: "Bilan + prochaines etapes", color: "bg-green-100 text-green-700", icon: FileText },
     ],
-    bots: ["BOO", "BCO", "BRO"],
+    bots: ["COOB", "CEOB", "CROB"],
     notes: "Orchestration via COMMAND Protocol",
   },
   {
@@ -471,7 +471,7 @@ const FLOW_ACTION: FlowDef[] = [
       { label: "Premiers chantiers", color: "bg-emerald-100 text-emerald-700", icon: Rocket },
       { label: "Espace configure", color: "bg-green-100 text-green-700", icon: CheckCircle2 },
     ],
-    bots: ["BCO"],
+    bots: ["CEOB"],
     notes: "4 types: Manufacturier, Fournisseur, Expert solo, Entreprise pro",
   },
   {
@@ -486,7 +486,7 @@ const FLOW_ACTION: FlowDef[] = [
       { label: "D Demontrer/Decider/Debloquer", color: "bg-emerald-100 text-emerald-700", icon: CheckCircle2 },
       { label: "O Obtenir/Operer/Ouvrir", color: "bg-green-100 text-green-700", icon: Rocket },
     ],
-    bots: ["BCO"],
+    bots: ["CEOB"],
     notes: "3 lectures simultanées: Bouche (vente), Cerveau (idees), Coeur (coaching). Reboucles max 2x/phase.",
   },
 ];
@@ -504,7 +504,7 @@ const FLOW_MODES: FlowDef[] = [
       { label: "Antithese", color: "bg-red-100 text-red-700", icon: Swords },
       { label: "Synthese", color: "bg-green-100 text-green-700", icon: CheckCircle2 },
     ],
-    bots: ["BCO", "BCS"],
+    bots: ["CEOB", "CSOB"],
   },
   {
     id: "5.2",
@@ -516,7 +516,7 @@ const FLOW_MODES: FlowDef[] = [
       { label: "Realiste (faisabilite)", color: "bg-amber-100 text-amber-700", icon: Wrench },
       { label: "Critique (filtrage)", color: "bg-red-100 text-red-700", icon: AlertTriangle },
     ],
-    bots: ["BCO", "BCM", "BCT"],
+    bots: ["CEOB", "CMOB", "CTOB"],
   },
   {
     id: "5.3",
@@ -528,7 +528,7 @@ const FLOW_MODES: FlowDef[] = [
       { label: "Decider action", color: "bg-amber-100 text-amber-700", icon: Target },
       { label: "Agir immediatement", color: "bg-green-100 text-green-700", icon: Zap },
     ],
-    bots: ["BCO", "BOO"],
+    bots: ["CEOB", "COOB"],
     notes: "Active automatiquement si urgence > 0.8",
   },
   {
@@ -541,7 +541,7 @@ const FLOW_MODES: FlowDef[] = [
       { label: "Ishikawa (causes-effets)", color: "bg-violet-100 text-violet-700", icon: Brain },
       { label: "Conclusion + 3 reco", color: "bg-green-100 text-green-700", icon: CheckCircle2 },
     ],
-    bots: ["BCT", "BCF"],
+    bots: ["CTOB", "CFOB"],
   },
   {
     id: "5.5",
@@ -553,7 +553,7 @@ const FLOW_MODES: FlowDef[] = [
       { label: "Matrice ponderee", color: "bg-amber-100 text-amber-700", icon: BarChart3 },
       { label: "Verdict final", color: "bg-green-100 text-green-700", icon: Vote },
     ],
-    bots: ["BCO", "BCF"],
+    bots: ["CEOB", "CFOB"],
   },
   {
     id: "5.6",
@@ -567,7 +567,7 @@ const FLOW_MODES: FlowDef[] = [
       { label: "Horizon 1-3 ans", color: "bg-amber-100 text-amber-700", icon: Clock },
       { label: "Plan d'action (max 7)", color: "bg-green-100 text-green-700", icon: Rocket },
     ],
-    bots: ["BCO", "BCS", "BCF"],
+    bots: ["CEOB", "CSOB", "CFOB"],
   },
   {
     id: "5.7",
@@ -582,7 +582,7 @@ const FLOW_MODES: FlowDef[] = [
       { label: "Vert (Creativite)", color: "bg-green-100 text-green-700", icon: Sparkles },
       { label: "Bleu (Synthese)", color: "bg-blue-100 text-blue-700", icon: Brain },
     ],
-    bots: ["BCT", "BCM"],
+    bots: ["CTOB", "CMOB"],
   },
   {
     id: "5.8",
@@ -594,7 +594,7 @@ const FLOW_MODES: FlowDef[] = [
       { label: "Spirale 6 (Agent→Deep Think)", color: "bg-violet-100 text-violet-700", icon: Brain },
       { label: "Spirale 9 (Integration)", color: "bg-green-100 text-green-700", icon: Sparkles },
     ],
-    bots: ["BCO"],
+    bots: ["CEOB"],
     notes: "Multi-model: validation par modele externe (Claude Opus)",
   },
   {
@@ -607,7 +607,7 @@ const FLOW_MODES: FlowDef[] = [
       { label: "Flash / Panel", color: "bg-amber-100 text-amber-700", icon: Sparkles },
       { label: "Perspective Ghost-infused", color: "bg-green-100 text-green-700", icon: Lightbulb },
     ],
-    bots: ["BCO"],
+    bots: ["CEOB"],
     notes: "12 Ghosts: Bezos, Jobs, Musk, Sun Tzu, Munger, Marc Aurele, Churchill, Disney, Tesla, Buffett, Curie, Oprah",
   },
 ];
@@ -621,10 +621,10 @@ const FLOW_SYSTEME: FlowDef[] = [
     description: "4 stages sequentiels + 3 degres d'autonomie (D1 Soldat / D2 Lieutenant / D3 Partenaire)",
     status: "actif",
     steps: [
-      { label: "SCAN (BCF/BCT/BCM)", color: "bg-blue-100 text-blue-700", icon: Search, duration: "Flash" },
-      { label: "STRATEGY (BCS)", color: "bg-violet-100 text-violet-700", icon: Target, duration: "Pro" },
-      { label: "EXECUTION (BOO)", color: "bg-amber-100 text-amber-700", icon: Play, duration: "Flash" },
-      { label: "BILAN (BCO)", color: "bg-green-100 text-green-700", icon: FileText, duration: "Pro" },
+      { label: "SCAN (CFOB/CTOB/CMOB)", color: "bg-blue-100 text-blue-700", icon: Search, duration: "Flash" },
+      { label: "STRATEGY (CSOB)", color: "bg-violet-100 text-violet-700", icon: Target, duration: "Pro" },
+      { label: "EXECUTION (COOB)", color: "bg-amber-100 text-amber-700", icon: Play, duration: "Flash" },
+      { label: "BILAN (CEOB)", color: "bg-green-100 text-green-700", icon: FileText, duration: "Pro" },
     ],
     notes: "Auto-activation: 3+ bots score > 0, ou mots-cles complexes (vue d'ensemble, diagnostic, 360)",
   },

@@ -715,7 +715,7 @@ export default function MasterCortexRobotPage() {
           Goldman Sachs · IFR · Physical Intelligence · Sanctuary AI ·
           PwC Canada · NVIDIA · HuggingFace · Google A2A ·
           Bible-GHML-V2 Section 4.11 · CHALLENGE-FACTORY-GHOST-BOTS.md ·
-          Trisociation BFA: Ohno + Deming + Nightingale · 137 taches operationnelles mappees
+          Trisociation CPOB: Ohno + Deming + Nightingale · 137 taches operationnelles mappees
         </p>
       </div>
     </PageLayout>

@@ -41,10 +41,10 @@ const API_KEY = import.meta.env.VITE_API_KEY || "";
 
 // Noms humains des bots
 const BOT_NAMES: Record<string, string> = {
-  BCO: "CarlOS (CEO)", BCT: "Thierry (CTO)", BCF: "François (CFO)",
-  BCM: "Martine (CMO)", BCS: "Sophie (CSO)", BOO: "Olivier (COO)",
-  BFA: "Fabien (Usine)", BHR: "Hélène (RH)", BIO: "Inès (Innovation)",
-  BRO: "Raphaël (Ventes)", BLE: "Louise (Légal)", BSE: "Sébastien (Sécurité)",
+  CEOB: "CarlOS (CEO)", CTOB: "Thierry (CTO)", CFOB: "François (CFO)",
+  CMOB: "Martine (CMO)", CSOB: "Sophie (CSO)", COOB: "Olivier (COO)",
+  CPOB: "Fabien (Usine)", CHROB: "Hélène (RH)", CINOB: "Inès (Innovation)",
+  CROB: "Raphaël (Ventes)", CLOB: "Louise (Légal)", CISOB: "Sébastien (Sécurité)",
 };
 
 // Labels humains pour les types
@@ -79,7 +79,7 @@ export function MeetingGuestPage({ slug }: Props) {
       .then(data => {
         setMeetingTitle(data.title || "Réunion");
         setMeetingType(data.meeting_type || "");
-        setBotCodes(data.bot_codes || [data.bot_code || "BCO"]);
+        setBotCodes(data.bot_codes || [data.bot_code || "CEOB"]);
         if (data.status === "ended") {
           setError("Cette réunion est terminée.");
           setStatus("ended");

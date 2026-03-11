@@ -142,7 +142,7 @@ export function CanvasActionProvider({ children }: { children: React.ReactNode }
             contenu: (pushData.contenu as string) || "",
             contentTypes: (pushData.content_types as string[]) || [],
             fullLength: (pushData.full_length as number) || 0,
-            bot: action.bot || "BCO",
+            bot: action.bot || "CEOB",
             timestamp: Date.now(),
           });
         }
@@ -169,7 +169,7 @@ export function CanvasActionProvider({ children }: { children: React.ReactNode }
             title: (d.title as string) || "Mission",
             elementType: (d.element_type as string) || "generic",
             data: d.data,
-            bot: action.bot || "BCO",
+            bot: action.bot || "CEOB",
           });
         }
         break;

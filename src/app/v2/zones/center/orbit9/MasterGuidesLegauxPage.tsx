@@ -25,12 +25,12 @@ function SectionDivider() {
 // ======================================================================
 
 const GUIDES = [
-  { role: "CEO", bot: "BCO", size: "26,719 chars", status: "extracted", content: "5 piliers d'integration, cadre emploi QC, gouvernance, ESG", color: "bg-blue-50 text-blue-700" },
-  { role: "CFO", bot: "BCF", size: "35,709 chars", status: "extracted", content: "NI 52-109, responsabilite personnelle ARC/RQ, fiducie presumee", color: "bg-emerald-50 text-emerald-700" },
-  { role: "CTO", bot: "BCT", size: "~30,000 chars", status: "pending", content: "Conformite technique, PI, cybersecurite", color: "bg-violet-50 text-violet-700" },
-  { role: "CMO", bot: "BCM", size: "~30,000 chars", status: "pending", content: "Loi 25 (marketing), Projet de loi 96 (langue), droit d'auteur", color: "bg-pink-50 text-pink-700" },
-  { role: "CSO", bot: "BCS", size: "~30,000 chars", status: "pending", content: "Contrats commerciaux, concurrence, exportation", color: "bg-red-50 text-red-700" },
-  { role: "COO", bot: "BOO", size: "~30,000 chars", status: "pending", content: "CNESST, normes manufacturieres, chaine d'approvisionnement", color: "bg-orange-50 text-orange-700" },
+  { role: "CEO", bot: "CEOB", size: "26,719 chars", status: "extracted", content: "5 piliers d'integration, cadre emploi QC, gouvernance, ESG", color: "bg-blue-50 text-blue-700" },
+  { role: "CFO", bot: "CFOB", size: "35,709 chars", status: "extracted", content: "NI 52-109, responsabilite personnelle ARC/RQ, fiducie presumee", color: "bg-emerald-50 text-emerald-700" },
+  { role: "CTO", bot: "CTOB", size: "~30,000 chars", status: "pending", content: "Conformite technique, PI, cybersecurite", color: "bg-violet-50 text-violet-700" },
+  { role: "CMO", bot: "CMOB", size: "~30,000 chars", status: "pending", content: "Loi 25 (marketing), Projet de loi 96 (langue), droit d'auteur", color: "bg-pink-50 text-pink-700" },
+  { role: "CSO", bot: "CSOB", size: "~30,000 chars", status: "pending", content: "Contrats commerciaux, concurrence, exportation", color: "bg-red-50 text-red-700" },
+  { role: "COO", bot: "COOB", size: "~30,000 chars", status: "pending", content: "CNESST, normes manufacturieres, chaine d'approvisionnement", color: "bg-orange-50 text-orange-700" },
 ];
 
 const CEO_PILIERS = [

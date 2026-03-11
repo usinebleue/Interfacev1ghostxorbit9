@@ -30,34 +30,34 @@ import type { DiagnosticCatalogue } from "../../api/types";
 
 /* ============ BOT GRADIENTS (same as Pipeline) ============ */
 const BOT_GRADIENTS: Record<string, string> = {
-  BCO: "from-blue-600 to-blue-500",
-  BCT: "from-violet-600 to-violet-500",
-  BCF: "from-emerald-600 to-emerald-500",
-  BCM: "from-pink-600 to-pink-500",
-  BCS: "from-red-600 to-red-500",
-  BOO: "from-orange-600 to-orange-500",
-  BFA: "from-amber-600 to-amber-500",
-  BHR: "from-teal-600 to-teal-500",
-  BIO: "from-rose-600 to-rose-500",
-  BRO: "from-amber-600 to-amber-500",
-  BLE: "from-indigo-600 to-indigo-500",
-  BSE: "from-gray-600 to-gray-500",
+  CEOB: "from-blue-600 to-blue-500",
+  CTOB: "from-violet-600 to-violet-500",
+  CFOB: "from-emerald-600 to-emerald-500",
+  CMOB: "from-pink-600 to-pink-500",
+  CSOB: "from-red-600 to-red-500",
+  COOB: "from-orange-600 to-orange-500",
+  CPOB: "from-amber-600 to-amber-500",
+  CHROB: "from-teal-600 to-teal-500",
+  CINOB: "from-rose-600 to-rose-500",
+  CROB: "from-amber-600 to-amber-500",
+  CLOB: "from-indigo-600 to-indigo-500",
+  CISOB: "from-gray-600 to-gray-500",
 };
 
 /* ============ DEPT LABELS ============ */
 const DEPT_LABELS: Record<string, { label: string; gradient: string; bot: string }> = {
-  direction:   { label: "Direction (CEO)",     gradient: "from-slate-700 to-slate-600",   bot: "BCO" },
-  finance:     { label: "Finance (CFO)",       gradient: "from-emerald-600 to-teal-500",  bot: "BCF" },
-  technologie: { label: "Technologie (CTO)",   gradient: "from-blue-700 to-indigo-600",   bot: "BCT" },
-  marketing:   { label: "Marketing (CMO)",     gradient: "from-fuchsia-600 to-pink-500",  bot: "BCM" },
-  strategie:   { label: "Strategie (CSO)",     gradient: "from-violet-700 to-purple-600", bot: "BCS" },
-  operations:  { label: "Operations (COO)",    gradient: "from-orange-600 to-orange-500", bot: "BOO" },
-  production:  { label: "Production (CPO)",    gradient: "from-slate-600 to-slate-500",   bot: "BFA" },
-  rh:          { label: "RH (CHRO)",           gradient: "from-teal-600 to-teal-500",     bot: "BHR" },
-  innovation:  { label: "Innovation (CINO)",   gradient: "from-rose-600 to-rose-500",     bot: "BIO" },
-  ventes:      { label: "Ventes (CRO)",        gradient: "from-amber-600 to-amber-500",   bot: "BRO" },
-  legal:       { label: "Legal (CLO)",         gradient: "from-indigo-600 to-indigo-500", bot: "BLE" },
-  securite:    { label: "Securite (CISO)",     gradient: "from-zinc-700 to-zinc-600",     bot: "BSE" },
+  direction:   { label: "Direction (CEO)",     gradient: "from-slate-700 to-slate-600",   bot: "CEOB" },
+  finance:     { label: "Finance (CFO)",       gradient: "from-emerald-600 to-teal-500",  bot: "CFOB" },
+  technologie: { label: "Technologie (CTO)",   gradient: "from-blue-700 to-indigo-600",   bot: "CTOB" },
+  marketing:   { label: "Marketing (CMO)",     gradient: "from-fuchsia-600 to-pink-500",  bot: "CMOB" },
+  strategie:   { label: "Strategie (CSO)",     gradient: "from-violet-700 to-purple-600", bot: "CSOB" },
+  operations:  { label: "Operations (COO)",    gradient: "from-orange-600 to-orange-500", bot: "COOB" },
+  production:  { label: "Production (CPO)",    gradient: "from-slate-600 to-slate-500",   bot: "CPOB" },
+  rh:          { label: "RH (CHRO)",           gradient: "from-teal-600 to-teal-500",     bot: "CHROB" },
+  innovation:  { label: "Innovation (CINO)",   gradient: "from-rose-600 to-rose-500",     bot: "CINOB" },
+  ventes:      { label: "Ventes (CRO)",        gradient: "from-amber-600 to-amber-500",   bot: "CROB" },
+  legal:       { label: "Legal (CLO)",         gradient: "from-indigo-600 to-indigo-500", bot: "CLOB" },
+  securite:    { label: "Securite (CISO)",     gradient: "from-zinc-700 to-zinc-600",     bot: "CISOB" },
 };
 
 /* ============ VITAA DATA ============ */
@@ -120,12 +120,12 @@ function KpiCard({ icon: Icon, label, value, sub, gradient, onClick }: {
 
 /* Mapping pilier VITAA → bot */
 const VITAA_BOT: Record<string, string> = {
-  Vente: "BCS", Idee: "BIO", Temps: "BOO", Argent: "BCF", Actif: "BOO",
+  Vente: "CSOB", Idee: "CINOB", Temps: "COOB", Argent: "CFOB", Actif: "COOB",
 };
 
 /* Mapping role → bot code */
 const QW_BOT_CODE: Record<string, string> = {
-  CFO: "BCF", CTO: "BCT", COO: "BOO", CEO: "BCO", CRO: "BRO",
+  CFO: "CFOB", CTO: "CTOB", COO: "COOB", CEO: "CEOB", CRO: "CROB",
 };
 
 /* ============ TABS ============ */
@@ -148,7 +148,7 @@ export function HealthView() {
     api.listDiagnosticsEnrichis().then(d => setDiagnosticsEnrichis(d || [])).catch(() => {});
   }, []);
 
-  const handleFocus = (title: string, elementType: string, data: unknown, bot = "BCO") => {
+  const handleFocus = (title: string, elementType: string, data: unknown, bot = "CEOB") => {
     dispatch({ type: "focus", layer: "bouche", data: { title, element_type: elementType, data }, bot });
   };
 
@@ -227,7 +227,7 @@ export function HealthView() {
             value={`${SCORE_GLOBAL}/100`}
             sub="Moyenne des 5 piliers"
             gradient="bg-gradient-to-r from-orange-600 to-orange-500"
-            onClick={() => handleFocus("Score VITAA Global", "health_vitaa", VITAA, "BCO")}
+            onClick={() => handleFocus("Score VITAA Global", "health_vitaa", VITAA, "CEOB")}
           />
           <KpiCard
             icon={CRITIQUES >= 2 ? Flame : CRITIQUES === 1 ? AlertTriangle : CheckCircle2}
@@ -235,7 +235,7 @@ export function HealthView() {
             value={TRIANGLE_STATUS}
             sub={`${CRITIQUES} pilier${CRITIQUES !== 1 ? "s" : ""} en risque`}
             gradient={cn("bg-gradient-to-r", CRITIQUES >= 2 ? "from-red-600 to-red-500" : CRITIQUES === 1 ? "from-amber-600 to-amber-500" : "from-green-600 to-green-500")}
-            onClick={() => handleFocus("Triangle du Feu", "health_triangle", { status: TRIANGLE_STATUS, critiques: CRITIQUES, vitaa: VITAA }, "BCO")}
+            onClick={() => handleFocus("Triangle du Feu", "health_triangle", { status: TRIANGLE_STATUS, critiques: CRITIQUES, vitaa: VITAA }, "CEOB")}
           />
           <KpiCard
             icon={BarChart3}
@@ -243,7 +243,7 @@ export function HealthView() {
             value={VITAA.filter(p => p.score >= p.avg).length + "/5"}
             sub="Piliers au-dessus moyenne"
             gradient="bg-gradient-to-r from-violet-600 to-violet-500"
-            onClick={() => handleFocus("Benchmark vs Secteur", "health_benchmark", VITAA, "BCS")}
+            onClick={() => handleFocus("Benchmark vs Secteur", "health_benchmark", VITAA, "CSOB")}
           />
           <KpiCard
             icon={TrendingUp}
@@ -251,7 +251,7 @@ export function HealthView() {
             value={`${DEPT_SCORES[0].score}%`}
             sub={`Meilleur: ${DEPT_SCORES[0].label}`}
             gradient="bg-gradient-to-r from-slate-700 to-slate-600"
-            onClick={() => handleFocus("Scores Départements", "health_depts", DEPT_SCORES, "BCO")}
+            onClick={() => handleFocus("Scores Départements", "health_depts", DEPT_SCORES, "CEOB")}
           />
         </div>
 
@@ -271,7 +271,7 @@ export function HealthView() {
                 <div
                   key={i}
                   className="cursor-pointer rounded-lg hover:bg-blue-50 px-1 -mx-1 transition-colors group"
-                  onClick={() => handleFocus(`${p.label} — Pilier VITAA (${p.score}/100)`, "vitaa_pillar", p, VITAA_BOT[p.label] || "BCO")}
+                  onClick={() => handleFocus(`${p.label} — Pilier VITAA (${p.score}/100)`, "vitaa_pillar", p, VITAA_BOT[p.label] || "CEOB")}
                 >
                   <div className="flex items-center gap-2 mb-0.5">
                     <div className={cn("w-5 h-5 rounded flex items-center justify-center text-white text-[9px] font-bold shrink-0", p.color)}>{p.letter}</div>
@@ -305,7 +305,7 @@ export function HealthView() {
                 <div
                   key={i}
                   className="cursor-pointer group rounded-lg hover:bg-red-50 px-2 py-1.5 -mx-1 transition-colors border border-transparent hover:border-red-100"
-                  onClick={() => handleFocus(qw.text, "quick_win", qw, QW_BOT_CODE[qw.bot] || "BCO")}
+                  onClick={() => handleFocus(qw.text, "quick_win", qw, QW_BOT_CODE[qw.bot] || "CEOB")}
                 >
                   <div className="flex items-start gap-1.5">
                     <span className={cn(
@@ -498,7 +498,7 @@ export function HealthView() {
               diagByDept.map(({ dept, items }) => {
                 const deptCfg = DEPT_LABELS[dept];
                 const gradient = deptCfg?.gradient || "from-gray-500 to-gray-600";
-                const botCode = deptCfg?.bot || "BCO";
+                const botCode = deptCfg?.bot || "CEOB";
                 const botAvatar = BOT_AVATAR[botCode];
                 return (
                   <div key={dept} className="bg-gradient-to-b from-gray-50 to-white border rounded-xl overflow-hidden shadow-sm">

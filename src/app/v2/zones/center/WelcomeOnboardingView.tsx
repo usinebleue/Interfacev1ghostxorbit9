@@ -24,12 +24,12 @@ const CREDO_PHASES = [
 ];
 
 const TEAM_BOTS = [
-  { code: "BCO", name: "CEO", avatar: "/agents/ceo-carlos.png" },
-  { code: "BCT", name: "CTO", avatar: "/agents/cto-thomas.png" },
-  { code: "BCF", name: "CFO", avatar: "/agents/cfo-francois.png" },
-  { code: "BCM", name: "CMO", avatar: "/agents/cmo-sofia.png" },
-  { code: "BCS", name: "CSO", avatar: "/agents/cso-marc.png" },
-  { code: "BOO", name: "COO", avatar: "/agents/coo-lise.png" },
+  { code: "CEOB", name: "CEO", avatar: "/agents/ceo-carlos.png" },
+  { code: "CTOB", name: "CTO", avatar: "/agents/cto-thomas.png" },
+  { code: "CFOB", name: "CFO", avatar: "/agents/cfo-francois.png" },
+  { code: "CMOB", name: "CMO", avatar: "/agents/cmo-sofia.png" },
+  { code: "CSOB", name: "CSO", avatar: "/agents/cso-marc.png" },
+  { code: "COOB", name: "COO", avatar: "/agents/coo-lise.png" },
 ];
 
 export function WelcomeOnboardingView({

@@ -232,7 +232,7 @@ export function MasterDettePage() {
             <span className="font-bold text-xs text-emerald-700">Les 12 vrais bots</span>
           </div>
           <div className="flex flex-wrap gap-1.5">
-            {["BCO", "BCT", "BCF", "BCM", "BCS", "BOO", "BFA", "BHR", "BIO", "BRO", "BLE", "BSE"].map((code) => (
+            {["CEOB", "CTOB", "CFOB", "CMOB", "CSOB", "COOB", "CPOB", "CHROB", "CINOB", "CROB", "CLOB", "CISOB"].map((code) => (
               <span key={code} className="text-[9px] font-bold font-mono px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-200">
                 {code}
               </span>
@@ -302,7 +302,7 @@ export function MasterDettePage() {
               <span className="font-bold text-xs text-red-700">Actuel — cryptique</span>
             </div>
             <div className="flex flex-wrap gap-1.5">
-              {["BCO", "BCT", "BCF", "BCM", "BCS", "BOO"].map((code) => (
+              {["CEOB", "CTOB", "CFOB", "CMOB", "CSOB", "COOB"].map((code) => (
                 <code key={code} className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-600">
                   {code}
                 </code>

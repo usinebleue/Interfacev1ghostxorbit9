@@ -26,16 +26,16 @@ export interface FocusData {
 // ── Gradient par bot ──────────────────────────────────────
 
 const BOT_GRADIENTS: Record<string, string> = {
-  BCO: "from-blue-600 to-blue-500",
-  BCT: "from-violet-600 to-violet-500",
-  BCF: "from-emerald-600 to-emerald-500",
-  BCM: "from-pink-600 to-pink-500",
-  BCS: "from-red-600 to-red-500",
-  BOO: "from-orange-600 to-orange-500",
-  BHR: "from-teal-600 to-teal-500",
-  BIO: "from-rose-600 to-rose-500",
-  BRO: "from-amber-600 to-amber-500",
-  BLE: "from-indigo-600 to-indigo-500",
+  CEOB: "from-blue-600 to-blue-500",
+  CTOB: "from-violet-600 to-violet-500",
+  CFOB: "from-emerald-600 to-emerald-500",
+  CMOB: "from-pink-600 to-pink-500",
+  CSOB: "from-red-600 to-red-500",
+  COOB: "from-orange-600 to-orange-500",
+  CHROB: "from-teal-600 to-teal-500",
+  CINOB: "from-rose-600 to-rose-500",
+  CROB: "from-amber-600 to-amber-500",
+  CLOB: "from-indigo-600 to-indigo-500",
 };
 
 const BOT_LABELS: Record<string, string> = {
@@ -75,7 +75,7 @@ export function FocusModeLayout({
   onClose: () => void;
 }) {
   const gradient = BOT_GRADIENTS[focusData.bot] || "from-blue-600 to-blue-500";
-  const avatarSrc = BOT_AVATAR[focusData.bot] || BOT_AVATAR["BCO"];
+  const avatarSrc = BOT_AVATAR[focusData.bot] || BOT_AVATAR["CEOB"];
   const typeLabel = BOT_LABELS[focusData.elementType] || focusData.elementType;
   const ElementIcon = ELEMENT_ICONS[focusData.elementType] || Target;
 
@@ -109,7 +109,7 @@ export function FocusModeLayout({
       </div>
 
       {/* Bandeau trio — CarlOS + spécialiste */}
-      {focusData.bot !== "BCO" && (
+      {focusData.bot !== "CEOB" && (
         <div className="bg-gray-50 border-b px-4 py-1.5 flex items-center gap-3 shrink-0">
           <div className="flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
@@ -119,9 +119,9 @@ export function FocusModeLayout({
             <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
             <span className="text-[9px] font-medium text-gray-500">
               {({
-                BCT: "Thierry", BCF: "François", BCM: "Martine", BCS: "Sophie",
-                BOO: "Olivier", BHR: "Hélène", BIO: "Inès",
-                BRO: "Raphaël", BLE: "Louise", BSE: "Sébastien",
+                CTOB: "Thierry", CFOB: "François", CMOB: "Martine", CSOB: "Sophie",
+                COOB: "Olivier", CHROB: "Hélène", CINOB: "Inès",
+                CROB: "Raphaël", CLOB: "Louise", CISOB: "Sébastien",
               } as Record<string, string>)[focusData.bot] || focusData.bot}
             </span>
           </div>

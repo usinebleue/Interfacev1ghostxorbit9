@@ -56,7 +56,7 @@ export function HeaderLeft({ collapsed }: { collapsed: boolean }) {
   const { navigateToDepartment } = useFrameMaster();
 
   const handleLogoClick = () => {
-    navigateToDepartment("BCO", "dashboard");
+    navigateToDepartment("CEOB", "dashboard");
   };
 
   return (
@@ -76,7 +76,7 @@ export function HeaderCenter() {
 
   const NAV_ITEMS = [
     { id: "tour", label: "Tour de Controle", icon: LayoutDashboard, tooltip: "Tour de Controle",
-      onClick: () => setActiveView(activeBotCode === "BCO" ? "dashboard" : "department"),
+      onClick: () => setActiveView(activeBotCode === "CEOB" ? "dashboard" : "department"),
       isActive: activeView === "dashboard" || activeView === "department" },
     { id: "cockpit", label: "Cockpit", icon: Gauge, tooltip: "Cockpit",
       onClick: () => setActiveView("cockpit"),

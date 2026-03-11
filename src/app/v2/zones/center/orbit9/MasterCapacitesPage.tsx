@@ -31,37 +31,37 @@ const DEPT_CAPACITES: {
   heuresMois: string; exemples: string[];
 }[] = [
   {
-    dept: "Direction", bot: "BCO", color: "blue", icon: Crown,
+    dept: "Direction", bot: "CEOB", color: "blue", icon: Crown,
     equivHumain: "CEO conseil / Coach executif", coutHumain: "100-200K$",
     tachesCount: 15, heuresMois: "80-120h",
     exemples: ["Preparation CA", "Decisions strategiques", "Vision & roadmap", "Gestion parties prenantes"],
   },
   {
-    dept: "Finance", bot: "BCF", color: "emerald", icon: DollarSign,
+    dept: "Finance", bot: "CFOB", color: "emerald", icon: DollarSign,
     equivHumain: "CFO fractionnaire", coutHumain: "150-250K$",
     tachesCount: 18, heuresMois: "100-160h",
     exemples: ["Budget annuel", "Analyse ROI projets", "Tresorerie", "Subventions & financement"],
   },
   {
-    dept: "Technologie", bot: "BCT", color: "violet", icon: Cpu,
+    dept: "Technologie", bot: "CTOB", color: "violet", icon: Cpu,
     equivHumain: "CTO fractionnaire", coutHumain: "150-300K$",
     tachesCount: 16, heuresMois: "120-180h",
     exemples: ["Architecture techno", "Selection fournisseurs", "Cybersecurite", "Automatisation"],
   },
   {
-    dept: "Marketing", bot: "BCM", color: "pink", icon: Target,
+    dept: "Marketing", bot: "CMOB", color: "pink", icon: Target,
     equivHumain: "Directeur marketing", coutHumain: "120-200K$",
     tachesCount: 14, heuresMois: "100-160h",
     exemples: ["Strategie marketing", "Generation leads", "Positionnement", "Campagnes"],
   },
   {
-    dept: "Strategie", bot: "BCS", color: "red", icon: TrendingUp,
+    dept: "Strategie", bot: "CSOB", color: "red", icon: TrendingUp,
     equivHumain: "Consultant strategie", coutHumain: "120-200K$",
     tachesCount: 12, heuresMois: "80-120h",
     exemples: ["Analyse concurrentielle", "Plan strategique", "Diversification", "M&A screening"],
   },
   {
-    dept: "Operations", bot: "BOO", color: "orange", icon: Factory,
+    dept: "Operations", bot: "COOB", color: "orange", icon: Factory,
     equivHumain: "Directeur operations", coutHumain: "120-200K$",
     tachesCount: 15, heuresMois: "120-200h",
     exemples: ["Optimisation processus", "Gestion qualite", "Lean manufacturing", "Chaine d'approvisionnement"],

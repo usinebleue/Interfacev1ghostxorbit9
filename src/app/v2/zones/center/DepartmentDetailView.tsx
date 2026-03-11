@@ -74,7 +74,7 @@ interface DeptConfig {
 // --- Configs par departement (identique V1) ---
 
 const DEPT_CONFIGS: Record<string, DeptConfig> = {
-  BCO: {
+  CEOB: {
     name: "Direction",
     color: "text-blue-600",
     ringColor: "ring-blue-500",
@@ -135,7 +135,7 @@ const DEPT_CONFIGS: Record<string, DeptConfig> = {
       { id: 4, text: "CMO a genere 12 leads LinkedIn", time: "matin" },
     ],
   },
-  BCT: {
+  CTOB: {
     name: "Technologie", color: "text-purple-600", ringColor: "ring-purple-500",
     summary: "Audit usine #2 termine. 3 options de robots identifiees. Stack API stable (99.2% uptime).",
     kpis: [
@@ -176,7 +176,7 @@ const DEPT_CONFIGS: Record<string, DeptConfig> = {
       { id: 2, text: "Stack API stable — 0 incident 48h", time: "hier" },
     ],
   },
-  BCF: {
+  CFOB: {
     name: "Finance", color: "text-green-600", ringColor: "ring-green-500",
     summary: "Budget Q2 pret (3 scenarios). ROI automatisation +15%. Subvention MEDTEQ en attente.",
     kpis: [
@@ -215,7 +215,7 @@ const DEPT_CONFIGS: Record<string, DeptConfig> = {
       { id: 2, text: "Subvention MEDTEQ soumise", time: "hier" },
     ],
   },
-  BCM: {
+  CMOB: {
     name: "Marketing", color: "text-pink-600", ringColor: "ring-pink-500",
     summary: "12 leads LinkedIn generes cette semaine. Plan contenu Q2 en attente. 2 campagnes actives.",
     kpis: [
@@ -252,7 +252,7 @@ const DEPT_CONFIGS: Record<string, DeptConfig> = {
       { id: 2, text: "Campagne email lancee — 340 ouvertures", time: "hier" },
     ],
   },
-  BCS: {
+  CSOB: {
     name: "Strategie", color: "text-red-600", ringColor: "ring-red-500",
     summary: "Pipeline a 475K$. Soumission MetalPro deadline jeudi. 3 prospects en qualification.",
     kpis: [
@@ -288,7 +288,7 @@ const DEPT_CONFIGS: Record<string, DeptConfig> = {
       { id: 2, text: "3 nouveaux prospects qualifies", time: "hier" },
     ],
   },
-  BOO: {
+  COOB: {
     name: "Operations", color: "text-orange-600", ringColor: "ring-orange-500",
     summary: "2 process optimises cette semaine. Ligne assemblage #1 a 87% efficacite. 4 projets actifs.",
     kpis: [
@@ -325,7 +325,7 @@ const DEPT_CONFIGS: Record<string, DeptConfig> = {
       { id: 2, text: "Ligne assemblage #1 a 87% efficacite", time: "hier" },
     ],
   },
-  BFA: {
+  CPOB: {
     name: "Production", color: "text-slate-600", ringColor: "ring-slate-500",
     summary: "Ligne #1 a 87% efficacite. 2 projets automatisation en cours. Audit qualite planifie.",
     kpis: [
@@ -365,7 +365,7 @@ const DEPT_CONFIGS: Record<string, DeptConfig> = {
       { id: 2, text: "Commande acier placee chez fournisseur", time: "hier" },
     ],
   },
-  BHR: {
+  CHROB: {
     name: "Ressources Humaines", color: "text-teal-600", ringColor: "ring-teal-500",
     summary: "2 postes ouverts. Turnover Q1 a 8%. Evaluation de performance Q1 planifiee.",
     kpis: [
@@ -403,7 +403,7 @@ const DEPT_CONFIGS: Record<string, DeptConfig> = {
       { id: 2, text: "6 candidats preselectionnees dev senior", time: "hier" },
     ],
   },
-  BRO: {
+  CROB: {
     name: "Vente", color: "text-amber-600", ringColor: "ring-amber-500",
     summary: "Pipeline 475K$. 5 deals actifs. Win rate 35%. Objectif Q1 a 82%.",
     kpis: [
@@ -443,7 +443,7 @@ const DEPT_CONFIGS: Record<string, DeptConfig> = {
       { id: 2, text: "TechnoSoud — rencontre positive", time: "hier" },
     ],
   },
-  BSE: {
+  CISOB: {
     name: "Securite", color: "text-zinc-600", ringColor: "ring-zinc-500",
     summary: "Score securite 58%. 2 alertes actives. Audit cyber planifie mars.",
     kpis: [
@@ -481,7 +481,7 @@ const DEPT_CONFIGS: Record<string, DeptConfig> = {
       { id: 2, text: "Mise a jour firewall completee", time: "hier" },
     ],
   },
-  BLE: {
+  CLOB: {
     name: "Legal", color: "text-indigo-600", ringColor: "ring-indigo-500",
     summary: "2 contrats en revue. Conformite RGPD a 78%. Renouvellement assurances avril.",
     kpis: [
@@ -519,7 +519,7 @@ const DEPT_CONFIGS: Record<string, DeptConfig> = {
       { id: 2, text: "Politique RGPD mise a jour", time: "hier" },
     ],
   },
-  BIO: {
+  CINOB: {
     name: "Systemes", color: "text-cyan-600", ringColor: "ring-cyan-500",
     summary: "8 systemes actifs. Migration ERP planifiee Q2. 99.2% uptime global.",
     kpis: [

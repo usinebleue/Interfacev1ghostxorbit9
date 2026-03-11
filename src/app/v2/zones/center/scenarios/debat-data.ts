@@ -37,7 +37,7 @@ export const DEBAT_DATA = {
     theme: "Impact financier",
     icon: DollarSign,
     pour: {
-      code: "BRO",
+      code: "CROB",
       position: "POUR l'ERP",
       argument: "Les 2 jours de reconciliation par mois = 24 jours/an = 48K$ en salaires gaspilles. Ajoutez les erreurs de saisie (estimees a 2-3% du CA = 240-360K$), les retards de facturation (DSO +12 jours = 40K$ en cout de tresorerie), et la perte de visibilite sur les marges reelles. Le cout REEL du statu quo est de 328-448K$/an. L'ERP a 200K$ se rembourse en 6-8 mois.",
       sources: [
@@ -46,7 +46,7 @@ export const DEBAT_DATA = {
       ],
     },
     contre: {
-      code: "BCF",
+      code: "CFOB",
       position: "CONTRE l'ERP",
       argument: "Le chiffre de 200K$ est un mirage. L'implementation reelle coute 2.5x a 4x le prix du logiciel. Formation, migration, personnalisation, productivite perdue pendant 6-12 mois = budget reel de 500-800K$. Et 67% des implementations ERP depassent le budget initial. Avec 200K$, on peut automatiser les transferts entre systemes existants (Zapier Enterprise + API customs) pour 35K$ et recuperer 80% des gains sans le risque.",
       sources: [
@@ -62,7 +62,7 @@ export const DEBAT_DATA = {
     theme: "Risque operationnel",
     icon: AlertTriangle,
     pour: {
-      code: "BRO",
+      code: "CROB",
       position: "POUR l'ERP",
       argument: "Le vrai risque, c'est de NE PAS agir. Avec 6 systemes disconnectes, vous n'avez aucune vue en temps reel sur vos couts de production. Votre marge reelle par produit? Inconnue. Votre cout reel par commande? Estime au doigt mouille. Vos concurrents avec un ERP voient tout ca en 1 clic. Dans 2 ans, sans ERP, vous perdrez des contrats parce que vous ne pourrez pas soumissionner assez vite avec des marges precises.",
       sources: [
@@ -71,7 +71,7 @@ export const DEBAT_DATA = {
       ],
     },
     contre: {
-      code: "BCF",
+      code: "CFOB",
       position: "CONTRE l'ERP",
       argument: "Parlons du risque de l'ERP lui-meme. Implementation = 6-18 mois de chaos. 44% des entreprises rapportent des perturbations operationnelles majeures pendant la migration. Avec 45 employes, vous n'avez pas le buffer pour absorber ca. Un seul mois de production perturbee = 1M$ de CA a risque. Et si l'ERP ne s'adapte pas a vos processus? Vous devrez changer VOS processus pour le logiciel — pas l'inverse.",
       sources: [
@@ -86,7 +86,7 @@ export const DEBAT_DATA = {
     theme: "Vision strategique a 3 ans",
     icon: TrendingUp,
     pour: {
-      code: "BRO",
+      code: "CROB",
       position: "POUR l'ERP",
       argument: "Dans 3 ans, vous visez 20M$ de CA (+67%). Comment gerer cette croissance avec 6 systemes? Chaque nouvel employe devra apprendre 6 outils. Chaque nouveau client ajoute de la complexite dans 6 bases de donnees. L'ERP est un investissement d'infrastructure — comme une usine. On ne construit pas une usine pour aujourd'hui, on la construit pour dans 5 ans. Le bon moment pour implanter un ERP, c'est AVANT d'en avoir desesperement besoin.",
       sources: [
@@ -95,7 +95,7 @@ export const DEBAT_DATA = {
       ],
     },
     contre: {
-      code: "BCF",
+      code: "CFOB",
       position: "CONTRE l'ERP",
       argument: "L'argument 'construire pour le futur' est seduisant mais dangereux. En 3 ans, les solutions cloud et IA auront completement change le paysage. Un ERP installe aujourd'hui sera obsolete en 2029. Ma recommandation : investir 50K$ dans des integrations API robustes MAINTENANT, garder la flexibilite, et reevaluer dans 18 mois quand les ERP cloud-native IA seront matures. La meilleure decision n'est pas toujours 'oui' ou 'non' — c'est parfois 'pas maintenant'.",
       sources: [

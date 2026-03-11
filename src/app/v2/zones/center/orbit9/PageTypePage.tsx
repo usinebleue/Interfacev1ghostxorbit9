@@ -27,18 +27,18 @@ import { PageHeader } from "../layouts/PageHeader";
 import { useFrameMaster } from "../../../context/FrameMasterContext";
 
 export const OFFICIAL_BOTS = [
-  { code: "BCO", name: "CarlOS", role: "CEO", color: "blue", emoji: "👔", subtitle: "Agent AI manufacturier", profil: "/agents/generated/ceo-carlos-profil-v3.png", standby: "/agents/generated/ceo-carlos-standby-v3.png" },
-  { code: "BCT", name: "Thierry", role: "CTO", color: "violet", emoji: "💻", subtitle: "Technologie & Innovation", profil: "/agents/generated/cto-thierry-profil-v3.png", standby: "/agents/generated/cto-thierry-standby-v3.png" },
-  { code: "BCF", name: "François", role: "CFO", color: "emerald", emoji: "💰", subtitle: "Finance & Trésorerie", profil: "/agents/generated/cfo-francois-profil-v3.png", standby: "/agents/generated/cfo-francois-standby-v3.png" },
-  { code: "BCM", name: "Martine", role: "CMO", color: "pink", emoji: "📢", subtitle: "Marketing & Croissance", profil: "/agents/generated/cmo-martine-profil-v3.png", standby: "/agents/generated/cmo-martine-standby-v3.png" },
-  { code: "BCS", name: "Sophie", role: "CSO", color: "red", emoji: "🎯", subtitle: "Stratégie & Ventes", profil: "/agents/generated/cso-sophie-profil-v3.png", standby: "/agents/generated/cso-sophie-standby-v3.png" },
-  { code: "BOO", name: "Olivier", role: "COO", color: "orange", emoji: "⚙️", subtitle: "Opérations & Production", profil: "/agents/generated/coo-olivier-profil-v3.png", standby: "/agents/generated/coo-olivier-standby-v3.png" },
-  { code: "BFA", name: "Fabien", role: "CPO", color: "slate", emoji: "🏭", subtitle: "Automatisation & Usine", profil: "/agents/generated/factory-bot-profil-v3.png", standby: "/agents/generated/factory-bot-standby-v3.png" },
-  { code: "BHR", name: "Hélène", role: "CHRO", color: "teal", emoji: "🤝", subtitle: "Ressources Humaines", profil: "/agents/generated/chro-helene-profil-v3.png", standby: "/agents/generated/chro-helene-standby-v3.png" },
-  { code: "BIO", name: "Inès", role: "CINO", color: "rose", emoji: "📊", subtitle: "Innovation & R&D", profil: "/agents/generated/cino-ines-profil-v3.png", standby: "/agents/generated/cino-ines-standby-v3.png" },
-  { code: "BRO", name: "Raphaël", role: "CRO", color: "amber", emoji: "📈", subtitle: "Revenus & Croissance", profil: "/agents/generated/cro-raphael-profil-v3.png", standby: "/agents/generated/cro-raphael-standby-v3.png" },
-  { code: "BLE", name: "Louise", role: "CLO", color: "indigo", emoji: "⚖️", subtitle: "Juridique & Conformité", profil: "/agents/generated/clo-louise-profil-v3.png", standby: "/agents/generated/clo-louise-standby-v3.png" },
-  { code: "BSE", name: "Sébastien", role: "CISO", color: "zinc", emoji: "🛡️", subtitle: "Sécurité & Cyber", profil: "/agents/generated/ciso-secbot-profil-v3.png", standby: "/agents/generated/ciso-secbot-standby-v3.png" },
+  { code: "CEOB", name: "CarlOS", role: "CEO", color: "blue", emoji: "👔", subtitle: "Agent AI manufacturier", profil: "/agents/generated/ceo-carlos-profil-v3.png", standby: "/agents/generated/ceo-carlos-standby-v3.png" },
+  { code: "CTOB", name: "Thierry", role: "CTO", color: "violet", emoji: "💻", subtitle: "Technologie & Innovation", profil: "/agents/generated/cto-thierry-profil-v3.png", standby: "/agents/generated/cto-thierry-standby-v3.png" },
+  { code: "CFOB", name: "François", role: "CFO", color: "emerald", emoji: "💰", subtitle: "Finance & Trésorerie", profil: "/agents/generated/cfo-francois-profil-v3.png", standby: "/agents/generated/cfo-francois-standby-v3.png" },
+  { code: "CMOB", name: "Martine", role: "CMO", color: "pink", emoji: "📢", subtitle: "Marketing & Croissance", profil: "/agents/generated/cmo-martine-profil-v3.png", standby: "/agents/generated/cmo-martine-standby-v3.png" },
+  { code: "CSOB", name: "Sophie", role: "CSO", color: "red", emoji: "🎯", subtitle: "Stratégie & Ventes", profil: "/agents/generated/cso-sophie-profil-v3.png", standby: "/agents/generated/cso-sophie-standby-v3.png" },
+  { code: "COOB", name: "Olivier", role: "COO", color: "orange", emoji: "⚙️", subtitle: "Opérations & Production", profil: "/agents/generated/coo-olivier-profil-v3.png", standby: "/agents/generated/coo-olivier-standby-v3.png" },
+  { code: "CPOB", name: "Fabien", role: "CPO", color: "slate", emoji: "🏭", subtitle: "Automatisation & Usine", profil: "/agents/generated/factory-bot-profil-v3.png", standby: "/agents/generated/factory-bot-standby-v3.png" },
+  { code: "CHROB", name: "Hélène", role: "CHRO", color: "teal", emoji: "🤝", subtitle: "Ressources Humaines", profil: "/agents/generated/chro-helene-profil-v3.png", standby: "/agents/generated/chro-helene-standby-v3.png" },
+  { code: "CINOB", name: "Inès", role: "CINO", color: "rose", emoji: "📊", subtitle: "Innovation & R&D", profil: "/agents/generated/cino-ines-profil-v3.png", standby: "/agents/generated/cino-ines-standby-v3.png" },
+  { code: "CROB", name: "Raphaël", role: "CRO", color: "amber", emoji: "📈", subtitle: "Revenus & Croissance", profil: "/agents/generated/cro-raphael-profil-v3.png", standby: "/agents/generated/cro-raphael-standby-v3.png" },
+  { code: "CLOB", name: "Louise", role: "CLO", color: "indigo", emoji: "⚖️", subtitle: "Juridique & Conformité", profil: "/agents/generated/clo-louise-profil-v3.png", standby: "/agents/generated/clo-louise-standby-v3.png" },
+  { code: "CISOB", name: "Sébastien", role: "CISO", color: "zinc", emoji: "🛡️", subtitle: "Sécurité & Cyber", profil: "/agents/generated/ciso-secbot-profil-v3.png", standby: "/agents/generated/ciso-secbot-standby-v3.png" },
 ];
 
 const tabs = [
@@ -1158,9 +1158,9 @@ export function FE1TabCardsData() {
         <p className="text-xs text-gray-400 mb-3">Header gradient couleur du bot, contenu compact, grid-cols-3</p>
         <div className="grid grid-cols-3 gap-3">
           {[
-            { dept: "Finances", code: "BCF", color: "emerald", icon: DollarSign, kpis: [{ l: "Tresorerie", v: "845,000$", c: "emerald" }, { l: "Revenus", v: "125,000$", c: "gray" }, { l: "Marge", pct: 42 }] },
-            { dept: "Technologie", code: "BCT", color: "violet", icon: Zap, kpis: [{ l: "Uptime", v: "99.7%", c: "violet" }, { l: "Deploys", v: "12 ce mois", c: "gray" }, { l: "Securite", pct: 88 }] },
-            { dept: "Marketing", code: "BCM", color: "pink", icon: Target, kpis: [{ l: "Leads", v: "47", c: "pink" }, { l: "Conversion", v: "12.3%", c: "gray" }, { l: "Budget", pct: 65 }] },
+            { dept: "Finances", code: "CFOB", color: "emerald", icon: DollarSign, kpis: [{ l: "Tresorerie", v: "845,000$", c: "emerald" }, { l: "Revenus", v: "125,000$", c: "gray" }, { l: "Marge", pct: 42 }] },
+            { dept: "Technologie", code: "CTOB", color: "violet", icon: Zap, kpis: [{ l: "Uptime", v: "99.7%", c: "violet" }, { l: "Deploys", v: "12 ce mois", c: "gray" }, { l: "Securite", pct: 88 }] },
+            { dept: "Marketing", code: "CMOB", color: "pink", icon: Target, kpis: [{ l: "Leads", v: "47", c: "pink" }, { l: "Conversion", v: "12.3%", c: "gray" }, { l: "Budget", pct: 65 }] },
           ].map((d) => {
             const Icon = d.icon;
             return (
@@ -1207,10 +1207,10 @@ export function FE1TabCardsData() {
         <p className="text-xs text-gray-400 mb-3">grid-cols-4 gap-2 — avatar + couleur + mini-bulletin</p>
         <div className="grid grid-cols-4 gap-2">
           {[
-            { code: "BCO", name: "CarlOS CEO", color: "blue", stats: [{ l: "Travail", v: "3" }, { l: "Decisions", v: "12" }] },
-            { code: "BCT", name: "CTO", color: "violet", stats: [{ l: "Deploys", v: "8" }, { l: "Bugs", v: "2" }] },
-            { code: "BCF", name: "CFO", color: "emerald", stats: [{ l: "Budget", v: "94%" }, { l: "Alertes", v: "1" }] },
-            { code: "BCM", name: "CMO", color: "pink", stats: [{ l: "Leads", v: "47" }, { l: "Campagnes", v: "3" }] },
+            { code: "CEOB", name: "CarlOS CEO", color: "blue", stats: [{ l: "Travail", v: "3" }, { l: "Decisions", v: "12" }] },
+            { code: "CTOB", name: "CTO", color: "violet", stats: [{ l: "Deploys", v: "8" }, { l: "Bugs", v: "2" }] },
+            { code: "CFOB", name: "CFO", color: "emerald", stats: [{ l: "Budget", v: "94%" }, { l: "Alertes", v: "1" }] },
+            { code: "CMOB", name: "CMO", color: "pink", stats: [{ l: "Leads", v: "47" }, { l: "Campagnes", v: "3" }] },
           ].map((bot) => (
             <Card key={bot.code} className="overflow-hidden">
               <div className={cn("px-2.5 py-1.5 flex items-center gap-2", `bg-gradient-to-r from-${bot.color}-600 to-${bot.color}-500`)}>
@@ -1307,9 +1307,9 @@ export function FE1TabCardsData() {
         <p className="text-xs text-gray-400 mb-3">Bordure gauche couleur du bot, fond blanc</p>
         <div className="space-y-2">
           {[
-            { bot: "BCO (CEO)", color: "blue", msg: "Je recommande de prioriser le pipeline manufacturier avant l'expansion." },
-            { bot: "BCT (CTO)", color: "violet", msg: "L'architecture actuelle supporte 10x la charge. On est solides." },
-            { bot: "BCF (CFO)", color: "emerald", msg: "Le cash flow permet 3 mois de runway sans revenu additionnel." },
+            { bot: "CEOB (CEO)", color: "blue", msg: "Je recommande de prioriser le pipeline manufacturier avant l'expansion." },
+            { bot: "CTOB (CTO)", color: "violet", msg: "L'architecture actuelle supporte 10x la charge. On est solides." },
+            { bot: "CFOB (CFO)", color: "emerald", msg: "Le cash flow permet 3 mois de runway sans revenu additionnel." },
           ].map((b) => (
             <div key={b.bot} className={cn("p-3 rounded-xl border-l-[3px] bg-white border", `border-l-${b.color}-400 border-gray-100`)}>
               <p className={cn("text-xs font-semibold mb-1", `text-${b.color}-700`)}>{b.bot}</p>
@@ -1327,9 +1327,9 @@ export function FE1TabCardsData() {
         <p className="text-xs text-gray-400 mb-3">grid-cols-3 gap-3 — fond pastel par bot</p>
         <div className="grid grid-cols-3 gap-3">
           {[
-            { bot: "CEO", code: "BCO", color: "blue", msg: "Vision strategique: concentrer sur 3 pionniers." },
-            { bot: "CFO", code: "BCF", color: "emerald", msg: "ROI positif apres 4 mois avec le pricing actuel." },
-            { bot: "CTO", code: "BCT", color: "violet", msg: "APIs pretes, deploiement en 48h." },
+            { bot: "CEO", code: "CEOB", color: "blue", msg: "Vision strategique: concentrer sur 3 pionniers." },
+            { bot: "CFO", code: "CFOB", color: "emerald", msg: "ROI positif apres 4 mois avec le pricing actuel." },
+            { bot: "CTO", code: "CTOB", color: "violet", msg: "APIs pretes, deploiement en 48h." },
           ].map((b) => (
             <div key={b.code} className={cn("p-3 rounded-xl border", `bg-${b.color}-50 border-${b.color}-200`)}>
               <div className="flex items-center gap-2 mb-2">
@@ -2453,10 +2453,10 @@ export function FE1TabBullesActions() {
                   <div className="text-[10px] text-gray-400 mb-2 italic">Ex: message = "notre pipeline est brisé technologiquement"</div>
                   <div className="space-y-1">
                     {[
-                      { code: "BCT", name: "Thierry CTO", kw: 3, mode: 2, dom: 3, total: 8, tag: "PRIMAIRE", color: "violet", stars: "★★★" },
-                      { code: "BCF", name: "François CFO", kw: 1, mode: 1, dom: 2, total: 4, tag: "ANGLE MORT", color: "emerald", stars: "★★" },
-                      { code: "BOO", name: "Olivier COO", kw: 1, mode: 1, dom: 2, total: 4, tag: "ANGLE MORT", color: "orange", stars: "★★" },
-                      { code: "BCO", name: "CarlOS CEO", kw: 0, mode: 2, dom: 1, total: 3, tag: "écarté", color: "gray", stars: "★" },
+                      { code: "CTOB", name: "Thierry CTO", kw: 3, mode: 2, dom: 3, total: 8, tag: "PRIMAIRE", color: "violet", stars: "★★★" },
+                      { code: "CFOB", name: "François CFO", kw: 1, mode: 1, dom: 2, total: 4, tag: "ANGLE MORT", color: "emerald", stars: "★★" },
+                      { code: "COOB", name: "Olivier COO", kw: 1, mode: 1, dom: 2, total: 4, tag: "ANGLE MORT", color: "orange", stars: "★★" },
+                      { code: "CEOB", name: "CarlOS CEO", kw: 0, mode: 2, dom: 1, total: 3, tag: "écarté", color: "gray", stars: "★" },
                     ].map(({ code, name, kw, mode, dom, total, tag, color, stars }) => (
                       <div key={code} className={`flex items-center gap-2 text-[10px] ${color === "gray" ? "opacity-40" : ""}`}>
                         <span className="w-16 font-mono text-gray-500">{code}</span>
@@ -2501,7 +2501,7 @@ export function FE1TabBullesActions() {
                     <div className="text-[10px] text-gray-400 mb-1 font-medium">Prompt micro envoyé à Gemini Flash :</div>
                     <div className="bg-gray-900 text-green-300 rounded-lg px-3 py-2 text-[10px] font-mono leading-relaxed">
                       <span className="text-gray-400">Explique en 1 phrase claire</span><br/>
-                      <span className="text-gray-400">pourquoi [BCT, BCF, BOO]</span><br/>
+                      <span className="text-gray-400">pourquoi [CTOB, CFOB, COOB]</span><br/>
                       <span className="text-gray-400">sont les bons bots pour:</span><br/>
                       <span className="text-yellow-300">"pipeline techniquement brisé"</span><br/>
                       <span className="text-gray-400">Réponse JSON:</span><br/>

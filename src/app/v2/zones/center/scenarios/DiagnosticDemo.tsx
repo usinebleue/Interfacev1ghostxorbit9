@@ -258,7 +258,7 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
             <ThinkingAnimation
               steps={SIM_ACTE1.ceoThinking}
               botName="CarlOS (CEO)"
-              botCode="BCO"
+              botCode="CEOB"
               onComplete={() => setStage(2)}
             />
           )}
@@ -266,7 +266,7 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
           {/* ===== STAGE 2 — CEO response + Question 1 ===== */}
           {stage >= 2 && (
             <div className="flex gap-3">
-              <BotAvatar code="BCO" size="md" />
+              <BotAvatar code="CEOB" size="md" />
               <div className="bg-white border rounded-xl rounded-tl-none px-4 py-3 shadow-sm border-l-[3px] border-l-blue-500 max-w-[85%]">
                 <div className="text-xs text-blue-600 mb-2 font-medium">CarlOS (CEO)</div>
                 {stage === 2 ? (
@@ -325,7 +325,7 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
           {/* ===== STAGE 3 — CEO Question 2 ===== */}
           {stage >= 3 && (
             <div className="flex gap-3">
-              <BotAvatar code="BCO" size="md" />
+              <BotAvatar code="CEOB" size="md" />
               <div className="bg-white border rounded-xl rounded-tl-none px-4 py-3 shadow-sm border-l-[3px] border-l-blue-500 max-w-[85%]">
                 <div className="text-xs text-blue-600 mb-2 font-medium">CarlOS (CEO)</div>
                 {stage === 3 ? (
@@ -461,7 +461,7 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
                   {showCfoChallengeCard && (
                     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-2">
                       <div className="flex gap-3">
-                        <BotAvatar code="BCF" size="md" />
+                        <BotAvatar code="CFOB" size="md" />
                         <div className="bg-white border rounded-xl rounded-tl-none px-4 py-3 shadow-sm border-l-[3px] border-l-emerald-400 flex-1">
                           <div className="text-xs text-emerald-600 mb-2 font-medium">Francois (CFO) — Reponse au challenge</div>
                           <TypewriterText
@@ -512,7 +512,7 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
                   {showCooDeepDive && (
                     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-2">
                       <div className="flex gap-3">
-                        <BotAvatar code="BOO" size="md" />
+                        <BotAvatar code="COOB" size="md" />
                         <div className="bg-white border rounded-xl rounded-tl-none px-4 py-3 shadow-sm border-l-[3px] border-l-orange-400 flex-1">
                           <div className="text-xs text-orange-600 mb-2 font-medium">Olivier (COO) — Detail du plan operationnel</div>
                           <TypewriterText
@@ -577,7 +577,7 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
                   {showCooChallenge && (
                     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
                       <div className="flex gap-3">
-                        <BotAvatar code="BOO" size="md" />
+                        <BotAvatar code="COOB" size="md" />
                         <div className="bg-white border rounded-xl rounded-tl-none px-4 py-3 shadow-sm border-l-[3px] border-l-orange-400 flex-1">
                           <div className="text-xs text-orange-600 mb-2 font-medium">Olivier (COO) — Defense des delais</div>
                           <TypewriterText
@@ -594,7 +594,7 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
                   {showCtoChallenge && (
                     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-2">
                       <div className="flex gap-3">
-                        <BotAvatar code="BCT" size="md" />
+                        <BotAvatar code="CTOB" size="md" />
                         <div className="bg-white border rounded-xl rounded-tl-none px-4 py-3 shadow-sm border-l-[3px] border-l-purple-400 flex-1">
                           <div className="text-xs text-purple-600 mb-2 font-medium">Thierry (CTO) — Defense des choix technologiques</div>
                           <TypewriterText
@@ -653,21 +653,21 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
                         </div>
                         <div className="p-4 space-y-3">
                           <div className="flex gap-3">
-                            <BotAvatar code="BCF" size="sm" />
+                            <BotAvatar code="CFOB" size="sm" />
                             <div className="flex-1">
                               <div className="text-xs text-emerald-600 font-medium mb-1">Francois (CFO)</div>
                               <p className="text-sm text-gray-700">Le timing est critique. Si on rate la fenetre HQ de juin 2026, on perd 12 mois. Je recommande de deposer les 4 dossiers simultanement — EnerGuide, systemes industriels, STIQ et RS&DE. Le risque de ne pas combiner les 3 axes, c'est de perdre l'effet levier des subventions croisees.</p>
                             </div>
                           </div>
                           <div className="flex gap-3">
-                            <BotAvatar code="BOO" size="sm" />
+                            <BotAvatar code="COOB" size="sm" />
                             <div className="flex-1">
                               <div className="text-xs text-orange-600 font-medium mb-1">Olivier (COO)</div>
                               <p className="text-sm text-gray-700">Francois a raison sur le timing, mais je souleve un point : les 6 operateurs de palettisation doivent etre formes AVANT l'arrivee du cobot, pas pendant. Ca veut dire demarrer la formation en Phase 1, pas en Phase 3. Ca ajoute un cout de 15-20K$ mais reduit le risque de resistance au changement de 80%.</p>
                             </div>
                           </div>
                           <div className="flex gap-3">
-                            <BotAvatar code="BCT" size="sm" />
+                            <BotAvatar code="CTOB" size="sm" />
                             <div className="flex-1">
                               <div className="text-xs text-purple-600 font-medium mb-1">Thierry (CTO)</div>
                               <p className="text-sm text-gray-700">D'accord avec Olivier. J'ajoute que l'IoT devrait commencer en Phase 1 aussi — installer les capteurs de base des le debut permet de mesurer le "avant" pour prouver les economies a HQ. Les donnees de monitoring pre-travaux renforcent enormement le dossier de subvention.</p>
@@ -710,7 +710,7 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
                   {showSentinelWarning && (
                     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
                       <div className="flex gap-3">
-                        <BotAvatar code="BCO" size="md" />
+                        <BotAvatar code="CEOB" size="md" />
                         <div className="bg-amber-50 border border-amber-200 rounded-xl rounded-tl-none px-4 py-3 shadow-sm border-l-[3px] border-l-amber-500 flex-1">
                           <div className="text-xs text-amber-700 mb-1.5 font-medium flex items-center gap-1.5">
                             <Sparkles className="h-3 w-3" /> CarlOS — Sentinelle de discussion
@@ -747,14 +747,14 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
                         </div>
                         <div className="p-4 space-y-3">
                           <div className="flex gap-3">
-                            <BotAvatar code="BCF" size="sm" />
+                            <BotAvatar code="CFOB" size="sm" />
                             <div className="flex-1">
                               <div className="text-xs text-emerald-600 font-medium mb-1">Francois (CFO)</div>
                               <p className="text-sm text-gray-700">Le risque financier est minimal si on depose les dossiers a temps. Le 470K$ minimum de subventions rend le projet quasiment autofinance. Mon souci c'est qu'on ne peut pas se permettre de commencer les travaux AVANT la confirmation HQ — sinon on perd l'admissibilite.</p>
                             </div>
                           </div>
                           <div className="flex gap-3">
-                            <BotAvatar code="BOO" size="sm" />
+                            <BotAvatar code="COOB" size="sm" />
                             <div className="flex-1">
                               <div className="text-xs text-orange-600 font-medium mb-1">Olivier (COO)</div>
                               <p className="text-sm text-gray-700">Je suis d'accord avec Francois sur le timing. Par contre, on PEUT commencer les travaux preparatoires (audit, specs, commande equipement) avant la confirmation sans perdre l'admissibilite. C'est seulement l'installation physique qui doit attendre. Ca nous sauve 4-6 semaines sur le calendrier total.</p>
@@ -788,7 +788,7 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
             <ThinkingAnimation
               steps={SIM_ACTE1.syntheseThinking}
               botName="CarlOS (CEO)"
-              botCode="BCO"
+              botCode="CEOB"
               onComplete={() => setStage(5.5)}
             />
           )}
@@ -836,7 +836,7 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
                   {showSyntheseChallenge && (
                     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-2">
                       <div className="flex gap-3">
-                        <BotAvatar code="BCO" size="md" />
+                        <BotAvatar code="CEOB" size="md" />
                         <div className="bg-white border rounded-xl rounded-tl-none px-4 py-3 shadow-sm border-l-[3px] border-l-blue-500 flex-1">
                           <div className="text-xs text-blue-600 mb-2 font-medium">CarlOS (CEO) — Defense de la synthese</div>
                           <TypewriterText
@@ -868,7 +868,7 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
                   {showContreArgument && (
                     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-2">
                       <div className="flex gap-3">
-                        <BotAvatar code="BCO" size="md" />
+                        <BotAvatar code="CEOB" size="md" />
                         <div className="bg-white border rounded-xl rounded-tl-none px-4 py-3 shadow-sm border-l-[3px] border-l-red-400 flex-1">
                           <div className="text-xs text-red-600 mb-2 font-medium">CarlOS (CEO) — Meilleur argument CONTRE</div>
                           <TypewriterText
@@ -904,7 +904,7 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
             <ThinkingAnimation
               steps={SIM_ACTE1.preRapportThinking}
               botName="CarlOS (CEO)"
-              botCode="BCO"
+              botCode="CEOB"
               onComplete={() => setStage(6.5)}
             />
           )}
@@ -929,7 +929,7 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
           {/* ===== STAGE 7 — CEO transition message ===== */}
           {stage >= 7 && (
             <div className="flex gap-3">
-              <BotAvatar code="BCO" size="md" />
+              <BotAvatar code="CEOB" size="md" />
               <div className="bg-white border rounded-xl rounded-tl-none px-4 py-3 shadow-sm border-l-[3px] border-l-blue-500 max-w-[85%]">
                 <div className="text-xs text-blue-600 mb-2 font-medium">CarlOS (CEO)</div>
                 {stage === 7 ? (

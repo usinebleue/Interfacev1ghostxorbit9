@@ -36,7 +36,7 @@ export interface ChatRequest {
 // --- Équipe 3 Bots (Chef d'Orchestre) ---
 
 export interface BotRoleTeam {
-  code: string;          // "BCT"
+  code: string;          // "CTOB"
   name: string;          // "Thierry"
   emoji: string;         // "💻"
   role_tag: "PRIMAIRE" | "ANGLE MORT";
@@ -280,7 +280,7 @@ export interface ChatMessage {
   msgType?: MessageType;
   parentId?: string;       // ID du message auquel celui-ci repond
   branchDepth?: number;    // 0 = trunk, 1 = sous-branche, 2 = sous-sous-branche
-  branchLabel?: string;    // "Challenge #2 — BCT", "Consultation CFO"
+  branchLabel?: string;    // "Challenge #2 — CTOB", "Consultation CFO"
   // Streaming
   isStreaming?: boolean;    // true pendant le streaming SSE en cours
   // Canvas Actions associees a cette reponse
@@ -388,7 +388,7 @@ export interface DiagnosticVivant {
 // ─── Participant (Espace Unifié — multi-participants bots + humains) ───
 export interface Participant {
   type: "bot" | "humain";
-  code?: string;    // bot code (BCO, BCT...) — seulement si type=bot
+  code?: string;    // bot code (CEOB, CTOB...) — seulement si type=bot
   nom?: string;     // human name — seulement si type=humain
   role: string;     // "pilote" | "sponsor" | "responsable" | "support" | "observateur"
 }
@@ -552,35 +552,35 @@ export interface CascadeSuggestion {
 // --- Avatar Map (vrais fichiers dans /public/agents/) ---
 
 export const BOT_AVATAR: Record<string, string> = {
-  BCO: "/agents/generated/ceo-carlos-profil-v3.png",
-  BCT: "/agents/generated/cto-thierry-profil-v3.png",
-  BCF: "/agents/generated/cfo-francois-profil-v3.png",
-  BCM: "/agents/generated/cmo-martine-profil-v3.png",
-  BCS: "/agents/generated/cso-sophie-profil-v3.png",
-  BOO: "/agents/generated/coo-olivier-profil-v3.png",
-  BFA: "/agents/generated/factory-bot-profil-v3.png",
-  BHR: "/agents/generated/chro-helene-profil-v3.png",
-  BIO: "/agents/generated/cino-ines-profil-v3.png",
-  BRO: "/agents/generated/cro-raphael-profil-v3.png",
-  BLE: "/agents/generated/clo-louise-profil-v3.png",
-  BSE: "/agents/generated/ciso-secbot-profil-v3.png",
+  CEOB: "/agents/generated/ceo-carlos-profil-v3.png",
+  CTOB: "/agents/generated/cto-thierry-profil-v3.png",
+  CFOB: "/agents/generated/cfo-francois-profil-v3.png",
+  CMOB: "/agents/generated/cmo-martine-profil-v3.png",
+  CSOB: "/agents/generated/cso-sophie-profil-v3.png",
+  COOB: "/agents/generated/coo-olivier-profil-v3.png",
+  CPOB: "/agents/generated/factory-bot-profil-v3.png",
+  CHROB: "/agents/generated/chro-helene-profil-v3.png",
+  CINOB: "/agents/generated/cino-ines-profil-v3.png",
+  CROB: "/agents/generated/cro-raphael-profil-v3.png",
+  CLOB: "/agents/generated/clo-louise-profil-v3.png",
+  CISOB: "/agents/generated/ciso-secbot-profil-v3.png",
 };
 
 // --- Sous-titre par bot (affiche dans le header) ---
 
 export const BOT_SUBTITLE: Record<string, string> = {
-  BCO: "Agent AI manufacturier",
-  BCT: "Technologie & Innovation",
-  BCF: "Finance & Tresorerie",
-  BCM: "Marketing & Croissance",
-  BCS: "Strategie & Ventes",
-  BOO: "Operations & Production",
-  BFA: "Automatisation & Usine",
-  BHR: "Ressources Humaines",
-  BIO: "Innovation & R&D",
-  BRO: "Revenus & Croissance",
-  BLE: "Juridique & Conformite",
-  BSE: "Securite & Cyber",
+  CEOB: "Agent AI manufacturier",
+  CTOB: "Technologie & Innovation",
+  CFOB: "Finance & Tresorerie",
+  CMOB: "Marketing & Croissance",
+  CSOB: "Strategie & Ventes",
+  COOB: "Operations & Production",
+  CPOB: "Automatisation & Usine",
+  CHROB: "Ressources Humaines",
+  CINOB: "Innovation & R&D",
+  CROB: "Revenus & Croissance",
+  CLOB: "Juridique & Conformite",
+  CISOB: "Securite & Cyber",
 };
 
 // Legacy alias
@@ -589,18 +589,18 @@ export const AVATAR_MAP = BOT_AVATAR;
 // --- Emoji fallback ---
 
 export const BOT_EMOJI: Record<string, string> = {
-  BCO: "👔",
-  BCT: "💻",
-  BCF: "💰",
-  BCM: "📢",
-  BCS: "🎯",
-  BOO: "⚙️",
-  BRO: "📈",
-  BHR: "👥",
-  BSE: "🛡️",
-  BLE: "⚖️",
-  BFA: "🏭",
-  BIO: "🖥️",
+  CEOB: "👔",
+  CTOB: "💻",
+  CFOB: "💰",
+  CMOB: "📢",
+  CSOB: "🎯",
+  COOB: "⚙️",
+  CROB: "📈",
+  CHROB: "👥",
+  CISOB: "🛡️",
+  CLOB: "⚖️",
+  CPOB: "🏭",
+  CINOB: "🖥️",
 };
 
 // --- Company Kit (client switcher) ---
@@ -744,7 +744,7 @@ export interface CanvasAction {
   data?: unknown;                // contenu a injecter
   message?: string;              // message humain (coaching, annotation)
   priority?: "low" | "normal" | "high";  // urgence
-  bot?: string;                  // bot source (BCO, BCT, etc.)
+  bot?: string;                  // bot source (CEOB, CTOB, etc.)
 }
 
 // --- Idee (migration Crystals localStorage → PostgreSQL) ---

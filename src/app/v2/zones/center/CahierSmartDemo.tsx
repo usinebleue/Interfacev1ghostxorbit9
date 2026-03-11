@@ -490,7 +490,7 @@ function SyntheseCard({ data, animate }: { data: typeof SIM_ACTE1.syntheseCard; 
           {/* CEO intro text */}
           {data.ceoIntro && (
             <div className="flex items-start gap-2 bg-blue-50/50 border border-blue-100 rounded-lg px-3 py-2.5">
-              <BotAvatar code="BCO" size="sm" className="mt-0.5" />
+              <BotAvatar code="CEOB" size="sm" className="mt-0.5" />
               <p className="text-sm text-gray-700 leading-relaxed">{data.ceoIntro}</p>
             </div>
           )}
@@ -748,7 +748,7 @@ function JumelageSessionAnimation({ questions, onComplete }: {
               )}>
                 {/* Question from CarlOS */}
                 <div className="flex items-start gap-2 mb-2">
-                  <BotAvatar code="BCO" size="sm" />
+                  <BotAvatar code="CEOB" size="sm" />
                   <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-sm text-blue-800 flex-1">
                     {q.question}
                   </div>
@@ -1581,7 +1581,7 @@ function PreRapportCard({ data, animate }: {
             {/* CEO recommendation */}
             {data.ceoRecommandation && (
               <div className="flex items-start gap-2 bg-white/60 border border-blue-100 rounded-lg px-3 py-2.5 mt-2">
-                <BotAvatar code="BCO" size="sm" className="mt-0.5" />
+                <BotAvatar code="CEOB" size="sm" className="mt-0.5" />
                 <div>
                   <div className="text-[10px] font-semibold text-blue-600 mb-0.5">Recommandation CarlOS (CEO)</div>
                   <p className="text-xs text-gray-700 leading-relaxed">{data.ceoRecommandation}</p>
@@ -1801,7 +1801,7 @@ export function CahierSmartDemo() {
             <ThinkingAnimation
               steps={SIM_ACTE1.ceoThinking}
               botName="CarlOS (CEO)"
-              botCode="BCO"
+              botCode="CEOB"
               onComplete={() => setStage(2)}
             />
           )}
@@ -1809,10 +1809,10 @@ export function CahierSmartDemo() {
           {/* ===== STAGE 2 — CEO response + Question 1 ===== */}
           {stage >= 2 && (
             <div className="flex gap-3">
-              <BotAvatar code="BCO" size="md" />
+              <BotAvatar code="CEOB" size="md" />
               <div className="bg-white border-l-[3px] border-l-blue-500 border border-gray-200 rounded-xl rounded-tl-none px-4 py-3 max-w-[75%] shadow-sm">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className={cn("text-xs font-semibold", BOT_COLORS.BCO.text)}>CarlOS (CEO)</span>
+                  <span className={cn("text-xs font-semibold", BOT_COLORS.CEOB.text)}>CarlOS (CEO)</span>
                   <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-medium">Diagnostic preliminaire</span>
                 </div>
                 {stage === 2 ? (
@@ -1869,10 +1869,10 @@ export function CahierSmartDemo() {
           {/* ===== STAGE 3 — CEO Question 2 ===== */}
           {stage >= 3 && (
             <div className="flex gap-3">
-              <BotAvatar code="BCO" size="md" />
+              <BotAvatar code="CEOB" size="md" />
               <div className="bg-white border-l-[3px] border-l-blue-500 border border-gray-200 rounded-xl rounded-tl-none px-4 py-3 max-w-[75%] shadow-sm">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className={cn("text-xs font-semibold", BOT_COLORS.BCO.text)}>CarlOS (CEO)</span>
+                  <span className={cn("text-xs font-semibold", BOT_COLORS.CEOB.text)}>CarlOS (CEO)</span>
                   <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">Approfondissement</span>
                 </div>
                 <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
@@ -1944,7 +1944,7 @@ export function CahierSmartDemo() {
             <ThinkingAnimation
               steps={SIM_ACTE1.syntheseThinking}
               botName="CarlOS (CEO)"
-              botCode="BCO"
+              botCode="CEOB"
               onComplete={() => setStage(5.5)}
             />
           )}
@@ -1971,7 +1971,7 @@ export function CahierSmartDemo() {
             <ThinkingAnimation
               steps={SIM_ACTE1.preRapportThinking}
               botName="CarlOS (CEO)"
-              botCode="BCO"
+              botCode="CEOB"
               onComplete={() => setStage(6.5)}
             />
           )}
@@ -1996,10 +1996,10 @@ export function CahierSmartDemo() {
           {/* ===== STAGE 7 — CEO transition message ===== */}
           {stage >= 7 && stage < 8 && (
             <div className="flex gap-3">
-              <BotAvatar code="BCO" size="md" />
+              <BotAvatar code="CEOB" size="md" />
               <div className="bg-white border-l-[3px] border-l-blue-500 border border-gray-200 rounded-xl rounded-tl-none px-4 py-3 max-w-[75%] shadow-sm">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className={cn("text-xs font-semibold", BOT_COLORS.BCO.text)}>CarlOS (CEO)</span>
+                  <span className={cn("text-xs font-semibold", BOT_COLORS.CEOB.text)}>CarlOS (CEO)</span>
                   <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium flex items-center gap-1">
                     <Handshake className="h-3 w-3" /> Transition Jumelage
                   </span>
@@ -2048,7 +2048,7 @@ export function CahierSmartDemo() {
             <ThinkingAnimation
               steps={SIM_ACTE2.criteresThinking}
               botName="Equipe Bot (COO + CFO + CTO)"
-              botCode="BOO"
+              botCode="COOB"
               onComplete={() => setStage(8.5)}
             />
           )}
@@ -2097,7 +2097,7 @@ export function CahierSmartDemo() {
               {/* CEO acknowledgment */}
               {criteresModified && stage === 8.5 && (
                 <div className="flex gap-3 animate-in fade-in slide-in-from-left-2 duration-300">
-                  <BotAvatar code="BCO" size="md" />
+                  <BotAvatar code="CEOB" size="md" />
                   <div className="bg-white border-l-[3px] border-l-blue-500 border border-gray-200 rounded-xl rounded-tl-none px-4 py-2.5 max-w-[70%] shadow-sm">
                     <p className="text-sm text-gray-800">Parfait, j'ajoute l'experience en milieu alimentaire comme critere. C'est effectivement crucial pour ton secteur — les normes HACCP et la gestion des zones de temperature vont filtrer encore plus precisement.</p>
                   </div>
@@ -2186,9 +2186,9 @@ export function CahierSmartDemo() {
             <>
               {/* CEO intro before winner */}
               <div className="flex gap-3">
-                <BotAvatar code="BCO" size="md" />
+                <BotAvatar code="CEOB" size="md" />
                 <div className="bg-white border-l-[3px] border-l-blue-500 border border-gray-200 rounded-xl rounded-tl-none px-4 py-2.5 max-w-[75%] shadow-sm">
-                  <span className={cn("text-xs font-semibold", BOT_COLORS.BCO.text)}>CarlOS (CEO)</span>
+                  <span className={cn("text-xs font-semibold", BOT_COLORS.CEOB.text)}>CarlOS (CEO)</span>
                   <p className="text-sm text-gray-800 mt-1">{SIM_ACTE2.ceoWinnerIntro}</p>
                 </div>
               </div>
@@ -2198,10 +2198,10 @@ export function CahierSmartDemo() {
               {/* CarlOS selection message */}
               {stage >= 11 && (
                 <div className="flex gap-3">
-                  <BotAvatar code="BCO" size="md" />
+                  <BotAvatar code="CEOB" size="md" />
                   <div className="bg-white border-l-[3px] border-l-blue-500 border border-gray-200 rounded-xl rounded-tl-none px-4 py-3 max-w-[75%] shadow-sm">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className={cn("text-xs font-semibold", BOT_COLORS.BCO.text)}>CarlOS (CEO)</span>
+                      <span className={cn("text-xs font-semibold", BOT_COLORS.CEOB.text)}>CarlOS (CEO)</span>
                       <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-medium flex items-center gap-1">
                         <CheckCircle2 className="h-3 w-3" /> Selection finale
                       </span>
@@ -2250,10 +2250,10 @@ export function CahierSmartDemo() {
           {/* ===== STAGE 12 — CEO message + thinking ===== */}
           {stage >= 12 && (
             <div className="flex gap-3">
-              <BotAvatar code="BCO" size="md" />
+              <BotAvatar code="CEOB" size="md" />
               <div className="bg-white border-l-[3px] border-l-blue-500 border border-gray-200 rounded-xl rounded-tl-none px-4 py-3 max-w-[75%] shadow-sm">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className={cn("text-xs font-semibold", BOT_COLORS.BCO.text)}>CarlOS (CEO)</span>
+                  <span className={cn("text-xs font-semibold", BOT_COLORS.CEOB.text)}>CarlOS (CEO)</span>
                   <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-medium">Construction du Cahier</span>
                 </div>
                 <p className="text-sm text-gray-800">
@@ -2268,7 +2268,7 @@ export function CahierSmartDemo() {
             <ThinkingAnimation
               steps={SIM_ACTE3.buildingThinking}
               botName="Equipe Bot + Energia Solutions"
-              botCode="BCO"
+              botCode="CEOB"
               onComplete={() => setStage(12.5)}
             />
           )}
@@ -2459,10 +2459,10 @@ export function CahierSmartDemo() {
 
               {/* CarlOS final message */}
               <div className="flex gap-3">
-                <BotAvatar code="BCO" size="md" />
+                <BotAvatar code="CEOB" size="md" />
                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-[3px] border-l-blue-500 border border-blue-200 rounded-xl rounded-tl-none px-4 py-3 max-w-[75%] shadow-sm">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className={cn("text-xs font-semibold", BOT_COLORS.BCO.text)}>CarlOS (CEO)</span>
+                    <span className={cn("text-xs font-semibold", BOT_COLORS.CEOB.text)}>CarlOS (CEO)</span>
                     <Sparkles className="h-3.5 w-3.5 text-yellow-500" />
                   </div>
                   <p className="text-sm text-gray-800">{SIM_ACTE3.ceremonyMessage}</p>

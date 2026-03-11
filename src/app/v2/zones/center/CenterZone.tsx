@@ -91,18 +91,18 @@ import { useFlowGPS } from "../../api/hooks";
 
 /** Couleur identitaire par bot — bande fine en haut du canevas */
 const BOT_BAND_COLORS: Record<string, string> = {
-  BCO: "bg-blue-500",
-  BCT: "bg-violet-500",
-  BCF: "bg-emerald-500",
-  BCM: "bg-pink-500",
-  BCS: "bg-red-500",
-  BOO: "bg-orange-500",
-  BFA: "bg-slate-400",
-  BHR: "bg-teal-500",
-  BIO: "bg-rose-500",
-  BRO: "bg-amber-500",
-  BLE: "bg-indigo-500",
-  BSE: "bg-zinc-400",
+  CEOB: "bg-blue-500",
+  CTOB: "bg-violet-500",
+  CFOB: "bg-emerald-500",
+  CMOB: "bg-pink-500",
+  CSOB: "bg-red-500",
+  COOB: "bg-orange-500",
+  CPOB: "bg-slate-400",
+  CHROB: "bg-teal-500",
+  CINOB: "bg-rose-500",
+  CROB: "bg-amber-500",
+  CLOB: "bg-indigo-500",
+  CISOB: "bg-zinc-400",
 };
 
 /** Labels CREDO par couche */
@@ -332,7 +332,7 @@ export function CenterZone() {
             {/* Header */}
             <div className="bg-gradient-to-r from-blue-600 to-indigo-500 px-3 py-2 flex items-center gap-2">
               <img
-                src={BOT_AVATAR[pushedContent.bot] || BOT_AVATAR["BCO"]}
+                src={BOT_AVATAR[pushedContent.bot] || BOT_AVATAR["CEOB"]}
                 alt={pushedContent.bot}
                 className="w-5 h-5 rounded-full ring-1 ring-white/30"
               />

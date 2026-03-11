@@ -496,48 +496,48 @@ export function DashboardView() {
         {/* Grille 12 bots Bot Team CarlOS — 4 colonnes, 3 rangées */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "100ms", animationFillMode: "both" }}>
-            <BlocCEO onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "CarlOS — Direction", element_type: "kpi_ceo", data: kpis?.CEO }, bot: "BCO" })} kpi={kpis?.CEO} />
+            <BlocCEO onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "CarlOS — Direction", element_type: "kpi_ceo", data: kpis?.CEO }, bot: "CEOB" })} kpi={kpis?.CEO} />
           </div>
           <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "150ms", animationFillMode: "both" }}>
-            <BlocCFO onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent CFO — Finances", element_type: "kpi_cfo", data: kpis?.CFO }, bot: "BCF" })} kpi={kpis?.CFO} />
+            <BlocCFO onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent CFO — Finances", element_type: "kpi_cfo", data: kpis?.CFO }, bot: "CFOB" })} kpi={kpis?.CFO} />
           </div>
           <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "200ms", animationFillMode: "both" }}>
-            <BlocCTO onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent CTO — Technologie", element_type: "kpi_cto", data: kpis?.CTO }, bot: "BCT" })} kpi={kpis?.CTO} />
+            <BlocCTO onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent CTO — Technologie", element_type: "kpi_cto", data: kpis?.CTO }, bot: "CTOB" })} kpi={kpis?.CTO} />
           </div>
           <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "250ms", animationFillMode: "both" }}>
-            <BlocCMO onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent CMO — Marketing", element_type: "kpi_cmo", data: kpis?.CMO }, bot: "BCM" })} kpi={kpis?.CMO} />
+            <BlocCMO onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent CMO — Marketing", element_type: "kpi_cmo", data: kpis?.CMO }, bot: "CMOB" })} kpi={kpis?.CMO} />
           </div>
           <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "300ms", animationFillMode: "both" }}>
-            <BlocCSO onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent CSO — Strategie", element_type: "kpi_cso", data: kpis?.CSO }, bot: "BCS" })} kpi={kpis?.CSO} />
+            <BlocCSO onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent CSO — Strategie", element_type: "kpi_cso", data: kpis?.CSO }, bot: "CSOB" })} kpi={kpis?.CSO} />
           </div>
           <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "350ms", animationFillMode: "both" }}>
-            <BlocCOO onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent COO — Operations", element_type: "kpi_coo", data: kpis?.COO }, bot: "BOO" })} kpi={kpis?.COO} />
+            <BlocCOO onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent COO — Operations", element_type: "kpi_coo", data: kpis?.COO }, bot: "COOB" })} kpi={kpis?.COO} />
           </div>
           <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "400ms", animationFillMode: "both" }}>
-            <BlocRH onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent RH — Ressources Humaines", element_type: "kpi_rh", data: kpis?.RH }, bot: "BHR" })} kpi={kpis?.RH} />
+            <BlocRH onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent RH — Ressources Humaines", element_type: "kpi_rh", data: kpis?.RH }, bot: "CHROB" })} kpi={kpis?.RH} />
           </div>
           <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "450ms", animationFillMode: "both" }}>
-            <BlocInnovation onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent Innovation", element_type: "kpi_innovation", data: kpis?.IO }, bot: "BIO" })} kpi={kpis?.IO} />
+            <BlocInnovation onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent Innovation", element_type: "kpi_innovation", data: kpis?.IO }, bot: "CINOB" })} kpi={kpis?.IO} />
           </div>
           <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "500ms", animationFillMode: "both" }}>
-            <BlocClients onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent Securite", element_type: "kpi_securite", data: kpis?.SE }, bot: "BSE" })} kpi={kpis?.SE} />
+            <BlocClients onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent Securite", element_type: "kpi_securite", data: kpis?.SE }, bot: "CISOB" })} kpi={kpis?.SE} />
           </div>
           <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "550ms", animationFillMode: "both" }}>
-            <BlocProduit onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent Usine & Produit", element_type: "kpi_usine", data: kpis?.FA }, bot: "BFA" })} kpi={kpis?.FA} />
+            <BlocProduit onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent Usine & Produit", element_type: "kpi_usine", data: kpis?.FA }, bot: "CPOB" })} kpi={kpis?.FA} />
           </div>
           <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "600ms", animationFillMode: "both" }}>
-            <BlocRisques onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent Risques", element_type: "kpi_risques", data: kpis?.RO }, bot: "BRO" })} kpi={kpis?.RO} />
+            <BlocRisques onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent Risques", element_type: "kpi_risques", data: kpis?.RO }, bot: "CROB" })} kpi={kpis?.RO} />
           </div>
           <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "650ms", animationFillMode: "both" }}>
-            <BlocLegal onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent Legal", element_type: "kpi_legal", data: kpis?.LE }, bot: "BLE" })} kpi={kpis?.LE} />
+            <BlocLegal onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent Legal", element_type: "kpi_legal", data: kpis?.LE }, bot: "CLOB" })} kpi={kpis?.LE} />
           </div>
         </div>
 
         {/* Diagnostic Express — entry point questionnaire (BLOC 6) */}
         <Card className="p-4 flex items-center gap-4 hover:shadow-md transition-shadow cursor-pointer animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "700ms", animationFillMode: "both" }}
           onClick={() => {
-            sendMessage("/questionnaire start", "BCO");
-            dispatch({ type: "focus", layer: "cerveau", data: { title: "Diagnostic Express", element_type: "questionnaire", data: {} }, bot: "BCO" });
+            sendMessage("/questionnaire start", "CEOB");
+            dispatch({ type: "focus", layer: "cerveau", data: { title: "Diagnostic Express", element_type: "questionnaire", data: {} }, bot: "CEOB" });
           }}
         >
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shrink-0 shadow-lg">

@@ -1,7 +1,7 @@
 /**
  * DepartmentTourDeControle.tsx — Tour de Controle par departement
  * MEME PATTERN que DashboardView (CarlOS) : bandeau proactif + 2 rangees de 5 Cards
- * Si BCO (Direction) => redirige vers DashboardView
+ * Si CEOB (Direction) => redirige vers DashboardView
  * Sprint A — Frame Master V2
  */
 
@@ -128,37 +128,37 @@ const DEPT_VIEW_TABS: { id: DeptViewTab; label: string; icon: React.ElementType 
 ];
 
 const DEPT_HEADER_GRADIENT: Record<string, string> = {
-  BCF: "from-emerald-600 to-emerald-500",
-  BCT: "from-violet-600 to-violet-500",
-  BFA: "from-slate-700 to-slate-600",
-  BOO: "from-orange-600 to-orange-500",
-  BRO: "from-amber-600 to-amber-500",
-  BCM: "from-pink-600 to-pink-500",
-  BCS: "from-red-600 to-red-500",
-  BHR: "from-teal-600 to-teal-500",
-  BSE: "from-zinc-700 to-zinc-600",
-  BLE: "from-indigo-600 to-indigo-500",
-  BIO: "from-rose-600 to-rose-500",
+  CFOB: "from-emerald-600 to-emerald-500",
+  CTOB: "from-violet-600 to-violet-500",
+  CPOB: "from-slate-700 to-slate-600",
+  COOB: "from-orange-600 to-orange-500",
+  CROB: "from-amber-600 to-amber-500",
+  CMOB: "from-pink-600 to-pink-500",
+  CSOB: "from-red-600 to-red-500",
+  CHROB: "from-teal-600 to-teal-500",
+  CISOB: "from-zinc-700 to-zinc-600",
+  CLOB: "from-indigo-600 to-indigo-500",
+  CINOB: "from-rose-600 to-rose-500",
 };
 
 /* Icon par departement pour le header gradient */
 const DEPT_ICON: Record<string, React.ElementType> = {
-  BCF: DollarSign, BCT: Cpu, BFA: Factory, BOO: Settings,
-  BRO: TrendingUp, BCM: Megaphone, BCS: Target, BHR: Users,
-  BSE: ShieldCheck, BLE: Scale, BIO: Lightbulb,
+  CFOB: DollarSign, CTOB: Cpu, CPOB: Factory, COOB: Settings,
+  CROB: TrendingUp, CMOB: Megaphone, CSOB: Target, CHROB: Users,
+  CISOB: ShieldCheck, CLOB: Scale, CINOB: Lightbulb,
 };
 
 /* Mapping bot code → department key for diagnostics */
 const BOT_TO_DEPT: Record<string, string> = {
-  BCO: "direction", BCT: "technologie", BCF: "finance", BCM: "marketing",
-  BCS: "strategie", BOO: "operations", BFA: "production", BHR: "rh",
-  BIO: "innovation", BRO: "ventes", BLE: "legal", BSE: "securite",
+  CEOB: "direction", CTOB: "technologie", CFOB: "finance", CMOB: "marketing",
+  CSOB: "strategie", COOB: "operations", CPOB: "production", CHROB: "rh",
+  CINOB: "innovation", CROB: "ventes", CLOB: "legal", CISOB: "securite",
 };
 
 const DEPT_TDC: Record<string, DeptTdcConfig> = {
 
-  /* --- FINANCE (BCF) --- */
-  BCF: {
+  /* --- FINANCE (CFOB) --- */
+  CFOB: {
     botName: "Agent CFO",
     summary: "Cash flow positif +34K$. 2 factures en retard (14K$). Marge brute a 42% — au-dessus de la cible.",
     row1: [
@@ -217,8 +217,8 @@ const DEPT_TDC: Record<string, DeptTdcConfig> = {
     ],
   },
 
-  /* --- TECHNOLOGIE (BCT) --- */
-  BCT: {
+  /* --- TECHNOLOGIE (CTOB) --- */
+  CTOB: {
     botName: "Agent CTO",
     summary: "Sprint A a 85%. 0 bug bloquant. Deploy V1 prevu vendredi. 535 tests OK.",
     row1: [
@@ -277,8 +277,8 @@ const DEPT_TDC: Record<string, DeptTdcConfig> = {
     ],
   },
 
-  /* --- PRODUCTION (BFA) --- */
-  BFA: {
+  /* --- PRODUCTION (CPOB) --- */
+  CPOB: {
     botName: "Agent Production",
     summary: "Ligne A a 94% capacite. 1 maintenance preventive prevue. Stock matiere a 78%.",
     row1: [
@@ -337,8 +337,8 @@ const DEPT_TDC: Record<string, DeptTdcConfig> = {
     ],
   },
 
-  /* --- OPERATION (BOO) --- */
-  BOO: {
+  /* --- OPERATION (COOB) --- */
+  COOB: {
     botName: "Agent COO",
     summary: "5 alertes operationnelles. Logistique fluide. 3 processus en optimisation.",
     row1: [
@@ -397,8 +397,8 @@ const DEPT_TDC: Record<string, DeptTdcConfig> = {
     ],
   },
 
-  /* --- VENTE (BRO) --- */
-  BRO: {
+  /* --- VENTE (CROB) --- */
+  CROB: {
     botName: "Agent CRO",
     summary: "Pipeline a 475K$. 2 deals en negociation. Taux closing a 32% — au-dessus de la cible.",
     row1: [
@@ -457,8 +457,8 @@ const DEPT_TDC: Record<string, DeptTdcConfig> = {
     ],
   },
 
-  /* --- MARKETING (BCM) --- */
-  BCM: {
+  /* --- MARKETING (CMOB) --- */
+  CMOB: {
     botName: "Agent CMO",
     summary: "1.2K leads generes. Taux conversion 3.8%. Campagne Q1 prete au lancement.",
     row1: [
@@ -517,8 +517,8 @@ const DEPT_TDC: Record<string, DeptTdcConfig> = {
     ],
   },
 
-  /* --- STRATEGIE (BCS) --- */
-  BCS: {
+  /* --- STRATEGIE (CSOB) --- */
+  CSOB: {
     botName: "Agent CSO",
     summary: "Plan strategique 2026 valide. 2 pivots en cours. Prochaine revue le 5 mars.",
     row1: [
@@ -577,8 +577,8 @@ const DEPT_TDC: Record<string, DeptTdcConfig> = {
     ],
   },
 
-  /* --- RH (BHR) --- */
-  BHR: {
+  /* --- RH (CHROB) --- */
+  CHROB: {
     botName: "Agent CHRO",
     summary: "1 embauche a confirmer. Climat social bon (4.2/5). Formation IA planifiee.",
     row1: [
@@ -637,8 +637,8 @@ const DEPT_TDC: Record<string, DeptTdcConfig> = {
     ],
   },
 
-  /* --- SECURITE (BSE) --- */
-  BSE: {
+  /* --- SECURITE (CISOB) --- */
+  CISOB: {
     botName: "Agent Securite",
     summary: "4 alertes actives. 1 tentative suspecte detectee. Conformite a 94%.",
     row1: [
@@ -697,8 +697,8 @@ const DEPT_TDC: Record<string, DeptTdcConfig> = {
     ],
   },
 
-  /* --- LEGAL (BLE) --- */
-  BLE: {
+  /* --- LEGAL (CLOB) --- */
+  CLOB: {
     botName: "Agent Legal",
     summary: "3 contrats en attente de signature. 0 litige actif. Conformite Loi 25 a 92%.",
     row1: [
@@ -757,8 +757,8 @@ const DEPT_TDC: Record<string, DeptTdcConfig> = {
     ],
   },
 
-  /* --- INNOVATION (BIO — Inès / CINO) --- */
-  BIO: {
+  /* --- INNOVATION (CINOB — Inès / CINO) --- */
+  CINOB: {
     botName: "Agent CINO",
     summary: "3 projets R&D actifs. 1 brevet en examen. Prototype IA vision en test.",
     row1: [
@@ -830,7 +830,7 @@ export function DepartmentTourDeControle() {
   // Load data for Pipeline / Documents / Diagnostics tabs
   // MUST be before any early return (React hooks rules)
   useEffect(() => {
-    if (activeBotCode === "BCO") return;
+    if (activeBotCode === "CEOB") return;
     setDeptTab("overview");
     const deptKey = BOT_TO_DEPT[activeBotCode] || "";
     api.listMissions().then(r => setMissions((r.missions || []).filter(m => m.bot_primaire === activeBotCode))).catch(() => {});
@@ -838,8 +838,8 @@ export function DepartmentTourDeControle() {
     api.listTemplatesDocumentaires(activeBotCode).then(t => setTemplates(t || [])).catch(() => {});
   }, [activeBotCode]);
 
-  // BCO (Direction) = meme Tour de Controle que le home
-  if (activeBotCode === "BCO") {
+  // CEOB (Direction) = meme Tour de Controle que le home
+  if (activeBotCode === "CEOB") {
     return <DashboardView />;
   }
 

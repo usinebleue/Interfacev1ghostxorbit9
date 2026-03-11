@@ -42,11 +42,11 @@ type TransitionTarget = "cahier" | "analyse" | "debat" | null;
 
 // ─── Bot colors ───
 const BOT_COLORS: Record<string, { bg: string; text: string; border: string; label: string }> = {
-  BCO: { bg: "bg-blue-100", text: "text-blue-700", border: "border-blue-300", label: "CEO" },
-  BCF: { bg: "bg-emerald-100", text: "text-emerald-700", border: "border-emerald-300", label: "CFO" },
-  BCS: { bg: "bg-red-100", text: "text-red-700", border: "border-red-300", label: "CSO" },
-  BOO: { bg: "bg-orange-100", text: "text-orange-700", border: "border-orange-300", label: "COO" },
-  BRO: { bg: "bg-amber-100", text: "text-amber-700", border: "border-amber-300", label: "CRO" },
+  CEOB: { bg: "bg-blue-100", text: "text-blue-700", border: "border-blue-300", label: "CEO" },
+  CFOB: { bg: "bg-emerald-100", text: "text-emerald-700", border: "border-emerald-300", label: "CFO" },
+  CSOB: { bg: "bg-red-100", text: "text-red-700", border: "border-red-300", label: "CSO" },
+  COOB: { bg: "bg-orange-100", text: "text-orange-700", border: "border-orange-300", label: "COO" },
+  CROB: { bg: "bg-amber-100", text: "text-amber-700", border: "border-amber-300", label: "CRO" },
 };
 
 // ─── Typewriter ───
@@ -96,7 +96,7 @@ function ThinkingAnimation({ steps, speed = 800, onDone }: { steps: { icon: Reac
 
 // ─── Bot avatar ───
 function BotAvatar({ code, size = "sm" }: { code: string; size?: "sm" | "md" }) {
-  const bot = BOT_COLORS[code] || BOT_COLORS.BCO;
+  const bot = BOT_COLORS[code] || BOT_COLORS.CEOB;
   const sz = size === "md" ? "w-8 h-8 text-xs" : "w-6 h-6 text-[10px]";
   return (
     <div className={cn("rounded-full flex items-center justify-center font-bold shrink-0", sz, bot.bg, bot.text, "border", bot.border)}>
@@ -300,7 +300,7 @@ function VerdictCard({ animated, challengeCount, onChallenge, onCounterArg, onTr
       {/* Recommandation */}
       <div className="px-4 py-3 border-b bg-white">
         <div className="flex items-center gap-1.5 mb-1.5">
-          <BotAvatar code="BCO" size="md" />
+          <BotAvatar code="CEOB" size="md" />
           <span className="text-xs font-bold text-gray-800">Recommandation du CEO</span>
         </div>
         <p className="text-xs text-gray-700 leading-relaxed">{v.recommandation}</p>
@@ -356,7 +356,7 @@ function ChallengeResponseCard({ type }: { type: "challenge" | "counter" }) {
   return (
     <div className="border rounded-xl overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-500">
       <div className={cn("px-4 py-2.5 border-b flex items-center gap-2", isChallenge ? "bg-red-50" : "bg-amber-50")}>
-        <BotAvatar code="BCO" size="sm" />
+        <BotAvatar code="CEOB" size="sm" />
         <span className={cn("text-xs font-bold", isChallenge ? "text-red-800" : "text-amber-800")}>
           {isChallenge ? "Defense du verdict" : "Contre-argument"}
         </span>
@@ -524,7 +524,7 @@ export function DecisionDemo({ onComplete, onTransition: onTransitionProp }: {
         {/* Stage 1 — CEO intro */}
         {stage >= 1 && (
           <div className="flex gap-2">
-            <BotAvatar code="BCO" size="md" />
+            <BotAvatar code="CEOB" size="md" />
             <div className="bg-white border rounded-2xl rounded-tl-md px-4 py-3 max-w-[85%] shadow-sm">
               <p className="text-sm text-gray-700 leading-relaxed">
                 <TypewriterText text={DECISION_DATA.ceoIntro} speed={10} onDone={() => setIntroTyped(true)} />
@@ -541,7 +541,7 @@ export function DecisionDemo({ onComplete, onTransition: onTransitionProp }: {
         {/* Stage 1.5 — Thinking setup */}
         {stage >= 1.5 && stage < 2 && (
           <div className="flex gap-2">
-            <BotAvatar code="BCO" size="md" />
+            <BotAvatar code="CEOB" size="md" />
             <div className="bg-white border rounded-2xl px-4 py-2 shadow-sm">
               <ThinkingAnimation steps={DECISION_DATA.setupThinking} speed={700} onDone={() => setStage(2)} />
             </div>
@@ -603,7 +603,7 @@ export function DecisionDemo({ onComplete, onTransition: onTransitionProp }: {
         {/* Stage 4.5 — Verdict thinking */}
         {stage >= 4.5 && stage < 5 && (
           <div className="flex gap-2">
-            <BotAvatar code="BCO" size="md" />
+            <BotAvatar code="CEOB" size="md" />
             <div className="bg-white border rounded-2xl px-4 py-2 shadow-sm">
               <ThinkingAnimation steps={DECISION_DATA.verdictThinking} speed={800} onDone={() => setStage(5)} />
             </div>

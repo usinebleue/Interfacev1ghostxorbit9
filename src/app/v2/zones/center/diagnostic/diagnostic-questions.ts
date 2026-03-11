@@ -184,60 +184,60 @@ export function getSecteursForProfil(profil: ProfilType): SecteurSCIAN[] {
 
 export const DEPARTEMENTS: DepartementInfo[] = [
   {
-    code: "BCO", nom: "Direction / CEO", tier: "CORE",
+    code: "CEOB", nom: "Direction / CEO", tier: "CORE",
     gapPhrase: "CarlOS agit comme votre copilote stratégique — il analyse vos données, simule des scénarios et vous donne des perspectives multi-angles pour chaque décision importante.",
   },
   {
-    code: "BCF", nom: "Finance / CFO", tier: "CORE",
-    gapPhrase: "BCF François automatise vos rapports, prédit votre trésorerie et analyse vos coûts — ce qui prend 15h/semaine se fait en 20 minutes.",
+    code: "CFOB", nom: "Finance / CFO", tier: "CORE",
+    gapPhrase: "CFOB François automatise vos rapports, prédit votre trésorerie et analyse vos coûts — ce qui prend 15h/semaine se fait en 20 minutes.",
   },
   {
-    code: "BCM", nom: "Marketing / CMO", tier: "CORE",
-    gapPhrase: "BCM Martine crée votre contenu, analyse votre marché et structure votre pipeline — 3x plus de leads avec le marketing automatisé.",
+    code: "CMOB", nom: "Marketing / CMO", tier: "CORE",
+    gapPhrase: "CMOB Martine crée votre contenu, analyse votre marché et structure votre pipeline — 3x plus de leads avec le marketing automatisé.",
   },
   {
-    code: "BOO", nom: "Opérations / COO", tier: "CORE",
-    gapPhrase: "BOO Olivier optimise la planification, réduit les goulots et élimine le temps perdu — 15-25% d'efficacité en plus.",
+    code: "COOB", nom: "Opérations / COO", tier: "CORE",
+    gapPhrase: "COOB Olivier optimise la planification, réduit les goulots et élimine le temps perdu — 15-25% d'efficacité en plus.",
   },
   {
-    code: "BFA", nom: "Production / Usine", tier: "CORE",
+    code: "CPOB", nom: "Production / Usine", tier: "CORE",
     nomByProfil: { FEQ: "R&D / Fabrication", DEV: "Développement / Livraison", INT: "Livraison / Projets", DST: "Logistique / Distribution", ORG: "Programmes / Services" },
-    gapPhrase: "BFA Factory analyse votre TRS, optimise la maintenance et détecte les anomalies qualité.",
+    gapPhrase: "CPOB Factory analyse votre TRS, optimise la maintenance et détecte les anomalies qualité.",
     gapPhraseByProfil: {
-      FEQ: "BFA optimise votre cycle R&D, votre fabrication spécialisée et votre service après-vente.",
-      DEV: "BFA accélère votre cycle de développement, votre CI/CD et votre support client.",
-      INT: "BFA gère la qualité de vos livraisons, le suivi client et vos revenus récurrents.",
-      DST: "BFA optimise votre chaîne logistique, vos inventaires et votre service client.",
-      ORG: "BFA maximise l'impact de vos programmes et l'engagement de vos membres.",
+      FEQ: "CPOB optimise votre cycle R&D, votre fabrication spécialisée et votre service après-vente.",
+      DEV: "CPOB accélère votre cycle de développement, votre CI/CD et votre support client.",
+      INT: "CPOB gère la qualité de vos livraisons, le suivi client et vos revenus récurrents.",
+      DST: "CPOB optimise votre chaîne logistique, vos inventaires et votre service client.",
+      ORG: "CPOB maximise l'impact de vos programmes et l'engagement de vos membres.",
     },
   },
   {
-    code: "BHR", nom: "RH / CHRO", tier: "CORE",
-    gapPhrase: "BHR transforme votre recrutement, réduit le roulement et développe une culture forte — avantage décisif en pénurie de main-d'oeuvre.",
+    code: "CHROB", nom: "RH / CHRO", tier: "CORE",
+    gapPhrase: "CHROB transforme votre recrutement, réduit le roulement et développe une culture forte — avantage décisif en pénurie de main-d'oeuvre.",
   },
   {
-    code: "BCT", nom: "Technologie / CTO", tier: "EXPAND",
-    gapPhrase: "BCT Thierry évalue votre dette technique, connecte vos systèmes et planifie votre transformation digitale.",
+    code: "CTOB", nom: "Technologie / CTO", tier: "EXPAND",
+    gapPhrase: "CTOB Thierry évalue votre dette technique, connecte vos systèmes et planifie votre transformation digitale.",
   },
   {
-    code: "BCS", nom: "Stratégie / CSO", tier: "EXPAND",
-    gapPhrase: "BCS Sophie analyse votre positionnement, identifie les opportunités et simule des scénarios stratégiques.",
+    code: "CSOB", nom: "Stratégie / CSO", tier: "EXPAND",
+    gapPhrase: "CSOB Sophie analyse votre positionnement, identifie les opportunités et simule des scénarios stratégiques.",
   },
   {
-    code: "BRO", nom: "Ventes / CRO", tier: "EXPAND",
-    gapPhrase: "BRO Revenue optimise votre pipeline, coache vos vendeurs et affine votre pricing — +20-40% de conversion.",
+    code: "CROB", nom: "Ventes / CRO", tier: "EXPAND",
+    gapPhrase: "CROB Revenue optimise votre pipeline, coache vos vendeurs et affine votre pricing — +20-40% de conversion.",
   },
   {
-    code: "BIO", nom: "Innovation / CINO", tier: "FULL",
-    gapPhrase: "BIO Inès surveille les technologies émergentes, évalue vos idées et protège votre PI.",
+    code: "CINOB", nom: "Innovation / CINO", tier: "FULL",
+    gapPhrase: "CINOB Inès surveille les technologies émergentes, évalue vos idées et protège votre PI.",
   },
   {
-    code: "BLE", nom: "Juridique / CLO", tier: "FULL",
-    gapPhrase: "BLE Legal analyse vos contrats, assure votre conformité Loi 25 et anticipe les risques.",
+    code: "CLOB", nom: "Juridique / CLO", tier: "FULL",
+    gapPhrase: "CLOB Legal analyse vos contrats, assure votre conformité Loi 25 et anticipe les risques.",
   },
   {
-    code: "BSE", nom: "Sécurité / CISO", tier: "FULL",
-    gapPhrase: "BSE Sécurité audite votre posture, forme vos employés et prépare votre PCA.",
+    code: "CISOB", nom: "Sécurité / CISO", tier: "FULL",
+    gapPhrase: "CISOB Sécurité audite votre posture, forme vos employés et prépare votre PCA.",
   },
 ];
 
@@ -258,8 +258,8 @@ export function getDepartementsForTaille(taille: TailleCategorie): DepartementIn
 // ── Questions par département (48 questions) ──
 
 export const DEPARTMENT_QUESTIONS: Record<string, DiagnosticQuestion[]> = {
-  // ── D1 — Direction / CEO (BCO) — IDENTIQUE ──
-  BCO: [
+  // ── D1 — Direction / CEO (CEOB) — IDENTIQUE ──
+  CEOB: [
     {
       id: "D1.1", question: "Comment prenez-vous vos décisions stratégiques importantes?",
       options: [
@@ -302,8 +302,8 @@ export const DEPARTMENT_QUESTIONS: Record<string, DiagnosticQuestion[]> = {
     },
   ],
 
-  // ── D2 — Finance / CFO (BCF) — 2/4 adaptées ──
-  BCF: [
+  // ── D2 — Finance / CFO (CFOB) — 2/4 adaptées ──
+  CFOB: [
     {
       id: "D2.1", question: "Comment produisez-vous vos rapports financiers mensuels?",
       options: [
@@ -362,8 +362,8 @@ export const DEPARTMENT_QUESTIONS: Record<string, DiagnosticQuestion[]> = {
     },
   ],
 
-  // ── D3 — Marketing / CMO (BCM) — 3/4 adaptées ──
-  BCM: [
+  // ── D3 — Marketing / CMO (CMOB) — 3/4 adaptées ──
+  CMOB: [
     {
       id: "D3.1", question: "Comment générez-vous vos nouveaux leads/prospects?",
       questionByProfil: { INT: "Comment trouvez-vous et qualifiez-vous vos prospects manufacturiers?" },
@@ -430,8 +430,8 @@ export const DEPARTMENT_QUESTIONS: Record<string, DiagnosticQuestion[]> = {
     },
   ],
 
-  // ── D4 — Opérations / COO (BOO) — 3/4 adaptées ──
-  BOO: [
+  // ── D4 — Opérations / COO (COOB) — 3/4 adaptées ──
+  COOB: [
     {
       id: "D4.1", question: "Comment planifiez-vous votre production/livraisons?",
       questionByProfil: { INT: "Comment planifiez-vous et coordonnez-vous vos mandats/projets clients?" },
@@ -499,7 +499,7 @@ export const DEPARTMENT_QUESTIONS: Record<string, DiagnosticQuestion[]> = {
   ],
 
   // ── D5 — Production (Manufacturier) / Livraison (Fournisseur) — 100% DIFFÉRENT ──
-  BFA: [
+  CPOB: [
     {
       id: "D5.1", question: "Quel est votre niveau d'automatisation sur le plancher?",
       questionByProfil: { INT: "Comment gérez-vous la qualité de livraison de vos mandats/projets?" },
@@ -574,8 +574,8 @@ export const DEPARTMENT_QUESTIONS: Record<string, DiagnosticQuestion[]> = {
     },
   ],
 
-  // ── D6 — RH / CHRO (BHR) — IDENTIQUE ──
-  BHR: [
+  // ── D6 — RH / CHRO (CHROB) — IDENTIQUE ──
+  CHROB: [
     {
       id: "D6.1", question: "Comment recrutez-vous vos employés?",
       options: [
@@ -618,8 +618,8 @@ export const DEPARTMENT_QUESTIONS: Record<string, DiagnosticQuestion[]> = {
     },
   ],
 
-  // ── D7 — Technologie / CTO (BCT) — 1/4 adaptée ──
-  BCT: [
+  // ── D7 — Technologie / CTO (CTOB) — 1/4 adaptée ──
+  CTOB: [
     {
       id: "D7.1", question: "Quel est votre principal système de gestion (ERP)?",
       options: [
@@ -670,8 +670,8 @@ export const DEPARTMENT_QUESTIONS: Record<string, DiagnosticQuestion[]> = {
     },
   ],
 
-  // ── D8 — Stratégie / CSO (BCS) — 2/4 adaptées ──
-  BCS: [
+  // ── D8 — Stratégie / CSO (CSOB) — 2/4 adaptées ──
+  CSOB: [
     {
       id: "D8.1", question: "Avez-vous un avantage compétitif clairement identifié et communiqué?",
       questionByProfil: { INT: "Qu'est-ce qui vous différencie des autres fournisseurs/intégrateurs dans votre domaine?" },
@@ -730,8 +730,8 @@ export const DEPARTMENT_QUESTIONS: Record<string, DiagnosticQuestion[]> = {
     },
   ],
 
-  // ── D9 — Ventes / CRO (BRO) — 3/4 adaptées ──
-  BRO: [
+  // ── D9 — Ventes / CRO (CROB) — 3/4 adaptées ──
+  CROB: [
     {
       id: "D9.1", question: "Comment suivez-vous votre pipeline de ventes?",
       questionByProfil: { INT: "Comment gérez-vous votre pipeline de mandats/projets potentiels?" },
@@ -798,8 +798,8 @@ export const DEPARTMENT_QUESTIONS: Record<string, DiagnosticQuestion[]> = {
     },
   ],
 
-  // ── D10 — Innovation / CINO (BIO) — 2/4 adaptées ──
-  BIO: [
+  // ── D10 — Innovation / CINO (CINOB) — 2/4 adaptées ──
+  CINOB: [
     {
       id: "D10.1", question: "Quel pourcentage de votre CA vient de produits/services lancés dans les 3 dernières années?",
       questionByProfil: { INT: "Quel pourcentage de votre CA vient de nouvelles offres/services lancés dans les 3 dernières années?" },
@@ -858,8 +858,8 @@ export const DEPARTMENT_QUESTIONS: Record<string, DiagnosticQuestion[]> = {
     },
   ],
 
-  // ── D11 — Juridique / CLO (BLE) — IDENTIQUE ──
-  BLE: [
+  // ── D11 — Juridique / CLO (CLOB) — IDENTIQUE ──
+  CLOB: [
     {
       id: "D11.1", question: "Comment gérez-vous vos contrats (clients, fournisseurs, employés)?",
       options: [
@@ -902,8 +902,8 @@ export const DEPARTMENT_QUESTIONS: Record<string, DiagnosticQuestion[]> = {
     },
   ],
 
-  // ── D12 — Sécurité / CISO (BSE) — 1/4 adaptée ──
-  BSE: [
+  // ── D12 — Sécurité / CISO (CISOB) — 1/4 adaptée ──
+  CISOB: [
     {
       id: "D12.1", question: "Avez-vous un plan de continuité des affaires (PCA) si vos systèmes tombent?",
       options: [
@@ -1066,12 +1066,12 @@ export const APPROCHE_CLIENT_QUESTIONS: DiagnosticQuestion[] = [
 // ── SEI Weights ──
 
 export const SEI_WEIGHTS: Record<string, { depts: string[]; weight: number; label: string }> = {
-  finance:    { depts: ["BCF"], weight: 0.20, label: "Finance" },
-  ventes:     { depts: ["BCM", "BRO"], weight: 0.20, label: "Ventes & Marketing" },
-  operations: { depts: ["BOO", "BFA"], weight: 0.20, label: "Opérations" },
-  strategie:  { depts: ["BCO", "BCS"], weight: 0.15, label: "Stratégie" },
-  innovation: { depts: ["BCT", "BIO"], weight: 0.15, label: "Innovation & Techno" },
-  rh:         { depts: ["BHR"], weight: 0.10, label: "Ressources Humaines" },
+  finance:    { depts: ["CFOB"], weight: 0.20, label: "Finance" },
+  ventes:     { depts: ["CMOB", "CROB"], weight: 0.20, label: "Ventes & Marketing" },
+  operations: { depts: ["COOB", "CPOB"], weight: 0.20, label: "Opérations" },
+  strategie:  { depts: ["CEOB", "CSOB"], weight: 0.15, label: "Stratégie" },
+  innovation: { depts: ["CTOB", "CINOB"], weight: 0.15, label: "Innovation & Techno" },
+  rh:         { depts: ["CHROB"], weight: 0.10, label: "Ressources Humaines" },
 };
 
 // ── Niveaux DIA ──

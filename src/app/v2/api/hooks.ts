@@ -32,37 +32,37 @@ import type {
 
 // Options contextuelles par defaut — arbre de developpement de la pensee (wireframe p.3)
 const DEFAULT_OPTIONS_BY_AGENT: Record<string, string[]> = {
-  BCO: [
+  CEOB: [
     "Approfondir cette idee",
     "Voir les implications financieres",
     "Quelles sont les prochaines etapes?",
     "Challenger cette approche",
   ],
-  BCT: [
+  CTOB: [
     "Details techniques",
     "Options d'integration",
     "Risques et mitigation",
     "Timeline de mise en oeuvre",
   ],
-  BCF: [
+  CFOB: [
     "Analyse de ROI",
     "Scenarios budgetaires",
     "Sources de financement",
     "Impact sur le cash flow",
   ],
-  BCM: [
+  CMOB: [
     "Strategie de contenu",
     "Ciblage et personas",
     "KPIs et mesure",
     "Plan d'execution",
   ],
-  BCS: [
+  CSOB: [
     "Analyse concurrentielle",
     "Opportunites de marche",
     "Plan d'action strategique",
     "Risques et contingences",
   ],
-  BOO: [
+  COOB: [
     "Optimisation du process",
     "Ressources necessaires",
     "Indicateurs de performance",
@@ -101,7 +101,7 @@ const MODE_LIVE_CONFIG: Record<string, ModeConfig> = {
     coachingIntro: "",
     coachingConverge: "Les arguments sont clairs des 2 cotes. On passe au verdict?",
     synthesisPrompt: "Synthetise le debat: Position A (arguments + forces), Position B (arguments + forces), Verdict (quelle position est la plus solide et pourquoi), Decision recommandee.",
-    autoConsultBots: ["BCF", "BCS"],
+    autoConsultBots: ["CFOB", "CSOB"],
     maxExchanges: 8,
   },
   brainstorm: {
@@ -109,7 +109,7 @@ const MODE_LIVE_CONFIG: Record<string, ModeConfig> = {
     coachingIntro: "",
     coachingConverge: "On a assez d'idees. On passe au tri?",
     synthesisPrompt: "Classe les idees par potentiel (fort/moyen/faible). Top 3 idees avec justification. Prochaine etape pour chaque top idee.",
-    autoConsultBots: ["BCM", "BCT"],
+    autoConsultBots: ["CMOB", "CTOB"],
     maxExchanges: 5,
   },
   crise: {
@@ -117,7 +117,7 @@ const MODE_LIVE_CONFIG: Record<string, ModeConfig> = {
     coachingIntro: "",
     coachingConverge: "Situation evaluee. On passe au plan d'action immediat?",
     synthesisPrompt: "Plan de crise: (1) Severite 1-10, (2) Actions immediates (30 min), (3) Communication a faire, (4) Responsable de chaque action, (5) Suivi dans 24h.",
-    autoConsultBots: ["BOO"],
+    autoConsultBots: ["COOB"],
     maxExchanges: 4,
   },
   analyse: {
@@ -125,7 +125,7 @@ const MODE_LIVE_CONFIG: Record<string, ModeConfig> = {
     coachingIntro: "",
     coachingConverge: "L'analyse est solide. On formule les conclusions?",
     synthesisPrompt: "Analyse structuree: (1) Probleme decompose, (2) Causes racines identifiees, (3) Donnees cles, (4) Conclusions, (5) Recommandations actionnables.",
-    autoConsultBots: ["BCT", "BCF"],
+    autoConsultBots: ["CTOB", "CFOB"],
     maxExchanges: 6,
   },
   decision: {
@@ -133,7 +133,7 @@ const MODE_LIVE_CONFIG: Record<string, ModeConfig> = {
     coachingIntro: "",
     coachingConverge: "Les options sont evaluees. Pret a trancher?",
     synthesisPrompt: "Matrice de decision: Options evaluees (criteres, risques, potentiel). Recommandation avec niveau de confiance. Conditions de succes du Go. Plan B si No-Go.",
-    autoConsultBots: ["BCF", "BCS"],
+    autoConsultBots: ["CFOB", "CSOB"],
     maxExchanges: 5,
   },
   strategie: {
@@ -141,7 +141,7 @@ const MODE_LIVE_CONFIG: Record<string, ModeConfig> = {
     coachingIntro: "",
     coachingConverge: "La strategie se dessine. On formalise le plan?",
     synthesisPrompt: "Plan strategique: (1) Forces et faiblesses, (2) 3 axes prioritaires, (3) Quick wins (30 jours), (4) Moyen terme (90 jours), (5) Indicateurs de succes.",
-    autoConsultBots: ["BCS", "BCF"],
+    autoConsultBots: ["CSOB", "CFOB"],
     maxExchanges: 7,
   },
   innovation: {
@@ -149,7 +149,7 @@ const MODE_LIVE_CONFIG: Record<string, ModeConfig> = {
     coachingIntro: "",
     coachingConverge: "On a identifie des pistes. On selectionne la plus prometteuse?",
     synthesisPrompt: "Innovation brief: (1) Opportunite identifiee, (2) Solution proposee, (3) Differenciateur cle, (4) Premier prototype (description), (5) Marche potentiel, (6) Prochaine etape concrete.",
-    autoConsultBots: ["BCT", "BCM"],
+    autoConsultBots: ["CTOB", "CMOB"],
     maxExchanges: 6,
   },
   deep: {
@@ -157,7 +157,7 @@ const MODE_LIVE_CONFIG: Record<string, ModeConfig> = {
     coachingIntro: "",
     coachingConverge: "Des insights profonds emergent. On cristallise?",
     synthesisPrompt: "Insights: (1) Ce qui n'etait pas evident, (2) Connexions inattendues, (3) Question que personne ne posait, (4) Recommandation contre-intuitive, (5) Ce que ca change pour la suite.",
-    autoConsultBots: ["BCS"],
+    autoConsultBots: ["CSOB"],
     maxExchanges: 5,
   },
 };
@@ -285,7 +285,7 @@ Reponse du bot: ${botResponse.slice(0, 300)}
 
 Titre:`,
       user_id: 1,
-      agent: "BCO",
+      agent: "CEOB",
       direct: true,
     });
 
@@ -402,7 +402,7 @@ export function useChat() {
   const [threads, setThreads] = useState<Thread[]>(() => loadThreads());
   const [activeThreadId, setActiveThreadIdRaw] = useState<string | null>(() => loadActiveThreadId());
   // Roster de bots actifs — max 3, CarlOS en défaut
-  const [activeRoster, setActiveRoster] = useState<string[]>(["BCO"]);
+  const [activeRoster, setActiveRoster] = useState<string[]>(["CEOB"]);
   const idCounter = useRef(0);
   const hasAutoRestored = useRef(false);
 
@@ -509,7 +509,7 @@ export function useChat() {
         role: "system",
         content: text,
         timestamp: new Date(),
-        agent: "BCO",
+        agent: "CEOB",
         msgType: "coaching",
         options,
       };
@@ -587,7 +587,7 @@ export function useChat() {
           status: "active",
           messages: [userMsg],
           mode: (mode as Thread["mode"]) || "credo",
-          primaryBot: agent || "BCO",
+          primaryBot: agent || "CEOB",
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
@@ -630,7 +630,7 @@ export function useChat() {
         role: "assistant",
         content: "",
         timestamp: new Date(),
-        agent: agent || "BCO",
+        agent: agent || "CEOB",
         msgType: msgType === "challenge" ? "challenge" : msgType === "consultation" ? "consultation" : msgType === "synthesis" ? "synthesis" : "normal",
         parentId: meta?.parentId,
         branchDepth,
@@ -669,7 +669,7 @@ export function useChat() {
                 parsedOptions = parsed.parsedOptions;
               }
 
-              const agentOptions = DEFAULT_OPTIONS_BY_AGENT[agent || "BCO"];
+              const agentOptions = DEFAULT_OPTIONS_BY_AGENT[agent || "CEOB"];
               const options = parsedOptions.length > 0
                 ? parsedOptions
                 : msgType === "synthesis"
@@ -852,7 +852,7 @@ export function useChat() {
             parsedOptions = parsed.parsedOptions;
           }
 
-          const agentOptions = DEFAULT_OPTIONS_BY_AGENT[agent || "BCO"];
+          const agentOptions = DEFAULT_OPTIONS_BY_AGENT[agent || "CEOB"];
           const options = parsedOptions.length > 0
             ? parsedOptions
             : msgType === "synthesis"
@@ -926,7 +926,7 @@ export function useChat() {
 
   const acceptTeamProposal = useCallback((bots: string[]) => {
     const limited = bots.slice(0, 3);
-    setActiveRoster(limited.length > 0 ? limited : ["BCO"]);
+    setActiveRoster(limited.length > 0 ? limited : ["CEOB"]);
   }, []);
 
   const newConversation = useCallback(() => {
@@ -1028,7 +1028,7 @@ export function useChat() {
           status: "active",
           messages: [userMsg],
           mode: (mode as Thread["mode"]) || "credo",
-          primaryBot: agents[0] || "BCO",
+          primaryBot: agents[0] || "CEOB",
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
@@ -1089,7 +1089,7 @@ export function useChat() {
         role,
         content,
         timestamp: new Date(),
-        agent: role === "assistant" ? (agent || "BCO") : undefined,
+        agent: role === "assistant" ? (agent || "CEOB") : undefined,
         msgType: "voice" as MessageType,
       };
       setMessages((prev) => [...prev, msg]);
@@ -1103,7 +1103,7 @@ export function useChat() {
           status: "active",
           messages: [msg],
           mode: "credo",
-          primaryBot: agent || "BCO",
+          primaryBot: agent || "CEOB",
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
@@ -1127,7 +1127,7 @@ export function useChat() {
         role: "assistant",
         content: question,
         timestamp: new Date(),
-        agent: fd.bot || "BCO",
+        agent: fd.bot || "CEOB",
         msgType: "focus_card" as MessageType,
         focusCardData: { title: fd.title, elementType: fd.elementType, items, quickActions },
       };
@@ -1140,7 +1140,7 @@ export function useChat() {
         status: "active",
         messages: [msg],
         mode: "credo",
-        primaryBot: fd.bot || "BCO",
+        primaryBot: fd.bot || "CEOB",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -2202,7 +2202,7 @@ export function usePhone() {
     }
   }, []);
 
-  const callOutbound = useCallback(async (to: string, botCode = "BCO") => {
+  const callOutbound = useCallback(async (to: string, botCode = "CEOB") => {
     setLoading(true);
     setError(null);
     try {

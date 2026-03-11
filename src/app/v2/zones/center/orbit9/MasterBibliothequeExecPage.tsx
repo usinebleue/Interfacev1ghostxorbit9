@@ -54,18 +54,18 @@ const THREE_MODELS = [
 ];
 
 const CLEVEL_TASKS = [
-  { role: "CEO", bot: "BCO", tasks: 30, topAuto: ["Analyser tableaux de bord KPIs (★★★)", "Préparer agenda CODIR (★★★)", "Lire veille concurrentielle (★★★)", "Suivre KPIs usine TRS (★★★)"] },
-  { role: "CFO", bot: "BCF", tasks: 30, topAuto: ["Générer états financiers (★★★)", "Analyser variance budget (★★★)", "Suivi trésorerie (★★★)", "Rapports conformité ARC/RQ (★★)"] },
-  { role: "COO", bot: "BOO", tasks: 30, topAuto: ["Planification production (★★★)", "Suivi OFs dans ERP (★★★)", "Rapports de performance (★★★)", "Tableau de bord ops (★★★)"] },
-  { role: "CTO", bot: "BCT", tasks: 30, topAuto: ["Monitoring infrastructure (★★★)", "Alertes sécurité (★★★)", "Rapports de dette technique (★★)", "Déploiement automatisé (★★★)"] },
-  { role: "CMO", bot: "BCM", tasks: 25, topAuto: ["Analytics marketing digital (★★★)", "Génération contenu (★★)", "Rapports performance campagnes (★★★)", "Social media monitoring (★★★)"] },
-  { role: "CSO", bot: "BCS", tasks: 25, topAuto: ["Veille concurrentielle (★★★)", "Analyse pipeline stratégique (★★)", "Scoring opportunités (★★)", "Rapports veille sectorielle (★★★)"] },
-  { role: "CHRO", bot: "BHR", tasks: 25, topAuto: ["Sondages engagement (★★★)", "Suivi formation (★★★)", "Rapports roulement (★★★)", "Screening CV (★★)"] },
-  { role: "CRO", bot: "BRO", tasks: 25, topAuto: ["Suivi pipeline ventes (★★★)", "Forecasting (★★★)", "Rapports performance reps (★★★)", "Scoring leads (★★★)"] },
-  { role: "CINO", bot: "BIO", tasks: 20, topAuto: ["Veille technologique (★★★)", "Gestion portfolio PI (★★)", "Rapports R&D (★★)", "Benchmark innovation (★★)"] },
-  { role: "CPO/Factory", bot: "BFA", tasks: 30, topAuto: ["Monitoring TRS machines (★★★)", "Suivi maintenance GMAO (★★★)", "Alertes SST (★★★)", "Rapports production (★★★)"] },
-  { role: "CLO", bot: "BLE", tasks: 20, topAuto: ["Suivi renouvellements contrats (★★★)", "Alertes conformité (★★★)", "Gestion registre Loi 25 (★★)", "Veille réglementaire (★★★)"] },
-  { role: "CISO", bot: "BSE", tasks: 20, topAuto: ["Monitoring cybersécurité (★★★)", "Alertes vulnérabilités (★★★)", "Rapports conformité SOC2/NIST (★★)", "Tests automatisés (★★★)"] },
+  { role: "CEO", bot: "CEOB", tasks: 30, topAuto: ["Analyser tableaux de bord KPIs (★★★)", "Préparer agenda CODIR (★★★)", "Lire veille concurrentielle (★★★)", "Suivre KPIs usine TRS (★★★)"] },
+  { role: "CFO", bot: "CFOB", tasks: 30, topAuto: ["Générer états financiers (★★★)", "Analyser variance budget (★★★)", "Suivi trésorerie (★★★)", "Rapports conformité ARC/RQ (★★)"] },
+  { role: "COO", bot: "COOB", tasks: 30, topAuto: ["Planification production (★★★)", "Suivi OFs dans ERP (★★★)", "Rapports de performance (★★★)", "Tableau de bord ops (★★★)"] },
+  { role: "CTO", bot: "CTOB", tasks: 30, topAuto: ["Monitoring infrastructure (★★★)", "Alertes sécurité (★★★)", "Rapports de dette technique (★★)", "Déploiement automatisé (★★★)"] },
+  { role: "CMO", bot: "CMOB", tasks: 25, topAuto: ["Analytics marketing digital (★★★)", "Génération contenu (★★)", "Rapports performance campagnes (★★★)", "Social media monitoring (★★★)"] },
+  { role: "CSO", bot: "CSOB", tasks: 25, topAuto: ["Veille concurrentielle (★★★)", "Analyse pipeline stratégique (★★)", "Scoring opportunités (★★)", "Rapports veille sectorielle (★★★)"] },
+  { role: "CHRO", bot: "CHROB", tasks: 25, topAuto: ["Sondages engagement (★★★)", "Suivi formation (★★★)", "Rapports roulement (★★★)", "Screening CV (★★)"] },
+  { role: "CRO", bot: "CROB", tasks: 25, topAuto: ["Suivi pipeline ventes (★★★)", "Forecasting (★★★)", "Rapports performance reps (★★★)", "Scoring leads (★★★)"] },
+  { role: "CINO", bot: "CINOB", tasks: 20, topAuto: ["Veille technologique (★★★)", "Gestion portfolio PI (★★)", "Rapports R&D (★★)", "Benchmark innovation (★★)"] },
+  { role: "CPO/Factory", bot: "CPOB", tasks: 30, topAuto: ["Monitoring TRS machines (★★★)", "Suivi maintenance GMAO (★★★)", "Alertes SST (★★★)", "Rapports production (★★★)"] },
+  { role: "CLO", bot: "CLOB", tasks: 20, topAuto: ["Suivi renouvellements contrats (★★★)", "Alertes conformité (★★★)", "Gestion registre Loi 25 (★★)", "Veille réglementaire (★★★)"] },
+  { role: "CISO", bot: "CISOB", tasks: 20, topAuto: ["Monitoring cybersécurité (★★★)", "Alertes vulnérabilités (★★★)", "Rapports conformité SOC2/NIST (★★)", "Tests automatisés (★★★)"] },
 ];
 
 const MEETING_TYPES = [

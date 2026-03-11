@@ -1,8 +1,8 @@
 /**
  * CarlOSPresence.tsx — Bulle d'accueil du bot dans chaque section du canevas
  * Le bot ÉCRIT EN PREMIER pour présenter la section — avant que l'utilisateur parle.
- * Sections générales → CarlOS (BCO)
- * Départements (BCT, BCF, etc.) → chaque bot présente sa propre section
+ * Sections générales → CarlOS (CEOB)
+ * Départements (CTOB, CFOB, etc.) → chaque bot présente sa propre section
  * Sprint B/C — CarlOS Noyau Omnipresent (D-081)
  */
 
@@ -66,24 +66,24 @@ const FIRST_VISIT_MSG = "Bienvenue dans CarlOS! Chaque bloc que vous voyez est u
 
 /** Messages d'accueil par bot pour leurs départements */
 const DEPT_MESSAGES: Record<string, string> = {
-  BCO: "Bienvenue dans la direction générale. Je surveille l'ensemble de l'organisation pour vous.",
-  BCT: "Bienvenue dans mon département Technologie. Voici l'état de votre écosystème tech. Cliquez sur un élément pour qu'on en discute.",
-  BCF: "Bonjour! Je suis François, votre CFO. Voici un portrait de vos finances. Cliquez sur un bloc pour qu'on creuse ensemble.",
-  BCM: "Martine ici, votre CMO. Bienvenue dans Marketing & Croissance. Cliquez sur un élément pour qu'on l'analyse.",
-  BCS: "Sophie à l'appareil, votre CSO. Stratégie & Ventes — cliquez sur un bloc pour qu'on en discute.",
-  BOO: "Olivier ici, votre COO. Opérations & Production — cliquez sur un élément pour qu'on approfondisse.",
-  BHR: "Hélène, votre CHRO. Capital humain, recrutement et culture. Cliquez sur un bloc pour qu'on en parle.",
-  BIO: "Inès, votre CINO. Innovation & Données — cliquez sur un élément pour qu'on en discute.",
-  BRO: "Raphaël, votre CRO. Revenus & Croissance — cliquez sur un bloc pour qu'on creuse ensemble.",
-  BLE: "Louise, votre CLO. Juridique & Conformité — cliquez sur un élément pour qu'on en discute.",
-  BSE: "Sébastien, votre CISO. Sécurité & Cyber — cliquez sur un bloc pour qu'on analyse ensemble.",
+  CEOB: "Bienvenue dans la direction générale. Je surveille l'ensemble de l'organisation pour vous.",
+  CTOB: "Bienvenue dans mon département Technologie. Voici l'état de votre écosystème tech. Cliquez sur un élément pour qu'on en discute.",
+  CFOB: "Bonjour! Je suis François, votre CFO. Voici un portrait de vos finances. Cliquez sur un bloc pour qu'on creuse ensemble.",
+  CMOB: "Martine ici, votre CMO. Bienvenue dans Marketing & Croissance. Cliquez sur un élément pour qu'on l'analyse.",
+  CSOB: "Sophie à l'appareil, votre CSO. Stratégie & Ventes — cliquez sur un bloc pour qu'on en discute.",
+  COOB: "Olivier ici, votre COO. Opérations & Production — cliquez sur un élément pour qu'on approfondisse.",
+  CHROB: "Hélène, votre CHRO. Capital humain, recrutement et culture. Cliquez sur un bloc pour qu'on en parle.",
+  CINOB: "Inès, votre CINO. Innovation & Données — cliquez sur un élément pour qu'on en discute.",
+  CROB: "Raphaël, votre CRO. Revenus & Croissance — cliquez sur un bloc pour qu'on creuse ensemble.",
+  CLOB: "Louise, votre CLO. Juridique & Conformité — cliquez sur un élément pour qu'on en discute.",
+  CISOB: "Sébastien, votre CISO. Sécurité & Cyber — cliquez sur un bloc pour qu'on analyse ensemble.",
 };
 
 /** Nom court par bot */
 const BOT_NAMES: Record<string, string> = {
-  BCO: "CarlOS", BCT: "Thierry", BCF: "François", BCM: "Martine",
-  BCS: "Sophie", BOO: "Olivier", BHR: "Hélène", BIO: "Inès",
-  BFA: "Fabien", BRO: "Raphaël", BLE: "Louise", BSE: "Sébastien",
+  CEOB: "CarlOS", CTOB: "Thierry", CFOB: "François", CMOB: "Martine",
+  CSOB: "Sophie", COOB: "Olivier", CHROB: "Hélène", CINOB: "Inès",
+  CPOB: "Fabien", CROB: "Raphaël", CLOB: "Louise", CISOB: "Sébastien",
 };
 
 export function CarlOSPresence() {
@@ -102,9 +102,9 @@ export function CarlOSPresence() {
 
   // Pour les vues département, chaque bot présente sa propre section
   const isDept = activeView === "department";
-  const botCode = isDept ? activeBotCode : "BCO";
+  const botCode = isDept ? activeBotCode : "CEOB";
   const botName = BOT_NAMES[botCode] || "CarlOS";
-  const botAvatar = BOT_AVATAR[botCode] || BOT_AVATAR["BCO"];
+  const botAvatar = BOT_AVATAR[botCode] || BOT_AVATAR["CEOB"];
   const botRole = BOT_SUBTITLE[botCode] || "Agent AI";
 
   // Première visite → message enrichi sur le dashboard

@@ -16,10 +16,10 @@ import { PageHeader } from "./layouts/PageHeader";
 // ── Equipe de crise par defaut ──
 
 const CRISIS_TEAM: { code: string; nom: string; role_crise: string; ringColor: string }[] = [
-  { code: "BCO", nom: "CarlOS", role_crise: "Commandant de crise", ringColor: "ring-blue-500" },
-  { code: "BOO", nom: "Olivier", role_crise: "Operations d'urgence", ringColor: "ring-orange-500" },
-  { code: "BCS", nom: "Sophie", role_crise: "Analyse des risques", ringColor: "ring-red-500" },
-  { code: "BCF", nom: "Francois", role_crise: "Impact financier", ringColor: "ring-emerald-500" },
+  { code: "CEOB", nom: "CarlOS", role_crise: "Commandant de crise", ringColor: "ring-blue-500" },
+  { code: "COOB", nom: "Olivier", role_crise: "Operations d'urgence", ringColor: "ring-orange-500" },
+  { code: "CSOB", nom: "Sophie", role_crise: "Analyse des risques", ringColor: "ring-red-500" },
+  { code: "CFOB", nom: "Francois", role_crise: "Impact financier", ringColor: "ring-emerald-500" },
 ];
 
 // ── Steps du flow War Room ──

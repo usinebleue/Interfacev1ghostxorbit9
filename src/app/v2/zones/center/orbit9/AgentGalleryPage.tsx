@@ -89,9 +89,9 @@ interface AgentConfig {
 // ════════════════════════════════════════════════════════════════
 
 export const AGENTS: AgentConfig[] = [
-  // ─── 1. BCO — CarlOS (CEO) — BLUE ───
+  // ─── 1. CEOB — CarlOS (CEO) — BLUE ───
   {
-    code: "BCO",
+    code: "CEOB",
     name: "CarlOS",
     role: "CEO AI — Président Directeur Général",
     image: "/agents/generated/ceo-carlos-standby-v3.png?v=5",
@@ -187,9 +187,9 @@ export const AGENTS: AgentConfig[] = [
     uniqueDesc: "Hologramme 3D + dashboards animés",
   },
 
-  // ─── 2. BCT — Thierry (CTO) — VIOLET ───
+  // ─── 2. CTOB — Thierry (CTO) — VIOLET ───
   {
-    code: "BCT",
+    code: "CTOB",
     name: "Thierry",
     role: "CTO AI — Directeur Technologie",
     image: "/agents/generated/cto-thierry-standby-v3.png?v=5",
@@ -266,9 +266,9 @@ export const AGENTS: AgentConfig[] = [
     identityPos: "right",
   },
 
-  // ─── 3. BCF — François (CFO) — EMERALD ───
+  // ─── 3. CFOB — François (CFO) — EMERALD ───
   {
-    code: "BCF",
+    code: "CFOB",
     name: "François",
     role: "CFO AI — Directeur Finances",
     image: "/agents/generated/cfo-francois-standby-v3.png?v=5",
@@ -334,9 +334,9 @@ export const AGENTS: AgentConfig[] = [
     uniqueDesc: "Écrans Bloomberg + courbes financières animées",
   },
 
-  // ─── 4. BCM — Martine (CMO) — PINK ───
+  // ─── 4. CMOB — Martine (CMO) — PINK ───
   {
-    code: "BCM",
+    code: "CMOB",
     name: "Martine",
     role: "CMO AI — Directrice Marketing",
     image: "/agents/generated/cmo-martine-standby-v3.png?v=5",
@@ -419,9 +419,9 @@ export const AGENTS: AgentConfig[] = [
     uniqueDesc: "Cards UI flottantes + éléments créatifs",
   },
 
-  // ─── 5. BCS — Sophie (CSO) — RED ───
+  // ─── 5. CSOB — Sophie (CSO) — RED ───
   {
-    code: "BCS",
+    code: "CSOB",
     name: "Sophie",
     role: "CSO AI — Directrice Stratégie",
     image: "/agents/generated/cso-sophie-standby-v3.png?v=5",
@@ -509,9 +509,9 @@ export const AGENTS: AgentConfig[] = [
     uniqueDesc: "Carte mondiale + connexions stratégiques + échiquier",
   },
 
-  // ─── 6. BOO — Olivier (COO) — ORANGE ───
+  // ─── 6. COOB — Olivier (COO) — ORANGE ───
   {
-    code: "BOO",
+    code: "COOB",
     name: "Olivier",
     role: "COO AI — Directeur Opérations",
     image: "/agents/generated/coo-olivier-standby-v3.png?v=5",
@@ -592,9 +592,9 @@ export const AGENTS: AgentConfig[] = [
     uniqueDesc: "Dashboard HUD opérationnel + étincelles bras robotiques",
   },
 
-  // ─── 7. BHR — Hélène (CHRO) — TEAL ───
+  // ─── 7. CHROB — Hélène (CHRO) — TEAL ───
   {
-    code: "BHR",
+    code: "CHROB",
     name: "Hélène",
     role: "CHRO AI — Directrice Ressources Humaines",
     image: "/agents/generated/chro-helene-standby-v3.png?v=5",
@@ -679,9 +679,9 @@ export const AGENTS: AgentConfig[] = [
     uniqueDesc: "Organigramme holographique interactif",
   },
 
-  // ─── 8. BIO — Inès (CINO) — CYAN/PINK ───
+  // ─── 8. CINOB — Inès (CINO) — CYAN/PINK ───
   {
-    code: "BIO",
+    code: "CINOB",
     name: "Inès",
     role: "CINO AI — Directrice Innovation",
     image: "/agents/generated/cino-ines-standby-v3.png?v=5",
@@ -768,9 +768,9 @@ export const AGENTS: AgentConfig[] = [
     identityPos: "right",
   },
 
-  // ─── 9. BRO — Raphaël (CRO) — AMBER ───
+  // ─── 9. CROB — Raphaël (CRO) — AMBER ───
   {
-    code: "BRO",
+    code: "CROB",
     name: "Raphaël",
     role: "CRO AI — Directeur Revenus",
     image: "/agents/generated/cro-raphael-standby-v3.png?v=5",
@@ -845,9 +845,9 @@ export const AGENTS: AgentConfig[] = [
     uniqueDesc: "Écrans courbes ventes + tablette HUD interactive",
   },
 
-  // ─── 10. BLE — Louise (CLO) — INDIGO ───
+  // ─── 10. CLOB — Louise (CLO) — INDIGO ───
   {
-    code: "BLE",
+    code: "CLOB",
     name: "Louise",
     role: "CLO AI — Directrice Juridique",
     image: "/agents/generated/clo-louise-standby-v3.png?v=5",
@@ -919,9 +919,9 @@ export const AGENTS: AgentConfig[] = [
     uniqueDesc: "Dashboard juridique holographique + graphiques",
   },
 
-  // ─── 11. BSE — SecBot (CISO) — ZINC ───
+  // ─── 11. CISOB — SecBot (CISO) — ZINC ───
   {
-    code: "BSE",
+    code: "CISOB",
     name: "Sébastien",
     role: "CISO AI — Directeur Cybersécurité",
     image: "/agents/generated/ciso-secbot-standby-v3.png?v=5",
@@ -1008,9 +1008,9 @@ export const AGENTS: AgentConfig[] = [
     identityPos: "right",
   },
 
-  // ─── 12. BFA — Factory Bot — SLATE ───
+  // ─── 12. CPOB — Factory Bot — SLATE ───
   {
-    code: "BFA",
+    code: "CPOB",
     name: "Fabien",
     role: "CPO AI — Directeur Production",
     image: "/agents/generated/factory-bot-standby-v3.png?v=5",

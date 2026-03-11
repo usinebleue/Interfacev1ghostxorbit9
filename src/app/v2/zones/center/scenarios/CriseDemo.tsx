@@ -528,7 +528,7 @@ export function CriseDemo({ onComplete, onTransition: onTransitionProp }: { onCo
             <ThinkingAnimation
               steps={data.observe.thinking}
               botEmoji=""
-              botCode="BCO"
+              botCode="CEOB"
               botName="CarlOS"
               speed={300}
               onComplete={() => setStage(1.5)}
@@ -538,7 +538,7 @@ export function CriseDemo({ onComplete, onTransition: onTransitionProp }: { onCo
           {/* STAGE 1.5 — CEO Message + Facts Dashboard */}
           {stage >= 1.5 && stage < 3 && (
             <div className="flex gap-3">
-              <BotAvatar code="BCO" size="md" />
+              <BotAvatar code="CEOB" size="md" />
               <div className="bg-white border-l-[3px] border border-gray-200 rounded-xl rounded-tl-none px-4 py-3 max-w-[75%] shadow-sm border-l-blue-400">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs font-semibold text-blue-700">
@@ -608,7 +608,7 @@ export function CriseDemo({ onComplete, onTransition: onTransitionProp }: { onCo
           {/* STAGE 2.5 — Option 1: Appel immediat (path rapide) */}
           {stage >= 2.5 && stage < 3 && (
             <div className="flex gap-3">
-              <BotAvatar code="BCO" size="md" />
+              <BotAvatar code="CEOB" size="md" />
               <div className="bg-white border-l-[3px] border border-gray-200 rounded-xl rounded-tl-none px-4 py-3 max-w-[75%] shadow-sm border-l-red-400">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs font-semibold text-blue-700">CarlOS (CEO)</span>
@@ -641,7 +641,7 @@ export function CriseDemo({ onComplete, onTransition: onTransitionProp }: { onCo
             <ThinkingAnimation
               steps={data.decide.thinking}
               botEmoji=""
-              botCode="BCO"
+              botCode="CEOB"
               botName="CarlOS"
               speed={300}
               onComplete={() => setStage(3.5)}
@@ -651,7 +651,7 @@ export function CriseDemo({ onComplete, onTransition: onTransitionProp }: { onCo
           {/* STAGE 3.5 — CEO Directive (adapted to choice) */}
           {stage >= 3.5 && stage < 6 && (
             <div className="flex gap-3">
-              <BotAvatar code="BCO" size="md" />
+              <BotAvatar code="CEOB" size="md" />
               <div className="bg-white border-l-[3px] border border-gray-200 rounded-xl rounded-tl-none px-4 py-3 max-w-[75%] shadow-sm border-l-blue-400">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs font-semibold text-blue-700">
@@ -759,7 +759,7 @@ export function CriseDemo({ onComplete, onTransition: onTransitionProp }: { onCo
           {/* STAGE 6 — Resultat message (differs by orient choice) */}
           {stage >= 6 && stage < 10 && (
             <div className="flex gap-3">
-              <BotAvatar code="BCO" size="md" />
+              <BotAvatar code="CEOB" size="md" />
               <div className="bg-white border-l-[3px] border border-gray-200 rounded-xl rounded-tl-none px-4 py-3 max-w-[75%] shadow-sm border-l-green-400">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs font-semibold text-green-700">
@@ -856,7 +856,7 @@ function OrientStage({
   return (
     <>
       <div className="flex gap-3">
-        <BotAvatar code="BCO" size="md" />
+        <BotAvatar code="CEOB" size="md" />
         <div className="bg-white border-l-[3px] border border-gray-200 rounded-xl rounded-tl-none px-4 py-3 max-w-[75%] shadow-sm border-l-blue-400">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-semibold text-blue-700">

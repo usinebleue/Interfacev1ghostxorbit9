@@ -151,22 +151,22 @@ function StepIndicator({ current }: { current: DocumentWorkflowStep }) {
 
 // Bot options pour le selecteur Blue Print
 const BOT_COLORS: Record<string, string> = {
-  BCO: "bg-blue-500",
-  BCT: "bg-cyan-500",
-  BCF: "bg-emerald-500",
-  BCM: "bg-pink-500",
-  BCS: "bg-indigo-500",
-  BOO: "bg-teal-500",
+  CEOB: "bg-blue-500",
+  CTOB: "bg-cyan-500",
+  CFOB: "bg-emerald-500",
+  CMOB: "bg-pink-500",
+  CSOB: "bg-indigo-500",
+  COOB: "bg-teal-500",
 };
 const BOT_LABELS: Record<string, string> = {
-  BCO: "CarlOS",
-  BCT: "CTO",
-  BCF: "CFO",
-  BCM: "CMO",
-  BCS: "CSO",
-  BOO: "COO",
+  CEOB: "CarlOS",
+  CTOB: "CTO",
+  CFOB: "CFO",
+  CMOB: "CMO",
+  CSOB: "CSO",
+  COOB: "COO",
 };
-const BLUEPRINT_BOTS = ["BCO", "BCT", "BCF", "BCM", "BCS", "BOO"];
+const BLUEPRINT_BOTS = ["CEOB", "CTOB", "CFOB", "CMOB", "CSOB", "COOB"];
 
 function BlockCard({
   block,
@@ -191,7 +191,7 @@ function BlockCard({
   const [suggestion, setSuggestion] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingAction, setLoadingAction] = useState<"challenge" | "complete" | null>(null);
-  const [selectedBot, setSelectedBot] = useState("BCO");
+  const [selectedBot, setSelectedBot] = useState("CEOB");
   const lastActionRef = useRef<"challenge" | "complete" | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const statusCfg = STATUS_CONFIG[block.status];

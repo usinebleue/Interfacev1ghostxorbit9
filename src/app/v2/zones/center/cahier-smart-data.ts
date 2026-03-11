@@ -39,18 +39,18 @@ export const BOT_COLORS: Record<string, {
   ring: string; dot: string; emoji: string; name: string; role: string;
   avatar: string;
 }> = {
-  BCO: { bg: "bg-blue-600", bgLight: "bg-blue-50", text: "text-blue-700", border: "border-blue-400", ring: "ring-blue-300", dot: "bg-blue-500", emoji: "\u{1F454}", name: "CarlOS", role: "CEO", avatar: "/agents/ceo-carlos.png" },
-  BCT: { bg: "bg-violet-600", bgLight: "bg-violet-50", text: "text-violet-700", border: "border-violet-400", ring: "ring-violet-300", dot: "bg-violet-500", emoji: "\u{1F4BB}", name: "Thierry", role: "CTO", avatar: "/agents/cto-thierry.png" },
-  BCF: { bg: "bg-emerald-600", bgLight: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-400", ring: "ring-emerald-300", dot: "bg-emerald-500", emoji: "\u{1F4B0}", name: "Fran\u00e7ois", role: "CFO", avatar: "/agents/cfo-francois.png" },
-  BCM: { bg: "bg-pink-600", bgLight: "bg-pink-50", text: "text-pink-700", border: "border-pink-400", ring: "ring-pink-300", dot: "bg-pink-500", emoji: "\u{1F4E3}", name: "Martine", role: "CMO", avatar: "/agents/cmo-martine.png" },
-  BCS: { bg: "bg-red-600", bgLight: "bg-red-50", text: "text-red-700", border: "border-red-400", ring: "ring-red-300", dot: "bg-red-500", emoji: "\u{1F3AF}", name: "Sophie", role: "CSO", avatar: "/agents/cso-sophie.png" },
-  BOO: { bg: "bg-orange-600", bgLight: "bg-orange-50", text: "text-orange-700", border: "border-orange-400", ring: "ring-orange-300", dot: "bg-orange-500", emoji: "\u{2699}\u{FE0F}", name: "Olivier", role: "COO", avatar: "/agents/coo-olivier.png" },
-  BFA: { bg: "bg-slate-600", bgLight: "bg-slate-50", text: "text-slate-700", border: "border-slate-400", ring: "ring-slate-300", dot: "bg-slate-500", emoji: "\u{1F3ED}", name: "Fabien", role: "CPO", avatar: "/agents/generated/factory-bot-profil-v1.png" },
-  BHR: { bg: "bg-teal-600", bgLight: "bg-teal-50", text: "text-teal-700", border: "border-teal-400", ring: "ring-teal-300", dot: "bg-teal-500", emoji: "\u{1F91D}", name: "H\u00e9l\u00e8ne", role: "CHRO", avatar: "/agents/chro-helene.png" },
-  BIO: { bg: "bg-rose-600", bgLight: "bg-rose-50", text: "text-rose-700", border: "border-rose-400", ring: "ring-rose-300", dot: "bg-rose-500", emoji: "\u{1F4CA}", name: "Inès", role: "CINO", avatar: "/agents/cino-ines.png" },
-  BRO: { bg: "bg-amber-600", bgLight: "bg-amber-50", text: "text-amber-700", border: "border-amber-400", ring: "ring-amber-300", dot: "bg-amber-500", emoji: "\u{1F4C8}", name: "Rapha\u00ebl", role: "CRO", avatar: "/agents/cro-raphael.png" },
-  BLE: { bg: "bg-indigo-600", bgLight: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-400", ring: "ring-indigo-300", dot: "bg-indigo-500", emoji: "\u{2696}\u{FE0F}", name: "Louise", role: "CLO", avatar: "/agents/clo-louise.png" },
-  BSE: { bg: "bg-zinc-700", bgLight: "bg-zinc-50", text: "text-zinc-700", border: "border-zinc-400", ring: "ring-zinc-300", dot: "bg-zinc-500", emoji: "\u{1F6E1}\u{FE0F}", name: "Sébastien", role: "CISO", avatar: "" },
+  CEOB: { bg: "bg-blue-600", bgLight: "bg-blue-50", text: "text-blue-700", border: "border-blue-400", ring: "ring-blue-300", dot: "bg-blue-500", emoji: "\u{1F454}", name: "CarlOS", role: "CEO", avatar: "/agents/ceo-carlos.png" },
+  CTOB: { bg: "bg-violet-600", bgLight: "bg-violet-50", text: "text-violet-700", border: "border-violet-400", ring: "ring-violet-300", dot: "bg-violet-500", emoji: "\u{1F4BB}", name: "Thierry", role: "CTO", avatar: "/agents/cto-thierry.png" },
+  CFOB: { bg: "bg-emerald-600", bgLight: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-400", ring: "ring-emerald-300", dot: "bg-emerald-500", emoji: "\u{1F4B0}", name: "Fran\u00e7ois", role: "CFO", avatar: "/agents/cfo-francois.png" },
+  CMOB: { bg: "bg-pink-600", bgLight: "bg-pink-50", text: "text-pink-700", border: "border-pink-400", ring: "ring-pink-300", dot: "bg-pink-500", emoji: "\u{1F4E3}", name: "Martine", role: "CMO", avatar: "/agents/cmo-martine.png" },
+  CSOB: { bg: "bg-red-600", bgLight: "bg-red-50", text: "text-red-700", border: "border-red-400", ring: "ring-red-300", dot: "bg-red-500", emoji: "\u{1F3AF}", name: "Sophie", role: "CSO", avatar: "/agents/cso-sophie.png" },
+  COOB: { bg: "bg-orange-600", bgLight: "bg-orange-50", text: "text-orange-700", border: "border-orange-400", ring: "ring-orange-300", dot: "bg-orange-500", emoji: "\u{2699}\u{FE0F}", name: "Olivier", role: "COO", avatar: "/agents/coo-olivier.png" },
+  CPOB: { bg: "bg-slate-600", bgLight: "bg-slate-50", text: "text-slate-700", border: "border-slate-400", ring: "ring-slate-300", dot: "bg-slate-500", emoji: "\u{1F3ED}", name: "Fabien", role: "CPO", avatar: "/agents/generated/factory-bot-profil-v1.png" },
+  CHROB: { bg: "bg-teal-600", bgLight: "bg-teal-50", text: "text-teal-700", border: "border-teal-400", ring: "ring-teal-300", dot: "bg-teal-500", emoji: "\u{1F91D}", name: "H\u00e9l\u00e8ne", role: "CHRO", avatar: "/agents/chro-helene.png" },
+  CINOB: { bg: "bg-rose-600", bgLight: "bg-rose-50", text: "text-rose-700", border: "border-rose-400", ring: "ring-rose-300", dot: "bg-rose-500", emoji: "\u{1F4CA}", name: "Inès", role: "CINO", avatar: "/agents/cino-ines.png" },
+  CROB: { bg: "bg-amber-600", bgLight: "bg-amber-50", text: "text-amber-700", border: "border-amber-400", ring: "ring-amber-300", dot: "bg-amber-500", emoji: "\u{1F4C8}", name: "Rapha\u00ebl", role: "CRO", avatar: "/agents/cro-raphael.png" },
+  CLOB: { bg: "bg-indigo-600", bgLight: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-400", ring: "ring-indigo-300", dot: "bg-indigo-500", emoji: "\u{2696}\u{FE0F}", name: "Louise", role: "CLO", avatar: "/agents/clo-louise.png" },
+  CISOB: { bg: "bg-zinc-700", bgLight: "bg-zinc-50", text: "text-zinc-700", border: "border-zinc-400", ring: "ring-zinc-300", dot: "bg-zinc-500", emoji: "\u{1F6E1}\u{FE0F}", name: "Sébastien", role: "CISO", avatar: "" },
 };
 
 export const USER_AVATAR = "/agents/carl-fugere.jpg";
@@ -78,14 +78,14 @@ export const SIM_ACTE1 = {
   userAnswer2: "Honnetement, les deux sont urgents. L'energie nous coute une fortune et la palettisation manuelle c'est un risque SST constant. Budget : on pourrait aller 800K a 1.2M si on a les subventions. La priorite c'est ce qui genere le plus de ROI vite.",
 
   consultBots: [
-    { emoji: "\u{1F4B0}", name: "CFO", code: "BCF" },
-    { emoji: "\u{2699}\u{FE0F}", name: "COO", code: "BOO" },
-    { emoji: "\u{1F4BB}", name: "CTO", code: "BCT" },
+    { emoji: "\u{1F4B0}", name: "CFO", code: "CFOB" },
+    { emoji: "\u{2699}\u{FE0F}", name: "COO", code: "COOB" },
+    { emoji: "\u{1F4BB}", name: "CTO", code: "CTOB" },
   ],
 
   perspectives: [
     {
-      emoji: "\u{1F4B0}", code: "BCF", name: "CFO", angle: "Programmes, subventions et financement",
+      emoji: "\u{1F4B0}", code: "CFOB", name: "CFO", angle: "Programmes, subventions et financement",
       text: "J'ai identifie plusieurs programmes combinables :\n\n1) Hydro-Quebec — EnerGuide (50% audit) + systemes industriels (0.10$/kWh) + optimisation energetique (75% couts admissibles) = potentiel 510K$\n2) Programme STIQ/MESI pour automatisation manufacturiere — jusqu'a 40% des couts d'equipement robotique\n3) Credit d'impot RS&DE potentiel sur l'integration IoT/maintenance predictive\n\nAvec 800K-1.2M de budget et ces programmes combines, le net pourrait descendre a 400-500K$. Ratio subventions exceptionnel.",
       verdict: "510K$ HQ + 40% STIQ sur robotique", color: "green",
       sources: [
@@ -96,7 +96,7 @@ export const SIM_ACTE1 = {
       ],
     },
     {
-      emoji: "\u{2699}\u{FE0F}", code: "BOO", name: "COO", angle: "Plan operationnel en 4 phases",
+      emoji: "\u{2699}\u{FE0F}", code: "COOB", name: "COO", angle: "Plan operationnel en 4 phases",
       text: "J'ai modele un plan d'implantation en 4 phases qui ne touche jamais a la production :\n\nPhase 1 (sem. 1-4) : Depot dossiers HQ + STIQ + Audit detaille\nPhase 2 (sem. 5-12) : Remplacement systeme refrigeration CO2 transcritique + chaudieres condensation\nPhase 3 (sem. 11-16) : Robot palettiseur collaboratif (cobot) fin de ligne — elimine le goulot de 15%\nPhase 4 (sem. 14-20) : HVAC intelligent + capteurs IoT + monitoring temps reel\n\nElimination du goulot fin de ligne = +15% throughput immediat. Risque d'arret production : 0%.",
       verdict: "+15% throughput + 0% arret production", color: "green",
       sources: [
@@ -106,7 +106,7 @@ export const SIM_ACTE1 = {
       ],
     },
     {
-      emoji: "\u{1F4BB}", code: "BCT", name: "CTO", angle: "Technologies recommandees — 3 axes",
+      emoji: "\u{1F4BB}", code: "CTOB", name: "CTO", angle: "Technologies recommandees — 3 axes",
       text: "3 axes technologiques a combiner :\n\n1) Energie : VFD sur moteurs 15HP+, conversion refrigeration CO2 transcritique, chaudieres condensation 95%+ — reduction 35-55% par systeme\n2) Palettisation : Robot collaboratif (cobot) palettiseur — Universal Robots UR10e ou FANUC CRX-25iA — cadence 8-12 palettes/heure, elimine 100% du risque SST\n3) IoT/Monitoring : 48+ capteurs temps reel, tableau de bord, maintenance predictive par analyse vibratoire — detecte defaillances 3 semaines avant panne\n\nROI technique combine : 20-24 mois. Technologies eprouvees, zero risque experimental.",
       verdict: "ROI 20-24 mois — 3 axes techno eprouves", color: "green",
       sources: [

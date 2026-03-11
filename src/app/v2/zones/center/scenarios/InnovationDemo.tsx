@@ -131,7 +131,7 @@ function TechniqueCard({
             )}
           >
             <div className="flex items-start gap-3">
-              <BotAvatar code="BCO" size="md" />
+              <BotAvatar code="CEOB" size="md" />
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1.5">
                   <span className="text-xs font-semibold text-blue-700">CarlOS (CEO)</span>
@@ -309,7 +309,7 @@ function FeasibilitySpectrum({
               3 idees comparees sur 3 axes
             </div>
           </div>
-          <BotAvatar code="BCO" size="sm" />
+          <BotAvatar code="CEOB" size="sm" />
         </div>
 
         {/* 3-column comparison */}
@@ -441,7 +441,7 @@ function SyntheseCard({
               Fusion des 3 techniques d'innovation
             </div>
           </div>
-          <BotAvatar code="BCO" size="sm" />
+          <BotAvatar code="CEOB" size="sm" />
         </div>
 
         <div className="p-4 space-y-4">
@@ -498,7 +498,7 @@ function SyntheseCard({
           {conclusionVisible && (
             <div className="bg-gradient-to-r from-fuchsia-50 to-pink-50 border border-fuchsia-200 rounded-lg px-4 py-3 animate-in fade-in duration-700">
               <div className="flex items-start gap-2">
-                <BotAvatar code="BCO" size="sm" className="mt-0.5" />
+                <BotAvatar code="CEOB" size="sm" className="mt-0.5" />
                 <div>
                   <div className="text-xs font-semibold text-fuchsia-700 mb-1">
                     Conclusion CarlOS
@@ -620,7 +620,7 @@ export function InnovationDemo({
               steps={INNOVATION_DATA.ceoThinking}
               botEmoji=""
               botName="CarlOS (CEO)"
-              botCode="BCO"
+              botCode="CEOB"
               onComplete={() => {
                 setPhase("R");
                 setStage(2);
@@ -631,7 +631,7 @@ export function InnovationDemo({
           {/* ===== STAGE 2 — CEO intro ===== */}
           {stage >= 2 && (
             <BotBubble
-              code="BCO"
+              code="CEOB"
               text={INNOVATION_DATA.ceoIntro}
               phaseLabel="Mode Innovation"
               time="14:23"
@@ -706,7 +706,7 @@ export function InnovationDemo({
               steps={INNOVATION_DATA.syntheseThinking}
               botEmoji=""
               botName="CarlOS (CEO)"
-              botCode="BCO"
+              botCode="CEOB"
               onComplete={() => {
                 setPhase("O");
                 setStage(8);
