@@ -99,7 +99,6 @@ const BOT_GRADIENT: Record<string, string> = {
   BHR: "bg-gradient-to-r from-teal-600 to-teal-500",
   BSE: "bg-gradient-to-r from-zinc-700 to-zinc-600",
   BLE: "bg-gradient-to-r from-indigo-600 to-indigo-500",
-  BPO: "bg-gradient-to-r from-fuchsia-600 to-fuchsia-500",
 };
 
 /* ============ 12 C-LEVEL × 3 ANGLES × 4 KPIs ============ */
@@ -566,47 +565,6 @@ const CLEVEL_LINES: CLeveLineData[] = [
       ]},
     ]},
 
-  // ── BPO — CPO Innovation ──
-  { code: "BPO", nom: "Agent CPO — Innovation", icon: Lightbulb,
-    bulletin: { heuresTravail: "163h", heuresSauvees: "67h", tauxSucces: "91%", tasksCompleted: "73" },
-    angles: [
-      { label: "Performance", icon: Gauge, maj: "26 fev", stats: [
-        { label: "Projets R&D actifs", value: "3", icon: Beaker, trend: "stable" },
-        { label: "Budget R&D", value: "88%", icon: Wallet, trend: "stable" },
-        { label: "Brevets", value: "1+1", icon: BadgeCheck, trend: "up" },
-        { label: "Produits lances (12m)", value: "2", icon: PackageCheck, trend: "up" },
-      ]},
-      { label: "Risques", icon: AlertTriangle, maj: "25 fev", stats: [
-        { label: "POC en cours", value: "2", icon: Beaker, trend: "stable" },
-        { label: "ROI projets R&D", value: "2.8x", icon: DollarSign, trend: "up" },
-        { label: "Time-to-prototype", value: "18j", icon: Timer, trend: "up" },
-        { label: "Adoption interne", value: "62%", icon: Users, trend: "up" },
-      ]},
-      { label: "Croissance", icon: TrendingUp, maj: "18 fev", stats: [
-        { label: "Idees soumises/m", value: "14", icon: Lightbulb, trend: "up" },
-        { label: "Partenariats R&D", value: "3", icon: Handshake, trend: "up" },
-        { label: "Subventions", value: "45K$", icon: Banknote, trend: "up" },
-        { label: "Score techno", value: "Top 15%", icon: Award, trend: "up" },
-      ]},
-      { label: "Operations", icon: Settings, maj: "26 fev", stats: [
-        { label: "Experimentations", value: "6/m", icon: Beaker, trend: "up" },
-        { label: "Prototypes testes", value: "3", icon: PackageCheck, trend: "up" },
-        { label: "Etudes faisabilite", value: "2", icon: FileText, trend: "stable" },
-        { label: "Workshops/m", value: "2", icon: Users, trend: "up" },
-      ]},
-      { label: "Equipe", icon: Users, maj: "25 fev", stats: [
-        { label: "Chercheurs", value: "2", icon: Beaker, trend: "stable" },
-        { label: "Stagiaires R&D", value: "1", icon: GraduationCap, trend: "stable" },
-        { label: "Mentors externes", value: "2", icon: Handshake, trend: "up" },
-        { label: "Heures lab", value: "120h/m", icon: Clock, trend: "up" },
-      ]},
-      { label: "Projets", icon: Target, maj: "24 fev", stats: [
-        { label: "IA Vision", value: "72%", icon: Cpu, trend: "up" },
-        { label: "Orbit9 moteur", value: "45%", icon: Globe, trend: "up" },
-        { label: "Plateforme SaaS", value: "30%", icon: Server, trend: "up" },
-        { label: "Green manufacturing", value: "15%", icon: Lightbulb, trend: "up" },
-      ]},
-    ]},
 ];
 
 /* ============ C-LEVEL STATS ROWS — 3 angles × 4 KPIs ============ */

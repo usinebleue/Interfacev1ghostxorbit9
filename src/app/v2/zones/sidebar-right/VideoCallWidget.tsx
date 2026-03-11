@@ -50,8 +50,6 @@ const BOT_GRADIENT: Record<string, string> = {
   BFA: "from-slate-600 to-slate-500",
   BHR: "from-teal-600 to-teal-500",
   BIO: "from-rose-600 to-rose-500",
-  BCC: "from-cyan-600 to-cyan-500",
-  BPO: "from-fuchsia-600 to-fuchsia-500",
   BRO: "from-amber-600 to-amber-500",
   BLE: "from-indigo-600 to-indigo-500",
   BSE: "from-zinc-600 to-zinc-500",
@@ -60,14 +58,14 @@ const BOT_GRADIENT: Record<string, string> = {
 const BOT_ROLES: Record<string, string> = {
   BCO: "CEO", BCT: "CTO", BCF: "CFO", BCM: "CMO",
   BCS: "CSO", BOO: "COO", BFA: "CPO", BHR: "CHRO",
-  BIO: "CINO", BCC: "CCO", BPO: "CPO", BRO: "CRO",
+  BIO: "CINO", BRO: "CRO",
   BLE: "CLO", BSE: "CISO",
 };
 
 const BOT_NAMES: Record<string, string> = {
   BCO: "CarlOS", BCT: "Thierry", BCF: "François", BCM: "Martine",
   BCS: "Sophie", BOO: "Olivier", BFA: "Fabien", BHR: "Hélène",
-  BIO: "Inès", BCC: "Catherine", BPO: "Philippe", BRO: "Raphaël",
+  BIO: "Inès", BRO: "Raphaël",
   BLE: "Louise", BSE: "Sébastien",
 };
 
@@ -85,8 +83,6 @@ const BOT_STANDBY: Record<string, string> = {
   BFA: `/agents/generated/factory-bot-standby-v3.png${IMG_V}`,
   BHR: `/agents/generated/chro-helene-standby-v3.png${IMG_V}`,
   BIO: `/agents/generated/cino-ines-standby-v3.png${IMG_V}`,
-  BCC: `/agents/generated/cco-catherine-standby-v3.png${IMG_V}`,
-  BPO: `/agents/generated/cpo-philippe-standby-v3.png${IMG_V}`,
   BRO: `/agents/generated/cro-raphael-standby-v3.png${IMG_V}`,
   BLE: `/agents/generated/clo-louise-standby-v3.png${IMG_V}`,
   BSE: `/agents/generated/ciso-secbot-standby-v3.png${IMG_V}`,
@@ -101,8 +97,6 @@ const AVATAR_CONFIG_GLOW: Record<string, string> = {
   BOO: "rgba(249, 115, 22, 0.4)",
   BHR: "rgba(20, 184, 166, 0.4)",
   BIO: "rgba(244, 63, 94, 0.4)",
-  BCC: "rgba(6, 182, 212, 0.4)",
-  BPO: "rgba(217, 70, 239, 0.4)",
   BRO: "rgba(245, 158, 11, 0.4)",
   BLE: "rgba(99, 102, 241, 0.4)",
 };

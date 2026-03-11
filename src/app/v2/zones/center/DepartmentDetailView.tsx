@@ -519,44 +519,6 @@ const DEPT_CONFIGS: Record<string, DeptConfig> = {
       { id: 2, text: "Politique RGPD mise a jour", time: "hier" },
     ],
   },
-  BPO: {
-    name: "Innovation", color: "text-fuchsia-600", ringColor: "ring-fuchsia-500",
-    summary: "3 projets R&D actifs. Prototype IA vision en test. Budget innovation 85K$.",
-    kpis: [
-      { label: "Projets R&D", value: "3" },
-      { label: "Prototypes", value: "1" },
-      { label: "Budget", value: "85K$" },
-      { label: "Brevets", value: "1", positive: true },
-    ],
-    widgets: [
-      { title: "PROJETS R&D", icon: Cpu, iconColor: "text-fuchsia-500", badge: "3", items: [
-        { id: 1, primary: "IA vision inspection qualite", secondary: "Prototype en test usine", progress: 65 },
-        { id: 2, primary: "Predictive maintenance IoT", secondary: "Phase recherche · 3 capteurs", progress: 30 },
-        { id: 3, primary: "Optimisation coupes laser IA", secondary: "Concept valide", progress: 15 },
-      ]},
-      { title: "VEILLE TECHNOLOGIQUE", icon: TrendingUp, iconColor: "text-blue-500", items: [
-        { id: 1, primary: "IA generative manufacturing", secondary: "3 articles analyses ce mois" },
-        { id: 2, primary: "Cobots nouvelle generation", secondary: "Demo prevue · Universal Robots" },
-        { id: 3, primary: "Jumeaux numeriques", secondary: "Evaluation Siemens NX" },
-      ]},
-      { title: "PARTENARIATS", icon: Handshake, iconColor: "text-green-500", items: [
-        { id: 1, primary: "Universite Laval — IA", secondary: "Projet conjoint · Actif", tag: "ok" },
-        { id: 2, primary: "CDPQ — programme PME", secondary: "Candidature soumise", progress: 40 },
-      ]},
-      { title: "IDEES & PIPELINE", icon: Target, iconColor: "text-orange-500", items: [
-        { id: 1, primary: "Bot Marketplace (Orbit9)", secondary: "Concept valide · Sprint B" },
-        { id: 2, primary: "Voix ElevenLabs", secondary: "Integration planifiee · Sprint B" },
-        { id: 3, primary: "Multi-tenant platform", secondary: "Architecture en design · Sprint D" },
-      ]},
-    ],
-    recentFiles: [
-      { id: 1, name: "Rapport IA Vision V1", progress: 65, by: "CPO", time: "4h", type: "RR" },
-    ],
-    activity: [
-      { id: 1, text: "Prototype IA vision teste en usine", time: "4h" },
-      { id: 2, text: "Veille cobots — 2 options identifiees", time: "hier" },
-    ],
-  },
   BIO: {
     name: "Systemes", color: "text-cyan-600", ringColor: "ring-cyan-500",
     summary: "8 systemes actifs. Migration ERP planifiee Q2. 99.2% uptime global.",
@@ -594,44 +556,6 @@ const DEPT_CONFIGS: Record<string, DeptConfig> = {
     activity: [
       { id: 1, text: "Backup automatique complete", time: "03:00" },
       { id: 2, text: "Evaluation ERP — 3 demos planifiees", time: "hier" },
-    ],
-  },
-  BCC: {
-    name: "Communication", color: "text-rose-600", ringColor: "ring-rose-500",
-    summary: "Strategie comm Q2 en prep. 2 communiques planifies. Branding CarlOS en cours.",
-    kpis: [
-      { label: "Communiques", value: "2" },
-      { label: "Medias", value: "5 contacts" },
-      { label: "Brand score", value: "68%" },
-      { label: "Reach", value: "15K" },
-    ],
-    widgets: [
-      { title: "COMMUNICATIONS", icon: Megaphone, iconColor: "text-rose-500", badge: "2", items: [
-        { id: 1, primary: "Communique lancement CarlOS", secondary: "Draft V2 · Revue requise", progress: 70 },
-        { id: 2, primary: "Newsletter Q1 investisseurs", secondary: "Planifie 10 mars", progress: 20 },
-        { id: 3, primary: "Temoignage client FabriquePro", secondary: "Video en montage", progress: 55 },
-      ]},
-      { title: "BRANDING & IMAGE", icon: Target, iconColor: "text-blue-500", items: [
-        { id: 1, primary: "Charte graphique CarlOS", secondary: "Finalisation couleurs + typo", progress: 85 },
-        { id: 2, primary: "Site web ghostx.ai", secondary: "Redesign planifie · Sprint C" },
-        { id: 3, primary: "Kit media presse", secondary: "A creer · Q2" },
-      ]},
-      { title: "RELATIONS MEDIAS", icon: FileText, iconColor: "text-purple-500", items: [
-        { id: 1, primary: "Les Affaires", secondary: "Contact etabli · Article planifie" },
-        { id: 2, primary: "TVA Nouvelles", secondary: "Pitch envoye · En attente" },
-        { id: 3, primary: "LinkedIn Thought Leadership", secondary: "3 articles publies ce mois", value: "12K vues" },
-      ]},
-      { title: "EVENEMENTS", icon: Calendar, iconColor: "text-green-500", items: [
-        { id: 1, primary: "Salon Manufacturier QC", secondary: "15-17 avril · Kiosque confirme", value: "Avril" },
-        { id: 2, primary: "Webinaire IA manufacturiere", secondary: "25 mars · 45 inscrits", value: "45" },
-      ]},
-    ],
-    recentFiles: [
-      { id: 1, name: "Communique CarlOS V2", progress: 70, by: "CCO", time: "2h", type: "CO" },
-    ],
-    activity: [
-      { id: 1, text: "Draft communique CarlOS V2 soumis", time: "2h" },
-      { id: 2, text: "45 inscrits au webinaire", time: "hier" },
     ],
   },
 };

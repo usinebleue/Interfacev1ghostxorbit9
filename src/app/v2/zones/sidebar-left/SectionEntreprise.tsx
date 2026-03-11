@@ -67,7 +67,6 @@ const BOT_ICON_COLOR: Record<string, string> = {
   BHR: "text-teal-600",
   BSE: "text-zinc-600",
   BLE: "text-indigo-600",
-  BPO: "text-fuchsia-600",
 };
 
 // Notifications par departement — desactivees tant que pas branchees au backend

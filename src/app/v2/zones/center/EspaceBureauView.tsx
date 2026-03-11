@@ -191,7 +191,7 @@ const PRIORITY_ICONS: Record<string, { icon: string; color: string }> = {
   none: { icon: "⚪", color: "text-gray-400" },
 };
 
-const BOT_OPTIONS = ["BCO", "BCT", "BCF", "BCM", "BCS", "BOO", "BHR", "BIO", "BCC", "BPO", "BRO", "BLE"];
+const BOT_OPTIONS = ["BCO", "BCT", "BCF", "BCM", "BCS", "BOO", "BHR", "BIO", "BRO", "BLE"];
 
 // ══════════════════════════════════════════
 // BANDEAU PROACTIF CarlOS
