@@ -41,10 +41,10 @@ const API_KEY = import.meta.env.VITE_API_KEY || "";
 
 // Noms humains des bots
 const BOT_NAMES: Record<string, string> = {
-  BCO: "CarlOS (CEO)", BCT: "Alex (CTO)", BCF: "François (CFO)",
-  BCM: "Sophie (CMO)", BCS: "Simon (CSO)", BOO: "Julie (COO)",
-  BFA: "Denis (Usine)", BHR: "Marie (RH)", BIO: "Inès (Innovation)",
-  BRO: "Pierre (Ventes)", BLE: "Laurent (Légal)", BSE: "Samuel (Sécurité)",
+  BCO: "CarlOS (CEO)", BCT: "Thierry (CTO)", BCF: "François (CFO)",
+  BCM: "Martine (CMO)", BCS: "Sophie (CSO)", BOO: "Olivier (COO)",
+  BFA: "Fabien (Usine)", BHR: "Hélène (RH)", BIO: "Inès (Innovation)",
+  BRO: "Raphaël (Ventes)", BLE: "Louise (Légal)", BSE: "Sébastien (Sécurité)",
 };
 
 // Labels humains pour les types

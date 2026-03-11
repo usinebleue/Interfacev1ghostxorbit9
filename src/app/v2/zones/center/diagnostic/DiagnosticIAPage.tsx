@@ -45,8 +45,8 @@ interface ProfilData {
 
 const BOT_NAMES: Record<string, string> = {
   BCO: "CarlOS", BCF: "François", BCM: "Martine", BOO: "Olivier",
-  BFA: "Factory", BHR: "HR", BCT: "Thierry", BCS: "Sophie",
-  BRO: "Revenue", BIO: "Inès", BLE: "Legal", BSE: "Sécurité",
+  BFA: "Fabien", BHR: "Hélène", BCT: "Thierry", BCS: "Sophie",
+  BRO: "Raphaël", BIO: "Inès", BLE: "Louise", BSE: "Sébastien",
 };
 
 const BOT_ROLES: Record<string, string> = {
