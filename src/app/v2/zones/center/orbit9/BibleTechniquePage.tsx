@@ -7,7 +7,7 @@
 
 import { useState } from "react";
 import {
-  Server, Users, Globe, Database, Shield, Cpu, Link2,
+  Server, Users, Globe, Database, Shield, Cpu, Link2, Atom,
   ArrowRight, CheckCircle2, Clock, AlertTriangle,
   Terminal, HardDrive, Lock, Wifi, Layers,
   Mic, Video, Phone, Brain, Cloud, FileCode,
@@ -541,11 +541,12 @@ function SectionDivider() {
 // ═══════════════════════════════════════════════════════════════
 
 function TabBotsSkills() {
+  const { setActiveView } = useFrameMaster();
   return (
     <>
       {/* Header */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Equipe GhostX — 12 Agents C-Level</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">A.2.1.1</span>Equipe GhostX — 12 Agents C-Level</h3>
         <p className="text-xs text-gray-400 mb-3">
           Chaque bot possede une Trisociation (3 OS combines: Primaire + Calibrateur + Amplificateur), un fichier SOUL unique, et un ensemble de skills specialises.
           Le GHML (Ghost Modeling Language) modele l'intelligence d'affaires comme la chimie modele la matiere.
@@ -602,91 +603,24 @@ function TabBotsSkills() {
 
       <SectionDivider />
 
-      {/* GHML Framework Summary */}
-      <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Framework GHML</h3>
-        <p className="text-xs text-gray-400 mb-3">Ghost Modeling Language — moteur proprietaire qui structure toute l'intelligence d'affaires de la plateforme</p>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <Card className="p-3 bg-white border border-gray-100">
-            <div className="font-bold text-xs text-gray-700 mb-2">CREDO — Protocole Maitre</div>
-            <div className="space-y-1">
-              {["C — Connecter", "R — Rechercher", "E — Exposer", "D — Demontrer", "O — Obtenir"].map((phase) => (
-                <div key={phase} className="flex items-center gap-1.5">
-                  <ArrowRight className="h-3.5 w-3.5 text-blue-500 shrink-0" />
-                  <span className="text-xs text-gray-600">{phase}</span>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          <Card className="p-3 bg-white border border-gray-100">
-            <div className="font-bold text-xs text-gray-700 mb-2">VITAA — 5 Piliers de Scoring</div>
-            <div className="space-y-1">
-              {["V — Vente (0-100)", "I — Idee (0-100)", "T — Temps (0-100)", "A — Argent (0-100)", "A — Actif (0-100)"].map((pilier) => (
-                <div key={pilier} className="flex items-center gap-1.5">
-                  <ArrowRight className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                  <span className="text-xs text-gray-600">{pilier}</span>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          <Card className="p-3 bg-white border border-gray-100">
-            <div className="font-bold text-xs text-gray-700 mb-2">Tableau Periodique GHML</div>
-            <div className="text-xs text-gray-600 space-y-1">
-              <div>220+ elements proprietaires</div>
-              <div>4 groupes: <code className="bg-gray-100 px-1 py-0.5 rounded text-[9px] font-mono">S</code> Sectoriel, <code className="bg-gray-100 px-1 py-0.5 rounded text-[9px] font-mono">P</code> Patterns, <code className="bg-gray-100 px-1 py-0.5 rounded text-[9px] font-mono">T</code> Tech, <code className="bg-gray-100 px-1 py-0.5 rounded text-[9px] font-mono">H</code> Humain</div>
-              <div>7 periodes, structure chimique</div>
-            </div>
-          </Card>
-
-          <Card className="p-3 bg-white border border-gray-100">
-            <div className="font-bold text-xs text-gray-700 mb-2">Triangle du Feu</div>
-            <div className="text-xs text-gray-600 space-y-1">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-red-500" />
-                <span>BRULE — 3+ piliers actifs</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-amber-500" />
-                <span>COUVE — 2 piliers actifs</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-gray-400" />
-                <span>MEURT — 1 seul pilier actif</span>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-3 bg-white border border-gray-100">
-            <div className="font-bold text-xs text-gray-700 mb-2">8+1 Modes de Reflexion</div>
-            <div className="text-xs text-gray-600 space-y-0.5">
-              {["Debat", "Brainstorm", "Crise", "Analyse", "Decision", "Strategie", "Innovation", "Deep Resonance", "CREDO (maitre)"].map((mode, i) => (
-                <div key={mode} className="flex items-center gap-1.5">
-                  <span className="text-[9px] text-gray-400 w-4 text-right">{i + 1}.</span>
-                  <span>{mode}</span>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          <Card className="p-3 bg-white border border-gray-100">
-            <div className="font-bold text-xs text-gray-700 mb-2">12 Ghosts Definitifs (V1.1)</div>
-            <div className="text-xs text-gray-600 space-y-0.5">
-              {[
-                "G1 Bezos", "G2 Jobs", "G3 Musk", "G4 Sun Tzu", "G5 Munger", "G6 Marc Aurele",
-                "G7 Churchill", "G8 Disney", "G9 Tesla (constant)", "G10 Buffett", "G11 Curie", "G12 Oprah"
-              ].map((ghost) => (
-                <div key={ghost} className="flex items-center gap-1.5">
-                  <Zap className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-                  <span>{ghost}</span>
-                </div>
-              ))}
-            </div>
-          </Card>
+      {/* Cross-ref vers Bible GHML Complete */}
+      <Card className="p-4 bg-violet-50 border border-violet-200 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center shrink-0">
+            <Atom className="h-5 w-5 text-violet-600" />
+          </div>
+          <div className="flex-1">
+            <div className="text-sm font-bold text-violet-800">Framework GHML — Reference Complete</div>
+            <p className="text-xs text-violet-600 mt-0.5">CREDO, VITAA, 12 Ghosts, 8+1 Modes, Tableau Periodique, Triangle du Feu — tout est detaille dans la Bible GHML Complete (A.3).</p>
+          </div>
+          <button
+            onClick={() => setActiveView("bible-ghml")}
+            className="px-3 py-1.5 text-xs font-bold text-white bg-violet-600 rounded-lg hover:bg-violet-700 transition-colors shrink-0"
+          >
+            Voir A.3
+          </button>
         </div>
-      </div>
+      </Card>
     </>
   );
 }
@@ -698,7 +632,7 @@ function TabApiEndpoints() {
   return (
     <>
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">API REST — FastAPI sur VPS2</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">A.2.2.1</span>API REST — FastAPI sur VPS2</h3>
         <p className="text-xs text-gray-400 mb-3">
           {totalEndpoints} endpoints | {liveCount} LIVE | Port 8000 (bind 127.0.0.1) | Nginx proxy <code className="bg-gray-100 px-1 py-0.5 rounded font-mono">/api/v1/</code>
         </p>
@@ -734,7 +668,7 @@ function TabApiEndpoints() {
 
       {/* Auth Details */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Authentification</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">A.2.2.2</span>Authentification</h3>
         <p className="text-xs text-gray-400 mb-3">Toutes les requetes API necessitent un header <code className="bg-gray-100 px-1 py-0.5 rounded font-mono">X-API-Key</code></p>
 
         <Card className="p-3 bg-white border border-gray-100">
@@ -783,7 +717,7 @@ function TabBackend() {
     <>
       {/* Message Flow */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Message Flow — Pipeline de traitement</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">A.2.3.1</span>Message Flow — Pipeline de traitement</h3>
         <p className="text-xs text-gray-400 mb-3">Chaque message passe par un pipeline de classification, enrichissement et routage vers le tier optimal</p>
 
         <Card className="p-4 bg-white border border-gray-100 shadow-sm">
@@ -813,7 +747,7 @@ function TabBackend() {
 
       {/* Tier Routing */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Routage 5 Tiers — Optimisation cout vs capacite</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">A.2.3.2</span>Routage 5 Tiers — Optimisation cout vs capacite</h3>
         <p className="text-xs text-gray-400 mb-3">Distribution cible: 80%+ sur tiers gratuits, budget max $5/jour</p>
 
         <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
@@ -840,7 +774,7 @@ function TabBackend() {
 
       {/* Modules by Category */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Modules Python — {BACKEND_MODULES.length} fichiers</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">A.2.3.3</span>Modules Python — {BACKEND_MODULES.length} fichiers</h3>
         <p className="text-xs text-gray-400 mb-3">Architecture backend complete — chaque module a une responsabilite unique</p>
 
         {categories.map((cat) => (
@@ -867,7 +801,7 @@ function TabBackend() {
 
       {/* State Machine */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">State Machine V2 — 7 etats utilisateur</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">A.2.3.4</span>State Machine V2 — 7 etats utilisateur</h3>
         <p className="text-xs text-gray-400 mb-3">JarvisStateMachine dans bridge_state_machine.py — gere le contexte conversationnel</p>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -892,7 +826,7 @@ function TabBackend() {
 
       {/* Session Management */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Session Management</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">A.2.3.5</span>Session Management</h3>
         <p className="text-xs text-gray-400 mb-3">Auto-archive a: 8000 tokens OU 50 messages OU 24h idle</p>
 
         <Card className="p-3 bg-white border border-gray-100">
@@ -920,7 +854,7 @@ function TabDatabase() {
   return (
     <>
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">PostgreSQL 16 — Docker (carlosdb) sur VPS2</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">A.2.4.1</span>PostgreSQL 16 — Docker (carlosdb) sur VPS2</h3>
         <p className="text-xs text-gray-400 mb-3">
           {DB_TABLES.length} tables | Port 127.0.0.1:5432 | Acces unique via <code className="bg-gray-100 px-1 py-0.5 rounded font-mono">bridge_database.py</code>
         </p>
@@ -968,7 +902,7 @@ function TabDatabase() {
 
       {/* DB Access Pattern */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Pattern d'acces</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">A.2.4.2</span>Pattern d'acces</h3>
         <p className="text-xs text-gray-400 mb-3">bridge_database.py = seul point d'acces — JAMAIS de queries SQL directes ailleurs</p>
 
         <Card className="p-3 bg-white border border-gray-100">
@@ -997,7 +931,7 @@ function TabDatabase() {
 
       {/* Legend */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Legende des types</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">A.2.4.3</span>Legende des types</h3>
         <div className="flex flex-wrap gap-3">
           <div className="flex items-center gap-1.5">
             <span className="text-[9px] px-1.5 py-0.5 rounded font-mono bg-blue-100 text-blue-700 font-bold">PK</span>
@@ -1025,7 +959,7 @@ function TabInfrastructure() {
   return (
     <>
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Infrastructure — 2 VPS OVH</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">A.2.5.1</span>Infrastructure — 2 VPS OVH</h3>
         <p className="text-xs text-gray-400 mb-3">Architecture separee DEV / PROD depuis Session 32 (Sprint Securite)</p>
       </div>
 
@@ -1089,7 +1023,7 @@ function TabInfrastructure() {
 
       {/* Deploy Pipeline */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Pipeline de Deploiement</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">A.2.5.2</span>Pipeline de Deploiement</h3>
         <p className="text-xs text-gray-400 mb-3">deploy.sh copie de VPS1 vers VPS2, restart uvicorn et exclut les fichiers sensibles</p>
 
         <Card className="p-4 bg-white border border-gray-100 shadow-sm">
@@ -1119,7 +1053,7 @@ function TabInfrastructure() {
 
       {/* Nginx */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Nginx Configuration</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">A.2.5.3</span>Nginx Configuration</h3>
         <p className="text-xs text-gray-400 mb-3">
           Fichier: <code className="bg-gray-100 px-1 py-0.5 rounded font-mono">/etc/nginx/sites-available/usinebleue-app</code>
         </p>
@@ -1150,7 +1084,7 @@ function TabInfrastructure() {
 
       {/* Systemd */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Services Systemd</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">A.2.5.4</span>Services Systemd</h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <Card className="p-3 bg-white border border-gray-100">
@@ -1192,7 +1126,7 @@ function TabIntegrations() {
   return (
     <>
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Stack Integrations — {INTEGRATIONS.length} services</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">A.2.6.1</span>Stack Integrations — {INTEGRATIONS.length} services</h3>
         <p className="text-xs text-gray-400 mb-3">
           LiveKit + ElevenLabs + Deepgram + Telnyx + Tavus + Gemini + Claude + Plane.so + Google Drive
         </p>
@@ -1262,7 +1196,7 @@ function TabSecurite() {
   return (
     <>
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Securite — Sprint Securite (Session 32)</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">A.2.7.1</span>Securite — Sprint Securite (Session 32)</h3>
         <p className="text-xs text-gray-400 mb-3">
           {SECURITY_ITEMS.length} mesures deployees | UFW, CORS, API key, rate limit, auth server-side, input validation
         </p>
@@ -1297,7 +1231,7 @@ function TabSecurite() {
 
       {/* Commandes de secours */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Commandes de Secours</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">A.2.7.2</span>Commandes de Secours</h3>
         <p className="text-xs text-gray-400 mb-3">En cas d'urgence — ces commandes sont toujours disponibles</p>
 
         <div className="space-y-2">
@@ -1323,7 +1257,7 @@ function TabSecurite() {
 
       {/* Fichiers critiques */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Fichiers Critiques — NE JAMAIS modifier sans backup</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">A.2.7.3</span>Fichiers Critiques — NE JAMAIS modifier sans backup</h3>
         <p className="text-xs text-gray-400 mb-3">Ces fichiers peuvent casser le systeme entier si mal modifies</p>
 
         <Card className="p-3 bg-white border border-gray-100">
@@ -1349,7 +1283,7 @@ function TabSecurite() {
 
       {/* Backup Protocol */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Protocole de Backup</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">A.2.7.4</span>Protocole de Backup</h3>
         <p className="text-xs text-gray-400 mb-3">TOUJOURS backup avant de coder — regle #1 absolue</p>
 
         <Card className="p-3 bg-white border border-gray-100">

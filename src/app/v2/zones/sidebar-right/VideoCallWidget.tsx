@@ -8,7 +8,7 @@
  * Video : meme pipeline + Tavus avatar lip-sync sur le TTS audio
  */
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import {
   Phone,
   PhoneOff,
@@ -19,6 +19,9 @@ import {
   Loader2,
   Users,
   X,
+  Glasses,
+  Camera,
+  RefreshCw,
 } from "lucide-react";
 import { cn } from "../../../components/ui/utils";
 import { useFrameMaster } from "../../context/FrameMasterContext";
@@ -106,6 +109,34 @@ const AVATAR_CONFIG_GLOW: Record<string, string> = {
 
 type CallState = "idle" | "connecting" | "connected" | "error";
 
+/** Waveform animé overlay — bas de l'image 16:9 pendant un appel */
+function VoiceWaveformOverlay() {
+  const [bars, setBars] = useState<number[]>(Array.from({ length: 20 }, () => 3));
+  const animRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    animRef.current = setInterval(() => {
+      setBars((prev) => prev.map(() => Math.floor(Math.random() * 12) + 2));
+    }, 100);
+    return () => { if (animRef.current) clearInterval(animRef.current); };
+  }, []);
+
+  return (
+    <div className="flex items-end justify-center gap-[1.5px] h-5 mt-2">
+      {bars.map((h, i) => (
+        <div
+          key={i}
+          className="w-[3px] rounded-full bg-gradient-to-t from-blue-400/80 to-cyan-300/60"
+          style={{
+            height: `${h * 1.5}px`,
+            transition: "height 80ms ease-out",
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function VideoCallWidget() {
   const { activeBotCode, activeBot, activeView, setActiveView } = useFrameMaster();
   const { injectVoiceMessage, newConversation } = useChatContext();
@@ -125,11 +156,178 @@ export function VideoCallWidget() {
   const [jitsiOpen, setJitsiOpen] = useState(false);
   const [jitsiRoom, setJitsiRoom] = useState("");
 
+  // Vision mode state
+  const [visionMode, setVisionMode] = useState(false);
+  const [visionAuto, setVisionAuto] = useState(false);
+  const [visionBusy, setVisionBusy] = useState(false);
+  const visionVideoRef = useRef<HTMLVideoElement | null>(null);
+  const visionStreamRef = useRef<MediaStream | null>(null);
+  const visionAutoRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const visionCanvasRef = useRef<HTMLCanvasElement | null>(null);
+
   const openJitsi = () => {
     const room = `ghostx-${activeBotCode.toLowerCase()}-${Date.now().toString(36)}`;
     setJitsiRoom(room);
     setJitsiOpen(true);
   };
+
+  // ── Vision mode — camera + Gemini Vision ──
+
+  const startVision = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+      });
+      visionStreamRef.current = stream;
+      setVisionMode(true);
+      // Attach stream to video element after render
+      requestAnimationFrame(() => {
+        if (visionVideoRef.current) {
+          visionVideoRef.current.srcObject = stream;
+        }
+      });
+    } catch {
+      // Fallback to user-facing camera (desktop)
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        visionStreamRef.current = stream;
+        setVisionMode(true);
+        requestAnimationFrame(() => {
+          if (visionVideoRef.current) {
+            visionVideoRef.current.srcObject = stream;
+          }
+        });
+      } catch {
+        setErrorMsg("Camera non disponible");
+        setTimeout(() => setErrorMsg(""), 3000);
+      }
+    }
+  }, []);
+
+  const stopVision = useCallback(() => {
+    if (visionStreamRef.current) {
+      visionStreamRef.current.getTracks().forEach((t) => t.stop());
+      visionStreamRef.current = null;
+    }
+    if (visionAutoRef.current) {
+      clearInterval(visionAutoRef.current);
+      visionAutoRef.current = null;
+    }
+    setVisionMode(false);
+    setVisionAuto(false);
+    setVisionBusy(false);
+  }, []);
+
+  const captureAndSend = useCallback(async () => {
+    if (visionBusy) return;
+    const video = visionVideoRef.current;
+    if (!video || video.readyState < 2) return;
+
+    // Create offscreen canvas to capture frame
+    let canvas = visionCanvasRef.current;
+    if (!canvas) {
+      canvas = document.createElement("canvas");
+      visionCanvasRef.current = canvas;
+    }
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0);
+
+    // Convert to base64 JPEG (strip data:image/jpeg;base64, prefix)
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+    const base64 = dataUrl.split(",")[1];
+    if (!base64) return;
+
+    setVisionBusy(true);
+
+    // Auto-switch vers live-chat au centre pour voir le flow
+    if (activeViewRef.current !== "live-chat") {
+      setActiveViewRef.current("live-chat");
+    }
+
+    // Injecter le message user dans le flow
+    injectVoiceMessage("user", "[Vision] Qu'est-ce que tu vois?");
+
+    try {
+      const result = await api.chatVision(base64, "Qu'est-ce que tu vois?", activeBotCode);
+      if (result.response) {
+        injectVoiceMessage("assistant", result.response, result.agent || activeBotCode);
+      }
+    } catch (err) {
+      console.error("Vision capture error:", err);
+      injectVoiceMessage("assistant", "Erreur de capture — reessaye.", activeBotCode);
+    } finally {
+      setVisionBusy(false);
+    }
+  }, [visionBusy, activeBotCode, injectVoiceMessage]);
+
+  // Auto-capture toggle
+  useEffect(() => {
+    if (visionAuto && visionMode) {
+      // Capture immediately then every 10s
+      captureAndSend();
+      visionAutoRef.current = setInterval(captureAndSend, 10_000);
+    } else if (visionAutoRef.current) {
+      clearInterval(visionAutoRef.current);
+      visionAutoRef.current = null;
+    }
+    return () => {
+      if (visionAutoRef.current) {
+        clearInterval(visionAutoRef.current);
+        visionAutoRef.current = null;
+      }
+    };
+  }, [visionAuto, visionMode, captureAndSend]);
+
+  // Cleanup vision on unmount
+  useEffect(() => {
+    return () => {
+      if (visionStreamRef.current) {
+        visionStreamRef.current.getTracks().forEach((t) => t.stop());
+      }
+    };
+  }, []);
+
+  // ── Vision RayBan room polling — always active ──
+  // Poll carlos-vision-rayban room for exchanges from the APK
+  const visionPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const visionCursorRef = useRef(0);
+
+  useEffect(() => {
+    visionPollRef.current = setInterval(async () => {
+      try {
+        const res = await fetch(
+          `/api/v1/voice/events/carlos-vision-rayban?cursor=${visionCursorRef.current}`,
+          { headers: { "X-API-Key": import.meta.env.VITE_API_KEY || "missing-key" } }
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+
+        if (data.events && data.events.length > 0) {
+          for (const evt of data.events) {
+            if (evt.type === "exchange") {
+              if (evt.user_text) {
+                injectVoiceMessage("user", `[Vision] ${evt.user_text}`);
+              }
+              if (evt.bot_text) {
+                injectVoiceMessage("assistant", evt.bot_text, evt.agent || "BCO");
+              }
+            }
+          }
+          visionCursorRef.current = data.cursor;
+        }
+      } catch {
+        // Silent fail
+      }
+    }, 3000);
+
+    return () => {
+      if (visionPollRef.current) clearInterval(visionPollRef.current);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // LiveKit refs
   const roomRef = useRef<Room | null>(null);
@@ -502,7 +700,7 @@ export function VideoCallWidget() {
             !isInCall && "brightness-90"
           )}
         />
-        {/* Business card identity — clean, no extra overlay */}
+        {/* Business card identity + voice waveform overlay */}
         <div className={cn(
           "absolute bottom-0 left-0 right-0 z-[5] transition-opacity duration-500",
           hasVideoTrack ? "opacity-0" : "opacity-100",
@@ -519,6 +717,8 @@ export function VideoCallWidget() {
                 &quot;{lastTranscript.slice(0, 50)}{lastTranscript.length > 50 ? "..." : ""}&quot;
               </p>
             )}
+            {/* Voice waveform — overlay bottom of 16:9 image during call */}
+            {isInCall && <VoiceWaveformOverlay />}
           </div>
         </div>
 
@@ -538,6 +738,64 @@ export function VideoCallWidget() {
             >
               <X className="h-3.5 w-3.5" />
             </button>
+          </div>
+        )}
+
+        {/* ── Vision mode — camera feed overlay ── */}
+        {visionMode && (
+          <div className="absolute inset-0 z-30 rounded-t-lg overflow-hidden bg-black">
+            <video
+              ref={visionVideoRef}
+              autoPlay
+              playsInline
+              muted
+              className="w-full h-full object-cover"
+            />
+            {/* Status bar */}
+            <div className="absolute top-0 left-0 right-0 z-40 bg-cyan-600/90 px-3 py-1 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+              <span className="text-[9px] text-white font-semibold tracking-wide">
+                VISION ACTIVE
+              </span>
+              {visionBusy && (
+                <Loader2 className="h-3.5 w-3.5 text-white animate-spin ml-auto" />
+              )}
+            </div>
+            {/* Controls bar */}
+            <div className="absolute bottom-0 left-0 right-0 z-40 bg-gradient-to-t from-black/80 to-transparent px-3 pt-6 pb-2.5 flex items-center gap-2">
+              <button
+                onClick={captureAndSend}
+                disabled={visionBusy}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-semibold transition-all cursor-pointer",
+                  visionBusy
+                    ? "bg-gray-500 text-gray-300 cursor-wait"
+                    : "bg-white text-gray-900 hover:bg-gray-100"
+                )}
+              >
+                <Camera className="h-3.5 w-3.5" />
+                Capturer
+              </button>
+              <button
+                onClick={() => setVisionAuto((v) => !v)}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-semibold transition-all cursor-pointer",
+                  visionAuto
+                    ? "bg-cyan-500 text-white"
+                    : "bg-white/20 text-white hover:bg-white/30"
+                )}
+              >
+                <RefreshCw className={cn("h-3.5 w-3.5", visionAuto && "animate-spin")} />
+                Auto 10s
+              </button>
+              <button
+                onClick={stopVision}
+                className="ml-auto p-1.5 rounded-full bg-red-500/80 hover:bg-red-500 text-white cursor-pointer transition-colors"
+                title="Fermer la vision"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
         )}
 
@@ -576,68 +834,81 @@ export function VideoCallWidget() {
         )}
       </div>
 
-      {/* Call bar — status + 2 boutons principaux */}
-      <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-b-lg px-3 py-2.5 -mt-2">
-        {/* Status + label */}
-        <div className="flex-1 min-w-0 flex items-center gap-2">
+      {/* Call bar — status + 3 boutons */}
+      <div className="bg-gray-50 border border-gray-200 rounded-b-lg px-3 py-2.5 -mt-2 space-y-2">
+        {/* Status line */}
+        <div className="flex items-center gap-2">
           <span className={cn(
             "w-2 h-2 rounded-full shrink-0",
-            isInCall ? "bg-green-500" : isConnecting ? "bg-amber-400 animate-pulse" : "bg-emerald-500"
+            visionMode ? "bg-cyan-500 animate-pulse" : isInCall ? "bg-green-500" : isConnecting ? "bg-amber-400 animate-pulse" : "bg-emerald-500"
           )} />
-          <p className={cn("text-[11px] font-semibold leading-tight", isInCall ? "text-green-600" : isConnecting ? "text-amber-500" : "text-emerald-600")}>
-            {isInCall ? (isVideoCall ? "Vidéo en cours" : "En appel vocal") : isConnecting ? "Connexion..." : "A l'écoute"}
+          <p className={cn("text-[9px] font-semibold leading-tight", visionMode ? "text-cyan-600" : isInCall ? "text-green-600" : isConnecting ? "text-amber-500" : "text-emerald-600")}>
+            {visionMode ? "Vision active" : isInCall ? (isVideoCall ? "Vidéo en cours" : "En appel vocal") : isConnecting ? "Connexion..." : "Communiquez avec CarlOS"}
           </p>
           {isInCall && (
-            <span className="text-[10px] font-mono text-green-600 ml-auto">{formatDuration(callDuration)}</span>
+            <span className="text-[9px] font-mono text-green-600 ml-auto">{formatDuration(callDuration)}</span>
+          )}
+          {callState === "error" && (
+            <span className="text-[9px] text-red-500 ml-auto truncate" title={errorMsg}>Erreur</span>
           )}
         </div>
 
-        {/* Error message */}
-        {callState === "error" && (
-          <span className="text-[9px] text-red-500 max-w-[70px] truncate" title={errorMsg}>Erreur</span>
-        )}
+        {/* 3 boutons: Discussion AI + Conférence AI + Vision AI */}
+        <div className="grid grid-cols-3 gap-1.5">
+          {/* Discutez Live — appel vocal */}
+          <button
+            onClick={isInCall ? endCall : () => startCall(false)}
+            disabled={isConnecting}
+            className={cn(
+              "flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg font-medium text-[9px] transition-all cursor-pointer shadow-sm",
+              isInCall
+                ? "bg-red-500 text-white hover:bg-red-600 shadow-red-200"
+                : isConnecting
+                  ? "bg-blue-100 text-blue-400 cursor-wait"
+                  : "bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200"
+            )}
+            title={isInCall ? "Raccrocher" : "Discussion AI avec CarlOS"}
+          >
+            {isConnecting ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
+            ) : isInCall ? (
+              <PhoneOff className="h-3.5 w-3.5 shrink-0" />
+            ) : (
+              <Phone className="h-3.5 w-3.5 shrink-0" />
+            )}
+            <span>{isInCall ? "Raccrocher" : "Discussion AI"}</span>
+          </button>
 
-        {/* Bouton Discutez avec CarlOS — appel vocal */}
-        <button
-          onClick={isInCall ? endCall : () => startCall(false)}
-          disabled={isConnecting}
-          className={cn(
-            "flex items-center gap-1.5 px-3 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer shadow-sm",
-            isInCall
-              ? "bg-red-500 text-white hover:bg-red-600 shadow-red-200"
-              : isConnecting
-                ? "bg-blue-100 text-blue-400 cursor-wait"
-                : "bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200"
-          )}
-          title={isInCall ? "Raccrocher" : isConnecting ? "Connexion..." : `Discuter avec ${BOT_NAMES[activeBotCode] || "CarlOS"}`}
-        >
-          {isConnecting ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : isInCall ? (
-            <PhoneOff className="h-4 w-4" />
-          ) : (
-            <Phone className="h-4 w-4" />
-          )}
-          <span className="hidden sm:inline">{isInCall ? "Fin" : `Discuter avec ${BOT_NAMES[activeBotCode] || "CarlOS"}`}</span>
-        </button>
+          {/* Conférence AI — Meeting LiveKit */}
+          <button
+            onClick={() => setActiveView("meeting-room")}
+            className="flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg font-medium text-[9px] transition-all cursor-pointer shadow-sm bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-200"
+            title="Conférence AI — Salle de réunion LiveKit"
+          >
+            <Users className="h-3.5 w-3.5 shrink-0" />
+            <span>Conférence AI</span>
+          </button>
 
-        {/* Bouton Visio Jitsi — vert */}
-        <button
-          onClick={jitsiOpen ? () => setJitsiOpen(false) : openJitsi}
-          disabled={isConnecting}
-          className={cn(
-            "flex items-center gap-1.5 px-3 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer shadow-sm",
-            jitsiOpen
-              ? "bg-red-500 text-white hover:bg-red-600 shadow-red-200"
-              : isConnecting
-                ? "bg-emerald-100 text-emerald-400 cursor-wait"
-                : "bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-200"
-          )}
-          title={jitsiOpen ? "Fermer la visio" : "Vidéoconférence humain"}
-        >
-          <Users className="h-4 w-4" />
-          <span className="hidden sm:inline">{jitsiOpen ? "Fin" : "Visio"}</span>
-        </button>
+          {/* Vision Rayban — Camera + Gemini Vision */}
+          <button
+            onClick={visionMode ? stopVision : startVision}
+            disabled={isConnecting || isInCall}
+            className={cn(
+              "flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg font-medium text-[9px] transition-all cursor-pointer shadow-sm",
+              visionMode
+                ? "bg-red-500 text-white hover:bg-red-600 shadow-red-200"
+                : isConnecting
+                  ? "bg-cyan-100 text-cyan-400 cursor-wait"
+                  : isInCall
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-cyan-600 text-white hover:bg-cyan-700 shadow-cyan-200"
+            )}
+            title="Vision AI"
+          >
+            <Glasses className="h-3.5 w-3.5 shrink-0" />
+            <span>{visionMode ? "Fermer" : "Vision AI"}</span>
+          </button>
+        </div>
       </div>
     </div>
   );

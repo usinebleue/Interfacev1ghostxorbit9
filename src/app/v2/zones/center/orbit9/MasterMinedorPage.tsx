@@ -133,7 +133,7 @@ export function MasterMinedorPage() {
       {/* 1. Vue d'Ensemble */}
       {/* ============================================================ */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Vue d'Ensemble</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">D.5.1</span>Vue d'Ensemble</h3>
 
         <Card className="p-4 bg-yellow-50 border-yellow-200 shadow-sm">
           <div className="flex items-start gap-3">
@@ -181,7 +181,7 @@ export function MasterMinedorPage() {
       {/* ============================================================ */}
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-base font-bold text-gray-800">Methode CREDO — 296 pages</h3>
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">D.5.2</span>Methode CREDO — 296 pages</h3>
           <StatusBadge status="traite" />
         </div>
         <p className="text-xs text-gray-400 mb-3">
@@ -218,7 +218,7 @@ export function MasterMinedorPage() {
       {/* ============================================================ */}
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-base font-bold text-gray-800">Boost Camp — 3 Phases Usine Bleue</h3>
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">D.5.3</span>Boost Camp — 3 Phases Usine Bleue</h3>
           <StatusBadge status="partiel" />
         </div>
         <p className="text-xs text-gray-400 mb-3">
@@ -278,7 +278,7 @@ export function MasterMinedorPage() {
       {/* ============================================================ */}
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-base font-bold text-gray-800">Templates & Documents Operationnels</h3>
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">D.5.4</span>Templates & Documents Operationnels</h3>
           <StatusBadge status="brut" />
         </div>
         <p className="text-xs text-gray-400 mb-3">
@@ -315,7 +315,7 @@ export function MasterMinedorPage() {
       {/* ============================================================ */}
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-base font-bold text-gray-800">CRM & Contacts</h3>
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">D.5.5</span>CRM & Contacts</h3>
           <StatusBadge status="partiel" />
         </div>
         <p className="text-xs text-gray-400 mb-3">
@@ -326,7 +326,7 @@ export function MasterMinedorPage() {
           <Card className="p-4 bg-blue-50 border-blue-200 shadow-sm">
             <div className="flex items-center gap-2 mb-2">
               <Users className="h-4 w-4 text-blue-500" />
-              <span className="font-bold text-sm text-blue-700">Fichiers Sources</span>
+              <span className="font-bold text-sm text-blue-700"><span className="text-[9px] font-bold text-gray-400 mr-1">D.5.5.1</span>Fichiers Sources</span>
             </div>
             <div className="space-y-1.5">
               {[
@@ -348,7 +348,7 @@ export function MasterMinedorPage() {
           <Card className="p-4 bg-emerald-50 border-emerald-200 shadow-sm">
             <div className="flex items-center gap-2 mb-2">
               <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-              <span className="font-bold text-sm text-emerald-700">Integration</span>
+              <span className="font-bold text-sm text-emerald-700"><span className="text-[9px] font-bold text-gray-400 mr-1">D.5.5.2</span>Integration</span>
             </div>
             <div className="space-y-1.5">
               <div className="flex items-center gap-2">
@@ -371,7 +371,7 @@ export function MasterMinedorPage() {
       {/* ============================================================ */}
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-base font-bold text-gray-800">Prospection</h3>
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">D.5.6</span>Prospection</h3>
           <StatusBadge status="brut" />
         </div>
         <p className="text-xs text-gray-400 mb-3">
@@ -405,7 +405,7 @@ export function MasterMinedorPage() {
       {/* ============================================================ */}
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-base font-bold text-gray-800">Archives Email</h3>
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">D.5.7</span>Archives Email</h3>
           <StatusBadge status="non-traite" />
         </div>
         <p className="text-xs text-gray-400 mb-3">
@@ -450,7 +450,7 @@ export function MasterMinedorPage() {
       {/* ============================================================ */}
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-base font-bold text-gray-800">Donnees Manquantes — A Acquerir</h3>
+          <h3 className="text-base font-bold text-gray-800"><span className="text-[9px] font-bold text-gray-400 mr-1">D.5.8</span>Donnees Manquantes — A Acquerir</h3>
           <StatusBadge status="a-acquerir" />
         </div>
         <p className="text-xs text-gray-400 mb-3">

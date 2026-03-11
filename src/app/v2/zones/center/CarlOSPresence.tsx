@@ -26,7 +26,7 @@ const VIEW_MESSAGES: Record<string, string> = {
   "war-room":      "War Room activée. Cellule de crise prête. Décrivez la situation — je mobilise l'équipe d'urgence et on passe en mode COMMAND.",
   "think-room":    "Think Room ouverte. De la vision au Go/No-Go en 6 étapes. Partagez votre idée — je mobilise les spécialistes pour la structurer.",
   "mes-chantiers": "Voici votre pipeline complet: Discussions, Missions, Projets, Chantiers. Je garde un oeil sur tout — rien ne traine sans verdict.",
-  "meeting-room":  "Salle de réunion CarlOS. Créez un meeting, partagez le lien avec vos pionniers — je suis co-animateur IA en temps réel.",
+  "meeting-room":  "Conférence AI — choisissez votre type de rencontre. Podcast, board meeting, brainstorm, diagnostic — je m'adapte automatiquement au contexte avec le bon playbook.",
 };
 
 /** Messages sous-sections Orbit9 (Mon Réseau + Mon Industrie) */

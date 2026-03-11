@@ -80,7 +80,10 @@ export function InputBar({ compact = false }: { compact?: boolean }) {
     // Arreter l'ecoute micro si active
     if (stt.isListening) stt.stopListening();
     stt.clearTranscript();
-    setActiveView("live-chat");
+    // Ne rediriger vers live-chat que si on n'est PAS en mode compact (sidebar)
+    if (!compact) {
+      setActiveView("live-chat");
+    }
     sendMessage(trimmed, activeBotCode);
     setText("");
     textareaRef.current?.focus();

@@ -1,14 +1,16 @@
 /**
  * MasterDiagnosticsPage.tsx — Moteur Diagnostics CarlOS (54 universels + sectoriels)
  * Source: mega-prompt-diagnostics-departements.md + mega-prompt-diagnostics-gemini.md
- * Master GHML — Session 48
+ *         + Deep Research Prompt 2 — Benchmarks Opérationnels VITAA (mars 2026)
+ * Master GHML — Session 48 / enrichi Session 49
  */
 
 import {
   Stethoscope, Building2, DollarSign, Server, Megaphone,
   Target, Settings, Factory, Users, Lightbulb, TrendingUp,
   Scale, Shield, ArrowRight, FileText, Clock, BarChart3,
-  CheckCircle2, AlertTriangle, Layers,
+  CheckCircle2, AlertTriangle, Layers, Activity, HelpCircle,
+  Database,
 } from "lucide-react";
 import { cn } from "../../../../components/ui/utils";
 import { Card } from "../../../../components/ui/card";
@@ -193,6 +195,36 @@ const CHAIN = [
   { bot: "BCO", role: "Présente / Décide" },
 ];
 
+// --- Prompt 2 — Matrice des Seuils VITAA (Bonification A) ---
+const VITAA_SEUILS = [
+  { pilier: "Argent", agent: "BCF", metrique: "Cycle Conversion Encaisse (CCC)", unite: "Jours", vert: "< 45 jours", jaune: "45 a 89 jours", rouge: "> 90 jours", contexte: "Mediane NA = 89j. Alimentaire (311) : < 35j sous peine de crise de liquidite." },
+  { pilier: "Argent", agent: "BCF", metrique: "Delai Recouvrement Clients (DSO)", unite: "Jours", vert: "< 35 jours", jaune: "36 a 51 jours", rouge: "> 55 jours", contexte: "DSO de 60j en usinage (3327) est commun mais pese lourdement sur la PME." },
+  { pilier: "Argent", agent: "BCF", metrique: "Rotation des Stocks (DIO)", unite: "Jours", vert: "< 45 jours", jaune: "46 a 80 jours", rouge: "> 85 jours", contexte: "Aerospatiale (3364) tolere jusqu'a 120j+. Metal (332) vise 45-60j." },
+  { pilier: "Actif", agent: "BOO", metrique: "Taux Rendement Synthetique (TRS/OEE)", unite: "%", vert: "> 75%", jaune: "50% a 74%", rouge: "< 50%", contexte: "Moyenne PME QC = 55%. Sous 50%, capacite gaspillee. Benchmark mondial : 85%." },
+  { pilier: "Actif", agent: "BOO", metrique: "Livraison a Temps (OTD)", unite: "%", vert: "> 98%", jaune: "90% a 97%", rouge: "< 90%", contexte: "Sous 90% : risque d'eviction des chaines d'approvisionnement (auto/aero)." },
+  { pilier: "Temps", agent: "BHR", metrique: "Taux de Roulement (Turnover)", unite: "%", vert: "< 8%", jaune: "8% a 15%", rouge: "> 16%", contexte: "Au-dela de 15%, la PME se vide de sa memoire institutionnelle tous les 6 ans." },
+  { pilier: "Idee", agent: "BCT", metrique: "Interconnexion Numerique", unite: "Stade", vert: "Elevee (Niv. 4-5)", jaune: "Silos (Niv. 2-3)", rouge: "Papier (Niv. 1)", contexte: "Seules 14% des PME QC maitrisent l'interconnexion. 39% = zero." },
+  { pilier: "Vente", agent: "BCM", metrique: "CRM Structure", unite: "--", vert: "Deploiement complet", jaune: "Utilisation basique", rouge: "Aucun (Excel)", contexte: "33% des entreprises B2B QC operent sans CRM en 2025." },
+];
+
+// --- Prompt 2 — Benchmarks Sectoriels par code SCIAN ---
+const BENCHMARKS_SECTORIELS = [
+  { secteur: "Transformation alimentaire", scian: "311", dio: "15-25j", dso: "< 30j", ccc: "< 35j", marge: "2-5% net", detail: "Rotation ultra-rapide (produits perissables). CCC > 35j = signal de detresse.", color: "green" },
+  { secteur: "Aerospatiale / Pieces", scian: "3364", dio: "100-120j", dso: "60-75j", ccc: "~95j normal", marge: "> 18% BAIIA", detail: "Cycles dilates (certification, materiaux exotiques). BFR structurellement eleve.", color: "blue" },
+  { secteur: "Produits metalliques / Usinage", scian: "332/3327", dio: "45-60j", dso: "> 60j commun", ccc: "Variable", marge: "10-15% BAIIA", detail: "Goulot = DSO, clients industriels retardent les paiements.", color: "gray" },
+  { secteur: "Plastique / Caoutchouc", scian: "326", dio: "50-65j", dso: "Variable", ccc: "Variable", marge: "6-9% brute", detail: "Resines indexees petrole. Rebuts = levier #1 de rentabilite.", color: "amber" },
+  { secteur: "Machines industrielles", scian: "333", dio: "WIP dominant", dso: "Par jalons", ccc: "> 100j si mal structure", marge: "Variable", detail: "Projets d'ingenierie longs. Facturation par milestones critique.", color: "violet" },
+];
+
+// --- Prompt 2 — Top 5 Canary Questions CEO (Bonification B) ---
+const TOP5_CEO_QUESTIONS = [
+  { question: "Combien de jours s'ecoulent entre le paiement de vos materiaux et l'encaissement du cheque de votre client?", metrique: "CCC", pourquoi: "CCC qui s'allonge = premier signe d'infarctus de tresorerie (etat Meurt)." },
+  { question: "Sur 40h/semaine, combien d'heures votre machine la plus couteuse produit-elle des pieces parfaites?", metrique: "TRS/OEE", pourquoi: "TRS de 50% = CAPEX inutile. Optimiser setup et micro-arrets suffit souvent." },
+  { question: "Quel % de votre personnel de plancher a quitte dans les 12 derniers mois?", metrique: "Turnover", pourquoi: "78% des PME peinent a recruter. Fuite > 15% = paralysie des commandes." },
+  { question: "Quel % de vos commandes est livre a la date exacte promise au client?", metrique: "OTD", pourquoi: "OTD defaillant = symptome aval d'un probleme amont (MRP, achats, pannes)." },
+  { question: "Si une commande entre par courriel, combien d'interventions humaines avant qu'elle apparaisse sur l'ecran du machiniste?", metrique: "Interconnexion", pourquoi: "39% des entreprises QC = zero interconnexion. Des heures brulees en admin redondant." },
+];
+
 // ======================================================================
 // COMPOSANT
 // ======================================================================
@@ -206,12 +238,12 @@ export default function MasterDiagnosticsPage() {
         title="Moteur Diagnostics CarlOS"
         subtitle={`${totalDiag} diagnostics universels × 12 départements × 10 industries`}
         gradient="from-blue-600 to-teal-500"
-        icon={<Stethoscope className="h-5 w-5" />}
+        icon={Stethoscope}
       />
 
       {/* ── Funnel Diagnostics ── */}
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">Cercle Vertueux — Le Diagnostic est la Porte d'Entrée</h2>
+        <h2 className="text-lg font-semibold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">F.1.1</span>Cercle Vertueux — Le Diagnostic est la Porte d'Entrée</h2>
         <div className="space-y-2">
           {FUNNEL_STEPS.map((s) => (
             <div key={s.step} className="flex items-start gap-3">
@@ -231,7 +263,7 @@ export default function MasterDiagnosticsPage() {
 
       {/* ── Chaîne de valeur inter-agents ── */}
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-800 mb-3">Chaîne de Valeur Inter-Agents</h2>
+        <h2 className="text-lg font-semibold text-gray-800 mb-3"><span className="text-[9px] font-bold text-gray-400 mr-1">F.1.2</span>Chaîne de Valeur Inter-Agents</h2>
         <div className="flex flex-wrap items-center gap-2">
           {CHAIN.map((c, i) => (
             <div key={c.bot} className="flex items-center gap-2">
@@ -247,7 +279,7 @@ export default function MasterDiagnosticsPage() {
 
       {/* ── 6 Diagnostics existants ── */}
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-800 mb-3">6 Diagnostics Déjà Implémentés</h2>
+        <h2 className="text-lg font-semibold text-gray-800 mb-3"><span className="text-[9px] font-bold text-gray-400 mr-1">F.1.3</span>6 Diagnostics Déjà Implémentés</h2>
         <div className="flex flex-wrap gap-2">
           {DIAG_EXISTING.map((d) => (
             <Badge key={d} className="bg-green-50 text-green-700 border-green-200">{d}</Badge>
@@ -260,7 +292,7 @@ export default function MasterDiagnosticsPage() {
       {/* ── 54 Diagnostics par Département ── */}
       <div className="mb-8">
         <h2 className="text-lg font-semibold text-gray-800 mb-2">
-          {totalDiag} Diagnostics Universels par Département
+          <span className="text-[9px] font-bold text-gray-400 mr-1">F.1.4</span>{totalDiag} Diagnostics Universels par Département
         </h2>
         <p className="text-sm text-gray-500 mb-6">
           Chaque département a 3 à 5 diagnostics ciblés de 15-25 min. Total : {totalDiag} diagnostics.
@@ -303,7 +335,7 @@ export default function MasterDiagnosticsPage() {
 
       {/* ── Règles du Moteur ── */}
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">Règles du Moteur Diagnostics</h2>
+        <h2 className="text-lg font-semibold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">F.1.5</span>Règles du Moteur Diagnostics</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {RULES.map((r, i) => (
             <Card key={i} className="p-3">
@@ -321,9 +353,151 @@ export default function MasterDiagnosticsPage() {
 
       <SectionDivider />
 
+      {/* ── Matrice des Seuils VITAA (Prompt 2 — Bonification A) ── */}
+      <div className="mb-8">
+        <h2 className="text-lg font-semibold text-gray-800 mb-2">
+          <span className="text-[9px] font-bold text-gray-400 mr-1">F.1.6</span>Matrice des Seuils VITAA — Vert / Jaune / Rouge
+        </h2>
+        <p className="text-sm text-gray-500 mb-4">
+          Seuils calibres pour les PME manufacturieres QC (SCIAN 31-33). Zone rouge = alerte de survie (etat Meurt du Triangle du Feu).
+        </p>
+        <div className="space-y-3">
+          {VITAA_SEUILS.map((s, i) => (
+            <Card key={i} className="overflow-hidden">
+              <div className="px-4 py-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge variant="outline" className="text-[9px] font-mono">{s.pilier}</Badge>
+                  <Badge variant="outline" className="text-[9px] text-gray-500">{s.agent}</Badge>
+                  <span className="text-sm font-medium text-gray-800">{s.metrique}</span>
+                  <span className="text-[9px] text-gray-400 ml-auto">({s.unite})</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 mb-2">
+                  <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-center">
+                    <div className="text-[9px] font-bold text-green-600 uppercase mb-0.5">Vert</div>
+                    <div className="text-xs font-semibold text-green-800">{s.vert}</div>
+                  </div>
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-center">
+                    <div className="text-[9px] font-bold text-amber-600 uppercase mb-0.5">Jaune</div>
+                    <div className="text-xs font-semibold text-amber-800">{s.jaune}</div>
+                  </div>
+                  <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-center">
+                    <div className="text-[9px] font-bold text-red-600 uppercase mb-0.5">Rouge</div>
+                    <div className="text-xs font-semibold text-red-800">{s.rouge}</div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-1.5">
+                  <AlertTriangle className="h-3.5 w-3.5 text-amber-400 mt-0.5 shrink-0" />
+                  <p className="text-xs text-gray-500">{s.contexte}</p>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+        <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+          <p className="text-xs text-blue-700">
+            <span className="font-semibold">Source :</span> Deep Research Prompt 2 — 30 sources validees (mars 2026).
+            Seuils bases sur KPMG, ISED Canada, STIQ, MEIE, Statistique Canada, ISQ.
+          </p>
+        </div>
+      </div>
+
+      <SectionDivider />
+
+      {/* ── Benchmarks Sectoriels par SCIAN (Prompt 2) ── */}
+      <div className="mb-8">
+        <h2 className="text-lg font-semibold text-gray-800 mb-2">
+          <span className="text-[9px] font-bold text-gray-400 mr-1">F.1.7</span>Benchmarks Sectoriels par Code SCIAN
+        </h2>
+        <p className="text-sm text-gray-500 mb-4">
+          Un DSO de 45j = excellence en machines (333), mais hemorragie en alimentaire (311). Les seuils doivent etre contextualises par secteur.
+        </p>
+        <div className="space-y-3">
+          {BENCHMARKS_SECTORIELS.map((b) => (
+            <Card key={b.scian} className="overflow-hidden">
+              <div className={cn("bg-gradient-to-r px-4 py-2.5 flex items-center gap-2", {
+                "from-green-600 to-green-500": b.color === "green",
+                "from-blue-600 to-blue-500": b.color === "blue",
+                "from-gray-600 to-gray-500": b.color === "gray",
+                "from-amber-600 to-amber-500": b.color === "amber",
+                "from-violet-600 to-violet-500": b.color === "violet",
+              })}>
+                <Database className="h-4 w-4 text-white" />
+                <span className="text-sm font-semibold text-white">{b.secteur}</span>
+                <Badge className="ml-auto bg-white/20 text-white border-0 text-[9px]">SCIAN {b.scian}</Badge>
+              </div>
+              <div className="px-4 py-3">
+                <div className="grid grid-cols-4 gap-3 mb-2">
+                  <div>
+                    <div className="text-[9px] text-gray-400 uppercase">DIO</div>
+                    <div className="text-xs font-semibold text-gray-800">{b.dio}</div>
+                  </div>
+                  <div>
+                    <div className="text-[9px] text-gray-400 uppercase">DSO</div>
+                    <div className="text-xs font-semibold text-gray-800">{b.dso}</div>
+                  </div>
+                  <div>
+                    <div className="text-[9px] text-gray-400 uppercase">CCC</div>
+                    <div className="text-xs font-semibold text-gray-800">{b.ccc}</div>
+                  </div>
+                  <div>
+                    <div className="text-[9px] text-gray-400 uppercase">Marge</div>
+                    <div className="text-xs font-semibold text-gray-800">{b.marge}</div>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500">{b.detail}</p>
+              </div>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      <SectionDivider />
+
+      {/* ── Top 5 Canary Questions CEO (Prompt 2 — Bonification B) ── */}
+      <div className="mb-8">
+        <h2 className="text-lg font-semibold text-gray-800 mb-2">
+          <span className="text-[9px] font-bold text-gray-400 mr-1">F.1.8</span>Top 5 — Questions Canari du CEO
+        </h2>
+        <p className="text-sm text-gray-500 mb-4">
+          Si CarlOS ne pouvait poser que 5 questions pour determiner l'etat du Triangle du Feu, ce seraient celles-ci.
+        </p>
+        <div className="space-y-3">
+          {TOP5_CEO_QUESTIONS.map((q, i) => (
+            <Card key={i} className="p-4">
+              <div className="flex items-start gap-3">
+                <span className="flex-shrink-0 w-7 h-7 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold">
+                  {i + 1}
+                </span>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <HelpCircle className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                    <p className="text-sm font-medium text-gray-800">"{q.question}"</p>
+                  </div>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <Badge variant="outline" className="text-[9px] text-blue-600 bg-blue-50">{q.metrique}</Badge>
+                    <p className="text-xs text-gray-500">{q.pourquoi}</p>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+        <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+          <div className="flex items-start gap-2">
+            <Activity className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+            <p className="text-xs text-amber-800">
+              <span className="font-semibold">Interface ideale :</span> Jauges semi-circulaires (rouge vers vert) pour chaque metrique.
+              Le basculement d'une seule aiguille en rouge declenche la convocation des bots specialises (CFO, COO, CHRO).
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <SectionDivider />
+
       {/* ── Diagnostics Sectoriels (10 industries) ── */}
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">10 Industries Cibles — Diagnostics Sectoriels</h2>
+        <h2 className="text-lg font-semibold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">F.1.9</span>10 Industries Cibles — Diagnostics Sectoriels</h2>
         <p className="text-sm text-gray-500 mb-4">
           En plus des {totalDiag} diagnostics universels, chaque industrie a des diagnostics spécifiques.
         </p>
@@ -358,7 +532,7 @@ export default function MasterDiagnosticsPage() {
 
       {/* ── Pipeline Fabien (BFA) ── */}
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-800 mb-3">Pipeline Consultation BFA — VIST → JUAN → CPRJ</h2>
+        <h2 className="text-lg font-semibold text-gray-800 mb-3"><span className="text-[9px] font-bold text-gray-400 mr-1">F.1.10</span>Pipeline Consultation BFA — VIST → JUAN → CPRJ</h2>
         <div className="space-y-3">
           {[
             { code: "VIST", title: "Visite SMART", detail: "Observer, identifier douleurs et opportunités → Rapport SMART" },
@@ -381,7 +555,7 @@ export default function MasterDiagnosticsPage() {
       {/* ── 8 Gaspillages + 7 Familles Automatisation ── */}
       <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <h3 className="text-sm font-semibold text-gray-800 mb-3">8 Gaspillages (Grille Diagnostic)</h3>
+          <h3 className="text-sm font-semibold text-gray-800 mb-3"><span className="text-[9px] font-bold text-gray-400 mr-1">F.1.11.1</span>8 Gaspillages (Grille Diagnostic)</h3>
           <div className="space-y-1">
             {["Surproduction", "Attentes", "Transport", "Sur-traitement", "Stocks excessifs", "Mouvements inutiles", "Défauts", "Sous-utilisation compétences"].map((g, i) => (
               <div key={i} className="flex items-center gap-2 text-xs text-gray-600">
@@ -392,7 +566,7 @@ export default function MasterDiagnosticsPage() {
           </div>
         </div>
         <div>
-          <h3 className="text-sm font-semibold text-gray-800 mb-3">7 Familles d'Automatisation</h3>
+          <h3 className="text-sm font-semibold text-gray-800 mb-3"><span className="text-[9px] font-bold text-gray-400 mr-1">F.1.11.2</span>7 Familles d'Automatisation</h3>
           <div className="space-y-1">
             {[
               "Soudage robotisé (150K-500K$/cellule)",
@@ -416,6 +590,8 @@ export default function MasterDiagnosticsPage() {
       <div className="mt-8 pt-4 border-t border-gray-100">
         <p className="text-xs text-gray-400">
           Sources : mega-prompt-diagnostics-departements.md · mega-prompt-diagnostics-gemini.md ·
+          Deep Research Prompt 2 (30 sources, mars 2026) · KPMG Working Capital 2024 · ISED Canada ·
+          Barometre STIQ 2025 · MEIE Enquete Numerique 2025 · ISQ · Statistique Canada ·
           Pipeline BFA (VIST/JUAN/CPRJ) · 8 Gaspillages Lean · 7 Familles Automatisation REAI
         </p>
       </div>

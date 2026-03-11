@@ -1447,3 +1447,33 @@ export interface CommandDetectResponse {
   scan_bots: string[];
   raison: string;
 }
+
+// --- Diagnostic IA ---
+
+export interface DiagnosticIA {
+  id: number;
+  user_id: number;
+  nom_entreprise: string;
+  secteur: string;
+  nb_employes: string;
+  chiffre_affaires: string;
+  defi_principal: string;
+  profil_type: string;
+  taille_categorie: string;
+  nb_departements: number;
+  reponses: Record<string, number>;
+  scores_departements: Record<string, number>;
+  score_absorption: number;
+  score_dia: number;
+  score_sei: number;
+  niveau: string;
+  top_gaps: { botCode: string; score: number; label: string }[];
+  ghost_team: { botCode: string; score: number; raison: string; priorite: string }[];
+  status: string;
+  departement_courant: number;
+  contact_nom: string;
+  contact_email: string;
+  created_at: string;
+  updated_at: string;
+  completed_at: string;
+}

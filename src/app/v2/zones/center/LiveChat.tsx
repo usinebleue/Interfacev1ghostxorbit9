@@ -241,7 +241,7 @@ function CanvasActionBadges({ actions }: { actions: CanvasAction[] }) {
       if (botCode && (action.view === "department" || action.view === "detail")) {
         navigateToDepartment(botCode, action.view as "department" | "detail");
       } else {
-        setActiveView(action.view as "department" | "health" | "cockpit" | "orbit9-detail" | "agent-settings" | "espace-bureau");
+        setActiveView(action.view as "department" | "health" | "cockpit" | "orbit9-detail" | "agent-settings" | "espace-bureau" | "diagnostic-hub");
       }
     } else {
       dispatch(action);

@@ -301,7 +301,7 @@ export function MasterParcoursPage() {
       {/* SECTION 1 — Philosophie CarlOS GPS */}
       {/* ============================================================ */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Philosophie CarlOS GPS</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">E.3.1</span>Philosophie CarlOS GPS</h3>
 
         <Card className="p-6 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border-gray-700 shadow-lg mb-5">
           <div className="text-center">
@@ -358,7 +358,7 @@ export function MasterParcoursPage() {
       {/* SECTION 2 — Les 4 Points de Depart */}
       {/* ============================================================ */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Les 4 Points de Depart</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">E.3.2</span>Les 4 Points de Depart</h3>
         <p className="text-xs text-gray-400 mb-4">
           4 profils de dirigeants, 4 parcours adaptes. CarlOS s'ajuste au stade de l'entreprise.
         </p>
@@ -435,7 +435,7 @@ export function MasterParcoursPage() {
       {/* SECTION 3 — Le Parcours Universel — 7 Etapes */}
       {/* ============================================================ */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Le Parcours Universel — 7 Etapes</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">E.3.3</span>Le Parcours Universel — 7 Etapes</h3>
         <p className="text-xs text-gray-400 mb-4">
           De la premiere minute a l'entreprise full AI. Chaque etape construit sur la precedente.
         </p>
@@ -504,7 +504,7 @@ export function MasterParcoursPage() {
       {/* SECTION 4 — Metriques de Progression */}
       {/* ============================================================ */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Metriques de Progression</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">E.3.4</span>Metriques de Progression</h3>
         <p className="text-xs text-gray-400 mb-4">
           Ce qui est mesure a chaque etape. Progression visible, pas abstraite.
         </p>
@@ -529,7 +529,7 @@ export function MasterParcoursPage() {
       {/* SECTION 5 — Ce qui rend CarlOS unique */}
       {/* ============================================================ */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Ce qui rend CarlOS unique</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">E.3.5</span>Ce qui rend CarlOS unique</h3>
         <p className="text-xs text-gray-400 mb-4">
           5 avantages structurels qu'aucun chatbot generique ne peut reproduire.
         </p>

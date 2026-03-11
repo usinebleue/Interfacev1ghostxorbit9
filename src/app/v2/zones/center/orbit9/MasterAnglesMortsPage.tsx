@@ -194,7 +194,7 @@ export function MasterAnglesMortsPage() {
 
       {/* MATRICE SYNTHESE */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Matrice de Priorite — Vue d'Ensemble</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">G.1.1</span>Matrice de Priorite — Vue d'Ensemble</h3>
         <Card className="bg-white border border-gray-100 shadow-sm overflow-hidden">
           <div className="grid grid-cols-[60px_1fr_70px_70px_50px] gap-2 px-4 py-2.5 bg-gray-50 border-b border-gray-100">
             <span className="text-[9px] font-bold text-gray-500 uppercase">#</span>
@@ -221,7 +221,7 @@ export function MasterAnglesMortsPage() {
 
       {/* DETAIL — 13 Angles Morts */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Detail — 13 Angles Morts</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">G.1.2</span>Detail — 13 Angles Morts</h3>
         <div className="space-y-3">
           {ANGLES_MORTS.map((am) => {
             const Icon = am.icon;
@@ -258,7 +258,7 @@ export function MasterAnglesMortsPage() {
 
       {/* CHECKLIST PRE-LANCEMENT */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Checklist Pre-Lancement</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">G.1.3</span>Checklist Pre-Lancement</h3>
         <div className="space-y-3">
           {PRE_LAUNCH.map((group) => (
             <Card key={group.priorite} className={cn("p-4 bg-white border shadow-sm", `border-${group.color}-200`)}>
@@ -282,7 +282,7 @@ export function MasterAnglesMortsPage() {
 
       {/* POSITIONNEMENT VS ALADDIN */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Positionnement Strategique vs Aladdin</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">G.1.4</span>Positionnement Strategique vs Aladdin</h3>
         <Card className="p-4 bg-blue-50 border border-blue-100 shadow-sm mb-3">
           <div className="flex items-start gap-2">
             <Shield className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
@@ -321,7 +321,7 @@ export function MasterAnglesMortsPage() {
 
       {/* 6 PATTERNS GHML VALIDES */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-1">6 Patterns GHML Valides au Combat</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-1"><span className="text-[9px] font-bold text-gray-400 mr-1">G.1.5</span>6 Patterns GHML Valides au Combat</h3>
         <p className="text-xs text-gray-400 mb-4">Proposes suite a l'audit hostile Deep Think, valides par Carl.</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           {[
@@ -347,7 +347,7 @@ export function MasterAnglesMortsPage() {
 
       {/* SOURCES */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Documents Source</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">G.1.6</span>Documents Source</h3>
         <Card className="p-4 bg-white border border-gray-100 shadow-sm">
           <div className="space-y-2">
             {[

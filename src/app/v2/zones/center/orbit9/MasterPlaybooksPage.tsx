@@ -109,12 +109,12 @@ export default function MasterPlaybooksPage() {
         title="Playbooks & Templates CarlOS"
         subtitle={`${PLAYBOOKS_UNIVERSELS.length} playbooks universels + ${PLAYBOOKS_SECTORIELS.length} sectoriels + 30 missions types`}
         gradient="from-amber-600 to-orange-500"
-        icon={<BookTemplate className="h-5 w-5" />}
+        icon={BookTemplate}
       />
 
       {/* ── 6 Types de Chantiers ── */}
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">6 Types de Chantiers (Transformations)</h2>
+        <h2 className="text-lg font-semibold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">F.2.1</span>6 Types de Chantiers (Transformations)</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {CHANTIER_TYPES.map((c) => (
             <Card key={c.type} className="p-3">
@@ -129,7 +129,7 @@ export default function MasterPlaybooksPage() {
 
       {/* ── Playbooks Universels ── */}
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-800 mb-2">{PLAYBOOKS_UNIVERSELS.length} Playbooks Universels</h2>
+        <h2 className="text-lg font-semibold text-gray-800 mb-2"><span className="text-[9px] font-bold text-gray-400 mr-1">F.2.2</span>{PLAYBOOKS_UNIVERSELS.length} Playbooks Universels</h2>
         <p className="text-sm text-gray-500 mb-4">Chaque playbook = 1 chantier + 2-4 projets + 3-5 missions par projet.</p>
         <div className="space-y-2">
           {PLAYBOOKS_UNIVERSELS.map((p, i) => (
@@ -164,7 +164,7 @@ export default function MasterPlaybooksPage() {
 
       {/* ── Playbooks Sectoriels ── */}
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-800 mb-2">{PLAYBOOKS_SECTORIELS.length} Playbooks Sectoriels</h2>
+        <h2 className="text-lg font-semibold text-gray-800 mb-2"><span className="text-[9px] font-bold text-gray-400 mr-1">F.2.3</span>{PLAYBOOKS_SECTORIELS.length} Playbooks Sectoriels</h2>
         <p className="text-sm text-gray-500 mb-4">Spécifiques à une industrie — benchmarks et KPIs adaptés au secteur.</p>
         <div className="space-y-2">
           {PLAYBOOKS_SECTORIELS.map((p, i) => (
@@ -201,7 +201,7 @@ export default function MasterPlaybooksPage() {
 
       {/* ── 30 Missions Récurrentes ── */}
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">30 Missions Types Récurrentes (6 catégories)</h2>
+        <h2 className="text-lg font-semibold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">F.2.4</span>30 Missions Types Récurrentes (6 catégories)</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {MISSION_CATEGORIES.map((m) => (
             <Card key={m.cat} className="p-3">
@@ -219,7 +219,7 @@ export default function MasterPlaybooksPage() {
 
       {/* ── 9 Types de Documents Générés ── */}
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">9 Types de Documents Générés</h2>
+        <h2 className="text-lg font-semibold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">F.2.5</span>9 Types de Documents Générés</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {DOC_TYPES.map((d) => (
             <Card key={d.type} className="p-3 flex items-start gap-2">
@@ -237,7 +237,7 @@ export default function MasterPlaybooksPage() {
 
       {/* ── Architecture Playbook ── */}
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-800 mb-3">Architecture d'un Playbook</h2>
+        <h2 className="text-lg font-semibold text-gray-800 mb-3"><span className="text-[9px] font-bold text-gray-400 mr-1">F.2.6</span>Architecture d'un Playbook</h2>
         <Card className="p-4 bg-gray-50">
           <div className="space-y-3">
             {[

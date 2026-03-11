@@ -114,28 +114,33 @@ export function MasterCapacitesPage() {
         />
       }
     >
-      {/* LE CALCUL QUI TUE */}
-      <Card className="p-0 overflow-hidden border-0 shadow-md">
-        <div className="bg-gradient-to-r from-emerald-600 to-emerald-500 px-6 py-5">
-          <div className="text-center">
-            <p className="text-[9px] text-white/70 uppercase tracking-wider mb-1">Le Calcul qui Tue</p>
-            <div className="flex items-center justify-center gap-4">
-              <div>
-                <div className="text-xs text-white/80">C-Suite humain</div>
-                <div className="text-2xl font-bold text-white">1.35M$/an</div>
-              </div>
-              <ArrowRight className="h-6 w-6 text-white/60" />
-              <div>
-                <div className="text-xs text-white/80">GhostX C-Suite</div>
-                <div className="text-2xl font-bold text-white">21,600$/an</div>
-              </div>
-              <div className="px-3 py-1.5 bg-white/20 rounded-lg">
-                <div className="text-xs text-white/80">Economies</div>
-                <div className="text-2xl font-bold text-white">97%</div>
-              </div>
+      {/* ROI Summary — detail complet dans Vision & Strategie (B.2) */}
+      <Card className="p-4 bg-emerald-50 border border-emerald-200 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
+            <div className="text-center">
+              <div className="text-lg font-bold text-gray-800">1.35M$</div>
+              <div className="text-[9px] text-gray-500">C-Suite humain</div>
             </div>
-            <p className="text-xs text-white/70 mt-2">Le client paie ~2% de la valeur equivalente</p>
+            <ArrowRight className="h-4 w-4 text-emerald-500 shrink-0" />
+            <div className="text-center">
+              <div className="text-lg font-bold text-emerald-600">21,600$</div>
+              <div className="text-[9px] text-gray-500">GhostX/an</div>
+            </div>
+            <div className="px-2 py-1 bg-emerald-100 rounded-lg text-center">
+              <div className="text-lg font-bold text-emerald-700">97%</div>
+              <div className="text-[9px] text-emerald-600">economies</div>
+            </div>
           </div>
+          <div className="flex-1 ml-3">
+            <p className="text-xs text-emerald-700">Le client paie ~2% de la valeur equivalente. Pricing, projections et concurrence detailles dans Vision & Strategie.</p>
+          </div>
+          <button
+            onClick={() => setActiveView("master-strategie")}
+            className="px-3 py-1.5 text-xs font-bold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors shrink-0"
+          >
+            Voir B.2
+          </button>
         </div>
       </Card>
 
@@ -143,7 +148,7 @@ export function MasterCapacitesPage() {
 
       {/* CAPACITES PAR DEPARTEMENT */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-1">Capacites par Departement</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-1"><span className="text-[9px] font-bold text-gray-400 mr-1">C.4.1</span>Capacites par Departement</h3>
         <p className="text-xs text-gray-400 mb-4">90+ taches automatisees, 660-1,170 heures/mois economisees.</p>
 
         <div className="space-y-3">
@@ -214,7 +219,7 @@ export function MasterCapacitesPage() {
 
       {/* THROUGHPUT */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-1">Capacite de Traitement (Throughput)</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-1"><span className="text-[9px] font-bold text-gray-400 mr-1">C.4.2</span>Capacite de Traitement (Throughput)</h3>
         <p className="text-xs text-gray-400 mb-4">GhostX Team operant 24/7 — capacite annuelle.</p>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -241,7 +246,7 @@ export function MasterCapacitesPage() {
 
       {/* 6 FLUX DE REVENUS */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-1">6 Flux de Revenus</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-1"><span className="text-[9px] font-bold text-gray-400 mr-1">C.4.3</span>6 Flux de Revenus</h3>
         <p className="text-xs text-gray-400 mb-4">Projections An 1→3 par flux.</p>
 
         <div className="space-y-2">
@@ -281,7 +286,7 @@ export function MasterCapacitesPage() {
 
       {/* 7 ANGLES INEXPLOITES */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-1">7 Angles de Revenus Inexploites</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-1"><span className="text-[9px] font-bold text-gray-400 mr-1">C.4.4</span>7 Angles de Revenus Inexploites</h3>
         <p className="text-xs text-gray-400 mb-4">Opportunites identifiees, pas encore activees.</p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -307,7 +312,7 @@ export function MasterCapacitesPage() {
 
       {/* ORBIT9 COORDINATION ROI */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Multiplicateur Orbit9 (9x)</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">C.4.5</span>Multiplicateur Orbit9 (9x)</h3>
         <Card className="p-4 bg-gradient-to-br from-orange-50 to-white border border-orange-100 shadow-sm">
           <div className="space-y-2">
             {[
@@ -329,7 +334,7 @@ export function MasterCapacitesPage() {
 
       {/* SOURCES */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Documents Source</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">C.4.6</span>Documents Source</h3>
         <Card className="p-4 bg-white border border-gray-100 shadow-sm">
           <div className="space-y-2">
             {[

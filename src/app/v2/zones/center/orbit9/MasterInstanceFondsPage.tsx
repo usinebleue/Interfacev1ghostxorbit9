@@ -97,7 +97,7 @@ export function MasterInstanceFondsPage() {
     >
       {/* ARCHITECTURE 3 NIVEAUX */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Architecture 3 Niveaux</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">B.4.1</span>Architecture 3 Niveaux</h3>
         <div className="flex flex-col md:flex-row gap-3">
           {ARCHITECTURE_LEVELS.map((lvl, i) => {
             const Icon = lvl.icon;
@@ -124,7 +124,7 @@ export function MasterInstanceFondsPage() {
 
       {/* 9 FONDS CIBLES */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-1">9 Fonds Quebecois Cibles</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-1"><span className="text-[9px] font-bold text-gray-400 mr-1">B.4.2</span>9 Fonds Quebecois Cibles</h3>
         <p className="text-xs text-gray-400 mb-4">~616G$ AUM cumule, 7,000+ entreprises portefeuille.</p>
 
         <Card className="bg-white border border-gray-100 shadow-sm overflow-hidden">
@@ -171,7 +171,7 @@ export function MasterInstanceFondsPage() {
 
       {/* STRATEGIE DOMINO */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Strategie Domino (4 phases)</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">B.4.3</span>Strategie Domino (4 phases)</h3>
         <div className="space-y-2">
           {DOMINO_PHASES.map((p, i) => (
             <Card key={p.phase} className="p-4 bg-white border border-gray-100 shadow-sm">
@@ -200,7 +200,7 @@ export function MasterInstanceFondsPage() {
 
       {/* 7 RAISONS MASSUES */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">7 Raisons Massues pour les Fonds</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">B.4.4</span>7 Raisons Massues pour les Fonds</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           {RAISONS_MASSUES.map((r) => (
             <Card key={r.titre} className="p-3 bg-white border border-gray-100 shadow-sm">
@@ -218,7 +218,7 @@ export function MasterInstanceFondsPage() {
 
       {/* PRICING FONDS */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Pricing Instance Fonds</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">B.4.5</span>Pricing Instance Fonds</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {PRICING_FONDS.map((p, i) => (
             <Card key={p.tier} className={cn("p-0 overflow-hidden bg-white border shadow-sm",
@@ -250,7 +250,7 @@ export function MasterInstanceFondsPage() {
 
       {/* SCHEMA DB */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-1">Schema PostgreSQL (5 tables)</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-1"><span className="text-[9px] font-bold text-gray-400 mr-1">B.4.6</span>Schema PostgreSQL (5 tables)</h3>
         <p className="text-xs text-gray-400 mb-4">Tables additionnelles pour l'instance fonds, avec RLS.</p>
 
         <div className="space-y-2">
@@ -279,7 +279,7 @@ export function MasterInstanceFondsPage() {
 
       {/* INTEGRATION MILA */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Integration MILA (IA Predictive)</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">B.4.7</span>Integration MILA (IA Predictive)</h3>
         <div className="grid grid-cols-2 gap-2">
           {[
             { model: "Predictif Churn", desc: "Detection precoce de PME a risque dans le portefeuille" },
@@ -302,7 +302,7 @@ export function MasterInstanceFondsPage() {
 
       {/* ROI MATH */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">ROI Math — 9 Fonds</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">B.4.8</span>ROI Math — 9 Fonds</h3>
         <Card className="p-4 bg-gradient-to-br from-emerald-50 to-white border border-emerald-100 shadow-sm">
           <div className="text-center space-y-3">
             <div>
@@ -334,7 +334,7 @@ export function MasterInstanceFondsPage() {
 
       {/* SOURCES */}
       <div>
-        <h3 className="text-base font-bold text-gray-800 mb-4">Documents Source</h3>
+        <h3 className="text-base font-bold text-gray-800 mb-4"><span className="text-[9px] font-bold text-gray-400 mr-1">B.4.9</span>Documents Source</h3>
         <Card className="p-4 bg-white border border-gray-100 shadow-sm">
           <div className="space-y-2">
             {[

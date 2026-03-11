@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Usine Bleue AI — Flow de Transformation</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #0a1628 0%, #0f2847 40%, #0a1628 100%);
+    min-height: 100vh;
+    overflow-x: hidden;
+    color: white;
+  }
+
+  /* ═══════════ PARTICLES BACKGROUND ═══════════ */
+  .particles {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  }
+  .particle {
+    position: absolute;
+    width: 3px; height: 3px;
+    background: rgba(59, 130, 246, 0.3);
+    border-radius: 50%;
+    animation: float-particle 8s infinite ease-in-out;
+  }
+  @keyframes float-particle {
+    0%, 100% { transform: translateY(0) translateX(0); opacity: 0.2; }
+    50% { transform: translateY(-40px) translateX(20px); opacity: 0.6; }
+  }
+
+  /* ═══════════ HEADER ═══════════ */
+  .header {
+    text-align: center;
+    padding: 60px 20px 40px;
+    position: relative; z-index: 1;
+    animation: fadeInDown 1s ease-out;
+  }
+  .logo-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .logo-icon {
+    width: 56px; height: 56px;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.4);
+    animation: pulse-glow 3s infinite;
+  }
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 30px rgba(59, 130, 246, 0.4); }
+    50% { box-shadow: 0 0 50px rgba(59, 130, 246, 0.7); }
+  }
+  .logo-icon svg { width: 32px; height: 32px; fill: white; }
+  .logo-text {
+    font-size: 28px; font-weight: 800;
+    background: linear-gradient(90deg, #60a5fa, #a78bfa, #60a5fa);
+    background-size: 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 3s infinite linear;
+  }
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  .header h2 {
+    font-size: 18px; font-weight: 400; color: rgba(255,255,255,0.5);
+    letter-spacing: 4px; text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .header h1 {
+    font-size: 42px; font-weight: 800; line-height: 1.2;
+    background: linear-gradient(90deg, #fff, #93c5fd);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .header p {
+    font-size: 16px; color: rgba(255,255,255,0.4);
+    margin-top: 12px; max-width: 600px; margin-inline: auto;
+  }
+
+  /* ═══════════ FLOW CONTAINER ═══════════ */
+  .flow-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px 40px 80px;
+    position: relative; z-index: 1;
+  }
+
+  /* ═══════════ VERTICAL CONNECTOR LINE ═══════════ */
+  .connector-line {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: 3px;
+    height: 0;
+    background: linear-gradient(180deg, #3b82f6, #8b5cf6, #06b6d4, #10b981, #f59e0b, #3b82f6);
+    background-size: 100% 300%;
+    transform: translateX(-50%);
+    animation: grow-line 4s ease-out 1.5s forwards, line-flow 4s linear 1.5s infinite;
+    border-radius: 2px;
+  }
+  @keyframes grow-line {
+    to { height: 100%; }
+  }
+  @keyframes line-flow {
+    0% { background-position: 0% 0%; }
+    100% { background-position: 0% 300%; }
+  }
+
+  /* ═══════════ STEP ═══════════ */
+  .step {
+    display: flex;
+    align-items: flex-start;
+    gap: 40px;
+    margin-bottom: 50px;
+    position: relative;
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  .step.visible {
+    animation: stepReveal 0.8s ease-out forwards;
+  }
+  @keyframes stepReveal {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Alternance gauche/droite */
+  .step:nth-child(even) { flex-direction: row-reverse; }
+  .step:nth-child(even) .step-content { text-align: right; }
+  .step:nth-child(even) .step-details { align-items: flex-end; }
+
+  /* ═══════════ STEP NODE (cercle central) ═══════════ */
+  .step-node {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 2;
+  }
+  .step-node-inner {
+    width: 100%; height: 100%;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    box-shadow: 0 0 25px var(--step-glow);
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+  .step:hover .step-node-inner {
+    transform: scale(1.15);
+    box-shadow: 0 0 40px var(--step-glow);
+  }
+  .step-node-ring {
+    position: absolute; inset: -6px;
+    border-radius: 50%;
+    border: 2px solid var(--step-color);
+    opacity: 0.3;
+    animation: ring-pulse 2s infinite;
+  }
+  @keyframes ring-pulse {
+    0%, 100% { transform: scale(1); opacity: 0.3; }
+    50% { transform: scale(1.15); opacity: 0.1; }
+  }
+  .step-number {
+    position: absolute;
+    top: -8px; right: -8px;
+    width: 22px; height: 22px;
+    background: white;
+    color: #0f172a;
+    border-radius: 50%;
+    font-size: 11px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+
+  /* ═══════════ STEP CONTENT ═══════════ */
+  .step-content {
+    flex: 1;
+    padding-top: 8px;
+  }
+  .step-label {
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--step-color);
+    margin-bottom: 6px;
+  }
+  .step-title {
+    font-size: 22px; font-weight: 700;
+    color: white;
+    margin-bottom: 8px;
+    line-height: 1.3;
+  }
+  .step-desc {
+    font-size: 14px;
+    color: rgba(255,255,255,0.5);
+    line-height: 1.6;
+    max-width: 380px;
+  }
+  .step:nth-child(even) .step-desc {
+    margin-left: auto;
+  }
+
+  /* ═══════════ STEP DETAILS PILLS ═══════════ */
+  .step-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 14px;
+  }
+  .detail-pill {
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    background: var(--step-bg);
+    color: var(--step-color);
+    border: 1px solid var(--step-border);
+    font-weight: 500;
+  }
+
+  /* ═══════════ CARLOS AI BADGE ═══════════ */
+  .carlos-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(139,92,246,0.15));
+    border: 1px solid rgba(59,130,246,0.3);
+    border-radius: 20px;
+    padding: 5px 14px;
+    margin-top: 14px;
+    font-size: 11px;
+    color: #93c5fd;
+    font-weight: 600;
+  }
+  .carlos-dot {
+    width: 8px; height: 8px;
+    background: #3b82f6;
+    border-radius: 50%;
+    animation: carlos-pulse 1.5s infinite;
+  }
+  @keyframes carlos-pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(59,130,246,0.5); }
+    50% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(59,130,246,0); }
+  }
+
+  /* ═══════════ STEP COLORS ═══════════ */
+  .step-1 { --step-color: #3b82f6; --step-glow: rgba(59,130,246,0.4); --step-bg: rgba(59,130,246,0.1); --step-border: rgba(59,130,246,0.25); }
+  .step-2 { --step-color: #8b5cf6; --step-glow: rgba(139,92,246,0.4); --step-bg: rgba(139,92,246,0.1); --step-border: rgba(139,92,246,0.25); }
+  .step-3 { --step-color: #06b6d4; --step-glow: rgba(6,182,212,0.4); --step-bg: rgba(6,182,212,0.1); --step-border: rgba(6,182,212,0.25); }
+  .step-4 { --step-color: #10b981; --step-glow: rgba(16,185,129,0.4); --step-bg: rgba(16,185,129,0.1); --step-border: rgba(16,185,129,0.25); }
+  .step-5 { --step-color: #f59e0b; --step-glow: rgba(245,158,11,0.4); --step-bg: rgba(245,158,11,0.1); --step-border: rgba(245,158,11,0.25); }
+  .step-6 { --step-color: #ec4899; --step-glow: rgba(236,72,153,0.4); --step-bg: rgba(236,72,153,0.1); --step-border: rgba(236,72,153,0.25); }
+  .step-7 { --step-color: #22d3ee; --step-glow: rgba(34,211,238,0.4); --step-bg: rgba(34,211,238,0.1); --step-border: rgba(34,211,238,0.25); }
+
+  /* ═══════════ RESULT BANNER ═══════════ */
+  .result-banner {
+    text-align: center;
+    padding: 50px 20px;
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  .result-banner.visible {
+    animation: bannerReveal 1s ease-out forwards;
+  }
+  @keyframes bannerReveal {
+    to { opacity: 1; transform: scale(1); }
+  }
+  .result-box {
+    display: inline-block;
+    background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(34,211,238,0.1));
+    border: 1px solid rgba(16,185,129,0.3);
+    border-radius: 20px;
+    padding: 30px 50px;
+    position: relative;
+    overflow: hidden;
+  }
+  .result-box::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, transparent, rgba(16,185,129,0.05));
+    animation: result-shimmer 3s infinite;
+  }
+  @keyframes result-shimmer {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+  .result-icon { font-size: 48px; margin-bottom: 12px; }
+  .result-title {
+    font-size: 28px; font-weight: 800;
+    background: linear-gradient(90deg, #10b981, #22d3ee);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .result-sub {
+    font-size: 14px; color: rgba(255,255,255,0.5);
+    margin-top: 8px;
+  }
+
+  /* ═══════════ FOOTER ═══════════ */
+  .footer {
+    text-align: center;
+    padding: 40px 20px 60px;
+    opacity: 0;
+    animation: fadeIn 1s ease-out 8s forwards;
+  }
+  .footer p {
+    font-size: 12px;
+    color: rgba(255,255,255,0.25);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* ═══════════ ANIMATIONS GLOBALES ═══════════ */
+  @keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    to { opacity: 1; }
+  }
+
+  /* ═══════════ DATA FLOW PARTICLES on connector ═══════════ */
+  .data-particle {
+    position: absolute;
+    left: 50%;
+    width: 8px; height: 8px;
+    background: var(--p-color, #3b82f6);
+    border-radius: 50%;
+    transform: translateX(-50%);
+    animation: flow-down var(--p-duration, 3s) linear var(--p-delay, 0s) infinite;
+    box-shadow: 0 0 10px var(--p-color, #3b82f6);
+    opacity: 0;
+  }
+  @keyframes flow-down {
+    0% { top: 0; opacity: 0; }
+    5% { opacity: 1; }
+    95% { opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+  }
+
+  /* ═══════════ RESPONSIVE ═══════════ */
+  @media (max-width: 768px) {
+    .step { flex-direction: column !important; gap: 16px; align-items: center; }
+    .step-content { text-align: center !important; }
+    .step-details { justify-content: center; }
+    .step:nth-child(even) .step-desc { margin-left: 0; }
+    .header h1 { font-size: 28px; }
+    .flow-container { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Particles background -->
+<div class="particles" id="particles"></div>
+
+<!-- Header -->
+<div class="header">
+  <div class="logo-container">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+    </div>
+    <span class="logo-text">Usine Bleue AI</span>
+  </div>
+  <h2>Ligne de transformation</h2>
+  <h1>Du diagnostic<br>a la realisation</h1>
+  <p>Le parcours complet d'un manufacturier accompagne par CarlOS et le reseau Usine Bleue</p>
+</div>
+
+<!-- Flow -->
+<div class="flow-container">
+  <div class="connector-line">
+    <div class="data-particle" style="--p-color:#3b82f6; --p-duration:6s; --p-delay:2s;"></div>
+    <div class="data-particle" style="--p-color:#8b5cf6; --p-duration:5s; --p-delay:3.5s;"></div>
+    <div class="data-particle" style="--p-color:#06b6d4; --p-duration:7s; --p-delay:4s;"></div>
+    <div class="data-particle" style="--p-color:#10b981; --p-duration:5.5s; --p-delay:5s;"></div>
+    <div class="data-particle" style="--p-color:#f59e0b; --p-duration:6.5s; --p-delay:3s;"></div>
+  </div>
+
+  <!-- Step 1 — Qualification -->
+  <div class="step step-1" data-delay="2000">
+    <div class="step-node">
+      <div class="step-node-inner" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+        🎯
+      </div>
+      <div class="step-node-ring"></div>
+      <div class="step-number">1</div>
+    </div>
+    <div class="step-content">
+      <div class="step-label">Phase 1</div>
+      <div class="step-title">Qualification du manufacturier</div>
+      <div class="step-desc">
+        CarlOS engage la conversation avec le dirigeant.
+        Diagnostic VITAA automatise sur les 5 piliers :
+        Ventes, Idees, Temps, Argent, Actifs.
+      </div>
+      <div class="step-details">
+        <span class="detail-pill">Diagnostic VITAA</span>
+        <span class="detail-pill">Triangle du Feu</span>
+        <span class="detail-pill">Scoring 0-100</span>
+      </div>
+      <div class="carlos-badge">
+        <span class="carlos-dot"></span>
+        CarlOS — CEO Bot analyse en temps reel
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2 — Pre-Rapport -->
+  <div class="step step-2" data-delay="2800">
+    <div class="step-node">
+      <div class="step-node-inner" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+        📋
+      </div>
+      <div class="step-node-ring"></div>
+      <div class="step-number">2</div>
+    </div>
+    <div class="step-content">
+      <div class="step-label">Phase 2</div>
+      <div class="step-title">Pre-rapport &amp; invitation</div>
+      <div class="step-desc">
+        Generation automatique du pre-rapport diagnostique.
+        Identification des gaps critiques et recommandations.
+        Invitation au jumelage avec fournisseurs qualifies.
+      </div>
+      <div class="step-details">
+        <span class="detail-pill">Pre-rapport PDF</span>
+        <span class="detail-pill">Gaps identifies</span>
+        <span class="detail-pill">Invitation jumelage</span>
+      </div>
+      <div class="carlos-badge">
+        <span class="carlos-dot"></span>
+        CarlOS genere le rapport + propose le match
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 3 — Jumelage -->
+  <div class="step step-3" data-delay="3600">
+    <div class="step-node">
+      <div class="step-node-inner" style="background: linear-gradient(135deg, #06b6d4, #0891b2);">
+        🤝
+      </div>
+      <div class="step-node-ring"></div>
+      <div class="step-number">3</div>
+    </div>
+    <div class="step-content">
+      <div class="step-label">Phase 3</div>
+      <div class="step-title">Jumelage manufacturier &harr; fournisseur</div>
+      <div class="step-desc">
+        Orbit9 Matching Engine connecte le manufacturier avec les
+        fournisseurs, integrateurs et equipementiers du reseau.
+        Trisociation intelligente pour une synergie optimale.
+      </div>
+      <div class="step-details">
+        <span class="detail-pill">Orbit9 Matching</span>
+        <span class="detail-pill">Trisociation</span>
+        <span class="detail-pill">130+ membres REAI</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 4 — Visite -->
+  <div class="step step-4" data-delay="4400">
+    <div class="step-node">
+      <div class="step-node-inner" style="background: linear-gradient(135deg, #10b981, #059669);">
+        🏭
+      </div>
+      <div class="step-node-ring"></div>
+      <div class="step-number">4</div>
+    </div>
+    <div class="step-content">
+      <div class="step-label">Phase 4</div>
+      <div class="step-title">Visite d'usine</div>
+      <div class="step-desc">
+        Rencontre terrain entre le manufacturier et les fournisseurs jumeles.
+        Evaluation de la ligne de production actuelle.
+        Identification des opportunites d'automatisation.
+      </div>
+      <div class="step-details">
+        <span class="detail-pill">Visite terrain</span>
+        <span class="detail-pill">Audit ligne</span>
+        <span class="detail-pill">Photos / mesures</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 5 — Rapport -->
+  <div class="step step-5" data-delay="5200">
+    <div class="step-node">
+      <div class="step-node-inner" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+        📊
+      </div>
+      <div class="step-node-ring"></div>
+      <div class="step-number">5</div>
+    </div>
+    <div class="step-content">
+      <div class="step-label">Phase 5</div>
+      <div class="step-title">Rapport complet</div>
+      <div class="step-desc">
+        Rapport detaille post-visite. Analyse approfondie des processus,
+        couts, retour sur investissement projete et plan de transformation.
+      </div>
+      <div class="step-details">
+        <span class="detail-pill">Analyse ROI</span>
+        <span class="detail-pill">Plan transformation</span>
+        <span class="detail-pill">Recommandations</span>
+      </div>
+      <div class="carlos-badge">
+        <span class="carlos-dot"></span>
+        CarlOS compile les donnees + genere l'analyse
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 6 — Cahier de projet -->
+  <div class="step step-6" data-delay="6000">
+    <div class="step-node">
+      <div class="step-node-inner" style="background: linear-gradient(135deg, #ec4899, #db2777);">
+        📓
+      </div>
+      <div class="step-node-ring"></div>
+      <div class="step-number">6</div>
+    </div>
+    <div class="step-content">
+      <div class="step-label">Phase 6</div>
+      <div class="step-title">Cahier de projet</div>
+      <div class="step-desc">
+        Document de reference complet pour le projet d'implantation.
+        Specifications techniques, echeancier, budget,
+        responsabilites et jalons.
+      </div>
+      <div class="step-details">
+        <span class="detail-pill">Specs techniques</span>
+        <span class="detail-pill">Echeancier</span>
+        <span class="detail-pill">Budget detaille</span>
+        <span class="detail-pill">Jalons</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 7 — Financement + Realisation -->
+  <div class="step step-7" data-delay="6800">
+    <div class="step-node">
+      <div class="step-node-inner" style="background: linear-gradient(135deg, #22d3ee, #06b6d4);">
+        💰
+      </div>
+      <div class="step-node-ring"></div>
+      <div class="step-number">7</div>
+    </div>
+    <div class="step-content">
+      <div class="step-label">Phase 7</div>
+      <div class="step-title">Financement &amp; realisation</div>
+      <div class="step-desc">
+        Montage financier avec les programmes disponibles.
+        Demarrage de l'implantation sur la ligne de montage.
+        Suivi en temps reel par CarlOS.
+      </div>
+      <div class="step-details">
+        <span class="detail-pill">Montage financier</span>
+        <span class="detail-pill">Implantation</span>
+        <span class="detail-pill">Suivi CarlOS</span>
+      </div>
+      <div class="carlos-badge">
+        <span class="carlos-dot"></span>
+        CarlOS suit le projet jusqu'a la livraison
+      </div>
+    </div>
+  </div>
+
+  <!-- Result Banner -->
+  <div class="result-banner" data-delay="7800">
+    <div class="result-box">
+      <div class="result-icon">🚀</div>
+      <div class="result-title">Usine transformee</div>
+      <div class="result-sub">Ligne de production automatisee, performante et connectee</div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <p>Usine Bleue AI &mdash; Propulse par GhostX &amp; CarlOS</p>
+</div>
+
+<script>
+  // Generate background particles
+  const particlesContainer = document.getElementById('particles');
+  for (let i = 0; i < 40; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.top = Math.random() * 100 + '%';
+    p.style.animationDelay = Math.random() * 8 + 's';
+    p.style.animationDuration = (6 + Math.random() * 6) + 's';
+    p.style.width = p.style.height = (2 + Math.random() * 3) + 'px';
+    particlesContainer.appendChild(p);
+  }
+
+  // Reveal steps with scroll + delay
+  const steps = document.querySelectorAll('.step, .result-banner');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const delay = parseInt(entry.target.dataset.delay) || 0;
+        // Use minimum of scroll-based or time-based reveal
+        const scrollDelay = Math.min(delay, 600);
+        setTimeout(() => {
+          entry.target.classList.add('visible');
+        }, scrollDelay);
+      }
+    });
+  }, { threshold: 0.2 });
+
+  steps.forEach(step => observer.observe(step));
+
+  // Also trigger time-based reveals for initial load
+  steps.forEach(step => {
+    const delay = parseInt(step.dataset.delay) || 0;
+    setTimeout(() => {
+      step.classList.add('visible');
+    }, delay);
+  });
+</script>
+</body>
+</html>
