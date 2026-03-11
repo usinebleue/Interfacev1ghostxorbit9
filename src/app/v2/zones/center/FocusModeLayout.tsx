@@ -34,8 +34,6 @@ const BOT_GRADIENTS: Record<string, string> = {
   BOO: "from-orange-600 to-orange-500",
   BHR: "from-teal-600 to-teal-500",
   BIO: "from-rose-600 to-rose-500",
-  BCC: "from-cyan-600 to-cyan-500",
-  BPO: "from-fuchsia-600 to-fuchsia-500",
   BRO: "from-amber-600 to-amber-500",
   BLE: "from-indigo-600 to-indigo-500",
 };
@@ -122,8 +120,8 @@ export function FocusModeLayout({
             <span className="text-[9px] font-medium text-gray-500">
               {({
                 BCT: "Thierry", BCF: "François", BCM: "Martine", BCS: "Sophie",
-                BOO: "Olivier", BHR: "Hélène", BIO: "Inès", BCC: "Catherine",
-                BPO: "Philippe", BRO: "Raphaël", BLE: "Louise", BSE: "Sébastien",
+                BOO: "Olivier", BHR: "Hélène", BIO: "Inès",
+                BRO: "Raphaël", BLE: "Louise", BSE: "Sébastien",
               } as Record<string, string>)[focusData.bot] || focusData.bot}
             </span>
           </div>

@@ -102,8 +102,6 @@ const BOT_GHOSTS: Record<string, string[]> = {
   BFA: ["Ohno", "Deming", "Nightingale"],
   BHR: ["Oprah", "Marc Aurèle", "Deming"],
   BIO: ["Musk", "Curie", "Tesla"],
-  BCC: ["Jobs", "Tesla", "Oprah"],
-  BPO: ["Jobs", "Musk", "Vinci"],
   BRO: ["Thiel", "Bezos", "Chanel"],
   BLE: ["Munger", "Franklin", "Marc Aurèle"],
   BSE: ["Sun Tzu", "Curie", "Franklin"],
@@ -157,8 +155,6 @@ const BOT_PROFILES: Record<string, {
   BFA: { style: "Pragmatique et terrain", forces: ["Planification production", "Contrôle qualité", "Lean manufacturing", "Gestion d'usine"], approche: "Va sur le terrain. Élimine les étapes sans valeur ajoutée.", scores: { strategique: 45, analytique: 75, creatif: 35, operationnel: 95, relationnel: 50 } },
   BHR: { style: "Empathique et structuré", forces: ["Gestion des talents", "Culture d'entreprise", "Résolution de conflits", "Développement RH"], approche: "Place l'humain au centre de chaque décision organisationnelle.", scores: { strategique: 55, analytique: 65, creatif: 50, operationnel: 70, relationnel: 95 } },
   BIO: { style: "Technique et visionnaire", forces: ["Architecture IT", "Cybersécurité", "Transformation digitale", "Infrastructure cloud"], approche: "Construit des systèmes scalables en partant des premiers principes.", scores: { strategique: 70, analytique: 95, creatif: 75, operationnel: 85, relationnel: 40 } },
-  BCC: { style: "Charismatique et persuasif", forces: ["Communication corporate", "Relations publiques", "Gestion de crise comm.", "Brand voice"], approche: "Simplifie les messages complexes. Commande l'attention.", scores: { strategique: 60, analytique: 50, creatif: 85, operationnel: 45, relationnel: 95 } },
-  BPO: { style: "Créatif et itératif", forces: ["Design produit", "UX/UI", "Product-market fit", "Roadmap produit"], approche: "Itère rapidement. Prototyper → tester → apprendre → répéter.", scores: { strategique: 65, analytique: 70, creatif: 95, operationnel: 60, relationnel: 70 } },
   BRO: { style: "Dynamique et orienté résultat", forces: ["Vente consultative", "Pipeline management", "Closing", "Revenue ops"], approche: "Toujours en mode solution. Cherche le chemin le plus court vers le deal.", scores: { strategique: 70, analytique: 65, creatif: 60, operationnel: 75, relationnel: 90 } },
   BLE: { style: "Rigoureux et protecteur", forces: ["Conformité réglementaire", "Gestion contractuelle", "Propriété intellectuelle", "Gestion du risque légal"], approche: "Évalue chaque décision par ses implications légales à long terme.", scores: { strategique: 75, analytique: 90, creatif: 30, operationnel: 60, relationnel: 55 } },
   BSE: { style: "Vigilant et systématique", forces: ["Cybersécurité", "Gestion des risques", "Audit sécurité", "Conformité"], approche: "Anticipe les menaces. Construit des défenses en profondeur.", scores: { strategique: 70, analytique: 95, creatif: 45, operationnel: 85, relationnel: 40 } },
@@ -169,14 +165,14 @@ const BOT_PROFILES: Record<string, {
 const BOT_ROLES: Record<string, string> = {
   BCO: "CEO", BCT: "CTO", BCF: "CFO", BCM: "CMO",
   BCS: "CSO", BOO: "COO", BFA: "Production", BHR: "CHRO",
-  BIO: "CIO", BCC: "CCO", BPO: "CPO", BRO: "CRO",
+  BIO: "CIO", BRO: "CRO",
   BLE: "CLO", BSE: "CISO",
 };
 
 const BOT_DEPT: Record<string, string> = {
   BCO: "Direction Générale", BCT: "Technologie", BCF: "Finance", BCM: "Marketing",
   BCS: "Stratégie", BOO: "Opérations", BFA: "Production", BHR: "Ressources Humaines",
-  BIO: "Systèmes d'Information", BCC: "Communication", BPO: "Produit", BRO: "Revenus",
+  BIO: "Systèmes d'Information", BRO: "Revenus",
   BLE: "Juridique", BSE: "Sécurité",
 };
 
@@ -192,8 +188,6 @@ const BOT_STANDBY: Record<string, string> = {
   BFA: "/agents/generated/factory-bot-standby-v3.png",
   BHR: "/agents/generated/chro-helene-standby-v3.png",
   BIO: "/agents/generated/cino-ines-standby-v3.png",
-  BCC: "/agents/generated/cco-catherine-standby-v3.png",
-  BPO: "/agents/generated/cpo-philippe-standby-v3.png",
   BRO: "/agents/generated/cro-raphael-standby-v3.png",
   BLE: "/agents/generated/clo-louise-standby-v3.png",
   BSE: "/agents/generated/ciso-secbot-standby-v3.png",

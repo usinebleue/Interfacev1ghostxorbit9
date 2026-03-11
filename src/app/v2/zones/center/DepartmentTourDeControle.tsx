@@ -139,7 +139,6 @@ const DEPT_HEADER_GRADIENT: Record<string, string> = {
   BSE: "from-zinc-700 to-zinc-600",
   BLE: "from-indigo-600 to-indigo-500",
   BIO: "from-rose-600 to-rose-500",
-  BPO: "from-fuchsia-600 to-fuchsia-500",
 };
 
 /* Icon par departement pour le header gradient */
@@ -154,7 +153,6 @@ const BOT_TO_DEPT: Record<string, string> = {
   BCO: "direction", BCT: "technologie", BCF: "finance", BCM: "marketing",
   BCS: "strategie", BOO: "operations", BFA: "production", BHR: "rh",
   BIO: "innovation", BRO: "ventes", BLE: "legal", BSE: "securite",
-  BPO: "innovation",
 };
 
 const DEPT_TDC: Record<string, DeptTdcConfig> = {

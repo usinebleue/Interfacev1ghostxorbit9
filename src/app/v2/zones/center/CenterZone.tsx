@@ -100,8 +100,6 @@ const BOT_BAND_COLORS: Record<string, string> = {
   BFA: "bg-slate-400",
   BHR: "bg-teal-500",
   BIO: "bg-rose-500",
-  BCC: "bg-cyan-500",
-  BPO: "bg-fuchsia-500",
   BRO: "bg-amber-500",
   BLE: "bg-indigo-500",
   BSE: "bg-zinc-400",

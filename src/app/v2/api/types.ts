@@ -561,8 +561,6 @@ export const BOT_AVATAR: Record<string, string> = {
   BFA: "/agents/generated/factory-bot-profil-v3.png",
   BHR: "/agents/generated/chro-helene-profil-v3.png",
   BIO: "/agents/generated/cino-ines-profil-v3.png",
-  BCC: "/agents/generated/cco-catherine-profil-v3.png",
-  BPO: "/agents/generated/cpo-philippe-profil-v3.png",
   BRO: "/agents/generated/cro-raphael-profil-v3.png",
   BLE: "/agents/generated/clo-louise-profil-v3.png",
   BSE: "/agents/generated/ciso-secbot-profil-v3.png",
@@ -580,8 +578,6 @@ export const BOT_SUBTITLE: Record<string, string> = {
   BFA: "Automatisation & Usine",
   BHR: "Ressources Humaines",
   BIO: "Innovation & R&D",
-  BCC: "Communication & Marque",
-  BPO: "Innovation & Produits",
   BRO: "Revenus & Croissance",
   BLE: "Juridique & Conformite",
   BSE: "Securite & Cyber",
@@ -603,10 +599,8 @@ export const BOT_EMOJI: Record<string, string> = {
   BHR: "👥",
   BSE: "🛡️",
   BLE: "⚖️",
-  BPO: "💡",
   BFA: "🏭",
   BIO: "🖥️",
-  BCC: "📡",
 };
 
 // --- Company Kit (client switcher) ---
