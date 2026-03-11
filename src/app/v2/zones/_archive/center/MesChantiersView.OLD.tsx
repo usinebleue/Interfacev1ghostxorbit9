@@ -30,6 +30,9 @@ import {
   Zap,
   LayoutGrid,
   LayoutList,
+  Layers,
+  Users,
+  ListChecks,
 } from "lucide-react";
 import { Card } from "../../../components/ui/card";
 import { Badge } from "../../../components/ui/badge";
@@ -57,13 +60,17 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   archivee: { label: "Archive", color: "bg-gray-300" },
 };
 
-type TabId = "discussions" | "missions" | "projets" | "chantiers";
+type TabId = "overview" | "timeline" | "chantiers" | "projets" | "missions" | "taches" | "opportunites" | "equipes" | "discussions";
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
-  { id: "discussions", label: "Discussions", icon: MessageSquare },
-  { id: "missions", label: "Missions", icon: Target },
-  { id: "projets", label: "Projets", icon: FolderKanban },
+  { id: "overview", label: "Vue d'ensemble", icon: Layers },
+  { id: "timeline", label: "Timeline", icon: Clock },
   { id: "chantiers", label: "Chantiers", icon: Flame },
+  { id: "projets", label: "Projets", icon: FolderKanban },
+  { id: "missions", label: "Missions", icon: Target },
+  { id: "taches", label: "Taches", icon: ListChecks },
+  { id: "opportunites", label: "Opportunites", icon: ArrowUpRight },
+  { id: "equipes", label: "Equipes", icon: BookOpen },
 ];
 
 const CHANTIER_TYPES = [
@@ -900,18 +907,28 @@ export function MesChantiersView() {
     .filter(ch => !searchTerm || ch.titre.toLowerCase().includes(searchTerm.toLowerCase()))
     .sort((a, b) => pipelineSort === "nom" ? a.titre.localeCompare(b.titre, "fr") : new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-  const searchPlaceholders: Record<TabId, string> = {
-    discussions: "Rechercher une discussion...",
-    missions: "Rechercher une mission...",
-    projets: "Rechercher un projet...",
+  const searchPlaceholders: Record<string, string> = {
+    overview: "Rechercher...",
+    timeline: "Rechercher un jalon...",
     chantiers: "Rechercher un chantier...",
+    projets: "Rechercher un projet...",
+    missions: "Rechercher une mission...",
+    taches: "Rechercher une tache...",
+    opportunites: "Rechercher une opportunite...",
+    equipes: "Rechercher un bot...",
+    discussions: "Rechercher une discussion...",
   };
 
-  const addLabels: Record<TabId, string> = {
-    discussions: "Nouvelle discussion",
-    missions: "Nouvelle mission",
-    projets: "Nouveau projet",
+  const addLabels: Record<string, string> = {
+    overview: "",
+    timeline: "",
     chantiers: "Nouveau chantier",
+    projets: "Nouveau projet",
+    missions: "Nouvelle mission",
+    taches: "Nouvelle tache",
+    opportunites: "Nouvelle opportunite",
+    equipes: "",
+    discussions: "Nouvelle discussion",
   };
 
   const handleAdd = () => {
@@ -988,23 +1005,38 @@ export function MesChantiersView() {
 
         {/* Navigation Pipeline — rectangle gradient (pattern Pionniers) */}
         {(() => {
-          const PIPELINE_GRADIENTS: Record<TabId, string> = {
-            discussions: "from-violet-600 to-purple-600",
-            missions: "from-green-600 to-emerald-600",
-            projets: "from-indigo-600 to-blue-600",
+          const PIPELINE_GRADIENTS: Record<string, string> = {
+            overview: "from-slate-700 to-slate-600",
+            timeline: "from-sky-600 to-cyan-600",
             chantiers: "from-red-600 to-orange-600",
+            projets: "from-indigo-600 to-blue-600",
+            missions: "from-green-600 to-emerald-600",
+            taches: "from-purple-600 to-violet-600",
+            opportunites: "from-amber-600 to-yellow-600",
+            equipes: "from-teal-600 to-emerald-600",
+            discussions: "from-violet-600 to-purple-600",
           };
-          const PIPELINE_TITLES: Record<TabId, string> = {
-            discussions: "Discussions",
-            missions: "Missions",
-            projets: "Projets",
+          const PIPELINE_TITLES: Record<string, string> = {
+            overview: "Vue d'ensemble",
+            timeline: "Timeline",
             chantiers: "Chantiers",
+            projets: "Projets",
+            missions: "Missions",
+            taches: "Taches",
+            opportunites: "Opportunites",
+            equipes: "Equipes",
+            discussions: "Discussions",
           };
-          const PIPELINE_SUBS: Record<TabId, string> = {
-            discussions: "Explorez vos idees avec CarlOS et votre equipe",
-            missions: "Objectifs tactiques — jours a semaines",
-            projets: "Initiatives organisees — semaines a mois",
+          const PIPELINE_SUBS: Record<string, string> = {
+            overview: "Vision globale de votre blueprint — KPIs, progression, statut",
+            timeline: "Vue temporelle des jalons et echeances",
             chantiers: "Transformations strategiques — mois a trimestres",
+            projets: "Initiatives organisees — semaines a mois",
+            missions: "Objectifs tactiques — jours a semaines",
+            taches: "Actions concretes extraites de vos projets",
+            opportunites: "Opportunites business liees a votre blueprint",
+            equipes: "Bots assignes et ressources par chantier",
+            discussions: "Explorez vos idees avec CarlOS et votre equipe",
           };
           const ActiveIcon = TABS.find(t => t.id === activeTab)?.icon || MessageSquare;
           return (
@@ -1026,7 +1058,12 @@ export function MesChantiersView() {
                     const count = tab.id === "discussions" ? threads.length
                       : tab.id === "missions" ? missions.length
                       : tab.id === "projets" ? projets.length
-                      : chantiers.length;
+                      : tab.id === "chantiers" ? chantiers.length
+                      : tab.id === "overview" ? chantiers.length + projets.length + missions.length
+                      : tab.id === "taches" ? 0
+                      : tab.id === "opportunites" ? 0
+                      : tab.id === "equipes" ? 12
+                      : 0;
                     return (
                       <button
                         key={tab.id}
@@ -1930,6 +1967,138 @@ export function MesChantiersView() {
                 })}
               </div>
             )}
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════ */}
+        {/* TAB — Vue d'ensemble                  */}
+        {/* ══════════════════════════════════════ */}
+        {activeTab === "overview" && (
+          <div className="space-y-4">
+            {/* KPIs summary */}
+            <div className="grid grid-cols-4 gap-3">
+              {[
+                { label: "Chantiers", value: chantiers.length, color: "text-red-600", bg: "bg-red-50" },
+                { label: "Projets", value: projets.length, color: "text-indigo-600", bg: "bg-indigo-50" },
+                { label: "Missions", value: missions.length, color: "text-green-600", bg: "bg-green-50" },
+                { label: "Completion", value: `${missions.length > 0 ? Math.round(missions.filter(m => m.status === "completee").length / missions.length * 100) : 0}%`, color: "text-amber-600", bg: "bg-amber-50" },
+              ].map((kpi) => (
+                <Card key={kpi.label} className="p-3">
+                  <div className={cn("text-[9px] font-bold uppercase tracking-wider mb-1", kpi.color)}>{kpi.label}</div>
+                  <div className="text-2xl font-bold text-gray-900">{kpi.value}</div>
+                </Card>
+              ))}
+            </div>
+            {/* Chantiers par chaleur */}
+            <Card className="p-4">
+              <h3 className="text-xs font-bold text-gray-700 mb-3 uppercase tracking-wider">Chantiers par chaleur</h3>
+              <div className="space-y-2">
+                {chantiers.map((ch) => {
+                  const cfg = CHALEUR_CONFIG[ch.chaleur] || CHALEUR_CONFIG.couve;
+                  return (
+                    <div key={ch.id} className={cn("flex items-center gap-3 px-3 py-2 rounded-lg border-l-4", cfg.border, cfg.bg)}>
+                      <span className={cn("w-2 h-2 rounded-full shrink-0", cfg.dot)} />
+                      <span className="text-sm font-medium flex-1 truncate">{ch.titre}</span>
+                      <span className="text-[9px] text-gray-400">{ch.missions_count ?? 0} missions</span>
+                    </div>
+                  );
+                })}
+                {chantiers.length === 0 && <p className="text-sm text-gray-400 text-center py-4">Aucun chantier</p>}
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════ */}
+        {/* TAB — Timeline                         */}
+        {/* ══════════════════════════════════════ */}
+        {activeTab === "timeline" && (
+          <div className="space-y-4">
+            <Card className="p-4">
+              <h3 className="text-xs font-bold text-gray-700 mb-3 uppercase tracking-wider">Timeline des jalons</h3>
+              <div className="space-y-3">
+                {chantiers.map((ch, i) => {
+                  const cfg = CHALEUR_CONFIG[ch.chaleur] || CHALEUR_CONFIG.couve;
+                  return (
+                    <div key={ch.id} className="flex items-start gap-3">
+                      <div className="flex flex-col items-center">
+                        <span className={cn("w-3 h-3 rounded-full shrink-0", cfg.dot)} />
+                        {i < chantiers.length - 1 && <div className="w-0.5 h-8 bg-gray-200 mt-1" />}
+                      </div>
+                      <div className="flex-1">
+                        <span className="text-sm font-medium">{ch.titre}</span>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-[9px] text-gray-400">{new Date(ch.created_at).toLocaleDateString("fr-CA")}</span>
+                          <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded", cfg.gradient, "text-white")}>{cfg.label}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                {chantiers.length === 0 && <p className="text-sm text-gray-400 text-center py-4">Aucun jalon</p>}
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════ */}
+        {/* TAB — Taches                           */}
+        {/* ══════════════════════════════════════ */}
+        {activeTab === "taches" && (
+          <div className="space-y-4">
+            <Card className="p-6 text-center">
+              <ListChecks className="h-8 w-8 text-purple-300 mx-auto mb-3" />
+              <h3 className="text-sm font-bold text-gray-700 mb-1">Taches</h3>
+              <p className="text-[9px] text-gray-400 max-w-sm mx-auto">
+                Les taches sont extraites automatiquement de vos projets et missions. Connectez un Blueprint JSON pour voir vos taches ici.
+              </p>
+            </Card>
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════ */}
+        {/* TAB — Opportunites                     */}
+        {/* ══════════════════════════════════════ */}
+        {activeTab === "opportunites" && (
+          <div className="space-y-4">
+            <Card className="p-6 text-center">
+              <ArrowUpRight className="h-8 w-8 text-amber-300 mx-auto mb-3" />
+              <h3 className="text-sm font-bold text-gray-700 mb-1">Opportunites</h3>
+              <p className="text-[9px] text-gray-400 max-w-sm mx-auto">
+                Les opportunites business liees a votre blueprint apparaitront ici. CarlOS identifie les gaps et les synergies.
+              </p>
+            </Card>
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════ */}
+        {/* TAB — Equipes                          */}
+        {/* ══════════════════════════════════════ */}
+        {activeTab === "equipes" && (
+          <div className="space-y-4">
+            <Card className="p-4">
+              <h3 className="text-xs font-bold text-gray-700 mb-3 uppercase tracking-wider">Equipe AI assignee</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {BOT_OPTIONS.map((bot) => {
+                  const gradient = BOT_GRADIENTS[bot.code] || "from-gray-600 to-gray-500";
+                  const assignedCount = chantiers.filter(ch => ch.bot_codes?.includes(bot.code)).length
+                    + missions.filter(m => m.bot_primaire === bot.code).length;
+                  return (
+                    <Card key={bot.code} className="p-2.5 hover:shadow-md transition-shadow">
+                      <div className="flex items-center gap-2">
+                        <div className={cn("w-7 h-7 rounded-lg bg-gradient-to-r flex items-center justify-center text-[9px] font-bold text-white shrink-0", gradient)}>
+                          {bot.short}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-medium truncate">{bot.label}</div>
+                          <div className="text-[9px] text-gray-400">{assignedCount} assignation{assignedCount !== 1 ? "s" : ""}</div>
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            </Card>
           </div>
         )}
 

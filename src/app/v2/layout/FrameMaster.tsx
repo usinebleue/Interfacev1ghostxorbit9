@@ -1,10 +1,7 @@
 /**
- * FrameMaster.tsx — Shell 4 zones (D-066)
- * Header DANS chaque panneau — les colonnes header s'alignent
- * automatiquement avec les colonnes body (wireframe p.2)
- * Sidebar gauche ET droite retractables en mode icones (meme pattern)
- * Style V1 : fond gris clair (bg-gray-50)
- * Sprint A — Frame Master V2
+ * FrameMaster.tsx — Shell 3 zones + TopBar unifiee
+ * TopBar (pleine largeur) + 3 colonnes resizables
+ * Sprint C — Restructuration Plateforme (remplace per-column headers)
  */
 
 import { useRef, useEffect, useCallback, useState } from "react";
@@ -17,7 +14,7 @@ import {
 } from "../../components/ui/resizable";
 import { useIsMobile } from "../../components/ui/use-mobile";
 import { useFrameMaster } from "../context/FrameMasterContext";
-import { HeaderLeft, HeaderCenter, HeaderRight } from "../zones/header/HeaderBar";
+import { TopBar } from "../zones/TopBar";
 import { SidebarLeft } from "../zones/sidebar-left/SidebarLeft";
 import { CenterZone } from "../zones/center/CenterZone";
 import { SidebarRight } from "../zones/sidebar-right/SidebarRight";
@@ -58,7 +55,7 @@ export function FrameMaster() {
     return <FrameMasterMobile />;
   }
 
-  /* Style inline pour les grip indicators (les poignees de drag sur les lignes grises) */
+  /* Style inline pour les grip indicators */
   const gripStyle: React.CSSProperties = {
     position: 'absolute',
     top: '50%',
@@ -77,13 +74,16 @@ export function FrameMaster() {
 
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-white">
-      {/* BODY — 3 colonnes resizable, pleine hauteur */}
+      {/* TOP BAR — pleine largeur */}
+      <TopBar />
+
+      {/* BODY — 3 colonnes resizable */}
       <ResizablePanelGroup
         direction="horizontal"
-        autoSaveId="frame-master-layout"
+        autoSaveId="frame-master-v2"
         className="flex-1"
       >
-        {/* SIDEBAR GAUCHE — Header Logo + Navigation */}
+        {/* SIDEBAR GAUCHE */}
         <ResizablePanel
           ref={leftPanelRef}
           defaultSize={16}
@@ -95,20 +95,16 @@ export function FrameMaster() {
           onExpand={handleLeftExpand}
           className="min-w-[56px]"
         >
-          <div className="h-full flex flex-col">
-            <HeaderLeft collapsed={leftSidebarCollapsed} />
-            <div className="flex-1 overflow-hidden">
-              <SidebarLeft />
-            </div>
+          <div className="h-full overflow-hidden border-r border-gray-200">
+            <SidebarLeft />
           </div>
         </ResizablePanel>
 
         <ResizableHandle className="cursor-col-resize" />
 
-        {/* ZONE CENTRALE — Header Bot ID + Contenu + InputBar */}
+        {/* ZONE CENTRALE */}
         <ResizablePanel defaultSize={60} minSize={35}>
           <div className="h-full flex flex-col">
-            <HeaderCenter />
             <div className="flex-1 overflow-hidden" style={{ position: 'relative' }}>
               <CenterZone />
               {/* Ligne grise gauche du canvas */}
@@ -129,7 +125,7 @@ export function FrameMaster() {
 
         <ResizableHandle className="cursor-col-resize" />
 
-        {/* SIDEBAR DROITE — Header Profil + Contexte (meme pattern collapse que gauche) */}
+        {/* SIDEBAR DROITE */}
         <ResizablePanel
           defaultSize={22}
           minSize={4}
@@ -140,11 +136,8 @@ export function FrameMaster() {
           onExpand={() => setRightCollapsed(false)}
           className="min-w-[56px]"
         >
-          <div className="h-full flex flex-col">
-            <HeaderRight collapsed={rightCollapsed} />
-            <div className="flex-1 overflow-hidden">
-              <SidebarRight collapsed={rightCollapsed} />
-            </div>
+          <div className="h-full overflow-hidden border-l border-gray-200">
+            <SidebarRight collapsed={rightCollapsed} />
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>

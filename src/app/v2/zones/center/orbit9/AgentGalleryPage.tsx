@@ -63,7 +63,7 @@ export const AG_KEYFRAMES = `
 // TYPES & CONFIG
 // ════════════════════════════════════════════════════════════════
 
-interface AgentConfig {
+export interface AgentConfig {
   code: string;
   name: string;
   role: string;

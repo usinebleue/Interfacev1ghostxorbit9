@@ -110,14 +110,27 @@ export type StreamCallback = {
 const BASE_URL = "/api/v1";
 const API_KEY = import.meta.env.VITE_API_KEY || "missing-key";
 
+// JWT token storage
+function getJwtToken(): string | null {
+  try { return localStorage.getItem("ghostx-jwt"); } catch { return null; }
+}
+function setJwtToken(token: string) {
+  try { localStorage.setItem("ghostx-jwt", token); } catch { /* noop */ }
+}
+function clearJwtToken() {
+  try { localStorage.removeItem("ghostx-jwt"); } catch { /* noop */ }
+}
+
 async function apiFetch<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
   const url = `${BASE_URL}${path}`;
+  const jwt = getJwtToken();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     "X-API-Key": API_KEY,
+    ...(jwt ? { Authorization: `Bearer ${jwt}` } : {}),
     ...(options.headers as Record<string, string>),
   };
 
