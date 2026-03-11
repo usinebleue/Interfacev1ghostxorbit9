@@ -271,13 +271,13 @@ const SIM = {
   ceoConnect: "Bonne tension. Tu touches a quelque chose d'important — le passage de transactionnel a recurrent, c'est le move #1 pour stabiliser le cash flow. Avant de foncer, je veux comprendre : c'est quoi le declencheur? Un client t'en a parle, ou c'est une intuition?",
 
   consultBots: [
-    { emoji: "💰", name: "CFO", code: "BCF" },
-    { emoji: "📈", name: "CRO", code: "BRO" },
-    { emoji: "⚙️", name: "COO", code: "BOO" },
+    { emoji: "💰", name: "CFO", code: "CFOB" },
+    { emoji: "📈", name: "CRO", code: "CROB" },
+    { emoji: "⚙️", name: "COO", code: "COOB" },
   ],
   perspectives: [
     {
-      emoji: "💰", code: "BCF", name: "CFO", angle: "Analyse financiere",
+      emoji: "💰", code: "CFOB", name: "CFO", angle: "Analyse financiere",
       text: "Un modele d'abonnement a 2,500$/mois avec 20 clients = 600K$ recurrents annuels. Marge brute estimee: 72% vs 45% en consulting ponctuel. Le break-even est a 8 clients. Cash flow positif des le mois 4 si on signe 3 clients/mois.",
       verdict: "Financierement solide", color: "green",
       sources: [
@@ -287,7 +287,7 @@ const SIM = {
       ],
     },
     {
-      emoji: "📈", code: "BRO", name: "CRO", angle: "Strategie de vente",
+      emoji: "📈", code: "CROB", name: "CRO", angle: "Strategie de vente",
       text: "Notre pipeline actuel a 47 clients en consulting. 60% ont achete 2+ fois — ceux-la sont nos cibles #1 pour la conversion. Proposition: offrir les 2 premiers mois a 50% pour convertir. Risque: cannibaliser le consulting ponctuel a court terme.",
       verdict: "Pipeline suffisant, attention cannibalisation", color: "yellow",
       sources: [
@@ -297,7 +297,7 @@ const SIM = {
       ],
     },
     {
-      emoji: "⚙️", code: "BOO", name: "COO", angle: "Operations & livraison",
+      emoji: "⚙️", code: "COOB", name: "COO", angle: "Operations & livraison",
       text: "On a la capacite pour 12 clients abonnes avec l'equipe actuelle. Au-dela, il faut embaucher. Le consulting ponctuel est flexible — l'abonnement exige une disponibilite constante. Il faut definir un SLA clair: temps de reponse, nombre d'heures incluses, livrables mensuels.",
       verdict: "Faisable jusqu'a 12, SLA a definir", color: "orange",
       sources: [
@@ -316,14 +316,14 @@ const SIM = {
     { icon: BookOpen, text: "Formulation des contre-mesures..." },
   ],
   challengeResult: [
-    { emoji: "👔", code: "BCO", name: "CEO",
+    { emoji: "👔", code: "CEOB", name: "CEO",
       text: "Point valide. La solution: un systeme de tiers. Tier 1 (2,500$): support email 48h, 10h/mois. Tier 2 (5,000$): support prioritaire 24h, 20h/mois + un check-in mensuel. Tier 3 (10,000$): dedie, meme jour, heures illimitees. Ca protege la reputation ET maximise le revenu.",
       sources: [
         { type: "doc" as const, label: "Pricing SaaS — ProfitWell 2025" },
         { type: "data" as const, label: "Analyse churn par tier — historique interne" },
       ],
     },
-    { emoji: "💻", code: "BCT", name: "CTO",
+    { emoji: "💻", code: "CTOB", name: "CTO",
       text: "Techniquement, on peut automatiser 40% du support Tier 1 avec nos bots. Ca libere l'equipe pour les Tiers 2-3 ou la marge est. Je recommande de construire un portail client avec ticketing integre — 2 semaines de dev max.",
       sources: [
         { type: "doc" as const, label: "Architecture technique V2.1" },
@@ -430,18 +430,18 @@ const BOT_COLORS: Record<string, {
   ring: string; dot: string; emoji: string; name: string; role: string;
   avatar: string;
 }> = {
-  BCO: { bg: "bg-blue-600", bgLight: "bg-blue-50", text: "text-blue-700", border: "border-blue-400", ring: "ring-blue-300", dot: "bg-blue-500", emoji: "👔", name: "CarlOS", role: "CEO", avatar: "/agents/ceo-carlos.png" },
-  BCT: { bg: "bg-violet-600", bgLight: "bg-violet-50", text: "text-violet-700", border: "border-violet-400", ring: "ring-violet-300", dot: "bg-violet-500", emoji: "💻", name: "Thierry", role: "CTO", avatar: "/agents/cto-thierry.png" },
-  BCF: { bg: "bg-emerald-600", bgLight: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-400", ring: "ring-emerald-300", dot: "bg-emerald-500", emoji: "💰", name: "François", role: "CFO", avatar: "/agents/cfo-francois.png" },
-  BCM: { bg: "bg-pink-600", bgLight: "bg-pink-50", text: "text-pink-700", border: "border-pink-400", ring: "ring-pink-300", dot: "bg-pink-500", emoji: "📣", name: "Martine", role: "CMO", avatar: "/agents/cmo-martine.png" },
-  BCS: { bg: "bg-red-600", bgLight: "bg-red-50", text: "text-red-700", border: "border-red-400", ring: "ring-red-300", dot: "bg-red-500", emoji: "🎯", name: "Sophie", role: "CSO", avatar: "/agents/cso-sophie.png" },
-  BOO: { bg: "bg-orange-600", bgLight: "bg-orange-50", text: "text-orange-700", border: "border-orange-400", ring: "ring-orange-300", dot: "bg-orange-500", emoji: "⚙️", name: "Olivier", role: "COO", avatar: "/agents/coo-olivier.png" },
-  BFA: { bg: "bg-slate-600", bgLight: "bg-slate-50", text: "text-slate-700", border: "border-slate-400", ring: "ring-slate-300", dot: "bg-slate-500", emoji: "🏭", name: "Fabien", role: "CPO", avatar: "/agents/generated/factory-bot-profil-v1.png" },
-  BHR: { bg: "bg-teal-600", bgLight: "bg-teal-50", text: "text-teal-700", border: "border-teal-400", ring: "ring-teal-300", dot: "bg-teal-500", emoji: "🤝", name: "Hélène", role: "CHRO", avatar: "/agents/chro-helene.png" },
-  BIO: { bg: "bg-rose-600", bgLight: "bg-rose-50", text: "text-rose-700", border: "border-rose-400", ring: "ring-rose-300", dot: "bg-rose-500", emoji: "📊", name: "Inès", role: "CINO", avatar: "/agents/cino-ines.png" },
-  BRO: { bg: "bg-amber-600", bgLight: "bg-amber-50", text: "text-amber-700", border: "border-amber-400", ring: "ring-amber-300", dot: "bg-amber-500", emoji: "📈", name: "Raphaël", role: "CRO", avatar: "/agents/cro-raphael.png" },
-  BLE: { bg: "bg-indigo-600", bgLight: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-400", ring: "ring-indigo-300", dot: "bg-indigo-500", emoji: "⚖️", name: "Louise", role: "CLO", avatar: "/agents/clo-louise.png" },
-  BSE: { bg: "bg-zinc-700", bgLight: "bg-zinc-50", text: "text-zinc-700", border: "border-zinc-400", ring: "ring-zinc-300", dot: "bg-zinc-500", emoji: "🛡️", name: "Sébastien", role: "CISO", avatar: "" },
+  CEOB: { bg: "bg-blue-600", bgLight: "bg-blue-50", text: "text-blue-700", border: "border-blue-400", ring: "ring-blue-300", dot: "bg-blue-500", emoji: "👔", name: "CarlOS", role: "CEO", avatar: "/agents/ceo-carlos.png" },
+  CTOB: { bg: "bg-violet-600", bgLight: "bg-violet-50", text: "text-violet-700", border: "border-violet-400", ring: "ring-violet-300", dot: "bg-violet-500", emoji: "💻", name: "Thierry", role: "CTO", avatar: "/agents/cto-thierry.png" },
+  CFOB: { bg: "bg-emerald-600", bgLight: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-400", ring: "ring-emerald-300", dot: "bg-emerald-500", emoji: "💰", name: "François", role: "CFO", avatar: "/agents/cfo-francois.png" },
+  CMOB: { bg: "bg-pink-600", bgLight: "bg-pink-50", text: "text-pink-700", border: "border-pink-400", ring: "ring-pink-300", dot: "bg-pink-500", emoji: "📣", name: "Martine", role: "CMO", avatar: "/agents/cmo-martine.png" },
+  CSOB: { bg: "bg-red-600", bgLight: "bg-red-50", text: "text-red-700", border: "border-red-400", ring: "ring-red-300", dot: "bg-red-500", emoji: "🎯", name: "Sophie", role: "CSO", avatar: "/agents/cso-sophie.png" },
+  COOB: { bg: "bg-orange-600", bgLight: "bg-orange-50", text: "text-orange-700", border: "border-orange-400", ring: "ring-orange-300", dot: "bg-orange-500", emoji: "⚙️", name: "Olivier", role: "COO", avatar: "/agents/coo-olivier.png" },
+  CPOB: { bg: "bg-slate-600", bgLight: "bg-slate-50", text: "text-slate-700", border: "border-slate-400", ring: "ring-slate-300", dot: "bg-slate-500", emoji: "🏭", name: "Fabien", role: "CPO", avatar: "/agents/generated/factory-bot-profil-v1.png" },
+  CHROB: { bg: "bg-teal-600", bgLight: "bg-teal-50", text: "text-teal-700", border: "border-teal-400", ring: "ring-teal-300", dot: "bg-teal-500", emoji: "🤝", name: "Hélène", role: "CHRO", avatar: "/agents/chro-helene.png" },
+  CINOB: { bg: "bg-rose-600", bgLight: "bg-rose-50", text: "text-rose-700", border: "border-rose-400", ring: "ring-rose-300", dot: "bg-rose-500", emoji: "📊", name: "Inès", role: "CINO", avatar: "/agents/cino-ines.png" },
+  CROB: { bg: "bg-amber-600", bgLight: "bg-amber-50", text: "text-amber-700", border: "border-amber-400", ring: "ring-amber-300", dot: "bg-amber-500", emoji: "📈", name: "Raphaël", role: "CRO", avatar: "/agents/cro-raphael.png" },
+  CLOB: { bg: "bg-indigo-600", bgLight: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-400", ring: "ring-indigo-300", dot: "bg-indigo-500", emoji: "⚖️", name: "Louise", role: "CLO", avatar: "/agents/clo-louise.png" },
+  CISOB: { bg: "bg-zinc-700", bgLight: "bg-zinc-50", text: "text-zinc-700", border: "border-zinc-400", ring: "ring-zinc-300", dot: "bg-zinc-500", emoji: "🛡️", name: "Sébastien", role: "CISO", avatar: "" },
 };
 
 const USER_AVATAR = "/agents/carl-fugere.jpg";
@@ -990,7 +990,7 @@ function CrossLinkCard({ message, onResume, animate }: {
         </div>
         <div className="p-4">
           <div className="flex gap-3">
-            <BotAvatar code="BCO" size="md" />
+            <BotAvatar code="CEOB" size="md" />
             <div className="flex-1">
               {animate ? (
                 <TypewriterText text={message} speed={12} className="text-sm text-gray-700 leading-relaxed" />
@@ -1156,7 +1156,7 @@ export function BranchPatternsDemo({ onComplete }: { onComplete?: () => void } =
           {stage === 1.5 && (
             <ThinkingAnimation
               steps={SIM.ceoThinking}
-              botEmoji="👔" botName="CarlOS (CEO)" botCode="BCO"
+              botEmoji="👔" botName="CarlOS (CEO)" botCode="CEOB"
               onComplete={() => setStage(2)}
             />
           )}
@@ -1164,10 +1164,10 @@ export function BranchPatternsDemo({ onComplete }: { onComplete?: () => void } =
           {/* ===== STAGE 2 — CEO response with inline options ===== */}
           {stage >= 2 && (
             <div className="flex gap-3">
-              <BotAvatar code="BCO" size="md" />
+              <BotAvatar code="CEOB" size="md" />
               <div className="bg-white border-l-[3px] border-l-blue-500 border border-gray-200 rounded-xl rounded-tl-none px-4 py-3 max-w-[75%] shadow-sm">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className={cn("text-xs font-semibold", BOT_COLORS.BCO.text)}>CarlOS (CEO)</span>
+                  <span className={cn("text-xs font-semibold", BOT_COLORS.CEOB.text)}>CarlOS (CEO)</span>
                   <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-medium">Phase C</span>
                 </div>
                 {stage === 2 ? (
@@ -1307,7 +1307,7 @@ export function BranchPatternsDemo({ onComplete }: { onComplete?: () => void } =
           {stage === 4.5 && (
             <ThinkingAnimation
               steps={SIM.challengeThinking}
-              botEmoji="👔" botName="CarlOS (CEO)" botCode="BCO"
+              botEmoji="👔" botName="CarlOS (CEO)" botCode="CEOB"
               onComplete={() => setStage(5)}
             />
           )}
@@ -1351,7 +1351,7 @@ export function BranchPatternsDemo({ onComplete }: { onComplete?: () => void } =
           {stage === 6.5 && (
             <ThinkingAnimation
               steps={SIM.parkingSteps}
-              botEmoji="👔" botName="CarlOS (CEO)" botCode="BCO"
+              botEmoji="👔" botName="CarlOS (CEO)" botCode="CEOB"
               onComplete={() => setStage(7)}
             />
           )}
@@ -1364,10 +1364,10 @@ export function BranchPatternsDemo({ onComplete }: { onComplete?: () => void } =
           {/* ===== STAGE 7 — CarlOS parking confirmation ===== */}
           {stage >= 7 && (
             <div className="flex gap-3">
-              <BotAvatar code="BCO" size="md" />
+              <BotAvatar code="CEOB" size="md" />
               <div className="bg-white border-l-[3px] border-l-blue-500 border-2 border-amber-200 rounded-xl rounded-tl-none px-4 py-3 max-w-[75%] shadow-sm">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className={cn("text-xs font-semibold", BOT_COLORS.BCO.text)}>CarlOS (CEO)</span>
+                  <span className={cn("text-xs font-semibold", BOT_COLORS.CEOB.text)}>CarlOS (CEO)</span>
                   <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">⏸ Suspension Intelligente</span>
                 </div>
                 {stage === 7 ? (
@@ -1391,7 +1391,7 @@ export function BranchPatternsDemo({ onComplete }: { onComplete?: () => void } =
           {stage === 7.5 && (
             <ThinkingAnimation
               steps={SIM.sideThreadThinking}
-              botEmoji="💻" botName="CTO — Thread Architecture" botCode="BCT"
+              botEmoji="💻" botName="CTO — Thread Architecture" botCode="CTOB"
               onComplete={() => setStage(8)}
             />
           )}
@@ -1400,9 +1400,9 @@ export function BranchPatternsDemo({ onComplete }: { onComplete?: () => void } =
           {stage >= 8 && (
             <div className="ml-11">
               <div className="bg-gradient-to-b from-violet-50 to-white border-2 border-violet-200 rounded-xl overflow-hidden shadow-sm">
-                <div className={cn("px-4 py-2.5 flex items-center gap-2 border-b border-violet-200", BOT_COLORS.BCT.bgLight)}>
-                  <BotAvatar code="BCT" size="sm" />
-                  <span className={cn("text-sm font-bold", BOT_COLORS.BCT.text)}>CTO — Thread Architecture Technique</span>
+                <div className={cn("px-4 py-2.5 flex items-center gap-2 border-b border-violet-200", BOT_COLORS.CTOB.bgLight)}>
+                  <BotAvatar code="CTOB" size="sm" />
+                  <span className={cn("text-sm font-bold", BOT_COLORS.CTOB.text)}>CTO — Thread Architecture Technique</span>
                   <span className="text-xs bg-violet-200 text-violet-700 px-2 py-0.5 rounded-full ml-auto font-medium">Thread lateral</span>
                 </div>
                 <div className="p-4">
@@ -1434,7 +1434,7 @@ export function BranchPatternsDemo({ onComplete }: { onComplete?: () => void } =
           {stage === 8.5 && (
             <ThinkingAnimation
               steps={SIM.syntheseThinking}
-              botEmoji="👔" botName="CarlOS (CEO) — Thread repris" botCode="BCO"
+              botEmoji="👔" botName="CarlOS (CEO) — Thread repris" botCode="CEOB"
               onComplete={() => setStage(9)}
             />
           )}

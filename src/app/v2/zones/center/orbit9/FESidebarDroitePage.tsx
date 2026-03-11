@@ -457,7 +457,7 @@ function SectionFlow() {
                 <p>1. Sante Globale</p>
                 <p>2. CarlOS: "Temps en zone orange"</p>
                 <p>3. User tape "Explique pourquoi"</p>
-                <p>4. LiveChat + invite BOO (COO)</p>
+                <p>4. LiveChat + invite COOB (COO)</p>
               </div>
             </div>
           </div>

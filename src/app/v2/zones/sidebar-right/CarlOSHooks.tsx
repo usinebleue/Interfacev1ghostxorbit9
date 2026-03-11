@@ -118,7 +118,7 @@ function TeamAssembly({ members, context }: { members: TeamMember[]; context: st
       {/* Members */}
       <div className="space-y-1.5">
         {members.map((m, i) => {
-          const avatar = BOT_AVATAR[m.code] || BOT_AVATAR["BCO"];
+          const avatar = BOT_AVATAR[m.code] || BOT_AVATAR["CEOB"];
           const subtitle = BOT_SUBTITLE[m.code] || m.role;
           return (
             <div
@@ -231,15 +231,15 @@ const GENERIC_HOOKS: CarlOSHook[] = [
 const DEMO_THINKING_STEPS: ThinkingStep[] = [
   { id: "t1", label: "Analyse du contexte", icon: Search, status: "done", detail: "PME manufacturiere, 45 employes, secteur metal" },
   { id: "t2", label: "Recherche GHML", icon: FileText, status: "done", detail: "3 patterns trouves dans Tableau Periodique" },
-  { id: "t3", label: "Synthese multi-agent", icon: Brain, status: "active", detail: "BCT + BCF + BCS en trisociation..." },
+  { id: "t3", label: "Synthese multi-agent", icon: Brain, status: "active", detail: "CTOB + CFOB + CSOB en trisociation..." },
   { id: "t4", label: "Generation recommandation", icon: Sparkles, status: "pending" },
 ];
 
 const DEMO_TEAM: TeamMember[] = [
-  { code: "BCO", role: "CEO — Orchestrateur", status: "joined" },
-  { code: "BCT", role: "CTO — Analyse technique", status: "joined" },
-  { code: "BCF", role: "CFO — Impact financier", status: "joining" },
-  { code: "BCS", role: "CSO — Strategie", status: "called" },
+  { code: "CEOB", role: "CEO — Orchestrateur", status: "joined" },
+  { code: "CTOB", role: "CTO — Analyse technique", status: "joined" },
+  { code: "CFOB", role: "CFO — Impact financier", status: "joining" },
+  { code: "CSOB", role: "CSO — Strategie", status: "called" },
 ];
 
 // ================================================================
@@ -274,7 +274,7 @@ export function CarlOSHooks() {
     .filter((h) => !dismissedIds.has(h.id))
     .sort((a, b) => a.priority - b.priority);
 
-  const botAvatar = BOT_AVATAR[activeBotCode] || BOT_AVATAR["BCO"];
+  const botAvatar = BOT_AVATAR[activeBotCode] || BOT_AVATAR["CEOB"];
 
   return (
     <div className="flex-1 min-h-0 overflow-auto">

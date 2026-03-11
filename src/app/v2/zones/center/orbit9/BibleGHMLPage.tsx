@@ -95,12 +95,12 @@ const GHOSTS = [
 ];
 
 const TRISOCIATION_EXAMPLES = [
-  { code: "BCO", role: "CEO", formula: "Gh(Bz·Mg·Ch)STX", primaire: "Bezos", calibrateur: "Munger", amplificateur: "Churchill", resultat: "L'Empire Resilient" },
-  { code: "BCT", role: "CTO", formula: "Gh(Mk·Cu·Vi)STX", primaire: "Musk", calibrateur: "Curie", amplificateur: "Vinci", resultat: "La Science Creative" },
-  { code: "BCF", role: "CFO", formula: "Gh(Bu·Mg·Fr)STX", primaire: "Buffett", calibrateur: "Munger", amplificateur: "Franklin", resultat: "Le Coffre-Fort Intelligent" },
-  { code: "BCM", role: "CMO", formula: "Gh(Di·Jb·Op)STX", primaire: "Disney", calibrateur: "Jobs/Blakely", amplificateur: "Oprah", resultat: "La Machine a Reves" },
-  { code: "BCS", role: "CSO", formula: "Gh(Tz·Th·Cn)STX", primaire: "Sun Tzu", calibrateur: "Thiel", amplificateur: "Chanel", resultat: "L'Echiquier Elegant" },
-  { code: "BOO", role: "COO", formula: "Gh(MA·De·Ni)STX", primaire: "Marc Aurele", calibrateur: "Deming", amplificateur: "Nightingale", resultat: "La Forge Stoique" },
+  { code: "CEOB", role: "CEO", formula: "Gh(Bz·Mg·Ch)STX", primaire: "Bezos", calibrateur: "Munger", amplificateur: "Churchill", resultat: "L'Empire Resilient" },
+  { code: "CTOB", role: "CTO", formula: "Gh(Mk·Cu·Vi)STX", primaire: "Musk", calibrateur: "Curie", amplificateur: "Vinci", resultat: "La Science Creative" },
+  { code: "CFOB", role: "CFO", formula: "Gh(Bu·Mg·Fr)STX", primaire: "Buffett", calibrateur: "Munger", amplificateur: "Franklin", resultat: "Le Coffre-Fort Intelligent" },
+  { code: "CMOB", role: "CMO", formula: "Gh(Di·Jb·Op)STX", primaire: "Disney", calibrateur: "Jobs/Blakely", amplificateur: "Oprah", resultat: "La Machine a Reves" },
+  { code: "CSOB", role: "CSO", formula: "Gh(Tz·Th·Cn)STX", primaire: "Sun Tzu", calibrateur: "Thiel", amplificateur: "Chanel", resultat: "L'Echiquier Elegant" },
+  { code: "COOB", role: "COO", formula: "Gh(MA·De·Ni)STX", primaire: "Marc Aurele", calibrateur: "Deming", amplificateur: "Nightingale", resultat: "La Forge Stoique" },
 ];
 
 const REFLECTION_MODES = [
@@ -118,22 +118,22 @@ const HERRMANN_QUADRANTS = [
   {
     quadrant: "A", name: "Analytique", color: "bg-blue-500", lightBg: "bg-blue-50", textColor: "text-blue-700",
     desc: "Logique, faits, chiffres, raisonnement",
-    bots: ["BCF (CFO)", "BCT (CTO)", "BSE (CISO)"],
+    bots: ["CFOB (CFO)", "CTOB (CTO)", "CISOB (CISO)"],
   },
   {
     quadrant: "B", name: "Organisationnel", color: "bg-emerald-500", lightBg: "bg-emerald-50", textColor: "text-emerald-700",
     desc: "Processus, planification, execution",
-    bots: ["BOO (COO)", "BFA (CPO)", "BLE (CLO)"],
+    bots: ["COOB (COO)", "CPOB (CPO)", "CLOB (CLO)"],
   },
   {
     quadrant: "C", name: "Relationnel", color: "bg-red-500", lightBg: "bg-red-50", textColor: "text-red-700",
     desc: "Emotions, empathie, communication",
-    bots: ["BHR (CHRO)", "BCS (CSO)", "BRO (CRO)"],
+    bots: ["CHROB (CHRO)", "CSOB (CSO)", "CROB (CRO)"],
   },
   {
     quadrant: "D", name: "Creatif", color: "bg-amber-500", lightBg: "bg-amber-50", textColor: "text-amber-700",
     desc: "Vision, innovation, intuition",
-    bots: ["BCO (CEO)", "BCM (CMO)", "BIO (CINO)"],
+    bots: ["CEOB (CEO)", "CMOB (CMO)", "CINOB (CINO)"],
   },
 ];
 
@@ -225,18 +225,18 @@ const TP_SOURCES = [
 ];
 
 const TP_FONDAMENTAUX = [
-  { symbol: "Li", name: "Lien Initial", group: "H", period: 1, valence: 3, coefficient: 1.0, agent: "BCO", phase: "C", desc: "Premier contact, creation du rapport de confiance" },
-  { symbol: "Vc", name: "Vision Claire", group: "P", period: 1, valence: 4, coefficient: 1.2, agent: "BCO", phase: "C", desc: "Comprehension nette de la situation et des objectifs" },
-  { symbol: "Jm", name: "Jugement Munger", group: "P", period: 1, valence: 5, coefficient: 1.5, agent: "BCF", phase: "R", desc: "Modeles mentaux inverses — penser a l'envers pour trouver la verite" },
-  { symbol: "Cp", name: "Comprehension Profonde", group: "H", period: 1, valence: 4, coefficient: 1.3, agent: "BCO", phase: "R", desc: "Diagnostic en profondeur, au-dela des symptomes" },
-  { symbol: "Mf", name: "Modele Financier", group: "T", period: 2, valence: 6, coefficient: 1.8, agent: "BCF", phase: "R", desc: "Analyse financiere structuree, ratios, projections" },
-  { symbol: "Au", name: "Autorite Sectorielle", group: "S", period: 2, valence: 3, coefficient: 1.4, agent: "BCS", phase: "E", desc: "Expertise reconnue dans le secteur d'activite" },
-  { symbol: "Nt", name: "Narratif Transformateur", group: "H", period: 2, valence: 4, coefficient: 1.6, agent: "BCM", phase: "E", desc: "Storytelling qui transforme la perception du possible" },
-  { symbol: "Ro", name: "ROI Observable", group: "T", period: 3, valence: 5, coefficient: 2.0, agent: "BCF", phase: "D", desc: "Retour sur investissement mesurable et demontrable" },
-  { symbol: "Sb", name: "Social Proof Business", group: "P", period: 3, valence: 3, coefficient: 1.7, agent: "BCS", phase: "D", desc: "Preuves sociales, cas clients, temoignages" },
-  { symbol: "Cr", name: "Closing Resilient", group: "P", period: 3, valence: 4, coefficient: 1.9, agent: "BCS", phase: "O", desc: "Conclusion qui resiste aux objections et au temps" },
-  { symbol: "Co", name: "Continuite Operationnelle", group: "T", period: 3, valence: 5, coefficient: 1.5, agent: "BOO", phase: "O", desc: "Suivi post-decision, execution, next steps concrets" },
-  { symbol: "Ep", name: "Evolution Perpetuelle", group: "H", period: 4, valence: 6, coefficient: 2.2, agent: "BCO", phase: "O", desc: "Amelioration continue, cycle iteratif, spirale ascendante" },
+  { symbol: "Li", name: "Lien Initial", group: "H", period: 1, valence: 3, coefficient: 1.0, agent: "CEOB", phase: "C", desc: "Premier contact, creation du rapport de confiance" },
+  { symbol: "Vc", name: "Vision Claire", group: "P", period: 1, valence: 4, coefficient: 1.2, agent: "CEOB", phase: "C", desc: "Comprehension nette de la situation et des objectifs" },
+  { symbol: "Jm", name: "Jugement Munger", group: "P", period: 1, valence: 5, coefficient: 1.5, agent: "CFOB", phase: "R", desc: "Modeles mentaux inverses — penser a l'envers pour trouver la verite" },
+  { symbol: "Cp", name: "Comprehension Profonde", group: "H", period: 1, valence: 4, coefficient: 1.3, agent: "CEOB", phase: "R", desc: "Diagnostic en profondeur, au-dela des symptomes" },
+  { symbol: "Mf", name: "Modele Financier", group: "T", period: 2, valence: 6, coefficient: 1.8, agent: "CFOB", phase: "R", desc: "Analyse financiere structuree, ratios, projections" },
+  { symbol: "Au", name: "Autorite Sectorielle", group: "S", period: 2, valence: 3, coefficient: 1.4, agent: "CSOB", phase: "E", desc: "Expertise reconnue dans le secteur d'activite" },
+  { symbol: "Nt", name: "Narratif Transformateur", group: "H", period: 2, valence: 4, coefficient: 1.6, agent: "CMOB", phase: "E", desc: "Storytelling qui transforme la perception du possible" },
+  { symbol: "Ro", name: "ROI Observable", group: "T", period: 3, valence: 5, coefficient: 2.0, agent: "CFOB", phase: "D", desc: "Retour sur investissement mesurable et demontrable" },
+  { symbol: "Sb", name: "Social Proof Business", group: "P", period: 3, valence: 3, coefficient: 1.7, agent: "CSOB", phase: "D", desc: "Preuves sociales, cas clients, temoignages" },
+  { symbol: "Cr", name: "Closing Resilient", group: "P", period: 3, valence: 4, coefficient: 1.9, agent: "CSOB", phase: "O", desc: "Conclusion qui resiste aux objections et au temps" },
+  { symbol: "Co", name: "Continuite Operationnelle", group: "T", period: 3, valence: 5, coefficient: 1.5, agent: "COOB", phase: "O", desc: "Suivi post-decision, execution, next steps concrets" },
+  { symbol: "Ep", name: "Evolution Perpetuelle", group: "H", period: 4, valence: 6, coefficient: 2.2, agent: "CEOB", phase: "O", desc: "Amelioration continue, cycle iteratif, spirale ascendante" },
 ];
 
 const TP_CREDO_PHASES = [
@@ -1331,7 +1331,7 @@ function TabGlossaire() {
               </div>
               <div className="flex items-start gap-2">
                 <ArrowRight className="h-3.5 w-3.5 text-gray-400 mt-0.5 shrink-0" />
-                <span className="text-[9px] text-gray-600">Refonte nomenclature bot codes (BCO vers CEOB etc.) — sprint separe futur</span>
+                <span className="text-[9px] text-gray-600">Refonte nomenclature bot codes (CEOB vers CEOB etc.) — sprint separe futur</span>
               </div>
             </div>
           </Card>

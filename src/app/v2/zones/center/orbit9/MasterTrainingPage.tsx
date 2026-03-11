@@ -52,18 +52,18 @@ interface SoulFile {
 }
 
 const SOUL_FILES: SoulFile[] = [
-  { code: "BCO", role: "CEO", name: "CarlOS", chars: "10,645", trisociation: "Bezos + Munger + Churchill" },
-  { code: "BCT", role: "CTO", name: "CTO", chars: "9,685", trisociation: "Musk + Curie + Vinci" },
-  { code: "BCF", role: "CFO", name: "CFO", chars: "9,426", trisociation: "Buffett + Munger + Franklin" },
-  { code: "BCM", role: "CMO", name: "CMO", chars: "9,408", trisociation: "Disney + Jobs/Blakely + Oprah" },
-  { code: "BCS", role: "CSO", name: "CSO", chars: "9,658", trisociation: "Sun Tzu + Thiel + Chanel" },
-  { code: "BOO", role: "COO", name: "COO", chars: "9,712", trisociation: "Marc Aurele + Deming + Nightingale" },
-  { code: "BFA", role: "Factory", name: "Factory", chars: "40,327", trisociation: "Le plus gros SOUL file" },
-  { code: "BHR", role: "CHRO", name: "CHRO", chars: "15,060", trisociation: "" },
-  { code: "BRO", role: "CRO", name: "CRO", chars: "14,405", trisociation: "" },
-  { code: "BSE", role: "CISO", name: "CISO", chars: "14,117", trisociation: "" },
-  { code: "BLE", role: "CLO", name: "CLO", chars: "15,003", trisociation: "" },
-  { code: "BIO", role: "CINO", name: "CINO", chars: "16,074", trisociation: "" },
+  { code: "CEOB", role: "CEO", name: "CarlOS", chars: "10,645", trisociation: "Bezos + Munger + Churchill" },
+  { code: "CTOB", role: "CTO", name: "CTO", chars: "9,685", trisociation: "Musk + Curie + Vinci" },
+  { code: "CFOB", role: "CFO", name: "CFO", chars: "9,426", trisociation: "Buffett + Munger + Franklin" },
+  { code: "CMOB", role: "CMO", name: "CMO", chars: "9,408", trisociation: "Disney + Jobs/Blakely + Oprah" },
+  { code: "CSOB", role: "CSO", name: "CSO", chars: "9,658", trisociation: "Sun Tzu + Thiel + Chanel" },
+  { code: "COOB", role: "COO", name: "COO", chars: "9,712", trisociation: "Marc Aurele + Deming + Nightingale" },
+  { code: "CPOB", role: "Factory", name: "Factory", chars: "40,327", trisociation: "Le plus gros SOUL file" },
+  { code: "CHROB", role: "CHRO", name: "CHRO", chars: "15,060", trisociation: "" },
+  { code: "CROB", role: "CRO", name: "CRO", chars: "14,405", trisociation: "" },
+  { code: "CISOB", role: "CISO", name: "CISO", chars: "14,117", trisociation: "" },
+  { code: "CLOB", role: "CLO", name: "CLO", chars: "15,003", trisociation: "" },
+  { code: "CINOB", role: "CINO", name: "CINO", chars: "16,074", trisociation: "" },
 ];
 
 // ======================================================================

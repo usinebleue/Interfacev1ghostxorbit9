@@ -63,8 +63,8 @@ export function FrameMasterProvider({
   children: React.ReactNode;
 }) {
   const [activeBot, setActiveBotState] = useState<BotInfo | null>(null);
-  const [activeBotCode, setActiveBotCode] = useState("BCO");
-  const [activeView, setActiveView] = useState<ActiveView>("department"); // Ouvre sur Direction (BCO) par defaut
+  const [activeBotCode, setActiveBotCode] = useState("CEOB");
+  const [activeView, setActiveView] = useState<ActiveView>("department"); // Ouvre sur Direction (CEOB) par defaut
   const [activeOrbit9Section, setActiveOrbit9Section] = useState<string | null>(null);
   const [activeEspaceSection, setActiveEspaceSection] = useState<EspaceSection>("idees");
   const [activeBlueprintSection, setActiveBlueprintSection] = useState<BlueprintSection>("live");

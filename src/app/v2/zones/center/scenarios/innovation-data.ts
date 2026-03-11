@@ -44,7 +44,7 @@ export const INNOVATION_DATA = {
     accentColor: "from-fuchsia-500 to-pink-500",
     icon: Lightbulb,
     intro: "Dans l'industrie des ascenseurs (Otis, Schindler), ils ont transforme la maintenance en service predictif par abonnement. Otis fait 80% de ses profits sur le service, pas la vente d'ascenseurs. Transpose chez vous : vendre des 'contrats de performance garantie' au lieu de 'reparer quand ca casse'.",
-    botCode: "BCT",
+    botCode: "CTOB",
     botProposal: "On installe des capteurs IoT sur chaque equipement vendu — vibrations, temperature, consommation electrique. L'algorithme predit les pannes 2-4 semaines a l'avance. On vend ca comme un abonnement 'Zero-Panne Garanti' a 1,500$/mois par equipement. Avec 200 equipements en parc, ca fait 3.6M$/an de revenus recurrents. Cout additionnel : 800K$ (capteurs + plateforme). Marge nette : 40%+.",
     sources: [
       { type: "stat" as const, label: "Otis Connected — 80% profits from service (2024)" },
@@ -61,7 +61,7 @@ export const INNOVATION_DATA = {
     accentColor: "from-orange-500 to-amber-500",
     icon: Shuffle,
     intro: "Et si on faisait l'OPPOSE? Au lieu de reparer les pannes, on FACTURE quand l'equipement FONCTIONNE. Modele 'Equipment-as-a-Service'. Le client ne possede plus — il paie a l'utilisation. Chaque heure de production qui tourne, vous facturez.",
-    botCode: "BCM",
+    botCode: "CMOB",
     botProposal: "On lance une offre 'Performance-as-a-Service'. Le client ne paie plus 250K$ pour l'equipement — il paie 45$/heure de production. On garantit 95% d'uptime. S'il y a une panne, c'est NOUS qui perdons, pas lui. Le client adore : zero risque, zero CAPEX. Nous : revenus previsibles de 394K$/an par equipement (8,760h x 45$). Sur 10 equipements convertis la premiere annee, c'est 3.9M$ de revenus recurrents. Le SAV devient le moteur de livraison du service.",
     sources: [
       { type: "stat" as const, label: "Hilti Fleet Management — 60% client retention boost" },
@@ -78,7 +78,7 @@ export const INNOVATION_DATA = {
     accentColor: "from-green-500 to-emerald-500",
     icon: Leaf,
     intro: "Dans la nature, les fourmis pratiquent la maintenance distribuee — chaque ouvriere inspecte et repare les tunnels qu'elle traverse, SANS coordination centrale. Transpose : former les OPERATEURS du client a faire la maintenance de niveau 1, vous ne gerez que le niveau 2-3. Le volume de vos interventions baisse de 60%, mais chaque intervention vaut 3x plus cher.",
-    botCode: "BOO",
+    botCode: "COOB",
     botProposal: "On cree un programme 'Operateur Certifie' en 3 niveaux. Niveau 1 : l'operateur fait les inspections quotidiennes et les ajustements simples (formation 2 jours, 2,500$). Niveau 2 : le chef d'equipe gere les maintenances preventives mensuelles (formation 5 jours, 6,000$). Niveau 3 : nos techniciens experts interviennent uniquement sur les pannes complexes et les overhauls. Resultat : nos 12 techniciens passent de 800 interventions/an a 300 interventions a haute valeur. Revenu moyen par intervention : de 650$ a 2,200$. Plus : 400K$/an en formations. Cout SAV baisse de 2.4M$ a 1.6M$, revenus montent de 2M$ a 2.7M$.",
     sources: [
       { type: "doc" as const, label: "Toyota TPM (Total Productive Maintenance) — framework" },
@@ -96,21 +96,21 @@ export const INNOVATION_DATA = {
         technique: "Analogie",
         color: "fuchsia",
         scores: [92, 65, 75], // Impact, Faisabilite, Originalite
-        botCode: "BCT",
+        botCode: "CTOB",
       },
       {
         nom: "Equipment-as-a-Service",
         technique: "Inversion",
         color: "orange",
         scores: [98, 40, 95],
-        botCode: "BCM",
+        botCode: "CMOB",
       },
       {
         nom: "Maintenance Distribuee",
         technique: "Biomimetisme",
         color: "green",
         scores: [70, 90, 60],
-        botCode: "BOO",
+        botCode: "COOB",
       },
     ],
   },

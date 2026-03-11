@@ -44,15 +44,15 @@ interface ProfilData {
 // ── BOT names (for display) ──
 
 const BOT_NAMES: Record<string, string> = {
-  BCO: "CarlOS", BCF: "François", BCM: "Martine", BOO: "Olivier",
-  BFA: "Fabien", BHR: "Hélène", BCT: "Thierry", BCS: "Sophie",
-  BRO: "Raphaël", BIO: "Inès", BLE: "Louise", BSE: "Sébastien",
+  CEOB: "CarlOS", CFOB: "François", CMOB: "Martine", COOB: "Olivier",
+  CPOB: "Fabien", CHROB: "Hélène", CTOB: "Thierry", CSOB: "Sophie",
+  CROB: "Raphaël", CINOB: "Inès", CLOB: "Louise", CISOB: "Sébastien",
 };
 
 const BOT_ROLES: Record<string, string> = {
-  BCO: "CEO", BCF: "CFO", BCM: "CMO", BOO: "COO",
-  BFA: "Production", BHR: "CHRO", BCT: "CTO", BCS: "CSO",
-  BRO: "CRO", BIO: "CINO", BLE: "CLO", BSE: "CISO",
+  CEOB: "CEO", CFOB: "CFO", CMOB: "CMO", COOB: "COO",
+  CPOB: "Production", CHROB: "CHRO", CTOB: "CTO", CSOB: "CSO",
+  CROB: "CRO", CINOB: "CINO", CLOB: "CLO", CISOB: "CISO",
 };
 
 // ══════════════════════════════════════════════════════════════
@@ -734,7 +734,7 @@ export function DiagnosticIAPage() {
           </div>
           {step === "departements" && currentDept && (
             <div className="flex items-center gap-2">
-              <img src={BOT_AVATAR[currentDept.code] || BOT_AVATAR["BCO"]} alt={currentDept.code} className="h-8 w-8 rounded-full" />
+              <img src={BOT_AVATAR[currentDept.code] || BOT_AVATAR["CEOB"]} alt={currentDept.code} className="h-8 w-8 rounded-full" />
               {deptPartialScore !== null && (
                 <Badge className="text-[9px]" style={{
                   backgroundColor: deptPartialScore < 40 ? "#fef2f2" : deptPartialScore < 60 ? "#fffbeb" : "#f0fdf4",
@@ -865,7 +865,7 @@ export function DiagnosticIAPage() {
                 const label = getDepartementNom(d, profil.profil_type);
                 return (
                   <div key={d.code} className="flex items-center gap-3">
-                    <img src={BOT_AVATAR[d.code] || BOT_AVATAR["BCO"]} alt={d.code} className="h-6 w-6 rounded-full shrink-0" />
+                    <img src={BOT_AVATAR[d.code] || BOT_AVATAR["CEOB"]} alt={d.code} className="h-6 w-6 rounded-full shrink-0" />
                     <span className="text-xs text-gray-600 w-28 truncate">{label}</span>
                     <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
                       <div className="h-full rounded-full transition-all" style={{ width: `${score}%`, backgroundColor: color }} />
@@ -919,7 +919,7 @@ export function DiagnosticIAPage() {
                         {dept ? getDepartementGapPhrase(dept, profil.profil_type).substring(0, 120) : ""}...
                       </p>
                     </div>
-                    <img src={BOT_AVATAR[gap.botCode] || BOT_AVATAR["BCO"]} alt={gap.botCode} className="h-8 w-8 rounded-full shrink-0" />
+                    <img src={BOT_AVATAR[gap.botCode] || BOT_AVATAR["CEOB"]} alt={gap.botCode} className="h-8 w-8 rounded-full shrink-0" />
                   </div>
                 );
               })}
@@ -992,7 +992,7 @@ export function DiagnosticIAPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
                   {immediateTeam.slice(0, 3).map(g => (
                     <div key={g.botCode} className="p-4 border-2 border-red-200 bg-red-50 rounded-xl text-center">
-                      <img src={BOT_AVATAR[g.botCode] || BOT_AVATAR["BCO"]} alt={g.botCode} className="h-12 w-12 rounded-full mx-auto mb-2" />
+                      <img src={BOT_AVATAR[g.botCode] || BOT_AVATAR["CEOB"]} alt={g.botCode} className="h-12 w-12 rounded-full mx-auto mb-2" />
                       <div className="font-bold text-sm">{BOT_NAMES[g.botCode]}</div>
                       <div className="text-xs text-gray-500">{BOT_ROLES[g.botCode]}</div>
                       <div className="text-lg font-bold mt-1" style={{ color: "#ef4444" }}>{g.score}%</div>
@@ -1007,7 +1007,7 @@ export function DiagnosticIAPage() {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
                   {phase2Team.map(g => (
                     <div key={g.botCode} className="p-3 border border-amber-200 bg-amber-50 rounded-lg text-center">
-                      <img src={BOT_AVATAR[g.botCode] || BOT_AVATAR["BCO"]} alt={g.botCode} className="h-8 w-8 rounded-full mx-auto mb-1" />
+                      <img src={BOT_AVATAR[g.botCode] || BOT_AVATAR["CEOB"]} alt={g.botCode} className="h-8 w-8 rounded-full mx-auto mb-1" />
                       <div className="font-medium text-xs">{BOT_NAMES[g.botCode]}</div>
                       <div className="text-sm font-bold mt-0.5" style={{ color: "#d97706" }}>{g.score}%</div>
                     </div>

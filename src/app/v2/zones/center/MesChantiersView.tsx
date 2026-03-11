@@ -78,33 +78,33 @@ const CHANTIER_TYPES = [
 // ── 12 bots C-Level (select options) ──
 
 const BOT_OPTIONS = [
-  { code: "BCO", label: "CarlOS", short: "CEO" },
-  { code: "BCT", label: "Thierry", short: "CTO" },
-  { code: "BCF", label: "Francois", short: "CFO" },
-  { code: "BCM", label: "Martine", short: "CMO" },
-  { code: "BCS", label: "Sophie", short: "CSO" },
-  { code: "BOO", label: "Olivier", short: "COO" },
-  { code: "BFA", label: "Fabien", short: "CPO" },
-  { code: "BHR", label: "Helene", short: "CHRO" },
-  { code: "BIO", label: "Ines", short: "CINO" },
-  { code: "BRO", label: "Raphael", short: "CRO" },
-  { code: "BLE", label: "Louise", short: "CLO" },
-  { code: "BSE", label: "Sebastien", short: "CISO" },
+  { code: "CEOB", label: "CarlOS", short: "CEO" },
+  { code: "CTOB", label: "Thierry", short: "CTO" },
+  { code: "CFOB", label: "Francois", short: "CFO" },
+  { code: "CMOB", label: "Martine", short: "CMO" },
+  { code: "CSOB", label: "Sophie", short: "CSO" },
+  { code: "COOB", label: "Olivier", short: "COO" },
+  { code: "CPOB", label: "Fabien", short: "CPO" },
+  { code: "CHROB", label: "Helene", short: "CHRO" },
+  { code: "CINOB", label: "Ines", short: "CINO" },
+  { code: "CROB", label: "Raphael", short: "CRO" },
+  { code: "CLOB", label: "Louise", short: "CLO" },
+  { code: "CISOB", label: "Sebastien", short: "CISO" },
 ] as const;
 
 const BOT_GRADIENTS: Record<string, string> = {
-  BCO: "from-blue-600 to-blue-500",
-  BCT: "from-violet-600 to-violet-500",
-  BCF: "from-emerald-600 to-emerald-500",
-  BCM: "from-pink-600 to-pink-500",
-  BCS: "from-red-600 to-red-500",
-  BOO: "from-orange-600 to-orange-500",
-  BFA: "from-amber-600 to-amber-500",
-  BHR: "from-teal-600 to-teal-500",
-  BIO: "from-rose-600 to-rose-500",
-  BRO: "from-amber-600 to-amber-500",
-  BLE: "from-indigo-600 to-indigo-500",
-  BSE: "from-gray-600 to-gray-500",
+  CEOB: "from-blue-600 to-blue-500",
+  CTOB: "from-violet-600 to-violet-500",
+  CFOB: "from-emerald-600 to-emerald-500",
+  CMOB: "from-pink-600 to-pink-500",
+  CSOB: "from-red-600 to-red-500",
+  COOB: "from-orange-600 to-orange-500",
+  CPOB: "from-amber-600 to-amber-500",
+  CHROB: "from-teal-600 to-teal-500",
+  CINOB: "from-rose-600 to-rose-500",
+  CROB: "from-amber-600 to-amber-500",
+  CLOB: "from-indigo-600 to-indigo-500",
+  CISOB: "from-gray-600 to-gray-500",
 };
 
 // ── Playbook type gradients (harmonisés avec CHANTIER_TYPES) ──
@@ -126,7 +126,7 @@ const PRESET_PROJETS = [
     titre: "Audit SI & Infrastructure",
     description: "Cartographier les systemes existants, evaluer la maturite technologique et identifier les gaps critiques.",
     type: "technologique",
-    bots: ["BCT", "BIO"],
+    bots: ["CTOB", "CINOB"],
     missions_suggerees: 3,
   },
   {
@@ -134,7 +134,7 @@ const PRESET_PROJETS = [
     titre: "Plan Marketing Strategique",
     description: "Definir le positionnement, les canaux d'acquisition et le plan de contenu pour les 12 prochains mois.",
     type: "strategique",
-    bots: ["BCM", "BCS"],
+    bots: ["CMOB", "CSOB"],
     missions_suggerees: 4,
   },
   {
@@ -142,7 +142,7 @@ const PRESET_PROJETS = [
     titre: "Optimisation Lean Operations",
     description: "Cartographier les processus, eliminer les gaspillages et implanter les indicateurs de performance.",
     type: "operationnel",
-    bots: ["BOO", "BFA"],
+    bots: ["COOB", "CPOB"],
     missions_suggerees: 5,
   },
   {
@@ -150,7 +150,7 @@ const PRESET_PROJETS = [
     titre: "Bilan Carbone & Conformite ESG",
     description: "Mesurer l'empreinte carbone, identifier les leviers de reduction et preparer la certification.",
     type: "environnemental",
-    bots: ["BOO", "BCF"],
+    bots: ["COOB", "CFOB"],
     missions_suggerees: 3,
   },
   {
@@ -158,7 +158,7 @@ const PRESET_PROJETS = [
     titre: "Programme Innovation Interne",
     description: "Deployer un programme d'ideation, former les equipes et structurer le pipeline d'innovation.",
     type: "culturel",
-    bots: ["BIO", "BHR"],
+    bots: ["CINOB", "CHROB"],
     missions_suggerees: 4,
   },
   {
@@ -166,7 +166,7 @@ const PRESET_PROJETS = [
     titre: "Restructuration Organisationnelle",
     description: "Redefinir les roles, optimiser les equipes et accompagner le changement avec un plan de transition.",
     type: "organisationnel",
-    bots: ["BHR", "BOO"],
+    bots: ["CHROB", "COOB"],
     missions_suggerees: 4,
   },
 ] as const;
@@ -191,7 +191,7 @@ function MissionBriefingForm({ onSubmit, onCancel, defaultBot }: {
 }) {
   const [titre, setTitre] = useState("");
   const [description, setDescription] = useState("");
-  const [botPrimaire, setBotPrimaire] = useState(defaultBot || "BCO");
+  const [botPrimaire, setBotPrimaire] = useState(defaultBot || "CEOB");
   const [priorite, setPriorite] = useState<PrioriteLevel>("moyenne");
   const [objectif, setObjectif] = useState("");
   const [delai, setDelai] = useState("");
@@ -574,7 +574,7 @@ function ProjetBriefingForm({ onSubmit, onCancel, chantiers, defaultValues }: {
   const [titre, setTitre] = useState(defaultValues?.titre || "");
   const [description, setDescription] = useState(defaultValues?.description || "");
   const [chantierId, setChantierId] = useState<string>("");
-  const [botPrimaire, setBotPrimaire] = useState(defaultValues?.bot_primaire || "BCO");
+  const [botPrimaire, setBotPrimaire] = useState(defaultValues?.bot_primaire || "CEOB");
   const [objectifs, setObjectifs] = useState<string[]>(defaultValues?.objectifs || []);
   const [newObjectif, setNewObjectif] = useState("");
   const [echeance, setEcheance] = useState("");
@@ -587,7 +587,7 @@ function ProjetBriefingForm({ onSubmit, onCancel, chantiers, defaultValues }: {
     if (defaultValues) {
       setTitre(defaultValues.titre || "");
       setDescription(defaultValues.description || "");
-      setBotPrimaire(defaultValues.bot_primaire || "BCO");
+      setBotPrimaire(defaultValues.bot_primaire || "CEOB");
       setObjectifs(defaultValues.objectifs || []);
     }
   }, [defaultValues?.titre]);
@@ -1137,7 +1137,7 @@ export function MesChantiersView() {
                   const linkedMission = thread.missionId
                     ? missions.find(m => String(m.id) === thread.missionId)
                     : null;
-                  const botCode = thread.primaryBot || "BCO";
+                  const botCode = thread.primaryBot || "CEOB";
                   const botAvatar = BOT_AVATAR[botCode];
                   const botGradient = BOT_GRADIENTS[botCode] || "from-blue-600 to-blue-500";
                   const botInfo = BOT_OPTIONS.find(b => b.code === botCode);
@@ -1404,8 +1404,8 @@ export function MesChantiersView() {
                 const linkedThreadCount = m.thread_ids?.length || 0;
                 const linkedDocsCount = bureauItems.filter(bi => bi.mission_id === m.id).length;
                 const botInfo = BOT_OPTIONS.find(b => b.code === m.bot_primaire);
-                const botAvatar = BOT_AVATAR[m.bot_primaire || "BCO"];
-                const botGradient = BOT_GRADIENTS[m.bot_primaire || "BCO"] || "from-green-600 to-emerald-500";
+                const botAvatar = BOT_AVATAR[m.bot_primaire || "CEOB"];
+                const botGradient = BOT_GRADIENTS[m.bot_primaire || "CEOB"] || "from-green-600 to-emerald-500";
                 const missionClick = () => {
                   if (m.thread_ids?.[0]) { resumeThread(m.thread_ids[0]); setActiveView("live-chat"); }
                   else { newConversation(); setActiveView("live-chat"); }
@@ -1590,8 +1590,8 @@ export function MesChantiersView() {
                     ? chantiers.find(ch => ch.id === p.chantier_id)
                     : null;
                   const botInfo = BOT_OPTIONS.find(b => b.code === p.bot_primaire);
-                  const pBotAvatar = BOT_AVATAR[p.bot_primaire || "BCO"];
-                  const pBotGradient = BOT_GRADIENTS[p.bot_primaire || "BCO"] || "from-indigo-600 to-indigo-500";
+                  const pBotAvatar = BOT_AVATAR[p.bot_primaire || "CEOB"];
+                  const pBotGradient = BOT_GRADIENTS[p.bot_primaire || "CEOB"] || "from-indigo-600 to-indigo-500";
                   if (viewMode === "liste") {
                     return (
                       <Card key={p.id} className="px-4 py-3 hover:shadow-md transition-shadow cursor-pointer">
@@ -1794,7 +1794,7 @@ export function MesChantiersView() {
                   const chantierProjets = projets.filter(p => p.chantier_id === ch.id);
                   const typeCfg = CHANTIER_TYPES.find(t => t.id === ch.type_chantier);
                   const totalCount = (ch.missions_count ?? chantierMissions.length) + chantierProjets.length;
-                  const chLeaderCode = ch.bot_codes?.[0] || "BCO";
+                  const chLeaderCode = ch.bot_codes?.[0] || "CEOB";
                   const chLeaderAvatar = BOT_AVATAR[chLeaderCode];
                   const chLeaderInfo = BOT_OPTIONS.find(b => b.code === chLeaderCode);
                   if (viewMode === "liste") {

@@ -63,10 +63,10 @@ export const CRISE_DATA = {
     ],
     ceoDirective: "On fait LES DEUX. Appel dans 30 minutes + plan correctif par email dans 4 heures. Voici ce que chaque departement fait dans la prochaine heure :",
     assignments: [
-      { bot: "BCO", role: "CEO", task: "Appeler Jean-Pierre dans 30 min. Script : excuses sinceres, zero blame, on prend 100% de la responsabilite. Proposer meeting en personne demain 8h a LEURS bureaux.", color: "blue" },
-      { bot: "BOO", role: "COO", task: "Audit flash des 7 retards : cause racine pour chacun. Rapport en 2 heures. Identifier les 3 commandes en cours et garantir livraison anticipee.", color: "orange" },
-      { bot: "BCT", role: "CTO", task: "Les 3 NCR : analyse technique en 1 heure. Quel changement de processus elimine le probleme? Proposer un systeme de controle qualite additionnel (inspection a 100% sur pieces Aeromax).", color: "violet" },
-      { bot: "BCF", role: "CFO", task: "Modele financier : si on perd Aeromax, c'est quoi l'impact? Combien on peut investir pour les garder? Calculer le cout d'un credit qualite de 50-100K$ comme geste de bonne foi.", color: "emerald" },
+      { bot: "CEOB", role: "CEO", task: "Appeler Jean-Pierre dans 30 min. Script : excuses sinceres, zero blame, on prend 100% de la responsabilite. Proposer meeting en personne demain 8h a LEURS bureaux.", color: "blue" },
+      { bot: "COOB", role: "COO", task: "Audit flash des 7 retards : cause racine pour chacun. Rapport en 2 heures. Identifier les 3 commandes en cours et garantir livraison anticipee.", color: "orange" },
+      { bot: "CTOB", role: "CTO", task: "Les 3 NCR : analyse technique en 1 heure. Quel changement de processus elimine le probleme? Proposer un systeme de controle qualite additionnel (inspection a 100% sur pieces Aeromax).", color: "violet" },
+      { bot: "CFOB", role: "CFO", task: "Modele financier : si on perd Aeromax, c'est quoi l'impact? Combien on peut investir pour les garder? Calculer le cout d'un credit qualite de 50-100K$ comme geste de bonne foi.", color: "emerald" },
     ],
   },
 

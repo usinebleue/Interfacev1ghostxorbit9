@@ -133,40 +133,40 @@ const TEMPLATE_COLORS: Record<string, string> = {
 
 // Mapping categorie template → bot code (pour avatar)
 const CAT_TO_BOT: Record<string, string> = {
-  "CEO": "BCO", "CTO": "BCT", "CFO": "BCF", "CMO": "BCM",
-  "CSO": "BCS", "COO": "BOO", "FACTORY": "BFA", "INTERNE-UB": "BCO",
+  "CEO": "CEOB", "CTO": "CTOB", "CFO": "CFOB", "CMO": "CMOB",
+  "CSO": "CSOB", "COO": "COOB", "FACTORY": "CPOB", "INTERNE-UB": "CEOB",
 };
 
 // ── Bot gradients + labels (pattern Pipeline — MesChantiersView) ──
 
 const BOT_GRADIENTS: Record<string, string> = {
-  BCO: "from-blue-600 to-blue-500",
-  BCT: "from-violet-600 to-violet-500",
-  BCF: "from-emerald-600 to-emerald-500",
-  BCM: "from-pink-600 to-pink-500",
-  BCS: "from-red-600 to-red-500",
-  BOO: "from-orange-600 to-orange-500",
-  BFA: "from-amber-600 to-amber-500",
-  BHR: "from-teal-600 to-teal-500",
-  BIO: "from-rose-600 to-rose-500",
-  BRO: "from-amber-600 to-amber-500",
-  BLE: "from-indigo-600 to-indigo-500",
-  BSE: "from-gray-600 to-gray-500",
+  CEOB: "from-blue-600 to-blue-500",
+  CTOB: "from-violet-600 to-violet-500",
+  CFOB: "from-emerald-600 to-emerald-500",
+  CMOB: "from-pink-600 to-pink-500",
+  CSOB: "from-red-600 to-red-500",
+  COOB: "from-orange-600 to-orange-500",
+  CPOB: "from-amber-600 to-amber-500",
+  CHROB: "from-teal-600 to-teal-500",
+  CINOB: "from-rose-600 to-rose-500",
+  CROB: "from-amber-600 to-amber-500",
+  CLOB: "from-indigo-600 to-indigo-500",
+  CISOB: "from-gray-600 to-gray-500",
 };
 
 const BOT_LABELS: Record<string, { label: string; short: string }> = {
-  BCO: { label: "CarlOS", short: "CEO" },
-  BCT: { label: "Thierry", short: "CTO" },
-  BCF: { label: "Francois", short: "CFO" },
-  BCM: { label: "Martine", short: "CMO" },
-  BCS: { label: "Sophie", short: "CSO" },
-  BOO: { label: "Olivier", short: "COO" },
-  BFA: { label: "Fabien", short: "CPO" },
-  BHR: { label: "Helene", short: "CHRO" },
-  BIO: { label: "Ines", short: "CINO" },
-  BRO: { label: "Raphael", short: "CRO" },
-  BLE: { label: "Louise", short: "CLO" },
-  BSE: { label: "Sebastien", short: "CISO" },
+  CEOB: { label: "CarlOS", short: "CEO" },
+  CTOB: { label: "Thierry", short: "CTO" },
+  CFOB: { label: "Francois", short: "CFO" },
+  CMOB: { label: "Martine", short: "CMO" },
+  CSOB: { label: "Sophie", short: "CSO" },
+  COOB: { label: "Olivier", short: "COO" },
+  CPOB: { label: "Fabien", short: "CPO" },
+  CHROB: { label: "Helene", short: "CHRO" },
+  CINOB: { label: "Ines", short: "CINO" },
+  CROB: { label: "Raphael", short: "CRO" },
+  CLOB: { label: "Louise", short: "CLO" },
+  CISOB: { label: "Sebastien", short: "CISO" },
 };
 
 const FILE_ICONS: Record<string, React.ElementType> = {
@@ -191,7 +191,7 @@ const PRIORITY_ICONS: Record<string, { icon: string; color: string }> = {
   none: { icon: "⚪", color: "text-gray-400" },
 };
 
-const BOT_OPTIONS = ["BCO", "BCT", "BCF", "BCM", "BCS", "BOO", "BHR", "BIO", "BRO", "BLE"];
+const BOT_OPTIONS = ["CEOB", "CTOB", "CFOB", "CMOB", "CSOB", "COOB", "CHROB", "CINOB", "CROB", "CLOB"];
 
 // ══════════════════════════════════════════
 // BANDEAU PROACTIF CarlOS
@@ -211,7 +211,7 @@ function BandeauProactif({ message, section }: { message: string; section: Espac
   return (
     <div className={cn("bg-gradient-to-r rounded-xl p-3 flex items-center gap-3", sectionColors[section])}>
       <img
-        src={BOT_AVATAR["BCO"]}
+        src={BOT_AVATAR["CEOB"]}
         alt="CarlOS"
         className="w-8 h-8 rounded-full ring-2 ring-white/30 shrink-0"
       />
@@ -775,7 +775,7 @@ function IdeesPage() {
   const ideesHook = useIdees();
 
   const handleAddIdee = async (titre: string, contenu: string) => {
-    await ideesHook.create({ titre, contenu: contenu || titre, source: "Manuel", bot: "BCO" });
+    await ideesHook.create({ titre, contenu: contenu || titre, source: "Manuel", bot: "CEOB" });
   };
 
   const allIdees = ideesHook.idees;
@@ -783,7 +783,7 @@ function IdeesPage() {
 
   // Compteurs par bot pour les filter pills
   const botCounts = allIdees.reduce((acc, c) => {
-    const b = c.bot || "BCO";
+    const b = c.bot || "CEOB";
     acc[b] = (acc[b] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
@@ -837,7 +837,7 @@ function IdeesPage() {
         /* ── Vue grille — gradient header par bot (pattern Pipeline) ── */
         <div className="grid grid-cols-2 gap-3">
           {idees.map(c => {
-            const bot = c.bot || "BCO";
+            const bot = c.bot || "CEOB";
             const gradient = BOT_GRADIENTS[bot] || "from-amber-600 to-amber-500";
             const avatar = BOT_AVATAR[bot];
             const info = BOT_LABELS[bot];
@@ -880,7 +880,7 @@ function IdeesPage() {
         /* ── Vue liste — avatar bot + badges (pattern Pipeline) ── */
         <div className="space-y-1.5">
           {idees.map(c => {
-            const bot = c.bot || "BCO";
+            const bot = c.bot || "CEOB";
             const avatar = BOT_AVATAR[bot];
             const info = BOT_LABELS[bot];
             const tags = c.tags && c.tags.length > 0 ? c.tags : [c.mode || "brainstorm"];
@@ -1196,7 +1196,7 @@ function DocumentsPage() {
               {generes.map((doc) => {
                 const meta = doc.metadata as Record<string, string>;
                 const fileType = meta?.file_type || "PDF";
-                const bot = doc.bot || "BCO";
+                const bot = doc.bot || "CEOB";
                 const gradient = BOT_GRADIENTS[bot] || "from-green-600 to-green-500";
                 const avatar = BOT_AVATAR[bot];
                 const info = BOT_LABELS[bot];
@@ -1574,14 +1574,14 @@ function TachesPage() {
 function AgendaPage() {
   // Evenements simules — sera branche sur Google Calendar / API quand pret
   const EVENTS = [
-    { id: 1, titre: "Standup equipe dev", heure: "09:00", duree: "30 min", type: "recurrent", bot: "BCT", jour: "Lun" },
-    { id: 2, titre: "Revue financiere Q1", heure: "10:30", duree: "1h", type: "reunion", bot: "BCF", jour: "Lun" },
-    { id: 3, titre: "Pipeline ventes — point hebdo", heure: "14:00", duree: "45 min", type: "reunion", bot: "BRO", jour: "Mar" },
-    { id: 4, titre: "Demo client — Alimentation Boreal", heure: "15:30", duree: "1h", type: "demo", bot: "BCO", jour: "Mar" },
-    { id: 5, titre: "Comite direction", heure: "09:00", duree: "1h30", type: "strategique", bot: "BCO", jour: "Mer" },
-    { id: 6, titre: "Sprint review CarlOS", heure: "11:00", duree: "1h", type: "recurrent", bot: "BCT", jour: "Jeu" },
-    { id: 7, titre: "Rencontre RH — embauche dev", heure: "13:00", duree: "45 min", type: "reunion", bot: "BHR", jour: "Jeu" },
-    { id: 8, titre: "Board Room — CA mensuel", heure: "10:00", duree: "2h", type: "strategique", bot: "BCO", jour: "Ven" },
+    { id: 1, titre: "Standup equipe dev", heure: "09:00", duree: "30 min", type: "recurrent", bot: "CTOB", jour: "Lun" },
+    { id: 2, titre: "Revue financiere Q1", heure: "10:30", duree: "1h", type: "reunion", bot: "CFOB", jour: "Lun" },
+    { id: 3, titre: "Pipeline ventes — point hebdo", heure: "14:00", duree: "45 min", type: "reunion", bot: "CROB", jour: "Mar" },
+    { id: 4, titre: "Demo client — Alimentation Boreal", heure: "15:30", duree: "1h", type: "demo", bot: "CEOB", jour: "Mar" },
+    { id: 5, titre: "Comite direction", heure: "09:00", duree: "1h30", type: "strategique", bot: "CEOB", jour: "Mer" },
+    { id: 6, titre: "Sprint review CarlOS", heure: "11:00", duree: "1h", type: "recurrent", bot: "CTOB", jour: "Jeu" },
+    { id: 7, titre: "Rencontre RH — embauche dev", heure: "13:00", duree: "45 min", type: "reunion", bot: "CHROB", jour: "Jeu" },
+    { id: 8, titre: "Board Room — CA mensuel", heure: "10:00", duree: "2h", type: "strategique", bot: "CEOB", jour: "Ven" },
   ];
 
   const TYPE_COLORS: Record<string, string> = {
@@ -1707,9 +1707,9 @@ function TemplatesPage() {
 
   // Bibliotheque: group by department
   const LIB_DEPT_MAP: Record<string, string> = {
-    BCO: "direction", BCT: "technologie", BCF: "finance", BCM: "marketing",
-    BCS: "strategie", BOO: "operations", BFA: "production", BHR: "rh",
-    BIO: "innovation", BRO: "ventes", BLE: "legal", BSE: "securite",
+    CEOB: "direction", CTOB: "technologie", CFOB: "finance", CMOB: "marketing",
+    CSOB: "strategie", COOB: "operations", CPOB: "production", CHROB: "rh",
+    CINOB: "innovation", CROB: "ventes", CLOB: "legal", CISOB: "securite",
   };
   const libDepts = [...new Set(templatesDoc.map(t => t.departement))];
   const filteredLib = libFilter
@@ -2033,7 +2033,7 @@ const OUTILS_MANUFACTURIERS = [
     titre: "Calculateur OEE / TRS",
     description: "Mesure le Taux de Rendement Synthetique: disponibilite x performance x qualite. Benchmarks World Class (85%+) et analyse des 6 grandes pertes.",
     icon: Gauge,
-    bot: "BFA",
+    bot: "CPOB",
     color: "from-emerald-600 to-emerald-500",
     iconBg: "bg-emerald-50",
     iconColor: "text-emerald-600",
@@ -2045,7 +2045,7 @@ const OUTILS_MANUFACTURIERS = [
     titre: "Calculateur ROI automatisation",
     description: "Calcule le retour sur investissement d'un projet d'automatisation: payback, VAN, TRI, flux de tresorerie sur 5 ans.",
     icon: BarChart3,
-    bot: "BFA",
+    bot: "CPOB",
     color: "from-blue-600 to-blue-500",
     iconBg: "bg-blue-50",
     iconColor: "text-blue-600",
@@ -2057,7 +2057,7 @@ const OUTILS_MANUFACTURIERS = [
     titre: "Prix des materiaux industriels",
     description: "Reference des prix: acier (HRC, CRC, inox 304/316), aluminium (6061, 7075), cuivre, laiton, titane, plastiques techniques.",
     icon: Package,
-    bot: "BFA",
+    bot: "CPOB",
     color: "from-amber-600 to-amber-500",
     iconBg: "bg-amber-50",
     iconColor: "text-amber-600",
@@ -2069,7 +2069,7 @@ const OUTILS_MANUFACTURIERS = [
     titre: "Convertisseur d'unites industrielles",
     description: "40+ conversions: longueur (mm/in), poids (kg/lb), pression (psi/bar), temperature, couple, debit, vitesse, puissance.",
     icon: Ruler,
-    bot: "BFA",
+    bot: "CPOB",
     color: "from-violet-600 to-violet-500",
     iconBg: "bg-violet-50",
     iconColor: "text-violet-600",
@@ -2081,7 +2081,7 @@ const OUTILS_MANUFACTURIERS = [
     titre: "Calculateur cout energetique",
     description: "Estime les couts d'electricite selon les tarifs Hydro-Quebec 2025-2026: tarif G, M et LG avec puissance et consommation.",
     icon: Zap,
-    bot: "BFA",
+    bot: "CPOB",
     color: "from-yellow-600 to-yellow-500",
     iconBg: "bg-yellow-50",
     iconColor: "text-yellow-600",
@@ -2093,7 +2093,7 @@ const OUTILS_MANUFACTURIERS = [
     titre: "Calculateur de gains manufacturier",
     description: "Analyse complete des gains potentiels: pertes d'opportunites, capacite, personnel, retention, qualite, volume. Budget et ROI 5 ans.",
     icon: DollarSign,
-    bot: "BFA",
+    bot: "CPOB",
     color: "from-green-600 to-green-500",
     iconBg: "bg-green-50",
     iconColor: "text-green-600",
@@ -2105,7 +2105,7 @@ const OUTILS_MANUFACTURIERS = [
     titre: "Estimateur de couts de projet",
     description: "Estimation par postes: main-d'oeuvre, materiaux, equipements, sous-traitance. Majoration frais generaux, profit et contingence.",
     icon: Calculator,
-    bot: "BFA",
+    bot: "CPOB",
     color: "from-slate-600 to-slate-500",
     iconBg: "bg-slate-50",
     iconColor: "text-slate-600",
@@ -2117,7 +2117,7 @@ const OUTILS_MANUFACTURIERS = [
     titre: "Audit qualite et conformite",
     description: "Verification de conformite ISO 13485, FDA 21 CFR 820. KPIs qualite: FPY, taux de non-conformite, efficacite CAPA.",
     icon: Scale,
-    bot: "BFA",
+    bot: "CPOB",
     color: "from-red-600 to-red-500",
     iconBg: "bg-red-50",
     iconColor: "text-red-600",

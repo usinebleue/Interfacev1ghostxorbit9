@@ -271,7 +271,7 @@ export function CahierProjetDemo({ onTransition }: { onTransition?: (target: str
       {stage >= 1 && stage < 2 && (
         <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
           <div className="flex gap-3">
-            <BotAvatar code="BCO" size="md" />
+            <BotAvatar code="CEOB" size="md" />
             <div className="bg-white border rounded-xl rounded-tl-none px-4 py-3 shadow-sm border-l-[3px] border-blue-400 max-w-lg">
               <div className="text-xs text-blue-700 mb-1.5">CarlOS (CEO)</div>
               <TypewriterText
@@ -289,7 +289,7 @@ export function CahierProjetDemo({ onTransition }: { onTransition?: (target: str
               <ThinkingAnimation
                 steps={SIM_ACTE3.buildingThinking}
                 botName="CarlOS"
-                botCode="BCO"
+                botCode="CEOB"
                 onComplete={() => setStage(1.5)}
               />
             </div>
@@ -395,7 +395,7 @@ export function CahierProjetDemo({ onTransition }: { onTransition?: (target: str
           {showRiskAnalysis && (
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
               <div className="flex gap-3">
-                <BotAvatar code="BCO" size="md" />
+                <BotAvatar code="CEOB" size="md" />
                 <div className="bg-white border rounded-xl rounded-tl-none px-4 py-3 shadow-sm border-l-[3px] border-red-400 flex-1">
                   <div className="text-xs text-red-600 mb-2 font-medium">CarlOS (CEO) — Analyse des risques</div>
                   <div className="space-y-2 text-sm text-gray-700">
@@ -534,7 +534,7 @@ export function CahierProjetDemo({ onTransition }: { onTransition?: (target: str
           {showBudgetChallenge && (
             <div className="mt-3 animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-2">
               <div className="flex gap-3">
-                <BotAvatar code="BCO" size="md" />
+                <BotAvatar code="CEOB" size="md" />
                 <div className="bg-white border rounded-xl rounded-tl-none px-4 py-3 shadow-sm border-l-[3px] border-blue-400 max-w-lg">
                   <div className="text-xs text-blue-700 mb-1.5">CarlOS (CEO) — Defence budgetaire</div>
                   <p className="text-sm text-gray-700 leading-relaxed">
@@ -578,7 +578,7 @@ export function CahierProjetDemo({ onTransition }: { onTransition?: (target: str
               {showPessimiste && (
                 <div className="ml-11 animate-in fade-in slide-in-from-bottom-2 duration-500">
                   <div className="flex gap-3">
-                    <BotAvatar code="BCF" size="md" />
+                    <BotAvatar code="CFOB" size="md" />
                     <div className="bg-white border rounded-xl rounded-tl-none px-4 py-3 shadow-sm border-l-[3px] border-emerald-400 flex-1">
                       <div className="text-xs text-emerald-600 mb-2 font-medium">Francois (CFO) — Scenario pessimiste</div>
                       <p className="text-sm text-gray-700 leading-relaxed">
@@ -756,7 +756,7 @@ export function CahierProjetDemo({ onTransition }: { onTransition?: (target: str
 
           {/* CarlOS ceremony message */}
           <div className="flex gap-3">
-            <BotAvatar code="BCO" size="md" />
+            <BotAvatar code="CEOB" size="md" />
             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border rounded-xl rounded-tl-none px-4 py-3 shadow-sm border-l-[3px] border-blue-400 max-w-lg">
               <div className="text-xs text-blue-700 mb-1.5 font-semibold">CarlOS (CEO)</div>
               <TypewriterText

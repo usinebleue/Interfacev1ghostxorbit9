@@ -191,18 +191,18 @@ const BOT_COLORS: Record<string, {
   bg: string; bgLight: string; text: string; border: string;
   ring: string; emoji: string; name: string; role: string; avatar: string;
 }> = {
-  BCO: { bg: "bg-blue-600", bgLight: "bg-blue-50", text: "text-blue-700", border: "border-blue-400", ring: "ring-blue-300", emoji: "\u{1F454}", name: "CarlOS", role: "CEO", avatar: "/agents/generated/ceo-carlos-profil-v3.png" },
-  BCT: { bg: "bg-violet-600", bgLight: "bg-violet-50", text: "text-violet-700", border: "border-violet-400", ring: "ring-violet-300", emoji: "\u{1F4BB}", name: "Thierry", role: "CTO", avatar: "/agents/generated/cto-thierry-profil-v3.png" },
-  BCF: { bg: "bg-emerald-600", bgLight: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-400", ring: "ring-emerald-300", emoji: "\u{1F4B0}", name: "Fran\u00E7ois", role: "CFO", avatar: "/agents/generated/cfo-francois-profil-v3.png" },
-  BCM: { bg: "bg-pink-600", bgLight: "bg-pink-50", text: "text-pink-700", border: "border-pink-400", ring: "ring-pink-300", emoji: "\u{1F4E3}", name: "Martine", role: "CMO", avatar: "/agents/generated/cmo-martine-profil-v3.png" },
-  BCS: { bg: "bg-red-600", bgLight: "bg-red-50", text: "text-red-700", border: "border-red-400", ring: "ring-red-300", emoji: "\u{1F3AF}", name: "Sophie", role: "CSO", avatar: "/agents/generated/cso-sophie-profil-v3.png" },
-  BOO: { bg: "bg-orange-600", bgLight: "bg-orange-50", text: "text-orange-700", border: "border-orange-400", ring: "ring-orange-300", emoji: "\u{2699}\u{FE0F}", name: "Olivier", role: "COO", avatar: "/agents/generated/coo-olivier-profil-v3.png" },
-  BFA: { bg: "bg-slate-600", bgLight: "bg-slate-50", text: "text-slate-700", border: "border-slate-400", ring: "ring-slate-300", emoji: "\u{1F3ED}", name: "Fabien", role: "CPO", avatar: "/agents/generated/factory-bot-profil-v3.png" },
-  BHR: { bg: "bg-teal-600", bgLight: "bg-teal-50", text: "text-teal-700", border: "border-teal-400", ring: "ring-teal-300", emoji: "\u{1F91D}", name: "H\u00E9l\u00E8ne", role: "CHRO", avatar: "/agents/generated/chro-helene-profil-v3.png" },
-  BIO: { bg: "bg-rose-600", bgLight: "bg-rose-50", text: "text-rose-700", border: "border-rose-400", ring: "ring-rose-300", emoji: "\u{1F4CA}", name: "Inès", role: "CINO", avatar: "/agents/generated/cino-ines-profil-v3.png" },
-  BRO: { bg: "bg-amber-600", bgLight: "bg-amber-50", text: "text-amber-700", border: "border-amber-400", ring: "ring-amber-300", emoji: "\u{1F4C8}", name: "Rapha\u00EBl", role: "CRO", avatar: "/agents/generated/cro-raphael-profil-v3.png" },
-  BLE: { bg: "bg-indigo-600", bgLight: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-400", ring: "ring-indigo-300", emoji: "\u{2696}\u{FE0F}", name: "Louise", role: "CLO", avatar: "/agents/generated/clo-louise-profil-v3.png" },
-  BSE: { bg: "bg-zinc-700", bgLight: "bg-zinc-50", text: "text-zinc-700", border: "border-zinc-400", ring: "ring-zinc-300", emoji: "\u{1F6E1}\u{FE0F}", name: "Sébastien", role: "CISO", avatar: "/agents/generated/ciso-secbot-profil-v3.png" },
+  CEOB: { bg: "bg-blue-600", bgLight: "bg-blue-50", text: "text-blue-700", border: "border-blue-400", ring: "ring-blue-300", emoji: "\u{1F454}", name: "CarlOS", role: "CEO", avatar: "/agents/generated/ceo-carlos-profil-v3.png" },
+  CTOB: { bg: "bg-violet-600", bgLight: "bg-violet-50", text: "text-violet-700", border: "border-violet-400", ring: "ring-violet-300", emoji: "\u{1F4BB}", name: "Thierry", role: "CTO", avatar: "/agents/generated/cto-thierry-profil-v3.png" },
+  CFOB: { bg: "bg-emerald-600", bgLight: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-400", ring: "ring-emerald-300", emoji: "\u{1F4B0}", name: "Fran\u00E7ois", role: "CFO", avatar: "/agents/generated/cfo-francois-profil-v3.png" },
+  CMOB: { bg: "bg-pink-600", bgLight: "bg-pink-50", text: "text-pink-700", border: "border-pink-400", ring: "ring-pink-300", emoji: "\u{1F4E3}", name: "Martine", role: "CMO", avatar: "/agents/generated/cmo-martine-profil-v3.png" },
+  CSOB: { bg: "bg-red-600", bgLight: "bg-red-50", text: "text-red-700", border: "border-red-400", ring: "ring-red-300", emoji: "\u{1F3AF}", name: "Sophie", role: "CSO", avatar: "/agents/generated/cso-sophie-profil-v3.png" },
+  COOB: { bg: "bg-orange-600", bgLight: "bg-orange-50", text: "text-orange-700", border: "border-orange-400", ring: "ring-orange-300", emoji: "\u{2699}\u{FE0F}", name: "Olivier", role: "COO", avatar: "/agents/generated/coo-olivier-profil-v3.png" },
+  CPOB: { bg: "bg-slate-600", bgLight: "bg-slate-50", text: "text-slate-700", border: "border-slate-400", ring: "ring-slate-300", emoji: "\u{1F3ED}", name: "Fabien", role: "CPO", avatar: "/agents/generated/factory-bot-profil-v3.png" },
+  CHROB: { bg: "bg-teal-600", bgLight: "bg-teal-50", text: "text-teal-700", border: "border-teal-400", ring: "ring-teal-300", emoji: "\u{1F91D}", name: "H\u00E9l\u00E8ne", role: "CHRO", avatar: "/agents/generated/chro-helene-profil-v3.png" },
+  CINOB: { bg: "bg-rose-600", bgLight: "bg-rose-50", text: "text-rose-700", border: "border-rose-400", ring: "ring-rose-300", emoji: "\u{1F4CA}", name: "Inès", role: "CINO", avatar: "/agents/generated/cino-ines-profil-v3.png" },
+  CROB: { bg: "bg-amber-600", bgLight: "bg-amber-50", text: "text-amber-700", border: "border-amber-400", ring: "ring-amber-300", emoji: "\u{1F4C8}", name: "Rapha\u00EBl", role: "CRO", avatar: "/agents/generated/cro-raphael-profil-v3.png" },
+  CLOB: { bg: "bg-indigo-600", bgLight: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-400", ring: "ring-indigo-300", emoji: "\u{2696}\u{FE0F}", name: "Louise", role: "CLO", avatar: "/agents/generated/clo-louise-profil-v3.png" },
+  CISOB: { bg: "bg-zinc-700", bgLight: "bg-zinc-50", text: "text-zinc-700", border: "border-zinc-400", ring: "ring-zinc-300", emoji: "\u{1F6E1}\u{FE0F}", name: "Sébastien", role: "CISO", avatar: "/agents/generated/ciso-secbot-profil-v3.png" },
 };
 
 const USER_AVATAR = "/agents/carl-fugere.jpg";
@@ -516,7 +516,7 @@ function ThinkingAnimation({ mode, botCode }: { mode: string; botCode?: string }
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const steps = useMemo(() => getThinkingSteps(mode), [mode]);
-  const bot = BOT_COLORS[botCode || "BCO"];
+  const bot = BOT_COLORS[botCode || "CEOB"];
 
   useEffect(() => {
     setCurrentStep(0);
@@ -534,7 +534,7 @@ function ThinkingAnimation({ mode, botCode }: { mode: string; botCode?: string }
 
   return (
     <div className="flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
-      <BotAvatar code={botCode || "BCO"} size="md" className="mt-1" />
+      <BotAvatar code={botCode || "CEOB"} size="md" className="mt-1" />
       <div className={cn(
         "bg-white border rounded-2xl rounded-tl-md px-5 py-4 shadow-sm min-w-[280px]",
         bot && `border-l-[3px] ${bot.border}`
@@ -613,7 +613,7 @@ function CommandProgressCard({ status }: { status: import("../../api/types").Com
 
   return (
     <div className="flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
-      <BotAvatar code="BCO" size="md" className="mt-1" />
+      <BotAvatar code="CEOB" size="md" className="mt-1" />
       <div className="bg-gradient-to-br from-slate-50 to-blue-50 border border-blue-200 border-l-[3px] border-l-blue-500 rounded-2xl rounded-tl-md px-5 py-4 shadow-sm max-w-[85%] w-full">
         <div className="text-xs font-bold text-blue-700 mb-3 flex items-center gap-1.5">
           <Cpu className="h-3.5 w-3.5 animate-pulse" /> COMMAND en cours
@@ -1211,7 +1211,7 @@ export function LiveChat({
   useEffect(() => {
     if (messages.length === 0 && kitGreeting && greetingDoneRef.current !== kitGreeting) {
       greetingDoneRef.current = kitGreeting;
-      setTimeout(() => injectVoiceMessage("assistant", kitGreeting, "BCO"), 150);
+      setTimeout(() => injectVoiceMessage("assistant", kitGreeting, "CEOB"), 150);
     }
     if (messages.length > 0) {
       greetingDoneRef.current = null;
@@ -1283,7 +1283,7 @@ export function LiveChat({
       const prompt = SYNTHESIS_PROMPTS[activeReflectionMode] || SYNTHESIS_PROMPTS.credo;
       sendMessage(
         prompt,
-        "BCO",
+        "CEOB",
         undefined,
         { msgType: "synthesis" as const, branchLabel: `Synthese ${activeReflectionMode.toUpperCase()}` }
       );
@@ -1439,7 +1439,7 @@ export function LiveChat({
     if (consultedBots.length < 2) return;
     sendMessage(
       "Fusionne les perspectives de tous les bots consultés en une synthèse unifiée avec les points de convergence, de divergence, et la recommandation finale.",
-      "BCO", undefined,
+      "CEOB", undefined,
       { msgType: "fusionner", branchLabel: `Fusion — ${consultedBots.length} perspectives` }
     );
   }, [messages, sendMessage, isTyping]);
@@ -1465,7 +1465,7 @@ export function LiveChat({
     const botNames = consultedBots.map(c => kitBotFullName(c)).join(", ");
     sendMessage(
       `Je challenge TOUS vos points de vue (${botNames}). Defendez vos positions avec des arguments concrets et des sources. Ou etes-vous en desaccord entre vous?`,
-      "BCO", undefined,
+      "CEOB", undefined,
       { msgType: "challenge", branchLabel: `Challenge collectif — ${consultedBots.length} bots` }
     );
   }, [messages, sendMessage, isTyping, kitBotFullName]);
@@ -1477,7 +1477,7 @@ export function LiveChat({
     const botNames = consultedBots.map(c => kitBotFullName(c)).join(" vs ");
     sendMessage(
       `Lance un DEBAT structure entre ${botNames} sur le sujet: "${lastUserMessage}". Chaque bot defend sa position. Identifie les points de friction et propose un verdict.`,
-      "BCO", undefined,
+      "CEOB", undefined,
       { msgType: "challenge", branchLabel: `Debat — ${botNames}` }
     );
   }, [messages, sendMessage, lastUserMessage, isTyping, kitBotFullName]);
@@ -1937,12 +1937,12 @@ export function LiveChat({
 
             // ── Focus Card — injection depuis le dashboard (style BotBubble simulation) ──
             if (isFocusCard) {
-              const bot = msg.agent ? (BOT_COLORS[msg.agent] || BOT_COLORS.BCO) : BOT_COLORS.BCO;
+              const bot = msg.agent ? (BOT_COLORS[msg.agent] || BOT_COLORS.CEOB) : BOT_COLORS.CEOB;
               const fc = msg.focusCardData;
               return (
                 <div key={msg.id} className="animate-in fade-in slide-in-from-bottom-2 duration-500">
                   <div className="flex gap-3">
-                    <BotAvatar code={msg.agent || "BCO"} size="md" className="mt-1 shrink-0" />
+                    <BotAvatar code={msg.agent || "CEOB"} size="md" className="mt-1 shrink-0" />
                     <div className={cn(
                       "rounded-2xl rounded-tl-md px-5 py-4 shadow-sm max-w-[85%] border border-l-[3px]",
                       bot.bgLight, bot.border
@@ -2006,7 +2006,7 @@ export function LiveChat({
             if (isCoaching || isSystem) {
               return (
                 <div key={msg.id} className="flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                  <BotAvatar code="BCO" size="md" className="mt-1" />
+                  <BotAvatar code="CEOB" size="md" className="mt-1" />
                   <div className="bg-blue-50 border border-blue-200 border-l-[3px] border-l-blue-400 rounded-2xl rounded-tl-md px-5 py-4 shadow-sm max-w-[85%]">
                     <div className="text-xs font-semibold text-blue-700 mb-1.5 flex items-center gap-1.5">
                       <Zap className="h-3 w-3" /> CarlOS — Coaching
@@ -2044,7 +2044,7 @@ export function LiveChat({
                     <div className="flex-1 h-px bg-amber-200" />
                   </div>
                   <div className="flex gap-3">
-                    <BotAvatar code="BCO" size="md" className="mt-1" />
+                    <BotAvatar code="CEOB" size="md" className="mt-1" />
                     <div className="bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-200 rounded-2xl rounded-tl-md px-5 py-4 shadow-md max-w-[85%] group">
                       <div className="text-xs font-bold text-amber-700 mb-2 flex items-center gap-1.5">
                         <Sparkles className="h-3 w-3" /> Synthese CarlOS
@@ -2163,7 +2163,7 @@ export function LiveChat({
 
                   {!isUser && (
                     <BotAvatar
-                      code={msg.agent || "BCO"}
+                      code={msg.agent || "CEOB"}
                       size="md"
                       className={cn(
                         "mt-1",
@@ -2193,7 +2193,7 @@ export function LiveChat({
                     {/* Agent name */}
                     {!isUser && agentInfo && (
                       <div className={cn("text-xs mb-2 font-semibold flex items-center gap-1.5", agentInfo.text)}>
-                        {kitBotFullName(msg.agent || "BCO")}
+                        {kitBotFullName(msg.agent || "CEOB")}
                         {isVoice && <Mic className="h-2.5 w-2.5 opacity-50" />}
                         {isDiagnosticMsg && (
                           <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-300 ml-1">
@@ -2381,7 +2381,7 @@ export function LiveChat({
           {/* Sentinelle CarlOS — alerte anti-boucle */}
           {sentinelleWarning && !isTyping && (
             <div className="flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
-              <BotAvatar code="BCO" size="md" className="mt-1" />
+              <BotAvatar code="CEOB" size="md" className="mt-1" />
               <div className="bg-amber-50 border border-amber-200 border-l-[3px] border-l-amber-400 rounded-2xl rounded-tl-md px-5 py-4 shadow-sm max-w-[85%]">
                 <div className="text-xs font-semibold text-amber-700 mb-1 flex items-center gap-1.5">
                   <AlertTriangle className="h-3 w-3" /> Sentinelle CarlOS

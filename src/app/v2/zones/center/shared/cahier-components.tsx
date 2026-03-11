@@ -480,7 +480,7 @@ export function SyntheseCard({ data, animate }: { data: typeof SIM_ACTE1.synthes
         <div className="p-4 space-y-3">
           {data.ceoIntro && (
             <div className="flex items-start gap-2 bg-blue-50/50 border border-blue-100 rounded-lg px-3 py-2.5">
-              <BotAvatar code="BCO" size="sm" className="mt-0.5" />
+              <BotAvatar code="CEOB" size="sm" className="mt-0.5" />
               <p className="text-sm text-gray-700 leading-relaxed">{data.ceoIntro}</p>
             </div>
           )}
@@ -610,7 +610,7 @@ export function PreRapportCard({ data, animate }: {
             </div>
             {data.ceoRecommandation && (
               <div className="flex items-start gap-2 bg-white/60 border border-blue-100 rounded-lg px-3 py-2.5 mt-2">
-                <BotAvatar code="BCO" size="sm" className="mt-0.5" />
+                <BotAvatar code="CEOB" size="sm" className="mt-0.5" />
                 <div>
                   <div className="text-[10px] font-semibold text-blue-600 mb-0.5">Recommandation CarlOS (CEO)</div>
                   <p className="text-xs text-gray-700 leading-relaxed">{data.ceoRecommandation}</p>
@@ -843,7 +843,7 @@ export function JumelageSessionAnimation({ questions, onComplete }: {
                 qi < currentQ && "opacity-60",
               )}>
                 <div className="flex items-start gap-2 mb-2">
-                  <BotAvatar code="BCO" size="sm" />
+                  <BotAvatar code="CEOB" size="sm" />
                   <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-sm text-blue-800 flex-1">
                     {q.question}
                   </div>

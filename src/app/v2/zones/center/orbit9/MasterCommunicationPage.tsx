@@ -46,18 +46,18 @@ function SectionDivider() {
 // ================================================================
 
 const BOT_VOICES = [
-  { code: "BCO", name: "CarlOS", role: "CEO", voice: "Chris", voiceId: "iP95p4xoKVk53GoZ742B", desc: "Voix principale Carl" },
-  { code: "BCT", name: "Thierry", role: "CTO", voice: "Quebec Tremblay", voiceId: "0Z7Lo7cYVyjM6WL0AP0n", desc: "Jeune homme quebecois" },
-  { code: "BCF", name: "Francois", role: "CFO", voice: "George", voiceId: "JBFqnCBsd6RMkjVDRZzb", desc: "Warm, Captivating Storyteller" },
-  { code: "BCM", name: "Martine", role: "CMO", voice: "Amelie", voiceId: "UJCi4DDncuo0VJDSIegj", desc: "Quebec, Canada (feminine)" },
-  { code: "BCS", name: "Sophie", role: "CSO", voice: "Alice", voiceId: "Xb7hH8MSUJpSbSDYk0k2", desc: "Clear, Engaging Educator" },
-  { code: "BOO", name: "Olivier", role: "COO", voice: "Eric", voiceId: "cjVigY5qzO86Huf0OWal", desc: "Smooth, Trustworthy" },
-  { code: "BFA", name: "Fabien", role: "CPO", voice: "Daniel", voiceId: "onwK4e9ZLuTAKqWW03F9", desc: "Steady Broadcaster" },
-  { code: "BHR", name: "Helene", role: "CHRO", voice: "Matilda", voiceId: "XrExE9yKIg1WjnnlVkGX", desc: "Knowledgable, Professional" },
-  { code: "BIO", name: "Ines", role: "CINO", voice: "Lily", voiceId: "pFZP5JQG7iQjIQuC4Bku", desc: "Velvety Actress" },
-  { code: "BRO", name: "Raphael", role: "CRO", voice: "Liam", voiceId: "TX3LPaxmHKxFdv7VOQHJ", desc: "Energetic, Social Media Creator" },
-  { code: "BLE", name: "Louise", role: "CLO", voice: "Sarah", voiceId: "EXAVITQu4vr4xnSDxMaL", desc: "Mature, Reassuring, Confident" },
-  { code: "BSE", name: "Sebastien", role: "CISO", voice: "Brian", voiceId: "nPczCjzI2devNBz1zQrb", desc: "Deep, Resonant and Comforting" },
+  { code: "CEOB", name: "CarlOS", role: "CEO", voice: "Chris", voiceId: "iP95p4xoKVk53GoZ742B", desc: "Voix principale Carl" },
+  { code: "CTOB", name: "Thierry", role: "CTO", voice: "Quebec Tremblay", voiceId: "0Z7Lo7cYVyjM6WL0AP0n", desc: "Jeune homme quebecois" },
+  { code: "CFOB", name: "Francois", role: "CFO", voice: "George", voiceId: "JBFqnCBsd6RMkjVDRZzb", desc: "Warm, Captivating Storyteller" },
+  { code: "CMOB", name: "Martine", role: "CMO", voice: "Amelie", voiceId: "UJCi4DDncuo0VJDSIegj", desc: "Quebec, Canada (feminine)" },
+  { code: "CSOB", name: "Sophie", role: "CSO", voice: "Alice", voiceId: "Xb7hH8MSUJpSbSDYk0k2", desc: "Clear, Engaging Educator" },
+  { code: "COOB", name: "Olivier", role: "COO", voice: "Eric", voiceId: "cjVigY5qzO86Huf0OWal", desc: "Smooth, Trustworthy" },
+  { code: "CPOB", name: "Fabien", role: "CPO", voice: "Daniel", voiceId: "onwK4e9ZLuTAKqWW03F9", desc: "Steady Broadcaster" },
+  { code: "CHROB", name: "Helene", role: "CHRO", voice: "Matilda", voiceId: "XrExE9yKIg1WjnnlVkGX", desc: "Knowledgable, Professional" },
+  { code: "CINOB", name: "Ines", role: "CINO", voice: "Lily", voiceId: "pFZP5JQG7iQjIQuC4Bku", desc: "Velvety Actress" },
+  { code: "CROB", name: "Raphael", role: "CRO", voice: "Liam", voiceId: "TX3LPaxmHKxFdv7VOQHJ", desc: "Energetic, Social Media Creator" },
+  { code: "CLOB", name: "Louise", role: "CLO", voice: "Sarah", voiceId: "EXAVITQu4vr4xnSDxMaL", desc: "Mature, Reassuring, Confident" },
+  { code: "CISOB", name: "Sebastien", role: "CISO", voice: "Brian", voiceId: "nPczCjzI2devNBz1zQrb", desc: "Deep, Resonant and Comforting" },
 ];
 
 // ================================================================

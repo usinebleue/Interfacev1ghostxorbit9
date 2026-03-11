@@ -41,32 +41,32 @@ import {
 } from "livekit-client";
 
 const BOT_GRADIENT: Record<string, string> = {
-  BCO: "from-blue-600 to-blue-500",
-  BCT: "from-violet-600 to-violet-500",
-  BCF: "from-emerald-600 to-emerald-500",
-  BCM: "from-pink-600 to-pink-500",
-  BCS: "from-red-600 to-red-500",
-  BOO: "from-orange-600 to-orange-500",
-  BFA: "from-slate-600 to-slate-500",
-  BHR: "from-teal-600 to-teal-500",
-  BIO: "from-rose-600 to-rose-500",
-  BRO: "from-amber-600 to-amber-500",
-  BLE: "from-indigo-600 to-indigo-500",
-  BSE: "from-zinc-600 to-zinc-500",
+  CEOB: "from-blue-600 to-blue-500",
+  CTOB: "from-violet-600 to-violet-500",
+  CFOB: "from-emerald-600 to-emerald-500",
+  CMOB: "from-pink-600 to-pink-500",
+  CSOB: "from-red-600 to-red-500",
+  COOB: "from-orange-600 to-orange-500",
+  CPOB: "from-slate-600 to-slate-500",
+  CHROB: "from-teal-600 to-teal-500",
+  CINOB: "from-rose-600 to-rose-500",
+  CROB: "from-amber-600 to-amber-500",
+  CLOB: "from-indigo-600 to-indigo-500",
+  CISOB: "from-zinc-600 to-zinc-500",
 };
 
 const BOT_ROLES: Record<string, string> = {
-  BCO: "CEO", BCT: "CTO", BCF: "CFO", BCM: "CMO",
-  BCS: "CSO", BOO: "COO", BFA: "CPO", BHR: "CHRO",
-  BIO: "CINO", BRO: "CRO",
-  BLE: "CLO", BSE: "CISO",
+  CEOB: "CEO", CTOB: "CTO", CFOB: "CFO", CMOB: "CMO",
+  CSOB: "CSO", COOB: "COO", CPOB: "CPO", CHROB: "CHRO",
+  CINOB: "CINO", CROB: "CRO",
+  CLOB: "CLO", CISOB: "CISO",
 };
 
 const BOT_NAMES: Record<string, string> = {
-  BCO: "CarlOS", BCT: "Thierry", BCF: "François", BCM: "Martine",
-  BCS: "Sophie", BOO: "Olivier", BFA: "Fabien", BHR: "Hélène",
-  BIO: "Inès", BRO: "Raphaël",
-  BLE: "Louise", BSE: "Sébastien",
+  CEOB: "CarlOS", CTOB: "Thierry", CFOB: "François", CMOB: "Martine",
+  CSOB: "Sophie", COOB: "Olivier", CPOB: "Fabien", CHROB: "Hélène",
+  CINOB: "Inès", CROB: "Raphaël",
+  CLOB: "Louise", CISOB: "Sébastien",
 };
 
 // Images standby — originaux avec circuits neuronaux (fev 25) + Sophie v2 validée par Carl
@@ -74,31 +74,31 @@ const BOT_NAMES: Record<string, string> = {
 // PROTOCOLE: pour changer une image → modifier ICI + CarlOSAvatar.tsx + LiveChat.tsx BOT_COLORS + types.ts BOT_AVATAR
 const IMG_V = "?v=5";
 const BOT_STANDBY: Record<string, string> = {
-  BCO: `/agents/generated/ceo-carlos-standby-v3.png${IMG_V}`,
-  BCT: `/agents/generated/cto-thierry-standby-v3.png${IMG_V}`,
-  BCF: `/agents/generated/cfo-francois-standby-v3.png${IMG_V}`,
-  BCM: `/agents/generated/cmo-martine-standby-v3.png${IMG_V}`,
-  BCS: `/agents/generated/cso-sophie-standby-v3.png${IMG_V}`,
-  BOO: `/agents/generated/coo-olivier-standby-v3.png${IMG_V}`,
-  BFA: `/agents/generated/factory-bot-standby-v3.png${IMG_V}`,
-  BHR: `/agents/generated/chro-helene-standby-v3.png${IMG_V}`,
-  BIO: `/agents/generated/cino-ines-standby-v3.png${IMG_V}`,
-  BRO: `/agents/generated/cro-raphael-standby-v3.png${IMG_V}`,
-  BLE: `/agents/generated/clo-louise-standby-v3.png${IMG_V}`,
-  BSE: `/agents/generated/ciso-secbot-standby-v3.png${IMG_V}`,
+  CEOB: `/agents/generated/ceo-carlos-standby-v3.png${IMG_V}`,
+  CTOB: `/agents/generated/cto-thierry-standby-v3.png${IMG_V}`,
+  CFOB: `/agents/generated/cfo-francois-standby-v3.png${IMG_V}`,
+  CMOB: `/agents/generated/cmo-martine-standby-v3.png${IMG_V}`,
+  CSOB: `/agents/generated/cso-sophie-standby-v3.png${IMG_V}`,
+  COOB: `/agents/generated/coo-olivier-standby-v3.png${IMG_V}`,
+  CPOB: `/agents/generated/factory-bot-standby-v3.png${IMG_V}`,
+  CHROB: `/agents/generated/chro-helene-standby-v3.png${IMG_V}`,
+  CINOB: `/agents/generated/cino-ines-standby-v3.png${IMG_V}`,
+  CROB: `/agents/generated/cro-raphael-standby-v3.png${IMG_V}`,
+  CLOB: `/agents/generated/clo-louise-standby-v3.png${IMG_V}`,
+  CISOB: `/agents/generated/ciso-secbot-standby-v3.png${IMG_V}`,
 };
 
 const AVATAR_CONFIG_GLOW: Record<string, string> = {
-  BCO: "rgba(59, 130, 246, 0.4)",
-  BCT: "rgba(139, 92, 246, 0.4)",
-  BCF: "rgba(16, 185, 129, 0.4)",
-  BCM: "rgba(236, 72, 153, 0.4)",
-  BCS: "rgba(239, 68, 68, 0.4)",
-  BOO: "rgba(249, 115, 22, 0.4)",
-  BHR: "rgba(20, 184, 166, 0.4)",
-  BIO: "rgba(244, 63, 94, 0.4)",
-  BRO: "rgba(245, 158, 11, 0.4)",
-  BLE: "rgba(99, 102, 241, 0.4)",
+  CEOB: "rgba(59, 130, 246, 0.4)",
+  CTOB: "rgba(139, 92, 246, 0.4)",
+  CFOB: "rgba(16, 185, 129, 0.4)",
+  CMOB: "rgba(236, 72, 153, 0.4)",
+  CSOB: "rgba(239, 68, 68, 0.4)",
+  COOB: "rgba(249, 115, 22, 0.4)",
+  CHROB: "rgba(20, 184, 166, 0.4)",
+  CINOB: "rgba(244, 63, 94, 0.4)",
+  CROB: "rgba(245, 158, 11, 0.4)",
+  CLOB: "rgba(99, 102, 241, 0.4)",
 };
 
 type CallState = "idle" | "connecting" | "connected" | "error";
@@ -306,7 +306,7 @@ export function VideoCallWidget() {
                 injectVoiceMessage("user", `[Vision] ${evt.user_text}`);
               }
               if (evt.bot_text) {
-                injectVoiceMessage("assistant", evt.bot_text, evt.agent || "BCO");
+                injectVoiceMessage("assistant", evt.bot_text, evt.agent || "CEOB");
               }
             }
           }
@@ -333,7 +333,7 @@ export function VideoCallWidget() {
   const roomNameRef = useRef<string>("");
   const userHangupRef = useRef(false);
 
-  const standbyImg = BOT_STANDBY[activeBotCode] || BOT_STANDBY.BCO;
+  const standbyImg = BOT_STANDBY[activeBotCode] || BOT_STANDBY.CEOB;
   const botName = activeBot?.nom || BOT_ROLES[activeBotCode] || "CarlOS";
   const botRole = BOT_ROLES[activeBotCode] || "Agent";
   const gradient = BOT_GRADIENT[activeBotCode] || "from-blue-600 to-blue-500";

@@ -123,7 +123,7 @@ export function ChatBox() {
   };
 
   const botName = activeBot?.nom || "CarlOS";
-  const botAvatar = BOT_AVATAR[activeBotCode] || BOT_AVATAR["BCO"];
+  const botAvatar = BOT_AVATAR[activeBotCode] || BOT_AVATAR["CEOB"];
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -133,7 +133,7 @@ export function ChatBox() {
           src={botAvatar}
           alt={botName}
           className="w-6 h-6 rounded-full ring-2 ring-blue-200"
-          onError={(e) => { (e.target as HTMLImageElement).src = BOT_AVATAR["BCO"]; }}
+          onError={(e) => { (e.target as HTMLImageElement).src = BOT_AVATAR["CEOB"]; }}
         />
         <div className="flex-1 min-w-0">
           <div className="text-xs font-semibold text-gray-900 truncate">{botName}</div>
@@ -209,7 +209,7 @@ export function ChatBox() {
                   src={botAvatar}
                   alt={botName}
                   className="w-5 h-5 rounded-full ring-1 ring-gray-200 shrink-0 mt-0.5"
-                  onError={(e) => { (e.target as HTMLImageElement).src = BOT_AVATAR["BCO"]; }}
+                  onError={(e) => { (e.target as HTMLImageElement).src = BOT_AVATAR["CEOB"]; }}
                 />
                 <div className="flex-1 min-w-0">
                   <div className="bg-gray-100 px-3 py-2 rounded-r-lg rounded-tl-lg text-xs text-gray-900 whitespace-pre-wrap break-words">
@@ -314,7 +314,7 @@ export function ChatBox() {
               src={botAvatar}
               alt={botName}
               className="w-5 h-5 rounded-full ring-1 ring-gray-200 shrink-0 mt-0.5"
-              onError={(e) => { (e.target as HTMLImageElement).src = BOT_AVATAR["BCO"]; }}
+              onError={(e) => { (e.target as HTMLImageElement).src = BOT_AVATAR["CEOB"]; }}
             />
             <div className="bg-gray-100 px-3 py-2 rounded-r-lg rounded-tl-lg">
               <div className="flex items-center gap-1">

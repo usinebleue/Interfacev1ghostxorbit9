@@ -148,7 +148,7 @@ export const api = {
   },
 
   /** Vision — envoyer une image (camera/lunettes) a CarlOS pour analyse */
-  chatVision(image: string, message = "Qu'est-ce que tu vois?", agent = "BCO"): Promise<{ response: string; agent: string }> {
+  chatVision(image: string, message = "Qu'est-ce que tu vois?", agent = "CEOB"): Promise<{ response: string; agent: string }> {
     return apiFetch<{ response: string; agent: string }>("/chat/vision", {
       method: "POST",
       body: JSON.stringify({ image, message, agent, user_id: 1 }),
@@ -418,7 +418,7 @@ export const api = {
   },
 
   /** Obtenir un token LiveKit pour appel vocal/video */
-  voiceToken(agentCode = "BCO", userId = 1, video = false): Promise<{ token: string; room_name: string; livekit_url: string; agent_code: string }> {
+  voiceToken(agentCode = "CEOB", userId = 1, video = false): Promise<{ token: string; room_name: string; livekit_url: string; agent_code: string }> {
     return apiFetch("/voice/token", {
       method: "POST",
       body: JSON.stringify({ user_id: userId, agent_code: agentCode, video }),

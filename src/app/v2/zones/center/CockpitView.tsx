@@ -88,23 +88,23 @@ interface CLeveLineData {
 
 /* ============ GRADIENT PAR BOT ============ */
 const BOT_GRADIENT: Record<string, string> = {
-  BCO: "bg-gradient-to-r from-blue-600 to-blue-500",
-  BCF: "bg-gradient-to-r from-emerald-600 to-emerald-500",
-  BCT: "bg-gradient-to-r from-violet-600 to-violet-500",
-  BFA: "bg-gradient-to-r from-slate-600 to-slate-500",
-  BOO: "bg-gradient-to-r from-orange-600 to-orange-500",
-  BRO: "bg-gradient-to-r from-amber-600 to-amber-500",
-  BCM: "bg-gradient-to-r from-pink-600 to-pink-500",
-  BCS: "bg-gradient-to-r from-red-600 to-red-500",
-  BHR: "bg-gradient-to-r from-teal-600 to-teal-500",
-  BSE: "bg-gradient-to-r from-zinc-700 to-zinc-600",
-  BLE: "bg-gradient-to-r from-indigo-600 to-indigo-500",
+  CEOB: "bg-gradient-to-r from-blue-600 to-blue-500",
+  CFOB: "bg-gradient-to-r from-emerald-600 to-emerald-500",
+  CTOB: "bg-gradient-to-r from-violet-600 to-violet-500",
+  CPOB: "bg-gradient-to-r from-slate-600 to-slate-500",
+  COOB: "bg-gradient-to-r from-orange-600 to-orange-500",
+  CROB: "bg-gradient-to-r from-amber-600 to-amber-500",
+  CMOB: "bg-gradient-to-r from-pink-600 to-pink-500",
+  CSOB: "bg-gradient-to-r from-red-600 to-red-500",
+  CHROB: "bg-gradient-to-r from-teal-600 to-teal-500",
+  CISOB: "bg-gradient-to-r from-zinc-700 to-zinc-600",
+  CLOB: "bg-gradient-to-r from-indigo-600 to-indigo-500",
 };
 
 /* ============ 12 C-LEVEL × 3 ANGLES × 4 KPIs ============ */
 const CLEVEL_LINES: CLeveLineData[] = [
-  // ── BCO — CEO Direction ──
-  { code: "BCO", nom: "CarlOS — Direction", icon: Briefcase,
+  // ── CEOB — CEO Direction ──
+  { code: "CEOB", nom: "CarlOS — Direction", icon: Briefcase,
     bulletin: { heuresTravail: "247h", heuresSauvees: "82h", tauxSucces: "94%", tasksCompleted: "156" },
     angles: [
       { label: "Performance", icon: Gauge, maj: "26 fev", stats: [
@@ -145,8 +145,8 @@ const CLEVEL_LINES: CLeveLineData[] = [
       ]},
     ]},
 
-  // ── BCF — CFO Finance ──
-  { code: "BCF", nom: "Agent CFO — Finance", icon: DollarSign,
+  // ── CFOB — CFO Finance ──
+  { code: "CFOB", nom: "Agent CFO — Finance", icon: DollarSign,
     bulletin: { heuresTravail: "189h", heuresSauvees: "64h", tauxSucces: "97%", tasksCompleted: "98" },
     angles: [
       { label: "Performance", icon: Gauge, maj: "26 fev", stats: [
@@ -187,8 +187,8 @@ const CLEVEL_LINES: CLeveLineData[] = [
       ]},
     ]},
 
-  // ── BCT — CTO Technologie ──
-  { code: "BCT", nom: "Agent CTO — Technologie", icon: Cpu,
+  // ── CTOB — CTO Technologie ──
+  { code: "CTOB", nom: "Agent CTO — Technologie", icon: Cpu,
     bulletin: { heuresTravail: "312h", heuresSauvees: "127h", tauxSucces: "92%", tasksCompleted: "203" },
     angles: [
       { label: "Performance", icon: Gauge, maj: "26 fev", stats: [
@@ -229,8 +229,8 @@ const CLEVEL_LINES: CLeveLineData[] = [
       ]},
     ]},
 
-  // ── BFA — Production ──
-  { code: "BFA", nom: "Agent Production", icon: Factory,
+  // ── CPOB — Production ──
+  { code: "CPOB", nom: "Agent Production", icon: Factory,
     bulletin: { heuresTravail: "156h", heuresSauvees: "48h", tauxSucces: "89%", tasksCompleted: "87" },
     angles: [
       { label: "Performance", icon: Gauge, maj: "26 fev", stats: [
@@ -271,8 +271,8 @@ const CLEVEL_LINES: CLeveLineData[] = [
       ]},
     ]},
 
-  // ── BOO — COO Operations ──
-  { code: "BOO", nom: "Agent COO — Operations", icon: Settings,
+  // ── COOB — COO Operations ──
+  { code: "COOB", nom: "Agent COO — Operations", icon: Settings,
     bulletin: { heuresTravail: "198h", heuresSauvees: "71h", tauxSucces: "91%", tasksCompleted: "134" },
     angles: [
       { label: "Performance", icon: Gauge, maj: "26 fev", stats: [
@@ -313,8 +313,8 @@ const CLEVEL_LINES: CLeveLineData[] = [
       ]},
     ]},
 
-  // ── BRO — CRO Vente ──
-  { code: "BRO", nom: "Agent CRO — Vente", icon: TrendingUp,
+  // ── CROB — CRO Vente ──
+  { code: "CROB", nom: "Agent CRO — Vente", icon: TrendingUp,
     bulletin: { heuresTravail: "221h", heuresSauvees: "93h", tauxSucces: "88%", tasksCompleted: "145" },
     angles: [
       { label: "Performance", icon: Gauge, maj: "26 fev", stats: [
@@ -355,8 +355,8 @@ const CLEVEL_LINES: CLeveLineData[] = [
       ]},
     ]},
 
-  // ── BCM — CMO Marketing ──
-  { code: "BCM", nom: "Agent CMO — Marketing", icon: Megaphone,
+  // ── CMOB — CMO Marketing ──
+  { code: "CMOB", nom: "Agent CMO — Marketing", icon: Megaphone,
     bulletin: { heuresTravail: "175h", heuresSauvees: "58h", tauxSucces: "93%", tasksCompleted: "112" },
     angles: [
       { label: "Performance", icon: Gauge, maj: "26 fev", stats: [
@@ -397,8 +397,8 @@ const CLEVEL_LINES: CLeveLineData[] = [
       ]},
     ]},
 
-  // ── BCS — CSO Strategie ──
-  { code: "BCS", nom: "Agent CSO — Strategie", icon: Target,
+  // ── CSOB — CSO Strategie ──
+  { code: "CSOB", nom: "Agent CSO — Strategie", icon: Target,
     bulletin: { heuresTravail: "142h", heuresSauvees: "52h", tauxSucces: "96%", tasksCompleted: "78" },
     angles: [
       { label: "Performance", icon: Gauge, maj: "25 fev", stats: [
@@ -439,8 +439,8 @@ const CLEVEL_LINES: CLeveLineData[] = [
       ]},
     ]},
 
-  // ── BHR — CHRO RH ──
-  { code: "BHR", nom: "Agent CHRO — RH", icon: Users,
+  // ── CHROB — CHRO RH ──
+  { code: "CHROB", nom: "Agent CHRO — RH", icon: Users,
     bulletin: { heuresTravail: "134h", heuresSauvees: "41h", tauxSucces: "95%", tasksCompleted: "67" },
     angles: [
       { label: "Performance", icon: Gauge, maj: "26 fev", stats: [
@@ -481,8 +481,8 @@ const CLEVEL_LINES: CLeveLineData[] = [
       ]},
     ]},
 
-  // ── BSE — Securite ──
-  { code: "BSE", nom: "Agent Securite", icon: Shield,
+  // ── CISOB — Securite ──
+  { code: "CISOB", nom: "Agent Securite", icon: Shield,
     bulletin: { heuresTravail: "168h", heuresSauvees: "56h", tauxSucces: "98%", tasksCompleted: "89" },
     angles: [
       { label: "Performance", icon: Gauge, maj: "26 fev", stats: [
@@ -523,8 +523,8 @@ const CLEVEL_LINES: CLeveLineData[] = [
       ]},
     ]},
 
-  // ── BLE — Legal ──
-  { code: "BLE", nom: "Agent Legal", icon: Scale,
+  // ── CLOB — Legal ──
+  { code: "CLOB", nom: "Agent Legal", icon: Scale,
     bulletin: { heuresTravail: "112h", heuresSauvees: "38h", tauxSucces: "99%", tasksCompleted: "54" },
     angles: [
       { label: "Performance", icon: Gauge, maj: "25 fev", stats: [
@@ -820,7 +820,7 @@ export function CockpitView() {
   const { dispatch } = useCanvasActions();
 
   // Trouver le bot actif dans les donnees
-  const activeBot = activeBotCode !== "BCO"
+  const activeBot = activeBotCode !== "CEOB"
     ? CLEVEL_LINES.find((b) => b.code === activeBotCode)
     : null;
 
@@ -840,13 +840,13 @@ export function CockpitView() {
             {/* Row 1 : 4 KPI cards globaux — cliquables → Focus Mode */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
               <KpiCard icon={DollarSign} label="TRG — Rendement Global" value="87%" change="+3pts vs jan" changeType="up"
-                onClick={() => handleFocus("TRG — Rendement Global", "kpi_global", { rendement: "87%", variation: "+3pts vs jan" }, "BCO")} />
+                onClick={() => handleFocus("TRG — Rendement Global", "kpi_global", { rendement: "87%", variation: "+3pts vs jan" }, "CEOB")} />
               <KpiCard icon={Target} label="Pipeline total" value="1.0M$" change="+8% ce mois" changeType="up"
-                onClick={() => handleFocus("Pipeline — Vue CEO", "pipeline", { pipeline_total: 1000000, variation: "+8% ce mois" }, "BCO")} />
+                onClick={() => handleFocus("Pipeline — Vue CEO", "pipeline", { pipeline_total: 1000000, variation: "+8% ce mois" }, "CEOB")} />
               <KpiCard icon={Users} label="Clients actifs" value="22" change="+5 ce mois" changeType="up"
-                onClick={() => handleFocus("Clients Actifs", "kpi_ceo", { clients_actifs: 22, nouveaux: "+5 ce mois" }, "BCO")} />
+                onClick={() => handleFocus("Clients Actifs", "kpi_ceo", { clients_actifs: 22, nouveaux: "+5 ce mois" }, "CEOB")} />
               <KpiCard icon={FileText} label="Taux conversion" value="38%" change="+3pts vs jan" changeType="up"
-                onClick={() => handleFocus("Taux de Conversion", "kpi_cso", { taux_conversion: "38%", variation: "+3pts vs jan" }, "BCS")} />
+                onClick={() => handleFocus("Taux de Conversion", "kpi_cso", { taux_conversion: "38%", variation: "+3pts vs jan" }, "CSOB")} />
             </div>
 
             {/* 12 rangees C-Level — 4 boxes par ligne (identite + 3 angles) */}

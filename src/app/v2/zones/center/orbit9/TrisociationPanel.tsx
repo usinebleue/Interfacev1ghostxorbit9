@@ -144,7 +144,7 @@ export function TrisociationPanel({
         {/* CarlOS (Tavus avatar ou placeholder) */}
         <div className="aspect-video bg-gray-700 rounded-xl flex flex-col items-center justify-center relative overflow-hidden">
           <div className="w-full h-full bg-gradient-to-br from-indigo-800 to-purple-900 flex items-center justify-center">
-            <BotAvatar code="BCO" size="lg" />
+            <BotAvatar code="CEOB" size="lg" />
           </div>
           <div className="absolute bottom-2 left-2 bg-black/60 rounded-full px-2 py-0.5">
             <span className="text-[9px] text-white font-medium">CarlOS</span>

@@ -95,7 +95,7 @@ function ChallengeDefenseCard({ onAccept, onMoreData }: { onAccept?: () => void;
     <div className="ml-11 animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-2">
       <div className="border border-blue-200 rounded-xl overflow-hidden">
         <div className="bg-blue-50 px-4 py-2.5 flex items-center gap-2 border-b border-blue-200">
-          <BotAvatar code="BCO" size="sm" />
+          <BotAvatar code="CEOB" size="sm" />
           <span className="text-xs font-bold text-blue-800">Defense de la selection — CarlOS (CEO)</span>
         </div>
         <div className="p-4 space-y-3">
@@ -375,7 +375,7 @@ export function JumelageDemo({ onTransition }: { onTransition?: (target: string)
             <ThinkingAnimation
               steps={SIM_ACTE2.criteresThinking}
               botName="CarlOS (CEO)"
-              botCode="BCO"
+              botCode="CEOB"
               onComplete={() => setStage(1.5)}
             />
           )}
@@ -454,10 +454,10 @@ export function JumelageDemo({ onTransition }: { onTransition?: (target: string)
 
               {/* CEO acknowledgment */}
               <div className="flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                <BotAvatar code="BCO" size="md" />
+                <BotAvatar code="CEOB" size="md" />
                 <div className={cn(
                   "bg-white border rounded-xl rounded-tl-none px-4 py-3 shadow-sm border-l-[3px]",
-                  BOT_COLORS.BCO.border,
+                  BOT_COLORS.CEOB.border,
                 )}>
                   <div className="text-xs text-blue-600 mb-1 font-medium">CarlOS (CEO)</div>
                   <p className="text-sm text-gray-700 leading-relaxed">
@@ -579,10 +579,10 @@ export function JumelageDemo({ onTransition }: { onTransition?: (target: string)
             <>
               {/* CEO intro before winner */}
               <div className="flex gap-3">
-                <BotAvatar code="BCO" size="md" />
+                <BotAvatar code="CEOB" size="md" />
                 <div className={cn(
                   "bg-white border rounded-xl rounded-tl-none px-4 py-3 shadow-sm max-w-[85%] border-l-[3px]",
-                  BOT_COLORS.BCO.border,
+                  BOT_COLORS.CEOB.border,
                 )}>
                   <div className="text-xs text-blue-600 mb-1 font-medium">CarlOS (CEO)</div>
                   {stage === 4 && !ceoIntroDone ? (
@@ -608,10 +608,10 @@ export function JumelageDemo({ onTransition }: { onTransition?: (target: string)
               {/* CEO selection message */}
               {(ceoIntroDone || stage > 4) && (
                 <div className="flex gap-3">
-                  <BotAvatar code="BCO" size="md" />
+                  <BotAvatar code="CEOB" size="md" />
                   <div className={cn(
                     "bg-white border rounded-xl rounded-tl-none px-4 py-3 shadow-sm max-w-[85%] border-l-[3px]",
-                    BOT_COLORS.BCO.border,
+                    BOT_COLORS.CEOB.border,
                   )}>
                     <div className="text-xs text-blue-600 mb-1 font-medium">CarlOS (CEO)</div>
                     {stage === 4 && !ceoWinnerDone ? (

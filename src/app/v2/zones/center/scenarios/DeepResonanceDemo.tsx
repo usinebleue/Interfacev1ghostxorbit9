@@ -255,11 +255,11 @@ function DeepBotBubble({
   label?: string;
   time?: string;
 }) {
-  const botColor = BOT_COLORS["BCO"];
+  const botColor = BOT_COLORS["CEOB"];
 
   return (
     <div className="flex gap-3">
-      <BotAvatar code="BCO" size="md" />
+      <BotAvatar code="CEOB" size="md" />
       <div className="bg-white/80 backdrop-blur-sm border-l-[3px] border border-indigo-200/60 border-l-indigo-400 rounded-xl rounded-tl-none px-4 py-3 max-w-[80%] shadow-sm">
         <div className="flex items-center gap-2 mb-1.5">
           <span className="text-xs font-semibold text-indigo-700">
@@ -323,7 +323,7 @@ function MirrorSynthesis({
 
   return (
     <div className="flex gap-3">
-      <BotAvatar code="BCO" size="md" />
+      <BotAvatar code="CEOB" size="md" />
       <div className="bg-white/80 backdrop-blur-sm border-l-[3px] border border-indigo-200/60 border-l-indigo-400 rounded-xl rounded-tl-none px-5 py-4 max-w-[85%] shadow-sm">
         <div className="flex items-center gap-2 mb-3">
           <span className="text-xs font-semibold text-indigo-700">
@@ -553,7 +553,7 @@ export function DeepResonanceDemo({
               steps={DEEP_DATA.ceoThinking}
               botEmoji=""
               botName="CarlOS (CEO)"
-              botCode="BCO"
+              botCode="CEOB"
               speed={1200}
               onComplete={() => {
                 setActiveSpiral(1);
@@ -628,7 +628,7 @@ export function DeepResonanceDemo({
               steps={DEEP_DATA.spirale2.thinkingSteps}
               botEmoji=""
               botName="CarlOS (CEO)"
-              botCode="BCO"
+              botCode="CEOB"
               speed={1200}
               onComplete={() => setStage(3)}
             />
@@ -709,7 +709,7 @@ export function DeepResonanceDemo({
               steps={DEEP_DATA.spirale3.thinkingSteps}
               botEmoji=""
               botName="CarlOS (CEO)"
-              botCode="BCO"
+              botCode="CEOB"
               speed={1200}
               onComplete={() => setStage(4)}
             />

@@ -365,7 +365,7 @@ export function JumelageLivePage({
             { icon: Users, text: "Preparation du scan reseau..." },
           ]}
           botName="CarlOS"
-          botCode="BCO"
+          botCode="CEOB"
           onComplete={() => setStage(1.5)}
         />
       )}
@@ -514,7 +514,7 @@ export function JumelageLivePage({
                 { icon: BarChart3, text: "Preparation de l'evaluation..." },
               ]}
               botName="CarlOS"
-              botCode="BCO"
+              botCode="CEOB"
               onComplete={() => {}}
             />
           ) : questions.length > 0 ? (
@@ -537,7 +537,7 @@ export function JumelageLivePage({
                 { icon: Star, text: "Ponderation finale..." },
               ]}
               botName="CarlOS"
-              botCode="BCO"
+              botCode="CEOB"
               onComplete={() => {}}
             />
           ) : scoringCategories.length > 0 ? (
@@ -629,7 +629,7 @@ export function JumelageLivePage({
 
               <div className="bg-white/80 border border-amber-200 rounded-xl p-4 mb-4">
                 <div className="flex items-start gap-2">
-                  <BotAvatar code="BCO" size="sm" />
+                  <BotAvatar code="CEOB" size="sm" />
                   <div>
                     <div className="text-[9px] font-semibold text-blue-600 mb-0.5">CarlOS — Challenge du choix</div>
                     <p className="text-sm text-gray-700 leading-relaxed italic">
@@ -685,7 +685,7 @@ export function JumelageLivePage({
               </div>
               <div className="text-center">
                 <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-2 overflow-hidden">
-                  <BotAvatar code="BCO" size="lg" />
+                  <BotAvatar code="CEOB" size="lg" />
                 </div>
                 <div className="text-xs font-semibold">CarlOS</div>
                 <div className="text-[9px] text-purple-200">Facilitateur IA</div>

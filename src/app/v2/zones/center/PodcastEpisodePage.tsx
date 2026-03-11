@@ -197,11 +197,11 @@ export function PodcastEpisodePage({ slug, onBack }: Props) {
                 <div key={i} className="text-sm">
                   <span className={cn(
                     "font-semibold",
-                    entry.speaker === "BCO" || entry.speaker === "CarlOS"
+                    entry.speaker === "CEOB" || entry.speaker === "CarlOS"
                       ? "text-blue-600"
                       : "text-gray-700"
                   )}>
-                    {entry.speaker === "BCO" ? "CarlOS" : entry.speaker}:
+                    {entry.speaker === "CEOB" ? "CarlOS" : entry.speaker}:
                   </span>{" "}
                   <span className="text-gray-600">{entry.text}</span>
                 </div>

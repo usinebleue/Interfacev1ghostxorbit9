@@ -93,18 +93,18 @@ const SLOT_BTN_ACTIVE = ["bg-blue-600 text-white border-blue-600", "bg-violet-60
 // ── Trisociations par bot ──
 
 const BOT_GHOSTS: Record<string, string[]> = {
-  BCO: ["Bezos", "Munger", "Churchill"],
-  BCT: ["Musk", "Curie", "Vinci"],
-  BCF: ["Buffett", "Munger", "Franklin"],
-  BCM: ["Jobs", "Tesla", "Oprah"],
-  BCS: ["Sun Tzu", "Thiel", "Chanel"],
-  BOO: ["Marc Aurèle", "Deming", "Nightingale"],
-  BFA: ["Ohno", "Deming", "Nightingale"],
-  BHR: ["Oprah", "Marc Aurèle", "Deming"],
-  BIO: ["Musk", "Curie", "Tesla"],
-  BRO: ["Thiel", "Bezos", "Chanel"],
-  BLE: ["Munger", "Franklin", "Marc Aurèle"],
-  BSE: ["Sun Tzu", "Curie", "Franklin"],
+  CEOB: ["Bezos", "Munger", "Churchill"],
+  CTOB: ["Musk", "Curie", "Vinci"],
+  CFOB: ["Buffett", "Munger", "Franklin"],
+  CMOB: ["Jobs", "Tesla", "Oprah"],
+  CSOB: ["Sun Tzu", "Thiel", "Chanel"],
+  COOB: ["Marc Aurèle", "Deming", "Nightingale"],
+  CPOB: ["Ohno", "Deming", "Nightingale"],
+  CHROB: ["Oprah", "Marc Aurèle", "Deming"],
+  CINOB: ["Musk", "Curie", "Tesla"],
+  CROB: ["Thiel", "Bezos", "Chanel"],
+  CLOB: ["Munger", "Franklin", "Marc Aurèle"],
+  CISOB: ["Sun Tzu", "Curie", "Franklin"],
 };
 
 // ── Catégories ──
@@ -146,51 +146,51 @@ const BOT_PROFILES: Record<string, {
   style: string; forces: string[]; approche: string;
   scores: { strategique: number; analytique: number; creatif: number; operationnel: number; relationnel: number };
 }> = {
-  BCO: { style: "Directif et visionnaire", forces: ["Vision stratégique", "Prise de décision", "Leadership mobilisateur", "Gestion de crise"], approche: "Part toujours du résultat voulu pour le client et remonte vers la stratégie.", scores: { strategique: 95, analytique: 75, creatif: 70, operationnel: 60, relationnel: 80 } },
-  BCT: { style: "Innovateur et méthodique", forces: ["Architecture technique", "Innovation disruptive", "Résolution complexe", "Prototypage rapide"], approche: "Repart des premiers principes et challenge les contraintes perçues.", scores: { strategique: 70, analytique: 90, creatif: 95, operationnel: 80, relationnel: 55 } },
-  BCF: { style: "Prudent et discipliné", forces: ["Analyse financière", "Gestion du risque", "Valorisation", "Planification budgétaire"], approche: "Évalue la valeur intrinsèque avant le prix apparent. Patient.", scores: { strategique: 80, analytique: 95, creatif: 40, operationnel: 70, relationnel: 50 } },
-  BCM: { style: "Créatif et empathique", forces: ["Positionnement de marque", "Storytelling", "Analyse d'audience", "Innovation marketing"], approche: "Simplifie le message jusqu'à l'essentiel. Connexion émotionnelle.", scores: { strategique: 65, analytique: 60, creatif: 95, operationnel: 50, relationnel: 90 } },
-  BCS: { style: "Stratège et incisif", forces: ["Analyse concurrentielle", "Planification stratégique", "Anticipation", "Positionnement marché"], approche: "Analyse les forces en présence avant toute recommandation.", scores: { strategique: 95, analytique: 85, creatif: 60, operationnel: 50, relationnel: 45 } },
-  BOO: { style: "Méthodique et fiable", forces: ["Optimisation processus", "Gestion qualité", "Logistique", "Amélioration continue"], approche: "Mesure tout, élimine le gaspillage, construit des systèmes robustes.", scores: { strategique: 60, analytique: 80, creatif: 40, operationnel: 95, relationnel: 65 } },
-  BFA: { style: "Pragmatique et terrain", forces: ["Planification production", "Contrôle qualité", "Lean manufacturing", "Gestion d'usine"], approche: "Va sur le terrain. Élimine les étapes sans valeur ajoutée.", scores: { strategique: 45, analytique: 75, creatif: 35, operationnel: 95, relationnel: 50 } },
-  BHR: { style: "Empathique et structuré", forces: ["Gestion des talents", "Culture d'entreprise", "Résolution de conflits", "Développement RH"], approche: "Place l'humain au centre de chaque décision organisationnelle.", scores: { strategique: 55, analytique: 65, creatif: 50, operationnel: 70, relationnel: 95 } },
-  BIO: { style: "Technique et visionnaire", forces: ["Architecture IT", "Cybersécurité", "Transformation digitale", "Infrastructure cloud"], approche: "Construit des systèmes scalables en partant des premiers principes.", scores: { strategique: 70, analytique: 95, creatif: 75, operationnel: 85, relationnel: 40 } },
-  BRO: { style: "Dynamique et orienté résultat", forces: ["Vente consultative", "Pipeline management", "Closing", "Revenue ops"], approche: "Toujours en mode solution. Cherche le chemin le plus court vers le deal.", scores: { strategique: 70, analytique: 65, creatif: 60, operationnel: 75, relationnel: 90 } },
-  BLE: { style: "Rigoureux et protecteur", forces: ["Conformité réglementaire", "Gestion contractuelle", "Propriété intellectuelle", "Gestion du risque légal"], approche: "Évalue chaque décision par ses implications légales à long terme.", scores: { strategique: 75, analytique: 90, creatif: 30, operationnel: 60, relationnel: 55 } },
-  BSE: { style: "Vigilant et systématique", forces: ["Cybersécurité", "Gestion des risques", "Audit sécurité", "Conformité"], approche: "Anticipe les menaces. Construit des défenses en profondeur.", scores: { strategique: 70, analytique: 95, creatif: 45, operationnel: 85, relationnel: 40 } },
+  CEOB: { style: "Directif et visionnaire", forces: ["Vision stratégique", "Prise de décision", "Leadership mobilisateur", "Gestion de crise"], approche: "Part toujours du résultat voulu pour le client et remonte vers la stratégie.", scores: { strategique: 95, analytique: 75, creatif: 70, operationnel: 60, relationnel: 80 } },
+  CTOB: { style: "Innovateur et méthodique", forces: ["Architecture technique", "Innovation disruptive", "Résolution complexe", "Prototypage rapide"], approche: "Repart des premiers principes et challenge les contraintes perçues.", scores: { strategique: 70, analytique: 90, creatif: 95, operationnel: 80, relationnel: 55 } },
+  CFOB: { style: "Prudent et discipliné", forces: ["Analyse financière", "Gestion du risque", "Valorisation", "Planification budgétaire"], approche: "Évalue la valeur intrinsèque avant le prix apparent. Patient.", scores: { strategique: 80, analytique: 95, creatif: 40, operationnel: 70, relationnel: 50 } },
+  CMOB: { style: "Créatif et empathique", forces: ["Positionnement de marque", "Storytelling", "Analyse d'audience", "Innovation marketing"], approche: "Simplifie le message jusqu'à l'essentiel. Connexion émotionnelle.", scores: { strategique: 65, analytique: 60, creatif: 95, operationnel: 50, relationnel: 90 } },
+  CSOB: { style: "Stratège et incisif", forces: ["Analyse concurrentielle", "Planification stratégique", "Anticipation", "Positionnement marché"], approche: "Analyse les forces en présence avant toute recommandation.", scores: { strategique: 95, analytique: 85, creatif: 60, operationnel: 50, relationnel: 45 } },
+  COOB: { style: "Méthodique et fiable", forces: ["Optimisation processus", "Gestion qualité", "Logistique", "Amélioration continue"], approche: "Mesure tout, élimine le gaspillage, construit des systèmes robustes.", scores: { strategique: 60, analytique: 80, creatif: 40, operationnel: 95, relationnel: 65 } },
+  CPOB: { style: "Pragmatique et terrain", forces: ["Planification production", "Contrôle qualité", "Lean manufacturing", "Gestion d'usine"], approche: "Va sur le terrain. Élimine les étapes sans valeur ajoutée.", scores: { strategique: 45, analytique: 75, creatif: 35, operationnel: 95, relationnel: 50 } },
+  CHROB: { style: "Empathique et structuré", forces: ["Gestion des talents", "Culture d'entreprise", "Résolution de conflits", "Développement RH"], approche: "Place l'humain au centre de chaque décision organisationnelle.", scores: { strategique: 55, analytique: 65, creatif: 50, operationnel: 70, relationnel: 95 } },
+  CINOB: { style: "Technique et visionnaire", forces: ["Architecture IT", "Cybersécurité", "Transformation digitale", "Infrastructure cloud"], approche: "Construit des systèmes scalables en partant des premiers principes.", scores: { strategique: 70, analytique: 95, creatif: 75, operationnel: 85, relationnel: 40 } },
+  CROB: { style: "Dynamique et orienté résultat", forces: ["Vente consultative", "Pipeline management", "Closing", "Revenue ops"], approche: "Toujours en mode solution. Cherche le chemin le plus court vers le deal.", scores: { strategique: 70, analytique: 65, creatif: 60, operationnel: 75, relationnel: 90 } },
+  CLOB: { style: "Rigoureux et protecteur", forces: ["Conformité réglementaire", "Gestion contractuelle", "Propriété intellectuelle", "Gestion du risque légal"], approche: "Évalue chaque décision par ses implications légales à long terme.", scores: { strategique: 75, analytique: 90, creatif: 30, operationnel: 60, relationnel: 55 } },
+  CISOB: { style: "Vigilant et systématique", forces: ["Cybersécurité", "Gestion des risques", "Audit sécurité", "Conformité"], approche: "Anticipe les menaces. Construit des défenses en profondeur.", scores: { strategique: 70, analytique: 95, creatif: 45, operationnel: 85, relationnel: 40 } },
 };
 
 // ── Rôles ──
 
 const BOT_ROLES: Record<string, string> = {
-  BCO: "CEO", BCT: "CTO", BCF: "CFO", BCM: "CMO",
-  BCS: "CSO", BOO: "COO", BFA: "Production", BHR: "CHRO",
-  BIO: "CIO", BRO: "CRO",
-  BLE: "CLO", BSE: "CISO",
+  CEOB: "CEO", CTOB: "CTO", CFOB: "CFO", CMOB: "CMO",
+  CSOB: "CSO", COOB: "COO", CPOB: "Production", CHROB: "CHRO",
+  CINOB: "CIO", CROB: "CRO",
+  CLOB: "CLO", CISOB: "CISO",
 };
 
 const BOT_DEPT: Record<string, string> = {
-  BCO: "Direction Générale", BCT: "Technologie", BCF: "Finance", BCM: "Marketing",
-  BCS: "Stratégie", BOO: "Opérations", BFA: "Production", BHR: "Ressources Humaines",
-  BIO: "Systèmes d'Information", BRO: "Revenus",
-  BLE: "Juridique", BSE: "Sécurité",
+  CEOB: "Direction Générale", CTOB: "Technologie", CFOB: "Finance", CMOB: "Marketing",
+  CSOB: "Stratégie", COOB: "Opérations", CPOB: "Production", CHROB: "Ressources Humaines",
+  CINOB: "Systèmes d'Information", CROB: "Revenus",
+  CLOB: "Juridique", CISOB: "Sécurité",
 };
 
 // ── Standby images (16:9 v3) ──
 
 const BOT_STANDBY: Record<string, string> = {
-  BCO: "/agents/generated/ceo-carlos-standby-v3.png",
-  BCT: "/agents/generated/cto-thierry-standby-v3.png",
-  BCF: "/agents/generated/cfo-francois-standby-v3.png",
-  BCM: "/agents/generated/cmo-martine-standby-v3.png",
-  BCS: "/agents/generated/cso-sophie-standby-v3.png",
-  BOO: "/agents/generated/coo-olivier-standby-v3.png",
-  BFA: "/agents/generated/factory-bot-standby-v3.png",
-  BHR: "/agents/generated/chro-helene-standby-v3.png",
-  BIO: "/agents/generated/cino-ines-standby-v3.png",
-  BRO: "/agents/generated/cro-raphael-standby-v3.png",
-  BLE: "/agents/generated/clo-louise-standby-v3.png",
-  BSE: "/agents/generated/ciso-secbot-standby-v3.png",
+  CEOB: "/agents/generated/ceo-carlos-standby-v3.png",
+  CTOB: "/agents/generated/cto-thierry-standby-v3.png",
+  CFOB: "/agents/generated/cfo-francois-standby-v3.png",
+  CMOB: "/agents/generated/cmo-martine-standby-v3.png",
+  CSOB: "/agents/generated/cso-sophie-standby-v3.png",
+  COOB: "/agents/generated/coo-olivier-standby-v3.png",
+  CPOB: "/agents/generated/factory-bot-standby-v3.png",
+  CHROB: "/agents/generated/chro-helene-standby-v3.png",
+  CINOB: "/agents/generated/cino-ines-standby-v3.png",
+  CROB: "/agents/generated/cro-raphael-standby-v3.png",
+  CLOB: "/agents/generated/clo-louise-standby-v3.png",
+  CISOB: "/agents/generated/ciso-secbot-standby-v3.png",
 };
 
 // ── Score Bar component ──
@@ -283,8 +283,8 @@ export function AgentSettingsView() {
   const botRole = BOT_ROLES[activeBotCode] || "CEO";
   const botDept = BOT_DEPT[activeBotCode] || "Direction";
   const avatar = BOT_AVATAR[activeBotCode];
-  const standby = BOT_STANDBY[activeBotCode] || BOT_STANDBY.BCO;
-  const profile = BOT_PROFILES[activeBotCode] || BOT_PROFILES.BCO;
+  const standby = BOT_STANDBY[activeBotCode] || BOT_STANDBY.CEOB;
+  const profile = BOT_PROFILES[activeBotCode] || BOT_PROFILES.CEOB;
   const ghosts = localGhosts;
   const ghostSet = new Set(ghosts);
 
@@ -584,17 +584,17 @@ export function AgentSettingsView() {
                 {(() => {
                   // Show top collaborators based on bot role (mock data placeholder)
                   const collabMap: Record<string, { bot: string; role: string; freq: string }[]> = {
-                    BCO: [
+                    CEOB: [
                       { bot: "CFO", role: "Finance", freq: "Très fréquent" },
                       { bot: "CSO", role: "Stratégie", freq: "Fréquent" },
                       { bot: "COO", role: "Opérations", freq: "Régulier" },
                     ],
-                    BCT: [
+                    CTOB: [
                       { bot: "CIO", role: "Systèmes", freq: "Très fréquent" },
                       { bot: "CISO", role: "Sécurité", freq: "Fréquent" },
                       { bot: "CPO", role: "Produit", freq: "Régulier" },
                     ],
-                    BCF: [
+                    CFOB: [
                       { bot: "CEO", role: "Direction", freq: "Très fréquent" },
                       { bot: "COO", role: "Opérations", freq: "Fréquent" },
                       { bot: "CLO", role: "Juridique", freq: "Régulier" },

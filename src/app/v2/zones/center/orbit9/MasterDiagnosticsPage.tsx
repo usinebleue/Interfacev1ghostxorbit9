@@ -46,7 +46,7 @@ interface DiagDept {
 
 const DEPT_DIAGNOSTICS: DiagDept[] = [
   {
-    code: "direction", name: "Direction / CEO", bot: "BCO", botName: "CarlOS",
+    code: "direction", name: "Direction / CEO", bot: "CEOB", botName: "CarlOS",
     icon: Building2, gradient: "from-blue-700 to-blue-500",
     diagnostics: [
       { title: "Maturité organisationnelle", measures: "Structure décisionnelle, processus documentés, délégation, gouvernance", dataPoints: "Nb niveaux hiérarchiques, % processus documentés, fréquence CA, organigramme à jour" },
@@ -56,7 +56,7 @@ const DEPT_DIAGNOSTICS: DiagDept[] = [
     ],
   },
   {
-    code: "finance", name: "Finance / CFO", bot: "BCF", botName: "François",
+    code: "finance", name: "Finance / CFO", bot: "CFOB", botName: "François",
     icon: DollarSign, gradient: "from-emerald-600 to-emerald-500",
     diagnostics: [
       { title: "Santé financière et ratios", measures: "Liquidité, solvabilité, rentabilité vs benchmarks", dataPoints: "Ratio courant, ratio dette/équité, marge nette, ROE, EBITDA" },
@@ -67,7 +67,7 @@ const DEPT_DIAGNOSTICS: DiagDept[] = [
     ],
   },
   {
-    code: "technologie", name: "Technologie / CTO", bot: "BCT", botName: "Thierry",
+    code: "technologie", name: "Technologie / CTO", bot: "CTOB", botName: "Thierry",
     icon: Server, gradient: "from-violet-600 to-violet-500",
     diagnostics: [
       { title: "Maturité numérique", measures: "Niveau 1.0→4.0 sur l'échelle de transformation digitale", dataPoints: "Nb systèmes, % cloud vs on-prem, automatisation processus, IoT" },
@@ -78,7 +78,7 @@ const DEPT_DIAGNOSTICS: DiagDept[] = [
     ],
   },
   {
-    code: "marketing", name: "Marketing / CMO", bot: "BCM", botName: "Martine",
+    code: "marketing", name: "Marketing / CMO", bot: "CMOB", botName: "Martine",
     icon: Megaphone, gradient: "from-pink-600 to-pink-500",
     diagnostics: [
       { title: "Positionnement et marque", measures: "Notoriété, différenciation, cohérence messaging", dataPoints: "Score notoriété, proposition valeur claire, cohérence visuelle" },
@@ -88,7 +88,7 @@ const DEPT_DIAGNOSTICS: DiagDept[] = [
     ],
   },
   {
-    code: "strategie", name: "Stratégie / CSO", bot: "BCS", botName: "Sophie",
+    code: "strategie", name: "Stratégie / CSO", bot: "CSOB", botName: "Sophie",
     icon: Target, gradient: "from-red-600 to-red-500",
     diagnostics: [
       { title: "Positionnement concurrentiel", measures: "Parts de marché, avantages compétitifs, menaces", dataPoints: "Part de marché, nb concurrents directs, barrières entrée" },
@@ -98,7 +98,7 @@ const DEPT_DIAGNOSTICS: DiagDept[] = [
     ],
   },
   {
-    code: "operations", name: "Opérations / COO", bot: "BOO", botName: "Olivier",
+    code: "operations", name: "Opérations / COO", bot: "COOB", botName: "Olivier",
     icon: Settings, gradient: "from-orange-600 to-orange-500",
     diagnostics: [
       { title: "Efficacité opérationnelle", measures: "Flux, processus, bottlenecks, valeur ajoutée vs gaspillage", dataPoints: "Nb étapes processus, % valeur ajoutée, temps de cycle, lead time" },
@@ -109,7 +109,7 @@ const DEPT_DIAGNOSTICS: DiagDept[] = [
     ],
   },
   {
-    code: "production", name: "Production / Factory", bot: "BFA", botName: "Fabien",
+    code: "production", name: "Production / Factory", bot: "CPOB", botName: "Fabien",
     icon: Factory, gradient: "from-amber-600 to-amber-500",
     diagnostics: [
       { title: "Performance production (TRS/OEE)", measures: "Disponibilité × performance × qualité par ligne", dataPoints: "TRS global, TRS par ligne, top 3 causes arrêts, SMED" },
@@ -120,7 +120,7 @@ const DEPT_DIAGNOSTICS: DiagDept[] = [
     ],
   },
   {
-    code: "rh", name: "RH / CHRO", bot: "BHR", botName: "Hélène",
+    code: "rh", name: "RH / CHRO", bot: "CHROB", botName: "Hélène",
     icon: Users, gradient: "from-teal-600 to-teal-500",
     diagnostics: [
       { title: "Culture organisationnelle", measures: "Valeurs vécues vs affichées, engagement, appartenance", dataPoints: "Valeurs formalisées, score engagement, eNPS, participation" },
@@ -131,7 +131,7 @@ const DEPT_DIAGNOSTICS: DiagDept[] = [
     ],
   },
   {
-    code: "innovation", name: "Innovation / CINO", bot: "BIO", botName: "Inès",
+    code: "innovation", name: "Innovation / CINO", bot: "CINOB", botName: "Inès",
     icon: Lightbulb, gradient: "from-rose-600 to-rose-500",
     diagnostics: [
       { title: "Capacité d'innovation", measures: "Processus idéation, pipeline, budget R&D, time-to-market", dataPoints: "Budget R&D % CA, projets innovation actifs, délai idée→prototype" },
@@ -141,7 +141,7 @@ const DEPT_DIAGNOSTICS: DiagDept[] = [
     ],
   },
   {
-    code: "ventes", name: "Ventes / CRO", bot: "BRO", botName: "Raphaël",
+    code: "ventes", name: "Ventes / CRO", bot: "CROB", botName: "Raphaël",
     icon: TrendingUp, gradient: "from-cyan-600 to-cyan-500",
     diagnostics: [
       { title: "Processus de vente et pipeline", measures: "Étapes, conversion, cycle de vente, CRM", dataPoints: "Nb étapes pipeline, taux conversion, cycle vente jours, CRM utilisé" },
@@ -152,7 +152,7 @@ const DEPT_DIAGNOSTICS: DiagDept[] = [
     ],
   },
   {
-    code: "legal", name: "Légal / CLO", bot: "BLE", botName: "Louise",
+    code: "legal", name: "Légal / CLO", bot: "CLOB", botName: "Louise",
     icon: Scale, gradient: "from-indigo-600 to-indigo-500",
     diagnostics: [
       { title: "Conformité réglementaire", measures: "Lois applicables, licences, permis, risques", dataPoints: "Nb lois applicables, % permis à jour, dernière vérification, amendes 3 ans" },
@@ -162,7 +162,7 @@ const DEPT_DIAGNOSTICS: DiagDept[] = [
     ],
   },
   {
-    code: "securite", name: "Sécurité / CISO", bot: "BSE", botName: "Sébastien",
+    code: "securite", name: "Sécurité / CISO", bot: "CISOB", botName: "Sébastien",
     icon: Shield, gradient: "from-gray-600 to-gray-500",
     diagnostics: [
       { title: "Posture cybersécurité", measures: "Pare-feu, MFA, formation, tests pénétration", dataPoints: "MFA activé %, antivirus à jour, formation employés, tests pénétration" },
@@ -188,23 +188,23 @@ const RULES = [
 ];
 
 const CHAIN = [
-  { bot: "BFA", role: "Observe terrain" },
-  { bot: "BCT", role: "Analyse faisabilité" },
-  { bot: "BCF", role: "Calcule ROI" },
-  { bot: "BCS", role: "Qualifie lead" },
-  { bot: "BCO", role: "Présente / Décide" },
+  { bot: "CPOB", role: "Observe terrain" },
+  { bot: "CTOB", role: "Analyse faisabilité" },
+  { bot: "CFOB", role: "Calcule ROI" },
+  { bot: "CSOB", role: "Qualifie lead" },
+  { bot: "CEOB", role: "Présente / Décide" },
 ];
 
 // --- Prompt 2 — Matrice des Seuils VITAA (Bonification A) ---
 const VITAA_SEUILS = [
-  { pilier: "Argent", agent: "BCF", metrique: "Cycle Conversion Encaisse (CCC)", unite: "Jours", vert: "< 45 jours", jaune: "45 a 89 jours", rouge: "> 90 jours", contexte: "Mediane NA = 89j. Alimentaire (311) : < 35j sous peine de crise de liquidite." },
-  { pilier: "Argent", agent: "BCF", metrique: "Delai Recouvrement Clients (DSO)", unite: "Jours", vert: "< 35 jours", jaune: "36 a 51 jours", rouge: "> 55 jours", contexte: "DSO de 60j en usinage (3327) est commun mais pese lourdement sur la PME." },
-  { pilier: "Argent", agent: "BCF", metrique: "Rotation des Stocks (DIO)", unite: "Jours", vert: "< 45 jours", jaune: "46 a 80 jours", rouge: "> 85 jours", contexte: "Aerospatiale (3364) tolere jusqu'a 120j+. Metal (332) vise 45-60j." },
-  { pilier: "Actif", agent: "BOO", metrique: "Taux Rendement Synthetique (TRS/OEE)", unite: "%", vert: "> 75%", jaune: "50% a 74%", rouge: "< 50%", contexte: "Moyenne PME QC = 55%. Sous 50%, capacite gaspillee. Benchmark mondial : 85%." },
-  { pilier: "Actif", agent: "BOO", metrique: "Livraison a Temps (OTD)", unite: "%", vert: "> 98%", jaune: "90% a 97%", rouge: "< 90%", contexte: "Sous 90% : risque d'eviction des chaines d'approvisionnement (auto/aero)." },
-  { pilier: "Temps", agent: "BHR", metrique: "Taux de Roulement (Turnover)", unite: "%", vert: "< 8%", jaune: "8% a 15%", rouge: "> 16%", contexte: "Au-dela de 15%, la PME se vide de sa memoire institutionnelle tous les 6 ans." },
-  { pilier: "Idee", agent: "BCT", metrique: "Interconnexion Numerique", unite: "Stade", vert: "Elevee (Niv. 4-5)", jaune: "Silos (Niv. 2-3)", rouge: "Papier (Niv. 1)", contexte: "Seules 14% des PME QC maitrisent l'interconnexion. 39% = zero." },
-  { pilier: "Vente", agent: "BCM", metrique: "CRM Structure", unite: "--", vert: "Deploiement complet", jaune: "Utilisation basique", rouge: "Aucun (Excel)", contexte: "33% des entreprises B2B QC operent sans CRM en 2025." },
+  { pilier: "Argent", agent: "CFOB", metrique: "Cycle Conversion Encaisse (CCC)", unite: "Jours", vert: "< 45 jours", jaune: "45 a 89 jours", rouge: "> 90 jours", contexte: "Mediane NA = 89j. Alimentaire (311) : < 35j sous peine de crise de liquidite." },
+  { pilier: "Argent", agent: "CFOB", metrique: "Delai Recouvrement Clients (DSO)", unite: "Jours", vert: "< 35 jours", jaune: "36 a 51 jours", rouge: "> 55 jours", contexte: "DSO de 60j en usinage (3327) est commun mais pese lourdement sur la PME." },
+  { pilier: "Argent", agent: "CFOB", metrique: "Rotation des Stocks (DIO)", unite: "Jours", vert: "< 45 jours", jaune: "46 a 80 jours", rouge: "> 85 jours", contexte: "Aerospatiale (3364) tolere jusqu'a 120j+. Metal (332) vise 45-60j." },
+  { pilier: "Actif", agent: "COOB", metrique: "Taux Rendement Synthetique (TRS/OEE)", unite: "%", vert: "> 75%", jaune: "50% a 74%", rouge: "< 50%", contexte: "Moyenne PME QC = 55%. Sous 50%, capacite gaspillee. Benchmark mondial : 85%." },
+  { pilier: "Actif", agent: "COOB", metrique: "Livraison a Temps (OTD)", unite: "%", vert: "> 98%", jaune: "90% a 97%", rouge: "< 90%", contexte: "Sous 90% : risque d'eviction des chaines d'approvisionnement (auto/aero)." },
+  { pilier: "Temps", agent: "CHROB", metrique: "Taux de Roulement (Turnover)", unite: "%", vert: "< 8%", jaune: "8% a 15%", rouge: "> 16%", contexte: "Au-dela de 15%, la PME se vide de sa memoire institutionnelle tous les 6 ans." },
+  { pilier: "Idee", agent: "CTOB", metrique: "Interconnexion Numerique", unite: "Stade", vert: "Elevee (Niv. 4-5)", jaune: "Silos (Niv. 2-3)", rouge: "Papier (Niv. 1)", contexte: "Seules 14% des PME QC maitrisent l'interconnexion. 39% = zero." },
+  { pilier: "Vente", agent: "CMOB", metrique: "CRM Structure", unite: "--", vert: "Deploiement complet", jaune: "Utilisation basique", rouge: "Aucun (Excel)", contexte: "33% des entreprises B2B QC operent sans CRM en 2025." },
 ];
 
 // --- Prompt 2 — Benchmarks Sectoriels par code SCIAN ---
@@ -530,9 +530,9 @@ export default function MasterDiagnosticsPage() {
 
       <SectionDivider />
 
-      {/* ── Pipeline Fabien (BFA) ── */}
+      {/* ── Pipeline Fabien (CPOB) ── */}
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-800 mb-3"><span className="text-[9px] font-bold text-gray-400 mr-1">F.1.10</span>Pipeline Consultation BFA — VIST → JUAN → CPRJ</h2>
+        <h2 className="text-lg font-semibold text-gray-800 mb-3"><span className="text-[9px] font-bold text-gray-400 mr-1">F.1.10</span>Pipeline Consultation CPOB — VIST → JUAN → CPRJ</h2>
         <div className="space-y-3">
           {[
             { code: "VIST", title: "Visite SMART", detail: "Observer, identifier douleurs et opportunités → Rapport SMART" },
@@ -592,7 +592,7 @@ export default function MasterDiagnosticsPage() {
           Sources : mega-prompt-diagnostics-departements.md · mega-prompt-diagnostics-gemini.md ·
           Deep Research Prompt 2 (30 sources, mars 2026) · KPMG Working Capital 2024 · ISED Canada ·
           Barometre STIQ 2025 · MEIE Enquete Numerique 2025 · ISQ · Statistique Canada ·
-          Pipeline BFA (VIST/JUAN/CPRJ) · 8 Gaspillages Lean · 7 Familles Automatisation REAI
+          Pipeline CPOB (VIST/JUAN/CPRJ) · 8 Gaspillages Lean · 7 Familles Automatisation REAI
         </p>
       </div>
     </PageLayout>

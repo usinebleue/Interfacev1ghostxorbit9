@@ -564,12 +564,12 @@ interface BotConfig {
 }
 
 const BOT_CFG: Record<string, BotConfig> = {
-  BCO: { avatar: "/agents/ceo-carlos.png", name: "CarlOS", role: "CEO", color: "#3b82f6" },
-  BCT: { avatar: "/agents/cto-thierry.png", name: "Thierry", role: "CTO", color: "#8b5cf6" },
-  BCF: { avatar: "/agents/cfo-francois.png", name: "François", role: "CFO", color: "#10b981" },
-  BRO: { avatar: "/agents/cro-raphael.png", name: "Raphaël", role: "CRO", color: "#f59e0b" },
-  BOO: { avatar: "/agents/coo-olivier.png", name: "Olivier", role: "COO", color: "#f97316" },
-  BCS: { avatar: "/agents/cso-sophie.png", name: "Sophie", role: "CSO", color: "#ef4444" },
+  CEOB: { avatar: "/agents/ceo-carlos.png", name: "CarlOS", role: "CEO", color: "#3b82f6" },
+  CTOB: { avatar: "/agents/cto-thierry.png", name: "Thierry", role: "CTO", color: "#8b5cf6" },
+  CFOB: { avatar: "/agents/cfo-francois.png", name: "François", role: "CFO", color: "#10b981" },
+  CROB: { avatar: "/agents/cro-raphael.png", name: "Raphaël", role: "CRO", color: "#f59e0b" },
+  COOB: { avatar: "/agents/coo-olivier.png", name: "Olivier", role: "COO", color: "#f97316" },
+  CSOB: { avatar: "/agents/cso-sophie.png", name: "Sophie", role: "CSO", color: "#ef4444" },
 };
 
 interface ReflectionConfig {
@@ -582,7 +582,7 @@ interface ReflectionConfig {
 
 const STEP_REFLECTIONS: Record<number, ReflectionConfig> = {
   1: {
-    type: "thinking", lead: "BCO",
+    type: "thinking", lead: "CEOB",
     thinkSteps: [
       "Analyse du profil manufacturier...",
       "Scoring VITAA — 5 piliers...",
@@ -591,7 +591,7 @@ const STEP_REFLECTIONS: Record<number, ReflectionConfig> = {
     ],
   },
   2: {
-    type: "thinking", lead: "BCO",
+    type: "thinking", lead: "CEOB",
     thinkSteps: [
       "Compilation des donnees brutes...",
       "Identification des gaps critiques...",
@@ -600,12 +600,12 @@ const STEP_REFLECTIONS: Record<number, ReflectionConfig> = {
     ],
   },
   3: {
-    type: "consult", lead: "BCO",
-    consultBots: ["BCO", "BRO", "BOO"],
+    type: "consult", lead: "CEOB",
+    consultBots: ["CEOB", "CROB", "COOB"],
     consolidation: "Orbit9 — Match optimal identifie",
   },
   4: {
-    type: "thinking", lead: "BOO",
+    type: "thinking", lead: "COOB",
     thinkSteps: [
       "Planification de la visite terrain...",
       "Evaluation de la ligne de production...",
@@ -614,12 +614,12 @@ const STEP_REFLECTIONS: Record<number, ReflectionConfig> = {
     ],
   },
   5: {
-    type: "consult", lead: "BCO",
-    consultBots: ["BCO", "BCT", "BCF"],
+    type: "consult", lead: "CEOB",
+    consultBots: ["CEOB", "CTOB", "CFOB"],
     consolidation: "Rapport compile — ROI projete calcule",
   },
   6: {
-    type: "thinking", lead: "BCT",
+    type: "thinking", lead: "CTOB",
     thinkSteps: [
       "Structuration des specs techniques...",
       "Calcul du budget detaille...",
@@ -628,8 +628,8 @@ const STEP_REFLECTIONS: Record<number, ReflectionConfig> = {
     ],
   },
   7: {
-    type: "consult", lead: "BCO",
-    consultBots: ["BCO", "BCF", "BCS"],
+    type: "consult", lead: "CEOB",
+    consultBots: ["CEOB", "CFOB", "CSOB"],
     consolidation: "Montage financier pret — Go Live!",
   },
 };
@@ -1090,7 +1090,7 @@ function StepProcessScene({ stepNum, active, color, colorRgb, onComplete }: {
           <span style={{ fontSize: 8, color: "rgba(15,23,42,0.4)", fontWeight: 600 }}>Manufacturier</span>
         </div>
         <div style={{ position: "absolute", left: 100, top: 12, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-          <BotAvatarSmall code="BCO" size={40} glow={phase >= 1} />
+          <BotAvatarSmall code="CEOB" size={40} glow={phase >= 1} />
           <span style={{ fontSize: 8, color: "rgba(59,130,246,0.6)", fontWeight: 600 }}>CarlOS</span>
         </div>
         {/* Chat bubbles */}
@@ -1156,7 +1156,7 @@ function StepProcessScene({ stepNum, active, color, colorRgb, onComplete }: {
       <div style={{ position: "relative", height: H, opacity: active ? 1 : 0, transition: "opacity 0.6s 0.5s" }}>
         {/* CarlOS generating */}
         <div style={{ position: "absolute", left: 8, top: 8, display: "flex", alignItems: "center", gap: 8 }}>
-          <BotAvatarSmall code="BCO" size={28} glow={phase >= 1} />
+          <BotAvatarSmall code="CEOB" size={28} glow={phase >= 1} />
           <span style={{ fontSize: 9, color: `rgba(${colorRgb},0.6)`, fontWeight: 600 }}>
             {phase < 4 ? "Generation en cours..." : "Rapport genere!"}
           </span>
@@ -1278,7 +1278,7 @@ function StepProcessScene({ stepNum, active, color, colorRgb, onComplete }: {
           position: "absolute", bottom: 8, right: 8, display: "flex", gap: 4,
           opacity: phase >= 2 ? 1 : 0, transition: "opacity 0.5s",
         }}>
-          {["BCO", "BRO", "BOO"].map(c => <BotAvatarSmall key={c} code={c} size={22} />)}
+          {["CEOB", "CROB", "COOB"].map(c => <BotAvatarSmall key={c} code={c} size={22} />)}
         </div>
         {/* Match result */}
         {phase >= 5 && (
@@ -1347,7 +1347,7 @@ function StepProcessScene({ stepNum, active, color, colorRgb, onComplete }: {
           <span style={{ fontSize: 7, color: "rgba(15,23,42,0.3)" }}>+</span>
           <div style={{ width: 24, height: 24, borderRadius: "50%", background: "rgba(0,0,0,0.03)", border: "1.5px solid rgba(0,0,0,0.08)",
             display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>🔧</div>
-          <BotAvatarSmall code="BOO" size={24} glow={phase >= 2} />
+          <BotAvatarSmall code="COOB" size={24} glow={phase >= 2} />
         </div>
         {/* Measurement badges */}
         <div style={{
@@ -1378,7 +1378,7 @@ function StepProcessScene({ stepNum, active, color, colorRgb, onComplete }: {
           position: "absolute", top: 8, right: 8, display: "flex", gap: 4,
           opacity: phase >= 1 ? 1 : 0, transition: "opacity 0.5s",
         }}>
-          {["BCO", "BCT", "BCF"].map((c, i) => (
+          {["CEOB", "CTOB", "CFOB"].map((c, i) => (
             <div key={c} style={{ opacity: phase >= 1 + i ? 1 : 0.3, transition: `opacity 0.4s ${i * 0.3}s` }}>
               <BotAvatarSmall code={c} size={24} glow={phase >= 2 + i} />
             </div>
@@ -1447,7 +1447,7 @@ function StepProcessScene({ stepNum, active, color, colorRgb, onComplete }: {
       <div style={{ position: "relative", height: H, opacity: active ? 1 : 0, transition: "opacity 0.6s 0.5s" }}>
         {/* CTO structuring */}
         <div style={{ position: "absolute", right: 8, top: 8, display: "flex", alignItems: "center", gap: 6 }}>
-          <BotAvatarSmall code="BCT" size={24} glow={phase >= 1} />
+          <BotAvatarSmall code="CTOB" size={24} glow={phase >= 1} />
           <span style={{ fontSize: 8, color: "rgba(139,92,246,0.6)", fontWeight: 600 }}>Structure le cahier...</span>
         </div>
         {/* Notebook sections stacking */}
@@ -1523,7 +1523,7 @@ function StepProcessScene({ stepNum, active, color, colorRgb, onComplete }: {
           position: "absolute", top: 8, left: 8, display: "flex", gap: 4,
           opacity: phase >= 1 ? 1 : 0, transition: "opacity 0.5s",
         }}>
-          {["BCO", "BCF", "BCS"].map((c, i) => (
+          {["CEOB", "CFOB", "CSOB"].map((c, i) => (
             <div key={c} style={{ opacity: phase >= 1 + i ? 1 : 0.3, transition: `opacity 0.4s ${i * 0.3}s` }}>
               <BotAvatarSmall code={c} size={22} glow={phase >= 2 + i} />
             </div>
@@ -1574,7 +1574,7 @@ function StepProcessScene({ stepNum, active, color, colorRgb, onComplete }: {
           transition: "all 0.5s",
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 4 }}>
-            <BotAvatarSmall code="BCO" size={16} />
+            <BotAvatarSmall code="CEOB" size={16} />
             <span style={{ fontSize: 7, color: "rgba(59,130,246,0.6)", fontWeight: 600 }}>Suivi en temps reel</span>
             <span style={{
               marginLeft: "auto", width: 6, height: 6, borderRadius: "50%",

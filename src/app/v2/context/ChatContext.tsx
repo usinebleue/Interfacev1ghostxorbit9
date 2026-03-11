@@ -139,7 +139,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
   // D-101 — Résoudre la sous-section active pour le GPS du Flow
   const resolveSubSection = useCallback((): string | undefined => {
-    if (activeView === "department") return activeBotCode; // BCO→direction, BCF→finance, etc.
+    if (activeView === "department") return activeBotCode; // CEOB→direction, CFOB→finance, etc.
     if (activeView === "orbit9-detail") return activeOrbit9Section || undefined;
     if (activeView === "espace-bureau") return activeEspaceSection;
     if (activeView === "blueprint") return activeBlueprintSection;

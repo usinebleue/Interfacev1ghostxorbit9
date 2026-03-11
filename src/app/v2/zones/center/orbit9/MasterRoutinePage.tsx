@@ -543,7 +543,7 @@ const ANTI_PATTERNS = [
 const TEAM_MEMBERS = [
   {
     role: "Carl",
-    code: "BCO / N1",
+    code: "CEOB / N1",
     degre: "Commandant",
     color: "cyan",
     icon: Users,
@@ -558,7 +558,7 @@ const TEAM_MEMBERS = [
   },
   {
     role: "Claude Code",
-    code: "BCT / D1-D2",
+    code: "CTOB / D1-D2",
     degre: "CTO — Soldat/Lieutenant",
     color: "violet",
     icon: Code2,

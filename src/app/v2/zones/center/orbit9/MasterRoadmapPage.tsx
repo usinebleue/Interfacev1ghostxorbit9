@@ -263,7 +263,7 @@ const SESSIONS_ALL: SessionEntry[] = [
   { session: "S1", date: "22 fev", highlights: ["Bible GHML V2.3 (3115 lignes)", "TOP 100 Index Patrimoine"], sprint: "1" },
   { session: "S2", date: "22 fev", highlights: ["Architecture 3 couches (NOYAU + 6 MOD)", "context_builder.py branche"], sprint: "1" },
   { session: "S3", date: "22 fev", highlights: ["136 tests automatises", "Fix Ghost G4-G12 state machine"], sprint: "1" },
-  { session: "S4", date: "22 fev", highlights: ["Factory Ghost BFA cree", "SOUL Factory 712 lignes"], sprint: "1" },
+  { session: "S4", date: "22 fev", highlights: ["Factory Ghost CPOB cree", "SOUL Factory 712 lignes"], sprint: "1" },
   { session: "S8", date: "23 fev", highlights: ["OpenClaw Gateway desactive", "7 bugs fixes"], sprint: "1" },
   { session: "S11", date: "24 fev", highlights: ["PostgreSQL Direct adopte", "5 modeles database crees"], sprint: "1" },
   { session: "S13", date: "24 fev", highlights: ["MEGA-ANALYSE-FRONTEND (1098 lignes)", "4 instances detaillees"], sprint: "1" },
@@ -993,7 +993,7 @@ const HISTOIRE: HistoireActe[] = [
     events: [
       { date: "20 fev", titre: "Radiographie complete — 16,000 lignes de code", desc: "Bible Officielle GHML V1 (775 lignes). Consolidation Chronologique (996 lignes). G10=Buffett, G11=Curie, G12=Oprah confirmes. Profil Patient Zero : 25 ans de Carl en mega-prompt." },
       { date: "20-21 fev", titre: "5 invariants architecturaux", desc: "1) Support decisionnel, jamais autonome. 2) Niveaux d'autonomie 0-3. 3) LEGACY-first. 4) Auto-generation graduelle. 5) Tableau Periodique = combinatoire, pas decoration." },
-      { date: "21 fev matin", titre: "PREMIERE TRISOCIATION VIVANTE", desc: "BCO+BCT+BCF deployes. 3 bots, 9 OS, reactions chimiques live. CTO Bot : premiere mission autonome — 1min10sec. OAuth2 restaure, voix bidirectionnelle, 16 capacites validees." },
+      { date: "21 fev matin", titre: "PREMIERE TRISOCIATION VIVANTE", desc: "CEOB+CTOB+CFOB deployes. 3 bots, 9 OS, reactions chimiques live. CTO Bot : premiere mission autonome — 1min10sec. OAuth2 restaure, voix bidirectionnelle, 16 capacites validees." },
       { date: "21 fev pm", titre: "Scan Google Drive : 155,449 fichiers", desc: "947.7 GB. 26 ans de patrimoine numerique cartographies. 118,737 doublons identifies (351.6 GB recuperables). Le patrimoine est pret a nourrir la machine." },
     ],
   },
@@ -1003,7 +1003,7 @@ const HISTOIRE: HistoireActe[] = [
     periode: "22 — 27 fevrier 2026",
     color: "emerald",
     events: [
-      { date: "22 fev", titre: "Bible GHML V2.3 — 3,115 lignes", desc: "TOP 100 Index Patrimoine. Architecture 3 couches (NOYAU + 6 MOD). 136 tests automatises. Factory Ghost BFA cree." },
+      { date: "22 fev", titre: "Bible GHML V2.3 — 3,115 lignes", desc: "TOP 100 Index Patrimoine. Architecture 3 couches (NOYAU + 6 MOD). 136 tests automatises. Factory Ghost CPOB cree." },
       { date: "24 fev", titre: "PostgreSQL Direct + MEGA-ANALYSE Frontend", desc: "5 modeles database. Analyse frontend exhaustive (1,098 lignes). Interface V1 polished, sidebar collapsible." },
       { date: "26 fev", titre: "Sprint 1 API REST finalise", desc: "6 bots C-Level operationnels. Decisions D-050 a D-058 prises. 10 Fondations UX verrouillees. Modele d'affaires SaaS consolide." },
     ],
@@ -1222,7 +1222,7 @@ const IDEES_PARKING: Idee[] = [
     source: "Carl S42",
     categorie: "tech",
     maturite: "en-reflexion",
-    description: "Codes actuels (BCO, BCT) cryptiques. Vision : codes lisibles (CEOB, CTOB, CFOB). 12 C-Level = 12 equipes, bots futurs se rangent sous leur C-Level. Supporte N bots par equipe.",
+    description: "Codes actuels (CEOB, CTOB) cryptiques. Vision : codes lisibles (CEOB, CTOB, CFOB). 12 C-Level = 12 equipes, bots futurs se rangent sous leur C-Level. Supporte N bots par equipe.",
     connexions: ["Dette technique volet 4", "Sprint dedie apres nettoyage"],
   },
   {

@@ -48,12 +48,12 @@ const CATEGORY_COLORS: Record<string, string> = {
 // ── 6 C-Level bots pour la grille Live ──
 
 const CLEVEL_BOTS: { code: string; nom: string; role: string; dept: string; deptColor: string }[] = [
-  { code: "BCO", nom: "CarlOS", role: "CEO", dept: "Direction", deptColor: "bg-blue-100 text-blue-700" },
-  { code: "BCT", nom: "Thierry", role: "CTO", dept: "Technologie", deptColor: "bg-violet-100 text-violet-700" },
-  { code: "BCF", nom: "Francois", role: "CFO", dept: "Finance", deptColor: "bg-emerald-100 text-emerald-700" },
-  { code: "BCM", nom: "Martine", role: "CMO", dept: "Marketing", deptColor: "bg-pink-100 text-pink-700" },
-  { code: "BCS", nom: "Sophie", role: "CSO", dept: "Strategie", deptColor: "bg-red-100 text-red-700" },
-  { code: "BOO", nom: "Olivier", role: "COO", dept: "Operations", deptColor: "bg-orange-100 text-orange-700" },
+  { code: "CEOB", nom: "CarlOS", role: "CEO", dept: "Direction", deptColor: "bg-blue-100 text-blue-700" },
+  { code: "CTOB", nom: "Thierry", role: "CTO", dept: "Technologie", deptColor: "bg-violet-100 text-violet-700" },
+  { code: "CFOB", nom: "Francois", role: "CFO", dept: "Finance", deptColor: "bg-emerald-100 text-emerald-700" },
+  { code: "CMOB", nom: "Martine", role: "CMO", dept: "Marketing", deptColor: "bg-pink-100 text-pink-700" },
+  { code: "CSOB", nom: "Sophie", role: "CSO", dept: "Strategie", deptColor: "bg-red-100 text-red-700" },
+  { code: "COOB", nom: "Olivier", role: "COO", dept: "Operations", deptColor: "bg-orange-100 text-orange-700" },
 ];
 
 // ── Stage labels pour COMMAND missions ──
@@ -333,8 +333,8 @@ function TabPipeline() {
   ];
 
   const JUMELAGES = [
-    { e1: "Usine Bleue", e2: "Alimentation Boreal", type: "Co-innovation", bots: ["BCT", "BCF"] },
-    { e1: "Usine Bleue", e2: "TechNord Solutions", type: "Sous-traitance", bots: ["BOO", "BCO"] },
+    { e1: "Usine Bleue", e2: "Alimentation Boreal", type: "Co-innovation", bots: ["CTOB", "CFOB"] },
+    { e1: "Usine Bleue", e2: "TechNord Solutions", type: "Sous-traitance", bots: ["COOB", "CEOB"] },
   ];
 
   return (

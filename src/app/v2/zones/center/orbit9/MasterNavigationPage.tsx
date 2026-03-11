@@ -104,7 +104,7 @@ const NAV_STATS = [
 
 const CONTEXT_VARS = [
   { name: "activeView", type: "ActiveView (48 values)", desc: "Route principale du canvas central", scope: "Global" },
-  { name: "activeBotCode", type: "string", desc: "Bot actif (BCO, BCT, etc.) — couleur bande + contexte", scope: "Global" },
+  { name: "activeBotCode", type: "string", desc: "Bot actif (CEOB, CTOB, etc.) — couleur bande + contexte", scope: "Global" },
   { name: "activeEspaceSection", type: "EspaceSection", desc: "Sous-tab dans EspaceBureauView", scope: "Mon Espace" },
   { name: "activeDiscussionTab", type: "DiscussionTab", desc: "Sous-tab dans MesChantiersView", scope: "Mon Espace" },
   { name: "activeBlueprintSection", type: "BlueprintSection", desc: "Sous-tab dans BluePrintView", scope: "Mon Équipe" },
@@ -135,18 +135,18 @@ const NAV_METHODS = [
 // ======================================================================
 
 const BOT_COLORS = [
-  { code: "BCO", role: "CEO — Direction", band: "bg-blue-500", text: "text-blue-600" },
-  { code: "BCT", role: "CTO — Technologie", band: "bg-violet-500", text: "text-violet-600" },
-  { code: "BCF", role: "CFO — Finance", band: "bg-emerald-500", text: "text-emerald-600" },
-  { code: "BCM", role: "CMO — Marketing", band: "bg-pink-500", text: "text-pink-600" },
-  { code: "BCS", role: "CSO — Stratégie", band: "bg-red-500", text: "text-red-600" },
-  { code: "BOO", role: "COO — Opérations", band: "bg-orange-500", text: "text-orange-600" },
-  { code: "BFA", role: "CPO — Production", band: "bg-slate-400", text: "text-slate-600" },
-  { code: "BHR", role: "CHRO — RH", band: "bg-teal-500", text: "text-teal-600" },
-  { code: "BIO", role: "CINO — Innovation", band: "bg-rose-500", text: "text-rose-600" },
-  { code: "BRO", role: "CRO — Ventes", band: "bg-amber-500", text: "text-amber-600" },
-  { code: "BLE", role: "CLO — Légal", band: "bg-indigo-500", text: "text-indigo-600" },
-  { code: "BSE", role: "CISO — Sécurité", band: "bg-zinc-400", text: "text-zinc-600" },
+  { code: "CEOB", role: "CEO — Direction", band: "bg-blue-500", text: "text-blue-600" },
+  { code: "CTOB", role: "CTO — Technologie", band: "bg-violet-500", text: "text-violet-600" },
+  { code: "CFOB", role: "CFO — Finance", band: "bg-emerald-500", text: "text-emerald-600" },
+  { code: "CMOB", role: "CMO — Marketing", band: "bg-pink-500", text: "text-pink-600" },
+  { code: "CSOB", role: "CSO — Stratégie", band: "bg-red-500", text: "text-red-600" },
+  { code: "COOB", role: "COO — Opérations", band: "bg-orange-500", text: "text-orange-600" },
+  { code: "CPOB", role: "CPO — Production", band: "bg-slate-400", text: "text-slate-600" },
+  { code: "CHROB", role: "CHRO — RH", band: "bg-teal-500", text: "text-teal-600" },
+  { code: "CINOB", role: "CINO — Innovation", band: "bg-rose-500", text: "text-rose-600" },
+  { code: "CROB", role: "CRO — Ventes", band: "bg-amber-500", text: "text-amber-600" },
+  { code: "CLOB", role: "CLO — Légal", band: "bg-indigo-500", text: "text-indigo-600" },
+  { code: "CISOB", role: "CISO — Sécurité", band: "bg-zinc-400", text: "text-zinc-600" },
 ];
 
 // ======================================================================
@@ -328,7 +328,7 @@ export function MasterNavigationPage() {
           </div>
           <p className="text-xs text-gray-500 mb-2 italic">Vue CEO — CarlOS est le OS, il gouverne tout en dessous. Carl + CarlOS au sommet.</p>
           <NavLevel>
-            <NavItem icon={Crown} label="Direction (CarlOS)" viewId="department → BCO" status="live" color="text-blue-600" sub="Le CEO Bot — département Direction. CarlOS = le OS au sommet de tout." tabs={["Vue d'ensemble", "Pipeline", "Documents", "Diagnostics"]} />
+            <NavItem icon={Crown} label="Direction (CarlOS)" viewId="department → CEOB" status="live" color="text-blue-600" sub="Le CEO Bot — département Direction. CarlOS = le OS au sommet de tout." tabs={["Vue d'ensemble", "Pipeline", "Documents", "Diagnostics"]} />
             <NavItem icon={Layout} label="Tour de Contrôle" viewId="dashboard" status="live" color="text-blue-500" sub="Dashboard principal — 10 blocs KPI" />
             <NavItem icon={Eye} label="Cockpit" viewId="cockpit" status="live" color="text-violet-500" sub="Vue opérationnelle 360° — tous les bots" />
             <NavItem icon={Activity} label="Blueprint" viewId="blueprint" status="live" color="text-cyan-500" sub="Schéma directeur — Chantiers/Projets/Missions/Tâches" tabs={["Vue d'ensemble", "Timeline", "Chantiers", "Projets", "Missions", "Tâches", "Opportunités", "Équipes"]} />
@@ -383,19 +383,19 @@ export function MasterNavigationPage() {
             <span className="text-sm font-semibold text-violet-800"><span className="text-[9px] font-bold text-gray-400 mr-1">C.2.2.4</span>Mon Équipe AI — 11 Départements</span>
             <Badge className="text-[9px] bg-violet-100 text-violet-700 border-violet-200">SectionEntreprise.tsx → renommer</Badge>
           </div>
-          <p className="text-xs text-gray-500 mb-2 italic">11 C-Level bots (Direction/BCO retiré → Mon Entreprise). Blueprint retiré d'ici → Mon Entreprise.</p>
+          <p className="text-xs text-gray-500 mb-2 italic">11 C-Level bots (Direction/CEOB retiré → Mon Entreprise). Blueprint retiré d'ici → Mon Entreprise.</p>
           <NavLevel>
-            <NavItem icon={DollarSign} label="Finance" viewId="department → BCF" status="live" color="text-emerald-500" tabs={["Vue d'ensemble", "Pipeline", "Documents", "Diagnostics"]} />
-            <NavItem icon={Cpu} label="Technologie" viewId="department → BCT" status="live" color="text-violet-500" tabs={["Vue d'ensemble", "Pipeline", "Documents", "Diagnostics"]} />
-            <NavItem icon={Factory} label="Production" viewId="department → BFA" status="live" color="text-slate-500" tabs={["Vue d'ensemble", "Pipeline", "Documents", "Diagnostics"]} />
-            <NavItem icon={Settings} label="Opérations" viewId="department → BOO" status="live" color="text-orange-500" tabs={["Vue d'ensemble", "Pipeline", "Documents", "Diagnostics"]} />
-            <NavItem icon={TrendingUp} label="Ventes" viewId="department → BRO" status="live" color="text-amber-500" tabs={["Vue d'ensemble", "Pipeline", "Documents", "Diagnostics"]} />
-            <NavItem icon={Megaphone} label="Marketing" viewId="department → BCM" status="live" color="text-pink-500" tabs={["Vue d'ensemble", "Pipeline", "Documents", "Diagnostics"]} />
-            <NavItem icon={Target} label="Stratégie" viewId="department → BCS" status="live" color="text-red-500" tabs={["Vue d'ensemble", "Pipeline", "Documents", "Diagnostics"]} />
-            <NavItem icon={Users} label="RH" viewId="department → BHR" status="live" color="text-teal-500" tabs={["Vue d'ensemble", "Pipeline", "Documents", "Diagnostics"]} />
-            <NavItem icon={Shield} label="Sécurité" viewId="department → BSE" status="live" color="text-zinc-500" tabs={["Vue d'ensemble", "Pipeline", "Documents", "Diagnostics"]} />
-            <NavItem icon={Scale} label="Légal" viewId="department → BLE" status="live" color="text-indigo-500" tabs={["Vue d'ensemble", "Pipeline", "Documents", "Diagnostics"]} />
-            <NavItem icon={Lightbulb} label="Innovation" viewId="department → BIO" status="live" color="text-rose-500" tabs={["Vue d'ensemble", "Pipeline", "Documents", "Diagnostics"]} />
+            <NavItem icon={DollarSign} label="Finance" viewId="department → CFOB" status="live" color="text-emerald-500" tabs={["Vue d'ensemble", "Pipeline", "Documents", "Diagnostics"]} />
+            <NavItem icon={Cpu} label="Technologie" viewId="department → CTOB" status="live" color="text-violet-500" tabs={["Vue d'ensemble", "Pipeline", "Documents", "Diagnostics"]} />
+            <NavItem icon={Factory} label="Production" viewId="department → CPOB" status="live" color="text-slate-500" tabs={["Vue d'ensemble", "Pipeline", "Documents", "Diagnostics"]} />
+            <NavItem icon={Settings} label="Opérations" viewId="department → COOB" status="live" color="text-orange-500" tabs={["Vue d'ensemble", "Pipeline", "Documents", "Diagnostics"]} />
+            <NavItem icon={TrendingUp} label="Ventes" viewId="department → CROB" status="live" color="text-amber-500" tabs={["Vue d'ensemble", "Pipeline", "Documents", "Diagnostics"]} />
+            <NavItem icon={Megaphone} label="Marketing" viewId="department → CMOB" status="live" color="text-pink-500" tabs={["Vue d'ensemble", "Pipeline", "Documents", "Diagnostics"]} />
+            <NavItem icon={Target} label="Stratégie" viewId="department → CSOB" status="live" color="text-red-500" tabs={["Vue d'ensemble", "Pipeline", "Documents", "Diagnostics"]} />
+            <NavItem icon={Users} label="RH" viewId="department → CHROB" status="live" color="text-teal-500" tabs={["Vue d'ensemble", "Pipeline", "Documents", "Diagnostics"]} />
+            <NavItem icon={Shield} label="Sécurité" viewId="department → CISOB" status="live" color="text-zinc-500" tabs={["Vue d'ensemble", "Pipeline", "Documents", "Diagnostics"]} />
+            <NavItem icon={Scale} label="Légal" viewId="department → CLOB" status="live" color="text-indigo-500" tabs={["Vue d'ensemble", "Pipeline", "Documents", "Diagnostics"]} />
+            <NavItem icon={Lightbulb} label="Innovation" viewId="department → CINOB" status="live" color="text-rose-500" tabs={["Vue d'ensemble", "Pipeline", "Documents", "Diagnostics"]} />
           </NavLevel>
         </Card>
 
@@ -674,11 +674,11 @@ export function MasterNavigationPage() {
 
         <div className="space-y-2">
           {[
-            { bloc: "Bloc CEO (Direction)", target: "department → BCO", icon: Briefcase, color: "text-blue-500" },
-            { bloc: "Bloc CFO (Finance)", target: "department → BCF", icon: DollarSign, color: "text-emerald-500" },
-            { bloc: "Bloc CTO (Technologie)", target: "department → BCT", icon: Cpu, color: "text-violet-500" },
-            { bloc: "Bloc CMO (Marketing)", target: "department → BCM", icon: Megaphone, color: "text-pink-500" },
-            { bloc: "Bloc CSO (Stratégie)", target: "department → BCS", icon: Target, color: "text-red-500" },
+            { bloc: "Bloc CEO (Direction)", target: "department → CEOB", icon: Briefcase, color: "text-blue-500" },
+            { bloc: "Bloc CFO (Finance)", target: "department → CFOB", icon: DollarSign, color: "text-emerald-500" },
+            { bloc: "Bloc CTO (Technologie)", target: "department → CTOB", icon: Cpu, color: "text-violet-500" },
+            { bloc: "Bloc CMO (Marketing)", target: "department → CMOB", icon: Megaphone, color: "text-pink-500" },
+            { bloc: "Bloc CSO (Stratégie)", target: "department → CSOB", icon: Target, color: "text-red-500" },
             { bloc: "Mes Priorités", target: "mes-chantiers → chantiers", icon: Flame, color: "text-orange-500" },
             { bloc: "Pipeline Vente", target: "mes-chantiers → missions", icon: TrendingUp, color: "text-green-500" },
             { bloc: "Mes Projets", target: "mes-chantiers → projets", icon: FolderKanban, color: "text-indigo-500" },
@@ -874,7 +874,7 @@ SIDEBAR GAUCHE — 6 SECTIONS
 │
 ├─ [1] MON ENTREPRISE (CEO + CarlOS = le OS)
 │  ├─ tabs centre: Direction | TdC | Cockpit | Blueprint | Santé
-│  ├─ Direction (CarlOS)  → department → BCO (le OS au sommet)
+│  ├─ Direction (CarlOS)  → department → CEOB (le OS au sommet)
 │  ├─ Tour de Contrôle    → dashboard (10 blocs KPI)
 │  ├─ Cockpit             → cockpit (360° tous bots)
 │  ├─ Blueprint           → blueprint / playbook-usine-bleue
@@ -899,17 +899,17 @@ SIDEBAR GAUCHE — 6 SECTIONS
 │
 ├─ [4] MON ÉQUIPE AI (11 agents — EXCEPTION: tabs dans vue agent)
 │  ├─ sidebar = liste 11 agents AI (click → vue agent)
-│  ├─ Finance (BCF)       → department + 4 tabs agent
-│  ├─ Technologie (BCT)   → department + 4 tabs agent
-│  ├─ Production (BFA)    → department + 4 tabs agent
-│  ├─ Opérations (BOO)    → department + 4 tabs agent
-│  ├─ Ventes (BRO)        → department + 4 tabs agent
-│  ├─ Marketing (BCM)     → department + 4 tabs agent
-│  ├─ Stratégie (BCS)     → department + 4 tabs agent
-│  ├─ RH (BHR)            → department + 4 tabs agent
-│  ├─ Sécurité (BSE)      → department + 4 tabs agent
-│  ├─ Légal (BLE)         → department + 4 tabs agent
-│  └─ Innovation (BIO)    → department + 4 tabs agent
+│  ├─ Finance (CFOB)       → department + 4 tabs agent
+│  ├─ Technologie (CTOB)   → department + 4 tabs agent
+│  ├─ Production (CPOB)    → department + 4 tabs agent
+│  ├─ Opérations (COOB)    → department + 4 tabs agent
+│  ├─ Ventes (CROB)        → department + 4 tabs agent
+│  ├─ Marketing (CMOB)     → department + 4 tabs agent
+│  ├─ Stratégie (CSOB)     → department + 4 tabs agent
+│  ├─ RH (CHROB)            → department + 4 tabs agent
+│  ├─ Sécurité (CISOB)      → department + 4 tabs agent
+│  ├─ Légal (CLOB)         → department + 4 tabs agent
+│  └─ Innovation (CINOB)    → department + 4 tabs agent
 │     └─ 4 tabs par agent: Vue d'ensemble | Pipeline | Documents | Diagnostics
 │
 ├─ [5] MON RÉSEAU — Centre Nerveux Orbit9 (réseau élite augmenté AI)

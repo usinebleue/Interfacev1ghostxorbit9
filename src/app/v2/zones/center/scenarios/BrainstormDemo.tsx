@@ -523,7 +523,7 @@ export function BrainstormDemo({
               steps={BRAINSTORM_DATA.setupThinking}
               botEmoji="\u{1F454}"
               botName="CarlOS (CEO)"
-              botCode="BCO"
+              botCode="CEOB"
               onComplete={() => setStage(2)}
             />
           )}
@@ -531,13 +531,13 @@ export function BrainstormDemo({
           {/* ===== STAGE 2 — CEO intro (typewriter) + SCAMPER badge ===== */}
           {stage >= 2 && (
             <div className="flex gap-3">
-              <BotAvatar code="BCO" size="md" />
+              <BotAvatar code="CEOB" size="md" />
               <div className="bg-white border-l-[3px] border-l-blue-500 border border-gray-200 rounded-xl rounded-tl-none px-4 py-3 max-w-[80%] shadow-sm">
                 <div className="flex items-center gap-2 mb-1">
                   <span
                     className={cn(
                       "text-xs font-semibold",
-                      BOT_COLORS.BCO.text,
+                      BOT_COLORS.CEOB.text,
                     )}
                   >
                     CarlOS (CEO)
@@ -681,7 +681,7 @@ export function BrainstormDemo({
               steps={BRAINSTORM_DATA.syntheseThinking}
               botEmoji="\u{1F454}"
               botName="CarlOS (CEO)"
-              botCode="BCO"
+              botCode="CEOB"
               onComplete={() => setStage(7)}
             />
           )}

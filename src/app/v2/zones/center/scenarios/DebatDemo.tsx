@@ -279,7 +279,7 @@ function VerdictCard({
               Analyse des 3 rounds de debat
             </div>
           </div>
-          <BotAvatar code="BCO" size="sm" />
+          <BotAvatar code="CEOB" size="sm" />
         </div>
 
         <div className="p-4 space-y-4">
@@ -346,7 +346,7 @@ function VerdictCard({
           {conclusionVisible && (
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg px-4 py-3 animate-in fade-in duration-700">
               <div className="flex items-start gap-2">
-                <BotAvatar code="BCO" size="sm" className="mt-0.5" />
+                <BotAvatar code="CEOB" size="sm" className="mt-0.5" />
                 <div>
                   <div className="text-xs font-semibold text-blue-700 mb-1">
                     Conclusion CarlOS
@@ -466,7 +466,7 @@ export function DebatDemo({
               steps={DEBAT_DATA.ceoThinking}
               botEmoji=""
               botName="CarlOS (CEO)"
-              botCode="BCO"
+              botCode="CEOB"
               onComplete={() => {
                 setPhase("R");
                 setStage(2);
@@ -477,7 +477,7 @@ export function DebatDemo({
           {/* ===== STAGE 2 — CEO intro ===== */}
           {stage >= 2 && (
             <BotBubble
-              code="BCO"
+              code="CEOB"
               text={DEBAT_DATA.ceoIntro}
               phaseLabel="Mode Debat"
               time="09:16"
@@ -544,7 +544,7 @@ export function DebatDemo({
               steps={DEBAT_DATA.verdictThinking}
               botEmoji=""
               botName="CarlOS (CEO)"
-              botCode="BCO"
+              botCode="CEOB"
               onComplete={() => {
                 setPhase("O");
                 setStage(7);
