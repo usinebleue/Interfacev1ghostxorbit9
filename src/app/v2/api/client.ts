@@ -147,6 +147,14 @@ export const api = {
     });
   },
 
+  /** Vision — envoyer une image (camera/lunettes) a CarlOS pour analyse */
+  chatVision(image: string, message = "Qu'est-ce que tu vois?", agent = "BCO"): Promise<{ response: string; agent: string }> {
+    return apiFetch<{ response: string; agent: string }>("/chat/vision", {
+      method: "POST",
+      body: JSON.stringify({ image, message, agent, user_id: 1 }),
+    });
+  },
+
   /** Multi-perspectives : consulter 2-3 bots en parallele */
   chatMulti(req: MultiChatRequest): Promise<MultiChatResponse> {
     return apiFetch<MultiChatResponse>("/chat/multi", {
@@ -1014,5 +1022,107 @@ export const api = {
       });
 
     return controller;
+  },
+
+  // ── Memory (cross-canal Telegram ↔ Web) ──
+
+  async memorySearch(query: string, limit = 10): Promise<{ results: string[]; total: number }> {
+    const params = new URLSearchParams({ query, limit: String(limit) });
+    const res = await apiFetch(`/memory/search?${params}`);
+    return res.json();
+  },
+
+  async memoryActivities(limit = 50, type?: string): Promise<{ activities: Record<string, unknown>[]; total: number }> {
+    const params = new URLSearchParams({ limit: String(limit) });
+    if (type) params.set("type", type);
+    const res = await apiFetch(`/memory/activities?${params}`);
+    return res.json();
+  },
+
+  async memorySummary(): Promise<Record<string, unknown>> {
+    const res = await apiFetch("/memory/summary");
+    return res.json();
+  },
+
+  // ── Diagnostic IA ──
+
+  async diagnosticIACreate(data: Record<string, unknown>): Promise<{ id: number; status: string }> {
+    const res = await apiFetch("/diagnostic-ia", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+
+  async diagnosticIAList(userId = 1, status?: string): Promise<{ items: import("./types").DiagnosticIA[]; total: number }> {
+    const params = new URLSearchParams({ user_id: String(userId) });
+    if (status) params.set("status", status);
+    const res = await apiFetch(`/diagnostic-ia?${params}`);
+    return res.json();
+  },
+
+  async diagnosticIAGet(id: number): Promise<import("./types").DiagnosticIA> {
+    const res = await apiFetch(`/diagnostic-ia/${id}`);
+    return res.json();
+  },
+
+  async diagnosticIAUpdate(id: number, data: Record<string, unknown>): Promise<{ ok: boolean }> {
+    const res = await apiFetch(`/diagnostic-ia/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+
+  async diagnosticIADelete(id: number): Promise<{ ok: boolean }> {
+    const res = await apiFetch(`/diagnostic-ia/${id}`, { method: "DELETE" });
+    return res.json();
+  },
+
+  // ── MEETINGS (D-114) ──
+
+  meetingCreate(req: { title: string; meeting_type?: string; bot_code?: string }): Promise<any> {
+    return apiFetch("/meetings", {
+      method: "POST",
+      body: JSON.stringify(req),
+    });
+  },
+
+  meetingList(status?: string): Promise<{ meetings: any[]; total: number }> {
+    const params = status ? `?status=${status}` : "";
+    return apiFetch(`/meetings${params}`);
+  },
+
+  meetingGet(slug: string): Promise<any> {
+    return apiFetch(`/meetings/${slug}`);
+  },
+
+  meetingJoin(slug: string, req: { display_name: string }): Promise<{ token: string; room_name: string; livekit_url: string; identity: string; display_name: string }> {
+    return apiFetch(`/meetings/${slug}/join`, {
+      method: "POST",
+      body: JSON.stringify(req),
+    });
+  },
+
+  meetingStart(slug: string): Promise<{ ok: boolean; egress_id?: string }> {
+    return apiFetch(`/meetings/${slug}/start`, { method: "POST" });
+  },
+
+  meetingEnd(slug: string): Promise<{ ok: boolean }> {
+    return apiFetch(`/meetings/${slug}/end`, { method: "POST" });
+  },
+
+  meetingTranscript(slug: string): Promise<{ slug: string; entries: any[]; total: number }> {
+    return apiFetch(`/meetings/${slug}/transcript`);
+  },
+
+  meetingPodcast(slug: string): Promise<any> {
+    return apiFetch(`/meetings/${slug}/podcast`);
+  },
+
+  meetingPodcastRegenerate(slug: string): Promise<{ ok: boolean }> {
+    return apiFetch(`/meetings/${slug}/podcast/regenerate`, { method: "POST" });
   },
 };
