@@ -6,7 +6,7 @@
  * Session 37: Redesign CV + psychométrique
  */
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Bot,
   Target,
@@ -34,11 +34,14 @@ import {
   Star,
   Timer,
   CheckCircle2,
+  DollarSign,
 } from "lucide-react";
 import { Badge } from "../../../components/ui/badge";
 import { cn } from "../../../components/ui/utils";
 import { useFrameMaster } from "../../context/FrameMasterContext";
 import { BOT_AVATAR, BOT_SUBTITLE } from "../../api/types";
+import { api } from "../../api/client";
+import { useMissions } from "../../api/hooks";
 import { PageLayout } from "./layouts/PageLayout";
 import { PageHeader } from "./layouts/PageHeader";
 
@@ -169,6 +172,27 @@ const BOT_ROLES: Record<string, string> = {
   CLOB: "CLO", CISOB: "CISO",
 };
 
+// ── SA8 — Capacités & ROI par bot (specs techniques) ──
+
+const BOT_CAPACITES: Record<string, {
+  equivHumain: string; coutHumain: string;
+  tachesCount: number; heuresMois: string;
+  exemples: string[];
+}> = {
+  CEOB: { equivHumain: "CEO conseil / Coach executif", coutHumain: "100-200K$", tachesCount: 15, heuresMois: "80-120h", exemples: ["Preparation CA", "Decisions strategiques", "Vision & roadmap", "Gestion parties prenantes"] },
+  CFOB: { equivHumain: "CFO fractionnaire", coutHumain: "150-250K$", tachesCount: 18, heuresMois: "100-160h", exemples: ["Budget annuel", "Analyse ROI projets", "Tresorerie", "Subventions & financement"] },
+  CTOB: { equivHumain: "CTO fractionnaire", coutHumain: "150-300K$", tachesCount: 16, heuresMois: "120-180h", exemples: ["Architecture techno", "Selection fournisseurs", "Cybersecurite", "Automatisation"] },
+  CMOB: { equivHumain: "Directeur marketing", coutHumain: "120-200K$", tachesCount: 14, heuresMois: "100-160h", exemples: ["Strategie marketing", "Generation leads", "Positionnement", "Campagnes"] },
+  CSOB: { equivHumain: "Consultant strategie", coutHumain: "120-200K$", tachesCount: 12, heuresMois: "80-120h", exemples: ["Analyse concurrentielle", "Plan strategique", "Diversification", "M&A screening"] },
+  COOB: { equivHumain: "Directeur operations", coutHumain: "120-200K$", tachesCount: 15, heuresMois: "120-200h", exemples: ["Optimisation processus", "Gestion qualite", "Lean manufacturing", "Chaine d'approvisionnement"] },
+  CPOB: { equivHumain: "Directeur usine", coutHumain: "100-180K$", tachesCount: 30, heuresMois: "120-200h", exemples: ["Monitoring TRS machines", "Suivi maintenance GMAO", "Alertes SST", "Rapports production"] },
+  CHROB: { equivHumain: "VP Ressources humaines", coutHumain: "100-180K$", tachesCount: 25, heuresMois: "80-140h", exemples: ["Sondages engagement", "Suivi formation", "Rapports roulement", "Screening CV"] },
+  CINOB: { equivHumain: "VP Innovation / R&D", coutHumain: "120-200K$", tachesCount: 20, heuresMois: "80-120h", exemples: ["Veille technologique", "Gestion portfolio PI", "Rapports R&D", "Benchmark innovation"] },
+  CROB: { equivHumain: "VP Ventes / Revenus", coutHumain: "120-200K$", tachesCount: 25, heuresMois: "100-160h", exemples: ["Suivi pipeline ventes", "Forecasting", "Rapports performance reps", "Scoring leads"] },
+  CLOB: { equivHumain: "Directeur juridique", coutHumain: "120-200K$", tachesCount: 20, heuresMois: "60-100h", exemples: ["Suivi contrats", "Alertes conformite", "Gestion registre Loi 25", "Veille reglementaire"] },
+  CISOB: { equivHumain: "Directeur cybersecurite", coutHumain: "120-200K$", tachesCount: 20, heuresMois: "80-140h", exemples: ["Monitoring cybersecurite", "Alertes vulnerabilites", "Rapports conformite SOC2/NIST", "Tests automatises"] },
+};
+
 const BOT_DEPT: Record<string, string> = {
   CEOB: "Direction Générale", CTOB: "Technologie", CFOB: "Finance", CMOB: "Marketing",
   CSOB: "Stratégie", COOB: "Opérations", CPOB: "Production", CHROB: "Ressources Humaines",
@@ -278,6 +302,29 @@ export function AgentSettingsView() {
     BOT_GHOSTS[activeBotCode] || ["Bezos", "Munger", "Churchill"]
   );
   const [editingSlot, setEditingSlot] = useState<number | null>(null);
+
+  // ── Données réelles depuis les API ──
+  const { missions } = useMissions();
+  const [decisions, setDecisions] = useState<{ total: number; entries: any[] }>({ total: 0, entries: [] });
+  const [commandMissions, setCommandMissions] = useState<any[]>([]);
+  const [briefings, setBriefings] = useState<any[]>([]);
+
+  useEffect(() => {
+    api.listDecisions({ bot_code: activeBotCode, limit: 50 }).then((r) => setDecisions({ total: r.total || 0, entries: r.entries || [] })).catch(() => {});
+    api.commandMissions(50).then((r) => setCommandMissions(Array.isArray(r) ? r : [])).catch(() => {});
+    api.listBriefings(activeBotCode, undefined, 50).then((r) => setBriefings(Array.isArray(r?.briefings) ? r.briefings : [])).catch(() => {});
+  }, [activeBotCode]);
+
+  const botMissions = useMemo(() => {
+    const all = missions.filter((m) => m.bot_assigne === activeBotCode || m.responsable === activeBotCode);
+    const completed = all.filter((m) => m.statut === "termine");
+    const active = all.filter((m) => m.statut === "en_cours");
+    return { all, completed, active };
+  }, [missions, activeBotCode]);
+
+  const botCommandMissions = useMemo(() =>
+    commandMissions.filter((m: any) => m.bot_code === activeBotCode || m.bot_assigne === activeBotCode),
+  [commandMissions, activeBotCode]);
 
   const botName = activeBot?.nom || "Carlos";
   const botRole = BOT_ROLES[activeBotCode] || "CEO";
@@ -504,127 +551,184 @@ export function AgentSettingsView() {
             </div>
           </div>
 
-          {/* ══ STATISTIQUES DE MISSIONS — KPI row ══ */}
+          {/* ══ STATISTIQUES DE MISSIONS — KPI row (REAL DATA) ══ */}
           <div className="border rounded-xl overflow-hidden shadow-sm bg-white">
             <div className="bg-gradient-to-r from-cyan-600 to-blue-500 px-4 py-2.5 flex items-center gap-2">
               <ClipboardList className="h-4 w-4 text-white" />
               <span className="text-xs font-bold text-white">Statistiques de Missions</span>
-              <span className="ml-auto text-[9px] bg-white/20 text-white/80 px-2 py-0.5 rounded-full">(en dev)</span>
             </div>
             <div className="p-3">
               <div className="grid grid-cols-4 gap-3">
                 <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-center">
                   <CheckCircle2 className="h-5 w-5 text-blue-500 mx-auto mb-1" />
-                  <div className="text-2xl font-extrabold text-gray-800">—</div>
-                  <div className="text-[10px] text-gray-500 mt-0.5">Missions complétées</div>
+                  <div className="text-2xl font-extrabold text-gray-800">{botMissions.completed.length}</div>
+                  <div className="text-[9px] text-gray-500 mt-0.5">Missions completees</div>
                 </div>
                 <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-3 text-center">
                   <Star className="h-5 w-5 text-emerald-500 mx-auto mb-1" />
-                  <div className="text-2xl font-extrabold text-gray-800">—</div>
-                  <div className="text-[10px] text-gray-500 mt-0.5">Taux de succès</div>
+                  <div className="text-2xl font-extrabold text-gray-800">{botMissions.all.length > 0 ? `${Math.round((botMissions.completed.length / botMissions.all.length) * 100)}%` : "—"}</div>
+                  <div className="text-[9px] text-gray-500 mt-0.5">Taux de succes</div>
                 </div>
                 <div className="bg-amber-50 border border-amber-100 rounded-lg p-3 text-center">
                   <Timer className="h-5 w-5 text-amber-500 mx-auto mb-1" />
-                  <div className="text-2xl font-extrabold text-gray-800">—</div>
-                  <div className="text-[10px] text-gray-500 mt-0.5">Temps moyen / mission</div>
+                  <div className="text-2xl font-extrabold text-gray-800">{botCommandMissions.length}</div>
+                  <div className="text-[9px] text-gray-500 mt-0.5">Missions COMMAND</div>
                 </div>
                 <div className="bg-violet-50 border border-violet-100 rounded-lg p-3 text-center">
                   <Activity className="h-5 w-5 text-violet-500 mx-auto mb-1" />
-                  <div className="text-2xl font-extrabold text-gray-800">—</div>
-                  <div className="text-[10px] text-gray-500 mt-0.5">Missions actives</div>
+                  <div className="text-2xl font-extrabold text-gray-800">{botMissions.active.length}</div>
+                  <div className="text-[9px] text-gray-500 mt-0.5">Missions actives</div>
                 </div>
               </div>
             </div>
           </div>
 
+          {/* ══ SPECS TECHNIQUES & ROI (SA8 data) ══ */}
+          {(() => {
+            const cap = BOT_CAPACITES[activeBotCode];
+            if (!cap) return null;
+            return (
+              <div className="border rounded-xl overflow-hidden shadow-sm bg-white">
+                <div className="bg-gradient-to-r from-indigo-700 to-purple-600 px-4 py-2.5 flex items-center gap-2">
+                  <Cpu className="h-4 w-4 text-white" />
+                  <span className="text-xs font-bold text-white">Specs Techniques & ROI</span>
+                  <span className="ml-auto text-[9px] bg-white/20 text-white/80 px-2 py-0.5 rounded-full">
+                    {cap.tachesCount} taches automatisees
+                  </span>
+                </div>
+                <div className="p-3 space-y-3">
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-3 text-center">
+                      <Users className="h-4 w-4 text-indigo-500 mx-auto mb-1" />
+                      <div className="text-[11px] font-bold text-gray-800">{cap.equivHumain}</div>
+                      <div className="text-[9px] text-gray-500 mt-0.5">Equivalent humain</div>
+                    </div>
+                    <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-3 text-center">
+                      <DollarSign className="h-4 w-4 text-emerald-500 mx-auto mb-1" />
+                      <div className="text-lg font-extrabold text-gray-800">{cap.coutHumain}</div>
+                      <div className="text-[9px] text-gray-500 mt-0.5">Cout humain/an</div>
+                    </div>
+                    <div className="bg-amber-50 border border-amber-100 rounded-lg p-3 text-center">
+                      <Timer className="h-4 w-4 text-amber-500 mx-auto mb-1" />
+                      <div className="text-lg font-extrabold text-gray-800">{cap.heuresMois}</div>
+                      <div className="text-[9px] text-gray-500 mt-0.5">Heures/mois</div>
+                    </div>
+                  </div>
+                  <div className="border-t border-gray-100 pt-2">
+                    <div className="text-[9px] font-semibold text-gray-600 mb-1.5">Taches automatisees ({cap.tachesCount})</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {cap.exemples.map((ex, i) => (
+                        <span key={i} className="text-[9px] bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-1 rounded-full font-medium">
+                          {ex}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
           {/* ══ 2 COLONNES — Activité Récente + Collaboration ══ */}
           <div className="grid grid-cols-2 gap-4">
 
-            {/* Activité Récente */}
+            {/* Activité Récente (REAL DATA — decisions + missions) */}
             <div className="border rounded-xl overflow-hidden shadow-sm bg-white">
               <div className="bg-gradient-to-r from-slate-700 to-slate-600 px-4 py-2.5 flex items-center gap-2">
                 <Clock className="h-4 w-4 text-white" />
-                <span className="text-xs font-bold text-white">Activité Récente</span>
-                <span className="ml-auto text-[9px] bg-white/20 text-white/80 px-2 py-0.5 rounded-full">(en dev)</span>
-              </div>
-              <div className="p-3 space-y-2">
-                {[
-                  { label: "Analyse stratégique demandée", time: "Il y a 2h", icon: Target, color: "text-blue-500 bg-blue-50" },
-                  { label: "Briefing COMMAND compilé", time: "Il y a 5h", icon: FileText, color: "text-emerald-500 bg-emerald-50" },
-                  { label: "Session collaborative avec CFO", time: "Hier", icon: Users, color: "text-violet-500 bg-violet-50" },
-                  { label: "Rapport de décision généré", time: "Il y a 2j", icon: ClipboardList, color: "text-amber-500 bg-amber-50" },
-                ].map((item, i) => {
-                  const IIcon = item.icon;
-                  return (
-                    <div key={i} className="flex items-center gap-2.5 py-1.5 border-b border-gray-50 last:border-0">
-                      <div className={cn("p-1.5 rounded-lg shrink-0", item.color)}>
-                        <IIcon className="h-3 w-3" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[11px] text-gray-700 font-medium truncate">{item.label}</div>
-                        <div className="text-[9px] text-gray-400">{item.time}</div>
-                      </div>
-                    </div>
-                  );
-                })}
-                <div className="text-center pt-1">
-                  <span className="text-[9px] text-gray-400 italic">Données en temps réel bientôt disponibles</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Collaboration Équipe */}
-            <div className="border rounded-xl overflow-hidden shadow-sm bg-white">
-              <div className="bg-gradient-to-r from-rose-600 to-pink-500 px-4 py-2.5 flex items-center gap-2">
-                <Users className="h-4 w-4 text-white" />
-                <span className="text-xs font-bold text-white">Collaboration Équipe</span>
-                <span className="ml-auto text-[9px] bg-white/20 text-white/80 px-2 py-0.5 rounded-full">(en dev)</span>
+                <span className="text-xs font-bold text-white">Activite Recente</span>
               </div>
               <div className="p-3 space-y-2">
                 {(() => {
-                  // Show top collaborators based on bot role (mock data placeholder)
-                  const collabMap: Record<string, { bot: string; role: string; freq: string }[]> = {
-                    CEOB: [
-                      { bot: "CFO", role: "Finance", freq: "Très fréquent" },
-                      { bot: "CSO", role: "Stratégie", freq: "Fréquent" },
-                      { bot: "COO", role: "Opérations", freq: "Régulier" },
-                    ],
-                    CTOB: [
-                      { bot: "CIO", role: "Systèmes", freq: "Très fréquent" },
-                      { bot: "CISO", role: "Sécurité", freq: "Fréquent" },
-                      { bot: "CPO", role: "Produit", freq: "Régulier" },
-                    ],
-                    CFOB: [
-                      { bot: "CEO", role: "Direction", freq: "Très fréquent" },
-                      { bot: "COO", role: "Opérations", freq: "Fréquent" },
-                      { bot: "CLO", role: "Juridique", freq: "Régulier" },
-                    ],
-                  };
-                  const collabs = collabMap[activeBotCode] || [
-                    { bot: "CEO", role: "Direction", freq: "Fréquent" },
-                    { bot: "CTO", role: "Technologie", freq: "Régulier" },
-                    { bot: "CFO", role: "Finance", freq: "Occasionnel" },
-                  ];
-                  return collabs.map((c, i) => (
-                    <div key={i} className="flex items-center gap-2.5 py-1.5 border-b border-gray-50 last:border-0">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center shrink-0">
-                        <Bot className="h-4 w-4 text-gray-500" />
+                  const items: { label: string; time: string; icon: React.ElementType; color: string }[] = [];
+                  // Dernières missions
+                  botMissions.all.slice(0, 2).forEach((m) => {
+                    items.push({
+                      label: m.titre || m.nom || "Mission",
+                      time: m.updated_at ? new Date(m.updated_at).toLocaleDateString("fr-CA") : "",
+                      icon: m.statut === "termine" ? CheckCircle2 : Activity,
+                      color: m.statut === "termine" ? "text-emerald-500 bg-emerald-50" : "text-blue-500 bg-blue-50",
+                    });
+                  });
+                  // Dernières décisions
+                  decisions.entries.slice(0, 2).forEach((d: any) => {
+                    items.push({
+                      label: d.titre || d.description?.slice(0, 40) || "Decision",
+                      time: d.created_at ? new Date(d.created_at).toLocaleDateString("fr-CA") : "",
+                      icon: ClipboardList,
+                      color: "text-amber-500 bg-amber-50",
+                    });
+                  });
+                  if (items.length === 0) items.push({ label: "Aucune activite recente", time: "", icon: Clock, color: "text-gray-400 bg-gray-50" });
+                  return items.slice(0, 4).map((item, i) => {
+                    const IIcon = item.icon;
+                    return (
+                      <div key={i} className="flex items-center gap-2.5 py-1.5 border-b border-gray-50 last:border-0">
+                        <div className={cn("p-1.5 rounded-lg shrink-0", item.color)}>
+                          <IIcon className="h-3.5 w-3.5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[11px] text-gray-700 font-medium truncate">{item.label}</div>
+                          <div className="text-[9px] text-gray-400">{item.time}</div>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[11px] text-gray-700 font-medium">{c.bot}</div>
-                        <div className="text-[9px] text-gray-400">{c.role}</div>
-                      </div>
-                      <span className={cn("text-[9px] font-medium px-2 py-0.5 rounded-full",
-                        c.freq === "Très fréquent" ? "bg-emerald-50 text-emerald-600 border border-emerald-200" :
-                        c.freq === "Fréquent" ? "bg-blue-50 text-blue-600 border border-blue-200" :
-                        "bg-gray-50 text-gray-500 border border-gray-200"
-                      )}>{c.freq}</span>
-                    </div>
-                  ));
+                    );
+                  });
                 })()}
-                <div className="text-center pt-1">
-                  <span className="text-[9px] text-gray-400 italic">Basé sur les interactions COMMAND</span>
-                </div>
+              </div>
+            </div>
+
+            {/* Collaboration Équipe (REAL DATA — computed from missions) */}
+            <div className="border rounded-xl overflow-hidden shadow-sm bg-white">
+              <div className="bg-gradient-to-r from-rose-600 to-pink-500 px-4 py-2.5 flex items-center gap-2">
+                <Users className="h-4 w-4 text-white" />
+                <span className="text-xs font-bold text-white">Collaboration Equipe</span>
+              </div>
+              <div className="p-3 space-y-2">
+                {(() => {
+                  // Compute collaborators from real missions — which bots work together
+                  const COLLAB_ROLES: Record<string, string> = {
+                    CEOB: "Direction", CTOB: "Technologie", CFOB: "Finance",
+                    CMOB: "Marketing", CSOB: "Strategie", COOB: "Operations",
+                    CPOB: "Production", CHROB: "RH", CINOB: "Innovation",
+                    CROB: "Vente", CLOB: "Legal", CISOB: "Securite",
+                  };
+                  // Count how often other bots appear in same missions/chantiers
+                  const botCounts: Record<string, number> = {};
+                  missions.forEach((m) => {
+                    const assignee = m.bot_assigne || m.responsable || "";
+                    if (assignee && assignee !== activeBotCode) {
+                      botCounts[assignee] = (botCounts[assignee] || 0) + 1;
+                    }
+                  });
+                  const sorted = Object.entries(botCounts).sort((a, b) => b[1] - a[1]).slice(0, 3);
+                  if (sorted.length === 0) {
+                    return <div className="text-[11px] text-gray-400 text-center py-2">Aucune collaboration detectee</div>;
+                  }
+                  return sorted.map(([code, count], i) => {
+                    const avatar = BOT_AVATAR[code];
+                    return (
+                      <div key={i} className="flex items-center gap-2.5 py-1.5 border-b border-gray-50 last:border-0">
+                        {avatar ? (
+                          <img src={avatar} alt={code} className="w-8 h-8 rounded-full object-cover shrink-0" />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center shrink-0">
+                            <Bot className="h-4 w-4 text-gray-500" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[11px] text-gray-700 font-medium">{code}</div>
+                          <div className="text-[9px] text-gray-400">{COLLAB_ROLES[code] || "Agent"}</div>
+                        </div>
+                        <span className={cn("text-[9px] font-medium px-2 py-0.5 rounded-full",
+                          count >= 5 ? "bg-emerald-50 text-emerald-600 border border-emerald-200" :
+                          count >= 2 ? "bg-blue-50 text-blue-600 border border-blue-200" :
+                          "bg-gray-50 text-gray-500 border border-gray-200"
+                        )}>{count} missions</span>
+                      </div>
+                    );
+                  });
+                })()}
               </div>
             </div>
           </div>
@@ -632,65 +736,66 @@ export function AgentSettingsView() {
           {/* ══ HISTORIQUE DÉCISIONNEL + DOCUMENTS GÉNÉRÉS ══ */}
           <div className="grid grid-cols-2 gap-4">
 
-            {/* Historique Décisionnel */}
+            {/* Historique Décisionnel (REAL DATA) */}
             <div className="border rounded-xl overflow-hidden shadow-sm bg-white">
               <div className="bg-gradient-to-r from-amber-600 to-orange-500 px-4 py-2.5 flex items-center gap-2">
                 <BarChart3 className="h-4 w-4 text-white" />
-                <span className="text-xs font-bold text-white">Historique Décisionnel</span>
-                <span className="ml-auto text-[9px] bg-white/20 text-white/80 px-2 py-0.5 rounded-full">(en dev)</span>
+                <span className="text-xs font-bold text-white">Historique Decisionnel</span>
+                <span className="ml-auto text-[9px] bg-white/20 text-white/80 px-2 py-0.5 rounded-full">{decisions.total}</span>
               </div>
               <div className="p-3 space-y-2.5">
                 <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-gray-500">Décisions contribuées</span>
-                  <span className="font-bold text-gray-800">—</span>
+                  <span className="text-gray-500">Decisions contribuees</span>
+                  <span className="font-bold text-gray-800">{decisions.total}</span>
                 </div>
                 <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-gray-500">Recommandations émises</span>
-                  <span className="font-bold text-gray-800">—</span>
+                  <span className="text-gray-500">Missions COMMAND</span>
+                  <span className="font-bold text-gray-800">{botCommandMissions.length}</span>
                 </div>
                 <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-gray-500">Alertes déclenchées</span>
-                  <span className="font-bold text-gray-800">—</span>
+                  <span className="text-gray-500">Briefings compiles</span>
+                  <span className="font-bold text-gray-800">{briefings.length}</span>
                 </div>
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-gray-500">Consensus atteint</span>
-                  <span className="font-bold text-gray-800">—</span>
-                </div>
-                <div className="border-t border-gray-100 pt-2 mt-1">
-                  <div className="text-[10px] text-gray-400 italic text-center">
-                    Connecté au Decision Log et au protocole COMMAND
+                {decisions.entries.length > 0 && (
+                  <div className="border-t border-gray-100 pt-2 mt-1 space-y-1.5">
+                    {decisions.entries.slice(0, 3).map((d: any) => (
+                      <div key={d.id} className="text-[9px] text-gray-500 truncate">
+                        <span className="font-medium text-gray-700">D-{String(d.id).padStart(3, "0")}</span> {d.titre || d.description?.slice(0, 40)}
+                      </div>
+                    ))}
                   </div>
-                </div>
+                )}
               </div>
             </div>
 
-            {/* Documents Générés */}
+            {/* Briefings & Documents (REAL DATA) */}
             <div className="border rounded-xl overflow-hidden shadow-sm bg-white">
               <div className="bg-gradient-to-r from-teal-600 to-cyan-500 px-4 py-2.5 flex items-center gap-2">
                 <FileText className="h-4 w-4 text-white" />
-                <span className="text-xs font-bold text-white">Documents Générés</span>
-                <span className="ml-auto text-[9px] bg-white/20 text-white/80 px-2 py-0.5 rounded-full">(en dev)</span>
+                <span className="text-xs font-bold text-white">Briefings & Documents</span>
+                <span className="ml-auto text-[9px] bg-white/20 text-white/80 px-2 py-0.5 rounded-full">{briefings.length}</span>
               </div>
               <div className="p-3 space-y-2.5">
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-gray-500">Rapports d'analyse</span>
-                  <span className="font-bold text-gray-800">—</span>
-                </div>
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-gray-500">Briefings compilés</span>
-                  <span className="font-bold text-gray-800">—</span>
-                </div>
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-gray-500">Plans d'action</span>
-                  <span className="font-bold text-gray-800">—</span>
-                </div>
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-gray-500">Mémos stratégiques</span>
-                  <span className="font-bold text-gray-800">—</span>
-                </div>
+                {briefings.length === 0 ? (
+                  <div className="text-[11px] text-gray-400 text-center py-2">Aucun briefing compile pour ce bot</div>
+                ) : (
+                  briefings.slice(0, 4).map((b: any) => (
+                    <div key={b.id} className="flex items-center justify-between text-[11px]">
+                      <span className="text-gray-600 truncate flex-1 mr-2">{b.titre || b.type_briefing}</span>
+                      <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium shrink-0",
+                        b.type_briefing === "daily" ? "bg-blue-50 text-blue-600" : "bg-violet-50 text-violet-600"
+                      )}>{b.type_briefing === "daily" ? "Daily" : "Board"}</span>
+                    </div>
+                  ))
+                )}
                 <div className="border-t border-gray-100 pt-2 mt-1">
-                  <div className="text-[10px] text-gray-400 italic text-center">
-                    Moteur de création documentaire bientôt actif
+                  <div className="flex items-center justify-between text-[9px] text-gray-400">
+                    <span>Missions completees</span>
+                    <span className="font-bold text-gray-600">{botMissions.completed.length}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-[9px] text-gray-400">
+                    <span>Missions totales</span>
+                    <span className="font-bold text-gray-600">{botMissions.all.length}</span>
                   </div>
                 </div>
               </div>

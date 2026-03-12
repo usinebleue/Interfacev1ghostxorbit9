@@ -39,7 +39,7 @@ import { DepartmentDetailView } from "./DepartmentDetailView";
 import { Orbit9DetailView } from "./orbit9/Orbit9DetailView";
 import { AgentSettingsView } from "./AgentSettingsView";
 import { MonBureauView } from "./MonBureauView";
-import { BlueprintLiveView } from "./BlueprintLiveView";
+// BlueprintLiveView fusionné dans BlueprintGestionView (D-115)
 import { BoardRoomView } from "./BoardRoomView";
 import { WarRoomView } from "./WarRoomView";
 import { ThinkRoomView } from "./ThinkRoomView";
@@ -80,6 +80,8 @@ import { AnimationShowcasePage } from "./orbit9/AnimationShowcasePage";
 import { AgentGalleryPage } from "./orbit9/AgentGalleryPage";
 import { AccueilHeroPage } from "./orbit9/AccueilHeroPage";
 import { BlueprintPlanView } from "./BlueprintPlanView";
+// BlueprintView (seed data) remplacé par BlueprintGestionView unifié (D-115)
+import { MonReseauView } from "./MonReseauView";
 import { BlueprintReseauPage } from "./orbit9/BlueprintReseauPage";
 import { FESidebarDroitePage } from "./orbit9/FESidebarDroitePage";
 import { FEMonReseauPage } from "./orbit9/FEMonReseauPage";
@@ -236,7 +238,7 @@ export function CenterZone() {
       {activeView === "orbit9-detail" && <Orbit9DetailView />}
       {activeView === "agent-settings" && <AgentSettingsView />}
       {activeView === "espace-bureau" && <MonBureauView />}
-      {activeView === "blueprint" && <BlueprintLiveView />}
+      {activeView === "blueprint" && <BlueprintGestionView />}
       {activeView === "board-room" && <BoardRoomView />}
       {activeView === "war-room" && <WarRoomView />}
       {activeView === "think-room" && <ThinkRoomView />}
@@ -279,6 +281,7 @@ export function CenterZone() {
       {activeView === "blueprint-reseau" && <BlueprintReseauPage />}
       {activeView === "fe-sidebar-droite" && <FESidebarDroitePage />}
       {activeView === "fe-mon-reseau" && <FEMonReseauPage />}
+      {activeView === "mon-reseau" && <MonReseauView />}
       {activeView === "carlos-codes" && <CarlosCodesView />}
       {activeView === "diagnostic-ia" && <DiagnosticIAPage />}
       {/* diagnostic-hub absorbed into health view (Sprint C Phase 4) */}

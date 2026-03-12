@@ -7,6 +7,7 @@
 import { PageLayout } from "../layouts/PageLayout";
 import { PageHeader } from "../layouts/PageHeader";
 import { Users } from "lucide-react";
+import { useFrameMaster } from "../../../context/FrameMasterContext";
 
 // ════════════════════════════════════════════════════════════════
 // KEYFRAMES
@@ -1100,18 +1101,25 @@ export const AGENTS: AgentConfig[] = [
 // AGENT CARD COMPONENT
 // ════════════════════════════════════════════════════════════════
 
-export function AgentAnimatedCard({ agent, index }: { agent: AgentConfig; index: number }) {
+export function AgentAnimatedCard({ agent, index, onSelect }: { agent: AgentConfig; index: number; onSelect?: (code: string) => void }) {
   // Generate unique IDs for this agent's paths
   const pid = agent.code.toLowerCase();
 
   return (
-    <div style={{
-      background: "white",
-      border: "1px solid rgba(0,0,0,0.3)",
-      borderRadius: 14,
-      overflow: "hidden",
-      boxShadow: "0 2px 12px rgba(0,0,0,0.25)",
-    }}>
+    <div
+      onClick={() => onSelect?.(agent.code)}
+      style={{
+        background: "white",
+        border: "1px solid rgba(0,0,0,0.3)",
+        borderRadius: 14,
+        overflow: "hidden",
+        boxShadow: "0 2px 12px rgba(0,0,0,0.25)",
+        cursor: onSelect ? "pointer" : "default",
+        transition: "box-shadow 0.15s",
+      }}
+      onMouseEnter={e => { if (onSelect) { e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,0,0,0.4)"; }}}
+      onMouseLeave={e => { if (onSelect) { e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.25)"; }}}
+    >
       {/* 16:9 Image Container */}
       <div style={{
         width: "100%",
@@ -1300,12 +1308,18 @@ export function AgentAnimatedCard({ agent, index }: { agent: AgentConfig; index:
 // ════════════════════════════════════════════════════════════════
 
 export function AgentGalleryPage() {
+  const { navigateToDepartment } = useFrameMaster();
+
+  const handleSelect = (code: string) => {
+    navigateToDepartment(code, "department");
+  };
+
   return (
     <PageLayout maxWidth="5xl" header={
       <PageHeader
         icon={Users}
-        title="Galerie des Agents AI"
-        subtitle="12 agents animés — GhostX Team"
+        title="Mon Equipe AI"
+        subtitle="Cliquez sur un agent pour acceder a son departement"
       />
     }>
       <style>{AG_KEYFRAMES}</style>
@@ -1317,7 +1331,7 @@ export function AgentGalleryPage() {
         gap: 16,
       }}>
         {AGENTS.map((agent, i) => (
-          <AgentAnimatedCard key={agent.code} agent={agent} index={i} />
+          <AgentAnimatedCard key={agent.code} agent={agent} index={i} onSelect={handleSelect} />
         ))}
       </div>
     </PageLayout>

@@ -1,23 +1,24 @@
 /**
  * DepartmentTourDeControle.tsx — Tour de Controle par departement
  * MEME PATTERN que DashboardView (CarlOS) : bandeau proactif + 2 rangees de 5 Cards
- * Si CEOB (Direction) => redirige vers DashboardView
+ * CEOB (CarlOS AI) = meme structure 10 tabs que les autres bots
  * Sprint A — Frame Master V2
  */
 
-import { useState, useEffect } from "react";
-import { ArrowRight, Settings, Stethoscope } from "lucide-react";
-import { Button } from "../../../components/ui/button";
+import { useState, useEffect, useMemo } from "react";
+import { Settings, Stethoscope, Flame, ListChecks, Rocket, Bot } from "lucide-react";
 import { Card } from "../../../components/ui/card";
-import { Badge } from "../../../components/ui/badge";
 import { cn } from "../../../components/ui/utils";
 import { useFrameMaster } from "../../context/FrameMasterContext";
 import { useCanvasActions } from "../../context/CanvasActionContext";
 import { BOT_SUBTITLE } from "../../api/types";
 import { api } from "../../api/client";
+import { useTaches, useBureau } from "../../api/hooks";
 import type { Mission, DiagnosticCatalogue, TemplateDocumentaire } from "../../api/types";
-import { DashboardView } from "./DashboardView";
 import { PageLayout } from "./layouts/PageLayout";
+import { BlueprintFrame } from "./shared/BlueprintFrame";
+import { CHANTIERS, PLAYBOOK_TEMPLATES, BOT_INFO, STATUS_CONFIG, CHALEUR_CONFIG } from "./shared/blueprint-config";
+import type { TabDef } from "./shared/blueprint-types";
 
 /* ============ BLOCK HEADER — meme style que DashboardView ============ */
 function BlockHeader({ icon: Icon, title, count, gradient }: {
@@ -118,16 +119,22 @@ type DeptTdcConfig = {
   row2: BlocConfig[];
 };
 
-/* ============ TABS DEPARTEMENT (Pipeline pattern) ============ */
-type DeptViewTab = "overview" | "pipeline" | "documents" | "diagnostics";
-const DEPT_VIEW_TABS: { id: DeptViewTab; label: string; icon: React.ElementType }[] = [
-  { id: "overview", label: "Vue d'ensemble", icon: BarChart3 },
-  { id: "pipeline", label: "Pipeline", icon: Target },
+/* ============ TABS DEPARTEMENT (10 tabs — harmonise Blueprint) ============ */
+type DeptTabId = "cockpit" | "chantiers" | "projets" | "missions" | "taches" | "documents" | "playbooks" | "diagnostics" | "equipe";
+const DEPT_TABS: TabDef[] = [
+  { id: "cockpit", label: "Cockpit", icon: Gauge },
+  { id: "chantiers", label: "Chantiers", icon: Flame },
+  { id: "projets", label: "Projets", icon: Package },
+  { id: "missions", label: "Missions", icon: ListChecks },
+  { id: "taches", label: "Taches", icon: CheckCircle2 },
   { id: "documents", label: "Documents", icon: FileText },
+  { id: "playbooks", label: "Playbooks", icon: Rocket },
   { id: "diagnostics", label: "Diagnostics", icon: Stethoscope },
+  { id: "equipe", label: "Equipe AI", icon: Bot },
 ];
 
 const DEPT_HEADER_GRADIENT: Record<string, string> = {
+  CEOB: "from-blue-700 to-blue-500",
   CFOB: "from-emerald-600 to-emerald-500",
   CTOB: "from-violet-600 to-violet-500",
   CPOB: "from-slate-700 to-slate-600",
@@ -143,7 +150,7 @@ const DEPT_HEADER_GRADIENT: Record<string, string> = {
 
 /* Icon par departement pour le header gradient */
 const DEPT_ICON: Record<string, React.ElementType> = {
-  CFOB: DollarSign, CTOB: Cpu, CPOB: Factory, COOB: Settings,
+  CEOB: Zap, CFOB: DollarSign, CTOB: Cpu, CPOB: Factory, COOB: Settings,
   CROB: TrendingUp, CMOB: Megaphone, CSOB: Target, CHROB: Users,
   CISOB: ShieldCheck, CLOB: Scale, CINOB: Lightbulb,
 };
@@ -816,32 +823,134 @@ const DEPT_TDC: Record<string, DeptTdcConfig> = {
       ]},
     ],
   },
+
+  /* --- CARLOS AI / DIRECTION (CEOB) --- */
+  CEOB: {
+    botName: "CarlOS AI",
+    summary: "CEO Bot — Chef d'orchestre de la GhostX Team. Coordonne les 11 bots, supervise les chantiers strategiques et pilote les decisions COMMAND.",
+    row1: [
+      { icon: Zap, title: "Pilotage Strategique", gradient: "bg-gradient-to-r from-blue-700 to-blue-600", ringColor: "hover:ring-blue-300", items: [
+        { primary: "Decisions actives", value: "D-001 → D-114", secondary: "Journal decisionnel complet" },
+        { primary: "Chantiers supervises", value: "13", secondary: "CH-1 a CH-13 — tous departements" },
+        { primary: "Bots coordonnes", value: "11", secondary: "C-Suite complete sous COMMAND" },
+      ]},
+      { icon: Target, title: "Objectifs CEO", gradient: "bg-gradient-to-r from-blue-600 to-blue-500", ringColor: "hover:ring-blue-300", items: [
+        { primary: "Vision & roadmap", secondary: "V3.4 — Pioneer-Ready" },
+        { primary: "Preparation CA", secondary: "Board Room + Briefings automatises" },
+        { primary: "Gestion parties prenantes", secondary: "REAI, investisseurs, partenaires" },
+      ]},
+      { icon: Shield, title: "Gouvernance", gradient: "bg-gradient-to-r from-blue-500 to-indigo-500", ringColor: "hover:ring-indigo-300", items: [
+        { primary: "Protocole CREDO", pct: 100, pctColor: "bg-blue-500", secondary: "Deploye — gouverne toutes les interactions" },
+        { primary: "COMMAND Engine", pct: 100, pctColor: "bg-emerald-500", secondary: "LIVE — 4 stages actifs" },
+        { primary: "Decision Log", pct: 100, pctColor: "bg-violet-500", secondary: "Tracabilite complete" },
+      ]},
+      { icon: BarChart3, title: "KPIs Direction", gradient: "bg-gradient-to-r from-indigo-600 to-indigo-500", ringColor: "hover:ring-indigo-300", items: [
+        { primary: "ROI GhostX", value: "21x", valueColor: "text-emerald-600", secondary: "Cout humain vs CarlOS" },
+        { primary: "Economies", value: "97%", valueColor: "text-emerald-600", secondary: "1.35M$ → 21,600$/an" },
+        { primary: "Throughput", value: "500x", secondary: "Vitesse vs equipe humaine" },
+      ]},
+      { icon: Globe, title: "Reseau & Expansion", gradient: "bg-gradient-to-r from-cyan-600 to-cyan-500", ringColor: "hover:ring-cyan-300", items: [
+        { primary: "Membres REAI", value: "130+", secondary: "Reseau manufacturiers Quebec" },
+        { primary: "Orbit9 cellules", secondary: "Moteur de matching actif" },
+        { primary: "Pionniers AI", secondary: "Programme early adopters" },
+      ]},
+    ],
+    row2: [
+      { icon: MessageSquare, title: "Communication", gradient: "bg-gradient-to-r from-blue-600 to-blue-500", ringColor: "hover:ring-blue-300", items: [
+        { primary: "LiveChat multi-perspectives", pct: 100, pctColor: "bg-blue-500", secondary: "Branches, sentinelle, cristallisation" },
+        { primary: "Voice pipeline LiveKit", pct: 100, pctColor: "bg-emerald-500", secondary: "STT + TTS + Tavus video" },
+        { primary: "Canvas auto-nav", pct: 100, pctColor: "bg-violet-500", secondary: "Navigation vocale LIVE" },
+      ]},
+      { icon: ClipboardList, title: "Missions COMMAND", gradient: "bg-gradient-to-r from-violet-600 to-violet-500", ringColor: "hover:ring-violet-300", items: [
+        { primary: "Pipeline COMMAND", secondary: "SCAN → STRATEGIE → EXECUTION → BILAN" },
+        { primary: "Playbooks deployes", secondary: "46 playbooks JSON disponibles" },
+        { primary: "Templates generes", secondary: "41 templates documentaires" },
+      ]},
+      { icon: HeartPulse, title: "Sante Systeme", gradient: "bg-gradient-to-r from-rose-600 to-rose-500", ringColor: "hover:ring-rose-300", items: [
+        { primary: "Securite UFW", pct: 100, pctColor: "bg-emerald-500", secondary: "CORS + rate limit + API key" },
+        { primary: "Infrastructure", secondary: "VPS1 dev + VPS2 prod — actifs" },
+        { primary: "Tests", value: "94/94", valueColor: "text-emerald-600", secondary: "Protocoles valides" },
+      ]},
+      { icon: Eye, title: "Veille CEO", gradient: "bg-gradient-to-r from-amber-600 to-amber-500", ringColor: "hover:ring-amber-300", items: [
+        { primary: "Veille concurrentielle", secondary: "CSO rapports automatises" },
+        { primary: "Tableau de bord KPIs", secondary: "Cockpit centralisé" },
+        { primary: "Alertes prioritaires", secondary: "Triangle du Feu — BRULE/COUVE/MEURT" },
+      ]},
+      { icon: GraduationCap, title: "Intelligence", gradient: "bg-gradient-to-r from-slate-600 to-slate-500", ringColor: "hover:ring-slate-300", items: [
+        { primary: "GHML Framework", secondary: "220+ elements proprietaires" },
+        { primary: "Trisociation", secondary: "Bezos + Munger + Churchill" },
+        { primary: "8+1 Modes reflexion", secondary: "Debat, Brainstorm, Crise, etc." },
+      ]},
+    ],
+  },
 };
+
+/* ============ SA8 — SPECS TECHNIQUES & ROI PAR BOT ============ */
+const BOT_CAPACITES: Record<string, {
+  equivHumain: string; coutHumain: string;
+  tachesCount: number; heuresMois: string;
+  exemples: string[];
+}> = {
+  CEOB: { equivHumain: "CEO conseil / Coach executif", coutHumain: "100-200K$", tachesCount: 15, heuresMois: "80-120h", exemples: ["Preparation CA", "Decisions strategiques", "Vision & roadmap", "Gestion parties prenantes"] },
+  CFOB: { equivHumain: "CFO fractionnaire", coutHumain: "150-250K$", tachesCount: 18, heuresMois: "100-160h", exemples: ["Budget annuel", "Analyse ROI projets", "Tresorerie", "Subventions & financement"] },
+  CTOB: { equivHumain: "CTO fractionnaire", coutHumain: "150-300K$", tachesCount: 16, heuresMois: "120-180h", exemples: ["Architecture techno", "Selection fournisseurs", "Cybersecurite", "Automatisation"] },
+  CMOB: { equivHumain: "Directeur marketing", coutHumain: "120-200K$", tachesCount: 14, heuresMois: "100-160h", exemples: ["Strategie marketing", "Generation leads", "Positionnement", "Campagnes"] },
+  CSOB: { equivHumain: "Consultant strategie", coutHumain: "120-200K$", tachesCount: 12, heuresMois: "80-120h", exemples: ["Analyse concurrentielle", "Plan strategique", "Diversification", "M&A screening"] },
+  COOB: { equivHumain: "Directeur operations", coutHumain: "120-200K$", tachesCount: 15, heuresMois: "120-200h", exemples: ["Optimisation processus", "Gestion qualite", "Lean manufacturing", "Chaine d'approvisionnement"] },
+  CPOB: { equivHumain: "Directeur usine", coutHumain: "100-180K$", tachesCount: 30, heuresMois: "120-200h", exemples: ["Monitoring TRS machines", "Suivi maintenance GMAO", "Alertes SST", "Rapports production"] },
+  CHROB: { equivHumain: "VP Ressources humaines", coutHumain: "100-180K$", tachesCount: 25, heuresMois: "80-140h", exemples: ["Sondages engagement", "Suivi formation", "Rapports roulement", "Screening CV"] },
+  CINOB: { equivHumain: "VP Innovation / R&D", coutHumain: "120-200K$", tachesCount: 20, heuresMois: "80-120h", exemples: ["Veille technologique", "Gestion portfolio PI", "Rapports R&D", "Benchmark innovation"] },
+  CROB: { equivHumain: "VP Ventes / Revenus", coutHumain: "120-200K$", tachesCount: 25, heuresMois: "100-160h", exemples: ["Suivi pipeline ventes", "Forecasting", "Rapports performance reps", "Scoring leads"] },
+  CLOB: { equivHumain: "Directeur juridique", coutHumain: "120-200K$", tachesCount: 20, heuresMois: "60-100h", exemples: ["Suivi contrats", "Alertes conformite", "Gestion registre Loi 25", "Veille reglementaire"] },
+  CISOB: { equivHumain: "Directeur cybersecurite", coutHumain: "120-200K$", tachesCount: 20, heuresMois: "80-140h", exemples: ["Monitoring cybersecurite", "Alertes vulnerabilites", "Rapports conformite SOC2/NIST", "Tests automatises"] },
+};
+
+/* ============ HELPERS — Parsing missions from CHANTIERS ============ */
+function parseMissionBot(raw: string): { bot: string; text: string } {
+  const match = raw.match(/^(\w+):\s*(.+)$/);
+  if (match) return { bot: match[1], text: match[2] };
+  return { bot: "", text: raw };
+}
 
 /* ============ COMPOSANT PRINCIPAL ============ */
 export function DepartmentTourDeControle() {
   const { activeBotCode, activeBot, setActiveView } = useFrameMaster();
   const { dispatch } = useCanvasActions();
-  const [deptTab, setDeptTab] = useState<DeptViewTab>("overview");
+  const [deptTab, setDeptTab] = useState<DeptTabId>("cockpit");
   const [missions, setMissions] = useState<Mission[]>([]);
   const [diagnostics, setDiagnostics] = useState<DiagnosticCatalogue[]>([]);
   const [templates, setTemplates] = useState<TemplateDocumentaire[]>([]);
+  const { taches } = useTaches();
+  const { items: bureauItems } = useBureau();
 
-  // Load data for Pipeline / Documents / Diagnostics tabs
-  // MUST be before any early return (React hooks rules)
+  // Load data for Missions / Documents / Diagnostics tabs
   useEffect(() => {
-    if (activeBotCode === "CEOB") return;
-    setDeptTab("overview");
+    setDeptTab("cockpit");
     const deptKey = BOT_TO_DEPT[activeBotCode] || "";
     api.listMissions().then(r => setMissions((r.missions || []).filter(m => m.bot_primaire === activeBotCode))).catch(() => {});
     api.listDiagnosticsEnrichis(deptKey).then(d => setDiagnostics(d || [])).catch(() => {});
     api.listTemplatesDocumentaires(activeBotCode).then(t => setTemplates(t || [])).catch(() => {});
   }, [activeBotCode]);
 
-  // CEOB (Direction) = meme Tour de Controle que le home
-  if (activeBotCode === "CEOB") {
-    return <DashboardView />;
-  }
+  // Filter CHANTIERS and PLAYBOOKS for this bot
+  const botChantiers = useMemo(() =>
+    CHANTIERS.filter(ch => ch.bots.includes(activeBotCode)),
+    [activeBotCode]
+  );
+  const botProjets = useMemo(() =>
+    botChantiers.flatMap(ch => ch.projets.map(p => ({ ...p, chantierId: ch.id, chantierLabel: ch.label }))),
+    [botChantiers]
+  );
+  const botPlaybooks = useMemo(() =>
+    PLAYBOOK_TEMPLATES.filter(pb => pb.bots.includes(activeBotCode)),
+    [activeBotCode]
+  );
+  // Bots that collaborate with this one (from same chantiers)
+  const collaborators = useMemo(() => {
+    const codes = new Set<string>();
+    botChantiers.forEach(ch => ch.bots.forEach(b => { if (b !== activeBotCode) codes.add(b); }));
+    return Array.from(codes);
+  }, [botChantiers, activeBotCode]);
 
   const config = DEPT_TDC[activeBotCode];
 
@@ -863,6 +972,8 @@ export function DepartmentTourDeControle() {
 
   const subtitle = BOT_SUBTITLE[activeBotCode] || config.botName;
   const headerGradient = DEPT_HEADER_GRADIENT[activeBotCode] || "from-slate-600 to-slate-500";
+  const DeptIcon = DEPT_ICON[activeBotCode] || Briefcase;
+  const iconColor = `text-${headerGradient.split("from-")[1]?.split(" ")[0]?.replace(/(-\d+)$/, "") || "slate"}-600`;
 
   const handleBlocClick = (bloc: BlocConfig) => {
     const elementType = bloc.title.toLowerCase()
@@ -887,74 +998,293 @@ export function DepartmentTourDeControle() {
     setActiveView("live-chat");
   };
 
+  // KPI stats for cockpit
+  const tachesOpen = taches.filter((t: any) => t.state_detail?.group !== "completed");
+  const docs = bureauItems.filter((b: any) => b.type_item === "document");
+  const outils = bureauItems.filter((b: any) => b.type_item === "outil");
+  const stats = {
+    chantiers: botChantiers.length,
+    projets: botProjets.length,
+    projetsDone: botProjets.filter(p => p.status === "done").length,
+    missionsApi: missions.length,
+    docs: templates.length,
+    diags: diagnostics.length,
+    playbooks: botPlaybooks.length,
+    tachesOpen: tachesOpen.length,
+    docsCount: docs.length,
+    outilsCount: outils.length,
+  };
+
   return (
-    <PageLayout maxWidth="5xl" spacing="space-y-2.5">
+    <BlueprintFrame
+      title={subtitle}
+      subtitle=""
+      icon={DeptIcon}
+      iconColor={iconColor}
+      tabs={DEPT_TABS}
+      activeTab={deptTab}
+      onTabChange={(tab) => setDeptTab(tab as DeptTabId)}
+      maxWidth="5xl"
+    >
 
-        {/* ── GRADIENT HEADER + TABS (Pipeline pattern) ── */}
-        <div className={cn("bg-gradient-to-r rounded-xl p-4 transition-all duration-300", headerGradient)}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {(() => { const DeptIcon = DEPT_ICON[activeBotCode]; return DeptIcon ? (
-                <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center">
-                  <DeptIcon className="h-5 w-5 text-white" />
+        {/* ══════════════════════════════════════════ */}
+        {/* TAB 1 — COCKPIT (KPIs + blocs essentiels)  */}
+        {/* ══════════════════════════════════════════ */}
+        {deptTab === "cockpit" && (
+          <div className="space-y-4">
+            {/* KPI Cards — 4 cards, design-system standard (gradient header) */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <Card className="p-0 overflow-hidden transition-shadow hover:shadow-lg">
+                <div className={cn("flex items-center gap-2 px-3 py-2 bg-gradient-to-r", headerGradient)}>
+                  <Flame className="h-4 w-4 text-white" />
+                  <span className="text-sm font-bold text-white">Chantiers</span>
                 </div>
-              ) : null; })()}
-              <h2 className="text-lg font-bold text-white">{subtitle}</h2>
+                <div className="px-3 py-2">
+                  <p className="text-2xl font-extrabold text-gray-900">{stats.chantiers}</p>
+                  <p className="text-[9px] text-gray-500">{stats.projets} projets · {stats.projetsDone} termines</p>
+                </div>
+              </Card>
+              <Card className="p-0 overflow-hidden transition-shadow hover:shadow-lg">
+                <div className={cn("flex items-center gap-2 px-3 py-2 bg-gradient-to-r", headerGradient)}>
+                  <ListChecks className="h-4 w-4 text-white" />
+                  <span className="text-sm font-bold text-white">Missions</span>
+                </div>
+                <div className="px-3 py-2">
+                  <p className="text-2xl font-extrabold text-gray-900">{stats.missionsApi}</p>
+                  <p className="text-[9px] text-gray-500">{stats.tachesOpen} taches ouvertes</p>
+                </div>
+              </Card>
+              <Card className="p-0 overflow-hidden transition-shadow hover:shadow-lg">
+                <div className={cn("flex items-center gap-2 px-3 py-2 bg-gradient-to-r", headerGradient)}>
+                  <FileText className="h-4 w-4 text-white" />
+                  <span className="text-sm font-bold text-white">Documents</span>
+                </div>
+                <div className="px-3 py-2">
+                  <p className="text-2xl font-extrabold text-gray-900">{stats.docsCount}</p>
+                  <p className="text-[9px] text-gray-500">{stats.outilsCount} outils</p>
+                </div>
+              </Card>
+              <Card className="p-0 overflow-hidden transition-shadow hover:shadow-lg">
+                <div className={cn("flex items-center gap-2 px-3 py-2 bg-gradient-to-r", headerGradient)}>
+                  <Rocket className="h-4 w-4 text-white" />
+                  <span className="text-sm font-bold text-white">Playbooks</span>
+                </div>
+                <div className="px-3 py-2">
+                  <p className="text-2xl font-extrabold text-gray-900">{stats.playbooks}</p>
+                  <p className="text-[9px] text-gray-500">{stats.diags} diagnostics</p>
+                </div>
+              </Card>
             </div>
-            <div className="flex gap-1.5">
-              {DEPT_VIEW_TABS.map(tab => {
-                const Icon = tab.icon;
-                const count = tab.id === "pipeline" ? missions.length
-                  : tab.id === "documents" ? templates.length
-                  : tab.id === "diagnostics" ? diagnostics.length
-                  : undefined;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setDeptTab(tab.id)}
-                    className={cn(
-                      "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
-                      deptTab === tab.id
-                        ? "bg-white/25 text-white shadow-sm"
-                        : "text-white/60 hover:bg-white/10 hover:text-white/80"
-                    )}
-                  >
-                    <Icon className="h-3.5 w-3.5" />
-                    {tab.label}
-                    {count !== undefined && count > 0 && (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/20 font-bold">{count}</span>
-                    )}
-                  </button>
-                );
-              })}
+
+            {/* Blocs essentiels — row 1 */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+              {config.row1.map((bloc, i) => (
+                <Bloc key={i} config={bloc} onClick={() => handleBlocClick(bloc)} />
+              ))}
             </div>
+
+            {/* Blocs essentiels — row 2 */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+              {config.row2.map((bloc, i) => (
+                <Bloc key={i} config={bloc} onClick={() => handleBlocClick(bloc)} />
+              ))}
+            </div>
+
+            {/* Progression + Taches + Documents — 3 colonnes avec gradient headers */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {/* Progression projets */}
+              <Card className="p-0 overflow-hidden">
+                <div className={cn("flex items-center gap-2 px-3 py-2 bg-gradient-to-r", headerGradient)}>
+                  <LineChart className="h-4 w-4 text-white" />
+                  <span className="text-sm font-bold text-white">Progression</span>
+                  {botProjets.length > 0 && (
+                    <span className="text-[9px] font-bold bg-white/25 text-white px-2 py-0.5 rounded-full ml-auto">{botProjets.filter(p => p.status === "done").length}/{botProjets.length}</span>
+                  )}
+                </div>
+                <div className="p-3 space-y-2">
+                  {botProjets.slice(0, 6).map(p => {
+                    const sc = STATUS_CONFIG[p.status] || STATUS_CONFIG["a-faire"];
+                    return (
+                      <div key={p.id} className="flex items-center gap-2">
+                        <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded", sc.bg, sc.text)}>{sc.label}</span>
+                        <span className="text-xs text-gray-700 flex-1 truncate">{p.label}</span>
+                      </div>
+                    );
+                  })}
+                  {botProjets.length === 0 && (
+                    <p className="text-[9px] text-gray-400 text-center py-4">Aucun projet assigne</p>
+                  )}
+                </div>
+              </Card>
+
+              {/* Taches ouvertes */}
+              <Card className="p-0 overflow-hidden">
+                <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-amber-600 to-amber-500">
+                  <CheckCircle2 className="h-4 w-4 text-white" />
+                  <span className="text-sm font-bold text-white">Taches</span>
+                  {stats.tachesOpen > 0 && (
+                    <span className="text-[9px] font-bold bg-white/25 text-white px-2 py-0.5 rounded-full ml-auto">{stats.tachesOpen}</span>
+                  )}
+                </div>
+                <div className="p-3 space-y-2">
+                  {tachesOpen.length === 0 ? (
+                    <p className="text-[9px] text-gray-400 text-center py-4">Aucune tache ouverte</p>
+                  ) : (
+                    tachesOpen.slice(0, 6).map((t: any) => (
+                      <div key={t.id} className="flex items-center gap-2">
+                        <span className={cn("w-2 h-2 rounded-full shrink-0",
+                          t.priority === "urgent" ? "bg-red-500" : t.priority === "high" ? "bg-orange-500" : "bg-gray-300"
+                        )} />
+                        <span className="text-xs text-gray-700 truncate flex-1">{t.name}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </Card>
+
+              {/* Documents recents */}
+              <Card className="p-0 overflow-hidden">
+                <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-teal-600 to-teal-500">
+                  <FileText className="h-4 w-4 text-white" />
+                  <span className="text-sm font-bold text-white">Documents</span>
+                  {stats.docsCount > 0 && (
+                    <span className="text-[9px] font-bold bg-white/25 text-white px-2 py-0.5 rounded-full ml-auto">{stats.docsCount}</span>
+                  )}
+                </div>
+                <div className="p-3 space-y-2">
+                  {docs.length === 0 ? (
+                    <p className="text-[9px] text-gray-400 text-center py-4">Aucun document</p>
+                  ) : (
+                    docs.slice(0, 6).map((d: any) => (
+                      <div key={d.id} className="flex items-center gap-2">
+                        <FileText className="h-3.5 w-3.5 text-teal-500 shrink-0" />
+                        <span className="text-xs text-gray-700 truncate flex-1">{d.titre}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </Card>
+            </div>
+
+            {/* Collaborateurs */}
+            {collaborators.length > 0 && (
+              <Card className="p-0 overflow-hidden">
+                <div className={cn("flex items-center gap-2 px-3 py-2 bg-gradient-to-r", headerGradient)}>
+                  <Users className="h-4 w-4 text-white" />
+                  <span className="text-sm font-bold text-white">Collaborateurs</span>
+                  <span className="text-[9px] font-bold bg-white/25 text-white px-2 py-0.5 rounded-full ml-auto">{collaborators.length}</span>
+                </div>
+                <div className="p-3 flex flex-wrap gap-2">
+                  {collaborators.map(code => {
+                    const info = BOT_INFO[code];
+                    return (
+                      <div key={code} className={cn("flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[9px] font-medium bg-gradient-to-r text-white shadow-sm", info?.gradient || "from-gray-500 to-gray-400")}>
+                        <Bot className="h-3.5 w-3.5" />
+                        {info?.label || code} ({info?.short || ""})
+                      </div>
+                    );
+                  })}
+                </div>
+              </Card>
+            )}
           </div>
-        </div>
+        )}
 
         {/* ══════════════════════════════════════════ */}
-        {/* TAB 1 — VUE D'ENSEMBLE (10 blocs)         */}
+        {/* TAB 3 — CHANTIERS (filtres par bot)        */}
         {/* ══════════════════════════════════════════ */}
-        {deptTab === "overview" && (<>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-            {config.row1.map((bloc, i) => (
-              <Bloc key={i} config={bloc} onClick={() => handleBlocClick(bloc)} />
-            ))}
+        {deptTab === "chantiers" && (
+          <div className="space-y-3">
+            {botChantiers.length === 0 ? (
+              <div className="text-center py-12">
+                <Flame className="h-5 w-5 text-gray-300 mx-auto mb-2" />
+                <p className="text-sm text-gray-500">Aucun chantier assigne a cet agent</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {botChantiers.map(ch => {
+                  const done = ch.projets.filter(p => p.status === "done").length;
+                  const total = ch.projets.length;
+                  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+                  const cc = CHALEUR_CONFIG[ch.chaleur];
+                  return (
+                    <Card key={ch.id} className="p-0 overflow-hidden hover:shadow-lg transition-all cursor-pointer" onClick={() => handleFocus(`Chantier: ${ch.label}`, "chantier", ch)}>
+                      <div className={cn("bg-gradient-to-r px-3 py-2.5", headerGradient)}>
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-bold text-white">{ch.id} — {ch.label}</p>
+                          {cc && <span className={cn("text-[9px]", cc.color)}>{cc.label}</span>}
+                        </div>
+                      </div>
+                      <div className="px-3 py-2.5 space-y-2">
+                        <p className="text-[9px] text-gray-500 line-clamp-2">{ch.desc}</p>
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div className="h-full rounded-full bg-emerald-500" style={{ width: `${pct}%` }} />
+                          </div>
+                          <span className="text-[9px] font-bold text-gray-600">{pct}%</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{total} projets</span>
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600">{done} termines</span>
+                          {ch.bots.filter(b => b !== activeBotCode).map(b => (
+                            <span key={b} className="text-[9px] px-1.5 py-0.5 rounded bg-violet-50 text-violet-600">{BOT_INFO[b]?.short || b}</span>
+                          ))}
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-            {config.row2.map((bloc, i) => (
-              <Bloc key={i} config={bloc} onClick={() => handleBlocClick(bloc)} />
-            ))}
-          </div>
-        </>)}
+        )}
 
         {/* ══════════════════════════════════════════ */}
-        {/* TAB 2 — PIPELINE (Missions du departement) */}
+        {/* TAB 4 — PROJETS (des chantiers du bot)     */}
         {/* ══════════════════════════════════════════ */}
-        {deptTab === "pipeline" && (
+        {deptTab === "projets" && (
+          <div className="space-y-3">
+            {botProjets.length === 0 ? (
+              <div className="text-center py-12">
+                <Package className="h-5 w-5 text-gray-300 mx-auto mb-2" />
+                <p className="text-sm text-gray-500">Aucun projet pour cet agent</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {botProjets.map(p => {
+                  const sc = STATUS_CONFIG[p.status] || STATUS_CONFIG["a-faire"];
+                  return (
+                    <Card key={p.id} className="p-0 overflow-hidden hover:shadow-lg transition-all cursor-pointer" onClick={() => handleFocus(`Projet: ${p.label}`, "projet", p)}>
+                      <div className={cn("bg-gradient-to-r px-3 py-2.5 flex items-center justify-between", headerGradient)}>
+                        <p className="text-xs font-bold text-white truncate">{p.id} — {p.label}</p>
+                        <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded", sc.bg, sc.text)}>{sc.label}</span>
+                      </div>
+                      <div className="px-3 py-2.5 space-y-1.5">
+                        <p className="text-[9px] text-gray-500 line-clamp-2">{p.desc}</p>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{p.chantierId}</span>
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600">{p.missions.length} missions</span>
+                          {p.bloque_par && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-50 text-red-600">Bloque: {p.bloque_par}</span>
+                          )}
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════ */}
+        {/* TAB 5 — MISSIONS (API live)                */}
+        {/* ══════════════════════════════════════════ */}
+        {deptTab === "missions" && (
           <div className="space-y-3">
             {missions.length === 0 ? (
               <div className="text-center py-12">
-                <Target className="h-5 w-5 text-gray-300 mx-auto mb-2" />
+                <ListChecks className="h-5 w-5 text-gray-300 mx-auto mb-2" />
                 <p className="text-sm text-gray-500">Aucune mission pour ce departement</p>
                 <p className="text-[9px] text-gray-400 mt-1">Les missions creees avec cet agent apparaitront ici</p>
               </div>
@@ -987,7 +1317,47 @@ export function DepartmentTourDeControle() {
         )}
 
         {/* ══════════════════════════════════════════ */}
-        {/* TAB 3 — DOCUMENTS (Templates du departement) */}
+        {/* TAB 6 — TACHES (missions des projets)      */}
+        {/* ══════════════════════════════════════════ */}
+        {deptTab === "taches" && (
+          <div className="space-y-3">
+            {botProjets.length === 0 ? (
+              <div className="text-center py-12">
+                <CheckCircle2 className="h-5 w-5 text-gray-300 mx-auto mb-2" />
+                <p className="text-sm text-gray-500">Aucune tache pour cet agent</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {botProjets.filter(p => p.missions.length > 0).map(p => {
+                  const sc = STATUS_CONFIG[p.status] || STATUS_CONFIG["a-faire"];
+                  return (
+                    <Card key={p.id} className="p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded", sc.bg, sc.text)}>{sc.label}</span>
+                        <h4 className="text-xs font-bold text-gray-700">{p.id} — {p.label}</h4>
+                      </div>
+                      <div className="space-y-1.5">
+                        {p.missions.map((raw, idx) => {
+                          const { bot, text } = parseMissionBot(raw);
+                          const isThisBot = bot === activeBotCode;
+                          return (
+                            <div key={idx} className={cn("flex items-start gap-2 text-[9px] py-1 px-2 rounded", isThisBot ? "bg-blue-50" : "bg-gray-50")}>
+                              {bot && <span className={cn("font-bold shrink-0", isThisBot ? "text-blue-600" : "text-gray-500")}>{bot}</span>}
+                              <span className="text-gray-600">{text}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════ */}
+        {/* TAB 7 — DOCUMENTS (Templates du dept)      */}
         {/* ══════════════════════════════════════════ */}
         {deptTab === "documents" && (
           <div className="space-y-3">
@@ -1033,7 +1403,47 @@ export function DepartmentTourDeControle() {
         )}
 
         {/* ══════════════════════════════════════════ */}
-        {/* TAB 4 — DIAGNOSTICS (par departement)      */}
+        {/* TAB 8 — PLAYBOOKS (filtres par bot)        */}
+        {/* ══════════════════════════════════════════ */}
+        {deptTab === "playbooks" && (
+          <div className="space-y-3">
+            {botPlaybooks.length === 0 ? (
+              <div className="text-center py-12">
+                <Rocket className="h-5 w-5 text-gray-300 mx-auto mb-2" />
+                <p className="text-sm text-gray-500">Aucun playbook pour cet agent</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {botPlaybooks.map(pb => (
+                  <Card key={pb.id} className="p-0 overflow-hidden hover:shadow-lg transition-all cursor-pointer" onClick={() => handleFocus(`Playbook: ${pb.titre}`, "playbook", pb)}>
+                    <div className={cn("bg-gradient-to-r px-3 py-2.5 flex items-center justify-between", headerGradient)}>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-white truncate">{pb.titre}</p>
+                        <span className="text-[9px] text-white/60">{pb.niveau}</span>
+                      </div>
+                      {pb.populaire && (
+                        <span className="text-[9px] bg-white/20 text-white px-1.5 py-0.5 rounded-full shrink-0">Populaire</span>
+                      )}
+                    </div>
+                    <div className="px-3 py-2.5 space-y-1.5">
+                      <p className="text-[9px] text-gray-500 line-clamp-2 leading-relaxed">{pb.description}</p>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 font-medium">{pb.duree}</span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{pb.nb_projets} proj. · {pb.nb_missions} missions</span>
+                        {pb.bots.filter(b => b !== activeBotCode).map(b => (
+                          <span key={b} className="text-[9px] px-1.5 py-0.5 rounded bg-violet-50 text-violet-600">{BOT_INFO[b]?.short || b}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════ */}
+        {/* TAB 9 — DIAGNOSTICS (par departement)      */}
         {/* ══════════════════════════════════════════ */}
         {deptTab === "diagnostics" && (
           <div className="space-y-3">
@@ -1074,6 +1484,134 @@ export function DepartmentTourDeControle() {
           </div>
         )}
 
-    </PageLayout>
+        {/* ══════════════════════════════════════════ */}
+        {/* TAB 10 — MON EQUIPE AI                     */}
+        {/* ══════════════════════════════════════════ */}
+        {deptTab === "equipe" && (
+          <div className="space-y-4">
+            {/* This bot's info card */}
+            <Card className="p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-r text-white", BOT_INFO[activeBotCode]?.gradient || "from-gray-500 to-gray-400")}>
+                  <DeptIcon className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-gray-800">{BOT_INFO[activeBotCode]?.label || activeBotCode} — {BOT_INFO[activeBotCode]?.short || ""}</h3>
+                  <p className="text-[9px] text-gray-500">{subtitle}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="text-center p-2 bg-gray-50 rounded-lg">
+                  <p className="text-lg font-bold text-gray-800">{stats.chantiers}</p>
+                  <p className="text-[9px] text-gray-500">Chantiers</p>
+                </div>
+                <div className="text-center p-2 bg-gray-50 rounded-lg">
+                  <p className="text-lg font-bold text-gray-800">{stats.projets}</p>
+                  <p className="text-[9px] text-gray-500">Projets</p>
+                </div>
+                <div className="text-center p-2 bg-gray-50 rounded-lg">
+                  <p className="text-lg font-bold text-gray-800">{stats.playbooks}</p>
+                  <p className="text-[9px] text-gray-500">Playbooks</p>
+                </div>
+              </div>
+            </Card>
+
+            {/* Collaborators */}
+            <Card className="p-4">
+              <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-3">Equipe de collaboration</h3>
+              {collaborators.length === 0 ? (
+                <p className="text-[9px] text-gray-400 text-center py-4">Aucun collaborateur identifie</p>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {collaborators.map(code => {
+                    const info = BOT_INFO[code];
+                    const CollabIcon = DEPT_ICON[code];
+                    // Count shared chantiers
+                    const shared = botChantiers.filter(ch => ch.bots.includes(code)).length;
+                    return (
+                      <div key={code} className="flex items-center gap-2.5 p-2.5 border rounded-lg hover:bg-gray-50 transition-colors">
+                        <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-r text-white shrink-0", info?.gradient || "from-gray-500 to-gray-400")}>
+                          {CollabIcon ? <CollabIcon className="h-3.5 w-3.5" /> : <Bot className="h-3.5 w-3.5" />}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-gray-800 truncate">{info?.label || code}</p>
+                          <p className="text-[9px] text-gray-500">{info?.short || ""} · {shared} chantier{shared > 1 ? "s" : ""}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </Card>
+
+            {/* Specs Techniques & ROI */}
+            {(() => {
+              const cap = BOT_CAPACITES[activeBotCode];
+              if (!cap) return null;
+              return (
+                <Card className="overflow-hidden">
+                  <div className="bg-gradient-to-r from-indigo-700 to-purple-600 px-4 py-2.5 flex items-center gap-2">
+                    <Cpu className="h-4 w-4 text-white" />
+                    <span className="text-xs font-bold text-white">Specs Techniques & ROI</span>
+                    <span className="ml-auto text-[9px] bg-white/20 text-white/80 px-2 py-0.5 rounded-full">
+                      {cap.tachesCount} taches automatisees
+                    </span>
+                  </div>
+                  <div className="p-3 space-y-3">
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-3 text-center">
+                        <Users className="h-4 w-4 text-indigo-500 mx-auto mb-1" />
+                        <div className="text-[11px] font-bold text-gray-800">{cap.equivHumain}</div>
+                        <div className="text-[9px] text-gray-500 mt-0.5">Equivalent humain</div>
+                      </div>
+                      <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-3 text-center">
+                        <DollarSign className="h-4 w-4 text-emerald-500 mx-auto mb-1" />
+                        <div className="text-lg font-extrabold text-gray-800">{cap.coutHumain}</div>
+                        <div className="text-[9px] text-gray-500 mt-0.5">Cout humain/an</div>
+                      </div>
+                      <div className="bg-amber-50 border border-amber-100 rounded-lg p-3 text-center">
+                        <CalendarDays className="h-4 w-4 text-amber-500 mx-auto mb-1" />
+                        <div className="text-lg font-extrabold text-gray-800">{cap.heuresMois}</div>
+                        <div className="text-[9px] text-gray-500 mt-0.5">Heures/mois</div>
+                      </div>
+                    </div>
+                    <div className="border-t border-gray-100 pt-2">
+                      <div className="text-[9px] font-semibold text-gray-600 mb-1.5">Taches automatisees ({cap.tachesCount})</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {cap.exemples.map((ex, i) => (
+                          <span key={i} className="text-[9px] bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-1 rounded-full font-medium">
+                            {ex}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })()}
+
+            {/* Chantiers partages */}
+            <Card className="p-4">
+              <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-3">Chantiers avec cette equipe</h3>
+              <div className="space-y-2">
+                {botChantiers.map(ch => (
+                  <div key={ch.id} className="flex items-center gap-2 py-1.5 border-b border-gray-100 last:border-0">
+                    <span className="text-[9px] font-bold text-gray-400">{ch.id}</span>
+                    <span className="text-xs text-gray-700 flex-1 truncate">{ch.label}</span>
+                    <div className="flex gap-1">
+                      {ch.bots.map(b => (
+                        <span key={b} className={cn("text-[9px] px-1.5 py-0.5 rounded text-white", b === activeBotCode ? "bg-blue-600" : "bg-gray-400")}>
+                          {BOT_INFO[b]?.short || b}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        )}
+
+    </BlueprintFrame>
   );
 }
