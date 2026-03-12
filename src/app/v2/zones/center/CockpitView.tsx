@@ -865,12 +865,17 @@ export function CockpitView() {
                 onClick={() => handleFocus("Missions", "pipeline", { total: missionsTotal, actives: missionsActives }, "CEOB")} />
               <KpiCard icon={CheckCircle} label="Completees" value={String(missionsDone)} change={`${tauxCompletion}% taux`} changeType="up"
                 onClick={() => handleFocus("Missions Completees", "kpi_ceo", { done: missionsDone, taux: tauxCompletion }, "CEOB")} />
-              <KpiCard icon={Users} label="Bots actifs" value="12" change="GhostX Team" changeType="stable"
-                onClick={() => handleFocus("GhostX Team", "kpi_cso", { bots: 12 }, "CEOB")} />
+              <KpiCard icon={Users} label="Bots actifs" value="—" change="A connecter" changeType="stable"
+                onClick={() => handleFocus("GhostX Team", "kpi_cso", {}, "CEOB")} />
             </div>
 
-            {/* 12 rangees C-Level — 4 boxes par ligne (identite + 3 angles) */}
-            <CLevelStatsRows onFocus={handleFocus} />
+            {/* 12 rangees C-Level — VIDEES (fake data supprimee) */}
+            <Card className="p-6 text-center">
+              <LayoutDashboard className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+              <p className="text-sm font-medium text-gray-500">KPIs par departement</p>
+              <p className="text-xs text-gray-400 mt-1">Les donnees s'afficheront ici quand les KPIs seront connectes aux vrais indicateurs de chaque departement.</p>
+              <p className="text-[9px] text-gray-300 mt-3">12 departements × 6 angles × 4 KPIs = 288 indicateurs a connecter</p>
+            </Card>
 
             {/* Briefings Compiles (BLOC 3) */}
             <BriefingsPanel />
