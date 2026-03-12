@@ -69,24 +69,8 @@ const DEPT_LABELS: Record<string, { label: string; gradient: string; bot: string
   securite:    { label: "Securite (CISO)",     gradient: "from-zinc-700 to-zinc-600",     bot: "CISOB" },
 };
 
-/* ============ VITAA DATA — VIDE (a connecter aux vrais diagnostics) ============ */
-const VITAA = [
-  { letter: "V", label: "Vente", score: 0, avg: 0, color: "bg-blue-500" },
-  { letter: "I", label: "Idee", score: 0, avg: 0, color: "bg-purple-500" },
-  { letter: "T", label: "Temps", score: 0, avg: 0, color: "bg-emerald-500" },
-  { letter: "A", label: "Argent", score: 0, avg: 0, color: "bg-amber-500" },
-  { letter: "A", label: "Actif", score: 0, avg: 0, color: "bg-red-500" },
-];
-
-const SCORE_GLOBAL = 0;
-const CRITIQUES = 0;
-const TRIANGLE_STATUS = "—";
-
-/* ============ QUICK WINS — VIDE (generees par diagnostics) ============ */
-const QUICK_WINS: { text: string; bot: string; priority: "critique" | "haute" | "moyenne" }[] = [];
-
-/* ============ DEPARTEMENTS — VIDE (a connecter aux vrais scores) ============ */
-const DEPT_SCORES: { label: string; score: number }[] = [];
+/* ============ VITAA / SCORE / QUICK WINS / DEPT SCORES ============ */
+/* Calcules dynamiquement dans le composant depuis lastDiag (dernier diagnostic complete) */
 
 /* ============ KPI CARD ============ */
 function KpiCard({ icon: Icon, label, value, sub, gradient, onClick }: {
@@ -173,7 +157,37 @@ export function SanteGlobaleView() {
     items: diagnosticsEnrichis.filter(d => d.departement === dept),
   }));
 
-  // Resultats tab — radar + gaps + ghost team from lastDiag
+  // ── Tab 1 — Etat de sante (calcule depuis dernier diagnostic) ──
+  const ds = lastDiag?.scores_departements || {};
+  const VITAA = lastDiag ? [
+    { letter: "V", label: "Vente", score: ds.ventes || 0, avg: 50, color: "bg-blue-500" },
+    { letter: "I", label: "Idee", score: ds.innovation || 0, avg: 50, color: "bg-purple-500" },
+    { letter: "T", label: "Temps", score: ds.operations || 0, avg: 50, color: "bg-emerald-500" },
+    { letter: "A", label: "Argent", score: ds.finance || 0, avg: 50, color: "bg-amber-500" },
+    { letter: "A", label: "Actif", score: ds.production || 0, avg: 50, color: "bg-red-500" },
+  ] : [
+    { letter: "V", label: "Vente", score: 0, avg: 0, color: "bg-blue-500" },
+    { letter: "I", label: "Idee", score: 0, avg: 0, color: "bg-purple-500" },
+    { letter: "T", label: "Temps", score: 0, avg: 0, color: "bg-emerald-500" },
+    { letter: "A", label: "Argent", score: 0, avg: 0, color: "bg-amber-500" },
+    { letter: "A", label: "Actif", score: 0, avg: 0, color: "bg-red-500" },
+  ];
+  const SCORE_GLOBAL = lastDiag?.score_dia || 0;
+  const CRITIQUES = VITAA.filter(p => p.score > 0 && p.score < 35).length;
+  const TRIANGLE_STATUS = !lastDiag ? "—" : CRITIQUES >= 3 ? "BRULE" : CRITIQUES >= 2 ? "COUVE" : CRITIQUES >= 1 ? "RISQUE" : "SAIN";
+  const QUICK_WINS: { text: string; bot: string; priority: "critique" | "haute" | "moyenne" }[] =
+    (lastDiag?.top_gaps || []).map(gap => ({
+      text: gap.label,
+      bot: gap.botCode,
+      priority: (gap.score < 30 ? "critique" : gap.score < 50 ? "haute" : "moyenne") as "critique" | "haute" | "moyenne",
+    }));
+  const DEPT_SCORES: { label: string; score: number }[] = lastDiag?.scores_departements
+    ? Object.entries(lastDiag.scores_departements)
+        .map(([key, score]) => ({ label: DEPT_LABELS[key]?.label?.split(" (")[0] || key, score }))
+        .sort((a, b) => b.score - a.score)
+    : [];
+
+  // ── Tab 3 — Resultats (radar + gaps + ghost team) ──
   const niveau = lastDiag ? getNiveau(lastDiag.score_dia) : null;
   const radarData = lastDiag?.scores_departements
     ? Object.entries(lastDiag.scores_departements).map(([key, score]) => ({
