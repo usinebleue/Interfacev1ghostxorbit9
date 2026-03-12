@@ -76,7 +76,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   } = useChat();
   const { crystals, addCrystal, deleteCrystal, exportCrystals } = useCrystals();
   const { dispatchBatch, focusData, clearFocusMode } = useCanvasActions();
-  const { activeView, activeBotCode, activeOrbit9Section, activeEspaceSection, activeBlueprintSection, chatSourceView } = useFrameMaster();
+  const { activeView, activeBotCode, activeOrbit9Section, activeEspaceSection, activeStrategiqueSection, chatSourceView } = useFrameMaster();
 
   // Connecter le hook chat au Canvas Action Bus
   useEffect(() => {
@@ -142,9 +142,9 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     if (activeView === "department") return activeBotCode; // CEOB→direction, CFOB→finance, etc.
     if (activeView === "orbit9-detail") return activeOrbit9Section || undefined;
     if (activeView === "espace-bureau") return activeEspaceSection;
-    if (activeView === "blueprint") return activeBlueprintSection;
+    if (activeView === "strategique") return activeStrategiqueSection;
     return undefined;
-  }, [activeView, activeBotCode, activeOrbit9Section, activeEspaceSection, activeBlueprintSection]);
+  }, [activeView, activeBotCode, activeOrbit9Section, activeEspaceSection, activeStrategiqueSection]);
 
   // Wrap sendMessage to inject active reflection mode + GPS du Flow context
   const sendMessage = useCallback(

@@ -1,5 +1,5 @@
 /**
- * BlueprintComponents.tsx — Composants partages pour Blueprint / Mon Bureau / Mon Reseau
+ * SectionComponents.tsx — Composants partages pour Strategique / Mon Bureau / Mon Reseau
  * StatusBadge, BotBadge, ChaleurBadge, PlaybookCard, TemplateSection, KPICard
  */
 
@@ -10,8 +10,8 @@ import { Card } from "../../../../components/ui/card";
 import {
   STATUS_CONFIG, CHALEUR_CONFIG, BOT_INFO, TYPE_COLORS,
   PLAYBOOK_TEMPLATES,
-} from "./blueprint-config";
-import type { PlaybookTemplate, KPIConfig, BreadcrumbItem } from "./blueprint-types";
+} from "./section-config";
+import type { PlaybookTemplate, KPIConfig, BreadcrumbItem } from "./section-types";
 
 // ================================================================
 // BADGES

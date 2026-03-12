@@ -1,7 +1,7 @@
 /**
  * MonReseauView.tsx — Mon Reseau (fusion RD.8 + FE.9)
  * 10 tabs: Profil, Cellules, Jumelage, Chantiers Reseau, Pionniers, Gouvernance, Dashboard, Nouvelles, Evenements, Industrie
- * Utilise BlueprintFrame pour la coherence visuelle
+ * Utilise SectionFrame pour la coherence visuelle
  * Reutilise les pages existantes + enrichissements FE.9
  */
 
@@ -21,9 +21,9 @@ import { Card } from "../../../components/ui/card";
 import { Badge } from "../../../components/ui/badge";
 import { useFrameMaster } from "../../context/FrameMasterContext";
 import type { ReseauSection } from "../../context/FrameMasterContext";
-import { BlueprintFrame } from "./shared/BlueprintFrame";
+import { SectionFrame } from "./shared/SectionFrame";
 import { HierarchieGHML } from "./shared/HierarchieGHML";
-import type { TabDef } from "./shared/blueprint-types";
+import type { TabDef } from "./shared/section-types";
 
 // Reuse existing pages (NO duplication)
 import { CellulesPage } from "./orbit9/CellulesPage";
@@ -885,7 +885,7 @@ export function MonReseauView() {
   };
 
   return (
-    <BlueprintFrame
+    <SectionFrame
       title="Mon Reseau"
       subtitle=""
       icon={Network}
@@ -895,6 +895,6 @@ export function MonReseauView() {
       onTabChange={(tab) => navigateReseau(tab as ReseauTabId)}
     >
       {renderTab()}
-    </BlueprintFrame>
+    </SectionFrame>
   );
 }

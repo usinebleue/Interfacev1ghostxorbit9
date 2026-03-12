@@ -16,9 +16,9 @@ import { api } from "../../api/client";
 import { useTaches, useBureau, useChantiers, useProjets } from "../../api/hooks";
 import type { Mission, DiagnosticCatalogue, TemplateDocumentaire } from "../../api/types";
 import { PageLayout } from "./layouts/PageLayout";
-import { BlueprintFrame } from "./shared/BlueprintFrame";
-import { PLAYBOOK_TEMPLATES, BOT_INFO, STATUS_CONFIG, CHALEUR_CONFIG } from "./shared/blueprint-config";
-import type { TabDef } from "./shared/blueprint-types";
+import { SectionFrame } from "./shared/SectionFrame";
+import { PLAYBOOK_TEMPLATES, BOT_INFO, STATUS_CONFIG, CHALEUR_CONFIG } from "./shared/section-config";
+import type { TabDef } from "./shared/section-types";
 import { HierarchieGHML } from "./shared/HierarchieGHML";
 
 /* ============ BLOCK HEADER — meme style que DashboardView ============ */
@@ -120,7 +120,7 @@ type DeptTdcConfig = {
   row2: BlocConfig[];
 };
 
-/* ============ TABS DEPARTEMENT (10 tabs — harmonise Blueprint) ============ */
+/* ============ TABS DEPARTEMENT (10 tabs — harmonise Strategique) ============ */
 type DeptTabId = "cockpit" | "chantiers" | "projets" | "missions" | "taches" | "documents" | "playbooks" | "diagnostics" | "equipe";
 const DEPT_TABS: TabDef[] = [
   { id: "cockpit", label: "Vue d'ensemble", icon: Gauge },
@@ -832,7 +832,7 @@ const DEPT_TDC: Record<string, DeptTdcConfig> = {
     row1: [
       { icon: Zap, title: "Pilotage Strategique", gradient: "bg-gradient-to-r from-blue-700 to-blue-600", ringColor: "hover:ring-blue-300", items: [
         { primary: "Decisions actives", value: "—", secondary: "A connecter au Decision Log" },
-        { primary: "Chantiers", value: "—", secondary: "A connecter au Blueprint" },
+        { primary: "Chantiers", value: "—", secondary: "A connecter au Strategique" },
         { primary: "Bots actifs", value: "—", secondary: "A connecter" },
       ]},
       { icon: Target, title: "Objectifs CEO", gradient: "bg-gradient-to-r from-blue-600 to-blue-500", ringColor: "hover:ring-blue-300", items: [
@@ -1012,7 +1012,7 @@ export function DepartmentTourDeControle() {
   };
 
   return (
-    <BlueprintFrame
+    <SectionFrame
       title={subtitle}
       subtitle=""
       icon={DeptIcon}
@@ -1504,6 +1504,6 @@ export function DepartmentTourDeControle() {
           </div>
         )}
 
-    </BlueprintFrame>
+    </SectionFrame>
   );
 }

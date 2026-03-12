@@ -38,7 +38,7 @@ type CockpitItem = {
 
 const ITEMS: CockpitItem[] = [
   { id: "direction", label: "Tactique", icon: Zap, color: "text-blue-600", view: "department", botCode: "CEOB" },
-  { id: "blueprint", label: "Strategique", icon: Layers, color: "text-cyan-600", view: "blueprint" },
+  { id: "strategique", label: "Strategique", icon: Layers, color: "text-cyan-600", view: "strategique" },
   { id: "tableau-de-bord", label: "Tableau de Bord", icon: LayoutDashboard, color: "text-amber-600", view: "cockpit" },
   { id: "sante", label: "Sante Globale", icon: HeartPulse, color: "text-rose-500", view: "health" },
 ];

@@ -963,7 +963,7 @@ export function DiagnosticIAPage() {
                   ))}
                   <li className="flex items-center gap-2 text-sm text-gray-700">
                     <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
-                    Premier Blueprint stratégique Ghost Team
+                    Premier Plan Strategique Ghost Team
                   </li>
                 </ul>
               </div>

@@ -4,7 +4,7 @@
  *
  * 5 types de pages canvas:
  * 1. GRILLE (5xl)  — Dashboard, TRG, Cockpit, Santé, Réglages
- * 2. CONTENU (4xl) — Bureau, Blueprint, Scénarios, Orbit9, Rooms, Chantiers
+ * 2. CONTENU (4xl) — Bureau, Strategique, Scenarios, Orbit9, Rooms, Chantiers
  * 3. CHAT (2xl)    — Discussions
  * 4. ROOM (4xl)    — ThinkRoom, WarRoom, BoardRoom
  * 5. FOCUS         — FocusModeLayout (son propre composant)

@@ -1,10 +1,10 @@
 /**
  * HierarchieGHML.tsx — Composant partage pour la hierarchie Chantier > Projet > Mission > Tache
  * Source: API PostgreSQL via hooks existants
- * Utilise par: BlueprintView, DepartmentTourDeControle, MonReseauView
- * Design: memes patterns que BlueprintView (gradient headers, StatusBadge, BotBadge)
+ * Utilise par: StrategiqueView, DepartmentTourDeControle, MonReseauView
+ * Design: memes patterns que StrategiqueView (gradient headers, StatusBadge, BotBadge)
  *
- * Phase 1 — Plan Harmonisation Blueprint (blueprint-harmonization.md)
+ * Phase 1 — Plan Harmonisation Strategique
  */
 
 import { useState, useMemo } from "react";
@@ -19,8 +19,8 @@ import type {
   Projet as APIProjet,
   Mission as APIMission,
 } from "../../../api/types";
-import { StatusBadge, BotBadge, ChaleurBadge, TemplateSection, type PlaybookDeployOptions } from "./BlueprintComponents";
-import { BOT_INFO } from "./blueprint-config";
+import { StatusBadge, BotBadge, ChaleurBadge, TemplateSection, type PlaybookDeployOptions } from "./SectionComponents";
+import { BOT_INFO } from "./section-config";
 
 // ================================================================
 // TYPES
@@ -48,7 +48,7 @@ interface HierarchieGHMLProps {
 }
 
 // ================================================================
-// STATUS MAPPER — API statuts → blueprint-config STATUS_CONFIG keys
+// STATUS MAPPER — API statuts → section-config STATUS_CONFIG keys
 // ================================================================
 
 function mapStatus(s: string): "done" | "en-cours" | "a-faire" | "bloque" {

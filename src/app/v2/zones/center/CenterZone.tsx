@@ -77,9 +77,9 @@ import { FlowUsineBleuePage } from "./orbit9/FlowUsineBleuePage";
 import { AnimationShowcasePage } from "./orbit9/AnimationShowcasePage";
 import { AgentGalleryPage } from "./orbit9/AgentGalleryPage";
 import { AccueilHeroPage } from "./orbit9/AccueilHeroPage";
-import { BlueprintView } from "./BlueprintView";
+import { StrategiqueView } from "./StrategiqueView";
 import { MonReseauView } from "./MonReseauView";
-import { BlueprintReseauPage } from "./orbit9/BlueprintReseauPage";
+import { StrategiqueReseauPage } from "./orbit9/StrategiqueReseauPage";
 import { FESidebarDroitePage } from "./orbit9/FESidebarDroitePage";
 import { FEMonReseauPage } from "./orbit9/FEMonReseauPage";
 import { CarlosCodesView } from "./CarlosCodesView";
@@ -235,11 +235,11 @@ export function CenterZone() {
       {activeView === "orbit9-detail" && <Orbit9DetailView />}
       {activeView === "agent-settings" && <AgentSettingsView />}
       {activeView === "espace-bureau" && <MonBureauView />}
-      {activeView === "blueprint" && <BlueprintView />}
+      {activeView === "strategique" && <StrategiqueView />}
       {activeView === "board-room" && <BoardRoomView />}
       {activeView === "war-room" && <WarRoomView />}
       {activeView === "think-room" && <ThinkRoomView />}
-      {activeView === "mes-chantiers" && <BlueprintView />}
+      {activeView === "mes-chantiers" && <StrategiqueView />}
       {activeView === "bible-visuelle" && <PageTypePage />}
       {activeView === "bible-technique" && <BibleTechniquePage />}
       {activeView === "bible-ghml" && <BibleGHMLPage />}
@@ -274,8 +274,8 @@ export function CenterZone() {
       {activeView === "animation-showcase" && <AnimationShowcasePage />}
       {activeView === "agent-gallery" && <AgentGalleryPage />}
       {activeView === "accueil-hero" && <AccueilHeroPage />}
-      {activeView === "playbook-usine-bleue" && <BlueprintView />}
-      {activeView === "blueprint-reseau" && <BlueprintReseauPage />}
+      {activeView === "playbook-usine-bleue" && <StrategiqueView />}
+      {activeView === "strategique-reseau" && <StrategiqueReseauPage />}
       {activeView === "fe-sidebar-droite" && <FESidebarDroitePage />}
       {activeView === "fe-mon-reseau" && <FEMonReseauPage />}
       {activeView === "mon-reseau" && <MonReseauView />}

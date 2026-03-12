@@ -53,7 +53,7 @@ const BUREAU_MESSAGES: Record<string, string> = {
 };
 
 /** Messages sous-sections Strategique */
-const BLUEPRINT_MESSAGES: Record<string, string> = {
+const STRATEGIQUE_MESSAGES: Record<string, string> = {
   live:     "Plan Strategique — construisons votre plan d'affaires ensemble. Dites-moi par quelle section commencer et je guide le processus avec les bots spécialistes.",
   hub:      "Hub de contenu — vos templates et documents générés. Cliquez sur un élément pour qu'on l'explore.",
   pipeline: "Pipeline d'exécution — vos étapes de réalisation. Dites-moi quelle étape vous voulez lancer.",
@@ -87,7 +87,7 @@ const BOT_NAMES: Record<string, string> = {
 };
 
 export function CarlOSPresence() {
-  const { activeView, activeBotCode, activeOrbit9Section, activeEspaceSection, activeBlueprintSection } = useFrameMaster();
+  const { activeView, activeBotCode, activeOrbit9Section, activeEspaceSection, activeStrategiqueSection } = useFrameMaster();
   const [phase, setPhase] = useState<"thinking" | "typing" | "done">("thinking");
   const [dismissed, setDismissed] = useState(false);
 
@@ -117,7 +117,7 @@ export function CarlOSPresence() {
     if (isDept) return DEPT_MESSAGES[botCode] || `Bienvenue dans mon département. Je suis ${botName}. Cliquez sur un bloc pour qu'on en discute.`;
     if (activeView === "orbit9-detail" && activeOrbit9Section) return ORBIT9_MESSAGES[activeOrbit9Section] || VIEW_MESSAGES["orbit9-detail"] || "";
     if (activeView === "espace-bureau") return BUREAU_MESSAGES[activeEspaceSection] || VIEW_MESSAGES["espace-bureau"] || "";
-    if (activeView === "blueprint") return BLUEPRINT_MESSAGES[activeBlueprintSection] || VIEW_MESSAGES["blueprint"] || "";
+    if (activeView === "strategique") return STRATEGIQUE_MESSAGES[activeStrategiqueSection] || VIEW_MESSAGES["strategique"] || "";
     return VIEW_MESSAGES[activeView] || "Je suis là pour vous accompagner.";
   };
   const msg = resolveMessage();

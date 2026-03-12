@@ -1,5 +1,5 @@
 /**
- * BlueprintView.tsx — Blueprint Unifie (fusion RD.7 + BlueprintLiveView + BlueprintGestionView)
+ * StrategiqueView.tsx — Strategique Unifie (fusion RD.7 + StrategiqueLiveView)
  * 8 tabs: Vue d'ensemble, Timeline, Chantiers, Projets, Missions, Taches, Opportunites, Equipes
  * Donnees seed RD.7 (plan Carl) + API reelles (COMMAND, templates, CRUD) fusionnees
  */
@@ -22,17 +22,17 @@ import { Badge } from "../../../components/ui/badge";
 import { useFrameMaster } from "../../context/FrameMasterContext";
 import { BOT_AVATAR } from "../../api/types";
 import { api } from "../../api/client";
-import { BlueprintFrame } from "./shared/BlueprintFrame";
-import { PlaybookCard, KPICard } from "./shared/BlueprintComponents";
+import { SectionFrame } from "./shared/SectionFrame";
+import { PlaybookCard, KPICard } from "./shared/SectionComponents";
 import { HierarchieGHML } from "./shared/HierarchieGHML";
 import {
-  BLUEPRINT_TABS, BOT_INFO,
+  STRATEGIQUE_TABS, BOT_INFO,
   PLAYBOOK_TEMPLATES,
-} from "./shared/blueprint-config";
-import type { BlueprintTabId, BlueprintNav } from "./shared/blueprint-types";
+} from "./shared/section-config";
+import type { StrategiqueTabId, StrategiqueNav } from "./shared/section-types";
 
 // ================================================================
-// COMMAND STAGES (from BlueprintLiveView)
+// COMMAND STAGES (from StrategiqueLiveView)
 // ================================================================
 
 const STAGE_LABELS: Record<string, { label: string; progress: number }> = {
@@ -56,7 +56,7 @@ const CLEVEL_BOTS = [
 // TAB: VUE D'ENSEMBLE
 // ================================================================
 
-function TabOverview({ nav, stats, onDeploy }: { nav: BlueprintNav; stats: { chantiers: number; projets: number; missions: number; taches: number; missionsDone: number; tachesDone: number }; onDeploy?: (playbookId: string) => Promise<void> }) {
+function TabOverview({ nav, stats, onDeploy }: { nav: StrategiqueNav; stats: { chantiers: number; projets: number; missions: number; taches: number; missionsDone: number; tachesDone: number }; onDeploy?: (playbookId: string) => Promise<void> }) {
   const [commandMissions, setCommandMissions] = useState<Record<string, unknown>[]>([]);
   const [loadingCommand, setLoadingCommand] = useState(true);
 
@@ -91,10 +91,10 @@ function TabOverview({ nav, stats, onDeploy }: { nav: BlueprintNav; stats: { cha
         {/* 4 KPIs */}
         <div className="grid grid-cols-2 gap-2">
           {[
-            { label: "Chantiers", value: String(stats.chantiers), sub: "actifs", color: "red", icon: Flame, tab: "chantiers" as BlueprintTabId },
-            { label: "Projets", value: String(stats.projets), sub: "en cours", color: "blue", icon: Package, tab: "projets" as BlueprintTabId },
-            { label: "Missions", value: String(stats.missions), sub: `${stats.missionsDone} completes`, color: "violet", icon: ListChecks, tab: "missions" as BlueprintTabId },
-            { label: "Taches", value: String(stats.taches), sub: `${stats.tachesDone} terminees`, color: "emerald", icon: CheckCircle2, tab: "taches" as BlueprintTabId },
+            { label: "Chantiers", value: String(stats.chantiers), sub: "actifs", color: "red", icon: Flame, tab: "chantiers" as StrategiqueTabId },
+            { label: "Projets", value: String(stats.projets), sub: "en cours", color: "blue", icon: Package, tab: "projets" as StrategiqueTabId },
+            { label: "Missions", value: String(stats.missions), sub: `${stats.missionsDone} completes`, color: "violet", icon: ListChecks, tab: "missions" as StrategiqueTabId },
+            { label: "Taches", value: String(stats.taches), sub: `${stats.tachesDone} terminees`, color: "emerald", icon: CheckCircle2, tab: "taches" as StrategiqueTabId },
           ].map((kpi) => (
             <KPICard key={kpi.label} kpi={{ ...kpi, onClick: () => nav.goTo(kpi.tab) }} />
           ))}
@@ -186,11 +186,11 @@ function TabOverview({ nav, stats, onDeploy }: { nav: BlueprintNav; stats: { cha
           </div>
         </div>
 
-        {/* Flow CREDO → Blueprint */}
+        {/* Flow CREDO → Strategique */}
         <Card className="p-0 overflow-hidden border border-gray-200">
           <div className="px-4 py-2 bg-gradient-to-r from-violet-700 to-violet-600 flex items-center gap-2">
             <Route className="h-4 w-4 text-white" />
-            <span className="text-sm font-bold text-white">Flow CREDO → Blueprint</span>
+            <span className="text-sm font-bold text-white">Flow CREDO → Strategique</span>
           </div>
           <div className="p-4">
             <div className="flex items-center gap-2 flex-wrap">
@@ -336,9 +336,9 @@ function TabTimeline() {
 // MAIN COMPONENT
 // ================================================================
 
-export function BlueprintView() {
+export function StrategiqueView() {
   const { setActiveView } = useFrameMaster();
-  const [activeTab, setActiveTab] = useState<BlueprintTabId>("overview");
+  const [activeTab, setActiveTab] = useState<StrategiqueTabId>("overview");
 
   // API data — source unique de vérité
   const [apiChantiers, setApiChantiers] = useState<Record<string, unknown>[]>([]);
@@ -366,7 +366,7 @@ export function BlueprintView() {
     };
   }, [apiChantiers, apiProjets, apiMissions, apiTaches]);
 
-  const goTo = (tab: BlueprintTabId) => {
+  const goTo = (tab: StrategiqueTabId) => {
     setActiveTab(tab);
   };
 
@@ -380,17 +380,17 @@ export function BlueprintView() {
     api.listTachesUser().then((r) => setApiTaches(Array.isArray(r) ? r : [])).catch(() => {});
   }, []);
 
-  const nav: BlueprintNav = { tab: activeTab, chantierId: null, projetId: null, missionIdx: null, goTo: (t) => goTo(t) };
+  const nav: StrategiqueNav = { tab: activeTab, chantierId: null, projetId: null, missionIdx: null, goTo: (t) => goTo(t) };
 
   return (
-    <BlueprintFrame
+    <SectionFrame
       title="Strategique"
       subtitle=""
       icon={Rocket}
       iconColor="text-blue-600"
-      tabs={BLUEPRINT_TABS}
+      tabs={STRATEGIQUE_TABS}
       activeTab={activeTab}
-      onTabChange={(t) => goTo(t as BlueprintTabId)}
+      onTabChange={(t) => goTo(t as StrategiqueTabId)}
       onBack={() => setActiveView("dashboard")}
     >
       {activeTab === "overview" && <TabOverview nav={nav} stats={stats} onDeploy={handleDeployPlaybook} />}
@@ -401,6 +401,6 @@ export function BlueprintView() {
       {activeTab === "taches" && <HierarchieGHML key="bp-taches" defaultLevel="taches" showTemplates onDeploy={handleDeployPlaybook} />}
       {activeTab === "opportunites" && <TabOpportunites />}
       {activeTab === "equipes" && <TabEquipe />}
-    </BlueprintFrame>
+    </SectionFrame>
   );
 }

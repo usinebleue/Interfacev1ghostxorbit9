@@ -6,13 +6,13 @@
 import { createContext, useContext, useState, useCallback, useRef, useEffect } from "react";
 import type { BotInfo } from "../api/types";
 
-export type ActiveView = "dashboard" | "cockpit" | "health" | "department" | "detail" | "discussion" | "branches" | "cahier" | "scenarios" | "live-chat" | "canvas" | "orbit9-detail" | "agent-settings" | "espace-bureau" | "blueprint" | "board-room" | "war-room" | "think-room" | "mes-chantiers" | "mon-reseau" | "bible-visuelle" | "bible-technique" | "bible-ghml" | "master-roadmap" | "master-strategie" | "master-orbit9" | "master-communication" | "master-dette" | "master-routine" | "master-minedor" | "master-training" | "master-profils" | "master-parcours" | "master-navigation" | "master-angles-morts" | "master-capacites" | "master-instance-fonds" | "master-diagnostics" | "master-playbooks" | "master-bibliotheque-exec" | "master-marketing-360" | "master-guides-legaux" | "master-cortex-robot" | "master-hydro-quebec" | "master-flows" | "master-cartographie" | "master-oracle9" | "master-bible-live" | "bible-visuelle-cible" | "flow-usine-bleue" | "animation-showcase" | "agent-gallery" | "playbook-usine-bleue" | "fe-sidebar-droite" | "blueprint-reseau" | "fe-mon-reseau" | "accueil-hero" | "bible-officielle" | "carlos-codes" | "diagnostic-ia" | "meeting-room" | "status";
+export type ActiveView = "dashboard" | "cockpit" | "health" | "department" | "detail" | "discussion" | "branches" | "cahier" | "scenarios" | "live-chat" | "canvas" | "orbit9-detail" | "agent-settings" | "espace-bureau" | "strategique" | "board-room" | "war-room" | "think-room" | "mes-chantiers" | "mon-reseau" | "bible-visuelle" | "bible-technique" | "bible-ghml" | "master-roadmap" | "master-strategie" | "master-orbit9" | "master-communication" | "master-dette" | "master-routine" | "master-minedor" | "master-training" | "master-profils" | "master-parcours" | "master-navigation" | "master-angles-morts" | "master-capacites" | "master-instance-fonds" | "master-diagnostics" | "master-playbooks" | "master-bibliotheque-exec" | "master-marketing-360" | "master-guides-legaux" | "master-cortex-robot" | "master-hydro-quebec" | "master-flows" | "master-cartographie" | "master-oracle9" | "master-bible-live" | "bible-visuelle-cible" | "flow-usine-bleue" | "animation-showcase" | "agent-gallery" | "playbook-usine-bleue" | "fe-sidebar-droite" | "strategique-reseau" | "fe-mon-reseau" | "accueil-hero" | "bible-officielle" | "carlos-codes" | "diagnostic-ia" | "meeting-room" | "status";
 
 export type EspaceSection = "idees" | "projets" | "documents" | "taches" | "outils" | "agenda" | "templates";
 
 export type ReseauSection = "profil" | "cellules" | "jumelage" | "chantiers" | "pionniers" | "gouvernance" | "dashboard" | "nouvelles" | "evenements" | "industrie";
 
-export type BlueprintSection = "live" | "hub" | "pipeline";
+export type StrategiqueSection = "live" | "hub" | "pipeline";
 
 export type DiscussionTab = "overview" | "timeline" | "chantiers" | "projets" | "missions" | "taches" | "opportunites" | "equipes" | "discussions";
 
@@ -23,7 +23,7 @@ interface FrameMasterState {
   activeOrbit9Section: string | null;
   activeEspaceSection: EspaceSection;
   activeReseauSection: ReseauSection;
-  activeBlueprintSection: BlueprintSection;
+  activeStrategiqueSection: StrategiqueSection;
   activeDiscussionTab: DiscussionTab;
   /** D-109 — Source view quand on ouvre le LiveChat depuis une Room */
   chatSourceView: string | null;
@@ -49,7 +49,7 @@ interface FrameMasterActions {
   navigateOrbit9: (sectionId: string) => void;
   navigateEspace: (section: EspaceSection) => void;
   navigateReseau: (section: ReseauSection) => void;
-  navigateBlueprint: (section: BlueprintSection) => void;
+  navigateStrategique: (section: StrategiqueSection) => void;
   navigateDiscussionTab: (tab: DiscussionTab) => void;
   /** D-109 — Ouvre le LiveChat avec contexte de la source (board-room, war-room, etc.) */
   navigateToChat: (sourceView: string) => void;
@@ -72,7 +72,7 @@ export function FrameMasterProvider({
   const [activeOrbit9Section, setActiveOrbit9Section] = useState<string | null>(null);
   const [activeEspaceSection, setActiveEspaceSection] = useState<EspaceSection>("idees");
   const [activeReseauSection, setActiveReseauSection] = useState<ReseauSection>("profil");
-  const [activeBlueprintSection, setActiveBlueprintSection] = useState<BlueprintSection>("live");
+  const [activeStrategiqueSection, setActiveStrategiqueSection] = useState<StrategiqueSection>("live");
   const [activeDiscussionTab, setActiveDiscussionTab] = useState<DiscussionTab>("overview");
   const [chatSourceView, setChatSourceView] = useState<string | null>(null);
   const [leftSidebarCollapsed, setLeftCollapsed] = useState(false);
@@ -128,9 +128,9 @@ export function FrameMasterProvider({
     setActiveView("mon-reseau");
   }, []);
 
-  const navigateBlueprint = useCallback((section: BlueprintSection) => {
-    setActiveBlueprintSection(section);
-    setActiveView("blueprint");
+  const navigateStrategique = useCallback((section: StrategiqueSection) => {
+    setActiveStrategiqueSection(section);
+    setActiveView("strategique");
   }, []);
 
   const navigateDiscussionTab = useCallback((tab: DiscussionTab) => {
@@ -176,7 +176,7 @@ export function FrameMasterProvider({
         activeOrbit9Section,
         activeEspaceSection,
         activeReseauSection,
-        activeBlueprintSection,
+        activeStrategiqueSection,
         activeDiscussionTab,
         chatSourceView,
         leftSidebarCollapsed,
@@ -197,7 +197,7 @@ export function FrameMasterProvider({
         navigateOrbit9,
         navigateEspace,
         navigateReseau,
-        navigateBlueprint,
+        navigateStrategique,
         navigateDiscussionTab,
         navigateToChat,
         registerLeftPanel,

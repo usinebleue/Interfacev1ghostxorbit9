@@ -1,15 +1,15 @@
 /**
- * BlueprintFrame.tsx — Frame unifie pour Blueprint / Mon Bureau / Mon Reseau
+ * SectionFrame.tsx — Frame unifie pour Strategique / Mon Bureau / Mon Reseau
  * Squelette reutilisable: PageHeader + Tabs + Breadcrumb (optionnel) + KPI bar (optionnel) + Content
  */
 
 import { cn } from "../../../../components/ui/utils";
 import { PageLayout } from "../layouts/PageLayout";
 import { PageHeader } from "../layouts/PageHeader";
-import type { TabDef, KPIConfig, BreadcrumbItem } from "./blueprint-types";
-import { KPICard, Breadcrumb } from "./BlueprintComponents";
+import type { TabDef, KPIConfig, BreadcrumbItem } from "./section-types";
+import { KPICard, Breadcrumb } from "./SectionComponents";
 
-interface BlueprintFrameProps {
+interface SectionFrameProps {
   title: string;
   subtitle: string;
   icon: React.ElementType;
@@ -24,7 +24,7 @@ interface BlueprintFrameProps {
   maxWidth?: "2xl" | "4xl" | "5xl";
 }
 
-export function BlueprintFrame({
+export function SectionFrame({
   title,
   subtitle,
   icon,
@@ -37,7 +37,7 @@ export function BlueprintFrame({
   kpis,
   children,
   maxWidth = "4xl",
-}: BlueprintFrameProps) {
+}: SectionFrameProps) {
   return (
     <PageLayout
       maxWidth={maxWidth}
