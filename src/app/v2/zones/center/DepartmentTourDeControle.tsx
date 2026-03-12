@@ -825,62 +825,62 @@ const DEPT_TDC: Record<string, DeptTdcConfig> = {
     ],
   },
 
-  /* --- TACTIQUE (CEOB) --- */
+  /* --- TACTIQUE (CEOB) — VIDE (a connecter aux vrais KPIs) --- */
   CEOB: {
     botName: "CarlOS — Tactique",
-    summary: "CEO Bot — Chef d'orchestre de la GhostX Team. Coordonne les 11 bots, supervise les chantiers strategiques et pilote les decisions COMMAND.",
+    summary: "CEO Bot — Chef d'orchestre de la GhostX Team. Les donnees s'afficheront ici quand les KPIs seront connectes.",
     row1: [
       { icon: Zap, title: "Pilotage Strategique", gradient: "bg-gradient-to-r from-blue-700 to-blue-600", ringColor: "hover:ring-blue-300", items: [
-        { primary: "Decisions actives", value: "D-001 → D-114", secondary: "Journal decisionnel complet" },
-        { primary: "Chantiers supervises", value: "13", secondary: "CH-1 a CH-13 — tous departements" },
-        { primary: "Bots coordonnes", value: "11", secondary: "C-Suite complete sous COMMAND" },
+        { primary: "Decisions actives", value: "—", secondary: "A connecter au Decision Log" },
+        { primary: "Chantiers", value: "—", secondary: "A connecter au Blueprint" },
+        { primary: "Bots actifs", value: "—", secondary: "A connecter" },
       ]},
       { icon: Target, title: "Objectifs CEO", gradient: "bg-gradient-to-r from-blue-600 to-blue-500", ringColor: "hover:ring-blue-300", items: [
-        { primary: "Vision & roadmap", secondary: "V3.4 — Pioneer-Ready" },
-        { primary: "Preparation CA", secondary: "Board Room + Briefings automatises" },
-        { primary: "Gestion parties prenantes", secondary: "REAI, investisseurs, partenaires" },
+        { primary: "Vision & roadmap", secondary: "A definir" },
+        { primary: "Objectif Q2", secondary: "A definir" },
+        { primary: "Objectif Q3", secondary: "A definir" },
       ]},
       { icon: Shield, title: "Gouvernance", gradient: "bg-gradient-to-r from-blue-500 to-indigo-500", ringColor: "hover:ring-indigo-300", items: [
-        { primary: "Protocole CREDO", pct: 100, pctColor: "bg-blue-500", secondary: "Deploye — gouverne toutes les interactions" },
-        { primary: "COMMAND Engine", pct: 100, pctColor: "bg-emerald-500", secondary: "LIVE — 4 stages actifs" },
-        { primary: "Decision Log", pct: 100, pctColor: "bg-violet-500", secondary: "Tracabilite complete" },
+        { primary: "Protocoles actifs", value: "—", secondary: "A connecter" },
+        { primary: "Conformite", value: "—", secondary: "A connecter" },
+        { primary: "Decisions en attente", value: "—", secondary: "A connecter" },
       ]},
       { icon: BarChart3, title: "KPIs Tactique", gradient: "bg-gradient-to-r from-indigo-600 to-indigo-500", ringColor: "hover:ring-indigo-300", items: [
-        { primary: "ROI GhostX", value: "21x", valueColor: "text-emerald-600", secondary: "Cout humain vs CarlOS" },
-        { primary: "Economies", value: "97%", valueColor: "text-emerald-600", secondary: "1.35M$ → 21,600$/an" },
-        { primary: "Throughput", value: "500x", secondary: "Vitesse vs equipe humaine" },
+        { primary: "Revenus", value: "—", secondary: "A connecter" },
+        { primary: "Pipeline", value: "—", secondary: "A connecter" },
+        { primary: "Marge", value: "—", secondary: "A connecter" },
       ]},
       { icon: Globe, title: "Reseau & Expansion", gradient: "bg-gradient-to-r from-cyan-600 to-cyan-500", ringColor: "hover:ring-cyan-300", items: [
-        { primary: "Membres REAI", value: "130+", secondary: "Reseau manufacturiers Quebec" },
-        { primary: "Orbit9 cellules", secondary: "Moteur de matching actif" },
-        { primary: "Pionniers AI", secondary: "Programme early adopters" },
+        { primary: "Contacts reseau", value: "—", secondary: "A connecter a Orbit9" },
+        { primary: "Cellules actives", value: "—", secondary: "A connecter" },
+        { primary: "Opportunites", value: "—", secondary: "A connecter" },
       ]},
     ],
     row2: [
       { icon: MessageSquare, title: "Communication", gradient: "bg-gradient-to-r from-blue-600 to-blue-500", ringColor: "hover:ring-blue-300", items: [
-        { primary: "LiveChat multi-perspectives", pct: 100, pctColor: "bg-blue-500", secondary: "Branches, sentinelle, cristallisation" },
-        { primary: "Voice pipeline LiveKit", pct: 100, pctColor: "bg-emerald-500", secondary: "STT + TTS + Tavus video" },
-        { primary: "Canvas auto-nav", pct: 100, pctColor: "bg-violet-500", secondary: "Navigation vocale LIVE" },
+        { primary: "Messages ce mois", value: "—", secondary: "A connecter" },
+        { primary: "Appels vocaux", value: "—", secondary: "A connecter" },
+        { primary: "Documents generes", value: "—", secondary: "A connecter" },
       ]},
-      { icon: ClipboardList, title: "Missions COMMAND", gradient: "bg-gradient-to-r from-violet-600 to-violet-500", ringColor: "hover:ring-violet-300", items: [
-        { primary: "Pipeline COMMAND", secondary: "SCAN → STRATEGIE → EXECUTION → BILAN" },
-        { primary: "Playbooks deployes", secondary: "46 playbooks JSON disponibles" },
-        { primary: "Templates generes", secondary: "41 templates documentaires" },
+      { icon: ClipboardList, title: "Missions", gradient: "bg-gradient-to-r from-violet-600 to-violet-500", ringColor: "hover:ring-violet-300", items: [
+        { primary: "Missions actives", value: "—", secondary: "A connecter au Pipeline" },
+        { primary: "Missions completees", value: "—", secondary: "A connecter" },
+        { primary: "Taches en cours", value: "—", secondary: "A connecter" },
       ]},
-      { icon: HeartPulse, title: "Sante Systeme", gradient: "bg-gradient-to-r from-rose-600 to-rose-500", ringColor: "hover:ring-rose-300", items: [
-        { primary: "Securite UFW", pct: 100, pctColor: "bg-emerald-500", secondary: "CORS + rate limit + API key" },
-        { primary: "Infrastructure", secondary: "VPS1 dev + VPS2 prod — actifs" },
-        { primary: "Tests", value: "94/94", valueColor: "text-emerald-600", secondary: "Protocoles valides" },
+      { icon: HeartPulse, title: "Sante", gradient: "bg-gradient-to-r from-rose-600 to-rose-500", ringColor: "hover:ring-rose-300", items: [
+        { primary: "Score VITAA", value: "—", secondary: "Lancez un diagnostic" },
+        { primary: "Triangle du Feu", value: "—", secondary: "Lancez un diagnostic" },
+        { primary: "Derniere analyse", value: "—", secondary: "Aucune" },
       ]},
-      { icon: Eye, title: "Veille CEO", gradient: "bg-gradient-to-r from-amber-600 to-amber-500", ringColor: "hover:ring-amber-300", items: [
-        { primary: "Veille concurrentielle", secondary: "CSO rapports automatises" },
-        { primary: "Tableau de bord KPIs", secondary: "Cockpit centralisé" },
-        { primary: "Alertes prioritaires", secondary: "Triangle du Feu — BRULE/COUVE/MEURT" },
+      { icon: Eye, title: "Veille", gradient: "bg-gradient-to-r from-amber-600 to-amber-500", ringColor: "hover:ring-amber-300", items: [
+        { primary: "Alertes", value: "—", secondary: "A connecter" },
+        { primary: "Veille concurrentielle", value: "—", secondary: "A connecter" },
+        { primary: "Tendances secteur", value: "—", secondary: "A connecter" },
       ]},
       { icon: GraduationCap, title: "Intelligence", gradient: "bg-gradient-to-r from-slate-600 to-slate-500", ringColor: "hover:ring-slate-300", items: [
-        { primary: "GHML Framework", secondary: "220+ elements proprietaires" },
-        { primary: "Trisociation", secondary: "Bezos + Munger + Churchill" },
-        { primary: "8+1 Modes reflexion", secondary: "Debat, Brainstorm, Crise, etc." },
+        { primary: "Diagnostics completes", value: "—", secondary: "A connecter" },
+        { primary: "Recommandations", value: "—", secondary: "A connecter" },
+        { primary: "Score apprentissage", value: "—", secondary: "A connecter" },
       ]},
     ],
   },

@@ -69,42 +69,24 @@ const DEPT_LABELS: Record<string, { label: string; gradient: string; bot: string
   securite:    { label: "Securite (CISO)",     gradient: "from-zinc-700 to-zinc-600",     bot: "CISOB" },
 };
 
-/* ============ VITAA DATA ============ */
+/* ============ VITAA DATA — VIDE (a connecter aux vrais diagnostics) ============ */
 const VITAA = [
-  { letter: "V", label: "Vente", score: 72, avg: 65, color: "bg-blue-500" },
-  { letter: "I", label: "Idee", score: 45, avg: 55, color: "bg-purple-500" },
-  { letter: "T", label: "Temps", score: 88, avg: 70, color: "bg-emerald-500" },
-  { letter: "A", label: "Argent", score: 31, avg: 50, color: "bg-amber-500" },
-  { letter: "A", label: "Actif", score: 62, avg: 60, color: "bg-red-500" },
+  { letter: "V", label: "Vente", score: 0, avg: 0, color: "bg-blue-500" },
+  { letter: "I", label: "Idee", score: 0, avg: 0, color: "bg-purple-500" },
+  { letter: "T", label: "Temps", score: 0, avg: 0, color: "bg-emerald-500" },
+  { letter: "A", label: "Argent", score: 0, avg: 0, color: "bg-amber-500" },
+  { letter: "A", label: "Actif", score: 0, avg: 0, color: "bg-red-500" },
 ];
 
-const SCORE_GLOBAL = Math.round(VITAA.reduce((s, p) => s + p.score, 0) / VITAA.length);
-const CRITIQUES = VITAA.filter(p => p.score < 50).length;
-const TRIANGLE_STATUS = CRITIQUES >= 3 ? "BRULE" : CRITIQUES === 2 ? "COUVE" : CRITIQUES === 1 ? "MEURT" : "SAIN";
+const SCORE_GLOBAL = 0;
+const CRITIQUES = 0;
+const TRIANGLE_STATUS = "—";
 
-/* ============ QUICK WINS ============ */
-const QUICK_WINS = [
-  { text: "Consolider tresorerie — Argent critique (31)", bot: "CFO", priority: "critique" as const },
-  { text: "Augmenter capacite Innovation — pilier I (45)", bot: "CTO", priority: "haute" as const },
-  { text: "Revoir structure de couts — 15K$ potentiel", bot: "CFO", priority: "haute" as const },
-  { text: "Optimiser utilisation des actifs existants", bot: "COO", priority: "moyenne" as const },
-];
+/* ============ QUICK WINS — VIDE (generees par diagnostics) ============ */
+const QUICK_WINS: { text: string; bot: string; priority: "critique" | "haute" | "moyenne" }[] = [];
 
-/* ============ DEPARTEMENTS ============ */
-const DEPT_SCORES = [
-  { label: "Tactique",    score: 92 },
-  { label: "Finance",     score: 88 },
-  { label: "Techno",      score: 85 },
-  { label: "Strategie",   score: 82 },
-  { label: "Vente",       score: 80 },
-  { label: "Marketing",   score: 78 },
-  { label: "Innovation",  score: 76 },
-  { label: "Production",  score: 74 },
-  { label: "Operations",  score: 71 },
-  { label: "Legal",       score: 69 },
-  { label: "RH",          score: 65 },
-  { label: "Securite",    score: 58 },
-].sort((a, b) => b.score - a.score);
+/* ============ DEPARTEMENTS — VIDE (a connecter aux vrais scores) ============ */
+const DEPT_SCORES: { label: string; score: number }[] = [];
 
 /* ============ KPI CARD ============ */
 function KpiCard({ icon: Icon, label, value, sub, gradient, onClick }: {
@@ -291,8 +273,8 @@ export function SanteGlobaleView() {
           <KpiCard
             icon={TrendingUp}
             label="Departements"
-            value={`${DEPT_SCORES[0].score}%`}
-            sub={`Meilleur: ${DEPT_SCORES[0].label}`}
+            value={DEPT_SCORES.length > 0 ? `${DEPT_SCORES[0].score}%` : "—"}
+            sub={DEPT_SCORES.length > 0 ? `Meilleur: ${DEPT_SCORES[0].label}` : "Aucun score"}
             gradient="bg-gradient-to-r from-slate-700 to-slate-600"
             onClick={() => handleFocus("Scores Départements", "health_depts", DEPT_SCORES, "CEOB")}
           />
@@ -344,7 +326,12 @@ export function SanteGlobaleView() {
               <Badge variant="destructive" className="text-[9px] px-1 py-0 h-3.5">{QUICK_WINS.length}</Badge>
             </div>
             <div className="p-2.5 space-y-1.5">
-              {QUICK_WINS.map((qw, i) => (
+              {QUICK_WINS.length === 0 ? (
+                <div className="text-center py-4">
+                  <p className="text-xs text-gray-400">Aucune action prioritaire</p>
+                  <p className="text-[9px] text-gray-300 mt-1">Lancez un diagnostic pour generer des recommandations</p>
+                </div>
+              ) : QUICK_WINS.map((qw, i) => (
                 <div
                   key={i}
                   className="cursor-pointer group rounded-lg hover:bg-red-50 px-2 py-1.5 -mx-1 transition-colors border border-transparent hover:border-red-100"
@@ -408,7 +395,12 @@ export function SanteGlobaleView() {
               <h3 className="text-[9px] font-bold uppercase tracking-wider text-gray-700 flex-1">Departements</h3>
             </div>
             <div className="p-2.5 space-y-1">
-              {DEPT_SCORES.map((d) => {
+              {DEPT_SCORES.length === 0 ? (
+                <div className="text-center py-3">
+                  <p className="text-xs text-gray-400">Aucun score</p>
+                  <p className="text-[9px] text-gray-300 mt-1">Completez un diagnostic</p>
+                </div>
+              ) : DEPT_SCORES.map((d) => {
                 const color = d.score >= 80 ? "bg-green-500" : d.score >= 60 ? "bg-amber-500" : "bg-red-500";
                 const textColor = d.score >= 80 ? "text-green-600" : d.score >= 60 ? "text-amber-600" : "text-red-600";
                 return (
