@@ -5,7 +5,6 @@
  *
  * Tab 1: Nouvelle Rencontre — Cards par type + lancement
  * Tab 2: Archives — Meetings passés + rapports
- * Tab 3: Playbooks — Preview des flows (lecture seule V1)
  */
 
 import { useState, useEffect, useCallback } from "react";
@@ -28,7 +27,6 @@ import {
   Flame,
   Plus,
   Archive,
-  BookOpen,
   Clock,
   Users,
   ArrowRight,
@@ -195,25 +193,6 @@ const GHML_TYPES: MeetingTypeCard[] = [
 ];
 
 // Flow steps par type (pour Tab Playbooks)
-const FLOWS: Record<string, string[]> = {
-  podcast: ["Intro", "Tour de table", "Discussion", "Synthèse", "Closing"],
-  board: ["Ouverture", "Points à l'ordre", "Varia", "Clôture"],
-  client: ["Accueil", "Discovery", "Présentation", "Objections", "Next steps"],
-  aiguillage: ["Bienvenue", "Questions VITAA", "Triangle du Feu", "Recommandation"],
-  travail: ["Libre"],
-  onboarding: ["Accueil", "Tour guidé", "Questions", "Premiers pas"],
-  diagnostic: ["Introduction", "Piliers VITAA", "Scoring", "Triangle du Feu", "Recommandations", "Plan d'action"],
-  crise: ["Alerte", "Évaluation", "Plan d'action", "Assignation", "Suivi"],
-  brainstorm: ["Contexte", "Divergence", "Regroupement", "Convergence", "Actions"],
-  debat: ["Thèse", "Pour", "Contre", "Synthèse", "Verdict"],
-  analyse: ["Problème", "5 Pourquoi", "Data review", "Cause racine", "Recommandation"],
-  decision: ["Options", "Critères", "Évaluation", "Débat", "Verdict"],
-  strategie: ["Vision", "SWOT", "Priorités", "Plan", "Engagements"],
-  innovation: ["Défi", "Trisociation", "What-if", "Prototypage", "Go/No-Go"],
-  resonance: ["Libre"],
-  credo: ["Connecter", "Rechercher", "Exposer", "Démontrer", "Obtenir"],
-};
-
 // Bots pré-configurés par playbook — miroir de bridge_meetings.py invited_bots
 const PLAYBOOK_BOTS: Record<string, { code: string; name: string; role: string }[]> = {
   podcast: [{ code: "CEOB", name: "CarlOS", role: "Co-animateur" }],
@@ -270,7 +249,7 @@ const PLAYBOOK_BOTS: Record<string, { code: string; name: string; role: string }
   credo: [{ code: "CEOB", name: "CarlOS", role: "Maître CREDO" }],
 };
 
-type Tab = "new" | "archives" | "playbooks";
+type Tab = "new" | "archives";
 
 export function ConferenceAIView() {
   const { setActiveView } = useFrameMaster();
@@ -366,13 +345,11 @@ export function ConferenceAIView() {
   const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
     { id: "new", label: "Nouvelle Rencontre", icon: Plus },
     { id: "archives", label: "Archives", icon: Archive },
-    { id: "playbooks", label: "Playbooks", icon: BookOpen },
   ];
 
   return (
     <PageLayout
       maxWidth="4xl"
-      showPresence
       header={
         <PageHeader
           icon={Video}
@@ -471,39 +448,6 @@ export function ConferenceAIView() {
               ))}
             </div>
           )}
-        </div>
-      )}
-
-      {/* ── Tab 3: Playbooks ── */}
-      {activeTab === "playbooks" && (
-        <div className="space-y-4">
-          <p className="text-xs text-gray-500">
-            Chaque type de meeting a un flow structuré. CarlOS suit automatiquement le playbook adapté.
-          </p>
-          {[...BUSINESS_TYPES, ...GHML_TYPES].map(type => {
-            const flow = FLOWS[type.id] || [];
-            return (
-              <div key={type.id} className="bg-white border rounded-xl overflow-hidden">
-                <div className={cn("bg-gradient-to-r px-4 py-2 flex items-center gap-2", type.gradient)}>
-                  <type.icon className="h-4 w-4 text-white" />
-                  <span className="text-sm font-bold text-white">{type.label}</span>
-                </div>
-                <div className="px-4 py-3">
-                  <p className="text-xs text-gray-500 mb-2">{type.description}</p>
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    {flow.map((step, i) => (
-                      <span key={i} className="flex items-center gap-1">
-                        {i > 0 && <ArrowRight className="h-3.5 w-3.5 text-gray-300" />}
-                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">
-                          {step}
-                        </span>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
         </div>
       )}
 

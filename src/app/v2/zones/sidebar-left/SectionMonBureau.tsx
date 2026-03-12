@@ -10,6 +10,7 @@ import {
   ChevronDown,
   ChevronRight,
   FolderOpen,
+  Briefcase,
   Sparkles,
   FileText,
   Wrench,
@@ -23,23 +24,47 @@ import {
 } from "../../../components/ui/collapsible";
 import { cn } from "../../../components/ui/utils";
 import { useFrameMaster } from "../../context/FrameMasterContext";
-import type { EspaceSection } from "../../context/FrameMasterContext";
+import type { EspaceSection, ActiveView } from "../../context/FrameMasterContext";
 
 interface Props {
   collapsed: boolean;
 }
 
-const ITEMS: { id: EspaceSection; label: string; icon: React.ElementType; color: string }[] = [
-  { id: "idees", label: "Idees", icon: Sparkles, color: "text-amber-500" },
-  { id: "documents", label: "Documents", icon: FileText, color: "text-green-500" },
-  { id: "outils", label: "Outils", icon: Wrench, color: "text-orange-500" },
-  { id: "taches", label: "Taches", icon: CheckSquare, color: "text-purple-500" },
-  { id: "agenda", label: "Agenda", icon: CalendarDays, color: "text-rose-500" },
+type BureauItem = {
+  id: string;
+  label: string;
+  icon: React.ElementType;
+  color: string;
+  espaceSection?: EspaceSection;
+  view?: ActiveView;
+  botCode?: string;
+};
+
+const ITEMS: BureauItem[] = [
+  { id: "direction", label: "Direction", icon: Briefcase, color: "text-blue-600", view: "department", botCode: "CEOB" },
+  { id: "idees", label: "Idees", icon: Sparkles, color: "text-amber-500", espaceSection: "idees" },
+  { id: "documents", label: "Documents", icon: FileText, color: "text-green-500", espaceSection: "documents" },
+  { id: "outils", label: "Outils", icon: Wrench, color: "text-orange-500", espaceSection: "outils" },
+  { id: "taches", label: "Taches", icon: CheckSquare, color: "text-purple-500", espaceSection: "taches" },
+  { id: "agenda", label: "Agenda", icon: CalendarDays, color: "text-rose-500", espaceSection: "agenda" },
 ];
 
 export function SectionMonBureau({ collapsed }: Props) {
   const [open, setOpen] = useState(false);
-  const { activeView, activeEspaceSection, navigateEspace } = useFrameMaster();
+  const { activeView, activeBotCode, activeEspaceSection, navigateEspace, navigateToDepartment } = useFrameMaster();
+
+  const handleClick = (item: BureauItem) => {
+    if (item.botCode) {
+      navigateToDepartment(item.botCode, item.view!);
+    } else if (item.espaceSection) {
+      navigateEspace(item.espaceSection);
+    }
+  };
+
+  const isActive = (item: BureauItem) => {
+    if (item.botCode) return activeView === "department" && activeBotCode === item.botCode;
+    return activeView === "espace-bureau" && activeEspaceSection === item.espaceSection;
+  };
 
   if (collapsed) {
     return (
@@ -52,10 +77,10 @@ export function SectionMonBureau({ collapsed }: Props) {
           return (
             <button
               key={item.id}
-              onClick={() => navigateEspace(item.id)}
+              onClick={() => handleClick(item)}
               className={cn(
                 "w-full flex justify-center py-1.5 rounded hover:bg-accent transition-colors",
-                activeView === "espace-bureau" && activeEspaceSection === item.id && "bg-accent"
+                isActive(item) && "bg-accent"
               )}
               title={item.label}
             >
@@ -80,10 +105,10 @@ export function SectionMonBureau({ collapsed }: Props) {
             return (
               <button
                 key={item.id}
-                onClick={() => navigateEspace(item.id)}
+                onClick={() => handleClick(item)}
                 className={cn(
                   "w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm hover:bg-accent transition-colors",
-                  activeView === "espace-bureau" && activeEspaceSection === item.id && "bg-accent font-medium"
+                  isActive(item) && "bg-accent font-medium"
                 )}
               >
                 <Icon className={cn("h-3.5 w-3.5 shrink-0", item.color)} />

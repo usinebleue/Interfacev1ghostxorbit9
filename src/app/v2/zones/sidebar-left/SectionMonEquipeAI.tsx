@@ -81,7 +81,7 @@ const BOT_COLOR: Record<string, string> = {
 };
 
 export function SectionMonEquipeAI({ collapsed }: Props) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const { bots } = useBots();
   const { activeBotCode, activeView, setActiveBot, setActiveView } = useFrameMaster();
 

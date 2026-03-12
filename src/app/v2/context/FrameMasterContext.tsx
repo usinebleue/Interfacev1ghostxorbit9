@@ -6,9 +6,11 @@
 import { createContext, useContext, useState, useCallback, useRef, useEffect } from "react";
 import type { BotInfo } from "../api/types";
 
-export type ActiveView = "dashboard" | "cockpit" | "health" | "department" | "detail" | "discussion" | "branches" | "cahier" | "scenarios" | "live-chat" | "canvas" | "orbit9-detail" | "agent-settings" | "espace-bureau" | "blueprint" | "board-room" | "war-room" | "think-room" | "mes-chantiers" | "bible-visuelle" | "bible-technique" | "bible-ghml" | "master-roadmap" | "master-strategie" | "master-orbit9" | "master-communication" | "master-dette" | "master-routine" | "master-minedor" | "master-training" | "master-profils" | "master-parcours" | "master-navigation" | "master-angles-morts" | "master-capacites" | "master-instance-fonds" | "master-diagnostics" | "master-playbooks" | "master-bibliotheque-exec" | "master-marketing-360" | "master-guides-legaux" | "master-cortex-robot" | "master-hydro-quebec" | "master-flows" | "master-cartographie" | "master-oracle9" | "master-bible-live" | "bible-visuelle-cible" | "flow-usine-bleue" | "animation-showcase" | "agent-gallery" | "playbook-usine-bleue" | "fe-sidebar-droite" | "blueprint-reseau" | "fe-mon-reseau" | "accueil-hero" | "bible-officielle" | "carlos-codes" | "diagnostic-ia" | "meeting-room" | "status";
+export type ActiveView = "dashboard" | "cockpit" | "health" | "department" | "detail" | "discussion" | "branches" | "cahier" | "scenarios" | "live-chat" | "canvas" | "orbit9-detail" | "agent-settings" | "espace-bureau" | "blueprint" | "board-room" | "war-room" | "think-room" | "mes-chantiers" | "mon-reseau" | "bible-visuelle" | "bible-technique" | "bible-ghml" | "master-roadmap" | "master-strategie" | "master-orbit9" | "master-communication" | "master-dette" | "master-routine" | "master-minedor" | "master-training" | "master-profils" | "master-parcours" | "master-navigation" | "master-angles-morts" | "master-capacites" | "master-instance-fonds" | "master-diagnostics" | "master-playbooks" | "master-bibliotheque-exec" | "master-marketing-360" | "master-guides-legaux" | "master-cortex-robot" | "master-hydro-quebec" | "master-flows" | "master-cartographie" | "master-oracle9" | "master-bible-live" | "bible-visuelle-cible" | "flow-usine-bleue" | "animation-showcase" | "agent-gallery" | "playbook-usine-bleue" | "fe-sidebar-droite" | "blueprint-reseau" | "fe-mon-reseau" | "accueil-hero" | "bible-officielle" | "carlos-codes" | "diagnostic-ia" | "meeting-room" | "status";
 
 export type EspaceSection = "idees" | "projets" | "documents" | "taches" | "outils" | "agenda" | "templates";
+
+export type ReseauSection = "profil" | "cellules" | "jumelage" | "chantiers" | "pionniers" | "gouvernance" | "dashboard" | "nouvelles" | "evenements" | "industrie";
 
 export type BlueprintSection = "live" | "hub" | "pipeline";
 
@@ -20,6 +22,7 @@ interface FrameMasterState {
   activeView: ActiveView;
   activeOrbit9Section: string | null;
   activeEspaceSection: EspaceSection;
+  activeReseauSection: ReseauSection;
   activeBlueprintSection: BlueprintSection;
   activeDiscussionTab: DiscussionTab;
   /** D-109 — Source view quand on ouvre le LiveChat depuis une Room */
@@ -45,6 +48,7 @@ interface FrameMasterActions {
   setLeftCollapsed: (v: boolean) => void;
   navigateOrbit9: (sectionId: string) => void;
   navigateEspace: (section: EspaceSection) => void;
+  navigateReseau: (section: ReseauSection) => void;
   navigateBlueprint: (section: BlueprintSection) => void;
   navigateDiscussionTab: (tab: DiscussionTab) => void;
   /** D-109 — Ouvre le LiveChat avec contexte de la source (board-room, war-room, etc.) */
@@ -67,6 +71,7 @@ export function FrameMasterProvider({
   const [activeView, setActiveView] = useState<ActiveView>("department"); // Ouvre sur Direction (CEOB) par defaut
   const [activeOrbit9Section, setActiveOrbit9Section] = useState<string | null>(null);
   const [activeEspaceSection, setActiveEspaceSection] = useState<EspaceSection>("idees");
+  const [activeReseauSection, setActiveReseauSection] = useState<ReseauSection>("profil");
   const [activeBlueprintSection, setActiveBlueprintSection] = useState<BlueprintSection>("live");
   const [activeDiscussionTab, setActiveDiscussionTab] = useState<DiscussionTab>("overview");
   const [chatSourceView, setChatSourceView] = useState<string | null>(null);
@@ -118,6 +123,11 @@ export function FrameMasterProvider({
     setActiveView("espace-bureau");
   }, []);
 
+  const navigateReseau = useCallback((section: ReseauSection) => {
+    setActiveReseauSection(section);
+    setActiveView("mon-reseau");
+  }, []);
+
   const navigateBlueprint = useCallback((section: BlueprintSection) => {
     setActiveBlueprintSection(section);
     setActiveView("blueprint");
@@ -165,6 +175,7 @@ export function FrameMasterProvider({
         activeView,
         activeOrbit9Section,
         activeEspaceSection,
+        activeReseauSection,
         activeBlueprintSection,
         activeDiscussionTab,
         chatSourceView,
@@ -185,6 +196,7 @@ export function FrameMasterProvider({
         setLeftCollapsed,
         navigateOrbit9,
         navigateEspace,
+        navigateReseau,
         navigateBlueprint,
         navigateDiscussionTab,
         navigateToChat,
