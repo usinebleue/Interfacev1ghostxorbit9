@@ -2,7 +2,7 @@
  * SidebarLeft.tsx — Sidebar gauche restructuree
  * 6 sections: Mon Cockpit, Mon Bureau, Mes Salles, Mon Equipe AI, Mon Reseau, Reglages
  * + Master GHML (reference, collapsed en bas)
- * Mon Cockpit = CarlOS AI + Tableau de Bord + Blueprint + Sante Globale
+ * Mon Cockpit = Tactique + Strategique + Tableau de Bord + Sante Globale
  * Mon Bureau = Idees + Documents + Taches + Agenda + Outils
  */
 

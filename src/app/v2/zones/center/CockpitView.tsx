@@ -115,8 +115,8 @@ const BOT_GRADIENT: Record<string, string> = {
 
 /* ============ 12 C-LEVEL × 3 ANGLES × 4 KPIs ============ */
 const CLEVEL_LINES: CLeveLineData[] = [
-  // ── CEOB — CEO Direction ──
-  { code: "CEOB", nom: "CarlOS — Direction", icon: Briefcase,
+  // ── CEOB — CEO Tactique ──
+  { code: "CEOB", nom: "CarlOS — Tactique", icon: Briefcase,
     bulletin: { heuresTravail: "247h", heuresSauvees: "82h", tauxSucces: "94%", tasksCompleted: "156" },
     angles: [
       { label: "Performance", icon: Gauge, maj: "26 fev", stats: [

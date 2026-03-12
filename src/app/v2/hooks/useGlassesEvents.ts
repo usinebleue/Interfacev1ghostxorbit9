@@ -22,6 +22,8 @@ const SECTION_TO_VIEW: Record<string, string> = {
   "mon bureau": "espace-bureau",
   blueprint: "blueprint",
   "blue print": "blueprint",
+  strategique: "blueprint",
+  tactique: "department",
   scenarios: "scenarios",
   chantiers: "mes-chantiers",
   missions: "mes-chantiers",

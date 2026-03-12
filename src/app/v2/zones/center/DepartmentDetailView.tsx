@@ -75,7 +75,7 @@ interface DeptConfig {
 
 const DEPT_CONFIGS: Record<string, DeptConfig> = {
   CEOB: {
-    name: "Direction",
+    name: "Tactique",
     color: "text-blue-600",
     ringColor: "ring-blue-500",
     summary:

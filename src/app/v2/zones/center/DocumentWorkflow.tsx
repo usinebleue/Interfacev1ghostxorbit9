@@ -107,7 +107,7 @@ const STATUS_CONFIG: Record<DocumentBlock["status"], { label: string; bg: string
 
 const STEPS: { id: DocumentWorkflowStep; label: string; num: number }[] = [
   { id: "briefing", label: "Briefing", num: 1 },
-  { id: "editing", label: "Blue Print", num: 2 },
+  { id: "editing", label: "Redaction", num: 2 },
   { id: "review", label: "Revision", num: 3 },
   { id: "export", label: "Export", num: 4 },
 ];

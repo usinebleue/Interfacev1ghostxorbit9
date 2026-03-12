@@ -1,6 +1,6 @@
 /**
  * SectionMonCockpit.tsx — [1] Mon Cockpit
- * 4 items strategiques: CarlOS AI, Tableau de Bord, Blueprint, Sante Globale
+ * 4 items strategiques: Tactique, Strategique, Tableau de Bord, Sante Globale
  * Sprint C — Restructuration Plateforme
  */
 

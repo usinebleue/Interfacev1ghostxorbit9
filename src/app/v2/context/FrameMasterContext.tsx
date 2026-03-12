@@ -68,7 +68,7 @@ export function FrameMasterProvider({
 }) {
   const [activeBot, setActiveBotState] = useState<BotInfo | null>(null);
   const [activeBotCode, setActiveBotCode] = useState("CEOB");
-  const [activeView, setActiveView] = useState<ActiveView>("department"); // Ouvre sur Direction (CEOB) par defaut
+  const [activeView, setActiveView] = useState<ActiveView>("department"); // Ouvre sur Tactique (CEOB) par defaut
   const [activeOrbit9Section, setActiveOrbit9Section] = useState<string | null>(null);
   const [activeEspaceSection, setActiveEspaceSection] = useState<EspaceSection>("idees");
   const [activeReseauSection, setActiveReseauSection] = useState<ReseauSection>("profil");

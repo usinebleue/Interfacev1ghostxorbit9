@@ -52,9 +52,9 @@ const BUREAU_MESSAGES: Record<string, string> = {
   templates: "Vos templates de documents. Générez un document en un clic — je remplis les champs avec les données de votre entreprise.",
 };
 
-/** Messages sous-sections Mon Blue Print */
+/** Messages sous-sections Strategique */
 const BLUEPRINT_MESSAGES: Record<string, string> = {
-  live:     "Blue Print Live — construisons votre plan d'affaires ensemble. Dites-moi par quelle section commencer et je guide le processus avec les bots spécialistes.",
+  live:     "Plan Strategique — construisons votre plan d'affaires ensemble. Dites-moi par quelle section commencer et je guide le processus avec les bots spécialistes.",
   hub:      "Hub de contenu — vos templates et documents générés. Cliquez sur un élément pour qu'on l'explore.",
   pipeline: "Pipeline d'exécution — vos étapes de réalisation. Dites-moi quelle étape vous voulez lancer.",
 };
@@ -66,7 +66,7 @@ const FIRST_VISIT_MSG = "Bienvenue dans CarlOS! Chaque bloc que vous voyez est u
 
 /** Messages d'accueil par bot pour leurs départements */
 const DEPT_MESSAGES: Record<string, string> = {
-  CEOB: "Bienvenue dans la direction générale. Je surveille l'ensemble de l'organisation pour vous.",
+  CEOB: "Bienvenue dans la vue Tactique. Je surveille l'ensemble de l'organisation pour vous.",
   CTOB: "Bienvenue dans mon département Technologie. Voici l'état de votre écosystème tech. Cliquez sur un élément pour qu'on en discute.",
   CFOB: "Bonjour! Je suis François, votre CFO. Voici un portrait de vos finances. Cliquez sur un bloc pour qu'on creuse ensemble.",
   CMOB: "Martine ici, votre CMO. Bienvenue dans Marketing & Croissance. Cliquez sur un élément pour qu'on l'analyse.",
