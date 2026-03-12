@@ -1,8 +1,8 @@
 /**
- * PlaybookUsineBleuePage.tsx — RD.7 Mon Blueprint
+ * PlaybookUsineBleuePage.tsx — RD.7 Plan Strategique
  * 1 chantier "Usine Bleue AI" contenant 13 projets pour livrer la plateforme complete
  * Equipe: Carl (N1) + Claude Code (CTOB) + Gemini (PM) + 12 Bots C-Level
- * Futur modele de la section Blueprint officielle pour tous les utilisateurs
+ * Futur modele de la section Strategique officielle pour tous les utilisateurs
  */
 
 import { useState } from "react";
@@ -79,7 +79,7 @@ const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
 ];
 
 /** Navigation context shared across all tabs */
-interface BlueprintNav {
+interface StrategiqueNav {
   tab: TabId;
   chantierId: string | null;
   projetId: string | null;
@@ -810,11 +810,11 @@ const MISSIONS_DONE = CHANTIERS.reduce((s, ch) => s + ch.projets.filter((p) => p
 const MISSIONS_EN_COURS = CHANTIERS.reduce((s, ch) => s + ch.projets.filter((p) => p.status === "en-cours").length, 0);
 
 // ================================================================
-// TAB: VUE D'ENSEMBLE — Landing page Blueprint
+// TAB: VUE D'ENSEMBLE — Landing page Strategique
 // KPIs + chantiers clickables + opportunites + flow CREDO
 // ================================================================
 
-function TabOverview({ nav }: { nav: BlueprintNav }) {
+function TabOverview({ nav }: { nav: StrategiqueNav }) {
   // Calculer les opportunites (missions avec besoin externe)
   const allMissions = CHANTIERS.flatMap((c) => c.projets.flatMap((p) => p.missions));
   const opportunites = allMissions.filter((m) => m.toLowerCase().includes("externe") || m.toLowerCase().includes("fournisseur") || m.toLowerCase().includes("ouverte") || m.toLowerCase().includes("partenaire"));
@@ -1097,7 +1097,7 @@ const ROLE_CONFIG = {
 // Click chantier → Projets tab
 // ================================================================
 
-function TabChantiers({ nav }: { nav: BlueprintNav }) {
+function TabChantiers({ nav }: { nav: StrategiqueNav }) {
   return (
     <div className="space-y-4">
       {/* Stats globaux */}
@@ -1159,7 +1159,7 @@ function TabChantiers({ nav }: { nav: BlueprintNav }) {
 // Sans selection: liste 13 projets / Avec selection: missions (= .projets[]) du projet
 // ================================================================
 
-function TabProjets({ nav, ch }: { nav: BlueprintNav; ch: Chantier | null }) {
+function TabProjets({ nav, ch }: { nav: StrategiqueNav; ch: Chantier | null }) {
   // Vue sans projet selectionne — liste des 13 projets
   if (!ch) {
     return (
@@ -1320,7 +1320,7 @@ function TabProjets({ nav, ch }: { nav: BlueprintNav; ch: Chantier | null }) {
 // Click mission → Taches tab (= .missions[] dans le code)
 // ================================================================
 
-function TabMissionsView({ nav, ch, projet }: { nav: BlueprintNav; ch: Chantier | null; projet: Projet | null }) {
+function TabMissionsView({ nav, ch, projet }: { nav: StrategiqueNav; ch: Chantier | null; projet: Projet | null }) {
   if (!ch || !projet) {
     const grouped = CHANTIERS.map((c) => ({
       ch: c,
@@ -1492,7 +1492,7 @@ function TabMissionsView({ nav, ch, projet }: { nav: BlueprintNav; ch: Chantier 
 // TAB: TACHES — Detail mission + sous-taches (niveau 4)
 // ================================================================
 
-function TabTaches({ nav, ch, projet, missionIdx }: { nav: BlueprintNav; ch: Chantier | null; projet: Projet | null; missionIdx: number | null }) {
+function TabTaches({ nav, ch, projet, missionIdx }: { nav: StrategiqueNav; ch: Chantier | null; projet: Projet | null; missionIdx: number | null }) {
   // Vue globale — toutes les taches (quand aucune mission selectionnee)
   if (!ch || !projet || missionIdx === null) {
     const allTaches: { text: string; botCode: string; role: string; chantier: Chantier; projet: Projet; missionIdx: number }[] = [];
@@ -1717,7 +1717,7 @@ function TabTaches({ nav, ch, projet, missionIdx }: { nav: BlueprintNav; ch: Cha
 // TAB: OPPORTUNITES — Missions externes/fournisseurs/ouvertes
 // ================================================================
 
-function TabOpportunites({ nav }: { nav: BlueprintNav }) {
+function TabOpportunites({ nav }: { nav: StrategiqueNav }) {
   // Extraire toutes les missions avec contexte chantier/projet
   const allOpps: { mission: string; parsed: ReturnType<typeof parseMission>; chantier: Chantier; projet: Projet; missionIdx: number }[] = [];
   CHANTIERS.forEach((c) => {
@@ -2032,7 +2032,7 @@ function TabTimeline() {
 }
 
 // ================================================================
-// MAIN COMPONENT — Blueprint avec navigation cross-tab
+// MAIN COMPONENT — Strategique avec navigation cross-tab
 // ================================================================
 
 export function PlaybookUsineBleuePage() {
@@ -2050,7 +2050,7 @@ export function PlaybookUsineBleuePage() {
     if (mIdx !== undefined) setMissionIdx(mIdx);
   };
 
-  const nav: BlueprintNav = { tab: activeTab, chantierId, projetId, missionIdx, goTo };
+  const nav: StrategiqueNav = { tab: activeTab, chantierId, projetId, missionIdx, goTo };
 
   // Resolve selected objects
   const ch = chantierId ? CHANTIERS.find((c) => c.id === chantierId) : null;
@@ -2064,7 +2064,7 @@ export function PlaybookUsineBleuePage() {
         <PageHeader
           icon={Rocket}
           iconColor="text-blue-600"
-          title="Mon Blueprint"
+          title="Plan Strategique"
           subtitle={`1 chantier · ${NB_PROJETS} projets · ${NB_MISSIONS} missions`}
           onBack={() => setActiveView("master-roadmap")}
           rightSlot={

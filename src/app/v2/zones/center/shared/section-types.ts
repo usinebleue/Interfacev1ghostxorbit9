@@ -1,9 +1,9 @@
 /**
- * blueprint-types.ts — Types partages pour Blueprint / Mon Bureau / Mon Reseau
- * Interfaces communes: Chantier, Projet, Mission, BlueprintNav, etc.
+ * section-types.ts — Types partages pour Strategique / Mon Bureau / Mon Reseau
+ * Interfaces communes: Chantier, Projet, Mission, StrategiqueNav, etc.
  */
 
-export type BlueprintTabId = "overview" | "timeline" | "chantiers" | "projets" | "missions" | "taches" | "opportunites" | "equipes";
+export type StrategiqueTabId = "overview" | "timeline" | "chantiers" | "projets" | "missions" | "taches" | "opportunites" | "equipes";
 
 export type BureauTabId = "idees" | "documents" | "outils" | "taches" | "agenda";
 
@@ -44,13 +44,13 @@ export interface Chantier {
   timing: string;
 }
 
-/** Navigation context shared across all Blueprint tabs */
-export interface BlueprintNav {
-  tab: BlueprintTabId;
+/** Navigation context shared across all Strategique tabs */
+export interface StrategiqueNav {
+  tab: StrategiqueTabId;
   chantierId: string | null;
   projetId: string | null;
   missionIdx: number | null;
-  goTo: (tab: BlueprintTabId, chantierId?: string | null, projetId?: string | null, missionIdx?: number | null) => void;
+  goTo: (tab: StrategiqueTabId, chantierId?: string | null, projetId?: string | null, missionIdx?: number | null) => void;
 }
 
 export interface PlaybookTemplate {

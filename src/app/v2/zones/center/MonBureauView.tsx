@@ -67,8 +67,8 @@ import { useBureau, useTaches, useTemplates, useIdees } from "../../api/hooks";
 import { api } from "../../api/client";
 import { CarlOSPresence } from "../center/CarlOSPresence";
 import { DocumentWorkflow } from "../center/DocumentWorkflow";
-import { BlueprintFrame } from "./shared/BlueprintFrame";
-import type { TabDef } from "./shared/blueprint-types";
+import { SectionFrame } from "./shared/SectionFrame";
+import type { TabDef } from "./shared/section-types";
 
 // ── Sub-tabs config (pattern Orbit9DetailView) ──
 
@@ -140,7 +140,7 @@ const CAT_TO_BOT: Record<string, string> = {
   "CSO": "CSOB", "COO": "COOB", "FACTORY": "CPOB", "INTERNE-UB": "CEOB",
 };
 
-// ── Bot gradients + labels (pattern Pipeline — BlueprintGestionView) ──
+// ── Bot gradients + labels (pattern Pipeline) ──
 
 const BOT_GRADIENTS: Record<string, string> = {
   CEOB: "from-blue-600 to-blue-500",
@@ -1577,7 +1577,7 @@ function TachesPage() {
         )}
       </>)}
 
-      {/* Sub-tab: Taches Projet (from Blueprint JSON) */}
+      {/* Sub-tab: Taches Projet (from Strategique) */}
       {tacheSubTab === "projet" && (
         <div className="text-center py-16 space-y-4">
           <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto">
@@ -1586,7 +1586,7 @@ function TachesPage() {
           <div>
             <h3 className="text-lg font-bold text-gray-800">Taches Projet</h3>
             <p className="text-sm text-gray-500 mt-1 max-w-md mx-auto">
-              Les taches extraites de votre Blueprint sont accessibles dans la section Blueprint &gt; Taches.
+              Les taches extraites de votre Plan Strategique sont accessibles dans la section Strategique &gt; Taches.
               CarlOS synchronisera automatiquement vos taches projet ici.
             </p>
           </div>
@@ -2300,7 +2300,7 @@ export function MonBureauView() {
   };
 
   return (
-    <BlueprintFrame
+    <SectionFrame
       title="Mon Bureau"
       subtitle=""
       icon={Briefcase}
@@ -2310,6 +2310,6 @@ export function MonBureauView() {
       onTabChange={(tab) => navigateEspace(tab as EspaceSection)}
     >
       {renderPage()}
-    </BlueprintFrame>
+    </SectionFrame>
   );
 }

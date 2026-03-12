@@ -1,6 +1,6 @@
 /**
- * BlueprintReseauPage.tsx — RD.8 Blueprint Reseau Orbit9
- * Meme frame que le Blueprint interne (PlaybookUsineBleuePage)
+ * StrategiqueReseauPage.tsx — RD.8 Strategique Reseau Orbit9
+ * Meme frame que le plan Strategique interne (PlaybookUsineBleuePage)
  * mais pour la collaboration inter-entreprises manufacturier ↔ fournisseurs.
  * Cellules Orbit9 = chantiers/projets partages entre membres du reseau.
  * Session 51 — Modelisation
@@ -26,7 +26,7 @@ import { PageHeader } from "../layouts/PageHeader";
 import { useFrameMaster } from "../../../context/FrameMasterContext";
 
 // ================================================================
-// TYPES — Meme hierarchie que Blueprint interne
+// TYPES — Meme hierarchie que Strategique interne
 // ================================================================
 
 type TabId = "overview" | "profil" | "cellules" | "chantiers" | "projets" | "missions" | "prime-spot" | "pipeline" | "membres";
@@ -252,7 +252,7 @@ const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "membres", label: "Membres", icon: Users },
 ];
 
-interface BlueprintNav {
+interface StrategiqueNav {
   tab: TabId;
   chantierId: string | null;
   projetId: string | null;
@@ -313,7 +313,7 @@ function MembreBadge({ nom, type }: { nom: string; type?: string }) {
 // TAB: VUE D'ENSEMBLE
 // ================================================================
 
-function TabOverview({ nav }: { nav: BlueprintNav }) {
+function TabOverview({ nav }: { nav: StrategiqueNav }) {
   return (
     <div className="space-y-6">
       {/* KPIs Reseau */}
@@ -345,15 +345,15 @@ function TabOverview({ nav }: { nav: BlueprintNav }) {
         ))}
       </div>
 
-      {/* Difference avec Blueprint interne */}
+      {/* Difference avec Strategique interne */}
       <Card className="p-4 bg-orange-50/50 border-orange-200">
         <div className="flex items-center gap-2 mb-3">
           <Network className="h-4 w-4 text-orange-600" />
-          <span className="text-sm font-bold text-orange-800">Blueprint Reseau vs Blueprint Interne</span>
+          <span className="text-sm font-bold text-orange-800">Strategique Reseau vs Strategique Interne</span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <div className="text-xs font-bold text-blue-700">Blueprint Interne (RD.7)</div>
+            <div className="text-xs font-bold text-blue-700">Strategique Interne (RD.7)</div>
             <div className="text-[9px] text-gray-600 space-y-1">
               <div className="flex items-center gap-1.5"><ArrowRight className="h-3.5 w-3.5 text-blue-400" /> 1 entreprise, ses propres chantiers</div>
               <div className="flex items-center gap-1.5"><ArrowRight className="h-3.5 w-3.5 text-blue-400" /> Equipe interne: CEO + bots AI</div>
@@ -362,7 +362,7 @@ function TabOverview({ nav }: { nav: BlueprintNav }) {
             </div>
           </div>
           <div className="space-y-2">
-            <div className="text-xs font-bold text-orange-700">Blueprint Reseau (RD.8)</div>
+            <div className="text-xs font-bold text-orange-700">Strategique Reseau (RD.8)</div>
             <div className="text-[9px] text-gray-600 space-y-1">
               <div className="flex items-center gap-1.5"><ArrowRight className="h-3.5 w-3.5 text-orange-400" /> N entreprises, chantiers PARTAGES</div>
               <div className="flex items-center gap-1.5"><ArrowRight className="h-3.5 w-3.5 text-orange-400" /> Cellules: 3 membres complementaires</div>
@@ -655,7 +655,7 @@ function TabProfil() {
 // TAB: CELLULES
 // ================================================================
 
-function TabCellules({ nav }: { nav: BlueprintNav }) {
+function TabCellules({ nav }: { nav: StrategiqueNav }) {
   const selected = nav.celluleId ? CELLULES.find((c) => c.id === nav.celluleId) : null;
 
   if (selected) {
@@ -800,7 +800,7 @@ function TabCellules({ nav }: { nav: BlueprintNav }) {
 // TAB: CHANTIERS
 // ================================================================
 
-function TabChantiers({ nav }: { nav: BlueprintNav }) {
+function TabChantiers({ nav }: { nav: StrategiqueNav }) {
   const selected = nav.chantierId ? CHANTIERS_RESEAU.find((c) => c.id === nav.chantierId) : null;
 
   if (selected) {
@@ -931,7 +931,7 @@ function TabChantiers({ nav }: { nav: BlueprintNav }) {
 // TAB: PROJETS
 // ================================================================
 
-function TabProjets({ nav }: { nav: BlueprintNav }) {
+function TabProjets({ nav }: { nav: StrategiqueNav }) {
   const allProjets = CHANTIERS_RESEAU.flatMap((ch) => ch.projets.map((p) => ({ ...p, chantier: ch })));
   const selected = nav.projetId ? allProjets.find((p) => p.id === nav.projetId) : null;
 
@@ -1045,7 +1045,7 @@ function TabProjets({ nav }: { nav: BlueprintNav }) {
 // TAB: MISSIONS
 // ================================================================
 
-function TabMissions({ nav }: { nav: BlueprintNav }) {
+function TabMissions({ nav }: { nav: StrategiqueNav }) {
   const allMissions = CHANTIERS_RESEAU.flatMap((ch) =>
     ch.projets.flatMap((p) =>
       p.missions.map((m) => ({ raw: m, projet: p, chantier: ch }))
@@ -1336,14 +1336,14 @@ function TabMembres() {
 // MAIN COMPONENT
 // ================================================================
 
-export function BlueprintReseauPage() {
+export function StrategiqueReseauPage() {
   const { setActiveView } = useFrameMaster();
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [chantierId, setChantierId] = useState<string | null>(null);
   const [projetId, setProjetId] = useState<string | null>(null);
   const [celluleId, setCelluleId] = useState<string | null>(null);
 
-  const nav: BlueprintNav = {
+  const nav: StrategiqueNav = {
     tab: activeTab,
     chantierId,
     projetId,
@@ -1360,7 +1360,7 @@ export function BlueprintReseauPage() {
     <PageLayout maxWidth="4xl" showPresence={false} onBack={() => setActiveView("dashboard")}>
       <PageHeader
         icon={Network}
-        title="Blueprint Reseau Orbit9"
+        title="Strategique Reseau Orbit9"
         subtitle={`${CELLULES.length} cellules • ${MEMBRES.length} membres • ${NB_CHANTIERS} chantiers partages • ${NB_MISSIONS} missions`}
         gradient="from-orange-700 to-orange-500"
       />

@@ -108,7 +108,7 @@ const GHML_BLOCS: GHMLBloc[] = [
       { id: "master-bibliotheque-exec", label: "RD.5 Bibliotheque Execution", icon: Library, color: "text-indigo-600" },
       { id: "master-angles-morts", label: "RD.6 Angles Morts & Risques", icon: EyeOff, color: "text-red-600" },
       { id: "playbook-usine-bleue", label: "RD.7 Plan Strategique", icon: Rocket, color: "text-blue-600" },
-      { id: "blueprint-reseau", label: "RD.8 Blueprint Reseau", icon: Network, color: "text-orange-600" },
+      { id: "strategique-reseau", label: "RD.8 Strategique Reseau", icon: Network, color: "text-orange-600" },
     ],
   },
   {

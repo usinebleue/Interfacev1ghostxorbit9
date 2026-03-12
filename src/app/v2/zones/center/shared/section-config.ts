@@ -1,5 +1,5 @@
 /**
- * blueprint-config.ts — Configurations partagees pour Blueprint / Mon Bureau / Mon Reseau
+ * section-config.ts — Configurations partagees pour Strategique / Mon Bureau / Mon Reseau
  * STATUS_CONFIG, CHALEUR_CONFIG, BOT_INFO, ROLE_CONFIG, PLAYBOOK_TEMPLATES
  */
 
@@ -9,7 +9,7 @@ import {
   Zap, CheckCircle2, ListChecks,
   Calendar,
 } from "lucide-react";
-import type { PlaybookTemplate, TabDef } from "./blueprint-types";
+import type { PlaybookTemplate, TabDef } from "./section-types";
 
 // ================================================================
 // STATUS & CHALEUR CONFIGS
@@ -64,7 +64,7 @@ export const TYPE_COLORS: Record<string, { bg: string; text: string; border: str
 // TABS
 // ================================================================
 
-export const BLUEPRINT_TABS: TabDef[] = [
+export const STRATEGIQUE_TABS: TabDef[] = [
   { id: "overview", label: "Vue d'ensemble", icon: Layers },
   { id: "timeline", label: "Timeline", icon: Calendar },
   { id: "chantiers", label: "Chantiers", icon: Flame },

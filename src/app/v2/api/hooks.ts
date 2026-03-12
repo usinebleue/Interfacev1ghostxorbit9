@@ -1534,7 +1534,7 @@ export function useTensions(filters?: {
 const FLOW_CONFIGS: Record<string, { steps: string[]; flowType: string }> = {
   "board-room": { steps: ["Accueil", "Ordre du jour", "Debat CA", "Vote", "Decisions"], flowType: "action" },
   "jumelage": { steps: ["Accueil", "Profil", "Matching", "Rencontre", "Suivi"], flowType: "action" },
-  "blueprint": { steps: ["Brief", "Analyse", "Modele", "Validation", "Livraison"], flowType: "action" },
+  "strategique": { steps: ["Brief", "Analyse", "Modele", "Validation", "Livraison"], flowType: "action" },
   "scenarios": { steps: ["Contexte", "Hypotheses", "Simulation", "Resultats", "Decision"], flowType: "action" },
   "cellules": { steps: ["Objectif", "Membres", "Mandat", "Lancement"], flowType: "action" },
   "pipeline": { steps: ["Prospect", "Qualification", "Proposition", "Negociation", "Cloture"], flowType: "action" },

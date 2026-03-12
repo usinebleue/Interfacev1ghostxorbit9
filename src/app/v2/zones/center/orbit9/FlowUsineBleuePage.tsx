@@ -1827,7 +1827,7 @@ function EnergyBeam() {
 // BLUEPRINT INFOGRAPHIC between steps
 // ════════════════════════════════════════════════════════════════
 
-interface BlueprintData {
+interface FlowStepData {
   from: string;
   process: string;
   to: string;
@@ -1835,7 +1835,7 @@ interface BlueprintData {
   detail: string;
 }
 
-const BLUEPRINT_DATA: BlueprintData[] = [
+const FLOW_STEP_DATA: FlowStepData[] = [
   { from: "Donnees brutes", process: "Analyse VITAA", to: "Diagnostic", icon: "\u2699\uFE0F", detail: "5 piliers scores" },
   { from: "Gaps identifies", process: "Orbit9 Match", to: "Invitation", icon: "\uD83D\uDD0D", detail: "Algorithme trisociation" },
   { from: "Profils jumeles", process: "Coordination", to: "RDV terrain", icon: "\uD83D\uDCC5", detail: "Planification visite" },
@@ -1844,8 +1844,8 @@ const BLUEPRINT_DATA: BlueprintData[] = [
   { from: "Cahier valide", process: "Montage $", to: "Go Live", icon: "\uD83D\uDE80", detail: "Programmes + suivi" },
 ];
 
-function BlueprintConnector({ data, visible, colorFrom, colorTo }: {
-  data: BlueprintData; visible: boolean; colorFrom: string; colorTo: string;
+function FlowStepConnector({ data, visible, colorFrom, colorTo }: {
+  data: FlowStepData; visible: boolean; colorFrom: string; colorTo: string;
 }) {
   return (
     <div style={{
@@ -2195,9 +2195,9 @@ export function FlowUsineBleuePage() {
               canvasRef={canvasRef}
             />
             {/* Blueprint infographic between steps */}
-            {i < STEPS.length - 1 && BLUEPRINT_DATA[i] && (
-              <BlueprintConnector
-                data={BLUEPRINT_DATA[i]}
+            {i < STEPS.length - 1 && FLOW_STEP_DATA[i] && (
+              <FlowStepConnector
+                data={FLOW_STEP_DATA[i]}
                 visible={visibleSteps.has(i) && visibleSteps.has(i + 1)}
                 colorFrom={step.color}
                 colorTo={STEPS[i + 1].color}

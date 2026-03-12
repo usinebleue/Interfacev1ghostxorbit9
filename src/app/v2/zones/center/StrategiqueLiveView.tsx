@@ -1,5 +1,5 @@
 /**
- * BlueprintLiveView.tsx — Blueprint Live (dashboard operationnel)
+ * StrategiqueLiveView.tsx — Strategique Live (dashboard operationnel)
  * 3 sous-sections: Live, Hub, Pipeline
  * Pattern: sub-tabs dans header bar
  * Design System: bg-white border-b header, bg-gray-50 content, max-w-4xl mx-auto
@@ -19,14 +19,14 @@ import { Card } from "../../../components/ui/card";
 import { Badge } from "../../../components/ui/badge";
 import { cn } from "../../../components/ui/utils";
 import { useFrameMaster } from "../../context/FrameMasterContext";
-import type { BlueprintSection } from "../../context/FrameMasterContext";
+import type { StrategiqueSection } from "../../context/FrameMasterContext";
 import { BOT_AVATAR } from "../../api/types";
 import type { TemplateInfo, BureauItem } from "../../api/types";
 import { api } from "../../api/client";
 
 // ── Sub-tabs config (pattern Orbit9DetailView) ──
 
-const BLUEPRINT_TABS: { id: BlueprintSection; label: string; icon: React.ElementType }[] = [
+const STRATEGIQUE_LIVE_TABS: { id: StrategiqueSection; label: string; icon: React.ElementType }[] = [
   { id: "live", label: "Live", icon: Activity },
   { id: "hub", label: "Hub", icon: FileText },
   { id: "pipeline", label: "Pipeline", icon: GitBranch },
@@ -432,8 +432,8 @@ function TabPipeline() {
 // VUE PRINCIPALE — pattern EspaceBureauView / Orbit9DetailView
 // ══════════════════════════════════════════
 
-export function BlueprintLiveView() {
-  const { activeBlueprintSection, navigateBlueprint, setActiveView } = useFrameMaster();
+export function StrategiqueLiveView() {
+  const { activeStrategiqueSection, navigateStrategique, setActiveView } = useFrameMaster();
 
   return (
     <PageLayout
@@ -447,13 +447,13 @@ export function BlueprintLiveView() {
           onBack={() => setActiveView("department")}
           rightSlot={
             <>
-              {BLUEPRINT_TABS.map((tab) => {
+              {STRATEGIQUE_LIVE_TABS.map((tab) => {
                 const TIcon = tab.icon;
-                const isActive = tab.id === activeBlueprintSection;
+                const isActive = tab.id === activeStrategiqueSection;
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => navigateBlueprint(tab.id)}
+                    onClick={() => navigateStrategique(tab.id)}
                     className={cn(
                       "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
                       isActive
@@ -471,9 +471,9 @@ export function BlueprintLiveView() {
         />
       }
     >
-      {activeBlueprintSection === "live" && <TabLive />}
-      {activeBlueprintSection === "hub" && <TabHub />}
-      {activeBlueprintSection === "pipeline" && <TabPipeline />}
+      {activeStrategiqueSection === "live" && <TabLive />}
+      {activeStrategiqueSection === "hub" && <TabHub />}
+      {activeStrategiqueSection === "pipeline" && <TabPipeline />}
     </PageLayout>
   );
 }
