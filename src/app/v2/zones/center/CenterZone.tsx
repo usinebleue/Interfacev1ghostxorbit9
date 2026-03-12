@@ -39,11 +39,9 @@ import { DepartmentDetailView } from "./DepartmentDetailView";
 import { Orbit9DetailView } from "./orbit9/Orbit9DetailView";
 import { AgentSettingsView } from "./AgentSettingsView";
 import { MonBureauView } from "./MonBureauView";
-// BlueprintLiveView fusionné dans BlueprintGestionView (D-115)
 import { BoardRoomView } from "./BoardRoomView";
 import { WarRoomView } from "./WarRoomView";
 import { ThinkRoomView } from "./ThinkRoomView";
-import { BlueprintGestionView } from "./BlueprintGestionView";
 import { FocusModeLayout } from "./FocusModeLayout";
 import { PageTypePage } from "./orbit9/PageTypePage";
 import { BibleTechniquePage } from "./orbit9/BibleTechniquePage";
@@ -79,8 +77,7 @@ import { FlowUsineBleuePage } from "./orbit9/FlowUsineBleuePage";
 import { AnimationShowcasePage } from "./orbit9/AnimationShowcasePage";
 import { AgentGalleryPage } from "./orbit9/AgentGalleryPage";
 import { AccueilHeroPage } from "./orbit9/AccueilHeroPage";
-import { BlueprintPlanView } from "./BlueprintPlanView";
-// BlueprintView (seed data) remplacé par BlueprintGestionView unifié (D-115)
+import { BlueprintView } from "./BlueprintView";
 import { MonReseauView } from "./MonReseauView";
 import { BlueprintReseauPage } from "./orbit9/BlueprintReseauPage";
 import { FESidebarDroitePage } from "./orbit9/FESidebarDroitePage";
@@ -238,11 +235,11 @@ export function CenterZone() {
       {activeView === "orbit9-detail" && <Orbit9DetailView />}
       {activeView === "agent-settings" && <AgentSettingsView />}
       {activeView === "espace-bureau" && <MonBureauView />}
-      {activeView === "blueprint" && <BlueprintGestionView />}
+      {activeView === "blueprint" && <BlueprintView />}
       {activeView === "board-room" && <BoardRoomView />}
       {activeView === "war-room" && <WarRoomView />}
       {activeView === "think-room" && <ThinkRoomView />}
-      {activeView === "mes-chantiers" && <BlueprintGestionView />}
+      {activeView === "mes-chantiers" && <BlueprintView />}
       {activeView === "bible-visuelle" && <PageTypePage />}
       {activeView === "bible-technique" && <BibleTechniquePage />}
       {activeView === "bible-ghml" && <BibleGHMLPage />}
@@ -277,7 +274,7 @@ export function CenterZone() {
       {activeView === "animation-showcase" && <AnimationShowcasePage />}
       {activeView === "agent-gallery" && <AgentGalleryPage />}
       {activeView === "accueil-hero" && <AccueilHeroPage />}
-      {activeView === "playbook-usine-bleue" && <BlueprintPlanView />}
+      {activeView === "playbook-usine-bleue" && <BlueprintView />}
       {activeView === "blueprint-reseau" && <BlueprintReseauPage />}
       {activeView === "fe-sidebar-droite" && <FESidebarDroitePage />}
       {activeView === "fe-mon-reseau" && <FEMonReseauPage />}

@@ -186,7 +186,7 @@ export function DiscussionView() {
         icon={MessageSquare}
         iconColor="text-blue-600"
         title="Mes Discussions"
-        subtitle={total === 0 ? "Aucune discussion" : `${total} discussion${total !== 1 ? "s" : ""} · ${activeThreads.length} active${activeThreads.length !== 1 ? "s" : ""}`}
+        subtitle=""
         rightSlot={
           <button
             onClick={() => { newConversation(); goToChat(); }}

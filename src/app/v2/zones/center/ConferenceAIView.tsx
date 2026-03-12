@@ -355,7 +355,7 @@ export function ConferenceAIView() {
           icon={Video}
           iconColor="text-blue-600"
           title="Conférence AI"
-          subtitle="Meetings intelligents avec CarlOS"
+          subtitle=""
           onBack={() => setActiveView("dashboard")}
           rightSlot={
             <div className="flex gap-1">

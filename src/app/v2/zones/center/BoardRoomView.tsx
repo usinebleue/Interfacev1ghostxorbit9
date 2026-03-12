@@ -46,7 +46,7 @@ export function BoardRoomView() {
 
   return (
     <PageLayout maxWidth="4xl" header={
-      <PageHeader icon={Crown} iconColor="text-amber-600" title="Board Room" subtitle="Conseil d'Administration — 6 C-Level" onBack={() => setActiveView("department")} />
+      <PageHeader icon={Crown} iconColor="text-amber-600" title="Board Room" subtitle="" onBack={() => setActiveView("department")} />
     }>
       {/* Table ronde — 6 membres */}
       <div>

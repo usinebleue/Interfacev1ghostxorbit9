@@ -1763,6 +1763,47 @@ export function useMissions(chantierId?: number, projetId?: number) {
 }
 
 // ══════════════════════════════════════════════
+// useTachesUser — 4e niveau GHML
+// ══════════════════════════════════════════════
+
+export function useTachesUser(filters?: { mission_id?: number; projet_id?: number; chantier_id?: number; status?: string }) {
+  const [taches, setTaches] = useState<import("./types").TacheUser[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await api.listTachesUser(filters);
+      setTaches(Array.isArray(data) ? data : []);
+    } catch {
+      setTaches([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [filters?.mission_id, filters?.projet_id, filters?.chantier_id, filters?.status]);
+
+  useEffect(() => { refresh(); }, [refresh]);
+
+  const create = useCallback(async (data: Partial<import("./types").TacheUser>) => {
+    const result = await api.createTacheUser(data);
+    await refresh();
+    return result;
+  }, [refresh]);
+
+  const complete = useCallback(async (id: number) => {
+    await api.completeTacheUser(id);
+    await refresh();
+  }, [refresh]);
+
+  const remove = useCallback(async (id: number) => {
+    await api.deleteTacheUser(id);
+    await refresh();
+  }, [refresh]);
+
+  return { taches, loading, refresh, create, complete, remove };
+}
+
+// ══════════════════════════════════════════════
 // useDiscussions — persistance metadonnees discussions
 // ══════════════════════════════════════════════
 

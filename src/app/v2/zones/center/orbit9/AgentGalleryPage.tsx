@@ -1319,7 +1319,7 @@ export function AgentGalleryPage() {
       <PageHeader
         icon={Users}
         title="Mon Equipe AI"
-        subtitle="Cliquez sur un agent pour acceder a son departement"
+        subtitle=""
       />
     }>
       <style>{AG_KEYFRAMES}</style>

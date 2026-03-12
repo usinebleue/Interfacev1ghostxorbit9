@@ -13,12 +13,13 @@ import { useFrameMaster } from "../../context/FrameMasterContext";
 import { useCanvasActions } from "../../context/CanvasActionContext";
 import { BOT_SUBTITLE } from "../../api/types";
 import { api } from "../../api/client";
-import { useTaches, useBureau } from "../../api/hooks";
+import { useTaches, useBureau, useChantiers, useProjets } from "../../api/hooks";
 import type { Mission, DiagnosticCatalogue, TemplateDocumentaire } from "../../api/types";
 import { PageLayout } from "./layouts/PageLayout";
 import { BlueprintFrame } from "./shared/BlueprintFrame";
-import { CHANTIERS, PLAYBOOK_TEMPLATES, BOT_INFO, STATUS_CONFIG, CHALEUR_CONFIG } from "./shared/blueprint-config";
+import { PLAYBOOK_TEMPLATES, BOT_INFO, STATUS_CONFIG, CHALEUR_CONFIG } from "./shared/blueprint-config";
 import type { TabDef } from "./shared/blueprint-types";
+import { HierarchieGHML } from "./shared/HierarchieGHML";
 
 /* ============ BLOCK HEADER — meme style que DashboardView ============ */
 function BlockHeader({ icon: Icon, title, count, gradient }: {
@@ -122,7 +123,7 @@ type DeptTdcConfig = {
 /* ============ TABS DEPARTEMENT (10 tabs — harmonise Blueprint) ============ */
 type DeptTabId = "cockpit" | "chantiers" | "projets" | "missions" | "taches" | "documents" | "playbooks" | "diagnostics" | "equipe";
 const DEPT_TABS: TabDef[] = [
-  { id: "cockpit", label: "Cockpit", icon: Gauge },
+  { id: "cockpit", label: "Vue d'ensemble", icon: Gauge },
   { id: "chantiers", label: "Chantiers", icon: Flame },
   { id: "projets", label: "Projets", icon: Package },
   { id: "missions", label: "Missions", icon: ListChecks },
@@ -905,13 +906,6 @@ const BOT_CAPACITES: Record<string, {
   CISOB: { equivHumain: "Directeur cybersecurite", coutHumain: "120-200K$", tachesCount: 20, heuresMois: "80-140h", exemples: ["Monitoring cybersecurite", "Alertes vulnerabilites", "Rapports conformite SOC2/NIST", "Tests automatises"] },
 };
 
-/* ============ HELPERS — Parsing missions from CHANTIERS ============ */
-function parseMissionBot(raw: string): { bot: string; text: string } {
-  const match = raw.match(/^(\w+):\s*(.+)$/);
-  if (match) return { bot: match[1], text: match[2] };
-  return { bot: "", text: raw };
-}
-
 /* ============ COMPOSANT PRINCIPAL ============ */
 export function DepartmentTourDeControle() {
   const { activeBotCode, activeBot, setActiveView } = useFrameMaster();
@@ -932,14 +926,16 @@ export function DepartmentTourDeControle() {
     api.listTemplatesDocumentaires(activeBotCode).then(t => setTemplates(t || [])).catch(() => {});
   }, [activeBotCode]);
 
-  // Filter CHANTIERS and PLAYBOOKS for this bot
+  // API data — chantiers et projets filtrés par bot
+  const { chantiers: allChantiers } = useChantiers();
+  const { projets: allProjets } = useProjets();
   const botChantiers = useMemo(() =>
-    CHANTIERS.filter(ch => ch.bots.includes(activeBotCode)),
-    [activeBotCode]
+    allChantiers.filter(ch => ch.bot_codes?.includes(activeBotCode)),
+    [allChantiers, activeBotCode]
   );
   const botProjets = useMemo(() =>
-    botChantiers.flatMap(ch => ch.projets.map(p => ({ ...p, chantierId: ch.id, chantierLabel: ch.label }))),
-    [botChantiers]
+    allProjets.filter(p => p.bot_primaire === activeBotCode || p.bot_codes?.includes(activeBotCode)),
+    [allProjets, activeBotCode]
   );
   const botPlaybooks = useMemo(() =>
     PLAYBOOK_TEMPLATES.filter(pb => pb.bots.includes(activeBotCode)),
@@ -948,7 +944,7 @@ export function DepartmentTourDeControle() {
   // Bots that collaborate with this one (from same chantiers)
   const collaborators = useMemo(() => {
     const codes = new Set<string>();
-    botChantiers.forEach(ch => ch.bots.forEach(b => { if (b !== activeBotCode) codes.add(b); }));
+    botChantiers.forEach(ch => (ch.bot_codes || []).forEach((b: string) => { if (b !== activeBotCode) codes.add(b); }));
     return Array.from(codes);
   }, [botChantiers, activeBotCode]);
 
@@ -1005,7 +1001,7 @@ export function DepartmentTourDeControle() {
   const stats = {
     chantiers: botChantiers.length,
     projets: botProjets.length,
-    projetsDone: botProjets.filter(p => p.status === "done").length,
+    projetsDone: botProjets.filter(p => p.status === "completee" || p.status === "complete").length,
     missionsApi: missions.length,
     docs: templates.length,
     diags: diagnostics.length,
@@ -1098,16 +1094,18 @@ export function DepartmentTourDeControle() {
                   <LineChart className="h-4 w-4 text-white" />
                   <span className="text-sm font-bold text-white">Progression</span>
                   {botProjets.length > 0 && (
-                    <span className="text-[9px] font-bold bg-white/25 text-white px-2 py-0.5 rounded-full ml-auto">{botProjets.filter(p => p.status === "done").length}/{botProjets.length}</span>
+                    <span className="text-[9px] font-bold bg-white/25 text-white px-2 py-0.5 rounded-full ml-auto">{botProjets.filter(p => p.status === "completee" || p.status === "complete").length}/{botProjets.length}</span>
                   )}
                 </div>
                 <div className="p-3 space-y-2">
                   {botProjets.slice(0, 6).map(p => {
-                    const sc = STATUS_CONFIG[p.status] || STATUS_CONFIG["a-faire"];
+                    const apiToLocal: Record<string, string> = { completee: "done", complete: "done", active: "en-cours", en_attente: "a-faire", archivee: "bloque" };
+                    const mappedStatus = apiToLocal[p.status] || "a-faire";
+                    const sc = STATUS_CONFIG[mappedStatus] || STATUS_CONFIG["a-faire"];
                     return (
                       <div key={p.id} className="flex items-center gap-2">
                         <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded", sc.bg, sc.text)}>{sc.label}</span>
-                        <span className="text-xs text-gray-700 flex-1 truncate">{p.label}</span>
+                        <span className="text-xs text-gray-700 flex-1 truncate">{p.titre}</span>
                       </div>
                     );
                   })}
@@ -1194,87 +1192,14 @@ export function DepartmentTourDeControle() {
         {/* TAB 3 — CHANTIERS (filtres par bot)        */}
         {/* ══════════════════════════════════════════ */}
         {deptTab === "chantiers" && (
-          <div className="space-y-3">
-            {botChantiers.length === 0 ? (
-              <div className="text-center py-12">
-                <Flame className="h-5 w-5 text-gray-300 mx-auto mb-2" />
-                <p className="text-sm text-gray-500">Aucun chantier assigne a cet agent</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {botChantiers.map(ch => {
-                  const done = ch.projets.filter(p => p.status === "done").length;
-                  const total = ch.projets.length;
-                  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-                  const cc = CHALEUR_CONFIG[ch.chaleur];
-                  return (
-                    <Card key={ch.id} className="p-0 overflow-hidden hover:shadow-lg transition-all cursor-pointer" onClick={() => handleFocus(`Chantier: ${ch.label}`, "chantier", ch)}>
-                      <div className={cn("bg-gradient-to-r px-3 py-2.5", headerGradient)}>
-                        <div className="flex items-center justify-between">
-                          <p className="text-xs font-bold text-white">{ch.id} — {ch.label}</p>
-                          {cc && <span className={cn("text-[9px]", cc.color)}>{cc.label}</span>}
-                        </div>
-                      </div>
-                      <div className="px-3 py-2.5 space-y-2">
-                        <p className="text-[9px] text-gray-500 line-clamp-2">{ch.desc}</p>
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                            <div className="h-full rounded-full bg-emerald-500" style={{ width: `${pct}%` }} />
-                          </div>
-                          <span className="text-[9px] font-bold text-gray-600">{pct}%</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{total} projets</span>
-                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600">{done} termines</span>
-                          {ch.bots.filter(b => b !== activeBotCode).map(b => (
-                            <span key={b} className="text-[9px] px-1.5 py-0.5 rounded bg-violet-50 text-violet-600">{BOT_INFO[b]?.short || b}</span>
-                          ))}
-                        </div>
-                      </div>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          <HierarchieGHML key={`dept-ch-${activeBotCode}`} botCode={activeBotCode} compact />
         )}
 
         {/* ══════════════════════════════════════════ */}
         {/* TAB 4 — PROJETS (des chantiers du bot)     */}
         {/* ══════════════════════════════════════════ */}
         {deptTab === "projets" && (
-          <div className="space-y-3">
-            {botProjets.length === 0 ? (
-              <div className="text-center py-12">
-                <Package className="h-5 w-5 text-gray-300 mx-auto mb-2" />
-                <p className="text-sm text-gray-500">Aucun projet pour cet agent</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {botProjets.map(p => {
-                  const sc = STATUS_CONFIG[p.status] || STATUS_CONFIG["a-faire"];
-                  return (
-                    <Card key={p.id} className="p-0 overflow-hidden hover:shadow-lg transition-all cursor-pointer" onClick={() => handleFocus(`Projet: ${p.label}`, "projet", p)}>
-                      <div className={cn("bg-gradient-to-r px-3 py-2.5 flex items-center justify-between", headerGradient)}>
-                        <p className="text-xs font-bold text-white truncate">{p.id} — {p.label}</p>
-                        <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded", sc.bg, sc.text)}>{sc.label}</span>
-                      </div>
-                      <div className="px-3 py-2.5 space-y-1.5">
-                        <p className="text-[9px] text-gray-500 line-clamp-2">{p.desc}</p>
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{p.chantierId}</span>
-                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600">{p.missions.length} missions</span>
-                          {p.bloque_par && (
-                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-50 text-red-600">Bloque: {p.bloque_par}</span>
-                          )}
-                        </div>
-                      </div>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          <HierarchieGHML key={`dept-proj-${activeBotCode}`} botCode={activeBotCode} defaultLevel="projets" compact />
         )}
 
         {/* ══════════════════════════════════════════ */}
@@ -1320,40 +1245,7 @@ export function DepartmentTourDeControle() {
         {/* TAB 6 — TACHES (missions des projets)      */}
         {/* ══════════════════════════════════════════ */}
         {deptTab === "taches" && (
-          <div className="space-y-3">
-            {botProjets.length === 0 ? (
-              <div className="text-center py-12">
-                <CheckCircle2 className="h-5 w-5 text-gray-300 mx-auto mb-2" />
-                <p className="text-sm text-gray-500">Aucune tache pour cet agent</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {botProjets.filter(p => p.missions.length > 0).map(p => {
-                  const sc = STATUS_CONFIG[p.status] || STATUS_CONFIG["a-faire"];
-                  return (
-                    <Card key={p.id} className="p-4">
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded", sc.bg, sc.text)}>{sc.label}</span>
-                        <h4 className="text-xs font-bold text-gray-700">{p.id} — {p.label}</h4>
-                      </div>
-                      <div className="space-y-1.5">
-                        {p.missions.map((raw, idx) => {
-                          const { bot, text } = parseMissionBot(raw);
-                          const isThisBot = bot === activeBotCode;
-                          return (
-                            <div key={idx} className={cn("flex items-start gap-2 text-[9px] py-1 px-2 rounded", isThisBot ? "bg-blue-50" : "bg-gray-50")}>
-                              {bot && <span className={cn("font-bold shrink-0", isThisBot ? "text-blue-600" : "text-gray-500")}>{bot}</span>}
-                              <span className="text-gray-600">{text}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          <HierarchieGHML key={`dept-tach-${activeBotCode}`} botCode={activeBotCode} defaultLevel="taches" compact />
         )}
 
         {/* ══════════════════════════════════════════ */}
@@ -1527,7 +1419,7 @@ export function DepartmentTourDeControle() {
                     const info = BOT_INFO[code];
                     const CollabIcon = DEPT_ICON[code];
                     // Count shared chantiers
-                    const shared = botChantiers.filter(ch => ch.bots.includes(code)).length;
+                    const shared = botChantiers.filter(ch => (ch.bot_codes || []).includes(code)).length;
                     return (
                       <div key={code} className="flex items-center gap-2.5 p-2.5 border rounded-lg hover:bg-gray-50 transition-colors">
                         <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-r text-white shrink-0", info?.gradient || "from-gray-500 to-gray-400")}>
@@ -1596,10 +1488,10 @@ export function DepartmentTourDeControle() {
               <div className="space-y-2">
                 {botChantiers.map(ch => (
                   <div key={ch.id} className="flex items-center gap-2 py-1.5 border-b border-gray-100 last:border-0">
-                    <span className="text-[9px] font-bold text-gray-400">{ch.id}</span>
-                    <span className="text-xs text-gray-700 flex-1 truncate">{ch.label}</span>
+                    <span className="text-[9px] font-bold text-gray-400">#{ch.id}</span>
+                    <span className="text-xs text-gray-700 flex-1 truncate">{ch.titre}</span>
                     <div className="flex gap-1">
-                      {ch.bots.map(b => (
+                      {(ch.bot_codes || []).map((b: string) => (
                         <span key={b} className={cn("text-[9px] px-1.5 py-0.5 rounded text-white", b === activeBotCode ? "bg-blue-600" : "bg-gray-400")}>
                           {BOT_INFO[b]?.short || b}
                         </span>

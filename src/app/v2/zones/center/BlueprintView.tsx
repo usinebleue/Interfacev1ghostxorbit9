@@ -4,7 +4,7 @@
  * Donnees seed RD.7 (plan Carl) + API reelles (COMMAND, templates, CRUD) fusionnees
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Rocket, Wrench, Shield, Package, Users, Globe,
   Target, Brain, ChevronRight, ChevronDown,
@@ -23,14 +23,13 @@ import { useFrameMaster } from "../../context/FrameMasterContext";
 import { BOT_AVATAR } from "../../api/types";
 import { api } from "../../api/client";
 import { BlueprintFrame } from "./shared/BlueprintFrame";
-import { StatusBadge, BotBadge, ChaleurBadge, PlaybookCard, TemplateSection, KPICard } from "./shared/BlueprintComponents";
+import { PlaybookCard, KPICard } from "./shared/BlueprintComponents";
+import { HierarchieGHML } from "./shared/HierarchieGHML";
 import {
-  BLUEPRINT_TABS, STATUS_CONFIG, CHALEUR_CONFIG, BOT_INFO, ROLE_CONFIG,
-  PLAYBOOK_TEMPLATES, CHANTIERS,
-  NB_PROJETS, NB_MISSIONS, NB_TACHES, MISSIONS_DONE, MISSIONS_EN_COURS,
-  parseMission,
+  BLUEPRINT_TABS, BOT_INFO,
+  PLAYBOOK_TEMPLATES,
 } from "./shared/blueprint-config";
-import type { BlueprintTabId, BlueprintNav, Chantier, Projet } from "./shared/blueprint-types";
+import type { BlueprintTabId, BlueprintNav } from "./shared/blueprint-types";
 
 // ================================================================
 // COMMAND STAGES (from BlueprintLiveView)
@@ -57,7 +56,7 @@ const CLEVEL_BOTS = [
 // TAB: VUE D'ENSEMBLE
 // ================================================================
 
-function TabOverview({ nav }: { nav: BlueprintNav }) {
+function TabOverview({ nav, stats, onDeploy }: { nav: BlueprintNav; stats: { chantiers: number; projets: number; missions: number; taches: number; missionsDone: number; tachesDone: number }; onDeploy?: (playbookId: string) => Promise<void> }) {
   const [commandMissions, setCommandMissions] = useState<Record<string, unknown>[]>([]);
   const [loadingCommand, setLoadingCommand] = useState(true);
 
@@ -68,11 +67,11 @@ function TabOverview({ nav }: { nav: BlueprintNav }) {
       .finally(() => setLoadingCommand(false));
   }, []);
 
-  const allMissions = CHANTIERS.flatMap((c) => c.projets.flatMap((p) => p.missions));
-  const opportunites = allMissions.filter((m) => m.toLowerCase().includes("externe") || m.toLowerCase().includes("fournisseur") || m.toLowerCase().includes("ouverte") || m.toLowerCase().includes("partenaire"));
-  const pctDone = Math.round((MISSIONS_DONE / NB_MISSIONS) * 100);
-  const pctEnCours = Math.round((MISSIONS_EN_COURS / NB_MISSIONS) * 100);
-  const pctAFaire = 100 - pctDone - pctEnCours;
+  const totalMissions = stats.missions || 1;
+  const pctDone = Math.round((stats.missionsDone / totalMissions) * 100);
+  const missionsEnCours = stats.missions - stats.missionsDone;
+  const pctEnCours = Math.round((missionsEnCours / totalMissions) * 100);
+  const pctAFaire = Math.max(0, 100 - pctDone - pctEnCours);
 
   const botStatus = (code: string) => {
     const activeMission = commandMissions.find(
@@ -92,10 +91,10 @@ function TabOverview({ nav }: { nav: BlueprintNav }) {
         {/* 4 KPIs */}
         <div className="grid grid-cols-2 gap-2">
           {[
-            { label: "Chantiers", value: "1", sub: "Usine Bleue AI", color: "red", icon: Flame, tab: "chantiers" as BlueprintTabId },
-            { label: "Projets", value: String(NB_PROJETS), sub: `${CHANTIERS.filter((c) => c.chaleur === "brule").length} brulent`, color: "blue", icon: Package, tab: "projets" as BlueprintTabId },
-            { label: "Missions", value: String(NB_MISSIONS), sub: `${MISSIONS_DONE} completes`, color: "violet", icon: ListChecks, tab: "missions" as BlueprintTabId },
-            { label: "Taches", value: String(NB_TACHES), sub: `${MISSIONS_EN_COURS} en cours`, color: "emerald", icon: CheckCircle2, tab: "taches" as BlueprintTabId },
+            { label: "Chantiers", value: String(stats.chantiers), sub: "actifs", color: "red", icon: Flame, tab: "chantiers" as BlueprintTabId },
+            { label: "Projets", value: String(stats.projets), sub: "en cours", color: "blue", icon: Package, tab: "projets" as BlueprintTabId },
+            { label: "Missions", value: String(stats.missions), sub: `${stats.missionsDone} completes`, color: "violet", icon: ListChecks, tab: "missions" as BlueprintTabId },
+            { label: "Taches", value: String(stats.taches), sub: `${stats.tachesDone} terminees`, color: "emerald", icon: CheckCircle2, tab: "taches" as BlueprintTabId },
           ].map((kpi) => (
             <KPICard key={kpi.label} kpi={{ ...kpi, onClick: () => nav.goTo(kpi.tab) }} />
           ))}
@@ -122,9 +121,9 @@ function TabOverview({ nav }: { nav: BlueprintNav }) {
             </div>
             <div className="grid grid-cols-3 gap-2 pt-1">
               {[
-                { v: MISSIONS_DONE, l: "COMPLETES", c: "emerald" },
-                { v: MISSIONS_EN_COURS, l: "EN COURS", c: "amber" },
-                { v: NB_TACHES, l: "TACHES", c: "blue" },
+                { v: stats.missionsDone, l: "COMPLETES", c: "emerald" },
+                { v: missionsEnCours, l: "EN COURS", c: "amber" },
+                { v: stats.taches, l: "TACHES", c: "blue" },
               ].map((s) => (
                 <div key={s.l} className={cn("text-center p-2 rounded-lg border", `bg-${s.c}-50 border-${s.c}-100`)}>
                   <div className={cn("text-lg font-bold", `text-${s.c}-600`)}>{s.v}</div>
@@ -135,38 +134,10 @@ function TabOverview({ nav }: { nav: BlueprintNav }) {
           </div>
         </Card>
 
-        {/* 13 Projets tree */}
+        {/* Arbre chantiers (API) */}
         <div>
-          <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wide mb-2">1 Chantier — {NB_PROJETS} Projets</div>
-          <div className="rounded-lg border shadow-sm overflow-hidden">
-            <button onClick={() => nav.goTo("chantiers")} className="w-full flex items-center gap-2 px-3 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 transition-colors cursor-pointer group">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-white/20">
-                <Rocket className="h-4 w-4 text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-bold text-white">Application Usine Bleue AI</div>
-                <span className="text-[9px] font-bold text-white/80">{NB_PROJETS} projets · {NB_MISSIONS} missions · {NB_TACHES} taches</span>
-              </div>
-              <ChevronRight className="h-4 w-4 text-white/50 group-hover:text-white transition-colors shrink-0" />
-            </button>
-            <div className="border-t border-blue-400/20 divide-y divide-gray-50">
-              {CHANTIERS.map((c) => {
-                const Icon = c.icon;
-                const done = c.projets.filter((p) => p.status === "done").length;
-                const ChaleurIcon = CHALEUR_CONFIG[c.chaleur].icon;
-                return (
-                  <button key={c.id} onClick={() => nav.goTo("chantiers", c.id)} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 transition-colors text-left cursor-pointer">
-                    <div className={cn("w-6 h-6 rounded flex items-center justify-center shrink-0 bg-gradient-to-br", `from-${c.color}-500 to-${c.color}-600`)}>
-                      <Icon className="h-3.5 w-3.5 text-white" />
-                    </div>
-                    <span className="text-[9px] font-bold text-gray-800 flex-1 truncate">{c.label}</span>
-                    <span className="text-[9px] font-bold text-emerald-600">{done}/{c.projets.length}</span>
-                    <ChaleurIcon className={cn("h-3.5 w-3.5", CHALEUR_CONFIG[c.chaleur].color)} />
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wide mb-2">{stats.chantiers} Chantier{stats.chantiers > 1 ? "s" : ""} — {stats.projets} Projets</div>
+          <HierarchieGHML key="overview-tree" compact />
         </div>
       </div>
 
@@ -202,34 +173,6 @@ function TabOverview({ nav }: { nav: BlueprintNav }) {
           </div>
         </Card>
 
-        {/* Opportunites */}
-        {opportunites.length > 0 && (
-          <Card className="p-0 overflow-hidden border-2 border-orange-200">
-            <div className="px-4 py-2 bg-gradient-to-r from-orange-600 to-orange-500 flex items-center gap-2">
-              <Zap className="h-4 w-4 text-white" />
-              <span className="text-sm font-bold text-white">Opportunites</span>
-              <span className="text-[9px] px-2 py-0.5 bg-white/20 rounded text-white ml-auto font-bold">{opportunites.length}</span>
-            </div>
-            <div className="p-3 space-y-1.5">
-              {opportunites.slice(0, 5).map((m, i) => {
-                const parts = m.split(": ");
-                const text = parts.length > 1 ? parts.slice(1).join(": ") : m;
-                return (
-                  <div key={i} className="flex items-center gap-2 px-2 py-1.5 rounded-lg border border-orange-100 bg-orange-50/50">
-                    <Zap className="h-3.5 w-3.5 text-orange-500 shrink-0" />
-                    <span className="text-[9px] text-gray-800 flex-1 truncate">{text}</span>
-                  </div>
-                );
-              })}
-              {opportunites.length > 5 && (
-                <button onClick={() => nav.goTo("opportunites")} className="w-full text-center text-[9px] text-orange-600 font-bold py-1 hover:bg-orange-50 rounded transition-colors">
-                  Voir les {opportunites.length} opportunites →
-                </button>
-              )}
-            </div>
-          </Card>
-        )}
-
         {/* Playbooks Populaires */}
         <div>
           <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-2">
@@ -238,7 +181,7 @@ function TabOverview({ nav }: { nav: BlueprintNav }) {
           </div>
           <div className="space-y-2">
             {PLAYBOOK_TEMPLATES.filter((p) => p.populaire).map((pb) => (
-              <PlaybookCard key={pb.id} pb={pb} />
+              <PlaybookCard key={pb.id} pb={pb} onDeploy={onDeploy} />
             ))}
           </div>
         </div>
@@ -276,481 +219,22 @@ function TabOverview({ nav }: { nav: BlueprintNav }) {
 }
 
 // ================================================================
-// TAB: CHANTIERS
+// TAB: OPPORTUNITES (API — missions avec tags externe/fournisseur)
 // ================================================================
 
-function TabChantiers({ nav }: { nav: BlueprintNav }) {
-  return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-4 gap-2">
-        <div className="text-center p-2.5 bg-red-50 rounded-lg border border-red-100">
-          <div className="text-lg font-bold text-red-600">1</div>
-          <div className="text-[9px] text-red-600 font-medium">CHANTIER</div>
-        </div>
-        <div className="text-center p-2.5 bg-blue-50 rounded-lg border border-blue-100">
-          <div className="text-lg font-bold text-blue-600">{NB_PROJETS}</div>
-          <div className="text-[9px] text-blue-600 font-medium">PROJETS</div>
-        </div>
-        <div className="text-center p-2.5 bg-violet-50 rounded-lg border border-violet-100">
-          <div className="text-lg font-bold text-violet-600">{NB_MISSIONS}</div>
-          <div className="text-[9px] text-violet-600 font-medium">MISSIONS</div>
-        </div>
-        <div className="text-center p-2.5 bg-emerald-50 rounded-lg border border-emerald-100">
-          <div className="text-lg font-bold text-emerald-600">{NB_TACHES}</div>
-          <div className="text-[9px] text-emerald-600 font-medium">TACHES</div>
-        </div>
-      </div>
-
-      <button onClick={() => nav.goTo("projets")} className="w-full p-0 overflow-hidden rounded-lg border shadow-sm hover:shadow-md transition-all text-left cursor-pointer group">
-        <div className="px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-500 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-white/20"><Rocket className="h-5 w-5 text-white" /></div>
-          <div className="flex-1">
-            <span className="text-sm font-bold text-white">Application Usine Bleue AI</span>
-            <div className="text-[9px] text-white/70">{NB_PROJETS} projets · {NB_MISSIONS} missions</div>
-          </div>
-          <ChevronRight className="h-4 w-4 text-white/50 group-hover:text-white transition-colors" />
-        </div>
-        <div className="px-4 py-3">
-          <p className="text-[9px] text-gray-500">Plateforme CarlOS complete — de la fondation technique a l'expansion marche.</p>
-          <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-            {["CEOB", "CTOB", "CFOB", "CMOB", "CSOB", "COOB"].map((b) => <BotBadge key={b} code={b} />)}
-          </div>
-        </div>
-      </button>
-
-      <TemplateSection niveau="chantier" label="Chantier" />
-    </div>
-  );
-}
-
-// ================================================================
-// TAB: PROJETS
-// ================================================================
-
-function TabProjets({ nav, ch }: { nav: BlueprintNav; ch: Chantier | null }) {
-  if (!ch) {
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center gap-2 text-[9px]">
-          <button onClick={() => nav.goTo("chantiers")} className="px-2 py-1 rounded font-bold bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors">← Chantiers</button>
-          <span className="text-gray-400">{NB_PROJETS} projets dans Usine Bleue AI</span>
-        </div>
-        <div className="space-y-2">
-          {CHANTIERS.map((c) => {
-            const Icon = c.icon;
-            const nbMissions = c.projets.length;
-            const done = c.projets.filter((p) => p.status === "done").length;
-            return (
-              <button key={c.id} onClick={() => nav.goTo("projets", c.id)} className="w-full p-0 overflow-hidden rounded-lg border shadow-sm hover:shadow-md transition-all text-left cursor-pointer group">
-                <div className={cn("px-4 py-2.5 flex items-center gap-3 bg-gradient-to-r", `from-${c.color}-600 to-${c.color}-500`)}>
-                  <Icon className="h-4 w-4 text-white" />
-                  <span className="text-xs font-bold text-white">{c.label}</span>
-                  <span className="text-[9px] text-white/70 ml-auto">{nbMissions} missions</span>
-                  <ChevronRight className="h-4 w-4 text-white/50 group-hover:text-white transition-colors" />
-                </div>
-                <div className="px-4 py-2.5">
-                  <p className="text-[9px] text-gray-500 line-clamp-2">{c.desc}</p>
-                  <div className="flex items-center gap-3 mt-1.5">
-                    <span className="text-[9px] font-bold text-emerald-600">{done}/{nbMissions} done</span>
-                    <span className="text-[9px] text-gray-400">{c.timing}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                    {[...new Set(c.bots)].map((b) => <BotBadge key={b} code={b} />)}
-                  </div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-        <TemplateSection niveau="projet" label="Projet" />
-      </div>
-    );
-  }
-
-  const Icon = ch.icon;
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-1 text-[9px] flex-wrap">
-        <button onClick={() => nav.goTo("chantiers")} className="px-2 py-1 rounded font-bold bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors">Chantiers</button>
-        <ChevronRight className="h-3.5 w-3.5 text-gray-300" />
-        <button onClick={() => nav.goTo("projets")} className="px-2 py-1 rounded font-bold bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors">Projets</button>
-        <ChevronRight className="h-3.5 w-3.5 text-gray-300" />
-        <span className={cn("px-2 py-1 rounded font-bold", `bg-${ch.color}-100 text-${ch.color}-700`)}>{ch.label}</span>
-      </div>
-
-      <Card className="p-0 overflow-hidden border shadow-sm">
-        <div className={cn("px-4 py-3 bg-gradient-to-r", `from-${ch.color}-600 to-${ch.color}-500`)}>
-          <div className="flex items-center gap-2">
-            <Icon className="h-5 w-5 text-white" />
-            <span className="text-sm font-bold text-white">{ch.label}</span>
-          </div>
-          <p className="text-[9px] text-white/80 mt-1">{ch.desc}</p>
-        </div>
-        <div className="px-4 py-2 flex items-center gap-1 flex-wrap">
-          {ch.bots.map((b) => <BotBadge key={b} code={b} />)}
-          <span className="text-[9px] text-gray-400 ml-2">{ch.responsable}</span>
-        </div>
-      </Card>
-
-      <div className="grid grid-cols-4 gap-3">
-        {[
-          { v: ch.projets.filter((p) => p.status === "done").length, l: "DONE", c: "emerald" },
-          { v: ch.projets.filter((p) => p.status === "en-cours").length, l: "EN COURS", c: "amber" },
-          { v: ch.projets.filter((p) => p.status === "a-faire").length, l: "A FAIRE", c: "gray" },
-          { v: ch.projets.filter((p) => p.status === "bloque").length, l: "BLOQUES", c: "red" },
-        ].map((s) => (
-          <div key={s.l} className={cn("text-center p-2 rounded-lg border", `bg-${s.c}-50 border-${s.c}-100`)}>
-            <div className={cn("text-lg font-bold", `text-${s.c}-600`)}>{s.v}</div>
-            <div className={cn("text-[9px] font-medium", `text-${s.c}-600`)}>{s.l}</div>
-          </div>
-        ))}
-      </div>
-
-      <div className="space-y-2">
-        {ch.projets.map((p) => (
-          <button key={p.id} onClick={() => nav.goTo("missions", ch.id, p.id)} className="w-full p-0 overflow-hidden rounded-lg border shadow-sm hover:shadow-md transition-all text-left cursor-pointer group">
-            <div className="px-4 py-2.5 flex items-center gap-3 bg-gradient-to-r from-blue-600 to-blue-500">
-              <code className="text-[9px] font-mono font-bold text-blue-200">{p.id}</code>
-              <span className="text-xs font-bold text-white flex-1 truncate">{p.label}</span>
-              <StatusBadge status={p.status} />
-              <ChevronRight className="h-4 w-4 text-white/50 group-hover:text-white transition-colors" />
-            </div>
-            <div className="px-4 py-2.5">
-              <p className="text-[9px] text-gray-500 line-clamp-2">{p.desc}</p>
-              <div className="flex items-center gap-3 mt-1.5">
-                <span className="text-[9px] text-gray-400">{p.missions.length} taches</span>
-                {p.bloque_par && <span className="text-[8px] px-1.5 py-0.5 rounded bg-red-100 text-red-600 font-bold flex items-center gap-1"><Lock className="h-3.5 w-3.5" /> {p.bloque_par}</span>}
-              </div>
-            </div>
-          </button>
-        ))}
-      </div>
-      <TemplateSection niveau="mission" label="Mission" />
-    </div>
-  );
-}
-
-// ================================================================
-// TAB: MISSIONS
-// ================================================================
-
-function TabMissionsView({ nav, ch, projet }: { nav: BlueprintNav; ch: Chantier | null; projet: Projet | null }) {
-  if (!ch || !projet) {
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center gap-2 text-[9px]">
-          <button onClick={() => nav.goTo("projets")} className="px-2 py-1 rounded font-bold bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors">← Projets</button>
-          <span className="text-gray-400">Selectionnez un projet pour voir ses missions</span>
-        </div>
-        {CHANTIERS.map((c) => {
-          const chMissions = c.projets.flatMap((p) => p.missions.map((m, idx) => ({ ...parseMission(m), projet: p, idx })));
-          if (chMissions.length === 0) return null;
-          const Icon = c.icon;
-          return (
-            <div key={c.id} className="space-y-2">
-              <div className="flex items-center gap-2 px-1">
-                <Icon className={cn("h-3.5 w-3.5", `text-${c.color}-500`)} />
-                <span className="text-[9px] font-bold text-gray-600">{c.label}</span>
-                <span className="text-[9px] text-gray-400">{chMissions.length} taches</span>
-              </div>
-              {chMissions.slice(0, 5).map((m, i) => (
-                <button key={`${c.id}-${m.projet.id}-${m.idx}-${i}`} onClick={() => nav.goTo("taches", c.id, m.projet.id, m.idx)} className="w-full p-0 overflow-hidden rounded-lg border shadow-sm hover:shadow-md transition-all text-left cursor-pointer group">
-                  <div className={cn("px-4 py-2.5 flex items-center gap-3 bg-gradient-to-r", `from-${c.color}-600 to-${c.color}-500`)}>
-                    <span className="text-xs font-bold text-white flex-1 truncate">{m.text}</span>
-                    <ChevronRight className="h-4 w-4 text-white/50 group-hover:text-white transition-colors" />
-                  </div>
-                  <div className="px-4 py-2.5">
-                    <div className="flex items-center gap-3">
-                      <span className="text-[9px] text-gray-400">{m.projet.id}</span>
-                      <BotBadge code={m.botCode} />
-                    </div>
-                  </div>
-                </button>
-              ))}
-              {chMissions.length > 5 && (
-                <button onClick={() => nav.goTo("projets", c.id)} className="w-full text-center text-[9px] text-blue-600 font-bold py-1 hover:bg-blue-50 rounded transition-colors">
-                  Voir les {chMissions.length} taches →
-                </button>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-1 text-[9px] flex-wrap">
-        <button onClick={() => nav.goTo("projets")} className="px-2 py-1 rounded font-bold bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors">Projets</button>
-        <ChevronRight className="h-3.5 w-3.5 text-gray-300" />
-        <button onClick={() => nav.goTo("projets", ch.id)} className={cn("px-2 py-1 rounded font-bold", `bg-${ch.color}-100 text-${ch.color}-700`)}>{ch.label}</button>
-        <ChevronRight className="h-3.5 w-3.5 text-gray-300" />
-        <span className="px-2 py-1 rounded font-bold bg-blue-100 text-blue-700">{projet.id}: {projet.label}</span>
-      </div>
-
-      <div className="p-0 overflow-hidden rounded-lg border shadow-sm">
-        <div className="px-4 py-3 bg-gradient-to-r from-blue-700 to-blue-600">
-          <div className="flex items-center gap-2">
-            <code className="text-[9px] font-mono font-bold text-blue-200">{projet.id}</code>
-            <span className="text-sm font-bold text-white">{projet.label}</span>
-            <StatusBadge status={projet.status} />
-          </div>
-          <p className="text-[9px] text-white/80 mt-1">{projet.desc}</p>
-          {projet.bloque_par && (
-            <div className="flex items-center gap-1.5 mt-2 px-2 py-1 bg-red-500/20 rounded">
-              <Lock className="h-3.5 w-3.5 text-red-200" />
-              <span className="text-[9px] text-red-200">Bloque par: {projet.bloque_par}</span>
-            </div>
-          )}
-        </div>
-        <div className="px-4 py-2 flex items-center gap-2">
-          <BotBadge code={projet.bot} />
-          <span className="text-[9px] text-gray-500">Responsable</span>
-          <span className="text-[9px] text-gray-400 ml-auto">{projet.missions.length} taches</span>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        {projet.missions.map((m, idx) => {
-          const parsed = parseMission(m);
-          const rc = ROLE_CONFIG[parsed.role];
-          return (
-            <button key={idx} onClick={() => nav.goTo("taches", ch.id, projet.id, idx)} className="w-full p-0 overflow-hidden rounded-lg border shadow-sm hover:shadow-md transition-all text-left cursor-pointer group">
-              <div className={cn("px-4 py-2.5 flex items-center gap-3 bg-gradient-to-r",
-                parsed.role === "master" ? "from-blue-600 to-blue-500" :
-                parsed.role === "humain-ceo" ? "from-slate-700 to-slate-600" :
-                parsed.role === "humain-pm" ? "from-sky-600 to-sky-500" :
-                parsed.role === "externe" ? "from-orange-500 to-orange-400" :
-                "from-violet-600 to-violet-500"
-              )}>
-                <span className="text-[9px] font-mono font-bold text-white/70">#{idx + 1}</span>
-                <span className="text-xs font-bold text-white flex-1 truncate">{parsed.text}</span>
-                <ChevronRight className="h-4 w-4 text-white/50 group-hover:text-white transition-colors" />
-              </div>
-              <div className="px-4 py-2.5">
-                <div className="flex items-center gap-3">
-                  <BotBadge code={parsed.botCode} />
-                  <span className={cn("text-[8px] px-1.5 py-0.5 rounded font-bold text-white", rc.bg)}>{rc.badge}</span>
-                </div>
-              </div>
-            </button>
-          );
-        })}
-      </div>
-      <TemplateSection niveau="tache" label="Tache" />
-    </div>
-  );
-}
-
-// ================================================================
-// TAB: TACHES
-// ================================================================
-
-function TabTaches({ nav, ch, projet, missionIdx }: { nav: BlueprintNav; ch: Chantier | null; projet: Projet | null; missionIdx: number | null }) {
-  if (!ch || !projet || missionIdx === null) {
-    const allTaches: { text: string; botCode: string; role: string; chantier: Chantier; projet: Projet; missionIdx: number }[] = [];
-    CHANTIERS.forEach((c) => {
-      c.projets.forEach((p) => {
-        p.missions.forEach((m, idx) => {
-          const parsed = parseMission(m);
-          allTaches.push({ ...parsed, chantier: c, projet: p, missionIdx: idx });
-        });
-      });
-    });
-
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center gap-2 text-[9px]">
-          <button onClick={() => nav.goTo("missions")} className="px-2 py-1 rounded font-bold bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors">← Missions</button>
-          <span className="text-gray-400">{allTaches.length} taches au total</span>
-        </div>
-        {CHANTIERS.map((c) => {
-          const chTaches = c.projets.flatMap((p) => p.missions.map((m, idx) => ({ ...parseMission(m), projet: p, idx })));
-          if (chTaches.length === 0) return null;
-          const Icon = c.icon;
-          return (
-            <div key={c.id} className="space-y-2">
-              <div className="flex items-center gap-2 px-1">
-                <Icon className={cn("h-3.5 w-3.5", `text-${c.color}-500`)} />
-                <span className="text-[9px] font-bold text-gray-600">{c.label}</span>
-                <span className="text-[9px] text-gray-400">{chTaches.length} taches</span>
-              </div>
-              {chTaches.slice(0, 5).map((t, i) => (
-                <button key={`${c.id}-${t.projet.id}-${t.idx}-${i}`} onClick={() => nav.goTo("taches", c.id, t.projet.id, t.idx)} className="w-full p-0 overflow-hidden rounded-lg border shadow-sm hover:shadow-md transition-all text-left cursor-pointer group">
-                  <div className={cn("px-4 py-2.5 flex items-center gap-3 bg-gradient-to-r", `from-${c.color}-600 to-${c.color}-500`)}>
-                    <span className="text-xs font-bold text-white flex-1 truncate">{t.text}</span>
-                    <ChevronRight className="h-4 w-4 text-white/50 group-hover:text-white transition-colors" />
-                  </div>
-                  <div className="px-4 py-2.5">
-                    <span className="text-[9px] text-gray-400">{t.projet.id} — {t.projet.label}</span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          );
-        })}
-      </div>
-    );
-  }
-
-  const missionRaw = projet.missions[missionIdx];
-  if (!missionRaw) return null;
-
-  const parsed = parseMission(missionRaw);
-  const botInfo2 = BOT_INFO[parsed.botCode];
-  const rc = ROLE_CONFIG[parsed.role];
-
-  const mockSousTaches = parsed.role === "humain-ceo" ? [
-    { label: "CarlOS prepare le contexte et les options", assignee: "CEOB", status: "done" as const },
-    { label: "Presentation au CEO avec recommandation", assignee: "CEOB", status: "en-cours" as const },
-    { label: "Decision GO/STOP du CEO", assignee: parsed.botCode, status: "a-faire" as const },
-    { label: "CarlOS execute selon la decision", assignee: "CEOB", status: "a-faire" as const },
-  ] : parsed.role === "master" ? [
-    { label: "Analyser le contexte et les donnees disponibles", assignee: "CEOB", status: "done" as const },
-    { label: "Deleguer aux sous-bots specialises", assignee: "CEOB", status: "en-cours" as const },
-    { label: "Synthetiser et proposer au CEO", assignee: "CEOB", status: "a-faire" as const },
-    { label: "Ajuster selon feedback humain", assignee: "CEOB", status: "a-faire" as const },
-  ] : [
-    { label: "Recevoir le briefing de CarlOS", assignee: parsed.botCode, status: "done" as const },
-    { label: "Executer la tache", assignee: parsed.botCode, status: "en-cours" as const },
-    { label: "Reporter a CarlOS pour validation", assignee: parsed.botCode, status: "a-faire" as const },
-    { label: "CarlOS valide et presente au CEO", assignee: "CEOB", status: "a-faire" as const },
-  ];
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-1 text-[9px] flex-wrap">
-        <button onClick={() => nav.goTo("projets", ch.id)} className={cn("px-2 py-1 rounded font-bold", `bg-${ch.color}-100 text-${ch.color}-700`)}>{ch.label}</button>
-        <ChevronRight className="h-3.5 w-3.5 text-gray-300" />
-        <button onClick={() => nav.goTo("missions", ch.id, projet.id)} className="px-2 py-1 rounded font-bold bg-blue-100 text-blue-700">{projet.id}</button>
-        <ChevronRight className="h-3.5 w-3.5 text-gray-300" />
-        <span className="px-2 py-1 rounded font-bold bg-violet-100 text-violet-700">Tache #{missionIdx + 1}</span>
-      </div>
-
-      <div className="p-0 overflow-hidden rounded-lg border shadow-sm">
-        <div className={cn("px-4 py-3 bg-gradient-to-r",
-          parsed.role === "master" ? "from-blue-700 to-blue-600" :
-          parsed.role === "humain-ceo" ? "from-slate-800 to-slate-700" :
-          parsed.role === "humain-pm" ? "from-sky-700 to-sky-600" :
-          parsed.role === "externe" ? "from-orange-600 to-orange-500" :
-          "from-violet-700 to-violet-600"
-        )}>
-          <div className="flex items-center gap-2">
-            <span className="w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold bg-white/20 text-white shrink-0">{missionIdx + 1}</span>
-            <span className="text-sm font-bold text-white flex-1">{parsed.text}</span>
-          </div>
-          <span className="text-[9px] text-white/70 mt-2 block">Projet: {projet.id} — {projet.label}</span>
-        </div>
-        <div className="px-4 py-2 flex items-center gap-2">
-          {botInfo2 && <span className={cn("text-[8px] font-bold text-white px-1.5 py-0.5 rounded bg-gradient-to-r", botInfo2.gradient)}>{botInfo2.label}</span>}
-          <span className={cn("text-[8px] px-1.5 py-0.5 rounded font-bold text-white", rc.bg)}>{rc.badge}</span>
-          <StatusBadge status={projet.status} />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        {mockSousTaches.map((t, i) => {
-          const assigneeInfo = BOT_INFO[t.assignee];
-          return (
-            <div key={i} className="w-full p-0 overflow-hidden rounded-lg border shadow-sm">
-              <div className={cn("px-4 py-2.5 flex items-center gap-3 bg-gradient-to-r",
-                t.status === "done" ? "from-emerald-600 to-emerald-500" :
-                t.status === "en-cours" ? "from-amber-600 to-amber-500" :
-                "from-gray-500 to-gray-400"
-              )}>
-                <CheckCircle2 className={cn("h-4 w-4 text-white", t.status === "done" ? "opacity-100" : "opacity-50")} />
-                <span className={cn("text-xs font-bold text-white flex-1", t.status === "done" && "line-through opacity-80")}>{t.label}</span>
-              </div>
-              <div className="px-4 py-2.5">
-                <div className="flex items-center gap-3">
-                  {assigneeInfo ? (
-                    <span className={cn("text-[8px] font-bold text-white px-1.5 py-0.5 rounded bg-gradient-to-r", assigneeInfo.gradient)}>{assigneeInfo.label}</span>
-                  ) : (
-                    <span className="text-[9px] text-gray-400">{t.assignee}</span>
-                  )}
-                  <StatusBadge status={t.status} />
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="flex items-center gap-2">
-        {missionIdx > 0 && (
-          <button onClick={() => nav.goTo("taches", ch.id, projet.id, missionIdx - 1)} className="flex-1 p-0 overflow-hidden rounded-lg border shadow-sm hover:shadow-md transition-all text-left cursor-pointer">
-            <div className="px-4 py-2.5 bg-gradient-to-r from-gray-500 to-gray-400"><span className="text-xs font-bold text-white">← Precedente</span></div>
-            <div className="px-4 py-2 text-[9px] text-gray-500 truncate">{parseMission(projet.missions[missionIdx - 1]).text}</div>
-          </button>
-        )}
-        {missionIdx < projet.missions.length - 1 && (
-          <button onClick={() => nav.goTo("taches", ch.id, projet.id, missionIdx + 1)} className="flex-1 p-0 overflow-hidden rounded-lg border shadow-sm hover:shadow-md transition-all text-left cursor-pointer">
-            <div className="px-4 py-2.5 bg-gradient-to-r from-gray-500 to-gray-400"><span className="text-xs font-bold text-white ml-auto block text-right">Suivante →</span></div>
-            <div className="px-4 py-2 text-[9px] text-gray-500 truncate text-right">{parseMission(projet.missions[missionIdx + 1]).text}</div>
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ================================================================
-// TAB: OPPORTUNITES
-// ================================================================
-
-function TabOpportunites({ nav }: { nav: BlueprintNav }) {
-  const allOpps: { mission: string; parsed: ReturnType<typeof parseMission>; chantier: Chantier; projet: Projet; missionIdx: number }[] = [];
-  CHANTIERS.forEach((c) => {
-    c.projets.forEach((p) => {
-      p.missions.forEach((m, idx) => {
-        const lower = m.toLowerCase();
-        if (lower.includes("externe") || lower.includes("fournisseur") || lower.includes("ouverte") || lower.includes("partenaire")) {
-          allOpps.push({ mission: m, parsed: parseMission(m), chantier: c, projet: p, missionIdx: idx });
-        }
-      });
-    });
-  });
-
-  const grouped = CHANTIERS.map((c) => ({ chantier: c, opps: allOpps.filter((o) => o.chantier.id === c.id) })).filter((g) => g.opps.length > 0);
-
+function TabOpportunites() {
   return (
     <div className="space-y-4">
       <Card className="p-0 overflow-hidden border-2 border-orange-200">
         <div className="px-4 py-3 bg-gradient-to-r from-orange-600 to-orange-500 flex items-center gap-2">
           <Zap className="h-4 w-4 text-white" />
-          <span className="text-sm font-bold text-white">Opportunites Detectees</span>
-          <span className="ml-auto text-xs font-bold text-white bg-white/20 px-2.5 py-1 rounded">{allOpps.length}</span>
+          <span className="text-sm font-bold text-white">Opportunites</span>
         </div>
         <div className="px-4 py-3">
-          <p className="text-xs text-gray-600">Missions necessitant une expertise externe ou un partenaire. Publiables sur Orbit9.</p>
+          <p className="text-xs text-gray-600">Les missions necessitant une expertise externe ou un partenaire apparaitront ici automatiquement.</p>
+          <p className="text-[9px] text-gray-400 mt-1">Publiables sur Orbit9 pour jumelage inter-entreprises.</p>
         </div>
       </Card>
-
-      {grouped.map(({ chantier: c, opps }) => {
-        const Icon = c.icon;
-        return (
-          <Card key={c.id} className="p-0 overflow-hidden border border-gray-100 shadow-sm">
-            <div className={cn("px-4 py-2 flex items-center gap-2 bg-gradient-to-r", `from-${c.color}-600 to-${c.color}-500`)}>
-              <Icon className="h-4 w-4 text-white" />
-              <span className="text-xs font-bold text-white">{c.id} — {c.label}</span>
-              <span className="ml-auto text-[9px] font-bold text-white bg-white/20 px-2 py-0.5 rounded">{opps.length}</span>
-            </div>
-            <div className="divide-y divide-gray-100">
-              {opps.map((o, i) => (
-                <button key={i} onClick={() => nav.goTo("taches", o.chantier.id, o.projet.id, o.missionIdx)} className="w-full text-left px-4 py-3 hover:bg-orange-50/50 transition-colors group flex items-start gap-3">
-                  <BotBadge code={o.parsed.botCode} />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs text-gray-800 group-hover:text-orange-700 transition-colors">{o.parsed.text}</div>
-                    <span className="text-[9px] text-gray-400">{o.projet.label}</span>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-gray-300 group-hover:text-orange-500 shrink-0 mt-1" />
-                </button>
-              ))}
-            </div>
-          </Card>
-        );
-      })}
     </div>
   );
 }
@@ -829,12 +313,9 @@ function TabTimeline() {
           <div className="p-4">
             <div className="flex items-center gap-1.5 mb-3 flex-wrap">
               <span className="text-[9px] font-bold text-gray-500">Chantiers:</span>
-              {p.chantiers.map((chId) => {
-                const ch = CHANTIERS.find((c) => c.id === chId);
-                return ch ? (
-                  <span key={chId} className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded", `bg-${ch.color}-100 text-${ch.color}-700`)}>{chId}</span>
-                ) : null;
-              })}
+              {p.chantiers.map((chId) => (
+                <span key={chId} className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded", `bg-${p.color}-100 text-${p.color}-700`)}>{chId}</span>
+              ))}
             </div>
             <div className={cn("p-2 rounded-lg border", `bg-${p.color}-50 border-${p.color}-200`)}>
               <div className="flex items-center gap-1.5">
@@ -858,25 +339,53 @@ function TabTimeline() {
 export function BlueprintView() {
   const { setActiveView } = useFrameMaster();
   const [activeTab, setActiveTab] = useState<BlueprintTabId>("overview");
-  const [chantierId, setChantierId] = useState<string | null>(null);
-  const [projetId, setProjetId] = useState<string | null>(null);
-  const [missionIdx, setMissionIdx] = useState<number | null>(null);
 
-  const goTo = (tab: BlueprintTabId, chId?: string | null, pId?: string | null, mIdx?: number | null) => {
+  // API data — source unique de vérité
+  const [apiChantiers, setApiChantiers] = useState<Record<string, unknown>[]>([]);
+  const [apiProjets, setApiProjets] = useState<Record<string, unknown>[]>([]);
+  const [apiMissions, setApiMissions] = useState<Record<string, unknown>[]>([]);
+  const [apiTaches, setApiTaches] = useState<Record<string, unknown>[]>([]);
+
+  useEffect(() => {
+    api.listChantiers().then((r) => setApiChantiers((r as Record<string, unknown>).chantiers as Record<string, unknown>[] || [])).catch(() => {});
+    api.listProjets().then((r) => setApiProjets(Array.isArray(r) ? r : [])).catch(() => {});
+    api.listMissions().then((r) => setApiMissions((r as Record<string, unknown>).missions as Record<string, unknown>[] || [])).catch(() => {});
+    api.listTachesUser().then((r) => setApiTaches(Array.isArray(r) ? r : [])).catch(() => {});
+  }, []);
+
+  const stats = useMemo(() => {
+    const nbMissionsDone = apiMissions.filter((m) => m.status === "completee" || m.status === "complete").length;
+    const nbTachesDone = apiTaches.filter((t) => t.status === "complete").length;
+    return {
+      chantiers: apiChantiers.length,
+      projets: apiProjets.length,
+      missions: apiMissions.length,
+      taches: apiTaches.length,
+      missionsDone: nbMissionsDone,
+      tachesDone: nbTachesDone,
+    };
+  }, [apiChantiers, apiProjets, apiMissions, apiTaches]);
+
+  const goTo = (tab: BlueprintTabId) => {
     setActiveTab(tab);
-    if (chId !== undefined) setChantierId(chId);
-    if (pId !== undefined) setProjetId(pId);
-    if (mIdx !== undefined) setMissionIdx(mIdx);
   };
 
-  const nav: BlueprintNav = { tab: activeTab, chantierId, projetId, missionIdx, goTo };
-  const ch = chantierId ? CHANTIERS.find((c) => c.id === chantierId) || null : null;
-  const projet = ch && projetId ? ch.projets.find((p) => p.id === projetId) || null : null;
+  // Deploy playbook composable — refresh data after deploy
+  const handleDeployPlaybook = useCallback(async (playbookId: string, options?: { parent_chantier_id?: number; parent_projet_id?: number; parent_mission_id?: number }) => {
+    await api.deployPlaybook(playbookId, options);
+    // Refresh all data
+    api.listChantiers().then((r) => setApiChantiers((r as Record<string, unknown>).chantiers as Record<string, unknown>[] || [])).catch(() => {});
+    api.listProjets().then((r) => setApiProjets(Array.isArray(r) ? r : [])).catch(() => {});
+    api.listMissions().then((r) => setApiMissions((r as Record<string, unknown>).missions as Record<string, unknown>[] || [])).catch(() => {});
+    api.listTachesUser().then((r) => setApiTaches(Array.isArray(r) ? r : [])).catch(() => {});
+  }, []);
+
+  const nav: BlueprintNav = { tab: activeTab, chantierId: null, projetId: null, missionIdx: null, goTo: (t) => goTo(t) };
 
   return (
     <BlueprintFrame
-      title="Mon Blueprint"
-      subtitle={`1 chantier · ${NB_PROJETS} projets · ${NB_MISSIONS} missions`}
+      title="Strategique"
+      subtitle=""
       icon={Rocket}
       iconColor="text-blue-600"
       tabs={BLUEPRINT_TABS}
@@ -884,13 +393,13 @@ export function BlueprintView() {
       onTabChange={(t) => goTo(t as BlueprintTabId)}
       onBack={() => setActiveView("dashboard")}
     >
-      {activeTab === "overview" && <TabOverview nav={nav} />}
+      {activeTab === "overview" && <TabOverview nav={nav} stats={stats} onDeploy={handleDeployPlaybook} />}
       {activeTab === "timeline" && <TabTimeline />}
-      {activeTab === "chantiers" && <TabChantiers nav={nav} />}
-      {activeTab === "projets" && <TabProjets nav={nav} ch={ch} />}
-      {activeTab === "missions" && <TabMissionsView nav={nav} ch={ch} projet={projet} />}
-      {activeTab === "taches" && <TabTaches nav={nav} ch={ch} projet={projet} missionIdx={missionIdx} />}
-      {activeTab === "opportunites" && <TabOpportunites nav={nav} />}
+      {activeTab === "chantiers" && <HierarchieGHML key="bp-chantiers" showStats showTemplates onDeploy={handleDeployPlaybook} />}
+      {activeTab === "projets" && <HierarchieGHML key="bp-projets" defaultLevel="projets" showStats showTemplates onDeploy={handleDeployPlaybook} />}
+      {activeTab === "missions" && <HierarchieGHML key="bp-missions" defaultLevel="missions" showTemplates onDeploy={handleDeployPlaybook} />}
+      {activeTab === "taches" && <HierarchieGHML key="bp-taches" defaultLevel="taches" showTemplates onDeploy={handleDeployPlaybook} />}
+      {activeTab === "opportunites" && <TabOpportunites />}
       {activeTab === "equipes" && <TabEquipe />}
     </BlueprintFrame>
   );

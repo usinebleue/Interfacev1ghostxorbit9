@@ -38,7 +38,7 @@ export function WarRoomView() {
 
   return (
     <PageLayout maxWidth="4xl" header={
-      <PageHeader icon={AlertTriangle} iconColor="text-red-500" title="War Room" subtitle="Gestion de crise — Mode COMMAND urgent" onBack={() => setActiveView("department")} />
+      <PageHeader icon={AlertTriangle} iconColor="text-red-500" title="War Room" subtitle="" onBack={() => setActiveView("department")} />
     }>
       {/* Equipe de crise */}
       <div>

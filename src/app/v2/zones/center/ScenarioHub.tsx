@@ -305,7 +305,7 @@ export function ScenarioHub() {
           icon={GitBranch}
           iconColor="text-blue-600"
           title="Scenarios de simulation"
-          subtitle="12 modes de réflexion CarlOS — chaque scenario simule un type de discussion avec la Bot Team"
+          subtitle=""
         />
       }
     >

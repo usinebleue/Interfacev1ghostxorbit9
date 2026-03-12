@@ -38,7 +38,7 @@ export function ThinkRoomView() {
 
   return (
     <PageLayout maxWidth="4xl" header={
-      <PageHeader icon={Lightbulb} iconColor="text-amber-500" title="Think Room" subtitle="Lancement de projet — De la vision au Go/No-Go" onBack={() => setActiveView("department")} />
+      <PageHeader icon={Lightbulb} iconColor="text-amber-500" title="Think Room" subtitle="" onBack={() => setActiveView("department")} />
     }>
       {/* Equipe Think */}
       <div>

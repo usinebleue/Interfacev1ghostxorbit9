@@ -443,7 +443,7 @@ export function BlueprintLiveView() {
           icon={LayoutGrid}
           iconColor="text-blue-600"
           title="Mon Blue Print"
-          subtitle="Schema directeur — de l'idee a la realisation"
+          subtitle=""
           onBack={() => setActiveView("department")}
           rightSlot={
             <>

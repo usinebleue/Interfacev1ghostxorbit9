@@ -8,11 +8,10 @@
 import { useState } from "react";
 import {
   Network, Shield, Handshake, Flame, Users, BarChart3,
-  ChevronRight, ChevronDown, Clock, Lock, Star,
+  Clock, Lock, Star,
   CheckCircle2, AlertTriangle, Eye, Globe,
   Activity, Gauge, TrendingUp, Zap,
-  Award, Cpu, Factory, Code2,
-  Layers, Package, ListChecks, Route,
+  Award,
   Bot, Video, Bell, Sparkles, Crown,
   FileText, BookOpen, GraduationCap, ArrowRight,
   Rocket, Newspaper, Calendar,
@@ -23,8 +22,8 @@ import { Badge } from "../../../components/ui/badge";
 import { useFrameMaster } from "../../context/FrameMasterContext";
 import type { ReseauSection } from "../../context/FrameMasterContext";
 import { BlueprintFrame } from "./shared/BlueprintFrame";
-import { StatusBadge, ChaleurBadge, KPICard, Breadcrumb } from "./shared/BlueprintComponents";
-import type { TabDef, KPIConfig, BreadcrumbItem } from "./shared/blueprint-types";
+import { HierarchieGHML } from "./shared/HierarchieGHML";
+import type { TabDef } from "./shared/blueprint-types";
 
 // Reuse existing pages (NO duplication)
 import { CellulesPage } from "./orbit9/CellulesPage";
@@ -53,31 +52,6 @@ interface Membre {
   vitaaScore: number;
 }
 
-interface ProjetCollab {
-  id: string;
-  label: string;
-  desc: string;
-  status: "done" | "en-cours" | "a-faire" | "bloque";
-  leadMembre: string;
-  missions: string[];
-}
-
-interface ChantierPartage {
-  id: string;
-  num: number;
-  label: string;
-  desc: string;
-  icon: React.ElementType;
-  color: string;
-  chaleur: "brule" | "couve" | "meurt";
-  type: string;
-  cellule: string;
-  membres: string[];
-  projets: ProjetCollab[];
-  objectif: string;
-  timing: string;
-  valeurEstimee: string;
-}
 
 // ================================================================
 // DATA — Profil entreprise (FE.9)
@@ -139,86 +113,6 @@ const CELLULES = [
   { id: "CELL-004", nom: "Cellule Delta — Plasturgie Verte", membres: ["QC Plasturgie", "Robotik Solutions", "EcoVert Energie"], score: 68, status: "prospect" as const, nbChantiers: 0, secteur: "Plasturgie + Decarbonation" },
 ];
 
-// ================================================================
-// DATA — Chantiers partages (RD.8)
-// ================================================================
-
-const CHANTIERS_RESEAU: ChantierPartage[] = [
-  {
-    id: "CR-1", num: 1, label: "Automatisation Soudage Robotise",
-    desc: "MetalPro automatise sa ligne de soudage. TechnoBot fournit les cobots, SoudurePlus les consommables.",
-    icon: Cpu, color: "violet", chaleur: "brule", type: "technologique",
-    cellule: "CELL-001", membres: ["MetalPro Sherbrooke", "TechnoBot QC", "SoudurePlus"],
-    objectif: "+40% productivite soudage", timing: "3-6 mois", valeurEstimee: "350K$",
-    projets: [
-      { id: "PR-1.1", label: "Audit Ligne Actuelle", desc: "Evaluation OEE baseline", status: "done", leadMembre: "MetalPro Sherbrooke",
-        missions: ["MetalPro: Donnees OEE 6 mois", "TechnoBot: Audit physique (2j)", "TechnoBot: Rapport faisabilite", "SoudurePlus: Inventaire consommables"] },
-      { id: "PR-1.2", label: "Selection & Design Cellule Robot", desc: "Choix cobots, simulation 3D", status: "en-cours", leadMembre: "TechnoBot QC",
-        missions: ["TechnoBot: Design cellule (3 options)", "TechnoBot: Simulation 3D", "MetalPro: Validation contraintes", "SoudurePlus: Spec torches robot", "MetalPro: GO budget 350K$"] },
-      { id: "PR-1.3", label: "Installation & Mise en Route", desc: "Installation, programmation, validation", status: "a-faire", leadMembre: "TechnoBot QC",
-        missions: ["TechnoBot: Installation cobots (4 sem)", "TechnoBot: 12 programmes soudage", "SoudurePlus: Setup consommables", "MetalPro: Formation personnel", "TechnoBot: Validation CWB"] },
-    ],
-  },
-  {
-    id: "CR-2", num: 2, label: "Chaine du Froid 4.0",
-    desc: "Alimentation Boreal modernise sa chaine du froid avec FroidTech et PackPro.",
-    icon: Shield, color: "teal", chaleur: "brule", type: "operationnel",
-    cellule: "CELL-002", membres: ["Alimentation Boreal", "FroidTech Solutions", "PackPro International"],
-    objectif: "Tracabilite 100%, -25% pertes", timing: "4-8 mois", valeurEstimee: "500K$",
-    projets: [
-      { id: "PR-2.1", label: "Audit Chaine du Froid", desc: "Cartographie 5 zones temperature", status: "done", leadMembre: "FroidTech Solutions",
-        missions: ["FroidTech: Audit 5 zones (3j)", "FroidTech: Rapport gaps MAPAQ/ACIA", "Boreal: Historique bris 12 mois", "PackPro: Audit emballage"] },
-      { id: "PR-2.2", label: "Systeme Monitoring IoT", desc: "45 capteurs + dashboard temps reel", status: "en-cours", leadMembre: "FroidTech Solutions",
-        missions: ["FroidTech: Selection capteurs IoT", "FroidTech: Installation 45 points", "FroidTech: Dashboard temps reel", "Boreal: Responsable qualite IoT"] },
-      { id: "PR-2.3", label: "Emballage Automatise HACCP", desc: "Ligne emballage + tracabilite GS1", status: "a-faire", leadMembre: "PackPro International",
-        missions: ["PackPro: Design ligne (2 options)", "PackPro: Integration GS1", "Boreal: Spec 12 formats", "PackPro: Installation (6 sem)"] },
-    ],
-  },
-  {
-    id: "CR-3", num: 3, label: "Cellule Usinage 5 Axes — Efficacite",
-    desc: "Precision CNC modernise avec AutomaTech (MES) et EcoVert (energie).",
-    icon: Factory, color: "emerald", chaleur: "couve", type: "technologique",
-    cellule: "CELL-003", membres: ["Precision CNC Beauce", "AutomaTech Inc.", "EcoVert Energie"],
-    objectif: "MES integre, -30% energie", timing: "4-6 mois", valeurEstimee: "280K$",
-    projets: [
-      { id: "PR-3.1", label: "Audit Energetique & Processus", desc: "Double audit energie + processus", status: "en-cours", leadMembre: "EcoVert Energie",
-        missions: ["EcoVert: Audit energetique complet", "AutomaTech: Audit processus (OEE)", "Precision CNC: Donnees Hydro-QC 24 mois", "EcoVert: Rapport ROI"] },
-      { id: "PR-3.2", label: "Implementation MES", desc: "MES connecte aux 8 machines CNC", status: "a-faire", leadMembre: "AutomaTech Inc.",
-        missions: ["AutomaTech: Selection MES", "AutomaTech: Integration 8 machines", "AutomaTech: Dashboard production", "Precision CNC: Formation operateurs"] },
-    ],
-  },
-  {
-    id: "CR-4", num: 4, label: "Integration MES MetalPro (Phase 2)",
-    desc: "MetalPro connecte toutes ses machines avec AutomaTech et TechnoBot.",
-    icon: Code2, color: "blue", chaleur: "couve", type: "technologique",
-    cellule: "CELL-001", membres: ["MetalPro Sherbrooke", "AutomaTech Inc.", "TechnoBot QC"],
-    objectif: "MES complet, visibilite temps reel", timing: "3-5 mois", valeurEstimee: "180K$",
-    projets: [
-      { id: "PR-4.1", label: "Cartographie Machines", desc: "Inventaire 22 machines, protocoles", status: "a-faire", leadMembre: "AutomaTech Inc.",
-        missions: ["AutomaTech: Inventaire 22 machines", "AutomaTech: Test OPC-UA/Modbus", "MetalPro: Top 10 critique", "TechnoBot: Integration robot-MES"] },
-    ],
-  },
-  {
-    id: "CR-5", num: 5, label: "Formation Continue Reseau",
-    desc: "Formation croisee entre les 12 membres. Chacun partage son expertise.",
-    icon: Users, color: "amber", chaleur: "couve", type: "organisationnel",
-    cellule: "Reseau complet", membres: ["Tous les membres"],
-    objectif: "12 ateliers/an, competences croisees", timing: "Permanent", valeurEstimee: "Inclus",
-    projets: [
-      { id: "PR-5.1", label: "Calendrier Ateliers Q2 2026", desc: "3 ateliers: Robotique, Energie, Lean", status: "en-cours", leadMembre: "Usine Bleue AI",
-        missions: ["TechnoBot: Atelier Cobots PME (avril)", "EcoVert: Atelier Subventions HQ (mai)", "AutomaTech: Atelier MES 101 (juin)", "Usine Bleue: Logistique + suivi"] },
-    ],
-  },
-];
-
-// ================================================================
-// COMPUTED STATS
-// ================================================================
-
-const NB_CHANTIERS = CHANTIERS_RESEAU.length;
-const NB_PROJETS = CHANTIERS_RESEAU.reduce((s, ch) => s + ch.projets.length, 0);
-const NB_MISSIONS = CHANTIERS_RESEAU.reduce((s, ch) => s + ch.projets.reduce((s2, p) => s2 + p.missions.length, 0), 0);
-const PROJETS_DONE = CHANTIERS_RESEAU.reduce((s, ch) => s + ch.projets.filter(p => p.status === "done").length, 0);
 
 const TYPE_MEMBER_COLORS: Record<string, string> = {
   manufacturier: "from-blue-600 to-blue-500",
@@ -453,168 +347,6 @@ function TabProfil() {
   );
 }
 
-// ================================================================
-// TAB: CHANTIERS RESEAU (from RD.8 — with drill-down)
-// ================================================================
-
-function TabChantiersReseau() {
-  const [selectedChantier, setSelectedChantier] = useState<string | null>(null);
-  const [selectedProjet, setSelectedProjet] = useState<string | null>(null);
-
-  const chantier = selectedChantier ? CHANTIERS_RESEAU.find(c => c.id === selectedChantier) : null;
-  const projet = chantier && selectedProjet ? chantier.projets.find(p => p.id === selectedProjet) : null;
-
-  // Breadcrumb
-  const breadcrumb: BreadcrumbItem[] = [];
-  if (selectedChantier) {
-    breadcrumb.push({ label: "Chantiers", onClick: () => { setSelectedChantier(null); setSelectedProjet(null); }, color: "orange" });
-    if (chantier) breadcrumb.push({ label: chantier.label, onClick: () => setSelectedProjet(null), color: chantier.color });
-    if (projet) breadcrumb.push({ label: projet.label });
-  }
-
-  // Projet detail view
-  if (projet && chantier) {
-    return (
-      <div className="space-y-4">
-        <Breadcrumb items={breadcrumb} />
-        <Card className="p-0 overflow-hidden">
-          <div className={cn("bg-gradient-to-r px-4 py-3", `from-${chantier.color}-600 to-${chantier.color}-500`)}>
-            <h3 className="text-sm font-bold text-white">{projet.label}</h3>
-            <p className="text-[9px] text-white/70">{projet.desc}</p>
-          </div>
-          <div className="p-4 space-y-3">
-            <div className="flex items-center gap-2">
-              <StatusBadge status={projet.status} />
-              <span className="text-[9px] text-gray-500">Lead: {projet.leadMembre}</span>
-            </div>
-            <h4 className="text-xs font-bold text-gray-700">Missions ({projet.missions.length})</h4>
-            <div className="space-y-1.5">
-              {projet.missions.map((m, i) => {
-                const parts = m.split(": ");
-                const assignee = parts[0];
-                const desc = parts.slice(1).join(": ");
-                return (
-                  <div key={i} className="flex items-start gap-2 p-2 bg-gray-50 rounded-lg">
-                    <MembreBadge nom={assignee} />
-                    <span className="text-[9px] text-gray-700 flex-1">{desc}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </Card>
-      </div>
-    );
-  }
-
-  // Chantier detail view
-  if (chantier) {
-    const Icon = chantier.icon;
-    return (
-      <div className="space-y-4">
-        <Breadcrumb items={breadcrumb} />
-        <Card className="p-0 overflow-hidden">
-          <div className={cn("bg-gradient-to-r px-4 py-3", `from-${chantier.color}-600 to-${chantier.color}-500`)}>
-            <div className="flex items-center gap-2">
-              <Icon className="h-5 w-5 text-white" />
-              <div>
-                <h3 className="text-sm font-bold text-white">CH-{chantier.num} {chantier.label}</h3>
-                <p className="text-[9px] text-white/70">{chantier.desc}</p>
-              </div>
-            </div>
-          </div>
-          <div className="p-4 space-y-3">
-            <div className="flex items-center gap-3 flex-wrap">
-              <ChaleurBadge chaleur={chantier.chaleur} />
-              <span className="text-[9px] text-gray-500">{chantier.type}</span>
-              <span className="text-[9px] text-gray-500">{chantier.timing}</span>
-              <span className="text-[9px] font-bold text-emerald-600">{chantier.valeurEstimee}</span>
-            </div>
-            <div className="flex gap-1.5 flex-wrap">
-              {chantier.membres.map(m => <MembreBadge key={m} nom={m} />)}
-            </div>
-            <h4 className="text-xs font-bold text-gray-700">Projets ({chantier.projets.length})</h4>
-            <div className="space-y-2">
-              {chantier.projets.map(p => (
-                <Card
-                  key={p.id}
-                  className="p-3 hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => setSelectedProjet(p.id)}
-                >
-                  <div className="flex items-center gap-2">
-                    <StatusBadge status={p.status} />
-                    <span className="text-xs font-bold text-gray-800 flex-1">{p.label}</span>
-                    <span className="text-[9px] text-gray-400">{p.missions.length} missions</span>
-                    <ChevronRight className="h-3.5 w-3.5 text-gray-300" />
-                  </div>
-                  <p className="text-[9px] text-gray-500 mt-1">{p.desc}</p>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </Card>
-      </div>
-    );
-  }
-
-  // List view
-  return (
-    <div className="space-y-4">
-      {/* KPI summary */}
-      <div className="grid grid-cols-4 gap-2">
-        <div className="bg-orange-50 rounded-lg p-3 text-center">
-          <div className="text-lg font-bold text-orange-600">{NB_CHANTIERS}</div>
-          <div className="text-[9px] text-gray-500">Chantiers</div>
-        </div>
-        <div className="bg-blue-50 rounded-lg p-3 text-center">
-          <div className="text-lg font-bold text-blue-600">{NB_PROJETS}</div>
-          <div className="text-[9px] text-gray-500">Projets</div>
-        </div>
-        <div className="bg-violet-50 rounded-lg p-3 text-center">
-          <div className="text-lg font-bold text-violet-600">{NB_MISSIONS}</div>
-          <div className="text-[9px] text-gray-500">Missions</div>
-        </div>
-        <div className="bg-emerald-50 rounded-lg p-3 text-center">
-          <div className="text-lg font-bold text-emerald-600">{PROJETS_DONE}</div>
-          <div className="text-[9px] text-gray-500">Completes</div>
-        </div>
-      </div>
-
-      {/* Chantiers list */}
-      <div className="space-y-3">
-        {CHANTIERS_RESEAU.map(ch => {
-          const Icon = ch.icon;
-          const done = ch.projets.filter(p => p.status === "done").length;
-          const total = ch.projets.length;
-          return (
-            <Card
-              key={ch.id}
-              className="p-0 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => setSelectedChantier(ch.id)}
-            >
-              <div className={cn("bg-gradient-to-r px-4 py-2.5 flex items-center gap-3", `from-${ch.color}-600 to-${ch.color}-500`)}>
-                <Icon className="h-4 w-4 text-white shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <span className="text-xs font-bold text-white">CH-{ch.num} {ch.label}</span>
-                  <span className="text-[9px] text-white/60 ml-2">{ch.cellule}</span>
-                </div>
-                <ChaleurBadge chaleur={ch.chaleur} />
-                <ChevronRight className="h-3.5 w-3.5 text-white/50" />
-              </div>
-              <div className="px-4 py-2.5 flex items-center gap-3">
-                <p className="text-[9px] text-gray-500 flex-1">{ch.desc}</p>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-[9px] font-bold text-emerald-600">{ch.valeurEstimee}</span>
-                  <span className="text-[9px] text-gray-400">{done}/{total} projets</span>
-                </div>
-              </div>
-            </Card>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 // ================================================================
 // TAB: DASHBOARD (from FE.9)
@@ -1122,7 +854,7 @@ export function MonReseauView() {
           </div>
         );
       case "chantiers":
-        return <TabChantiersReseau />;
+        return <HierarchieGHML key="reseau-chantiers" typeChantier="réseau" showStats />;
       case "pionniers":
         return (
           <div className="space-y-4">

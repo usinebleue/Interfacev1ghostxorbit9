@@ -65,6 +65,7 @@ import type {
   MissionCatalogue,
   TemplateProjetCatalogue,
   TemplateDocumentaire,
+  TacheUser,
 } from "./types";
 
 // --- SSE Stream types ---
@@ -714,8 +715,49 @@ export const api = {
     return apiFetch("/playbooks");
   },
 
-  deployPlaybook(playbookId: string): Promise<PlaybookDeployResult> {
-    return apiFetch(`/playbooks/deploy/${playbookId}`, { method: "POST" });
+  deployPlaybook(playbookId: string, options?: {
+    parent_chantier_id?: number;
+    parent_projet_id?: number;
+    parent_mission_id?: number;
+  }): Promise<PlaybookDeployResult> {
+    const params = new URLSearchParams();
+    if (options?.parent_chantier_id) params.set("parent_chantier_id", String(options.parent_chantier_id));
+    if (options?.parent_projet_id) params.set("parent_projet_id", String(options.parent_projet_id));
+    if (options?.parent_mission_id) params.set("parent_mission_id", String(options.parent_mission_id));
+    const qs = params.toString() ? `?${params.toString()}` : "";
+    return apiFetch(`/playbooks/deploy/${playbookId}${qs}`, { method: "POST" });
+  },
+
+  // ── TACHES (4e niveau GHML) ───────────────────────────────
+
+  listTachesUser(filters?: { mission_id?: number; projet_id?: number; chantier_id?: number; status?: string }): Promise<TacheUser[]> {
+    const params = new URLSearchParams();
+    if (filters?.mission_id) params.set("mission_id", String(filters.mission_id));
+    if (filters?.projet_id) params.set("projet_id", String(filters.projet_id));
+    if (filters?.chantier_id) params.set("chantier_id", String(filters.chantier_id));
+    if (filters?.status) params.set("status", filters.status);
+    const qs = params.toString() ? `?${params.toString()}` : "";
+    return apiFetch(`/taches-user${qs}`);
+  },
+
+  getTacheUser(tacheId: number): Promise<TacheUser> {
+    return apiFetch(`/taches-user/${tacheId}`);
+  },
+
+  createTacheUser(data: Partial<TacheUser>): Promise<{ status: string; id: number }> {
+    return apiFetch("/taches-user", { method: "POST", body: JSON.stringify(data) });
+  },
+
+  updateTacheUser(tacheId: number, data: Partial<TacheUser>): Promise<{ status: string }> {
+    return apiFetch(`/taches-user/${tacheId}`, { method: "PUT", body: JSON.stringify(data) });
+  },
+
+  deleteTacheUser(tacheId: number): Promise<{ status: string }> {
+    return apiFetch(`/taches-user/${tacheId}`, { method: "DELETE" });
+  },
+
+  completeTacheUser(tacheId: number): Promise<{ status: string }> {
+    return apiFetch(`/taches-user/${tacheId}/complete`, { method: "POST" });
   },
 
   // ── CATALOGUES (diagnostics, missions, templates projets) ──
