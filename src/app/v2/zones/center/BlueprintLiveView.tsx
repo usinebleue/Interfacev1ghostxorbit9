@@ -48,7 +48,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 // ── 6 C-Level bots pour la grille Live ──
 
 const CLEVEL_BOTS: { code: string; nom: string; role: string; dept: string; deptColor: string }[] = [
-  { code: "CEOB", nom: "CarlOS", role: "CEO", dept: "Direction", deptColor: "bg-blue-100 text-blue-700" },
+  { code: "CEOB", nom: "CarlOS", role: "CEO", dept: "Tactique", deptColor: "bg-blue-100 text-blue-700" },
   { code: "CTOB", nom: "Thierry", role: "CTO", dept: "Technologie", deptColor: "bg-violet-100 text-violet-700" },
   { code: "CFOB", nom: "Francois", role: "CFO", dept: "Finance", deptColor: "bg-emerald-100 text-emerald-700" },
   { code: "CMOB", nom: "Martine", role: "CMO", dept: "Marketing", deptColor: "bg-pink-100 text-pink-700" },
@@ -442,7 +442,7 @@ export function BlueprintLiveView() {
         <PageHeader
           icon={LayoutGrid}
           iconColor="text-blue-600"
-          title="Mon Blue Print"
+          title="Plan Strategique"
           subtitle=""
           onBack={() => setActiveView("department")}
           rightSlot={

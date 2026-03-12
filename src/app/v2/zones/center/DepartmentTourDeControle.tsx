@@ -1,7 +1,7 @@
 /**
  * DepartmentTourDeControle.tsx — Tour de Controle par departement
  * MEME PATTERN que DashboardView (CarlOS) : bandeau proactif + 2 rangees de 5 Cards
- * CEOB (CarlOS AI) = meme structure 10 tabs que les autres bots
+ * CEOB (Tactique) = meme structure 10 tabs que les autres bots
  * Sprint A — Frame Master V2
  */
 
@@ -825,9 +825,9 @@ const DEPT_TDC: Record<string, DeptTdcConfig> = {
     ],
   },
 
-  /* --- CARLOS AI / DIRECTION (CEOB) --- */
+  /* --- TACTIQUE (CEOB) --- */
   CEOB: {
-    botName: "CarlOS AI",
+    botName: "CarlOS — Tactique",
     summary: "CEO Bot — Chef d'orchestre de la GhostX Team. Coordonne les 11 bots, supervise les chantiers strategiques et pilote les decisions COMMAND.",
     row1: [
       { icon: Zap, title: "Pilotage Strategique", gradient: "bg-gradient-to-r from-blue-700 to-blue-600", ringColor: "hover:ring-blue-300", items: [
@@ -845,7 +845,7 @@ const DEPT_TDC: Record<string, DeptTdcConfig> = {
         { primary: "COMMAND Engine", pct: 100, pctColor: "bg-emerald-500", secondary: "LIVE — 4 stages actifs" },
         { primary: "Decision Log", pct: 100, pctColor: "bg-violet-500", secondary: "Tracabilite complete" },
       ]},
-      { icon: BarChart3, title: "KPIs Direction", gradient: "bg-gradient-to-r from-indigo-600 to-indigo-500", ringColor: "hover:ring-indigo-300", items: [
+      { icon: BarChart3, title: "KPIs Tactique", gradient: "bg-gradient-to-r from-indigo-600 to-indigo-500", ringColor: "hover:ring-indigo-300", items: [
         { primary: "ROI GhostX", value: "21x", valueColor: "text-emerald-600", secondary: "Cout humain vs CarlOS" },
         { primary: "Economies", value: "97%", valueColor: "text-emerald-600", secondary: "1.35M$ → 21,600$/an" },
         { primary: "Throughput", value: "500x", secondary: "Vitesse vs equipe humaine" },

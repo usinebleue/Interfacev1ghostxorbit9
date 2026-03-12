@@ -18,7 +18,7 @@ import { PageHeader } from "./layouts/PageHeader";
 // ── 6 administrateurs C-Level ──
 
 const BOARD_MEMBERS: { code: string; nom: string; titre: string; ringColor: string; derniere_position: string }[] = [
-  { code: "CEOB", nom: "CarlOS", titre: "CEO — Direction", ringColor: "ring-blue-500", derniere_position: "Priorise expansion manufacturiere Q2" },
+  { code: "CEOB", nom: "CarlOS", titre: "CEO — Tactique", ringColor: "ring-blue-500", derniere_position: "Priorise expansion manufacturiere Q2" },
   { code: "CTOB", nom: "Thierry", titre: "CTO — Technologie", ringColor: "ring-violet-500", derniere_position: "Recommande migration cloud avant scale" },
   { code: "CFOB", nom: "Francois", titre: "CFO — Finance", ringColor: "ring-emerald-500", derniere_position: "Approuve budget R&D sous conditions" },
   { code: "CMOB", nom: "Martine", titre: "CMO — Marketing", ringColor: "ring-pink-500", derniere_position: "Propose repositionnement marque B2B" },

@@ -194,7 +194,7 @@ const BOT_CAPACITES: Record<string, {
 };
 
 const BOT_DEPT: Record<string, string> = {
-  CEOB: "Direction Générale", CTOB: "Technologie", CFOB: "Finance", CMOB: "Marketing",
+  CEOB: "Tactique", CTOB: "Technologie", CFOB: "Finance", CMOB: "Marketing",
   CSOB: "Stratégie", COOB: "Opérations", CPOB: "Production", CHROB: "Ressources Humaines",
   CINOB: "Systèmes d'Information", CROB: "Revenus",
   CLOB: "Juridique", CISOB: "Sécurité",
@@ -328,7 +328,7 @@ export function AgentSettingsView() {
 
   const botName = activeBot?.nom || "Carlos";
   const botRole = BOT_ROLES[activeBotCode] || "CEO";
-  const botDept = BOT_DEPT[activeBotCode] || "Direction";
+  const botDept = BOT_DEPT[activeBotCode] || "Tactique";
   const avatar = BOT_AVATAR[activeBotCode];
   const standby = BOT_STANDBY[activeBotCode] || BOT_STANDBY.CEOB;
   const profile = BOT_PROFILES[activeBotCode] || BOT_PROFILES.CEOB;
@@ -688,7 +688,7 @@ export function AgentSettingsView() {
                 {(() => {
                   // Compute collaborators from real missions — which bots work together
                   const COLLAB_ROLES: Record<string, string> = {
-                    CEOB: "Direction", CTOB: "Technologie", CFOB: "Finance",
+                    CEOB: "Tactique", CTOB: "Technologie", CFOB: "Finance",
                     CMOB: "Marketing", CSOB: "Strategie", COOB: "Operations",
                     CPOB: "Production", CHROB: "RH", CINOB: "Innovation",
                     CROB: "Vente", CLOB: "Legal", CISOB: "Securite",

@@ -1,6 +1,6 @@
 /**
  * SectionMonEquipeAI.tsx — [4] Mon Equipe AI
- * 11 agents (sans CEOB qui est dans Mon Cockpit > Direction)
+ * 11 agents (sans CEOB qui est dans Mon Cockpit > Tactique)
  * Click agent → vue departement avec 4 tabs
  * Sprint C — Restructuration Plateforme
  */
@@ -37,7 +37,7 @@ interface Props {
   collapsed: boolean;
 }
 
-// 11 agents — CEOB exclus (il est dans Mon Cockpit > Direction)
+// 11 agents — CEOB exclus (il est dans Mon Cockpit > Tactique)
 const AGENTS: { label: string; icon: React.ElementType; code: string }[] = [
   { label: "Finance", icon: DollarSign, code: "CFOB" },
   { label: "Technologie", icon: Cpu, code: "CTOB" },

@@ -28,7 +28,7 @@ const THINK_ROOM_STEPS = [
   { id: "vision", label: "Vision", icon: Lightbulb, color: "text-amber-500", desc: "Partager l'idee ou le projet" },
   { id: "brainstorm", label: "Brainstorm", icon: Brain, color: "text-purple-500", desc: "Exploration multi-bot sans censure" },
   { id: "evaluation", label: "Evaluation", icon: Target, color: "text-blue-500", desc: "Matrice de decision multicritere" },
-  { id: "blueprint", label: "Blueprint", icon: FileText, color: "text-green-500", desc: "Structure du projet section par section" },
+  { id: "blueprint", label: "Plan Strategique", icon: FileText, color: "text-green-500", desc: "Structure du projet section par section" },
   { id: "roadmap", label: "Roadmap", icon: Map, color: "text-indigo-500", desc: "Jalons, dependances, ressources" },
   { id: "go_nogo", label: "Go / No-Go", icon: CheckCircle2, color: "text-emerald-500", desc: "Decision finale avec resume executif" },
 ];

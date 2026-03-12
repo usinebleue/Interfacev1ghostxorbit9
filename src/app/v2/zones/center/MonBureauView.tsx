@@ -1763,7 +1763,7 @@ function TemplatesPage() {
 
   // Group diagnostics by department
   const DEPT_LABELS: Record<string, { label: string; gradient: string }> = {
-    direction: { label: "Direction (CEO)", gradient: "from-slate-700 to-slate-600" },
+    direction: { label: "Tactique (CEO)", gradient: "from-slate-700 to-slate-600" },
     finance: { label: "Finance (CFO)", gradient: "from-emerald-600 to-teal-500" },
     technologie: { label: "Technologie (CTO)", gradient: "from-blue-700 to-indigo-600" },
     marketing: { label: "Marketing (CMO)", gradient: "from-fuchsia-600 to-pink-500" },

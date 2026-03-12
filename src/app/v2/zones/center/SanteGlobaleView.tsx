@@ -55,7 +55,7 @@ const BOT_GRADIENTS: Record<string, string> = {
 
 /* ============ DEPT LABELS ============ */
 const DEPT_LABELS: Record<string, { label: string; gradient: string; bot: string }> = {
-  direction:   { label: "Direction (CEO)",     gradient: "from-slate-700 to-slate-600",   bot: "CEOB" },
+  direction:   { label: "Tactique (CEO)",       gradient: "from-slate-700 to-slate-600",   bot: "CEOB" },
   finance:     { label: "Finance (CFO)",       gradient: "from-emerald-600 to-teal-500",  bot: "CFOB" },
   technologie: { label: "Technologie (CTO)",   gradient: "from-blue-700 to-indigo-600",   bot: "CTOB" },
   marketing:   { label: "Marketing (CMO)",     gradient: "from-fuchsia-600 to-pink-500",  bot: "CMOB" },
@@ -92,7 +92,7 @@ const QUICK_WINS = [
 
 /* ============ DEPARTEMENTS ============ */
 const DEPT_SCORES = [
-  { label: "Direction",   score: 92 },
+  { label: "Tactique",    score: 92 },
   { label: "Finance",     score: 88 },
   { label: "Techno",      score: 85 },
   { label: "Strategie",   score: 82 },

@@ -496,7 +496,7 @@ export function DashboardView() {
         {/* Grille 12 bots Bot Team CarlOS — 4 colonnes, 3 rangées */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "100ms", animationFillMode: "both" }}>
-            <BlocCEO onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "CarlOS — Direction", element_type: "kpi_ceo", data: kpis?.CEO }, bot: "CEOB" })} kpi={kpis?.CEO} />
+            <BlocCEO onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "CarlOS — Tactique", element_type: "kpi_ceo", data: kpis?.CEO }, bot: "CEOB" })} kpi={kpis?.CEO} />
           </div>
           <div className="animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "150ms", animationFillMode: "both" }}>
             <BlocCFO onClick={() => dispatch({ type: "focus", layer: "cerveau", data: { title: "Agent CFO — Finances", element_type: "kpi_cfo", data: kpis?.CFO }, bot: "CFOB" })} kpi={kpis?.CFO} />
