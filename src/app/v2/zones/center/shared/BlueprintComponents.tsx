@@ -3,8 +3,8 @@
  * StatusBadge, BotBadge, ChaleurBadge, PlaybookCard, TemplateSection, KPICard
  */
 
-import { useState } from "react";
-import { ChevronRight, ChevronDown, BookOpen, Sparkles, Package } from "lucide-react";
+import { useState, useCallback } from "react";
+import { ChevronRight, ChevronDown, BookOpen, Sparkles, Package, Play, Loader2, CheckCircle2 } from "lucide-react";
 import { cn } from "../../../../components/ui/utils";
 import { Card } from "../../../../components/ui/card";
 import {
@@ -51,8 +51,36 @@ export function ChaleurBadge({ chaleur }: { chaleur: keyof typeof CHALEUR_CONFIG
 // PLAYBOOK CARDS
 // ================================================================
 
-export function PlaybookCard({ pb, compact = false }: { pb: PlaybookTemplate; compact?: boolean }) {
+export interface PlaybookDeployOptions {
+  parent_chantier_id?: number;
+  parent_projet_id?: number;
+  parent_mission_id?: number;
+}
+
+export function PlaybookCard({ pb, compact = false, onDeploy }: {
+  pb: PlaybookTemplate;
+  compact?: boolean;
+  onDeploy?: (playbookId: string, options?: PlaybookDeployOptions) => Promise<void>;
+}) {
+  const [deploying, setDeploying] = useState(false);
+  const [deployed, setDeployed] = useState(false);
   const tc = TYPE_COLORS[pb.type] || TYPE_COLORS.strategique;
+
+  const handleDeploy = useCallback(async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!onDeploy || deploying || deployed) return;
+    setDeploying(true);
+    try {
+      await onDeploy(pb.id);
+      setDeployed(true);
+      setTimeout(() => setDeployed(false), 3000);
+    } catch {
+      // error handled by parent
+    } finally {
+      setDeploying(false);
+    }
+  }, [onDeploy, pb.id, deploying, deployed]);
+
   return (
     <Card className={cn("p-0 overflow-hidden border shadow-sm hover:shadow-md transition-all cursor-pointer group", tc.border)}>
       <div className="px-3 py-2 flex items-center gap-2">
@@ -60,6 +88,21 @@ export function PlaybookCard({ pb, compact = false }: { pb: PlaybookTemplate; co
         <span className={cn("text-xs font-bold flex-1 truncate", tc.text)}>{pb.titre}</span>
         {pb.populaire && <Sparkles className="h-3.5 w-3.5 text-amber-500 shrink-0" />}
         <span className={cn("text-[8px] px-1.5 py-0.5 rounded font-bold border", tc.bg, tc.text, tc.border)}>{pb.type.toUpperCase()}</span>
+        {onDeploy && (
+          <button
+            onClick={handleDeploy}
+            disabled={deploying || deployed}
+            className={cn(
+              "flex items-center gap-1 text-[8px] font-bold px-2 py-1 rounded transition-all",
+              deployed
+                ? "bg-emerald-100 text-emerald-700"
+                : "bg-blue-100 text-blue-700 hover:bg-blue-200"
+            )}
+          >
+            {deploying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : deployed ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+            {deploying ? "..." : deployed ? "OK" : "Deployer"}
+          </button>
+        )}
       </div>
       {!compact && (
         <div className="px-3 pb-3 space-y-2">
@@ -80,7 +123,11 @@ export function PlaybookCard({ pb, compact = false }: { pb: PlaybookTemplate; co
 }
 
 /** Section Templates reutilisable pour chaque tab */
-export function TemplateSection({ niveau, label }: { niveau: PlaybookTemplate["niveau"]; label: string }) {
+export function TemplateSection({ niveau, label, onDeploy }: {
+  niveau: PlaybookTemplate["niveau"];
+  label: string;
+  onDeploy?: (playbookId: string, options?: PlaybookDeployOptions) => Promise<void>;
+}) {
   const [expanded, setExpanded] = useState(true);
   const templates = PLAYBOOK_TEMPLATES.filter((p) => p.niveau === niveau);
   if (templates.length === 0) return null;
@@ -100,7 +147,7 @@ export function TemplateSection({ niveau, label }: { niveau: PlaybookTemplate["n
       {expanded && (
         <div className="px-4 pb-3 grid grid-cols-1 md:grid-cols-2 gap-2">
           {templates.map((pb) => (
-            <PlaybookCard key={pb.id} pb={pb} />
+            <PlaybookCard key={pb.id} pb={pb} onDeploy={onDeploy} />
           ))}
         </div>
       )}

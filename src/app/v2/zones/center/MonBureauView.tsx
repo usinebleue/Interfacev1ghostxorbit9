@@ -2302,7 +2302,7 @@ export function MonBureauView() {
   return (
     <BlueprintFrame
       title="Mon Bureau"
-      subtitle="Espace personnel — idees, documents, outils et taches"
+      subtitle=""
       icon={Briefcase}
       iconColor="text-amber-600"
       tabs={tabs}

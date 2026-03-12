@@ -490,6 +490,32 @@ export interface Mission {
   completed_at?: string | null;
 }
 
+// ─── Tache (4e niveau GHML — Element atomique) ───
+
+export interface TacheUser {
+  id: number;
+  user_id?: number;
+  chantier_id?: number | null;
+  projet_id?: number | null;
+  mission_id?: number | null;
+  titre: string;
+  description: string;
+  status: string;
+  priorite: number;
+  bot_primaire: string;
+  assignee_type: string;
+  assignee_nom: string;
+  section?: string;
+  source?: string;
+  tags?: string[];
+  contexte?: Record<string, unknown>;
+  participants?: Participant[];
+  echeance?: string | null;
+  created_at: string;
+  updated_at: string;
+  completed_at?: string | null;
+}
+
 // ─── Discussion (metadonnees persistees — messages en localStorage) ───
 // Pipeline: Discussion → Mission → Chantier
 
@@ -569,7 +595,7 @@ export const BOT_AVATAR: Record<string, string> = {
 // --- Sous-titre par bot (affiche dans le header) ---
 
 export const BOT_SUBTITLE: Record<string, string> = {
-  CEOB: "CarlOS AI — Chef d'orchestre",
+  CEOB: "Tactique — Vue d'ensemble",
   CTOB: "Technologie & Innovation",
   CFOB: "Finance & Tresorerie",
   CMOB: "Marketing & Croissance",
@@ -790,9 +816,10 @@ export interface PlaybookSummary {
 
 export interface PlaybookDeployResult {
   status: string;
-  chantier_id: number;
+  chantier_id: number | null;
   projets: { id: number; titre: string }[];
   missions: { id: number; titre: string; projet_id: number }[];
+  taches?: { id: number; titre: string; mission_id?: number }[];
   playbook_id: string;
 }
 

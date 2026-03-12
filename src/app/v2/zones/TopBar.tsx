@@ -8,7 +8,7 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   LayoutDashboard,
-  Gauge,
+  Zap,
   Layers,
   HeartPulse,
   Building2,
@@ -96,13 +96,16 @@ export function TopBarCenter() {
   const { activeView, activeBotCode, setActiveView, navigateToDepartment } = useFrameMaster();
 
   const NAV_ITEMS = [
-    { id: "cockpit", label: "Cockpit", icon: Gauge,
+    { id: "tactique", label: "Tactique", icon: Zap,
       onClick: () => navigateToDepartment("CEOB"),
       isActive: activeView === "department" && activeBotCode === "CEOB" },
-    { id: "blueprint", label: "Blueprint", icon: Layers,
+    { id: "strategique", label: "Strategique", icon: Layers,
       onClick: () => setActiveView("blueprint"),
       isActive: activeView === "blueprint" },
-    { id: "sante", label: "Sante", icon: HeartPulse,
+    { id: "tableau-de-bord", label: "Tableau de Bord", icon: LayoutDashboard,
+      onClick: () => setActiveView("cockpit"),
+      isActive: activeView === "cockpit" },
+    { id: "sante", label: "Sante Globale", icon: HeartPulse,
       onClick: () => setActiveView("health"),
       isActive: activeView === "health" || activeView === "diagnostic-hub" || activeView === "diagnostic-ia" },
     { id: "bureau", label: "Bureau", icon: FolderOpen,
@@ -113,7 +116,7 @@ export function TopBarCenter() {
       isActive: activeView === "meeting-room" || activeView === "board-room" || activeView === "war-room" || activeView === "think-room" },
     { id: "equipe", label: "Equipe AI", icon: Bot,
       onClick: () => setActiveView("agent-gallery"),
-      isActive: activeView === "agent-gallery" || activeView === "department" },
+      isActive: activeView === "agent-gallery" || (activeView === "department" && activeBotCode !== "CEOB") },
     { id: "reseau", label: "Reseau", icon: Network,
       onClick: () => setActiveView("mon-reseau"),
       isActive: activeView === "mon-reseau" },
