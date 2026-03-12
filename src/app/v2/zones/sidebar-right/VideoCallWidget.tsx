@@ -28,7 +28,7 @@ import { useFrameMaster } from "../../context/FrameMasterContext";
 import { useChatContext } from "../../context/ChatContext";
 import { useCanvasActions } from "../../context/CanvasActionContext";
 import { BOT_SUBTITLE } from "../../api/types";
-import { AGENTS } from "../center/orbit9/AgentGalleryPage";
+import { AGENTS, AG_KEYFRAMES } from "../center/orbit9/AgentGalleryPage";
 import type { AgentConfig } from "../center/orbit9/AgentGalleryPage";
 import type { CanvasAction } from "../../api/types";
 import { api } from "../../api/client";
@@ -685,6 +685,8 @@ export function VideoCallWidget() {
 
   return (
     <div className="space-y-2">
+      {/* CSS keyframes for agent SVG animations */}
+      <style>{AG_KEYFRAMES}</style>
       {/* Bot video — 16:9 */}
       <div className="relative rounded-t-lg overflow-hidden aspect-video bg-gray-900">
         {/* Tavus video track — shown when available */}

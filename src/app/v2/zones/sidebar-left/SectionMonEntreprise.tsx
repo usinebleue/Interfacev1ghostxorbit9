@@ -29,15 +29,14 @@ interface Props {
 }
 
 const ITEMS: { id: string; label: string; icon: React.ElementType; color: string; view: ActiveView; botCode?: string }[] = [
-  { id: "direction", label: "Direction", icon: Briefcase, color: "text-blue-600", view: "department", botCode: "CEOB" },
   { id: "tdc", label: "Tour de Controle", icon: LayoutDashboard, color: "text-slate-600", view: "dashboard" },
   { id: "cockpit", label: "Cockpit", icon: Gauge, color: "text-amber-600", view: "cockpit" },
-  { id: "blueprint", label: "Blueprint", icon: Layers, color: "text-cyan-600", view: "mes-chantiers" },
+  { id: "blueprint", label: "Blueprint", icon: Layers, color: "text-cyan-600", view: "blueprint" },
   { id: "sante", label: "Sante Globale", icon: HeartPulse, color: "text-rose-500", view: "health" },
 ];
 
 export function SectionMonEntreprise({ collapsed }: Props) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const { activeView, activeBotCode, setActiveView, navigateToDepartment } = useFrameMaster();
 
   const handleClick = (item: typeof ITEMS[number]) => {
