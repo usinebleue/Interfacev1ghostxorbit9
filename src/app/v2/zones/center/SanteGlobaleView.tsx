@@ -94,7 +94,7 @@ function KpiCard({ icon: Icon, label, value, sub, gradient, onClick }: {
 }) {
   return (
     <Card
-      className={cn("p-0 overflow-hidden transition-shadow", onClick && "cursor-pointer hover:shadow-lg hover:ring-1 hover:ring-blue-300")}
+      className={cn("p-0 overflow-hidden transition-shadow", onClick && "cursor-pointer hover:shadow-md")}
       onClick={onClick}
     >
       <div className={cn("flex items-center gap-2 px-3 py-2", gradient)}>
@@ -198,7 +198,7 @@ export function SanteGlobaleView() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center">
-                <Heart className="h-5 w-5 text-white" />
+                <Heart className="h-4 w-4 text-white" />
               </div>
               <div>
                 <h2 className="text-lg font-bold text-white">Sante Globale</h2>
@@ -309,7 +309,7 @@ export function SanteGlobaleView() {
                       "text-green-600 bg-green-50 border-green-200"
                     )}>{p.score < 35 ? "critique" : p.score < 50 ? "risque" : "sain"}</Badge>
                   </div>
-                  <div className="relative h-2 bg-gray-100 rounded-full overflow-hidden ml-7">
+                  <div className="relative h-2.5 bg-gray-100 rounded-full overflow-hidden ml-7">
                     <div className="h-full rounded-full bg-gray-200/80 absolute" style={{ width: `${p.avg}%` }} />
                     <div className={cn("h-full rounded-full absolute", p.color)} style={{ width: `${p.score}%` }} />
                   </div>
@@ -406,7 +406,7 @@ export function SanteGlobaleView() {
                 return (
                   <div key={d.label} className="flex items-center gap-1.5">
                     <span className="text-[9px] text-gray-700 w-16 truncate">{d.label}</span>
-                    <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
                       <div className={cn("h-full rounded-full", color)} style={{ width: `${d.score}%` }} />
                     </div>
                     <span className={cn("text-[9px] font-bold w-7 text-right", textColor)}>{d.score}</span>
@@ -539,7 +539,7 @@ export function SanteGlobaleView() {
                           <div className="flex-1 min-w-0">
                             <div className="text-xs font-medium text-gray-800">{gap.label}</div>
                             <div className="flex items-center gap-1.5 mt-1">
-                              <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                              <div className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
                                 <div
                                   className={cn("h-full rounded-full", gap.score < 40 ? "bg-red-400" : gap.score < 60 ? "bg-amber-400" : "bg-green-400")}
                                   style={{ width: `${gap.score}%` }}
@@ -604,7 +604,7 @@ export function SanteGlobaleView() {
                                     score >= 70 ? "text-green-600" : score >= 40 ? "text-amber-600" : "text-red-600"
                                   )}>{score}/100</span>
                                 </div>
-                                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
                                   <div
                                     className={cn("h-full rounded-full", score >= 70 ? "bg-green-400" : score >= 40 ? "bg-amber-400" : "bg-red-400")}
                                     style={{ width: `${score}%` }}
