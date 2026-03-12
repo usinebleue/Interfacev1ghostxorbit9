@@ -28,9 +28,9 @@ function BlockHeader({ icon: Icon, title, count, gradient }: {
 }) {
   if (gradient) {
     return (
-      <div className={cn("flex items-center gap-2.5 -mx-4 -mt-4 mb-3 px-4 py-2.5", gradient)}>
+      <div className={cn("flex items-center gap-2 -mx-4 -mt-4 mb-3 px-4 py-2.5", gradient)}>
         <div className="w-7 h-7 bg-white/20 rounded-lg flex items-center justify-center">
-          <Icon className="h-3.5 w-3.5 text-white" />
+          <Icon className="h-4 w-4 text-white" />
         </div>
         <h3 className="text-xs font-bold uppercase tracking-wider text-white flex-1">{title}</h3>
         {count !== undefined && (
@@ -82,7 +82,7 @@ function BlocCEO({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string, 
     items.push({ label: "Tour de controle", detail: "Aucune donnee", sub: "Selectionnez une instance" });
   }
   return (
-    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-300 transition-shadow" onClick={onClick}>
+    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-1 hover:ring-blue-300 transition-shadow" onClick={onClick}>
       <BlockHeader icon={Briefcase} title="CarlOS — CEO" count={items.length} gradient="bg-gradient-to-r from-blue-600 to-blue-500" />
       <ul className="space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
@@ -116,7 +116,7 @@ function BlocCFO({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string, 
   }
   if (items.length === 0) items.push({ label: "Finances", value: "—", valueColor: "", sub: "Aucune donnee" });
   return (
-    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-2 hover:ring-emerald-300 transition-shadow" onClick={onClick}>
+    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-1 hover:ring-emerald-300 transition-shadow" onClick={onClick}>
       <BlockHeader icon={DollarSign} title="François — CFO" count={items.length > 1 ? items.length : undefined} gradient="bg-gradient-to-r from-emerald-600 to-emerald-500" />
       <ul className="space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
@@ -145,14 +145,14 @@ function BlocCTO({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string, 
   }
   if (items.length === 0) items.push({ label: "Tech", value: "—", sub: "Aucune donnee" });
   return (
-    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-2 hover:ring-violet-300 transition-shadow" onClick={onClick}>
+    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-1 hover:ring-violet-300 transition-shadow" onClick={onClick}>
       <BlockHeader icon={Cpu} title="Thierry — CTO" gradient="bg-gradient-to-r from-violet-600 to-violet-500" />
       <ul className="space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
           <li key={i} className="text-xs text-gray-800">
             <div className="flex justify-between mb-0.5"><span className="font-medium">{item.label}</span><span className="font-bold">{item.value}</span></div>
             {item.pct !== undefined && (
-              <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
                 <div className="h-full bg-violet-500 rounded-full" style={{ width: `${Math.min(item.pct, 100)}%` }} />
               </div>
             )}
@@ -179,7 +179,7 @@ function BlocCMO({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string, 
   }
   if (items.length === 0) items.push({ label: "Marketing", value: "—", valueColor: "", sub: "Aucune donnee" });
   return (
-    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-2 hover:ring-pink-300 transition-shadow" onClick={onClick}>
+    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-1 hover:ring-pink-300 transition-shadow" onClick={onClick}>
       <BlockHeader icon={Megaphone} title="Martine — CMO" gradient="bg-gradient-to-r from-pink-600 to-pink-500" />
       <ul className="space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
@@ -207,7 +207,7 @@ function BlocCSO({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string, 
   }
   if (items.length === 0) items.push({ label: "Strategie", detail: "—", sub: "Aucune donnee" });
   return (
-    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-2 hover:ring-red-300 transition-shadow" onClick={onClick}>
+    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-1 hover:ring-red-300 transition-shadow" onClick={onClick}>
       <BlockHeader icon={Target} title="Sophie — CSO" gradient="bg-gradient-to-r from-red-600 to-red-500" />
       <ul className="space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
@@ -233,7 +233,7 @@ function BlocCOO({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string, 
   }
   if (items.length === 0) items.push({ label: "Operations", value: "—", sub: "Aucune donnee" });
   return (
-    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-2 hover:ring-orange-300 transition-shadow" onClick={onClick}>
+    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-1 hover:ring-orange-300 transition-shadow" onClick={onClick}>
       <BlockHeader icon={Settings} title="Olivier — COO" gradient="bg-gradient-to-r from-orange-600 to-orange-500" />
       <ul className="space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
@@ -258,7 +258,7 @@ function BlocRH({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string, u
   }
   if (items.length === 0) items.push({ label: "Ressources humaines", value: "—", sub: "Aucune donnee" });
   return (
-    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-2 hover:ring-teal-300 transition-shadow" onClick={onClick}>
+    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-1 hover:ring-teal-300 transition-shadow" onClick={onClick}>
       <BlockHeader icon={Users} title="Hélène — CHRO" gradient="bg-gradient-to-r from-teal-600 to-teal-500" />
       <ul className="space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
@@ -282,7 +282,7 @@ function BlocInnovation({ onClick, kpi }: { onClick?: () => void; kpi?: Record<s
   }
   if (items.length === 0) items.push({ label: "Innovation", value: "—", sub: "Aucune donnee" });
   return (
-    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-2 hover:ring-rose-300 transition-shadow" onClick={onClick}>
+    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-1 hover:ring-rose-300 transition-shadow" onClick={onClick}>
       <BlockHeader icon={Lightbulb} title="Inès — CINO" gradient="bg-gradient-to-r from-rose-600 to-rose-500" />
       <ul className="space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
@@ -307,7 +307,7 @@ function BlocClients({ onClick, kpi }: { onClick?: () => void; kpi?: Record<stri
   }
   if (items.length === 0) items.push({ label: "Securite & Conformite", value: "—", sub: "Aucune donnee" });
   return (
-    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-2 hover:ring-zinc-300 transition-shadow" onClick={onClick}>
+    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-1 hover:ring-zinc-300 transition-shadow" onClick={onClick}>
       <BlockHeader icon={HeartHandshake} title="Sébastien — CISO" gradient="bg-gradient-to-r from-zinc-600 to-zinc-500" />
       <ul className="space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
@@ -331,7 +331,7 @@ function BlocProduit({ onClick, kpi }: { onClick?: () => void; kpi?: Record<stri
   }
   if (items.length === 0) items.push({ label: "Usine & Produit", value: "—", sub: "Aucune donnee" });
   return (
-    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-2 hover:ring-slate-300 transition-shadow" onClick={onClick}>
+    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-1 hover:ring-slate-300 transition-shadow" onClick={onClick}>
       <BlockHeader icon={Package} title="Fabien — CPO" gradient="bg-gradient-to-r from-slate-600 to-slate-500" />
       <ul className="space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
@@ -355,7 +355,7 @@ function BlocRisques({ onClick, kpi }: { onClick?: () => void; kpi?: Record<stri
   }
   if (items.length === 0) items.push({ label: "Risques", value: "—", sub: "Aucune donnee" });
   return (
-    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-2 hover:ring-amber-300 transition-shadow" onClick={onClick}>
+    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-1 hover:ring-amber-300 transition-shadow" onClick={onClick}>
       <BlockHeader icon={ShieldAlert} title="Raphaël — CRO" gradient="bg-gradient-to-r from-amber-600 to-amber-500" />
       <ul className="space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
@@ -379,7 +379,7 @@ function BlocLegal({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string
   }
   if (items.length === 0) items.push({ label: "Legal", value: "—", sub: "Aucune donnee" });
   return (
-    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-2 hover:ring-indigo-300 transition-shadow" onClick={onClick}>
+    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-1 hover:ring-indigo-300 transition-shadow" onClick={onClick}>
       <BlockHeader icon={Scale} title="Louise — CLO" gradient="bg-gradient-to-r from-indigo-600 to-indigo-500" />
       <ul className="space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
