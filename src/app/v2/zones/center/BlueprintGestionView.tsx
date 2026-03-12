@@ -1,12 +1,12 @@
 /**
- * BlueprintGestionView.tsx — Blueprint Gestion (CRUD Pipeline)
- * CarlOS = gardien de l'organisation — il guide la promotion et l'abandon
- * 3 tabs synchro avec FrameMaster: Discussions | Missions | Chantiers
- * Navigation croisee: chaque entite lien vers ses parents/enfants
- * Briefing forms style "Mission Impossible" — parametres complets
+ * BlueprintGestionView.tsx — Blueprint Unifie (Dashboard + CRUD Pipeline)
+ * Fusion de BlueprintLiveView + BlueprintGestionView (D-115)
+ * Vue d'ensemble: bot grid + COMMAND missions + KPIs
+ * CRUD: Chantiers → Projets → Missions → Discussions
+ * CarlOS = gardien de l'organisation
  */
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import {
   Flame,
   Target,
@@ -33,11 +33,12 @@ import {
   Layers,
   Users,
   ListChecks,
+  Activity,
 } from "lucide-react";
 import { Card } from "../../../components/ui/card";
 import { Badge } from "../../../components/ui/badge";
 import { cn } from "../../../components/ui/utils";
-import { useChantiers, useMissions, useDiscussions, useBureau, useProjets } from "../../api/hooks";
+import { useChantiers, useMissions, useDiscussions, useBureau, useProjets, useTaches } from "../../api/hooks";
 import { api } from "../../api/client";
 import { BOT_AVATAR, REFLECTION_MODES } from "../../api/types";
 import { useChatContext } from "../../context/ChatContext";
@@ -112,6 +113,27 @@ const BOT_GRADIENTS: Record<string, string> = {
   CROB: "from-amber-600 to-amber-500",
   CLOB: "from-indigo-600 to-indigo-500",
   CISOB: "from-gray-600 to-gray-500",
+};
+
+// ── 6 C-Level bots pour la grille Live (overview) ──
+
+const CLEVEL_BOTS: { code: string; nom: string; role: string; dept: string; deptColor: string }[] = [
+  { code: "CEOB", nom: "CarlOS", role: "CEO", dept: "Direction", deptColor: "bg-blue-100 text-blue-700" },
+  { code: "CTOB", nom: "Thierry", role: "CTO", dept: "Technologie", deptColor: "bg-violet-100 text-violet-700" },
+  { code: "CFOB", nom: "Francois", role: "CFO", dept: "Finance", deptColor: "bg-emerald-100 text-emerald-700" },
+  { code: "CMOB", nom: "Martine", role: "CMO", dept: "Marketing", deptColor: "bg-pink-100 text-pink-700" },
+  { code: "CSOB", nom: "Sophie", role: "CSO", dept: "Strategie", deptColor: "bg-red-100 text-red-700" },
+  { code: "COOB", nom: "Olivier", role: "COO", dept: "Operations", deptColor: "bg-orange-100 text-orange-700" },
+];
+
+// ── Stage labels pour COMMAND missions ──
+
+const STAGE_LABELS: Record<string, { label: string; progress: number }> = {
+  scan: { label: "Scan", progress: 25 },
+  strategie: { label: "Strategie", progress: 50 },
+  execution: { label: "Execution", progress: 75 },
+  bilan: { label: "Bilan", progress: 90 },
+  done: { label: "Termine", progress: 100 },
 };
 
 // ── Playbook type gradients (harmonisés avec CHANTIER_TYPES) ──
@@ -761,16 +783,54 @@ export function BlueprintGestionView() {
   const [missionDeptFilter, setMissionDeptFilter] = useState<string | null>(null);
   const [projetTypeFilter, setProjetTypeFilter] = useState<string | null>(null);
   const [playbookTypeFilter, setPlaybookTypeFilter] = useState<string | null>(null);
+  // D-115 — COMMAND missions pour l'overview (ex BlueprintLiveView)
+  const [commandMissions, setCommandMissions] = useState<Record<string, unknown>[]>([]);
+  const [loadingCommand, setLoadingCommand] = useState(true);
+  // Taches tab — inline create
+  const [showTacheInput, setShowTacheInput] = useState(false);
+  const [newTacheTitre, setNewTacheTitre] = useState("");
 
   const { chantiers, loading: loadingChantiers, refresh: refreshChantiers } = useChantiers();
   const { projets, loading: loadingProjets, refresh: refreshProjets } = useProjets();
   const { missions, loading: loadingMissions, refresh: refreshMissions } = useMissions();
   const { discussions, promote: promoteDiscussion } = useDiscussions();
   const { items: bureauItems } = useBureau();
+  const { taches, loading: loadingTaches, refresh: refreshTaches, createTache, completeTache } = useTaches();
   const {
     threads, activeThreadId,
     resumeThread, deleteThread, newConversation,
   } = useChatContext();
+
+  // Orbit9 data pour Opportunites
+  const [orbit9Matches, setOrbit9Matches] = useState<Record<string, unknown>[]>([]);
+  const [orbit9Members, setOrbit9Members] = useState<Record<string, unknown>[]>([]);
+  const [loadingOrbit9, setLoadingOrbit9] = useState(true);
+  useEffect(() => {
+    Promise.all([
+      api.listOrbit9Matches().then((r) => setOrbit9Matches(r.matches || [])).catch(() => {}),
+      api.listOrbit9Members().then((r) => setOrbit9Members(r.members || [])).catch(() => {}),
+    ]).finally(() => setLoadingOrbit9(false));
+  }, []);
+
+  // D-115 — Fetch COMMAND missions pour l'overview
+  useEffect(() => {
+    api.commandMissions(20)
+      .then((res) => setCommandMissions(Array.isArray(res) ? res : (res as Record<string, unknown>).missions as Record<string, unknown>[] || []))
+      .catch(() => setCommandMissions([]))
+      .finally(() => setLoadingCommand(false));
+  }, []);
+
+  // Bot status calculé depuis COMMAND missions
+  const botStatus = (code: string) => {
+    const activeMission = commandMissions.find(
+      (m) => Array.isArray(m.scan_bots) && (m.scan_bots as string[]).includes(code) && m.current_stage !== "done"
+    );
+    if (activeMission) {
+      const stage = STAGE_LABELS[activeMission.current_stage as string] || { label: "Actif", progress: 50 };
+      return { label: stage.label, progress: stage.progress, active: true };
+    }
+    return { label: "Standby", progress: 0, active: false };
+  };
 
   // ── Handlers enrichis (briefing complet) ──
 
@@ -1989,6 +2049,89 @@ export function BlueprintGestionView() {
                 </Card>
               ))}
             </div>
+
+            {/* Equipe C-Level — grille bot status (ex BlueprintLiveView) */}
+            <div>
+              <div className="text-sm font-bold text-gray-800 mb-3">Equipe C-Level</div>
+              <div className="grid grid-cols-3 gap-3">
+                {CLEVEL_BOTS.map((bot) => {
+                  const status = botStatus(bot.code);
+                  return (
+                    <Card key={bot.code} className="p-3 hover:shadow-md transition-shadow cursor-pointer">
+                      <div className="flex items-center gap-2.5 mb-2">
+                        <div className="relative">
+                          <img
+                            src={BOT_AVATAR[bot.code]}
+                            alt={bot.nom}
+                            className="w-10 h-10 rounded-full ring-2 ring-white shadow-sm"
+                          />
+                          {status.active && (
+                            <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-green-500 ring-2 ring-white animate-pulse" />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-gray-800 truncate">{bot.nom}</p>
+                          <p className="text-[11px] text-gray-400">{bot.role}</p>
+                        </div>
+                      </div>
+                      <Badge className={cn("text-[9px] mb-2", bot.deptColor)}>{bot.dept}</Badge>
+                      <p className="text-[11px] text-gray-500 mb-1.5">{status.label}</p>
+                      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div
+                          className={cn("h-full rounded-full transition-all duration-1000 ease-out", status.active ? "bg-blue-500" : "bg-gray-300")}
+                          style={{ width: `${status.progress}%` }}
+                        />
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Missions COMMAND actives */}
+            <div>
+              <div className="text-sm font-bold text-gray-800 mb-3">
+                Missions COMMAND
+                {loadingCommand && <Activity className="inline h-3.5 w-3.5 ml-2 animate-spin text-gray-400" />}
+              </div>
+              {commandMissions.length === 0 && !loadingCommand ? (
+                <Card className="p-4">
+                  <p className="text-xs text-gray-400 text-center">Aucune mission active — les bots attendent vos directives</p>
+                </Card>
+              ) : (
+                <div className="space-y-2">
+                  {commandMissions.slice(0, 5).map((m) => {
+                    const stage = STAGE_LABELS[(m.current_stage as string) || "scan"] || STAGE_LABELS.scan;
+                    const isDone = m.current_stage === "done";
+                    return (
+                      <Card key={m.id as number} className="p-4 hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-xs font-bold text-gray-800 truncate flex-1">
+                            {(m.message_original as string || "Mission").slice(0, 80)}
+                          </p>
+                          <Badge variant="outline" className={cn(
+                            "text-[9px] ml-2",
+                            isDone ? "text-green-600 bg-green-50" : "text-blue-600 bg-blue-50"
+                          )}>
+                            {stage.label}
+                          </Badge>
+                        </div>
+                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                          <div
+                            className={cn(
+                              "h-full rounded-full transition-all duration-1000 ease-out",
+                              isDone ? "bg-emerald-500" : "bg-gradient-to-r from-blue-500 to-indigo-500"
+                            )}
+                            style={{ width: `${stage.progress}%` }}
+                          />
+                        </div>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
             {/* Chantiers par chaleur */}
             <Card className="p-4">
               <h3 className="text-xs font-bold text-gray-700 mb-3 uppercase tracking-wider">Chantiers par chaleur</h3>
@@ -2046,13 +2189,167 @@ export function BlueprintGestionView() {
         {/* ══════════════════════════════════════ */}
         {activeTab === "taches" && (
           <div className="space-y-4">
-            <Card className="p-6 text-center">
-              <ListChecks className="h-8 w-8 text-purple-300 mx-auto mb-3" />
-              <h3 className="text-sm font-bold text-gray-700 mb-1">Taches</h3>
-              <p className="text-[9px] text-gray-400 max-w-sm mx-auto">
-                Les taches sont extraites automatiquement de vos projets et missions. Connectez un Blueprint JSON pour voir vos taches ici.
-              </p>
-            </Card>
+            {/* KPI taches */}
+            <div className="grid grid-cols-4 gap-2">
+              {(() => {
+                const total = taches.length;
+                const backlog = taches.filter(t => t.state_detail?.group === "backlog").length;
+                const started = taches.filter(t => t.state_detail?.group === "started").length;
+                const done = taches.filter(t => t.state_detail?.group === "completed").length;
+                return (
+                  <>
+                    <Card className="p-2.5 text-center">
+                      <div className="text-lg font-bold text-gray-700">{total}</div>
+                      <div className="text-[9px] text-gray-400">Total</div>
+                    </Card>
+                    <Card className="p-2.5 text-center">
+                      <div className="text-lg font-bold text-amber-600">{backlog}</div>
+                      <div className="text-[9px] text-gray-400">Backlog</div>
+                    </Card>
+                    <Card className="p-2.5 text-center">
+                      <div className="text-lg font-bold text-blue-600">{started}</div>
+                      <div className="text-[9px] text-gray-400">En cours</div>
+                    </Card>
+                    <Card className="p-2.5 text-center">
+                      <div className="text-lg font-bold text-green-600">{done}</div>
+                      <div className="text-[9px] text-gray-400">Terminees</div>
+                    </Card>
+                  </>
+                );
+              })()}
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider">Taches (Plane.so)</h3>
+              <div className="flex items-center gap-2">
+                <button onClick={() => refreshTaches()} className="text-[9px] text-blue-600 hover:underline cursor-pointer">Rafraichir</button>
+                <button
+                  onClick={() => setShowTacheInput(true)}
+                  className="flex items-center gap-1 text-[9px] font-medium bg-purple-600 text-white px-2 py-1 rounded hover:bg-purple-700 cursor-pointer"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Nouvelle tache
+                </button>
+              </div>
+            </div>
+
+            {/* Create inline */}
+            {showTacheInput && (
+              <Card className="p-3 bg-purple-50 border-purple-200 space-y-2">
+                <input
+                  type="text"
+                  value={newTacheTitre}
+                  onChange={(e) => setNewTacheTitre(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && newTacheTitre.trim()) {
+                      createTache({ titre: newTacheTitre.trim() });
+                      setNewTacheTitre("");
+                      setShowTacheInput(false);
+                    }
+                    if (e.key === "Escape") { setShowTacheInput(false); setNewTacheTitre(""); }
+                  }}
+                  placeholder="Titre de la tache..."
+                  className="w-full text-sm px-3 py-1.5 border rounded-lg bg-white outline-none focus:ring-1 focus:ring-purple-300"
+                  autoFocus
+                />
+                <div className="flex items-center gap-2 justify-end">
+                  <button onClick={() => { setShowTacheInput(false); setNewTacheTitre(""); }} className="text-[9px] text-gray-500 hover:text-gray-700 cursor-pointer">Annuler</button>
+                  <button
+                    onClick={() => {
+                      if (newTacheTitre.trim()) {
+                        createTache({ titre: newTacheTitre.trim() });
+                        setNewTacheTitre("");
+                        setShowTacheInput(false);
+                      }
+                    }}
+                    className="text-[9px] font-medium bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700 cursor-pointer"
+                  >Creer</button>
+                </div>
+              </Card>
+            )}
+
+            {/* Loading */}
+            {loadingTaches && (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-4 w-4 animate-spin text-purple-500" />
+              </div>
+            )}
+
+            {/* Taches list */}
+            {!loadingTaches && taches.length === 0 && (
+              <Card className="p-6 text-center">
+                <ListChecks className="h-8 w-8 text-purple-300 mx-auto mb-3" />
+                <p className="text-[9px] text-gray-400">Aucune tache. Creez-en une ou deployer un playbook.</p>
+              </Card>
+            )}
+
+            {!loadingTaches && taches.length > 0 && (
+              <div className="space-y-1.5">
+                {taches.map((t) => {
+                  const priorityColor = t.priority === "urgent" ? "bg-red-500" : t.priority === "high" ? "bg-orange-500" : t.priority === "medium" ? "bg-amber-400" : "bg-gray-300";
+                  const stateColor = t.state_detail?.group === "completed" ? "text-green-600" : t.state_detail?.group === "started" ? "text-blue-600" : "text-gray-500";
+                  return (
+                    <Card key={t.id} className="p-2.5 hover:shadow-md transition-shadow">
+                      <div className="flex items-center gap-2">
+                        <div className={cn("w-1.5 h-1.5 rounded-full shrink-0", priorityColor)} />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-medium truncate">{t.name}</div>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className={cn("text-[9px] font-medium", stateColor)}>{t.state_detail?.name || "Backlog"}</span>
+                            {t.priority && t.priority !== "none" && (
+                              <span className="text-[9px] text-gray-400 capitalize">{t.priority}</span>
+                            )}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => completeTache(t.id)}
+                          className="p-1 text-gray-300 hover:text-green-500 transition-colors cursor-pointer"
+                          title="Marquer terminee"
+                        >
+                          <Check className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Missions as project tasks */}
+            {(() => {
+              const missionTasks = missions.filter(m => m.statut === "en_cours" || m.statut === "en_attente");
+              if (missionTasks.length === 0) return null;
+              return (
+                <div className="mt-4">
+                  <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Taches Projet (Missions actives)</h3>
+                  <div className="space-y-1.5">
+                    {missionTasks.slice(0, 15).map((m) => {
+                      const botGrad = BOT_GRADIENTS[m.bot_primaire || ""] || "from-gray-600 to-gray-500";
+                      const botOpt = BOT_OPTIONS.find(b => b.code === m.bot_primaire);
+                      return (
+                        <Card key={m.id} className="p-2.5 hover:shadow-md transition-shadow">
+                          <div className="flex items-center gap-2">
+                            {botOpt && (
+                              <div className={cn("w-5 h-5 rounded bg-gradient-to-r flex items-center justify-center text-[7px] font-bold text-white shrink-0", botGrad)}>
+                                {botOpt.short}
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="text-xs font-medium truncate">{m.titre}</div>
+                              <div className="text-[9px] text-gray-400">
+                                {m.statut === "en_cours" ? "En cours" : "En attente"}
+                                {m.chantier_id ? ` · Chantier #${m.chantier_id}` : ""}
+                              </div>
+                            </div>
+                            <Target className="h-3.5 w-3.5 text-gray-300 shrink-0" />
+                          </div>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
 
@@ -2061,13 +2358,124 @@ export function BlueprintGestionView() {
         {/* ══════════════════════════════════════ */}
         {activeTab === "opportunites" && (
           <div className="space-y-4">
-            <Card className="p-6 text-center">
-              <ArrowUpRight className="h-8 w-8 text-amber-300 mx-auto mb-3" />
-              <h3 className="text-sm font-bold text-gray-700 mb-1">Opportunites</h3>
-              <p className="text-[9px] text-gray-400 max-w-sm mx-auto">
-                Les opportunites business liees a votre blueprint apparaitront ici. CarlOS identifie les gaps et les synergies.
-              </p>
-            </Card>
+            {/* KPI Opportunites */}
+            <div className="grid grid-cols-4 gap-2">
+              {(() => {
+                const matchesOpen = orbit9Matches.filter(m => m.status === "open" || m.status === "pending").length;
+                const matchesWon = orbit9Matches.filter(m => (m.gagnant_ids as number[] || []).length > 0).length;
+                const membersActifs = orbit9Members.filter(m => m.status === "active" || m.status === "verified").length;
+                const missionsOuvertes = missions.filter(m => !m.bot_primaire && m.statut !== "termine").length;
+                return (
+                  <>
+                    <Card className="p-2.5 text-center">
+                      <div className="text-lg font-bold text-amber-600">{matchesOpen}</div>
+                      <div className="text-[9px] text-gray-400">Matches ouverts</div>
+                    </Card>
+                    <Card className="p-2.5 text-center">
+                      <div className="text-lg font-bold text-green-600">{matchesWon}</div>
+                      <div className="text-[9px] text-gray-400">Matches conclus</div>
+                    </Card>
+                    <Card className="p-2.5 text-center">
+                      <div className="text-lg font-bold text-blue-600">{membersActifs}</div>
+                      <div className="text-[9px] text-gray-400">Membres Orbit9</div>
+                    </Card>
+                    <Card className="p-2.5 text-center">
+                      <div className="text-lg font-bold text-purple-600">{missionsOuvertes}</div>
+                      <div className="text-[9px] text-gray-400">Missions ouvertes</div>
+                    </Card>
+                  </>
+                );
+              })()}
+            </div>
+
+            {/* Orbit9 Matches */}
+            <div>
+              <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <Activity className="h-3.5 w-3.5 text-amber-500" />
+                Matchings Orbit9
+              </h3>
+
+              {loadingOrbit9 && (
+                <div className="flex items-center justify-center py-6">
+                  <Loader2 className="h-4 w-4 animate-spin text-amber-500" />
+                </div>
+              )}
+
+              {!loadingOrbit9 && orbit9Matches.length === 0 && (
+                <Card className="p-4 text-center">
+                  <p className="text-[9px] text-gray-400">Aucun matching en cours. Lancez un match depuis Mon Reseau.</p>
+                </Card>
+              )}
+
+              {!loadingOrbit9 && orbit9Matches.length > 0 && (
+                <div className="space-y-1.5">
+                  {orbit9Matches.map((match, i) => {
+                    const statusColor = match.status === "open" || match.status === "pending" ? "bg-amber-400" : (match.gagnant_ids as number[] || []).length > 0 ? "bg-green-500" : "bg-gray-400";
+                    const statusLabel = match.status === "open" || match.status === "pending" ? "Ouvert" : (match.gagnant_ids as number[] || []).length > 0 ? "Conclu" : String(match.status || "");
+                    const candidats = Array.isArray(match.candidats) ? match.candidats as { nom: string; score: number }[] : [];
+                    return (
+                      <Card key={match.id as number || i} className="p-2.5 hover:shadow-md transition-shadow">
+                        <div className="flex items-start gap-2">
+                          <div className={cn("w-1.5 h-6 rounded-full shrink-0 mt-0.5", statusColor)} />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs font-medium">{String(match.besoin || "Matching #" + (match.id || i + 1))}</div>
+                            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                              <span className="text-[9px] text-gray-400">{statusLabel}</span>
+                              {candidats.length > 0 && (
+                                <span className="text-[9px] text-gray-400">{candidats.length} candidat{candidats.length > 1 ? "s" : ""}</span>
+                              )}
+                              {Array.isArray(match.criteres) && (match.criteres as string[]).slice(0, 2).map((c, ci) => (
+                                <span key={ci} className="text-[9px] bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded">{c}</span>
+                              ))}
+                            </div>
+                            {candidats.length > 0 && (
+                              <div className="flex items-center gap-1.5 mt-1">
+                                {candidats.slice(0, 3).map((c, ci) => (
+                                  <span key={ci} className="text-[9px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded">
+                                    {c.nom} ({c.score}%)
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <ArrowUpRight className="h-3.5 w-3.5 text-gray-300 shrink-0 mt-1" />
+                        </div>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Missions non-assignees */}
+            {(() => {
+              const unassigned = missions.filter(m => !m.bot_primaire && m.statut !== "termine");
+              if (unassigned.length === 0) return null;
+              return (
+                <div className="mt-4">
+                  <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <Target className="h-3.5 w-3.5 text-purple-500" />
+                    Missions non-assignees ({unassigned.length})
+                  </h3>
+                  <div className="space-y-1.5">
+                    {unassigned.slice(0, 10).map((m) => (
+                      <Card key={m.id} className="p-2.5 hover:shadow-md transition-shadow">
+                        <div className="flex items-center gap-2">
+                          <div className="w-5 h-5 rounded bg-gray-200 flex items-center justify-center text-[7px] font-bold text-gray-500 shrink-0">?</div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs font-medium truncate">{m.titre}</div>
+                            <div className="text-[9px] text-gray-400">
+                              {m.statut === "en_cours" ? "En cours" : m.statut === "en_attente" ? "En attente" : m.statut}
+                              {m.chantier_id ? ` · Chantier #${m.chantier_id}` : " · Orpheline"}
+                            </div>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
 

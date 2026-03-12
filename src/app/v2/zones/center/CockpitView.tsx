@@ -1,7 +1,19 @@
 /**
- * CockpitView.tsx — Cockpit Stats CEO
- * 4 KPI cards en haut + 12 rangees C-Level (identite + 3 angles × 4 KPIs)
- * Angles : Performance · Risques · Croissance
+ * CockpitView.tsx — ARCHIVE / REFERENCE pour futurs cockpits
+ * ══════════════════════════════════════════════════════════
+ * Ce fichier n'est PLUS la page active du bouton "Cockpit" TopBar.
+ * Le Cockpit est maintenant dans DepartmentTourDeControle.tsx (CEOB).
+ *
+ * CONSERVER CE FICHIER comme reference de patterns:
+ * - KpiCard: gradient header standard (from-slate-800 to-slate-700)
+ * - 12 C-Level × 6 angles × 4 KPIs = 288 KPIs au total
+ * - Angles: Performance, Risques, Croissance, Operations, Equipe, Projets
+ * - BotBulletin: heuresTravail, heuresSauvees, tauxSucces, tasksCompleted
+ * - BOT_GRADIENT: couleurs par bot
+ * - Layout: grid 4 KPI top + 12 rows expandables avec avatar + angles
+ * - API hooks: useBriefings, useChantiers, useMissions
+ *
+ * Pour reproduire dans un futur cockpit, copier les patterns d'ici.
  * Sprint A — Frame Master V2
  */
 
@@ -20,7 +32,7 @@ import {
 import { BOT_AVATAR } from "../../api/types";
 import { useFrameMaster } from "../../context/FrameMasterContext";
 import { useCanvasActions } from "../../context/CanvasActionContext";
-import { useBriefings } from "../../api/hooks";
+import { useBriefings, useChantiers, useMissions } from "../../api/hooks";
 import { PageLayout } from "./layouts/PageLayout";
 
 /* ============ KPI GAUGE CARD — header gradient ============ */
@@ -818,6 +830,14 @@ function BriefingsPanel() {
 export function CockpitView() {
   const { activeBotCode } = useFrameMaster();
   const { dispatch } = useCanvasActions();
+  const { chantiers } = useChantiers();
+  const { missions } = useMissions();
+
+  // KPIs reels
+  const missionsActives = missions.filter((m) => m.statut === "en_cours").length;
+  const missionsTotal = missions.length;
+  const missionsDone = missions.filter((m) => m.statut === "termine").length;
+  const tauxCompletion = missionsTotal > 0 ? Math.round((missionsDone / missionsTotal) * 100) : 0;
 
   // Trouver le bot actif dans les donnees
   const activeBot = activeBotCode !== "CEOB"
@@ -837,16 +857,16 @@ export function CockpitView() {
         ) : (
           /* Vue CEO 360 — tous les bots */
           <>
-            {/* Row 1 : 4 KPI cards globaux — cliquables → Focus Mode */}
+            {/* Row 1 : 4 KPI cards globaux — REAL DATA */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-              <KpiCard icon={DollarSign} label="TRG — Rendement Global" value="87%" change="+3pts vs jan" changeType="up"
-                onClick={() => handleFocus("TRG — Rendement Global", "kpi_global", { rendement: "87%", variation: "+3pts vs jan" }, "CEOB")} />
-              <KpiCard icon={Target} label="Pipeline total" value="1.0M$" change="+8% ce mois" changeType="up"
-                onClick={() => handleFocus("Pipeline — Vue CEO", "pipeline", { pipeline_total: 1000000, variation: "+8% ce mois" }, "CEOB")} />
-              <KpiCard icon={Users} label="Clients actifs" value="22" change="+5 ce mois" changeType="up"
-                onClick={() => handleFocus("Clients Actifs", "kpi_ceo", { clients_actifs: 22, nouveaux: "+5 ce mois" }, "CEOB")} />
-              <KpiCard icon={FileText} label="Taux conversion" value="38%" change="+3pts vs jan" changeType="up"
-                onClick={() => handleFocus("Taux de Conversion", "kpi_cso", { taux_conversion: "38%", variation: "+3pts vs jan" }, "CSOB")} />
+              <KpiCard icon={Briefcase} label="Chantiers" value={String(chantiers.length)} change={`${chantiers.filter(c => c.chaleur === "brule").length} en feu`} changeType={chantiers.filter(c => c.chaleur === "brule").length > 0 ? "down" : "up"}
+                onClick={() => handleFocus("Chantiers", "kpi_global", { total: chantiers.length }, "CEOB")} />
+              <KpiCard icon={Target} label="Missions" value={String(missionsTotal)} change={`${missionsActives} actives`} changeType="up"
+                onClick={() => handleFocus("Missions", "pipeline", { total: missionsTotal, actives: missionsActives }, "CEOB")} />
+              <KpiCard icon={CheckCircle} label="Completees" value={String(missionsDone)} change={`${tauxCompletion}% taux`} changeType="up"
+                onClick={() => handleFocus("Missions Completees", "kpi_ceo", { done: missionsDone, taux: tauxCompletion }, "CEOB")} />
+              <KpiCard icon={Users} label="Bots actifs" value="12" change="GhostX Team" changeType="stable"
+                onClick={() => handleFocus("GhostX Team", "kpi_cso", { bots: 12 }, "CEOB")} />
             </div>
 
             {/* 12 rangees C-Level — 4 boxes par ligne (identite + 3 angles) */}

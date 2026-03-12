@@ -1,7 +1,7 @@
 /**
- * FrameMaster.tsx — Shell 3 zones + TopBar unifiee
- * TopBar (pleine largeur) + 3 colonnes resizables
- * Sprint C — Restructuration Plateforme (remplace per-column headers)
+ * FrameMaster.tsx — Shell 3 zones avec TopBar eclatee
+ * Chaque panel a sa propre section de TopBar au-dessus de son contenu
+ * Sprint C — Restructuration Plateforme
  */
 
 import { useRef, useEffect, useCallback, useState } from "react";
@@ -14,7 +14,7 @@ import {
 } from "../../components/ui/resizable";
 import { useIsMobile } from "../../components/ui/use-mobile";
 import { useFrameMaster } from "../context/FrameMasterContext";
-import { TopBar } from "../zones/TopBar";
+import { TopBarLeft, TopBarCenter, TopBarRight } from "../zones/TopBar";
 import { SidebarLeft } from "../zones/sidebar-left/SidebarLeft";
 import { CenterZone } from "../zones/center/CenterZone";
 import { SidebarRight } from "../zones/sidebar-right/SidebarRight";
@@ -74,10 +74,7 @@ export function FrameMaster() {
 
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-white">
-      {/* TOP BAR — pleine largeur */}
-      <TopBar />
-
-      {/* BODY — 3 colonnes resizable */}
+      {/* BODY — 3 colonnes resizable, chaque colonne a sa TopBar + contenu */}
       <ResizablePanelGroup
         direction="horizontal"
         autoSaveId="frame-master-v2"
@@ -95,8 +92,11 @@ export function FrameMaster() {
           onExpand={handleLeftExpand}
           className="min-w-[56px]"
         >
-          <div className="h-full overflow-hidden border-r border-gray-200">
-            <SidebarLeft />
+          <div className="h-full flex flex-col overflow-hidden">
+            <TopBarLeft />
+            <div className="flex-1 overflow-hidden border-r border-gray-200">
+              <SidebarLeft />
+            </div>
           </div>
         </ResizablePanel>
 
@@ -105,6 +105,7 @@ export function FrameMaster() {
         {/* ZONE CENTRALE */}
         <ResizablePanel defaultSize={60} minSize={35}>
           <div className="h-full flex flex-col">
+            <TopBarCenter />
             <div className="flex-1 overflow-hidden" style={{ position: 'relative' }}>
               <CenterZone />
               {/* Ligne grise gauche du canvas */}
@@ -136,8 +137,11 @@ export function FrameMaster() {
           onExpand={() => setRightCollapsed(false)}
           className="min-w-[56px]"
         >
-          <div className="h-full overflow-hidden border-l border-gray-200">
-            <SidebarRight collapsed={rightCollapsed} />
+          <div className="h-full flex flex-col overflow-hidden">
+            <TopBarRight />
+            <div className="flex-1 overflow-hidden border-l border-gray-200">
+              <SidebarRight collapsed={rightCollapsed} />
+            </div>
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>

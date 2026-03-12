@@ -37,6 +37,7 @@ import {
   DropdownMenuTrigger,
 } from "../../components/ui/dropdown-menu";
 import { useFrameMaster } from "../context/FrameMasterContext";
+import type { ActiveView } from "../context/FrameMasterContext";
 import { api } from "../api/client";
 import type { KitInfo, KitUserProfile } from "../api/types";
 
@@ -92,15 +93,12 @@ export function TopBarLeft() {
 // ═══════════════════════════════════════
 
 export function TopBarCenter() {
-  const { activeView, setActiveView } = useFrameMaster();
+  const { activeView, activeBotCode, setActiveView, navigateToDepartment } = useFrameMaster();
 
   const NAV_ITEMS = [
-    { id: "tdc", label: "Tour de Controle", icon: LayoutDashboard,
-      onClick: () => setActiveView("dashboard"),
-      isActive: activeView === "dashboard" },
     { id: "cockpit", label: "Cockpit", icon: Gauge,
-      onClick: () => setActiveView("cockpit"),
-      isActive: activeView === "cockpit" },
+      onClick: () => navigateToDepartment("CEOB"),
+      isActive: activeView === "department" && activeBotCode === "CEOB" },
     { id: "blueprint", label: "Blueprint", icon: Layers,
       onClick: () => setActiveView("blueprint"),
       isActive: activeView === "blueprint" },

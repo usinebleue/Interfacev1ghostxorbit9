@@ -7,7 +7,7 @@
  * Donnees reelles: PostgreSQL (projets, docs, outils) + Plane.so (taches) + localStorage (idees)
  */
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import {
   Sparkles,
   FolderKanban,
@@ -45,6 +45,7 @@ import {
   Package,
   Gauge,
   Scale,
+  Briefcase,
 } from "lucide-react";
 import { Card } from "../../../components/ui/card";
 import { Badge } from "../../../components/ui/badge";
@@ -66,6 +67,8 @@ import { useBureau, useTaches, useTemplates, useIdees } from "../../api/hooks";
 import { api } from "../../api/client";
 import { CarlOSPresence } from "../center/CarlOSPresence";
 import { DocumentWorkflow } from "../center/DocumentWorkflow";
+import { BlueprintFrame } from "./shared/BlueprintFrame";
+import type { TabDef } from "./shared/blueprint-types";
 
 // ── Sub-tabs config (pattern Orbit9DetailView) ──
 
@@ -790,7 +793,7 @@ function IdeesPage() {
   const activeBots = Object.keys(botCounts).sort();
 
   return (
-    <div className="max-w-4xl mx-auto px-10 py-5 space-y-4 pb-12">
+    <div className="space-y-4">
       <SearchBar
         placeholder="Rechercher dans les idees..."
         viewMode={viewMode}
@@ -1163,7 +1166,7 @@ function DocumentsPage() {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto px-10 py-5 space-y-4 pb-12">
+    <div className="space-y-4">
       {/* Sub-tabs internes */}
       <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit">
         {DOC_TABS.map((tab) => (
@@ -1486,7 +1489,7 @@ function TachesPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-10 py-5 space-y-4 pb-12">
+    <div className="space-y-4">
       {/* Sub-tabs: Mes Taches | Taches Projet (C.14) */}
       <div className="flex items-center justify-between">
         <div className="flex gap-1.5">
@@ -1616,75 +1619,119 @@ function TachesPage() {
 // ══════════════════════════════════════════
 
 function AgendaPage() {
-  // Evenements simules — sera branche sur Google Calendar / API quand pret
-  const EVENTS = [
-    { id: 1, titre: "Standup equipe dev", heure: "09:00", duree: "30 min", type: "recurrent", bot: "CTOB", jour: "Lun" },
-    { id: 2, titre: "Revue financiere Q1", heure: "10:30", duree: "1h", type: "reunion", bot: "CFOB", jour: "Lun" },
-    { id: 3, titre: "Pipeline ventes — point hebdo", heure: "14:00", duree: "45 min", type: "reunion", bot: "CROB", jour: "Mar" },
-    { id: 4, titre: "Demo client — Alimentation Boreal", heure: "15:30", duree: "1h", type: "demo", bot: "CEOB", jour: "Mar" },
-    { id: 5, titre: "Comite direction", heure: "09:00", duree: "1h30", type: "strategique", bot: "CEOB", jour: "Mer" },
-    { id: 6, titre: "Sprint review CarlOS", heure: "11:00", duree: "1h", type: "recurrent", bot: "CTOB", jour: "Jeu" },
-    { id: 7, titre: "Rencontre RH — embauche dev", heure: "13:00", duree: "45 min", type: "reunion", bot: "CHROB", jour: "Jeu" },
-    { id: 8, titre: "Board Room — CA mensuel", heure: "10:00", duree: "2h", type: "strategique", bot: "CEOB", jour: "Ven" },
-  ];
+  // Meetings reels depuis l'API + evenements demo
+  const [meetings, setMeetings] = useState<any[]>([]);
+  const [loadingMeetings, setLoadingMeetings] = useState(true);
 
-  const TYPE_COLORS: Record<string, string> = {
-    recurrent: "bg-blue-100 text-blue-700",
-    reunion: "bg-emerald-100 text-emerald-700",
-    demo: "bg-amber-100 text-amber-700",
-    strategique: "bg-violet-100 text-violet-700",
+  useEffect(() => {
+    api.meetingList().then((r) => {
+      setMeetings(Array.isArray(r?.meetings) ? r.meetings : []);
+    }).catch(() => {}).finally(() => setLoadingMeetings(false));
+  }, []);
+
+  const STATUS_COLORS: Record<string, string> = {
+    pending: "bg-amber-100 text-amber-700",
+    active: "bg-green-100 text-green-700",
+    ended: "bg-gray-100 text-gray-600",
+    scheduled: "bg-blue-100 text-blue-700",
   };
 
-  const JOURS = ["Lun", "Mar", "Mer", "Jeu", "Ven"];
+  // Build events: real meetings + fallback demo events if empty
+  const allEvents = useMemo(() => {
+    const realEvents = meetings.map((m: any) => ({
+      id: m.slug || m.id,
+      titre: m.title || m.slug,
+      heure: m.created_at ? new Date(m.created_at).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" }) : "",
+      date: m.created_at ? new Date(m.created_at) : new Date(),
+      type: m.status || "pending",
+      bot: m.bot_code || "CEOB",
+      duree: m.meeting_type || "meeting",
+    }));
+
+    // Si aucun meeting, afficher des events demo
+    if (realEvents.length === 0) {
+      const today = new Date();
+      return [
+        { id: "demo-1", titre: "Standup equipe dev", heure: "09:00", date: today, type: "scheduled", bot: "CTOB", duree: "30 min" },
+        { id: "demo-2", titre: "Pipeline ventes — point hebdo", heure: "14:00", date: today, type: "scheduled", bot: "CROB", duree: "45 min" },
+        { id: "demo-3", titre: "Comite direction", heure: "09:00", date: new Date(today.getTime() + 86400000), type: "scheduled", bot: "CEOB", duree: "1h30" },
+      ];
+    }
+    return realEvents;
+  }, [meetings]);
+
+  // Group by day
+  const JOURS_LABELS = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
+  const grouped = useMemo(() => {
+    const groups: Record<string, typeof allEvents> = {};
+    allEvents.forEach((ev) => {
+      const key = ev.date.toLocaleDateString("fr-CA");
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(ev);
+    });
+    return Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0])).slice(0, 5);
+  }, [allEvents]);
 
   return (
-    <div className="max-w-4xl mx-auto px-10 py-5 space-y-4 pb-12">
-      {/* Semaine en cours */}
+    <div className="space-y-4">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="text-sm font-bold text-gray-800">Semaine du 3 mars 2026</div>
+        <div className="text-sm font-bold text-gray-800">
+          {meetings.length > 0 ? `${meetings.length} meetings` : "Agenda"}
+        </div>
         <div className="flex gap-2">
-          <button className="px-3 py-1.5 text-xs text-gray-500 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">Aujourd'hui</button>
-          <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-white bg-gray-900 rounded-lg hover:bg-gray-800 cursor-pointer">
-            <Plus className="h-3.5 w-3.5" />
-            Nouveau
-          </button>
+          <button
+            onClick={() => api.meetingList().then((r) => setMeetings(Array.isArray(r?.meetings) ? r.meetings : [])).catch(() => {})}
+            className="px-3 py-1.5 text-xs text-gray-500 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+          >Rafraichir</button>
         </div>
       </div>
 
-      {/* Grille par jour */}
-      <div className="grid grid-cols-5 gap-3">
-        {JOURS.map((jour) => {
-          const events = EVENTS.filter((e) => e.jour === jour);
-          return (
-            <div key={jour}>
-              <div className="text-xs font-bold text-gray-600 mb-2 px-1">{jour}</div>
-              <div className="space-y-2">
-                {events.length === 0 ? (
-                  <div className="p-3 border border-dashed border-gray-200 rounded-lg text-center">
-                    <p className="text-[10px] text-gray-400">Aucun evenement</p>
-                  </div>
-                ) : (
-                  events.map((ev) => (
+      {loadingMeetings ? (
+        <div className="text-center py-8 text-gray-400 text-xs">Chargement...</div>
+      ) : (
+        <div className="grid grid-cols-5 gap-3">
+          {grouped.map(([dateKey, events]) => {
+            const d = new Date(dateKey);
+            const jourLabel = `${JOURS_LABELS[d.getDay()]} ${d.getDate()}`;
+            return (
+              <div key={dateKey}>
+                <div className="text-xs font-bold text-gray-600 mb-2 px-1">{jourLabel}</div>
+                <div className="space-y-2">
+                  {events.map((ev) => (
                     <Card key={ev.id} className="p-2.5 hover:shadow-md transition-shadow cursor-pointer">
                       <div className="flex items-center gap-1.5 mb-1">
-                        <img src={BOT_AVATAR[ev.bot]} alt="" className="w-4 h-4 rounded-full" />
-                        <span className="text-[10px] text-gray-400">{ev.heure}</span>
+                        {BOT_AVATAR[ev.bot] ? (
+                          <img src={BOT_AVATAR[ev.bot]} alt="" className="w-4 h-4 rounded-full" />
+                        ) : (
+                          <div className="w-4 h-4 rounded-full bg-gray-200" />
+                        )}
+                        <span className="text-[9px] text-gray-400">{ev.heure}</span>
                       </div>
                       <p className="text-[11px] font-medium text-gray-800 leading-tight mb-1.5">{ev.titre}</p>
                       <div className="flex items-center gap-1.5">
-                        <Badge variant="outline" className={cn("text-[9px]", TYPE_COLORS[ev.type] || "bg-gray-100 text-gray-600")}>
+                        <Badge variant="outline" className={cn("text-[9px]", STATUS_COLORS[ev.type] || "bg-gray-100 text-gray-600")}>
                           {ev.type}
                         </Badge>
                         <span className="text-[9px] text-gray-400">{ev.duree}</span>
                       </div>
                     </Card>
-                  ))
-                )}
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+          {/* Fill remaining columns if less than 5 */}
+          {Array.from({ length: Math.max(0, 5 - grouped.length) }).map((_, i) => (
+            <div key={`empty-${i}`}>
+              <div className="text-xs font-bold text-gray-300 mb-2 px-1">—</div>
+              <div className="p-3 border border-dashed border-gray-200 rounded-lg text-center">
+                <p className="text-[9px] text-gray-400">Aucun evenement</p>
               </div>
             </div>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -1792,7 +1839,7 @@ function TemplatesPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-10 py-5 space-y-4 pb-12">
+    <div className="space-y-4">
       {/* Tab switcher: Generateur | Bibliotheque | Diagnostics */}
       <div className="flex gap-2 border-b border-gray-100 pb-2">
         <button
@@ -2183,7 +2230,7 @@ function OutilsPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-10 py-5 space-y-4 pb-12">
+    <div className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {OUTILS_MANUFACTURIERS.map((outil) => {
           const Icon = outil.icon;
@@ -2231,6 +2278,8 @@ function OutilsPage() {
 export function MonBureauView() {
   const { activeEspaceSection, navigateEspace } = useFrameMaster();
 
+  const tabs: TabDef[] = ESPACE_TABS.map(t => ({ id: t.id, label: t.label, icon: t.icon }));
+
   const renderPage = () => {
     switch (activeEspaceSection) {
       case "idees":
@@ -2251,77 +2300,16 @@ export function MonBureauView() {
   };
 
   return (
-    <div className="h-full flex flex-col bg-gray-50">
-      <div className="flex-1 overflow-auto">
-        {/* CarlOS Presence retire — sera dans le slider droite (sprint futur) */}
-        {/* Navigation Ressources — rectangle gradient (pattern Pionniers) */}
-        <div className="max-w-4xl mx-auto px-10 pt-5">
-          {(() => {
-            const RESSOURCE_GRADIENTS: Record<string, string> = {
-              idees: "from-amber-600 to-yellow-600",
-              documents: "from-green-600 to-teal-600",
-              outils: "from-orange-600 to-amber-600",
-              taches: "from-purple-600 to-violet-600",
-              agenda: "from-rose-600 to-pink-600",
-            };
-            const RESSOURCE_TITLES: Record<string, string> = {
-              idees: "Idees",
-              documents: "Documents",
-              outils: "Outils",
-              taches: "Taches",
-              agenda: "Agenda",
-            };
-            const RESSOURCE_SUBS: Record<string, string> = {
-              idees: "Idees capturees par CarlOS durant vos conversations",
-              documents: "Documents generes, templates et fichiers importes",
-              outils: "Calculateurs et outils manufacturiers integres",
-              taches: "Taches et to-do synchronises avec Plane.so",
-              agenda: "Calendrier unifie — echeances et evenements",
-            };
-            const gradient = RESSOURCE_GRADIENTS[activeEspaceSection] || RESSOURCE_GRADIENTS.idees;
-            const title = RESSOURCE_TITLES[activeEspaceSection] || RESSOURCE_TITLES.idees;
-            const sub = RESSOURCE_SUBS[activeEspaceSection] || RESSOURCE_SUBS.idees;
-            const ActiveIcon = ESPACE_TABS.find(t => t.id === activeEspaceSection)?.icon || Sparkles;
-            return (
-              <div className={cn("bg-gradient-to-r rounded-xl p-4 transition-all", gradient)}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
-                      <ActiveIcon className="h-5 w-5 text-white" />
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-bold text-white">{title}</h2>
-                      <p className="text-sm text-white/70 leading-relaxed">{sub}</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-1.5">
-                    {ESPACE_TABS.map((tab) => {
-                      const TIcon = tab.icon;
-                      const isActive = tab.id === activeEspaceSection;
-                      return (
-                        <button
-                          key={tab.id}
-                          onClick={() => navigateEspace(tab.id)}
-                          className={cn(
-                            "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
-                            isActive
-                              ? "bg-white/25 text-white shadow-sm"
-                              : "text-white/60 hover:bg-white/10 hover:text-white/90"
-                          )}
-                      >
-                        <TIcon className="h-3.5 w-3.5" />
-                        {tab.label}
-                      </button>
-                    );
-                  })}
-                  </div>
-                </div>
-              </div>
-            );
-          })()}
-        </div>
-        {renderPage()}
-      </div>
-    </div>
+    <BlueprintFrame
+      title="Mon Bureau"
+      subtitle="Espace personnel — idees, documents, outils et taches"
+      icon={Briefcase}
+      iconColor="text-amber-600"
+      tabs={tabs}
+      activeTab={activeEspaceSection}
+      onTabChange={(tab) => navigateEspace(tab as EspaceSection)}
+    >
+      {renderPage()}
+    </BlueprintFrame>
   );
 }

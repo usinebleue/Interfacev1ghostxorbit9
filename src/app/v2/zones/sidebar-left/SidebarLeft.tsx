@@ -25,9 +25,9 @@ export function SidebarLeft() {
       {/* 5 sections principales + Master GHML scrollables */}
       <ScrollArea className="flex-1 min-h-0">
         <div className="py-2">
-          <SectionMonEntreprise collapsed={collapsed} />
-          <Separator className="my-2" />
           <SectionMonBureau collapsed={collapsed} />
+          <Separator className="my-2" />
+          <SectionMonEntreprise collapsed={collapsed} />
           <Separator className="my-2" />
           <SectionMesSalles collapsed={collapsed} />
           <Separator className="my-2" />

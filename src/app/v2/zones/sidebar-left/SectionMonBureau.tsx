@@ -16,6 +16,7 @@ import {
   Wrench,
   CheckSquare,
   CalendarDays,
+  Zap,
 } from "lucide-react";
 import {
   Collapsible,
@@ -41,7 +42,7 @@ type BureauItem = {
 };
 
 const ITEMS: BureauItem[] = [
-  { id: "direction", label: "Direction", icon: Briefcase, color: "text-blue-600", view: "department", botCode: "CEOB" },
+  { id: "direction", label: "CarlOS AI", icon: Zap, color: "text-blue-600", view: "department", botCode: "CEOB" },
   { id: "idees", label: "Idees", icon: Sparkles, color: "text-amber-500", espaceSection: "idees" },
   { id: "documents", label: "Documents", icon: FileText, color: "text-green-500", espaceSection: "documents" },
   { id: "outils", label: "Outils", icon: Wrench, color: "text-orange-500", espaceSection: "outils" },
