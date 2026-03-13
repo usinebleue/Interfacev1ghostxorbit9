@@ -77,7 +77,8 @@ import { FlowUsineBleuePage } from "./orbit9/FlowUsineBleuePage";
 import { AnimationShowcasePage } from "./orbit9/AnimationShowcasePage";
 import { AgentGalleryPage } from "./orbit9/AgentGalleryPage";
 import { AccueilHeroPage } from "./orbit9/AccueilHeroPage";
-import { StrategiqueView } from "./StrategiqueView";
+// StrategiqueView archived → replaced by BlueprintView
+import { BlueprintView } from "./BlueprintView";
 import { MonReseauView } from "./MonReseauView";
 import { StrategiqueReseauPage } from "./orbit9/StrategiqueReseauPage";
 import { FESidebarDroitePage } from "./orbit9/FESidebarDroitePage";
@@ -86,6 +87,9 @@ import { CarlosCodesView } from "./CarlosCodesView";
 import { DiagnosticIAPage } from "./diagnostic/DiagnosticIAPage";
 // DiagnosticHubPage absorbed into SanteGlobaleView (Sprint C Phase 4) — archived
 import { ConferenceAIView } from "./ConferenceAIView";
+import { SallesHubView } from "./SallesHubView";
+import { EquipeHumaineView } from "./EquipeHumaineView";
+import { ChatH2H } from "./ChatH2H";
 import { StatusView } from "./StatusView";
 import { useFlowGPS } from "../../api/hooks";
 
@@ -175,7 +179,7 @@ function FlowProgressBar({ sectionKey }: { sectionKey: string }) {
 }
 
 export function CenterZone() {
-  const { activeView, activeBotCode, setActiveView, navigateToDepartment } = useFrameMaster();
+  const { activeView, activeBotCode, activeEntrepriseSection, activeEquipeSection, setActiveView, navigateToDepartment } = useFrameMaster();
   const {
     navigateAction, clearNavigateAction, consumeNext,
     activeWidget, activeAnnotation,
@@ -235,11 +239,12 @@ export function CenterZone() {
       {activeView === "orbit9-detail" && <Orbit9DetailView />}
       {activeView === "agent-settings" && <AgentSettingsView />}
       {activeView === "espace-bureau" && <MonBureauView />}
-      {activeView === "strategique" && <StrategiqueView />}
+      {activeView === "strategique" && <BlueprintView />}
+      {activeView === "blueprint" && <BlueprintView />}
       {activeView === "board-room" && <BoardRoomView />}
       {activeView === "war-room" && <WarRoomView />}
       {activeView === "think-room" && <ThinkRoomView />}
-      {activeView === "mes-chantiers" && <StrategiqueView />}
+      {activeView === "mes-chantiers" && <BlueprintView />}
       {activeView === "bible-visuelle" && <PageTypePage />}
       {activeView === "bible-technique" && <BibleTechniquePage />}
       {activeView === "bible-ghml" && <BibleGHMLPage />}
@@ -274,7 +279,7 @@ export function CenterZone() {
       {activeView === "animation-showcase" && <AnimationShowcasePage />}
       {activeView === "agent-gallery" && <AgentGalleryPage />}
       {activeView === "accueil-hero" && <AccueilHeroPage />}
-      {activeView === "playbook-usine-bleue" && <StrategiqueView />}
+      {activeView === "playbook-usine-bleue" && <BlueprintView />}
       {activeView === "strategique-reseau" && <StrategiqueReseauPage />}
       {activeView === "fe-sidebar-droite" && <FESidebarDroitePage />}
       {activeView === "fe-mon-reseau" && <FEMonReseauPage />}
@@ -283,6 +288,25 @@ export function CenterZone() {
       {activeView === "diagnostic-ia" && <DiagnosticIAPage />}
       {/* diagnostic-hub absorbed into health view (Sprint C Phase 4) */}
       {activeView === "meeting-room" && <ConferenceAIView />}
+      {activeView === "conference-ai" && <ConferenceAIView />}
+      {activeView === "salles-hub" && <SallesHubView />}
+      {activeView === "mon-entreprise" && (() => {
+        switch (activeEntrepriseSection) {
+          case "blueprint": return <BlueprintView />;
+          case "dashboard": return <CockpitView />;
+          case "ressources": return <MonBureauView />;
+          case "sante": return <SanteGlobaleView />;
+          default: return <BlueprintView />;
+        }
+      })()}
+      {activeView === "mon-equipe" && (() => {
+        switch (activeEquipeSection) {
+          case "humains": return <EquipeHumaineView />;
+          case "bots": return <AgentGalleryPage />;
+          default: return <AgentGalleryPage />;
+        }
+      })()}
+      {activeView === "chat-h2h" && <ChatH2H />}
       {activeView === "status" && <StatusView />}
       {activeView === "canvas" && (
         <SmartCanvas

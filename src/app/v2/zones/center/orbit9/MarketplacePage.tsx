@@ -12,8 +12,10 @@ import {
   Bot, Search, Star, DollarSign, Zap,
   FileText, Hand, ArrowRight, Send,
   Target, Plus, Eye, MessageSquare,
-  TrendingUp, Loader2, Video,
+  TrendingUp, Loader2, Video, Shield,
 } from "lucide-react";
+import { TrustStars } from "./TrustStars";
+import { TrustRatingModal } from "./TrustRatingModal";
 import { cn } from "../../../../components/ui/utils";
 import { Card } from "../../../../components/ui/card";
 import { Badge } from "../../../../components/ui/badge";
@@ -29,6 +31,7 @@ interface MarketplacePageProps {
 export function MarketplacePage({ volet = "bots", onNavigate }: MarketplacePageProps) {
   const [matches, setMatches] = useState<Orbit9Match[]>([]);
   const [loadingMatches, setLoadingMatches] = useState(false);
+  const [trustModal, setTrustModal] = useState<{ orgId: number; name: string } | null>(null);
 
   // Charger les matches quand on est sur le volet cahiers
   useEffect(() => {
@@ -404,10 +407,13 @@ export function MarketplacePage({ volet = "bots", onNavigate }: MarketplacePageP
                       </div>
 
                       {match.candidats && match.candidats.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mb-3">
+                        <div className="flex flex-wrap gap-1.5 mb-3">
                           {match.candidats.slice(0, 3).map((c, j) => (
-                            <Badge key={j} variant="outline" className="text-[9px] px-1.5">
+                            <Badge key={j} variant="outline" className="text-[9px] px-1.5 gap-1">
                               {c.nom} ({c.score}%)
+                              {c.trust_score != null && c.trust_score > 0 && (
+                                <TrustStars score={c.trust_score} badge={c.trust_badge} size="sm" showCount={false} className="ml-0.5" />
+                              )}
                             </Badge>
                           ))}
                         </div>
@@ -425,6 +431,14 @@ export function MarketplacePage({ volet = "bots", onNavigate }: MarketplacePageP
                           )}
                           {match.status !== "archive" && match.gagnant_ids.length === 0 && (
                             <Button size="sm" className="text-[9px] h-7 gap-1.5 bg-green-600 hover:bg-green-700"><Hand className="h-3.5 w-3.5" /> Lever la main</Button>
+                          )}
+                          {match.status === "complete" && match.gagnant_ids.length > 0 && (
+                            <Button size="sm" variant="outline" className="text-[9px] h-7 gap-1.5"
+                              onClick={() => {
+                                const gagnant = match.candidats?.find(c => match.gagnant_ids.includes(c.member_id));
+                                if (gagnant) setTrustModal({ orgId: gagnant.member_id, name: gagnant.nom });
+                              }}
+                            ><Shield className="h-3.5 w-3.5" /> Evaluer</Button>
                           )}
                         </div>
                       </div>
@@ -447,6 +461,19 @@ export function MarketplacePage({ volet = "bots", onNavigate }: MarketplacePageP
             </div>
           </Card>
         </div>
+      )}
+      {/* Trust Rating Modal */}
+      {trustModal && (
+        <TrustRatingModal
+          isOpen={true}
+          onClose={() => setTrustModal(null)}
+          reviewerOrgId={1} // TODO: current user org_id from context
+          reviewedOrgId={trustModal.orgId}
+          reviewedName={trustModal.name}
+          reviewerRole="client"
+          interactionType="matching"
+          onSuccess={() => setTrustModal(null)}
+        />
       )}
     </div>
   );

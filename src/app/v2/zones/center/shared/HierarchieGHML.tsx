@@ -144,22 +144,25 @@ export function HierarchieGHML({
   const { taches, loading: loadingT } = useTachesUser(tacheFilters);
 
   // ===== Filtered data =====
+  // CEO (CEOB) voit TOUT — les autres bots voient seulement les leurs
+  const effectiveBotCode = botCode === "CEOB" ? undefined : botCode;
+
   const filteredChantiers = useMemo(() => {
     let list = chantiers;
-    if (botCode) list = list.filter((c) => c.bot_codes?.includes(botCode));
+    if (effectiveBotCode) list = list.filter((c) => c.bot_codes?.includes(effectiveBotCode));
     if (typeChantier) list = list.filter((c) => c.type_chantier === typeChantier);
     return list;
-  }, [chantiers, botCode, typeChantier]);
+  }, [chantiers, effectiveBotCode, typeChantier]);
 
   const filteredProjets = useMemo(() => {
-    if (!botCode) return projets;
-    return projets.filter((p) => p.bot_primaire === botCode || p.bot_codes?.includes(botCode));
-  }, [projets, botCode]);
+    if (!effectiveBotCode) return projets;
+    return projets.filter((p) => p.bot_primaire === effectiveBotCode || p.bot_codes?.includes(effectiveBotCode));
+  }, [projets, effectiveBotCode]);
 
   const filteredMissions = useMemo(() => {
-    if (!botCode) return missions;
-    return missions.filter((m) => m.bot_primaire === botCode);
-  }, [missions, botCode]);
+    if (!effectiveBotCode) return missions;
+    return missions.filter((m) => m.bot_primaire === effectiveBotCode);
+  }, [missions, effectiveBotCode]);
 
   // ===== Navigation helpers =====
   const goToChantiers = () => {

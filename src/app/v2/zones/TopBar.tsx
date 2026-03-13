@@ -8,7 +8,6 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   LayoutDashboard,
-  Zap,
   Layers,
   HeartPulse,
   Building2,
@@ -93,31 +92,22 @@ export function TopBarLeft() {
 // ═══════════════════════════════════════
 
 export function TopBarCenter() {
-  const { activeView, activeBotCode, setActiveView, navigateToDepartment } = useFrameMaster();
+  const { activeView, activeBotCode, setActiveView, navigateToDepartment, navigateEntreprise, navigateEquipe } = useFrameMaster();
 
   const NAV_ITEMS = [
-    { id: "tactique", label: "Tactique", icon: Zap,
-      onClick: () => navigateToDepartment("CEOB"),
-      isActive: activeView === "department" && activeBotCode === "CEOB" },
-    { id: "strategique", label: "Strategique", icon: Layers,
-      onClick: () => setActiveView("strategique"),
-      isActive: activeView === "strategique" },
-    { id: "tableau-de-bord", label: "Tableau de Bord", icon: LayoutDashboard,
-      onClick: () => setActiveView("cockpit"),
-      isActive: activeView === "cockpit" },
-    { id: "sante", label: "Sante Globale", icon: HeartPulse,
-      onClick: () => setActiveView("health"),
-      isActive: activeView === "health" || activeView === "diagnostic-hub" || activeView === "diagnostic-ia" },
-    { id: "bureau", label: "Bureau", icon: FolderOpen,
+    { id: "entreprise", label: "Mon Entreprise", icon: Building2,
+      onClick: () => navigateEntreprise("blueprint"),
+      isActive: activeView === "mon-entreprise" || activeView === "blueprint" || activeView === "cockpit" || activeView === "health" },
+    { id: "bureau", label: "Mon Bureau", icon: FolderOpen,
       onClick: () => setActiveView("espace-bureau"),
       isActive: activeView === "espace-bureau" },
-    { id: "salles", label: "Salles", icon: DoorOpen,
-      onClick: () => setActiveView("meeting-room"),
-      isActive: activeView === "meeting-room" || activeView === "board-room" || activeView === "war-room" || activeView === "think-room" },
-    { id: "equipe", label: "Equipe AI", icon: Bot,
-      onClick: () => setActiveView("agent-gallery"),
-      isActive: activeView === "agent-gallery" || (activeView === "department" && activeBotCode !== "CEOB") },
-    { id: "reseau", label: "Reseau", icon: Network,
+    { id: "salles", label: "Mes Salles", icon: DoorOpen,
+      onClick: () => setActiveView("salles-hub"),
+      isActive: activeView === "salles-hub" || activeView === "meeting-room" || activeView === "conference-ai" || activeView === "board-room" || activeView === "war-room" || activeView === "think-room" },
+    { id: "equipe", label: "Mon Equipe", icon: Users,
+      onClick: () => navigateEquipe("bots"),
+      isActive: activeView === "mon-equipe" || activeView === "agent-gallery" || activeView === "department" },
+    { id: "reseau", label: "Mon Reseau", icon: Network,
       onClick: () => setActiveView("mon-reseau"),
       isActive: activeView === "mon-reseau" },
   ];

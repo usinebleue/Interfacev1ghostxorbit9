@@ -5,6 +5,8 @@
 
 export type StrategiqueTabId = "overview" | "timeline" | "chantiers" | "projets" | "missions" | "taches" | "opportunites" | "equipes";
 
+export type BlueprintTabId = "sommaire" | "objectifs" | "overview" | "chantiers" | "projets" | "missions" | "taches" | "timeline" | "documents" | "playbooks" | "diagnostics" | "equipe";
+
 export type BureauTabId = "idees" | "documents" | "outils" | "taches" | "agenda";
 
 export type ReseauTabId = "profil" | "cellules" | "jumelage" | "chantiers-reseau" | "pionniers" | "gouvernance" | "dashboard";

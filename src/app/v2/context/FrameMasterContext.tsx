@@ -5,14 +5,20 @@
 
 import { createContext, useContext, useState, useCallback, useRef, useEffect } from "react";
 import type { BotInfo } from "../api/types";
+import { useAuth } from "./AuthContext";
 
-export type ActiveView = "dashboard" | "cockpit" | "health" | "department" | "detail" | "discussion" | "branches" | "cahier" | "scenarios" | "live-chat" | "canvas" | "orbit9-detail" | "agent-settings" | "espace-bureau" | "strategique" | "board-room" | "war-room" | "think-room" | "mes-chantiers" | "mon-reseau" | "bible-visuelle" | "bible-technique" | "bible-ghml" | "master-roadmap" | "master-strategie" | "master-orbit9" | "master-communication" | "master-dette" | "master-routine" | "master-minedor" | "master-training" | "master-profils" | "master-parcours" | "master-navigation" | "master-angles-morts" | "master-capacites" | "master-instance-fonds" | "master-diagnostics" | "master-playbooks" | "master-bibliotheque-exec" | "master-marketing-360" | "master-guides-legaux" | "master-cortex-robot" | "master-hydro-quebec" | "master-flows" | "master-cartographie" | "master-oracle9" | "master-bible-live" | "bible-visuelle-cible" | "flow-usine-bleue" | "animation-showcase" | "agent-gallery" | "playbook-usine-bleue" | "fe-sidebar-droite" | "strategique-reseau" | "fe-mon-reseau" | "accueil-hero" | "bible-officielle" | "carlos-codes" | "diagnostic-ia" | "meeting-room" | "status";
+export type ActiveView = "dashboard" | "cockpit" | "health" | "department" | "detail" | "discussion" | "branches" | "cahier" | "scenarios" | "live-chat" | "canvas" | "orbit9-detail" | "agent-settings" | "espace-bureau" | "strategique" | "blueprint" | "board-room" | "war-room" | "think-room" | "mes-chantiers" | "mon-reseau" | "bible-visuelle" | "bible-technique" | "bible-ghml" | "master-roadmap" | "master-strategie" | "master-orbit9" | "master-communication" | "master-dette" | "master-routine" | "master-minedor" | "master-training" | "master-profils" | "master-parcours" | "master-navigation" | "master-angles-morts" | "master-capacites" | "master-instance-fonds" | "master-diagnostics" | "master-playbooks" | "master-bibliotheque-exec" | "master-marketing-360" | "master-guides-legaux" | "master-cortex-robot" | "master-hydro-quebec" | "master-flows" | "master-cartographie" | "master-oracle9" | "master-bible-live" | "bible-visuelle-cible" | "flow-usine-bleue" | "animation-showcase" | "agent-gallery" | "playbook-usine-bleue" | "fe-sidebar-droite" | "strategique-reseau" | "fe-mon-reseau" | "accueil-hero" | "bible-officielle" | "carlos-codes" | "diagnostic-ia" | "meeting-room" | "conference-ai" | "salles-hub" | "mon-entreprise" | "mon-equipe" | "status";
 
 export type EspaceSection = "idees" | "projets" | "documents" | "taches" | "outils" | "agenda" | "templates";
 
 export type ReseauSection = "profil" | "cellules" | "jumelage" | "chantiers" | "pionniers" | "gouvernance" | "dashboard" | "nouvelles" | "evenements" | "industrie";
 
 export type StrategiqueSection = "live" | "hub" | "pipeline";
+
+export type EntrepriseSection = "blueprint" | "dashboard" | "ressources" | "sante";
+export type BlueprintSubTab = "sommaire" | "objectifs" | "chantiers";
+export type EquipeSection = "humains" | "bots" | "composition" | "roles" | "performance";
+export type BureauSection = "blueprint-perso" | "taches" | "documents" | "agenda" | "discussions" | "notifications";
 
 export type DiscussionTab = "overview" | "timeline" | "chantiers" | "projets" | "missions" | "taches" | "opportunites" | "equipes" | "discussions";
 
@@ -24,6 +30,10 @@ interface FrameMasterState {
   activeEspaceSection: EspaceSection;
   activeReseauSection: ReseauSection;
   activeStrategiqueSection: StrategiqueSection;
+  activeEntrepriseSection: EntrepriseSection;
+  activeBlueprintSubTab: BlueprintSubTab;
+  activeEquipeSection: EquipeSection;
+  activeBureauSection: BureauSection;
   activeDiscussionTab: DiscussionTab;
   /** D-109 — Source view quand on ouvre le LiveChat depuis une Room */
   chatSourceView: string | null;
@@ -50,6 +60,10 @@ interface FrameMasterActions {
   navigateEspace: (section: EspaceSection) => void;
   navigateReseau: (section: ReseauSection) => void;
   navigateStrategique: (section: StrategiqueSection) => void;
+  navigateEntreprise: (section: EntrepriseSection) => void;
+  navigateBlueprintSubTab: (tab: BlueprintSubTab) => void;
+  navigateEquipe: (section: EquipeSection) => void;
+  navigateBureau: (section: BureauSection) => void;
   navigateDiscussionTab: (tab: DiscussionTab) => void;
   /** D-109 — Ouvre le LiveChat avec contexte de la source (board-room, war-room, etc.) */
   navigateToChat: (sourceView: string) => void;
@@ -68,27 +82,38 @@ export function FrameMasterProvider({
 }) {
   const [activeBot, setActiveBotState] = useState<BotInfo | null>(null);
   const [activeBotCode, setActiveBotCode] = useState("CEOB");
-  const [activeView, setActiveView] = useState<ActiveView>("department"); // Ouvre sur Tactique (CEOB) par defaut
+  const [activeView, setActiveView] = useState<ActiveView>("blueprint"); // Ouvre sur Blueprint par defaut
   const [activeOrbit9Section, setActiveOrbit9Section] = useState<string | null>(null);
   const [activeEspaceSection, setActiveEspaceSection] = useState<EspaceSection>("idees");
   const [activeReseauSection, setActiveReseauSection] = useState<ReseauSection>("profil");
   const [activeStrategiqueSection, setActiveStrategiqueSection] = useState<StrategiqueSection>("live");
+  const [activeEntrepriseSection, setActiveEntrepriseSection] = useState<EntrepriseSection>("blueprint");
+  const [activeBlueprintSubTab, setActiveBlueprintSubTab] = useState<BlueprintSubTab>("chantiers");
+  const [activeEquipeSection, setActiveEquipeSection] = useState<EquipeSection>("bots");
+  const [activeBureauSection, setActiveBureauSection] = useState<BureauSection>("taches");
   const [activeDiscussionTab, setActiveDiscussionTab] = useState<DiscussionTab>("overview");
   const [chatSourceView, setChatSourceView] = useState<string | null>(null);
   const [leftSidebarCollapsed, setLeftCollapsed] = useState(false);
   const [rightSidebarCollapsed, setRightCollapsed] = useState(false);
-  const [isAuthenticated, setAuthenticatedState] = useState(() => {
-    try { return localStorage.getItem("ghostx-auth") === "authenticated"; }
-    catch { return false; }
-  });
+  // Auth state synced from AuthContext (F4)
+  const auth = useAuth();
+  const [isAuthenticated, setAuthenticatedState] = useState(() => auth.isAuthenticated);
+
+  // Sync when AuthContext changes
+  useEffect(() => {
+    setAuthenticatedState(auth.isAuthenticated);
+  }, [auth.isAuthenticated]);
 
   const setAuthenticated = useCallback((v: boolean) => {
     setAuthenticatedState(v);
+    if (!v) {
+      auth.logout();
+    }
     try {
       if (v) localStorage.setItem("ghostx-auth", "authenticated");
       else localStorage.removeItem("ghostx-auth");
     } catch { /* noop */ }
-  }, []);
+  }, [auth]);
   const [isOnboarded, setOnboardedState] = useState(true);      // DEV: bypass onboarding
 
   const setOnboarded = useCallback((v: boolean) => {
@@ -131,6 +156,25 @@ export function FrameMasterProvider({
   const navigateStrategique = useCallback((section: StrategiqueSection) => {
     setActiveStrategiqueSection(section);
     setActiveView("strategique");
+  }, []);
+
+  const navigateEntreprise = useCallback((section: EntrepriseSection) => {
+    setActiveEntrepriseSection(section);
+    setActiveView("mon-entreprise");
+  }, []);
+
+  const navigateBlueprintSubTab = useCallback((tab: BlueprintSubTab) => {
+    setActiveBlueprintSubTab(tab);
+  }, []);
+
+  const navigateEquipe = useCallback((section: EquipeSection) => {
+    setActiveEquipeSection(section);
+    setActiveView("mon-equipe");
+  }, []);
+
+  const navigateBureau = useCallback((section: BureauSection) => {
+    setActiveBureauSection(section);
+    setActiveView("espace-bureau");
   }, []);
 
   const navigateDiscussionTab = useCallback((tab: DiscussionTab) => {
@@ -177,6 +221,10 @@ export function FrameMasterProvider({
         activeEspaceSection,
         activeReseauSection,
         activeStrategiqueSection,
+        activeEntrepriseSection,
+        activeBlueprintSubTab,
+        activeEquipeSection,
+        activeBureauSection,
         activeDiscussionTab,
         chatSourceView,
         leftSidebarCollapsed,
@@ -184,7 +232,7 @@ export function FrameMasterProvider({
         isAuthenticated,
         isOnboarded,
         hasSeenSimulation,
-        currentUser: "Carl Fugere",
+        currentUser: auth.user?.nom || "Carl Fugere",
         setActiveBot,
         setActiveView,
         navigateToDepartment,
@@ -198,6 +246,10 @@ export function FrameMasterProvider({
         navigateEspace,
         navigateReseau,
         navigateStrategique,
+        navigateEntreprise,
+        navigateBlueprintSubTab,
+        navigateEquipe,
+        navigateBureau,
         navigateDiscussionTab,
         navigateToChat,
         registerLeftPanel,
