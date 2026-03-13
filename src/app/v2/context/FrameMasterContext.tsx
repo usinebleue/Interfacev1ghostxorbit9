@@ -7,7 +7,7 @@ import { createContext, useContext, useState, useCallback, useRef, useEffect } f
 import type { BotInfo } from "../api/types";
 import { useAuth } from "./AuthContext";
 
-export type ActiveView = "dashboard" | "cockpit" | "health" | "department" | "detail" | "discussion" | "branches" | "cahier" | "scenarios" | "live-chat" | "canvas" | "orbit9-detail" | "agent-settings" | "espace-bureau" | "blueprint" | "board-room" | "war-room" | "think-room" | "mes-chantiers" | "mon-reseau" | "bible-visuelle" | "bible-technique" | "bible-ghml" | "master-roadmap" | "master-strategie" | "master-orbit9" | "master-communication" | "master-dette" | "master-routine" | "master-minedor" | "master-training" | "master-profils" | "master-parcours" | "master-navigation" | "master-angles-morts" | "master-capacites" | "master-instance-fonds" | "master-diagnostics" | "master-playbooks" | "master-bibliotheque-exec" | "master-marketing-360" | "master-guides-legaux" | "master-cortex-robot" | "master-hydro-quebec" | "master-flows" | "master-cartographie" | "master-oracle9" | "master-bible-live" | "bible-visuelle-cible" | "flow-usine-bleue" | "animation-showcase" | "agent-gallery" | "playbook-usine-bleue" | "fe-sidebar-droite" | "strategique-reseau" | "fe-mon-reseau" | "accueil-hero" | "bible-officielle" | "carlos-codes" | "diagnostic-ia" | "meeting-room" | "conference-ai" | "salles-hub" | "mon-entreprise" | "mon-equipe" | "status";
+export type ActiveView = "dashboard" | "cockpit" | "health" | "department" | "detail" | "discussion" | "branches" | "cahier" | "scenarios" | "live-chat" | "canvas" | "orbit9-detail" | "agent-settings" | "espace-bureau" | "blueprint" | "board-room" | "war-room" | "think-room" | "mes-chantiers" | "mon-reseau" | "bible-visuelle" | "bible-technique" | "bible-ghml" | "master-roadmap" | "master-strategie" | "master-orbit9" | "master-communication" | "master-dette" | "master-routine" | "master-minedor" | "master-training" | "master-profils" | "master-parcours" | "master-navigation" | "master-angles-morts" | "master-capacites" | "master-instance-fonds" | "master-diagnostics" | "master-playbooks" | "master-bibliotheque-exec" | "master-marketing-360" | "master-guides-legaux" | "master-cortex-robot" | "master-hydro-quebec" | "master-flows" | "master-cartographie" | "master-oracle9" | "master-bible-live" | "bible-visuelle-cible" | "flow-usine-bleue" | "animation-showcase" | "agent-gallery" | "playbook-usine-bleue" | "fe-sidebar-droite" | "strategique-reseau" | "fe-mon-reseau" | "accueil-hero" | "bible-officielle" | "carlos-codes" | "diagnostic-ia" | "meeting-room" | "conference-ai" | "salles-hub" | "mon-entreprise" | "mon-equipe" | "status" | "onboarding";
 
 export type EspaceSection = "idees" | "projets" | "documents" | "taches" | "outils" | "agenda" | "templates";
 
@@ -174,6 +174,16 @@ export function FrameMasterProvider({
 
   const navigateBureau = useCallback((section: BureauSection) => {
     setActiveBureauSection(section);
+    // Synchroniser activeEspaceSection pour les sections partagees
+    const bureauToEspace: Record<string, EspaceSection> = {
+      "taches": "taches",
+      "documents": "documents",
+      "agenda": "agenda",
+      "blueprint-perso": "idees",
+      "discussions": "idees",
+      "notifications": "idees",
+    };
+    setActiveEspaceSection(bureauToEspace[section] || "idees");
     setActiveView("espace-bureau");
   }, []);
 

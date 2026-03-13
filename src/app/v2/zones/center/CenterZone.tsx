@@ -77,6 +77,7 @@ import { FlowUsineBleuePage } from "./orbit9/FlowUsineBleuePage";
 import { AnimationShowcasePage } from "./orbit9/AnimationShowcasePage";
 import { AgentGalleryPage } from "./orbit9/AgentGalleryPage";
 import { AccueilHeroPage } from "./orbit9/AccueilHeroPage";
+import { PlaybookUsineBleuePage } from "./orbit9/PlaybookUsineBleuePage";
 // StrategiqueView archived → replaced by BlueprintView
 import { BlueprintView } from "./BlueprintView";
 import { MonReseauView } from "./MonReseauView";
@@ -91,6 +92,7 @@ import { SallesHubView } from "./SallesHubView";
 import { EquipeHumaineView } from "./EquipeHumaineView";
 import { ChatH2H } from "./ChatH2H";
 import { StatusView } from "./StatusView";
+import { OnboardingView } from "./OnboardingView";
 import { useFlowGPS } from "../../api/hooks";
 
 /** Couleur identitaire par bot — bande fine en haut du canevas */
@@ -278,7 +280,7 @@ export function CenterZone() {
       {activeView === "animation-showcase" && <AnimationShowcasePage />}
       {activeView === "agent-gallery" && <AgentGalleryPage />}
       {activeView === "accueil-hero" && <AccueilHeroPage />}
-      {activeView === "playbook-usine-bleue" && <BlueprintView />}
+      {activeView === "playbook-usine-bleue" && <PlaybookUsineBleuePage />}
       {activeView === "strategique-reseau" && <StrategiqueReseauPage />}
       {activeView === "fe-sidebar-droite" && <FESidebarDroitePage />}
       {activeView === "fe-mon-reseau" && <FEMonReseauPage />}
@@ -307,6 +309,7 @@ export function CenterZone() {
       })()}
       {activeView === "chat-h2h" && <ChatH2H />}
       {activeView === "status" && <StatusView />}
+      {activeView === "onboarding" && <OnboardingView />}
       {activeView === "canvas" && (
         <SmartCanvas
           onStartChat={handleStartChat}

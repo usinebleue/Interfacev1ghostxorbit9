@@ -1,12 +1,11 @@
 /**
  * CarlOsPulse.tsx — "CarlOS Pulse" — alertes intelligentes
- * Remplace ActiveAgentsPanel (Sentinel) + alertes de ContextBoxes
- * Vide par defaut — CarlOS montre seulement quand il y a quelque chose a dire
+ * Agrege tensions actives, chantiers brulants, VITAA scores faibles
  * 3 types : critique (rouge), suggestion (bleu), confirmation (vert)
- * Sprint B — Reorganisation sidebar droite
+ * Branche sur /api/v1/pulse — polling 60s
  */
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   ChevronDown,
   ChevronRight,
@@ -15,6 +14,7 @@ import {
   Lightbulb,
   CheckCircle2,
   X,
+  RefreshCw,
 } from "lucide-react";
 import {
   Collapsible,
@@ -23,6 +23,7 @@ import {
 } from "../../../components/ui/collapsible";
 import { Badge } from "../../../components/ui/badge";
 import { cn } from "../../../components/ui/utils";
+import { api } from "../../api/client";
 
 type PulseType = "critical" | "suggestion" | "confirmation";
 
@@ -60,22 +61,44 @@ const PULSE_CONFIG: Record<
 
 export function CarlOsPulse({ compact = false }: { compact?: boolean }) {
   const [open, setOpen] = useState(true);
-
-  // TODO: brancher sur l'API /api/v1/pulse — pour l'instant, liste vide par defaut
-  // Les items seront pousses par CarlOS quand il detecte quelque chose
   const [items, setItems] = useState<PulseItem[]>([]);
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(false);
+
+  const fetchPulse = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await api.pulse();
+      if (data?.items) {
+        const typed = data.items.map((i) => ({
+          ...i,
+          type: (["critical", "suggestion", "confirmation"].includes(i.type) ? i.type : "suggestion") as PulseType,
+        }));
+        setItems(typed);
+      }
+    } catch {
+      // silently fail — pulse is non-critical
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPulse();
+    const interval = setInterval(fetchPulse, 60_000);
+    return () => clearInterval(interval);
+  }, [fetchPulse]);
 
   const dismiss = (id: string) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
+    setDismissed((prev) => new Set(prev).add(id));
   };
 
-  const criticalCount = items.filter((i) => i.type === "critical").length;
-  const totalCount = items.length;
+  const visibleItems = items.filter((i) => !dismissed.has(i.id));
+  const criticalCount = visibleItems.filter((i) => i.type === "critical").length;
+  const suggestionCount = visibleItems.filter((i) => i.type === "suggestion").length;
+  const totalCount = visibleItems.length;
 
-  // Feu de circulation — vert/jaune/rouge
-  const suggestionCount = items.filter((i) => i.type === "suggestion").length;
-  const statusColor = criticalCount > 0 ? "red" : suggestionCount > 0 ? "amber" : "green";
-  const statusDot = criticalCount > 0 ? "bg-red-500" : suggestionCount > 0 ? "bg-amber-400 animate-pulse" : "bg-green-500 animate-pulse";
+  const statusDot = criticalCount > 0 ? "bg-red-500 animate-pulse" : suggestionCount > 0 ? "bg-amber-400 animate-pulse" : "bg-green-500 animate-pulse";
   const statusText = criticalCount > 0
     ? `${criticalCount} urgence${criticalCount > 1 ? "s" : ""}`
     : suggestionCount > 0
@@ -83,7 +106,6 @@ export function CarlOsPulse({ compact = false }: { compact?: boolean }) {
       : "Tout est calme";
   const statusTextColor = criticalCount > 0 ? "text-red-600" : suggestionCount > 0 ? "text-amber-600" : "text-green-600";
 
-  // Mode compact — une seule ligne horizontale ~28px
   if (compact) {
     return (
       <div className="flex items-center gap-2 h-7">
@@ -100,7 +122,6 @@ export function CarlOsPulse({ compact = false }: { compact?: boolean }) {
     );
   }
 
-  // Si aucun item, afficher juste le header avec "Tout est calme"
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <CollapsibleTrigger className="flex items-center gap-2 w-full text-xs font-semibold text-gray-700 hover:text-gray-900">
@@ -135,13 +156,22 @@ export function CarlOsPulse({ compact = false }: { compact?: boolean }) {
 
       <CollapsibleContent>
         <div className="mt-2 space-y-1">
-          {items.length === 0 ? (
+          <div className="flex items-center justify-between px-2 mb-1">
+            <span className="text-[9px] text-gray-400">{totalCount} signal{totalCount !== 1 ? "x" : ""}</span>
+            <button
+              onClick={(e) => { e.stopPropagation(); fetchPulse(); }}
+              className="text-gray-300 hover:text-gray-500 transition-colors cursor-pointer"
+            >
+              <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
+            </button>
+          </div>
+          {visibleItems.length === 0 ? (
             <div className="flex items-center gap-2 px-2 py-2 text-xs">
               <span className={cn("w-2 h-2 rounded-full shrink-0", statusDot)} />
               <span className={statusTextColor}>{statusText} — CarlOS veille.</span>
             </div>
           ) : (
-            items.map((item) => {
+            visibleItems.map((item) => {
               const config = PULSE_CONFIG[item.type];
               const Icon = config.icon;
               return (
@@ -162,8 +192,8 @@ export function CarlOsPulse({ compact = false }: { compact?: boolean }) {
                     <p className="text-gray-700 leading-tight">
                       {item.message}
                     </p>
-                    <p className="text-[10px] text-gray-400 mt-0.5">
-                      {item.source} &middot; {item.time}
+                    <p className="text-[9px] text-gray-400 mt-0.5">
+                      {item.source}
                     </p>
                   </div>
                   <button
@@ -173,7 +203,7 @@ export function CarlOsPulse({ compact = false }: { compact?: boolean }) {
                     }}
                     className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-gray-500 transition-all p-0.5 shrink-0 cursor-pointer"
                   >
-                    <X className="h-3 w-3" />
+                    <X className="h-3.5 w-3.5" />
                   </button>
                 </div>
               );

@@ -159,16 +159,16 @@ const BOT_GRADIENTS: Record<string, string> = {
 
 const BOT_LABELS: Record<string, { label: string; short: string }> = {
   CEOB: { label: "CarlOS", short: "CEO" },
-  CTOB: { label: "Thierry", short: "CTO" },
-  CFOB: { label: "Francois", short: "CFO" },
-  CMOB: { label: "Martine", short: "CMO" },
-  CSOB: { label: "Sophie", short: "CSO" },
+  CTOB: { label: "Tim", short: "CTO" },
+  CFOB: { label: "Frank", short: "CFO" },
+  CMOB: { label: "Mathilde", short: "CMO" },
+  CSOB: { label: "Simone", short: "CSO" },
   COOB: { label: "Olivier", short: "COO" },
-  CPOB: { label: "Fabien", short: "CPO" },
+  CPOB: { label: "Paco", short: "CPO" },
   CHROB: { label: "Helene", short: "CHRO" },
   CINOB: { label: "Ines", short: "CINO" },
-  CROB: { label: "Raphael", short: "CRO" },
-  CLOB: { label: "Louise", short: "CLO" },
+  CROB: { label: "Rich", short: "CRO" },
+  CLOB: { label: "Loulou", short: "CLO" },
   CISOB: { label: "Sebastien", short: "CISO" },
 };
 
@@ -219,7 +219,7 @@ function BandeauProactif({ message, section }: { message: string; section: Espac
         className="w-8 h-8 rounded-full ring-2 ring-white/30 shrink-0"
       />
       <p className="text-xs text-white/90 flex-1">{message}</p>
-      <button className="text-[10px] bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-full font-medium transition-colors cursor-pointer shrink-0">
+      <button className="text-[9px] bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-full font-medium transition-colors cursor-pointer shrink-0">
         Explorer
       </button>
     </div>
@@ -636,7 +636,7 @@ function TacheDetailPanel({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[80vh] flex flex-col">
+      <div className="bg-white rounded-xl shadow-lg w-full max-w-lg mx-4 max-h-[80vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center gap-3 px-4 py-3 border-b">
           <div className="flex-1 min-w-0">
@@ -2246,7 +2246,7 @@ function OutilsPage() {
                   <Icon className="h-3.5 w-3.5 text-white" />
                 </div>
                 <h3 className="text-xs font-bold uppercase tracking-wider text-white flex-1 truncate">{outil.titre}</h3>
-                <Badge className="text-[9px] bg-white/20 text-white border-0">Fabien — CPO</Badge>
+                <Badge className="text-[9px] bg-white/20 text-white border-0">Paco — CPO</Badge>
               </div>
               {/* Body */}
               <div className="px-4 py-3 space-y-2">

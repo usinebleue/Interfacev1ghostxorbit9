@@ -19,7 +19,7 @@ import { api } from "../../api/client";
 import type { KitActiveResponse } from "../../api/types";
 import { PageLayout } from "./layouts/PageLayout";
 
-/* ============ BLOCK HEADER — style gradient Bilan de Sante ============ */
+/* ============ BLOCK HEADER — standard gradient (design-system.md) ============ */
 function BlockHeader({ icon: Icon, title, count, gradient }: {
   icon: React.ElementType;
   title: string;
@@ -28,23 +28,21 @@ function BlockHeader({ icon: Icon, title, count, gradient }: {
 }) {
   if (gradient) {
     return (
-      <div className={cn("flex items-center gap-2 -mx-4 -mt-4 mb-3 px-4 py-2.5", gradient)}>
-        <div className="w-7 h-7 bg-white/20 rounded-lg flex items-center justify-center">
-          <Icon className="h-4 w-4 text-white" />
-        </div>
-        <h3 className="text-xs font-bold uppercase tracking-wider text-white flex-1">{title}</h3>
+      <div className={cn("flex items-center gap-2 px-3 py-2.5", gradient)}>
+        <Icon className="h-4 w-4 text-white" />
+        <h3 className="text-sm font-bold text-white flex-1">{title}</h3>
         {count !== undefined && (
-          <span className="text-xs font-bold bg-white/25 text-white px-2 py-0.5 rounded-full">{count}</span>
+          <span className="text-[9px] font-bold bg-white/25 text-white px-2 py-0.5 rounded-full">{count}</span>
         )}
       </div>
     );
   }
   return (
-    <div className="flex items-center gap-2 mb-3">
+    <div className="flex items-center gap-2 px-3 py-2.5 bg-gray-50 border-b">
       <Icon className="h-4 w-4 text-gray-500" />
-      <h3 className="text-xs font-bold uppercase tracking-wider text-gray-700">{title}</h3>
+      <h3 className="text-sm font-bold text-gray-700">{title}</h3>
       {count !== undefined && (
-        <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-4">
+        <Badge variant="destructive" className="text-[9px] px-1.5 py-0 h-4">
           {count}
         </Badge>
       )}
@@ -79,12 +77,12 @@ function BlocCEO({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string, 
     if (kpi.revenus_milliards_usd) items.push({ label: "Revenus", detail: `${kpi.revenus_milliards_usd}G$ US`, sub: "" });
   }
   if (items.length === 0) {
-    items.push({ label: "Tour de controle", detail: "Aucune donnee", sub: "Selectionnez une instance" });
+    items.push({ label: "Tour de controle", detail: "Pret", sub: "Lancez un diagnostic pour activer" });
   }
   return (
-    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-1 hover:ring-blue-300 transition-shadow" onClick={onClick}>
+    <Card className="p-0 overflow-hidden rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
       <BlockHeader icon={Briefcase} title="CarlOS — CEO" count={items.length} gradient="bg-gradient-to-r from-blue-600 to-blue-500" />
-      <ul className="space-y-2.5">
+      <ul className="px-3 py-3 space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
           <li key={i} className="text-xs text-gray-800">
             <span className="font-medium">{item.label}</span> — {item.detail}
@@ -114,11 +112,11 @@ function BlocCFO({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string, 
     if (kpi.actifs_sous_gestion_milliards !== undefined) items.push({ label: "AUM", value: `${kpi.actifs_sous_gestion_milliards}G$`, valueColor: "text-emerald-600", sub: "" });
     if (kpi.rendement_annuel_pct !== undefined) items.push({ label: "Rendement annuel", value: fmtPct(Number(kpi.rendement_annuel_pct)), valueColor: "text-emerald-600", sub: "" });
   }
-  if (items.length === 0) items.push({ label: "Finances", value: "—", valueColor: "", sub: "Aucune donnee" });
+  if (items.length === 0) items.push({ label: "Finances", value: "—", valueColor: "", sub: "Consultez Frank pour analyser" });
   return (
-    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-1 hover:ring-emerald-300 transition-shadow" onClick={onClick}>
-      <BlockHeader icon={DollarSign} title="François — CFO" count={items.length > 1 ? items.length : undefined} gradient="bg-gradient-to-r from-emerald-600 to-emerald-500" />
-      <ul className="space-y-2.5">
+    <Card className="p-0 overflow-hidden rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
+      <BlockHeader icon={DollarSign} title="Frank — CFO" count={items.length > 1 ? items.length : undefined} gradient="bg-gradient-to-r from-emerald-600 to-emerald-500" />
+      <ul className="px-3 py-3 space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
           <li key={i} className="text-xs text-gray-800">
             <div className="flex justify-between"><span className="font-medium">{item.label}</span><span className={cn(item.valueColor, "font-bold")}>{item.value}</span></div>
@@ -143,11 +141,11 @@ function BlocCTO({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string, 
     if (kpi.ia_caisse) items.push({ label: "IA", value: String(kpi.ia_caisse).slice(0, 40), sub: "" });
     if (kpi.cto_nom) items.push({ label: "CTO", value: String(kpi.cto_nom), sub: "" });
   }
-  if (items.length === 0) items.push({ label: "Tech", value: "—", sub: "Aucune donnee" });
+  if (items.length === 0) items.push({ label: "Tech", value: "—", sub: "Consultez Tim pour evaluer" });
   return (
-    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-1 hover:ring-violet-300 transition-shadow" onClick={onClick}>
-      <BlockHeader icon={Cpu} title="Thierry — CTO" gradient="bg-gradient-to-r from-violet-600 to-violet-500" />
-      <ul className="space-y-2.5">
+    <Card className="p-0 overflow-hidden rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
+      <BlockHeader icon={Cpu} title="Tim — CTO" gradient="bg-gradient-to-r from-violet-600 to-violet-500" />
+      <ul className="px-3 py-3 space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
           <li key={i} className="text-xs text-gray-800">
             <div className="flex justify-between mb-0.5"><span className="font-medium">{item.label}</span><span className="font-bold">{item.value}</span></div>
@@ -177,11 +175,11 @@ function BlocCMO({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string, 
     if (kpi.programme_fidelite) items.push({ label: "Fidelite", value: String(kpi.programme_fidelite).slice(0, 30), valueColor: "", sub: "" });
     if (Array.isArray(kpi.marques)) items.push({ label: "Marques", value: `${kpi.marques.length} marques`, valueColor: "text-pink-600", sub: (kpi.marques as string[]).slice(0, 3).join(", ") });
   }
-  if (items.length === 0) items.push({ label: "Marketing", value: "—", valueColor: "", sub: "Aucune donnee" });
+  if (items.length === 0) items.push({ label: "Marketing", value: "—", valueColor: "", sub: "Consultez Mathilde pour planifier" });
   return (
-    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-1 hover:ring-pink-300 transition-shadow" onClick={onClick}>
-      <BlockHeader icon={Megaphone} title="Martine — CMO" gradient="bg-gradient-to-r from-pink-600 to-pink-500" />
-      <ul className="space-y-2.5">
+    <Card className="p-0 overflow-hidden rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
+      <BlockHeader icon={Megaphone} title="Mathilde — CMO" gradient="bg-gradient-to-r from-pink-600 to-pink-500" />
+      <ul className="px-3 py-3 space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
           <li key={i} className="text-xs text-gray-800">
             <div className="flex justify-between"><span className="font-medium">{item.label}</span><span className={cn(item.valueColor, "font-bold")}>{item.value}</span></div>
@@ -205,11 +203,11 @@ function BlocCSO({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string, 
     if (kpi.pipeline_ma) items.push({ label: "M&A", detail: String(kpi.pipeline_ma).slice(0, 50), sub: "" });
     if (Array.isArray(kpi.risques_strategiques)) items.push({ label: "Risques", detail: `${(kpi.risques_strategiques as string[]).length} identifies`, sub: (kpi.risques_strategiques as string[])[0]?.slice(0, 50) || "" });
   }
-  if (items.length === 0) items.push({ label: "Strategie", detail: "—", sub: "Aucune donnee" });
+  if (items.length === 0) items.push({ label: "Strategie", detail: "—", sub: "Consultez Simone pour analyser" });
   return (
-    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-1 hover:ring-red-300 transition-shadow" onClick={onClick}>
-      <BlockHeader icon={Target} title="Sophie — CSO" gradient="bg-gradient-to-r from-red-600 to-red-500" />
-      <ul className="space-y-2.5">
+    <Card className="p-0 overflow-hidden rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
+      <BlockHeader icon={Target} title="Simone — CSO" gradient="bg-gradient-to-r from-red-600 to-red-500" />
+      <ul className="px-3 py-3 space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
           <li key={i} className="text-xs text-gray-800">
             <span className="font-medium">{item.label}</span> — {item.detail}
@@ -231,11 +229,11 @@ function BlocCOO({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string, 
     if (kpi.nb_sites !== undefined) items.push({ label: "Sites", value: Number(kpi.nb_sites).toLocaleString(), sub: kpi.nb_pays ? `${kpi.nb_pays} pays` : "" });
     if (kpi.programme_efficience) items.push({ label: "Programme", value: String(kpi.programme_efficience).slice(0, 30), sub: "" });
   }
-  if (items.length === 0) items.push({ label: "Operations", value: "—", sub: "Aucune donnee" });
+  if (items.length === 0) items.push({ label: "Operations", value: "—", sub: "Consultez Olivier pour optimiser" });
   return (
-    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-1 hover:ring-orange-300 transition-shadow" onClick={onClick}>
+    <Card className="p-0 overflow-hidden rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
       <BlockHeader icon={Settings} title="Olivier — COO" gradient="bg-gradient-to-r from-orange-600 to-orange-500" />
-      <ul className="space-y-2.5">
+      <ul className="px-3 py-3 space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
           <li key={i} className="text-xs text-gray-800">
             <div className="flex justify-between"><span className="font-medium">{item.label}</span><span className="font-bold">{item.value}</span></div>
@@ -256,11 +254,11 @@ function BlocRH({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string, u
     if (kpi.postes_ouverts !== undefined) items.push({ label: "Postes ouverts", value: String(kpi.postes_ouverts), sub: "" });
     if (kpi.score_engagement !== undefined) items.push({ label: "Engagement", value: `${kpi.score_engagement}/10`, sub: "" });
   }
-  if (items.length === 0) items.push({ label: "Ressources humaines", value: "—", sub: "Aucune donnee" });
+  if (items.length === 0) items.push({ label: "Ressources humaines", value: "—", sub: "Consultez Helene pour evaluer" });
   return (
-    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-1 hover:ring-teal-300 transition-shadow" onClick={onClick}>
+    <Card className="p-0 overflow-hidden rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
       <BlockHeader icon={Users} title="Hélène — CHRO" gradient="bg-gradient-to-r from-teal-600 to-teal-500" />
-      <ul className="space-y-2.5">
+      <ul className="px-3 py-3 space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
           <li key={i} className="text-xs text-gray-800">
             <div className="flex justify-between"><span className="font-medium">{item.label}</span><span className="font-bold">{item.value}</span></div>
@@ -280,11 +278,11 @@ function BlocInnovation({ onClick, kpi }: { onClick?: () => void; kpi?: Record<s
     if (kpi.brevets !== undefined) items.push({ label: "Brevets", value: String(kpi.brevets), sub: "" });
     if (kpi.budget_innovation_pct !== undefined) items.push({ label: "Budget innov.", value: fmtPct(Number(kpi.budget_innovation_pct)), sub: "" });
   }
-  if (items.length === 0) items.push({ label: "Innovation", value: "—", sub: "Aucune donnee" });
+  if (items.length === 0) items.push({ label: "Innovation", value: "—", sub: "Consultez Ines pour explorer" });
   return (
-    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-1 hover:ring-rose-300 transition-shadow" onClick={onClick}>
+    <Card className="p-0 overflow-hidden rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
       <BlockHeader icon={Lightbulb} title="Inès — CINO" gradient="bg-gradient-to-r from-rose-600 to-rose-500" />
-      <ul className="space-y-2.5">
+      <ul className="px-3 py-3 space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
           <li key={i} className="text-xs text-gray-800">
             <div className="flex justify-between"><span className="font-medium">{item.label}</span><span className="font-bold">{item.value}</span></div>
@@ -305,11 +303,11 @@ function BlocClients({ onClick, kpi }: { onClick?: () => void; kpi?: Record<stri
     if (kpi.taux_retention_pct !== undefined) items.push({ label: "Retention", value: fmtPct(Number(kpi.taux_retention_pct)), sub: "" });
     if (kpi.satisfaction_client !== undefined) items.push({ label: "Satisfaction", value: `${kpi.satisfaction_client}/10`, sub: "" });
   }
-  if (items.length === 0) items.push({ label: "Securite & Conformite", value: "—", sub: "Aucune donnee" });
+  if (items.length === 0) items.push({ label: "Securite & Conformite", value: "—", sub: "Consultez Sebastien pour auditer" });
   return (
-    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-1 hover:ring-zinc-300 transition-shadow" onClick={onClick}>
+    <Card className="p-0 overflow-hidden rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
       <BlockHeader icon={HeartHandshake} title="Sébastien — CISO" gradient="bg-gradient-to-r from-zinc-600 to-zinc-500" />
-      <ul className="space-y-2.5">
+      <ul className="px-3 py-3 space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
           <li key={i} className="text-xs text-gray-800">
             <div className="flex justify-between"><span className="font-medium">{item.label}</span><span className="font-bold">{item.value}</span></div>
@@ -329,11 +327,11 @@ function BlocProduit({ onClick, kpi }: { onClick?: () => void; kpi?: Record<stri
     if (kpi.roadmap_items !== undefined) items.push({ label: "Items roadmap", value: String(kpi.roadmap_items), sub: "" });
     if (kpi.adoption_pct !== undefined) items.push({ label: "Adoption", value: fmtPct(Number(kpi.adoption_pct)), sub: "" });
   }
-  if (items.length === 0) items.push({ label: "Usine & Produit", value: "—", sub: "Aucune donnee" });
+  if (items.length === 0) items.push({ label: "Usine & Produit", value: "—", sub: "Consultez Fabien pour monitorer" });
   return (
-    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-1 hover:ring-slate-300 transition-shadow" onClick={onClick}>
-      <BlockHeader icon={Package} title="Fabien — CPO" gradient="bg-gradient-to-r from-slate-600 to-slate-500" />
-      <ul className="space-y-2.5">
+    <Card className="p-0 overflow-hidden rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
+      <BlockHeader icon={Package} title="Paco — CPO" gradient="bg-gradient-to-r from-slate-600 to-slate-500" />
+      <ul className="px-3 py-3 space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
           <li key={i} className="text-xs text-gray-800">
             <div className="flex justify-between"><span className="font-medium">{item.label}</span><span className="font-bold">{item.value}</span></div>
@@ -353,11 +351,11 @@ function BlocRisques({ onClick, kpi }: { onClick?: () => void; kpi?: Record<stri
     if (kpi.conformite_pct !== undefined) items.push({ label: "Conformite", value: fmtPct(Number(kpi.conformite_pct)), sub: "" });
     if (kpi.incidents_mois !== undefined) items.push({ label: "Incidents ce mois", value: String(kpi.incidents_mois), sub: "" });
   }
-  if (items.length === 0) items.push({ label: "Risques", value: "—", sub: "Aucune donnee" });
+  if (items.length === 0) items.push({ label: "Risques", value: "—", sub: "Consultez Raphael pour identifier" });
   return (
-    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-1 hover:ring-amber-300 transition-shadow" onClick={onClick}>
-      <BlockHeader icon={ShieldAlert} title="Raphaël — CRO" gradient="bg-gradient-to-r from-amber-600 to-amber-500" />
-      <ul className="space-y-2.5">
+    <Card className="p-0 overflow-hidden rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
+      <BlockHeader icon={ShieldAlert} title="Rich — CRO" gradient="bg-gradient-to-r from-amber-600 to-amber-500" />
+      <ul className="px-3 py-3 space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
           <li key={i} className="text-xs text-gray-800">
             <div className="flex justify-between"><span className="font-medium">{item.label}</span><span className="font-bold">{item.value}</span></div>
@@ -377,11 +375,11 @@ function BlocLegal({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string
     if (kpi.litiges !== undefined) items.push({ label: "Litiges", value: String(kpi.litiges), sub: "" });
     if (kpi.conformite_rgpd !== undefined) items.push({ label: "RGPD", value: String(kpi.conformite_rgpd), sub: "" });
   }
-  if (items.length === 0) items.push({ label: "Legal", value: "—", sub: "Aucune donnee" });
+  if (items.length === 0) items.push({ label: "Legal", value: "—", sub: "Consultez Louise pour verifier" });
   return (
-    <Card className="p-4 overflow-hidden cursor-pointer hover:ring-1 hover:ring-indigo-300 transition-shadow" onClick={onClick}>
-      <BlockHeader icon={Scale} title="Louise — CLO" gradient="bg-gradient-to-r from-indigo-600 to-indigo-500" />
-      <ul className="space-y-2.5">
+    <Card className="p-0 overflow-hidden rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
+      <BlockHeader icon={Scale} title="Loulou — CLO" gradient="bg-gradient-to-r from-indigo-600 to-indigo-500" />
+      <ul className="px-3 py-3 space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
           <li key={i} className="text-xs text-gray-800">
             <div className="flex justify-between"><span className="font-medium">{item.label}</span><span className="font-bold">{item.value}</span></div>
