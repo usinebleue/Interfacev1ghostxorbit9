@@ -9,8 +9,10 @@
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { TypewriterText } from "./shared/simulation-components";
-import { BOT_AVATAR, BOT_SUBTITLE } from "../../api/types";
+import { BOT_SUBTITLE } from "../../api/types";
 import { useFrameMaster } from "../../context/FrameMasterContext";
+import { PixelAgent } from "./shared/PixelAgent";
+import type { PixelAgentState } from "./shared/PixelAgent";
 
 /** Messages par vue — voix directe du bot */
 const VIEW_MESSAGES: Record<string, string> = {
@@ -105,8 +107,8 @@ export function CarlOSPresence() {
   const isDept = activeView === "department";
   const botCode = isDept ? activeBotCode : "CEOB";
   const botName = BOT_NAMES[botCode] || "CarlOS";
-  const botAvatar = BOT_AVATAR[botCode] || BOT_AVATAR["CEOB"];
   const botRole = BOT_SUBTITLE[botCode] || "Agent AI";
+  const presenceState: PixelAgentState = phase === "thinking" ? "thinking" : phase === "typing" ? "typing" : "idle";
 
   // Première visite → message enrichi sur le dashboard
   const isFirstVisit = activeView === "dashboard" && !sessionStorage.getItem("carlos_visited");
@@ -127,9 +129,9 @@ export function CarlOSPresence() {
     <div className="shrink-0 px-4 pt-4 pb-2 animate-in fade-in slide-in-from-bottom-3 duration-500">
       <div className="flex items-start gap-3 max-w-2xl">
 
-        {/* Avatar bot */}
-        <div className="w-9 h-9 rounded-full overflow-hidden ring-2 ring-white shadow-sm shrink-0 mt-0.5">
-          <img src={botAvatar} alt={botName} className="w-full h-full object-cover" />
+        {/* Avatar bot — pixel agent anime */}
+        <div className="shrink-0 mt-0.5">
+          <PixelAgent botCode={botCode} state={presenceState} size="md" />
         </div>
 
         {/* Bulle de chat */}
