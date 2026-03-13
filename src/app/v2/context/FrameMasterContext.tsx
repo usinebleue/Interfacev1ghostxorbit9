@@ -7,13 +7,13 @@ import { createContext, useContext, useState, useCallback, useRef, useEffect } f
 import type { BotInfo } from "../api/types";
 import { useAuth } from "./AuthContext";
 
-export type ActiveView = "dashboard" | "cockpit" | "health" | "department" | "detail" | "discussion" | "branches" | "cahier" | "scenarios" | "live-chat" | "canvas" | "orbit9-detail" | "agent-settings" | "espace-bureau" | "strategique" | "blueprint" | "board-room" | "war-room" | "think-room" | "mes-chantiers" | "mon-reseau" | "bible-visuelle" | "bible-technique" | "bible-ghml" | "master-roadmap" | "master-strategie" | "master-orbit9" | "master-communication" | "master-dette" | "master-routine" | "master-minedor" | "master-training" | "master-profils" | "master-parcours" | "master-navigation" | "master-angles-morts" | "master-capacites" | "master-instance-fonds" | "master-diagnostics" | "master-playbooks" | "master-bibliotheque-exec" | "master-marketing-360" | "master-guides-legaux" | "master-cortex-robot" | "master-hydro-quebec" | "master-flows" | "master-cartographie" | "master-oracle9" | "master-bible-live" | "bible-visuelle-cible" | "flow-usine-bleue" | "animation-showcase" | "agent-gallery" | "playbook-usine-bleue" | "fe-sidebar-droite" | "strategique-reseau" | "fe-mon-reseau" | "accueil-hero" | "bible-officielle" | "carlos-codes" | "diagnostic-ia" | "meeting-room" | "conference-ai" | "salles-hub" | "mon-entreprise" | "mon-equipe" | "status";
+export type ActiveView = "dashboard" | "cockpit" | "health" | "department" | "detail" | "discussion" | "branches" | "cahier" | "scenarios" | "live-chat" | "canvas" | "orbit9-detail" | "agent-settings" | "espace-bureau" | "blueprint" | "board-room" | "war-room" | "think-room" | "mes-chantiers" | "mon-reseau" | "bible-visuelle" | "bible-technique" | "bible-ghml" | "master-roadmap" | "master-strategie" | "master-orbit9" | "master-communication" | "master-dette" | "master-routine" | "master-minedor" | "master-training" | "master-profils" | "master-parcours" | "master-navigation" | "master-angles-morts" | "master-capacites" | "master-instance-fonds" | "master-diagnostics" | "master-playbooks" | "master-bibliotheque-exec" | "master-marketing-360" | "master-guides-legaux" | "master-cortex-robot" | "master-hydro-quebec" | "master-flows" | "master-cartographie" | "master-oracle9" | "master-bible-live" | "bible-visuelle-cible" | "flow-usine-bleue" | "animation-showcase" | "agent-gallery" | "playbook-usine-bleue" | "fe-sidebar-droite" | "strategique-reseau" | "fe-mon-reseau" | "accueil-hero" | "bible-officielle" | "carlos-codes" | "diagnostic-ia" | "meeting-room" | "conference-ai" | "salles-hub" | "mon-entreprise" | "mon-equipe" | "status";
 
 export type EspaceSection = "idees" | "projets" | "documents" | "taches" | "outils" | "agenda" | "templates";
 
 export type ReseauSection = "profil" | "cellules" | "jumelage" | "chantiers" | "pionniers" | "gouvernance" | "dashboard" | "nouvelles" | "evenements" | "industrie";
 
-export type StrategiqueSection = "live" | "hub" | "pipeline";
+export type BlueprintLiveSection = "live" | "hub" | "pipeline";
 
 export type EntrepriseSection = "blueprint" | "dashboard" | "ressources" | "sante";
 export type BlueprintSubTab = "sommaire" | "objectifs" | "chantiers";
@@ -29,7 +29,7 @@ interface FrameMasterState {
   activeOrbit9Section: string | null;
   activeEspaceSection: EspaceSection;
   activeReseauSection: ReseauSection;
-  activeStrategiqueSection: StrategiqueSection;
+  activeBlueprintLiveSection: BlueprintLiveSection;
   activeEntrepriseSection: EntrepriseSection;
   activeBlueprintSubTab: BlueprintSubTab;
   activeEquipeSection: EquipeSection;
@@ -59,7 +59,7 @@ interface FrameMasterActions {
   navigateOrbit9: (sectionId: string) => void;
   navigateEspace: (section: EspaceSection) => void;
   navigateReseau: (section: ReseauSection) => void;
-  navigateStrategique: (section: StrategiqueSection) => void;
+  navigateBlueprint: (section: BlueprintLiveSection) => void;
   navigateEntreprise: (section: EntrepriseSection) => void;
   navigateBlueprintSubTab: (tab: BlueprintSubTab) => void;
   navigateEquipe: (section: EquipeSection) => void;
@@ -86,7 +86,7 @@ export function FrameMasterProvider({
   const [activeOrbit9Section, setActiveOrbit9Section] = useState<string | null>(null);
   const [activeEspaceSection, setActiveEspaceSection] = useState<EspaceSection>("idees");
   const [activeReseauSection, setActiveReseauSection] = useState<ReseauSection>("profil");
-  const [activeStrategiqueSection, setActiveStrategiqueSection] = useState<StrategiqueSection>("live");
+  const [activeBlueprintLiveSection, setActiveBlueprintLiveSection] = useState<BlueprintLiveSection>("live");
   const [activeEntrepriseSection, setActiveEntrepriseSection] = useState<EntrepriseSection>("blueprint");
   const [activeBlueprintSubTab, setActiveBlueprintSubTab] = useState<BlueprintSubTab>("chantiers");
   const [activeEquipeSection, setActiveEquipeSection] = useState<EquipeSection>("bots");
@@ -153,9 +153,9 @@ export function FrameMasterProvider({
     setActiveView("mon-reseau");
   }, []);
 
-  const navigateStrategique = useCallback((section: StrategiqueSection) => {
-    setActiveStrategiqueSection(section);
-    setActiveView("strategique");
+  const navigateBlueprint = useCallback((section: BlueprintLiveSection) => {
+    setActiveBlueprintLiveSection(section);
+    setActiveView("blueprint");
   }, []);
 
   const navigateEntreprise = useCallback((section: EntrepriseSection) => {
@@ -220,7 +220,7 @@ export function FrameMasterProvider({
         activeOrbit9Section,
         activeEspaceSection,
         activeReseauSection,
-        activeStrategiqueSection,
+        activeBlueprintLiveSection,
         activeEntrepriseSection,
         activeBlueprintSubTab,
         activeEquipeSection,
@@ -245,7 +245,7 @@ export function FrameMasterProvider({
         navigateOrbit9,
         navigateEspace,
         navigateReseau,
-        navigateStrategique,
+        navigateBlueprint,
         navigateEntreprise,
         navigateBlueprintSubTab,
         navigateEquipe,

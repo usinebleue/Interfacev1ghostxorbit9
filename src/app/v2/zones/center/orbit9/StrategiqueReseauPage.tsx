@@ -252,7 +252,7 @@ const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "membres", label: "Membres", icon: Users },
 ];
 
-interface StrategiqueNav {
+interface BlueprintNav {
   tab: TabId;
   chantierId: string | null;
   projetId: string | null;
@@ -313,7 +313,7 @@ function MembreBadge({ nom, type }: { nom: string; type?: string }) {
 // TAB: VUE D'ENSEMBLE
 // ================================================================
 
-function TabOverview({ nav }: { nav: StrategiqueNav }) {
+function TabOverview({ nav }: { nav: BlueprintNav }) {
   return (
     <div className="space-y-6">
       {/* KPIs Reseau */}
@@ -655,7 +655,7 @@ function TabProfil() {
 // TAB: CELLULES
 // ================================================================
 
-function TabCellules({ nav }: { nav: StrategiqueNav }) {
+function TabCellules({ nav }: { nav: BlueprintNav }) {
   const selected = nav.celluleId ? CELLULES.find((c) => c.id === nav.celluleId) : null;
 
   if (selected) {
@@ -800,7 +800,7 @@ function TabCellules({ nav }: { nav: StrategiqueNav }) {
 // TAB: CHANTIERS
 // ================================================================
 
-function TabChantiers({ nav }: { nav: StrategiqueNav }) {
+function TabChantiers({ nav }: { nav: BlueprintNav }) {
   const selected = nav.chantierId ? CHANTIERS_RESEAU.find((c) => c.id === nav.chantierId) : null;
 
   if (selected) {
@@ -931,7 +931,7 @@ function TabChantiers({ nav }: { nav: StrategiqueNav }) {
 // TAB: PROJETS
 // ================================================================
 
-function TabProjets({ nav }: { nav: StrategiqueNav }) {
+function TabProjets({ nav }: { nav: BlueprintNav }) {
   const allProjets = CHANTIERS_RESEAU.flatMap((ch) => ch.projets.map((p) => ({ ...p, chantier: ch })));
   const selected = nav.projetId ? allProjets.find((p) => p.id === nav.projetId) : null;
 
@@ -1045,7 +1045,7 @@ function TabProjets({ nav }: { nav: StrategiqueNav }) {
 // TAB: MISSIONS
 // ================================================================
 
-function TabMissions({ nav }: { nav: StrategiqueNav }) {
+function TabMissions({ nav }: { nav: BlueprintNav }) {
   const allMissions = CHANTIERS_RESEAU.flatMap((ch) =>
     ch.projets.flatMap((p) =>
       p.missions.map((m) => ({ raw: m, projet: p, chantier: ch }))
@@ -1343,7 +1343,7 @@ export function StrategiqueReseauPage() {
   const [projetId, setProjetId] = useState<string | null>(null);
   const [celluleId, setCelluleId] = useState<string | null>(null);
 
-  const nav: StrategiqueNav = {
+  const nav: BlueprintNav = {
     tab: activeTab,
     chantierId,
     projetId,

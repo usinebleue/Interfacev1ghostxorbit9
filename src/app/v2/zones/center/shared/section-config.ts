@@ -65,7 +65,7 @@ export const TYPE_COLORS: Record<string, { bg: string; text: string; border: str
 // TABS
 // ================================================================
 
-export const STRATEGIQUE_TABS: TabDef[] = [
+export const BLUEPRINT_NAV_TABS: TabDef[] = [
   { id: "overview", label: "Vue d'ensemble", icon: Layers },
   { id: "timeline", label: "Timeline", icon: Calendar },
   { id: "chantiers", label: "Chantiers", icon: Flame },
