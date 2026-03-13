@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CarlOS Prospect — Widget Test</title>
+  <style>
+    body { font-family: sans-serif; background: #f8fafc; padding: 40px; }
+    h1 { color: #1e3a5f; }
+    .test-page { max-width: 800px; margin: 0 auto; }
+    .inline-demo { margin-top: 40px; }
+  </style>
+</head>
+<body>
+  <div class="test-page">
+    <h1>CarlOS Prospect — Widget Test Page</h1>
+    <p>Le widget flottant devrait apparaitre en bas a droite.</p>
+    <p>Pour tester en mode inline, ajoutez <code>data-mode="inline"</code>.</p>
+
+    <div class="inline-demo">
+      <h2>Mode Inline (demo)</h2>
+      <div data-carlos-prospect data-api-url="https://app.usinebleue.ai" data-mode="inline"></div>
+    </div>
+  </div>
+  <script type="module" src="./src/widget-main.tsx"></script>
+</body>
+</html>
