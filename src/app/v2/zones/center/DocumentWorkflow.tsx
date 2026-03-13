@@ -166,7 +166,7 @@ const BOT_LABELS: Record<string, string> = {
   CSOB: "CSO",
   COOB: "COO",
 };
-const STRATEGIQUE_BOTS = ["CEOB", "CTOB", "CFOB", "CMOB", "CSOB", "COOB"];
+const BLUEPRINT_BOTS = ["CEOB", "CTOB", "CFOB", "CMOB", "CSOB", "COOB"];
 
 function BlockCard({
   block,
@@ -301,7 +301,7 @@ function BlockCard({
           {/* Bot selector — Blue Print */}
           <div className="flex items-center gap-1">
             <span className="text-[9px] text-gray-400 mr-1">Bot:</span>
-            {STRATEGIQUE_BOTS.map((code) => (
+            {BLUEPRINT_BOTS.map((code) => (
               <button
                 key={code}
                 onClick={() => setSelectedBot(code)}

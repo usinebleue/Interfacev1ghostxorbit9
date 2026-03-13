@@ -1,6 +1,6 @@
 /**
- * SectionMonEquipe.tsx — [4] Mon Equipe
- * 5 items: Equipe Humaine, Bots C-Level, Composition, Roles, Performance
+ * SectionMonEntreprise.tsx — [1] Mon Entreprise
+ * 4 items: Blueprint, Tableau de Bord, Ressources, Sante
  * Plan V6 — Sprint F1
  */
 
@@ -8,13 +8,12 @@ import { useState } from "react";
 import {
   ChevronDown,
   ChevronRight,
-  Users,
-  Bot,
+  Building2,
   Layers,
-  Shield,
-  BarChart3,
+  LayoutDashboard,
+  FolderOpen,
+  HeartPulse,
 } from "lucide-react";
-import { Badge } from "../../../components/ui/badge";
 import {
   Collapsible,
   CollapsibleContent,
@@ -22,46 +21,63 @@ import {
 } from "../../../components/ui/collapsible";
 import { cn } from "../../../components/ui/utils";
 import { useFrameMaster } from "../../context/FrameMasterContext";
-import type { EquipeSection } from "../../context/FrameMasterContext";
+import type { EntrepriseSection } from "../../context/FrameMasterContext";
 
 interface Props {
   collapsed: boolean;
 }
 
-const ITEMS: { id: EquipeSection; label: string; icon: React.ElementType; color: string }[] = [
-  { id: "humains", label: "Equipe Humaine", icon: Users, color: "text-blue-500" },
-  { id: "bots", label: "Bots C-Level", icon: Bot, color: "text-violet-500" },
-  { id: "composition", label: "Composition", icon: Layers, color: "text-emerald-500" },
-  { id: "roles", label: "Roles & Permissions", icon: Shield, color: "text-amber-500" },
-  { id: "performance", label: "Performance", icon: BarChart3, color: "text-cyan-500" },
+type EntrepriseItem = {
+  id: string;
+  label: string;
+  icon: React.ElementType;
+  color: string;
+  section: EntrepriseSection;
+};
+
+const ITEMS: EntrepriseItem[] = [
+  { id: "blueprint", label: "Blueprint", icon: Layers, color: "text-blue-600", section: "blueprint" },
+  { id: "dashboard", label: "Tableau de Bord", icon: LayoutDashboard, color: "text-amber-600", section: "dashboard" },
+  { id: "ressources", label: "Ressources", icon: FolderOpen, color: "text-green-600", section: "ressources" },
+  { id: "sante", label: "Sante", icon: HeartPulse, color: "text-rose-500", section: "sante" },
 ];
 
-export function SectionMonEquipe({ collapsed }: Props) {
-  const [open, setOpen] = useState(false);
-  const { activeView, activeEquipeSection, navigateEquipe } = useFrameMaster();
+export function SectionMonEntreprise({ collapsed }: Props) {
+  const [open, setOpen] = useState(true);
+  const { activeView, activeEntrepriseSection, navigateEntreprise } = useFrameMaster();
 
-  const isActive = (itemId: EquipeSection) => {
-    if (itemId === "bots") {
-      return (activeView === "mon-equipe" && activeEquipeSection === "bots") || activeView === "agent-gallery" || activeView === "department";
+  const handleClick = (item: EntrepriseItem) => {
+    navigateEntreprise(item.section);
+  };
+
+  const isActive = (item: EntrepriseItem) => {
+    if (item.section === "blueprint") {
+      return (activeView === "mon-entreprise" && activeEntrepriseSection === "blueprint") || activeView === "blueprint";
     }
-    return activeView === "mon-equipe" && activeEquipeSection === itemId;
+    if (item.section === "dashboard") {
+      return (activeView === "mon-entreprise" && activeEntrepriseSection === "dashboard") || activeView === "cockpit";
+    }
+    if (item.section === "sante") {
+      return (activeView === "mon-entreprise" && activeEntrepriseSection === "sante") || activeView === "health" || activeView === "diagnostic-ia";
+    }
+    return activeView === "mon-entreprise" && activeEntrepriseSection === item.section;
   };
 
   if (collapsed) {
     return (
       <div className="space-y-1 px-1">
         <div className="text-center text-xs text-muted-foreground py-1">
-          <Users className="h-3.5 w-3.5 mx-auto" />
+          <Building2 className="h-3.5 w-3.5 mx-auto" />
         </div>
         {ITEMS.map((item) => {
           const Icon = item.icon;
           return (
             <button
               key={item.id}
-              onClick={() => navigateEquipe(item.id)}
+              onClick={() => handleClick(item)}
               className={cn(
                 "w-full flex justify-center py-1.5 rounded hover:bg-accent transition-colors",
-                isActive(item.id) && "bg-accent"
+                isActive(item) && "bg-accent"
               )}
               title={item.label}
             >
@@ -77,10 +93,7 @@ export function SectionMonEquipe({ collapsed }: Props) {
     <Collapsible open={open} onOpenChange={setOpen}>
       <CollapsibleTrigger className="flex items-center gap-2 w-full px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground uppercase tracking-wide">
         {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-        Mon Equipe
-        <Badge variant="secondary" className="ml-auto text-[9px] px-1.5">
-          {ITEMS.length}
-        </Badge>
+        Mon Entreprise
       </CollapsibleTrigger>
       <CollapsibleContent>
         <div className="space-y-0.5 px-1">
@@ -89,10 +102,10 @@ export function SectionMonEquipe({ collapsed }: Props) {
             return (
               <button
                 key={item.id}
-                onClick={() => navigateEquipe(item.id)}
+                onClick={() => handleClick(item)}
                 className={cn(
                   "w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm hover:bg-accent transition-colors",
-                  isActive(item.id) && "bg-accent font-medium"
+                  isActive(item) && "bg-accent font-medium"
                 )}
               >
                 <Icon className={cn("h-3.5 w-3.5 shrink-0", item.color)} />

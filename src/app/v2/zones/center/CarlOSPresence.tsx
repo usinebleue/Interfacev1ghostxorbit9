@@ -9,10 +9,8 @@
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { TypewriterText } from "./shared/simulation-components";
-import { BOT_SUBTITLE } from "../../api/types";
+import { BOT_AVATAR, BOT_SUBTITLE } from "../../api/types";
 import { useFrameMaster } from "../../context/FrameMasterContext";
-import { PixelAgent } from "./shared/PixelAgent";
-import type { PixelAgentState } from "./shared/PixelAgent";
 
 /** Messages par vue — voix directe du bot */
 const VIEW_MESSAGES: Record<string, string> = {
@@ -55,8 +53,8 @@ const BUREAU_MESSAGES: Record<string, string> = {
   templates: "Vos templates de documents. Générez un document en un clic — je remplis les champs avec les données de votre entreprise.",
 };
 
-/** Messages sous-sections Strategique */
-const STRATEGIQUE_MESSAGES: Record<string, string> = {
+/** Messages sous-sections Blueprint */
+const BLUEPRINT_MESSAGES: Record<string, string> = {
   live:     "Plan Strategique — construisons votre plan d'affaires ensemble. Dites-moi par quelle section commencer et je guide le processus avec les bots spécialistes.",
   hub:      "Hub de contenu — vos templates et documents générés. Cliquez sur un élément pour qu'on l'explore.",
   pipeline: "Pipeline d'exécution — vos étapes de réalisation. Dites-moi quelle étape vous voulez lancer.",
@@ -90,7 +88,7 @@ const BOT_NAMES: Record<string, string> = {
 };
 
 export function CarlOSPresence() {
-  const { activeView, activeBotCode, activeOrbit9Section, activeEspaceSection, activeStrategiqueSection } = useFrameMaster();
+  const { activeView, activeBotCode, activeOrbit9Section, activeEspaceSection, activeBlueprintLiveSection } = useFrameMaster();
   const [phase, setPhase] = useState<"thinking" | "typing" | "done">("thinking");
   const [dismissed, setDismissed] = useState(false);
 
@@ -107,8 +105,8 @@ export function CarlOSPresence() {
   const isDept = activeView === "department";
   const botCode = isDept ? activeBotCode : "CEOB";
   const botName = BOT_NAMES[botCode] || "CarlOS";
+  const botAvatar = BOT_AVATAR[botCode] || BOT_AVATAR["CEOB"];
   const botRole = BOT_SUBTITLE[botCode] || "Agent AI";
-  const presenceState: PixelAgentState = phase === "thinking" ? "thinking" : phase === "typing" ? "typing" : "idle";
 
   // Première visite → message enrichi sur le dashboard
   const isFirstVisit = activeView === "dashboard" && !sessionStorage.getItem("carlos_visited");
@@ -120,7 +118,7 @@ export function CarlOSPresence() {
     if (isDept) return DEPT_MESSAGES[botCode] || `Bienvenue dans mon département. Je suis ${botName}. Cliquez sur un bloc pour qu'on en discute.`;
     if (activeView === "orbit9-detail" && activeOrbit9Section) return ORBIT9_MESSAGES[activeOrbit9Section] || VIEW_MESSAGES["orbit9-detail"] || "";
     if (activeView === "espace-bureau") return BUREAU_MESSAGES[activeEspaceSection] || VIEW_MESSAGES["espace-bureau"] || "";
-    if (activeView === "strategique") return STRATEGIQUE_MESSAGES[activeStrategiqueSection] || VIEW_MESSAGES["strategique"] || "";
+    if (activeView === "blueprint") return BLUEPRINT_MESSAGES[activeBlueprintLiveSection] || VIEW_MESSAGES["blueprint"] || "";
     return VIEW_MESSAGES[activeView] || "Je suis là pour vous accompagner.";
   };
   const msg = resolveMessage();
@@ -129,9 +127,9 @@ export function CarlOSPresence() {
     <div className="shrink-0 px-4 pt-4 pb-2 animate-in fade-in slide-in-from-bottom-3 duration-500">
       <div className="flex items-start gap-3 max-w-2xl">
 
-        {/* Avatar bot — pixel agent anime */}
-        <div className="shrink-0 mt-0.5">
-          <PixelAgent botCode={botCode} state={presenceState} size="md" />
+        {/* Avatar bot */}
+        <div className="w-9 h-9 rounded-full overflow-hidden ring-2 ring-white shadow-sm shrink-0 mt-0.5">
+          <img src={botAvatar} alt={botName} className="w-full h-full object-cover" />
         </div>
 
         {/* Bulle de chat */}

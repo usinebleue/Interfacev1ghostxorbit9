@@ -239,7 +239,6 @@ export function CenterZone() {
       {activeView === "orbit9-detail" && <Orbit9DetailView />}
       {activeView === "agent-settings" && <AgentSettingsView />}
       {activeView === "espace-bureau" && <MonBureauView />}
-      {activeView === "strategique" && <BlueprintView />}
       {activeView === "blueprint" && <BlueprintView />}
       {activeView === "board-room" && <BoardRoomView />}
       {activeView === "war-room" && <WarRoomView />}
