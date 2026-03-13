@@ -28,6 +28,8 @@ import { useFrameMaster } from "../../context/FrameMasterContext";
 import { useChatContext } from "../../context/ChatContext";
 import { useCanvasActions } from "../../context/CanvasActionContext";
 import { BOT_SUBTITLE } from "../../api/types";
+import { PixelAgent } from "../center/shared/PixelAgent";
+import type { PixelAgentState } from "../center/shared/PixelAgent";
 import { AGENTS, AG_KEYFRAMES } from "../center/orbit9/AgentGalleryPage";
 import type { AgentConfig } from "../center/orbit9/AgentGalleryPage";
 import type { CanvasAction } from "../../api/types";
@@ -917,10 +919,11 @@ export function VideoCallWidget() {
       <div className="bg-gray-50 border border-gray-200 rounded-b-lg px-3 py-2.5 -mt-2 space-y-2">
         {/* Status line */}
         <div className="flex items-center gap-2">
-          <span className={cn(
-            "w-2 h-2 rounded-full shrink-0",
-            visionMode ? "bg-cyan-500 animate-pulse" : isInCall ? "bg-green-500" : isConnecting ? "bg-amber-400 animate-pulse" : "bg-emerald-500"
-          )} />
+          <PixelAgent
+            botCode={activeBotCode}
+            state={(visionMode ? "thinking" : isInCall ? "speaking" : isConnecting ? "thinking" : "idle") as PixelAgentState}
+            size="sm"
+          />
           <p className={cn("text-[9px] font-semibold leading-tight", visionMode ? "text-cyan-600" : isInCall ? "text-green-600" : isConnecting ? "text-amber-500" : "text-emerald-600")}>
             {visionMode ? "Vision active" : isInCall ? (isVideoCall ? "Vidéo en cours" : "En appel vocal") : isConnecting ? "Connexion..." : "Communiquez avec CarlOS"}
           </p>

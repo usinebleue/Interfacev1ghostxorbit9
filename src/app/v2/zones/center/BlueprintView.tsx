@@ -44,7 +44,7 @@ import { BLUEPRINT_TABS, BOT_INFO, PLAYBOOK_TEMPLATES } from "./shared/section-c
 import { CrudToolbar, type SortField, type SortDir } from "./shared/CrudToolbar";
 import { EntityModal, type EntityLevel } from "./shared/EntityModal";
 import { CatalogueGrid } from "./shared/CatalogueGrid";
-import { PixelAgentGrid, type PixelAgentState } from "./shared/PixelAgent";
+import { PixelAgentGrid, FlowSimulation, type PixelAgentState } from "./shared/PixelAgent";
 import type { BlueprintTabId } from "./shared/section-types";
 
 // ================================================================
@@ -332,6 +332,9 @@ function TabOverview({ goTo, stats, onDeploy }: {
         )}
         onBotClick={(code) => goTo("equipe")}
       />
+
+      {/* ═══ FLOW SIMULATION — Ligne de Production Usine Bleue ═══ */}
+      <FlowSimulation />
 
       {/* ═══ ZONE CONCEPTS À FINALISER ═══ */}
       <div className="border-t border-gray-200 pt-4">
