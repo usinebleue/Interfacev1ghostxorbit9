@@ -565,11 +565,11 @@ interface BotConfig {
 
 const BOT_CFG: Record<string, BotConfig> = {
   CEOB: { avatar: "/agents/ceo-carlos.png", name: "CarlOS", role: "CEO", color: "#3b82f6" },
-  CTOB: { avatar: "/agents/cto-thierry.png", name: "Thierry", role: "CTO", color: "#8b5cf6" },
-  CFOB: { avatar: "/agents/cfo-francois.png", name: "François", role: "CFO", color: "#10b981" },
-  CROB: { avatar: "/agents/cro-raphael.png", name: "Raphaël", role: "CRO", color: "#f59e0b" },
+  CTOB: { avatar: "/agents/cto-thierry.png", name: "Tim", role: "CTO", color: "#8b5cf6" },
+  CFOB: { avatar: "/agents/cfo-francois.png", name: "Frank", role: "CFO", color: "#10b981" },
+  CROB: { avatar: "/agents/cro-raphael.png", name: "Rich", role: "CRO", color: "#f59e0b" },
   COOB: { avatar: "/agents/coo-olivier.png", name: "Olivier", role: "COO", color: "#f97316" },
-  CSOB: { avatar: "/agents/cso-sophie.png", name: "Sophie", role: "CSO", color: "#ef4444" },
+  CSOB: { avatar: "/agents/cso-sophie.png", name: "Simone", role: "CSO", color: "#ef4444" },
 };
 
 interface ReflectionConfig {

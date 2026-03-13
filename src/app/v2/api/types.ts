@@ -37,7 +37,7 @@ export interface ChatRequest {
 
 export interface BotRoleTeam {
   code: string;          // "CTOB"
-  name: string;          // "Thierry"
+  name: string;          // "Tim"
   emoji: string;         // "💻"
   role_tag: "PRIMAIRE" | "ANGLE MORT";
   raison: string;        // Pourquoi ce bot est là

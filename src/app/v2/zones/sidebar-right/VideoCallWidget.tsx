@@ -65,13 +65,13 @@ const BOT_ROLES: Record<string, string> = {
 };
 
 const BOT_NAMES: Record<string, string> = {
-  CEOB: "CarlOS", CTOB: "Thierry", CFOB: "François", CMOB: "Martine",
-  CSOB: "Sophie", COOB: "Olivier", CPOB: "Fabien", CHROB: "Hélène",
-  CINOB: "Inès", CROB: "Raphaël",
-  CLOB: "Louise", CISOB: "Sébastien",
+  CEOB: "CarlOS", CTOB: "Tim", CFOB: "Frank", CMOB: "Mathilde",
+  CSOB: "Simone", COOB: "Olivier", CPOB: "Paco", CHROB: "Hélène",
+  CINOB: "Inès", CROB: "Rich",
+  CLOB: "Loulou", CISOB: "Sébastien",
 };
 
-// Images standby — originaux avec circuits neuronaux (fev 25) + Sophie v2 validée par Carl
+// Images standby — originaux avec circuits neuronaux (fev 25) + Simone v2 validée par Carl
 // object-fit: cover adapte les carrés en 16:9 automatiquement
 // PROTOCOLE: pour changer une image → modifier ICI + CarlOSAvatar.tsx + LiveChat.tsx BOT_COLORS + types.ts BOT_AVATAR
 const IMG_V = "?v=5";

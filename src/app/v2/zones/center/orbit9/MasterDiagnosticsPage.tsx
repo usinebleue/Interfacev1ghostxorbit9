@@ -56,7 +56,7 @@ const DEPT_DIAGNOSTICS: DiagDept[] = [
     ],
   },
   {
-    code: "finance", name: "Finance / CFO", bot: "CFOB", botName: "François",
+    code: "finance", name: "Finance / CFO", bot: "CFOB", botName: "Frank",
     icon: DollarSign, gradient: "from-emerald-600 to-emerald-500",
     diagnostics: [
       { title: "Santé financière et ratios", measures: "Liquidité, solvabilité, rentabilité vs benchmarks", dataPoints: "Ratio courant, ratio dette/équité, marge nette, ROE, EBITDA" },
@@ -67,7 +67,7 @@ const DEPT_DIAGNOSTICS: DiagDept[] = [
     ],
   },
   {
-    code: "technologie", name: "Technologie / CTO", bot: "CTOB", botName: "Thierry",
+    code: "technologie", name: "Technologie / CTO", bot: "CTOB", botName: "Tim",
     icon: Server, gradient: "from-violet-600 to-violet-500",
     diagnostics: [
       { title: "Maturité numérique", measures: "Niveau 1.0→4.0 sur l'échelle de transformation digitale", dataPoints: "Nb systèmes, % cloud vs on-prem, automatisation processus, IoT" },
@@ -78,7 +78,7 @@ const DEPT_DIAGNOSTICS: DiagDept[] = [
     ],
   },
   {
-    code: "marketing", name: "Marketing / CMO", bot: "CMOB", botName: "Martine",
+    code: "marketing", name: "Marketing / CMO", bot: "CMOB", botName: "Mathilde",
     icon: Megaphone, gradient: "from-pink-600 to-pink-500",
     diagnostics: [
       { title: "Positionnement et marque", measures: "Notoriété, différenciation, cohérence messaging", dataPoints: "Score notoriété, proposition valeur claire, cohérence visuelle" },
@@ -88,7 +88,7 @@ const DEPT_DIAGNOSTICS: DiagDept[] = [
     ],
   },
   {
-    code: "strategie", name: "Stratégie / CSO", bot: "CSOB", botName: "Sophie",
+    code: "strategie", name: "Stratégie / CSO", bot: "CSOB", botName: "Simone",
     icon: Target, gradient: "from-red-600 to-red-500",
     diagnostics: [
       { title: "Positionnement concurrentiel", measures: "Parts de marché, avantages compétitifs, menaces", dataPoints: "Part de marché, nb concurrents directs, barrières entrée" },
@@ -109,7 +109,7 @@ const DEPT_DIAGNOSTICS: DiagDept[] = [
     ],
   },
   {
-    code: "production", name: "Production / Factory", bot: "CPOB", botName: "Fabien",
+    code: "production", name: "Production / Factory", bot: "CPOB", botName: "Paco",
     icon: Factory, gradient: "from-amber-600 to-amber-500",
     diagnostics: [
       { title: "Performance production (TRS/OEE)", measures: "Disponibilité × performance × qualité par ligne", dataPoints: "TRS global, TRS par ligne, top 3 causes arrêts, SMED" },
@@ -141,7 +141,7 @@ const DEPT_DIAGNOSTICS: DiagDept[] = [
     ],
   },
   {
-    code: "ventes", name: "Ventes / CRO", bot: "CROB", botName: "Raphaël",
+    code: "ventes", name: "Ventes / CRO", bot: "CROB", botName: "Rich",
     icon: TrendingUp, gradient: "from-cyan-600 to-cyan-500",
     diagnostics: [
       { title: "Processus de vente et pipeline", measures: "Étapes, conversion, cycle de vente, CRM", dataPoints: "Nb étapes pipeline, taux conversion, cycle vente jours, CRM utilisé" },
@@ -152,7 +152,7 @@ const DEPT_DIAGNOSTICS: DiagDept[] = [
     ],
   },
   {
-    code: "legal", name: "Légal / CLO", bot: "CLOB", botName: "Louise",
+    code: "legal", name: "Légal / CLO", bot: "CLOB", botName: "Loulou",
     icon: Scale, gradient: "from-indigo-600 to-indigo-500",
     diagnostics: [
       { title: "Conformité réglementaire", measures: "Lois applicables, licences, permis, risques", dataPoints: "Nb lois applicables, % permis à jour, dernière vérification, amendes 3 ans" },
@@ -530,7 +530,7 @@ export default function MasterDiagnosticsPage() {
 
       <SectionDivider />
 
-      {/* ── Pipeline Fabien (CPOB) ── */}
+      {/* ── Pipeline Paco (CPOB) ── */}
       <div className="mb-8">
         <h2 className="text-lg font-semibold text-gray-800 mb-3"><span className="text-[9px] font-bold text-gray-400 mr-1">F.1.10</span>Pipeline Consultation CPOB — VIST → JUAN → CPRJ</h2>
         <div className="space-y-3">

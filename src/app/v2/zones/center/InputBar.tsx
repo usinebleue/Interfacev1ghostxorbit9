@@ -53,7 +53,7 @@ export function InputBar({ compact = false }: { compact?: boolean }) {
   const [attachedFile, setAttachedFile] = useState<File | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { sendMessage, isTyping, activeReflectionMode, setReflectionMode } =
+  const { sendMessage, sendMultiPerspective, isTyping, activeReflectionMode, setReflectionMode, activeRoster } =
     useChatContext();
   const { activeBotCode, activeBot, setActiveView } = useFrameMaster();
   const stt = useSpeechToText();
@@ -84,7 +84,12 @@ export function InputBar({ compact = false }: { compact?: boolean }) {
     if (!compact) {
       setActiveView("live-chat");
     }
-    sendMessage(trimmed, activeBotCode);
+    // Si le roster a 2+ bots, envoyer en multi-perspective
+    if (activeRoster.length >= 2) {
+      sendMultiPerspective(trimmed, activeRoster);
+    } else {
+      sendMessage(trimmed, activeBotCode);
+    }
     setText("");
     textareaRef.current?.focus();
   };

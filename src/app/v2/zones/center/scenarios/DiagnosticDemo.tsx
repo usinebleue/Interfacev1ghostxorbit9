@@ -463,7 +463,7 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
                       <div className="flex gap-3">
                         <BotAvatar code="CFOB" size="md" />
                         <div className="bg-white border rounded-xl rounded-tl-none px-4 py-3 shadow-sm border-l-[3px] border-l-emerald-400 flex-1">
-                          <div className="text-xs text-emerald-600 mb-2 font-medium">Francois (CFO) — Reponse au challenge</div>
+                          <div className="text-xs text-emerald-600 mb-2 font-medium">Frank (CFO) — Reponse au challenge</div>
                           <TypewriterText
                             text="Bonne question de challenger les chiffres. Le 510K$ de subventions HQ est un plafond theorique — en pratique, les dossiers bien montes obtiennent entre 85% et 95% du maximum. Sur nos 40 derniers dossiers, la moyenne est de 92%. Donc on parle realistement de 470K$ minimum. Pour le STIQ, c'est plus conservateur — le 40% est un pourcentage fixe sur les couts admissibles, pas de marge d'interpretation. Le vrai risque c'est le delai d'approbation HQ : 8-12 semaines. Il faut deposer avant juin 2026 sinon on perd le cycle budgetaire."
                             speed={6}
@@ -596,7 +596,7 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
                       <div className="flex gap-3">
                         <BotAvatar code="CTOB" size="md" />
                         <div className="bg-white border rounded-xl rounded-tl-none px-4 py-3 shadow-sm border-l-[3px] border-l-purple-400 flex-1">
-                          <div className="text-xs text-purple-600 mb-2 font-medium">Thierry (CTO) — Defense des choix technologiques</div>
+                          <div className="text-xs text-purple-600 mb-2 font-medium">Tim (CTO) — Defense des choix technologiques</div>
                           <TypewriterText
                             text="Les 3 technologies recommandees ne sont pas experimentales — elles sont eprouvees en manufacturier alimentaire. Le cobot UR10e est certifie IP67 pour les environnements alimentaires, 40,000+ unites installees dans le monde. Le systeme CO2 transcritique est le standard post-HFC en refrigeration industrielle — la reglementation canadienne interdit les HFC d'ici 2028, donc c'est inevitable. Les capteurs IoT utilisent LoRaWAN, la meme techno que chez Saputo et Agropur pour le monitoring temps reel. Le ROI de 20-24 mois est base sur 23 projets similaires — pas des projections theoriques. Le seul risque technologique : la maintenance predictive par analyse vibratoire necessite 6-8 semaines de donnees avant d'etre fiable. Pendant cette periode, on maintient la maintenance preventive classique en parallele."
                             speed={5}
@@ -655,7 +655,7 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
                           <div className="flex gap-3">
                             <BotAvatar code="CFOB" size="sm" />
                             <div className="flex-1">
-                              <div className="text-xs text-emerald-600 font-medium mb-1">Francois (CFO)</div>
+                              <div className="text-xs text-emerald-600 font-medium mb-1">Frank (CFO)</div>
                               <p className="text-sm text-gray-700">Le timing est critique. Si on rate la fenetre HQ de juin 2026, on perd 12 mois. Je recommande de deposer les 4 dossiers simultanement — EnerGuide, systemes industriels, STIQ et RS&DE. Le risque de ne pas combiner les 3 axes, c'est de perdre l'effet levier des subventions croisees.</p>
                             </div>
                           </div>
@@ -663,13 +663,13 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
                             <BotAvatar code="COOB" size="sm" />
                             <div className="flex-1">
                               <div className="text-xs text-orange-600 font-medium mb-1">Olivier (COO)</div>
-                              <p className="text-sm text-gray-700">Francois a raison sur le timing, mais je souleve un point : les 6 operateurs de palettisation doivent etre formes AVANT l'arrivee du cobot, pas pendant. Ca veut dire demarrer la formation en Phase 1, pas en Phase 3. Ca ajoute un cout de 15-20K$ mais reduit le risque de resistance au changement de 80%.</p>
+                              <p className="text-sm text-gray-700">Frank a raison sur le timing, mais je souleve un point : les 6 operateurs de palettisation doivent etre formes AVANT l'arrivee du cobot, pas pendant. Ca veut dire demarrer la formation en Phase 1, pas en Phase 3. Ca ajoute un cout de 15-20K$ mais reduit le risque de resistance au changement de 80%.</p>
                             </div>
                           </div>
                           <div className="flex gap-3">
                             <BotAvatar code="CTOB" size="sm" />
                             <div className="flex-1">
-                              <div className="text-xs text-purple-600 font-medium mb-1">Thierry (CTO)</div>
+                              <div className="text-xs text-purple-600 font-medium mb-1">Tim (CTO)</div>
                               <p className="text-sm text-gray-700">D'accord avec Olivier. J'ajoute que l'IoT devrait commencer en Phase 1 aussi — installer les capteurs de base des le debut permet de mesurer le "avant" pour prouver les economies a HQ. Les donnees de monitoring pre-travaux renforcent enormement le dossier de subvention.</p>
                             </div>
                           </div>
@@ -749,7 +749,7 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
                           <div className="flex gap-3">
                             <BotAvatar code="CFOB" size="sm" />
                             <div className="flex-1">
-                              <div className="text-xs text-emerald-600 font-medium mb-1">Francois (CFO)</div>
+                              <div className="text-xs text-emerald-600 font-medium mb-1">Frank (CFO)</div>
                               <p className="text-sm text-gray-700">Le risque financier est minimal si on depose les dossiers a temps. Le 470K$ minimum de subventions rend le projet quasiment autofinance. Mon souci c'est qu'on ne peut pas se permettre de commencer les travaux AVANT la confirmation HQ — sinon on perd l'admissibilite.</p>
                             </div>
                           </div>
@@ -757,7 +757,7 @@ export function DiagnosticDemo({ onTransition }: { onTransition?: (target: strin
                             <BotAvatar code="COOB" size="sm" />
                             <div className="flex-1">
                               <div className="text-xs text-orange-600 font-medium mb-1">Olivier (COO)</div>
-                              <p className="text-sm text-gray-700">Je suis d'accord avec Francois sur le timing. Par contre, on PEUT commencer les travaux preparatoires (audit, specs, commande equipement) avant la confirmation sans perdre l'admissibilite. C'est seulement l'installation physique qui doit attendre. Ca nous sauve 4-6 semaines sur le calendrier total.</p>
+                              <p className="text-sm text-gray-700">Je suis d'accord avec Frank sur le timing. Par contre, on PEUT commencer les travaux preparatoires (audit, specs, commande equipement) avant la confirmation sans perdre l'admissibilite. C'est seulement l'installation physique qui doit attendre. Ca nous sauve 4-6 semaines sur le calendrier total.</p>
                             </div>
                           </div>
                           <div className="bg-violet-50 border border-violet-200 rounded-lg px-3 py-2 text-xs">

@@ -23,9 +23,9 @@ import {
 } from "livekit-client";
 
 const BOT_NAMES: Record<string, string> = {
-  CEOB: "CarlOS", CTOB: "Thierry", CFOB: "François", CMOB: "Martine",
-  CSOB: "Sophie", COOB: "Olivier", CPOB: "Fabien", CHROB: "Hélène",
-  CINOB: "Inès", CROB: "Raphaël", CLOB: "Louise", CISOB: "Sébastien",
+  CEOB: "CarlOS", CTOB: "Tim", CFOB: "Frank", CMOB: "Mathilde",
+  CSOB: "Simone", COOB: "Olivier", CPOB: "Paco", CHROB: "Hélène",
+  CINOB: "Inès", CROB: "Rich", CLOB: "Loulou", CISOB: "Sébastien",
 };
 
 type CallState = "idle" | "connecting" | "connected" | "error";

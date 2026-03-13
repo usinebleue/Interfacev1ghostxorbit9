@@ -559,17 +559,17 @@ export function AccueilHeroPage() {
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {[
                 { name: "CarlOS", role: "CEO", color: "#3b82f6" },
-                { name: "Thierry", role: "CTO", color: "#8b5cf6" },
-                { name: "François", role: "CFO", color: "#10b981" },
-                { name: "Martine", role: "CMO", color: "#ec4899" },
-                { name: "Sophie", role: "CSO", color: "#ef4444" },
+                { name: "Tim", role: "CTO", color: "#8b5cf6" },
+                { name: "Frank", role: "CFO", color: "#10b981" },
+                { name: "Mathilde", role: "CMO", color: "#ec4899" },
+                { name: "Simone", role: "CSO", color: "#ef4444" },
                 { name: "Olivier", role: "COO", color: "#f97316" },
                 { name: "Hélène", role: "CHRO", color: "#14b8a6" },
                 { name: "Inès", role: "CINO", color: "#ec4899" },
-                { name: "Raphaël", role: "CRO", color: "#f59e0b" },
-                { name: "Louise", role: "CLO", color: "#6366f1" },
+                { name: "Rich", role: "CRO", color: "#f59e0b" },
+                { name: "Loulou", role: "CLO", color: "#6366f1" },
                 { name: "Sébastien", role: "CISO", color: "#71717a" },
-                { name: "Fabien", role: "CPO", color: "#64748b" },
+                { name: "Paco", role: "CPO", color: "#64748b" },
               ].map((bot) => (
                 <div key={bot.name} style={{
                   padding: "4px 8px",

@@ -580,7 +580,7 @@ export function CahierProjetDemo({ onTransition }: { onTransition?: (target: str
                   <div className="flex gap-3">
                     <BotAvatar code="CFOB" size="md" />
                     <div className="bg-white border rounded-xl rounded-tl-none px-4 py-3 shadow-sm border-l-[3px] border-emerald-400 flex-1">
-                      <div className="text-xs text-emerald-600 mb-2 font-medium">Francois (CFO) — Scenario pessimiste</div>
+                      <div className="text-xs text-emerald-600 mb-2 font-medium">Frank (CFO) — Scenario pessimiste</div>
                       <p className="text-sm text-gray-700 leading-relaxed">
                         Pire cas realiste : les subventions HQ sont reduites de 30% (413K$ au lieu de 592K$), le delai d'approbation
                         est de 14 semaines au lieu de 12, et les economies energetiques atteignent seulement 75% des projections.

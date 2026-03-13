@@ -17,9 +17,9 @@ import { PageHeader } from "./layouts/PageHeader";
 
 const THINK_TEAM: { code: string; nom: string; role_think: string; ringColor: string }[] = [
   { code: "CEOB", nom: "CarlOS", role_think: "Architecte de vision", ringColor: "ring-blue-500" },
-  { code: "CSOB", nom: "Sophie", role_think: "Analyse strategique", ringColor: "ring-red-500" },
-  { code: "CTOB", nom: "Thierry", role_think: "Faisabilite technique", ringColor: "ring-violet-500" },
-  { code: "CFOB", nom: "Francois", role_think: "Modelisation financiere", ringColor: "ring-emerald-500" },
+  { code: "CSOB", nom: "Simone", role_think: "Analyse strategique", ringColor: "ring-red-500" },
+  { code: "CTOB", nom: "Tim", role_think: "Faisabilite technique", ringColor: "ring-violet-500" },
+  { code: "CFOB", nom: "Frank", role_think: "Modelisation financiere", ringColor: "ring-emerald-500" },
 ];
 
 // ── Steps du flow Think Room ──

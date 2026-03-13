@@ -188,10 +188,10 @@ export const AGENTS: AgentConfig[] = [
     uniqueDesc: "Hologramme 3D + dashboards animés",
   },
 
-  // ─── 2. CTOB — Thierry (CTO) — VIOLET ───
+  // ─── 2. CTOB — Tim (CTO) — VIOLET ───
   {
     code: "CTOB",
-    name: "Thierry",
+    name: "Tim",
     role: "CTO AI — Directeur Technologie",
     image: "/agents/generated/cto-thierry-standby-v3.png?v=5",
     dotColor: "#a78bfa",
@@ -267,10 +267,10 @@ export const AGENTS: AgentConfig[] = [
     identityPos: "right",
   },
 
-  // ─── 3. CFOB — François (CFO) — EMERALD ───
+  // ─── 3. CFOB — Frank (CFO) — EMERALD ───
   {
     code: "CFOB",
-    name: "François",
+    name: "Frank",
     role: "CFO AI — Directeur Finances",
     image: "/agents/generated/cfo-francois-standby-v3.png?v=5",
     dotColor: "#34d399",
@@ -335,10 +335,10 @@ export const AGENTS: AgentConfig[] = [
     uniqueDesc: "Écrans Bloomberg + courbes financières animées",
   },
 
-  // ─── 4. CMOB — Martine (CMO) — PINK ───
+  // ─── 4. CMOB — Mathilde (CMO) — PINK ───
   {
     code: "CMOB",
-    name: "Martine",
+    name: "Mathilde",
     role: "CMO AI — Directrice Marketing",
     image: "/agents/generated/cmo-martine-standby-v3.png?v=5",
     dotColor: "#f472b6",
@@ -420,10 +420,10 @@ export const AGENTS: AgentConfig[] = [
     uniqueDesc: "Cards UI flottantes + éléments créatifs",
   },
 
-  // ─── 5. CSOB — Sophie (CSO) — RED ───
+  // ─── 5. CSOB — Simone (CSO) — RED ───
   {
     code: "CSOB",
-    name: "Sophie",
+    name: "Simone",
     role: "CSO AI — Directrice Stratégie",
     image: "/agents/generated/cso-sophie-standby-v3.png?v=5",
     dotColor: "#f87171",
@@ -769,10 +769,10 @@ export const AGENTS: AgentConfig[] = [
     identityPos: "right",
   },
 
-  // ─── 9. CROB — Raphaël (CRO) — AMBER ───
+  // ─── 9. CROB — Rich (CRO) — AMBER ───
   {
     code: "CROB",
-    name: "Raphaël",
+    name: "Rich",
     role: "CRO AI — Directeur Revenus",
     image: "/agents/generated/cro-raphael-standby-v3.png?v=5",
     dotColor: "#fbbf24",
@@ -846,10 +846,10 @@ export const AGENTS: AgentConfig[] = [
     uniqueDesc: "Écrans courbes ventes + tablette HUD interactive",
   },
 
-  // ─── 10. CLOB — Louise (CLO) — INDIGO ───
+  // ─── 10. CLOB — Loulou (CLO) — INDIGO ───
   {
     code: "CLOB",
-    name: "Louise",
+    name: "Loulou",
     role: "CLO AI — Directrice Juridique",
     image: "/agents/generated/clo-louise-standby-v3.png?v=5",
     dotColor: "#818cf8",
@@ -1012,7 +1012,7 @@ export const AGENTS: AgentConfig[] = [
   // ─── 12. CPOB — Factory Bot — SLATE ───
   {
     code: "CPOB",
-    name: "Fabien",
+    name: "Paco",
     role: "CPO AI — Directeur Production",
     image: "/agents/generated/factory-bot-standby-v3.png?v=5",
     dotColor: "#94a3b8",

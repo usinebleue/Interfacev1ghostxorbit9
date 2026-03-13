@@ -119,9 +119,9 @@ export function FocusModeLayout({
             <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
             <span className="text-[9px] font-medium text-gray-500">
               {({
-                CTOB: "Thierry", CFOB: "François", CMOB: "Martine", CSOB: "Sophie",
+                CTOB: "Tim", CFOB: "Frank", CMOB: "Mathilde", CSOB: "Simone",
                 COOB: "Olivier", CHROB: "Hélène", CINOB: "Inès",
-                CROB: "Raphaël", CLOB: "Louise", CISOB: "Sébastien",
+                CROB: "Rich", CLOB: "Loulou", CISOB: "Sébastien",
               } as Record<string, string>)[focusData.bot] || focusData.bot}
             </span>
           </div>

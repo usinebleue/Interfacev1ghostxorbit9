@@ -530,7 +530,7 @@ function TabBureau() {
           <Card className="p-0 overflow-hidden">
             <div className="bg-gradient-to-r from-violet-600 to-violet-500 px-2 py-1.5 flex items-center gap-1">
               <div className="w-4 h-4 rounded-full bg-white/20" />
-              <span className="text-[9px] text-white font-bold">Thierry CTO</span>
+              <span className="text-[9px] text-white font-bold">Tim CTO</span>
             </div>
             <div className="p-2">
               <div className="text-xs font-bold text-gray-800">Autre idee</div>
@@ -574,7 +574,7 @@ function TabBureau() {
                   <span className="text-[9px] font-bold text-white uppercase">{o.label}</span>
                 </div>
                 <div className="p-2">
-                  <span className="text-[9px] text-gray-400">Fabien — CPO</span>
+                  <span className="text-[9px] text-gray-400">Paco — CPO</span>
                 </div>
               </Card>
             );
@@ -677,16 +677,16 @@ function TabSalles() {
 function TabEquipeAI() {
   const BOTS_12 = [
     { code: "CEOB", nom: "CarlOS", role: "CEO AI — President Directeur General", from: "from-blue-600", to: "to-blue-500", ring: "ring-blue-400", bg: "bg-blue-500", icon: Crown, profil: "/agents/generated/ceo-carlos-profil-v3.png", standby: "/agents/generated/ceo-carlos-standby-v3.png" },
-    { code: "CTOB", nom: "Thierry", role: "CTO AI — Directeur Technologie", from: "from-violet-600", to: "to-violet-500", ring: "ring-violet-400", bg: "bg-violet-500", icon: Cpu, profil: "/agents/generated/cto-thierry-profil-v3.png", standby: "/agents/generated/cto-thierry-standby-v3.png" },
-    { code: "CFOB", nom: "Francois", role: "CFO AI — Directeur Finances", from: "from-emerald-600", to: "to-emerald-500", ring: "ring-emerald-400", bg: "bg-emerald-500", icon: DollarSign, profil: "/agents/generated/cfo-francois-profil-v3.png", standby: "/agents/generated/cfo-francois-standby-v3.png" },
-    { code: "CMOB", nom: "Martine", role: "CMO AI — Directrice Marketing", from: "from-pink-600", to: "to-pink-500", ring: "ring-pink-400", bg: "bg-pink-500", icon: Megaphone, profil: "/agents/generated/cmo-martine-profil-v3.png", standby: "/agents/generated/cmo-martine-standby-v3.png" },
-    { code: "CSOB", nom: "Sophie", role: "CSO AI — Directrice Strategie", from: "from-red-600", to: "to-red-500", ring: "ring-red-400", bg: "bg-red-500", icon: Target, profil: "/agents/generated/cso-sophie-profil-v3.png", standby: "/agents/generated/cso-sophie-standby-v3.png" },
+    { code: "CTOB", nom: "Tim", role: "CTO AI — Directeur Technologie", from: "from-violet-600", to: "to-violet-500", ring: "ring-violet-400", bg: "bg-violet-500", icon: Cpu, profil: "/agents/generated/cto-thierry-profil-v3.png", standby: "/agents/generated/cto-thierry-standby-v3.png" },
+    { code: "CFOB", nom: "Frank", role: "CFO AI — Directeur Finances", from: "from-emerald-600", to: "to-emerald-500", ring: "ring-emerald-400", bg: "bg-emerald-500", icon: DollarSign, profil: "/agents/generated/cfo-francois-profil-v3.png", standby: "/agents/generated/cfo-francois-standby-v3.png" },
+    { code: "CMOB", nom: "Mathilde", role: "CMO AI — Directrice Marketing", from: "from-pink-600", to: "to-pink-500", ring: "ring-pink-400", bg: "bg-pink-500", icon: Megaphone, profil: "/agents/generated/cmo-martine-profil-v3.png", standby: "/agents/generated/cmo-martine-standby-v3.png" },
+    { code: "CSOB", nom: "Simone", role: "CSO AI — Directrice Strategie", from: "from-red-600", to: "to-red-500", ring: "ring-red-400", bg: "bg-red-500", icon: Target, profil: "/agents/generated/cso-sophie-profil-v3.png", standby: "/agents/generated/cso-sophie-standby-v3.png" },
     { code: "COOB", nom: "Olivier", role: "COO AI — Directeur Operations", from: "from-orange-600", to: "to-orange-500", ring: "ring-orange-400", bg: "bg-orange-500", icon: Settings, profil: "/agents/generated/coo-olivier-profil-v3.png", standby: "/agents/generated/coo-olivier-standby-v3.png" },
-    { code: "CPOB", nom: "Fabien", role: "CPO AI — Directeur Production", from: "from-slate-700", to: "to-slate-600", ring: "ring-slate-400", bg: "bg-slate-600", icon: Factory, profil: "/agents/generated/factory-bot-profil-v3.png", standby: "/agents/generated/factory-bot-standby-v3.png" },
+    { code: "CPOB", nom: "Paco", role: "CPO AI — Directeur Production", from: "from-slate-700", to: "to-slate-600", ring: "ring-slate-400", bg: "bg-slate-600", icon: Factory, profil: "/agents/generated/factory-bot-profil-v3.png", standby: "/agents/generated/factory-bot-standby-v3.png" },
     { code: "CHROB", nom: "Helene", role: "CHRO AI — Directrice RH", from: "from-teal-600", to: "to-teal-500", ring: "ring-teal-400", bg: "bg-teal-500", icon: Users, profil: "/agents/generated/chro-helene-profil-v3.png", standby: "/agents/generated/chro-helene-standby-v3.png" },
     { code: "CINOB", nom: "Ines", role: "CINO AI — Directrice Innovation", from: "from-rose-600", to: "to-rose-500", ring: "ring-rose-400", bg: "bg-rose-500", icon: Lightbulb, profil: "/agents/generated/cino-ines-profil-v3.png", standby: "/agents/generated/cino-ines-standby-v3.png" },
-    { code: "CROB", nom: "Raphael", role: "CRO AI — Directeur Revenus", from: "from-amber-600", to: "to-amber-500", ring: "ring-amber-400", bg: "bg-amber-500", icon: TrendingUp, profil: "/agents/generated/cro-raphael-profil-v3.png", standby: "/agents/generated/cro-raphael-standby-v3.png" },
-    { code: "CLOB", nom: "Louise", role: "CLO AI — Directrice Juridique", from: "from-indigo-600", to: "to-indigo-500", ring: "ring-indigo-400", bg: "bg-indigo-500", icon: Scale, profil: "/agents/generated/clo-louise-profil-v3.png", standby: "/agents/generated/clo-louise-standby-v3.png" },
+    { code: "CROB", nom: "Rich", role: "CRO AI — Directeur Revenus", from: "from-amber-600", to: "to-amber-500", ring: "ring-amber-400", bg: "bg-amber-500", icon: TrendingUp, profil: "/agents/generated/cro-raphael-profil-v3.png", standby: "/agents/generated/cro-raphael-standby-v3.png" },
+    { code: "CLOB", nom: "Loulou", role: "CLO AI — Directrice Juridique", from: "from-indigo-600", to: "to-indigo-500", ring: "ring-indigo-400", bg: "bg-indigo-500", icon: Scale, profil: "/agents/generated/clo-louise-profil-v3.png", standby: "/agents/generated/clo-louise-standby-v3.png" },
     { code: "CISOB", nom: "Sebastien", role: "CISO AI — Directeur Cybersecurite", from: "from-zinc-700", to: "to-zinc-600", ring: "ring-zinc-400", bg: "bg-zinc-600", icon: Shield, profil: "/agents/generated/ciso-secbot-profil-v3.png", standby: "/agents/generated/ciso-secbot-standby-v3.png" },
   ];
 
@@ -804,17 +804,17 @@ function TabEquipeAI() {
         <div className="grid grid-cols-3 gap-2">
           {[
             { code: "CEOB", nom: "CarlOS", uniqueDesc: "Hologramme 3D + dashboards animes", dotColor: "#60a5fa", suitPaths: 10 },
-            { code: "CTOB", nom: "Thierry", uniqueDesc: "Cerveau holographique + tablette tech", dotColor: "#a78bfa", suitPaths: 8 },
-            { code: "CFOB", nom: "Francois", uniqueDesc: "Ecrans Bloomberg + courbes financieres", dotColor: "#34d399", suitPaths: 8 },
-            { code: "CMOB", nom: "Martine", uniqueDesc: "Cards UI flottantes + elements creatifs", dotColor: "#f472b6", suitPaths: 8 },
-            { code: "CSOB", nom: "Sophie", uniqueDesc: "Carte mondiale + connexions + echiquier", dotColor: "#f87171", suitPaths: 7 },
+            { code: "CTOB", nom: "Tim", uniqueDesc: "Cerveau holographique + tablette tech", dotColor: "#a78bfa", suitPaths: 8 },
+            { code: "CFOB", nom: "Frank", uniqueDesc: "Ecrans Bloomberg + courbes financieres", dotColor: "#34d399", suitPaths: 8 },
+            { code: "CMOB", nom: "Mathilde", uniqueDesc: "Cards UI flottantes + elements creatifs", dotColor: "#f472b6", suitPaths: 8 },
+            { code: "CSOB", nom: "Simone", uniqueDesc: "Carte mondiale + connexions + echiquier", dotColor: "#f87171", suitPaths: 7 },
             { code: "COOB", nom: "Olivier", uniqueDesc: "Dashboard HUD operationnel + etincelles", dotColor: "#fb923c", suitPaths: 8 },
             { code: "CHROB", nom: "Helene", uniqueDesc: "Organigramme holographique interactif", dotColor: "#2dd4bf", suitPaths: 7 },
             { code: "CINOB", nom: "Ines", uniqueDesc: "Cerveau neural 3D flottant holographique", dotColor: "#fb7185", suitPaths: 6 },
-            { code: "CROB", nom: "Raphael", uniqueDesc: "Ecrans courbes ventes + tablette HUD", dotColor: "#fbbf24", suitPaths: 7 },
-            { code: "CLOB", nom: "Louise", uniqueDesc: "Dashboard juridique holo + graphiques", dotColor: "#818cf8", suitPaths: 7 },
+            { code: "CROB", nom: "Rich", uniqueDesc: "Ecrans courbes ventes + tablette HUD", dotColor: "#fbbf24", suitPaths: 7 },
+            { code: "CLOB", nom: "Loulou", uniqueDesc: "Dashboard juridique holo + graphiques", dotColor: "#818cf8", suitPaths: 7 },
             { code: "CISOB", nom: "Sebastien", uniqueDesc: "Bouclier cybersecurite + menaces carte", dotColor: "#a1a1aa", suitPaths: 8 },
-            { code: "CPOB", nom: "Fabien", uniqueDesc: "Tablette production holo + etincelles soudure", dotColor: "#94a3b8", suitPaths: 7 },
+            { code: "CPOB", nom: "Paco", uniqueDesc: "Tablette production holo + etincelles soudure", dotColor: "#94a3b8", suitPaths: 7 },
           ].map(agent => {
             const bot = BOTS_12.find(b => b.code === agent.code)!;
             return (
@@ -870,7 +870,7 @@ function TabEquipeAI() {
           <div className="bg-gradient-to-r from-emerald-600 to-emerald-500 rounded-lg px-3 py-2 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-full bg-white/20" />
-              <span className="text-xs font-bold text-white">Francois — CFO</span>
+              <span className="text-xs font-bold text-white">Frank — CFO</span>
             </div>
             <div className="flex gap-1">
               {["Vue ensemble", "Pipeline", "Documents", "Diagnostics"].map((t, i) => (

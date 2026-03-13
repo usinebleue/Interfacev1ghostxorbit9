@@ -69,22 +69,22 @@ const FIRST_VISIT_MSG = "Bienvenue dans CarlOS! Chaque bloc que vous voyez est u
 const DEPT_MESSAGES: Record<string, string> = {
   CEOB: "Bienvenue dans la vue Tactique. Je surveille l'ensemble de l'organisation pour vous.",
   CTOB: "Bienvenue dans mon département Technologie. Voici l'état de votre écosystème tech. Cliquez sur un élément pour qu'on en discute.",
-  CFOB: "Bonjour! Je suis François, votre CFO. Voici un portrait de vos finances. Cliquez sur un bloc pour qu'on creuse ensemble.",
-  CMOB: "Martine ici, votre CMO. Bienvenue dans Marketing & Croissance. Cliquez sur un élément pour qu'on l'analyse.",
-  CSOB: "Sophie à l'appareil, votre CSO. Stratégie & Ventes — cliquez sur un bloc pour qu'on en discute.",
+  CFOB: "Bonjour! Je suis Frank, votre CFO. Voici un portrait de vos finances. Cliquez sur un bloc pour qu'on creuse ensemble.",
+  CMOB: "Mathilde ici, votre CMO. Bienvenue dans Marketing & Croissance. Cliquez sur un élément pour qu'on l'analyse.",
+  CSOB: "Simone à l'appareil, votre CSO. Stratégie & Ventes — cliquez sur un bloc pour qu'on en discute.",
   COOB: "Olivier ici, votre COO. Opérations & Production — cliquez sur un élément pour qu'on approfondisse.",
   CHROB: "Hélène, votre CHRO. Capital humain, recrutement et culture. Cliquez sur un bloc pour qu'on en parle.",
   CINOB: "Inès, votre CINO. Innovation & Données — cliquez sur un élément pour qu'on en discute.",
-  CROB: "Raphaël, votre CRO. Revenus & Croissance — cliquez sur un bloc pour qu'on creuse ensemble.",
-  CLOB: "Louise, votre CLO. Juridique & Conformité — cliquez sur un élément pour qu'on en discute.",
+  CROB: "Rich, votre CRO. Revenus & Croissance — cliquez sur un bloc pour qu'on creuse ensemble.",
+  CLOB: "Loulou, votre CLO. Juridique & Conformité — cliquez sur un élément pour qu'on en discute.",
   CISOB: "Sébastien, votre CISO. Sécurité & Cyber — cliquez sur un bloc pour qu'on analyse ensemble.",
 };
 
 /** Nom court par bot */
 const BOT_NAMES: Record<string, string> = {
-  CEOB: "CarlOS", CTOB: "Thierry", CFOB: "François", CMOB: "Martine",
-  CSOB: "Sophie", COOB: "Olivier", CHROB: "Hélène", CINOB: "Inès",
-  CPOB: "Fabien", CROB: "Raphaël", CLOB: "Louise", CISOB: "Sébastien",
+  CEOB: "CarlOS", CTOB: "Tim", CFOB: "Frank", CMOB: "Mathilde",
+  CSOB: "Simone", COOB: "Olivier", CHROB: "Hélène", CINOB: "Inès",
+  CPOB: "Paco", CROB: "Rich", CLOB: "Loulou", CISOB: "Sébastien",
 };
 
 export function CarlOSPresence() {

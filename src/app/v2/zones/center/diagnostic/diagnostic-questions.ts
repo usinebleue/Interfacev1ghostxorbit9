@@ -114,22 +114,22 @@ export const DIAGNOSTIC_CATALOGUE: DiagnosticCatalogueItem[] = [
   {
     id: "cybersecurite-ot", nom: "Diagnostic Cybersécurité OT/IT",
     description: "Audit de votre posture sécurité: IT, OT, cloud, données. Standards ISO 27001, NIST.",
-    profilTypes: ["MFG", "FEQ", "DEV"], estimatedMinutes: 20, available: false,
+    profilTypes: ["MFG", "FEQ", "DEV"], estimatedMinutes: 20, available: true,
   },
   {
     id: "supply-chain-4", nom: "Diagnostic Supply Chain 4.0",
     description: "Maturité chaîne d'approvisionnement: inventaire, prévision, logistique, fournisseurs.",
-    profilTypes: ["MFG", "DST"], estimatedMinutes: 25, available: false,
+    profilTypes: ["MFG", "DST"], estimatedMinutes: 25, available: true,
   },
   {
     id: "transformation-rh", nom: "Diagnostic Transformation RH",
     description: "Recrutement, rétention, formation, culture: où l'IA peut transformer vos RH.",
-    profilTypes: "all", estimatedMinutes: 15, available: false,
+    profilTypes: "all", estimatedMinutes: 15, available: true,
   },
   {
     id: "readiness-export", nom: "Diagnostic Prêt à l'Export",
     description: "Évaluez votre capacité d'exportation: marchés, conformité, logistique, financement.",
-    profilTypes: ["MFG", "FEQ", "DEV"], estimatedMinutes: 20, available: false,
+    profilTypes: ["MFG", "FEQ", "DEV"], estimatedMinutes: 20, available: true,
   },
 ];
 
@@ -189,11 +189,11 @@ export const DEPARTEMENTS: DepartementInfo[] = [
   },
   {
     code: "CFOB", nom: "Finance / CFO", tier: "CORE",
-    gapPhrase: "CFOB François automatise vos rapports, prédit votre trésorerie et analyse vos coûts — ce qui prend 15h/semaine se fait en 20 minutes.",
+    gapPhrase: "CFOB Frank automatise vos rapports, prédit votre trésorerie et analyse vos coûts — ce qui prend 15h/semaine se fait en 20 minutes.",
   },
   {
     code: "CMOB", nom: "Marketing / CMO", tier: "CORE",
-    gapPhrase: "CMOB Martine crée votre contenu, analyse votre marché et structure votre pipeline — 3x plus de leads avec le marketing automatisé.",
+    gapPhrase: "CMOB Mathilde crée votre contenu, analyse votre marché et structure votre pipeline — 3x plus de leads avec le marketing automatisé.",
   },
   {
     code: "COOB", nom: "Opérations / COO", tier: "CORE",
@@ -217,11 +217,11 @@ export const DEPARTEMENTS: DepartementInfo[] = [
   },
   {
     code: "CTOB", nom: "Technologie / CTO", tier: "EXPAND",
-    gapPhrase: "CTOB Thierry évalue votre dette technique, connecte vos systèmes et planifie votre transformation digitale.",
+    gapPhrase: "CTOB Tim évalue votre dette technique, connecte vos systèmes et planifie votre transformation digitale.",
   },
   {
     code: "CSOB", nom: "Stratégie / CSO", tier: "EXPAND",
-    gapPhrase: "CSOB Sophie analyse votre positionnement, identifie les opportunités et simule des scénarios stratégiques.",
+    gapPhrase: "CSOB Simone analyse votre positionnement, identifie les opportunités et simule des scénarios stratégiques.",
   },
   {
     code: "CROB", nom: "Ventes / CRO", tier: "EXPAND",

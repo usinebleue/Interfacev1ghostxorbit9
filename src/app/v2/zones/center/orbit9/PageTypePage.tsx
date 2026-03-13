@@ -28,16 +28,16 @@ import { useFrameMaster } from "../../../context/FrameMasterContext";
 
 export const OFFICIAL_BOTS = [
   { code: "CEOB", name: "CarlOS", role: "CEO", color: "blue", emoji: "👔", subtitle: "Agent AI manufacturier", profil: "/agents/generated/ceo-carlos-profil-v3.png", standby: "/agents/generated/ceo-carlos-standby-v3.png" },
-  { code: "CTOB", name: "Thierry", role: "CTO", color: "violet", emoji: "💻", subtitle: "Technologie & Innovation", profil: "/agents/generated/cto-thierry-profil-v3.png", standby: "/agents/generated/cto-thierry-standby-v3.png" },
-  { code: "CFOB", name: "François", role: "CFO", color: "emerald", emoji: "💰", subtitle: "Finance & Trésorerie", profil: "/agents/generated/cfo-francois-profil-v3.png", standby: "/agents/generated/cfo-francois-standby-v3.png" },
-  { code: "CMOB", name: "Martine", role: "CMO", color: "pink", emoji: "📢", subtitle: "Marketing & Croissance", profil: "/agents/generated/cmo-martine-profil-v3.png", standby: "/agents/generated/cmo-martine-standby-v3.png" },
-  { code: "CSOB", name: "Sophie", role: "CSO", color: "red", emoji: "🎯", subtitle: "Stratégie & Ventes", profil: "/agents/generated/cso-sophie-profil-v3.png", standby: "/agents/generated/cso-sophie-standby-v3.png" },
+  { code: "CTOB", name: "Tim", role: "CTO", color: "violet", emoji: "💻", subtitle: "Technologie & Innovation", profil: "/agents/generated/cto-thierry-profil-v3.png", standby: "/agents/generated/cto-thierry-standby-v3.png" },
+  { code: "CFOB", name: "Frank", role: "CFO", color: "emerald", emoji: "💰", subtitle: "Finance & Trésorerie", profil: "/agents/generated/cfo-francois-profil-v3.png", standby: "/agents/generated/cfo-francois-standby-v3.png" },
+  { code: "CMOB", name: "Mathilde", role: "CMO", color: "pink", emoji: "📢", subtitle: "Marketing & Croissance", profil: "/agents/generated/cmo-martine-profil-v3.png", standby: "/agents/generated/cmo-martine-standby-v3.png" },
+  { code: "CSOB", name: "Simone", role: "CSO", color: "red", emoji: "🎯", subtitle: "Stratégie & Ventes", profil: "/agents/generated/cso-sophie-profil-v3.png", standby: "/agents/generated/cso-sophie-standby-v3.png" },
   { code: "COOB", name: "Olivier", role: "COO", color: "orange", emoji: "⚙️", subtitle: "Opérations & Production", profil: "/agents/generated/coo-olivier-profil-v3.png", standby: "/agents/generated/coo-olivier-standby-v3.png" },
-  { code: "CPOB", name: "Fabien", role: "CPO", color: "slate", emoji: "🏭", subtitle: "Automatisation & Usine", profil: "/agents/generated/factory-bot-profil-v3.png", standby: "/agents/generated/factory-bot-standby-v3.png" },
+  { code: "CPOB", name: "Paco", role: "CPO", color: "slate", emoji: "🏭", subtitle: "Automatisation & Usine", profil: "/agents/generated/factory-bot-profil-v3.png", standby: "/agents/generated/factory-bot-standby-v3.png" },
   { code: "CHROB", name: "Hélène", role: "CHRO", color: "teal", emoji: "🤝", subtitle: "Ressources Humaines", profil: "/agents/generated/chro-helene-profil-v3.png", standby: "/agents/generated/chro-helene-standby-v3.png" },
   { code: "CINOB", name: "Inès", role: "CINO", color: "rose", emoji: "📊", subtitle: "Innovation & R&D", profil: "/agents/generated/cino-ines-profil-v3.png", standby: "/agents/generated/cino-ines-standby-v3.png" },
-  { code: "CROB", name: "Raphaël", role: "CRO", color: "amber", emoji: "📈", subtitle: "Revenus & Croissance", profil: "/agents/generated/cro-raphael-profil-v3.png", standby: "/agents/generated/cro-raphael-standby-v3.png" },
-  { code: "CLOB", name: "Louise", role: "CLO", color: "indigo", emoji: "⚖️", subtitle: "Juridique & Conformité", profil: "/agents/generated/clo-louise-profil-v3.png", standby: "/agents/generated/clo-louise-standby-v3.png" },
+  { code: "CROB", name: "Rich", role: "CRO", color: "amber", emoji: "📈", subtitle: "Revenus & Croissance", profil: "/agents/generated/cro-raphael-profil-v3.png", standby: "/agents/generated/cro-raphael-standby-v3.png" },
+  { code: "CLOB", name: "Loulou", role: "CLO", color: "indigo", emoji: "⚖️", subtitle: "Juridique & Conformité", profil: "/agents/generated/clo-louise-profil-v3.png", standby: "/agents/generated/clo-louise-standby-v3.png" },
   { code: "CISOB", name: "Sébastien", role: "CISO", color: "zinc", emoji: "🛡️", subtitle: "Sécurité & Cyber", profil: "/agents/generated/ciso-secbot-profil-v3.png", standby: "/agents/generated/ciso-secbot-standby-v3.png" },
 ];
 
@@ -738,7 +738,7 @@ export function FE1TabComposants() {
                   { label: "CarlOS CEO", color: "blue" },
                   { label: "Olivier COO", color: "orange" },
                   { label: "Thomas CTO", color: "violet" },
-                  { label: "Sophie CSO", color: "red" },
+                  { label: "Simone CSO", color: "red" },
                 ].map((bot) => (
                   <span key={bot.label} className="text-[9px] px-2.5 py-1 rounded-full font-medium text-gray-500 bg-gray-100 flex items-center gap-1">
                     <span className={`w-3.5 h-3.5 rounded-full bg-${bot.color}-200`} />
@@ -2069,12 +2069,12 @@ export function FE1TabBullesActions() {
             <div className="flex items-center gap-2 mb-2 ml-11">
               <div className="w-2.5 h-2.5 rounded-full bg-violet-400 border-2 border-violet-200" />
               <div className="w-4 h-px bg-violet-300" />
-              <span className="text-[10px] font-semibold text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full border border-violet-200">👥 Consultation — François CFO</span>
+              <span className="text-[10px] font-semibold text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full border border-violet-200">👥 Consultation — Frank CFO</span>
             </div>
             <div className="flex gap-3">
               <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-white shrink-0 ring-2 ring-violet-200 mt-1">💰</div>
               <div className="bg-white border border-l-[3px] border-violet-100 border-l-emerald-400 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm max-w-md">
-                <div className="text-xs font-semibold text-emerald-700 mb-1">François — CFO</div>
+                <div className="text-xs font-semibold text-emerald-700 mb-1">Frank — CFO</div>
                 <p className="text-sm text-gray-700 mb-3">Côté finances, Bauches a un DSO de 67 jours. Si on close un $45K, ça améliore le ratio de trésorerie de 12%. Je recommande d'aller vite.</p>
                 <div className="border-t border-gray-100 pt-2">
                   <div className="text-[10px] text-gray-400 font-medium mb-1.5">Actions :</div>
@@ -2453,8 +2453,8 @@ export function FE1TabBullesActions() {
                   <div className="text-[10px] text-gray-400 mb-2 italic">Ex: message = "notre pipeline est brisé technologiquement"</div>
                   <div className="space-y-1">
                     {[
-                      { code: "CTOB", name: "Thierry CTO", kw: 3, mode: 2, dom: 3, total: 8, tag: "PRIMAIRE", color: "violet", stars: "★★★" },
-                      { code: "CFOB", name: "François CFO", kw: 1, mode: 1, dom: 2, total: 4, tag: "ANGLE MORT", color: "emerald", stars: "★★" },
+                      { code: "CTOB", name: "Tim CTO", kw: 3, mode: 2, dom: 3, total: 8, tag: "PRIMAIRE", color: "violet", stars: "★★★" },
+                      { code: "CFOB", name: "Frank CFO", kw: 1, mode: 1, dom: 2, total: 4, tag: "ANGLE MORT", color: "emerald", stars: "★★" },
                       { code: "COOB", name: "Olivier COO", kw: 1, mode: 1, dom: 2, total: 4, tag: "ANGLE MORT", color: "orange", stars: "★★" },
                       { code: "CEOB", name: "CarlOS CEO", kw: 0, mode: 2, dom: 1, total: 3, tag: "écarté", color: "gray", stars: "★" },
                     ].map(({ code, name, kw, mode, dom, total, tag, color, stars }) => (
@@ -2512,7 +2512,7 @@ export function FE1TabBullesActions() {
                   <div>
                     <div className="text-[10px] text-gray-400 mb-1 font-medium">Ce que CarlOS affiche à l'utilisateur :</div>
                     <div className="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 text-[10px] text-blue-800 leading-relaxed">
-                      <span className="font-semibold">J'ai choisi Thierry</span> car le problème est technique et il doit diagnostiquer la racine. <span className="font-semibold">François</span> couvre l'impact sur le cash-flow si ça dure. <span className="font-semibold">Olivier</span> s'assure que la production ne s'arrête pas pendant qu'on répare.
+                      <span className="font-semibold">J'ai choisi Tim</span> car le problème est technique et il doit diagnostiquer la racine. <span className="font-semibold">Frank</span> couvre l'impact sur le cash-flow si ça dure. <span className="font-semibold">Olivier</span> s'assure que la production ne s'arrête pas pendant qu'on répare.
                     </div>
                   </div>
                 </div>
@@ -2529,14 +2529,14 @@ export function FE1TabBullesActions() {
                     <div>Angle Mort #2</div>
                   </div>
                   {[
-                    ["Pipeline / ventes / closing", "Sophie CSO 🎯", "François CFO 💰", "Martine CMO 📢"],
-                    ["Budget / tréso / coûts / DSO", "François CFO 💰", "CarlOS CEO 🎩", "Olivier COO ⚙️"],
-                    ["Serveur / tech / système brisé", "Thierry CTO 💻", "François CFO 💰", "Olivier COO ⚙️"],
+                    ["Pipeline / ventes / closing", "Simone CSO 🎯", "Frank CFO 💰", "Mathilde CMO 📢"],
+                    ["Budget / tréso / coûts / DSO", "Frank CFO 💰", "CarlOS CEO 🎩", "Olivier COO ⚙️"],
+                    ["Serveur / tech / système brisé", "Tim CTO 💻", "Frank CFO 💰", "Olivier COO ⚙️"],
                     ["Équipe / culture / RH / conflit", "Hélène CHRO 👥", "CarlOS CEO 🎩", "Olivier COO ⚙️"],
-                    ["Marketing / marque / campagne", "Martine CMO 📢", "Sophie CSO 🎯", "François CFO 💰"],
-                    ["Stratégie / expansion / M&A", "CarlOS CEO 🎩", "Sophie CSO 🎯", "François CFO 💰"],
-                    ["Légal / conformité / risque", "Louise CLO ⚖️", "François CFO 💰", "CarlOS CEO 🎩"],
-                    ["Opérations / production / livraison", "Olivier COO ⚙️", "Thierry CTO 💻", "François CFO 💰"],
+                    ["Marketing / marque / campagne", "Mathilde CMO 📢", "Simone CSO 🎯", "Frank CFO 💰"],
+                    ["Stratégie / expansion / M&A", "CarlOS CEO 🎩", "Simone CSO 🎯", "Frank CFO 💰"],
+                    ["Légal / conformité / risque", "Loulou CLO ⚖️", "Frank CFO 💰", "CarlOS CEO 🎩"],
+                    ["Opérations / production / livraison", "Olivier COO ⚙️", "Tim CTO 💻", "Frank CFO 💰"],
                   ].map(([tension, p, a1, a2], i) => (
                     <div key={String(tension)} className={`grid grid-cols-4 text-[9px] px-2 py-1.5 border-b border-gray-50 last:border-0 ${i % 2 === 0 ? "bg-white" : "bg-gray-50/40"}`}>
                       <div className="text-gray-600 font-medium">{tension}</div>
@@ -2562,8 +2562,8 @@ export function FE1TabBullesActions() {
                 <p className="font-semibold text-blue-700 mb-1.5">J'ai analysé ton problème. Voici l'équipe optimale :</p>
                 <div className="grid grid-cols-3 gap-2 mb-2">
                   {[
-                    { emoji: "💻", name: "Thierry", role: "CTO", tag: "PRIMAIRE", color: "violet", desc: "Diagnostic technique" },
-                    { emoji: "💰", name: "François", role: "CFO", tag: "ANGLE MORT", color: "emerald", desc: "Impact financier" },
+                    { emoji: "💻", name: "Tim", role: "CTO", tag: "PRIMAIRE", color: "violet", desc: "Diagnostic technique" },
+                    { emoji: "💰", name: "Frank", role: "CFO", tag: "ANGLE MORT", color: "emerald", desc: "Impact financier" },
                     { emoji: "⚙️", name: "Olivier", role: "COO", tag: "ANGLE MORT", color: "orange", desc: "Impact opérations" },
                   ].map(({ emoji, name, role, tag, color, desc }) => (
                     <div key={name} className={`bg-${color}-50 border border-${color}-200 rounded-lg p-2 text-center`}>
@@ -2600,8 +2600,8 @@ export function FE1TabBullesActions() {
             <div className="flex items-center gap-2 mb-3 flex-wrap">
               <span className="text-[10px] text-gray-500 font-medium">Équipe active :</span>
               {[
-                { emoji: "💻", name: "Thierry CTO", color: "violet" },
-                { emoji: "💰", name: "François CFO", color: "emerald" },
+                { emoji: "💻", name: "Tim CTO", color: "violet" },
+                { emoji: "💰", name: "Frank CFO", color: "emerald" },
               ].map(({ emoji, name, color }) => (
                 <div key={name} className={`flex items-center gap-1.5 bg-${color}-50 border border-${color}-200 rounded-full px-2.5 py-1 text-[10px]`}>
                   <span>{emoji}</span>
@@ -2619,7 +2619,7 @@ export function FE1TabBullesActions() {
               <span className="text-[10px] text-gray-400 w-full">Disponibles :</span>
               {[
                 ["🎩","CarlOS CEO","blue"],["⚙️","Olivier COO","orange"],
-                ["📢","Martine CMO","pink"],["🎯","Sophie CSO","red"],
+                ["📢","Mathilde CMO","pink"],["🎯","Simone CSO","red"],
               ].map(([e,n,c]) => (
                 <button key={String(n)} className={`flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-full bg-white border border-gray-200 text-gray-600 hover:bg-${c}-50 hover:border-${c}-200 cursor-pointer transition-colors`}>
                   <Plus className="h-2 w-2" /> {e} {n}

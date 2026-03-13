@@ -357,7 +357,7 @@ const DEPT_CONFIGS: Record<string, DeptConfig> = {
       ]},
     ],
     recentFiles: [
-      { id: 1, name: "Plan maintenance Q1", progress: 80, by: "Fabien", time: "3h", type: "PM" },
+      { id: 1, name: "Plan maintenance Q1", progress: 80, by: "Paco", time: "3h", type: "PM" },
       { id: 2, name: "Specs Robot Soudure", progress: 65, by: "CTO", time: "hier", type: "SP" },
     ],
     activity: [

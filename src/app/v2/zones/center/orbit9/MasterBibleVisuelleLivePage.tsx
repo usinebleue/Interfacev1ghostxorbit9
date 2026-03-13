@@ -56,16 +56,16 @@ type TabId = (typeof TABS)[number]["id"];
 
 export const BOTS_12 = [
   { code: "CEOB", nom: "CarlOS",    role: "CEO",  dept: "Direction Generale",    icon: Briefcase,  color: "blue",    emoji: "👔" },
-  { code: "CTOB", nom: "Thierry",   role: "CTO",  dept: "Technologie",           icon: Cpu,        color: "violet",  emoji: "💻" },
-  { code: "CFOB", nom: "François",  role: "CFO",  dept: "Finance & Tresorerie",  icon: DollarSign, color: "emerald", emoji: "💰" },
-  { code: "CMOB", nom: "Martine",   role: "CMO",  dept: "Marketing & Croissance", icon: Megaphone, color: "pink",    emoji: "📢" },
-  { code: "CSOB", nom: "Sophie",    role: "CSO",  dept: "Strategie & Ventes",    icon: Target,     color: "red",     emoji: "🎯" },
+  { code: "CTOB", nom: "Tim",       role: "CTO",  dept: "Technologie",           icon: Cpu,        color: "violet",  emoji: "💻" },
+  { code: "CFOB", nom: "Frank",     role: "CFO",  dept: "Finance & Tresorerie",  icon: DollarSign, color: "emerald", emoji: "💰" },
+  { code: "CMOB", nom: "Mathilde",  role: "CMO",  dept: "Marketing & Croissance", icon: Megaphone, color: "pink",    emoji: "📢" },
+  { code: "CSOB", nom: "Simone",    role: "CSO",  dept: "Strategie & Ventes",    icon: Target,     color: "red",     emoji: "🎯" },
   { code: "COOB", nom: "Olivier",   role: "COO",  dept: "Operations & Production", icon: Settings, color: "orange",  emoji: "⚙️" },
-  { code: "CPOB", nom: "Fabien",    role: "Usine", dept: "Automatisation & Usine", icon: Factory,  color: "slate",   emoji: "🏭" },
+  { code: "CPOB", nom: "Paco",      role: "Usine", dept: "Automatisation & Usine", icon: Factory,  color: "slate",   emoji: "🏭" },
   { code: "CHROB", nom: "Helene",    role: "CHRO", dept: "Ressources Humaines",   icon: Users,      color: "teal",    emoji: "🤝" },
   { code: "CINOB", nom: "Ines",      role: "CINO", dept: "Innovation & R&D",      icon: Lightbulb,  color: "cyan",    emoji: "🔬" },
-  { code: "CROB", nom: "Raphael",   role: "CRO",  dept: "Revenus & Croissance",  icon: TrendingUp, color: "amber",   emoji: "📈" },
-  { code: "CLOB", nom: "Louise",    role: "CLO",  dept: "Juridique & Conformite", icon: Scale,     color: "indigo",  emoji: "⚖️" },
+  { code: "CROB", nom: "Rich",      role: "CRO",  dept: "Revenus & Croissance",  icon: TrendingUp, color: "amber",   emoji: "📈" },
+  { code: "CLOB", nom: "Loulou",    role: "CLO",  dept: "Juridique & Conformite", icon: Scale,     color: "indigo",  emoji: "⚖️" },
   { code: "CISOB", nom: "Sebastien", role: "CISO", dept: "Securite & Cyber",      icon: Shield,     color: "zinc",    emoji: "🛡️" },
 ];
 
@@ -671,7 +671,7 @@ export function Tab4Headers() {
             <div className="flex gap-1.5 flex-wrap flex-1">
               {[
                 { code: "CEOB", name: "CarlOS", text: "text-blue-600", border: "border-blue-200", ring: "ring-blue-300" },
-                { code: "CTOB", name: "Thierry", text: "text-violet-600", border: "border-violet-200", ring: "ring-violet-300" },
+                { code: "CTOB", name: "Tim", text: "text-violet-600", border: "border-violet-200", ring: "ring-violet-300" },
               ].map((bot) => (
                 <div key={bot.code} className={cn("flex items-center gap-1.5 text-[9px] font-semibold px-2 py-0.5 rounded-full bg-white border", bot.text, bot.border)}>
                   <img src={BOT_AVATAR[bot.code] || ""} alt={bot.name} className={cn("w-4 h-4 rounded-full object-cover ring-1", bot.ring)} />
@@ -697,16 +697,16 @@ export function Tab4Headers() {
         <div className="space-y-2">
           {[
             { code: "CEOB", nom: "CarlOS",    role: "CEO",  dept: "Direction Generale",      from: "from-blue-600",    to: "to-blue-500" },
-            { code: "CTOB", nom: "Thierry",   role: "CTO",  dept: "Technologie & Innovation", from: "from-violet-600",  to: "to-violet-500" },
-            { code: "CFOB", nom: "François",  role: "CFO",  dept: "Finance & Tresorerie",    from: "from-emerald-600", to: "to-emerald-500" },
-            { code: "CMOB", nom: "Martine",   role: "CMO",  dept: "Marketing & Croissance",  from: "from-pink-600",    to: "to-pink-500" },
-            { code: "CSOB", nom: "Sophie",    role: "CSO",  dept: "Strategie & Ventes",      from: "from-red-600",     to: "to-red-500" },
+            { code: "CTOB", nom: "Tim",       role: "CTO",  dept: "Technologie & Innovation", from: "from-violet-600",  to: "to-violet-500" },
+            { code: "CFOB", nom: "Frank",     role: "CFO",  dept: "Finance & Tresorerie",    from: "from-emerald-600", to: "to-emerald-500" },
+            { code: "CMOB", nom: "Mathilde",  role: "CMO",  dept: "Marketing & Croissance",  from: "from-pink-600",    to: "to-pink-500" },
+            { code: "CSOB", nom: "Simone",    role: "CSO",  dept: "Strategie & Ventes",      from: "from-red-600",     to: "to-red-500" },
             { code: "COOB", nom: "Olivier",   role: "COO",  dept: "Operations & Production", from: "from-orange-600",  to: "to-orange-500" },
-            { code: "CPOB", nom: "Fabien",    role: "Usine", dept: "Automatisation & Usine",  from: "from-slate-600",   to: "to-slate-500" },
+            { code: "CPOB", nom: "Paco",      role: "Usine", dept: "Automatisation & Usine",  from: "from-slate-600",   to: "to-slate-500" },
             { code: "CHROB", nom: "Helene",    role: "CHRO", dept: "Ressources Humaines",     from: "from-teal-600",    to: "to-teal-500" },
             { code: "CINOB", nom: "Ines",      role: "CINO", dept: "Innovation & R&D",        from: "from-cyan-600",    to: "to-cyan-500" },
-            { code: "CROB", nom: "Raphael",   role: "CRO",  dept: "Revenus & Croissance",    from: "from-amber-600",   to: "to-amber-500" },
-            { code: "CLOB", nom: "Louise",    role: "CLO",  dept: "Juridique & Conformite",  from: "from-indigo-600",  to: "to-indigo-500" },
+            { code: "CROB", nom: "Rich",      role: "CRO",  dept: "Revenus & Croissance",    from: "from-amber-600",   to: "to-amber-500" },
+            { code: "CLOB", nom: "Loulou",    role: "CLO",  dept: "Juridique & Conformite",  from: "from-indigo-600",  to: "to-indigo-500" },
             { code: "CISOB", nom: "Sebastien", role: "CISO", dept: "Securite & Cyber",        from: "from-zinc-600",    to: "to-zinc-500" },
           ].map((bot) => (
             <div key={bot.code} className={cn("bg-gradient-to-r px-4 py-3 rounded-xl flex items-center gap-3", bot.from, bot.to)}>
@@ -1769,7 +1769,7 @@ export function Tab10Bulles() {
             <div className="flex gap-1.5 flex-wrap flex-1">
               {[
                 { code: "CEOB", name: "CarlOS", text: "text-blue-600", border: "border-blue-200", ring: "ring-blue-300" },
-                { code: "CTOB", name: "Thierry", text: "text-violet-600", border: "border-violet-200", ring: "ring-violet-300" },
+                { code: "CTOB", name: "Tim", text: "text-violet-600", border: "border-violet-200", ring: "ring-violet-300" },
               ].map((bot) => (
                 <div key={bot.code} className={cn("flex items-center gap-1.5 text-[9px] font-semibold px-2 py-0.5 rounded-full bg-white border", bot.text, bot.border)}>
                   <img src={BOT_AVATAR[bot.code] || ""} alt={bot.name} className={cn("w-4 h-4 rounded-full object-cover ring-1", bot.ring)} />
@@ -1860,9 +1860,9 @@ export function Tab10Bulles() {
             <div className="flex-1 h-px bg-red-200" />
           </div>
           <div className="flex gap-2 items-start ml-10">
-            <img src={BOT_AVATAR["CSOB"] || ""} alt="Sophie" className="w-8 h-8 rounded-full object-cover ring-2 ring-red-300 mt-1" />
+            <img src={BOT_AVATAR["CSOB"] || ""} alt="Simone" className="w-8 h-8 rounded-full object-cover ring-2 ring-red-300 mt-1" />
             <div className="bg-white border border-red-100 border-l-[3px] border-l-red-400 rounded-2xl rounded-tl-md px-5 py-4 shadow-sm">
-              <div className="text-xs font-semibold text-red-600 mb-1">Sophie — CSO</div>
+              <div className="text-xs font-semibold text-red-600 mb-1">Simone — CSO</div>
               <div className="text-sm text-gray-700 leading-relaxed">Je conteste cette approche. Avez-vous considere...</div>
             </div>
           </div>
@@ -1874,13 +1874,13 @@ export function Tab10Bulles() {
         <div className="space-y-2">
           <div className="flex items-center gap-2 ml-10">
             <div className="w-6 h-px bg-violet-300" />
-            <span className="text-[9px] font-semibold text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full border border-violet-200 flex items-center gap-1"><Users className="h-3.5 w-3.5" /> Consultation — Thierry</span>
+            <span className="text-[9px] font-semibold text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full border border-violet-200 flex items-center gap-1"><Users className="h-3.5 w-3.5" /> Consultation — Tim</span>
             <div className="flex-1 h-px bg-violet-200" />
           </div>
           <div className="flex gap-2 items-start ml-10">
-            <img src={BOT_AVATAR["CTOB"] || ""} alt="Thierry" className="w-8 h-8 rounded-full object-cover ring-2 ring-violet-300 mt-1" />
+            <img src={BOT_AVATAR["CTOB"] || ""} alt="Tim" className="w-8 h-8 rounded-full object-cover ring-2 ring-violet-300 mt-1" />
             <div className="bg-white border border-violet-100 border-l-[3px] border-l-violet-400 rounded-2xl rounded-tl-md px-5 py-4 shadow-sm">
-              <div className="text-xs font-semibold text-violet-600 mb-1">Thierry — CTO</div>
+              <div className="text-xs font-semibold text-violet-600 mb-1">Tim — CTO</div>
               <div className="text-sm text-gray-700 leading-relaxed">D'un point de vue technique, je recommande...</div>
             </div>
           </div>
@@ -2523,8 +2523,8 @@ export function Tab10Bulles() {
               <div className="text-[9px] text-gray-400 mb-2 italic">Ex: message = "notre pipeline est brisé technologiquement"</div>
               <div className="space-y-1">
                 {[
-                  { code: "CTOB", name: "Thierry CTO", kw: 3, mode: 2, dom: 3, total: 8, tag: "PRIMAIRE", color: "violet", stars: "★★★" },
-                  { code: "CFOB", name: "François CFO", kw: 1, mode: 1, dom: 2, total: 4, tag: "ANGLE MORT", color: "emerald", stars: "★★" },
+                  { code: "CTOB", name: "Tim CTO", kw: 3, mode: 2, dom: 3, total: 8, tag: "PRIMAIRE", color: "violet", stars: "★★★" },
+                  { code: "CFOB", name: "Frank CFO", kw: 1, mode: 1, dom: 2, total: 4, tag: "ANGLE MORT", color: "emerald", stars: "★★" },
                   { code: "COOB", name: "Olivier COO", kw: 1, mode: 1, dom: 2, total: 4, tag: "ANGLE MORT", color: "orange", stars: "★★" },
                   { code: "CEOB", name: "CarlOS CEO", kw: 0, mode: 2, dom: 1, total: 3, tag: "écarté", color: "gray", stars: "★" },
                 ].map(({ code, name, kw, mode, dom, total, tag, color, stars }) => (
@@ -2579,7 +2579,7 @@ export function Tab10Bulles() {
               <div>
                 <div className="text-[9px] text-gray-400 mb-1 font-medium">Ce que CarlOS affiche à l'utilisateur :</div>
                 <div className="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 text-[9px] text-blue-800 leading-relaxed">
-                  <span className="font-semibold">J'ai choisi Thierry</span> car le problème est technique et il doit diagnostiquer la racine. <span className="font-semibold">François</span> couvre l'impact sur le cash-flow si ça dure. <span className="font-semibold">Olivier</span> s'assure que la production ne s'arrête pas pendant qu'on répare.
+                  <span className="font-semibold">J'ai choisi Tim</span> car le problème est technique et il doit diagnostiquer la racine. <span className="font-semibold">Frank</span> couvre l'impact sur le cash-flow si ça dure. <span className="font-semibold">Olivier</span> s'assure que la production ne s'arrête pas pendant qu'on répare.
                 </div>
               </div>
             </div>
@@ -2595,14 +2595,14 @@ export function Tab10Bulles() {
                 <div>Angle Mort #2</div>
               </div>
               {[
-                ["Pipeline / ventes / closing", "Sophie CSO 🎯", "François CFO 💰", "Martine CMO 📢"],
-                ["Budget / tréso / coûts / DSO", "François CFO 💰", "CarlOS CEO 🎩", "Olivier COO ⚙️"],
-                ["Serveur / tech / système brisé", "Thierry CTO 💻", "François CFO 💰", "Olivier COO ⚙️"],
+                ["Pipeline / ventes / closing", "Simone CSO 🎯", "Frank CFO 💰", "Mathilde CMO 📢"],
+                ["Budget / tréso / coûts / DSO", "Frank CFO 💰", "CarlOS CEO 🎩", "Olivier COO ⚙️"],
+                ["Serveur / tech / système brisé", "Tim CTO 💻", "Frank CFO 💰", "Olivier COO ⚙️"],
                 ["Équipe / culture / RH / conflit", "Hélène CHRO 👥", "CarlOS CEO 🎩", "Olivier COO ⚙️"],
-                ["Marketing / marque / campagne", "Martine CMO 📢", "Sophie CSO 🎯", "François CFO 💰"],
-                ["Stratégie / expansion / M&A", "CarlOS CEO 🎩", "Sophie CSO 🎯", "François CFO 💰"],
-                ["Légal / conformité / risque", "Louise CLO ⚖️", "François CFO 💰", "CarlOS CEO 🎩"],
-                ["Opérations / production / livraison", "Olivier COO ⚙️", "Thierry CTO 💻", "François CFO 💰"],
+                ["Marketing / marque / campagne", "Mathilde CMO 📢", "Simone CSO 🎯", "Frank CFO 💰"],
+                ["Stratégie / expansion / M&A", "CarlOS CEO 🎩", "Simone CSO 🎯", "Frank CFO 💰"],
+                ["Légal / conformité / risque", "Loulou CLO ⚖️", "Frank CFO 💰", "CarlOS CEO 🎩"],
+                ["Opérations / production / livraison", "Olivier COO ⚙️", "Tim CTO 💻", "Frank CFO 💰"],
               ].map(([tension, p, a1, a2], i) => (
                 <div key={String(tension)} className={`grid grid-cols-4 text-[9px] px-2 py-1.5 border-b border-gray-50 last:border-0 ${i % 2 === 0 ? "bg-white" : "bg-gray-50/40"}`}>
                   <div className="text-gray-600 font-medium">{tension}</div>
@@ -2629,8 +2629,8 @@ export function Tab10Bulles() {
           <div className="flex items-center gap-2 mb-3 flex-wrap">
             <span className="text-[9px] text-gray-500 font-medium">Équipe active :</span>
             {[
-              { emoji: "💻", name: "Thierry CTO", color: "violet" },
-              { emoji: "💰", name: "François CFO", color: "emerald" },
+              { emoji: "💻", name: "Tim CTO", color: "violet" },
+              { emoji: "💰", name: "Frank CFO", color: "emerald" },
             ].map(({ emoji, name, color }) => (
               <div key={name} className={`flex items-center gap-1.5 bg-${color}-50 border border-${color}-200 rounded-full px-2.5 py-1 text-[9px]`}>
                 <span>{emoji}</span>
@@ -2646,7 +2646,7 @@ export function Tab10Bulles() {
             <span className="text-[9px] text-gray-400 w-full">Disponibles :</span>
             {[
               ["🎩","CarlOS CEO","blue"],["⚙️","Olivier COO","orange"],
-              ["📢","Martine CMO","pink"],["🎯","Sophie CSO","red"],
+              ["📢","Mathilde CMO","pink"],["🎯","Simone CSO","red"],
             ].map(([e,n,c]) => (
               <button key={String(n)} className={`flex items-center gap-1 text-[9px] px-2.5 py-1 rounded-full bg-white border border-gray-200 text-gray-600 hover:bg-${c}-50 hover:border-${c}-200 cursor-pointer transition-colors`}>
                 <Plus className="h-3.5 w-3.5" /> {e} {n}
@@ -5166,16 +5166,16 @@ function TabMonEntreprise() {
         <div className="space-y-2">
           {[
             { code: "CEOB", nom: "CarlOS",    role: "CEO",  dept: "Direction Generale",      from: "from-blue-600",    to: "to-blue-500" },
-            { code: "CTOB", nom: "Thierry",   role: "CTO",  dept: "Technologie & Innovation", from: "from-violet-600",  to: "to-violet-500" },
-            { code: "CFOB", nom: "François",  role: "CFO",  dept: "Finance & Tresorerie",    from: "from-emerald-600", to: "to-emerald-500" },
-            { code: "CMOB", nom: "Martine",   role: "CMO",  dept: "Marketing & Croissance",  from: "from-pink-600",    to: "to-pink-500" },
-            { code: "CSOB", nom: "Sophie",    role: "CSO",  dept: "Strategie & Ventes",      from: "from-red-600",     to: "to-red-500" },
+            { code: "CTOB", nom: "Tim",       role: "CTO",  dept: "Technologie & Innovation", from: "from-violet-600",  to: "to-violet-500" },
+            { code: "CFOB", nom: "Frank",     role: "CFO",  dept: "Finance & Tresorerie",    from: "from-emerald-600", to: "to-emerald-500" },
+            { code: "CMOB", nom: "Mathilde",  role: "CMO",  dept: "Marketing & Croissance",  from: "from-pink-600",    to: "to-pink-500" },
+            { code: "CSOB", nom: "Simone",    role: "CSO",  dept: "Strategie & Ventes",      from: "from-red-600",     to: "to-red-500" },
             { code: "COOB", nom: "Olivier",   role: "COO",  dept: "Operations & Production", from: "from-orange-600",  to: "to-orange-500" },
-            { code: "CPOB", nom: "Fabien",    role: "Usine", dept: "Automatisation & Usine",  from: "from-slate-600",   to: "to-slate-500" },
+            { code: "CPOB", nom: "Paco",      role: "Usine", dept: "Automatisation & Usine",  from: "from-slate-600",   to: "to-slate-500" },
             { code: "CHROB", nom: "Helene",    role: "CHRO", dept: "Ressources Humaines",     from: "from-teal-600",    to: "to-teal-500" },
             { code: "CINOB", nom: "Ines",      role: "CINO", dept: "Innovation & R&D",        from: "from-cyan-600",    to: "to-cyan-500" },
-            { code: "CROB", nom: "Raphael",   role: "CRO",  dept: "Revenus & Croissance",    from: "from-amber-600",   to: "to-amber-500" },
-            { code: "CLOB", nom: "Louise",    role: "CLO",  dept: "Juridique & Conformite",  from: "from-indigo-600",  to: "to-indigo-500" },
+            { code: "CROB", nom: "Rich",      role: "CRO",  dept: "Revenus & Croissance",    from: "from-amber-600",   to: "to-amber-500" },
+            { code: "CLOB", nom: "Loulou",    role: "CLO",  dept: "Juridique & Conformite",  from: "from-indigo-600",  to: "to-indigo-500" },
             { code: "CISOB", nom: "Sebastien", role: "CISO", dept: "Securite & Cyber",        from: "from-zinc-600",    to: "to-zinc-500" },
           ].map((bot) => (
             <div key={bot.code} className={cn("bg-gradient-to-r px-4 py-3 rounded-xl flex items-center gap-3", bot.from, bot.to)}>
@@ -5461,7 +5461,7 @@ function TabMonBureau() {
         <div className="grid grid-cols-2 gap-3">
           {[
             { bot: "CarlOS", gradient: "from-blue-600 to-blue-500", titre: "Plan strategique Q3" },
-            { bot: "Martine", gradient: "from-pink-600 to-pink-500", titre: "Campagne marketing" },
+            { bot: "Mathilde", gradient: "from-pink-600 to-pink-500", titre: "Campagne marketing" },
           ].map(item => (
             <Card key={item.titre} className="p-0 overflow-hidden hover:shadow-md transition-shadow">
               <div className={cn("bg-gradient-to-r px-3 py-2.5 flex items-center gap-2.5", item.gradient)}>
