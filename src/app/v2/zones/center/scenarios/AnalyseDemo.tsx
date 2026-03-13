@@ -400,7 +400,7 @@ function EvidenceCards({
       <div className="flex items-center gap-2 mb-2">
         <BotAvatar code="CTOB" size="sm" />
         <span className="text-xs font-semibold text-violet-700">
-          Thierry (CTO) — Donnees d'analyse
+          Tim (CTO) — Donnees d'analyse
         </span>
       </div>
 

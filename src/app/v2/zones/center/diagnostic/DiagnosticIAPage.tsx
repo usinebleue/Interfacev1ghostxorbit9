@@ -44,9 +44,9 @@ interface ProfilData {
 // ── BOT names (for display) ──
 
 const BOT_NAMES: Record<string, string> = {
-  CEOB: "CarlOS", CFOB: "François", CMOB: "Martine", COOB: "Olivier",
-  CPOB: "Fabien", CHROB: "Hélène", CTOB: "Thierry", CSOB: "Sophie",
-  CROB: "Raphaël", CINOB: "Inès", CLOB: "Louise", CISOB: "Sébastien",
+  CEOB: "CarlOS", CFOB: "Frank", CMOB: "Mathilde", COOB: "Olivier",
+  CPOB: "Paco", CHROB: "Hélène", CTOB: "Tim", CSOB: "Simone",
+  CROB: "Rich", CINOB: "Inès", CLOB: "Loulou", CISOB: "Sébastien",
 };
 
 const BOT_ROLES: Record<string, string> = {

@@ -49,10 +49,10 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 const CLEVEL_BOTS: { code: string; nom: string; role: string; dept: string; deptColor: string }[] = [
   { code: "CEOB", nom: "CarlOS", role: "CEO", dept: "Tactique", deptColor: "bg-blue-100 text-blue-700" },
-  { code: "CTOB", nom: "Thierry", role: "CTO", dept: "Technologie", deptColor: "bg-violet-100 text-violet-700" },
-  { code: "CFOB", nom: "Francois", role: "CFO", dept: "Finance", deptColor: "bg-emerald-100 text-emerald-700" },
-  { code: "CMOB", nom: "Martine", role: "CMO", dept: "Marketing", deptColor: "bg-pink-100 text-pink-700" },
-  { code: "CSOB", nom: "Sophie", role: "CSO", dept: "Strategie", deptColor: "bg-red-100 text-red-700" },
+  { code: "CTOB", nom: "Tim", role: "CTO", dept: "Technologie", deptColor: "bg-violet-100 text-violet-700" },
+  { code: "CFOB", nom: "Frank", role: "CFO", dept: "Finance", deptColor: "bg-emerald-100 text-emerald-700" },
+  { code: "CMOB", nom: "Mathilde", role: "CMO", dept: "Marketing", deptColor: "bg-pink-100 text-pink-700" },
+  { code: "CSOB", nom: "Simone", role: "CSO", dept: "Strategie", deptColor: "bg-red-100 text-red-700" },
   { code: "COOB", nom: "Olivier", role: "COO", dept: "Operations", deptColor: "bg-orange-100 text-orange-700" },
 ];
 

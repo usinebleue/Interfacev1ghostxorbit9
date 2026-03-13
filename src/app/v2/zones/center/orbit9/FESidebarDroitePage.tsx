@@ -266,7 +266,7 @@ function SectionLayout() {
                 <WireframeHook type="greeting" message="Bonjour! Vos KPIs sont stables." />
                 <WireframeHook type="alert" message="Discussion qui traine depuis 3 jours." action="Resoudre" />
                 <WireframeHook type="suggestion" message="3 discussions → missions. On qualifie?" action="Voir" />
-                <WireframeHook type="insight" message="Ventes +12%. Sophie a des recommandations." action="Voir" />
+                <WireframeHook type="insight" message="Ventes +12%. Simone a des recommandations." action="Voir" />
                 <WireframeHook type="nudge" message="Audit securite en attente d'assignation." action="Assigner" />
                 <div className="flex items-center gap-2 px-2 py-1.5 rounded border border-dashed border-blue-200 bg-blue-50/50">
                   <MessageSquare className="h-3.5 w-3.5 text-blue-400" />
@@ -364,7 +364,7 @@ function SectionHooks() {
               { vue: "Dashboard", hooks: [
                 { type: "greeting" as const, msg: "Bonjour! Vos KPIs sont stables. On regarde les tendances?" },
                 { type: "suggestion" as const, msg: "3 discussions en attente de verdict." },
-                { type: "insight" as const, msg: "Ventes +12%. Sophie (CSO) a des recommandations." },
+                { type: "insight" as const, msg: "Ventes +12%. Simone (CSO) a des recommandations." },
               ]},
               { vue: "Sante Globale", hooks: [
                 { type: "greeting" as const, msg: "Portrait sante transversal. 5 dimensions surveillees." },

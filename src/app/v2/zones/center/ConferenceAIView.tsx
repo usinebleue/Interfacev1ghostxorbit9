@@ -198,7 +198,7 @@ const PLAYBOOK_BOTS: Record<string, { code: string; name: string; role: string }
   podcast: [{ code: "CEOB", name: "CarlOS", role: "Co-animateur" }],
   board: [
     { code: "CEOB", name: "CarlOS", role: "Président" },
-    { code: "CFOB", name: "François", role: "Finances" },
+    { code: "CFOB", name: "Frank", role: "Finances" },
     { code: "CSOB", name: "Simon", role: "Stratégie" },
   ],
   client: [
@@ -212,33 +212,33 @@ const PLAYBOOK_BOTS: Record<string, { code: string; name: string; role: string }
   crise: [
     { code: "CEOB", name: "CarlOS", role: "Commandant" },
     { code: "COOB", name: "Julie", role: "Opérations" },
-    { code: "CFOB", name: "François", role: "Finances" },
+    { code: "CFOB", name: "Frank", role: "Finances" },
     { code: "CISOB", name: "Samuel", role: "Sécurité" },
   ],
   brainstorm: [
     { code: "CEOB", name: "CarlOS", role: "Facilitateur" },
     { code: "CTOB", name: "Alex", role: "Tech" },
-    { code: "CMOB", name: "Sophie", role: "Marketing" },
+    { code: "CMOB", name: "Mathilde", role: "Marketing" },
   ],
   debat: [
     { code: "CEOB", name: "CarlOS", role: "Modérateur" },
     { code: "CSOB", name: "Simon", role: "Stratégie" },
-    { code: "CMOB", name: "Sophie", role: "Marché" },
+    { code: "CMOB", name: "Mathilde", role: "Marché" },
   ],
   analyse: [
     { code: "CEOB", name: "CarlOS", role: "Analyste" },
     { code: "CTOB", name: "Alex", role: "Tech" },
-    { code: "CFOB", name: "François", role: "Finances" },
+    { code: "CFOB", name: "Frank", role: "Finances" },
   ],
   decision: [
     { code: "CEOB", name: "CarlOS", role: "Arbitre" },
-    { code: "CFOB", name: "François", role: "Finances" },
+    { code: "CFOB", name: "Frank", role: "Finances" },
     { code: "CSOB", name: "Simon", role: "Stratégie" },
   ],
   strategie: [
     { code: "CEOB", name: "CarlOS", role: "Stratège" },
     { code: "CSOB", name: "Simon", role: "Stratégie" },
-    { code: "CFOB", name: "François", role: "Finances" },
+    { code: "CFOB", name: "Frank", role: "Finances" },
   ],
   innovation: [
     { code: "CEOB", name: "CarlOS", role: "Disrupteur" },

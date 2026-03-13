@@ -26,7 +26,7 @@ import { useFrameMaster } from "../../context/FrameMasterContext";
 // PROTOCOLE: pour changer une image → modifier ICI + VideoCallWidget.tsx BOT_STANDBY + LiveChat.tsx BOT_COLORS + types.ts BOT_AVATAR
 const IMG_V = "?v=5";
 
-// Config avatar par bot — originaux circuits neuronaux (fev 25) + Sophie v2 validée
+// Config avatar par bot — originaux circuits neuronaux (fev 25) + Simone v2 validée
 const AVATAR_CONFIG: Record<string, {
   photo: string;
   standby: string;
@@ -37,16 +37,16 @@ const AVATAR_CONFIG: Record<string, {
   accentClass: string;
 }> = {
   CEOB: { photo: `/agents/generated/ceo-carlos-profil-v3.png${IMG_V}`, standby: `/agents/generated/ceo-carlos-standby-v3.png${IMG_V}`, name: "CarlOS", role: "CEO", color: "blue", glowColor: "rgba(59, 130, 246, 0.6)", accentClass: "from-blue-600/30" },
-  CTOB: { photo: `/agents/generated/cto-thierry-profil-v3.png${IMG_V}`, standby: `/agents/generated/cto-thierry-standby-v3.png${IMG_V}`, name: "Thierry", role: "CTO", color: "violet", glowColor: "rgba(139, 92, 246, 0.6)", accentClass: "from-violet-600/30" },
-  CFOB: { photo: `/agents/generated/cfo-francois-profil-v3.png${IMG_V}`, standby: `/agents/generated/cfo-francois-standby-v3.png${IMG_V}`, name: "François", role: "CFO", color: "emerald", glowColor: "rgba(16, 185, 129, 0.6)", accentClass: "from-emerald-600/30" },
-  CMOB: { photo: `/agents/generated/cmo-martine-profil-v3.png${IMG_V}`, standby: `/agents/generated/cmo-martine-standby-v3.png${IMG_V}`, name: "Martine", role: "CMO", color: "pink", glowColor: "rgba(236, 72, 153, 0.6)", accentClass: "from-pink-600/30" },
-  CSOB: { photo: `/agents/generated/cso-sophie-profil-v3.png${IMG_V}`, standby: `/agents/generated/cso-sophie-standby-v3.png${IMG_V}`, name: "Sophie", role: "CSO", color: "red", glowColor: "rgba(239, 68, 68, 0.6)", accentClass: "from-red-600/30" },
+  CTOB: { photo: `/agents/generated/cto-thierry-profil-v3.png${IMG_V}`, standby: `/agents/generated/cto-thierry-standby-v3.png${IMG_V}`, name: "Tim", role: "CTO", color: "violet", glowColor: "rgba(139, 92, 246, 0.6)", accentClass: "from-violet-600/30" },
+  CFOB: { photo: `/agents/generated/cfo-francois-profil-v3.png${IMG_V}`, standby: `/agents/generated/cfo-francois-standby-v3.png${IMG_V}`, name: "Frank", role: "CFO", color: "emerald", glowColor: "rgba(16, 185, 129, 0.6)", accentClass: "from-emerald-600/30" },
+  CMOB: { photo: `/agents/generated/cmo-martine-profil-v3.png${IMG_V}`, standby: `/agents/generated/cmo-martine-standby-v3.png${IMG_V}`, name: "Mathilde", role: "CMO", color: "pink", glowColor: "rgba(236, 72, 153, 0.6)", accentClass: "from-pink-600/30" },
+  CSOB: { photo: `/agents/generated/cso-sophie-profil-v3.png${IMG_V}`, standby: `/agents/generated/cso-sophie-standby-v3.png${IMG_V}`, name: "Simone", role: "CSO", color: "red", glowColor: "rgba(239, 68, 68, 0.6)", accentClass: "from-red-600/30" },
   COOB: { photo: `/agents/generated/coo-olivier-profil-v3.png${IMG_V}`, standby: `/agents/generated/coo-olivier-standby-v3.png${IMG_V}`, name: "Olivier", role: "COO", color: "orange", glowColor: "rgba(249, 115, 22, 0.6)", accentClass: "from-orange-600/30" },
-  CPOB: { photo: `/agents/generated/factory-bot-profil-v3.png${IMG_V}`, standby: `/agents/generated/factory-bot-standby-v3.png${IMG_V}`, name: "Fabien", role: "CPO", color: "slate", glowColor: "rgba(100, 116, 139, 0.6)", accentClass: "from-slate-600/30" },
+  CPOB: { photo: `/agents/generated/factory-bot-profil-v3.png${IMG_V}`, standby: `/agents/generated/factory-bot-standby-v3.png${IMG_V}`, name: "Paco", role: "CPO", color: "slate", glowColor: "rgba(100, 116, 139, 0.6)", accentClass: "from-slate-600/30" },
   CHROB: { photo: `/agents/generated/chro-helene-profil-v3.png${IMG_V}`, standby: `/agents/generated/chro-helene-standby-v3.png${IMG_V}`, name: "Hélène", role: "CHRO", color: "teal", glowColor: "rgba(20, 184, 166, 0.6)", accentClass: "from-teal-600/30" },
   CINOB: { photo: `/agents/generated/cino-ines-profil-v3.png${IMG_V}`, standby: `/agents/generated/cino-ines-standby-v3.png${IMG_V}`, name: "Inès", role: "CINO", color: "rose", glowColor: "rgba(244, 63, 94, 0.6)", accentClass: "from-rose-600/30" },
-  CROB: { photo: `/agents/generated/cro-raphael-profil-v3.png${IMG_V}`, standby: `/agents/generated/cro-raphael-standby-v3.png${IMG_V}`, name: "Raphaël", role: "CRO", color: "amber", glowColor: "rgba(245, 158, 11, 0.6)", accentClass: "from-amber-600/30" },
-  CLOB: { photo: `/agents/generated/clo-louise-profil-v3.png${IMG_V}`, standby: `/agents/generated/clo-louise-standby-v3.png${IMG_V}`, name: "Louise", role: "CLO", color: "indigo", glowColor: "rgba(99, 102, 241, 0.6)", accentClass: "from-indigo-600/30" },
+  CROB: { photo: `/agents/generated/cro-raphael-profil-v3.png${IMG_V}`, standby: `/agents/generated/cro-raphael-standby-v3.png${IMG_V}`, name: "Rich", role: "CRO", color: "amber", glowColor: "rgba(245, 158, 11, 0.6)", accentClass: "from-amber-600/30" },
+  CLOB: { photo: `/agents/generated/clo-louise-profil-v3.png${IMG_V}`, standby: `/agents/generated/clo-louise-standby-v3.png${IMG_V}`, name: "Loulou", role: "CLO", color: "indigo", glowColor: "rgba(99, 102, 241, 0.6)", accentClass: "from-indigo-600/30" },
   CISOB: { photo: `/agents/generated/ciso-secbot-profil-v3.png${IMG_V}`, standby: `/agents/generated/ciso-secbot-standby-v3.png${IMG_V}`, name: "Sébastien", role: "CISO", color: "zinc", glowColor: "rgba(113, 113, 122, 0.6)", accentClass: "from-zinc-600/30" },
 };
 

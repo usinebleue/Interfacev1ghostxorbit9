@@ -16,15 +16,15 @@ import { PageHeader } from "./layouts/PageHeader";
 // Map bot code → emoji + name (miroir de LiveChat BOT_COLORS)
 const BOT_META: Record<string, { emoji: string; name: string; color: string }> = {
   CEOB: { emoji: "👔", name: "CarlOS",    color: "text-blue-700 bg-blue-50 border-blue-200" },
-  CTOB: { emoji: "💻", name: "Thierry",   color: "text-violet-700 bg-violet-50 border-violet-200" },
-  CFOB: { emoji: "💰", name: "François",  color: "text-emerald-700 bg-emerald-50 border-emerald-200" },
-  CMOB: { emoji: "📣", name: "Martine",   color: "text-pink-700 bg-pink-50 border-pink-200" },
-  CSOB: { emoji: "🎯", name: "Sophie",    color: "text-red-700 bg-red-50 border-red-200" },
+  CTOB: { emoji: "💻", name: "Tim",       color: "text-violet-700 bg-violet-50 border-violet-200" },
+  CFOB: { emoji: "💰", name: "Frank",     color: "text-emerald-700 bg-emerald-50 border-emerald-200" },
+  CMOB: { emoji: "📣", name: "Mathilde",  color: "text-pink-700 bg-pink-50 border-pink-200" },
+  CSOB: { emoji: "🎯", name: "Simone",    color: "text-red-700 bg-red-50 border-red-200" },
   COOB: { emoji: "⚙️", name: "Olivier",   color: "text-orange-700 bg-orange-50 border-orange-200" },
-  CROB: { emoji: "📈", name: "Raphaël",   color: "text-cyan-700 bg-cyan-50 border-cyan-200" },
+  CROB: { emoji: "📈", name: "Rich",      color: "text-cyan-700 bg-cyan-50 border-cyan-200" },
   CHROB: { emoji: "👥", name: "Hélène",    color: "text-indigo-700 bg-indigo-50 border-indigo-200" },
   CISOB: { emoji: "🛡️", name: "Sécurité",  color: "text-gray-700 bg-gray-50 border-gray-200" },
-  CLOB: { emoji: "⚖️", name: "Louise",    color: "text-yellow-700 bg-yellow-50 border-yellow-200" },
+  CLOB: { emoji: "⚖️", name: "Loulou",    color: "text-yellow-700 bg-yellow-50 border-yellow-200" },
 };
 
 function formatRelativeTime(dateStr: string): string {

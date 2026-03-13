@@ -39,16 +39,16 @@ const BOT_PIXEL_CONFIG: Record<string, {
   shortHair?: boolean;
 }> = {
   CEOB: { name: "Carlos", primary: "#3B82F6", secondary: "#1D4ED8", skin: "#D4A574", hair: "#2C2C2C", accent: "#60A5FA", hasBeard: true, shortHair: true },
-  CTOB: { name: "Thierry", primary: "#8B5CF6", secondary: "#6D28D9", skin: "#D4A574", hair: "#2C2C2C", accent: "#A78BFA", hasGlasses: true, shortHair: true },
-  CFOB: { name: "Francois", primary: "#10B981", secondary: "#047857", skin: "#D4A574", hair: "#4A3728", accent: "#34D399", shortHair: true },
-  CMOB: { name: "Martine", primary: "#EC4899", secondary: "#BE185D", skin: "#E8C4A0", hair: "#B8432F", accent: "#F472B6" },
-  CSOB: { name: "Sophie", primary: "#F59E0B", secondary: "#D97706", skin: "#E8C4A0", hair: "#1A1A1A", accent: "#FBBF24" },
+  CTOB: { name: "Tim", primary: "#8B5CF6", secondary: "#6D28D9", skin: "#D4A574", hair: "#2C2C2C", accent: "#A78BFA", hasGlasses: true, shortHair: true },
+  CFOB: { name: "Frank", primary: "#10B981", secondary: "#047857", skin: "#D4A574", hair: "#4A3728", accent: "#34D399", shortHair: true },
+  CMOB: { name: "Mathilde", primary: "#EC4899", secondary: "#BE185D", skin: "#E8C4A0", hair: "#B8432F", accent: "#F472B6" },
+  CSOB: { name: "Simone", primary: "#F59E0B", secondary: "#D97706", skin: "#E8C4A0", hair: "#1A1A1A", accent: "#FBBF24" },
   COOB: { name: "Olivier", primary: "#EF4444", secondary: "#B91C1C", skin: "#D4A574", hair: "#3D2B1F", accent: "#F87171", shortHair: true },
-  CPOB: { name: "Fabien", primary: "#06B6D4", secondary: "#0891B2", skin: "#D4A574", hair: "#2C2C2C", accent: "#22D3EE", shortHair: true },
+  CPOB: { name: "Paco", primary: "#06B6D4", secondary: "#0891B2", skin: "#D4A574", hair: "#2C2C2C", accent: "#22D3EE", shortHair: true },
   CHROB: { name: "Helene", primary: "#F97316", secondary: "#C2410C", skin: "#E8C4A0", hair: "#8B4513", accent: "#FB923C" },
   CINOB: { name: "Ines", primary: "#14B8A6", secondary: "#0D9488", skin: "#C68E5B", hair: "#1A1A1A", accent: "#2DD4BF" },
-  CROB: { name: "Raphael", primary: "#6366F1", secondary: "#4338CA", skin: "#D4A574", hair: "#2C2C2C", accent: "#818CF8", shortHair: true },
-  CLOB: { name: "Louise", primary: "#A855F7", secondary: "#7C3AED", skin: "#E8C4A0", hair: "#4A3728", accent: "#C084FC" },
+  CROB: { name: "Rich", primary: "#6366F1", secondary: "#4338CA", skin: "#D4A574", hair: "#2C2C2C", accent: "#818CF8", shortHair: true },
+  CLOB: { name: "Loulou", primary: "#A855F7", secondary: "#7C3AED", skin: "#E8C4A0", hair: "#4A3728", accent: "#C084FC" },
   CISOB: { name: "Sebastien", primary: "#64748B", secondary: "#475569", skin: "#D4A574", hair: "#1A1A1A", accent: "#94A3B8", hasGlasses: true, shortHair: true },
 };
 
@@ -151,7 +151,7 @@ function drawPixelAgent(
     fillH(4.5 + pupilOff, 2.2, 0.35, 0.35, "#1A1A1A");
   }
 
-  // ═══ GLASSES (Thierry, Sebastien) ═══
+  // ═══ GLASSES (Tim, Sebastien) ═══
   if (config.hasGlasses) {
     ctx.strokeStyle = accent;
     ctx.lineWidth = px * 0.15;

@@ -192,16 +192,16 @@ const BOT_COLORS: Record<string, {
   ring: string; emoji: string; name: string; role: string; avatar: string;
 }> = {
   CEOB: { bg: "bg-blue-600", bgLight: "bg-blue-50", text: "text-blue-700", border: "border-blue-400", ring: "ring-blue-300", emoji: "\u{1F454}", name: "CarlOS", role: "CEO", avatar: "/agents/generated/ceo-carlos-profil-v3.png" },
-  CTOB: { bg: "bg-violet-600", bgLight: "bg-violet-50", text: "text-violet-700", border: "border-violet-400", ring: "ring-violet-300", emoji: "\u{1F4BB}", name: "Thierry", role: "CTO", avatar: "/agents/generated/cto-thierry-profil-v3.png" },
-  CFOB: { bg: "bg-emerald-600", bgLight: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-400", ring: "ring-emerald-300", emoji: "\u{1F4B0}", name: "Fran\u00E7ois", role: "CFO", avatar: "/agents/generated/cfo-francois-profil-v3.png" },
-  CMOB: { bg: "bg-pink-600", bgLight: "bg-pink-50", text: "text-pink-700", border: "border-pink-400", ring: "ring-pink-300", emoji: "\u{1F4E3}", name: "Martine", role: "CMO", avatar: "/agents/generated/cmo-martine-profil-v3.png" },
-  CSOB: { bg: "bg-red-600", bgLight: "bg-red-50", text: "text-red-700", border: "border-red-400", ring: "ring-red-300", emoji: "\u{1F3AF}", name: "Sophie", role: "CSO", avatar: "/agents/generated/cso-sophie-profil-v3.png" },
+  CTOB: { bg: "bg-violet-600", bgLight: "bg-violet-50", text: "text-violet-700", border: "border-violet-400", ring: "ring-violet-300", emoji: "\u{1F4BB}", name: "Tim", role: "CTO", avatar: "/agents/generated/cto-thierry-profil-v3.png" },
+  CFOB: { bg: "bg-emerald-600", bgLight: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-400", ring: "ring-emerald-300", emoji: "\u{1F4B0}", name: "Frank", role: "CFO", avatar: "/agents/generated/cfo-francois-profil-v3.png" },
+  CMOB: { bg: "bg-pink-600", bgLight: "bg-pink-50", text: "text-pink-700", border: "border-pink-400", ring: "ring-pink-300", emoji: "\u{1F4E3}", name: "Mathilde", role: "CMO", avatar: "/agents/generated/cmo-martine-profil-v3.png" },
+  CSOB: { bg: "bg-red-600", bgLight: "bg-red-50", text: "text-red-700", border: "border-red-400", ring: "ring-red-300", emoji: "\u{1F3AF}", name: "Simone", role: "CSO", avatar: "/agents/generated/cso-sophie-profil-v3.png" },
   COOB: { bg: "bg-orange-600", bgLight: "bg-orange-50", text: "text-orange-700", border: "border-orange-400", ring: "ring-orange-300", emoji: "\u{2699}\u{FE0F}", name: "Olivier", role: "COO", avatar: "/agents/generated/coo-olivier-profil-v3.png" },
-  CPOB: { bg: "bg-slate-600", bgLight: "bg-slate-50", text: "text-slate-700", border: "border-slate-400", ring: "ring-slate-300", emoji: "\u{1F3ED}", name: "Fabien", role: "CPO", avatar: "/agents/generated/factory-bot-profil-v3.png" },
+  CPOB: { bg: "bg-slate-600", bgLight: "bg-slate-50", text: "text-slate-700", border: "border-slate-400", ring: "ring-slate-300", emoji: "\u{1F3ED}", name: "Paco", role: "CPO", avatar: "/agents/generated/factory-bot-profil-v3.png" },
   CHROB: { bg: "bg-teal-600", bgLight: "bg-teal-50", text: "text-teal-700", border: "border-teal-400", ring: "ring-teal-300", emoji: "\u{1F91D}", name: "H\u00E9l\u00E8ne", role: "CHRO", avatar: "/agents/generated/chro-helene-profil-v3.png" },
   CINOB: { bg: "bg-rose-600", bgLight: "bg-rose-50", text: "text-rose-700", border: "border-rose-400", ring: "ring-rose-300", emoji: "\u{1F4CA}", name: "Inès", role: "CINO", avatar: "/agents/generated/cino-ines-profil-v3.png" },
-  CROB: { bg: "bg-amber-600", bgLight: "bg-amber-50", text: "text-amber-700", border: "border-amber-400", ring: "ring-amber-300", emoji: "\u{1F4C8}", name: "Rapha\u00EBl", role: "CRO", avatar: "/agents/generated/cro-raphael-profil-v3.png" },
-  CLOB: { bg: "bg-indigo-600", bgLight: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-400", ring: "ring-indigo-300", emoji: "\u{2696}\u{FE0F}", name: "Louise", role: "CLO", avatar: "/agents/generated/clo-louise-profil-v3.png" },
+  CROB: { bg: "bg-amber-600", bgLight: "bg-amber-50", text: "text-amber-700", border: "border-amber-400", ring: "ring-amber-300", emoji: "\u{1F4C8}", name: "Rich", role: "CRO", avatar: "/agents/generated/cro-raphael-profil-v3.png" },
+  CLOB: { bg: "bg-indigo-600", bgLight: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-400", ring: "ring-indigo-300", emoji: "\u{2696}\u{FE0F}", name: "Loulou", role: "CLO", avatar: "/agents/generated/clo-louise-profil-v3.png" },
   CISOB: { bg: "bg-zinc-700", bgLight: "bg-zinc-50", text: "text-zinc-700", border: "border-zinc-400", ring: "ring-zinc-300", emoji: "\u{1F6E1}\u{FE0F}", name: "Sébastien", role: "CISO", avatar: "/agents/generated/ciso-secbot-profil-v3.png" },
 };
 
