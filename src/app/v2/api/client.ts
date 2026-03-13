@@ -1251,6 +1251,20 @@ export const api = {
     return res.json();
   },
 
+  async pulse(): Promise<{ items: { id: string; message: string; type: string; source: string; time: string }[]; total: number }> {
+    const res = await apiFetch("/pulse");
+    return res.json();
+  },
+
+  async onboardingSave(data: { step: string; responses: Record<string, string> }): Promise<{ status: string }> {
+    const res = await apiFetch("/onboarding", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: 1, ...data }),
+    });
+    return res.json();
+  },
+
   // ── Diagnostic IA ──
 
   async diagnosticIACreate(data: Record<string, unknown>): Promise<{ id: number; status: string }> {

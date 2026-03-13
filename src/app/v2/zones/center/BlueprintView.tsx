@@ -75,10 +75,10 @@ const STAGE_LABELS: Record<string, { label: string; progress: number }> = {
 
 const CLEVEL_BOTS = [
   { code: "CEOB", nom: "CarlOS", role: "CEO", dept: "Direction" },
-  { code: "CTOB", nom: "Thierry", role: "CTO", dept: "Technologie" },
-  { code: "CFOB", nom: "Francois", role: "CFO", dept: "Finance" },
-  { code: "CMOB", nom: "Martine", role: "CMO", dept: "Marketing" },
-  { code: "CSOB", nom: "Sophie", role: "CSO", dept: "Strategie" },
+  { code: "CTOB", nom: "Tim", role: "CTO", dept: "Technologie" },
+  { code: "CFOB", nom: "Frank", role: "CFO", dept: "Finance" },
+  { code: "CMOB", nom: "Mathilde", role: "CMO", dept: "Marketing" },
+  { code: "CSOB", nom: "Simone", role: "CSO", dept: "Strategie" },
   { code: "COOB", nom: "Olivier", role: "COO", dept: "Operations" },
 ];
 
@@ -201,7 +201,7 @@ function TabOverview({ goTo, stats, onDeploy }: {
               </div>
               <div className="p-2 space-y-1.5">
                 {urgentTaches.length === 0 ? (
-                  <p className="text-[9px] text-gray-400 italic">Aucune tache urgente</p>
+                  <p className="text-[9px] text-gray-400 italic">Aucune tache urgente — tout roule!</p>
                 ) : (
                   urgentTaches.slice(0, 3).map((t, i) => (
                     <div key={i} className="flex items-start gap-1.5">
@@ -223,9 +223,9 @@ function TabOverview({ goTo, stats, onDeploy }: {
               </div>
               <div className="p-2 space-y-1.5">
                 {[
-                  { primary: "A connecter", sub: "Calendar / Plane.so" },
-                  { primary: "Prochaine reunion", sub: "A configurer" },
-                  { primary: "Echeances", sub: "A connecter" },
+                  { primary: "Pas de reunion prevue", sub: "Planifiez dans Mon Bureau" },
+                  { primary: "Prochaine echeance", sub: "Aucune — creez un chantier" },
+                  { primary: "Rappels", sub: "Actifs apres vos premieres missions" },
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-1.5">
                     <span className="w-1 h-1 rounded-full bg-cyan-400 mt-1 shrink-0" />
@@ -305,7 +305,7 @@ function TabOverview({ goTo, stats, onDeploy }: {
               </div>
               <div className="p-2 space-y-1.5">
                 {pendingDecisions.length === 0 ? (
-                  <p className="text-[9px] text-gray-400 italic">Aucune decision recente</p>
+                  <p className="text-[9px] text-gray-400 italic">Parlez a CarlOS pour capturer vos decisions</p>
                 ) : (
                   pendingDecisions.slice(0, 3).map((d, i) => (
                     <div key={i} className="flex items-start gap-1.5">
@@ -345,7 +345,7 @@ function TabOverview({ goTo, stats, onDeploy }: {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 opacity-70">
           {/* Bots COMMAND Status */}
           <Card className="p-0 overflow-hidden border border-gray-100 shadow-sm">
-            <div className="px-4 py-2 bg-gradient-to-r from-violet-700 to-violet-600 flex items-center gap-2">
+            <div className="px-3 py-2.5 bg-gradient-to-r from-violet-700 to-violet-600 flex items-center gap-2">
               <Bot className="h-4 w-4 text-white" />
               <span className="text-sm font-bold text-white">Equipe C-Level</span>
               {loadingCommand && <Loader2 className="h-3.5 w-3.5 animate-spin text-white/50 ml-auto" />}
@@ -375,7 +375,7 @@ function TabOverview({ goTo, stats, onDeploy }: {
 
           {/* Playbooks Populaires */}
           <Card className="p-0 overflow-hidden border border-gray-100 shadow-sm">
-            <div className="px-4 py-2 bg-gradient-to-r from-amber-600 to-amber-500 flex items-center gap-2">
+            <div className="px-3 py-2.5 bg-gradient-to-r from-amber-600 to-amber-500 flex items-center gap-2">
               <BookOpen className="h-4 w-4 text-white" />
               <span className="text-sm font-bold text-white">Playbooks Populaires</span>
             </div>
@@ -388,7 +388,7 @@ function TabOverview({ goTo, stats, onDeploy }: {
 
           {/* Flow CREDO → Blueprint */}
           <Card className="p-0 overflow-hidden border border-gray-100 shadow-sm">
-            <div className="px-4 py-2 bg-gradient-to-r from-blue-700 to-blue-600 flex items-center gap-2">
+            <div className="px-3 py-2.5 bg-gradient-to-r from-blue-700 to-blue-600 flex items-center gap-2">
               <Route className="h-4 w-4 text-white" />
               <span className="text-sm font-bold text-white">Flow CREDO</span>
             </div>
@@ -434,7 +434,7 @@ function TabTimeline() {
       <p className="text-xs text-gray-500">5 phases, 13 chantiers, de fondations a ecosysteme.</p>
       {phases.map((p, i) => (
         <Card key={p.phase} className="p-0 overflow-hidden border shadow-sm">
-          <div className={cn("px-4 py-2.5 flex items-center gap-2 border-b bg-gradient-to-r", `from-${p.color}-600 to-${p.color}-500`)}>
+          <div className={cn("px-3 py-2.5 flex items-center gap-2 border-b bg-gradient-to-r", `from-${p.color}-600 to-${p.color}-500`)}>
             <span className="text-sm font-bold text-white">{p.phase}</span>
             <span className="text-xs text-white/80">— {p.label}</span>
             <span className="ml-auto text-[9px] px-2 py-0.5 rounded-full font-medium bg-white/90 text-gray-700">{p.timing}</span>
@@ -480,7 +480,7 @@ function TabEquipe() {
         const Icon = m.icon;
         return (
           <Card key={m.role} className="p-0 overflow-hidden border shadow-sm">
-            <div className={cn("px-4 py-2.5 flex items-center gap-2 border-b bg-gradient-to-r", `from-${m.color}-600 to-${m.color}-500`)}>
+            <div className={cn("px-3 py-2.5 flex items-center gap-2 border-b bg-gradient-to-r", `from-${m.color}-600 to-${m.color}-500`)}>
               <Icon className="h-4 w-4 text-white" />
               <span className="text-sm font-bold text-white">{m.role}</span>
               <span className="ml-auto text-[9px] px-2 py-0.5 rounded-full font-medium bg-white/90 text-gray-700">{m.code}</span>
@@ -881,7 +881,7 @@ function HierarchieTab({
       {/* ═══ Section header (direct navigation — no drill-down) ═══ */}
       {!parentFilter && (
         <div className={cn("rounded-lg overflow-hidden border shadow-sm")}>
-          <div className={cn("px-4 py-2.5 flex items-center gap-3 bg-gradient-to-r", gradients[level])}>
+          <div className={cn("px-3 py-2.5 flex items-center gap-3 bg-gradient-to-r", gradients[level])}>
             <LevelIcon className="h-3.5 w-3.5 text-white shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-xs font-bold text-white capitalize">{levelLabels[level]}</p>
@@ -900,7 +900,7 @@ function HierarchieTab({
         const pLabel = parentLevelLabels[parentFilter.type] || "";
         return (
           <div className={cn("rounded-lg overflow-hidden border shadow-sm")}>
-            <div className={cn("px-4 py-2.5 flex items-center gap-3 bg-gradient-to-r", pGrad)}>
+            <div className={cn("px-3 py-2.5 flex items-center gap-3 bg-gradient-to-r", pGrad)}>
               <button
                 onClick={() => {
                   if (level === "projets") goTo("chantiers");
@@ -1065,7 +1065,7 @@ function HierarchieTab({
             return (
               <div key={gi}>
                 {/* Group section header — PROMINENT */}
-                <div className={cn("px-4 py-2.5 rounded-t-lg flex items-center gap-3 bg-gradient-to-r border border-b-0 border-gray-200", gGrad)}>
+                <div className={cn("px-3 py-2.5 rounded-t-lg flex items-center gap-3 bg-gradient-to-r border border-b-0 border-gray-200", gGrad)}>
                   <GroupParentIcon className={cn("h-4 w-4 shrink-0", gIcon)} />
                   <span className={cn("text-sm font-bold flex-1 truncate", gText)}>
                     {group.parentTitre}
@@ -1275,7 +1275,7 @@ function TabSommaire() {
     <div className="space-y-4">
       {/* CarlOS Balayeuse — 3 canaux d'alimentation */}
       <Card className="p-0 overflow-hidden">
-        <div className="bg-gradient-to-r from-gray-900 to-gray-800 px-4 py-2.5 flex items-center gap-2">
+        <div className="bg-gradient-to-r from-gray-900 to-gray-800 px-3 py-2.5 flex items-center gap-2">
           <Wand2 className="h-3.5 w-3.5 text-blue-400" />
           <span className="text-xs font-bold text-white">CarlOS Balayeuse</span>
           <span className="text-[9px] px-2 py-0.5 rounded-full bg-blue-500/30 text-blue-300">3 canaux d'alimentation</span>
@@ -1338,7 +1338,7 @@ function TabSommaire() {
 
       {/* IDENTITE */}
       <Card className="p-0 overflow-hidden">
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 flex items-center gap-2">
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-2.5 flex items-center gap-2">
           <Building2 className="h-3.5 w-3.5 text-white" />
           <span className="text-xs font-bold text-white">Identite de l'entreprise</span>
         </div>
@@ -1398,7 +1398,7 @@ function TabSommaire() {
 
       {/* MVV — Mission, Vision, Valeurs */}
       <Card className="p-0 overflow-hidden">
-        <div className="bg-gradient-to-r from-violet-600 to-purple-600 px-4 py-2.5 flex items-center gap-2">
+        <div className="bg-gradient-to-r from-violet-600 to-purple-600 px-3 py-2.5 flex items-center gap-2">
           <Target className="h-3.5 w-3.5 text-white" />
           <span className="text-xs font-bold text-white">Mission, Vision, Valeurs</span>
         </div>
@@ -1420,7 +1420,7 @@ function TabSommaire() {
 
       {/* SWOT — 4 quadrants */}
       <Card className="p-0 overflow-hidden">
-        <div className="bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2.5 flex items-center gap-2">
+        <div className="bg-gradient-to-r from-emerald-600 to-teal-600 px-3 py-2.5 flex items-center gap-2">
           <LayoutGrid className="h-3.5 w-3.5 text-white" />
           <span className="text-xs font-bold text-white">Analyse SWOT</span>
           <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/20 text-white">4 quadrants</span>
@@ -1466,7 +1466,7 @@ function TabSommaire() {
       {/* VITAA Scores (lecture seule — alimentés par diagnostics) */}
       {profil && (profil.score_vente > 0 || profil.score_idee > 0) && (
         <Card className="p-0 overflow-hidden">
-          <div className="bg-gradient-to-r from-gray-800 to-gray-700 px-4 py-2.5 flex items-center gap-2">
+          <div className="bg-gradient-to-r from-gray-800 to-gray-700 px-3 py-2.5 flex items-center gap-2">
             <BarChart3 className="h-3.5 w-3.5 text-white" />
             <span className="text-xs font-bold text-white">Scores VITAA</span>
             <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/20 text-white">auto — depuis diagnostics</span>
@@ -1628,7 +1628,7 @@ function TabObjectifs() {
 
       {/* ═══ BUSINESS MODEL CANVAS — 9 blocs ═══ */}
       <Card className="p-0 overflow-hidden">
-        <div className="bg-gradient-to-r from-indigo-600 to-blue-600 px-4 py-2.5 flex items-center gap-2">
+        <div className="bg-gradient-to-r from-indigo-600 to-blue-600 px-3 py-2.5 flex items-center gap-2">
           <LayoutGrid className="h-3.5 w-3.5 text-white" />
           <span className="text-xs font-bold text-white">Business Model Canvas</span>
           <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/20 text-white">9 blocs</span>
@@ -1724,7 +1724,7 @@ function TabObjectifs() {
 
       {/* ═══ OBJECTIFS STRATEGIQUES PAR PILIER VITAA ═══ */}
       <Card className="p-0 overflow-hidden">
-        <div className="bg-gradient-to-r from-gray-800 to-gray-700 px-4 py-2.5 flex items-center gap-2">
+        <div className="bg-gradient-to-r from-gray-800 to-gray-700 px-3 py-2.5 flex items-center gap-2">
           <Target className="h-3.5 w-3.5 text-white" />
           <span className="text-xs font-bold text-white">Objectifs strategiques VITAA</span>
           <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/20 text-white">5 piliers</span>
@@ -1789,7 +1789,7 @@ function TabObjectifs() {
 
       {/* ═══ HORIZONS — Court / Moyen / Long terme ═══ */}
       <Card className="p-0 overflow-hidden">
-        <div className="bg-gradient-to-r from-teal-600 to-cyan-600 px-4 py-2.5 flex items-center gap-2">
+        <div className="bg-gradient-to-r from-teal-600 to-cyan-600 px-3 py-2.5 flex items-center gap-2">
           <Route className="h-3.5 w-3.5 text-white" />
           <span className="text-xs font-bold text-white">Horizons strategiques</span>
         </div>
@@ -1811,7 +1811,7 @@ function TabObjectifs() {
 
       {/* ═══ AVANTAGES CONCURRENTIELS ═══ */}
       <Card className="p-0 overflow-hidden">
-        <div className="bg-gradient-to-r from-amber-600 to-orange-600 px-4 py-2.5 flex items-center gap-2">
+        <div className="bg-gradient-to-r from-amber-600 to-orange-600 px-3 py-2.5 flex items-center gap-2">
           <Zap className="h-3.5 w-3.5 text-white" />
           <span className="text-xs font-bold text-white">Avantages concurrentiels</span>
         </div>
@@ -1824,7 +1824,7 @@ function TabObjectifs() {
 
       {/* ═══ MODELE DE REVENUS ═══ */}
       <Card className="p-0 overflow-hidden">
-        <div className="bg-gradient-to-r from-emerald-600 to-green-600 px-4 py-2.5 flex items-center gap-2">
+        <div className="bg-gradient-to-r from-emerald-600 to-green-600 px-3 py-2.5 flex items-center gap-2">
           <DollarSign className="h-3.5 w-3.5 text-white" />
           <span className="text-xs font-bold text-white">Modele de revenus</span>
         </div>

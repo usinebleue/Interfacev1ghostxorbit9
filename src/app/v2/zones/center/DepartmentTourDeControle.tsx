@@ -29,11 +29,9 @@ function BlockHeader({ icon: Icon, title, count, gradient }: {
   gradient: string;
 }) {
   return (
-    <div className={cn("flex items-center gap-2.5 -mx-4 -mt-4 mb-3 px-4 py-2.5", gradient)}>
-      <div className="w-7 h-7 bg-white/20 rounded-lg flex items-center justify-center">
-        <Icon className="h-3.5 w-3.5 text-white" />
-      </div>
-      <h3 className="text-xs font-bold uppercase tracking-wider text-white flex-1">{title}</h3>
+    <div className={cn("flex items-center gap-2 px-3 py-2.5", gradient)}>
+      <Icon className="h-4 w-4 text-white" />
+      <h3 className="text-sm font-bold text-white flex-1">{title}</h3>
       {count !== undefined && (
         <span className="text-xs font-bold bg-white/25 text-white px-2 py-0.5 rounded-full">{count}</span>
       )}
@@ -62,9 +60,9 @@ interface BlocConfig {
 
 function Bloc({ config, onClick }: { config: BlocConfig; onClick?: () => void }) {
   return (
-    <Card className={cn("p-4 overflow-hidden transition-shadow", onClick ? "cursor-pointer hover:ring-2 " + config.ringColor : "")} onClick={onClick}>
+    <Card className={cn("p-0 overflow-hidden rounded-xl shadow-sm transition-shadow", onClick ? "cursor-pointer hover:shadow-md" : "")} onClick={onClick}>
       <BlockHeader icon={config.icon} title={config.title} count={config.count} gradient={config.gradient} />
-      <ul className="space-y-2.5">
+      <ul className="px-3 py-3 space-y-2.5">
         {config.items.map((item, i) => (
           <li key={i} className="text-xs text-gray-800">
             {item.pct !== undefined ? (
@@ -825,47 +823,47 @@ const DEPT_TDC: Record<string, DeptTdcConfig> = {
     ],
   },
 
-  /* --- TACTIQUE (CEOB) — VIDE (a connecter aux vrais KPIs) --- */
+  /* --- TACTIQUE (CEOB) --- */
   CEOB: {
     botName: "CarlOS — Tactique",
-    summary: "CEO Bot — Chef d'orchestre de la GhostX Team. Les donnees s'afficheront ici quand les KPIs seront connectes.",
+    summary: "CEO Bot — Chef d'orchestre de la GhostX Team. Consultez CarlOS pour activer vos KPIs.",
     row1: [
       { icon: Zap, title: "Pilotage Strategique", gradient: "bg-gradient-to-r from-blue-700 to-blue-600", ringColor: "hover:ring-blue-300", items: [
-        { primary: "Decisions actives", value: "—", secondary: "A connecter au Decision Log" },
-        { primary: "Chantiers", value: "—", secondary: "A connecter au Strategique" },
-        { primary: "Bots actifs", value: "—", secondary: "A connecter" },
+        { primary: "Decisions actives", value: "0", secondary: "Parlez a CarlOS pour decider" },
+        { primary: "Chantiers en cours", value: "0", secondary: "Creez un chantier pour commencer" },
+        { primary: "Bots actifs", value: "12", valueColor: "text-blue-600", secondary: "Ghost Team complete" },
       ]},
       { icon: Target, title: "Objectifs CEO", gradient: "bg-gradient-to-r from-blue-600 to-blue-500", ringColor: "hover:ring-blue-300", items: [
-        { primary: "Vision & roadmap", secondary: "A definir" },
-        { primary: "Objectif Q2", secondary: "A definir" },
-        { primary: "Objectif Q3", secondary: "A definir" },
+        { primary: "Vision & roadmap", secondary: "Discutez avec CarlOS" },
+        { primary: "Objectif trimestre", secondary: "Lancez un diagnostic VITAA" },
+        { primary: "Prochaine etape", secondary: "Completez votre profil" },
       ]},
       { icon: Shield, title: "Gouvernance", gradient: "bg-gradient-to-r from-blue-500 to-indigo-500", ringColor: "hover:ring-indigo-300", items: [
-        { primary: "Protocoles actifs", value: "—", secondary: "A connecter" },
-        { primary: "Conformite", value: "—", secondary: "A connecter" },
-        { primary: "Decisions en attente", value: "—", secondary: "A connecter" },
+        { primary: "Protocole CREDO", value: "Actif", valueColor: "text-green-600", secondary: "5 phases operationnelles" },
+        { primary: "Protocole COMMAND", value: "Actif", valueColor: "text-green-600", secondary: "Multi-domaine" },
+        { primary: "Decision Log", value: "Pret", valueColor: "text-blue-600", secondary: "Capture automatique" },
       ]},
-      { icon: BarChart3, title: "KPIs Tactique", gradient: "bg-gradient-to-r from-indigo-600 to-indigo-500", ringColor: "hover:ring-indigo-300", items: [
-        { primary: "Revenus", value: "—", secondary: "A connecter" },
-        { primary: "Pipeline", value: "—", secondary: "A connecter" },
-        { primary: "Marge", value: "—", secondary: "A connecter" },
+      { icon: BarChart3, title: "KPIs Entreprise", gradient: "bg-gradient-to-r from-indigo-600 to-indigo-500", ringColor: "hover:ring-indigo-300", items: [
+        { primary: "Revenus", value: "—", secondary: "Lancez un diagnostic" },
+        { primary: "Pipeline ventes", value: "—", secondary: "Renseignez votre profil" },
+        { primary: "Marge brute", value: "—", secondary: "Completez le questionnaire" },
       ]},
       { icon: Globe, title: "Reseau & Expansion", gradient: "bg-gradient-to-r from-cyan-600 to-cyan-500", ringColor: "hover:ring-cyan-300", items: [
-        { primary: "Contacts reseau", value: "—", secondary: "A connecter a Orbit9" },
-        { primary: "Cellules actives", value: "—", secondary: "A connecter" },
-        { primary: "Opportunites", value: "—", secondary: "A connecter" },
+        { primary: "Contacts Orbit9", value: "0", secondary: "Explorez le reseau" },
+        { primary: "Cellules actives", value: "0", secondary: "Lancez un jumelage" },
+        { primary: "Opportunites", value: "0", secondary: "Le matching s'active avec le diagnostic" },
       ]},
     ],
     row2: [
       { icon: MessageSquare, title: "Communication", gradient: "bg-gradient-to-r from-blue-600 to-blue-500", ringColor: "hover:ring-blue-300", items: [
-        { primary: "Messages ce mois", value: "—", secondary: "A connecter" },
-        { primary: "Appels vocaux", value: "—", secondary: "A connecter" },
-        { primary: "Documents generes", value: "—", secondary: "A connecter" },
+        { primary: "Chat CarlOS", value: "Pret", valueColor: "text-green-600", secondary: "Texte + vocal + video" },
+        { primary: "Ghost Team", value: "12 bots", secondary: "Multi-perspectives actif" },
+        { primary: "Documents", value: "Pret", valueColor: "text-green-600", secondary: "Templates + generation AI" },
       ]},
       { icon: ClipboardList, title: "Missions", gradient: "bg-gradient-to-r from-violet-600 to-violet-500", ringColor: "hover:ring-violet-300", items: [
-        { primary: "Missions actives", value: "—", secondary: "A connecter au Pipeline" },
-        { primary: "Missions completees", value: "—", secondary: "A connecter" },
-        { primary: "Taches en cours", value: "—", secondary: "A connecter" },
+        { primary: "Missions actives", value: "0", secondary: "Creez depuis le Pipeline" },
+        { primary: "Missions completees", value: "0", secondary: "Suivez vos progres" },
+        { primary: "Taches en cours", value: "0", secondary: "Assignez a votre equipe" },
       ]},
       { icon: HeartPulse, title: "Sante", gradient: "bg-gradient-to-r from-rose-600 to-rose-500", ringColor: "hover:ring-rose-300", items: [
         { primary: "Score VITAA", value: "—", secondary: "Lancez un diagnostic" },
@@ -873,14 +871,14 @@ const DEPT_TDC: Record<string, DeptTdcConfig> = {
         { primary: "Derniere analyse", value: "—", secondary: "Aucune" },
       ]},
       { icon: Eye, title: "Veille", gradient: "bg-gradient-to-r from-amber-600 to-amber-500", ringColor: "hover:ring-amber-300", items: [
-        { primary: "Alertes", value: "—", secondary: "A connecter" },
-        { primary: "Veille concurrentielle", value: "—", secondary: "A connecter" },
-        { primary: "Tendances secteur", value: "—", secondary: "A connecter" },
+        { primary: "Alertes sectorielles", value: "0", secondary: "Actif apres le diagnostic" },
+        { primary: "Veille concurrentielle", secondary: "Alimentee par CarlOS" },
+        { primary: "Tendances industrie", secondary: "Demandez a CarlOS" },
       ]},
       { icon: GraduationCap, title: "Intelligence", gradient: "bg-gradient-to-r from-slate-600 to-slate-500", ringColor: "hover:ring-slate-300", items: [
-        { primary: "Diagnostics completes", value: "—", secondary: "A connecter" },
-        { primary: "Recommandations", value: "—", secondary: "A connecter" },
-        { primary: "Score apprentissage", value: "—", secondary: "A connecter" },
+        { primary: "Diagnostics", value: "5 disponibles", secondary: "Sante Globale > Diagnostics" },
+        { primary: "Recommandations AI", secondary: "Generees apres diagnostic" },
+        { primary: "Apprentissage continu", secondary: "CarlOS evolue avec vous" },
       ]},
     ],
   },
