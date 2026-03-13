@@ -66,6 +66,8 @@ import type {
   TemplateProjetCatalogue,
   TemplateDocumentaire,
   TacheUser,
+  EntrepriseProfil,
+  CanvasItemType,
 } from "./types";
 
 // --- SSE Stream types ---
@@ -120,6 +122,21 @@ function setJwtToken(token: string) {
 }
 function clearJwtToken() {
   try { localStorage.removeItem("ghostx-jwt"); } catch { /* noop */ }
+}
+
+/** Extract user_id from JWT payload (F4 multi-user). Falls back to 1. */
+function getCurrentUserId(): number {
+  const jwt = getJwtToken();
+  if (jwt) {
+    try {
+      const parts = jwt.split(".");
+      if (parts.length === 3) {
+        const payload = JSON.parse(atob(parts[1]));
+        if (payload.user_id) return payload.user_id;
+      }
+    } catch { /* noop */ }
+  }
+  return 1;
 }
 
 async function apiFetch<T>(
@@ -183,7 +200,7 @@ export const api = {
   },
 
   /** Activer un bot specifique */
-  activateBot(code: string, userId = 1): Promise<BotActivateResponse> {
+  activateBot(code: string, userId = getCurrentUserId()): Promise<BotActivateResponse> {
     return apiFetch<BotActivateResponse>(
       `/bots/${code}/activate?user_id=${userId}`,
       { method: "POST" }
@@ -237,12 +254,12 @@ export const api = {
   },
 
   /** Kit entreprise actif + liste de tous les kits disponibles */
-  getActiveKit(userId = 1): Promise<KitActiveResponse> {
+  getActiveKit(userId = getCurrentUserId()): Promise<KitActiveResponse> {
     return apiFetch<KitActiveResponse>(`/kit/active?user_id=${userId}`);
   },
 
   /** Changer le kit entreprise actif */
-  setKit(slug: string, userId = 1): Promise<KitSetResponse> {
+  setKit(slug: string, userId = getCurrentUserId()): Promise<KitSetResponse> {
     return apiFetch<KitSetResponse>(`/kit/set?user_id=${userId}&slug=${slug}`, {
       method: "POST",
     });
@@ -557,6 +574,73 @@ export const api = {
     return apiFetch(`/flow/${sectionKey}/reset`, { method: "POST" });
   },
 
+  // ── ENTREPRISE PROFIL (Sprint F2) ──────────────────────────
+
+  /** Obtenir le profil entreprise */
+  getEntrepriseProfil(tenantId = 1): Promise<{ status: string; profil: EntrepriseProfil | null }> {
+    return apiFetch(`/entreprise-profil?tenant_id=${tenantId}`);
+  },
+
+  /** Sauvegarder le profil entreprise (create or update) */
+  saveEntrepriseProfil(data: Partial<EntrepriseProfil>, tenantId = 1): Promise<{ status: string; id: number }> {
+    return apiFetch(`/entreprise-profil?tenant_id=${tenantId}`, { method: "PUT", body: JSON.stringify(data) });
+  },
+
+  // ── CANVAS ITEMS (Sprint F2) ──────────────────────────────
+
+  /** Creer un canvas */
+  createCanvas(data: { type_canvas: string; titre?: string; data?: Record<string, unknown> }): Promise<{ status: string; id: number }> {
+    return apiFetch("/canvas", { method: "POST", body: JSON.stringify(data) });
+  },
+
+  /** Lister les canvas */
+  listCanvas(typeCanvas?: string): Promise<CanvasItemType[]> {
+    const qs = typeCanvas ? `?type_canvas=${typeCanvas}` : "";
+    return apiFetch(`/canvas${qs}`);
+  },
+
+  /** Obtenir un canvas */
+  getCanvas(canvasId: number): Promise<CanvasItemType> {
+    return apiFetch(`/canvas/${canvasId}`);
+  },
+
+  /** Mettre a jour un canvas */
+  updateCanvas(canvasId: number, data: Record<string, unknown>): Promise<{ status: string }> {
+    return apiFetch(`/canvas/${canvasId}`, { method: "PUT", body: JSON.stringify(data) });
+  },
+
+  /** Supprimer un canvas */
+  deleteCanvas(canvasId: number): Promise<{ status: string }> {
+    return apiFetch(`/canvas/${canvasId}`, { method: "DELETE" });
+  },
+
+  /** Obtenir ou creer un canvas par type (upsert) */
+  getOrCreateCanvas(typeCanvas: string): Promise<CanvasItemType> {
+    return apiFetch(`/canvas/by-type/${typeCanvas}`);
+  },
+
+  /** Canal 2 — Enrichir profil via web/Gemini */
+  enrichProfil(data: { nom: string; industrie?: string; localisation?: string; extra?: string }): Promise<{ status: string; data?: Record<string, unknown>; updates: number; detail?: string }> {
+    return apiFetch("/entreprise-profil/enrich", { method: "POST", body: JSON.stringify(data) });
+  },
+
+  /** Canal 3 — Extraire infos d'un document uploade */
+  extractDocument(file: File): Promise<{ status: string; data?: Record<string, unknown>; updates: number; detail?: string }> {
+    const form = new FormData();
+    form.append("file", file);
+    // apiFetch ajoute Content-Type: application/json, on doit faire un fetch brut pour FormData
+    const base = (import.meta as Record<string, Record<string, string>>).env?.VITE_API_BASE || "";
+    const apiKey = (import.meta as Record<string, Record<string, string>>).env?.VITE_API_KEY || "";
+    return fetch(`${base}/api/v1/entreprise-profil/extract-document`, {
+      method: "POST",
+      headers: { "X-API-Key": apiKey },
+      body: form,
+    }).then(r => {
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    });
+  },
+
   // ── CHANTIERS & MISSIONS ──────────────────────────────────
 
   /** Lister les chantiers */
@@ -665,6 +749,11 @@ export const api = {
     contexte?: Record<string, unknown>;
   }): Promise<{ status: string; id: number }> {
     return apiFetch("/missions-user", { method: "POST", body: JSON.stringify(data) });
+  },
+
+  /** Modifier une mission */
+  updateMission(missionId: number, data: Record<string, unknown>): Promise<{ status: string }> {
+    return apiFetch(`/missions-user/${missionId}`, { method: "PUT", body: JSON.stringify(data) });
   },
 
   /** Supprimer une mission (archive) */
@@ -861,22 +950,22 @@ export const api = {
   },
 
   /** Avancer dans la branche active */
-  flowBranchAdvance(userId = 1): Promise<{ completed: boolean; branch?: Record<string, unknown>; resume?: Record<string, unknown> }> {
+  flowBranchAdvance(userId = getCurrentUserId()): Promise<{ completed: boolean; branch?: Record<string, unknown>; resume?: Record<string, unknown> }> {
     return apiFetch(`/flow/branch/advance?user_id=${userId}`, { method: "POST" });
   },
 
   /** Status de la branche active */
-  flowBranchStatus(userId = 1): Promise<{ has_active_branch: boolean; branch: Record<string, unknown> | null }> {
+  flowBranchStatus(userId = getCurrentUserId()): Promise<{ has_active_branch: boolean; branch: Record<string, unknown> | null }> {
     return apiFetch(`/flow/branch/status?user_id=${userId}`);
   },
 
   /** Completer la branche active */
-  flowBranchComplete(userId = 1): Promise<{ ok: boolean; resume: Record<string, unknown> }> {
+  flowBranchComplete(userId = getCurrentUserId()): Promise<{ ok: boolean; resume: Record<string, unknown> }> {
     return apiFetch(`/flow/branch/complete?user_id=${userId}`, { method: "POST" });
   },
 
   /** Annuler la branche active */
-  flowBranchCancel(userId = 1): Promise<{ ok: boolean; resume: Record<string, unknown> }> {
+  flowBranchCancel(userId = getCurrentUserId()): Promise<{ ok: boolean; resume: Record<string, unknown> }> {
     return apiFetch(`/flow/branch/cancel?user_id=${userId}`, { method: "POST" });
   },
 
@@ -904,14 +993,14 @@ export const api = {
   // ── SUGGESTIONS (BLOC 4) ───────────────────────────────────
 
   /** Suggestions proactives pour le canvas */
-  suggestions(userId = 1): Promise<SuggestionsResponse> {
+  suggestions(userId = getCurrentUserId()): Promise<SuggestionsResponse> {
     return apiFetch<SuggestionsResponse>(`/suggestions?user_id=${userId}`);
   },
 
   // ── QUESTIONNAIRE (BLOC 6) ─────────────────────────────────
 
   /** Envoyer une action questionnaire */
-  questionnaire(commande: string, texte = "", userId = 1): Promise<QuestionnaireResponse> {
+  questionnaire(commande: string, texte = "", userId = getCurrentUserId()): Promise<QuestionnaireResponse> {
     return apiFetch<QuestionnaireResponse>("/questionnaire", {
       method: "POST",
       body: JSON.stringify({ commande, texte, user_id: userId }),
@@ -994,10 +1083,73 @@ export const api = {
     return apiFetch(`/orbit9/qualification/${memberId}`, { method: "POST" });
   },
 
+  // ── TRUST RATING (F7) ──────────────────────────────────────────
+
+  /** Creer une evaluation trust */
+  trustReviewCreate(data: {
+    reviewer_org_id: number;
+    reviewed_org_id: number;
+    reviewer_role?: string;
+    score_qualite: number;
+    score_delai: number;
+    score_communication: number;
+    score_prix: number;
+    score_fiabilite: number;
+    commentaire?: string;
+    interaction_type?: string;
+    interaction_id?: number;
+  }): Promise<{ review: import("./types").TrustReview }> {
+    return apiFetch("/trust-reviews", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  /** Lister les evaluations */
+  trustReviewList(params?: {
+    reviewed_org_id?: number;
+    reviewer_org_id?: number;
+    status?: string;
+    limit?: number;
+  }): Promise<{ reviews: import("./types").TrustReview[]; count: number }> {
+    const qs = params ? "?" + new URLSearchParams(
+      Object.entries(params).filter(([, v]) => v != null).map(([k, v]) => [k, String(v)])
+    ).toString() : "";
+    return apiFetch(`/trust-reviews${qs}`);
+  },
+
+  /** Obtenir une evaluation */
+  trustReviewGet(id: number): Promise<{ review: import("./types").TrustReview }> {
+    return apiFetch(`/trust-reviews/${id}`);
+  },
+
+  /** Modifier une evaluation (moderation, reponse) */
+  trustReviewUpdate(id: number, data: { status?: string; reponse?: string; flag_reason?: string }): Promise<{ review: import("./types").TrustReview }> {
+    return apiFetch(`/trust-reviews/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  },
+
+  /** Supprimer une evaluation */
+  trustReviewDelete(id: number): Promise<{ deleted: boolean }> {
+    return apiFetch(`/trust-reviews/${id}`, { method: "DELETE" });
+  },
+
+  /** Sommaire trust d'une organisation */
+  trustOrgSummary(orgId: number): Promise<import("./types").TrustOrgSummary> {
+    return apiFetch(`/trust/org/${orgId}`);
+  },
+
+  /** Verifier si on peut evaluer */
+  trustCanReview(orgId: number, targetOrgId: number): Promise<{ can_review: boolean; reason?: string }> {
+    return apiFetch(`/trust/org/${orgId}/can-review/${targetOrgId}`);
+  },
+
   // ── COMMAND DETECT ───────────────────────────────────────────
 
   /** Detecter si un message necessite COMMAND */
-  commandDetect(message: string, userId = 1): Promise<import("./types").CommandDetectResponse> {
+  commandDetect(message: string, userId = getCurrentUserId()): Promise<import("./types").CommandDetectResponse> {
     return apiFetch("/command/detect", {
       method: "POST",
       body: JSON.stringify({ message, user_id: userId }),
@@ -1201,5 +1353,136 @@ export const api = {
       method: "POST",
       body: JSON.stringify(req),
     });
+  },
+
+  // ═══════════════════════════════════════════
+  // Multi-User MVP — Sprint F4
+  // ═══════════════════════════════════════════
+
+  getMe(): Promise<any> {
+    return apiFetch("/auth/me");
+  },
+
+  switchTenant(tenantId: number): Promise<any> {
+    return apiFetch("/auth/switch-tenant", {
+      method: "POST",
+      body: JSON.stringify({ tenant_id: tenantId }),
+    });
+  },
+
+  // Tenants
+  getTenants(): Promise<{ tenants: any[] }> {
+    return apiFetch("/tenants");
+  },
+
+  getTenant(tenantId: number): Promise<any> {
+    return apiFetch(`/tenants/${tenantId}`);
+  },
+
+  // Users (admin)
+  getUsers(): Promise<{ users: any[] }> {
+    return apiFetch("/users");
+  },
+
+  inviteUser(email: string, role: string = "membre", departmentScope?: string[]): Promise<any> {
+    return apiFetch("/users/invite", {
+      method: "POST",
+      body: JSON.stringify({ email, role, department_scope: departmentScope }),
+    });
+  },
+
+  updateMembership(userId: number, updates: { role?: string; department_scope?: string[]; autonomy_override?: string; actif?: boolean }): Promise<any> {
+    return apiFetch(`/users/${userId}/membership`, {
+      method: "PUT",
+      body: JSON.stringify(updates),
+    });
+  },
+
+  // Governance
+  getApprovals(status: string = "pending"): Promise<{ approvals: any[] }> {
+    return apiFetch(`/approvals?status=${status}`);
+  },
+
+  approveAction(approvalId: number, note: string = ""): Promise<any> {
+    return apiFetch(`/approvals/${approvalId}/approve`, {
+      method: "POST",
+      body: JSON.stringify({ note }),
+    });
+  },
+
+  rejectAction(approvalId: number, note: string = ""): Promise<any> {
+    return apiFetch(`/approvals/${approvalId}/reject`, {
+      method: "POST",
+      body: JSON.stringify({ note }),
+    });
+  },
+
+  getGovernanceConfig(): Promise<any> {
+    return apiFetch("/governance/config");
+  },
+
+  setBotAutonomy(botCode: string, autonomyLevel: string, blockedActions?: string[], maxCost?: number): Promise<any> {
+    return apiFetch("/governance/config", {
+      method: "PUT",
+      body: JSON.stringify({
+        bot_code: botCode,
+        autonomy_level: autonomyLevel,
+        blocked_actions: blockedActions,
+        max_cost: maxCost,
+      }),
+    });
+  },
+
+  getBotAutonomy(botCode: string): Promise<{ bot_code: string; autonomy_level: string }> {
+    return apiFetch(`/governance/autonomy/${botCode}`);
+  },
+
+  // Auth sessions
+  getActiveSessions(): Promise<any[]> {
+    return apiFetch("/auth/sessions");
+  },
+
+  revokeSession(sessionId: number): Promise<any> {
+    return apiFetch(`/auth/sessions/${sessionId}`, { method: "DELETE" });
+  },
+
+  // Chat H2H
+  createChatRoom(name: string, typeRoom: string, memberIds: number[] = [], botCodes: string[] = []): Promise<any> {
+    return apiFetch("/chat-rooms", {
+      method: "POST",
+      body: JSON.stringify({ name, type_room: typeRoom, member_ids: memberIds, bot_codes: botCodes }),
+    });
+  },
+
+  getChatRooms(): Promise<{ rooms: any[] }> {
+    return apiFetch("/chat-rooms");
+  },
+
+  getChatMessages(roomId: number, limit: number = 50): Promise<{ messages: any[] }> {
+    return apiFetch(`/chat-rooms/${roomId}/messages?limit=${limit}`);
+  },
+
+  // Cross-Org / Fonds
+  getFundPortfolio(): Promise<{ portfolio: any[] }> {
+    return apiFetch("/cross-org/portfolio");
+  },
+
+  addToPortfolio(companyId: number, investmentAmount: number = 0, sharingLevel: string = "minimal"): Promise<any> {
+    return apiFetch("/cross-org/portfolio", {
+      method: "POST",
+      body: JSON.stringify({ company_id: companyId, investment_amount: investmentAmount, sharing_level: sharingLevel }),
+    });
+  },
+
+  getCompanySummary(companyId: number): Promise<{ summary: any }> {
+    return apiFetch(`/cross-org/${companyId}/summary`);
+  },
+
+  getFundAlerts(): Promise<{ alerts: any[] }> {
+    return apiFetch("/cross-org/alerts");
+  },
+
+  getFundSynergies(): Promise<{ synergies: any[] }> {
+    return apiFetch("/cross-org/synergies");
   },
 };

@@ -1,7 +1,7 @@
 /**
  * SectionMonBureau.tsx — [2] Mon Bureau
- * 5 items ressources: Idees, Documents, Taches, Agenda, Outils
- * Sprint C — Restructuration Plateforme
+ * 6 items: Blueprint Perso, Taches, Documents, Agenda, Discussions, Notifications
+ * Plan V6 — Sprint F1
  */
 
 import { useState } from "react";
@@ -9,11 +9,12 @@ import {
   ChevronDown,
   ChevronRight,
   FolderOpen,
-  Sparkles,
+  Target,
   FileText,
-  Wrench,
   CheckSquare,
   CalendarDays,
+  MessageSquare,
+  Bell,
 } from "lucide-react";
 import {
   Collapsible,
@@ -22,7 +23,7 @@ import {
 } from "../../../components/ui/collapsible";
 import { cn } from "../../../components/ui/utils";
 import { useFrameMaster } from "../../context/FrameMasterContext";
-import type { EspaceSection } from "../../context/FrameMasterContext";
+import type { BureauSection } from "../../context/FrameMasterContext";
 
 interface Props {
   collapsed: boolean;
@@ -33,27 +34,28 @@ type BureauItem = {
   label: string;
   icon: React.ElementType;
   color: string;
-  espaceSection: EspaceSection;
+  section: BureauSection;
 };
 
 const ITEMS: BureauItem[] = [
-  { id: "idees", label: "Idees", icon: Sparkles, color: "text-amber-500", espaceSection: "idees" },
-  { id: "documents", label: "Documents", icon: FileText, color: "text-green-500", espaceSection: "documents" },
-  { id: "taches", label: "Taches", icon: CheckSquare, color: "text-purple-500", espaceSection: "taches" },
-  { id: "agenda", label: "Agenda", icon: CalendarDays, color: "text-rose-500", espaceSection: "agenda" },
-  { id: "outils", label: "Outils", icon: Wrench, color: "text-orange-500", espaceSection: "outils" },
+  { id: "blueprint-perso", label: "Mon Blueprint", icon: Target, color: "text-blue-500", section: "blueprint-perso" },
+  { id: "taches", label: "Mes Taches", icon: CheckSquare, color: "text-purple-500", section: "taches" },
+  { id: "documents", label: "Mes Documents", icon: FileText, color: "text-green-500", section: "documents" },
+  { id: "agenda", label: "Mon Agenda", icon: CalendarDays, color: "text-rose-500", section: "agenda" },
+  { id: "discussions", label: "Mes Discussions", icon: MessageSquare, color: "text-amber-500", section: "discussions" },
+  { id: "notifications", label: "Notifications", icon: Bell, color: "text-orange-500", section: "notifications" },
 ];
 
 export function SectionMonBureau({ collapsed }: Props) {
   const [open, setOpen] = useState(false);
-  const { activeView, activeEspaceSection, navigateEspace } = useFrameMaster();
+  const { activeView, activeBureauSection, navigateBureau } = useFrameMaster();
 
   const handleClick = (item: BureauItem) => {
-    navigateEspace(item.espaceSection);
+    navigateBureau(item.section);
   };
 
   const isActive = (item: BureauItem) => {
-    return activeView === "espace-bureau" && activeEspaceSection === item.espaceSection;
+    return activeView === "espace-bureau" && activeBureauSection === item.section;
   };
 
   if (collapsed) {

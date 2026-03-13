@@ -143,6 +143,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     if (activeView === "orbit9-detail") return activeOrbit9Section || undefined;
     if (activeView === "espace-bureau") return activeEspaceSection;
     if (activeView === "strategique") return activeStrategiqueSection;
+    if (activeView === "blueprint") return "blueprint";
     return undefined;
   }, [activeView, activeBotCode, activeOrbit9Section, activeEspaceSection, activeStrategiqueSection]);
 

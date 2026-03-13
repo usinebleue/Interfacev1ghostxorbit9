@@ -26,6 +26,7 @@ const VIEW_MESSAGES: Record<string, string> = {
   "war-room":      "War Room activée. Cellule de crise prête. Décrivez la situation — je mobilise l'équipe d'urgence et on passe en mode COMMAND.",
   "think-room":    "Think Room ouverte. De la vision au Go/No-Go en 6 étapes. Partagez votre idée — je mobilise les spécialistes pour la structurer.",
   "mes-chantiers": "Voici votre pipeline complet: Discussions, Missions, Projets, Chantiers. Je garde un oeil sur tout — rien ne traine sans verdict.",
+  blueprint:       "Blueprint unifie — votre vue complete: chantiers, projets, missions, taches, documents, playbooks et diagnostics. Cliquez sur un element pour qu'on travaille dessus ensemble.",
   "meeting-room":  "Conférence AI — choisissez votre type de rencontre. Podcast, board meeting, brainstorm, diagnostic — je m'adapte automatiquement au contexte avec le bon playbook.",
 };
 

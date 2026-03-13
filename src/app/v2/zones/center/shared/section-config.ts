@@ -7,7 +7,8 @@ import {
   Flame, Clock, Lock,
   Layers, Package, Users,
   Zap, CheckCircle2, ListChecks,
-  Calendar,
+  Calendar, FileText, Rocket, Stethoscope, BookOpen,
+  Building2, Target,
 } from "lucide-react";
 import type { PlaybookTemplate, TabDef } from "./section-types";
 
@@ -73,6 +74,21 @@ export const STRATEGIQUE_TABS: TabDef[] = [
   { id: "taches", label: "Taches", icon: CheckCircle2 },
   { id: "opportunites", label: "Opportunites", icon: Zap },
   { id: "equipes", label: "Equipes", icon: Users },
+];
+
+export const BLUEPRINT_TABS: TabDef[] = [
+  { id: "sommaire", label: "Sommaire", icon: Building2 },
+  { id: "objectifs", label: "Objectifs", icon: Target },
+  { id: "overview", label: "Vue d'ensemble", icon: Layers },
+  { id: "chantiers", label: "Chantiers", icon: Flame },
+  { id: "projets", label: "Projets", icon: Package },
+  { id: "missions", label: "Missions", icon: ListChecks },
+  { id: "taches", label: "Taches", icon: CheckCircle2 },
+  { id: "timeline", label: "Timeline", icon: Calendar },
+  { id: "documents", label: "Documents", icon: FileText },
+  { id: "playbooks", label: "Playbooks", icon: Rocket },
+  { id: "diagnostics", label: "Diagnostics", icon: Stethoscope },
+  { id: "equipe", label: "Equipe", icon: Users },
 ];
 
 // ================================================================

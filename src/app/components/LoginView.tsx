@@ -5,6 +5,7 @@ import { Card } from './ui/card';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Separator } from './ui/separator';
+import { useAuth } from '../v2/context/AuthContext';
 
 interface LoginViewProps {
   onLogin?: () => void;
@@ -16,26 +17,16 @@ export function LoginView({ onLogin }: LoginViewProps) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const auth = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/v1/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        // Store JWT tokens
-        if (data.access_token) {
-          try {
-            localStorage.setItem('ghostx-jwt', data.access_token);
-            if (data.refresh_token) localStorage.setItem('ghostx-jwt-refresh', data.refresh_token);
-          } catch { /* noop */ }
-        }
+      // Use AuthContext login (handles JWT + user profile + memberships)
+      const success = await auth.login(email, password);
+      if (success) {
         onLogin?.();
       } else {
         setError('Email ou mot de passe invalide.');

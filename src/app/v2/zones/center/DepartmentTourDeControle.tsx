@@ -917,11 +917,22 @@ export function DepartmentTourDeControle() {
   const { taches } = useTaches();
   const { items: bureauItems } = useBureau();
 
+  // CEOB (CEO) → redirect vers Blueprint unifie
+  useEffect(() => {
+    if (activeBotCode === "CEOB") {
+      setActiveView("blueprint");
+    }
+  }, [activeBotCode, setActiveView]);
+
   // Load data for Missions / Documents / Diagnostics tabs
   useEffect(() => {
     setDeptTab("cockpit");
     const deptKey = BOT_TO_DEPT[activeBotCode] || "";
-    api.listMissions().then(r => setMissions((r.missions || []).filter(m => m.bot_primaire === activeBotCode))).catch(() => {});
+    api.listMissions().then(r => {
+      const all = r.missions || [];
+      // CEO (CEOB) voit TOUTES les missions — les autres bots voient seulement les leurs
+      setMissions(activeBotCode === "CEOB" ? all : all.filter(m => m.bot_primaire === activeBotCode));
+    }).catch(() => {});
     api.listDiagnosticsEnrichis(deptKey).then(d => setDiagnostics(d || [])).catch(() => {});
     api.listTemplatesDocumentaires(activeBotCode).then(t => setTemplates(t || [])).catch(() => {});
   }, [activeBotCode]);
@@ -929,12 +940,13 @@ export function DepartmentTourDeControle() {
   // API data — chantiers et projets filtrés par bot
   const { chantiers: allChantiers } = useChantiers();
   const { projets: allProjets } = useProjets();
+  // CEO (CEOB) voit TOUT — les autres bots voient seulement leurs chantiers/projets
   const botChantiers = useMemo(() =>
-    allChantiers.filter(ch => ch.bot_codes?.includes(activeBotCode)),
+    activeBotCode === "CEOB" ? allChantiers : allChantiers.filter(ch => ch.bot_codes?.includes(activeBotCode)),
     [allChantiers, activeBotCode]
   );
   const botProjets = useMemo(() =>
-    allProjets.filter(p => p.bot_primaire === activeBotCode || p.bot_codes?.includes(activeBotCode)),
+    activeBotCode === "CEOB" ? allProjets : allProjets.filter(p => p.bot_primaire === activeBotCode || p.bot_codes?.includes(activeBotCode)),
     [allProjets, activeBotCode]
   );
   const botPlaybooks = useMemo(() =>

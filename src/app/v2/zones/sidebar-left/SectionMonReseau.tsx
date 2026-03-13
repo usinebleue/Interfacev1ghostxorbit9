@@ -34,9 +34,8 @@ interface Props {
 
 const ITEMS: { id: ReseauSection; label: string; icon: React.ElementType; color: string }[] = [
   { id: "profil", label: "Mon Profil", icon: Shield, color: "text-blue-500" },
+  { id: "jumelage", label: "Matching", icon: Network, color: "text-amber-500" },
   { id: "cellules", label: "Mes Cellules", icon: Handshake, color: "text-emerald-500" },
-  { id: "jumelage", label: "Jumelage", icon: Network, color: "text-amber-500" },
-  { id: "chantiers", label: "Chantiers Reseau", icon: Flame, color: "text-orange-500" },
   { id: "pionniers", label: "Pionniers", icon: Rocket, color: "text-indigo-500" },
   { id: "gouvernance", label: "Gouvernance", icon: Award, color: "text-violet-500" },
   { id: "dashboard", label: "Dashboard", icon: BarChart3, color: "text-cyan-500" },

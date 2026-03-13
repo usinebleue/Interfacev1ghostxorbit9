@@ -397,6 +397,47 @@ export interface Participant {
 // Stratégique — semaines/mois. Trié par chaleur VITAA dans la sidebar.
 // Ex: "Expansion marché US", "Certification ISO", "Transformation numérique"
 // NOTE: field names match the API response (snake_case)
+// ─── Entreprise Profil (Sprint F2 — Sommaire Executif) ───
+export interface EntrepriseProfil {
+  id: number;
+  tenant_id: number;
+  nom: string;
+  industrie: string;
+  sous_secteur: string;
+  taille: string;
+  nb_employes: number | null;
+  annee_fondation: number | null;
+  localisation: string;
+  site_web: string;
+  chiffre_affaires: string;
+  mission: string;
+  vision: string;
+  valeurs: string[];
+  forces: string[];
+  faiblesses: string[];
+  opportunites: string[];
+  menaces: string[];
+  score_vente: number;
+  score_idee: number;
+  score_temps: number;
+  score_argent: number;
+  score_actif: number;
+  extra: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+// ─── Canvas Item (Sprint F2 — SWOT, Lean Canvas, BMC) ───
+export interface CanvasItemType {
+  id: number;
+  tenant_id: number;
+  type_canvas: string;
+  titre: string;
+  data: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
 export type ChantierType = "strategique" | "technologique" | "organisationnel" | "culturel" | "environnemental" | "operationnel";
 
 export interface Chantier {
@@ -421,6 +462,7 @@ export interface Chantier {
   risques?: string[];
   participants?: Participant[];
   missions_count?: number;
+  categorie?: "interne" | "client" | "partenaire";
   created_at: string;
   updated_at: string;
 }
@@ -444,6 +486,7 @@ export interface Projet {
   source?: string;
   contexte?: Record<string, unknown>;
   missions_count?: number;
+  categorie?: "interne" | "client" | "partenaire";
   created_at: string;
   updated_at: string;
 }
@@ -485,6 +528,7 @@ export interface Mission {
   participants?: Participant[];
   tags?: string[];
   contexte?: Record<string, unknown>;
+  categorie?: "interne" | "client" | "partenaire";
   created_at: string;
   updated_at: string;
   completed_at?: string | null;
@@ -511,6 +555,8 @@ export interface TacheUser {
   contexte?: Record<string, unknown>;
   participants?: Participant[];
   echeance?: string | null;
+  categorie?: "interne" | "client" | "partenaire";
+  assignee_user_id?: number | null;
   created_at: string;
   updated_at: string;
   completed_at?: string | null;
@@ -1148,7 +1194,10 @@ export interface Orbit9MatchCandidat {
   member_id: number;
   nom: string;
   score: number;
+  score_brut?: number;
   raison: string;
+  trust_score?: number | null;
+  trust_badge?: string;
 }
 
 export interface Orbit9Match {
@@ -1497,4 +1546,42 @@ export interface DiagnosticIA {
   created_at: string;
   updated_at: string;
   completed_at: string;
+}
+
+// --- Trust Rating (F7) ---
+
+export interface TrustReview {
+  id: number;
+  reviewer_org_id: number;
+  reviewed_org_id: number;
+  reviewer_role: string;
+  score_qualite: number;
+  score_delai: number;
+  score_communication: number;
+  score_prix: number;
+  score_fiabilite: number;
+  score_global: number;
+  commentaire: string;
+  reponse: string | null;
+  interaction_type: string;
+  interaction_id: number | null;
+  status: string;
+  created_at: string;
+}
+
+export interface TrustOrgSummary {
+  org_id: number;
+  trust_score_fournisseur: number | null;
+  trust_score_client: number | null;
+  trust_reviews_count_fournisseur: number;
+  trust_reviews_count_client: number;
+  trust_badge: string;
+  averages: {
+    qualite: number;
+    delai: number;
+    communication: number;
+    prix: number;
+    fiabilite: number;
+  };
+  recent_reviews: TrustReview[];
 }
