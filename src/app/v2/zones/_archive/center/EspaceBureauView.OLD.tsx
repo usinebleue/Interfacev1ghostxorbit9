@@ -156,12 +156,12 @@ const BOT_GRADIENTS: Record<string, string> = {
 
 const BOT_LABELS: Record<string, { label: string; short: string }> = {
   CEOB: { label: "CarlOS", short: "CEO" },
-  CTOB: { label: "Thierry", short: "CTO" },
+  CTOB: { label: "Tim", short: "CTO" },
   CFOB: { label: "Francois", short: "CFO" },
-  CMOB: { label: "Martine", short: "CMO" },
+  CMOB: { label: "Mathilde", short: "CMO" },
   CSOB: { label: "Sophie", short: "CSO" },
   COOB: { label: "Olivier", short: "COO" },
-  CPOB: { label: "Fabien", short: "CPO" },
+  CPOB: { label: "Paco", short: "CPO" },
   CHROB: { label: "Helene", short: "CHRO" },
   CINOB: { label: "Ines", short: "CINO" },
   CROB: { label: "Raphael", short: "CRO" },
@@ -2199,7 +2199,7 @@ function OutilsPage() {
                   <Icon className="h-3.5 w-3.5 text-white" />
                 </div>
                 <h3 className="text-xs font-bold uppercase tracking-wider text-white flex-1 truncate">{outil.titre}</h3>
-                <Badge className="text-[9px] bg-white/20 text-white border-0">Fabien — CPO</Badge>
+                <Badge className="text-[9px] bg-white/20 text-white border-0">Paco — CPO</Badge>
               </div>
               {/* Body */}
               <div className="px-4 py-3 space-y-2">

@@ -86,12 +86,12 @@ const CHANTIER_TYPES = [
 
 const BOT_OPTIONS = [
   { code: "CEOB", label: "CarlOS", short: "CEO" },
-  { code: "CTOB", label: "Thierry", short: "CTO" },
+  { code: "CTOB", label: "Tim", short: "CTO" },
   { code: "CFOB", label: "Francois", short: "CFO" },
-  { code: "CMOB", label: "Martine", short: "CMO" },
+  { code: "CMOB", label: "Mathilde", short: "CMO" },
   { code: "CSOB", label: "Sophie", short: "CSO" },
   { code: "COOB", label: "Olivier", short: "COO" },
-  { code: "CPOB", label: "Fabien", short: "CPO" },
+  { code: "CPOB", label: "Paco", short: "CPO" },
   { code: "CHROB", label: "Helene", short: "CHRO" },
   { code: "CINOB", label: "Ines", short: "CINO" },
   { code: "CROB", label: "Raphael", short: "CRO" },

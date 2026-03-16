@@ -9,7 +9,7 @@
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { TypewriterText } from "./shared/simulation-components";
-import { BOT_AVATAR, BOT_SUBTITLE } from "../../api/types";
+import { BOT_AVATAR, BOT_SUBTITLE, BOT_NAME } from "../../api/types";
 import { useFrameMaster } from "../../context/FrameMasterContext";
 
 /** Messages par vue — voix directe du bot */
@@ -80,12 +80,7 @@ const DEPT_MESSAGES: Record<string, string> = {
   CISOB: "Sébastien, votre CISO. Sécurité & Cyber — cliquez sur un bloc pour qu'on analyse ensemble.",
 };
 
-/** Nom court par bot */
-const BOT_NAMES: Record<string, string> = {
-  CEOB: "CarlOS", CTOB: "Tim", CFOB: "Frank", CMOB: "Mathilde",
-  CSOB: "Simone", COOB: "Olivier", CHROB: "Hélène", CINOB: "Inès",
-  CPOB: "Paco", CROB: "Rich", CLOB: "Loulou", CISOB: "Sébastien",
-};
+// BOT_NAME importé de types.ts — source unique
 
 export function CarlOSPresence() {
   const { activeView, activeBotCode, activeOrbit9Section, activeEspaceSection, activeBlueprintLiveSection } = useFrameMaster();
@@ -104,7 +99,7 @@ export function CarlOSPresence() {
   // Pour les vues département, chaque bot présente sa propre section
   const isDept = activeView === "department";
   const botCode = isDept ? activeBotCode : "CEOB";
-  const botName = BOT_NAMES[botCode] || "CarlOS";
+  const botName = BOT_NAME[botCode] || "CarlOS";
   const botAvatar = BOT_AVATAR[botCode] || BOT_AVATAR["CEOB"];
   const botRole = BOT_SUBTITLE[botCode] || "Agent AI";
 

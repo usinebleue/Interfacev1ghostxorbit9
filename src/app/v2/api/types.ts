@@ -621,6 +621,40 @@ export interface CascadeSuggestion {
 }
 
 
+// --- Noms d'affichage officiels des 12 bots (SOURCE UNIQUE) ---
+
+export const BOT_NAME: Record<string, string> = {
+  CEOB: "CarlOS",
+  CTOB: "Tim",
+  CFOB: "Frank",
+  CMOB: "Mathilde",
+  CSOB: "Simone",
+  COOB: "Olivier",
+  CPOB: "Paco",
+  CHROB: "Hélène",
+  CINOB: "Inès",
+  CROB: "Rich",
+  CLOB: "Loulou",
+  CISOB: "Sébastien",
+};
+
+// --- Rôle court par bot ---
+
+export const BOT_ROLE: Record<string, string> = {
+  CEOB: "CEO",
+  CTOB: "CTO",
+  CFOB: "CFO",
+  CMOB: "CMO",
+  CSOB: "CSO",
+  COOB: "COO",
+  CPOB: "CPO",
+  CHROB: "CHRO",
+  CINOB: "CINO",
+  CROB: "CRO",
+  CLOB: "CLO",
+  CISOB: "CISO",
+};
+
 // --- Avatar Map (vrais fichiers dans /public/agents/) ---
 
 export const BOT_AVATAR: Record<string, string> = {

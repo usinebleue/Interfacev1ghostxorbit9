@@ -8,7 +8,7 @@ import { useChat, useCrystals } from "../api/hooks";
 import { useTextToSpeech } from "../api/useVocal";
 import { useCanvasActions } from "./CanvasActionContext";
 import { useFrameMaster } from "./FrameMasterContext";
-import type { ChatMessage, ReflectionMode, CREDOPhase, Thread, MessageType, Crystal } from "../api/types";
+import type { ChatMessage, ReflectionMode, CREDOPhase, Thread, MessageType, Crystal, TeamProposal } from "../api/types";
 
 interface ChatState {
   messages: ChatMessage[];
@@ -33,6 +33,7 @@ interface ChatActions {
   sendMessage: (text: string, agent?: string, ghost?: string, meta?: BranchMeta) => Promise<void>;
   sendMultiPerspective: (text: string, agents: string[]) => Promise<void>;
   injectVoiceMessage: (role: "user" | "assistant", content: string, agent?: string) => void;
+  injectTeamProposal: (proposal: TeamProposal, agent: string) => void;
   setReflectionMode: (mode: ReflectionMode) => void;
   newConversation: () => void;
   parkThread: () => void;
@@ -60,6 +61,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     sendMessage: rawSend,
     sendMultiPerspective: rawMulti,
     injectVoiceMessage,
+    injectTeamProposal,
     injectFocusCard,
     newConversation,
     threads,
@@ -209,6 +211,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         sendMessage,
         sendMultiPerspective,
         injectVoiceMessage,
+        injectTeamProposal,
         setReflectionMode,
         newConversation: handleNewConversation,
         parkThread,

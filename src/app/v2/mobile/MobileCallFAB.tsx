@@ -11,6 +11,7 @@ import { useFrameMaster } from "../context/FrameMasterContext";
 import { useChatContext } from "../context/ChatContext";
 import { useCanvasActions } from "../context/CanvasActionContext";
 import { api } from "../api/client";
+import { BOT_NAME } from "../api/types";
 import type { CanvasAction } from "../api/types";
 import {
   Room,
@@ -21,12 +22,6 @@ import {
   Participant,
   DisconnectReason,
 } from "livekit-client";
-
-const BOT_NAMES: Record<string, string> = {
-  CEOB: "CarlOS", CTOB: "Tim", CFOB: "Frank", CMOB: "Mathilde",
-  CSOB: "Simone", COOB: "Olivier", CPOB: "Paco", CHROB: "Hélène",
-  CINOB: "Inès", CROB: "Rich", CLOB: "Loulou", CISOB: "Sébastien",
-};
 
 type CallState = "idle" | "connecting" | "connected" | "error";
 
@@ -214,7 +209,7 @@ export function MobileCallFAB() {
 
   const isInCall = callState === "connected";
   const isConnecting = callState === "connecting";
-  const botName = BOT_NAMES[activeBotCode] || "CarlOS";
+  const botName = BOT_NAME[activeBotCode] || "CarlOS";
 
   // --- En appel: barre compacte au-dessus du tab bar ---
   if (isInCall || isConnecting) {

@@ -61,7 +61,7 @@ import {
 import { useFrameMaster } from "../../context/FrameMasterContext";
 import type { EspaceSection } from "../../context/FrameMasterContext";
 import { useChatContext } from "../../context/ChatContext";
-import { BOT_AVATAR } from "../../api/types";
+import { BOT_AVATAR, BOT_NAME, BOT_ROLE } from "../../api/types";
 import type { BureauItemCreate, PlaneTacheCreate, TemplatePreview } from "../../api/types";
 import { useBureau, useTaches, useTemplates, useIdees } from "../../api/hooks";
 import { api } from "../../api/client";
@@ -157,20 +157,10 @@ const BOT_GRADIENTS: Record<string, string> = {
   CISOB: "from-gray-600 to-gray-500",
 };
 
-const BOT_LABELS: Record<string, { label: string; short: string }> = {
-  CEOB: { label: "CarlOS", short: "CEO" },
-  CTOB: { label: "Tim", short: "CTO" },
-  CFOB: { label: "Frank", short: "CFO" },
-  CMOB: { label: "Mathilde", short: "CMO" },
-  CSOB: { label: "Simone", short: "CSO" },
-  COOB: { label: "Olivier", short: "COO" },
-  CPOB: { label: "Paco", short: "CPO" },
-  CHROB: { label: "Helene", short: "CHRO" },
-  CINOB: { label: "Ines", short: "CINO" },
-  CROB: { label: "Rich", short: "CRO" },
-  CLOB: { label: "Loulou", short: "CLO" },
-  CISOB: { label: "Sebastien", short: "CISO" },
-};
+// BOT_LABELS derivé de BOT_NAME + BOT_ROLE (types.ts = source unique)
+const BOT_LABELS: Record<string, { label: string; short: string }> = Object.fromEntries(
+  Object.keys(BOT_NAME).map(code => [code, { label: BOT_NAME[code], short: BOT_ROLE[code] }])
+);
 
 const FILE_ICONS: Record<string, React.ElementType> = {
   "PDF": FileText,

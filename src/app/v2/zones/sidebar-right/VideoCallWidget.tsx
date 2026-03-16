@@ -27,7 +27,7 @@ import { cn } from "../../../components/ui/utils";
 import { useFrameMaster } from "../../context/FrameMasterContext";
 import { useChatContext } from "../../context/ChatContext";
 import { useCanvasActions } from "../../context/CanvasActionContext";
-import { BOT_SUBTITLE } from "../../api/types";
+import { BOT_SUBTITLE, BOT_NAME } from "../../api/types";
 import { AGENTS, AG_KEYFRAMES } from "../center/orbit9/AgentGalleryPage";
 import type { AgentConfig } from "../center/orbit9/AgentGalleryPage";
 import type { CanvasAction } from "../../api/types";
@@ -64,12 +64,7 @@ const BOT_ROLES: Record<string, string> = {
   CLOB: "CLO", CISOB: "CISO",
 };
 
-const BOT_NAMES: Record<string, string> = {
-  CEOB: "CarlOS", CTOB: "Tim", CFOB: "Frank", CMOB: "Mathilde",
-  CSOB: "Simone", COOB: "Olivier", CPOB: "Paco", CHROB: "Hélène",
-  CINOB: "Inès", CROB: "Rich",
-  CLOB: "Loulou", CISOB: "Sébastien",
-};
+// BOT_NAME importé de types.ts — source unique
 
 // Images standby — originaux avec circuits neuronaux (fev 25) + Simone v2 validée par Carl
 // object-fit: cover adapte les carrés en 16:9 automatiquement
@@ -135,7 +130,7 @@ function VoiceWaveformOverlay() {
 
 export function VideoCallWidget() {
   const { activeBotCode, activeBot, activeView, setActiveView } = useFrameMaster();
-  const { injectVoiceMessage, newConversation } = useChatContext();
+  const { injectVoiceMessage, injectTeamProposal, newConversation } = useChatContext();
   const { dispatchBatch } = useCanvasActions();
 
   // Call state
@@ -308,7 +303,8 @@ export function VideoCallWidget() {
                 injectVoiceMessage("user", `[Vision] ${evt.user_text}`);
               }
               if (evt.bot_text) {
-                injectVoiceMessage("assistant", evt.bot_text, evt.agent || "CEOB");
+                const optLabels = (evt.options || []).map((o: any) => o.label || o);
+                injectVoiceMessage("assistant", evt.bot_text, evt.agent || "CEOB", optLabels);
               }
             }
           }
@@ -547,6 +543,8 @@ export function VideoCallWidget() {
   // --- Polling voice transcript listener ---
   const injectRef = useRef(injectVoiceMessage);
   injectRef.current = injectVoiceMessage;
+  const injectTeamRef = useRef(injectTeamProposal);
+  injectTeamRef.current = injectTeamProposal;
   const dispatchBatchRef = useRef(dispatchBatch);
   dispatchBatchRef.current = dispatchBatch;
   const setActiveViewRef = useRef(setActiveView);
@@ -595,7 +593,14 @@ export function VideoCallWidget() {
                 setLastTranscript(evt.user_text);
               }
               if (evt.bot_text) {
-                injectRef.current("assistant", evt.bot_text, evt.agent);
+                const optLabels = (evt.options || []).map((o: any) => o.label || o);
+                injectRef.current("assistant", evt.bot_text, evt.agent, optLabels);
+              }
+              // D-115 Phase 3: TeamProposal vocal → afficher dans LiveChat
+              if (evt.team_proposal && evt.team_proposal.bots) {
+                setTimeout(() => {
+                  injectTeamRef.current(evt.team_proposal, evt.agent || "CEOB");
+                }, 400);
               }
             }
           }
@@ -786,7 +791,7 @@ export function VideoCallWidget() {
         )}>
           <div className="bg-gradient-to-t from-black/80 to-transparent px-3.5 pt-10 pb-2.5">
             <div className="text-lg text-white font-extrabold tracking-wide drop-shadow-lg leading-none">
-              {BOT_NAMES[activeBotCode] || botName}
+              {BOT_NAME[activeBotCode] || botName}
             </div>
             <div className="text-[9px] text-white/70 font-medium tracking-[0.2em] uppercase drop-shadow-md mt-1">
               {botRole} AI · Usine Bleue

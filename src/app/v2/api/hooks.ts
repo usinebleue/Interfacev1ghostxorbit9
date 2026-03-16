@@ -1083,7 +1083,7 @@ export function useChat() {
 
   // Voice transcript injection — called by VideoCallWidget when SSE events arrive
   const injectVoiceMessage = useCallback(
-    (role: "user" | "assistant", content: string, agent?: string) => {
+    (role: "user" | "assistant", content: string, agent?: string, options?: string[]) => {
       const msg: ChatMessage = {
         id: `msg-${++idCounter.current}`,
         role,
@@ -1091,6 +1091,7 @@ export function useChat() {
         timestamp: new Date(),
         agent: role === "assistant" ? (agent || "CEOB") : undefined,
         msgType: "voice" as MessageType,
+        options: options || [],
       };
       setMessages((prev) => [...prev, msg]);
 
@@ -1157,6 +1158,7 @@ export function useChat() {
     sendMessage,
     sendMultiPerspective,
     injectVoiceMessage,
+    injectTeamProposal,
     injectFocusCard,
     newConversation,
     threads,

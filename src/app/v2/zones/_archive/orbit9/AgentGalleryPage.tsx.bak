@@ -137,10 +137,10 @@ const AGENTS: AgentConfig[] = [
     uniqueDesc: "Hologramme 3D sur la table + dashboards animés",
   },
 
-  // ─── 2. BCT — Thierry (CTO) — VIOLET ───
+  // ─── 2. BCT — Tim (CTO) — VIOLET ───
   {
     code: "BCT",
-    name: "Thierry",
+    name: "Tim",
     role: "CTO — Directeur Technologie",
     image: "/agents/generated/cto-thierry-standby-v3.png?v=5",
     dotColor: "#a78bfa",
@@ -183,10 +183,10 @@ const AGENTS: AgentConfig[] = [
     uniqueDesc: "Cerveau holographique + tablette tech",
   },
 
-  // ─── 3. BCF — François (CFO) — EMERALD ───
+  // ─── 3. BCF — Frank (CFO) — EMERALD ───
   {
     code: "BCF",
-    name: "François",
+    name: "Frank",
     role: "CFO — Directeur Finances",
     image: "/agents/generated/cfo-francois-standby-v3.png?v=5",
     dotColor: "#34d399",
@@ -234,10 +234,10 @@ const AGENTS: AgentConfig[] = [
     uniqueDesc: "Écrans Bloomberg + courbes financières animées",
   },
 
-  // ─── 4. BCM — Martine (CMO) — PINK ───
+  // ─── 4. BCM — Mathilde (CMO) — PINK ───
   {
     code: "BCM",
-    name: "Martine",
+    name: "Mathilde",
     role: "CMO — Directrice Marketing",
     image: "/agents/generated/cmo-martine-standby-v3.png?v=5",
     dotColor: "#f472b6",
@@ -487,10 +487,10 @@ const AGENTS: AgentConfig[] = [
     uniqueDesc: "Cerveau neural 3D flottant holographique",
   },
 
-  // ─── 9. BRO — Raphaël (CRO) — AMBER ───
+  // ─── 9. BRO — Rich (CRO) — AMBER ───
   {
     code: "BRO",
-    name: "Raphaël",
+    name: "Rich",
     role: "CRO — Directeur Revenus",
     image: "/agents/generated/cro-raphael-standby-v3.png?v=5",
     dotColor: "#fbbf24",
@@ -634,7 +634,7 @@ const AGENTS: AgentConfig[] = [
   // ─── 12. BFA — Factory Bot — SLATE ───
   {
     code: "BFA",
-    name: "Fabien",
+    name: "Paco",
     role: "CPO — Directeur Production",
     image: "/agents/generated/factory-bot-standby-v3.png?v=5",
     dotColor: "#94a3b8",

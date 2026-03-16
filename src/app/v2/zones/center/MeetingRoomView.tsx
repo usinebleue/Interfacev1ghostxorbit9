@@ -92,6 +92,7 @@ export function MeetingRoomView({ meetingType, meetingTitle: initialTitle }: Mee
     }).catch(() => {});
   }, []);
 
+
   // Auto-scroll transcript
   useEffect(() => {
     transcriptEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -210,6 +211,15 @@ export function MeetingRoomView({ meetingType, meetingTitle: initialTitle }: Mee
       setMeetingStatus("error");
     }
   }, [meetingTitle]);
+
+  // Auto-start si lancé depuis ConferenceAIView avec un meetingType
+  const autoStarted = useRef(false);
+  useEffect(() => {
+    if (meetingType && meetingStatus === "idle" && !autoStarted.current) {
+      autoStarted.current = true;
+      handleCreate();
+    }
+  }, [meetingType, meetingStatus, handleCreate]);
 
   // Transcript polling — reads from meetings DB via /meetings/{slug}/transcript
   const startTranscriptPolling = useCallback((slug: string) => {

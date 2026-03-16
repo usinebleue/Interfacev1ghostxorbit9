@@ -18,7 +18,7 @@ import { Badge } from "../../../../components/ui/badge";
 import { Progress } from "../../../../components/ui/progress";
 import { PageLayout } from "../layouts/PageLayout";
 import { api } from "../../../api/client";
-import { BOT_AVATAR } from "../../../api/types";
+import { BOT_AVATAR, BOT_NAME, BOT_ROLE } from "../../../api/types";
 import type { DiagnosticIA } from "../../../api/types";
 import {
   DEPARTEMENTS, DEPARTMENT_QUESTIONS, ABSORPTION_QUESTIONS, APPROCHE_CLIENT_QUESTIONS,
@@ -41,19 +41,9 @@ interface ProfilData {
   profil_type: ProfilType;
 }
 
-// ── BOT names (for display) ──
-
-const BOT_NAMES: Record<string, string> = {
-  CEOB: "CarlOS", CFOB: "Frank", CMOB: "Mathilde", COOB: "Olivier",
-  CPOB: "Paco", CHROB: "Hélène", CTOB: "Tim", CSOB: "Simone",
-  CROB: "Rich", CINOB: "Inès", CLOB: "Loulou", CISOB: "Sébastien",
-};
-
-const BOT_ROLES: Record<string, string> = {
-  CEOB: "CEO", CFOB: "CFO", CMOB: "CMO", COOB: "COO",
-  CPOB: "Production", CHROB: "CHRO", CTOB: "CTO", CSOB: "CSO",
-  CROB: "CRO", CINOB: "CINO", CLOB: "CLO", CISOB: "CISO",
-};
+// BOT_NAME + BOT_ROLE importés de types.ts — source unique
+// Note: BOT_ROLE.CPOB = "CPO" (le code affichait "Production" avant)
+const BOT_ROLES = { ...BOT_ROLE, CPOB: "Production" };
 
 // ══════════════════════════════════════════════════════════════
 // COMPONENT PRINCIPAL
@@ -943,7 +933,7 @@ export function DiagnosticIAPage() {
                   {immediateTeam.slice(0, 3).map(g => (
                     <li key={g.botCode} className="flex items-center gap-2 text-sm text-gray-700">
                       <div className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
-                      Activer {BOT_NAMES[g.botCode]} ({BOT_ROLES[g.botCode]} — {g.score}%)
+                      Activer {BOT_NAME[g.botCode]} ({BOT_ROLES[g.botCode]} — {g.score}%)
                     </li>
                   ))}
                   <li className="flex items-center gap-2 text-sm text-gray-700">
@@ -958,7 +948,7 @@ export function DiagnosticIAPage() {
                   {phase2Team.slice(0, 3).map(g => (
                     <li key={g.botCode} className="flex items-center gap-2 text-sm text-gray-700">
                       <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
-                      Activer {BOT_NAMES[g.botCode]} ({BOT_ROLES[g.botCode]} — {g.score}%)
+                      Activer {BOT_NAME[g.botCode]} ({BOT_ROLES[g.botCode]} — {g.score}%)
                     </li>
                   ))}
                   <li className="flex items-center gap-2 text-sm text-gray-700">
@@ -993,7 +983,7 @@ export function DiagnosticIAPage() {
                   {immediateTeam.slice(0, 3).map(g => (
                     <div key={g.botCode} className="p-4 border-2 border-red-200 bg-red-50 rounded-xl text-center">
                       <img src={BOT_AVATAR[g.botCode] || BOT_AVATAR["CEOB"]} alt={g.botCode} className="h-12 w-12 rounded-full mx-auto mb-2" />
-                      <div className="font-bold text-sm">{BOT_NAMES[g.botCode]}</div>
+                      <div className="font-bold text-sm">{BOT_NAME[g.botCode]}</div>
                       <div className="text-xs text-gray-500">{BOT_ROLES[g.botCode]}</div>
                       <div className="text-lg font-bold mt-1" style={{ color: "#ef4444" }}>{g.score}%</div>
                     </div>
@@ -1008,7 +998,7 @@ export function DiagnosticIAPage() {
                   {phase2Team.map(g => (
                     <div key={g.botCode} className="p-3 border border-amber-200 bg-amber-50 rounded-lg text-center">
                       <img src={BOT_AVATAR[g.botCode] || BOT_AVATAR["CEOB"]} alt={g.botCode} className="h-8 w-8 rounded-full mx-auto mb-1" />
-                      <div className="font-medium text-xs">{BOT_NAMES[g.botCode]}</div>
+                      <div className="font-medium text-xs">{BOT_NAME[g.botCode]}</div>
                       <div className="text-sm font-bold mt-0.5" style={{ color: "#d97706" }}>{g.score}%</div>
                     </div>
                   ))}

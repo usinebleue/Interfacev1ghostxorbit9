@@ -43,6 +43,7 @@ import { PageLayout } from "./layouts/PageLayout";
 import { PageHeader } from "./layouts/PageHeader";
 import { useFrameMaster } from "../../context/FrameMasterContext";
 import { api } from "../../api/client";
+import { BOT_NAME } from "../../api/types";
 import { MeetingRoomView } from "./MeetingRoomView";
 
 // ═══════════════════════════════════════════════════════════════
@@ -194,59 +195,25 @@ const GHML_TYPES: MeetingTypeCard[] = [
 
 // Flow steps par type (pour Tab Playbooks)
 // Bots pré-configurés par playbook — miroir de bridge_meetings.py invited_bots
+// Noms resolus via BOT_NAME (types.ts) — source unique
+const pb = (code: string, role: string) => ({ code, name: BOT_NAME[code] || code, role });
 const PLAYBOOK_BOTS: Record<string, { code: string; name: string; role: string }[]> = {
-  podcast: [{ code: "CEOB", name: "CarlOS", role: "Co-animateur" }],
-  board: [
-    { code: "CEOB", name: "CarlOS", role: "Président" },
-    { code: "CFOB", name: "Frank", role: "Finances" },
-    { code: "CSOB", name: "Simon", role: "Stratégie" },
-  ],
-  client: [
-    { code: "CEOB", name: "CarlOS", role: "Assistant" },
-    { code: "CSOB", name: "Simon", role: "Ventes" },
-  ],
-  aiguillage: [{ code: "CEOB", name: "CarlOS", role: "Guide" }],
-  travail: [{ code: "CEOB", name: "CarlOS", role: "Documenteur" }],
-  onboarding: [{ code: "CEOB", name: "CarlOS", role: "Guide" }],
-  diagnostic: [{ code: "CEOB", name: "CarlOS", role: "Diagnosticien" }],
-  crise: [
-    { code: "CEOB", name: "CarlOS", role: "Commandant" },
-    { code: "COOB", name: "Julie", role: "Opérations" },
-    { code: "CFOB", name: "Frank", role: "Finances" },
-    { code: "CISOB", name: "Samuel", role: "Sécurité" },
-  ],
-  brainstorm: [
-    { code: "CEOB", name: "CarlOS", role: "Facilitateur" },
-    { code: "CTOB", name: "Alex", role: "Tech" },
-    { code: "CMOB", name: "Mathilde", role: "Marketing" },
-  ],
-  debat: [
-    { code: "CEOB", name: "CarlOS", role: "Modérateur" },
-    { code: "CSOB", name: "Simon", role: "Stratégie" },
-    { code: "CMOB", name: "Mathilde", role: "Marché" },
-  ],
-  analyse: [
-    { code: "CEOB", name: "CarlOS", role: "Analyste" },
-    { code: "CTOB", name: "Alex", role: "Tech" },
-    { code: "CFOB", name: "Frank", role: "Finances" },
-  ],
-  decision: [
-    { code: "CEOB", name: "CarlOS", role: "Arbitre" },
-    { code: "CFOB", name: "Frank", role: "Finances" },
-    { code: "CSOB", name: "Simon", role: "Stratégie" },
-  ],
-  strategie: [
-    { code: "CEOB", name: "CarlOS", role: "Stratège" },
-    { code: "CSOB", name: "Simon", role: "Stratégie" },
-    { code: "CFOB", name: "Frank", role: "Finances" },
-  ],
-  innovation: [
-    { code: "CEOB", name: "CarlOS", role: "Disrupteur" },
-    { code: "CTOB", name: "Alex", role: "Tech" },
-    { code: "CINOB", name: "Inès", role: "Innovation" },
-  ],
-  resonance: [{ code: "CEOB", name: "CarlOS", role: "Mentor" }],
-  credo: [{ code: "CEOB", name: "CarlOS", role: "Maître CREDO" }],
+  podcast: [pb("CEOB", "Co-animateur")],
+  board: [pb("CEOB", "Président"), pb("CFOB", "Finances"), pb("CSOB", "Stratégie")],
+  client: [pb("CEOB", "Assistant"), pb("CSOB", "Ventes")],
+  aiguillage: [pb("CEOB", "Guide")],
+  travail: [pb("CEOB", "Documenteur")],
+  onboarding: [pb("CEOB", "Guide")],
+  diagnostic: [pb("CEOB", "Diagnosticien")],
+  crise: [pb("CEOB", "Commandant"), pb("COOB", "Opérations"), pb("CFOB", "Finances"), pb("CISOB", "Sécurité")],
+  brainstorm: [pb("CEOB", "Facilitateur"), pb("CTOB", "Tech"), pb("CMOB", "Marketing")],
+  debat: [pb("CEOB", "Modérateur"), pb("CSOB", "Stratégie"), pb("CMOB", "Marché")],
+  analyse: [pb("CEOB", "Analyste"), pb("CTOB", "Tech"), pb("CFOB", "Finances")],
+  decision: [pb("CEOB", "Arbitre"), pb("CFOB", "Finances"), pb("CSOB", "Stratégie")],
+  strategie: [pb("CEOB", "Stratège"), pb("CSOB", "Stratégie"), pb("CFOB", "Finances")],
+  innovation: [pb("CEOB", "Disrupteur"), pb("CTOB", "Tech"), pb("CINOB", "Innovation")],
+  resonance: [pb("CEOB", "Mentor")],
+  credo: [pb("CEOB", "Maître CREDO")],
 };
 
 type Tab = "new" | "archives";
@@ -294,19 +261,11 @@ export function ConferenceAIView() {
     setShowModal(true);
   }, []);
 
-  // Créer et lancer le meeting
-  const handleLaunch = useCallback(async () => {
+  // Lancer le meeting — on passe juste type+titre à MeetingRoomView qui gère la création
+  const handleLaunch = useCallback(() => {
     if (!selectedType || !modalTitle.trim()) return;
-    setCreating(true);
-    try {
-      await api.meetingCreate({ title: modalTitle, meeting_type: selectedType.id });
-      setActiveMeeting({ type: selectedType.id, title: modalTitle });
-      setShowModal(false);
-    } catch (err) {
-      console.error("Meeting creation failed:", err);
-    } finally {
-      setCreating(false);
-    }
+    setActiveMeeting({ type: selectedType.id, title: modalTitle });
+    setShowModal(false);
   }, [selectedType, modalTitle]);
 
   // Ouvrir le modal d'invitation

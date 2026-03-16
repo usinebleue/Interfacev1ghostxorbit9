@@ -327,7 +327,7 @@ function BlocProduit({ onClick, kpi }: { onClick?: () => void; kpi?: Record<stri
     if (kpi.roadmap_items !== undefined) items.push({ label: "Items roadmap", value: String(kpi.roadmap_items), sub: "" });
     if (kpi.adoption_pct !== undefined) items.push({ label: "Adoption", value: fmtPct(Number(kpi.adoption_pct)), sub: "" });
   }
-  if (items.length === 0) items.push({ label: "Usine & Produit", value: "—", sub: "Consultez Fabien pour monitorer" });
+  if (items.length === 0) items.push({ label: "Usine & Produit", value: "—", sub: "Consultez Paco pour monitorer" });
   return (
     <Card className="p-0 overflow-hidden rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
       <BlockHeader icon={Package} title="Paco — CPO" gradient="bg-gradient-to-r from-slate-600 to-slate-500" />
@@ -351,7 +351,7 @@ function BlocRisques({ onClick, kpi }: { onClick?: () => void; kpi?: Record<stri
     if (kpi.conformite_pct !== undefined) items.push({ label: "Conformite", value: fmtPct(Number(kpi.conformite_pct)), sub: "" });
     if (kpi.incidents_mois !== undefined) items.push({ label: "Incidents ce mois", value: String(kpi.incidents_mois), sub: "" });
   }
-  if (items.length === 0) items.push({ label: "Risques", value: "—", sub: "Consultez Raphael pour identifier" });
+  if (items.length === 0) items.push({ label: "Risques", value: "—", sub: "Consultez Rich pour identifier" });
   return (
     <Card className="p-0 overflow-hidden rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
       <BlockHeader icon={ShieldAlert} title="Rich — CRO" gradient="bg-gradient-to-r from-amber-600 to-amber-500" />
@@ -375,7 +375,7 @@ function BlocLegal({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string
     if (kpi.litiges !== undefined) items.push({ label: "Litiges", value: String(kpi.litiges), sub: "" });
     if (kpi.conformite_rgpd !== undefined) items.push({ label: "RGPD", value: String(kpi.conformite_rgpd), sub: "" });
   }
-  if (items.length === 0) items.push({ label: "Legal", value: "—", sub: "Consultez Louise pour verifier" });
+  if (items.length === 0) items.push({ label: "Legal", value: "—", sub: "Consultez Loulou pour verifier" });
   return (
     <Card className="p-0 overflow-hidden rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
       <BlockHeader icon={Scale} title="Loulou — CLO" gradient="bg-gradient-to-r from-indigo-600 to-indigo-500" />

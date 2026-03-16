@@ -39,13 +39,9 @@ interface Props {
 
 const API_KEY = import.meta.env.VITE_API_KEY || "";
 
-// Noms humains des bots
-const BOT_NAMES: Record<string, string> = {
-  CEOB: "CarlOS (CEO)", CTOB: "Tim (CTO)", CFOB: "Frank (CFO)",
-  CMOB: "Mathilde (CMO)", CSOB: "Simone (CSO)", COOB: "Olivier (COO)",
-  CPOB: "Paco (Usine)", CHROB: "Hélène (RH)", CINOB: "Inès (Innovation)",
-  CROB: "Rich (Ventes)", CLOB: "Loulou (Légal)", CISOB: "Sébastien (Sécurité)",
-};
+// Noms humains des bots — source unique types.ts
+import { BOT_NAME, BOT_ROLE } from "../../api/types";
+const botLabel = (code: string) => `${BOT_NAME[code] || code} (${BOT_ROLE[code] || ""})`;
 
 // Labels humains pour les types
 const TYPE_LABELS: Record<string, string> = {
@@ -240,9 +236,9 @@ export function MeetingGuestPage({ slug }: Props) {
                   {botCodes.map(code => (
                     <span key={code} className="inline-flex items-center gap-1 px-2.5 py-1 bg-white/20 rounded-full text-xs">
                       <span className="w-4 h-4 bg-white/30 rounded-full flex items-center justify-center text-[8px] font-bold">
-                        {(BOT_NAMES[code] || code)[0]}
+                        {(BOT_NAME[code] || code)[0]}
                       </span>
-                      {BOT_NAMES[code] || code}
+                      {botLabel(code)}
                     </span>
                   ))}
                 </div>
