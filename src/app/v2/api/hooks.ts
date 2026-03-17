@@ -2432,9 +2432,10 @@ export function useDocForgeLibrary(libraryId: number | null) {
     setFacts((prev) => prev.map((f) => f.id === factId ? { ...f, status: "confirme", valeur_resolue: valeur } : f));
   }, []);
 
-  const process = useCallback(async () => {
-    if (!libraryId) return;
-    await api.docForgeProcess(libraryId);
+  const process = useCallback(async (overrideId?: number) => {
+    const id = overrideId || libraryId;
+    if (!id) return;
+    await api.docForgeProcess(id);
   }, [libraryId]);
 
   const ingestText = useCallback(async (texte: string, titre?: string) => {

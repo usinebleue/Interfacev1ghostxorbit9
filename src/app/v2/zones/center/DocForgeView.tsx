@@ -77,7 +77,7 @@ export function DocForgeView() {
           onSelect={(id) => { setSelectedLibId(id); setActiveTab("blocks"); }}
           onDelete={deleteLibrary}
           onCreate={() => setShowCreate(true)}
-          onProcess={async (id) => { setSelectedLibId(id); await process(); }}
+          onProcess={async (id) => { setSelectedLibId(id); await process(id); }}
           refresh={refresh}
         />
       )}
