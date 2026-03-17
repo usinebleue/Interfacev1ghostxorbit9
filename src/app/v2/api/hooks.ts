@@ -2344,3 +2344,109 @@ export function useCommandDetect() {
 
   return { result, loading, detect };
 }
+
+
+// ══════════════════════════════════════════════
+// useDocForge — DocForge Bibliothèque Intelligente
+// ══════════════════════════════════════════════
+
+export function useDocForge() {
+  const [libraries, setLibraries] = useState<import("./types").DocForgeLibrary[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const refresh = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    api
+      .getDocForgeLibraries()
+      .then((res) => {
+        setLibraries(res.libraries || []);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, []);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  const createLibrary = useCallback(async (data: { titre: string; template_alias?: string; description?: string; tags?: string[] }) => {
+    const res = await api.createDocForgeLibrary(data);
+    refresh();
+    return res;
+  }, [refresh]);
+
+  const deleteLibrary = useCallback(async (id: number) => {
+    await api.deleteDocForgeLibrary(id);
+    setLibraries((prev) => prev.filter((l) => l.id !== id));
+  }, []);
+
+  return { libraries, loading, error, refresh, createLibrary, deleteLibrary };
+}
+
+export function useDocForgeLibrary(libraryId: number | null) {
+  const [library, setLibrary] = useState<import("./types").DocForgeLibrary | null>(null);
+  const [blocks, setBlocks] = useState<import("./types").DocForgeBlock[]>([]);
+  const [facts, setFacts] = useState<import("./types").DocForgeFact[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const refresh = useCallback(async () => {
+    if (!libraryId) return;
+    setLoading(true);
+    try {
+      const [lib, blk, fct] = await Promise.all([
+        api.getDocForgeLibrary(libraryId),
+        api.docForgeBlocks(libraryId),
+        api.docForgeFacts(libraryId),
+      ]);
+      setLibrary(lib);
+      setBlocks(blk.blocks || []);
+      setFacts(fct.facts || []);
+    } catch (err) {
+      console.error("useDocForgeLibrary:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [libraryId]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  const approveBlock = useCallback(async (blockId: number) => {
+    await api.docForgeBlockApprove(blockId);
+    setBlocks((prev) => prev.map((b) => b.id === blockId ? { ...b, status: "approuve" } : b));
+  }, []);
+
+  const rejectBlock = useCallback(async (blockId: number) => {
+    await api.docForgeBlockReject(blockId);
+    setBlocks((prev) => prev.map((b) => b.id === blockId ? { ...b, status: "rejete" } : b));
+  }, []);
+
+  const resolveFact = useCallback(async (factId: number, valeur: string) => {
+    await api.docForgeFactResolve(factId, valeur);
+    setFacts((prev) => prev.map((f) => f.id === factId ? { ...f, status: "confirme", valeur_resolue: valeur } : f));
+  }, []);
+
+  const process = useCallback(async () => {
+    if (!libraryId) return;
+    await api.docForgeProcess(libraryId);
+  }, [libraryId]);
+
+  const ingestText = useCallback(async (texte: string, titre?: string) => {
+    if (!libraryId) return;
+    await api.docForgeIngestText(libraryId, texte, titre);
+    refresh();
+  }, [libraryId, refresh]);
+
+  const ingestDrive = useCallback(async (folderId: string) => {
+    if (!libraryId) return;
+    await api.docForgeIngestDrive(libraryId, folderId);
+  }, [libraryId]);
+
+  return { library, blocks, facts, loading, refresh, approveBlock, rejectBlock, resolveFact, process, ingestText, ingestDrive };
+}

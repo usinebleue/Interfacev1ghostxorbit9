@@ -339,7 +339,7 @@ export interface Thread {
 // Mission = objectif stratégique qui contient N discussions (threads)
 // Nomenclature: Mission > Discussion > Branche
 
-export type MissionStatus = "active" | "en_cours" | "en_attente" | "completee" | "archivee";
+export type MissionStatus = "active" | "en_cours" | "en_attente" | "a-faire" | "completee" | "archivee";
 export type ChantierStatus = "active" | "en_attente" | "completee" | "archivee";
 export type ChantierHeat = "brule" | "couve" | "meurt" | "inconnu";
 export type EtatCroissance = "inconnu" | "demarrage" | "croissance" | "maturite";
@@ -545,6 +545,7 @@ export interface TacheUser {
   titre: string;
   description: string;
   status: string;
+  progression: number;           // 0 ou 100 (complete = 100)
   priorite: number;
   bot_primaire: string;
   assignee_type: string;
@@ -1618,4 +1619,79 @@ export interface TrustOrgSummary {
     fiabilite: number;
   };
   recent_reviews: TrustReview[];
+}
+
+// --- DocForge — Bibliothèque Intelligente ---
+
+export interface DocForgeLibrary {
+  id: number;
+  titre: string;
+  description: string;
+  template_alias: string;
+  template_sections: DocForgeSection[];
+  nb_blocs: number;
+  nb_faits: number;
+  completude_pct: number;
+  nb_contradictions: number;
+  bot_primaire: string;
+  status: string;
+  tags: string[];
+  chantier_id: number | null;
+  projet_id: number | null;
+  created_at: string;
+  updated_at: string;
+  published_at: string | null;
+}
+
+export interface DocForgeSection {
+  id: string;
+  title: string;
+  level: number;
+  status: "empty" | "partial" | "complete";
+}
+
+export interface DocForgeBlock {
+  id: number;
+  library_id: number;
+  section_id: string;
+  section_title: string;
+  contenu_md: string;
+  contenu_resume: string;
+  source_type: string;
+  source_ref: string;
+  source_page: string;
+  confiance: number;
+  status: string;
+  faits_extraits: any[];
+  version: number;
+  ordre: number;
+  created_at: string;
+  updated_at: string;
+  reviewed_at: string | null;
+  reviewed_by: string | null;
+}
+
+export interface DocForgeFact {
+  id: number;
+  library_id: number;
+  sujet: string;
+  valeur: string;
+  categorie: string;
+  source_block_ids: number[];
+  status: string;
+  valeurs_alternatives: any[];
+  date_reference: string | null;
+  valeur_resolue: string | null;
+  resolu_par: string | null;
+  resolu_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DocForgeTemplate {
+  alias: string;
+  titre: string;
+  description: string;
+  fichier: string;
+  nb_sections: number;
 }

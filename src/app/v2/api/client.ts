@@ -1499,4 +1499,84 @@ export const api = {
   getFundSynergies(): Promise<{ synergies: any[] }> {
     return apiFetch("/cross-org/synergies");
   },
+
+  // --- DocForge ---
+
+  getDocForgeLibraries(status?: string): Promise<{ libraries: any[]; count: number }> {
+    const q = status ? `?status=${status}` : "";
+    return apiFetch(`/docforge/libraries${q}`);
+  },
+
+  createDocForgeLibrary(data: { titre: string; template_alias?: string; description?: string; tags?: string[] }): Promise<{ id: number; ok: boolean }> {
+    return apiFetch("/docforge/libraries", { method: "POST", body: JSON.stringify(data) });
+  },
+
+  getDocForgeLibrary(id: number): Promise<any> {
+    return apiFetch(`/docforge/libraries/${id}`);
+  },
+
+  updateDocForgeLibrary(id: number, data: any): Promise<{ ok: boolean }> {
+    return apiFetch(`/docforge/libraries/${id}`, { method: "POST", body: JSON.stringify(data) });
+  },
+
+  deleteDocForgeLibrary(id: number): Promise<{ ok: boolean }> {
+    return apiFetch(`/docforge/libraries/${id}/delete`, { method: "POST" });
+  },
+
+  docForgeIngestDrive(libraryId: number, folderId: string): Promise<{ ok: boolean }> {
+    return apiFetch(`/docforge/libraries/${libraryId}/ingest-drive`, { method: "POST", body: JSON.stringify({ folder_id: folderId }) });
+  },
+
+  docForgeIngestText(libraryId: number, texte: string, titre?: string): Promise<{ ok: boolean; block_id: number }> {
+    return apiFetch(`/docforge/libraries/${libraryId}/ingest-text`, { method: "POST", body: JSON.stringify({ texte, titre: titre || "Texte collé" }) });
+  },
+
+  docForgeProcess(libraryId: number): Promise<{ ok: boolean }> {
+    return apiFetch(`/docforge/libraries/${libraryId}/process`, { method: "POST" });
+  },
+
+  docForgeProgress(libraryId: number): Promise<{ status: string; nb_blocs: number; nb_faits: number; completude_pct: number; nb_contradictions: number }> {
+    return apiFetch(`/docforge/libraries/${libraryId}/progress`);
+  },
+
+  docForgeBlocks(libraryId: number, sectionId?: string, status?: string): Promise<{ blocks: any[]; count: number }> {
+    const params = new URLSearchParams();
+    if (sectionId) params.set("section_id", sectionId);
+    if (status) params.set("status", status);
+    const q = params.toString() ? `?${params}` : "";
+    return apiFetch(`/docforge/libraries/${libraryId}/blocks${q}`);
+  },
+
+  docForgeBlockUpdate(blockId: number, data: any): Promise<{ ok: boolean }> {
+    return apiFetch(`/docforge/blocks/${blockId}`, { method: "POST", body: JSON.stringify(data) });
+  },
+
+  docForgeBlockApprove(blockId: number): Promise<{ ok: boolean }> {
+    return apiFetch(`/docforge/blocks/${blockId}/approve`, { method: "POST" });
+  },
+
+  docForgeBlockReject(blockId: number): Promise<{ ok: boolean }> {
+    return apiFetch(`/docforge/blocks/${blockId}/reject`, { method: "POST" });
+  },
+
+  docForgeFacts(libraryId: number, status?: string): Promise<{ facts: any[]; count: number }> {
+    const q = status ? `?status=${status}` : "";
+    return apiFetch(`/docforge/libraries/${libraryId}/facts${q}`);
+  },
+
+  docForgeFactResolve(factId: number, valeur: string): Promise<{ ok: boolean }> {
+    return apiFetch(`/docforge/facts/${factId}/resolve`, { method: "POST", body: JSON.stringify({ valeur_resolue: valeur, resolu_par: "carl" }) });
+  },
+
+  docForgePreview(libraryId: number): Promise<{ markdown: string; length: number }> {
+    return apiFetch(`/docforge/libraries/${libraryId}/preview`);
+  },
+
+  docForgePublishDrive(libraryId: number, folderId: string): Promise<any> {
+    return apiFetch(`/docforge/libraries/${libraryId}/publish-drive`, { method: "POST", body: JSON.stringify({ target_folder_id: folderId }) });
+  },
+
+  docForgeTemplates(): Promise<{ templates: any[] }> {
+    return apiFetch("/docforge/templates");
+  },
 };

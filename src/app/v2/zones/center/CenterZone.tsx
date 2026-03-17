@@ -93,6 +93,7 @@ import { EquipeHumaineView } from "./EquipeHumaineView";
 import { ChatH2H } from "./ChatH2H";
 import { StatusView } from "./StatusView";
 import { OnboardingView } from "./OnboardingView";
+import { DocForgeView } from "./DocForgeView";
 import { useFlowGPS } from "../../api/hooks";
 
 /** Couleur identitaire par bot — bande fine en haut du canevas */
@@ -310,6 +311,7 @@ export function CenterZone() {
       {activeView === "chat-h2h" && <ChatH2H />}
       {activeView === "status" && <StatusView />}
       {activeView === "onboarding" && <OnboardingView />}
+      {activeView === "docforge" && <DocForgeView />}
       {activeView === "canvas" && (
         <SmartCanvas
           onStartChat={handleStartChat}
