@@ -19,7 +19,7 @@ import {
   AlertTriangle, DollarSign, CalendarDays, Shield, TrendingUp,
   LayoutGrid, List, Columns, Table2,
   Building2, Save, Globe, MapPin, Briefcase,
-  Search, Upload, Wand2,
+  Search, Upload, Wand2, ArrowUpDown, ArrowUp, ArrowDown,
 } from "lucide-react";
 import { cn } from "../../../components/ui/utils";
 import { Card } from "../../../components/ui/card";
@@ -517,10 +517,14 @@ function HierarchieTab({
   level,
   goTo,
   parentFilter,
+  viewMode,
+  setViewMode,
 }: {
   level: "chantiers" | "projets" | "missions" | "taches";
   goTo: (tab: BlueprintTabId, filter?: { type: string; id: number; titre: string }) => void;
   parentFilter?: { type: string; id: number; titre: string } | null;
+  viewMode: "cards" | "list" | "kanban" | "spreadsheet";
+  setViewMode: (m: "cards" | "list" | "kanban" | "spreadsheet") => void;
 }) {
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState<SortField>("titre");
@@ -529,7 +533,6 @@ function HierarchieTab({
   const [categorieFilter, setCategorieFilter] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editItem, setEditItem] = useState<Record<string, unknown> | null>(null);
-  const [viewMode, setViewMode] = useState<"cards" | "list" | "kanban" | "spreadsheet">("cards");
 
   // Data hooks — filter by parent if set
   const chantierId = parentFilter?.type === "chantier" ? parentFilter.id : undefined;
@@ -566,6 +569,19 @@ function HierarchieTab({
     return map;
   }, [missions]);
 
+  // Reverse lookup: projet → chantier, mission → projet (pour breadcrumbs)
+  const projetToChantierMap = useMemo(() => {
+    const map: Record<number, number> = {};
+    projets.forEach((p) => { if (p.chantier_id) map[p.id] = p.chantier_id; });
+    return map;
+  }, [projets]);
+
+  const missionToProjetMap = useMemo(() => {
+    const map: Record<number, number> = {};
+    missions.forEach((m) => { if (m.projet_id) map[m.id] = m.projet_id; });
+    return map;
+  }, [missions]);
+
   // Select data for current level
   const rawItems: Record<string, unknown>[] = useMemo(() => {
     switch (level) {
@@ -598,7 +614,7 @@ function HierarchieTab({
     if (categorieFilter) {
       list = list.filter((item) => (item.categorie as string) === categorieFilter);
     }
-    // Sort
+    // Sort — resolve hierarchy names for sorting
     list.sort((a, b) => {
       let cmp = 0;
       if (sortField === "titre") {
@@ -609,18 +625,39 @@ function HierarchieTab({
         cmp = mapStatus((a.status as string) || "").localeCompare(mapStatus((b.status as string) || ""));
       } else if (sortField === "priorite") {
         cmp = ((a.priorite as number) || 0) - ((b.priorite as number) || 0);
+      } else if (sortField === "mission") {
+        const aName = missionTitreMap[(a.mission_id as number)] || "";
+        const bName = missionTitreMap[(b.mission_id as number)] || "";
+        cmp = aName.localeCompare(bName);
+      } else if (sortField === "projet") {
+        const aPid = (a.projet_id as number) || ((a.mission_id as number) ? missionToProjetMap[a.mission_id as number] : 0) || 0;
+        const bPid = (b.projet_id as number) || ((b.mission_id as number) ? missionToProjetMap[b.mission_id as number] : 0) || 0;
+        cmp = (projetTitreMap[aPid] || "").localeCompare(projetTitreMap[bPid] || "");
+      } else if (sortField === "chantier") {
+        const resolveChantier = (item: Record<string, unknown>) => {
+          const pid = (item.chantier_id as number) || (item.projet_id as number ? projetToChantierMap[item.projet_id as number] : undefined)
+            || ((item.mission_id as number) ? projetToChantierMap[missionToProjetMap[item.mission_id as number]] : undefined) || 0;
+          return chantierTitreMap[pid] || "";
+        };
+        cmp = resolveChantier(a).localeCompare(resolveChantier(b));
+      } else if (sortField === "bot") {
+        cmp = ((a.bot_primaire as string) || "").localeCompare((b.bot_primaire as string) || "");
+      } else if (sortField === "categorie") {
+        cmp = ((a.categorie as string) || "").localeCompare((b.categorie as string) || "");
+      } else if (sortField === "progression") {
+        cmp = ((a.progression as number) || 0) - ((b.progression as number) || 0);
       }
       return sortDir === "desc" ? -cmp : cmp;
     });
     return list;
-  }, [rawItems, search, statusFilter, categorieFilter, sortField, sortDir]);
+  }, [rawItems, search, statusFilter, categorieFilter, sortField, sortDir, missionTitreMap, projetTitreMap, chantierTitreMap, missionToProjetMap, projetToChantierMap]);
 
   // Group items by parent — uses lookup maps to resolve parent titles
   // Groups in BOTH direct and drill-down views (drill-down groups by next parent level up)
   const groupedItems = useMemo(() => {
     if (level === "chantiers") return null; // top level, no grouping
     if (level === "projets") {
-      const groups: Record<string, { parentTitre: string; items: Record<string, unknown>[] }> = {};
+      const groups: Record<string, { parentTitre: string; breadcrumb?: string; items: Record<string, unknown>[] }> = {};
       items.forEach((item) => {
         const cid = item.chantier_id as number;
         const key = String(cid || "sans-chantier");
@@ -631,29 +668,44 @@ function HierarchieTab({
       return Object.values(groups);
     }
     if (level === "missions") {
-      const groups: Record<string, { parentTitre: string; items: Record<string, unknown>[] }> = {};
+      const groups: Record<string, { parentTitre: string; breadcrumb?: string; items: Record<string, unknown>[] }> = {};
       items.forEach((item) => {
         const pid = item.projet_id as number;
         const key = String(pid || "sans-projet");
         const titre = (pid && projetTitreMap[pid]) || "Sans projet";
-        if (!groups[key]) groups[key] = { parentTitre: titre, items: [] };
+        if (!groups[key]) {
+          // Resolve chantier parent for breadcrumb
+          const chantId = pid ? projetToChantierMap[pid] : undefined;
+          const chantTitre = chantId ? chantierTitreMap[chantId] : undefined;
+          groups[key] = { parentTitre: titre, breadcrumb: chantTitre, items: [] };
+        }
         groups[key].items.push(item);
       });
       return Object.values(groups);
     }
     if (level === "taches") {
-      const groups: Record<string, { parentTitre: string; items: Record<string, unknown>[] }> = {};
+      const groups: Record<string, { parentTitre: string; breadcrumb?: string; items: Record<string, unknown>[] }> = {};
       items.forEach((item) => {
         const mid = item.mission_id as number;
         const key = String(mid || "sans-mission");
         const titre = (mid && missionTitreMap[mid]) || "Sans mission";
-        if (!groups[key]) groups[key] = { parentTitre: titre, items: [] };
+        if (!groups[key]) {
+          // Resolve projet + chantier parent for breadcrumb
+          const projId = mid ? missionToProjetMap[mid] : undefined;
+          const projTitre = projId ? projetTitreMap[projId] : undefined;
+          const chantId = projId ? projetToChantierMap[projId] : undefined;
+          const chantTitre = chantId ? chantierTitreMap[chantId] : undefined;
+          const parts: string[] = [];
+          if (chantTitre) parts.push(chantTitre);
+          if (projTitre) parts.push(projTitre);
+          groups[key] = { parentTitre: titre, breadcrumb: parts.length > 0 ? parts.join(" › ") : undefined, items: [] };
+        }
         groups[key].items.push(item);
       });
       return Object.values(groups);
     }
     return null;
-  }, [level, items, chantierTitreMap, projetTitreMap, missionTitreMap]);
+  }, [level, items, chantierTitreMap, projetTitreMap, missionTitreMap, projetToChantierMap, missionToProjetMap]);
 
   // CRUD handlers
   const handleSave = async (data: Record<string, unknown>) => {
@@ -850,9 +902,13 @@ function HierarchieTab({
           <div className="flex items-center gap-2 flex-wrap">
             {(item.bot_primaire as string) && <BotBadge code={item.bot_primaire as string} />}
             {(item.chaleur as string) && <ChaleurBadge chaleur={item.chaleur as "brule" | "couve" | "meurt"} />}
-            {(item.progression as number) > 0 && (
-              <span className="text-[9px] text-gray-400">{item.progression}%</span>
-            )}
+            {/* Progress bar */}
+            <div className="flex items-center gap-1.5 min-w-[80px]">
+              <div className="flex-1 bg-gray-200 rounded-full h-2.5">
+                <div className={cn("h-2.5 rounded-full transition-all", (item.progression as number) >= 100 ? "bg-emerald-500" : (item.progression as number) > 0 ? "bg-blue-500" : "bg-gray-300")} style={{ width: `${Math.max((item.progression as number) || 0, 2)}%` }} />
+              </div>
+              <span className="text-[9px] font-bold text-gray-500 whitespace-nowrap">{(item.progression as number) || 0}%</span>
+            </div>
             {(item.missions_count as number) > 0 && (
               <span className="text-[9px] text-gray-400">{item.missions_count} missions</span>
             )}
@@ -989,17 +1045,51 @@ function HierarchieTab({
         </div>
       ) : viewMode === "spreadsheet" ? (
         /* ═══ SPREADSHEET VIEW ═══ */
-        <div className="border border-gray-200 rounded-lg overflow-hidden">
-          <table className="w-full text-[9px]">
+        <div className="border border-gray-200 rounded-lg overflow-hidden overflow-x-auto">
+          <table className="w-full text-[9px] table-fixed">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="text-left px-3 py-2 font-bold text-gray-500 uppercase">Titre</th>
-                <th className="text-left px-2 py-2 font-bold text-gray-500 uppercase w-20">Statut</th>
-                <th className="text-left px-2 py-2 font-bold text-gray-500 uppercase w-16">Priorite</th>
-                <th className="text-left px-2 py-2 font-bold text-gray-500 uppercase w-20">Bot</th>
-                <th className="text-left px-2 py-2 font-bold text-gray-500 uppercase w-20">Categorie</th>
-                <th className="text-left px-2 py-2 font-bold text-gray-500 uppercase w-20">Progression</th>
-                <th className="text-right px-3 py-2 font-bold text-gray-500 uppercase w-16">Actions</th>
+                {(() => {
+                  const SortTh = ({ field, label, className: cls }: { field: SortField; label: string; className?: string }) => {
+                    const active = sortField === field;
+                    const Icon = active ? (sortDir === "asc" ? ArrowUp : ArrowDown) : ArrowUpDown;
+                    return (
+                      <th
+                        className={cn("text-left px-2 py-2 font-bold text-gray-500 uppercase cursor-pointer select-none hover:bg-gray-100 transition-colors", cls)}
+                        onClick={() => {
+                          if (active) { setSortDir(sortDir === "asc" ? "desc" : "asc"); }
+                          else { setSortField(field); setSortDir("asc"); }
+                        }}
+                      >
+                        <span className="inline-flex items-center gap-1">
+                          {label}
+                          <Icon className={cn("h-3.5 w-3.5 shrink-0", active ? "text-blue-500" : "text-gray-300")} />
+                        </span>
+                      </th>
+                    );
+                  };
+                  // In drill-down mode, hide parent columns already shown in banner
+                  const pType = parentFilter?.type;
+                  const showChantier = (level === "taches" || level === "missions" || level === "projets") && pType !== "chantier" && pType !== "projet" && pType !== "mission";
+                  const showProjet = (level === "taches" || level === "missions") && pType !== "projet" && pType !== "mission";
+                  const showMission = level === "taches" && pType !== "mission";
+                  const hieraCols = (showChantier ? 1 : 0) + (showProjet ? 1 : 0) + (showMission ? 1 : 0);
+                  const titreW = hieraCols >= 3 ? "w-[150px]" : hieraCols >= 2 ? "w-[200px]" : "w-[260px]";
+                  return (
+                    <>
+                      <SortTh field="titre" label="Titre" className={cn("px-3", titreW)} />
+                      {showChantier && <SortTh field="chantier" label="Chantier" className="w-[90px]" />}
+                      {showProjet && <SortTh field="projet" label="Projet" className="w-[90px]" />}
+                      {showMission && <SortTh field="mission" label="Mission" className="w-[90px]" />}
+                      <SortTh field="statut" label="Statut" className="w-[72px]" />
+                      <SortTh field="priorite" label="Pri." className="w-[44px]" />
+                      <SortTh field="bot" label="Bot" className="w-[56px]" />
+                      <SortTh field="categorie" label="Cat." className="w-[64px]" />
+                      <SortTh field="progression" label="Prog." className="w-[76px]" />
+                      <th className="text-right px-1.5 py-2 font-bold text-gray-500 uppercase w-[36px]">Act.</th>
+                    </>
+                  );
+                })()}
               </tr>
             </thead>
             <tbody>
@@ -1007,24 +1097,44 @@ function HierarchieTab({
                 const st = mapStatus((item.status as string) || "");
                 const stColor: Record<string, string> = { "done": "text-emerald-600 bg-emerald-50", "en-cours": "text-blue-600 bg-blue-50", "a-faire": "text-amber-600 bg-amber-50", "bloque": "text-red-600 bg-red-50" };
                 const stLabel: Record<string, string> = { "done": "Complete", "en-cours": "En cours", "a-faire": "A faire", "bloque": "Bloque" };
+                // Resolve hierarchy names
+                const missionName = (item.mission_id as number) ? missionTitreMap[item.mission_id as number] || "" : "";
+                const projetId = (item.projet_id as number) || ((item.mission_id as number) ? missionToProjetMap[item.mission_id as number] : undefined);
+                const projetName = projetId ? projetTitreMap[projetId] || "" : "";
+                const chantierId = (item.chantier_id as number) || (projetId ? projetToChantierMap[projetId] : undefined);
+                const chantierName = chantierId ? chantierTitreMap[chantierId] || "" : "";
                 return (
                   <tr
                     key={item.id as number}
-                    className="border-b border-gray-100 hover:bg-blue-50/30 cursor-pointer transition-colors"
-                    onClick={() => handleDrillDown(item)}
+                    className={cn("border-b border-gray-100 hover:bg-blue-50/30 cursor-pointer transition-colors", level === "taches" && st === "done" && "opacity-60")}
+                    onClick={() => {
+                      if (level === "taches") { setEditItem(item); setModalOpen(true); }
+                      else handleDrillDown(item);
+                    }}
                   >
-                    <td className="px-3 py-2">
-                      <span className="font-medium text-gray-800 text-xs">{item.titre as string}</span>
-                      {(item.description as string) && (
-                        <p className="text-[9px] text-gray-400 line-clamp-1">{item.description as string}</p>
-                      )}
+                    <td className="px-3 py-1.5 overflow-hidden">
+                      <div className="flex items-center gap-1.5">
+                        {level === "taches" && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); if (st !== "done") handleComplete(item.id as number); }}
+                            className="shrink-0"
+                            title={st === "done" ? "Completee" : "Marquer completee"}
+                          >
+                            <CheckCircle2 className={cn("h-3.5 w-3.5", st === "done" ? "text-emerald-500" : "text-gray-300 hover:text-emerald-400")} />
+                          </button>
+                        )}
+                        <span className={cn("font-medium text-gray-800 text-xs block truncate", level === "taches" && st === "done" && "line-through text-gray-400")}>{item.titre as string}</span>
+                      </div>
                     </td>
-                    <td className="px-2 py-2"><span className={cn("px-1.5 py-0.5 rounded-full text-[9px] font-bold", stColor[st])}>{stLabel[st]}</span></td>
-                    <td className="px-2 py-2 text-gray-500">{(item.priorite as number) || 50}</td>
-                    <td className="px-2 py-2"><BotBadge code={(item.bot_primaire as string) || "CEOB"} /></td>
-                    <td className="px-2 py-2">
+                    {(level === "taches" || level === "missions" || level === "projets") && parentFilter?.type !== "chantier" && parentFilter?.type !== "projet" && parentFilter?.type !== "mission" && <td className="px-1.5 py-1.5 text-gray-500 truncate overflow-hidden" title={chantierName}>{chantierName || "—"}</td>}
+                    {(level === "taches" || level === "missions") && parentFilter?.type !== "projet" && parentFilter?.type !== "mission" && <td className="px-1.5 py-1.5 text-gray-500 truncate overflow-hidden" title={projetName}>{projetName || "—"}</td>}
+                    {level === "taches" && parentFilter?.type !== "mission" && <td className="px-1.5 py-1.5 text-gray-500 truncate overflow-hidden" title={missionName}>{missionName || "—"}</td>}
+                    <td className="px-1.5 py-1.5"><span className={cn("px-1 py-0.5 rounded-full text-[9px] font-bold", stColor[st])}>{stLabel[st]}</span></td>
+                    <td className="px-1.5 py-1.5 text-gray-500">{(item.priorite as number) || 50}</td>
+                    <td className="px-1.5 py-1.5"><BotBadge code={(item.bot_primaire as string) || "CEOB"} /></td>
+                    <td className="px-1.5 py-1.5">
                       <span className={cn(
-                        "px-1.5 py-0.5 rounded-full text-[9px] font-bold",
+                        "px-1 py-0.5 rounded-full text-[9px] font-bold",
                         (item.categorie as string) === "client" ? "bg-amber-100 text-amber-700" :
                         (item.categorie as string) === "partenaire" ? "bg-purple-100 text-purple-700" :
                         "bg-gray-100 text-gray-500"
@@ -1032,15 +1142,15 @@ function HierarchieTab({
                         {(item.categorie as string) || "interne"}
                       </span>
                     </td>
-                    <td className="px-2 py-2">
-                      <div className="flex items-center gap-1.5">
-                        <div className="flex-1 bg-gray-200 rounded-full h-1.5">
-                          <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${(item.progression as number) || 0}%` }} />
+                    <td className="px-1.5 py-1.5">
+                      <div className="flex items-center gap-1">
+                        <div className="flex-1 bg-gray-200 rounded-full h-2.5">
+                          <div className={cn("h-2.5 rounded-full transition-all", (item.progression as number) >= 100 ? "bg-emerald-500" : (item.progression as number) > 0 ? "bg-blue-500" : "bg-gray-300")} style={{ width: `${Math.max((item.progression as number) || 0, 2)}%` }} />
                         </div>
-                        <span className="text-[9px] text-gray-400">{(item.progression as number) || 0}%</span>
+                        <span className="text-[9px] font-bold text-gray-500">{(item.progression as number) || 0}%</span>
                       </div>
                     </td>
-                    <td className="px-3 py-2 text-right">
+                    <td className="px-1.5 py-1.5 text-right">
                       <button
                         onClick={(e) => { e.stopPropagation(); setEditItem(item); setModalOpen(true); }}
                         className="text-gray-400 hover:text-blue-600 transition-colors"
@@ -1067,9 +1177,16 @@ function HierarchieTab({
                 {/* Group section header — PROMINENT */}
                 <div className={cn("px-3 py-2.5 rounded-t-lg flex items-center gap-3 bg-gradient-to-r border border-b-0 border-gray-200", gGrad)}>
                   <GroupParentIcon className={cn("h-4 w-4 shrink-0", gIcon)} />
-                  <span className={cn("text-sm font-bold flex-1 truncate", gText)}>
-                    {group.parentTitre}
-                  </span>
+                  <div className="flex-1 min-w-0">
+                    {group.breadcrumb && (
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <span className="text-[9px] font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded truncate">{group.breadcrumb}</span>
+                      </div>
+                    )}
+                    <span className={cn("text-sm font-bold truncate block", gText)}>
+                      {group.parentTitre}
+                    </span>
+                  </div>
                   <span className={cn("text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/70 shrink-0", gText)}>
                     {group.items.length} {levelLabels[level]}
                   </span>
@@ -1878,8 +1995,9 @@ function TabObjectifs() {
 export function BlueprintView() {
   const { setActiveView } = useFrameMaster();
   const { dispatch } = useCanvasActions();
-  const [activeTab, setActiveTab] = useState<BlueprintTabId>("sommaire");
+  const [activeTab, setActiveTab] = useState<BlueprintTabId>("overview");
   const [parentFilter, setParentFilter] = useState<{ type: string; id: number; titre: string } | null>(null);
+  const [sharedViewMode, setSharedViewMode] = useState<"cards" | "list" | "kanban" | "spreadsheet">("cards");
 
   // API data for stats
   const [apiChantiers, setApiChantiers] = useState<Record<string, unknown>[]>([]);
@@ -1929,11 +2047,10 @@ export function BlueprintView() {
     refreshAll();
   }, [refreshAll]);
 
-  // Focus handler for catalogues
+  // Focus handler for catalogues — pas de setActiveView, FocusModeLayout remplace le centre directement
   const handleFocus = useCallback((title: string, elementType: string, data: unknown) => {
     dispatch({ type: "focus", layer: "cerveau", data: { title, element_type: elementType, data }, bot: "CEOB" });
-    setActiveView("live-chat");
-  }, [dispatch, setActiveView]);
+  }, [dispatch]);
 
   // ALWAYS reset parent filter when clicking a tab directly (not via drill-down)
   // This separates "direct navigation" (click tab) from "drill-down" (click item)
@@ -1962,19 +2079,19 @@ export function BlueprintView() {
       )}
 
       {activeTab === "chantiers" && (
-        <HierarchieTab level="chantiers" goTo={goTo} parentFilter={parentFilter} />
+        <HierarchieTab level="chantiers" goTo={goTo} parentFilter={parentFilter} viewMode={sharedViewMode} setViewMode={setSharedViewMode} />
       )}
 
       {activeTab === "projets" && (
-        <HierarchieTab level="projets" goTo={goTo} parentFilter={parentFilter} />
+        <HierarchieTab level="projets" goTo={goTo} parentFilter={parentFilter} viewMode={sharedViewMode} setViewMode={setSharedViewMode} />
       )}
 
       {activeTab === "missions" && (
-        <HierarchieTab level="missions" goTo={goTo} parentFilter={parentFilter} />
+        <HierarchieTab level="missions" goTo={goTo} parentFilter={parentFilter} viewMode={sharedViewMode} setViewMode={setSharedViewMode} />
       )}
 
       {activeTab === "taches" && (
-        <HierarchieTab level="taches" goTo={goTo} parentFilter={parentFilter} />
+        <HierarchieTab level="taches" goTo={goTo} parentFilter={parentFilter} viewMode={sharedViewMode} setViewMode={setSharedViewMode} />
       )}
 
       {activeTab === "timeline" && <TabTimeline />}
@@ -1984,7 +2101,12 @@ export function BlueprintView() {
           type="documents"
           items={templates as unknown as Parameters<typeof CatalogueGrid>[0]["items"]}
           loading={loadingCatalogues}
-          onAction={(item) => handleFocus(`Template: ${item.titre}`, "template_documentaire", item)}
+          onAction={(item) => {
+            dispatch({ type: "focus", layer: "cerveau",
+              data: { title: `Template: ${item.titre}`, element_type: "document_editor", data: { template: item, mode: "scratch" } },
+              bot: "CPOB"
+            });
+          }}
           actionLabel="Generer"
         />
       )}

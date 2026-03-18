@@ -36,7 +36,6 @@ import {
   MessageSquare,
   ChevronRight,
   Eye,
-  PenLine,
   Calculator,
   Zap,
   Ruler,
@@ -46,6 +45,7 @@ import {
   Gauge,
   Scale,
   Briefcase,
+  Table2,
 } from "lucide-react";
 import { Card } from "../../../components/ui/card";
 import { Badge } from "../../../components/ui/badge";
@@ -63,12 +63,13 @@ import type { EspaceSection } from "../../context/FrameMasterContext";
 import { useChatContext } from "../../context/ChatContext";
 import { BOT_AVATAR, BOT_NAME, BOT_ROLE } from "../../api/types";
 import type { BureauItemCreate, PlaneTacheCreate, TemplatePreview } from "../../api/types";
-import { useBureau, useTaches, useTemplates, useIdees } from "../../api/hooks";
+import { useBureau, useTaches, useTemplates, useIdees, useDocForge, useUnifiedTemplates, DEPT_LABELS } from "../../api/hooks";
 import { api } from "../../api/client";
+import { useCanvasActions } from "../../context/CanvasActionContext";
 import { CarlOSPresence } from "../center/CarlOSPresence";
-import { DocumentWorkflow } from "../center/DocumentWorkflow";
 import { SectionFrame } from "./shared/SectionFrame";
 import type { TabDef } from "./shared/section-types";
+import type { DocForgeTemplateV2, DocForgeLibrary, DriveBrowseItem, UnifiedTemplate } from "../../api/types";
 
 // ── Sub-tabs config (pattern Orbit9DetailView) ──
 
@@ -922,208 +923,70 @@ function IdeesPage() {
 // DOCUMENTS PAGE (3 volets)
 // ══════════════════════════════════════════
 
-// ══════════════════════════════════════════
-// GENERATE DOCUMENT DIALOG
-// ══════════════════════════════════════════
-
-function GenerateDocumentDialog({
-  open,
-  onClose,
-  preview,
-  loadingPreview,
-  onGenerate,
-  onWorkflow,
-}: {
-  open: boolean;
-  onClose: () => void;
-  preview: TemplatePreview | null;
-  loadingPreview: boolean;
-  onGenerate: (donnees: Record<string, string>, client: string) => Promise<void>;
-  onWorkflow?: () => void;
-}) {
-  const [client, setClient] = useState("Client");
-  const [placeholderValues, setPlaceholderValues] = useState<Record<string, string>>({});
-  const [generating, setGenerating] = useState(false);
-  const [result, setResult] = useState<{ titre: string; download_url: string } | null>(null);
-
-  // Reset state on open
-  useEffect(() => {
-    if (open) {
-      setPlaceholderValues({});
-      setClient("Client");
-      setGenerating(false);
-      setResult(null);
-    }
-  }, [open, preview?.alias]);
-
-  const handleGenerate = async () => {
-    setGenerating(true);
-    try {
-      await onGenerate(placeholderValues, client);
-    } finally {
-      setGenerating(false);
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-sm flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            {preview ? preview.nom : "Charger..."}
-          </DialogTitle>
-          <DialogDescription className="text-xs text-gray-500">
-            {preview ? `${preview.categorie} — ${preview.placeholders.length} champ(s) a remplir` : ""}
-          </DialogDescription>
-        </DialogHeader>
-
-        {loadingPreview ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
-          </div>
-        ) : preview ? (
-          <div className="space-y-4">
-            {/* Apercu markdown (collapsed) */}
-            <details className="group">
-              <summary className="text-xs font-medium text-gray-600 cursor-pointer hover:text-gray-800">
-                Apercu du template ({preview.contenu_md.split("\n").length} lignes)
-              </summary>
-              <pre className="mt-2 text-[10px] text-gray-500 bg-gray-50 rounded-lg p-3 max-h-40 overflow-y-auto whitespace-pre-wrap">
-                {preview.contenu_md.slice(0, 2000)}
-                {preview.contenu_md.length > 2000 ? "\n..." : ""}
-              </pre>
-            </details>
-
-            {/* Client name */}
-            <div>
-              <label className="text-xs font-medium text-gray-700 block mb-1">Nom du client</label>
-              <input
-                value={client}
-                onChange={(e) => setClient(e.target.value)}
-                className="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
-                placeholder="Nom du client"
-              />
-            </div>
-
-            {/* Placeholders */}
-            {preview.placeholders.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-gray-700">Champs du template</p>
-                {preview.placeholders.map((ph) => (
-                  <div key={ph}>
-                    <label className="text-[10px] text-gray-500 block mb-0.5">{ph}</label>
-                    <input
-                      value={placeholderValues[ph] || ""}
-                      onChange={(e) => setPlaceholderValues((prev) => ({ ...prev, [ph]: e.target.value }))}
-                      className="w-full px-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
-                      placeholder={`Valeur pour ${ph}`}
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Narratives info */}
-            {preview.narratives.length > 0 && (
-              <p className="text-[10px] text-gray-400">
-                {preview.narratives.length} bloc(s) narratif(s) — seront completes par CarlOS en Phase 2
-              </p>
-            )}
-          </div>
-        ) : null}
-
-        <DialogFooter className="flex gap-2">
-          <button
-            onClick={onClose}
-            className="px-3 py-2 text-xs text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 cursor-pointer"
-          >
-            Annuler
-          </button>
-          {onWorkflow && preview && (
-            <button
-              onClick={onWorkflow}
-              className="flex items-center gap-1.5 px-4 py-2 text-xs text-violet-700 bg-violet-50 rounded-lg hover:bg-violet-100 border border-violet-200 cursor-pointer"
-            >
-              <PenLine className="h-3.5 w-3.5" />
-              Travailler ce document
-            </button>
-          )}
-          <button
-            onClick={handleGenerate}
-            disabled={generating || !preview}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs text-white bg-gray-900 rounded-lg hover:bg-gray-800 disabled:opacity-50 cursor-pointer"
-          >
-            {generating ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <FileText className="h-3.5 w-3.5" />
-            )}
-            Generer PDF
-          </button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 function DocumentsPage() {
-  const [docTab, setDocTab] = useState<"generes" | "templates" | "importes">("generes");
+  const [docTab, setDocTab] = useState<"generes" | "docforge" | "importes">("generes");
   const { items: allDocs, loading, error, uploadFile, refresh: refreshDocs } = useBureau("document");
-  const { templates, categories, total: templateTotal, loading: loadingTemplates } = useTemplates();
-  const [tplCatFilter, setTplCatFilter] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
-  // Generate dialog state
-  const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
-  const [selectedPreview, setSelectedPreview] = useState<TemplatePreview | null>(null);
-  const [loadingPreview, setLoadingPreview] = useState(false);
+  // Unified templates (DocForge V3)
+  const { templates: unifiedTemplates, categories: unifiedCategories, departements, loading: loadingUnified } = useUnifiedTemplates();
+  const { libraries: dfLibraries, loading: dfLoading, refresh: dfRefresh } = useDocForge();
+  const [showCreateWizard, setShowCreateWizard] = useState(false);
+  const [dfTemplates, setDfTemplates] = useState<DocForgeTemplateV2[]>([]);
+  const [dfTemplatesLoading, setDfTemplatesLoading] = useState(false);
 
-  // Workflow state (Phase 2)
-  const [workflowActive, setWorkflowActive] = useState(false);
+  // View mode + filters
+  const [viewMode, setViewMode] = useState<"cards" | "list" | "table">("cards");
+  // catFilter removed in V4 — replaced by deptFilter + typeFilter above
+  const [deptFilter, setDeptFilter] = useState<string | null>(null);
+  const [typeFilter, setTypeFilter] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Canvas dispatch for focus mode
+  const { dispatch } = useCanvasActions();
+  // setActiveView removed — focus dispatch renders FocusModeLayout in CenterZone directly
+
+  // Load DocForge templates V2 for create wizard
+  useEffect(() => {
+    if (showCreateWizard && dfTemplates.length === 0 && !dfTemplatesLoading) {
+      setDfTemplatesLoading(true);
+      api.docForgeTemplatesV2().then(r => setDfTemplates(r.templates || [])).catch(() => {}).finally(() => setDfTemplatesLoading(false));
+    }
+  }, [showCreateWizard]);
 
   const generes = allDocs.filter((d) => (d.metadata as Record<string, unknown>)?.categorie === "genere");
   const importes = allDocs.filter((d) => (d.metadata as Record<string, unknown>)?.categorie !== "genere");
 
-  // Grouper templates par categorie
-  const templatesByCategory = categories.map((cat) => ({
-    categorie: cat,
-    items: templates.filter((t) => t.categorie === cat),
-  }));
-
-  const handleTemplateClick = async (alias: string) => {
-    setGenerateDialogOpen(true);
-    setSelectedPreview(null);
-    setLoadingPreview(true);
-    try {
-      const preview = await api.previewTemplate(alias);
-      setSelectedPreview(preview);
-    } catch (err) {
-      console.error("Preview error:", err);
-    } finally {
-      setLoadingPreview(false);
+  // Filter unified templates (V4: dept + type fonctionnel)
+  const filteredTemplates = useMemo(() => {
+    let list = unifiedTemplates;
+    if (deptFilter) list = list.filter(t => t.departement === deptFilter);
+    if (typeFilter) list = list.filter(t => t.categorie === typeFilter);
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(t => t.titre.toLowerCase().includes(q) || (t.description || "").toLowerCase().includes(q));
     }
+    return list;
+  }, [unifiedTemplates, deptFilter, typeFilter, searchQuery]);
+
+  // Click template → dispatch focus mode (FocusModeLayout remplace le centre, pas de setActiveView)
+  const handleTemplateClick = (template: UnifiedTemplate) => {
+    dispatch({
+      type: "focus", layer: "cerveau",
+      data: { title: template.titre, element_type: "document_editor", data: { template, mode: "scratch" } },
+      bot: template.bot_recommande || "CPOB",
+    });
   };
 
-  const handleGenerate = async (donnees: Record<string, string>, client: string) => {
-    if (!selectedPreview) return;
-    try {
-      const result = await api.generateDocument({
-        template_alias: selectedPreview.alias,
-        donnees,
-        client,
-      });
-      // Ouvrir le PDF dans un nouvel onglet
-      const url = api.documentDownloadUrl(result.nom_fichier);
-      window.open(url, "_blank");
-      setGenerateDialogOpen(false);
-      // Rafraichir la liste des documents generes
-      refreshDocs();
-    } catch (err) {
-      console.error("Generate error:", err);
-      alert(err instanceof Error ? err.message : "Erreur generation");
-    }
+  // Click library → dispatch focus mode
+  const handleLibraryClick = (lib: DocForgeLibrary) => {
+    dispatch({
+      type: "focus", layer: "cerveau",
+      data: { title: lib.titre, element_type: "document_editor", data: { library: lib, mode: "library" } },
+      bot: "CPOB",
+    });
   };
 
   const handleFileUpload = async (files: FileList | null) => {
@@ -1151,7 +1014,7 @@ function DocumentsPage() {
 
   const DOC_TABS = [
     { id: "generes" as const, label: "Mes Documents" },
-    { id: "templates" as const, label: `Templates (${templateTotal})` },
+    { id: "docforge" as const, label: `DocForge (${unifiedTemplates.length})` },
     { id: "importes" as const, label: "Importes" },
   ];
 
@@ -1254,86 +1117,249 @@ function DocumentsPage() {
         </div>
       )}
 
-      {/* Templates — cartes riches par document (style Pipeline) */}
-      {docTab === "templates" && (
-        <div className="space-y-3">
-          {loadingTemplates ? (
-            <LoadingSpinner />
-          ) : templates.length === 0 ? (
-            <EmptyState icon={FileText} text="Aucun template disponible" sub="Les templates seront charges depuis le serveur" />
-          ) : (<>
-            {/* Filtre pills par agent */}
-            <div className="flex gap-1.5 flex-wrap">
-              <button
-                onClick={() => setTplCatFilter(null)}
-                className={cn("text-[9px] px-2.5 py-1 rounded-full font-medium transition-all cursor-pointer flex items-center gap-1", !tplCatFilter ? "bg-gray-900 text-white" : "text-gray-500 bg-gray-100 hover:bg-gray-200")}
-              >
-                Tous ({templateTotal})
+      {/* DocForge V4 — Atelier de documents */}
+      {docTab === "docforge" && (
+        <div className="space-y-4">
+          {/* Bandeau explicatif */}
+          <div className="bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-200 rounded-xl p-4">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-lg bg-teal-100 flex items-center justify-center shrink-0">
+                <FileText className="h-5 w-5 text-teal-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xs font-bold text-gray-800">DocForge — Votre atelier de documents</h3>
+                <p className="text-[9px] text-gray-500 mt-0.5">Creez des documents professionnels assistes par votre equipe IA. Choisissez un template ou partez de zero.</p>
+              </div>
+            </div>
+            {/* Action buttons */}
+            <div className="flex items-center gap-2 mt-3">
+              <button onClick={() => {
+                dispatch({ type: "focus", layer: "cerveau", data: { title: "Nouveau document", element_type: "document_editor", data: { mode: "scratch" } }, bot: "CPOB" });
+              }} className="flex items-center gap-1.5 px-3 py-1.5 text-[9px] font-bold text-white bg-teal-600 rounded-lg hover:bg-teal-700 transition-colors cursor-pointer">
+                <Plus className="h-3.5 w-3.5" /> Creer un document
               </button>
-              {categories.map(cat => {
-                const botCode = CAT_TO_BOT[cat];
-                const avatar = botCode ? BOT_AVATAR[botCode] : null;
-                const info = botCode ? BOT_LABELS[botCode] : null;
-                return (
-                  <button key={cat} onClick={() => setTplCatFilter(cat === tplCatFilter ? null : cat)}
-                    className={cn("text-[9px] px-2.5 py-1 rounded-full font-medium transition-all cursor-pointer flex items-center gap-1", tplCatFilter === cat ? "bg-gray-900 text-white" : "text-gray-500 bg-gray-100 hover:bg-gray-200")}
-                  >
-                    {avatar && <img src={avatar} alt={cat} className="w-3.5 h-3.5 rounded-full object-cover" />}
-                    {info?.label || cat} ({templates.filter(t => t.categorie === cat).length})
-                  </button>
-                );
-              })}
+              <button onClick={() => setShowCreateWizard(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-[9px] font-bold text-teal-700 bg-white border border-teal-300 rounded-lg hover:bg-teal-50 transition-colors cursor-pointer">
+                <Upload className="h-3.5 w-3.5" /> Importer depuis Drive
+              </button>
             </div>
-            {/* Grille cartes individuelles par template */}
-            <div className="grid grid-cols-2 gap-3">
-              {templates.filter(t => !tplCatFilter || t.categorie === tplCatFilter).map((t) => {
-                const botCode = CAT_TO_BOT[t.categorie];
-                const gradient = TEMPLATE_COLORS[t.categorie] || "from-gray-600 to-gray-500";
-                const avatar = botCode ? BOT_AVATAR[botCode] : null;
-                const info = botCode ? BOT_LABELS[botCode] : null;
-                // Extraire un apercu du nom pour donner du contexte
-                const parts = t.nom.split(" — ");
-                const mainTitle = parts[0] || t.nom;
-                const subTitle = parts.length > 1 ? parts.slice(1).join(" — ") : null;
-                return (
-                  <Card
-                    key={t.alias}
-                    className="p-0 overflow-hidden hover:shadow-md transition-shadow cursor-pointer group"
-                    onClick={() => handleTemplateClick(t.alias)}
-                  >
-                    <div className={cn("bg-gradient-to-r px-3 py-2.5 flex items-center gap-2.5", gradient)}>
-                      {avatar ? (
-                        <img src={avatar} alt={t.categorie} className="w-7 h-7 rounded-lg object-cover border-2 border-white/30 shrink-0" />
-                      ) : (
+          </div>
+
+          {/* Mes documents en cours */}
+          {dfLibraries.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-xs font-bold text-gray-700">Mes documents en cours ({dfLibraries.length})</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {dfLibraries.map((lib) => {
+                  const statusColors: Record<string, string> = {
+                    draft: "bg-gray-100 text-gray-600", en_cours: "bg-blue-100 text-blue-700",
+                    review: "bg-amber-100 text-amber-700", publie: "bg-green-100 text-green-700",
+                  };
+                  const statusLabel: Record<string, string> = {
+                    draft: "Brouillon", en_cours: "En cours...", review: "A reviser", publie: "Publie",
+                  };
+                  return (
+                    <Card key={lib.id} className="p-0 overflow-hidden hover:shadow-md transition-shadow cursor-pointer group"
+                      onClick={() => handleLibraryClick(lib)}>
+                      <div className="bg-gradient-to-r from-teal-600 to-teal-500 px-3 py-2.5 flex items-center gap-2.5">
                         <div className="w-7 h-7 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
-                          <FileText className="h-3.5 w-3.5 text-white" />
+                          <Sparkles className="h-3.5 w-3.5 text-white" />
                         </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <span className="text-xs font-bold text-white">{info?.label || t.categorie}</span>
-                        <span className="text-[9px] text-white/60 ml-1.5">{info?.short || ""}</span>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-xs font-bold text-white truncate">{lib.titre}</span>
+                        </div>
+                        <Badge className={cn("text-[9px] border-0", statusColors[lib.status] || "bg-gray-100 text-gray-600")}>
+                          {statusLabel[lib.status] || lib.status}
+                        </Badge>
                       </div>
-                      <Eye className="h-3.5 w-3.5 text-white/40 group-hover:text-white/80 transition-colors shrink-0" />
-                    </div>
-                    <div className="p-3 space-y-1.5">
-                      <h3 className="text-xs font-bold text-gray-800 line-clamp-2">{mainTitle}</h3>
-                      {subTitle && (
-                        <p className="text-[9px] text-gray-500 leading-relaxed">{subTitle}</p>
-                      )}
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-violet-50 text-violet-700 font-medium">{t.categorie}</span>
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-gray-50 text-gray-500">PDF</span>
-                        <span className="text-[9px] text-gray-400 ml-auto flex items-center gap-0.5 group-hover:text-gray-600 transition-colors">
-                          <ChevronRight className="h-3.5 w-3.5" />
-                          Generer
-                        </span>
+                      <div className="p-3 space-y-1.5">
+                        {lib.description && <p className="text-[9px] text-gray-500 line-clamp-2">{lib.description}</p>}
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 bg-gray-200 rounded-full h-1.5">
+                            <div className="bg-teal-500 rounded-full h-1.5 transition-all" style={{ width: `${lib.completude_pct}%` }} />
+                          </div>
+                          <span className="text-[9px] text-gray-500 font-medium">{lib.completude_pct}%</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-[9px] text-gray-400">
+                          <span>{lib.nb_blocs} blocs</span>
+                          {lib.nb_contradictions > 0 && <span className="text-amber-600">{lib.nb_contradictions} contradictions</span>}
+                          <span className="text-[9px] text-teal-600 ml-auto flex items-center gap-0.5 group-hover:text-teal-700 font-medium transition-colors">
+                            Continuer <ChevronRight className="h-3.5 w-3.5" />
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  </Card>
-                );
-              })}
+                    </Card>
+                  );
+                })}
+              </div>
             </div>
-          </>)}
+          )}
+
+          {/* Templates section */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold text-gray-700">Templates ({filteredTemplates.length})</h3>
+              {/* View mode toggle */}
+              <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
+                {([["cards", LayoutGrid], ["list", List], ["table", Table2]] as [typeof viewMode, React.ElementType][]).map(([mode, Icon]) => (
+                  <button key={mode} onClick={() => setViewMode(mode)}
+                    className={cn("p-1.5 rounded-lg transition-all cursor-pointer", viewMode === mode ? "bg-gray-900 text-white" : "text-gray-400 hover:bg-gray-200")}>
+                    <Icon className="h-3.5 w-3.5" />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+              <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
+                placeholder="Rechercher un template..." />
+            </div>
+
+            {/* Departement filter */}
+            <div className="space-y-1.5">
+              <span className="text-[9px] font-medium text-gray-400 uppercase tracking-wide">Departement</span>
+              <div className="flex gap-1.5 flex-wrap">
+                <button onClick={() => setDeptFilter(null)}
+                  className={cn("text-[9px] px-2.5 py-1 rounded-full font-medium transition-all cursor-pointer",
+                    !deptFilter ? "bg-gray-900 text-white" : "text-gray-500 bg-gray-100 hover:bg-gray-200")}>
+                  Tous
+                </button>
+                {departements.map(dept => {
+                  const avatar = BOT_AVATAR[dept];
+                  const label = DEPT_LABELS[dept] || dept;
+                  return (
+                    <button key={dept} onClick={() => setDeptFilter(dept === deptFilter ? null : dept)}
+                      className={cn("text-[9px] px-2.5 py-1 rounded-full font-medium transition-all cursor-pointer flex items-center gap-1",
+                        deptFilter === dept ? "bg-gray-900 text-white" : "text-gray-500 bg-gray-100 hover:bg-gray-200")}>
+                      {avatar && <img src={avatar} alt={label} className="w-3.5 h-3.5 rounded-full object-cover" />}
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Type fonctionnel filter */}
+            <div className="space-y-1.5">
+              <span className="text-[9px] font-medium text-gray-400 uppercase tracking-wide">Type</span>
+              <div className="flex gap-1.5 flex-wrap">
+                <button onClick={() => setTypeFilter(null)}
+                  className={cn("text-[9px] px-2.5 py-1 rounded-full font-medium transition-all cursor-pointer",
+                    !typeFilter ? "bg-gray-900 text-white" : "text-gray-500 bg-gray-100 hover:bg-gray-200")}>
+                  Tous
+                </button>
+                {unifiedCategories.map(cat => (
+                  <button key={cat} onClick={() => setTypeFilter(cat === typeFilter ? null : cat)}
+                    className={cn("text-[9px] px-2.5 py-1 rounded-full font-medium transition-all cursor-pointer capitalize",
+                      typeFilter === cat ? "bg-gray-900 text-white" : "text-gray-500 bg-gray-100 hover:bg-gray-200")}>
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Templates grid */}
+            {loadingUnified ? <LoadingSpinner /> : filteredTemplates.length === 0 ? (
+              <EmptyState icon={FileText} text="Aucun template" sub={searchQuery ? "Essayez une autre recherche" : "Aucun template ne correspond aux filtres"} />
+            ) : viewMode === "cards" ? (
+              <div className="grid grid-cols-2 gap-3">
+                {filteredTemplates.map((t) => {
+                  const botCode = t.departement || "CPOB";
+                  const gradient = BOT_GRADIENTS[botCode] || "from-gray-600 to-gray-500";
+                  const avatar = BOT_AVATAR[botCode];
+                  const botName = DEPT_LABELS[botCode] || botCode;
+                  const parts = t.titre.split(" — ");
+                  const mainTitle = parts[0] || t.titre;
+                  const subTitle = parts.length > 1 ? parts.slice(1).join(" — ") : t.description?.slice(0, 80);
+                  return (
+                    <Card key={`${t.source}-${t.id}`} className="p-0 overflow-hidden hover:shadow-md transition-shadow cursor-pointer group"
+                      onClick={() => handleTemplateClick(t)}>
+                      <div className={cn("bg-gradient-to-r px-3 py-2.5 flex items-center gap-2.5", gradient)}>
+                        {avatar ? (
+                          <img src={avatar} alt={botName} className="w-7 h-7 rounded-lg object-cover border-2 border-white/30 shrink-0" />
+                        ) : (
+                          <div className="w-7 h-7 bg-white/20 rounded-lg flex items-center justify-center shrink-0"><FileText className="h-3.5 w-3.5 text-white" /></div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <span className="text-xs font-bold text-white">{botName}</span>
+                        </div>
+                      </div>
+                      <div className="p-3 space-y-1.5">
+                        <h3 className="text-xs font-bold text-gray-800 line-clamp-2">{mainTitle}</h3>
+                        {subTitle && <p className="text-[9px] text-gray-500 leading-relaxed line-clamp-2">{subTitle}</p>}
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[9px] px-1.5 py-0.5 rounded font-medium bg-gray-100 text-gray-600 capitalize">{t.categorie}</span>
+                          {t.nb_sections && <span className="text-[9px] px-1.5 py-0.5 rounded bg-gray-50 text-gray-500">{t.nb_sections} sections</span>}
+                          {t.frequence && <span className="text-[9px] px-1.5 py-0.5 rounded bg-gray-50 text-gray-500">{t.frequence}</span>}
+                          <span className="text-[9px] text-teal-600 ml-auto flex items-center gap-0.5 group-hover:text-teal-700 font-medium transition-colors">
+                            Creer <ChevronRight className="h-3.5 w-3.5" />
+                          </span>
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            ) : viewMode === "list" ? (
+              <div className="space-y-1">
+                {filteredTemplates.map(t => {
+                  const botCode = t.departement || "CPOB";
+                  const avatar = BOT_AVATAR[botCode];
+                  return (
+                    <button key={`${t.source}-${t.id}`} onClick={() => handleTemplateClick(t)}
+                      className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 flex items-center gap-2.5 cursor-pointer group">
+                      {avatar ? <img src={avatar} alt="" className="w-6 h-6 rounded-full object-cover shrink-0" /> :
+                        <FileText className="h-4 w-4 text-gray-400 shrink-0" />}
+                      <span className="text-xs font-medium text-gray-800 flex-1 truncate">{t.titre}</span>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded font-medium bg-gray-100 text-gray-600 capitalize">{t.categorie}</span>
+                      <span className="text-[9px] text-gray-400">{DEPT_LABELS[t.departement || ""] || ""}</span>
+                      <ChevronRight className="h-3.5 w-3.5 text-gray-300 group-hover:text-gray-500" />
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              /* Table view */
+              <div className="border rounded-lg overflow-hidden">
+                <table className="w-full text-left">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="text-[9px] font-medium text-gray-500 px-3 py-2">Titre</th>
+                      <th className="text-[9px] font-medium text-gray-500 px-3 py-2">Departement</th>
+                      <th className="text-[9px] font-medium text-gray-500 px-3 py-2">Type</th>
+                      <th className="text-[9px] font-medium text-gray-500 px-3 py-2">Sections</th>
+                      <th className="text-[9px] font-medium text-gray-500 px-3 py-2"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {filteredTemplates.map(t => (
+                      <tr key={`${t.source}-${t.id}`} onClick={() => handleTemplateClick(t)}
+                        className="hover:bg-gray-50 cursor-pointer">
+                        <td className="text-xs text-gray-800 px-3 py-2 font-medium">{t.titre}</td>
+                        <td className="text-[9px] text-gray-500 px-3 py-2">{DEPT_LABELS[t.departement || ""] || "—"}</td>
+                        <td className="text-[9px] text-gray-500 px-3 py-2 capitalize">{t.categorie}</td>
+                        <td className="text-[9px] text-gray-400 px-3 py-2">{t.nb_sections || "—"}</td>
+                        <td className="px-3 py-2"><ChevronRight className="h-3.5 w-3.5 text-gray-300" /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Create Wizard Dialog (Importer depuis Drive) */}
+          {showCreateWizard && (
+            <DocForgeCreateWizard
+              templates={dfTemplates}
+              templatesLoading={dfTemplatesLoading}
+              onClose={() => setShowCreateWizard(false)}
+              onCreated={() => { setShowCreateWizard(false); dfRefresh(); }}
+            />
+          )}
         </div>
       )}
 
@@ -1418,32 +1444,6 @@ function DocumentsPage() {
         </div>
       )}
 
-      {/* Generate Document Dialog */}
-      <GenerateDocumentDialog
-        open={generateDialogOpen}
-        onClose={() => setGenerateDialogOpen(false)}
-        preview={selectedPreview}
-        loadingPreview={loadingPreview}
-        onGenerate={handleGenerate}
-        onWorkflow={() => {
-          setGenerateDialogOpen(false);
-          setWorkflowActive(true);
-        }}
-      />
-
-      {/* Document Workflow (Phase 2) */}
-      {workflowActive && selectedPreview && (
-        <div className="fixed inset-0 z-50 bg-white overflow-auto">
-          <DocumentWorkflow
-            templateAlias={selectedPreview.alias}
-            templateName={selectedPreview.nom}
-            categorie={selectedPreview.categorie}
-            preview={selectedPreview}
-            onClose={() => setWorkflowActive(false)}
-            onDocumentGenerated={() => refreshDocs()}
-          />
-        </div>
-      )}
     </div>
   );
 }
@@ -1725,6 +1725,305 @@ function AgendaPage() {
     </div>
   );
 }
+
+// ══════════════════════════════════════════
+// DocForge Create Wizard — 4 etapes
+// ══════════════════════════════════════════
+
+function DocForgeCreateWizard({ templates, templatesLoading, onClose, onCreated }: {
+  templates: DocForgeTemplateV2[];
+  templatesLoading: boolean;
+  onClose: () => void;
+  onCreated: () => void;
+}) {
+  const [step, setStep] = useState(1);
+  const [selectedTemplate, setSelectedTemplate] = useState<DocForgeTemplateV2 | null>(null);
+
+  // Step 2 — Drive folder
+  const [folderId, setFolderId] = useState("1IRU1xnc3Me_Ku5jAxs8ZZXIc055O8QCJ"); // GhostX-Master default
+  const [folderName, setFolderName] = useState("GhostX-Master");
+  const [browsing, setBrowsing] = useState(false);
+  const [browseItems, setBrowseItems] = useState<{ folders: DriveBrowseItem[]; files: DriveBrowseItem[] }>({ folders: [], files: [] });
+  const [breadcrumb, setBreadcrumb] = useState<Array<{ id: string; name: string }>>([{ id: "1IRU1xnc3Me_Ku5jAxs8ZZXIc055O8QCJ", name: "GhostX-Master" }]);
+  const [noFolder, setNoFolder] = useState(false);
+
+  // Step 3 — Scan config
+  const [keywords, setKeywords] = useState<string[]>([]);
+  const [keywordInput, setKeywordInput] = useState("");
+  const [megaPrompt, setMegaPrompt] = useState("");
+  const [excludePrompts, setExcludePrompts] = useState(true);
+  const [excludeArchive, setExcludeArchive] = useState(true);
+  const [botPrimaire, setBotPrimaire] = useState("CPOB");
+
+  // Step 4 — Creating
+  const [creating, setCreating] = useState(false);
+  const [titre, setTitre] = useState("");
+
+  // Browse Drive folder
+  const browseDrive = async (id: string) => {
+    setBrowsing(true);
+    try {
+      const result = await api.driveBrowse(id);
+      setBrowseItems({ folders: result.folders || [], files: result.files || [] });
+    } catch (e) {
+      console.error("Browse Drive:", e);
+    } finally {
+      setBrowsing(false);
+    }
+  };
+
+  // When selecting a template, pre-fill keywords + mega_prompt
+  const handleSelectTemplate = (tpl: DocForgeTemplateV2) => {
+    setSelectedTemplate(tpl);
+    setKeywords(tpl.keywords || []);
+    setMegaPrompt(tpl.mega_prompt || "");
+    setTitre(tpl.titre);
+    setBotPrimaire(tpl.bot_recommande || "CPOB");
+    setStep(2);
+  };
+
+  // Navigate into a subfolder
+  const handleFolderClick = (folder: DriveBrowseItem) => {
+    setFolderId(folder.id);
+    setFolderName(folder.name);
+    setBreadcrumb(prev => [...prev, { id: folder.id, name: folder.name }]);
+    browseDrive(folder.id);
+  };
+
+  // Navigate breadcrumb
+  const handleBreadcrumbClick = (index: number) => {
+    const item = breadcrumb[index];
+    setFolderId(item.id);
+    setFolderName(item.name);
+    setBreadcrumb(prev => prev.slice(0, index + 1));
+    browseDrive(item.id);
+  };
+
+  // Step 2 init
+  useEffect(() => {
+    if (step === 2 && browseItems.folders.length === 0 && browseItems.files.length === 0) {
+      browseDrive(folderId);
+    }
+  }, [step]);
+
+  // Create library
+  const handleCreate = async () => {
+    if (!titre.trim()) return;
+    setCreating(true);
+    try {
+      const exclusionRules: Array<{ type: string; value: string }> = [];
+      if (excludePrompts) exclusionRules.push({ type: "keyword", value: "deep search prompt" });
+      if (excludeArchive) exclusionRules.push({ type: "keyword", value: "archive" });
+
+      await api.createDocForgeLibrary({
+        titre: titre.trim(),
+        template_alias: selectedTemplate?.alias || "",
+        description: selectedTemplate?.description || "",
+        bot_primaire: botPrimaire,
+        source_folder_id: noFolder ? "" : folderId,
+        exclusion_rules: exclusionRules,
+        scan_config: { keywords },
+      });
+      onCreated();
+    } catch (e) {
+      console.error("Create library:", e);
+      alert("Erreur creation bibliotheque");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  return (
+    <Dialog open onOpenChange={() => onClose()}>
+      <DialogContent className="max-w-xl">
+        <DialogHeader>
+          <DialogTitle className="text-sm">Importer depuis Drive — Etape {step}/4</DialogTitle>
+          <DialogDescription className="text-[9px] text-gray-500">
+            {step === 1 && "Choisissez un template qui servira de structure pour votre document."}
+            {step === 2 && "Selectionnez le dossier Drive a scanner. Le scanner ira chercher le contenu pertinent."}
+            {step === 3 && "Configurez les mots-cles et les regles de scan."}
+            {step === 4 && "Verifiez et creez votre bibliotheque."}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+          {/* Step 1 — Template selection */}
+          {step === 1 && (
+            <div className="space-y-2">
+              {templatesLoading ? <LoadingSpinner /> : templates.length === 0 ? (
+                <p className="text-xs text-gray-500 text-center py-4">Aucun template disponible. Lancez le seed.</p>
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
+                  {templates.map(tpl => (
+                    <Card key={tpl.id} onClick={() => handleSelectTemplate(tpl)}
+                      className={cn("p-3 cursor-pointer hover:shadow-md transition-shadow", selectedTemplate?.id === tpl.id && "ring-2 ring-teal-500")}>
+                      <h4 className="text-xs font-bold text-gray-800">{tpl.titre}</h4>
+                      <p className="text-[9px] text-gray-500 mt-1 line-clamp-2">{tpl.description}</p>
+                      <div className="flex items-center gap-1.5 mt-2">
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-teal-50 text-teal-700 font-medium">{tpl.nb_sections} sections</span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-gray-50 text-gray-500">{tpl.type_template}</span>
+                        {tpl.keywords.length > 0 && (
+                          <span className="text-[9px] text-gray-400">{tpl.keywords.length} keywords</span>
+                        )}
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Step 2 — Drive folder picker */}
+          {step === 2 && (
+            <div className="space-y-3">
+              <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+                <input type="checkbox" checked={noFolder} onChange={e => setNoFolder(e.target.checked)} className="rounded" />
+                Aucun dossier (import manuel seulement)
+              </label>
+              {!noFolder && (<>
+                {/* Breadcrumb */}
+                <div className="flex items-center gap-1.5 flex-wrap text-[9px]">
+                  {breadcrumb.map((bc, i) => (
+                    <span key={bc.id} className="flex items-center gap-1">
+                      {i > 0 && <ChevronRight className="h-3.5 w-3.5 text-gray-300" />}
+                      <button onClick={() => handleBreadcrumbClick(i)}
+                        className={cn("px-1.5 py-0.5 rounded cursor-pointer", i === breadcrumb.length - 1 ? "bg-teal-100 text-teal-700 font-medium" : "text-gray-500 hover:bg-gray-100")}>
+                        {bc.name}
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                {/* Folder list */}
+                {browsing ? <LoadingSpinner /> : (
+                  <div className="space-y-1 max-h-48 overflow-y-auto">
+                    {browseItems.folders.map(f => (
+                      <button key={f.id} onClick={() => handleFolderClick(f)}
+                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 flex items-center gap-2 text-xs cursor-pointer">
+                        <FolderKanban className="h-4 w-4 text-amber-500 shrink-0" />
+                        <span className="font-medium text-gray-700">{f.name}</span>
+                      </button>
+                    ))}
+                    {browseItems.files.length > 0 && (
+                      <p className="text-[9px] text-gray-400 px-3 pt-2">{browseItems.files.length} fichiers dans ce dossier</p>
+                    )}
+                  </div>
+                )}
+                <div className="bg-gray-50 rounded-lg p-2.5">
+                  <p className="text-[9px] text-gray-600">
+                    Dossier selectionne: <strong>{folderName}</strong>
+                  </p>
+                </div>
+              </>)}
+            </div>
+          )}
+
+          {/* Step 3 — Scan config */}
+          {step === 3 && (
+            <div className="space-y-3">
+              {/* Keywords */}
+              <div>
+                <label className="text-xs font-medium text-gray-700">Mots-cles de recherche</label>
+                <p className="text-[9px] text-gray-400 mb-1">Le scanner cherchera ces mots dans vos fichiers Drive.</p>
+                <div className="flex gap-1.5 flex-wrap mb-2">
+                  {keywords.map((kw, i) => (
+                    <span key={i} className="text-[9px] px-2 py-0.5 rounded-full bg-teal-100 text-teal-700 flex items-center gap-1">
+                      {kw}
+                      <button onClick={() => setKeywords(prev => prev.filter((_, j) => j !== i))} className="cursor-pointer">
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <div className="flex gap-1.5">
+                  <input value={keywordInput} onChange={e => setKeywordInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Enter" && keywordInput.trim()) { setKeywords(prev => [...prev, keywordInput.trim()]); setKeywordInput(""); } }}
+                    placeholder="Ajouter un mot-cle..." className="text-xs px-2.5 py-1.5 border rounded-lg flex-1" />
+                  <button onClick={() => { if (keywordInput.trim()) { setKeywords(prev => [...prev, keywordInput.trim()]); setKeywordInput(""); } }}
+                    className="text-[9px] px-2.5 py-1.5 bg-gray-100 rounded-lg hover:bg-gray-200 cursor-pointer">Ajouter</button>
+                </div>
+              </div>
+              {/* Mega prompt */}
+              <div>
+                <label className="text-xs font-medium text-gray-700">Instructions de scan (optionnel)</label>
+                <textarea value={megaPrompt} onChange={e => setMegaPrompt(e.target.value)}
+                  rows={3} placeholder="Instructions pour guider le scanner IA..."
+                  className="w-full text-xs px-2.5 py-1.5 border rounded-lg mt-1 resize-none" />
+              </div>
+              {/* Exclusions */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-gray-700">Exclusions</label>
+                <label className="flex items-center gap-2 text-[9px] text-gray-600 cursor-pointer">
+                  <input type="checkbox" checked={excludePrompts} onChange={e => setExcludePrompts(e.target.checked)} className="rounded" />
+                  Exclure prompts Gemini deep search
+                </label>
+                <label className="flex items-center gap-2 text-[9px] text-gray-600 cursor-pointer">
+                  <input type="checkbox" checked={excludeArchive} onChange={e => setExcludeArchive(e.target.checked)} className="rounded" />
+                  Exclure fichiers archives
+                </label>
+              </div>
+              {/* Bot primaire */}
+              <div>
+                <label className="text-xs font-medium text-gray-700">Bot primaire</label>
+                <select value={botPrimaire} onChange={e => setBotPrimaire(e.target.value)}
+                  className="w-full text-xs px-2.5 py-1.5 border rounded-lg mt-1">
+                  <option value="CPOB">Paco (CPO / Usine)</option>
+                  <option value="CEOB">CarlOS (CEO)</option>
+                  <option value="CTOB">Tim (CTO)</option>
+                  <option value="CFOB">Frank (CFO)</option>
+                  <option value="CMOB">Mathilde (CMO)</option>
+                  <option value="CSOB">Simone (CSO)</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* Step 4 — Review + Create */}
+          {step === 4 && (
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-medium text-gray-700">Titre de la bibliotheque</label>
+                <input value={titre} onChange={e => setTitre(e.target.value)}
+                  className="w-full text-xs px-2.5 py-1.5 border rounded-lg mt-1" placeholder="Ex: Bible GHML V3" />
+              </div>
+              <div className="bg-gray-50 rounded-lg p-3 space-y-1.5">
+                <p className="text-[9px] text-gray-600"><strong>Template:</strong> {selectedTemplate?.titre || "Aucun"}</p>
+                <p className="text-[9px] text-gray-600"><strong>Dossier:</strong> {noFolder ? "Manuel seulement" : folderName}</p>
+                <p className="text-[9px] text-gray-600"><strong>Keywords:</strong> {keywords.length > 0 ? keywords.join(", ") : "Aucun"}</p>
+                <p className="text-[9px] text-gray-600"><strong>Bot:</strong> {botPrimaire}</p>
+                <p className="text-[9px] text-gray-600"><strong>Sections:</strong> {selectedTemplate?.nb_sections || 0}</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter className="flex justify-between">
+          <div className="flex gap-2">
+            {step > 1 && (
+              <button onClick={() => setStep(s => s - 1)} className="text-xs px-3 py-1.5 border rounded-lg hover:bg-gray-50 cursor-pointer">Precedent</button>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <button onClick={onClose} className="text-xs px-3 py-1.5 border rounded-lg hover:bg-gray-50 cursor-pointer">Annuler</button>
+            {step < 4 ? (
+              <button onClick={() => setStep(s => s + 1)}
+                disabled={step === 1 && !selectedTemplate}
+                className="text-xs px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 cursor-pointer">
+                Suivant
+              </button>
+            ) : (
+              <button onClick={handleCreate} disabled={creating || !titre.trim()}
+                className="text-xs px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 cursor-pointer flex items-center gap-1.5">
+                {creating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                Creer
+              </button>
+            )}
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
 // ══════════════════════════════════════════
 // Templates Page — Parcourir + generer des documents

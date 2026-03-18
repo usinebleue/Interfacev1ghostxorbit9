@@ -1507,7 +1507,7 @@ export const api = {
     return apiFetch(`/docforge/libraries${q}`);
   },
 
-  createDocForgeLibrary(data: { titre: string; template_alias?: string; description?: string; tags?: string[] }): Promise<{ id: number; ok: boolean }> {
+  createDocForgeLibrary(data: { titre: string; template_alias?: string; description?: string; tags?: string[]; bot_primaire?: string; source_folder_id?: string; exclusion_rules?: any[]; scan_config?: any }): Promise<{ id: number; ok: boolean }> {
     return apiFetch("/docforge/libraries", { method: "POST", body: JSON.stringify(data) });
   },
 
@@ -1578,5 +1578,36 @@ export const api = {
 
   docForgeTemplates(): Promise<{ templates: any[] }> {
     return apiFetch("/docforge/templates");
+  },
+
+  // --- DocForge V2 — Templates DB ---
+
+  docForgeTemplatesV2(typeTemplate?: string): Promise<{ templates: any[]; count: number }> {
+    const q = typeTemplate ? `?type_template=${typeTemplate}` : "";
+    return apiFetch(`/docforge/templates-v2${q}`);
+  },
+  docForgeTemplateV2Create(data: { alias: string; titre: string; description?: string; sections?: any[]; keywords?: string[]; mega_prompt?: string; bot_recommande?: string }): Promise<{ id: number; ok: boolean }> {
+    return apiFetch("/docforge/templates-v2", { method: "POST", body: JSON.stringify(data) });
+  },
+  docForgeTemplateV2Get(id: number): Promise<any> {
+    return apiFetch(`/docforge/templates-v2/${id}`);
+  },
+  docForgeTemplateV2Update(id: number, data: Record<string, any>): Promise<{ ok: boolean }> {
+    return apiFetch(`/docforge/templates-v2/${id}`, { method: "POST", body: JSON.stringify(data) });
+  },
+  docForgeTemplateV2Delete(id: number): Promise<{ ok: boolean }> {
+    return apiFetch(`/docforge/templates-v2/${id}/delete`, { method: "POST" });
+  },
+  docForgeTemplateV2Seed(): Promise<{ ok: boolean; created: number }> {
+    return apiFetch("/docforge/templates-v2/seed", { method: "POST" });
+  },
+
+  // --- Drive browse/search ---
+
+  driveBrowse(folderId: string): Promise<{ folder_id: string; folders: any[]; files: any[]; total_folders: number; total_files: number }> {
+    return apiFetch("/drive/browse", { method: "POST", body: JSON.stringify({ folder_id: folderId }) });
+  },
+  driveSearch(folderId: string, keyword: string, maxResults?: number): Promise<{ folder_id: string; keyword: string; results: any[]; count: number }> {
+    return apiFetch("/drive/search", { method: "POST", body: JSON.stringify({ folder_id: folderId, keyword, max_results: maxResults || 50 }) });
   },
 };

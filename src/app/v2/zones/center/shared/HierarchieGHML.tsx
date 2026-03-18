@@ -235,8 +235,11 @@ export function HierarchieGHML({
                 </div>
                 <div className="flex-1 min-w-0">
                   <span className="text-sm font-bold text-white block truncate">{ch.titre}</span>
-                  <div className="text-[9px] text-white/70">
-                    Progression: {ch.progression || 0}%
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="flex-1 bg-white/20 rounded-full h-2">
+                      <div className="bg-white h-2 rounded-full transition-all" style={{ width: `${ch.progression || 0}%` }} />
+                    </div>
+                    <span className="text-[9px] font-bold text-white/90 whitespace-nowrap">{ch.progression || 0}%</span>
                   </div>
                 </div>
                 {ch.chaleur && (
@@ -320,8 +323,14 @@ export function HierarchieGHML({
                     <div className="flex items-center gap-3 mt-1.5">
                       <BotBadge code={p.bot_primaire} />
                       <span className="text-[9px] text-gray-400">
-                        {p.missions_count || 0} missions · {p.progression || 0}%
+                        {p.missions_count || 0} missions
                       </span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <div className="flex-1 bg-gray-200 rounded-full h-2">
+                        <div className="bg-blue-500 h-2 rounded-full transition-all" style={{ width: `${p.progression || 0}%` }} />
+                      </div>
+                      <span className="text-[9px] font-bold text-gray-500 whitespace-nowrap">{p.progression || 0}%</span>
                     </div>
                   </div>
                 )}
@@ -394,6 +403,12 @@ export function HierarchieGHML({
                         {m.priorite > 0 && (
                           <span className="text-[9px] text-gray-400">Priorite: {m.priorite}</span>
                         )}
+                      </div>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <div className="flex-1 bg-gray-200 rounded-full h-2">
+                          <div className="bg-blue-500 h-2 rounded-full transition-all" style={{ width: `${m.progression || 0}%` }} />
+                        </div>
+                        <span className="text-[9px] font-bold text-gray-500 whitespace-nowrap">{m.progression || 0}%</span>
                       </div>
                     </div>
                   )}

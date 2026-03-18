@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { cn } from "../../../../components/ui/utils";
 
-export type SortField = "titre" | "date" | "statut" | "priorite";
+export type SortField = "titre" | "date" | "statut" | "priorite" | "mission" | "projet" | "chantier" | "bot" | "categorie" | "progression";
 export type SortDir = "asc" | "desc";
 
 interface CrudToolbarProps {

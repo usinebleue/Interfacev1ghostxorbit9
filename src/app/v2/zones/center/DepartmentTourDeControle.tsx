@@ -1174,6 +1174,69 @@ export function DepartmentTourDeControle() {
               </Card>
             </div>
 
+            {/* Trial-Brain Training Status — visible pour CTOB (Tim) */}
+            {(activeBotCode === "CTOB") && (() => {
+              const trainingMissions = missions.filter(m => m.contexte?.type === "training_ghml");
+              if (trainingMissions.length === 0) return null;
+              const active = trainingMissions.find(m => m.status === "en-cours") || trainingMissions.find(m => m.status === "a-faire");
+              const lastDone = trainingMissions.find(m => m.status === "completee");
+              return (
+                <Card className="p-0 overflow-hidden">
+                  <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-violet-700 to-violet-600">
+                    <Cpu className="h-4 w-4 text-white" />
+                    <span className="text-sm font-bold text-white">Trial-Brain — Entrainement IA</span>
+                    <span className="text-[9px] font-bold bg-white/25 text-white px-2 py-0.5 rounded-full ml-auto">
+                      {trainingMissions.filter(m => m.status === "completee").length}/{trainingMissions.length} runs
+                    </span>
+                  </div>
+                  <div className="p-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {active && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded",
+                            active.status === "en-cours" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600"
+                          )}>
+                            {active.status === "en-cours" ? "EN COURS" : "PROCHAIN"}
+                          </span>
+                          <span className="text-xs font-medium text-gray-900 truncate">{active.titre}</span>
+                        </div>
+                        {active.contexte?.pod_id && (
+                          <div className="text-[9px] text-gray-500 space-y-0.5">
+                            <p>Pod: <span className="font-mono text-gray-700">{active.contexte.pod_id}</span></p>
+                            {active.contexte.last_progress && <p>Progress: <span className="font-medium text-violet-600">{active.contexte.last_progress}</span></p>}
+                            {active.contexte.loss_train != null && <p>Loss train: <span className="font-medium text-green-600">{active.contexte.loss_train}</span></p>}
+                            {active.contexte.loss_eval != null && <p>Loss eval: <span className="font-medium text-green-600">{active.contexte.loss_eval}</span></p>}
+                          </div>
+                        )}
+                        {!active.contexte?.pod_id && active.status === "a-faire" && (
+                          <p className="text-[9px] text-gray-400">En attente du prochain schedule (8h ou 20h)</p>
+                        )}
+                        {active.progression > 0 && (
+                          <div className="w-full bg-gray-100 rounded-full h-1.5">
+                            <div className="bg-violet-500 h-1.5 rounded-full transition-all" style={{ width: `${Math.min(active.progression, 100)}%` }} />
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {lastDone && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-green-100 text-green-700">COMPLETE</span>
+                          <span className="text-xs font-medium text-gray-900 truncate">{lastDone.titre}</span>
+                        </div>
+                        <div className="text-[9px] text-gray-500 space-y-0.5">
+                          {lastDone.contexte?.loss_train != null && <p>Loss train: <span className="font-medium text-green-600">{lastDone.contexte.loss_train}</span></p>}
+                          {lastDone.contexte?.loss_eval != null && <p>Loss eval: <span className="font-medium text-green-600">{lastDone.contexte.loss_eval}</span></p>}
+                          {lastDone.contexte?.dataset_pairs && <p>Dataset: <span className="font-medium">{Number(lastDone.contexte.dataset_pairs).toLocaleString()} paires</span></p>}
+                          {lastDone.completed_at && <p>Termine: {new Date(lastDone.completed_at).toLocaleDateString("fr-CA")}</p>}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              );
+            })()}
+
             {/* Collaborateurs */}
             {collaborators.length > 0 && (
               <Card className="p-0 overflow-hidden">
@@ -1274,7 +1337,12 @@ export function DepartmentTourDeControle() {
                   <Card
                     key={t.id}
                     className="p-0 overflow-hidden hover:shadow-lg transition-all cursor-pointer group"
-                    onClick={() => handleFocus(`Template: ${t.titre}`, "template_documentaire", t)}
+                    onClick={() => {
+                      dispatch({ type: "focus", layer: "cerveau",
+                        data: { title: `Template: ${t.titre}`, element_type: "document_editor", data: { template: t, mode: "scratch" } },
+                        bot: "CPOB"
+                      });
+                    }}
                   >
                     <div className={cn("bg-gradient-to-r px-3 py-2.5 flex items-center justify-between", headerGradient)}>
                       <div className="flex-1 min-w-0">

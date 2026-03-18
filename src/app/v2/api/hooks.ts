@@ -350,6 +350,8 @@ const FOCUS_QUESTIONS: Record<string, string> = {
   calendrier: "Ton calendrier — est-ce qu'il y a un événement ou une décision imminente qu'on devrait préparer?",
   industrie: "Ces données industrie — y'a-t-il un signal faible ou une tendance que tu veux approfondir?",
   ops: "Opérations — où est-ce que ça bloque, ou qu'est-ce qu'on pourrait optimiser?",
+  docforge_library: "Salut Carl! Je suis Paco. On va construire cette bibliothèque ensemble. Par quoi on commence?",
+  document_editor: "Salut Carl! Je suis Paco. On monte ce document ensemble. Dis-moi comment tu veux proceder — from scratch ou on va chercher du contenu existant?",
 };
 
 const FOCUS_QUICK_ACTIONS: Record<string, string[]> = {
@@ -363,6 +365,8 @@ const FOCUS_QUICK_ACTIONS: Record<string, string[]> = {
   calendrier: ["Préparer la semaine", "Points importants", "Déléguer"],
   industrie: ["Tendances clés", "Impact sur nous", "Actions"],
   ops: ["Goulots d'étranglement", "Automatiser quoi?", "KPIs"],
+  docforge_library: ["Scanner Drive", "Voir les sections", "Contradictions", "Exporter PDF"],
+  document_editor: ["Scanner Drive", "Remplir le briefing", "Voir les sections", "Exporter PDF"],
 };
 
 function extractFocusItems(data: unknown): Array<{ label: string; value: string }> {
@@ -2386,6 +2390,126 @@ export function useDocForge() {
   }, []);
 
   return { libraries, loading, error, refresh, createLibrary, deleteLibrary };
+}
+
+// --- useUnifiedTemplates — DocForge V4: merge 3 template sources, functional categories ---
+
+const DEPT_MAP: Record<string, string> = {
+  "CEO": "CEOB", "CTO": "CTOB", "CFO": "CFOB", "CMO": "CMOB",
+  "CSO": "CSOB", "COO": "COOB", "FACTORY": "CPOB", "INTERNE-UB": "CEOB",
+  "CHRO": "CHROB", "CINO": "CINOB", "CRO": "CROB", "CLO": "CLOB", "CISO": "CISOB",
+};
+
+export const DEPT_LABELS: Record<string, string> = {
+  "CEOB": "CarlOS", "CTOB": "Tim", "CFOB": "Frank",
+  "CMOB": "Mathilde", "CSOB": "Simone", "COOB": "Olivier",
+  "CPOB": "Paco", "CHROB": "Helene", "CINOB": "Ines",
+  "CROB": "Rich", "CLOB": "Loulou", "CISOB": "Sebastien",
+};
+
+/** Deduit une categorie fonctionnelle a partir du nom/titre du template */
+function inferCategorieFonctionnelle(nom: string): string {
+  const n = nom.toLowerCase();
+  if (n.includes("plan")) return "plan";
+  if (n.includes("analyse") || n.includes("diagnostic")) return "analyse";
+  if (n.includes("rapport") || n.includes("bilan")) return "rapport";
+  if (n.includes("audit")) return "audit";
+  if (n.includes("politique") || n.includes("regle")) return "politique";
+  if (n.includes("contrat") || n.includes("entente")) return "contrat";
+  if (n.includes("cahier") || n.includes("guide") || n.includes("manuel")) return "guide";
+  if (n.includes("registre") || n.includes("tableau")) return "registre";
+  if (n.includes("formulaire") || n.includes("fiche")) return "formulaire";
+  if (n.includes("decision") || n.includes("reunion")) return "rapport";
+  if (n.includes("budget") || n.includes("prevision") || n.includes("financ")) return "budget";
+  if (n.includes("strateg")) return "strategie";
+  if (n.includes("inventaire")) return "registre";
+  if (n.includes("programme") || n.includes("calendrier")) return "plan";
+  return "document";
+}
+
+export function useUnifiedTemplates() {
+  const [templates, setTemplates] = useState<import("./types").UnifiedTemplate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [departements, setDepartements] = useState<string[]>([]);
+
+  const refresh = useCallback(() => {
+    setLoading(true);
+    Promise.all([
+      api.listTemplates().catch(() => ({ templates: [], categories: [], total: 0 })),
+      api.listTemplatesDocumentaires().catch(() => []),
+      api.docForgeTemplatesV2().catch(() => ({ templates: [], count: 0 })),
+    ]).then(([legoRes, blueprintList, docforgeRes]) => {
+      const unified: import("./types").UnifiedTemplate[] = [];
+
+      // 1. Lego templates (72) — categorie = department code → remap to functional
+      for (const t of (legoRes.templates || [])) {
+        unified.push({
+          id: t.alias,
+          alias: t.alias,
+          titre: t.nom,
+          categorie: inferCategorieFonctionnelle(t.nom),
+          departement: DEPT_MAP[t.categorie] || "CPOB",
+          source: "lego",
+          bot_recommande: DEPT_MAP[t.categorie] || "CPOB",
+          chemin: t.chemin,
+        });
+      }
+
+      // 2. Blueprint templates (141)
+      for (const t of (blueprintList || [])) {
+        unified.push({
+          id: t.id,
+          alias: t.id,
+          titre: t.titre,
+          description: t.description,
+          categorie: inferCategorieFonctionnelle(t.titre),
+          departement: t.departement,
+          source: "blueprint",
+          bot_recommande: t.departement || "CPOB",
+          nb_sections: t.sections?.length || 0,
+          sections: t.sections,
+          pages_estimees: t.pages_estimees,
+          frequence: t.frequence,
+          niveau_hierarchie: t.niveau_hierarchie,
+          tags: t.tags,
+          documents_lies: t.documents_lies,
+          source_donnees: t.source_donnees,
+        });
+      }
+
+      // 3. DocForge templates (8) — categorie fonctionnelle, pas "DocForge"
+      for (const t of (docforgeRes.templates || [])) {
+        unified.push({
+          id: `df-${t.id}`,
+          alias: t.alias,
+          titre: t.titre,
+          description: t.description,
+          categorie: inferCategorieFonctionnelle(t.titre),
+          departement: t.bot_recommande,
+          source: "docforge",
+          bot_recommande: t.bot_recommande || "CPOB",
+          nb_sections: t.nb_sections,
+          keywords: t.keywords,
+          mega_prompt: t.mega_prompt,
+          sections: t.sections,
+        });
+      }
+
+      setTemplates(unified);
+
+      // Extract unique categories and departements
+      const cats = [...new Set(unified.map(t => t.categorie).filter(Boolean))];
+      const depts = [...new Set(unified.map(t => t.departement).filter(Boolean) as string[])];
+      setCategories(cats.sort());
+      setDepartements(depts.sort());
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
+
+  useEffect(() => { refresh(); }, [refresh]);
+
+  return { templates, categories, departements, loading, refresh, deptLabels: DEPT_LABELS };
 }
 
 export function useDocForgeLibrary(libraryId: number | null) {

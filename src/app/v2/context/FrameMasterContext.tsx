@@ -67,6 +67,8 @@ interface FrameMasterActions {
   navigateDiscussionTab: (tab: DiscussionTab) => void;
   /** D-109 — Ouvre le LiveChat avec contexte de la source (board-room, war-room, etc.) */
   navigateToChat: (sourceView: string) => void;
+  /** Set active bot code directly (used by CanvasActionContext focus sync) */
+  setActiveBotCode: (code: string) => void;
   // Registre pour le panel imperatif
   registerLeftPanel: (api: { collapse: () => void; expand: () => void }) => void;
 }
@@ -262,6 +264,7 @@ export function FrameMasterProvider({
         navigateBureau,
         navigateDiscussionTab,
         navigateToChat,
+        setActiveBotCode,
         registerLeftPanel,
       }}
     >

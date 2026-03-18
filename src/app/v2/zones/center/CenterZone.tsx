@@ -93,7 +93,7 @@ import { EquipeHumaineView } from "./EquipeHumaineView";
 import { ChatH2H } from "./ChatH2H";
 import { StatusView } from "./StatusView";
 import { OnboardingView } from "./OnboardingView";
-import { DocForgeView } from "./DocForgeView";
+// DocForgeView archived — fusionné dans MonBureauView (DocForge sub-tab)
 import { useFlowGPS } from "../../api/hooks";
 
 /** Couleur identitaire par bot — bande fine en haut du canevas */
@@ -182,7 +182,7 @@ function FlowProgressBar({ sectionKey }: { sectionKey: string }) {
 }
 
 export function CenterZone() {
-  const { activeView, activeBotCode, activeEntrepriseSection, activeEquipeSection, setActiveView, navigateToDepartment } = useFrameMaster();
+  const { activeView, activeBotCode, activeEntrepriseSection, activeEquipeSection, setActiveView, navigateToDepartment, setActiveBotCode } = useFrameMaster();
   const {
     navigateAction, clearNavigateAction, consumeNext,
     activeWidget, activeAnnotation,
@@ -212,6 +212,13 @@ export function CenterZone() {
     clearNavigateAction();
     consumeNext();
   }, [navigateAction, setActiveView, navigateToDepartment, clearNavigateAction, consumeNext]);
+
+  // Sync activeBotCode quand Focus Mode est dispatché avec un bot spécifique (fix bot-switch bug)
+  useEffect(() => {
+    if (focusData?.bot) {
+      setActiveBotCode(focusData.bot);
+    }
+  }, [focusData, setActiveBotCode]);
 
   // Quitter le Focus Mode automatiquement quand on navigue via sidebar
   useEffect(() => {
@@ -311,7 +318,7 @@ export function CenterZone() {
       {activeView === "chat-h2h" && <ChatH2H />}
       {activeView === "status" && <StatusView />}
       {activeView === "onboarding" && <OnboardingView />}
-      {activeView === "docforge" && <DocForgeView />}
+      {/* DocForge fusionné dans MonBureauView — plus de vue séparée */}
       {activeView === "canvas" && (
         <SmartCanvas
           onStartChat={handleStartChat}

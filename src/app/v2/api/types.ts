@@ -1636,6 +1636,7 @@ export interface DocForgeLibrary {
   bot_primaire: string;
   status: string;
   tags: string[];
+  extra: Record<string, any>;
   chantier_id: number | null;
   projet_id: number | null;
   created_at: string;
@@ -1694,4 +1695,81 @@ export interface DocForgeTemplate {
   description: string;
   fichier: string;
   nb_sections: number;
+}
+
+// --- DocForge V2 — Templates DB + Drive ---
+
+export interface DocForgeTemplateV2 {
+  id: number;
+  alias: string;
+  titre: string;
+  description: string;
+  sections: Array<{
+    id: string;
+    title: string;
+    level: number;
+    description?: string;
+    keywords?: string[];
+  }>;
+  keywords: string[];
+  mega_prompt: string;
+  exclusion_defaults: Array<{ type: string; value: string }>;
+  bot_recommande: string;
+  type_template: "system" | "custom";
+  nb_sections: number;
+  actif: boolean;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// --- UnifiedTemplate (DocForge V3 — merge 3 sources) ---
+
+export interface UnifiedTemplate {
+  id: string | number;
+  alias: string;
+  titre: string;
+  description?: string;
+  categorie: string;
+  departement?: string;
+  source: "lego" | "blueprint" | "docforge";
+  bot_recommande?: string;
+  nb_sections?: number;
+  keywords?: string[];
+  sections?: Array<{ id?: string; titre_section?: string; title?: string; keywords?: string[]; ordre?: number; description?: string; type_contenu?: string; champs_cles?: string[]; exemple_contenu?: string }>;
+  pages_estimees?: string;
+  frequence?: string;
+  niveau_hierarchie?: string;
+  tags?: string[];
+  mega_prompt?: string;
+  // Lego-specific
+  chemin?: string;
+  contenu_md?: string;
+  placeholders?: string[];
+  // Blueprint-specific
+  documents_lies?: string[];
+  source_donnees?: string;
+}
+
+export interface DriveBrowseItem {
+  id: string;
+  name: string;
+  mimeType: string;
+  modifiedTime?: string;
+  size?: string;
+}
+
+export interface DriveBrowseResult {
+  folder_id: string;
+  folders: DriveBrowseItem[];
+  files: DriveBrowseItem[];
+  total_folders: number;
+  total_files: number;
+}
+
+export interface DriveSearchResult {
+  folder_id: string;
+  keyword: string;
+  results: DriveBrowseItem[];
+  count: number;
 }

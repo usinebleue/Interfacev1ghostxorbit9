@@ -15,7 +15,6 @@ import {
   CalendarDays,
   MessageSquare,
   Bell,
-  BookOpen,
 } from "lucide-react";
 import {
   Collapsible,
@@ -81,16 +80,6 @@ export function SectionMonBureau({ collapsed }: Props) {
             </button>
           );
         })}
-        <button
-          onClick={() => setActiveView("docforge")}
-          className={cn(
-            "w-full flex justify-center py-1.5 rounded hover:bg-accent transition-colors",
-            activeView === "docforge" && "bg-accent"
-          )}
-          title="DocForge"
-        >
-          <BookOpen className="h-3.5 w-3.5 text-indigo-500" />
-        </button>
       </div>
     );
   }
@@ -119,16 +108,6 @@ export function SectionMonBureau({ collapsed }: Props) {
               </button>
             );
           })}
-          <button
-            onClick={() => setActiveView("docforge")}
-            className={cn(
-              "w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm hover:bg-accent transition-colors",
-              activeView === "docforge" && "bg-accent font-medium"
-            )}
-          >
-            <BookOpen className="h-3.5 w-3.5 shrink-0 text-indigo-500" />
-            <span className="truncate">DocForge</span>
-          </button>
         </div>
       </CollapsibleContent>
     </Collapsible>
