@@ -1,8 +1,8 @@
 "use client";
 
 /**
- * LiveChat.tsx — Affichage chat reel avec CarlOS via ChatContext
- * PAS d'input ici — l'InputBar partagee en bas de CenterZone gere l'envoi.
+ * LiveChat.tsx — Affichage chat central CarlOS (MVP2 — Discussion Architecture)
+ * Zone centre = affichage des discussions uniquement. L'InputBar reste dans le cockpit (sidebar droite).
  * Sprint A — Frame Master V2
  */
 
@@ -32,21 +32,19 @@ import {
   ChevronDown,
   Plus,
   Bookmark,
-  Maximize2,
-  Volume2,
-  VolumeX,
   Mic,
   ArrowRight,
   LayoutDashboard,
   FileBarChart,
   Heart,
+  Pencil,
 } from "lucide-react";
 import { cn } from "../../../components/ui/utils";
 import { useChatContext } from "../../context/ChatContext";
 import { useBots, useCommandMission, useModeBranch } from "../../api/hooks";
 import { useFrameMaster } from "../../context/FrameMasterContext";
 import { useCanvasActions } from "../../context/CanvasActionContext";
-import { useTextToSpeech } from "../../api/useVocal";
+// TTS retiré — Carl: "si je suis en texte c'est ok d'être en texte"
 import { CarlOSAvatar } from "./CarlOSAvatar";
 import { api } from "../../api/client";
 import type { CanvasAction, BubbleContext } from "../../api/types";
@@ -55,19 +53,8 @@ import type { CanvasAction, BubbleContext } from "../../api/types";
 // Config
 // ══════════════════════════════════════════════
 
-// D-108 — Actions avancées autorisées par mode de réflexion
-// Les protocoles éliminent les actions non-logiques dans le contexte actif
-const MODE_ALLOWED_ACTIONS: Record<string, Set<string>> = {
-  credo:      new Set(["nuancer", "fil_parallele", "plan_action", "risques", "et_si", "deleguer"]),
-  crise:      new Set(["plan_action", "risques", "deleguer"]),              // Urgence: agir, pas rêver
-  brainstorm: new Set(["et_si", "nuancer", "fil_parallele"]),               // Créativité: explorer
-  analyse:    new Set(["risques", "plan_action", "nuancer"]),               // Rigueur: comprendre
-  debat:      new Set(["nuancer", "fil_parallele"]),                        // Dialectique: confronter
-  innovation: new Set(["et_si", "fil_parallele", "nuancer"]),              // 6 Chapeaux: diverger
-  decision:   new Set(["plan_action", "risques", "deleguer"]),             // Exécutif: trancher
-  strategie:  new Set(["plan_action", "risques", "et_si", "deleguer", "nuancer", "fil_parallele"]), // Tout
-  deep:       new Set(["nuancer", "fil_parallele"]),                       // Profondeur: spirale
-};
+// Actions hardcodées retirées — le backend drive les suggestions via msg.options
+// Seuls Consulter (autre bot) et Cristalliser (sauvegarder) restent comme utilitaires
 
 // Labels CREDO phase pour le footer
 const CREDO_PHASE_CONFIG: Record<string, { label: string; color: string }> = {
@@ -77,6 +64,13 @@ const CREDO_PHASE_CONFIG: Record<string, { label: string; color: string }> = {
   D: { label: "Démontrer", color: "bg-green-400" },
   O: { label: "Obtenir", color: "bg-red-400" },
 };
+
+// Sprint Discussion 1 — Helper: comparer les phases CREDO (C < R < E < D < O)
+const CREDO_ORDER = ["C", "R", "E", "D", "O"];
+function isPhaseAtLeast(current: string | null | undefined, target: string): boolean {
+  if (!current) return false;
+  return CREDO_ORDER.indexOf(current) >= CREDO_ORDER.indexOf(target);
+}
 
 const MODE_CONFIG: Record<string, { label: string; icon: typeof Zap; color: string; bg: string }> = {
   credo: { label: "Standard", icon: Zap, color: "text-blue-500", bg: "bg-blue-50" },
@@ -868,61 +862,44 @@ function ModeBar({ activeMode, onSelectMode, activeBranch, onAdvance, onComplete
 interface BotActionsProps {
   msg: { id: string; content: string; agent?: string; options?: string[]; bubbleContext?: BubbleContext };
   isLast: boolean;
-  challengeCount: number;
   onOptionClick: (text: string) => void;
-  onChallenge: () => void;
-  onApprofondir: () => void;
   onConsulterBot: (botCode: string) => void;
   onCrystallize: () => void;
   crystallized: boolean;
   disabled: boolean;
   availableBots: { code: string; nom: string; titre: string }[];
   currentBotCode: string;
-  // Nouvelles actions Chef d'Orchestre
-  onNuancer: () => void;
-  onFilParallele: () => void;
-  onPlanAction: () => void;
-  onEvaluerRisques: () => void;
-  onScenarioEtSi: () => void;
-  onDeleguer: () => void;
+  // Sprint Discussion 1 — phase-gating
+  currentPhase?: string | null;
+  exchangeCount?: number;
 }
 
 function BotMessageActions({
   msg,
   isLast,
-  challengeCount,
   onOptionClick,
-  onChallenge,
-  onApprofondir,
   onConsulterBot,
   onCrystallize,
   crystallized,
   disabled,
   availableBots,
   currentBotCode,
-  onNuancer,
-  onFilParallele,
-  onPlanAction,
-  onEvaluerRisques,
-  onScenarioEtSi,
-  onDeleguer,
+  currentPhase,
+  exchangeCount = 0,
 }: BotActionsProps) {
   const [showConsulter, setShowConsulter] = useState(false);
-  const maxChallenges = 2;
-  const canChallenge = challengeCount < maxChallenges;
 
-  // Only show full actions on the last bot message, subtle on others
-  const alwaysShow = isLast && !disabled;
+  // Visible sur le dernier message seulement — pas de hover confus
+  if (!isLast || disabled) return null;
+
+  const hasOptions = msg.options && msg.options.length > 0;
 
   return (
-    <div className={cn(
-      "mt-3 space-y-2 transition-opacity duration-200",
-      alwaysShow ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-    )}>
-      {/* Options cliquables */}
-      {msg.options && msg.options.length > 0 && (
+    <div className="mt-3 space-y-2">
+      {/* Options backend — le bot propose les prochaines étapes */}
+      {hasOptions && (
         <div className="flex flex-wrap gap-1.5">
-          {msg.options.map((opt, i) => (
+          {msg.options!.map((opt, i) => (
             <button
               key={i}
               onClick={() => onOptionClick(opt)}
@@ -935,43 +912,15 @@ function BotMessageActions({
         </div>
       )}
 
-      {/* Action buttons */}
+      {/* Utilitaires discrets — Consulter (phase R+) + Cristalliser (phase D+) */}
       <div className="flex items-center gap-1.5 flex-wrap">
-        {/* Challenger */}
-        <button
-          onClick={onChallenge}
-          disabled={disabled || !canChallenge}
-          className={cn(
-            "flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full transition-colors cursor-pointer font-medium",
-            canChallenge
-              ? "bg-red-50 text-red-600 border border-red-200 hover:bg-red-100"
-              : "bg-gray-50 text-gray-400 border border-gray-200 cursor-not-allowed"
-          )}
-          title={canChallenge ? "Challenger cette reponse" : `Max ${maxChallenges} challenges atteint`}
-        >
-          <Swords className="h-3.5 w-3.5" />
-          Challenger
-          {challengeCount > 0 && (
-            <span className="text-[9px] opacity-60">({challengeCount}/{maxChallenges})</span>
-          )}
-        </button>
-
-        {/* Approfondir */}
-        <button
-          onClick={onApprofondir}
-          disabled={disabled}
-          className="flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-colors cursor-pointer disabled:opacity-50 font-medium"
-        >
-          <Maximize2 className="h-3.5 w-3.5" />
-          Approfondir
-        </button>
-
-        {/* Consulter un autre bot */}
+        {/* Consulter un autre bot — visible à partir de la phase R (3+ échanges) */}
+        {isPhaseAtLeast(currentPhase, "R") && (
         <div className="relative">
           <button
             onClick={() => setShowConsulter(!showConsulter)}
             disabled={disabled}
-            className="flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100 transition-colors cursor-pointer disabled:opacity-50 font-medium"
+            className="flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full bg-gray-50 text-gray-500 border border-gray-200 hover:bg-violet-50 hover:text-violet-700 hover:border-violet-200 transition-colors cursor-pointer disabled:opacity-50 font-medium"
           >
             <Users className="h-3.5 w-3.5" />
             Consulter
@@ -1005,8 +954,10 @@ function BotMessageActions({
             </div>
           )}
         </div>
+        )}
 
-        {/* Cristalliser (sauvegarder l'idee dans la banque) */}
+        {/* Cristalliser — visible à partir de la phase D (9+ échanges) */}
+        {isPhaseAtLeast(currentPhase, "D") && (
         <button
           onClick={onCrystallize}
           disabled={disabled || crystallized}
@@ -1014,7 +965,7 @@ function BotMessageActions({
             "flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full transition-colors cursor-pointer font-medium",
             crystallized
               ? "bg-emerald-200 text-emerald-800 border border-emerald-300"
-              : "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 disabled:opacity-50"
+              : "bg-gray-50 text-gray-500 border border-gray-200 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 disabled:opacity-50"
           )}
         >
           {crystallized ? (
@@ -1023,48 +974,8 @@ function BotMessageActions({
             <><Bookmark className="h-3.5 w-3.5" /> Cristalliser</>
           )}
         </button>
+        )}
       </div>
-
-      {/* Actions avancées Chef d'Orchestre — 2e rangée, filtrée par protocole actif (D-108) */}
-      {isLast && (() => {
-        const activeMode = msg.bubbleContext?.mode || "credo";
-        const allowed = MODE_ALLOWED_ACTIONS[activeMode] || MODE_ALLOWED_ACTIONS.credo;
-        const modeLabel = activeMode !== "credo" && MODE_CONFIG[activeMode]
-          ? MODE_CONFIG[activeMode].label
-          : "Avancé";
-
-        // All possible actions — filtré par le protocole actif
-        const actions = [
-          { key: "nuancer",        show: allowed.has("nuancer"),        onClick: onNuancer,        icon: Scale,           label: "Nuancer",       title: "Nuancer — approfondir avec nuances et limites",  colors: "bg-sky-50 text-sky-600 border-sky-200 hover:bg-sky-100" },
-          { key: "fil_parallele",  show: allowed.has("fil_parallele"),  onClick: onFilParallele,   icon: ArrowRight,      label: "Fil parallèle", title: "Fil parallèle — explorer un angle non couvert",  colors: "bg-teal-50 text-teal-600 border-teal-200 hover:bg-teal-100" },
-          { key: "plan_action",    show: allowed.has("plan_action"),    onClick: onPlanAction,      icon: Target,          label: "Plan d'action", title: "Plan d'action — étapes concrètes",              colors: "bg-green-50 text-green-600 border-green-200 hover:bg-green-100" },
-          { key: "risques",        show: allowed.has("risques"),        onClick: onEvaluerRisques,  icon: AlertTriangle,   label: "Risques",       title: "Évaluer les risques — probabilité × impact",    colors: "bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100" },
-          { key: "et_si",          show: allowed.has("et_si"),          onClick: onScenarioEtSi,    icon: Zap,             label: "Et si?",        title: "Scénario Et si? — explorer les hypothèses",     colors: "bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100" },
-          { key: "deleguer",       show: allowed.has("deleguer"),       onClick: onDeleguer,        icon: FileText,        label: "Déléguer",      title: "Déléguer — créer un brief de délégation",       colors: "bg-indigo-50 text-indigo-600 border-indigo-200 hover:bg-indigo-100" },
-        ].filter(a => a.show);
-
-        if (actions.length === 0) return null;
-
-        return (
-          <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-gray-50">
-            <span className="text-[9px] text-gray-300 font-medium uppercase tracking-wide mr-0.5">{modeLabel}</span>
-            {actions.map(a => (
-              <button
-                key={a.key}
-                onClick={a.onClick}
-                disabled={disabled}
-                className={cn(
-                  "flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-full border transition-colors cursor-pointer disabled:opacity-50 font-medium",
-                  a.colors
-                )}
-                title={a.title}
-              >
-                <a.icon className="h-2.5 w-2.5" /> {a.label}
-              </button>
-            ))}
-          </div>
-        );
-      })()}
     </div>
   );
 }
@@ -1160,23 +1071,27 @@ export function LiveChat({
   compact?: boolean;
 }) {
   const {
-    messages, isTyping, activeReflectionMode, newConversation, sendMessage, sendMultiPerspective,
+    messages, isTyping, activeReflectionMode, currentCREDOPhase, newConversation, sendMessage, sendMultiPerspective,
     threads, activeThreadId, parkThread, resumeThread, completeThread, deleteThread,
     crystals, crystallize, deleteCrystal, exportCrystals,
     videoAvatarEnabled, toggleVideoAvatar,
     injectVoiceMessage,
     activeRoster, addBotToRoster, removeBotFromRoster, acceptTeamProposal,
+    exchangeCount, renameThread,
   } = useChatContext();
   const { activeBotCode } = useFrameMaster();
   const { bots } = useBots();
   const scrollRef = useRef<HTMLDivElement>(null);
   const { copied, copy } = useCopy();
-  const tts = useTextToSpeech();
+  // TTS retiré — Carl: audio = live stream vocal, pas lecture texte
   const [challengeCounts, setChallengeCounts] = useState<Record<string, number>>({});
   const [showThreads, setShowThreads] = useState(false);
   const [showCrystals, setShowCrystals] = useState(false);
   const [justCrystallized, setJustCrystallized] = useState<string | null>(null);
   const [typewriterMsgId, setTypewriterMsgId] = useState<string | null>(null);
+  // Sprint 2 — editable title
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState("");
   const prevMsgCount = useRef(messages.length);
 
   // COMMAND mission tracking (BLOC 1)
@@ -1341,34 +1256,7 @@ export function LiveChat({
     [sendMessage, activeBotCode, isTyping, messages, parkThread, handleSynthesis, activeThreadId, threads]
   );
 
-  const handleChallenge = useCallback(
-    (msgId: string, agentCode?: string) => {
-      const count = challengeCounts[msgId] || 0;
-      if (count >= 2 || isTyping) return;
-      setChallengeCounts((prev) => ({ ...prev, [msgId]: count + 1 }));
-      const agentName = kitBotFullName(agentCode || activeBotCode);
-      sendMessage(
-        "Je ne suis pas d'accord avec cette analyse. Defends ta position avec plus de details et des sources concretes.",
-        agentCode || activeBotCode,
-        undefined,
-        { msgType: "challenge", parentId: msgId, branchLabel: `Challenge — ${agentName}` }
-      );
-    },
-    [challengeCounts, sendMessage, activeBotCode, isTyping, kitBotFullName]
-  );
-
-  const handleApprofondir = useCallback(
-    (msgId: string, agentCode?: string) => {
-      if (!isTyping)
-        sendMessage(
-          "Developpe ce point en detail. Quelles sont les implications concretes?",
-          agentCode || activeBotCode,
-          undefined,
-          { msgType: "normal", parentId: msgId }
-        );
-    },
-    [sendMessage, activeBotCode, isTyping]
-  );
+  // handleChallenge / handleApprofondir retirés — le backend propose les actions via msg.options
 
   const handleConsulterBot = useCallback(
     (botCode: string) => {
@@ -1383,104 +1271,13 @@ export function LiveChat({
     [sendMessage, lastUserMessage, isTyping, kitBotFullName]
   );
 
-  // ── Nouvelles actions Chef d'Orchestre ──
-
-  const handleNuancer = useCallback((msgId: string, agent?: string) => {
-    if (!isTyping) sendMessage(
-      "Nuance cette idée avec plus de profondeur, des exemples concrets et les limites de cette approche.",
-      agent || activeBotCode, undefined,
-      { msgType: "nuancer", parentId: msgId, branchLabel: "Nuancer" }
-    );
-  }, [sendMessage, activeBotCode, isTyping]);
-
-  const handleFilParallele = useCallback((msgId: string, agent?: string) => {
-    if (!isTyping) sendMessage(
-      "Ouvre un fil de réflexion parallèle sur un angle que tu n'as pas encore exploré sur ce sujet.",
-      agent || activeBotCode, undefined,
-      { msgType: "fil_parallele", parentId: msgId, branchLabel: "Fil parallèle" }
-    );
-  }, [sendMessage, activeBotCode, isTyping]);
-
-  const handlePlanAction = useCallback((msgId: string, agent?: string) => {
-    if (!isTyping) sendMessage(
-      "Construis un plan d'action concret: étapes prioritaires, responsables, délais, ressources nécessaires.",
-      agent || activeBotCode, undefined,
-      { msgType: "plan_action", parentId: msgId, branchLabel: "Plan d'action" }
-    );
-  }, [sendMessage, activeBotCode, isTyping]);
-
-  const handleEvaluerRisques = useCallback((msgId: string, agent?: string) => {
-    if (!isTyping) sendMessage(
-      "Identifie et évalue les risques: probabilité × impact, risques critiques, mesures de mitigation.",
-      agent || activeBotCode, undefined,
-      { msgType: "evaluer_risques", parentId: msgId, branchLabel: "Évaluer risques" }
-    );
-  }, [sendMessage, activeBotCode, isTyping]);
-
-  const handleScenarioEtSi = useCallback((msgId: string, agent?: string) => {
-    if (!isTyping) sendMessage(
-      "Explore les scénarios hypothétiques: Et si on échoue? Et si ça dépasse nos attentes? Et si le marché change?",
-      agent || activeBotCode, undefined,
-      { msgType: "scenario_et_si", parentId: msgId, branchLabel: "Scénario Et si?" }
-    );
-  }, [sendMessage, activeBotCode, isTyping]);
-
-  const handleDeleguer = useCallback((msgId: string, agent?: string) => {
-    if (!isTyping) sendMessage(
-      "Crée un brief de délégation: objectif clair, responsable, livrables attendus, indicateurs de succès.",
-      agent || activeBotCode, undefined,
-      { msgType: "deleguer", parentId: msgId, branchLabel: "Déléguer" }
-    );
-  }, [sendMessage, activeBotCode, isTyping]);
-
-  const handleFusionner = useCallback(() => {
-    if (isTyping) return;
-    const consultedBots = [...new Set(messages.filter(m => m.role === "assistant" && m.agent).map(m => m.agent!))];
-    if (consultedBots.length < 2) return;
-    sendMessage(
-      "Fusionne les perspectives de tous les bots consultés en une synthèse unifiée avec les points de convergence, de divergence, et la recommandation finale.",
-      "CEOB", undefined,
-      { msgType: "fusionner", branchLabel: `Fusion — ${consultedBots.length} perspectives` }
-    );
-  }, [messages, sendMessage, isTyping]);
+  // Actions Chef d'Orchestre retirées — le backend propose via msg.options
 
   const handleAcceptTeam = useCallback((bots: string[]) => {
     acceptTeamProposal(bots);
   }, [acceptTeamProposal]);
 
-  // B.1 — Consulter MULTIPLE bots en parallele via /chat/multi
-  const handleConsulterMulti = useCallback(
-    (botCodes: string[]) => {
-      if (isTyping || !lastUserMessage || botCodes.length < 2) return;
-      sendMultiPerspective(lastUserMessage, botCodes);
-    },
-    [sendMultiPerspective, lastUserMessage, isTyping]
-  );
-
-  // Challenge ALL consulted bots at once (multi-perspective debate)
-  const handleChallengeAll = useCallback(() => {
-    if (isTyping) return;
-    const consultedBots = [...new Set(messages.filter(m => m.role === "assistant" && m.agent).map(m => m.agent!))];
-    if (consultedBots.length < 2) return;
-    const botNames = consultedBots.map(c => kitBotFullName(c)).join(", ");
-    sendMessage(
-      `Je challenge TOUS vos points de vue (${botNames}). Defendez vos positions avec des arguments concrets et des sources. Ou etes-vous en desaccord entre vous?`,
-      "CEOB", undefined,
-      { msgType: "challenge", branchLabel: `Challenge collectif — ${consultedBots.length} bots` }
-    );
-  }, [messages, sendMessage, isTyping, kitBotFullName]);
-
-  // Launch a formal debate between 2+ bots
-  const handleDebat = useCallback(() => {
-    if (isTyping || !lastUserMessage) return;
-    const consultedBots = [...new Set(messages.filter(m => m.role === "assistant" && m.agent).map(m => m.agent!))];
-    const botNames = consultedBots.map(c => kitBotFullName(c)).join(" vs ");
-    sendMessage(
-      `Lance un DEBAT structure entre ${botNames} sur le sujet: "${lastUserMessage}". Chaque bot defend sa position. Identifie les points de friction et propose un verdict.`,
-      "CEOB", undefined,
-      { msgType: "challenge", branchLabel: `Debat — ${botNames}` }
-    );
-  }, [messages, sendMessage, lastUserMessage, isTyping, kitBotFullName]);
+  // Multi-consultation / fusion / challenge retirés — le backend orchestre via msg.options
 
   // Create a new branch (sub-thread) from current discussion
   const handleNewBranch = useCallback((topic?: string) => {
@@ -1552,90 +1349,118 @@ export function LiveChat({
 
   return (
     <div className="h-full flex flex-col bg-gradient-to-b from-gray-50 to-white">
-      {/* Header */}
-      <div className={cn("bg-white/80 backdrop-blur-sm border-b shrink-0 flex items-center justify-between", compact ? "px-3 py-1.5" : "px-4 py-2.5")}>
-        <div className="flex items-center gap-2 min-w-0">
-          {onBack && !compact && (
-            <button onClick={onBack} className="text-gray-400 hover:text-gray-600 cursor-pointer p-1 rounded-lg hover:bg-gray-100 transition-colors">
-              <ArrowLeft className="h-4 w-4" />
-            </button>
-          )}
-          <div className="min-w-0">
-            <div className={cn("font-semibold text-gray-800 truncate", compact ? "text-xs max-w-[160px]" : "text-sm max-w-[300px]")}>
-              {threads.find(t => t.id === activeThreadId)?.title || "Nouvelle mission"}
-            </div>
-            {!compact && (
-            <div className="text-[11px] text-gray-400 flex items-center gap-1.5">
-              {kitBotFullName(activeBotCode)}
-              <span className={cn("flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-medium", modeInfo.color, modeInfo.bg)}>
-                <ModeIcon className="h-2.5 w-2.5" /> {modeInfo.label}
-              </span>
-            </div>
+      {/* Header — Sprint 2: titre éditable + dots CREDO + équipe active */}
+      <div className={cn("bg-white/80 backdrop-blur-sm border-b shrink-0", compact ? "px-3 py-1.5" : "px-4 py-2")}>
+        {/* Ligne 1: Titre + actions */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 min-w-0">
+            {onBack && !compact && (
+              <button onClick={onBack} className="text-gray-400 hover:text-gray-600 cursor-pointer p-1 rounded-lg hover:bg-gray-100 transition-colors">
+                <ArrowLeft className="h-4 w-4" />
+              </button>
+            )}
+            {editingTitle ? (
+              <input
+                autoFocus
+                value={titleDraft}
+                onChange={(e) => setTitleDraft(e.target.value)}
+                onBlur={() => {
+                  if (titleDraft.trim() && activeThreadId) renameThread(activeThreadId, titleDraft.trim());
+                  setEditingTitle(false);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") { e.currentTarget.blur(); }
+                  if (e.key === "Escape") { setEditingTitle(false); }
+                }}
+                className="text-sm font-semibold text-gray-800 bg-transparent border-b border-blue-400 outline-none max-w-[300px] px-0.5"
+              />
+            ) : (
+              <button
+                onClick={() => {
+                  const current = threads.find(t => t.id === activeThreadId)?.title || "";
+                  setTitleDraft(current);
+                  setEditingTitle(true);
+                }}
+                className="flex items-center gap-1.5 min-w-0 group cursor-pointer"
+              >
+                <span className={cn("font-semibold text-gray-800 truncate", compact ? "text-xs max-w-[160px]" : "text-sm max-w-[300px]")}>
+                  {threads.find(t => t.id === activeThreadId)?.title || "Nouvelle discussion"}
+                </span>
+                <Pencil className="h-3.5 w-3.5 text-gray-300 group-hover:text-gray-500 transition-colors shrink-0" />
+              </button>
             )}
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {/* Park thread */}
-          {messages.length > 0 && (
+          <div className="flex items-center gap-1.5">
+            {messages.length > 0 && (
+              <button onClick={parkThread} className="text-gray-400 hover:text-amber-600 cursor-pointer p-1.5 rounded-lg hover:bg-amber-50 transition-colors" title="Parker">
+                <Clock className="h-3.5 w-3.5" />
+              </button>
+            )}
             <button
-              onClick={parkThread}
-              className="text-gray-400 hover:text-amber-600 cursor-pointer p-1.5 rounded-lg hover:bg-amber-50 transition-colors"
-              title="Parker cette mission"
+              onClick={() => { setShowCrystals(!showCrystals); setShowThreads(false); }}
+              className={cn("flex items-center gap-1 p-1.5 rounded-lg transition-colors cursor-pointer", showCrystals ? "bg-emerald-50 text-emerald-600" : "text-gray-400 hover:text-gray-600 hover:bg-gray-100")}
+              title="Mes Idees"
             >
-              <Clock className="h-3.5 w-3.5" />
+              <Bookmark className="h-3.5 w-3.5" />
+              {crystals.length > 0 && <span className="text-[9px] font-bold bg-emerald-500 text-white px-1 rounded-full min-w-[14px] text-center">{crystals.length}</span>}
             </button>
-          )}
-
-          {/* Mes Idees toggle */}
-          <button
-            onClick={() => { setShowCrystals(!showCrystals); setShowThreads(false); }}
-            className={cn(
-              "flex items-center gap-1.5 p-1.5 rounded-lg transition-colors cursor-pointer",
-              showCrystals ? "bg-emerald-50 text-emerald-600" : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-            )}
-            title="Mes Idees"
-          >
-            <Bookmark className="h-3.5 w-3.5" />
-            {crystals.length > 0 && (
-              <span className="text-[9px] font-bold bg-emerald-500 text-white px-1 rounded-full min-w-[14px] text-center">
-                {crystals.length}
-              </span>
-            )}
-          </button>
-
-          {/* Thread Manager toggle */}
-          <button
-            onClick={() => { setShowThreads(!showThreads); setShowCrystals(false); }}
-            className={cn(
-              "flex items-center gap-1.5 p-1.5 rounded-lg transition-colors cursor-pointer",
-              showThreads ? "bg-violet-50 text-violet-600" : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-            )}
-            title="Threads"
-          >
-            <MessageSquare className="h-3.5 w-3.5" />
-            {parkedThreads.length > 0 && (
-              <span className="text-[9px] font-bold bg-amber-500 text-white px-1 rounded-full min-w-[14px] text-center">
-                {parkedThreads.length}
-              </span>
-            )}
-          </button>
-
-          {/* New conversation */}
-          {messages.length > 0 && (
             <button
-              onClick={newConversation}
-              className="text-gray-400 hover:text-gray-600 cursor-pointer p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
-              title="Nouvelle discussion"
+              onClick={() => { setShowThreads(!showThreads); setShowCrystals(false); }}
+              className={cn("flex items-center gap-1 p-1.5 rounded-lg transition-colors cursor-pointer", showThreads ? "bg-violet-50 text-violet-600" : "text-gray-400 hover:text-gray-600 hover:bg-gray-100")}
+              title="Threads"
             >
-              <Plus className="h-3.5 w-3.5" />
+              <MessageSquare className="h-3.5 w-3.5" />
+              {parkedThreads.length > 0 && <span className="text-[9px] font-bold bg-amber-500 text-white px-1 rounded-full min-w-[14px] text-center">{parkedThreads.length}</span>}
             </button>
-          )}
-
-          <div className="flex items-center gap-1.5 bg-green-50 px-2 py-1 rounded-full">
-            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-[10px] text-green-600 font-medium">LIVE</span>
+            {messages.length > 0 && (
+              <button onClick={newConversation} className="text-gray-400 hover:text-gray-600 cursor-pointer p-1.5 rounded-lg hover:bg-gray-100 transition-colors" title="Nouvelle discussion">
+                <Plus className="h-3.5 w-3.5" />
+              </button>
+            )}
+            <div className="flex items-center gap-1.5 bg-green-50 px-2 py-1 rounded-full">
+              <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+              <span className="text-[9px] text-green-600 font-medium">LIVE</span>
+            </div>
           </div>
         </div>
+        {/* Ligne 2: Équipe active + dots CREDO + compteur échanges */}
+        {!compact && (
+          <div className="flex items-center justify-between mt-1">
+            <div className="flex items-center gap-1.5">
+              {activeRoster.map((code) => (
+                <BotAvatar key={code} code={code} size="sm" />
+              ))}
+              {activeRoster.length < 3 && (
+                <div className="w-6 h-6 rounded-full border border-dashed border-gray-300 flex items-center justify-center text-gray-400">
+                  <Plus className="h-3.5 w-3.5" />
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
+                {CREDO_ORDER.map((phase) => {
+                  const cfg = CREDO_PHASE_CONFIG[phase];
+                  const isActive = currentCREDOPhase === phase;
+                  const isReached = isPhaseAtLeast(currentCREDOPhase, phase);
+                  return (
+                    <div
+                      key={phase}
+                      title={cfg?.label || phase}
+                      className={cn(
+                        "w-2 h-2 rounded-full transition-all",
+                        isActive ? cn(cfg?.color || "bg-gray-400", "ring-2 ring-offset-1 ring-gray-300 scale-125") :
+                        isReached ? (cfg?.color || "bg-gray-400") : "bg-gray-200"
+                      )}
+                    />
+                  );
+                })}
+              </div>
+              <span className="text-[9px] text-gray-400 font-medium">
+                {CREDO_PHASE_CONFIG[currentCREDOPhase]?.label || "Connecter"}, {exchangeCount} éch
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Avatar video CarlOS */}
@@ -1643,19 +1468,7 @@ export function LiveChat({
         <CarlOSAvatar onClose={toggleVideoAvatar} />
       )}
 
-      {/* Mode Bar — 8 modes autonomes (BLOC 2) */}
-      {!compact && (
-        <ModeBar
-          activeMode={activeReflectionMode}
-          onSelectMode={handleModeSelect}
-          activeBranch={modeBranch.state as Record<string, unknown> | null}
-          onAdvance={modeBranch.advance}
-          onComplete={modeBranch.complete}
-          onCancel={modeBranch.cancel}
-          loading={modeBranch.loading}
-          disabled={isTyping}
-        />
-      )}
+      {/* Mode Bar retiré — les modes de réflexion sont dans le cockpit (sidebar droite) */}
 
       {/* Mes Idees panel */}
       {showCrystals && (
@@ -1802,71 +1615,7 @@ export function LiveChat({
             <CommandProgressCard status={command.status} />
           )}
 
-          {/* Bots consultes — breadcrumb multi-perspectives + actions collectives */}
-          {(() => {
-            const consultedBots = [...new Set(messages.filter(m => m.role === "assistant" && m.agent).map(m => m.agent!))];
-            if (consultedBots.length <= 1) return null;
-            return (
-              <div className="flex items-center gap-2 py-2.5 px-3 bg-violet-50/50 rounded-xl border border-violet-100 flex-wrap">
-                <Users className="h-3.5 w-3.5 text-violet-500 shrink-0" />
-                <span className="text-[11px] text-violet-600 font-medium">Perspectives :</span>
-                <div className="flex gap-1.5 flex-wrap">
-                  {consultedBots.map((code) => {
-                    const info = BOT_COLORS[code];
-                    return (
-                      <span key={code} className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white border", info?.text || "text-gray-500")}>
-                        {info ? kitBotFullName(code) : code}
-                      </span>
-                    );
-                  })}
-                </div>
-                {/* Actions collectives */}
-                {!isTyping && (
-                  <div className="flex gap-1.5 ml-auto flex-wrap">
-                    {/* Multi-consult — relancer sur tous les bots */}
-                    <button
-                      onClick={() => handleConsulterMulti(consultedBots)}
-                      className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-violet-100 text-violet-700 border border-violet-300 hover:bg-violet-200 transition-colors cursor-pointer font-medium"
-                    >
-                      <Cpu className="h-2.5 w-2.5" />
-                      Relancer {consultedBots.length} bots
-                    </button>
-                    <button
-                      onClick={handleChallengeAll}
-                      className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-colors cursor-pointer font-medium"
-                    >
-                      <Swords className="h-2.5 w-2.5" />
-                      Challenger les {consultedBots.length}
-                    </button>
-                    <button
-                      onClick={handleDebat}
-                      className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-violet-50 text-violet-600 border border-violet-200 hover:bg-violet-100 transition-colors cursor-pointer font-medium"
-                    >
-                      <MessageSquare className="h-2.5 w-2.5" />
-                      Debat
-                    </button>
-                    <button
-                      onClick={() => handleNewBranch()}
-                      className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 transition-colors cursor-pointer font-medium"
-                    >
-                      <Plus className="h-2.5 w-2.5" />
-                      Branche
-                    </button>
-                    {consultedBots.length >= 2 && (
-                      <button
-                        onClick={handleFusionner}
-                        disabled={isTyping}
-                        className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-100 transition-colors cursor-pointer disabled:opacity-50 font-medium"
-                      >
-                        <Brain className="h-2.5 w-2.5" />
-                        Fusionner
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })()}
+          {/* Perspectives bar retirée — trop d'options sans logique contextuelle */}
 
           {/* Roster de bots actifs — équipe sélectionnée par CarlOS ou par le user */}
           {activeRoster.length > 0 && messages.length > 0 && (
@@ -2057,24 +1806,12 @@ export function LiveChat({
                         <div className="flex items-center gap-3 text-[10px] text-amber-500">
                         </div>
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {tts.isSupported && (
-                            <button
-                              onClick={() => tts.toggleSpeak(msg.content, msg.id)}
-                              className={cn(
-                                "cursor-pointer p-1 rounded transition-colors",
-                                tts.speakingMsgId === msg.id ? "text-amber-600" : "text-amber-400 hover:text-amber-600"
-                              )}
-                              title={tts.speakingMsgId === msg.id ? "Arreter" : "Ecouter la synthese"}
-                            >
-                              {tts.speakingMsgId === msg.id ? <VolumeX className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
-                            </button>
-                          )}
                           <button
                             onClick={() => copy(msg.id, msg.content)}
                             className="text-amber-400 hover:text-amber-600 cursor-pointer p-1 rounded transition-colors"
                             title="Copier la synthese"
                           >
-                            {copied === msg.id ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                            {copied === msg.id ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
                           </button>
                         </div>
                       </div>
@@ -2190,7 +1927,7 @@ export function LiveChat({
                       </div>
                     )}
 
-                    {/* Agent name */}
+                    {/* Agent name + écouter/copier en haut */}
                     {!isUser && agentInfo && (
                       <div className={cn("text-xs mb-2 font-semibold flex items-center gap-1.5", agentInfo.text)}>
                         {kitBotFullName(msg.agent || "CEOB")}
@@ -2200,6 +1937,16 @@ export function LiveChat({
                             Diagnostic
                           </span>
                         )}
+                        {/* Copier — en haut à droite */}
+                        <span className="ml-auto flex items-center gap-0.5">
+                          <button
+                            onClick={() => copy(msg.id, msg.content)}
+                            className="text-gray-300 hover:text-gray-500 cursor-pointer p-1 rounded transition-colors"
+                            title="Copier"
+                          >
+                            {copied === msg.id ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+                          </button>
+                        </span>
                       </div>
                     )}
 
@@ -2277,44 +2024,17 @@ export function LiveChat({
                       <p className="text-sm leading-relaxed">{msg.content}</p>
                     )}
 
-                    {/* Canvas Action Badges — inline dans la bulle */}
-                    {!isUser && msg.canvasActions && msg.canvasActions.length > 0 && (
-                      <CanvasActionBadges actions={msg.canvasActions} />
-                    )}
+                    {/* Canvas Action Badges — RETIRÉ Sprint Discussion 1 (Bug 1: navigation parasite) */}
 
                     {/* Cascade Suggestions — pilules inter-departements */}
                     {!isUser && msg.cascadeSuggestions && msg.cascadeSuggestions.length > 0 && (
                       <CascadeSuggestionsCard suggestions={msg.cascadeSuggestions} />
                     )}
 
-                    {/* Bot actions — TTS + copy + contexte dynamique */}
+                    {/* D-108 — Footer contextuel dynamique (section, CREDO, mode, mission) */}
                     {!isUser && (
-                      <div className="mt-3 pt-2 border-t border-gray-100 flex items-center justify-between">
-                        {/* D-108 — Footer contextuel dynamique (section, CREDO, mode, mission) */}
+                      <div className="mt-3 pt-2 border-t border-gray-100">
                         <BubbleFooterContext ctx={msg.bubbleContext} />
-                        <div className="flex items-center gap-1">
-                          {tts.isSupported && (
-                            <button
-                              onClick={() => tts.toggleSpeak(msg.content, msg.id)}
-                              className={cn(
-                                "cursor-pointer p-1 rounded transition-colors",
-                                tts.speakingMsgId === msg.id
-                                  ? "text-blue-500 hover:text-blue-700"
-                                  : "text-gray-400 hover:text-gray-600"
-                              )}
-                              title={tts.speakingMsgId === msg.id ? "Arreter" : "Ecouter"}
-                            >
-                              {tts.speakingMsgId === msg.id ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
-                            </button>
-                          )}
-                          <button
-                            onClick={() => copy(msg.id, msg.content)}
-                            className="text-gray-400 hover:text-gray-600 cursor-pointer p-1 rounded transition-colors"
-                            title="Copier"
-                          >
-                            {copied === msg.id ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
-                          </button>
-                        </div>
                       </div>
                     )}
 
@@ -2323,10 +2043,7 @@ export function LiveChat({
                       <BotMessageActions
                         msg={msg}
                         isLast={msg.id === lastBotMsgId}
-                        challengeCount={challengeCounts[msg.id] || 0}
                         onOptionClick={handleOptionClick}
-                        onChallenge={() => handleChallenge(msg.id, msg.agent)}
-                        onApprofondir={() => handleApprofondir(msg.id, msg.agent)}
                         onConsulterBot={handleConsulterBot}
                         onCrystallize={() => {
                           crystallize(msg.content, msg.agent || activeBotCode);
@@ -2337,12 +2054,8 @@ export function LiveChat({
                         disabled={isTyping}
                         availableBots={bots}
                         currentBotCode={msg.agent || activeBotCode}
-                        onNuancer={() => handleNuancer(msg.id, msg.agent)}
-                        onFilParallele={() => handleFilParallele(msg.id, msg.agent)}
-                        onPlanAction={() => handlePlanAction(msg.id, msg.agent)}
-                        onEvaluerRisques={() => handleEvaluerRisques(msg.id, msg.agent)}
-                        onScenarioEtSi={() => handleScenarioEtSi(msg.id, msg.agent)}
-                        onDeleguer={() => handleDeleguer(msg.id, msg.agent)}
+                        currentPhase={currentCREDOPhase}
+                        exchangeCount={exchangeCount}
                       />
                     )}
 
@@ -2365,8 +2078,8 @@ export function LiveChat({
             );
           })}
 
-          {/* Synthese — bouton discret toujours visible, le user controle le rythme */}
-          {!isTyping && messages.filter(m => m.role === "assistant").length >= 2 && !messages.some(m => m.msgType === "synthesis") && (
+          {/* Synthese — bouton discret, apparaît après 4+ échanges avec le bot */}
+          {!isTyping && messages.filter(m => m.role === "assistant").length >= 4 && !messages.some(m => m.msgType === "synthesis") && (
             <div className="flex justify-center">
               <button
                 onClick={handleSynthesis}
@@ -2421,6 +2134,7 @@ export function LiveChat({
           )}
         </div>
       </div>
+
     </div>
   );
 }

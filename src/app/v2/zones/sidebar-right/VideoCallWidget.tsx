@@ -332,7 +332,7 @@ export function VideoCallWidget() {
   const userHangupRef = useRef(false);
 
   const standbyImg = BOT_STANDBY[activeBotCode] || BOT_STANDBY.CEOB;
-  const botName = activeBot?.nom || BOT_ROLES[activeBotCode] || "CarlOS";
+  const botName = activeBot?.nom || BOT_NAME[activeBotCode] || "CarlOS";
   const botRole = BOT_ROLES[activeBotCode] || "Agent";
   const gradient = BOT_GRADIENT[activeBotCode] || "from-blue-600 to-blue-500";
 
@@ -927,7 +927,7 @@ export function VideoCallWidget() {
             visionMode ? "bg-cyan-500 animate-pulse" : isInCall ? "bg-green-500" : isConnecting ? "bg-amber-400 animate-pulse" : "bg-emerald-500"
           )} />
           <p className={cn("text-[9px] font-semibold leading-tight", visionMode ? "text-cyan-600" : isInCall ? "text-green-600" : isConnecting ? "text-amber-500" : "text-emerald-600")}>
-            {visionMode ? "Vision active" : isInCall ? (isVideoCall ? "Vidéo en cours" : "En appel vocal") : isConnecting ? "Connexion..." : "Communiquez avec CarlOS"}
+            {visionMode ? "Vision active" : isInCall ? (isVideoCall ? "Vidéo en cours" : "En appel vocal") : isConnecting ? "Connexion..." : `Communiquez avec ${botName}`}
           </p>
           {isInCall && (
             <span className="text-[9px] font-mono text-green-600 ml-auto">{formatDuration(callDuration)}</span>
@@ -951,7 +951,7 @@ export function VideoCallWidget() {
                   ? "bg-blue-100 text-blue-400 cursor-wait"
                   : "bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200"
             )}
-            title={isInCall ? "Raccrocher" : "Discussion AI avec CarlOS"}
+            title={isInCall ? "Raccrocher" : `Discussion AI avec ${botName}`}
           >
             {isConnecting ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />

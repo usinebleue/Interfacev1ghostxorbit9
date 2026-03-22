@@ -101,6 +101,9 @@ export interface StreamDoneEvent {
   cascade_suggestions?: CascadeSuggestion[];
   // D-108 — Contexte de bulle dynamique
   bubble_context?: BubbleContext | null;
+  // Sprint Discussion 1 — CREDO phase-gating
+  exchange_count?: number;
+  has_product?: boolean;
 }
 
 export type StreamCallback = {

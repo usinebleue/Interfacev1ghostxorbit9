@@ -877,6 +877,18 @@ function DocumentEditorFocus({ focusData }: { focusData: any }) {
                 </div>
               );
             })}
+            {/* Navigation buttons — fix Library mode (manquait) */}
+            <div className="flex items-center gap-2 pt-2">
+              <button onClick={() => setPhase("redaction")}
+                className="flex items-center gap-1 px-3 py-2 text-xs text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer">
+                Retour a la redaction
+              </button>
+              <div className="flex-1" />
+              <button onClick={() => setPhase("export")}
+                className="flex items-center gap-1.5 px-4 py-2 text-xs text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-colors cursor-pointer">
+                <Download className="h-3.5 w-3.5" /> Passer a l'export
+              </button>
+            </div>
           </>)}
         </div>
       )}

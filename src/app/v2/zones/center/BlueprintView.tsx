@@ -44,7 +44,7 @@ import { BLUEPRINT_TABS, BOT_INFO, PLAYBOOK_TEMPLATES } from "./shared/section-c
 import { CrudToolbar, type SortField, type SortDir } from "./shared/CrudToolbar";
 import { EntityModal, type EntityLevel } from "./shared/EntityModal";
 import { CatalogueGrid } from "./shared/CatalogueGrid";
-import { PixelAgentGrid, FlowSimulation, type PixelAgentState } from "./shared/PixelAgent";
+import { CatalogueUnifie } from "./shared/CatalogueUnifie";
 import type { BlueprintTabId } from "./shared/section-types";
 
 // ================================================================
@@ -133,28 +133,7 @@ function TabOverview({ goTo, stats, onDeploy }: {
       {/* ═══ ZONE PRINCIPALE — 2 colonnes ═══ */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-        {/* COLONNE GAUCHE — KPIs + Arbre chantiers */}
-        <div className="space-y-3">
-          {/* 4 KPIs hierarchie */}
-          <div className="grid grid-cols-2 gap-2">
-            {[
-              { label: "Chantiers", value: String(stats.chantiers), sub: "actifs", color: "red", icon: Flame, tab: "chantiers" as BlueprintTabId },
-              { label: "Projets", value: String(stats.projets), sub: "en cours", color: "blue", icon: Package, tab: "projets" as BlueprintTabId },
-              { label: "Missions", value: String(stats.missions), sub: `${stats.missionsDone} completes`, color: "violet", icon: ListChecks, tab: "missions" as BlueprintTabId },
-              { label: "Taches", value: String(stats.taches), sub: `${stats.tachesDone} terminees`, color: "emerald", icon: CheckCircle2, tab: "taches" as BlueprintTabId },
-            ].map((kpi) => (
-              <KPICard key={kpi.label} kpi={{ ...kpi, onClick: () => goTo(kpi.tab) }} />
-            ))}
-          </div>
-
-          {/* Arbre chantiers — pleine largeur pour drill-down */}
-          <div>
-            <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wide mb-2">{stats.chantiers} Chantier{stats.chantiers > 1 ? "s" : ""} — {stats.projets} Projets</div>
-            <HierarchieGHML key="overview-tree" compact />
-          </div>
-        </div>
-
-        {/* COLONNE DROITE — Progression + 6 box Pouls CEO (2x3) */}
+        {/* COLONNE GAUCHE — Progression + KPIs + Arbre chantiers */}
         <div className="space-y-3">
           {/* Progression */}
           <Card className="p-0 overflow-hidden border border-gray-100 shadow-sm">
@@ -190,6 +169,27 @@ function TabOverview({ goTo, stats, onDeploy }: {
             </div>
           </Card>
 
+          {/* 4 KPIs hierarchie */}
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { label: "Chantiers", value: String(stats.chantiers), sub: "actifs", color: "red", icon: Flame, tab: "chantiers" as BlueprintTabId },
+              { label: "Projets", value: String(stats.projets), sub: "en cours", color: "blue", icon: Package, tab: "projets" as BlueprintTabId },
+              { label: "Missions", value: String(stats.missions), sub: `${stats.missionsDone} completes`, color: "violet", icon: ListChecks, tab: "missions" as BlueprintTabId },
+              { label: "Taches", value: String(stats.taches), sub: `${stats.tachesDone} terminees`, color: "emerald", icon: CheckCircle2, tab: "taches" as BlueprintTabId },
+            ].map((kpi) => (
+              <KPICard key={kpi.label} kpi={{ ...kpi, onClick: () => goTo(kpi.tab) }} />
+            ))}
+          </div>
+
+          {/* Arbre chantiers — pleine largeur pour drill-down */}
+          <div>
+            <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wide mb-2">{stats.chantiers} Chantier{stats.chantiers > 1 ? "s" : ""} — {stats.projets} Projets</div>
+            <HierarchieGHML key="overview-tree" compact />
+          </div>
+        </div>
+
+        {/* COLONNE DROITE — 6 box Pouls CEO (2x3) */}
+        <div className="space-y-3">
           {/* 6 box Pouls CEO — grille 2 colonnes */}
           <div className="grid grid-cols-2 gap-2">
             {/* 1. Taches Urgentes */}
@@ -322,19 +322,6 @@ function TabOverview({ goTo, stats, onDeploy }: {
         </div>
       </div>
 
-      {/* ═══ PIXEL AGENTS — Bots au Travail ═══ */}
-      <PixelAgentGrid
-        botStates={Object.fromEntries(
-          CLEVEL_BOTS.map((bot) => {
-            const status = botStatus(bot.code);
-            return [bot.code, status.active ? "typing" as PixelAgentState : "idle" as PixelAgentState];
-          })
-        )}
-        onBotClick={(code) => goTo("equipe")}
-      />
-
-      {/* ═══ FLOW SIMULATION — Ligne de Production Usine Bleue ═══ */}
-      <FlowSimulation />
 
       {/* ═══ ZONE CONCEPTS À FINALISER ═══ */}
       <div className="border-t border-gray-200 pt-4">
@@ -2096,37 +2083,20 @@ export function BlueprintView() {
 
       {activeTab === "timeline" && <TabTimeline />}
 
-      {activeTab === "documents" && (
-        <CatalogueGrid
-          type="documents"
-          items={templates as unknown as Parameters<typeof CatalogueGrid>[0]["items"]}
-          loading={loadingCatalogues}
+      {activeTab === "catalogue" && (
+        <CatalogueUnifie
           onAction={(item) => {
-            dispatch({ type: "focus", layer: "cerveau",
-              data: { title: `Template: ${item.titre}`, element_type: "document_editor", data: { template: item, mode: "scratch" } },
-              bot: "CPOB"
-            });
+            if (item.type === "template") {
+              dispatch({ type: "focus", layer: "cerveau",
+                data: { title: `Template: ${item.titre}`, element_type: "document_editor", data: { template: item._raw, mode: "scratch" } },
+                bot: item.bot_recommande || "CPOB"
+              });
+            } else if (item.type === "playbook") {
+              handleFocus(`Playbook: ${item.titre}`, "playbook", item._raw);
+            } else {
+              handleFocus(`Diagnostic: ${item.titre}`, "diagnostic_enrichi", item._raw);
+            }
           }}
-          actionLabel="Generer"
-        />
-      )}
-
-      {activeTab === "playbooks" && (
-        <CatalogueGrid
-          type="playbooks"
-          items={PLAYBOOK_TEMPLATES as unknown as Parameters<typeof CatalogueGrid>[0]["items"]}
-          onAction={(item) => handleFocus(`Playbook: ${item.titre}`, "playbook", item)}
-          actionLabel="Deployer"
-        />
-      )}
-
-      {activeTab === "diagnostics" && (
-        <CatalogueGrid
-          type="diagnostics"
-          items={diagnostics as unknown as Parameters<typeof CatalogueGrid>[0]["items"]}
-          loading={loadingCatalogues}
-          onAction={(item) => handleFocus(`Diagnostic: ${item.titre}`, "diagnostic_enrichi", item)}
-          actionLabel="Lancer"
         />
       )}
 

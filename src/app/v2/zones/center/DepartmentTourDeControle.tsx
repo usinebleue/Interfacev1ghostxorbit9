@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect, useMemo } from "react";
-import { Settings, Stethoscope, Flame, ListChecks, Rocket, Bot } from "lucide-react";
+import { Settings, Stethoscope, Flame, ListChecks, Rocket, Bot, BookOpen } from "lucide-react";
 import { Card } from "../../../components/ui/card";
 import { cn } from "../../../components/ui/utils";
 import { useFrameMaster } from "../../context/FrameMasterContext";
@@ -20,6 +20,7 @@ import { SectionFrame } from "./shared/SectionFrame";
 import { PLAYBOOK_TEMPLATES, BOT_INFO, STATUS_CONFIG, CHALEUR_CONFIG } from "./shared/section-config";
 import type { TabDef } from "./shared/section-types";
 import { HierarchieGHML } from "./shared/HierarchieGHML";
+import { CatalogueUnifie } from "./shared/CatalogueUnifie";
 
 /* ============ BLOCK HEADER — meme style que DashboardView ============ */
 function BlockHeader({ icon: Icon, title, count, gradient }: {
@@ -119,16 +120,14 @@ type DeptTdcConfig = {
 };
 
 /* ============ TABS DEPARTEMENT (10 tabs — harmonise Strategique) ============ */
-type DeptTabId = "cockpit" | "chantiers" | "projets" | "missions" | "taches" | "documents" | "playbooks" | "diagnostics" | "equipe";
+type DeptTabId = "cockpit" | "chantiers" | "projets" | "missions" | "taches" | "catalogue" | "equipe";
 const DEPT_TABS: TabDef[] = [
   { id: "cockpit", label: "Vue d'ensemble", icon: Gauge },
   { id: "chantiers", label: "Chantiers", icon: Flame },
   { id: "projets", label: "Projets", icon: Package },
   { id: "missions", label: "Missions", icon: ListChecks },
   { id: "taches", label: "Taches", icon: CheckCircle2 },
-  { id: "documents", label: "Documents", icon: FileText },
-  { id: "playbooks", label: "Playbooks", icon: Rocket },
-  { id: "diagnostics", label: "Diagnostics", icon: Stethoscope },
+  { id: "catalogue", label: "Catalogue", icon: BookOpen },
   { id: "equipe", label: "Equipe AI", icon: Bot },
 ];
 
@@ -1072,12 +1071,12 @@ export function DepartmentTourDeControle() {
               </Card>
               <Card className="p-0 overflow-hidden transition-shadow hover:shadow-lg">
                 <div className={cn("flex items-center gap-2 px-3 py-2 bg-gradient-to-r", headerGradient)}>
-                  <Rocket className="h-4 w-4 text-white" />
-                  <span className="text-sm font-bold text-white">Playbooks</span>
+                  <BookOpen className="h-4 w-4 text-white" />
+                  <span className="text-sm font-bold text-white">Catalogue</span>
                 </div>
                 <div className="px-3 py-2">
-                  <p className="text-2xl font-extrabold text-gray-900">{stats.playbooks}</p>
-                  <p className="text-[9px] text-gray-500">{stats.diags} diagnostics</p>
+                  <p className="text-2xl font-extrabold text-gray-900">{stats.docs + stats.playbooks + stats.diags}</p>
+                  <p className="text-[9px] text-gray-500">templates + playbooks + diagnostics</p>
                 </div>
               </Card>
             </div>
@@ -1322,136 +1321,25 @@ export function DepartmentTourDeControle() {
         )}
 
         {/* ══════════════════════════════════════════ */}
-        {/* TAB 7 — DOCUMENTS (Templates du dept)      */}
+        {/* TAB 7 — CATALOGUE UNIFIE (templates + playbooks + diagnostics) */}
         {/* ══════════════════════════════════════════ */}
-        {deptTab === "documents" && (
-          <div className="space-y-3">
-            {templates.length === 0 ? (
-              <div className="text-center py-12">
-                <FileText className="h-5 w-5 text-gray-300 mx-auto mb-2" />
-                <p className="text-sm text-gray-500">Aucun template pour ce departement</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-3">
-                {templates.map(t => (
-                  <Card
-                    key={t.id}
-                    className="p-0 overflow-hidden hover:shadow-lg transition-all cursor-pointer group"
-                    onClick={() => {
-                      dispatch({ type: "focus", layer: "cerveau",
-                        data: { title: `Template: ${t.titre}`, element_type: "document_editor", data: { template: t, mode: "scratch" } },
-                        bot: "CPOB"
-                      });
-                    }}
-                  >
-                    <div className={cn("bg-gradient-to-r px-3 py-2.5 flex items-center justify-between", headerGradient)}>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-white truncate">{t.titre}</p>
-                        <span className="text-[9px] text-white/60">{t.categorie}</span>
-                      </div>
-                      {t.pages_estimees && (
-                        <span className="text-[9px] bg-white/20 text-white px-1.5 py-0.5 rounded-full shrink-0">{t.pages_estimees} p.</span>
-                      )}
-                    </div>
-                    <div className="px-3 py-2.5 space-y-1.5">
-                      <p className="text-[9px] text-gray-500 line-clamp-2 leading-relaxed">{t.description}</p>
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 font-medium">{t.frequence}</span>
-                        {t.niveau_hierarchie && (
-                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-gray-50 text-gray-500">{t.niveau_hierarchie}</span>
-                        )}
-                        {t.sections && t.sections.length > 0 && (
-                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-violet-50 text-violet-600">{t.sections.length} sections</span>
-                        )}
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ══════════════════════════════════════════ */}
-        {/* TAB 8 — PLAYBOOKS (filtres par bot)        */}
-        {/* ══════════════════════════════════════════ */}
-        {deptTab === "playbooks" && (
-          <div className="space-y-3">
-            {botPlaybooks.length === 0 ? (
-              <div className="text-center py-12">
-                <Rocket className="h-5 w-5 text-gray-300 mx-auto mb-2" />
-                <p className="text-sm text-gray-500">Aucun playbook pour cet agent</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {botPlaybooks.map(pb => (
-                  <Card key={pb.id} className="p-0 overflow-hidden hover:shadow-lg transition-all cursor-pointer" onClick={() => handleFocus(`Playbook: ${pb.titre}`, "playbook", pb)}>
-                    <div className={cn("bg-gradient-to-r px-3 py-2.5 flex items-center justify-between", headerGradient)}>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-white truncate">{pb.titre}</p>
-                        <span className="text-[9px] text-white/60">{pb.niveau}</span>
-                      </div>
-                      {pb.populaire && (
-                        <span className="text-[9px] bg-white/20 text-white px-1.5 py-0.5 rounded-full shrink-0">Populaire</span>
-                      )}
-                    </div>
-                    <div className="px-3 py-2.5 space-y-1.5">
-                      <p className="text-[9px] text-gray-500 line-clamp-2 leading-relaxed">{pb.description}</p>
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 font-medium">{pb.duree}</span>
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{pb.nb_projets} proj. · {pb.nb_missions} missions</span>
-                        {pb.bots.filter(b => b !== activeBotCode).map(b => (
-                          <span key={b} className="text-[9px] px-1.5 py-0.5 rounded bg-violet-50 text-violet-600">{BOT_INFO[b]?.short || b}</span>
-                        ))}
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ══════════════════════════════════════════ */}
-        {/* TAB 9 — DIAGNOSTICS (par departement)      */}
-        {/* ══════════════════════════════════════════ */}
-        {deptTab === "diagnostics" && (
-          <div className="space-y-3">
-            {diagnostics.length === 0 ? (
-              <div className="text-center py-12">
-                <Stethoscope className="h-5 w-5 text-gray-300 mx-auto mb-2" />
-                <p className="text-sm text-gray-500">Aucun diagnostic pour ce departement</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-3">
-                {diagnostics.map(diag => (
-                  <Card
-                    key={diag.id}
-                    className="p-0 overflow-hidden hover:shadow-lg transition-all cursor-pointer group"
-                    onClick={() => handleFocus(`Diagnostic: ${diag.titre}`, "diagnostic_enrichi", diag)}
-                  >
-                    <div className={cn("bg-gradient-to-r px-3 py-2.5 flex items-center justify-between", headerGradient)}>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-white truncate">{diag.titre}</p>
-                      </div>
-                      {(diag.data_points?.length || 0) > 0 && (
-                        <span className="text-[9px] bg-white/20 text-white px-1.5 py-0.5 rounded-full shrink-0">{diag.data_points?.length} KPIs</span>
-                      )}
-                    </div>
-                    <div className="px-3 py-2.5 space-y-1.5">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-50 text-cyan-700 font-medium">{diag.duree_minutes} min</span>
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-gray-50 text-gray-500">{diag.nb_questions} questions</span>
-                      </div>
-                      {diag.valeur_potentielle && (
-                        <p className="text-[9px] text-emerald-600 line-clamp-1">{diag.valeur_potentielle}</p>
-                      )}
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
+        {deptTab === "catalogue" && (
+          <CatalogueUnifie
+            deptFilter={activeBotCode}
+            onAction={(item) => {
+              if (item.type === "template") {
+                dispatch({ type: "focus", layer: "cerveau",
+                  data: { title: `Template: ${item.titre}`, element_type: "document_editor", data: { template: item._raw, mode: "scratch" } },
+                  bot: item.bot_recommande || "CPOB"
+                });
+                setActiveView("live-chat");
+              } else if (item.type === "playbook") {
+                handleFocus(`Playbook: ${item.titre}`, "playbook", item._raw);
+              } else {
+                handleFocus(`Diagnostic: ${item.titre}`, "diagnostic_enrichi", item._raw);
+              }
+            }}
+          />
         )}
 
         {/* ══════════════════════════════════════════ */}
@@ -1480,8 +1368,8 @@ export function DepartmentTourDeControle() {
                   <p className="text-[9px] text-gray-500">Projets</p>
                 </div>
                 <div className="text-center p-2 bg-gray-50 rounded-lg">
-                  <p className="text-lg font-bold text-gray-800">{stats.playbooks}</p>
-                  <p className="text-[9px] text-gray-500">Playbooks</p>
+                  <p className="text-lg font-bold text-gray-800">{stats.docs + stats.playbooks + stats.diags}</p>
+                  <p className="text-[9px] text-gray-500">Catalogue</p>
                 </div>
               </div>
             </Card>

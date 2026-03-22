@@ -1,7 +1,7 @@
 /**
- * SidebarRight.tsx — Bac CarlOS V8 (D-115 Phase 3)
- * 4 tabs: Recap | Discussions | Signaux | Actions
- * Pattern mobile-ready — meme layout sur web et futur app
+ * SidebarRight.tsx — Cockpit CarlOS (MVP2 Discussion Architecture)
+ * VideoCallWidget (top) + CockpitPanel (bottom)
+ * La sidebar droite n'est JAMAIS une zone de chat. C'est un cockpit.
  */
 
 import { useState, useMemo } from "react";
@@ -25,7 +25,7 @@ import {
 import { cn } from "../../../components/ui/utils";
 import { CarlOsPulse } from "./CarlOsPulse";
 import { VideoCallWidget } from "./VideoCallWidget";
-import { ChatBox } from "./ChatBox";
+import { CockpitPanel } from "./CockpitPanel";
 import { MemoryPanel } from "./MemoryPanel";
 import { useChantiers, useMissions, useDiscussions, useTaches, useBureau } from "../../api/hooks";
 
@@ -301,7 +301,7 @@ export function SidebarRight({ collapsed = false }: Props) {
     );
   }
 
-  // Mode ouvert — VideoWidget + ChatBox seulement
+  // Mode ouvert — VideoWidget + CockpitPanel
   return (
     <div className="h-full flex flex-col bg-white overflow-hidden">
       {/* Video/Voice compact */}
@@ -309,9 +309,9 @@ export function SidebarRight({ collapsed = false }: Props) {
         <VideoCallWidget />
       </div>
 
-      {/* ChatBox — toujours visible (comme Telegram) */}
+      {/* Cockpit — états, quick actions, équipe */}
       <div className="flex-1 overflow-hidden">
-        <ChatBox />
+        <CockpitPanel />
       </div>
     </div>
   );

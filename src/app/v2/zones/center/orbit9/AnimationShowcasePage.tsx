@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { PixelAgentGrid, FlowSimulation } from "../shared/PixelAgent";
 
 // ════════════════════════════════════════════════════════════════
 // STYLES (keyframes prefixed as-xxx)
@@ -2016,6 +2017,14 @@ export function AnimationShowcasePage() {
               style={{ width: "100%", aspectRatio: "16/9", background: "#0f172a", borderTop: "1px solid rgba(0,0,0,0.04)" }}
             />
           </div>
+        </div>
+
+        {/* Section E — Pixel Bots (déplacés de BlueprintView) */}
+        <div style={sectionHeaderStyle}>E — Pixel Bots</div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 24, marginBottom: 20 }}>
+          <div style={cardStyle}><div style={{ padding: 16 }}><PixelAgentGrid botStates={{}} /></div></div>
+          <div style={cardStyle}><div style={{ padding: 16 }}><FlowSimulation /></div></div>
         </div>
       </div>
     </div>

@@ -318,7 +318,7 @@ export interface Crystal {
 
 // --- Thread (conversation branch) ---
 
-export type ThreadStatus = "active" | "parked" | "completed";
+export type ThreadStatus = "active" | "parked" | "completed" | "resolved" | "rejected";
 
 export interface Thread {
   id: string;
@@ -333,6 +333,9 @@ export interface Thread {
   missionId?: string;
   flowSection?: string;     // "finance", "board-room", etc.
   flowType?: "data" | "action" | "mode_branch";
+  // Sprint 4 — Rattachement au squelette
+  parentChantier?: string;  // ID du chantier parent (null = orphelin)
+  credoPhase?: string;      // Dernière phase CREDO atteinte (C/R/E/D/O)
 }
 
 // ─── Missions — structure hiérarchique ───

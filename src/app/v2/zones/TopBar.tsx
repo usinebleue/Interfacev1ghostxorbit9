@@ -24,6 +24,8 @@ import {
   DoorOpen,
   Bot,
   Network,
+  Map,
+  Play,
 } from "lucide-react";
 import { cn } from "../../components/ui/utils";
 import { Button } from "../../components/ui/button";
@@ -307,6 +309,15 @@ export function TopBarRight() {
           <DropdownMenuItem className="flex items-center gap-2 cursor-pointer text-muted-foreground">
             <CreditCard className="h-3.5 w-3.5" />
             Abonnement
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => setActiveView("scenarios")} className="flex items-center gap-2 cursor-pointer">
+            <Map className="h-3.5 w-3.5 text-emerald-600" />
+            Tour Guide
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setActiveView("scenarios")} className="flex items-center gap-2 cursor-pointer text-muted-foreground">
+            <Play className="h-3.5 w-3.5" />
+            Scenarios de simulation
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => setAuthenticated(false)} className="flex items-center gap-2 cursor-pointer text-red-600">

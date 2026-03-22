@@ -21,6 +21,9 @@ interface ChatState {
   autoTTSEnabled: boolean;
   videoAvatarEnabled: boolean;
   activeRoster: string[];
+  // Sprint Discussion 1 — CREDO phase-gating
+  exchangeCount: number;
+  hasProduct: boolean;
 }
 
 interface BranchMeta {
@@ -35,6 +38,7 @@ interface ChatActions {
   injectVoiceMessage: (role: "user" | "assistant", content: string, agent?: string) => void;
   injectTeamProposal: (proposal: TeamProposal, agent: string) => void;
   setReflectionMode: (mode: ReflectionMode) => void;
+  setCurrentCREDOPhase: (phase: CREDOPhase) => void;
   newConversation: () => void;
   parkThread: () => void;
   resumeThread: (threadId: string) => void;
@@ -48,6 +52,7 @@ interface ChatActions {
   addBotToRoster: (code: string) => void;
   removeBotFromRoster: (code: string) => void;
   acceptTeamProposal: (bots: string[]) => void;
+  renameThread: (threadId: string, newTitle: string) => void;
 }
 
 type ChatContextType = ChatState & ChatActions;
@@ -75,6 +80,10 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     addBotToRoster,
     removeBotFromRoster,
     acceptTeamProposal,
+    lastCREDOPhase,
+    exchangeCount,
+    hasProduct,
+    renameThread,
   } = useChat();
   const { crystals, addCrystal, deleteCrystal, exportCrystals } = useCrystals();
   const { dispatchBatch, focusData, clearFocusMode } = useCanvasActions();
@@ -104,7 +113,13 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   }, [focusData]); // eslint-disable-line react-hooks/exhaustive-deps
   const [activeReflectionMode, setReflectionMode] =
     useState<ReflectionMode>("credo");
-  const [currentCREDOPhase] = useState<CREDOPhase>("C");
+  const [currentCREDOPhase, setCurrentCREDOPhase] = useState<CREDOPhase>("C");
+  // Sync CREDO phase from backend via useChat
+  useEffect(() => {
+    if (lastCREDOPhase && ["C", "R", "E", "D", "O"].includes(lastCREDOPhase)) {
+      setCurrentCREDOPhase(lastCREDOPhase as CREDOPhase);
+    }
+  }, [lastCREDOPhase]);
   const [autoTTSEnabled, setAutoTTSEnabled] = useState(false);
   const [videoAvatarEnabled, setVideoAvatarEnabled] = useState(false);
   const tts = useTextToSpeech();
@@ -202,12 +217,15 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         isTyping,
         activeReflectionMode,
         currentCREDOPhase,
+        setCurrentCREDOPhase,
         threads,
         activeThreadId,
         crystals,
         autoTTSEnabled,
         videoAvatarEnabled,
         activeRoster,
+        exchangeCount,
+        hasProduct,
         sendMessage,
         sendMultiPerspective,
         injectVoiceMessage,
@@ -226,6 +244,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         addBotToRoster,
         removeBotFromRoster,
         acceptTeamProposal,
+        renameThread,
       }}
     >
       {children}

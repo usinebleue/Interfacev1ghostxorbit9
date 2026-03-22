@@ -46,6 +46,7 @@ import {
   Scale,
   Briefcase,
   Table2,
+  ArrowUpDown, ArrowUp, ArrowDown,
 } from "lucide-react";
 import { Card } from "../../../components/ui/card";
 import { Badge } from "../../../components/ui/badge";
@@ -68,6 +69,8 @@ import { api } from "../../api/client";
 import { useCanvasActions } from "../../context/CanvasActionContext";
 import { CarlOSPresence } from "../center/CarlOSPresence";
 import { SectionFrame } from "./shared/SectionFrame";
+import { DiscussionView } from "./DiscussionView";
+import { CatalogueUnifie } from "./shared/CatalogueUnifie";
 import type { TabDef } from "./shared/section-types";
 import type { DocForgeTemplateV2, DocForgeLibrary, DriveBrowseItem, UnifiedTemplate } from "../../api/types";
 
@@ -75,6 +78,7 @@ import type { DocForgeTemplateV2, DocForgeLibrary, DriveBrowseItem, UnifiedTempl
 
 const ESPACE_TABS: { id: EspaceSection; label: string; icon: React.ElementType }[] = [
   { id: "idees", label: "Idees", icon: Sparkles },
+  { id: "discussions", label: "Discussions", icon: MessageSquare },
   { id: "documents", label: "Documents", icon: FileText },
   { id: "outils", label: "Outils", icon: Wrench },
   { id: "taches", label: "Taches", icon: CheckSquare },
@@ -763,9 +767,12 @@ function EmptyState({ icon: Icon, text, sub }: { icon: React.ElementType; text: 
 // ══════════════════════════════════════════
 
 function IdeesPage() {
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [viewMode, setViewMode] = useState<"cards" | "list" | "spreadsheet">("cards");
   const [showAddIdeeDialog, setShowAddIdeeDialog] = useState(false);
   const [botFilter, setBotFilter] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [sortField, setSortField] = useState<"titre" | "date" | "bot">("date");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const ideesHook = useIdees();
 
   const handleAddIdee = async (titre: string, contenu: string) => {
@@ -773,7 +780,6 @@ function IdeesPage() {
   };
 
   const allIdees = ideesHook.idees;
-  const idees = botFilter ? allIdees.filter(c => c.bot === botFilter) : allIdees;
 
   // Compteurs par bot pour les filter pills
   const botCounts = allIdees.reduce((acc, c) => {
@@ -783,52 +789,90 @@ function IdeesPage() {
   }, {} as Record<string, number>);
   const activeBots = Object.keys(botCounts).sort();
 
-  return (
-    <div className="space-y-4">
-      <SearchBar
-        placeholder="Rechercher dans les idees..."
-        viewMode={viewMode}
-        onToggleView={() => setViewMode(v => v === "grid" ? "list" : "grid")}
-        onAdd={() => setShowAddIdeeDialog(true)}
-        addLabel="Idee"
-      />
+  // Filter + Sort (pattern chantier)
+  const idees = useMemo(() => {
+    let items = [...allIdees];
+    if (botFilter) items = items.filter(c => c.bot === botFilter);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      items = items.filter(c => c.titre.toLowerCase().includes(q) || (c.contenu || "").toLowerCase().includes(q));
+    }
+    items.sort((a, b) => {
+      let cmp = 0;
+      switch (sortField) {
+        case "titre": cmp = a.titre.localeCompare(b.titre); break;
+        case "date": cmp = new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime(); break;
+        case "bot": cmp = (a.bot || "").localeCompare(b.bot || ""); break;
+      }
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+    return items;
+  }, [allIdees, botFilter, search, sortField, sortDir]);
 
-      {/* Filter pills par bot (pattern Pipeline) */}
-      {activeBots.length > 1 && (
-        <div className="flex gap-1.5 flex-wrap">
-          <button
-            onClick={() => setBotFilter(null)}
-            className={cn("text-[9px] px-2.5 py-1 rounded-full font-medium transition-all cursor-pointer flex items-center gap-1",
-              !botFilter ? "bg-gray-900 text-white" : "text-gray-500 bg-gray-100 hover:bg-gray-200")}
-          >
+  // Sort header helper (spreadsheet)
+  const SortTh = ({ field, label, cls }: { field: typeof sortField; label: string; cls?: string }) => {
+    const active = sortField === field;
+    const SIcon = active ? (sortDir === "asc" ? ArrowUp : ArrowDown) : ArrowUpDown;
+    return (
+      <th className={cn("text-left px-2 py-2 font-bold text-gray-500 uppercase cursor-pointer select-none hover:bg-gray-100 transition-colors text-[9px]", cls)}
+        onClick={() => { if (active) setSortDir(sortDir === "asc" ? "desc" : "asc"); else { setSortField(field); setSortDir("asc"); } }}>
+        <span className="inline-flex items-center gap-1">{label}<SIcon className={cn("h-3.5 w-3.5 shrink-0", active ? "text-blue-500" : "text-gray-300")} /></span>
+      </th>
+    );
+  };
+
+  return (
+    <div className="space-y-3">
+      {/* TOOLBAR — pattern chantier unifie */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="relative flex-1 min-w-[150px]">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+          <input type="text" placeholder="Rechercher..." value={search} onChange={e => setSearch(e.target.value)}
+            className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 bg-white" />
+        </div>
+        <div className="flex items-center gap-1">
+          <button onClick={() => setBotFilter(null)}
+            className={cn("px-2.5 py-1 text-[9px] font-medium rounded-full border transition-colors cursor-pointer",
+              !botFilter ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50")}>
             Toutes ({allIdees.length})
           </button>
           {activeBots.map(bot => {
-            const avatar = BOT_AVATAR[bot];
             const info = BOT_LABELS[bot];
             return (
               <button key={bot} onClick={() => setBotFilter(bot === botFilter ? null : bot)}
-                className={cn("text-[9px] px-2.5 py-1 rounded-full font-medium transition-all cursor-pointer flex items-center gap-1",
-                  botFilter === bot ? "bg-gray-900 text-white" : "text-gray-500 bg-gray-100 hover:bg-gray-200")}
-              >
-                {avatar && <img src={avatar} alt={bot} className="w-3.5 h-3.5 rounded-full object-cover" />}
+                className={cn("px-2.5 py-1 text-[9px] font-medium rounded-full border transition-colors cursor-pointer",
+                  botFilter === bot ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50")}>
                 {info?.label || bot} ({botCounts[bot]})
               </button>
             );
           })}
         </div>
-      )}
+        <button onClick={() => setShowAddIdeeDialog(true)}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-colors cursor-pointer shrink-0">
+          <Plus className="h-3.5 w-3.5" /> Idee
+        </button>
+        <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden shrink-0">
+          {([
+            { mode: "cards" as const, icon: LayoutGrid, title: "Cartes" },
+            { mode: "list" as const, icon: List, title: "Liste" },
+            { mode: "spreadsheet" as const, icon: Table2, title: "Tableur" },
+          ]).map(({ mode, icon: MIcon, title }) => (
+            <button key={mode} onClick={() => setViewMode(mode)}
+              className={cn("p-1.5 transition-colors cursor-pointer", viewMode === mode ? "bg-blue-600 text-white" : "bg-white text-gray-400 hover:text-gray-600")}
+              title={title}>
+              <MIcon className="h-3.5 w-3.5" />
+            </button>
+          ))}
+        </div>
+        <span className="text-[9px] font-bold text-gray-400">{idees.length} items</span>
+      </div>
 
-      {ideesHook.loading ? (
-        <LoadingSpinner />
-      ) : idees.length === 0 ? (
-        <EmptyState
-          icon={Sparkles}
-          text={botFilter ? "Aucune idee de cet agent" : "Aucune idee pour l'instant"}
-          sub="Discutez avec CarlOS — vos idees seront classees ici automatiquement"
-        />
-      ) : viewMode === "grid" ? (
-        /* ── Vue grille — gradient header par bot (pattern Pipeline) ── */
+      {ideesHook.loading ? <LoadingSpinner /> : idees.length === 0 ? (
+        <EmptyState icon={Sparkles} text={search ? `Aucun resultat pour "${search}"` : "Aucune idee"} sub="Discutez avec CarlOS — vos idees seront classees ici" />
+      ) : null}
+
+      {/* CARDS VIEW — gradient header par bot */}
+      {viewMode === "cards" && idees.length > 0 && !ideesHook.loading && (
         <div className="grid grid-cols-2 gap-3">
           {idees.map(c => {
             const bot = c.bot || "CEOB";
@@ -870,43 +914,67 @@ function IdeesPage() {
             );
           })}
         </div>
-      ) : (
-        /* ── Vue liste — avatar bot + badges (pattern Pipeline) ── */
-        <div className="space-y-1.5">
+      )}
+
+      {/* LIST VIEW — compact single-line */}
+      {viewMode === "list" && idees.length > 0 && !ideesHook.loading && (
+        <div className="space-y-1">
           {idees.map(c => {
             const bot = c.bot || "CEOB";
-            const avatar = BOT_AVATAR[bot];
             const info = BOT_LABELS[bot];
             const tags = c.tags && c.tags.length > 0 ? c.tags : [c.mode || "brainstorm"];
             const date = c.created_at ? new Date(c.created_at).toLocaleDateString("fr-CA", { day: "numeric", month: "short" }) : "";
             return (
-              <Card key={c.id} className="px-4 py-3 hover:shadow-md transition-shadow cursor-pointer">
-                <div className="flex items-center gap-3">
-                  {avatar ? (
-                    <img src={avatar} alt={bot} className="w-8 h-8 rounded-lg object-cover shrink-0" />
-                  ) : (
-                    <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center shrink-0">
-                      <Sparkles className="h-4 w-4 text-amber-600" />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-xs font-bold text-gray-800 truncate">{c.titre}</h3>
-                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                      <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4">{info?.label || bot}</Badge>
-                      {date && <span className="text-[9px] text-gray-400">{date}</span>}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    {tags.map(tag => (
-                      <span key={tag} className={cn("text-[9px] px-1.5 py-0.5 rounded font-medium", TAG_COLORS[tag] || "bg-gray-100 text-gray-600")}>
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </Card>
+              <div key={c.id} className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer">
+                <Sparkles className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                <span className="text-[9px] font-bold flex-1 truncate text-gray-800">{c.titre}</span>
+                <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full border bg-gray-50 text-gray-600 border-gray-200">{info?.label || bot}</span>
+                {tags.slice(0, 2).map(tag => (
+                  <span key={tag} className={cn("text-[9px] px-1.5 py-0.5 rounded font-medium", TAG_COLORS[tag] || "bg-gray-100 text-gray-600")}>{tag}</span>
+                ))}
+                {date && <span className="text-[8px] text-gray-400">{date}</span>}
+                <ChevronRight className="h-3.5 w-3.5 text-gray-300 shrink-0" />
+              </div>
             );
           })}
+        </div>
+      )}
+
+      {/* SPREADSHEET VIEW — tableur */}
+      {viewMode === "spreadsheet" && idees.length > 0 && !ideesHook.loading && (
+        <div className="border border-gray-200 rounded-lg overflow-hidden overflow-x-auto">
+          <table className="w-full text-[9px] table-fixed">
+            <thead>
+              <tr className="bg-gray-50 border-b border-gray-200">
+                <SortTh field="titre" label="Titre" cls="w-[40%] px-3" />
+                <SortTh field="bot" label="Bot" cls="w-[15%]" />
+                <th className="text-left px-2 py-2 font-bold text-gray-500 uppercase text-[9px] w-[20%]">Tags</th>
+                <th className="text-left px-2 py-2 font-bold text-gray-500 uppercase text-[9px] w-[15%]">Source</th>
+                <SortTh field="date" label="Date" cls="w-[10%]" />
+              </tr>
+            </thead>
+            <tbody>
+              {idees.map(c => {
+                const bot = c.bot || "CEOB";
+                const info = BOT_LABELS[bot];
+                const tags = c.tags && c.tags.length > 0 ? c.tags : [c.mode || "brainstorm"];
+                const date = c.created_at ? new Date(c.created_at).toLocaleDateString("fr-CA", { day: "numeric", month: "short" }) : "";
+                return (
+                  <tr key={c.id} className="border-b border-gray-100 hover:bg-blue-50/30 cursor-pointer transition-colors">
+                    <td className="px-3 py-2 font-medium text-gray-800 truncate">{c.titre}</td>
+                    <td className="px-2 py-2"><span className="px-1.5 py-0.5 rounded-full border bg-gray-50 text-gray-600 border-gray-200 font-medium">{info?.label || bot}</span></td>
+                    <td className="px-2 py-2">
+                      <div className="flex gap-1 flex-wrap">{tags.slice(0, 3).map(tag => (
+                        <span key={tag} className={cn("px-1.5 py-0.5 rounded font-medium", TAG_COLORS[tag] || "bg-gray-100 text-gray-600")}>{tag}</span>
+                      ))}</div>
+                    </td>
+                    <td className="px-2 py-2 text-gray-500">{c.source || "Chat"}</td>
+                    <td className="px-2 py-2 text-gray-400">{date}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
 
@@ -925,28 +993,18 @@ function IdeesPage() {
 
 
 function DocumentsPage() {
-  const [docTab, setDocTab] = useState<"generes" | "docforge" | "importes">("generes");
-  const { items: allDocs, loading, error, uploadFile, refresh: refreshDocs } = useBureau("document");
+  const { items: allDocs, loading, error, uploadFile } = useBureau("document");
+  const { libraries: dfLibraries, loading: dfLoading, refresh: dfRefresh } = useDocForge();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
-
-  // Unified templates (DocForge V3)
-  const { templates: unifiedTemplates, categories: unifiedCategories, departements, loading: loadingUnified } = useUnifiedTemplates();
-  const { libraries: dfLibraries, loading: dfLoading, refresh: dfRefresh } = useDocForge();
   const [showCreateWizard, setShowCreateWizard] = useState(false);
   const [dfTemplates, setDfTemplates] = useState<DocForgeTemplateV2[]>([]);
   const [dfTemplatesLoading, setDfTemplatesLoading] = useState(false);
+  const [docStateFilter, setDocStateFilter] = useState<"all" | "en-cours" | "orphelins" | "termines">("all");
+  const [docViewMode, setDocViewMode] = useState<"cards" | "list" | "spreadsheet">("cards");
+  const [docSearch, setDocSearch] = useState("");
 
-  // View mode + filters
-  const [viewMode, setViewMode] = useState<"cards" | "list" | "table">("cards");
-  // catFilter removed in V4 — replaced by deptFilter + typeFilter above
-  const [deptFilter, setDeptFilter] = useState<string | null>(null);
-  const [typeFilter, setTypeFilter] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-
-  // Canvas dispatch for focus mode
   const { dispatch } = useCanvasActions();
-  // setActiveView removed — focus dispatch renders FocusModeLayout in CenterZone directly
 
   // Load DocForge templates V2 for create wizard
   useEffect(() => {
@@ -955,30 +1013,6 @@ function DocumentsPage() {
       api.docForgeTemplatesV2().then(r => setDfTemplates(r.templates || [])).catch(() => {}).finally(() => setDfTemplatesLoading(false));
     }
   }, [showCreateWizard]);
-
-  const generes = allDocs.filter((d) => (d.metadata as Record<string, unknown>)?.categorie === "genere");
-  const importes = allDocs.filter((d) => (d.metadata as Record<string, unknown>)?.categorie !== "genere");
-
-  // Filter unified templates (V4: dept + type fonctionnel)
-  const filteredTemplates = useMemo(() => {
-    let list = unifiedTemplates;
-    if (deptFilter) list = list.filter(t => t.departement === deptFilter);
-    if (typeFilter) list = list.filter(t => t.categorie === typeFilter);
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      list = list.filter(t => t.titre.toLowerCase().includes(q) || (t.description || "").toLowerCase().includes(q));
-    }
-    return list;
-  }, [unifiedTemplates, deptFilter, typeFilter, searchQuery]);
-
-  // Click template → dispatch focus mode (FocusModeLayout remplace le centre, pas de setActiveView)
-  const handleTemplateClick = (template: UnifiedTemplate) => {
-    dispatch({
-      type: "focus", layer: "cerveau",
-      data: { title: template.titre, element_type: "document_editor", data: { template, mode: "scratch" } },
-      bot: template.bot_recommande || "CPOB",
-    });
-  };
 
   // Click library → dispatch focus mode
   const handleLibraryClick = (lib: DocForgeLibrary) => {
@@ -1012,438 +1046,289 @@ function DocumentsPage() {
     e.preventDefault();
   };
 
-  const DOC_TABS = [
-    { id: "generes" as const, label: "Mes Documents" },
-    { id: "docforge" as const, label: `DocForge (${unifiedTemplates.length})` },
-    { id: "importes" as const, label: "Importes" },
+  // 3-state filter for DocForge libraries
+  const enCoursLibs = dfLibraries.filter(l => l.status === "en_cours" || l.status === "draft");
+  const orphelinLibs = dfLibraries.filter(l => l.status === "review");
+  const terminesLibs = dfLibraries.filter(l => l.status === "publie");
+  const filteredLibsBase = docStateFilter === "all" ? dfLibraries
+    : docStateFilter === "en-cours" ? enCoursLibs
+    : docStateFilter === "orphelins" ? orphelinLibs
+    : terminesLibs;
+
+  // Apply search filter
+  const filteredLibs = useMemo(() => {
+    if (!docSearch.trim()) return filteredLibsBase;
+    const q = docSearch.toLowerCase();
+    return filteredLibsBase.filter(l => l.titre.toLowerCase().includes(q) || (l.description || "").toLowerCase().includes(q));
+  }, [filteredLibsBase, docSearch]);
+
+  const DOC_STATE_TABS = [
+    { id: "all" as const, label: "Tous", count: dfLibraries.length },
+    { id: "en-cours" as const, label: "En cours", count: enCoursLibs.length },
+    { id: "orphelins" as const, label: "En attente", count: orphelinLibs.length },
+    { id: "termines" as const, label: "Termines", count: terminesLibs.length },
   ];
 
+  const statusColors: Record<string, string> = {
+    draft: "bg-gray-100 text-gray-600", en_cours: "bg-blue-100 text-blue-700",
+    review: "bg-amber-100 text-amber-700", publie: "bg-green-100 text-green-700",
+  };
+  const statusLabel: Record<string, string> = {
+    draft: "Brouillon", en_cours: "En cours", review: "A reviser", publie: "Publie",
+  };
+
   return (
-    <div className="space-y-4">
-      {/* Sub-tabs internes */}
-      <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit">
-        {DOC_TABS.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setDocTab(tab.id)}
-            className={cn(
-              "px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
-              docTab === tab.id
-                ? "bg-gray-900 text-white shadow-sm"
-                : "text-gray-500 hover:bg-gray-200 hover:text-gray-700"
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
+    <div className="space-y-3">
+      {error && <ErrorBanner message={error} />}
+      <input ref={fileInputRef} type="file" className="hidden" multiple
+        accept=".pdf,.docx,.xlsx,.csv,.png,.jpg,.jpeg,.zip,.txt,.pptx"
+        onChange={(e) => handleFileUpload(e.target.files)} />
+
+      {/* TOOLBAR — pattern chantier unifie */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="relative flex-1 min-w-[150px]">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+          <input type="text" placeholder="Rechercher..." value={docSearch} onChange={e => setDocSearch(e.target.value)}
+            className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 bg-white" />
+        </div>
+        <div className="flex items-center gap-1">
+          {DOC_STATE_TABS.map(tab => (
+            <button key={tab.id} onClick={() => setDocStateFilter(tab.id)}
+              className={cn("px-2.5 py-1 text-[9px] font-medium rounded-full border transition-colors cursor-pointer",
+                docStateFilter === tab.id ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50")}>
+              {tab.label} ({tab.count})
+            </button>
+          ))}
+        </div>
+        <button onClick={() => {
+          dispatch({ type: "focus", layer: "cerveau", data: { title: "Nouveau document", element_type: "document_editor", data: { mode: "scratch" } }, bot: "CPOB" });
+        }} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-colors cursor-pointer shrink-0">
+          <Plus className="h-3.5 w-3.5" /> Creer
+        </button>
+        <button onClick={() => fileInputRef.current?.click()}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer shrink-0">
+          <Upload className="h-3.5 w-3.5" /> Importer
+        </button>
+        <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden shrink-0">
+          {([
+            { mode: "cards" as const, icon: LayoutGrid, title: "Cartes" },
+            { mode: "list" as const, icon: List, title: "Liste" },
+            { mode: "spreadsheet" as const, icon: Table2, title: "Tableur" },
+          ]).map(({ mode, icon: MIcon, title }) => (
+            <button key={mode} onClick={() => setDocViewMode(mode)}
+              className={cn("p-1.5 transition-colors cursor-pointer", docViewMode === mode ? "bg-blue-600 text-white" : "bg-white text-gray-400 hover:text-gray-600")}
+              title={title}>
+              <MIcon className="h-3.5 w-3.5" />
+            </button>
+          ))}
+        </div>
+        {uploading && <Loader2 className="h-3.5 w-3.5 text-blue-500 animate-spin" />}
+        <span className="text-[9px] font-bold text-gray-400">{filteredLibs.length + allDocs.length} items</span>
       </div>
 
-      {error && <ErrorBanner message={error} />}
+      {/* Drop zone */}
+      <div onDrop={handleDrop} onDragOver={handleDragOver}
+        className="border-2 border-dashed border-gray-200 rounded-xl p-2 text-center hover:border-blue-400 hover:bg-blue-50/30 transition-colors cursor-pointer"
+        onClick={() => fileInputRef.current?.click()}>
+        <p className="text-[9px] text-gray-400">Glissez-deposez vos fichiers ici</p>
+      </div>
 
-      {/* Mes Documents — style Pipeline harmonise */}
-      {docTab === "generes" && (
-        <div className="space-y-3">
-          {loading ? (
-            <LoadingSpinner />
-          ) : generes.length === 0 ? (
-            <EmptyState icon={FileText} text="Aucun document genere" sub="Les documents generes par CarlOS apparaitront ici" />
-          ) : (
+      {/* DOCUMENTS — 3 view modes */}
+      <div className="space-y-3">
+
+        {dfLoading ? <LoadingSpinner /> : (filteredLibs.length === 0 && allDocs.length === 0) ? (
+          <EmptyState icon={FileText} text={docSearch ? `Aucun resultat pour "${docSearch}"` : "Aucun document"} sub="Creez un document ou importez-en un" />
+        ) : null}
+
+        {/* CARDS VIEW */}
+        {docViewMode === "cards" && !dfLoading && (filteredLibs.length > 0 || allDocs.length > 0) && (<>
+          {filteredLibs.length > 0 && (
             <div className="grid grid-cols-2 gap-3">
-              {generes.map((doc) => {
-                const meta = doc.metadata as Record<string, string>;
-                const fileType = meta?.file_type || "PDF";
-                const bot = doc.bot || "CEOB";
-                const gradient = BOT_GRADIENTS[bot] || "from-green-600 to-green-500";
-                const avatar = BOT_AVATAR[bot];
-                const info = BOT_LABELS[bot];
-                const downloadUrl = meta?.source === "documents_generes" && meta?.file_path
-                  ? api.documentDownloadUrl(meta.file_path)
-                  : meta?.file_path
-                    ? api.bureauDownloadUrl(meta.file_path)
-                    : null;
-                const date = doc.created_at ? new Date(doc.created_at).toLocaleDateString("fr-CA", { day: "numeric", month: "short" }) : "";
-                return (
-                  <Card key={doc.id} className="p-0 overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
-                    <div className={cn("bg-gradient-to-r px-3 py-2.5 flex items-center gap-2.5", gradient)}>
-                      {avatar ? (
-                        <img src={avatar} alt={bot} className="w-7 h-7 rounded-lg object-cover border-2 border-white/30 shrink-0" />
-                      ) : (
-                        <div className="w-7 h-7 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
-                          <FileText className="h-3.5 w-3.5 text-white" />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <span className="text-xs font-bold text-white">{info?.label || bot}</span>
-                        <span className="text-[9px] text-white/60 ml-1.5">{info?.short}</span>
-                      </div>
-                      <Badge className="text-[9px] bg-white/20 text-white border-0">{fileType}</Badge>
+              {filteredLibs.map((lib) => (
+                <Card key={lib.id} className="p-0 overflow-hidden hover:shadow-md transition-shadow cursor-pointer group"
+                  onClick={() => handleLibraryClick(lib)}>
+                  <div className={cn("bg-gradient-to-r px-3 py-2 flex items-center gap-2.5",
+                    lib.status === "en_cours" ? "from-teal-600 to-teal-500" : lib.status === "publie" ? "from-emerald-600 to-emerald-500" : "from-amber-500 to-amber-400")}>
+                    <div className="w-7 h-7 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
+                      <Sparkles className="h-3.5 w-3.5 text-white" />
                     </div>
-                    <div className="p-3 space-y-1.5">
-                      <h3 className="text-xs font-bold text-gray-800 line-clamp-2">{doc.titre}</h3>
-                      {doc.description && (
-                        <p className="text-[9px] text-gray-500 line-clamp-2">{doc.description}</p>
-                      )}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5">
-                          {meta?.taille && <span className="text-[9px] text-gray-400">{meta.taille}</span>}
-                          {date && <span className="text-[9px] text-gray-400">{date}</span>}
-                        </div>
-                        {downloadUrl && (
-                          <a
-                            href={downloadUrl}
-                            onClick={(e) => e.stopPropagation()}
-                            className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
-                            title="Telecharger"
-                          >
-                            <Download className="h-3.5 w-3.5 text-gray-400" />
-                          </a>
-                        )}
+                    <span className="text-[9px] font-bold text-white flex-1 truncate">{lib.titre}</span>
+                    <span className={cn("text-[8px] font-bold px-1.5 py-0.5 rounded-full", statusColors[lib.status] || "bg-gray-100 text-gray-600")}>
+                      {statusLabel[lib.status] || lib.status}
+                    </span>
+                    <ChevronRight className="h-3.5 w-3.5 text-white/50 group-hover:text-white transition-colors shrink-0" />
+                  </div>
+                  <div className="p-3 space-y-1.5">
+                    {lib.description && <p className="text-[9px] text-gray-500 line-clamp-2">{lib.description}</p>}
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 bg-gray-200 rounded-full h-1.5">
+                        <div className="bg-teal-500 rounded-full h-1.5 transition-all" style={{ width: `${lib.completude_pct}%` }} />
                       </div>
-                      {doc.tags.length > 0 && (
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          {doc.tags.map(tag => (
-                            <span key={tag} className={cn("text-[9px] px-1.5 py-0.5 rounded font-medium", TAG_COLORS[tag] || "bg-gray-100 text-gray-600")}>
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
+                      <span className="text-[9px] text-gray-500 font-medium">{lib.completude_pct}%</span>
                     </div>
-                  </Card>
-                );
-              })}
+                    <div className="flex items-center gap-2 text-[9px] text-gray-400">
+                      <span>{lib.nb_blocs} blocs</span>
+                      {lib.nb_contradictions > 0 && <span className="text-amber-600">{lib.nb_contradictions} contradictions</span>}
+                    </div>
+                  </div>
+                </Card>
+              ))}
             </div>
           )}
-        </div>
-      )}
-
-      {/* DocForge V4 — Atelier de documents */}
-      {docTab === "docforge" && (
-        <div className="space-y-4">
-          {/* Bandeau explicatif */}
-          <div className="bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-200 rounded-xl p-4">
-            <div className="flex items-start gap-3">
-              <div className="w-9 h-9 rounded-lg bg-teal-100 flex items-center justify-center shrink-0">
-                <FileText className="h-5 w-5 text-teal-600" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-xs font-bold text-gray-800">DocForge — Votre atelier de documents</h3>
-                <p className="text-[9px] text-gray-500 mt-0.5">Creez des documents professionnels assistes par votre equipe IA. Choisissez un template ou partez de zero.</p>
-              </div>
-            </div>
-            {/* Action buttons */}
-            <div className="flex items-center gap-2 mt-3">
-              <button onClick={() => {
-                dispatch({ type: "focus", layer: "cerveau", data: { title: "Nouveau document", element_type: "document_editor", data: { mode: "scratch" } }, bot: "CPOB" });
-              }} className="flex items-center gap-1.5 px-3 py-1.5 text-[9px] font-bold text-white bg-teal-600 rounded-lg hover:bg-teal-700 transition-colors cursor-pointer">
-                <Plus className="h-3.5 w-3.5" /> Creer un document
-              </button>
-              <button onClick={() => setShowCreateWizard(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-[9px] font-bold text-teal-700 bg-white border border-teal-300 rounded-lg hover:bg-teal-50 transition-colors cursor-pointer">
-                <Upload className="h-3.5 w-3.5" /> Importer depuis Drive
-              </button>
-            </div>
-          </div>
-
-          {/* Mes documents en cours */}
-          {dfLibraries.length > 0 && (
+          {allDocs.length > 0 && (
             <div className="space-y-2">
-              <h3 className="text-xs font-bold text-gray-700">Mes documents en cours ({dfLibraries.length})</h3>
+              <h3 className="text-xs font-bold text-gray-700">Fichiers importes ({allDocs.length})</h3>
               <div className="grid grid-cols-2 gap-3">
-                {dfLibraries.map((lib) => {
-                  const statusColors: Record<string, string> = {
-                    draft: "bg-gray-100 text-gray-600", en_cours: "bg-blue-100 text-blue-700",
-                    review: "bg-amber-100 text-amber-700", publie: "bg-green-100 text-green-700",
-                  };
-                  const statusLabel: Record<string, string> = {
-                    draft: "Brouillon", en_cours: "En cours...", review: "A reviser", publie: "Publie",
-                  };
+                {allDocs.map((doc) => {
+                  const meta = doc.metadata as Record<string, string>;
+                  const fileType = meta?.file_type || "FILE";
+                  const FIcon = FILE_ICONS[fileType] || File;
+                  const date = doc.created_at ? new Date(doc.created_at).toLocaleDateString("fr-CA", { day: "numeric", month: "short" }) : "";
+                  const downloadUrl = meta?.file_path ? api.bureauDownloadUrl(meta.file_path) : null;
                   return (
-                    <Card key={lib.id} className="p-0 overflow-hidden hover:shadow-md transition-shadow cursor-pointer group"
-                      onClick={() => handleLibraryClick(lib)}>
-                      <div className="bg-gradient-to-r from-teal-600 to-teal-500 px-3 py-2.5 flex items-center gap-2.5">
+                    <Card key={doc.id} className="p-0 overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
+                      <div className="bg-gradient-to-r from-slate-600 to-slate-500 px-3 py-2 flex items-center gap-2.5">
                         <div className="w-7 h-7 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
-                          <Sparkles className="h-3.5 w-3.5 text-white" />
+                          <FIcon className="h-3.5 w-3.5 text-white" />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <span className="text-xs font-bold text-white truncate">{lib.titre}</span>
-                        </div>
-                        <Badge className={cn("text-[9px] border-0", statusColors[lib.status] || "bg-gray-100 text-gray-600")}>
-                          {statusLabel[lib.status] || lib.status}
-                        </Badge>
-                      </div>
-                      <div className="p-3 space-y-1.5">
-                        {lib.description && <p className="text-[9px] text-gray-500 line-clamp-2">{lib.description}</p>}
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 bg-gray-200 rounded-full h-1.5">
-                            <div className="bg-teal-500 rounded-full h-1.5 transition-all" style={{ width: `${lib.completude_pct}%` }} />
-                          </div>
-                          <span className="text-[9px] text-gray-500 font-medium">{lib.completude_pct}%</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-[9px] text-gray-400">
-                          <span>{lib.nb_blocs} blocs</span>
-                          {lib.nb_contradictions > 0 && <span className="text-amber-600">{lib.nb_contradictions} contradictions</span>}
-                          <span className="text-[9px] text-teal-600 ml-auto flex items-center gap-0.5 group-hover:text-teal-700 font-medium transition-colors">
-                            Continuer <ChevronRight className="h-3.5 w-3.5" />
-                          </span>
-                        </div>
-                      </div>
-                    </Card>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Templates section */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold text-gray-700">Templates ({filteredTemplates.length})</h3>
-              {/* View mode toggle */}
-              <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
-                {([["cards", LayoutGrid], ["list", List], ["table", Table2]] as [typeof viewMode, React.ElementType][]).map(([mode, Icon]) => (
-                  <button key={mode} onClick={() => setViewMode(mode)}
-                    className={cn("p-1.5 rounded-lg transition-all cursor-pointer", viewMode === mode ? "bg-gray-900 text-white" : "text-gray-400 hover:bg-gray-200")}>
-                    <Icon className="h-3.5 w-3.5" />
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
-              <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
-                placeholder="Rechercher un template..." />
-            </div>
-
-            {/* Departement filter */}
-            <div className="space-y-1.5">
-              <span className="text-[9px] font-medium text-gray-400 uppercase tracking-wide">Departement</span>
-              <div className="flex gap-1.5 flex-wrap">
-                <button onClick={() => setDeptFilter(null)}
-                  className={cn("text-[9px] px-2.5 py-1 rounded-full font-medium transition-all cursor-pointer",
-                    !deptFilter ? "bg-gray-900 text-white" : "text-gray-500 bg-gray-100 hover:bg-gray-200")}>
-                  Tous
-                </button>
-                {departements.map(dept => {
-                  const avatar = BOT_AVATAR[dept];
-                  const label = DEPT_LABELS[dept] || dept;
-                  return (
-                    <button key={dept} onClick={() => setDeptFilter(dept === deptFilter ? null : dept)}
-                      className={cn("text-[9px] px-2.5 py-1 rounded-full font-medium transition-all cursor-pointer flex items-center gap-1",
-                        deptFilter === dept ? "bg-gray-900 text-white" : "text-gray-500 bg-gray-100 hover:bg-gray-200")}>
-                      {avatar && <img src={avatar} alt={label} className="w-3.5 h-3.5 rounded-full object-cover" />}
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Type fonctionnel filter */}
-            <div className="space-y-1.5">
-              <span className="text-[9px] font-medium text-gray-400 uppercase tracking-wide">Type</span>
-              <div className="flex gap-1.5 flex-wrap">
-                <button onClick={() => setTypeFilter(null)}
-                  className={cn("text-[9px] px-2.5 py-1 rounded-full font-medium transition-all cursor-pointer",
-                    !typeFilter ? "bg-gray-900 text-white" : "text-gray-500 bg-gray-100 hover:bg-gray-200")}>
-                  Tous
-                </button>
-                {unifiedCategories.map(cat => (
-                  <button key={cat} onClick={() => setTypeFilter(cat === typeFilter ? null : cat)}
-                    className={cn("text-[9px] px-2.5 py-1 rounded-full font-medium transition-all cursor-pointer capitalize",
-                      typeFilter === cat ? "bg-gray-900 text-white" : "text-gray-500 bg-gray-100 hover:bg-gray-200")}>
-                    {cat}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Templates grid */}
-            {loadingUnified ? <LoadingSpinner /> : filteredTemplates.length === 0 ? (
-              <EmptyState icon={FileText} text="Aucun template" sub={searchQuery ? "Essayez une autre recherche" : "Aucun template ne correspond aux filtres"} />
-            ) : viewMode === "cards" ? (
-              <div className="grid grid-cols-2 gap-3">
-                {filteredTemplates.map((t) => {
-                  const botCode = t.departement || "CPOB";
-                  const gradient = BOT_GRADIENTS[botCode] || "from-gray-600 to-gray-500";
-                  const avatar = BOT_AVATAR[botCode];
-                  const botName = DEPT_LABELS[botCode] || botCode;
-                  const parts = t.titre.split(" — ");
-                  const mainTitle = parts[0] || t.titre;
-                  const subTitle = parts.length > 1 ? parts.slice(1).join(" — ") : t.description?.slice(0, 80);
-                  return (
-                    <Card key={`${t.source}-${t.id}`} className="p-0 overflow-hidden hover:shadow-md transition-shadow cursor-pointer group"
-                      onClick={() => handleTemplateClick(t)}>
-                      <div className={cn("bg-gradient-to-r px-3 py-2.5 flex items-center gap-2.5", gradient)}>
-                        {avatar ? (
-                          <img src={avatar} alt={botName} className="w-7 h-7 rounded-lg object-cover border-2 border-white/30 shrink-0" />
-                        ) : (
-                          <div className="w-7 h-7 bg-white/20 rounded-lg flex items-center justify-center shrink-0"><FileText className="h-3.5 w-3.5 text-white" /></div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <span className="text-xs font-bold text-white">{botName}</span>
-                        </div>
-                      </div>
-                      <div className="p-3 space-y-1.5">
-                        <h3 className="text-xs font-bold text-gray-800 line-clamp-2">{mainTitle}</h3>
-                        {subTitle && <p className="text-[9px] text-gray-500 leading-relaxed line-clamp-2">{subTitle}</p>}
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[9px] px-1.5 py-0.5 rounded font-medium bg-gray-100 text-gray-600 capitalize">{t.categorie}</span>
-                          {t.nb_sections && <span className="text-[9px] px-1.5 py-0.5 rounded bg-gray-50 text-gray-500">{t.nb_sections} sections</span>}
-                          {t.frequence && <span className="text-[9px] px-1.5 py-0.5 rounded bg-gray-50 text-gray-500">{t.frequence}</span>}
-                          <span className="text-[9px] text-teal-600 ml-auto flex items-center gap-0.5 group-hover:text-teal-700 font-medium transition-colors">
-                            Creer <ChevronRight className="h-3.5 w-3.5" />
-                          </span>
-                        </div>
-                      </div>
-                    </Card>
-                  );
-                })}
-              </div>
-            ) : viewMode === "list" ? (
-              <div className="space-y-1">
-                {filteredTemplates.map(t => {
-                  const botCode = t.departement || "CPOB";
-                  const avatar = BOT_AVATAR[botCode];
-                  return (
-                    <button key={`${t.source}-${t.id}`} onClick={() => handleTemplateClick(t)}
-                      className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 flex items-center gap-2.5 cursor-pointer group">
-                      {avatar ? <img src={avatar} alt="" className="w-6 h-6 rounded-full object-cover shrink-0" /> :
-                        <FileText className="h-4 w-4 text-gray-400 shrink-0" />}
-                      <span className="text-xs font-medium text-gray-800 flex-1 truncate">{t.titre}</span>
-                      <span className="text-[9px] px-1.5 py-0.5 rounded font-medium bg-gray-100 text-gray-600 capitalize">{t.categorie}</span>
-                      <span className="text-[9px] text-gray-400">{DEPT_LABELS[t.departement || ""] || ""}</span>
-                      <ChevronRight className="h-3.5 w-3.5 text-gray-300 group-hover:text-gray-500" />
-                    </button>
-                  );
-                })}
-              </div>
-            ) : (
-              /* Table view */
-              <div className="border rounded-lg overflow-hidden">
-                <table className="w-full text-left">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="text-[9px] font-medium text-gray-500 px-3 py-2">Titre</th>
-                      <th className="text-[9px] font-medium text-gray-500 px-3 py-2">Departement</th>
-                      <th className="text-[9px] font-medium text-gray-500 px-3 py-2">Type</th>
-                      <th className="text-[9px] font-medium text-gray-500 px-3 py-2">Sections</th>
-                      <th className="text-[9px] font-medium text-gray-500 px-3 py-2"></th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {filteredTemplates.map(t => (
-                      <tr key={`${t.source}-${t.id}`} onClick={() => handleTemplateClick(t)}
-                        className="hover:bg-gray-50 cursor-pointer">
-                        <td className="text-xs text-gray-800 px-3 py-2 font-medium">{t.titre}</td>
-                        <td className="text-[9px] text-gray-500 px-3 py-2">{DEPT_LABELS[t.departement || ""] || "—"}</td>
-                        <td className="text-[9px] text-gray-500 px-3 py-2 capitalize">{t.categorie}</td>
-                        <td className="text-[9px] text-gray-400 px-3 py-2">{t.nb_sections || "—"}</td>
-                        <td className="px-3 py-2"><ChevronRight className="h-3.5 w-3.5 text-gray-300" /></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-
-          {/* Create Wizard Dialog (Importer depuis Drive) */}
-          {showCreateWizard && (
-            <DocForgeCreateWizard
-              templates={dfTemplates}
-              templatesLoading={dfTemplatesLoading}
-              onClose={() => setShowCreateWizard(false)}
-              onCreated={() => { setShowCreateWizard(false); dfRefresh(); }}
-            />
-          )}
-        </div>
-      )}
-
-      {/* Importes — style harmonise */}
-      {docTab === "importes" && (
-        <div className="space-y-4">
-          {/* Upload zone */}
-          <div
-            onClick={() => fileInputRef.current?.click()}
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            className="border-2 border-dashed border-gray-300 rounded-xl p-5 text-center hover:border-blue-400 hover:bg-blue-50/30 transition-colors cursor-pointer"
-          >
-            {uploading ? (
-              <Loader2 className="h-6 w-6 text-blue-500 mx-auto mb-2 animate-spin" />
-            ) : (
-              <Upload className="h-6 w-6 text-gray-400 mx-auto mb-2" />
-            )}
-            <p className="text-xs text-gray-600 font-medium">
-              {uploading ? "Telechargement en cours..." : "Glissez vos fichiers ici ou cliquez"}
-            </p>
-            <p className="text-[9px] text-gray-400 mt-1">PDF, DOCX, XLSX, images — max 50 MB</p>
-            <input
-              ref={fileInputRef}
-              type="file"
-              className="hidden"
-              multiple
-              accept=".pdf,.docx,.xlsx,.csv,.png,.jpg,.jpeg,.zip,.txt,.pptx"
-              onChange={(e) => handleFileUpload(e.target.files)}
-            />
-          </div>
-
-          {/* Grille fichiers importes — style Pipeline */}
-          {loading ? (
-            <LoadingSpinner />
-          ) : importes.length === 0 ? (
-            <EmptyState icon={Upload} text="Aucun fichier importe" sub="Glissez-deposez ou cliquez pour importer" />
-          ) : (
-            <div className="grid grid-cols-2 gap-3">
-              {importes.map((doc) => {
-                const meta = doc.metadata as Record<string, string>;
-                const fileType = meta?.file_type || "FILE";
-                const FIcon = FILE_ICONS[fileType] || File;
-                const date = doc.created_at ? new Date(doc.created_at).toLocaleDateString("fr-CA", { day: "numeric", month: "short" }) : "";
-                return (
-                  <Card key={doc.id} className="p-0 overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
-                    <div className="bg-gradient-to-r from-slate-600 to-slate-500 px-3 py-2.5 flex items-center gap-2.5">
-                      <div className="w-7 h-7 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
-                        <FIcon className="h-3.5 w-3.5 text-white" />
-                      </div>
-                      <span className="text-xs font-bold text-white flex-1 truncate">{fileType}</span>
-                      {date && <span className="text-[9px] text-white/60">{date}</span>}
-                    </div>
-                    <div className="p-3 space-y-1.5">
-                      <h3 className="text-xs font-bold text-gray-800 line-clamp-2">{doc.titre}</h3>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          {meta?.taille && <span className="text-[9px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 font-medium">{meta.taille}</span>}
-                          {doc.tags.map(tag => (
-                            <span key={tag} className={cn("text-[9px] px-1.5 py-0.5 rounded font-medium", TAG_COLORS[tag] || "bg-gray-100 text-gray-600")}>
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                        {meta?.file_path && (
-                          <a
-                            href={api.bureauDownloadUrl(meta.file_path)}
-                            onClick={(e) => e.stopPropagation()}
-                            className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
-                            title="Telecharger"
-                          >
-                            <Download className="h-3.5 w-3.5 text-gray-400" />
+                        <span className="text-[9px] font-bold text-white flex-1 truncate">{doc.titre}</span>
+                        {downloadUrl && (
+                          <a href={downloadUrl} onClick={(e) => e.stopPropagation()} className="p-1 hover:bg-white/20 rounded transition-colors" title="Telecharger">
+                            <Download className="h-3.5 w-3.5 text-white/70" />
                           </a>
                         )}
                       </div>
-                    </div>
-                  </Card>
-                );
-              })}
+                      <div className="p-2.5">
+                        <div className="flex items-center gap-1.5 text-[9px] text-gray-400">
+                          <span>{fileType}</span>
+                          {meta?.taille && <><span>·</span><span>{meta.taille}</span></>}
+                          {date && <><span>·</span><span>{date}</span></>}
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
             </div>
           )}
-        </div>
-      )}
+        </>)}
 
+        {/* LIST VIEW */}
+        {docViewMode === "list" && !dfLoading && (filteredLibs.length > 0 || allDocs.length > 0) && (
+          <div className="space-y-1">
+            {filteredLibs.map((lib) => (
+              <div key={lib.id} className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
+                onClick={() => handleLibraryClick(lib)}>
+                <span className={cn("w-2 h-2 rounded-full shrink-0",
+                  lib.status === "en_cours" ? "bg-blue-500" : lib.status === "publie" ? "bg-emerald-500" : "bg-amber-400")} />
+                <Sparkles className="h-3.5 w-3.5 text-teal-500 shrink-0" />
+                <span className="text-[9px] font-bold flex-1 truncate text-gray-800">{lib.titre}</span>
+                <span className={cn("text-[9px] px-1.5 py-0.5 rounded font-medium", statusColors[lib.status] || "bg-gray-100 text-gray-600")}>{statusLabel[lib.status] || lib.status}</span>
+                <span className="text-[8px] text-gray-400">{lib.completude_pct}%</span>
+                <span className="text-[8px] text-gray-400">{lib.nb_blocs} blocs</span>
+                <ChevronRight className="h-3.5 w-3.5 text-gray-300 shrink-0" />
+              </div>
+            ))}
+            {allDocs.map((doc) => {
+              const meta = doc.metadata as Record<string, string>;
+              const fileType = meta?.file_type || "FILE";
+              const date = doc.created_at ? new Date(doc.created_at).toLocaleDateString("fr-CA", { day: "numeric", month: "short" }) : "";
+              return (
+                <div key={doc.id} className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer">
+                  <FileText className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+                  <span className="text-[9px] font-bold flex-1 truncate text-gray-800">{doc.titre}</span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 font-medium">{fileType}</span>
+                  {date && <span className="text-[8px] text-gray-400">{date}</span>}
+                  <ChevronRight className="h-3.5 w-3.5 text-gray-300 shrink-0" />
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* SPREADSHEET VIEW */}
+        {docViewMode === "spreadsheet" && !dfLoading && (filteredLibs.length > 0 || allDocs.length > 0) && (
+          <div className="border border-gray-200 rounded-lg overflow-hidden overflow-x-auto">
+            <table className="w-full text-[9px] table-fixed">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200">
+                  <th className="text-left px-3 py-2 font-bold text-gray-500 uppercase text-[9px] w-[35%]">Titre</th>
+                  <th className="text-left px-2 py-2 font-bold text-gray-500 uppercase text-[9px] w-[12%]">Type</th>
+                  <th className="text-left px-2 py-2 font-bold text-gray-500 uppercase text-[9px] w-[12%]">Statut</th>
+                  <th className="text-left px-2 py-2 font-bold text-gray-500 uppercase text-[9px] w-[12%]">Progres</th>
+                  <th className="text-left px-2 py-2 font-bold text-gray-500 uppercase text-[9px] w-[10%]">Blocs</th>
+                  <th className="text-left px-2 py-2 font-bold text-gray-500 uppercase text-[9px] w-[10%]">Taille</th>
+                  <th className="text-left px-2 py-2 font-bold text-gray-500 uppercase text-[9px] w-[9%]">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredLibs.map((lib) => (
+                  <tr key={lib.id} className="border-b border-gray-100 hover:bg-blue-50/30 cursor-pointer transition-colors"
+                    onClick={() => handleLibraryClick(lib)}>
+                    <td className="px-3 py-2 font-medium text-gray-800 truncate">{lib.titre}</td>
+                    <td className="px-2 py-2"><span className="px-1.5 py-0.5 rounded bg-teal-50 text-teal-700 font-medium">DocForge</span></td>
+                    <td className="px-2 py-2"><span className={cn("px-1.5 py-0.5 rounded font-bold", statusColors[lib.status] || "bg-gray-100 text-gray-600")}>{statusLabel[lib.status] || lib.status}</span></td>
+                    <td className="px-2 py-2 text-gray-500">{lib.completude_pct}%</td>
+                    <td className="px-2 py-2 text-gray-500">{lib.nb_blocs}</td>
+                    <td className="px-2 py-2 text-gray-400">—</td>
+                    <td className="px-2 py-2 text-gray-400">—</td>
+                  </tr>
+                ))}
+                {allDocs.map((doc) => {
+                  const meta = doc.metadata as Record<string, string>;
+                  const date = doc.created_at ? new Date(doc.created_at).toLocaleDateString("fr-CA", { day: "numeric", month: "short" }) : "";
+                  return (
+                    <tr key={doc.id} className="border-b border-gray-100 hover:bg-blue-50/30 cursor-pointer transition-colors">
+                      <td className="px-3 py-2 font-medium text-gray-800 truncate">{doc.titre}</td>
+                      <td className="px-2 py-2"><span className="px-1.5 py-0.5 rounded bg-slate-50 text-slate-600 font-medium">{(meta?.file_type || "FILE")}</span></td>
+                      <td className="px-2 py-2"><span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-bold">Importe</span></td>
+                      <td className="px-2 py-2 text-gray-400">—</td>
+                      <td className="px-2 py-2 text-gray-400">—</td>
+                      <td className="px-2 py-2 text-gray-500">{meta?.taille || "—"}</td>
+                      <td className="px-2 py-2 text-gray-400">{date}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Catalogue unifie — Templates + Playbooks + Diagnostics */}
+      <div className="space-y-2">
+        <h3 className="text-xs font-bold text-gray-700">Catalogue — Creer a partir d'un modele</h3>
+        <CatalogueUnifie
+          onAction={(item) => {
+            if (item.type === "template") {
+              dispatch({ type: "focus", layer: "cerveau",
+                data: { title: `Template: ${item.titre}`, element_type: "document_editor", data: { template: item._raw, mode: "scratch" } },
+                bot: item.bot_recommande || "CPOB"
+              });
+            } else if (item.type === "playbook") {
+              dispatch({ type: "focus", layer: "cerveau",
+                data: { title: `Playbook: ${item.titre}`, element_type: "playbook", data: item._raw },
+                bot: item.bot_recommande || "CPOB"
+              });
+            } else {
+              dispatch({ type: "focus", layer: "cerveau",
+                data: { title: `Diagnostic: ${item.titre}`, element_type: "diagnostic_enrichi", data: item._raw },
+                bot: item.bot_recommande || "CPOB"
+              });
+            }
+          }}
+        />
+      </div>
+
+      {/* Create Wizard Dialog (Importer depuis Drive) */}
+      {showCreateWizard && (
+        <DocForgeCreateWizard
+          templates={dfTemplates}
+          templatesLoading={dfTemplatesLoading}
+          onClose={() => setShowCreateWizard(false)}
+          onCreated={() => { setShowCreateWizard(false); dfRefresh(); }}
+        />
+      )}
     </div>
   );
 }
@@ -1459,13 +1344,19 @@ function TachesPage() {
     createTache, completeTache, commentTache,
   } = useTaches();
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [tacheSubTab, setTacheSubTab] = useState<"perso" | "projet">("perso");
+  const [tacheStateFilter, setTacheStateFilter] = useState<"a-faire" | "completees">("a-faire");
+  const [tacheViewMode, setTacheViewMode] = useState<"cards" | "list" | "spreadsheet">("cards");
+  const [tacheSearch, setTacheSearch] = useState("");
 
-  // Categoriser par priorite
-  const urgentes = taches.filter((t) => t.priority === "urgent");
-  const hautes = taches.filter((t) => t.priority === "high");
-  const moyennes = taches.filter((t) => t.priority === "medium" || t.priority === "none");
-  const basses = taches.filter((t) => t.priority === "low");
+  // 2-state: A faire / Completees (spec §4.2)
+  const tachesAFaire = taches.filter((t: any) => t.state_detail?.group !== "completed");
+  const tachesCompletees = taches.filter((t: any) => t.state_detail?.group === "completed");
+
+  // Categoriser par priorite (pour la vue A faire)
+  const urgentes = tachesAFaire.filter((t) => t.priority === "urgent");
+  const hautes = tachesAFaire.filter((t) => t.priority === "high");
+  const moyennes = tachesAFaire.filter((t) => t.priority === "medium" || t.priority === "none");
+  const basses = tachesAFaire.filter((t) => t.priority === "low");
 
   const widgets = [
     { title: "Urgentes", icon: AlertCircle, gradient: "from-red-600 to-red-500", items: urgentes, borderColor: "border-l-red-400" },
@@ -1478,108 +1369,146 @@ function TachesPage() {
     await createTache(data);
   };
 
+  const TACHE_STATE_TABS = [
+    { id: "a-faire" as const, label: "A faire", count: tachesAFaire.length },
+    { id: "completees" as const, label: "Completees", count: tachesCompletees.length },
+  ];
+
+  // Search filter
+  const displayTaches = useMemo(() => {
+    const base = tacheStateFilter === "a-faire" ? tachesAFaire : tachesCompletees;
+    if (!tacheSearch.trim()) return base;
+    const q = tacheSearch.toLowerCase();
+    return base.filter((t: any) => t.name.toLowerCase().includes(q));
+  }, [tachesAFaire, tachesCompletees, tacheStateFilter, tacheSearch]);
+
   return (
-    <div className="space-y-4">
-      {/* Sub-tabs: Mes Taches | Taches Projet (C.14) */}
-      <div className="flex items-center justify-between">
-        <div className="flex gap-1.5">
-          <button
-            onClick={() => setTacheSubTab("perso")}
-            className={cn("px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5",
-              tacheSubTab === "perso" ? "bg-gray-900 text-white" : "text-gray-500 bg-gray-100 hover:bg-gray-200"
-            )}
-          >
-            <CheckSquare className="h-3.5 w-3.5" />
-            Mes Taches
-            {taches.length > 0 && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/20">{taches.length}</span>}
-          </button>
-          <button
-            onClick={() => setTacheSubTab("projet")}
-            className={cn("px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5",
-              tacheSubTab === "projet" ? "bg-gray-900 text-white" : "text-gray-500 bg-gray-100 hover:bg-gray-200"
-            )}
-          >
-            <FolderKanban className="h-3.5 w-3.5" />
-            Taches Projet
-          </button>
+    <div className="space-y-3">
+      {/* TOOLBAR — pattern chantier unifie */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="relative flex-1 min-w-[150px]">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+          <input type="text" placeholder="Rechercher..." value={tacheSearch} onChange={e => setTacheSearch(e.target.value)}
+            className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 bg-white" />
         </div>
-        {tacheSubTab === "perso" && (
-          <button
-            onClick={() => setShowAddDialog(true)}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs text-white bg-gray-900 rounded-lg hover:bg-gray-800 cursor-pointer transition-colors"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Nouvelle tache
-          </button>
-        )}
+        <div className="flex items-center gap-1">
+          {TACHE_STATE_TABS.map(tab => (
+            <button key={tab.id} onClick={() => setTacheStateFilter(tab.id)}
+              className={cn("px-2.5 py-1 text-[9px] font-medium rounded-full border transition-colors cursor-pointer",
+                tacheStateFilter === tab.id ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50")}>
+              {tab.label} ({tab.count})
+            </button>
+          ))}
+        </div>
+        <button onClick={() => setShowAddDialog(true)}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-colors cursor-pointer shrink-0">
+          <Plus className="h-3.5 w-3.5" /> Tache
+        </button>
+        <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden shrink-0">
+          {([
+            { mode: "cards" as const, icon: LayoutGrid, title: "Cartes" },
+            { mode: "list" as const, icon: List, title: "Liste" },
+            { mode: "spreadsheet" as const, icon: Table2, title: "Tableur" },
+          ]).map(({ mode, icon: MIcon, title }) => (
+            <button key={mode} onClick={() => setTacheViewMode(mode)}
+              className={cn("p-1.5 transition-colors cursor-pointer", tacheViewMode === mode ? "bg-blue-600 text-white" : "bg-white text-gray-400 hover:text-gray-600")}
+              title={title}>
+              <MIcon className="h-3.5 w-3.5" />
+            </button>
+          ))}
+        </div>
+        <span className="text-[9px] font-bold text-gray-400">{displayTaches.length} items</span>
       </div>
 
-      {/* Sub-tab: Mes Taches (Plane.so) */}
-      {tacheSubTab === "perso" && (<>
-        {error && <ErrorBanner message={error} />}
+      {error && <ErrorBanner message={error} />}
 
-        {loading ? (
-          <LoadingSpinner />
-        ) : taches.length === 0 ? (
-          <EmptyState icon={CheckSquare} text="Aucune tache ouverte" sub="Creez une tache ou attendez que Plane.so se synchronise" />
-        ) : (
-          <div className="grid grid-cols-4 gap-3">
-            {widgets.map((w) => {
-              const WIcon = w.icon;
-              return (
-                <Card key={w.title} className="p-0 overflow-hidden">
-                  <div className={cn("flex items-center gap-2 px-3 py-2 bg-gradient-to-r", w.gradient)}>
-                    <WIcon className="h-4 w-4 text-white" />
-                    <span className="text-sm font-bold text-white">{w.title}</span>
-                    <span className="ml-auto text-xs bg-white/25 text-white rounded-full px-1.5 py-0.5 font-bold">{w.items.length}</span>
-                  </div>
-                  <div className="p-2 space-y-1">
-                    {w.items.length === 0 ? (
-                      <p className="text-[9px] text-gray-400 py-2 text-center">Aucune tache</p>
-                    ) : (
-                      w.items.map((t) => (
-                        <div
-                          key={t.id}
-                          onClick={() => selectTache(t.id)}
-                          className={cn("px-2.5 py-2 rounded-lg border-l-[3px] bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer", w.borderColor)}
-                        >
-                          <p className="text-xs font-medium text-gray-800 truncate">{t.name}</p>
-                          <div className="flex items-center gap-1.5 mt-1">
-                            {t.labels.length > 0 && (
-                              <>
-                                <Bot className="h-3.5 w-3.5 text-gray-400" />
-                                <span className="text-[9px] text-gray-400">{t.labels[0]}</span>
-                                <span className="text-[9px] text-gray-300">|</span>
-                              </>
-                            )}
-                            <span className="text-[9px] text-gray-400">
-                              #{t.sequence_id}
-                            </span>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
-        )}
-      </>)}
+      {loading ? <LoadingSpinner /> : displayTaches.length === 0 ? (
+        <EmptyState icon={CheckSquare} text={tacheSearch ? `Aucun resultat pour "${tacheSearch}"` : "Aucune tache"} sub="Creez une tache ou attendez Plane.so" />
+      ) : null}
 
-      {/* Sub-tab: Taches Projet (from Strategique) */}
-      {tacheSubTab === "projet" && (
-        <div className="text-center py-16 space-y-4">
-          <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto">
-            <FolderKanban className="h-8 w-8 text-purple-500" />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-gray-800">Taches Projet</h3>
-            <p className="text-sm text-gray-500 mt-1 max-w-md mx-auto">
-              Les taches extraites de votre Plan Strategique sont accessibles dans la section Strategique &gt; Taches.
-              CarlOS synchronisera automatiquement vos taches projet ici.
-            </p>
-          </div>
+      {/* CARDS VIEW */}
+      {tacheViewMode === "cards" && !loading && displayTaches.length > 0 && (
+        <div className="grid grid-cols-2 gap-3">
+          {displayTaches.map((t: any) => {
+            const prioInfo = PRIORITY_ICONS[t.priority] || PRIORITY_ICONS.none;
+            const isCompleted = t.state_detail?.group === "completed";
+            const gradient = t.priority === "urgent" ? "from-red-600 to-red-500"
+              : t.priority === "high" ? "from-orange-600 to-orange-500"
+              : t.priority === "medium" || t.priority === "none" ? "from-blue-600 to-blue-500"
+              : "from-green-600 to-green-500";
+            return (
+              <Card key={t.id} className="p-0 overflow-hidden hover:shadow-md transition-shadow cursor-pointer group"
+                onClick={() => selectTache(t.id)}>
+                <div className={cn("bg-gradient-to-r px-3 py-2 flex items-center gap-2", isCompleted ? "from-gray-500 to-gray-400" : gradient)}>
+                  {isCompleted ? <CheckCircle2 className="h-3.5 w-3.5 text-white shrink-0" /> : <CheckSquare className="h-3.5 w-3.5 text-white shrink-0" />}
+                  <span className={cn("text-[9px] font-bold text-white flex-1 truncate", isCompleted && "line-through")}>{t.name}</span>
+                  <span className="text-[9px] text-white/60">#{t.sequence_id}</span>
+                  <ChevronRight className="h-3.5 w-3.5 text-white/50 group-hover:text-white transition-colors shrink-0" />
+                </div>
+                <div className="px-3 py-2">
+                  <div className="flex items-center gap-2 text-[9px] flex-wrap">
+                    <span>{prioInfo.icon}</span>
+                    {t.labels.length > 0 && <span className="px-1.5 py-0.5 rounded bg-violet-50 text-violet-600 font-medium">{t.labels[0]}</span>}
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {/* LIST VIEW */}
+      {tacheViewMode === "list" && !loading && displayTaches.length > 0 && (
+        <div className="space-y-1">
+          {displayTaches.map((t: any) => {
+            const prioInfo = PRIORITY_ICONS[t.priority] || PRIORITY_ICONS.none;
+            const isCompleted = t.state_detail?.group === "completed";
+            return (
+              <div key={t.id} className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
+                onClick={() => selectTache(t.id)}>
+                <span className={cn("w-2 h-2 rounded-full shrink-0",
+                  t.priority === "urgent" ? "bg-red-500" : t.priority === "high" ? "bg-orange-500" : t.priority === "medium" ? "bg-blue-500" : "bg-green-500")} />
+                <span className="text-[9px]">{prioInfo.icon}</span>
+                <span className={cn("text-[9px] font-bold flex-1 truncate text-gray-800", isCompleted && "line-through text-gray-400")}>{t.name}</span>
+                {t.labels.length > 0 && <span className="text-[9px] px-1.5 py-0.5 rounded bg-violet-50 text-violet-600 font-medium">{t.labels[0]}</span>}
+                <span className="text-[8px] text-gray-400">#{t.sequence_id}</span>
+                <ChevronRight className="h-3.5 w-3.5 text-gray-300 shrink-0" />
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* SPREADSHEET VIEW */}
+      {tacheViewMode === "spreadsheet" && !loading && displayTaches.length > 0 && (
+        <div className="border border-gray-200 rounded-lg overflow-hidden overflow-x-auto">
+          <table className="w-full text-[9px] table-fixed">
+            <thead>
+              <tr className="bg-gray-50 border-b border-gray-200">
+                <th className="text-left px-3 py-2 font-bold text-gray-500 uppercase text-[9px] w-[40%]">Titre</th>
+                <th className="text-left px-2 py-2 font-bold text-gray-500 uppercase text-[9px] w-[12%]">Priorite</th>
+                <th className="text-left px-2 py-2 font-bold text-gray-500 uppercase text-[9px] w-[12%]">Statut</th>
+                <th className="text-left px-2 py-2 font-bold text-gray-500 uppercase text-[9px] w-[15%]">Labels</th>
+                <th className="text-left px-2 py-2 font-bold text-gray-500 uppercase text-[9px] w-[10%]">#</th>
+              </tr>
+            </thead>
+            <tbody>
+              {displayTaches.map((t: any) => {
+                const prioInfo = PRIORITY_ICONS[t.priority] || PRIORITY_ICONS.none;
+                const isCompleted = t.state_detail?.group === "completed";
+                return (
+                  <tr key={t.id} className="border-b border-gray-100 hover:bg-blue-50/30 cursor-pointer transition-colors"
+                    onClick={() => selectTache(t.id)}>
+                    <td className={cn("px-3 py-2 font-medium text-gray-800 truncate", isCompleted && "line-through text-gray-400")}>{t.name}</td>
+                    <td className="px-2 py-2"><span>{prioInfo.icon} {t.priority || "none"}</span></td>
+                    <td className="px-2 py-2"><span className={cn("px-1.5 py-0.5 rounded font-bold", isCompleted ? "bg-emerald-100 text-emerald-700" : "bg-blue-100 text-blue-700")}>{isCompleted ? "Completee" : "A faire"}</span></td>
+                    <td className="px-2 py-2">{t.labels.length > 0 ? t.labels[0] : "—"}</td>
+                    <td className="px-2 py-2 text-gray-400">{t.sequence_id}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
 
@@ -1609,9 +1538,10 @@ function TachesPage() {
 // ══════════════════════════════════════════
 
 function AgendaPage() {
-  // Meetings reels depuis l'API + evenements demo
   const [meetings, setMeetings] = useState<any[]>([]);
   const [loadingMeetings, setLoadingMeetings] = useState(true);
+  const [agendaViewMode, setAgendaViewMode] = useState<"cards" | "list" | "spreadsheet">("cards");
+  const [agendaSearch, setAgendaSearch] = useState("");
 
   useEffect(() => {
     api.meetingList().then((r) => {
@@ -1626,7 +1556,13 @@ function AgendaPage() {
     scheduled: "bg-blue-100 text-blue-700",
   };
 
-  // Build events: real meetings + fallback demo events if empty
+  const STATUS_GRADIENTS: Record<string, string> = {
+    pending: "from-amber-500 to-amber-400",
+    active: "from-green-600 to-green-500",
+    ended: "from-gray-500 to-gray-400",
+    scheduled: "from-blue-600 to-blue-500",
+  };
+
   const allEvents = useMemo(() => {
     const realEvents = meetings.map((m: any) => ({
       id: m.slug || m.id,
@@ -1637,8 +1573,6 @@ function AgendaPage() {
       bot: m.bot_code || "CEOB",
       duree: m.meeting_type || "meeting",
     }));
-
-    // Si aucun meeting, afficher des events demo
     if (realEvents.length === 0) {
       const today = new Date();
       return [
@@ -1650,76 +1584,126 @@ function AgendaPage() {
     return realEvents;
   }, [meetings]);
 
-  // Group by day
+  // Filter by search
+  const filteredEvents = useMemo(() => {
+    if (!agendaSearch.trim()) return allEvents;
+    const q = agendaSearch.toLowerCase();
+    return allEvents.filter(ev => ev.titre.toLowerCase().includes(q) || ev.bot.toLowerCase().includes(q));
+  }, [allEvents, agendaSearch]);
+
   const JOURS_LABELS = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
-  const grouped = useMemo(() => {
-    const groups: Record<string, typeof allEvents> = {};
-    allEvents.forEach((ev) => {
-      const key = ev.date.toLocaleDateString("fr-CA");
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(ev);
-    });
-    return Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0])).slice(0, 5);
-  }, [allEvents]);
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="text-sm font-bold text-gray-800">
-          {meetings.length > 0 ? `${meetings.length} meetings` : "Agenda"}
+    <div className="space-y-3">
+      {/* TOOLBAR — pattern chantier unifie */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="relative flex-1 min-w-[150px]">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+          <input type="text" placeholder="Rechercher..." value={agendaSearch} onChange={e => setAgendaSearch(e.target.value)}
+            className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 bg-white" />
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => api.meetingList().then((r) => setMeetings(Array.isArray(r?.meetings) ? r.meetings : [])).catch(() => {})}
-            className="px-3 py-1.5 text-xs text-gray-500 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
-          >Rafraichir</button>
+        <button onClick={() => api.meetingList().then((r) => setMeetings(Array.isArray(r?.meetings) ? r.meetings : [])).catch(() => {})}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer shrink-0">
+          Rafraichir
+        </button>
+        <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden shrink-0">
+          {([
+            { mode: "cards" as const, icon: LayoutGrid, title: "Cartes" },
+            { mode: "list" as const, icon: List, title: "Liste" },
+            { mode: "spreadsheet" as const, icon: Table2, title: "Tableur" },
+          ]).map(({ mode, icon: MIcon, title }) => (
+            <button key={mode} onClick={() => setAgendaViewMode(mode)}
+              className={cn("p-1.5 transition-colors cursor-pointer", agendaViewMode === mode ? "bg-blue-600 text-white" : "bg-white text-gray-400 hover:text-gray-600")}
+              title={title}>
+              <MIcon className="h-3.5 w-3.5" />
+            </button>
+          ))}
         </div>
+        <span className="text-[9px] font-bold text-gray-400">{filteredEvents.length} items</span>
       </div>
 
-      {loadingMeetings ? (
-        <div className="text-center py-8 text-gray-400 text-xs">Chargement...</div>
-      ) : (
-        <div className="grid grid-cols-5 gap-3">
-          {grouped.map(([dateKey, events]) => {
-            const d = new Date(dateKey);
-            const jourLabel = `${JOURS_LABELS[d.getDay()]} ${d.getDate()}`;
+      {loadingMeetings ? <LoadingSpinner /> : filteredEvents.length === 0 ? (
+        <EmptyState icon={CalendarDays} text={agendaSearch ? `Aucun resultat pour "${agendaSearch}"` : "Aucun evenement"} sub="Les meetings apparaitront ici" />
+      ) : null}
+
+      {/* CARDS VIEW */}
+      {agendaViewMode === "cards" && !loadingMeetings && filteredEvents.length > 0 && (
+        <div className="grid grid-cols-2 gap-3">
+          {filteredEvents.map((ev) => {
+            const gradient = STATUS_GRADIENTS[ev.type] || "from-blue-600 to-blue-500";
             return (
-              <div key={dateKey}>
-                <div className="text-xs font-bold text-gray-600 mb-2 px-1">{jourLabel}</div>
-                <div className="space-y-2">
-                  {events.map((ev) => (
-                    <Card key={ev.id} className="p-2.5 hover:shadow-md transition-shadow cursor-pointer">
-                      <div className="flex items-center gap-1.5 mb-1">
-                        {BOT_AVATAR[ev.bot] ? (
-                          <img src={BOT_AVATAR[ev.bot]} alt="" className="w-4 h-4 rounded-full" />
-                        ) : (
-                          <div className="w-4 h-4 rounded-full bg-gray-200" />
-                        )}
-                        <span className="text-[9px] text-gray-400">{ev.heure}</span>
-                      </div>
-                      <p className="text-[11px] font-medium text-gray-800 leading-tight mb-1.5">{ev.titre}</p>
-                      <div className="flex items-center gap-1.5">
-                        <Badge variant="outline" className={cn("text-[9px]", STATUS_COLORS[ev.type] || "bg-gray-100 text-gray-600")}>
-                          {ev.type}
-                        </Badge>
-                        <span className="text-[9px] text-gray-400">{ev.duree}</span>
-                      </div>
-                    </Card>
-                  ))}
+              <Card key={ev.id} className="p-0 overflow-hidden hover:shadow-md transition-shadow cursor-pointer group">
+                <div className={cn("bg-gradient-to-r px-3 py-2 flex items-center gap-2", gradient)}>
+                  {BOT_AVATAR[ev.bot] ? (
+                    <img src={BOT_AVATAR[ev.bot]} alt="" className="w-6 h-6 rounded-full border border-white/30 shrink-0" />
+                  ) : (
+                    <div className="w-6 h-6 rounded-full bg-white/20 shrink-0" />
+                  )}
+                  <span className="text-[9px] font-bold text-white flex-1 truncate">{ev.titre}</span>
+                  <span className="text-[9px] text-white/70">{ev.heure}</span>
                 </div>
-              </div>
+                <div className="px-3 py-2">
+                  <div className="flex items-center gap-2 text-[9px]">
+                    <span className={cn("px-1.5 py-0.5 rounded font-bold", STATUS_COLORS[ev.type] || "bg-gray-100 text-gray-600")}>{ev.type}</span>
+                    <span className="text-gray-400">{ev.duree}</span>
+                    <span className="text-gray-400">{JOURS_LABELS[ev.date.getDay()]} {ev.date.getDate()}</span>
+                  </div>
+                </div>
+              </Card>
             );
           })}
-          {/* Fill remaining columns if less than 5 */}
-          {Array.from({ length: Math.max(0, 5 - grouped.length) }).map((_, i) => (
-            <div key={`empty-${i}`}>
-              <div className="text-xs font-bold text-gray-300 mb-2 px-1">—</div>
-              <div className="p-3 border border-dashed border-gray-200 rounded-lg text-center">
-                <p className="text-[9px] text-gray-400">Aucun evenement</p>
-              </div>
+        </div>
+      )}
+
+      {/* LIST VIEW */}
+      {agendaViewMode === "list" && !loadingMeetings && filteredEvents.length > 0 && (
+        <div className="space-y-1">
+          {filteredEvents.map((ev) => (
+            <div key={ev.id} className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer">
+              <span className={cn("w-2 h-2 rounded-full shrink-0",
+                ev.type === "active" ? "bg-green-500" : ev.type === "scheduled" ? "bg-blue-500" : ev.type === "pending" ? "bg-amber-400" : "bg-gray-300")} />
+              {BOT_AVATAR[ev.bot] ? (
+                <img src={BOT_AVATAR[ev.bot]} alt="" className="w-4 h-4 rounded-full shrink-0" />
+              ) : (
+                <div className="w-4 h-4 rounded-full bg-gray-200 shrink-0" />
+              )}
+              <span className="text-[9px] font-bold flex-1 truncate text-gray-800">{ev.titre}</span>
+              <span className="text-[8px] text-gray-400">{ev.heure}</span>
+              <span className={cn("text-[9px] px-1.5 py-0.5 rounded font-medium", STATUS_COLORS[ev.type] || "bg-gray-100 text-gray-600")}>{ev.type}</span>
+              <span className="text-[8px] text-gray-400">{ev.duree}</span>
+              <span className="text-[8px] text-gray-400">{JOURS_LABELS[ev.date.getDay()]} {ev.date.getDate()}</span>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* SPREADSHEET VIEW */}
+      {agendaViewMode === "spreadsheet" && !loadingMeetings && filteredEvents.length > 0 && (
+        <div className="border border-gray-200 rounded-lg overflow-hidden overflow-x-auto">
+          <table className="w-full text-[9px] table-fixed">
+            <thead>
+              <tr className="bg-gray-50 border-b border-gray-200">
+                <th className="text-left px-3 py-2 font-bold text-gray-500 uppercase text-[9px] w-[35%]">Titre</th>
+                <th className="text-left px-2 py-2 font-bold text-gray-500 uppercase text-[9px] w-[10%]">Heure</th>
+                <th className="text-left px-2 py-2 font-bold text-gray-500 uppercase text-[9px] w-[12%]">Bot</th>
+                <th className="text-left px-2 py-2 font-bold text-gray-500 uppercase text-[9px] w-[12%]">Statut</th>
+                <th className="text-left px-2 py-2 font-bold text-gray-500 uppercase text-[9px] w-[12%]">Duree</th>
+                <th className="text-left px-2 py-2 font-bold text-gray-500 uppercase text-[9px] w-[12%]">Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredEvents.map((ev) => (
+                <tr key={ev.id} className="border-b border-gray-100 hover:bg-blue-50/30 cursor-pointer transition-colors">
+                  <td className="px-3 py-2 font-medium text-gray-800 truncate">{ev.titre}</td>
+                  <td className="px-2 py-2 text-gray-500">{ev.heure}</td>
+                  <td className="px-2 py-2"><span className="px-1.5 py-0.5 rounded bg-gray-50 text-gray-600 border border-gray-200 font-medium">{ev.bot}</span></td>
+                  <td className="px-2 py-2"><span className={cn("px-1.5 py-0.5 rounded font-bold", STATUS_COLORS[ev.type] || "bg-gray-100 text-gray-600")}>{ev.type}</span></td>
+                  <td className="px-2 py-2 text-gray-500">{ev.duree}</td>
+                  <td className="px-2 py-2 text-gray-400">{JOURS_LABELS[ev.date.getDay()]} {ev.date.getDate()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
@@ -2509,6 +2493,8 @@ const OUTILS_MANUFACTURIERS = [
 function OutilsPage() {
   const { navigateToDepartment } = useFrameMaster();
   const { newConversation, sendMessage } = useChatContext();
+  const [outilViewMode, setOutilViewMode] = useState<"cards" | "list" | "spreadsheet">("cards");
+  const [outilSearch, setOutilSearch] = useState("");
 
   const handleToolClick = (outil: typeof OUTILS_MANUFACTURIERS[0]) => {
     navigateToDepartment(outil.bot, "live-chat");
@@ -2518,44 +2504,121 @@ function OutilsPage() {
     }, 300);
   };
 
+  const filteredOutils = useMemo(() => {
+    if (!outilSearch.trim()) return OUTILS_MANUFACTURIERS;
+    const q = outilSearch.toLowerCase();
+    return OUTILS_MANUFACTURIERS.filter(o => o.titre.toLowerCase().includes(q) || o.description.toLowerCase().includes(q) || o.tags.some(t => t.toLowerCase().includes(q)));
+  }, [outilSearch]);
+
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {OUTILS_MANUFACTURIERS.map((outil) => {
-          const Icon = outil.icon;
-          return (
-            <Card
-              key={outil.id}
-              className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => handleToolClick(outil)}
-            >
-              {/* Gradient header */}
-              <div className={cn("flex items-center gap-2.5 px-4 py-2.5 bg-gradient-to-r", outil.color)}>
-                <div className="w-7 h-7 bg-white/20 rounded-lg flex items-center justify-center">
-                  <Icon className="h-3.5 w-3.5 text-white" />
-                </div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-white flex-1 truncate">{outil.titre}</h3>
-                <Badge className="text-[9px] bg-white/20 text-white border-0">Paco — CPO</Badge>
-              </div>
-              {/* Body */}
-              <div className="px-4 py-3 space-y-2">
-                <p className="text-[9px] text-gray-500 line-clamp-2">{outil.description}</p>
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  {outil.tags.map((tag) => (
-                    <span key={tag} className={cn("text-[9px] px-1.5 py-0.5 rounded font-medium", TAG_COLORS[tag] || "bg-gray-100 text-gray-600")}>
-                      {tag}
-                    </span>
-                  ))}
-                  <span className="text-[9px] text-gray-400 ml-auto flex items-center gap-0.5">
-                    <ChevronRight className="h-3.5 w-3.5" />
-                    Lancer
-                  </span>
-                </div>
-              </div>
-            </Card>
-          );
-        })}
+    <div className="space-y-3">
+      {/* TOOLBAR — pattern chantier unifie */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="relative flex-1 min-w-[150px]">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+          <input type="text" placeholder="Rechercher..." value={outilSearch} onChange={e => setOutilSearch(e.target.value)}
+            className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 bg-white" />
+        </div>
+        <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden shrink-0">
+          {([
+            { mode: "cards" as const, icon: LayoutGrid, title: "Cartes" },
+            { mode: "list" as const, icon: List, title: "Liste" },
+            { mode: "spreadsheet" as const, icon: Table2, title: "Tableur" },
+          ]).map(({ mode, icon: MIcon, title }) => (
+            <button key={mode} onClick={() => setOutilViewMode(mode)}
+              className={cn("p-1.5 transition-colors cursor-pointer", outilViewMode === mode ? "bg-blue-600 text-white" : "bg-white text-gray-400 hover:text-gray-600")}
+              title={title}>
+              <MIcon className="h-3.5 w-3.5" />
+            </button>
+          ))}
+        </div>
+        <span className="text-[9px] font-bold text-gray-400">{filteredOutils.length} items</span>
       </div>
+
+      {filteredOutils.length === 0 && (
+        <EmptyState icon={Wrench} text={`Aucun resultat pour "${outilSearch}"`} sub="Modifiez votre recherche" />
+      )}
+
+      {/* CARDS VIEW */}
+      {outilViewMode === "cards" && filteredOutils.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {filteredOutils.map((outil) => {
+            const OIcon = outil.icon;
+            return (
+              <Card key={outil.id} className="p-0 overflow-hidden hover:shadow-md transition-shadow cursor-pointer group"
+                onClick={() => handleToolClick(outil)}>
+                <div className={cn("flex items-center gap-2.5 px-3 py-2 bg-gradient-to-r", outil.color)}>
+                  <div className="w-7 h-7 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
+                    <OIcon className="h-3.5 w-3.5 text-white" />
+                  </div>
+                  <span className="text-[9px] font-bold text-white flex-1 truncate">{outil.titre}</span>
+                  <ChevronRight className="h-3.5 w-3.5 text-white/50 group-hover:text-white transition-colors shrink-0" />
+                </div>
+                <div className="px-3 py-2 space-y-1.5">
+                  <p className="text-[9px] text-gray-500 line-clamp-2">{outil.description}</p>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {outil.tags.map((tag) => (
+                      <span key={tag} className={cn("text-[9px] px-1.5 py-0.5 rounded font-medium", TAG_COLORS[tag] || "bg-gray-100 text-gray-600")}>{tag}</span>
+                    ))}
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {/* LIST VIEW */}
+      {outilViewMode === "list" && filteredOutils.length > 0 && (
+        <div className="space-y-1">
+          {filteredOutils.map((outil) => {
+            const OIcon = outil.icon;
+            return (
+              <div key={outil.id} className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
+                onClick={() => handleToolClick(outil)}>
+                <OIcon className="h-3.5 w-3.5 text-gray-500 shrink-0" />
+                <span className="text-[9px] font-bold flex-1 truncate text-gray-800">{outil.titre}</span>
+                {outil.tags.slice(0, 2).map((tag) => (
+                  <span key={tag} className={cn("text-[9px] px-1.5 py-0.5 rounded font-medium", TAG_COLORS[tag] || "bg-gray-100 text-gray-600")}>{tag}</span>
+                ))}
+                <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 font-medium">Paco</span>
+                <ChevronRight className="h-3.5 w-3.5 text-gray-300 shrink-0" />
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* SPREADSHEET VIEW */}
+      {outilViewMode === "spreadsheet" && filteredOutils.length > 0 && (
+        <div className="border border-gray-200 rounded-lg overflow-hidden overflow-x-auto">
+          <table className="w-full text-[9px] table-fixed">
+            <thead>
+              <tr className="bg-gray-50 border-b border-gray-200">
+                <th className="text-left px-3 py-2 font-bold text-gray-500 uppercase text-[9px] w-[35%]">Outil</th>
+                <th className="text-left px-2 py-2 font-bold text-gray-500 uppercase text-[9px] w-[35%]">Description</th>
+                <th className="text-left px-2 py-2 font-bold text-gray-500 uppercase text-[9px] w-[15%]">Tags</th>
+                <th className="text-left px-2 py-2 font-bold text-gray-500 uppercase text-[9px] w-[15%]">Bot</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredOutils.map((outil) => (
+                <tr key={outil.id} className="border-b border-gray-100 hover:bg-blue-50/30 cursor-pointer transition-colors"
+                  onClick={() => handleToolClick(outil)}>
+                  <td className="px-3 py-2 font-medium text-gray-800 truncate">{outil.titre}</td>
+                  <td className="px-2 py-2 text-gray-500 truncate">{outil.description.slice(0, 80)}</td>
+                  <td className="px-2 py-2">
+                    <div className="flex gap-1 flex-wrap">{outil.tags.map(tag => (
+                      <span key={tag} className={cn("px-1.5 py-0.5 rounded font-medium", TAG_COLORS[tag] || "bg-gray-100 text-gray-600")}>{tag}</span>
+                    ))}</div>
+                  </td>
+                  <td className="px-2 py-2"><span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 font-medium">Paco</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
@@ -2573,6 +2636,8 @@ export function MonBureauView() {
     switch (activeEspaceSection) {
       case "idees":
         return <IdeesPage />;
+      case "discussions":
+        return <DiscussionView />;
       case "documents":
         return <DocumentsPage />;
       case "outils":

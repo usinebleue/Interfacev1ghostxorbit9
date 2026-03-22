@@ -31,50 +31,8 @@ import type {
 } from "./types";
 
 // Options contextuelles par defaut — arbre de developpement de la pensee (wireframe p.3)
-const DEFAULT_OPTIONS_BY_AGENT: Record<string, string[]> = {
-  CEOB: [
-    "Approfondir cette idee",
-    "Voir les implications financieres",
-    "Quelles sont les prochaines etapes?",
-    "Challenger cette approche",
-  ],
-  CTOB: [
-    "Details techniques",
-    "Options d'integration",
-    "Risques et mitigation",
-    "Timeline de mise en oeuvre",
-  ],
-  CFOB: [
-    "Analyse de ROI",
-    "Scenarios budgetaires",
-    "Sources de financement",
-    "Impact sur le cash flow",
-  ],
-  CMOB: [
-    "Strategie de contenu",
-    "Ciblage et personas",
-    "KPIs et mesure",
-    "Plan d'execution",
-  ],
-  CSOB: [
-    "Analyse concurrentielle",
-    "Opportunites de marche",
-    "Plan d'action strategique",
-    "Risques et contingences",
-  ],
-  COOB: [
-    "Optimisation du process",
-    "Ressources necessaires",
-    "Indicateurs de performance",
-    "Plan d'amelioration continue",
-  ],
-};
-const FALLBACK_OPTIONS = [
-  "Approfondir ce sujet",
-  "Explorer une autre piste",
-  "Quelles sont les options?",
-  "Passer a l'action",
-];
+// Options hardcodées RETIRÉES — le backend drive les suggestions via msg.options
+// Si le backend n'envoie pas d'options, on n'affiche RIEN (pas de random générique)
 
 // ── Mode de reflexion live — config par mode ──
 
@@ -407,6 +365,11 @@ export function useChat() {
   const [activeThreadId, setActiveThreadIdRaw] = useState<string | null>(() => loadActiveThreadId());
   // Roster de bots actifs — max 3, CarlOS en défaut
   const [activeRoster, setActiveRoster] = useState<string[]>(["CEOB"]);
+  // CREDO phase — synced from backend responses
+  const [lastCREDOPhase, setLastCREDOPhase] = useState<string | null>(null);
+  // Sprint Discussion 1 — exchange count + product flag for phase-gating
+  const [exchangeCount, setExchangeCount] = useState(0);
+  const [hasProduct, setHasProduct] = useState(false);
   const idCounter = useRef(0);
   const hasAutoRestored = useRef(false);
 
@@ -661,6 +624,13 @@ export function useChat() {
               );
             },
             onDone: (data: StreamDoneEvent) => {
+              // Sync CREDO phase from backend
+              const backendPhase = data.bubble_context?.credo_phase || data.phase_credo;
+              if (backendPhase) setLastCREDOPhase(backendPhase);
+              // Sprint Discussion 1 — sync exchange_count + has_product
+              if (data.exchange_count !== undefined) setExchangeCount(data.exchange_count);
+              if (data.has_product !== undefined) setHasProduct(data.has_product);
+
               // Final update with all metadata
               let cleanText = data.response;
               let parsedOptions: string[] = [];
@@ -673,12 +643,8 @@ export function useChat() {
                 parsedOptions = parsed.parsedOptions;
               }
 
-              const agentOptions = DEFAULT_OPTIONS_BY_AGENT[agent || "CEOB"];
-              const options = parsedOptions.length > 0
-                ? parsedOptions
-                : msgType === "synthesis"
-                  ? ["Cristalliser le resultat", "Passer au Cahier SMART", "Continuer l'exploration"]
-                  : modeConf.options.length > 0 ? modeConf.options : (agentOptions || FALLBACK_OPTIONS);
+              // Options: backend explicit > parsed du texte > rien (pas de defaults hardcodés)
+              const options = parsedOptions.length > 0 ? parsedOptions : undefined;
 
               // Filtrer les canvas_actions pour enlever les meta-actions (phase_update)
               const visibleActions = (data.canvas_actions || []).filter(
@@ -695,7 +661,7 @@ export function useChat() {
                         ghost: data.ghost_actif,
                         tier: data.tier,
                         latence_ms: data.latence_ms,
-                        options,
+                        options: options || undefined,
                         isStreaming: false,
                         canvasActions: visibleActions.length > 0 ? visibleActions : undefined,
                         isDiagnostic: data.is_diagnostic || false,
@@ -710,7 +676,9 @@ export function useChat() {
               streamingMsgId.current = null;
 
               // Canvas Actions — dispatch vers le bus
-              if (data.canvas_actions && data.canvas_actions.length > 0 && canvasActionsCallbackRef.current) {
+              // GUARD: Pas de canvas actions pendant une discussion (cause des pop-ups + switch de département non voulus)
+              const isInChat = meta?.activeView === "live-chat" || !meta?.activeView;
+              if (data.canvas_actions && data.canvas_actions.length > 0 && canvasActionsCallbackRef.current && !isInChat) {
                 canvasActionsCallbackRef.current(data.canvas_actions);
               }
 
@@ -738,31 +706,10 @@ export function useChat() {
                   }
                 });
 
-                if (modeConf.autoConsultBots.length > 0 && msgType === "normal") {
-                  const firstAutoBot = modeConf.autoConsultBots[0];
-                  if (firstAutoBot && firstAutoBot !== agent) {
-                    setTimeout(async () => {
-                      try {
-                        const autoReq: ChatRequest = { message: text, user_id: 1, agent: firstAutoBot, mode: mode || undefined, direct: true };
-                        const autoRes = await api.chat(autoReq);
-                        const autoMsg: ChatMessage = {
-                          id: `msg-${++idCounter.current}`,
-                          role: "assistant",
-                          content: autoRes.response,
-                          timestamp: new Date(),
-                          agent: autoRes.agent,
-                          ghost: autoRes.ghost_actif,
-                          tier: autoRes.tier,
-                          latence_ms: autoRes.latence_ms,
-                          options: modeConf.options,
-                          msgType: "consultation",
-                          branchLabel: `Auto-consultation — ${firstAutoBot}`,
-                          branchDepth: 1,
-                        };
-                        setMessages((prev) => [...prev, autoMsg]);
-                      } catch { /* silent fail on auto-consult */ }
-                    }, 1500);
-                  }
+                // Auto-consult DÉSACTIVÉ — Carl: "les bots doivent être coordonnés, pas en parallèle automatique"
+                // Le user choisit manuellement qui consulter via le bouton Consulter
+                if (false && modeConf.autoConsultBots.length > 0 && msgType === "normal") {
+                  // ... code gardé mais désactivé
                 }
               } else if (botCount >= modeConf.maxExchanges) {
                 setTimeout(() => {
@@ -856,12 +803,8 @@ export function useChat() {
             parsedOptions = parsed.parsedOptions;
           }
 
-          const agentOptions = DEFAULT_OPTIONS_BY_AGENT[agent || "CEOB"];
-          const options = parsedOptions.length > 0
-            ? parsedOptions
-            : msgType === "synthesis"
-              ? ["Cristalliser le resultat", "Passer au Cahier SMART", "Continuer l'exploration"]
-              : modeConf.options.length > 0 ? modeConf.options : (agentOptions || FALLBACK_OPTIONS);
+          // Options: backend explicit > parsed du texte > rien
+          const options = parsedOptions.length > 0 ? parsedOptions : undefined;
 
           setMessages((prev) =>
             prev.map((m) =>
@@ -873,7 +816,7 @@ export function useChat() {
                     ghost: res.ghost_actif,
                     tier: res.tier,
                     latence_ms: res.latence_ms,
-                    options,
+                    options: options || undefined,
                     isStreaming: false,
                     isDiagnostic: res.is_diagnostic || false,
                     cascadeSuggestions: res.cascade_suggestions?.length ? res.cascade_suggestions : undefined,
@@ -1156,6 +1099,11 @@ export function useChat() {
     [] // pas de dépendances — utilise setters fonctionnels uniquement
   );
 
+  // Sprint 2 — rename thread title
+  const renameThread = useCallback((threadId: string, newTitle: string) => {
+    setThreads((prev) => prev.map((t) => t.id === threadId ? { ...t, title: newTitle } : t));
+  }, []);
+
   return {
     messages,
     isTyping,
@@ -1171,12 +1119,18 @@ export function useChat() {
     resumeThread,
     completeThread,
     deleteThread,
+    renameThread,
     setCanvasActionsCallback,
     // Chef d'Orchestre
     activeRoster,
     addBotToRoster,
     removeBotFromRoster,
     acceptTeamProposal,
+    // CREDO phase synced from backend
+    lastCREDOPhase,
+    // Sprint Discussion 1 — phase-gating data
+    exchangeCount,
+    hasProduct,
   };
 }
 
@@ -2510,6 +2464,114 @@ export function useUnifiedTemplates() {
   useEffect(() => { refresh(); }, [refresh]);
 
   return { templates, categories, departements, loading, refresh, deptLabels: DEPT_LABELS };
+}
+
+// --- useUnifiedCatalogue — Combine templates + playbooks + diagnostics en 1 source ---
+
+export type CatalogueItemType = "template" | "playbook" | "diagnostic";
+
+export interface UnifiedCatalogueItem {
+  id: string;
+  titre: string;
+  description?: string;
+  type: CatalogueItemType;
+  categorie?: string;
+  departement?: string;
+  bot_recommande?: string;
+  bots?: string[];
+  sections?: unknown[];
+  nb_sections?: number;
+  pages_estimees?: number;
+  nb_questions?: number;
+  nb_projets?: number;
+  nb_missions?: number;
+  niveau?: string;
+  duree_minutes?: number;
+  frequence?: string;
+  populaire?: boolean;
+  // Payload original pour l'action au clic
+  _raw: unknown;
+}
+
+export function useUnifiedCatalogue(deptFilter?: string) {
+  const [items, setItems] = useState<UnifiedCatalogueItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(() => {
+    setLoading(true);
+    const deptQs = deptFilter ? `?departement=${deptFilter}` : "";
+    Promise.all([
+      api.listTemplatesDocumentaires().catch(() => []),
+      api.listPlaybooks().catch(() => []),
+      api.listDiagnosticsEnrichis(deptFilter).catch(() => []),
+    ]).then(([templates, playbooks, diagnostics]) => {
+      const unified: UnifiedCatalogueItem[] = [];
+
+      // Templates documentaires (141+)
+      for (const t of (templates || []) as any[]) {
+        unified.push({
+          id: `tpl-${t.id}`,
+          titre: t.titre,
+          description: t.description,
+          type: "template",
+          categorie: t.categorie,
+          departement: t.departement,
+          bot_recommande: t.departement,
+          sections: t.sections,
+          nb_sections: t.sections?.length,
+          pages_estimees: t.pages_estimees,
+          frequence: t.frequence,
+          _raw: t,
+        });
+      }
+
+      // Playbooks (29)
+      for (const p of (playbooks || []) as any[]) {
+        unified.push({
+          id: `pb-${p.id}`,
+          titre: p.titre || p.nom,
+          description: p.description,
+          type: "playbook",
+          categorie: p.categorie,
+          departement: p.departement,
+          bots: p.bots,
+          nb_projets: p.nb_projets,
+          nb_missions: p.nb_missions,
+          niveau: p.niveau,
+          populaire: p.populaire,
+          _raw: p,
+        });
+      }
+
+      // Diagnostics enrichis (43)
+      for (const d of (diagnostics || []) as any[]) {
+        unified.push({
+          id: `diag-${d.id}`,
+          titre: d.titre || d.nom,
+          description: d.description,
+          type: "diagnostic",
+          categorie: d.categorie,
+          departement: d.departement,
+          bot_recommande: d.bot_primaire,
+          nb_questions: d.nb_questions,
+          duree_minutes: d.duree_minutes,
+          _raw: d,
+        });
+      }
+
+      // Filter by department if needed
+      const result = deptFilter
+        ? unified.filter(i => !i.departement || i.departement === deptFilter || (i.bots && i.bots.includes(deptFilter)))
+        : unified;
+
+      setItems(result);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, [deptFilter]);
+
+  useEffect(() => { refresh(); }, [refresh]);
+
+  return { items, loading, refresh };
 }
 
 export function useDocForgeLibrary(libraryId: number | null) {

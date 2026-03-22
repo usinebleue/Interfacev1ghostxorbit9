@@ -200,8 +200,16 @@ export function CenterZone() {
   // --- Consommer les canvas actions navigate ---
   // Utilise navigateAction (state dedie) au lieu de lastAction
   // pour survivre au batching React quand plusieurs actions arrivent ensemble
+  // GUARD: Si on est dans live-chat, ne PAS auto-naviguer ailleurs (fix S65 — Carl 12h01)
   useEffect(() => {
     if (!navigateAction || !navigateAction.view) return;
+    // Quand l'user est dans le chat, bloquer la navigation automatique
+    // pour éviter les switch de bot/département non voulus
+    if (activeView === "live-chat" && navigateAction.view !== "live-chat") {
+      clearNavigateAction();
+      consumeNext();
+      return;
+    }
     const params = navigateAction.params as Record<string, unknown> | undefined;
     const botCode = params?.bot as string | undefined;
     if (botCode && (navigateAction.view === "department" || navigateAction.view === "detail")) {
@@ -211,7 +219,7 @@ export function CenterZone() {
     }
     clearNavigateAction();
     consumeNext();
-  }, [navigateAction, setActiveView, navigateToDepartment, clearNavigateAction, consumeNext]);
+  }, [navigateAction, activeView, setActiveView, navigateToDepartment, clearNavigateAction, consumeNext]);
 
   // Sync activeBotCode quand Focus Mode est dispatché avec un bot spécifique (fix bot-switch bug)
   useEffect(() => {
@@ -345,9 +353,19 @@ export function CenterZone() {
         </div>
       )}
 
-      {/* Vue principale — Priority 1: Focus Mode, Priority 2: split-screen, Priority 3: normal */}
+      {/* Vue principale — Priority 1: Split screen (production), Priority 2: Focus Mode, Priority 3: normal */}
       <div className="flex-1 overflow-hidden flex">
-        {focusData ? (
+        {focusData && (focusData.elementType === "document_editor" || focusData.elementType === "docforge_library") ? (
+          /* ── Split Screen 50/50: Discussion GAUCHE + Production DROITE ── */
+          <div className="flex-1 overflow-hidden flex">
+            <div className="w-1/2 overflow-hidden border-r">
+              <LiveChat />
+            </div>
+            <div className="w-1/2 overflow-hidden">
+              <FocusModeLayout focusData={focusData} onClose={clearFocusMode} />
+            </div>
+          </div>
+        ) : focusData ? (
           /* ── Focus Mode: element ancre plein canvas (chat dans sidebar) ── */
           <div className="flex-1 overflow-hidden">
             <FocusModeLayout focusData={focusData} onClose={clearFocusMode} />
@@ -360,7 +378,8 @@ export function CenterZone() {
       </div>
 
       {/* Overlay: Push Content Panel — Actif pour Dev Channel (Claude Code → Carl) */}
-      {pushedContent && !focusData && (
+      {/* Supprimé en live-chat pour éviter les popups non voulus (fix S65) */}
+      {pushedContent && !focusData && activeView !== "live-chat" && (
         <div className={cn(
           "absolute top-12 right-3 z-50 w-80 max-h-[60vh] animate-in slide-in-from-right-4 duration-300",
           pinnedContent ? "opacity-100" : "opacity-95 hover:opacity-100"
