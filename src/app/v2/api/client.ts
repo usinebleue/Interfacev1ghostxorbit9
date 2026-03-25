@@ -93,6 +93,7 @@ export interface StreamDoneEvent {
   canvas_actions?: CanvasAction[];
   team_proposal?: TeamProposal | null;
   is_diagnostic?: boolean;
+  is_code_task?: boolean;
   // D-101 — GPS du Flow
   flow_type?: "data" | "action" | null;
   flow_step?: string | null;

@@ -677,8 +677,17 @@ export function useChat() {
 
               // Canvas Actions — dispatch vers le bus
               // GUARD: Pas de canvas actions pendant une discussion (cause des pop-ups + switch de département non voulus)
+              // EXCEPTION: is_code_task bypass le guard — CarlOS delegue a Claude Code
               const isInChat = meta?.activeView === "live-chat" || !meta?.activeView;
-              if (data.canvas_actions && data.canvas_actions.length > 0 && canvasActionsCallbackRef.current && !isInChat) {
+              if (data.is_code_task && data.canvas_actions?.length && canvasActionsCallbackRef.current) {
+                const codeAction = data.canvas_actions.find(a => a.view === "carlos-codes");
+                if (codeAction?.data) {
+                  const taskId = (codeAction.data as Record<string, string>).task_id;
+                  localStorage.setItem("carlos-codes-active-task", taskId);
+                  localStorage.setItem("carlos-codes-active-desc", data.response || "");
+                }
+                canvasActionsCallbackRef.current(data.canvas_actions);
+              } else if (data.canvas_actions && data.canvas_actions.length > 0 && canvasActionsCallbackRef.current && !isInChat) {
                 canvasActionsCallbackRef.current(data.canvas_actions);
               }
 

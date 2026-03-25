@@ -5,7 +5,7 @@
  * Sprint B — CarlOS Noyau Omnipresent (D-081)
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   X,
   FileText,
@@ -233,6 +233,27 @@ export function CenterZone() {
     if (focusData) clearFocusMode();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeView]);
+
+  // --- Vision lunettes → auto-navigate CarlosCodesView quand code task detectee ---
+  const lastDevTaskRef = useRef<string>("");
+  useEffect(() => {
+    const API_KEY = import.meta.env.VITE_API_KEY || "";
+    const checkDevLive = async () => {
+      try {
+        const res = await fetch("/api/v1/dev/live", { headers: { "X-API-Key": API_KEY } });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.code_task_id && data.code_task_id !== lastDevTaskRef.current) {
+          lastDevTaskRef.current = data.code_task_id;
+          localStorage.setItem("carlos-codes-active-task", data.code_task_id);
+          localStorage.setItem("carlos-codes-active-desc", data.stage || "");
+          setActiveView("carlos-codes");
+        }
+      } catch { /* noop */ }
+    };
+    const interval = setInterval(checkDevLive, 5000);
+    return () => clearInterval(interval);
+  }, [setActiveView]);
 
   const handleStartChat = (_mode: string) => {
     // Chat is now always visible in sidebar — just signal the canvas

@@ -18,7 +18,7 @@ export type BlueprintLiveSection = "live" | "hub" | "pipeline";
 export type EntrepriseSection = "blueprint" | "dashboard" | "ressources" | "sante";
 export type BlueprintSubTab = "sommaire" | "objectifs" | "chantiers";
 export type EquipeSection = "humains" | "bots" | "composition" | "roles" | "performance";
-export type BureauSection = "blueprint-perso" | "taches" | "documents" | "agenda" | "discussions" | "notifications";
+export type BureauSection = "blueprint-perso" | "taches" | "documents" | "agenda" | "discussions" | "notifications" | "claude-code";
 
 export type DiscussionTab = "overview" | "timeline" | "chantiers" | "projets" | "missions" | "taches" | "opportunites" | "equipes" | "discussions";
 
@@ -176,6 +176,11 @@ export function FrameMasterProvider({
 
   const navigateBureau = useCallback((section: BureauSection) => {
     setActiveBureauSection(section);
+    // Claude Code → vue dédiée CarlosCodesView
+    if (section === "claude-code") {
+      setActiveView("carlos-codes");
+      return;
+    }
     // Synchroniser activeEspaceSection pour les sections partagees
     const bureauToEspace: Record<string, EspaceSection> = {
       "taches": "taches",

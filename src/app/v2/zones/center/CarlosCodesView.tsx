@@ -1,15 +1,15 @@
 /**
- * CarlosCodesView.tsx — Panneau passif de progression CarlOS Codes
- * PAS d'input propre — tout vient du sidebar chat (cerveau unique)
- * Affiche les etapes CREDO en temps reel via SSE + fichiers lus/modifies
- * Se met a jour automatiquement quand une tache code est lancee via le sidebar
+ * CarlosCodesView.tsx — Claude Code intégré dans l'app
+ * Poll /api/v1/dev/live pour messages Vision-Claude (lunettes Ray-Ban → Claude Code)
+ * + tâches locales lancées via sidebar chat (localStorage)
+ * Remplace vision-live.html — tout dans l'app maintenant
  */
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
   CheckCircle2, Clock, FileCode, FolderOpen,
   Eye, Terminal, Code2, Search, Edit3, AlertCircle,
-  ChevronRight, Loader2, MessageSquare,
+  ChevronRight, Loader2, MessageSquare, Activity,
 } from "lucide-react";
 import { Card } from "@/app/components/ui/card";
 import { cn } from "@/app/components/ui/utils";
@@ -36,6 +36,21 @@ interface TaskState {
   plan: string | null;
   error: string | null;
   startedAt?: number;
+}
+
+interface DevMessage {
+  message: string;
+  sender: string;
+  ts: number;
+}
+
+interface DevLiveData {
+  active: boolean;
+  stage: string;
+  messages: DevMessage[];
+  replies: DevMessage[];
+  msg_count: number;
+  reply_count: number;
 }
 
 const STATUS_CONFIG: Record<TaskStatus, { label: string; icon: typeof Clock; color: string }> = {
@@ -67,32 +82,71 @@ function loadSavedTasks(): TaskState[] {
 
 function saveTasks(tasks: TaskState[]) {
   try {
-    // Garder les 20 dernieres
     localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks.slice(-20)));
   } catch { /* noop */ }
 }
 
+function formatElapsed(startTs: number): string {
+  const secs = Math.floor((Date.now() - startTs) / 1000);
+  if (secs < 60) return `${secs}s`;
+  const mins = Math.floor(secs / 60);
+  const rem = secs % 60;
+  return `${mins}m ${rem}s`;
+}
+
+function formatTime(ts: number): string {
+  const d = new Date(ts * 1000);
+  return d.toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" });
+}
+
 export function CarlosCodesView() {
+  // --- Vision-Claude polling state ---
+  const [devData, setDevData] = useState<DevLiveData | null>(null);
+  const [devError, setDevError] = useState(false);
+  const devPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // --- CarlOS Codes task state (localStorage) ---
   const [task, setTask] = useState<TaskState>({
-    id: null,
-    status: "idle",
-    description: "",
-    actions: [],
-    plan: null,
-    error: null,
+    id: null, status: "idle", description: "", actions: [], plan: null, error: null,
   });
   const [recentTasks, setRecentTasks] = useState<TaskState[]>(() => loadSavedTasks());
   const scrollRef = useRef<HTMLDivElement>(null);
-  const abortRef = useRef<AbortController | null>(null);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Timer tick for elapsed display
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // --- Poll /api/v1/dev/live ---
+  useEffect(() => {
+    const fetchDevLive = async () => {
+      try {
+        const res = await fetch(`${BASE_URL}/dev/live`, {
+          headers: { "X-API-Key": API_KEY },
+        });
+        if (!res.ok) { setDevError(true); return; }
+        const data: DevLiveData = await res.json();
+        setDevData(data);
+        setDevError(false);
+      } catch { setDevError(true); }
+    };
+
+    fetchDevLive();
+    devPollRef.current = setInterval(fetchDevLive, 3000);
+    return () => { if (devPollRef.current) clearInterval(devPollRef.current); };
+  }, []);
+
+  // Auto-scroll when messages change
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [task.actions, task.plan]);
+  }, [devData?.msg_count, task.actions, task.plan]);
 
-  // Ecouter les taches lancees depuis le sidebar chat (via localStorage event)
+  // --- CarlOS Codes task from localStorage ---
   useEffect(() => {
     const checkForNewTask = () => {
       try {
@@ -102,32 +156,22 @@ export function CarlosCodesView() {
             id: activeTaskId,
             status: "connecting",
             description: localStorage.getItem("carlos-codes-active-desc") || "",
-            actions: [],
-            plan: null,
-            error: null,
-            startedAt: Date.now(),
+            actions: [], plan: null, error: null, startedAt: Date.now(),
           });
           pollTaskStatus(activeTaskId);
         }
       } catch { /* noop */ }
     };
 
-    // Check on mount and listen for storage changes
     checkForNewTask();
     const handleStorage = (e: StorageEvent) => {
       if (e.key === "carlos-codes-active-task") checkForNewTask();
     };
     window.addEventListener("storage", handleStorage);
-
-    // Also poll every 3s for same-tab changes
     const interval = setInterval(checkForNewTask, 3000);
-    return () => {
-      window.removeEventListener("storage", handleStorage);
-      clearInterval(interval);
-    };
+    return () => { window.removeEventListener("storage", handleStorage); clearInterval(interval); };
   }, [task.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Sauvegarder les taches quand elles sont done/error
   useEffect(() => {
     if (task.id && (task.status === "done" || task.status === "error")) {
       setRecentTasks((prev) => {
@@ -138,10 +182,8 @@ export function CarlosCodesView() {
     }
   }, [task.status, task.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Poll task status via REST (plus simple que SSE pour un panneau passif)
   const pollTaskStatus = useCallback((taskId: string) => {
     if (pollingRef.current) clearInterval(pollingRef.current);
-
     const poll = async () => {
       try {
         const res = await fetch(`${BASE_URL}/codes/task/${taskId}`, {
@@ -156,43 +198,30 @@ export function CarlosCodesView() {
           plan: data.plan || data.summary || prev.plan,
           error: data.error || null,
           actions: (data.actions || []).map((a: CodeAction) => ({
-            type: a.type,
-            path: a.path,
-            command: a.command,
-            status: a.status,
-            result: a.result,
+            type: a.type, path: a.path, command: a.command, status: a.status, result: a.result,
           })),
         }));
         if (data.status === "done" || data.status === "error") {
           if (pollingRef.current) clearInterval(pollingRef.current);
-          // Nettoyer le localStorage
           localStorage.removeItem("carlos-codes-active-task");
           localStorage.removeItem("carlos-codes-active-desc");
         }
       } catch { /* noop */ }
     };
-
-    poll(); // premier poll immediat
+    poll();
     pollingRef.current = setInterval(poll, 2000);
-
-    // Auto-stop apres 10 min
-    setTimeout(() => {
-      if (pollingRef.current) clearInterval(pollingRef.current);
-    }, 600000);
+    setTimeout(() => { if (pollingRef.current) clearInterval(pollingRef.current); }, 600000);
   }, []);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
-      if (abortRef.current) abortRef.current.abort();
     };
   }, []);
 
   const currentStep = CREDO_STEPS.findIndex((s) => s.id === task.status);
-  const statusCfg = STATUS_CONFIG[task.status];
-  const StatusIcon = statusCfg.icon;
-  const isRunning = !["idle", "done", "error"].includes(task.status);
+  const hasDevMessages = devData && devData.messages.length > 0;
+  const allMessages = devData?.messages || [];
 
   return (
     <div className="h-full flex flex-col">
@@ -201,121 +230,205 @@ export function CarlosCodesView() {
         <div className="flex items-center gap-3">
           <Code2 className="w-6 h-6 text-white" />
           <div>
-            <h1 className="text-xl font-semibold text-white">CarlOS Codes</h1>
-            <p className="text-sm text-white/80 mt-0.5">Progression des taches de code — lance via le chat CarlOS</p>
+            <h1 className="text-xl font-semibold text-white">Claude Code</h1>
+            <p className="text-sm text-white/80 mt-0.5">Vision-Claude + taches de code en temps reel</p>
           </div>
+          {devData && (
+            <div className={cn(
+              "ml-auto flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium",
+              devData.active ? "bg-green-400/20 text-green-100" : "bg-white/10 text-white/60"
+            )}>
+              <Activity className={cn("w-3 h-3", devData.active && "animate-pulse")} />
+              {devData.active ? "Actif" : "Inactif"}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* CREDO Progress bar */}
-      <div className="px-10 py-3 border-b border-gray-100 bg-white">
-        <div className="flex items-center gap-1">
-          {CREDO_STEPS.map((step, i) => {
-            const isDone = currentStep > i;
-            const isActive = currentStep === i;
-            return (
-              <div key={step.id} className="flex items-center">
-                <div
-                  className={cn(
-                    "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all",
-                    isDone ? "bg-green-100 text-green-700" :
-                    isActive ? "bg-blue-100 text-blue-700 ring-1 ring-blue-300" :
-                    "bg-gray-50 text-gray-400"
+      {/* CREDO Progress bar — only visible when a code task is running */}
+      {task.status !== "idle" && (
+        <div className="px-10 py-3 border-b border-gray-100 bg-white">
+          <div className="flex items-center gap-1">
+            {CREDO_STEPS.map((step, i) => {
+              const isDone = currentStep > i;
+              const isActive = currentStep === i;
+              return (
+                <div key={step.id} className="flex items-center">
+                  <div
+                    className={cn(
+                      "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all",
+                      isDone ? "bg-green-100 text-green-700" :
+                      isActive ? "bg-blue-100 text-blue-700 ring-1 ring-blue-300" :
+                      "bg-gray-50 text-gray-400"
+                    )}
+                  >
+                    {isDone ? (
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                    ) : isActive ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <span className="font-bold">{step.letter}</span>
+                    )}
+                    <span className="hidden sm:inline">{step.label}</span>
+                  </div>
+                  {i < CREDO_STEPS.length - 1 && (
+                    <ChevronRight className="w-3.5 h-3.5 text-gray-300 mx-0.5" />
                   )}
-                >
-                  {isDone ? (
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                  ) : isActive ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <span className="font-bold">{step.letter}</span>
-                  )}
-                  <span className="hidden sm:inline">{step.label}</span>
                 </div>
-                {i < CREDO_STEPS.length - 1 && (
-                  <ChevronRight className="w-3.5 h-3.5 text-gray-300 mx-0.5" />
-                )}
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Status bar — active dev task */}
+      {devData?.active && devData.stage && (
+        <div className="px-10 py-2.5 border-b border-gray-100 bg-orange-50">
+          <div className="flex items-center gap-2 text-sm">
+            <Loader2 className="w-4 h-4 text-orange-500 animate-spin shrink-0" />
+            <span className="text-orange-700 font-medium truncate">{devData.stage}</span>
+          </div>
+        </div>
+      )}
 
       {/* Main content */}
       <div ref={scrollRef} className="flex-1 px-10 py-5 overflow-y-auto">
         <div className="max-w-4xl mx-auto space-y-4">
-          {/* Status badge */}
-          {task.status !== "idle" && (
-            <div className={cn("flex items-center gap-2 text-sm", statusCfg.color)}>
-              <StatusIcon className={cn("w-4 h-4", isRunning && "animate-pulse")} />
-              <span className="font-medium">{statusCfg.label}</span>
-              {task.description && (
-                <span className="text-gray-500">— {task.description}</span>
-              )}
+
+          {/* Vision-Claude Messages feed */}
+          {hasDevMessages && (
+            <div className="space-y-3">
+              <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                Messages ({allMessages.length})
+              </h3>
+              {allMessages.map((msg, i) => {
+                const isCarl = msg.sender === "carl";
+                return (
+                  <div key={i} className={cn("flex", isCarl ? "justify-start" : "justify-end")}>
+                    <div className={cn(
+                      "max-w-[80%] rounded-xl px-4 py-2.5 text-sm",
+                      isCarl
+                        ? "bg-gray-100 text-gray-800 rounded-bl-sm"
+                        : "bg-blue-600 text-white rounded-br-sm"
+                    )}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={cn(
+                          "text-[9px] font-semibold",
+                          isCarl ? "text-gray-500" : "text-blue-200"
+                        )}>
+                          {isCarl ? "Carl" : "Claude"}
+                        </span>
+                        <span className={cn(
+                          "text-[9px]",
+                          isCarl ? "text-gray-400" : "text-blue-300"
+                        )}>
+                          {formatTime(msg.ts)}
+                        </span>
+                      </div>
+                      <p className="whitespace-pre-wrap break-words leading-relaxed">{msg.message}</p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
 
-          {/* Empty state — pas d'input, pointer vers le sidebar */}
-          {task.status === "idle" && recentTasks.length === 0 && (
+          {/* CarlOS Code task status */}
+          {task.status !== "idle" && (
+            <>
+              {/* Status badge + timer */}
+              <div className="flex items-center gap-2 text-sm">
+                {(() => {
+                  const cfg = STATUS_CONFIG[task.status];
+                  const Icon = cfg.icon;
+                  const isRunning = !["idle", "done", "error"].includes(task.status);
+                  return (
+                    <>
+                      <Icon className={cn("w-4 h-4", cfg.color, isRunning && "animate-pulse")} />
+                      <span className={cn("font-medium", cfg.color)}>{cfg.label}</span>
+                      {task.description && <span className="text-gray-500">— {task.description}</span>}
+                      {isRunning && task.startedAt && (
+                        <span className="ml-auto text-xs text-gray-400 flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {formatElapsed(task.startedAt)}
+                        </span>
+                      )}
+                    </>
+                  );
+                })()}
+              </div>
+
+              {/* Plan */}
+              {task.plan && task.status !== "done" && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Eye className="w-4 h-4 text-amber-600" />
+                    <span className="text-xs font-medium text-amber-700">Plan en cours</span>
+                  </div>
+                  <p className="whitespace-pre-wrap break-words text-gray-700">{task.plan}</p>
+                </div>
+              )}
+
+              {/* Done summary */}
+              {task.plan && task.status === "done" && (
+                <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm">
+                  <div className="flex items-center gap-2 mb-1">
+                    <CheckCircle2 className="w-4 h-4 text-green-600" />
+                    <span className="text-xs font-medium text-green-700">Resultat</span>
+                  </div>
+                  <p className="whitespace-pre-wrap break-words text-gray-700">{task.plan}</p>
+                </div>
+              )}
+
+              {/* Actions log */}
+              {task.actions.length > 0 && (
+                <div className="space-y-2">
+                  <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wide">Actions ({task.actions.length})</h3>
+                  {task.actions.map((action, i) => (
+                    <div key={i} className="flex items-center gap-2 text-xs text-gray-600 bg-gray-50 rounded-lg px-3 py-2">
+                      {action.type === "read_file" && <FileCode className="w-3.5 h-3.5 text-blue-500 shrink-0" />}
+                      {action.type === "write_file" && <FileCode className="w-3.5 h-3.5 text-green-500 shrink-0" />}
+                      {action.type === "edit_file" && <Edit3 className="w-3.5 h-3.5 text-amber-500 shrink-0" />}
+                      {(action.type === "glob_search" || action.type === "grep_search") && <Search className="w-3.5 h-3.5 text-purple-500 shrink-0" />}
+                      {action.type === "bash_command" && <Terminal className="w-3.5 h-3.5 text-green-600 shrink-0" />}
+                      <span className="font-mono truncate">{action.path || action.command || action.type}</span>
+                      {action.status === "done" && <CheckCircle2 className="w-3.5 h-3.5 text-green-500 ml-auto shrink-0" />}
+                      {action.status === "running" && <Loader2 className="w-3.5 h-3.5 text-blue-500 ml-auto shrink-0 animate-spin" />}
+                      {action.status === "error" && <AlertCircle className="w-3.5 h-3.5 text-red-500 ml-auto shrink-0" />}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Error */}
+              {task.error && (
+                <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+                  <AlertCircle className="w-4 h-4 inline mr-2" />
+                  {task.error}
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Empty state */}
+          {task.status === "idle" && !hasDevMessages && recentTasks.length === 0 && (
             <Card className="p-6 text-center border-dashed">
-              <MessageSquare className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-              <p className="text-sm font-medium text-gray-700">Aucune tache en cours</p>
+              <Code2 className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+              <p className="text-sm font-medium text-gray-700">Aucune activite Claude Code</p>
               <p className="text-xs text-gray-500 mt-1">
-                Demande a CarlOS de coder dans le chat a droite.
+                Les messages Vision-Claude et les taches de code apparaitront ici en temps reel.
               </p>
               <p className="text-xs text-gray-400 mt-2">
-                Exemples: "Ajoute un endpoint /health-detail", "Lis api_rest.py", "Refactorise cette fonction"
+                Sources: lunettes Ray-Ban Meta + commandes dans le chat CarlOS
               </p>
             </Card>
           )}
 
-          {/* Real-time plan display */}
-          {task.plan && task.status !== "done" && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm">
-              <div className="flex items-center gap-2 mb-1">
-                <Eye className="w-4 h-4 text-amber-600" />
-                <span className="text-xs font-medium text-amber-700">Plan en cours</span>
-              </div>
-              <p className="whitespace-pre-wrap break-words text-gray-700">{task.plan}</p>
-            </div>
-          )}
-
-          {/* Done summary */}
-          {task.plan && task.status === "done" && (
-            <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm">
-              <div className="flex items-center gap-2 mb-1">
-                <CheckCircle2 className="w-4 h-4 text-green-600" />
-                <span className="text-xs font-medium text-green-700">Resultat</span>
-              </div>
-              <p className="whitespace-pre-wrap break-words text-gray-700">{task.plan}</p>
-            </div>
-          )}
-
-          {/* Actions log */}
-          {task.actions.length > 0 && (
-            <div className="space-y-2">
-              <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wide">Actions ({task.actions.length})</h3>
-              {task.actions.map((action, i) => (
-                <div key={i} className="flex items-center gap-2 text-xs text-gray-600 bg-gray-50 rounded-lg px-3 py-2">
-                  {action.type === "read_file" && <FileCode className="w-3.5 h-3.5 text-blue-500 shrink-0" />}
-                  {action.type === "write_file" && <FileCode className="w-3.5 h-3.5 text-green-500 shrink-0" />}
-                  {action.type === "edit_file" && <Edit3 className="w-3.5 h-3.5 text-amber-500 shrink-0" />}
-                  {(action.type === "glob_search" || action.type === "grep_search") && <Search className="w-3.5 h-3.5 text-purple-500 shrink-0" />}
-                  {action.type === "bash_command" && <Terminal className="w-3.5 h-3.5 text-green-600 shrink-0" />}
-                  <span className="font-mono truncate">{action.path || action.command || action.type}</span>
-                  {action.status === "done" && <CheckCircle2 className="w-3.5 h-3.5 text-green-500 ml-auto shrink-0" />}
-                  {action.status === "running" && <Loader2 className="w-3.5 h-3.5 text-blue-500 ml-auto shrink-0 animate-spin" />}
-                  {action.status === "error" && <AlertCircle className="w-3.5 h-3.5 text-red-500 ml-auto shrink-0" />}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Error */}
-          {task.error && (
-            <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
-              <AlertCircle className="w-4 h-4 inline mr-2" />
-              {task.error}
+          {/* Dev connection error */}
+          {devError && (
+            <div className="flex items-center gap-2 text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
+              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+              <span>Connexion au canal dev interrompue — nouvelle tentative dans 3s</span>
             </div>
           )}
 
@@ -341,11 +454,11 @@ export function CarlosCodesView() {
         </div>
       </div>
 
-      {/* Footer — pas d'input, indication que tout passe par le sidebar */}
+      {/* Footer */}
       <div className="px-10 py-3 border-t border-gray-100 bg-gray-50">
         <div className="max-w-4xl mx-auto flex items-center justify-center gap-2 text-xs text-gray-400">
           <MessageSquare className="w-3.5 h-3.5" />
-          <span>Les taches de code se lancent via le chat CarlOS (sidebar droite)</span>
+          <span>Vision-Claude (lunettes) + chat CarlOS — tout converge ici</span>
         </div>
       </div>
     </div>
