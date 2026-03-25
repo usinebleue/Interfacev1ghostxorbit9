@@ -1,6 +1,6 @@
 /**
  * SidebarLeft.tsx — Sidebar gauche Plan V6
- * 5 espaces: Mon Entreprise, Mon Bureau, Mes Salles, Mon Equipe, Mon Reseau
+ * 4 espaces: Mon Departement, Mes Salles, Mon Equipe, Mon Reseau
  * + Master GHML (reference, collapsed en bas)
  * Sprint F1 — Reorganisation Navigation
  */
@@ -9,7 +9,7 @@ import { ScrollArea } from "../../../components/ui/scroll-area";
 import { Separator } from "../../../components/ui/separator";
 import { useFrameMaster } from "../../context/FrameMasterContext";
 import { SectionMonEntreprise } from "./SectionMonEntreprise";
-import { SectionMonBureau } from "./SectionMonBureau";
+// SectionMonBureau retirée — contenu absorbé dans les tabs département
 import { SectionMesSalles } from "./SectionMesSalles";
 import { SectionMonEquipe } from "./SectionMonEquipe";
 import { SectionMonReseau } from "./SectionMonReseau";
@@ -26,8 +26,6 @@ export function SidebarLeft() {
       <ScrollArea className="flex-1 min-h-0">
         <div className="py-2">
           <SectionMonEntreprise collapsed={collapsed} />
-          <Separator className="my-2" />
-          <SectionMonBureau collapsed={collapsed} />
           <Separator className="my-2" />
           <SectionMesSalles collapsed={collapsed} />
           <Separator className="my-2" />

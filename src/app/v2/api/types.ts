@@ -679,7 +679,7 @@ export const BOT_AVATAR: Record<string, string> = {
 // --- Sous-titre par bot (affiche dans le header) ---
 
 export const BOT_SUBTITLE: Record<string, string> = {
-  CEOB: "Tactique — Vue d'ensemble",
+  CEOB: "Direction",
   CTOB: "Technologie & Innovation",
   CFOB: "Finance & Tresorerie",
   CMOB: "Marketing & Croissance",

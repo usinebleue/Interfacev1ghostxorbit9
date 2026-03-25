@@ -94,21 +94,18 @@ export function TopBarLeft() {
 // ═══════════════════════════════════════
 
 export function TopBarCenter() {
-  const { activeView, activeBotCode, setActiveView, navigateToDepartment, navigateEntreprise, navigateEquipe } = useFrameMaster();
+  const { activeView, activeBotCode, setActiveView, navigateToDepartment } = useFrameMaster();
 
   const NAV_ITEMS = [
-    { id: "entreprise", label: "Mon Entreprise", icon: Building2,
-      onClick: () => navigateEntreprise("blueprint"),
-      isActive: activeView === "mon-entreprise" || activeView === "blueprint" || activeView === "cockpit" || activeView === "health" },
-    { id: "bureau", label: "Mon Bureau", icon: FolderOpen,
-      onClick: () => setActiveView("espace-bureau"),
-      isActive: activeView === "espace-bureau" },
+    { id: "departement", label: "Mon Departement", icon: Building2,
+      onClick: () => navigateToDepartment("CEOB"),
+      isActive: (activeView === "department" && activeBotCode === "CEOB") || activeView === "mon-entreprise" || activeView === "blueprint" || activeView === "cockpit" || activeView === "health" },
     { id: "salles", label: "Mes Salles", icon: DoorOpen,
       onClick: () => setActiveView("salles-hub"),
       isActive: activeView === "salles-hub" || activeView === "meeting-room" || activeView === "conference-ai" || activeView === "board-room" || activeView === "war-room" || activeView === "think-room" },
     { id: "equipe", label: "Mon Equipe", icon: Users,
-      onClick: () => navigateEquipe("bots"),
-      isActive: activeView === "mon-equipe" || activeView === "agent-gallery" || activeView === "department" },
+      onClick: () => navigateToDepartment("CTOB"),
+      isActive: activeView === "department" && activeBotCode !== "CEOB" },
     { id: "reseau", label: "Mon Reseau", icon: Network,
       onClick: () => setActiveView("mon-reseau"),
       isActive: activeView === "mon-reseau" },

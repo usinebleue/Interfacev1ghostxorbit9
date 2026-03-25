@@ -46,7 +46,7 @@ import {
   Scale,
   Briefcase,
   Table2,
-  ArrowUpDown, ArrowUp, ArrowDown,
+  ArrowUpDown, ArrowUp, ArrowDown, Bell,
 } from "lucide-react";
 import { Card } from "../../../components/ui/card";
 import { Badge } from "../../../components/ui/badge";
@@ -71,18 +71,21 @@ import { CarlOSPresence } from "../center/CarlOSPresence";
 import { SectionFrame } from "./shared/SectionFrame";
 import { DiscussionView } from "./DiscussionView";
 import { CatalogueUnifie } from "./shared/CatalogueUnifie";
+import { DocumentsView } from "./shared/DocumentsView";
+import { HierarchieGHML } from "./shared/HierarchieGHML";
 import type { TabDef } from "./shared/section-types";
 import type { DocForgeTemplateV2, DocForgeLibrary, DriveBrowseItem, UnifiedTemplate } from "../../api/types";
 
 // ── Sub-tabs config (pattern Orbit9DetailView) ──
 
 const ESPACE_TABS: { id: EspaceSection; label: string; icon: React.ElementType }[] = [
-  { id: "idees", label: "Idees", icon: Sparkles },
-  { id: "discussions", label: "Discussions", icon: MessageSquare },
-  { id: "documents", label: "Documents", icon: FileText },
-  { id: "outils", label: "Outils", icon: Wrench },
+  { id: "idees", label: "Blueprint", icon: Sparkles },
   { id: "taches", label: "Taches", icon: CheckSquare },
+  { id: "documents", label: "Documents", icon: FileText },
   { id: "agenda", label: "Agenda", icon: CalendarDays },
+  { id: "discussions", label: "Discussions", icon: MessageSquare },
+  { id: "notifications", label: "Notifications", icon: Bell },
+  { id: "outils", label: "Outils", icon: Wrench },
 ];
 
 // ── Tag color helper ──
@@ -992,7 +995,7 @@ function IdeesPage() {
 // ══════════════════════════════════════════
 
 
-function DocumentsPage() {
+export function DocumentsPage() {
   const { items: allDocs, loading, error, uploadFile } = useBureau("document");
   const { libraries: dfLibraries, loading: dfLoading, refresh: dfRefresh } = useDocForge();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1439,13 +1442,17 @@ function TachesPage() {
             return (
               <Card key={t.id} className="p-0 overflow-hidden hover:shadow-md transition-shadow cursor-pointer group"
                 onClick={() => selectTache(t.id)}>
-                <div className={cn("bg-gradient-to-r px-3 py-2 flex items-center gap-2", isCompleted ? "from-gray-500 to-gray-400" : gradient)}>
-                  {isCompleted ? <CheckCircle2 className="h-3.5 w-3.5 text-white shrink-0" /> : <CheckSquare className="h-3.5 w-3.5 text-white shrink-0" />}
-                  <span className={cn("text-[9px] font-bold text-white flex-1 truncate", isCompleted && "line-through")}>{t.name}</span>
-                  <span className="text-[9px] text-white/60">#{t.sequence_id}</span>
-                  <ChevronRight className="h-3.5 w-3.5 text-white/50 group-hover:text-white transition-colors shrink-0" />
+                <div className={cn("bg-gradient-to-r px-4 py-3 flex items-center gap-3", isCompleted ? "from-gray-500 to-gray-400" : gradient)}>
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-white/20">
+                    {isCompleted ? <CheckCircle2 className="h-5 w-5 text-white" /> : <CheckSquare className="h-5 w-5 text-white" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className={cn("text-xs font-bold text-white block truncate", isCompleted && "line-through")}>{t.name}</span>
+                  </div>
+                  <span className="text-[8px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-white/20 text-white/90">#{t.sequence_id}</span>
+                  <ChevronRight className="h-4 w-4 text-white/50 group-hover:text-white transition-colors shrink-0" />
                 </div>
-                <div className="px-3 py-2">
+                <div className="px-4 py-3">
                   <div className="flex items-center gap-2 text-[9px] flex-wrap">
                     <span>{prioInfo.icon}</span>
                     {t.labels.length > 0 && <span className="px-1.5 py-0.5 rounded bg-violet-50 text-violet-600 font-medium">{t.labels[0]}</span>}
@@ -1537,7 +1544,7 @@ function TachesPage() {
 // AGENDA PAGE
 // ══════════════════════════════════════════
 
-function AgendaPage() {
+export function AgendaPage() {
   const [meetings, setMeetings] = useState<any[]>([]);
   const [loadingMeetings, setLoadingMeetings] = useState(true);
   const [agendaViewMode, setAgendaViewMode] = useState<"cards" | "list" | "spreadsheet">("cards");
@@ -1633,16 +1640,21 @@ function AgendaPage() {
             const gradient = STATUS_GRADIENTS[ev.type] || "from-blue-600 to-blue-500";
             return (
               <Card key={ev.id} className="p-0 overflow-hidden hover:shadow-md transition-shadow cursor-pointer group">
-                <div className={cn("bg-gradient-to-r px-3 py-2 flex items-center gap-2", gradient)}>
+                <div className={cn("bg-gradient-to-r px-4 py-3 flex items-center gap-3", gradient)}>
                   {BOT_AVATAR[ev.bot] ? (
-                    <img src={BOT_AVATAR[ev.bot]} alt="" className="w-6 h-6 rounded-full border border-white/30 shrink-0" />
+                    <img src={BOT_AVATAR[ev.bot]} alt="" className="w-9 h-9 rounded-lg border border-white/30 shrink-0" />
                   ) : (
-                    <div className="w-6 h-6 rounded-full bg-white/20 shrink-0" />
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-white/20 shrink-0">
+                      <CalendarDays className="h-5 w-5 text-white" />
+                    </div>
                   )}
-                  <span className="text-[9px] font-bold text-white flex-1 truncate">{ev.titre}</span>
-                  <span className="text-[9px] text-white/70">{ev.heure}</span>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-xs font-bold text-white block truncate">{ev.titre}</span>
+                  </div>
+                  <span className="text-[8px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-white/20 text-white/90">{ev.heure}</span>
+                  <ChevronRight className="h-4 w-4 text-white/50 group-hover:text-white transition-colors shrink-0" />
                 </div>
-                <div className="px-3 py-2">
+                <div className="px-4 py-3">
                   <div className="flex items-center gap-2 text-[9px]">
                     <span className={cn("px-1.5 py-0.5 rounded font-bold", STATUS_COLORS[ev.type] || "bg-gray-100 text-gray-600")}>{ev.type}</span>
                     <span className="text-gray-400">{ev.duree}</span>
@@ -2490,6 +2502,51 @@ const OUTILS_MANUFACTURIERS = [
   },
 ];
 
+export function NotificationsPage() {
+  // Notifications: decisions recentes, alertes, rappels
+  const MOCK_NOTIFS = [
+    { id: 1, type: "decision", titre: "Nouveau chantier cree", detail: "Chantier 'Expansion Ontario' ajoute par CarlOS", time: "Il y a 2h", read: false },
+    { id: 2, type: "mission", titre: "Mission completee", detail: "Mission V7 Training terminee (77%)", time: "Hier", read: false },
+    { id: 3, type: "alerte", titre: "Document en attente", detail: "Bible Produit V2.1 en revision depuis 3 jours", time: "Il y a 3j", read: true },
+  ];
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Notifications recentes</span>
+        <button className="text-[9px] text-blue-600 hover:underline cursor-pointer">Tout marquer lu</button>
+      </div>
+      <div className="space-y-2">
+        {MOCK_NOTIFS.map(n => (
+          <div key={n.id} className={cn(
+            "w-full p-0 overflow-hidden rounded-lg border shadow-sm hover:shadow-md transition-all cursor-pointer",
+            !n.read && "border-blue-200"
+          )}>
+            <div className={cn("px-4 py-3 flex items-center gap-3 bg-gradient-to-r",
+              n.type === "decision" ? "from-blue-600 to-blue-500"
+                : n.type === "mission" ? "from-violet-600 to-violet-500"
+                : "from-amber-600 to-amber-500"
+            )}>
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-white/20">
+                <Bell className="h-5 w-5 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <span className="text-xs font-bold text-white block truncate">{n.titre}</span>
+              </div>
+              {!n.read && <span className="w-2.5 h-2.5 rounded-full bg-white animate-pulse shrink-0" />}
+              <ChevronRight className="h-4 w-4 text-white/50 shrink-0" />
+            </div>
+            <div className="px-4 py-3">
+              <p className="text-[9px] text-gray-500">{n.detail}</p>
+              <span className="text-[9px] text-gray-400 mt-1 block">{n.time}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function OutilsPage() {
   const { navigateToDepartment } = useFrameMaster();
   const { newConversation, sendMessage } = useChatContext();
@@ -2639,11 +2696,13 @@ export function MonBureauView() {
       case "discussions":
         return <DiscussionView />;
       case "documents":
-        return <DocumentsPage />;
+        return <DocumentsView />;
+      case "notifications":
+        return <NotificationsPage />;
       case "outils":
         return <OutilsPage />;
       case "taches":
-        return <TachesPage />;
+        return <HierarchieGHML defaultLevel="taches" />;
       case "agenda":
         return <AgendaPage />;
       case "templates":

@@ -500,7 +500,7 @@ function TabEquipe() {
 // HIERARCHIE TAB — With CrudToolbar + drill-down via tab switch
 // ================================================================
 
-function HierarchieTab({
+export function HierarchieTab({
   level,
   goTo,
   parentFilter,
@@ -1226,7 +1226,7 @@ const TAILLE_OPTIONS = [
   { value: "grande", label: "Grande (250+)" },
 ];
 
-function TabSommaire() {
+export function TabSommaire() {
   const [profil, setProfil] = useState<EntrepriseProfil | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -1644,7 +1644,7 @@ const HORIZON_LABELS = [
   { key: "long", label: "Long terme (18+ mois)", color: "violet" },
 ];
 
-function TabObjectifs() {
+export function TabObjectifs() {
   const [bmcData, setBmcData] = useState<Record<string, string>>({});
   const [bmcId, setBmcId] = useState<number | null>(null);
   const [objectifsData, setObjectifsData] = useState<Record<string, { objectif: string; kpi_cible: string; kpi_actuel: string }>>({});
@@ -1979,7 +1979,7 @@ function TabObjectifs() {
 // MAIN COMPONENT
 // ================================================================
 
-export function BlueprintView() {
+export function BlueprintView({ botCode }: { botCode?: string } = {}) {
   const { setActiveView } = useFrameMaster();
   const { dispatch } = useCanvasActions();
   const [activeTab, setActiveTab] = useState<BlueprintTabId>("overview");
