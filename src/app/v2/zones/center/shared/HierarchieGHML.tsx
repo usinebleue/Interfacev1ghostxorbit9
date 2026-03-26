@@ -125,6 +125,7 @@ export function HierarchieGHML({
   const [selectedChantier, setSelectedChantier] = useState<APIChantier | null>(null);
   const [selectedProjet, setSelectedProjet] = useState<APIProjet | null>(null);
   const [selectedMission, setSelectedMission] = useState<APIMission | null>(null);
+  const [categorieFilter, setCategorieFilter] = useState<string | null>(null);
 
   // ===== Data hooks =====
   const { chantiers, loading: loadingC } = useChantiers();
@@ -151,8 +152,9 @@ export function HierarchieGHML({
     let list = chantiers;
     if (effectiveBotCode) list = list.filter((c) => c.bot_codes?.includes(effectiveBotCode));
     if (typeChantier) list = list.filter((c) => c.type_chantier === typeChantier);
+    if (categorieFilter) list = list.filter((c) => (c as any).categorie === categorieFilter);
     return list;
-  }, [chantiers, effectiveBotCode, typeChantier]);
+  }, [chantiers, effectiveBotCode, typeChantier, categorieFilter]);
 
   const filteredProjets = useMemo(() => {
     if (!effectiveBotCode) return projets;
@@ -222,6 +224,27 @@ export function HierarchieGHML({
           ]} />
         )}
 
+        {/* Filtre categorie pills */}
+        {!compact && (
+          <div className="flex items-center gap-1">
+            {([
+              { id: null, label: "Tous" },
+              { id: "interne", label: "Interne" },
+              { id: "client", label: "Client" },
+              { id: "collaboratif", label: "Collaboratif" },
+            ] as const).map(f => (
+              <button key={f.id ?? "all"} onClick={() => setCategorieFilter(f.id)}
+                className={cn("px-2.5 py-1 text-[9px] font-medium rounded-full border transition-colors cursor-pointer",
+                  categorieFilter === f.id
+                    ? "bg-gray-900 text-white border-gray-900"
+                    : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
+                )}>
+                {f.label}
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="space-y-2">
           {filteredChantiers.map((ch) => (
             <button
@@ -229,12 +252,23 @@ export function HierarchieGHML({
               onClick={() => goToProjets(ch)}
               className="w-full p-0 overflow-hidden rounded-lg border shadow-sm hover:shadow-md transition-all text-left cursor-pointer group"
             >
-              <div className="px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-500 flex items-center gap-3">
+              <div className={cn("px-4 py-3 flex items-center gap-3 bg-gradient-to-r",
+                ch.categorie === "client" ? "from-emerald-600 to-emerald-500"
+                  : ch.categorie === "collaboratif" ? "from-violet-600 to-violet-500"
+                  : "from-blue-600 to-blue-500"
+              )}>
                 <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-white/20">
                   <Rocket className="h-5 w-5 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <span className="text-sm font-bold text-white block truncate">{ch.titre}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-white block truncate">{ch.titre}</span>
+                    {ch.categorie && (
+                      <span className="text-[8px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-white/20 text-white/90 shrink-0">
+                        {ch.categorie}
+                      </span>
+                    )}
+                  </div>
                   <div className="flex items-center gap-2 mt-1">
                     <div className="flex-1 bg-white/20 rounded-full h-2">
                       <div className="bg-white h-2 rounded-full transition-all" style={{ width: `${ch.progression || 0}%` }} />

@@ -15,7 +15,6 @@ import {
   CalendarDays,
   MessageSquare,
   Bell,
-  Code2,
 } from "lucide-react";
 import {
   Collapsible,
@@ -45,19 +44,17 @@ const ITEMS: BureauItem[] = [
   { id: "agenda", label: "Mon Agenda", icon: CalendarDays, color: "text-rose-500", section: "agenda" },
   { id: "discussions", label: "Mes Discussions", icon: MessageSquare, color: "text-amber-500", section: "discussions" },
   { id: "notifications", label: "Notifications", icon: Bell, color: "text-orange-500", section: "notifications" },
-  { id: "claude-code", label: "Claude Code", icon: Code2, color: "text-orange-500", section: "claude-code" },
 ];
 
 export function SectionMonBureau({ collapsed }: Props) {
   const [open, setOpen] = useState(false);
-  const { activeView, activeBureauSection, navigateBureau, setActiveView } = useFrameMaster();
+  const { activeView, activeBureauSection, navigateBureau } = useFrameMaster();
 
   const handleClick = (item: BureauItem) => {
     navigateBureau(item.section);
   };
 
   const isActive = (item: BureauItem) => {
-    if (item.section === "claude-code") return activeView === "carlos-codes";
     return activeView === "espace-bureau" && activeBureauSection === item.section;
   };
 

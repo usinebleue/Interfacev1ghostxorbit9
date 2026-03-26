@@ -35,6 +35,8 @@ interface CrudToolbarProps {
   onCreate?: () => void;
   /** Cacher le bouton Creer */
   hideCreate?: boolean;
+  /** Mode compact: tout sur une ligne, pas de count, recherche plus petite */
+  compact?: boolean;
 }
 
 const SORT_OPTIONS: { field: SortField; label: string }[] = [
@@ -73,9 +75,90 @@ export function CrudToolbar({
   onCategorieFilterChange,
   onCreate,
   hideCreate = false,
+  compact = false,
 }: CrudToolbarProps) {
   const [showSort, setShowSort] = useState(false);
 
+  /* ── Mode compact: TOUT sur une seule ligne ── */
+  if (compact) {
+    return (
+      <div className="flex items-center gap-2 flex-wrap">
+        {/* Search (flex pour combler l'espace) */}
+        <div className="relative flex-1 min-w-[180px]">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+          <input
+            type="text"
+            placeholder={`Rechercher...`}
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 bg-white"
+          />
+        </div>
+
+        {/* Sort toggle (AVANT les status pills) */}
+        <div className="relative">
+          <button
+            onClick={() => setShowSort(!showSort)}
+            className="flex items-center gap-1 px-2 py-1.5 text-[9px] font-bold text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+          >
+            {sortDir === "asc" ? <SortAsc className="h-3.5 w-3.5" /> : <SortDesc className="h-3.5 w-3.5" />}
+            <ChevronDown className="h-3.5 w-3.5" />
+          </button>
+          {showSort && (
+            <div className="absolute right-0 top-full mt-1 z-20 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[120px]">
+              {SORT_OPTIONS.map((opt) => (
+                <button
+                  key={opt.field}
+                  onClick={() => {
+                    const newDir = sortField === opt.field && sortDir === "asc" ? "desc" : "asc";
+                    onSortChange(opt.field, newDir);
+                    setShowSort(false);
+                  }}
+                  className={cn(
+                    "w-full text-left px-3 py-1.5 text-[9px] font-medium hover:bg-gray-50 transition-colors cursor-pointer",
+                    sortField === opt.field ? "text-blue-600 bg-blue-50" : "text-gray-600"
+                  )}
+                >
+                  {opt.label} {sortField === opt.field && (sortDir === "asc" ? "↑" : "↓")}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Status chips */}
+        <div className="flex items-center gap-1">
+          {STATUS_CHIPS.map((chip) => (
+            <button
+              key={chip.value ?? "all"}
+              onClick={() => onStatusFilterChange(chip.value)}
+              className={cn(
+                "px-2 py-1 text-[9px] font-bold rounded-full transition-colors border cursor-pointer",
+                statusFilter === chip.value
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+              )}
+            >
+              {chip.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Create button */}
+        {!hideCreate && onCreate && (
+          <button
+            onClick={onCreate}
+            className="flex items-center gap-1 px-3 py-1.5 text-[9px] font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm cursor-pointer"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Creer
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  /* ── Mode normal (2 rangees) ── */
   return (
     <div className="space-y-2">
       {/* Row 1: Search + Create + Sort */}

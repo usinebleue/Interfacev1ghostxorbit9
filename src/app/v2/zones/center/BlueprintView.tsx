@@ -506,18 +506,25 @@ export function HierarchieTab({
   parentFilter,
   viewMode,
   setViewMode,
+  categorieFilter: categorieFilterProp,
+  compact: compactProp,
 }: {
   level: "chantiers" | "projets" | "missions" | "taches";
   goTo: (tab: BlueprintTabId, filter?: { type: string; id: number; titre: string }) => void;
   parentFilter?: { type: string; id: number; titre: string } | null;
   viewMode: "cards" | "list" | "kanban" | "spreadsheet";
   setViewMode: (m: "cards" | "list" | "kanban" | "spreadsheet") => void;
+  /** Filtre categorie impose par le parent (sub-tabs SectionHeader) */
+  categorieFilter?: string;
+  /** Mode compact: cache le header section + toolbar une ligne (quand SectionHeader parent) */
+  compact?: boolean;
 }) {
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState<SortField>("titre");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
-  const [categorieFilter, setCategorieFilter] = useState<string | null>(null);
+  const [categorieFilterLocal, setCategorieFilter] = useState<string | null>(null);
+  const categorieFilter = categorieFilterProp || categorieFilterLocal;
   const [modalOpen, setModalOpen] = useState(false);
   const [editItem, setEditItem] = useState<Record<string, unknown> | null>(null);
 
@@ -762,7 +769,7 @@ export function HierarchieTab({
   };
 
   const levelIcons: Record<string, React.ElementType> = {
-    chantiers: Rocket,
+    chantiers: Flame,
     projets: FolderOpen,
     missions: ListChecks,
     taches: CheckCircle2,
@@ -815,9 +822,14 @@ export function HierarchieTab({
   const renderItem = (item: Record<string, unknown>, idx: number) => {
     const status = mapStatus((item.status as string) || "");
     const isTache = level === "taches";
-    const gradient = isTache
-      ? (status === "done" ? "from-emerald-600 to-emerald-500" : status === "en-cours" ? "from-amber-600 to-amber-500" : "from-gray-500 to-gray-400")
-      : gradients[level];
+    // Couleur = bot responsable (porteur de ballon), fallback = bot_codes[0], fallback = niveau
+    const botCode = (item.bot_primaire as string) || ((item.bot_codes as string[]) || [])[0];
+    const botGradient = botCode && BOT_INFO[botCode]?.gradient;
+    const gradient = botGradient
+      ? botGradient
+      : isTache
+        ? (status === "done" ? "from-emerald-600 to-emerald-500" : status === "en-cours" ? "from-amber-600 to-amber-500" : "from-gray-500 to-gray-400")
+        : gradients[level];
 
     const handleClick = () => {
       if (isTache) { setEditItem(item); setModalOpen(true); }
@@ -922,7 +934,8 @@ export function HierarchieTab({
   return (
     <div className="space-y-3">
       {/* ═══ Section header (direct navigation — no drill-down) ═══ */}
-      {!parentFilter && (
+      {/* Cache quand SectionHeader parent le gere (compact mode) */}
+      {!parentFilter && !compactProp && (
         <div className={cn("rounded-lg overflow-hidden border shadow-sm")}>
           <div className={cn("px-3 py-2.5 flex items-center gap-3 bg-gradient-to-r", gradients[level])}>
             <LevelIcon className="h-3.5 w-3.5 text-white shrink-0" />
@@ -981,8 +994,9 @@ export function HierarchieTab({
             statusFilter={statusFilter}
             onStatusFilterChange={setStatusFilter}
             categorieFilter={categorieFilter}
-            onCategorieFilterChange={setCategorieFilter}
+            onCategorieFilterChange={compactProp ? undefined : setCategorieFilter}
             onCreate={() => { setEditItem(null); setModalOpen(true); }}
+            compact={!!compactProp}
           />
         </div>
         <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden shrink-0">
@@ -1226,7 +1240,7 @@ const TAILLE_OPTIONS = [
   { value: "grande", label: "Grande (250+)" },
 ];
 
-export function TabSommaire() {
+export function TabSommaire({ section }: { section?: "profil" | "swot" } = {}) {
   const [profil, setProfil] = useState<EntrepriseProfil | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -1375,58 +1389,13 @@ export function TabSommaire() {
   const labelCls = "text-[9px] font-bold text-gray-500 uppercase tracking-wide mb-1 block";
   const textareaCls = cn(inputCls, "resize-none");
 
+  const showProfil = !section || section === "profil";
+  const showSwot = !section || section === "swot";
+
   return (
     <div className="space-y-4">
-      {/* CarlOS Balayeuse — 3 canaux d'alimentation */}
-      <Card className="p-0 overflow-hidden">
-        <div className="bg-gradient-to-r from-gray-900 to-gray-800 px-3 py-2.5 flex items-center gap-2">
-          <Wand2 className="h-3.5 w-3.5 text-blue-400" />
-          <span className="text-xs font-bold text-white">CarlOS Balayeuse</span>
-          <span className="text-[9px] px-2 py-0.5 rounded-full bg-blue-500/30 text-blue-300">3 canaux d'alimentation</span>
-        </div>
-        <div className="p-3">
-          <div className="flex flex-wrap gap-2">
-            {/* Canal 1 — Auto (toujours actif) */}
-            <div className="flex items-center gap-1.5 px-3 py-1.5 text-[9px] bg-emerald-50 border border-emerald-200 rounded-lg">
-              <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="font-bold text-emerald-700">Conversations</span>
-              <span className="text-emerald-600">actif</span>
-            </div>
-            {/* Canal 2 — Enrichir via web */}
-            <button
-              onClick={handleEnrich}
-              disabled={enriching}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-[9px] font-bold text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer disabled:opacity-50"
-            >
-              {enriching ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Search className="h-3.5 w-3.5" />}
-              Enrichir via web
-            </button>
-            {/* Canal 3 — Importer document */}
-            <label className="flex items-center gap-1.5 px-3 py-1.5 text-[9px] font-bold text-violet-700 bg-violet-50 border border-violet-200 rounded-lg hover:bg-violet-100 transition-colors cursor-pointer">
-              {extracting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
-              Importer un document
-              <input type="file" className="hidden" accept=".pdf,.docx,.xlsx,.csv,.txt,.md" onChange={handleDocUpload} disabled={extracting} />
-            </label>
-          </div>
-          {/* Result messages */}
-          {enrichResult && (
-            <div className={cn("mt-2 text-[9px] px-3 py-1.5 rounded-lg", enrichResult.includes("enrichis") ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700")}>
-              {enrichResult}
-            </div>
-          )}
-          {extractResult && (
-            <div className={cn("mt-2 text-[9px] px-3 py-1.5 rounded-lg", extractResult.includes("extraits") ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700")}>
-              {extractResult}
-            </div>
-          )}
-          <p className="text-[9px] text-gray-400 mt-2">
-            CarlOS aspire automatiquement les infos de vos conversations. Vous pouvez aussi enrichir via recherche web ou importer un plan d'affaires existant.
-          </p>
-        </div>
-      </Card>
-
       {/* Save bar */}
-      {dirty && (
+      {showProfil && dirty && (
         <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-lg px-4 py-2">
           <span className="text-xs text-amber-700 font-medium">Modifications non sauvegardees</span>
           <button
@@ -1441,7 +1410,7 @@ export function TabSommaire() {
       )}
 
       {/* IDENTITE */}
-      <Card className="p-0 overflow-hidden">
+      {showProfil && <Card className="p-0 overflow-hidden">
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-2.5 flex items-center gap-2">
           <Building2 className="h-3.5 w-3.5 text-white" />
           <span className="text-xs font-bold text-white">Identite de l'entreprise</span>
@@ -1498,10 +1467,10 @@ export function TabSommaire() {
             </div>
           </div>
         </div>
-      </Card>
+      </Card>}
 
       {/* MVV — Mission, Vision, Valeurs */}
-      <Card className="p-0 overflow-hidden">
+      {showProfil && <Card className="p-0 overflow-hidden">
         <div className="bg-gradient-to-r from-violet-600 to-purple-600 px-3 py-2.5 flex items-center gap-2">
           <Target className="h-3.5 w-3.5 text-white" />
           <span className="text-xs font-bold text-white">Mission, Vision, Valeurs</span>
@@ -1520,10 +1489,19 @@ export function TabSommaire() {
             <input className={inputCls} value={valeurs} onChange={(e) => { setValeurs(e.target.value); markDirty(); }} placeholder="Innovation, Integrite, Excellence, Collaboration" />
           </div>
         </div>
-      </Card>
+      </Card>}
+
+      {/* Save profil */}
+      {showProfil && <div className="flex justify-end">
+        <button onClick={handleSave} disabled={saving || !dirty}
+          className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+          {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+          Sauvegarder le profil
+        </button>
+      </div>}
 
       {/* SWOT — 4 quadrants */}
-      <Card className="p-0 overflow-hidden">
+      {showSwot && <Card className="p-0 overflow-hidden">
         <div className="bg-gradient-to-r from-emerald-600 to-teal-600 px-3 py-2.5 flex items-center gap-2">
           <LayoutGrid className="h-3.5 w-3.5 text-white" />
           <span className="text-xs font-bold text-white">Analyse SWOT</span>
@@ -1565,10 +1543,10 @@ export function TabSommaire() {
             </div>
           </div>
         </div>
-      </Card>
+      </Card>}
 
       {/* VITAA Scores (lecture seule — alimentés par diagnostics) */}
-      {profil && (profil.score_vente > 0 || profil.score_idee > 0) && (
+      {showSwot && profil && (profil.score_vente > 0 || profil.score_idee > 0) && (
         <Card className="p-0 overflow-hidden">
           <div className="bg-gradient-to-r from-gray-800 to-gray-700 px-3 py-2.5 flex items-center gap-2">
             <BarChart3 className="h-3.5 w-3.5 text-white" />
@@ -1597,17 +1575,14 @@ export function TabSommaire() {
         </Card>
       )}
 
-      {/* Save button bottom */}
-      <div className="flex justify-end">
-        <button
-          onClick={handleSave}
-          disabled={saving || !dirty}
-          className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-        >
+      {/* Save SWOT */}
+      {showSwot && <div className="flex justify-end">
+        <button onClick={handleSave} disabled={saving || !dirty}
+          className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
           {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-          Sauvegarder le profil
+          Sauvegarder
         </button>
-      </div>
+      </div>}
     </div>
   );
 }
@@ -1644,7 +1619,7 @@ const HORIZON_LABELS = [
   { key: "long", label: "Long terme (18+ mois)", color: "violet" },
 ];
 
-export function TabObjectifs() {
+export function TabObjectifs({ section }: { section?: "bmc" | "objectifs" | "finances" } = {}) {
   const [bmcData, setBmcData] = useState<Record<string, string>>({});
   const [bmcId, setBmcId] = useState<number | null>(null);
   const [objectifsData, setObjectifsData] = useState<Record<string, { objectif: string; kpi_cible: string; kpi_actuel: string }>>({});
@@ -1717,6 +1692,10 @@ export function TabObjectifs() {
   const inputCls = "w-full px-3 py-2 text-xs border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-blue-400 focus:border-blue-400";
   const labelCls = "text-[9px] font-bold text-gray-500 uppercase tracking-wide mb-1 block";
 
+  const showBmc = !section || section === "bmc";
+  const showObj = !section || section === "objectifs";
+  const showFin = !section || section === "finances";
+
   return (
     <div className="space-y-4">
       {/* Save bar */}
@@ -1731,7 +1710,7 @@ export function TabObjectifs() {
       )}
 
       {/* ═══ BUSINESS MODEL CANVAS — 9 blocs ═══ */}
-      <Card className="p-0 overflow-hidden">
+      {showBmc && <Card className="p-0 overflow-hidden">
         <div className="bg-gradient-to-r from-indigo-600 to-blue-600 px-3 py-2.5 flex items-center gap-2">
           <LayoutGrid className="h-3.5 w-3.5 text-white" />
           <span className="text-xs font-bold text-white">Business Model Canvas</span>
@@ -1824,10 +1803,10 @@ export function TabObjectifs() {
             </div>
           </div>
         </div>
-      </Card>
+      </Card>}
 
       {/* ═══ OBJECTIFS STRATEGIQUES PAR PILIER VITAA ═══ */}
-      <Card className="p-0 overflow-hidden">
+      {showObj && <Card className="p-0 overflow-hidden">
         <div className="bg-gradient-to-r from-gray-800 to-gray-700 px-3 py-2.5 flex items-center gap-2">
           <Target className="h-3.5 w-3.5 text-white" />
           <span className="text-xs font-bold text-white">Objectifs strategiques VITAA</span>
@@ -1889,10 +1868,10 @@ export function TabObjectifs() {
             </div>
           )}
         </div>
-      </Card>
+      </Card>}
 
       {/* ═══ HORIZONS — Court / Moyen / Long terme ═══ */}
-      <Card className="p-0 overflow-hidden">
+      {showObj && <Card className="p-0 overflow-hidden">
         <div className="bg-gradient-to-r from-teal-600 to-cyan-600 px-3 py-2.5 flex items-center gap-2">
           <Route className="h-3.5 w-3.5 text-white" />
           <span className="text-xs font-bold text-white">Horizons strategiques</span>
@@ -1911,10 +1890,10 @@ export function TabObjectifs() {
             ))}
           </div>
         </div>
-      </Card>
+      </Card>}
 
       {/* ═══ AVANTAGES CONCURRENTIELS ═══ */}
-      <Card className="p-0 overflow-hidden">
+      {showFin && <Card className="p-0 overflow-hidden">
         <div className="bg-gradient-to-r from-amber-600 to-orange-600 px-3 py-2.5 flex items-center gap-2">
           <Zap className="h-3.5 w-3.5 text-white" />
           <span className="text-xs font-bold text-white">Avantages concurrentiels</span>
@@ -1924,10 +1903,10 @@ export function TabObjectifs() {
             value={avantagesData} onChange={(e) => { setAvantagesData(e.target.value); markDirty(); }}
             placeholder="1 avantage par ligne: brevets, expertise unique, reseau, technologie proprietaire, localisation..." />
         </div>
-      </Card>
+      </Card>}
 
       {/* ═══ MODELE DE REVENUS ═══ */}
-      <Card className="p-0 overflow-hidden">
+      {showFin && <Card className="p-0 overflow-hidden">
         <div className="bg-gradient-to-r from-emerald-600 to-green-600 px-3 py-2.5 flex items-center gap-2">
           <DollarSign className="h-3.5 w-3.5 text-white" />
           <span className="text-xs font-bold text-white">Modele de revenus</span>
@@ -1960,7 +1939,7 @@ export function TabObjectifs() {
             </div>
           </div>
         </div>
-      </Card>
+      </Card>}
 
       {/* Save button bottom */}
       <div className="flex justify-end">

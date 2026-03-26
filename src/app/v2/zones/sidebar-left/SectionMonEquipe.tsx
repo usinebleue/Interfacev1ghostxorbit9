@@ -1,7 +1,7 @@
 /**
  * SectionMonEquipe.tsx — [4] Mon Equipe
- * 5 items: Equipe Humaine, Bots C-Level, Composition, Roles, Performance
- * Plan V6 — Sprint F1
+ * 11 bots C-Level — click → navigateToDepartment(botCode)
+ * V2 — Restructure 12 departements identiques
  */
 
 import { useState } from "react";
@@ -9,10 +9,16 @@ import {
   ChevronDown,
   ChevronRight,
   Users,
-  Bot,
-  Layers,
-  Shield,
-  BarChart3,
+  Cpu,
+  DollarSign,
+  Megaphone,
+  Target,
+  Settings,
+  Factory,
+  Lightbulb,
+  TrendingUp,
+  Scale,
+  ShieldCheck,
 } from "lucide-react";
 import { Badge } from "../../../components/ui/badge";
 import {
@@ -22,29 +28,31 @@ import {
 } from "../../../components/ui/collapsible";
 import { cn } from "../../../components/ui/utils";
 import { useFrameMaster } from "../../context/FrameMasterContext";
-import type { EquipeSection } from "../../context/FrameMasterContext";
 
 interface Props {
   collapsed: boolean;
 }
 
-const ITEMS: { id: EquipeSection; label: string; icon: React.ElementType; color: string }[] = [
-  { id: "humains", label: "Equipe Humaine", icon: Users, color: "text-blue-500" },
-  { id: "bots", label: "Bots C-Level", icon: Bot, color: "text-violet-500" },
-  { id: "composition", label: "Composition", icon: Layers, color: "text-emerald-500" },
-  { id: "roles", label: "Roles & Permissions", icon: Shield, color: "text-amber-500" },
-  { id: "performance", label: "Performance", icon: BarChart3, color: "text-cyan-500" },
+const BOT_ITEMS: { code: string; label: string; icon: React.ElementType; color: string }[] = [
+  { code: "CTOB", label: "Tim — CTO", icon: Cpu, color: "text-violet-500" },
+  { code: "CFOB", label: "Frank — CFO", icon: DollarSign, color: "text-emerald-500" },
+  { code: "CMOB", label: "Mathilde — CMO", icon: Megaphone, color: "text-pink-500" },
+  { code: "CSOB", label: "Simone — CSO", icon: Target, color: "text-red-500" },
+  { code: "COOB", label: "Olivier — COO", icon: Settings, color: "text-orange-500" },
+  { code: "CPOB", label: "Paco — CPO", icon: Factory, color: "text-slate-500" },
+  { code: "CHROB", label: "Helene — CHRO", icon: Users, color: "text-teal-500" },
+  { code: "CINOB", label: "Ines — CINO", icon: Lightbulb, color: "text-rose-500" },
+  { code: "CROB", label: "Rich — CRO", icon: TrendingUp, color: "text-amber-500" },
+  { code: "CLOB", label: "Loulou — CLO", icon: Scale, color: "text-indigo-500" },
+  { code: "CISOB", label: "Sebastien — CISO", icon: ShieldCheck, color: "text-zinc-500" },
 ];
 
 export function SectionMonEquipe({ collapsed }: Props) {
   const [open, setOpen] = useState(false);
-  const { activeView, activeEquipeSection, navigateEquipe } = useFrameMaster();
+  const { activeView, activeBotCode, navigateToDepartment } = useFrameMaster();
 
-  const isActive = (itemId: EquipeSection) => {
-    if (itemId === "bots") {
-      return (activeView === "mon-equipe" && activeEquipeSection === "bots") || activeView === "agent-gallery" || activeView === "department";
-    }
-    return activeView === "mon-equipe" && activeEquipeSection === itemId;
+  const isActive = (code: string) => {
+    return activeView === "department" && activeBotCode === code;
   };
 
   if (collapsed) {
@@ -53,15 +61,15 @@ export function SectionMonEquipe({ collapsed }: Props) {
         <div className="text-center text-xs text-muted-foreground py-1">
           <Users className="h-3.5 w-3.5 mx-auto" />
         </div>
-        {ITEMS.map((item) => {
+        {BOT_ITEMS.map((item) => {
           const Icon = item.icon;
           return (
             <button
-              key={item.id}
-              onClick={() => navigateEquipe(item.id)}
+              key={item.code}
+              onClick={() => navigateToDepartment(item.code)}
               className={cn(
                 "w-full flex justify-center py-1.5 rounded hover:bg-accent transition-colors",
-                isActive(item.id) && "bg-accent"
+                isActive(item.code) && "bg-accent"
               )}
               title={item.label}
             >
@@ -79,20 +87,20 @@ export function SectionMonEquipe({ collapsed }: Props) {
         {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
         Mon Equipe
         <Badge variant="secondary" className="ml-auto text-[9px] px-1.5">
-          {ITEMS.length}
+          11
         </Badge>
       </CollapsibleTrigger>
       <CollapsibleContent>
         <div className="space-y-0.5 px-1">
-          {ITEMS.map((item) => {
+          {BOT_ITEMS.map((item) => {
             const Icon = item.icon;
             return (
               <button
-                key={item.id}
-                onClick={() => navigateEquipe(item.id)}
+                key={item.code}
+                onClick={() => navigateToDepartment(item.code)}
                 className={cn(
                   "w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm hover:bg-accent transition-colors",
-                  isActive(item.id) && "bg-accent font-medium"
+                  isActive(item.code) && "bg-accent font-medium"
                 )}
               >
                 <Icon className={cn("h-3.5 w-3.5 shrink-0", item.color)} />

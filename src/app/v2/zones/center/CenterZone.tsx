@@ -32,7 +32,7 @@ import { DiscussionView } from "./DiscussionView";
 import { BranchPatternsDemo } from "./BranchPatternsDemo";
 import { CahierSmartDemo } from "./CahierSmartDemo";
 import { ScenarioHub } from "./ScenarioHub";
-import { LiveChat } from "./LiveChat";
+// LiveChat moved to permanent chat panel (Session 70 — Layout 3 Zones)
 import { SmartCanvas } from "./SmartCanvas";
 import { DepartmentDetailView } from "./DepartmentDetailView";
 // InputBar moved to SidebarRight (Sprint Final V1)
@@ -95,6 +95,67 @@ import { StatusView } from "./StatusView";
 import { OnboardingView } from "./OnboardingView";
 // DocForgeView archived — fusionné dans MonBureauView (DocForge sub-tab)
 import { useFlowGPS } from "../../api/hooks";
+import { BOT_NAME, BOT_ROLE, BOT_AVATAR, BOT_SUBTITLE } from "../../api/types";
+
+// ═══════════════════════════════════════
+// MonEquipeHub — Grille de selection des 12 bots AI
+// ═══════════════════════════════════════
+
+const ALL_BOT_CODES = [
+  "CEOB", "CTOB", "CFOB", "CMOB", "CSOB", "COOB",
+  "CPOB", "CHROB", "CINOB", "CROB", "CLOB", "CISOB",
+] as const;
+
+const BOT_COLORS: Record<string, string> = {
+  CEOB: "border-blue-200 hover:border-blue-400 hover:bg-blue-50/50",
+  CTOB: "border-violet-200 hover:border-violet-400 hover:bg-violet-50/50",
+  CFOB: "border-emerald-200 hover:border-emerald-400 hover:bg-emerald-50/50",
+  CMOB: "border-pink-200 hover:border-pink-400 hover:bg-pink-50/50",
+  CSOB: "border-red-200 hover:border-red-400 hover:bg-red-50/50",
+  COOB: "border-orange-200 hover:border-orange-400 hover:bg-orange-50/50",
+  CPOB: "border-slate-200 hover:border-slate-400 hover:bg-slate-50/50",
+  CHROB: "border-teal-200 hover:border-teal-400 hover:bg-teal-50/50",
+  CINOB: "border-rose-200 hover:border-rose-400 hover:bg-rose-50/50",
+  CROB: "border-amber-200 hover:border-amber-400 hover:bg-amber-50/50",
+  CLOB: "border-indigo-200 hover:border-indigo-400 hover:bg-indigo-50/50",
+  CISOB: "border-zinc-200 hover:border-zinc-400 hover:bg-zinc-50/50",
+};
+
+function MonEquipeHub() {
+  const { navigateToDepartment } = useFrameMaster();
+
+  return (
+    <div className="h-full overflow-auto p-6">
+      <div className="max-w-5xl mx-auto">
+        <h2 className="text-lg font-bold text-gray-800 mb-1">Mon Equipe AI</h2>
+        <p className="text-sm text-gray-500 mb-6">12 agents specialises — cliquez pour acceder au departement</p>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {ALL_BOT_CODES.map((code) => (
+            <button
+              key={code}
+              onClick={() => navigateToDepartment(code)}
+              className={cn(
+                "flex flex-col items-center gap-3 p-5 rounded-xl border-2 bg-white transition-all cursor-pointer shadow-sm hover:shadow-md",
+                BOT_COLORS[code] || "border-gray-200 hover:border-gray-400"
+              )}
+            >
+              <img
+                src={BOT_AVATAR[code]}
+                alt={BOT_NAME[code]}
+                className="w-16 h-16 rounded-full object-cover ring-2 ring-white shadow"
+              />
+              <div className="text-center">
+                <div className="text-sm font-semibold text-gray-800">{BOT_NAME[code]}</div>
+                <div className="text-[9px] font-medium text-gray-500">{BOT_ROLE[code]}</div>
+                <div className="text-[9px] text-gray-400 mt-0.5">{BOT_SUBTITLE[code]}</div>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 /** Couleur identitaire par bot — bande fine en haut du canevas */
 const BOT_BAND_COLORS: Record<string, string> = {
@@ -203,13 +264,7 @@ export function CenterZone() {
   // GUARD: Si on est dans live-chat, ne PAS auto-naviguer ailleurs (fix S65 — Carl 12h01)
   useEffect(() => {
     if (!navigateAction || !navigateAction.view) return;
-    // Quand l'user est dans le chat, bloquer la navigation automatique
-    // pour éviter les switch de bot/département non voulus
-    if (activeView === "live-chat" && navigateAction.view !== "live-chat") {
-      clearNavigateAction();
-      consumeNext();
-      return;
-    }
+    // Chat is now permanently visible — allow all navigations
     const params = navigateAction.params as Record<string, unknown> | undefined;
     const botCode = params?.bot as string | undefined;
     if (botCode && (navigateAction.view === "department" || navigateAction.view === "detail")) {
@@ -274,7 +329,7 @@ export function CenterZone() {
       {activeView === "cahier" && <CahierSmartDemo />}
       {activeView === "scenarios" && <ScenarioHub />}
       {activeView === "detail" && <DepartmentDetailView />}
-      {activeView === "live-chat" && <LiveChat />}
+      {activeView === "live-chat" && <DashboardView />}
       {activeView === "orbit9-detail" && <Orbit9DetailView />}
       {activeView === "agent-settings" && <AgentSettingsView />}
       {activeView === "espace-bureau" && <MonBureauView />}
@@ -328,22 +383,8 @@ export function CenterZone() {
       {activeView === "meeting-room" && <ConferenceAIView />}
       {activeView === "conference-ai" && <ConferenceAIView />}
       {activeView === "salles-hub" && <SallesHubView />}
-      {activeView === "mon-entreprise" && (() => {
-        switch (activeEntrepriseSection) {
-          case "blueprint": return <BlueprintView />;
-          case "dashboard": return <CockpitView />;
-          case "ressources": return <MonBureauView />;
-          case "sante": return <SanteGlobaleView />;
-          default: return <BlueprintView />;
-        }
-      })()}
-      {activeView === "mon-equipe" && (() => {
-        switch (activeEquipeSection) {
-          case "humains": return <EquipeHumaineView />;
-          case "bots": return <AgentGalleryPage />;
-          default: return <AgentGalleryPage />;
-        }
-      })()}
+      {activeView === "mon-entreprise" && <DepartmentTourDeControle />}
+      {activeView === "mon-equipe" && <MonEquipeHub />}
       {activeView === "chat-h2h" && <ChatH2H />}
       {activeView === "status" && <StatusView />}
       {activeView === "onboarding" && <OnboardingView />}
@@ -374,20 +415,10 @@ export function CenterZone() {
         </div>
       )}
 
-      {/* Vue principale — Priority 1: Split screen (production), Priority 2: Focus Mode, Priority 3: normal */}
+      {/* Vue principale — Focus Mode plein canvas OU vue normale */}
+      {/* Chat permanent visible dans le panel centre — plus de split screen ici */}
       <div className="flex-1 overflow-hidden flex">
-        {focusData && (focusData.elementType === "document_editor" || focusData.elementType === "docforge_library") ? (
-          /* ── Split Screen 50/50: Discussion GAUCHE + Production DROITE ── */
-          <div className="flex-1 overflow-hidden flex">
-            <div className="w-1/2 overflow-hidden border-r">
-              <LiveChat />
-            </div>
-            <div className="w-1/2 overflow-hidden">
-              <FocusModeLayout focusData={focusData} onClose={clearFocusMode} />
-            </div>
-          </div>
-        ) : focusData ? (
-          /* ── Focus Mode: element ancre plein canvas (chat dans sidebar) ── */
+        {focusData ? (
           <div className="flex-1 overflow-hidden">
             <FocusModeLayout focusData={focusData} onClose={clearFocusMode} />
           </div>
@@ -398,9 +429,9 @@ export function CenterZone() {
         )}
       </div>
 
-      {/* Overlay: Push Content Panel — Actif pour Dev Channel (Claude Code → Carl) */}
-      {/* Supprimé en live-chat pour éviter les popups non voulus (fix S65) */}
-      {pushedContent && !focusData && activeView !== "live-chat" && (
+      {/* Overlay: Push Content Panel — DÉSACTIVÉ (Carl: pas de popups sauf urgences) */}
+      {/* Sera réactivé uniquement pour messages urgents à ne pas manquer */}
+      {false && pushedContent && !focusData && (
         <div className={cn(
           "absolute top-12 right-3 z-50 w-80 max-h-[60vh] animate-in slide-in-from-right-4 duration-300",
           pinnedContent ? "opacity-100" : "opacity-95 hover:opacity-100"

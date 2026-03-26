@@ -99,7 +99,7 @@ function formatTime(ts: number): string {
   return d.toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" });
 }
 
-export function CarlosCodesView() {
+export function CarlosCodesView({ embedded = false }: { embedded?: boolean } = {}) {
   // --- Vision-Claude polling state ---
   const [devData, setDevData] = useState<DevLiveData | null>(null);
   const [devError, setDevError] = useState(false);
@@ -224,8 +224,9 @@ export function CarlosCodesView() {
   const allMessages = devData?.messages || [];
 
   return (
-    <div className="h-full flex flex-col">
-      {/* Header gradient */}
+    <div className={cn("flex flex-col", embedded ? "h-auto" : "h-full")}>
+      {/* Header gradient — masque quand embedded dans un departement */}
+      {!embedded && (
       <div className="bg-gradient-to-r from-orange-500 to-red-600 px-10 py-5">
         <div className="flex items-center gap-3">
           <Code2 className="w-6 h-6 text-white" />
@@ -244,6 +245,7 @@ export function CarlosCodesView() {
           )}
         </div>
       </div>
+      )}
 
       {/* CREDO Progress bar — only visible when a code task is running */}
       {task.status !== "idle" && (
@@ -454,13 +456,15 @@ export function CarlosCodesView() {
         </div>
       </div>
 
-      {/* Footer */}
+      {/* Footer — masque quand embedded */}
+      {!embedded && (
       <div className="px-10 py-3 border-t border-gray-100 bg-gray-50">
         <div className="max-w-4xl mx-auto flex items-center justify-center gap-2 text-xs text-gray-400">
           <MessageSquare className="w-3.5 h-3.5" />
           <span>Vision-Claude (lunettes) + chat CarlOS — tout converge ici</span>
         </div>
       </div>
+      )}
     </div>
   );
 }

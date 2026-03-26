@@ -18,9 +18,9 @@ const TYPE_ICONS: Record<CatalogueItemType, React.ElementType> = {
 };
 
 const TYPE_GRADIENTS: Record<CatalogueItemType, string> = {
-  template: "from-teal-600 to-teal-500",
+  template: "from-violet-600 to-violet-500",
   playbook: "from-indigo-600 to-indigo-500",
-  diagnostic: "from-cyan-600 to-cyan-500",
+  diagnostic: "from-blue-600 to-blue-500",
 };
 
 const TYPE_LABELS: Record<CatalogueItemType, string> = {

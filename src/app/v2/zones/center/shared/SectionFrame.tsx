@@ -50,7 +50,7 @@ export function SectionFrame({
           subtitle={subtitle}
           onBack={onBack}
           rightSlot={
-            <div className="flex items-center gap-1 flex-wrap">
+            <div className="flex items-center gap-0.5 flex-wrap">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 return (
@@ -58,13 +58,13 @@ export function SectionFrame({
                     key={tab.id}
                     onClick={() => onTabChange(tab.id)}
                     className={cn(
-                      "flex items-center gap-1.5 px-2.5 py-1.5 text-[9px] font-bold rounded-lg transition-colors",
+                      "flex items-center gap-1 px-2 py-1 text-[9px] font-bold rounded-md transition-colors whitespace-nowrap",
                       activeTab === tab.id
                         ? "bg-gray-900 text-white shadow-sm"
                         : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
                     )}
                   >
-                    <Icon className="h-3.5 w-3.5" />
+                    <Icon className="h-3.5 w-3.5 shrink-0" />
                     {tab.label}
                   </button>
                 );

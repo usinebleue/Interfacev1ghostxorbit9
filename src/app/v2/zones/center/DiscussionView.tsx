@@ -1,21 +1,25 @@
 /**
  * DiscussionView.tsx — Mes Discussions (Mon Bureau)
- * MEME DESIGN que chantier/projet/mission/tache:
- * Toolbar (search + sort + status filter + view mode) + gradient cards + list + tableur
+ * MEME DESIGN que chantier/projet/mission/tache (HierarchieTab pattern):
+ * Toolbar (search + sort + status filter + view mode) + gradient cards + list + kanban + tableur
+ * 4 vues: Cards, List, Kanban (colonnes par status), Spreadsheet
+ * Groupement par chantier parent, drill-down avec banniere contexte
  * 3-state: En cours / En attente / Terminees
- * Drill-down: parent chantier/projet visible, CREDO phase, branches
+ * CREDO phase, branches, promotion en mission
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import {
   MessageSquare, Clock, CheckCircle, PlusCircle, Trash2,
-  ArrowRight, MessageCircle, Link2, AlertCircle,
-  Search, LayoutGrid, List, Table2, ArrowUpDown, ArrowUp, ArrowDown,
-  ChevronRight,
+  ArrowRight, MessageCircle, Link2, AlertCircle, Rocket,
+  Search, LayoutGrid, List, Table2, Columns, ArrowUpDown, ArrowUp, ArrowDown,
+  ChevronRight, ArrowLeft, FolderOpen,
 } from "lucide-react";
 import { cn } from "../../../components/ui/utils";
 import { useChatContext } from "../../context/ChatContext";
 import { useFrameMaster } from "../../context/FrameMasterContext";
+import { useChantiers } from "../../api/hooks";
+import { api } from "../../api/client";
 import type { Thread } from "../../api/types";
 
 // ── Bot metadata ──
@@ -71,18 +75,32 @@ const STATUS_BADGE: Record<string, { label: string; bg: string; text: string }> 
 
 type SortField = "titre" | "date" | "phase" | "echanges" | "bot";
 type SortDir = "asc" | "desc";
-type ViewMode = "cards" | "list" | "spreadsheet";
+type ViewMode = "cards" | "list" | "kanban" | "spreadsheet";
 
 // ════════════════════════════════════════════════════════
 // MAIN COMPONENT
 // ════════════════════════════════════════════════════════
 
-export function DiscussionView() {
+interface DiscussionViewProps {
+  /** Filtre par bot principal (pour tabs departement) */
+  botFilter?: string;
+  /** Filtre par chantier (pour drill-down hierarchie) */
+  chantierId?: number;
+  /** Cache le header gradient (quand SectionHeader parent le gere) */
+  hideHeader?: boolean;
+  /** Force le groupement par chantier */
+  groupByChantier?: boolean;
+  /** Montre seulement les discussions orphelines */
+  orphelinesOnly?: boolean;
+}
+
+export function DiscussionView({ botFilter, chantierId, hideHeader, groupByChantier, orphelinesOnly }: DiscussionViewProps = {}) {
   const {
     threads, activeThreadId,
     parkThread, resumeThread, deleteThread, newConversation,
   } = useChatContext();
   const { setActiveView } = useFrameMaster();
+  const { chantiers } = useChantiers();
 
   // Toolbar state
   const [search, setSearch] = useState("");
@@ -90,6 +108,10 @@ export function DiscussionView() {
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
+  const [botFilterLocal, setBotFilterLocal] = useState<string | null>(null);
+  const [groupFilter, setGroupFilter] = useState<{ chantierId: number; titre: string } | null>(null);
+
+  const [promoting, setPromoting] = useState<string | null>(null);
 
   const goToChat = () => setActiveView("live-chat");
 
@@ -98,9 +120,69 @@ export function DiscussionView() {
     goToChat();
   };
 
+  /** Promouvoir une discussion en mission (cree en DB si pas deja fait, puis promeut) */
+  const handlePromote = useCallback(async (thread: Thread) => {
+    if (promoting) return;
+    setPromoting(thread.id);
+    try {
+      // 1. S'assurer que la discussion existe en DB (create est idempotent sur external_id)
+      const createRes = await api.createDiscussion({
+        external_id: thread.id,
+        titre: thread.title,
+        bot_primaire: thread.primaryBot,
+        section: thread.flowSection,
+        flow_type: thread.flowType,
+      }).catch(() => null);
+
+      // 2. Obtenir l'ID DB — soit du create, soit via list
+      let dbId = createRes?.id;
+      if (!dbId) {
+        const all = await api.listDiscussions();
+        const found = all.find((d: any) => d.external_id === thread.id);
+        dbId = found?.id;
+      }
+
+      if (!dbId) {
+        console.error("Impossible de trouver la discussion en DB");
+        return;
+      }
+
+      // 3. Promouvoir
+      const res = await api.promoteDiscussion(dbId, thread.title);
+      if (res?.mission_id) {
+        // Marquer le thread localement comme promu
+        parkThread(thread.id);
+      }
+    } catch (err) {
+      console.error("Erreur promotion:", err);
+    } finally {
+      setPromoting(null);
+    }
+  }, [promoting, parkThread]);
+
   // ── Filter + Sort ──
   const filtered = useMemo(() => {
     let items = [...threads];
+
+    // Bot filter (from department tabs)
+    if (botFilter) {
+      items = items.filter(t => t.primaryBot === botFilter);
+    }
+
+    // Orphelines only (from SectionHeader sub-tab)
+    if (orphelinesOnly) {
+      items = items.filter(t => !t.parentChantier);
+    }
+
+    // Bot filter local (user pill selection)
+    if (botFilterLocal) {
+      items = items.filter(t => t.primaryBot === botFilterLocal);
+    }
+
+    // Group filter (drill-down by chantier)
+    if (groupFilter) {
+      items = items.filter(t => t.parentChantier === groupFilter.chantierId);
+    }
 
     // Status filter
     if (statusFilter) {
@@ -136,7 +218,29 @@ export function DiscussionView() {
     });
 
     return items;
-  }, [threads, statusFilter, search, sortField, sortDir]);
+  }, [threads, botFilter, botFilterLocal, groupFilter, statusFilter, search, sortField, sortDir, orphelinesOnly]);
+
+  // ── Groupement par chantier (quand pas en drill-down) ──
+  const chantierGroups = useMemo(() => {
+    if (groupFilter) return null; // Already drilled down
+    const parentIds = new Set(filtered.filter(t => t.parentChantier).map(t => t.parentChantier!));
+    if (!groupByChantier && parentIds.size < 2) return null; // Not enough groups to show
+    const groups: { chantierId: number; titre: string; count: number }[] = [];
+    parentIds.forEach(cid => {
+      const ch = chantiers.find((c: any) => c.id === cid);
+      groups.push({ chantierId: cid, titre: ch?.titre || `Chantier #${cid}`, count: filtered.filter(t => t.parentChantier === cid).length });
+    });
+    const orphanCount = filtered.filter(t => !t.parentChantier).length;
+    if (orphanCount > 0) groups.push({ chantierId: -1, titre: "Non rattachees", count: orphanCount });
+    return groups.sort((a, b) => b.count - a.count);
+  }, [filtered, groupFilter, chantiers]);
+
+  // ─── Unique bots for filter pills ───
+  const uniqueBots = useMemo(() => {
+    const bots = new Set<string>();
+    threads.forEach(t => { if (t.primaryBot) bots.add(t.primaryBot); });
+    return Array.from(bots).sort();
+  }, [threads]);
 
   // Counts for filter pills
   const counts = {
@@ -166,6 +270,19 @@ export function DiscussionView() {
 
   return (
     <div className="space-y-3 p-4">
+
+      {/* ══ HEADER TITRE (cache quand SectionHeader parent le gere) ══ */}
+      {!hideHeader && (
+        <div className="bg-gradient-to-r from-cyan-600 to-cyan-500 px-4 py-3 rounded-xl flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-white/20">
+            <MessageSquare className="h-5 w-5 text-white" />
+          </div>
+          <div className="flex-1">
+            <h2 className="text-sm font-bold text-white">Discussions</h2>
+            <p className="text-[9px] text-white/70">{filtered.length} discussion{filtered.length > 1 ? "s" : ""}</p>
+          </div>
+        </div>
+      )}
 
       {/* ══ TOOLBAR — meme pattern que chantiers ══ */}
       <div className="flex items-center gap-2 flex-wrap">
@@ -214,6 +331,7 @@ export function DiscussionView() {
           {([
             { mode: "cards" as const, icon: LayoutGrid, title: "Cartes" },
             { mode: "list" as const, icon: List, title: "Liste" },
+            { mode: "kanban" as const, icon: Columns, title: "Kanban" },
             { mode: "spreadsheet" as const, icon: Table2, title: "Tableur" },
           ]).map(({ mode, icon: Icon, title }) => (
             <button key={mode} onClick={() => setViewMode(mode)}
@@ -226,6 +344,61 @@ export function DiscussionView() {
 
         <span className="text-[9px] font-bold text-gray-400">{filtered.length} items</span>
       </div>
+
+      {/* ══ BOT FILTER PILLS ══ */}
+      {uniqueBots.length > 1 && (
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-[9px] text-gray-400 font-medium">Bot:</span>
+          <button onClick={() => setBotFilterLocal(null)}
+            className={cn("px-2 py-0.5 text-[9px] font-bold rounded-full transition-colors border cursor-pointer",
+              !botFilterLocal ? "bg-violet-600 text-white border-violet-600" : "bg-white text-gray-500 border-gray-200 hover:border-gray-300")}>
+            Tous
+          </button>
+          {uniqueBots.map(bot => {
+            const meta = BOT_META[bot];
+            return (
+              <button key={bot} onClick={() => setBotFilterLocal(botFilterLocal === bot ? null : bot)}
+                className={cn("px-2 py-0.5 text-[9px] font-bold rounded-full transition-colors border cursor-pointer",
+                  botFilterLocal === bot ? "bg-violet-600 text-white border-violet-600" : "bg-white text-gray-500 border-gray-200 hover:border-gray-300")}>
+                {meta?.name || bot}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ══ CONTEXT BANNER — drill-down dans un chantier ══ */}
+      {groupFilter && (
+        <div className="flex items-center gap-2 px-3 py-2 bg-cyan-50 border border-cyan-200 rounded-lg">
+          <button onClick={() => setGroupFilter(null)} className="flex items-center gap-1 text-xs font-medium text-cyan-700 hover:text-cyan-900 cursor-pointer">
+            <ArrowLeft className="h-3.5 w-3.5" /> Retour
+          </button>
+          <span className="text-[9px] text-gray-400">|</span>
+          <FolderOpen className="h-3.5 w-3.5 text-cyan-600" />
+          <span className="text-xs font-bold text-cyan-800">{groupFilter.titre}</span>
+          <span className="text-[9px] text-cyan-600 ml-auto">{filtered.length} discussion{filtered.length > 1 ? "s" : ""}</span>
+        </div>
+      )}
+
+      {/* ══ GROUPEMENT PAR CHANTIER (quand pas en drill-down) ══ */}
+      {chantierGroups && !groupFilter && viewMode !== "kanban" && (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+          {chantierGroups.map(g => (
+            <button
+              key={g.chantierId}
+              onClick={() => g.chantierId === -1 ? setStatusFilter("orphelin") : setGroupFilter({ chantierId: g.chantierId, titre: g.titre })}
+              className="flex items-center gap-2 p-2.5 rounded-lg border border-gray-200 hover:border-cyan-300 hover:bg-cyan-50/50 transition-all cursor-pointer text-left group"
+            >
+              <FolderOpen className="h-4 w-4 text-cyan-500 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-[9px] font-bold text-gray-700 truncate group-hover:text-cyan-700">{g.titre}</p>
+                <p className="text-[9px] text-gray-400">{g.count} discussion{g.count > 1 ? "s" : ""}</p>
+              </div>
+              <ChevronRight className="h-3.5 w-3.5 text-gray-300 group-hover:text-cyan-500 shrink-0" />
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* ══ EMPTY STATE ══ */}
       {filtered.length === 0 && (
@@ -252,16 +425,18 @@ export function DiscussionView() {
               <div key={t.id} className="w-full p-0 overflow-hidden rounded-lg border shadow-sm hover:shadow-md transition-all group cursor-pointer"
                 onClick={() => handleAction(t.id, t.status === "active" ? "continuer" : t.status === "parked" ? "reprendre" : "revoir")}>
                 {/* GRADIENT HEADER */}
-                <div className={cn("px-3 py-2 flex items-center gap-2 bg-gradient-to-r", gradient)}>
-                  <MessageSquare className="h-3.5 w-3.5 text-white shrink-0" />
-                  <span className="text-[9px] font-bold text-white flex-1 truncate">{t.title}</span>
-                  <span className={cn("text-[8px] font-bold px-1.5 py-0.5 rounded-full", sb.bg, sb.text)}>{sb.label}</span>
+                <div className={cn("px-4 py-3 flex items-center gap-3 bg-gradient-to-r", gradient)}>
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-white/20">
+                    <MessageSquare className="h-5 w-5 text-white" />
+                  </div>
+                  <span className="text-xs font-bold text-white flex-1 truncate">{t.title}</span>
+                  <span className="text-[8px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-white/20 text-white/90">{sb.label}</span>
                   {isActive && <span className="w-2 h-2 rounded-full bg-white animate-pulse shrink-0" />}
                   <ChevronRight className="h-3.5 w-3.5 text-white/50 group-hover:text-white transition-colors shrink-0" />
                 </div>
 
                 {/* BODY */}
-                <div className="px-3 py-2 space-y-1.5">
+                <div className="px-4 py-3 space-y-1.5">
                   <div className="flex items-center gap-2 flex-wrap">
                     {/* Bot badge */}
                     <span className={cn("flex items-center gap-0.5 px-1.5 py-0.5 rounded-full border text-[9px] font-medium", bot.color)}>
@@ -284,6 +459,26 @@ export function DiscussionView() {
                       </span>
                     )}
                   </div>
+                  {/* Actions */}
+                  {t.status === "active" && (
+                    <div className="flex items-center gap-1.5 pt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handlePromote(t); }}
+                        disabled={promoting === t.id}
+                        className="flex items-center gap-1 px-2 py-0.5 text-[9px] font-medium text-violet-700 bg-violet-50 border border-violet-200 rounded-full hover:bg-violet-100 transition-colors cursor-pointer disabled:opacity-50"
+                      >
+                        <Rocket className="h-3.5 w-3.5" />
+                        {promoting === t.id ? "Promotion..." : "Promouvoir en mission"}
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); deleteThread(t.id); }}
+                        className="p-0.5 rounded hover:bg-red-50 cursor-pointer"
+                        title="Supprimer"
+                      >
+                        <Trash2 className="h-3.5 w-3.5 text-gray-300 hover:text-red-500" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -330,6 +525,47 @@ export function DiscussionView() {
           })}
         </div>
       )}
+
+      {/* ══ KANBAN VIEW — colonnes par statut ══ */}
+      {viewMode === "kanban" && filtered.length > 0 && (() => {
+        const KANBAN_COLS = [
+          { key: "active", label: "En cours", gradient: "from-cyan-600 to-cyan-500", items: filtered.filter(t => t.status === "active") },
+          { key: "parked", label: "En attente", gradient: "from-amber-500 to-amber-400", items: filtered.filter(t => t.status === "parked") },
+          { key: "completed", label: "Terminees", gradient: "from-emerald-500 to-emerald-400", items: filtered.filter(t => t.status === "completed" || t.status === "resolved") },
+          { key: "rejected", label: "Rejetees", gradient: "from-red-500 to-red-400", items: filtered.filter(t => t.status === "rejected") },
+        ].filter(c => c.items.length > 0);
+        return (
+          <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${KANBAN_COLS.length}, minmax(200px, 1fr))` }}>
+            {KANBAN_COLS.map(col => (
+              <div key={col.key} className="flex flex-col gap-1.5">
+                <div className={cn("flex items-center gap-2 px-3 py-2 rounded-t-lg bg-gradient-to-r", col.gradient)}>
+                  <span className="text-xs font-bold text-white flex-1">{col.label}</span>
+                  <span className="text-[9px] font-bold bg-white/25 text-white px-1.5 py-0.5 rounded-full">{col.items.length}</span>
+                </div>
+                <div className="space-y-1.5">
+                  {col.items.map(t => {
+                    const bot = BOT_META[t.primaryBot] || BOT_META.CEOB;
+                    return (
+                      <div
+                        key={t.id}
+                        className="p-2.5 rounded-lg border border-gray-200 hover:shadow-md transition-all cursor-pointer bg-white"
+                        onClick={() => handleAction(t.id, t.status === "active" ? "continuer" : t.status === "parked" ? "reprendre" : "revoir")}
+                      >
+                        <p className="text-[9px] font-bold text-gray-800 line-clamp-2">{t.title}</p>
+                        <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                          <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full border font-medium", bot.color)}>{bot.name}</span>
+                          <CREDODots currentPhase={t.credoPhase} />
+                          <span className="text-[8px] text-gray-400 ml-auto">{formatRelativeTime(t.updatedAt)}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
 
       {/* ══ SPREADSHEET VIEW — tableur meme pattern chantier ══ */}
       {viewMode === "spreadsheet" && filtered.length > 0 && (

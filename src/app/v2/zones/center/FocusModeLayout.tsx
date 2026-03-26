@@ -62,6 +62,7 @@ const BOT_LABELS: Record<string, string> = {
   generic: "Focus",
   docforge_library: "DocForge",
   document_editor: "DocForge",
+  tim_code: "TimCode",
 };
 
 const ELEMENT_ICONS: Record<string, React.ElementType> = {
@@ -77,6 +78,7 @@ const ELEMENT_ICONS: Record<string, React.ElementType> = {
   ops: BarChart3,
   docforge_library: Sparkles,
   document_editor: FileText,
+  tim_code: Cpu,
 };
 
 // ── Composant principal ────────────────────────────────────
@@ -146,6 +148,8 @@ export function FocusModeLayout({
       {/* ── Contenu focus ─────── */}
       {(focusData.elementType === "document_editor" || focusData.elementType === "docforge_library") ? (
         <DocumentEditorFocus focusData={focusData.data as any} />
+      ) : focusData.elementType === "tim_code" ? (
+        <TimCodeFocus focusData={focusData} />
       ) : (
         <div className="flex-1 overflow-hidden flex items-center justify-center bg-gray-50/50">
           <div className="text-center space-y-3 max-w-md px-6">
@@ -159,6 +163,89 @@ export function FocusModeLayout({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+
+// ══════════════════════════════════════════
+// TimCodeFocus — Split-screen code progression panel
+// Left: Discussion with Tim (in LiveChat)
+// Right: This panel — plan steps + live output + status
+// ══════════════════════════════════════════
+
+type TimCodeState = "planification" | "codage" | "debogage" | "test" | "complete";
+
+const TIM_CODE_STATES: { id: TimCodeState; label: string; gradient: string }[] = [
+  { id: "planification", label: "Planification", gradient: "from-violet-600 to-violet-500" },
+  { id: "codage", label: "Codage", gradient: "from-blue-600 to-blue-500" },
+  { id: "debogage", label: "Debogage", gradient: "from-amber-600 to-amber-500" },
+  { id: "test", label: "Test", gradient: "from-emerald-600 to-emerald-500" },
+  { id: "complete", label: "Complete", gradient: "from-green-600 to-green-500" },
+];
+
+function TimCodeFocus({ focusData }: { focusData: FocusData }) {
+  const data = (focusData.data || {}) as any;
+  const steps = data.steps || [];
+  const currentState: TimCodeState = data.state || "planification";
+  const output = data.output || "";
+  const currentStepIdx = TIM_CODE_STATES.findIndex(s => s.id === currentState);
+
+  return (
+    <div className="flex-1 overflow-hidden flex flex-col">
+      {/* State bar */}
+      <div className="flex items-center gap-1 px-4 py-2 bg-gray-50 border-b">
+        {TIM_CODE_STATES.map((s, i) => {
+          const isActive = s.id === currentState;
+          const isDone = i < currentStepIdx;
+          return (
+            <div key={s.id} className="flex items-center gap-1">
+              {i > 0 && <div className={cn("w-6 h-0.5", isDone || isActive ? "bg-violet-400" : "bg-gray-200")} />}
+              <div className={cn(
+                "px-2 py-1 rounded-full text-[9px] font-bold transition-all",
+                isActive ? `bg-gradient-to-r ${s.gradient} text-white shadow-sm` :
+                isDone ? "bg-violet-100 text-violet-700" :
+                "bg-gray-100 text-gray-400"
+              )}>
+                {s.label}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Plan steps (table des matieres) */}
+      {steps.length > 0 && (
+        <div className="px-4 py-3 border-b bg-white space-y-1">
+          <h4 className="text-[9px] font-bold text-gray-500 uppercase">Plan</h4>
+          {steps.map((step: { title: string; done?: boolean }, i: number) => (
+            <div key={i} className="flex items-center gap-2">
+              <span className={cn(
+                "w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0",
+                step.done ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-400"
+              )}>
+                {step.done ? "✓" : i + 1}
+              </span>
+              <span className={cn("text-xs", step.done ? "text-gray-400 line-through" : "text-gray-700")}>{step.title}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Output */}
+      <div className="flex-1 overflow-auto px-4 py-3 bg-gray-900 font-mono text-[11px] text-gray-300">
+        {output ? (
+          <pre className="whitespace-pre-wrap">{output}</pre>
+        ) : (
+          <div className="flex items-center justify-center h-full text-gray-500">
+            <div className="text-center space-y-2">
+              <Cpu className="h-8 w-8 mx-auto opacity-30" />
+              <p className="text-sm">En attente de Tim...</p>
+              <p className="text-[9px] opacity-50">Demandez a Tim de coder quelque chose dans le chat</p>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

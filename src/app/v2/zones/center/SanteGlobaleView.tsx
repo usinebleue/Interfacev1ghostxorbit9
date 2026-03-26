@@ -200,7 +200,7 @@ export function SanteGlobaleView() {
   const ghostTeam = lastDiag?.ghost_team?.slice(0, 3) || [];
 
   return (
-    <PageLayout maxWidth="5xl" spacing="space-y-2.5">
+    <div className="space-y-2.5">
 
         {/* ── GRADIENT HEADER + TABS (Pipeline pattern) ── */}
         <div className={cn("bg-gradient-to-r rounded-xl p-4 transition-all duration-300",
@@ -703,6 +703,6 @@ export function SanteGlobaleView() {
           </div>
         )}
 
-    </PageLayout>
+    </div>
   );
 }

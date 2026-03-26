@@ -80,10 +80,8 @@ export function InputBar({ compact = false }: { compact?: boolean }) {
     // Arreter l'ecoute micro si active
     if (stt.isListening) stt.stopListening();
     stt.clearTranscript();
-    // Ne rediriger vers live-chat que si on n'est PAS en mode compact (sidebar)
-    if (!compact) {
-      setActiveView("live-chat");
-    }
+    // Toujours naviguer vers live-chat pour voir la discussion
+    setActiveView("live-chat");
     // Si le roster a 2+ bots, envoyer en multi-perspective
     if (activeRoster.length >= 2) {
       sendMultiPerspective(trimmed, activeRoster);

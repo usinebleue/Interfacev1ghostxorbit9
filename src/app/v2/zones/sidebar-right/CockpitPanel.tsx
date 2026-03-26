@@ -390,11 +390,11 @@ function TabDiscussions() {
 // Tab "Mon Équipe d'Agents AI" — 12 agents
 // ──────────────────────────────────────────
 function TabEquipeAI() {
-  const { activeBotCode, setActiveBotCode, setActiveView } = useFrameMaster();
+  const { activeBotCode, setActiveBotCode, navigateToDepartment } = useFrameMaster();
 
   const handleSelectBot = (code: string) => {
     setActiveBotCode(code);
-    setActiveView("live-chat");
+    navigateToDepartment(code);
   };
 
   return (
