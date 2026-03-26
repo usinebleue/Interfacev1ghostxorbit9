@@ -754,7 +754,7 @@ function DocumentEditorFocus({ focusData }: { focusData: any }) {
               <span className="text-[9px] text-gray-400">{totalBlocks} sections | {fillRate}% complet</span>
             )}
             {initialMode === "library" && (
-              <span className="text-[9px] text-gray-400">{dfBlocks.length} blocs | {library?.completude_pct || 0}% complet</span>
+              <span className="text-[9px] text-gray-400">{blocks.length} sections | {fillRate}% complet</span>
             )}
           </div>
         </div>
