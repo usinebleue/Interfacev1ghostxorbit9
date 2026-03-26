@@ -118,7 +118,7 @@ export function FocusModeLayout({
         <button
           onClick={onClose}
           className="text-white/60 hover:text-white p-1 rounded-lg hover:bg-white/10 cursor-pointer transition-colors shrink-0"
-          title="Quitter le focus"
+          title="Quitter l'atelier"
         >
           <X className="h-4 w-4" />
         </button>

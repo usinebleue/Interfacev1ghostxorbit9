@@ -1,14 +1,13 @@
 /**
- * FrameMaster.tsx — Layout 3 zones: Cockpit | Chat | Contenu
+ * FrameMaster.tsx — Layout 2 zones: Cockpit | Canvas Central
  * Gauche: Cockpit (video + etat/discussions/equipe) — collapsible
- * Centre: LiveChat permanent + InputBar
- * Droite: TopBar nav + CenterZone (50+ vues)
- * Session 70 — Layout 3 Zones
+ * Droite: TopBar nav + CenterZone (50+ vues) — pleine largeur
+ * L'Atelier = split-screen FocusModeLayout dans CenterZone (pas un 3e panel)
+ * Session 70 — Simplification post-vocal Carl 1h47
  */
 
 import { useRef, useEffect, useCallback, useState } from "react";
 import type { ImperativePanelHandle } from "react-resizable-panels";
-import { GripVertical } from "lucide-react";
 import {
   ResizablePanelGroup,
   ResizablePanel,
@@ -16,10 +15,9 @@ import {
 } from "../../components/ui/resizable";
 import { useIsMobile } from "../../components/ui/use-mobile";
 import { useFrameMaster } from "../context/FrameMasterContext";
-import { TopBarCockpit, TopBarChat, TopBarContent } from "../zones/TopBar";
+import { TopBarCockpit, TopBarContent } from "../zones/TopBar";
 import { SidebarRight } from "../zones/sidebar-right/SidebarRight";
 import { CenterZone } from "../zones/center/CenterZone";
-import { LiveChat } from "../zones/center/LiveChat";
 import { FrameMasterMobile } from "./FrameMasterMobile";
 import { useGlassesEvents } from "../hooks/useGlassesEvents";
 
@@ -63,10 +61,10 @@ export function FrameMaster() {
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-white">
       <ResizablePanelGroup
         direction="horizontal"
-        autoSaveId="frame-master-v3"
+        autoSaveId="frame-master-v4"
         className="flex-1"
       >
-        {/* ═══ PANEL GAUCHE — Cockpit (ancien SidebarRight) ═══ */}
+        {/* ═══ PANEL GAUCHE — Cockpit ═══ */}
         <ResizablePanel
           ref={leftPanelRef}
           defaultSize={16}
@@ -88,20 +86,8 @@ export function FrameMaster() {
 
         <ResizableHandle className="cursor-col-resize" />
 
-        {/* ═══ PANEL CENTRE — Chat permanent ═══ */}
-        <ResizablePanel defaultSize={22} minSize={12} maxSize={40}>
-          <div className="h-full flex flex-col overflow-hidden">
-            <TopBarChat />
-            <div className="flex-1 overflow-hidden border-x border-gray-200">
-              <LiveChat />
-            </div>
-          </div>
-        </ResizablePanel>
-
-        <ResizableHandle className="cursor-col-resize" />
-
-        {/* ═══ PANEL DROITE — Contenu (nav + CenterZone intact) ═══ */}
-        <ResizablePanel defaultSize={60} minSize={35}>
+        {/* ═══ PANEL DROITE — Canvas Central (nav + CenterZone) ═══ */}
+        <ResizablePanel defaultSize={84} minSize={60}>
           <div className="h-full flex flex-col">
             <TopBarContent />
             <div className="flex-1 overflow-hidden">

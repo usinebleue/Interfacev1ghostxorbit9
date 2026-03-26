@@ -32,7 +32,7 @@ import { DiscussionView } from "./DiscussionView";
 import { BranchPatternsDemo } from "./BranchPatternsDemo";
 import { CahierSmartDemo } from "./CahierSmartDemo";
 import { ScenarioHub } from "./ScenarioHub";
-// LiveChat moved to permanent chat panel (Session 70 — Layout 3 Zones)
+import { LiveChat } from "./LiveChat";
 import { SmartCanvas } from "./SmartCanvas";
 import { DepartmentDetailView } from "./DepartmentDetailView";
 // InputBar moved to SidebarRight (Sprint Final V1)
@@ -329,7 +329,7 @@ export function CenterZone() {
       {activeView === "cahier" && <CahierSmartDemo />}
       {activeView === "scenarios" && <ScenarioHub />}
       {activeView === "detail" && <DepartmentDetailView />}
-      {activeView === "live-chat" && <DashboardView />}
+      {activeView === "live-chat" && <LiveChat />}
       {activeView === "orbit9-detail" && <Orbit9DetailView />}
       {activeView === "agent-settings" && <AgentSettingsView />}
       {activeView === "espace-bureau" && <MonBureauView />}
