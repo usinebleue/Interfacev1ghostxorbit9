@@ -1802,7 +1802,7 @@ export function DepartmentTourDeControle() {
       },
       bot: activeBotCode,
     });
-    setActiveView("live-chat");
+    // PAS de setActiveView("live-chat") — focusData déclenche le split-screen Atelier dans CenterZone
   };
 
   const handleFocus = (title: string, elementType: string, data: unknown) => {

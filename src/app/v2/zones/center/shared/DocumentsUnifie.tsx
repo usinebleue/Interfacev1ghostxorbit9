@@ -267,7 +267,6 @@ export function DocumentsUnifie({ botFilter, onAction, hideHeader, typeFilter: t
         data: { title: doc.titre, element_type: "document_editor", data: { library: lib, mode: "library" } },
         bot: doc.bot || "CPOB",
       });
-      setActiveView("live-chat");
     } else if (doc.type === "importe") {
       const bu = doc._raw as any;
       const meta = bu.metadata || {};
@@ -283,7 +282,6 @@ export function DocumentsUnifie({ botFilter, onAction, hideHeader, typeFilter: t
       data: { title: "Nouveau document", element_type: "document_editor", data: { mode: "scratch" } },
       bot: botFilter || "CPOB",
     });
-    setActiveView("live-chat");
   };
 
   const handleDelete = (doc: UnifiedDoc) => {

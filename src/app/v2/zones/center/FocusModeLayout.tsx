@@ -534,6 +534,21 @@ function DocumentEditorFocus({ focusData }: { focusData: any }) {
       setTemplatePreview(md);
       setPlaceholders([]);
       setDocTitle(template.titre);
+    } else if (initialMode === "scratch" && template && !template.source && template.sections?.length) {
+      // Templates documentaires (catalogue JSON) — pas de source, mais ont des sections
+      const md = (template.sections || [])
+        .sort((a: any, b: any) => (a.ordre || 0) - (b.ordre || 0))
+        .map((s: any) => `## ${s.titre_section || s.title || "Section"}\n\n*Type: ${s.type_contenu || "texte"}*\n\n{{ A COMPLETER }}`)
+        .join("\n\n");
+      setTemplatePreview(md);
+      setPlaceholders([]);
+      setDocTitle(template.titre);
+    } else if (initialMode === "scratch" && template && !template.source) {
+      // Template sans sections — juste le titre et description
+      const md = `## ${template.titre}\n\n${template.description || ""}\n\n{{ A COMPLETER }}`;
+      setTemplatePreview(md);
+      setPlaceholders([]);
+      setDocTitle(template.titre);
     }
   }, [template, initialMode]);
 
