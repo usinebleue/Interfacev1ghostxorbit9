@@ -46,7 +46,7 @@ export function PageHeader({
           )}
         </div>
       </div>
-      {rightSlot && <div className="flex gap-1 ml-auto">{rightSlot}</div>}
+      {rightSlot && <div className="flex-1 flex justify-center">{rightSlot}</div>}
     </div>
   );
 }

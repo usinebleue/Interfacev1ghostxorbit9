@@ -415,13 +415,18 @@ export function CenterZone() {
         </div>
       )}
 
-      {/* Vue principale — Focus Mode plein canvas OU vue normale */}
-      {/* Chat permanent visible dans le panel centre — plus de split screen ici */}
+      {/* Vue principale — Atelier split-screen OU vue normale */}
       <div className="flex-1 overflow-hidden flex">
         {focusData ? (
-          <div className="flex-1 overflow-hidden">
-            <FocusModeLayout focusData={focusData} onClose={clearFocusMode} />
-          </div>
+          /* Atelier: LiveChat gauche (discussion bot) + FocusModeLayout droite (fabrication) */
+          <>
+            <div className="w-[40%] min-w-[280px] h-full overflow-hidden border-r border-gray-200">
+              <LiveChat />
+            </div>
+            <div className="flex-1 h-full overflow-hidden">
+              <FocusModeLayout focusData={focusData} onClose={clearFocusMode} />
+            </div>
+          </>
         ) : (
           <div className="flex-1 overflow-hidden">
             {renderMainView()}
