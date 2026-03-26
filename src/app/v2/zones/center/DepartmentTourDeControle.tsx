@@ -6,26 +6,28 @@
  */
 
 import { useState, useEffect, useMemo } from "react";
-import { Settings, Stethoscope, Flame, ListChecks, Rocket, Bot, BookOpen, Bell, Layers } from "lucide-react";
+import { Settings, Stethoscope, Flame, ListChecks, Rocket, Bot, Bell, Layers, Inbox, Brain, Search, SortAsc, SortDesc, ChevronDown, Plus, LayoutGrid, List, Columns, Table2, Building2, Target, Shield, TrendingUp, DollarSign, Compass } from "lucide-react";
 import { Card } from "../../../components/ui/card";
 import { cn } from "../../../components/ui/utils";
 import { useFrameMaster } from "../../context/FrameMasterContext";
 import { useCanvasActions } from "../../context/CanvasActionContext";
-import { BOT_SUBTITLE } from "../../api/types";
+import { BOT_SUBTITLE, REFLECTION_MODES } from "../../api/types";
 import { api } from "../../api/client";
 import { useTaches, useBureau, useChantiers, useProjets } from "../../api/hooks";
-import type { Mission, DiagnosticCatalogue, TemplateDocumentaire } from "../../api/types";
+import type { Mission, DiagnosticCatalogue, TemplateDocumentaire, PlaybookSummary } from "../../api/types";
 import { PageLayout } from "./layouts/PageLayout";
 import { SectionFrame } from "./shared/SectionFrame";
 import { PLAYBOOK_TEMPLATES, BOT_INFO, STATUS_CONFIG, CHALEUR_CONFIG } from "./shared/section-config";
 import type { TabDef } from "./shared/section-types";
 import { HierarchieGHML } from "./shared/HierarchieGHML";
-import { CatalogueUnifie } from "./shared/CatalogueUnifie";
+// CatalogueUnifie retire — contenu redistribue dans Chantiers (playbooks), Documents (templates), Sante (diagnostics)
 import { DiscussionView } from "./DiscussionView";
-import { DocumentsView } from "./shared/DocumentsView";
+// DocumentsView retire — remplace par DocumentsUnifie (meme pattern HierarchieTab)
 import { SanteGlobaleView } from "./SanteGlobaleView";
 import { TabSommaire, TabObjectifs, HierarchieTab } from "./BlueprintView";
-import { AgendaPage, NotificationsPage, DocumentsPage } from "./MonBureauView";
+import { AgendaPage, NotificationsPage } from "./MonBureauView";
+import { DocumentsUnifie } from "./shared/DocumentsUnifie";
+import { BlueprintDepartement } from "./blueprint/BlueprintDepartement";
 
 /* ============ BLOCK HEADER — meme style que DashboardView ============ */
 function BlockHeader({ icon: Icon, title, count, gradient }: {
@@ -112,7 +114,7 @@ import {
   CalendarDays, Newspaper, Scale, ShieldCheck,
   Gauge, LineChart, Package, ClipboardList,
   GraduationCap, HeartPulse, AlertTriangle, Lock,
-  Briefcase, Globe, Zap, Eye, MessageSquare,
+  Briefcase, Globe, Zap, Eye, MessageSquare, Sparkles, Upload,
 } from "lucide-react";
 
 /* ============ CONFIGS PAR DEPARTEMENT — 10 blocs chacun ============ */
@@ -124,8 +126,282 @@ type DeptTdcConfig = {
   row2: BlocConfig[];
 };
 
+/* ============ SECTION HEADER — Pattern Sante (gradient + sub-tabs intégrés) ============ */
+interface SubTabDef {
+  id: string;
+  label: string;
+  icon?: React.ElementType;
+  gradient: string;
+  count?: number;
+}
+
+function SectionHeader({ icon: Icon, title, subtitle, tabs, activeTab, onTabChange, gradient }: {
+  icon: React.ElementType;
+  title: string;
+  subtitle: string;
+  tabs: SubTabDef[];
+  activeTab: string;
+  onTabChange: (id: string) => void;
+  /** Couleur fixe du header (couleur du bot) — si absent, utilise la couleur du sub-tab actif */
+  gradient?: string;
+}) {
+  const currentGradient = gradient || tabs.find(t => t.id === activeTab)?.gradient || tabs[0]?.gradient || "from-blue-600 to-blue-500";
+  return (
+    <div className={cn("bg-gradient-to-r rounded-xl p-4 transition-all duration-300", currentGradient)}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center">
+            <Icon className="h-4 w-4 text-white" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-white">{title}</h2>
+            {subtitle && <p className="text-sm text-white/70">{subtitle}</p>}
+          </div>
+        </div>
+        <div className="flex gap-1.5 flex-wrap justify-end">
+          {tabs.map(tab => {
+            const TabIcon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => onTabChange(tab.id)}
+                className={cn(
+                  "px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5",
+                  activeTab === tab.id
+                    ? "bg-white/25 text-white shadow-sm"
+                    : "text-white/60 hover:bg-white/10 hover:text-white/80"
+                )}
+              >
+                {TabIcon && <TabIcon className="h-3.5 w-3.5" />}
+                {tab.label}
+                {tab.count !== undefined && tab.count > 0 && (
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/20">{tab.count}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============ PLAYBOOK GRID — meme pattern que HierarchieTab (search, sort, 4 vues) ============ */
+function PlaybookGrid({ playbooks, onFocus, viewMode, setViewMode }: {
+  playbooks: PlaybookSummary[];
+  onFocus: (label: string, type: string, data: unknown) => void;
+  viewMode: "cards" | "list" | "kanban" | "spreadsheet";
+  setViewMode: (m: "cards" | "list" | "kanban" | "spreadsheet") => void;
+}) {
+  const [search, setSearch] = useState("");
+  const [sortField, setSortField] = useState<"titre" | "type" | "dept" | "projets">("dept");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [showSort, setShowSort] = useState(false);
+  const [deptFilter, setDeptFilter] = useState<string | null>(null);
+
+  // Helper: premier bot suggere = departement responsable
+  const pbBot = (pb: PlaybookSummary) => (pb.bots_suggeres || [])[0] || "";
+  const pbBotLabel = (pb: PlaybookSummary) => BOT_INFO[pbBot(pb)]?.short || pbBot(pb) || "—";
+  const pbBotGradient = (pb: PlaybookSummary) => BOT_INFO[pbBot(pb)]?.gradient || "from-indigo-600 to-indigo-500";
+
+  // Departements uniques pour les chips de filtre — ordre C-suite logique
+  const CSUITE_ORDER = ["CEOB","CTOB","CFOB","CMOB","CSOB","COOB","CPOB","CHROB","CINOB","CROB","CLOB","CISOB"];
+  const deptChips = useMemo(() => {
+    const codes = Array.from(new Set(playbooks.map(pbBot).filter(Boolean)));
+    return codes
+      .sort((a, b) => (CSUITE_ORDER.indexOf(a) === -1 ? 99 : CSUITE_ORDER.indexOf(a)) - (CSUITE_ORDER.indexOf(b) === -1 ? 99 : CSUITE_ORDER.indexOf(b)))
+      .map(c => ({ code: c, label: BOT_INFO[c]?.short || c, short: BOT_INFO[c]?.short || c }));
+  }, [playbooks]);
+
+  const filtered = useMemo(() => {
+    let items = [...playbooks];
+    if (deptFilter) items = items.filter(p => pbBot(p) === deptFilter);
+    if (search) {
+      const q = search.toLowerCase();
+      items = items.filter(p => p.titre_template.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q) || p.type_chantier?.toLowerCase().includes(q));
+    }
+    items.sort((a, b) => {
+      let cmp = 0;
+      if (sortField === "titre") cmp = a.titre_template.localeCompare(b.titre_template);
+      else if (sortField === "type") cmp = (a.type_chantier || "").localeCompare(b.type_chantier || "");
+      else if (sortField === "dept") cmp = pbBotLabel(a).localeCompare(pbBotLabel(b));
+      else if (sortField === "projets") cmp = (a.nb_projets || 0) - (b.nb_projets || 0);
+      return sortDir === "desc" ? -cmp : cmp;
+    });
+    return items;
+  }, [playbooks, search, sortField, sortDir, deptFilter]);
+
+  const SORT_OPTS = [
+    { field: "dept" as const, label: "Departement" },
+    { field: "titre" as const, label: "Nom" },
+    { field: "type" as const, label: "Type" },
+    { field: "projets" as const, label: "Projets" },
+  ];
+
+  const VIEW_MODES = [
+    { id: "cards" as const, icon: LayoutGrid },
+    { id: "list" as const, icon: List },
+    { id: "kanban" as const, icon: Columns },
+    { id: "spreadsheet" as const, icon: Table2 },
+  ];
+
+  if (playbooks.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-8 gap-2 text-gray-400">
+        <Inbox className="h-6 w-6" />
+        <span className="text-xs">Aucun playbook disponible</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {/* Toolbar compact — meme ligne */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="relative flex-1 min-w-[180px]">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+          <input type="text" placeholder="Rechercher playbooks..." value={search} onChange={e => setSearch(e.target.value)}
+            className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 bg-white" />
+        </div>
+        {/* Sort */}
+        <div className="relative">
+          <button onClick={() => setShowSort(!showSort)}
+            className="flex items-center gap-1 px-2 py-1.5 text-[9px] font-bold text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">
+            {sortDir === "asc" ? <SortAsc className="h-3.5 w-3.5" /> : <SortDesc className="h-3.5 w-3.5" />}
+            <ChevronDown className="h-3.5 w-3.5" />
+          </button>
+          {showSort && (
+            <div className="absolute right-0 top-full mt-1 z-20 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[120px]">
+              {SORT_OPTS.map(opt => (
+                <button key={opt.field} onClick={() => { setSortField(opt.field); setSortDir(sortField === opt.field && sortDir === "asc" ? "desc" : "asc"); setShowSort(false); }}
+                  className={cn("w-full text-left px-3 py-1.5 text-[9px] font-medium hover:bg-gray-50 transition-colors cursor-pointer", sortField === opt.field ? "text-blue-600 bg-blue-50" : "text-gray-600")}>
+                  {opt.label} {sortField === opt.field && (sortDir === "asc" ? "↑" : "↓")}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        {/* Dept filter chips */}
+        <div className="flex items-center gap-1">
+          <button onClick={() => setDeptFilter(null)}
+            className={cn("px-2 py-1 text-[9px] font-bold rounded-full transition-colors border cursor-pointer",
+              !deptFilter ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:bg-gray-50")}>
+            Tous
+          </button>
+          {deptChips.map(d => (
+            <button key={d.code} onClick={() => setDeptFilter(d.code)}
+              className={cn("px-2 py-1 text-[9px] font-bold rounded-full transition-colors border cursor-pointer",
+                deptFilter === d.code ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:bg-gray-50")}>
+              {d.label}
+            </button>
+          ))}
+        </div>
+        {/* View modes */}
+        <div className="flex items-center gap-0.5 border border-gray-200 rounded-lg p-0.5">
+          {VIEW_MODES.map(vm => (
+            <button key={vm.id} onClick={() => setViewMode(vm.id)}
+              className={cn("p-1.5 rounded-md transition-colors cursor-pointer", viewMode === vm.id ? "bg-blue-100 text-blue-600" : "text-gray-400 hover:text-gray-600 hover:bg-gray-50")}>
+              <vm.icon className="h-3.5 w-3.5" />
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Content — 4 modes */}
+      {viewMode === "list" ? (
+        <div className="space-y-1">
+          {filtered.map(pb => (
+            <div key={pb.id} onClick={() => onFocus(`Playbook: ${pb.titre_template}`, "playbook", pb)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors group cursor-pointer">
+              <Rocket className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
+              <span className="text-[9px] font-bold flex-1 truncate">{pb.titre_template}</span>
+              <span className={cn("text-[9px] px-1.5 py-0.5 rounded font-bold text-white bg-gradient-to-r", pbBotGradient(pb))}>{pbBotLabel(pb)}</span>
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600 font-medium">{pb.type_chantier}</span>
+              <span className="text-[9px] text-gray-400">{pb.nb_projets} proj. · {pb.nb_missions} miss.</span>
+            </div>
+          ))}
+        </div>
+      ) : viewMode === "spreadsheet" ? (
+        <div className="border border-gray-200 rounded-lg overflow-hidden">
+          <table className="w-full text-[9px]">
+            <thead>
+              <tr className="bg-gray-50 border-b border-gray-200">
+                <th className="text-left px-3 py-1.5 font-bold text-gray-500">Nom</th>
+                <th className="text-left px-3 py-1.5 font-bold text-gray-500">Dept</th>
+                <th className="text-left px-3 py-1.5 font-bold text-gray-500">Type</th>
+                <th className="text-center px-3 py-1.5 font-bold text-gray-500">Projets</th>
+                <th className="text-center px-3 py-1.5 font-bold text-gray-500">Missions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map(pb => (
+                <tr key={pb.id} onClick={() => onFocus(`Playbook: ${pb.titre_template}`, "playbook", pb)}
+                  className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors">
+                  <td className="px-3 py-1.5 font-medium">{pb.titre_template}</td>
+                  <td className="px-3 py-1.5"><span className={cn("px-1.5 py-0.5 rounded font-bold text-white bg-gradient-to-r", pbBotGradient(pb))}>{pbBotLabel(pb)}</span></td>
+                  <td className="px-3 py-1.5"><span className="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600 font-medium">{pb.type_chantier}</span></td>
+                  <td className="px-3 py-1.5 text-center">{pb.nb_projets}</td>
+                  <td className="px-3 py-1.5 text-center">{pb.nb_missions}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : viewMode === "kanban" ? (
+        /* Kanban par departement (bot) — grid responsive */
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+          {deptChips.map(dept => {
+            const deptItems = filtered.filter(p => pbBot(p) === dept.code);
+            if (deptItems.length === 0) return null;
+            return (
+              <div key={dept.code}>
+                <div className={cn("text-[9px] font-bold text-white uppercase tracking-wider px-2 py-1.5 rounded-t-lg bg-gradient-to-r", BOT_INFO[dept.code]?.gradient || "from-gray-500 to-gray-400")}>{dept.label}</div>
+                <div className="space-y-1.5 border border-gray-200 rounded-b-lg p-2 bg-white">
+                  {deptItems.map(pb => (
+                    <button key={pb.id} onClick={() => onFocus(`Playbook: ${pb.titre_template}`, "playbook", pb)}
+                      className="w-full text-left border rounded-lg p-2 hover:shadow-md transition-all cursor-pointer group">
+                      <p className="text-[9px] font-bold text-gray-800 group-hover:text-indigo-600 truncate">{pb.titre_template}</p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="text-[8px] px-1 py-0.5 rounded bg-indigo-50 text-indigo-600">{pb.type_chantier}</span>
+                        <span className="text-[8px] text-gray-400">{pb.nb_projets} proj. · {pb.nb_missions} miss.</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        /* Cards (defaut) */
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {filtered.map(pb => (
+            <div key={pb.id} className="w-full overflow-hidden rounded-lg border shadow-sm hover:shadow-md transition-all group">
+              <div className={cn("px-3 py-2 flex items-center gap-2 bg-gradient-to-r", pbBotGradient(pb))}>
+                <Rocket className="h-3.5 w-3.5 text-white shrink-0" />
+                <button onClick={() => onFocus(`Playbook: ${pb.titre_template}`, "playbook", pb)}
+                  className="text-[9px] font-bold text-white flex-1 truncate text-left cursor-pointer hover:underline">
+                  {pb.titre_template}
+                </button>
+              </div>
+              <div className="px-3 py-2">
+                {pb.description && <p className="text-[9px] text-gray-400 line-clamp-2 mb-1.5">{pb.description}</p>}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className={cn("text-[9px] px-1.5 py-0.5 rounded font-bold text-white bg-gradient-to-r", pbBotGradient(pb))}>{pbBotLabel(pb)}</span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600 font-medium">{pb.type_chantier}</span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{pb.nb_projets} proj. · {pb.nb_missions} missions</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ============ TABS DEPARTEMENT (11 tabs — structure identique 12 departements) ============ */
-type DeptTabId = "cockpit" | "blueprint" | "sante" | "chantiers" | "projets" | "missions" | "taches" | "discussions" | "documents" | "agenda" | "notifications" | "catalogue" | "performance";
+type DeptTabId = "cockpit" | "blueprint" | "sante" | "chantiers" | "projets" | "missions" | "taches" | "discussions" | "documents" | "agenda" | "notifications" | "performance";
 const DEPT_TABS: TabDef[] = [
   { id: "cockpit", label: "Vue d'ensemble", icon: Gauge },
   { id: "blueprint", label: "Blueprint", icon: Layers },
@@ -138,7 +414,6 @@ const DEPT_TABS: TabDef[] = [
   { id: "documents", label: "Documents", icon: FileText },
   { id: "agenda", label: "Agenda", icon: CalendarDays },
   { id: "notifications", label: "Notifications", icon: Bell },
-  { id: "catalogue", label: "Catalogue", icon: BookOpen },
   { id: "performance", label: "Performance AI", icon: Bot },
 ];
 
@@ -1190,13 +1465,22 @@ export function DepartmentTourDeControle() {
   const [deptTab, setDeptTab] = useState<DeptTabId>("cockpit");
   const [hierViewMode, setHierViewMode] = useState<"cards" | "list" | "kanban" | "spreadsheet">("cards");
   const [hierParentFilter, setHierParentFilter] = useState<{ type: string; id: number; titre: string } | null>(null);
+  // Sub-tab state for sections with SectionHeader pattern
+  const [blueprintSub, setBlueprintSub] = useState("profil");
+  const [chantiersSub, setChantiersSub] = useState("tous");
+  const [projetsSub, setProjetsSub] = useState("tous");
+  const [missionsSub, setMissionsSub] = useState("tous");
+  const [tachesSub, setTachesSub] = useState("tous");
+  const [discSub, setDiscSub] = useState("toutes");
+  const [docsSub, setDocsSub] = useState("tous");
   const [missions, setMissions] = useState<Mission[]>([]);
   const [diagnostics, setDiagnostics] = useState<DiagnosticCatalogue[]>([]);
   const [templates, setTemplates] = useState<TemplateDocumentaire[]>([]);
+  const [apiPlaybooks, setApiPlaybooks] = useState<PlaybookSummary[]>([]);
   const { taches } = useTaches();
   const { items: bureauItems } = useBureau();
 
-  // Load data for Missions / Documents / Diagnostics tabs
+  // Load data for Missions / Documents / Diagnostics / Playbooks tabs
   useEffect(() => {
     setDeptTab("cockpit");
     const deptKey = BOT_TO_DEPT[activeBotCode] || "";
@@ -1207,6 +1491,11 @@ export function DepartmentTourDeControle() {
     }).catch(() => {});
     api.listDiagnosticsEnrichis(deptKey).then(d => setDiagnostics(d || [])).catch(() => {});
     api.listTemplatesDocumentaires(activeBotCode).then(t => setTemplates(t || [])).catch(() => {});
+    api.listPlaybooks().then(pbs => {
+      // Filtrer par bot sauf CEOB qui voit tout
+      const filtered = activeBotCode === "CEOB" ? pbs : pbs.filter(p => p.bots_suggeres?.includes(activeBotCode));
+      setApiPlaybooks(filtered || []);
+    }).catch(() => {});
   }, [activeBotCode]);
 
   // API data — chantiers et projets filtrés par bot
@@ -1499,138 +1788,291 @@ export function DepartmentTourDeControle() {
         {/* CEOB = master plan global (redirige vers BlueprintView sommaire+objectifs) */}
         {/* Autres bots = objectifs departement + strategie specifique */}
         {/* ══════════════════════════════════════════ */}
-        {deptTab === "blueprint" && activeBotCode === "CEOB" && (
-          <div className="space-y-4">
-            <TabSommaire />
-            <TabObjectifs />
-          </div>
-        )}
-        {deptTab === "blueprint" && activeBotCode !== "CEOB" && (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-              <Layers className="h-4 w-4 text-gray-600" />
-              <div>
-                <p className="text-xs font-bold text-gray-800">Blueprint — {BOT_INFO[activeBotCode]?.label || activeBotCode}</p>
-                <p className="text-[9px] text-gray-500">Objectifs et strategie du departement. Lies au Blueprint master (CEOB).</p>
+        {deptTab === "blueprint" && activeBotCode === "CEOB" && (() => {
+          const bpSubTabs: SubTabDef[] = [
+            { id: "profil", label: "Profil", icon: Building2, gradient: "from-blue-600 to-blue-500" },
+            { id: "swot", label: "SWOT", icon: Shield, gradient: "from-emerald-600 to-emerald-500" },
+            { id: "bmc", label: "BMC", icon: LayoutGrid, gradient: "from-violet-600 to-violet-500" },
+            { id: "objectifs", label: "Objectifs", icon: Target, gradient: "from-amber-600 to-amber-500" },
+            { id: "finances", label: "Finances", icon: DollarSign, gradient: "from-teal-600 to-teal-500" },
+          ];
+          return (
+            <div className="space-y-3">
+              <SectionHeader icon={Compass} title="Blueprint" subtitle="" tabs={bpSubTabs} activeTab={blueprintSub} onTabChange={setBlueprintSub} gradient={headerGradient} />
+              {/* Selecteur Startup / Scaleup / Exitup */}
+              <div className="flex items-center gap-2 px-1">
+                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Phase:</span>
+                {[
+                  { id: "startup", label: "Startup", desc: "Demarrage" },
+                  { id: "scaleup", label: "Scaleup", desc: "Croissance" },
+                  { id: "exitup", label: "Exitup", desc: "Sortie" },
+                ].map(phase => (
+                  <button key={phase.id} className={cn(
+                    "px-3 py-1.5 text-[9px] font-bold rounded-lg border transition-colors cursor-pointer",
+                    "bg-white text-gray-500 border-gray-200 hover:border-blue-300 hover:bg-blue-50"
+                  )}>
+                    {phase.label} <span className="font-normal text-gray-400">({phase.desc})</span>
+                  </button>
+                ))}
               </div>
+              {/* Contenu par sub-tab */}
+              {blueprintSub === "profil" && <TabSommaire section="profil" />}
+              {blueprintSub === "swot" && <TabSommaire section="swot" />}
+              {blueprintSub === "bmc" && <TabObjectifs section="bmc" />}
+              {blueprintSub === "objectifs" && <TabObjectifs section="objectifs" />}
+              {blueprintSub === "finances" && <TabObjectifs section="finances" />}
             </div>
-            {/* Chantiers de ce departement */}
-            <Card className="p-0 overflow-hidden">
-              <div className={cn("flex items-center gap-2 px-3 py-2 bg-gradient-to-r", headerGradient)}>
-                <Flame className="h-4 w-4 text-white" />
-                <span className="text-sm font-bold text-white">Chantiers du departement</span>
-                <span className="text-[9px] font-bold bg-white/25 text-white px-2 py-0.5 rounded-full ml-auto">{botChantiers.length}</span>
-              </div>
-              <div className="p-3 space-y-2">
-                {botChantiers.map(ch => {
-                  const projCount = allProjets.filter(p => p.chantier_id === ch.id).length;
-                  const projDone = allProjets.filter(p => p.chantier_id === ch.id && (p.status === "completee" || p.status === "complete")).length;
-                  const pct = projCount > 0 ? Math.round((projDone / projCount) * 100) : 0;
-                  const apiToLocal: Record<string, string> = { completee: "done", complete: "done", active: "en-cours", en_attente: "a-faire", archivee: "bloque" };
-                  const mappedStatus = apiToLocal[ch.status] || "a-faire";
-                  const sc = STATUS_CONFIG[mappedStatus] || STATUS_CONFIG["a-faire"];
-                  return (
-                    <div key={ch.id}>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded", sc.bg, sc.text)}>{sc.label}</span>
-                        <span className="text-xs text-gray-700 flex-1 truncate">{ch.titre}</span>
-                        <span className="text-[9px] text-gray-400">{projDone}/{projCount}</span>
+          );
+        })()}
+        {deptTab === "blueprint" && activeBotCode !== "CEOB" && (
+          <BlueprintDepartement botCode={activeBotCode} headerGradient={headerGradient} />
+        )}
+
+        {/* ══════════════════════════════════════════ */}
+        {/* TAB 4 — CHANTIERS (SectionHeader + sub-tabs) */}
+        {/* ══════════════════════════════════════════ */}
+        {deptTab === "chantiers" && (() => {
+          const subTabs: SubTabDef[] = [
+            { id: "tous", label: "Tous", gradient: "from-blue-600 to-blue-500", count: botChantiers.length },
+            { id: "interne", label: "Internes", gradient: "from-slate-600 to-slate-500" },
+            { id: "client", label: "Clients", gradient: "from-emerald-600 to-emerald-500" },
+            { id: "partenaire", label: "Partenaires", gradient: "from-amber-600 to-amber-500" },
+            { id: "playbooks", label: "Playbooks", icon: Rocket, gradient: "from-indigo-600 to-indigo-500", count: apiPlaybooks.length },
+          ];
+          return (
+            <div className="space-y-3">
+              <SectionHeader icon={Flame} title="Chantiers" subtitle="" tabs={subTabs} activeTab={chantiersSub} onTabChange={setChantiersSub} gradient={headerGradient} />
+              {chantiersSub === "playbooks" ? (
+                <PlaybookGrid playbooks={apiPlaybooks} onFocus={handleFocus} viewMode={hierViewMode} setViewMode={setHierViewMode} />
+              ) : (
+                <HierarchieTab
+                  key={`dept-hier-${activeBotCode}-chantiers-${chantiersSub}`}
+                  level="chantiers"
+                  compact
+                  categorieFilter={chantiersSub === "tous" ? undefined : chantiersSub}
+                  goTo={(tab, filter) => {
+                    const mapped = tab as string;
+                    if (mapped === "chantiers" || mapped === "projets" || mapped === "missions" || mapped === "taches") {
+                      setDeptTab(mapped as DeptTabId);
+                      setHierParentFilter(filter || null);
+                    }
+                  }}
+                  parentFilter={hierParentFilter}
+                  viewMode={hierViewMode}
+                  setViewMode={setHierViewMode}
+                />
+              )}
+            </div>
+          );
+        })()}
+
+        {/* ══════════════════════════════════════════ */}
+        {/* TAB 5 — PROJETS (SectionHeader + sub-tabs) */}
+        {/* ══════════════════════════════════════════ */}
+        {deptTab === "projets" && (() => {
+          const subTabs: SubTabDef[] = [
+            { id: "tous", label: "Tous", gradient: "from-blue-600 to-blue-500", count: botProjets.length },
+            { id: "interne", label: "Internes", gradient: "from-slate-600 to-slate-500" },
+            { id: "client", label: "Clients", gradient: "from-emerald-600 to-emerald-500" },
+            { id: "partenaire", label: "Partenaires", gradient: "from-amber-600 to-amber-500" },
+            { id: "templates", label: "Templates", icon: Rocket, gradient: "from-gray-500 to-gray-400" },
+          ];
+          return (
+            <div className="space-y-3">
+              <SectionHeader icon={Package} title="Projets" subtitle="" tabs={subTabs} activeTab={projetsSub} onTabChange={setProjetsSub} gradient={headerGradient} />
+              {projetsSub === "templates" ? (
+                <div className="flex flex-col items-center justify-center py-8 gap-2 text-gray-400">
+                  <Inbox className="h-6 w-6" />
+                  <span className="text-xs">Templates a venir</span>
+                  <p className="text-[9px] text-gray-300 text-center">Les templates de projets seront disponibles prochainement.</p>
+                </div>
+              ) : (
+                <HierarchieTab
+                  key={`dept-hier-${activeBotCode}-projets-${projetsSub}`}
+                  level="projets"
+                  compact
+                  categorieFilter={projetsSub === "tous" ? undefined : projetsSub}
+                  goTo={(tab, filter) => {
+                    const mapped = tab as string;
+                    if (mapped === "chantiers" || mapped === "projets" || mapped === "missions" || mapped === "taches") {
+                      setDeptTab(mapped as DeptTabId);
+                      setHierParentFilter(filter || null);
+                    }
+                  }}
+                  parentFilter={hierParentFilter}
+                  viewMode={hierViewMode}
+                  setViewMode={setHierViewMode}
+                />
+              )}
+            </div>
+          );
+        })()}
+
+        {/* ══════════════════════════════════════════ */}
+        {/* TAB 6 — MISSIONS (SectionHeader + sub-tabs) */}
+        {/* ══════════════════════════════════════════ */}
+        {deptTab === "missions" && (() => {
+          const subTabs: SubTabDef[] = [
+            { id: "tous", label: "Toutes", gradient: "from-blue-600 to-blue-500", count: missions.length },
+            { id: "interne", label: "Internes", gradient: "from-slate-600 to-slate-500" },
+            { id: "client", label: "Clients", gradient: "from-emerald-600 to-emerald-500" },
+            { id: "partenaire", label: "Partenaires", gradient: "from-amber-600 to-amber-500" },
+            { id: "templates", label: "Templates", icon: Rocket, gradient: "from-gray-500 to-gray-400" },
+          ];
+          return (
+            <div className="space-y-3">
+              <SectionHeader icon={ListChecks} title="Missions" subtitle="" tabs={subTabs} activeTab={missionsSub} onTabChange={setMissionsSub} gradient={headerGradient} />
+              {missionsSub === "templates" ? (
+                <div className="flex flex-col items-center justify-center py-8 gap-2 text-gray-400">
+                  <Inbox className="h-6 w-6" />
+                  <span className="text-xs">Templates a venir</span>
+                  <p className="text-[9px] text-gray-300 text-center">Les templates de missions seront disponibles prochainement.</p>
+                </div>
+              ) : (
+                <HierarchieTab
+                  key={`dept-hier-${activeBotCode}-missions-${missionsSub}`}
+                  level="missions"
+                  compact
+                  categorieFilter={missionsSub === "tous" ? undefined : missionsSub}
+                  goTo={(tab, filter) => {
+                    const mapped = tab as string;
+                    if (mapped === "chantiers" || mapped === "projets" || mapped === "missions" || mapped === "taches") {
+                      setDeptTab(mapped as DeptTabId);
+                      setHierParentFilter(filter || null);
+                    }
+                  }}
+                  parentFilter={hierParentFilter}
+                  viewMode={hierViewMode}
+                  setViewMode={setHierViewMode}
+                />
+              )}
+            </div>
+          );
+        })()}
+
+        {/* ══════════════════════════════════════════ */}
+        {/* TAB 7 — TACHES (SectionHeader + sub-tabs) */}
+        {/* ══════════════════════════════════════════ */}
+        {deptTab === "taches" && (() => {
+          const subTabs: SubTabDef[] = [
+            { id: "tous", label: "Toutes", gradient: "from-blue-600 to-blue-500", count: tachesOpen.length },
+            { id: "interne", label: "Internes", gradient: "from-slate-600 to-slate-500" },
+            { id: "client", label: "Clients", gradient: "from-emerald-600 to-emerald-500" },
+            { id: "partenaire", label: "Partenaires", gradient: "from-amber-600 to-amber-500" },
+            { id: "templates", label: "Templates", icon: Rocket, gradient: "from-gray-500 to-gray-400" },
+          ];
+          return (
+            <div className="space-y-3">
+              <SectionHeader icon={CheckCircle2} title="Taches" subtitle="" tabs={subTabs} activeTab={tachesSub} onTabChange={setTachesSub} gradient={headerGradient} />
+              {tachesSub === "templates" ? (
+                <div className="flex flex-col items-center justify-center py-8 gap-2 text-gray-400">
+                  <Inbox className="h-6 w-6" />
+                  <span className="text-xs">Templates a venir</span>
+                  <p className="text-[9px] text-gray-300 text-center">Les templates de taches seront disponibles prochainement.</p>
+                </div>
+              ) : (
+                <HierarchieTab
+                  key={`dept-hier-${activeBotCode}-taches-${tachesSub}`}
+                  level="taches"
+                  compact
+                  categorieFilter={tachesSub === "tous" ? undefined : tachesSub}
+                  goTo={(tab, filter) => {
+                    const mapped = tab as string;
+                    if (mapped === "chantiers" || mapped === "projets" || mapped === "missions" || mapped === "taches") {
+                      setDeptTab(mapped as DeptTabId);
+                      setHierParentFilter(filter || null);
+                    }
+                  }}
+                  parentFilter={hierParentFilter}
+                  viewMode={hierViewMode}
+                  setViewMode={setHierViewMode}
+                />
+              )}
+            </div>
+          );
+        })()}
+
+        {/* ══════════════════════════════════════════ */}
+        {/* TAB 8 — DISCUSSIONS (SectionHeader + sub-tabs) */}
+        {/* ══════════════════════════════════════════ */}
+        {deptTab === "discussions" && (() => {
+          const subTabs: SubTabDef[] = [
+            { id: "toutes", label: "Toutes", gradient: "from-cyan-600 to-cyan-500" },
+            { id: "par-chantier", label: "Par chantier", gradient: "from-blue-600 to-blue-500" },
+            { id: "orphelines", label: "Orphelines", gradient: "from-gray-500 to-gray-400" },
+            { id: "modes", label: "Modes reflexion", icon: Brain, gradient: "from-purple-600 to-purple-500", count: REFLECTION_MODES.length },
+          ];
+          return (
+            <div className="space-y-3">
+              <SectionHeader icon={MessageSquare} title="Discussions" subtitle="" tabs={subTabs} activeTab={discSub} onTabChange={setDiscSub} gradient={headerGradient} />
+              {discSub === "modes" ? (
+                <div className="space-y-2 max-h-[600px] overflow-auto">
+                  {REFLECTION_MODES.map(mode => (
+                    <button key={mode.id} onClick={() => handleFocus(`Discussion ${mode.label}`, "discussion", { mode: mode.id, label: mode.label })} className="w-full text-left border rounded-lg p-2.5 hover:shadow-md transition-all cursor-pointer group">
+                      <div className="flex items-center gap-2">
+                        <span className={cn("w-2.5 h-2.5 rounded-full shrink-0", mode.color)} />
+                        <span className="text-xs font-medium text-gray-800 group-hover:text-purple-600 transition-colors flex-1">{mode.label}</span>
                       </div>
-                      <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                        <div className={cn("h-full rounded-full", pct === 100 ? "bg-green-500" : "bg-blue-500")} style={{ width: `${pct}%` }} />
-                      </div>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <DiscussionView botFilter={activeBotCode} hideHeader groupByChantier={discSub === "par-chantier"} orphelinesOnly={discSub === "orphelines"} />
+              )}
+            </div>
+          );
+        })()}
+
+        {/* ══════════════════════════════════════════ */}
+        {/* TAB 9 — DOCUMENTS (SectionHeader + sub-tabs) */}
+        {/* ══════════════════════════════════════════ */}
+        {deptTab === "documents" && (() => {
+          const subTabs: SubTabDef[] = [
+            { id: "tous", label: "Tous", gradient: "from-teal-600 to-teal-500" },
+            { id: "docforge", label: "DocForge", icon: Sparkles, gradient: "from-emerald-600 to-emerald-500" },
+            { id: "importe", label: "Importes", icon: Upload, gradient: "from-slate-600 to-slate-500" },
+            { id: "templates", label: "Templates", icon: FileText, gradient: "from-violet-600 to-violet-500", count: templates.length },
+          ];
+          return (
+            <div className="space-y-3">
+              <SectionHeader icon={FileText} title="Documents" subtitle="" tabs={subTabs} activeTab={docsSub} onTabChange={setDocsSub} gradient={headerGradient} />
+              {docsSub === "templates" ? (
+                <div className="space-y-2 max-h-[600px] overflow-auto">
+                  {templates.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-8 gap-2 text-gray-400">
+                      <Inbox className="h-6 w-6" />
+                      <span className="text-xs">Aucun template</span>
                     </div>
-                  );
-                })}
-                {botChantiers.length === 0 && <p className="text-[9px] text-gray-400 text-center py-4">Aucun chantier assigne</p>}
-              </div>
-            </Card>
-            {/* Collaborateurs sur ces chantiers */}
-            {collaborators.length > 0 && (
-              <Card className="p-0 overflow-hidden">
-                <div className={cn("flex items-center gap-2 px-3 py-2 bg-gradient-to-r", headerGradient)}>
-                  <Users className="h-4 w-4 text-white" />
-                  <span className="text-sm font-bold text-white">Collaboration inter-departements</span>
-                </div>
-                <div className="p-3 flex flex-wrap gap-2">
-                  {collaborators.map(code => {
-                    const info = BOT_INFO[code];
-                    return (
-                      <div key={code} className={cn("flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[9px] font-medium bg-gradient-to-r text-white shadow-sm", info?.gradient || "from-gray-500 to-gray-400")}>
-                        <Bot className="h-3.5 w-3.5" />
-                        {info?.label || code}
+                  ) : templates.map(tpl => (
+                    <button key={tpl.id} onClick={() => handleFocus(`Template: ${tpl.titre}`, "document_editor", { template: tpl, mode: "scratch" })} className="w-full text-left border rounded-lg p-2.5 hover:shadow-md transition-all cursor-pointer group">
+                      <div className="flex items-start gap-2">
+                        <FileText className="h-3.5 w-3.5 text-violet-500 mt-0.5 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-gray-800 group-hover:text-violet-600 transition-colors truncate">{tpl.titre}</p>
+                          {tpl.description && <p className="text-[9px] text-gray-400 line-clamp-2 mt-0.5">{tpl.description}</p>}
+                          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                            {tpl.categorie && <span className="text-[9px] px-1.5 py-0.5 rounded bg-violet-50 text-violet-600 font-medium">{tpl.categorie}</span>}
+                            {tpl.pages_estimees && <span className="text-[9px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500">{tpl.pages_estimees} p.</span>}
+                          </div>
+                        </div>
                       </div>
-                    );
-                  })}
+                    </button>
+                  ))}
                 </div>
-              </Card>
-            )}
-          </div>
-        )}
+              ) : (
+                <DocumentsUnifie botFilter={activeBotCode} hideHeader typeFilter={docsSub === "tous" ? undefined : docsSub as "docforge" | "importe"} />
+              )}
+            </div>
+          );
+        })()}
 
         {/* ══════════════════════════════════════════ */}
-        {/* TAB 4-7 — CHANTIERS/PROJETS/MISSIONS/TACHES */}
-        {/* Meme design que BlueprintView (HierarchieTab) */}
-        {/* ══════════════════════════════════════════ */}
-        {(deptTab === "chantiers" || deptTab === "projets" || deptTab === "missions" || deptTab === "taches") && (
-          <HierarchieTab
-            key={`dept-hier-${activeBotCode}-${deptTab}`}
-            level={deptTab as "chantiers" | "projets" | "missions" | "taches"}
-            goTo={(tab, filter) => {
-              const mapped = tab as string;
-              if (mapped === "chantiers" || mapped === "projets" || mapped === "missions" || mapped === "taches") {
-                setDeptTab(mapped as DeptTabId);
-                setHierParentFilter(filter || null);
-              }
-            }}
-            parentFilter={hierParentFilter}
-            viewMode={hierViewMode}
-            setViewMode={setHierViewMode}
-          />
-        )}
-
-        {/* ══════════════════════════════════════════ */}
-        {/* TAB 7 — DISCUSSIONS (filtre par bot)        */}
-        {/* ══════════════════════════════════════════ */}
-        {deptTab === "discussions" && (
-          <DiscussionView botFilter={activeBotCode} />
-        )}
-
-        {/* ══════════════════════════════════════════ */}
-        {/* TAB 8 — DOCUMENTS (filtre par bot)          */}
-        {/* ══════════════════════════════════════════ */}
-        {deptTab === "documents" && (
-          <DocumentsPage />
-        )}
-
-        {/* ══════════════════════════════════════════ */}
-        {/* TAB 3 — SANTE (SanteGlobaleView existante)  */}
+        {/* TAB 3 — SANTE + DIAGNOSTICS                 */}
         {/* ══════════════════════════════════════════ */}
         {deptTab === "sante" && (
           <SanteGlobaleView />
         )}
 
-        {/* ══════════════════════════════════════════ */}
-        {/* TAB — CATALOGUE UNIFIE (templates + playbooks + diagnostics) */}
-        {/* ══════════════════════════════════════════ */}
-        {deptTab === "catalogue" && (
-          <CatalogueUnifie
-            deptFilter={activeBotCode}
-            onAction={(item) => {
-              if (item.type === "template") {
-                dispatch({ type: "focus", layer: "cerveau",
-                  data: { title: `Template: ${item.titre}`, element_type: "document_editor", data: { template: item._raw, mode: "scratch" } },
-                  bot: item.bot_recommande || "CPOB"
-                });
-                setActiveView("live-chat");
-              } else if (item.type === "playbook") {
-                handleFocus(`Playbook: ${item.titre}`, "playbook", item._raw);
-              } else {
-                handleFocus(`Diagnostic: ${item.titre}`, "diagnostic_enrichi", item._raw);
-              }
-            }}
-          />
-        )}
 
         {/* ══════════════════════════════════════════ */}
         {/* TAB — AGENDA                               */}
