@@ -1806,8 +1806,8 @@ export function DepartmentTourDeControle() {
   };
 
   const handleFocus = (title: string, elementType: string, data: unknown) => {
+    // Dispatch met focusData → CenterZone affiche le split-screen Atelier (LiveChat + FocusModeLayout)
     dispatch({ type: "focus", layer: "cerveau", data: { title, element_type: elementType, data }, bot: activeBotCode });
-    setActiveView("live-chat");
   };
 
   // KPI stats for cockpit
