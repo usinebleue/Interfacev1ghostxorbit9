@@ -325,7 +325,7 @@ const EDITOR_BOTS = ["CEOB", "CTOB", "CFOB", "CMOB", "CSOB", "COOB"];
 // ── BlockCard — individual section editor with AI Challenger/Completer ──
 
 function BlockCard({
-  block, onUpdateContent, onComplete, templateName, categorie, clientName, allBlocks, defaultBot,
+  block, onUpdateContent, onComplete, templateName, categorie, clientName, allBlocks, defaultBot, forceExpanded,
 }: {
   block: DocumentBlock;
   onUpdateContent: (id: string, content: string, newStatus?: DocumentBlock["status"]) => void;
@@ -335,8 +335,9 @@ function BlockCard({
   clientName: string;
   allBlocks: DocumentBlock[];
   defaultBot?: string;
+  forceExpanded?: boolean;
 }) {
-  const [expanded, setExpanded] = useState(block.status === "empty");
+  const [expanded, setExpanded] = useState(forceExpanded || block.status === "empty");
   const [suggestion, setSuggestion] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingAction, setLoadingAction] = useState<"challenge" | "complete" | null>(null);
@@ -385,14 +386,21 @@ function BlockCard({
 
   return (
     <Card className="overflow-hidden">
-      <button onClick={() => setExpanded(v => !v)} className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-gray-50 transition-colors cursor-pointer">
-        <span className="text-xs font-medium text-gray-400">H{block.level}</span>
-        <span className="text-xs font-bold text-gray-800 flex-1 text-left truncate">{block.title}</span>
-        <Badge className={cn("text-[9px] border-0", statusCfg.bg, statusCfg.text)}>{statusCfg.label}</Badge>
-        {expanded ? <ChevronUp className="h-3.5 w-3.5 text-gray-400" /> : <ChevronDown className="h-3.5 w-3.5 text-gray-400" />}
-      </button>
+      {forceExpanded ? (
+        <div className="flex items-center gap-2 px-3 py-2.5 border-b border-gray-100">
+          <span className="text-sm font-bold text-gray-800 flex-1">{block.title}</span>
+          <Badge className={cn("text-[9px] border-0", statusCfg.bg, statusCfg.text)}>{statusCfg.label}</Badge>
+        </div>
+      ) : (
+        <button onClick={() => setExpanded(v => !v)} className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-gray-50 transition-colors cursor-pointer">
+          <span className="text-xs font-medium text-gray-400">H{block.level}</span>
+          <span className="text-xs font-bold text-gray-800 flex-1 text-left truncate">{block.title}</span>
+          <Badge className={cn("text-[9px] border-0", statusCfg.bg, statusCfg.text)}>{statusCfg.label}</Badge>
+          {expanded ? <ChevronUp className="h-3.5 w-3.5 text-gray-400" /> : <ChevronDown className="h-3.5 w-3.5 text-gray-400" />}
+        </button>
+      )}
 
-      {expanded && (
+      {(forceExpanded || expanded) && (
         <div className="px-3 pb-3 space-y-2 border-t border-gray-100 pt-2">
           <textarea value={block.content} onChange={(e) => onUpdateContent(block.id, e.target.value)}
             rows={Math.max(4, block.content.split("\n").length + 1)}
@@ -466,18 +474,6 @@ function BlockCard({
 
 type EditorPhase = "briefing" | "redaction" | "revision" | "export";
 
-interface DocForgeLiveBlock {
-  id: number;
-  section_id: string;
-  section_title: string;
-  contenu_md: string;
-  contenu_resume: string;
-  status: string;
-  confiance: number;
-  source_type: string;
-  source_ref: string;
-}
-
 function DocumentEditorFocus({ focusData }: { focusData: any }) {
   // Detect mode from focusData
   const template: UnifiedTemplate | null = focusData?.template || null;
@@ -486,21 +482,19 @@ function DocumentEditorFocus({ focusData }: { focusData: any }) {
 
   const [phase, setPhase] = useState<EditorPhase>(initialMode === "library" ? "redaction" : "briefing");
 
-  // Scratch mode state
+  // Unified state (both modes use blocks[])
   const [blocks, setBlocks] = useState<DocumentBlock[]>([]);
+  const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
   const [client, setClient] = useState("Client");
-  const [docTitle, setDocTitle] = useState(template?.titre || "");
+  const [docTitle, setDocTitle] = useState(template?.titre || libraryData?.titre || "");
   const [templatePreview, setTemplatePreview] = useState<string>("");
   const [placeholders, setPlaceholders] = useState<string[]>([]);
   const [placeholderValues, setPlaceholderValues] = useState<Record<string, string>>({});
   const [loadingPreview, setLoadingPreview] = useState(false);
 
-  // Library mode state
+  // Library-specific (for DB save operations)
   const [library, setLibrary] = useState<any>(libraryData || null);
-  const [dfBlocks, setDfBlocks] = useState<DocForgeLiveBlock[]>([]);
-  const [activeSection, setActiveSection] = useState<string | null>(null);
-  const [editingBlock, setEditingBlock] = useState<number | null>(null);
-  const [editContent, setEditContent] = useState("");
+  const [dfBlockMap, setDfBlockMap] = useState<Map<string, number[]>>(new Map());
   const [processing, setProcessing] = useState(false);
 
   // Shared
@@ -509,6 +503,7 @@ function DocumentEditorFocus({ focusData }: { focusData: any }) {
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
 
   const libId = libraryData?.id || library?.id;
+  const activeBlock = blocks.find(b => b.id === activeBlockId) || null;
 
   // ── Load template preview for Lego templates (scratch) ──
   useEffect(() => {
@@ -552,27 +547,47 @@ function DocumentEditorFocus({ focusData }: { focusData: any }) {
     }
   }, [template, initialMode]);
 
-  // ── Load library + blocks (library mode) ──
+  // ── Load library + convert to unified blocks (library mode) ──
   const loadLibraryData = useCallback(async () => {
     if (!libId) return;
     setLoading(true);
     try {
-      const [lib, blocs] = await Promise.all([
+      const [lib, blocsData] = await Promise.all([
         api.getDocForgeLibrary(libId),
         api.docForgeBlocks(libId),
       ]);
       setLibrary(lib);
-      setDfBlocks(blocs.blocks || blocs || []);
+      const rawBlocks = blocsData.blocks || blocsData || [];
       const sections = lib?.template_sections || [];
-      if (sections.length > 0 && !activeSection) {
-        setActiveSection(sections[0].id);
+
+      // Convert to unified DocumentBlock[] — même format que scratch
+      const converted: DocumentBlock[] = sections.map((s: any) => {
+        const sBlocs = rawBlocks.filter((b: any) => b.section_id === s.id && b.status !== "archive" && b.status !== "rejete");
+        return {
+          id: s.id,
+          title: s.title,
+          content: sBlocs.map((b: any) => b.contenu_md).join("\n\n"),
+          level: 2,
+          status: (sBlocs.some((b: any) => b.status === "approuve") ? "completed" :
+                  sBlocs.length > 0 ? "draft" : "empty") as DocumentBlock["status"],
+        };
+      });
+
+      // Track DB block IDs for save operations
+      const blockMap = new Map<string, number[]>();
+      for (const s of sections) {
+        blockMap.set(s.id, rawBlocks.filter((b: any) => b.section_id === s.id && b.status !== "archive").map((b: any) => b.id));
       }
+      setDfBlockMap(blockMap);
+      setBlocks(converted);
+      if (converted.length > 0) setActiveBlockId(converted[0].id);
+      setDocTitle(lib?.titre || docTitle);
     } catch (e) {
       console.error("Load DocForge data:", e);
     } finally {
       setLoading(false);
     }
-  }, [libId, activeSection]);
+  }, [libId]);
 
   useEffect(() => {
     if (initialMode === "library" && libId) loadLibraryData();
@@ -591,20 +606,32 @@ function DocumentEditorFocus({ focusData }: { focusData: any }) {
       md = md.replaceAll("{{ nom_client }}", client).replaceAll("{{nom_client}}", client);
       md = md.replaceAll("{{ entreprise }}", client).replaceAll("{{entreprise}}", client);
     }
-    setBlocks(parseMarkdownToBlocks(md));
+    const parsed = parseMarkdownToBlocks(md);
+    setBlocks(parsed);
+    if (parsed.length > 0) setActiveBlockId(parsed[0].id);
     setPhase("redaction");
   }, [templatePreview, placeholderValues, client]);
 
-  // ── Scratch: Update block content ──
+  // ── Update block content (unified — saves to API for library mode) ──
   const updateBlockContent = useCallback((id: string, content: string, newStatus?: DocumentBlock["status"]) => {
     setBlocks(prev => prev.map(b =>
       b.id === id ? { ...b, content, status: newStatus || (hasUnfilledPlaceholders(content) ? "empty" : "draft") } : b
     ));
-  }, []);
+    if (initialMode === "library") {
+      const dbIds = dfBlockMap.get(id);
+      if (dbIds && dbIds.length > 0) {
+        api.docForgeBlockUpdate(dbIds[0], { contenu_md: content }).catch(e => console.error("Save block:", e));
+      }
+    }
+  }, [initialMode, dfBlockMap]);
 
   const markBlockCompleted = useCallback((block: DocumentBlock) => {
     setBlocks(prev => prev.map(b => b.id === block.id ? { ...b, status: "completed" } : b));
-  }, []);
+    if (initialMode === "library") {
+      const dbIds = dfBlockMap.get(block.id);
+      if (dbIds) dbIds.forEach(id => api.docForgeBlockApprove(id).catch(e => console.error(e)));
+    }
+  }, [initialMode, dfBlockMap]);
 
   // ── Scratch: Assemble final markdown ──
   const assembleMarkdown = useCallback(() => {
@@ -615,7 +642,7 @@ function DocumentEditorFocus({ focusData }: { focusData: any }) {
     }).join("\n\n");
   }, [blocks]);
 
-  // ── Library: Launch pipeline ──
+  // ── Library: Launch pipeline (Scanner Drive) ──
   const handleProcess = async () => {
     if (!libId) return;
     setProcessing(true);
@@ -626,22 +653,6 @@ function DocumentEditorFocus({ focusData }: { focusData: any }) {
         if (progress.status !== "en_cours") { clearInterval(poll); setProcessing(false); loadLibraryData(); }
       }, 5000);
     } catch (e) { console.error("Process:", e); setProcessing(false); }
-  };
-
-  // ── Library: Approve/edit blocks ──
-  const handleApprove = async (blockId: number) => {
-    try {
-      await api.docForgeBlockApprove(blockId);
-      setDfBlocks(prev => prev.map(b => b.id === blockId ? { ...b, status: "approuve" } : b));
-    } catch (e) { console.error(e); }
-  };
-
-  const handleSaveEdit = async (blockId: number) => {
-    try {
-      await api.docForgeBlockUpdate(blockId, { contenu_md: editContent });
-      setDfBlocks(prev => prev.map(b => b.id === blockId ? { ...b, contenu_md: editContent } : b));
-      setEditingBlock(null);
-    } catch (e) { console.error(e); }
   };
 
   // ── Export PDF (scratch) ──
@@ -673,14 +684,11 @@ function DocumentEditorFocus({ focusData }: { focusData: any }) {
   };
 
   // ── Stats ──
+  // Stats (unified — same for both modes)
   const completedCount = blocks.filter(b => b.status === "completed" || b.status === "challenged").length;
   const totalBlocks = blocks.length;
   const filledCount = blocks.filter(b => b.content.trim() && !b.content.includes("[A COMPLETER")).length;
   const fillRate = totalBlocks > 0 ? Math.round((filledCount / totalBlocks) * 100) : 0;
-
-  const libSections = library?.template_sections || [];
-  const libSectionBlocks = dfBlocks.filter(b => b.section_id === activeSection && b.status !== "archive" && b.status !== "rejete");
-  const overflowBlocks = dfBlocks.filter(b => b.section_id?.startsWith("overflow"));
 
   if (loading) {
     return <div className="flex-1 flex items-center justify-center"><Loader2 className="h-6 w-6 text-teal-500 animate-spin" /></div>;
@@ -818,180 +826,117 @@ function DocumentEditorFocus({ focusData }: { focusData: any }) {
         </div>
       )}
 
-      {/* ═══════ REDACTION — Scratch mode (BlockCard) ═══════ */}
-      {phase === "redaction" && initialMode === "scratch" && (
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
-          <div className="space-y-2">
-            {blocks.map(block => (
-              <BlockCard key={block.id} block={block}
-                onUpdateContent={updateBlockContent} onComplete={markBlockCompleted}
-                templateName={docTitle} categorie={template?.categorie || ""} clientName={client} allBlocks={blocks}
-                defaultBot={template?.bot_recommande || "CPOB"} />
-            ))}
-          </div>
-          <div className="flex items-center gap-2 pt-2">
-            <button onClick={() => setPhase("briefing")}
-              className="flex items-center gap-1 px-3 py-2 text-xs text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer">
-              Retour briefing
-            </button>
-            <div className="flex-1" />
-            <button onClick={() => setPhase("revision")} disabled={filledCount < 1}
-              className="flex items-center gap-1.5 px-4 py-2 text-xs text-white bg-gray-900 rounded-lg hover:bg-gray-800 disabled:opacity-40 transition-colors cursor-pointer">
-              <Eye className="h-3.5 w-3.5" /> Passer a la revision <ArrowRight className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ═══════ REDACTION — Library mode (DocForge blocks) ═══════ */}
-      {phase === "redaction" && initialMode === "library" && (
+      {/* ═══════ RÉDACTION — UNIFIÉ (sidebar + section editor) ═══════ */}
+      {phase === "redaction" && (
         <div className="flex-1 flex overflow-hidden">
-          {/* Sections nav */}
-          <div className="w-48 border-r bg-gray-50/50 overflow-y-auto shrink-0">
-            <div className="p-2 space-y-0.5">
-              {libSections.map((s: any) => {
-                const sBlocs = dfBlocks.filter(b => b.section_id === s.id && b.status !== "archive" && b.status !== "rejete");
+          {/* Sidebar — table des matières */}
+          <div className="w-52 border-r bg-gray-50/50 flex flex-col shrink-0">
+            <div className="p-2 space-y-0.5 flex-1 overflow-y-auto">
+              {blocks.map(block => {
+                const st = STATUS_CONFIG[block.status] || STATUS_CONFIG.draft;
                 return (
-                  <button key={s.id} onClick={() => setActiveSection(s.id)}
-                    className={cn("w-full text-left px-2.5 py-1.5 rounded-lg text-[9px] transition-all cursor-pointer",
-                      activeSection === s.id ? "bg-teal-100 text-teal-800 font-medium" : "text-gray-600 hover:bg-gray-100")}>
-                    <span className="block truncate">{s.title}</span>
-                    <span className="text-gray-400">{sBlocs.length} blocs</span>
+                  <button key={block.id} onClick={() => setActiveBlockId(block.id)}
+                    className={cn("w-full text-left px-2.5 py-2 rounded-lg text-[9px] transition-all cursor-pointer",
+                      activeBlockId === block.id ? "bg-blue-100 text-blue-800 font-medium" : "text-gray-600 hover:bg-gray-100")}>
+                    <span className="block truncate font-medium">{block.title}</span>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className={cn("px-1 py-0.5 rounded text-[8px]", st.bg, st.text)}>{st.label}</span>
+                    </div>
                   </button>
                 );
               })}
-              {overflowBlocks.length > 0 && (
-                <button onClick={() => setActiveSection("overflow")}
-                  className={cn("w-full text-left px-2.5 py-1.5 rounded-lg text-[9px] transition-all cursor-pointer",
-                    activeSection === "overflow" ? "bg-amber-100 text-amber-800 font-medium" : "text-amber-600 hover:bg-amber-50")}>
-                  <span className="block truncate">Sections suggerees</span>
-                  <span className="text-amber-400">{overflowBlocks.length} blocs</span>
-                </button>
-              )}
+            </div>
+            {/* Stats */}
+            <div className="p-3 border-t bg-white shrink-0">
+              <div className="text-[9px] text-gray-500 space-y-1">
+                <div className="flex justify-between"><span>Sections</span><span className="font-bold">{totalBlocks}</span></div>
+                <div className="flex justify-between"><span>Completees</span><span className="font-bold text-green-600">{completedCount}</span></div>
+                <div className="flex justify-between"><span>Remplissage</span><span className="font-bold text-blue-600">{fillRate}%</span></div>
+              </div>
+              <div className="mt-2 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${fillRate}%` }} />
+              </div>
             </div>
           </div>
 
-          {/* Blocks editor */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            {activeSection && (
-              <div className="space-y-3">
-                <h3 className="text-xs font-bold text-gray-700">
-                  {libSections.find((s: any) => s.id === activeSection)?.title || "Sections suggerees"}
-                </h3>
-                {(activeSection === "overflow" ? overflowBlocks : libSectionBlocks).length === 0 ? (
-                  <div className="text-center py-8">
-                    <FileText className="h-6 w-6 text-gray-300 mx-auto mb-2" />
-                    <p className="text-xs text-gray-400">Aucun bloc dans cette section</p>
-                    <p className="text-[9px] text-gray-400 mt-1">Lancez le scan ou utilisez Paco dans le chat pour ajouter du contenu</p>
-                  </div>
-                ) : (
-                  (activeSection === "overflow" ? overflowBlocks : libSectionBlocks).map(bloc => (
-                    <div key={bloc.id} className="border rounded-lg overflow-hidden">
-                      <div className="bg-gray-50 px-3 py-1.5 flex items-center gap-2 border-b">
-                        <Badge className={cn("text-[9px] border-0",
-                          bloc.status === "approuve" ? "bg-green-100 text-green-700" :
-                          bloc.status === "suggere" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600")}>
-                          {bloc.status}
-                        </Badge>
-                        <span className="text-[9px] text-gray-400">{bloc.source_type}</span>
-                        {bloc.confiance < 1 && <span className="text-[9px] text-gray-400">{Math.round(bloc.confiance * 100)}% confiance</span>}
-                        <div className="ml-auto flex items-center gap-1.5">
-                          {bloc.status !== "approuve" && (
-                            <button onClick={() => handleApprove(bloc.id)}
-                              className="text-[9px] px-2 py-0.5 bg-green-100 text-green-700 rounded hover:bg-green-200 cursor-pointer flex items-center gap-1">
-                              <Check className="h-3.5 w-3.5" /> Approuver
-                            </button>
-                          )}
-                          <button onClick={() => { setEditingBlock(bloc.id); setEditContent(bloc.contenu_md); }}
-                            className="text-[9px] px-2 py-0.5 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 cursor-pointer">Editer</button>
-                        </div>
-                      </div>
-                      <div className="p-3">
-                        {editingBlock === bloc.id ? (
-                          <div className="space-y-2">
-                            <textarea value={editContent} onChange={e => setEditContent(e.target.value)}
-                              rows={8} className="w-full text-xs px-2.5 py-1.5 border rounded-lg resize-none font-mono" />
-                            <div className="flex gap-2">
-                              <button onClick={() => handleSaveEdit(bloc.id)}
-                                className="text-[9px] px-2.5 py-1 bg-teal-600 text-white rounded-lg hover:bg-teal-700 cursor-pointer">Sauvegarder</button>
-                              <button onClick={() => setEditingBlock(null)}
-                                className="text-[9px] px-2.5 py-1 border rounded-lg hover:bg-gray-50 cursor-pointer">Annuler</button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="text-xs text-gray-700 whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto">
-                            {bloc.contenu_md.slice(0, 2000)}
-                            {bloc.contenu_md.length > 2000 && <span className="text-gray-400">... ({bloc.contenu_md.length} chars)</span>}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                )}
+          {/* Section Editor */}
+          <div className="flex-1 overflow-y-auto p-4 flex flex-col">
+            {activeBlock ? (
+              <div className="flex-1">
+                <BlockCard
+                  key={activeBlock.id}
+                  block={activeBlock}
+                  onUpdateContent={updateBlockContent}
+                  onComplete={markBlockCompleted}
+                  templateName={docTitle}
+                  categorie={template?.categorie || library?.categorie || ""}
+                  clientName={client}
+                  allBlocks={blocks}
+                  defaultBot={template?.bot_recommande || "CPOB"}
+                  forceExpanded
+                />
+              </div>
+            ) : (
+              <div className="flex-1 flex items-center justify-center text-gray-400">
+                <div className="text-center">
+                  <FileText className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                  <p className="text-xs">Selectionnez une section</p>
+                </div>
               </div>
             )}
+            {/* Navigation */}
+            <div className="flex items-center gap-2 mt-4 pt-3 border-t shrink-0">
+              {initialMode === "scratch" && (
+                <button onClick={() => setPhase("briefing")}
+                  className="flex items-center gap-1 px-3 py-2 text-xs text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer">
+                  Retour briefing
+                </button>
+              )}
+              {initialMode === "library" && library?.status === "draft" && (
+                <button onClick={handleProcess} disabled={processing}
+                  className="flex items-center gap-1 px-3 py-2 text-[9px] font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 disabled:opacity-50 cursor-pointer">
+                  {processing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                  Scanner Drive
+                </button>
+              )}
+              <div className="flex-1" />
+              <button onClick={() => setPhase("revision")} disabled={filledCount < 1}
+                className="flex items-center gap-1.5 px-4 py-2 text-xs text-white bg-gray-900 rounded-lg hover:bg-gray-800 disabled:opacity-40 transition-colors cursor-pointer">
+                <Eye className="h-3.5 w-3.5" /> Passer a la revision <ArrowRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* ═══════ REVISION ═══════ */}
+      {/* ═══════ REVISION — UNIFIÉ ═══════ */}
       {phase === "revision" && (
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {initialMode === "scratch" ? (<>
-            <Card className="p-3">
-              <div className="grid grid-cols-3 gap-3">
-                <div className="text-center"><p className="text-lg font-bold text-gray-900">{totalBlocks}</p><p className="text-[9px] text-gray-500">Sections</p></div>
-                <div className="text-center"><p className="text-lg font-bold text-green-600">{completedCount}</p><p className="text-[9px] text-gray-500">Completees</p></div>
-                <div className="text-center"><p className="text-lg font-bold text-blue-600">{fillRate}%</p><p className="text-[9px] text-gray-500">Remplissage</p></div>
-              </div>
-            </Card>
-            <Card className="p-4">
-              <h3 className="text-xs font-bold text-gray-800 mb-3 flex items-center gap-1.5"><Eye className="h-3.5 w-3.5 text-gray-500" />Apercu du document final</h3>
-              <div className="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
-                <pre className="text-[9px] text-gray-700 whitespace-pre-wrap font-mono">{assembleMarkdown()}</pre>
-              </div>
-            </Card>
-            <div className="flex items-center gap-2">
-              <button onClick={() => setPhase("redaction")}
-                className="flex items-center gap-1 px-3 py-2 text-xs text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer">
-                Retour a la redaction
-              </button>
-              <div className="flex-1" />
-              <button onClick={handleExportPDF} disabled={generating}
-                className="flex items-center gap-1.5 px-4 py-2 text-xs text-white bg-gray-900 rounded-lg hover:bg-gray-800 disabled:opacity-50 transition-colors cursor-pointer">
-                {generating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
-                Generer PDF <ArrowRight className="h-3.5 w-3.5" />
-              </button>
+          <Card className="p-3">
+            <div className="grid grid-cols-3 gap-3">
+              <div className="text-center"><p className="text-lg font-bold text-gray-900">{totalBlocks}</p><p className="text-[9px] text-gray-500">Sections</p></div>
+              <div className="text-center"><p className="text-lg font-bold text-green-600">{completedCount}</p><p className="text-[9px] text-gray-500">Completees</p></div>
+              <div className="text-center"><p className="text-lg font-bold text-blue-600">{fillRate}%</p><p className="text-[9px] text-gray-500">Remplissage</p></div>
             </div>
-          </>) : (<>
-            <h3 className="text-xs font-bold text-gray-700">Revision — Vue assemblee</h3>
-            <p className="text-[9px] text-gray-500">Apercu du document complet avec toutes les sections.</p>
-            {libSections.map((s: any) => {
-              const sBlocs = dfBlocks.filter(b => b.section_id === s.id && (b.status === "approuve" || b.status === "suggere"));
-              return (
-                <div key={s.id} className="border rounded-lg p-3">
-                  <h4 className="text-xs font-bold text-gray-800 mb-2">{s.title}</h4>
-                  {sBlocs.length === 0 ? (
-                    <p className="text-[9px] text-gray-400 italic">Section vide</p>
-                  ) : sBlocs.map(b => (
-                    <div key={b.id} className="text-xs text-gray-700 whitespace-pre-wrap leading-relaxed mb-2">{b.contenu_md.slice(0, 1000)}</div>
-                  ))}
-                </div>
-              );
-            })}
-            {/* Navigation buttons — fix Library mode (manquait) */}
-            <div className="flex items-center gap-2 pt-2">
-              <button onClick={() => setPhase("redaction")}
-                className="flex items-center gap-1 px-3 py-2 text-xs text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer">
-                Retour a la redaction
-              </button>
-              <div className="flex-1" />
-              <button onClick={() => setPhase("export")}
-                className="flex items-center gap-1.5 px-4 py-2 text-xs text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-colors cursor-pointer">
-                <Download className="h-3.5 w-3.5" /> Passer a l'export
-              </button>
+          </Card>
+          <Card className="p-4">
+            <h3 className="text-xs font-bold text-gray-800 mb-3 flex items-center gap-1.5"><Eye className="h-3.5 w-3.5 text-gray-500" />Apercu du document final</h3>
+            <div className="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
+              <pre className="text-[9px] text-gray-700 whitespace-pre-wrap font-mono">{assembleMarkdown()}</pre>
             </div>
-          </>)}
+          </Card>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setPhase("redaction")}
+              className="flex items-center gap-1 px-3 py-2 text-xs text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer">
+              Retour a la redaction
+            </button>
+            <div className="flex-1" />
+            <button onClick={initialMode === "scratch" ? handleExportPDF : () => setPhase("export")} disabled={generating}
+              className="flex items-center gap-1.5 px-4 py-2 text-xs text-white bg-gray-900 rounded-lg hover:bg-gray-800 disabled:opacity-50 transition-colors cursor-pointer">
+              {generating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
+              {initialMode === "scratch" ? "Generer PDF" : "Passer a l'export"} <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
       )}
 
