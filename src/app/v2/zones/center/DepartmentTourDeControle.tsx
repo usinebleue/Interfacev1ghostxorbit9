@@ -1785,46 +1785,9 @@ export function DepartmentTourDeControle() {
 
         {/* ══════════════════════════════════════════ */}
         {/* TAB 2 — BLUEPRINT (plan d'affaires)        */}
-        {/* CEOB = master plan global (redirige vers BlueprintView sommaire+objectifs) */}
-        {/* Autres bots = objectifs departement + strategie specifique */}
+        {/* Blueprint Vivant — MEME composant pour TOUS les bots (CEOB = 11 sections, le plus complet) */}
         {/* ══════════════════════════════════════════ */}
-        {deptTab === "blueprint" && activeBotCode === "CEOB" && (() => {
-          const bpSubTabs: SubTabDef[] = [
-            { id: "profil", label: "Profil", icon: Building2, gradient: "from-blue-600 to-blue-500" },
-            { id: "swot", label: "SWOT", icon: Shield, gradient: "from-emerald-600 to-emerald-500" },
-            { id: "bmc", label: "BMC", icon: LayoutGrid, gradient: "from-violet-600 to-violet-500" },
-            { id: "objectifs", label: "Objectifs", icon: Target, gradient: "from-amber-600 to-amber-500" },
-            { id: "finances", label: "Finances", icon: DollarSign, gradient: "from-teal-600 to-teal-500" },
-          ];
-          return (
-            <div className="space-y-3">
-              <SectionHeader icon={Compass} title="Blueprint" subtitle="" tabs={bpSubTabs} activeTab={blueprintSub} onTabChange={setBlueprintSub} gradient={headerGradient} />
-              {/* Selecteur Startup / Scaleup / Exitup */}
-              <div className="flex items-center gap-2 px-1">
-                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Phase:</span>
-                {[
-                  { id: "startup", label: "Startup", desc: "Demarrage" },
-                  { id: "scaleup", label: "Scaleup", desc: "Croissance" },
-                  { id: "exitup", label: "Exitup", desc: "Sortie" },
-                ].map(phase => (
-                  <button key={phase.id} className={cn(
-                    "px-3 py-1.5 text-[9px] font-bold rounded-lg border transition-colors cursor-pointer",
-                    "bg-white text-gray-500 border-gray-200 hover:border-blue-300 hover:bg-blue-50"
-                  )}>
-                    {phase.label} <span className="font-normal text-gray-400">({phase.desc})</span>
-                  </button>
-                ))}
-              </div>
-              {/* Contenu par sub-tab */}
-              {blueprintSub === "profil" && <TabSommaire section="profil" />}
-              {blueprintSub === "swot" && <TabSommaire section="swot" />}
-              {blueprintSub === "bmc" && <TabObjectifs section="bmc" />}
-              {blueprintSub === "objectifs" && <TabObjectifs section="objectifs" />}
-              {blueprintSub === "finances" && <TabObjectifs section="finances" />}
-            </div>
-          );
-        })()}
-        {deptTab === "blueprint" && activeBotCode !== "CEOB" && (
+        {deptTab === "blueprint" && (
           <BlueprintDepartement botCode={activeBotCode} headerGradient={headerGradient} />
         )}
 
