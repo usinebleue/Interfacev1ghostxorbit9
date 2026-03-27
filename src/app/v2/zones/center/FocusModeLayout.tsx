@@ -23,6 +23,7 @@ import { Card } from "../../../components/ui/card";
 import { BOT_AVATAR, BOT_NAME, BOT_ROLE } from "../../api/types";
 import type { DocumentBlock, UnifiedTemplate, DocForgeLibrary } from "../../api/types";
 import { api, type StreamDoneEvent } from "../../api/client";
+import { DiagnosticFlowFocus } from "./diagnostic/DiagnosticFlowFocus";
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -35,17 +36,20 @@ export interface FocusData {
 
 // ── Gradient par bot ──────────────────────────────────────
 
+/** Couleurs plates — harmonisées avec LiveChat splitMode (pas de gradient = même bleu partout) */
 const BOT_GRADIENTS: Record<string, string> = {
-  CEOB: "from-blue-600 to-blue-500",
-  CTOB: "from-violet-600 to-violet-500",
-  CFOB: "from-emerald-600 to-emerald-500",
-  CMOB: "from-pink-600 to-pink-500",
-  CSOB: "from-red-600 to-red-500",
-  COOB: "from-orange-600 to-orange-500",
-  CHROB: "from-teal-600 to-teal-500",
-  CINOB: "from-rose-600 to-rose-500",
-  CROB: "from-amber-600 to-amber-500",
-  CLOB: "from-indigo-600 to-indigo-500",
+  CEOB: "bg-blue-600",
+  CTOB: "bg-violet-600",
+  CFOB: "bg-emerald-600",
+  CMOB: "bg-pink-600",
+  CSOB: "bg-red-600",
+  COOB: "bg-orange-600",
+  CPOB: "bg-slate-600",
+  CHROB: "bg-teal-600",
+  CINOB: "bg-rose-600",
+  CROB: "bg-amber-600",
+  CLOB: "bg-indigo-600",
+  CISOB: "bg-zinc-600",
 };
 
 const BOT_LABELS: Record<string, string> = {
@@ -63,6 +67,7 @@ const BOT_LABELS: Record<string, string> = {
   docforge_library: "DocForge",
   document_editor: "DocForge",
   tim_code: "TimCode",
+  blueprint_section: "Blueprint",
 };
 
 const ELEMENT_ICONS: Record<string, React.ElementType> = {
@@ -79,6 +84,7 @@ const ELEMENT_ICONS: Record<string, React.ElementType> = {
   docforge_library: Sparkles,
   document_editor: FileText,
   tim_code: Cpu,
+  blueprint_section: PenLine,
 };
 
 // ── Composant principal ────────────────────────────────────
@@ -91,65 +97,55 @@ export function FocusModeLayout({
   onClose: () => void;
 }) {
   const gradient = BOT_GRADIENTS[focusData.bot] || "from-blue-600 to-blue-500";
-  const avatarSrc = BOT_AVATAR[focusData.bot] || BOT_AVATAR["CEOB"];
   const typeLabel = BOT_LABELS[focusData.elementType] || focusData.elementType;
   const ElementIcon = ELEMENT_ICONS[focusData.elementType] || Target;
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
 
-      {/* ── Header gradient identitaire du bot ──────────── */}
-      <div className={cn(
-        "bg-gradient-to-r px-4 py-2.5 flex items-center gap-2.5 shrink-0",
-        gradient
-      )}>
-        <img
-          src={avatarSrc}
-          alt={focusData.bot}
-          className="w-7 h-7 rounded-full ring-1 ring-white/30 shrink-0"
-        />
-        <div className="flex-1 min-w-0">
-          <span className="text-sm font-bold text-white truncate block">{focusData.title}</span>
+      {/* ── Header gradient — hauteur harmonisée avec LiveChat splitMode ──────────── */}
+      <div className={cn("px-4 py-2 shrink-0", gradient)}>
+        {/* Ligne 1: titre section + badge type + close */}
+        <div className="flex items-center gap-2">
+          <ElementIcon className="h-4 w-4 text-white shrink-0" />
+          <div className="flex-1 min-w-0">
+            <span className="text-xs font-bold text-white truncate block">{focusData.title}</span>
+          </div>
+          <span className="text-[9px] bg-white/20 text-white px-2 py-0.5 rounded-full shrink-0">
+            {typeLabel}
+          </span>
+          <button
+            onClick={onClose}
+            className="text-white/60 hover:text-white p-1 rounded-lg hover:bg-white/10 cursor-pointer transition-colors shrink-0"
+            title="Quitter l'atelier"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
-        <span className="flex items-center gap-1 text-[9px] bg-white/20 text-white px-2 py-0.5 rounded-full shrink-0">
-          <ElementIcon className="h-3.5 w-3.5" />
-          {typeLabel}
-        </span>
-        <button
-          onClick={onClose}
-          className="text-white/60 hover:text-white p-1 rounded-lg hover:bg-white/10 cursor-pointer transition-colors shrink-0"
-          title="Quitter l'atelier"
-        >
-          <X className="h-4 w-4" />
-        </button>
+        {/* Ligne 2: bot actif — harmonise la hauteur avec la ligne "Equipe" du chat */}
+        <div className="flex items-center gap-2 pt-1 mt-1 border-t border-white/15">
+          <div className="w-1.5 h-1.5 bg-green-400 rounded-full shrink-0" />
+          <span className="text-[9px] text-white/70 font-medium">
+            {BOT_NAME[focusData.bot] || focusData.bot} — {BOT_ROLE[focusData.bot] || "Agent"}
+          </span>
+          {focusData.bot !== "CEOB" && (
+            <>
+              <div className="w-1.5 h-1.5 bg-green-400 rounded-full shrink-0 ml-2" />
+              <span className="text-[9px] text-white/70 font-medium">CarlOS</span>
+            </>
+          )}
+        </div>
       </div>
-
-      {/* Bandeau trio — CarlOS + spécialiste */}
-      {focusData.bot !== "CEOB" && (
-        <div className="bg-gray-50 border-b px-4 py-1.5 flex items-center gap-3 shrink-0">
-          <div className="flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
-            <span className="text-[9px] font-medium text-gray-500">CarlOS</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
-            <span className="text-[9px] font-medium text-gray-500">
-              {({
-                CTOB: "Tim", CFOB: "Frank", CMOB: "Mathilde", CSOB: "Simone",
-                COOB: "Olivier", CHROB: "Hélène", CINOB: "Inès",
-                CROB: "Rich", CLOB: "Loulou", CISOB: "Sébastien",
-              } as Record<string, string>)[focusData.bot] || focusData.bot}
-            </span>
-          </div>
-          <span className="text-[9px] text-gray-400 ml-auto">Session trio</span>
-        </div>
-      )}
 
       {/* ── Contenu focus ─────── */}
       {(focusData.elementType === "document_editor" || focusData.elementType === "docforge_library") ? (
         <DocumentEditorFocus focusData={focusData.data as any} />
+      ) : focusData.elementType === "blueprint_section" ? (
+        <BlueprintSectionFocus focusData={focusData} />
       ) : focusData.elementType === "tim_code" ? (
         <TimCodeFocus focusData={focusData} />
+      ) : focusData.elementType === "diagnostic_flow" ? (
+        <DiagnosticFlowFocus focusData={focusData} />
       ) : (
         <div className="flex-1 overflow-hidden flex items-center justify-center bg-gray-50/50">
           <div className="text-center space-y-3 max-w-md px-6">
@@ -250,6 +246,297 @@ function TimCodeFocus({ focusData }: { focusData: FocusData }) {
   );
 }
 
+
+// ══════════════════════════════════════════
+// BlueprintSectionFocus — Blueprint section editor in Atelier
+// Left: LiveChat with department bot
+// Right: This panel — section fields editable + auto-save
+// ══════════════════════════════════════════
+
+interface SectionTOCItem { id: string; label: string; icon: string; fieldCount: number; filledCount: number; description: string; intro: string }
+
+function BlueprintSectionFocus({ focusData }: { focusData: FocusData }) {
+  const d = (focusData.data || {}) as Record<string, unknown>;
+  const canvasKey = (d.canvasKey as string) || "";
+  const botCode = (d.botCode as string) || focusData.bot;
+  const initialSectionId = (d.sectionId as string) || "";
+
+  const [activeSectionId, setActiveSectionId] = useState(initialSectionId);
+  const [sections, setSections] = useState<SectionTOCItem[]>([]);
+  const [activeFields, setActiveFields] = useState<{ id: string; label: string; type: string; value: string; placeholder?: string; options?: string[]; required?: boolean }[]>([]);
+  const [activeDescription, setActiveDescription] = useState("");
+  const [activeIntro, setActiveIntro] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [canvasId, setCanvasId] = useState<number | null>(null);
+  const [allData, setAllData] = useState<Record<string, string>>({});
+  const [configRef, setConfigRef] = useState<any>(null);
+  const [tierRef, setTierRef] = useState<string>("T2");
+
+  // Load blueprint config + canvas once
+  useEffect(() => {
+    (async () => {
+      try {
+        const mod = await import("./blueprint/blueprint-config");
+        const config = mod.getBlueprintConfig(botCode);
+        if (!config) { setLoading(false); return; }
+
+        let tier = "T2";
+        try {
+          const profil = await api.getEntrepriseProfil();
+          if (profil.profil?.nb_employes) tier = mod.getSizeTier(profil.profil.nb_employes);
+        } catch { /* default */ }
+
+        const canvas = await api.getOrCreateCanvas(canvasKey);
+        setCanvasId(canvas.id);
+        const flat: Record<string, string> = {};
+        if (canvas.data && typeof canvas.data === "object") {
+          for (const [k, v] of Object.entries(canvas.data as Record<string, unknown>)) {
+            flat[k] = typeof v === "string" ? v : JSON.stringify(v);
+          }
+        }
+        setAllData(flat);
+        setConfigRef(config);
+        setTierRef(tier);
+
+        // Build TOC from all visible sections
+        const visible = mod.getVisibleSubSections(config, tier as any);
+        const tocItems: SectionTOCItem[] = visible.map(s => {
+          const sFields = mod.getFieldsForTier(s.fields, tier as any);
+          const filled = sFields.filter(f => {
+            const v = flat[`${s.id}.${f.id}`];
+            return v !== undefined && v !== "" && v !== "[]";
+          }).length;
+          return { id: s.id, label: s.label, icon: s.icon, fieldCount: sFields.length, filledCount: filled, description: s.description, intro: s.intro || "" };
+        });
+        setSections(tocItems);
+      } catch (e) {
+        console.error("BlueprintSectionFocus load:", e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [canvasKey, botCode]);
+
+  // Build active section fields when section changes
+  useEffect(() => {
+    if (!configRef || !activeSectionId) return;
+    (async () => {
+      const mod = await import("./blueprint/blueprint-config");
+      const section = configRef.subSections.find((s: any) => s.id === activeSectionId);
+      if (!section) return;
+      const sFields = mod.getFieldsForTier(section.fields, tierRef as any);
+      setActiveFields(sFields.map((f: any) => ({
+        id: f.id,
+        label: f.label,
+        type: f.type,
+        value: allData[`${activeSectionId}.${f.id}`] || "",
+        placeholder: f.placeholder,
+        options: f.options,
+        required: f.required,
+      })));
+      setActiveDescription(section.description || "");
+      setActiveIntro(section.intro || "");
+    })();
+  }, [activeSectionId, configRef, tierRef, allData]);
+
+  const handleFieldChange = (fieldId: string, value: string) => {
+    const key = `${activeSectionId}.${fieldId}`;
+    setAllData(prev => ({ ...prev, [key]: value }));
+    setActiveFields(prev => prev.map(f => f.id === fieldId ? { ...f, value } : f));
+    // Update TOC counts
+    setSections(prev => prev.map(s => {
+      if (s.id !== activeSectionId) return s;
+      const newFilled = activeFields.map(f => f.id === fieldId ? value.trim() : f.value.trim()).filter(Boolean).length;
+      return { ...s, filledCount: newFilled };
+    }));
+    setDirty(true);
+  };
+
+  const handleSave = async () => {
+    if (!canvasId) return;
+    setSaving(true);
+    try {
+      await api.updateCanvas(canvasId, allData as Record<string, unknown>);
+      setDirty(false);
+    } catch (e) {
+      console.error("Save blueprint:", e);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const inputBase = "w-full text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent bg-white";
+
+  if (loading) {
+    return <div className="flex-1 flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-blue-500" /></div>;
+  }
+
+  // Global stats
+  const totalFields = sections.reduce((s, sec) => s + sec.fieldCount, 0);
+  const totalFilled = sections.reduce((s, sec) => s + sec.filledCount, 0);
+  const globalPct = totalFields > 0 ? Math.round((totalFilled / totalFields) * 100) : 0;
+  const activeSection = sections.find(s => s.id === activeSectionId);
+  const isWide = (type: string) => type === "textarea" || type === "list" || type === "json";
+  const wideFields = activeFields.filter(f => isWide(f.type));
+  const narrowFields = activeFields.filter(f => !isWide(f.type));
+
+  return (
+    <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Global progress bar */}
+      <div className="bg-white border-b px-4 py-2 shrink-0 flex items-center gap-3">
+        <span className="text-[9px] font-bold text-gray-500 shrink-0">Blueprint</span>
+        <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+          <div className={cn("h-full rounded-full transition-all duration-500", globalPct === 100 ? "bg-emerald-500" : "bg-blue-500")} style={{ width: `${globalPct}%` }} />
+        </div>
+        <span className="text-[9px] text-gray-500 font-medium shrink-0">{globalPct}%</span>
+        {dirty && (
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-bold bg-blue-600 text-white hover:bg-blue-700 cursor-pointer transition-all"
+          >
+            {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+            Sauvegarder
+          </button>
+        )}
+      </div>
+
+      {/* Layout: Sidebar TOC + Content */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Sidebar TOC */}
+        <div className="w-48 border-r bg-gray-50/50 flex flex-col shrink-0">
+          <div className="p-2 space-y-0.5 flex-1 overflow-y-auto">
+            {sections.map(sec => {
+              const isActive = sec.id === activeSectionId;
+              const pct = sec.fieldCount > 0 ? Math.round((sec.filledCount / sec.fieldCount) * 100) : 0;
+              return (
+                <button
+                  key={sec.id}
+                  onClick={() => setActiveSectionId(sec.id)}
+                  className={cn(
+                    "w-full text-left px-2.5 py-2 rounded-lg transition-all cursor-pointer",
+                    isActive ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-100 border border-transparent"
+                  )}
+                >
+                  <span className={cn("text-[9px] font-bold block truncate leading-tight", isActive ? "text-blue-700" : "text-gray-700")}>
+                    {sec.label}
+                  </span>
+                  {sec.fieldCount > 0 && (
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <div className="flex-1 h-1 bg-gray-200 rounded-full overflow-hidden">
+                        <div className={cn("h-full rounded-full", pct === 100 ? "bg-emerald-500" : pct > 0 ? "bg-blue-500" : "bg-gray-200")} style={{ width: `${pct}%` }} />
+                      </div>
+                      <span className="text-[8px] text-gray-400 w-5 text-right">{pct}%</span>
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          {/* Global stats */}
+          <div className="p-3 border-t bg-white shrink-0">
+            <div className="text-[9px] text-gray-500 space-y-1">
+              <div className="flex justify-between"><span>Sections</span><span className="font-bold">{sections.length}</span></div>
+              <div className="flex justify-between"><span>Champs remplis</span><span className="font-bold text-blue-600">{totalFilled}/{totalFields}</span></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Section content */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+          {/* Section intro */}
+          {(activeDescription || activeIntro) && (
+            <div className="bg-gradient-to-r from-slate-50 to-blue-50/30 rounded-lg px-4 py-3 border border-blue-100/50">
+              {activeDescription && <p className="text-xs text-gray-600 font-medium leading-relaxed">{activeDescription}</p>}
+              {activeIntro && (
+                <div className="mt-2 flex items-start gap-2">
+                  <Sparkles className="h-3.5 w-3.5 text-blue-400 mt-0.5 shrink-0" />
+                  <p className="text-[9px] text-gray-500 leading-relaxed">{activeIntro}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Narrow fields — 2 columns */}
+          {narrowFields.length > 0 && (
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+              {narrowFields.map(field => (
+                <div key={field.id}>
+                  <label className="text-xs font-bold text-gray-600 mb-1 flex items-center gap-1.5">
+                    {field.label}
+                    {field.required && <span className="text-red-400">*</span>}
+                  </label>
+                  {field.type === "select" && field.options ? (
+                    <select className={inputBase} value={field.value} onChange={e => handleFieldChange(field.id, e.target.value)}>
+                      <option value="">— Sélectionner —</option>
+                      {field.options.map(o => <option key={o} value={o}>{o}</option>)}
+                    </select>
+                  ) : (
+                    <input
+                      type={field.type === "number" || field.type === "currency" || field.type === "percentage" ? "number" : field.type === "date" ? "date" : "text"}
+                      className={inputBase}
+                      value={field.value}
+                      onChange={e => handleFieldChange(field.id, e.target.value)}
+                      placeholder={field.placeholder || field.label}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Wide fields — full width */}
+          {wideFields.length > 0 && (
+            <div className="space-y-3">
+              {wideFields.map(field => (
+                <div key={field.id}>
+                  <label className="text-xs font-bold text-gray-600 mb-1 flex items-center gap-1.5">
+                    {field.label}
+                    {field.required && <span className="text-red-400">*</span>}
+                  </label>
+                  <textarea
+                    className={cn(inputBase, "min-h-[80px] resize-y")}
+                    value={field.value}
+                    onChange={e => handleFieldChange(field.id, e.target.value)}
+                    placeholder={field.placeholder || `${field.label} (${field.type === "list" ? "un par ligne" : field.type === "json" ? "JSON" : "texte libre"})`}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {activeFields.length === 0 && (
+            <div className="text-center py-12">
+              <FileText className="h-8 w-8 text-gray-200 mx-auto mb-2" />
+              <p className="text-xs text-gray-400">Cette section sera alimentée automatiquement par les diagnostics et documents créés.</p>
+              <p className="text-[9px] text-gray-300 mt-1">Utilisez le chat à gauche pour discuter avec le bot.</p>
+            </div>
+          )}
+
+          {/* Footer save */}
+          {activeFields.length > 0 && (
+            <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+              <span className="text-[9px] text-gray-400">{dirty ? "Modifications non sauvegardées" : "À jour"}</span>
+              <button
+                onClick={handleSave}
+                disabled={saving || !dirty}
+                className={cn(
+                  "flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all",
+                  dirty ? "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer" : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                )}
+              >
+                {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                {saving ? "Sauvegarde..." : "Sauvegarder"}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ══════════════════════════════════════════
 // DocumentEditorFocus — Unified document editor V3

@@ -1038,6 +1038,11 @@ export const api = {
     return apiFetch("/calendar/today");
   },
 
+  /** Evenements sur une plage de dates */
+  calendarRange(start: string, end: string): Promise<{ events: { summary: string; start: string; end: string; date: string; formatted: string }[]; count: number }> {
+    return apiFetch(`/calendar/range?start=${start}&end=${end}`);
+  },
+
   /** Creneaux libres */
   calendarFree(date?: string): Promise<{ slots: import("./types").CalendarFreeSlot[] }> {
     const q = date ? `?date=${date}` : "";

@@ -114,6 +114,15 @@ export interface DeptBlueprintConfig {
   subSections: SubSectionDef[];
 }
 
+// ── Cross-Reference entre départements (Blueprint Organisme) ──
+
+export interface CrossRef {
+  sourceDept: string;       // Bot code du département source (ex: "CFOB")
+  sourceSection: string;    // ID de la sous-section source (ex: "budget_previsions")
+  sourceFields: string[];   // IDs des champs à lire (ex: ["budget_annuel"])
+  label: string;            // Libellé affiché (ex: "Budget annuel (Finance)")
+}
+
 // ── Helper functions ──
 
 export function getSizeTier(nbEmployes: number): SizeTier {
@@ -162,6 +171,7 @@ const CEOB_BLUEPRINT: DeptBlueprintConfig = {
       id: "sommaire_executif",
       label: "Sommaire Exécutif",
       description: "Résumé exécutif de l'entreprise — le pitch en 1 page",
+      intro: "Votre sommaire exécutif est la première impression — le seul document que TOUS vos interlocuteurs liront. Investisseurs, partenaires, banquiers : vous avez 30 secondes pour capter leur attention. Un bon pitch clarifie le problème, la solution et le potentiel en un paragraphe.",
       icon: "FileText",
       pertinence: { T1: "C", T2: "C", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -180,76 +190,10 @@ const CEOB_BLUEPRINT: DeptBlueprintConfig = {
       templates: ["elevator-pitch", "sommaire-executif"],
     },
     {
-      id: "profil_public",
-      label: "Profil Public (Orbit9)",
-      description: "Informations publiques — visible sur le réseau Orbit9",
-      icon: "Globe",
-      pertinence: { T1: "C", T2: "C", T3: "C", T4: "C", T5: "C" },
-      fields: [
-        { id: "logo_url", label: "URL du logo", type: "text", tier: "T1" },
-        { id: "couleurs_marque", label: "Couleurs de marque (hex)", type: "text", tier: "T1" },
-        { id: "slogan", label: "Slogan / Tagline", type: "text", tier: "T1" },
-        { id: "description_courte", label: "Description courte (150 caractères)", type: "textarea", tier: "T1", required: true },
-        { id: "description_longue", label: "Description longue (500 caractères)", type: "textarea", tier: "T2" },
-        { id: "photos_entreprise", label: "Photos de l'entreprise (URLs)", type: "list", tier: "T2" },
-        { id: "lien_linkedin", label: "LinkedIn", type: "text", tier: "T1" },
-        { id: "lien_facebook", label: "Facebook", type: "text", tier: "T1" },
-        { id: "lien_instagram", label: "Instagram", type: "text", tier: "T2" },
-        { id: "lien_google_business", label: "Google Business", type: "text", tier: "T2" },
-        { id: "lien_youtube", label: "YouTube", type: "text", tier: "T2" },
-        { id: "media_kit_url", label: "URL du média kit", type: "text", tier: "T3" },
-        { id: "certifications_publiques", label: "Certifications affichées (ISO, B Corp)", type: "list", tier: "T3" },
-        { id: "note_reputation", label: "Note de réputation (avis Google)", type: "number", tier: "T3" },
-        { id: "badges_orbit9", label: "Badges Orbit9 obtenus", type: "list", tier: "T3" },
-      ],
-      kpis: [],
-      templates: ["profil-entreprise"],
-    },
-    {
-      id: "equipe_direction",
-      label: "Équipe de Direction",
-      description: "Fondateurs, dirigeants, conseillers, actionnariat de l'équipe",
-      icon: "Users",
-      pertinence: { T1: "O", T2: "C", T3: "C", T4: "C", T5: "C" },
-      fields: [
-        { id: "fondateurs", label: "Fondateurs (nom, rôle, % équité)", type: "json", tier: "T1" },
-        { id: "equipe_direction", label: "Équipe de direction (C-Level)", type: "json", tier: "T2" },
-        { id: "nb_cofondateurs", label: "Nombre de co-fondateurs", type: "number", tier: "T1" },
-        { id: "biographies_cles", label: "Biographies clés", type: "json", tier: "T2" },
-        { id: "conseillers_externes", label: "Conseillers externes", type: "json", tier: "T3" },
-        { id: "mentor_board", label: "Advisory Board / Mentors", type: "json", tier: "T3" },
-        { id: "lacunes_equipe", label: "Lacunes à combler dans l'équipe", type: "list", tier: "T2" },
-        { id: "plan_embauche_direction", label: "Plan d'embauche direction (12 mois)", type: "json", tier: "T3" },
-      ],
-      kpis: [],
-      templates: ["organigramme-direction"],
-    },
-    {
-      id: "produits_services",
-      label: "Produits & Services",
-      description: "Catalogue complet, tarification, cycle de vie, parts de revenus",
-      icon: "Package",
-      pertinence: { T1: "C", T2: "C", T3: "C", T4: "C", T5: "C" },
-      fields: [
-        { id: "catalogue_produits", label: "Catalogue produits/services", type: "json", tier: "T1", required: true },
-        { id: "produit_phare", label: "Produit/service phare", type: "text", tier: "T1" },
-        { id: "repartition_revenus", label: "Répartition revenus par produit/service (%)", type: "json", tier: "T2" },
-        { id: "tarification", label: "Grille de tarification", type: "json", tier: "T1" },
-        { id: "cycle_vie_produits", label: "Cycle de vie par produit", type: "json", tier: "T3" },
-        { id: "pipeline_nouveaux_produits", label: "Pipeline nouveaux produits", type: "json", tier: "T3" },
-        { id: "taux_retention_produit", label: "Taux de rétention par produit (%)", type: "percentage", tier: "T3" },
-        { id: "marge_par_produit", label: "Marge brute par produit (%)", type: "json", tier: "T3" },
-        { id: "nb_clients_actifs", label: "Nombre de clients actifs", type: "number", tier: "T2" },
-        { id: "revenu_par_client", label: "Revenu moyen par client", type: "currency", tier: "T2" },
-        { id: "nrr", label: "Net Revenue Retention (%)", type: "percentage", tier: "T3" },
-      ],
-      kpis: [],
-      templates: ["fiche-produit", "catalogue-entreprise"],
-    },
-    {
       id: "description_historique",
       label: "Description & Historique",
       description: "Histoire de l'entreprise, jalons majeurs, réalisations clés",
+      intro: "L'histoire de votre entreprise construit votre crédibilité. Les jalons majeurs et reconnaissances sont des preuves sociales puissantes qui renforcent la confiance. C'est aussi la base de votre storytelling marketing.",
       icon: "BookOpen",
       pertinence: { T1: "I", T2: "C", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -267,6 +211,7 @@ const CEOB_BLUEPRINT: DeptBlueprintConfig = {
       id: "profil",
       label: "Profil entreprise",
       description: "Identité, industrie, mission, vision, valeurs",
+      intro: "Le profil entreprise est la fiche d'identité fondamentale qui alimente TOUTES les autres sections du blueprint. Le nombre d'employés détermine votre palier de taille et les obligations réglementaires applicables. La mission et la vision sont le fil conducteur de votre stratégie.",
       icon: "Building2",
       pertinence: { T1: "C", T2: "C", T3: "R", T4: "R", T5: "R" },
       fields: [
@@ -294,25 +239,80 @@ const CEOB_BLUEPRINT: DeptBlueprintConfig = {
       templates: ["profil-entreprise", "elevator-pitch"],
     },
     {
-      id: "swot",
-      label: "SWOT",
-      description: "Forces, faiblesses, opportunités, menaces",
-      icon: "Target",
-      pertinence: { T1: "H", T2: "O", T3: "I", T4: "C", T5: "C" },
+      id: "profil_public",
+      label: "Profil Public (Orbit9)",
+      description: "Informations publiques — visible sur le réseau Orbit9",
+      intro: "Votre profil public est votre vitrine sur le réseau Orbit9. C'est ce que les partenaires potentiels, investisseurs et clients voient en premier. Un profil complet avec logo, description et certifications augmente vos chances de jumelage et de crédibilité.",
+      icon: "Globe",
+      pertinence: { T1: "C", T2: "C", T3: "C", T4: "C", T5: "C" },
       fields: [
-        { id: "forces", label: "Forces (Strengths)", type: "list", tier: "T1" },
-        { id: "faiblesses", label: "Faiblesses (Weaknesses)", type: "list", tier: "T1" },
-        { id: "opportunites", label: "Opportunités", type: "list", tier: "T1" },
-        { id: "menaces", label: "Menaces", type: "list", tier: "T1" },
-        { id: "actions_prioritaires", label: "Actions prioritaires (croisement SWOT)", type: "list", tier: "T3" },
+        { id: "logo_url", label: "URL du logo", type: "text", tier: "T1" },
+        { id: "couleurs_marque", label: "Couleurs de marque (hex)", type: "text", tier: "T1" },
+        { id: "slogan", label: "Slogan / Tagline", type: "text", tier: "T1" },
+        { id: "description_courte", label: "Description courte (150 caractères)", type: "textarea", tier: "T1", required: true },
+        { id: "description_longue", label: "Description longue (500 caractères)", type: "textarea", tier: "T2" },
+        { id: "photos_entreprise", label: "Photos de l'entreprise (URLs)", type: "list", tier: "T2" },
+        { id: "lien_linkedin", label: "LinkedIn", type: "text", tier: "T1" },
+        { id: "lien_facebook", label: "Facebook", type: "text", tier: "T1" },
+        { id: "lien_instagram", label: "Instagram", type: "text", tier: "T2" },
+        { id: "lien_google_business", label: "Google Business", type: "text", tier: "T2" },
+        { id: "lien_youtube", label: "YouTube", type: "text", tier: "T2" },
+        { id: "media_kit_url", label: "URL du média kit", type: "text", tier: "T3" },
+        { id: "certifications_publiques", label: "Certifications affichées (ISO, B Corp)", type: "list", tier: "T3" },
+        { id: "note_reputation", label: "Note de réputation (avis Google)", type: "number", tier: "T3" },
+        { id: "badges_orbit9", label: "Badges Orbit9 obtenus", type: "list", tier: "T3" },
       ],
       kpis: [],
-      templates: ["analyse-swot"],
+      templates: ["profil-entreprise"],
+    },
+    {
+      id: "equipe_direction",
+      label: "Équipe de Direction",
+      description: "Fondateurs, dirigeants, conseillers, actionnariat de l'équipe",
+      intro: "La qualité de votre équipe de direction est le facteur #1 évalué par les investisseurs. Une équipe complémentaire avec des lacunes identifiées démontre de la maturité. Les conseillers externes multiplient votre accès aux opportunités.",
+      icon: "Users",
+      pertinence: { T1: "O", T2: "C", T3: "C", T4: "C", T5: "C" },
+      fields: [
+        { id: "fondateurs", label: "Fondateurs (nom, rôle, % équité)", type: "json", tier: "T1" },
+        { id: "equipe_direction", label: "Équipe de direction (C-Level)", type: "json", tier: "T2" },
+        { id: "nb_cofondateurs", label: "Nombre de co-fondateurs", type: "number", tier: "T1" },
+        { id: "biographies_cles", label: "Biographies clés", type: "json", tier: "T2" },
+        { id: "conseillers_externes", label: "Conseillers externes", type: "json", tier: "T3" },
+        { id: "mentor_board", label: "Advisory Board / Mentors", type: "json", tier: "T3" },
+        { id: "lacunes_equipe", label: "Lacunes à combler dans l'équipe", type: "list", tier: "T2" },
+        { id: "plan_embauche_direction", label: "Plan d'embauche direction (12 mois)", type: "json", tier: "T3" },
+      ],
+      kpis: [],
+      templates: ["organigramme-direction"],
+    },
+    {
+      id: "produits_services",
+      label: "Produits & Services",
+      description: "Catalogue complet, tarification, cycle de vie, parts de revenus",
+      intro: "Votre catalogue est le cœur de votre proposition de valeur. La répartition des revenus par produit révèle vos dépendances et opportunités de diversification. Les marges par produit et la rétention sont les indicateurs les plus prédictifs de votre santé commerciale.",
+      icon: "Package",
+      pertinence: { T1: "C", T2: "C", T3: "C", T4: "C", T5: "C" },
+      fields: [
+        { id: "catalogue_produits", label: "Catalogue produits/services", type: "json", tier: "T1", required: true },
+        { id: "produit_phare", label: "Produit/service phare", type: "text", tier: "T1" },
+        { id: "repartition_revenus", label: "Répartition revenus par produit/service (%)", type: "json", tier: "T2" },
+        { id: "tarification", label: "Grille de tarification", type: "json", tier: "T1" },
+        { id: "cycle_vie_produits", label: "Cycle de vie par produit", type: "json", tier: "T3" },
+        { id: "pipeline_nouveaux_produits", label: "Pipeline nouveaux produits", type: "json", tier: "T3" },
+        { id: "taux_retention_produit", label: "Taux de rétention par produit (%)", type: "percentage", tier: "T3" },
+        { id: "marge_par_produit", label: "Marge brute par produit (%)", type: "json", tier: "T3" },
+        { id: "nb_clients_actifs", label: "Nombre de clients actifs", type: "number", tier: "T2" },
+        { id: "revenu_par_client", label: "Revenu moyen par client", type: "currency", tier: "T2" },
+        { id: "nrr", label: "Net Revenue Retention (%)", type: "percentage", tier: "T3" },
+      ],
+      kpis: [],
+      templates: ["fiche-produit", "catalogue-entreprise"],
     },
     {
       id: "bmc",
       label: "BMC",
       description: "Business Model Canvas — 9 blocs",
+      intro: "Le Business Model Canvas en 9 blocs est le standard mondial pour décrire votre modèle d'affaires. Il force la clarté sur COMMENT vous créez, délivrez et capturez de la valeur. C'est souvent le premier exercice demandé par les accélérateurs et investisseurs.",
       icon: "Layers",
       pertinence: { T1: "I", T2: "C", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -333,6 +333,7 @@ const CEOB_BLUEPRINT: DeptBlueprintConfig = {
       id: "objectifs_vitaa",
       label: "Objectifs VITAA",
       description: "5 piliers stratégiques — Vente, Idée, Temps, Argent, Actif",
+      intro: "Les 5 piliers VITAA (Vente, Idée, Temps, Argent, Actif) évaluent la santé globale de votre entreprise. Les scores alimentent le Triangle du Feu et déterminent les playbooks prioritaires. Les OKRs trimestriels transforment la vision en actions mesurables.",
       icon: "Rocket",
       pertinence: { T1: "C", T2: "C", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -355,6 +356,7 @@ const CEOB_BLUEPRINT: DeptBlueprintConfig = {
       id: "finances",
       label: "Finances",
       description: "Horizons financiers, avantages concurrentiels, revenus",
+      intro: "La santé financière vue de la Direction : revenus, marges et horizons de croissance. Ces données sont croisées avec le département Finance pour détecter les incohérences. Les avantages concurrentiels financiers (pricing power, récurrence) sont des moats stratégiques.",
       icon: "DollarSign",
       pertinence: { T1: "C", T2: "C", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -371,9 +373,27 @@ const CEOB_BLUEPRINT: DeptBlueprintConfig = {
       ],
     },
     {
+      id: "swot",
+      label: "SWOT",
+      description: "Forces, faiblesses, opportunités, menaces",
+      intro: "L'analyse SWOT croise vos forces internes avec les opportunités et menaces externes. Les actions prioritaires qui en découlent sont le pont entre l'analyse et l'exécution. Cette section est enrichie par les données des 11 autres départements.",
+      icon: "Target",
+      pertinence: { T1: "H", T2: "O", T3: "I", T4: "C", T5: "C" },
+      fields: [
+        { id: "forces", label: "Forces (Strengths)", type: "list", tier: "T1" },
+        { id: "faiblesses", label: "Faiblesses (Weaknesses)", type: "list", tier: "T1" },
+        { id: "opportunites", label: "Opportunités", type: "list", tier: "T1" },
+        { id: "menaces", label: "Menaces", type: "list", tier: "T1" },
+        { id: "actions_prioritaires", label: "Actions prioritaires (croisement SWOT)", type: "list", tier: "T3" },
+      ],
+      kpis: [],
+      templates: ["analyse-swot"],
+    },
+    {
       id: "gouvernance",
       label: "Gouvernance",
       description: "Entité légale, actionnariat, CA, pacte d'actionnaires",
+      intro: "La gouvernance structure le pouvoir décisionnel de votre entreprise. Un CA indépendant et une convention d'actionnaires à jour sont des prérequis pour la croissance. À partir de 100 employés, la gouvernance formelle devient recommandée.",
       icon: "Shield",
       pertinence: { T1: "H", T2: "O", T3: "I", T4: "C", T5: "R" },
       fields: [
@@ -392,9 +412,28 @@ const CEOB_BLUEPRINT: DeptBlueprintConfig = {
       templates: ["convention-actionnaires", "charte-ca"],
     },
     {
+      id: "culture_esg",
+      label: "Culture & ESG",
+      description: "Éthique, empreinte carbone, DEI, certifications",
+      intro: "Les critères ESG sont de plus en plus exigés par les donneurs d'ordres et les institutions financières. La certification B Corp et le score EcoVadis deviennent des différenciateurs commerciaux. Le code d'éthique et les politiques DEI renforcent votre marque employeur.",
+      icon: "Compass",
+      pertinence: { T1: "O", T2: "I", T3: "C", T4: "C", T5: "R" },
+      fields: [
+        { id: "code_ethique", label: "Code d'éthique", type: "select", options: ["Formel", "Informel", "Absent"], tier: "T3" },
+        { id: "politique_dei", label: "Politique DEI", type: "select", options: ["Formelle", "Informelle", "Absente"], tier: "T4" },
+        { id: "bilan_carbone", label: "Bilan carbone (tonnes CO2e)", type: "number", tier: "T4" },
+        { id: "certifications_esg", label: "Certifications ESG", type: "list", tier: "T5" },
+        { id: "rapport_esg_public", label: "Rapport ESG public", type: "select", options: ["Oui", "Non"], tier: "T5" },
+        { id: "certification_bcorp", label: "Certification B Corp", type: "select", options: ["Certifié", "En cours", "Non"], tier: "T4" },
+        { id: "score_ecovadis", label: "Score EcoVadis", type: "number", tier: "T5" },
+      ],
+      kpis: [],
+    },
+    {
       id: "risques_sortie",
       label: "Risques & Sortie",
       description: "Matrice risques, PCA, exit strategy, valorisation",
+      intro: "La gestion des risques et la planification de sortie sont critiques pour la pérennité. Un plan de continuité (PCA) protège contre les crises, et la définition précoce de votre stratégie de sortie maximise la valorisation future.",
       icon: "Shield",
       pertinence: { T1: "H", T2: "O", T3: "I", T4: "C", T5: "C" },
       fields: [
@@ -411,38 +450,43 @@ const CEOB_BLUEPRINT: DeptBlueprintConfig = {
       templates: ["plan-continuite-affaires", "data-room-checklist"],
     },
     {
-      id: "culture_esg",
-      label: "Culture & ESG",
-      description: "Éthique, empreinte carbone, DEI, certifications",
-      icon: "Compass",
-      pertinence: { T1: "O", T2: "I", T3: "C", T4: "C", T5: "R" },
-      fields: [
-        { id: "code_ethique", label: "Code d'éthique", type: "select", options: ["Formel", "Informel", "Absent"], tier: "T3" },
-        { id: "politique_dei", label: "Politique DEI", type: "select", options: ["Formelle", "Informelle", "Absente"], tier: "T4" },
-        { id: "bilan_carbone", label: "Bilan carbone (tonnes CO2e)", type: "number", tier: "T4" },
-        { id: "certifications_esg", label: "Certifications ESG", type: "list", tier: "T5" },
-        { id: "rapport_esg_public", label: "Rapport ESG public", type: "select", options: ["Oui", "Non"], tier: "T5" },
-        { id: "certification_bcorp", label: "Certification B Corp", type: "select", options: ["Certifié", "En cours", "Non"], tier: "T4" },
-        { id: "score_ecovadis", label: "Score EcoVadis", type: "number", tier: "T5" },
-      ],
-      kpis: [],
-    },
-    {
-      id: "vue_consolidee",
-      label: "Vue consolidée",
-      description: "Agrégation des 11 départements, alertes, gaps prioritaires",
-      icon: "Layers",
+      id: "conseil_administration",
+      label: "Conseil d'administration",
+      description: "Membres du CA, structure de gouvernance, réunions et comités",
+      intro: "Le conseil d'administration est l'organe de gouvernance suprême de votre organisation. Identifier vos administrateurs, définir leurs rôles et leur donner accès à la plateforme permet une gouvernance transparente et efficace. Les membres du CA peuvent être invités automatiquement aux réunions (Conférence AI ou présentiel), recevoir les minutes et suivre les résultats de l'organisation en temps réel.",
+      icon: "Building2",
       pertinence: { T1: "H", T2: "O", T3: "I", T4: "C", T5: "C" },
-      fields: [],
-      kpis: [
-        { id: "score_global", label: "Score Santé Global", formule: "moyenne pondérée 12 depts", benchmark: "70/100", seuils: { vert: 70, jaune: 50, rouge: 30 }, tier: "T2", unite: "/100" },
-        { id: "nb_gaps_critiques", label: "Gaps critiques", formule: "sections C vides", benchmark: "0", seuils: { vert: 0, jaune: 3, rouge: 5 }, tier: "T2", unite: "" },
+      fields: [
+        { id: "nb_membres_ca", label: "Nombre de membres au CA", type: "number", tier: "T2" },
+        { id: "president_ca", label: "Président(e) du CA", type: "text", tier: "T2", required: true },
+        { id: "membres_ca", label: "Membres du CA (nom, rôle, expertise)", type: "json", placeholder: "[{\"nom\": \"\", \"role\": \"\", \"expertise\": \"\", \"courriel\": \"\", \"depuis\": \"\"}]", tier: "T2" },
+        { id: "membres_independants", label: "Nombre de membres indépendants", type: "number", tier: "T4" },
+        { id: "comites_ca", label: "Comités du CA (audit, RH, stratégie, etc.)", type: "list", tier: "T3" },
+        { id: "frequence_reunions_ca", label: "Fréquence des réunions du CA", type: "select", options: ["Mensuelle", "Bimestrielle", "Trimestrielle", "Semestrielle", "Annuelle"], tier: "T2" },
+        { id: "format_reunions_ca", label: "Format des réunions", type: "select", options: ["Présentiel", "Conférence AI", "Hybride"], tier: "T2" },
+        { id: "prochaine_reunion_ca", label: "Prochaine réunion du CA", type: "date", tier: "T2" },
+        { id: "mandat_admin", label: "Durée des mandats (années)", type: "number", tier: "T3" },
+        { id: "charte_ca", label: "Charte du CA documentée", type: "select", options: ["Oui", "En rédaction", "Non"], tier: "T3" },
+        { id: "assurance_administrateurs", label: "Assurance responsabilité des administrateurs (D&O)", type: "select", options: ["Oui", "Non", "En évaluation"], tier: "T4" },
+        { id: "processus_evaluation_ca", label: "Processus d'évaluation du CA", type: "select", options: ["Annuel formel", "Informel", "Aucun"], tier: "T4" },
+        { id: "acces_plateforme_ca", label: "Accès plateforme pour les membres du CA", type: "select", options: ["Tous les membres", "Président seulement", "Pas encore configuré"], tier: "T2" },
+        { id: "distribution_minutes", label: "Distribution automatique des minutes", type: "select", options: ["Activée", "Manuelle", "Non configurée"], tier: "T2" },
+        { id: "comite_direction", label: "Membres du comité de direction", type: "json", placeholder: "[{\"nom\": \"\", \"titre\": \"\", \"departement\": \"\"}]", tier: "T3" },
+        { id: "frequence_comite_direction", label: "Fréquence comité de direction", type: "select", options: ["Hebdomadaire", "Bimensuelle", "Mensuelle", "Bimestrielle"], tier: "T3" },
       ],
+      kpis: [
+        { id: "taux_presence_ca", label: "Taux de présence CA", formule: "Présences / (Membres × Réunions) × 100", benchmark: ">85%", seuils: { vert: 85, jaune: 70, rouge: 50 }, tier: "T3", unite: "%" },
+        { id: "nb_reunions_annuelles", label: "Réunions CA / an", benchmark: "4-12 selon taille", seuils: { vert: 4, jaune: 2, rouge: 1 }, tier: "T3", unite: "" },
+        { id: "ratio_independants", label: "Ratio membres indépendants", formule: "Indépendants / Total × 100", benchmark: ">33% PME, >50% grande", seuils: { vert: 50, jaune: 33, rouge: 10 }, tier: "T4", unite: "%" },
+      ],
+      playbooks: ["reunion-conseil-administration", "conference-ai-ca", "playbook-comite-direction"],
+      templates: ["ordre-du-jour-ca", "minutes-conseil-administration", "charte-gouvernance-ca"],
     },
     {
       id: "kpis_direction",
       label: "KPIs Direction",
       description: "VITAA Global, exécution stratégique, croissance CA",
+      intro: "Les KPIs de la Direction mesurent la performance globale. Le VITAA Global, la croissance CA, le NPS et l'atteinte des OKRs sont vos indicateurs de santé stratégique, alimentés par les données des départements spécialisés.",
       icon: "TrendingUp",
       pertinence: { T1: "I", T2: "C", T3: "C", T4: "C", T5: "C" },
       fields: [],
@@ -458,11 +502,25 @@ const CEOB_BLUEPRINT: DeptBlueprintConfig = {
       id: "playbooks_direction",
       label: "Playbooks",
       description: "Playbooks stratégiques par phase",
+      intro: "Les playbooks stratégiques guident les actions concrètes pour chaque phase de croissance. Du plan stratégique 3-5 ans à la préparation du CA, chaque playbook est un mode d'emploi éprouvé adapté à votre taille.",
       icon: "Rocket",
       pertinence: { T1: "O", T2: "I", T3: "C", T4: "C", T5: "C" },
       fields: [],
       kpis: [],
       playbooks: ["plan-strategique-3-5ans", "preparation-ca", "due-diligence-vendeur"],
+    },
+    {
+      id: "vue_consolidee",
+      label: "Vue consolidée",
+      description: "Agrégation des 11 départements, alertes, gaps prioritaires",
+      intro: "Vue d'ensemble des 11 départements — le tableau de bord stratégique du CEO. Les scores, gaps critiques et données clés de chaque département en un coup d'œil. Les tensions entre départements sont signalées automatiquement.",
+      icon: "Layers",
+      pertinence: { T1: "H", T2: "O", T3: "I", T4: "C", T5: "C" },
+      fields: [],
+      kpis: [
+        { id: "score_global", label: "Score Santé Global", formule: "moyenne pondérée 12 depts", benchmark: "70/100", seuils: { vert: 70, jaune: 50, rouge: 30 }, tier: "T2", unite: "/100" },
+        { id: "nb_gaps_critiques", label: "Gaps critiques", formule: "sections C vides", benchmark: "0", seuils: { vert: 0, jaune: 3, rouge: 5 }, tier: "T2", unite: "" },
+      ],
     },
   ],
 };
@@ -478,6 +536,7 @@ const CTOB_BLUEPRINT: DeptBlueprintConfig = {
       id: "stack_technique",
       label: "Stack Technique",
       description: "Langages, BDD, cloud, outils DevOps",
+      intro: "Votre pile technologique est le fondement de votre capacité d'exécution numérique. Chaque outil doit être documenté pour identifier les redondances, les risques de vendor lock-in et les opportunités d'automatisation. Ces données alimentent le département Cybersécurité.",
       icon: "Layers",
       pertinence: { T1: "C", T2: "C", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -495,37 +554,10 @@ const CTOB_BLUEPRINT: DeptBlueprintConfig = {
       kpis: [],
     },
     {
-      id: "dette_technique",
-      label: "Dette Technique",
-      description: "Registre composants à refactoriser",
-      icon: "ListChecks",
-      pertinence: { T1: "H", T2: "O", T3: "I", T4: "C", T5: "C" },
-      fields: [
-        { id: "composants_critiques", label: "Composants à refactoriser", type: "json", tier: "T2" },
-        { id: "score_dette", label: "Score dette (1-10)", type: "number", tier: "T3" },
-        { id: "plan_remediation", label: "Plan de remédiation", type: "textarea", tier: "T3" },
-        { id: "backlog_dette", label: "Backlog de la dette technique", type: "json", tier: "T3" },
-      ],
-      kpis: [],
-    },
-    {
-      id: "roadmap_tech",
-      label: "Roadmap Tech",
-      description: "Gantt déploiements, jalons techniques",
-      icon: "TrendingUp",
-      pertinence: { T1: "O", T2: "I", T3: "C", T4: "C", T5: "C" },
-      fields: [
-        { id: "jalons_q1", label: "Jalons Q1", type: "list", tier: "T2" },
-        { id: "jalons_q2", label: "Jalons Q2", type: "list", tier: "T2" },
-        { id: "jalons_q3", label: "Jalons Q3", type: "list", tier: "T3" },
-        { id: "jalons_q4", label: "Jalons Q4", type: "list", tier: "T3" },
-      ],
-      kpis: [],
-    },
-    {
       id: "architecture_si",
       label: "Architecture SI",
       description: "CRM, ERP, SIRH, intégrations",
+      intro: "L'architecture de vos systèmes d'information (CRM, ERP, SIRH) détermine votre efficacité opérationnelle. Les intégrations entre systèmes éliminent les silos de données. Un diagramme d'architecture à jour est un prérequis pour tout audit technique.",
       icon: "Building2",
       pertinence: { T1: "H", T2: "O", T3: "I", T4: "C", T5: "C" },
       fields: [
@@ -544,6 +576,7 @@ const CTOB_BLUEPRINT: DeptBlueprintConfig = {
       id: "infrastructure",
       label: "Infrastructure",
       description: "Serveurs, monitoring, coûts, SLA",
+      intro: "L'infrastructure soutient la disponibilité et la performance de vos services. Le monitoring, les SLAs et les coûts doivent être suivis en continu. Le uptime cible de 99.5% est le standard minimum pour les applications critiques.",
       icon: "Shield",
       pertinence: { T1: "I", T2: "I", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -560,9 +593,40 @@ const CTOB_BLUEPRINT: DeptBlueprintConfig = {
       ],
     },
     {
+      id: "roadmap_tech",
+      label: "Roadmap Tech",
+      description: "Gantt déploiements, jalons techniques",
+      intro: "La feuille de route technologique aligne les investissements IT avec les objectifs d'affaires. Des jalons trimestriels clairs permettent de mesurer la progression et de réajuster les priorités.",
+      icon: "TrendingUp",
+      pertinence: { T1: "O", T2: "I", T3: "C", T4: "C", T5: "C" },
+      fields: [
+        { id: "jalons_q1", label: "Jalons Q1", type: "list", tier: "T2" },
+        { id: "jalons_q2", label: "Jalons Q2", type: "list", tier: "T2" },
+        { id: "jalons_q3", label: "Jalons Q3", type: "list", tier: "T3" },
+        { id: "jalons_q4", label: "Jalons Q4", type: "list", tier: "T3" },
+      ],
+      kpis: [],
+    },
+    {
+      id: "dette_technique",
+      label: "Dette Technique",
+      description: "Registre composants à refactoriser",
+      intro: "La dette technique est le coût invisible qui ralentit votre développement. Comme une dette financière, elle s'accumule avec les intérêts. Un registre transparent et un plan de remédiation priorisé permettent de garder le contrôle.",
+      icon: "ListChecks",
+      pertinence: { T1: "H", T2: "O", T3: "I", T4: "C", T5: "C" },
+      fields: [
+        { id: "composants_critiques", label: "Composants à refactoriser", type: "json", tier: "T2" },
+        { id: "score_dette", label: "Score dette (1-10)", type: "number", tier: "T3" },
+        { id: "plan_remediation", label: "Plan de remédiation", type: "textarea", tier: "T3" },
+        { id: "backlog_dette", label: "Backlog de la dette technique", type: "json", tier: "T3" },
+      ],
+      kpis: [],
+    },
+    {
       id: "securite_applicative",
       label: "Sécurité Applicative",
       description: "DevSecOps, OWASP, pen tests",
+      intro: "La sécurité applicative protège vos logiciels contre les vulnérabilités (OWASP Top 10). Les tests de pénétration réguliers et un pipeline DevSecOps automatisé préviennent les brèches. Section complémentaire au département Cybersécurité.",
       icon: "Shield",
       pertinence: { T1: "I", T2: "I", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -576,6 +640,7 @@ const CTOB_BLUEPRINT: DeptBlueprintConfig = {
       id: "kpis_tech",
       label: "KPIs Tech",
       description: "Uptime, MTTR, coût par client",
+      intro: "Les KPIs technologiques mesurent la santé de votre infrastructure. L'uptime, le MTTR, le coût par client et le ratio de dette technique sont les indicateurs clés que les CTO de PME performantes surveillent.",
       icon: "TrendingUp",
       pertinence: { T1: "H", T2: "O", T3: "C", T4: "C", T5: "C" },
       fields: [],
@@ -591,6 +656,7 @@ const CTOB_BLUEPRINT: DeptBlueprintConfig = {
       id: "playbooks_tech",
       label: "Playbooks",
       description: "Playbooks technologiques par phase",
+      intro: "Les playbooks technologiques guident les décisions majeures : audit de sécurité annuel, migration cloud et plan de reprise après sinistre. Chaque playbook inclut des étapes concrètes adaptées à votre palier de taille.",
       icon: "Rocket",
       pertinence: { T1: "O", T2: "I", T3: "C", T4: "C", T5: "C" },
       fields: [],
@@ -607,9 +673,26 @@ const CFOB_BLUEPRINT: DeptBlueprintConfig = {
   intro: "La fonction financière évolue d'une comptabilité de survie vers une modélisation prédictive à mesure que votre entreprise grandit. La gestion de la trésorerie est le nerf de la guerre — le Cycle de Conversion en Espèces (CCC) est la métrique absolue de votre santé financière. Ce département structure vos budgets, revenus, obligations fiscales et prépare votre valorisation.",
   subSections: [
     {
+      id: "modele_revenus",
+      label: "Mod\u00e8le de Revenus",
+      description: "R\u00e9current, transactionnel, pricing",
+      intro: "Votre modèle de revenus détermine votre prévisibilité financière et votre valorisation. Les modèles récurrents (SaaS, abonnement) obtiennent des multiples 3-5x supérieurs aux modèles transactionnels. Comprendre votre MRR/ARR est essentiel.",
+      icon: "TrendingUp",
+      pertinence: { T1: "C", T2: "C", T3: "C", T4: "C", T5: "C" },
+      fields: [
+        { id: "type_revenus", label: "Type principal", type: "select", options: ["R\u00e9current (SaaS/abo)", "Transactionnel", "Projet", "Mixte", "Commission", "Licence"], tier: "T1", required: true },
+        { id: "mrr", label: "MRR / Revenus mensuels", type: "currency", tier: "T1" },
+        { id: "chiffre_affaires_estime", label: "Chiffre d\u2019affaires estim\u00e9", type: "currency", tier: "T1" },
+        { id: "arr", label: "ARR", type: "currency", tier: "T2" },
+        { id: "pricing_strategy", label: "Strat\u00e9gie de prix", type: "textarea", tier: "T2" },
+      ],
+      kpis: [],
+    },
+    {
       id: "budget_previsions",
       label: "Budget & Pr\u00e9visions",
       description: "Budget annuel, CAPEX/OPEX, sc\u00e9narios",
+      intro: "Le budget est votre boussole financière. La distinction CAPEX/OPEX impacte votre fiscalité et valorisation. Les prévisions à 3 ans sont exigées par les investisseurs. Un budget par centre de coûts donne une visibilité fine sur vos marges.",
       icon: "DollarSign",
       pertinence: { T1: "I", T2: "C", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -624,24 +707,10 @@ const CFOB_BLUEPRINT: DeptBlueprintConfig = {
       kpis: [],
     },
     {
-      id: "modele_revenus",
-      label: "Mod\u00e8le de Revenus",
-      description: "R\u00e9current, transactionnel, pricing",
-      icon: "TrendingUp",
-      pertinence: { T1: "C", T2: "C", T3: "C", T4: "C", T5: "C" },
-      fields: [
-        { id: "type_revenus", label: "Type principal", type: "select", options: ["R\u00e9current (SaaS/abo)", "Transactionnel", "Projet", "Mixte", "Commission", "Licence"], tier: "T1", required: true },
-        { id: "mrr", label: "MRR / Revenus mensuels", type: "currency", tier: "T1" },
-        { id: "chiffre_affaires_estime", label: "Chiffre d\u2019affaires estim\u00e9", type: "currency", tier: "T1" },
-        { id: "arr", label: "ARR", type: "currency", tier: "T2" },
-        { id: "pricing_strategy", label: "Strat\u00e9gie de prix", type: "textarea", tier: "T2" },
-      ],
-      kpis: [],
-    },
-    {
       id: "tresorerie",
       label: "Tr\u00e9sorerie",
       description: "Cash flow 13 semaines, runway, burn rate",
+      intro: "La trésorerie est le nerf de la guerre — 82% des faillites de PME sont dues à des problèmes de cash flow. Le Cash Flow 13 semaines est l'outil de survie par excellence. Le Cycle de Conversion en Espèces (CCC) est LA métrique à optimiser.",
       icon: "DollarSign",
       pertinence: { T1: "I", T2: "C", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -660,25 +729,10 @@ const CFOB_BLUEPRINT: DeptBlueprintConfig = {
       ],
     },
     {
-      id: "fiscalite",
-      label: "Fiscalit\u00e9 & Incitatifs",
-      description: "RS&DE, CRIC, subventions actives",
-      icon: "Shield",
-      pertinence: { T1: "R", T2: "R", T3: "R", T4: "R", T5: "R" },
-      fields: [
-        { id: "inscription_tps_tvq", label: "Inscription TPS/TVQ", type: "select", options: ["Oui", "Non \u2014 sous 30K$", "En cours"], tier: "T1" },
-        { id: "rsde", label: "RS&DE d\u00e9pos\u00e9", type: "select", options: ["Oui \u2014 en cours", "Oui \u2014 termin\u00e9", "Non \u2014 \u00e9ligible", "Non \u2014 pas \u00e9ligible"], tier: "T2" },
-        { id: "numeros_taxes_tps_tvq", label: "Num\u00e9ros TPS/TVQ", type: "text", tier: "T2" },
-        { id: "subventions", label: "Subventions actives", type: "json", tier: "T3" },
-        { id: "credits_impot", label: "Cr\u00e9dits d\u2019imp\u00f4t", type: "list", tier: "T3" },
-        { id: "norme_comptable", label: "Norme comptable applicable", type: "select", options: ["NCECF", "IFRS", "Comptabilit\u00e9 de caisse"], tier: "T4" },
-      ],
-      kpis: [],
-    },
-    {
       id: "etats_financiers",
       label: "\u00c9tats Financiers",
       description: "Bilan, r\u00e9sultats, flux de tr\u00e9sorerie",
+      intro: "Les états financiers sont la carte de santé de votre entreprise. Le bilan, les résultats et les flux doivent être à jour pour toute demande de financement. La marge BAIIA (EBITDA) est le multiple de référence pour la valorisation des PME.",
       icon: "Layers",
       pertinence: { T1: "I", T2: "C", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -696,9 +750,27 @@ const CFOB_BLUEPRINT: DeptBlueprintConfig = {
       ],
     },
     {
+      id: "fiscalite",
+      label: "Fiscalit\u00e9 & Incitatifs",
+      description: "RS&DE, CRIC, subventions actives",
+      intro: "La fiscalité québécoise offre des avantages significatifs : crédits RS&DE (35% fédéral + 30% provincial sur le premier million), crédits CDAE et programmes régionaux. L'inscription TPS/TVQ est obligatoire dès 30 000$ de revenus.",
+      icon: "Shield",
+      pertinence: { T1: "R", T2: "R", T3: "R", T4: "R", T5: "R" },
+      fields: [
+        { id: "inscription_tps_tvq", label: "Inscription TPS/TVQ", type: "select", options: ["Oui", "Non \u2014 sous 30K$", "En cours"], tier: "T1" },
+        { id: "rsde", label: "RS&DE d\u00e9pos\u00e9", type: "select", options: ["Oui \u2014 en cours", "Oui \u2014 termin\u00e9", "Non \u2014 \u00e9ligible", "Non \u2014 pas \u00e9ligible"], tier: "T2" },
+        { id: "numeros_taxes_tps_tvq", label: "Num\u00e9ros TPS/TVQ", type: "text", tier: "T2" },
+        { id: "subventions", label: "Subventions actives", type: "json", tier: "T3" },
+        { id: "credits_impot", label: "Cr\u00e9dits d\u2019imp\u00f4t", type: "list", tier: "T3" },
+        { id: "norme_comptable", label: "Norme comptable applicable", type: "select", options: ["NCECF", "IFRS", "Comptabilit\u00e9 de caisse"], tier: "T4" },
+      ],
+      kpis: [],
+    },
+    {
       id: "valorisation",
       label: "Valorisation",
       description: "Multiples, EBITDA normalis\u00e9, QoE",
+      intro: "La valorisation reflète la capacité de votre entreprise à générer des profits futurs. L'EBITDA normalisé, le multiple du secteur et la Quality of Earnings (QoE) sont les outils utilisés par les acquéreurs.",
       icon: "TrendingUp",
       pertinence: { T1: "H", T2: "O", T3: "I", T4: "C", T5: "C" },
       fields: [
@@ -716,6 +788,7 @@ const CFOB_BLUEPRINT: DeptBlueprintConfig = {
       id: "kpis_finance",
       label: "KPIs Finance",
       description: "Runway, marge EBITDA, CCC",
+      intro: "Les KPIs financiers sont les signaux vitaux. Le runway, la marge EBITDA, le CCC et la liquidité courante doivent être surveillés mensuellement. La Rule of 40 est le benchmark de référence pour les entreprises SaaS.",
       icon: "TrendingUp",
       pertinence: { T1: "I", T2: "C", T3: "C", T4: "C", T5: "C" },
       fields: [],
@@ -731,6 +804,7 @@ const CFOB_BLUEPRINT: DeptBlueprintConfig = {
       id: "playbooks_finance",
       label: "Playbooks",
       description: "Playbooks financiers par phase",
+      intro: "Les playbooks financiers guident les décisions critiques : prévision de trésorerie 13 semaines, préparation au financement et due diligence financière pour sécuriser les transactions.",
       icon: "Rocket",
       pertinence: { T1: "O", T2: "I", T3: "C", T4: "C", T5: "C" },
       fields: [],
@@ -751,6 +825,7 @@ const CMOB_BLUEPRINT: DeptBlueprintConfig = {
       id: "personas_icp",
       label: "Personas & ICP",
       description: "Profil client id\u00e9al, parcours d\u2019achat",
+      intro: "Le profil client idéal (ICP) est la fondation de TOUTE votre stratégie marketing. Un ICP précis réduit votre coût d'acquisition et augmente la qualité de vos leads. Les données ventes (clients actuels) valident ou invalident vos hypothèses.",
       icon: "Target",
       pertinence: { T1: "I", T2: "C", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -766,6 +841,7 @@ const CMOB_BLUEPRINT: DeptBlueprintConfig = {
       id: "positionnement",
       label: "Positionnement & Marque",
       description: "UVP, ton, charte graphique",
+      intro: "Votre positionnement différencie votre entreprise dans l'esprit du client. La proposition de valeur unique (UVP) doit être claire, mémorable et vérifiable. La charte graphique et le ton de voix assurent la cohérence de votre marque.",
       icon: "Compass",
       pertinence: { T1: "C", T2: "C", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -782,6 +858,7 @@ const CMOB_BLUEPRINT: DeptBlueprintConfig = {
       id: "canaux_budget",
       label: "Canaux & Budget",
       description: "Mix marketing, ROI par canal",
+      intro: "Le mix marketing et l'allocation budgétaire déterminent votre capacité d'acquisition. Le ROI par canal permet de concentrer les investissements sur ce qui fonctionne. Les données de ventes valident l'efficacité de chaque canal.",
       icon: "DollarSign",
       pertinence: { T1: "C", T2: "C", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -797,6 +874,7 @@ const CMOB_BLUEPRINT: DeptBlueprintConfig = {
       id: "contenu_campagnes",
       label: "Contenu & Campagnes",
       description: "Calendrier \u00e9ditorial, lead magnets",
+      intro: "Le contenu est le carburant de votre machine marketing. Un calendrier éditorial structuré et des lead magnets de qualité transforment les visiteurs en prospects qualifiés. Les campagnes actives alimentent directement le pipeline de ventes.",
       icon: "Layers",
       pertinence: { T1: "O", T2: "I", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -810,6 +888,7 @@ const CMOB_BLUEPRINT: DeptBlueprintConfig = {
       id: "automatisation",
       label: "Automatisation MarTech",
       description: "Workflows, lead scoring, nurturing",
+      intro: "L'automatisation marketing libère du temps pour la stratégie. Le lead scoring priorise les prospects les plus chauds, et les workflows de nurturing maintiennent l'engagement sur le long terme. L'attribution multi-touch révèle le vrai ROI.",
       icon: "Rocket",
       pertinence: { T1: "O", T2: "I", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -825,6 +904,7 @@ const CMOB_BLUEPRINT: DeptBlueprintConfig = {
       id: "reputation",
       label: "R\u00e9putation & PR",
       description: "T\u00e9moignages, NPS, \u00e9v\u00e9nements",
+      intro: "Votre réputation est votre actif marketing le plus précieux. Les témoignages clients, le NPS et les événements construisent la confiance. Un plan de gestion de crise RP protège cette réputation en cas d'incident.",
       icon: "TrendingUp",
       pertinence: { T1: "I", T2: "I", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -840,6 +920,7 @@ const CMOB_BLUEPRINT: DeptBlueprintConfig = {
       id: "kpis_marketing",
       label: "KPIs Marketing",
       description: "CAC, LTV:CAC, taux de conversion",
+      intro: "Les KPIs marketing mesurent l'efficacité de votre machine d'acquisition. Le CAC, le ratio LTV:CAC, le taux de conversion et le NPS sont les indicateurs qui déterminent si votre marketing crée ou détruit de la valeur.",
       icon: "TrendingUp",
       pertinence: { T1: "I", T2: "C", T3: "C", T4: "C", T5: "C" },
       fields: [],
@@ -854,6 +935,7 @@ const CMOB_BLUEPRINT: DeptBlueprintConfig = {
       id: "playbooks_marketing",
       label: "Playbooks",
       description: "Playbooks marketing par phase",
+      intro: "Les playbooks marketing guident l'exécution : stratégie de contenu B2B, lancement de campagne lead generation et audit de marque. Chaque playbook est adapté à votre phase de croissance.",
       icon: "Rocket",
       pertinence: { T1: "O", T2: "I", T3: "C", T4: "C", T5: "C" },
       fields: [],
@@ -871,25 +953,10 @@ const CSOB_BLUEPRINT: DeptBlueprintConfig = {
   intro: "La strat\u00e9gie garantit l'alignement \u00e0 long terme entre votre vision et le march\u00e9. De l'analyse concurrentielle au dimensionnement de votre march\u00e9 (TAM/SAM/SOM), en passant par vos partenariats et vos avantages concurrentiels durables (moats), ce d\u00e9partement structure les d\u00e9cisions qui d\u00e9terminent votre positionnement et votre croissance future.",
   subSections: [
     {
-      id: "pestel",
-      label: "Analyse PESTEL",
-      description: "Politique, \u00c9conomique, Social, Technologique, Environnemental, L\u00e9gal",
-      icon: "Compass",
-      pertinence: { T1: "H", T2: "O", T3: "I", T4: "C", T5: "C" },
-      fields: [
-        { id: "politique", label: "Politique", type: "textarea", tier: "T3" },
-        { id: "economique", label: "\u00c9conomique", type: "textarea", tier: "T3" },
-        { id: "social", label: "Social", type: "textarea", tier: "T3" },
-        { id: "technologique", label: "Technologique", type: "textarea", tier: "T2" },
-        { id: "environnemental", label: "Environnemental", type: "textarea", tier: "T4" },
-        { id: "legal", label: "L\u00e9gal", type: "textarea", tier: "T3" },
-      ],
-      kpis: [],
-    },
-    {
       id: "marche",
       label: "March\u00e9 (TAM/SAM/SOM)",
       description: "Taille de march\u00e9, potentiel, p\u00e9n\u00e9tration",
+      intro: "Le dimensionnement du marché (TAM/SAM/SOM) quantifie votre opportunité réelle. La part de marché actuelle et le potentiel de croissance sont des données essentielles pour les investisseurs et la planification stratégique.",
       icon: "TrendingUp",
       pertinence: { T1: "I", T2: "I", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -905,6 +972,7 @@ const CSOB_BLUEPRINT: DeptBlueprintConfig = {
       id: "concurrence",
       label: "Concurrence",
       description: "Comparatif, positionnement, moats",
+      intro: "L'analyse concurrentielle identifie vos rivaux directs et indirects. La matrice de positionnement révèle vos espaces de différenciation. Les données de marketing et d'innovation viennent enrichir cette analyse.",
       icon: "Target",
       pertinence: { T1: "I", T2: "C", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -917,38 +985,10 @@ const CSOB_BLUEPRINT: DeptBlueprintConfig = {
       kpis: [],
     },
     {
-      id: "partenariats",
-      label: "Partenariats Strat\u00e9giques",
-      description: "Alliances, JV, distribution",
-      icon: "Building2",
-      pertinence: { T1: "O", T2: "I", T3: "C", T4: "C", T5: "C" },
-      fields: [
-        { id: "partenaires_actuels", label: "Partenaires actuels", type: "json", tier: "T2" },
-        { id: "partenaires_distribution", label: "Partenaires de distribution", type: "list", tier: "T2" },
-        { id: "partenaires_cibles", label: "Partenaires cibl\u00e9s", type: "list", tier: "T3" },
-        { id: "type_partenariat", label: "Types de partenariats", type: "list", tier: "T3" },
-      ],
-      kpis: [],
-    },
-    {
-      id: "diversification",
-      label: "Diversification",
-      description: "Ansoff, nouveaux march\u00e9s, M&A",
-      icon: "Rocket",
-      pertinence: { T1: "H", T2: "O", T3: "I", T4: "I", T5: "C" },
-      fields: [
-        { id: "matrice_ansoff", label: "Matrice Ansoff", type: "json", tier: "T3" },
-        { id: "marches_cibles", label: "Nouveaux march\u00e9s cibl\u00e9s", type: "list", tier: "T4" },
-        { id: "strategie_internationalisation", label: "Strat\u00e9gie d\u2019internationalisation (r\u00e9gions vis\u00e9es)", type: "textarea", tier: "T4" },
-        { id: "plan_acquisitions_ma", label: "Plan d\u2019acquisitions M&A (cibles)", type: "json", tier: "T4" },
-        { id: "ma_potentiel", label: "Cibles M&A potentielles", type: "json", tier: "T5" },
-      ],
-      kpis: [],
-    },
-    {
       id: "avantage_concurrentiel",
       label: "Avantage Concurrentiel",
       description: "Moats, PI, effets r\u00e9seau",
+      intro: "Vos avantages concurrentiels durables (moats) protègent votre position sur le marché. Brevets, effets réseau, marque, coûts de changement — chaque moat rend votre entreprise plus difficile à déloger. L'analyse des 5 forces de Porter formalise ces barrières.",
       icon: "Shield",
       pertinence: { T1: "C", T2: "C", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -963,9 +1003,58 @@ const CSOB_BLUEPRINT: DeptBlueprintConfig = {
       kpis: [],
     },
     {
+      id: "pestel",
+      label: "Analyse PESTEL",
+      description: "Politique, \u00c9conomique, Social, Technologique, Environnemental, L\u00e9gal",
+      intro: "L'analyse PESTEL identifie les forces macro-environnementales qui impactent votre entreprise. Les facteurs Politique, Économique, Social, Technologique, Environnemental et Légal structurent votre veille stratégique et anticipent les risques.",
+      icon: "Compass",
+      pertinence: { T1: "H", T2: "O", T3: "I", T4: "C", T5: "C" },
+      fields: [
+        { id: "politique", label: "Politique", type: "textarea", tier: "T3" },
+        { id: "economique", label: "\u00c9conomique", type: "textarea", tier: "T3" },
+        { id: "social", label: "Social", type: "textarea", tier: "T3" },
+        { id: "technologique", label: "Technologique", type: "textarea", tier: "T2" },
+        { id: "environnemental", label: "Environnemental", type: "textarea", tier: "T4" },
+        { id: "legal", label: "L\u00e9gal", type: "textarea", tier: "T3" },
+      ],
+      kpis: [],
+    },
+    {
+      id: "partenariats",
+      label: "Partenariats Strat\u00e9giques",
+      description: "Alliances, JV, distribution",
+      intro: "Les partenariats stratégiques multiplient votre portée sans multiplier vos coûts. Les alliances de distribution, de R&D et les JV sont des leviers de croissance puissants. Les partenaires cibles doivent être alignés avec votre stratégie.",
+      icon: "Building2",
+      pertinence: { T1: "O", T2: "I", T3: "C", T4: "C", T5: "C" },
+      fields: [
+        { id: "partenaires_actuels", label: "Partenaires actuels", type: "json", tier: "T2" },
+        { id: "partenaires_distribution", label: "Partenaires de distribution", type: "list", tier: "T2" },
+        { id: "partenaires_cibles", label: "Partenaires cibl\u00e9s", type: "list", tier: "T3" },
+        { id: "type_partenariat", label: "Types de partenariats", type: "list", tier: "T3" },
+      ],
+      kpis: [],
+    },
+    {
+      id: "diversification",
+      label: "Diversification",
+      description: "Ansoff, nouveaux march\u00e9s, M&A",
+      intro: "La diversification réduit votre dépendance à un seul marché ou produit. La matrice Ansoff structure vos options (nouveaux produits, nouveaux marchés). L'internationalisation et les acquisitions M&A sont des leviers de croissance accélérée.",
+      icon: "Rocket",
+      pertinence: { T1: "H", T2: "O", T3: "I", T4: "I", T5: "C" },
+      fields: [
+        { id: "matrice_ansoff", label: "Matrice Ansoff", type: "json", tier: "T3" },
+        { id: "marches_cibles", label: "Nouveaux march\u00e9s cibl\u00e9s", type: "list", tier: "T4" },
+        { id: "strategie_internationalisation", label: "Strat\u00e9gie d\u2019internationalisation (r\u00e9gions vis\u00e9es)", type: "textarea", tier: "T4" },
+        { id: "plan_acquisitions_ma", label: "Plan d\u2019acquisitions M&A (cibles)", type: "json", tier: "T4" },
+        { id: "ma_potentiel", label: "Cibles M&A potentielles", type: "json", tier: "T5" },
+      ],
+      kpis: [],
+    },
+    {
       id: "kpis_strategie",
       label: "KPIs Strat\u00e9gie",
       description: "Part de march\u00e9, concentration client, initiatives",
+      intro: "Les KPIs stratégiques mesurent votre positionnement dans le marché. La part de marché, la concentration client et le nombre d'initiatives stratégiques en cours indiquent si votre stratégie se traduit en résultats concrets.",
       icon: "TrendingUp",
       pertinence: { T1: "H", T2: "I", T3: "C", T4: "C", T5: "C" },
       fields: [],
@@ -980,6 +1069,7 @@ const CSOB_BLUEPRINT: DeptBlueprintConfig = {
       id: "playbooks_strategie",
       label: "Playbooks",
       description: "Playbooks strat\u00e9giques par phase",
+      intro: "Les playbooks stratégiques structurent les décisions majeures : analyse concurrentielle approfondie, plan d'expansion marché et préparation aux acquisitions (M&A).",
       icon: "Rocket",
       pertinence: { T1: "H", T2: "O", T3: "I", T4: "C", T5: "C" },
       fields: [],
@@ -1000,6 +1090,7 @@ const COOB_BLUEPRINT: DeptBlueprintConfig = {
       id: "processus",
       label: "Processus (BPM)",
       description: "Cartographie, logigrammes, optimisation",
+      intro: "La cartographie de vos processus est la base de toute optimisation. Sans documentation, l'expertise reste dans la tête des employés — un risque majeur. Les goulots identifiés sont vos premières opportunités d'amélioration.",
       icon: "Layers",
       pertinence: { T1: "I", T2: "C", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -1013,9 +1104,25 @@ const COOB_BLUEPRINT: DeptBlueprintConfig = {
       kpis: [],
     },
     {
+      id: "capacite_planification",
+      label: "Capacit\u00e9 & Planification",
+      description: "Suivi goulots d\u2019\u00e9tranglement, saisonnalit\u00e9, Theory of Constraints",
+      intro: "La planification de la capacité anticipe les goulots d'étranglement avant qu'ils ne deviennent des crises. La saisonnalité, la demande commerciale (Ventes) et la Theory of Constraints optimisent votre utilisation des ressources.",
+      icon: "TrendingUp",
+      pertinence: { T1: "I", T2: "C", T3: "C", T4: "C", T5: "C" },
+      fields: [
+        { id: "goulots_etranglement", label: "Goulots d\u2019\u00e9tranglement identifi\u00e9s", type: "list", tier: "T3" },
+        { id: "saisonnalite", label: "Profil de saisonnalit\u00e9", type: "json", tier: "T3" },
+        { id: "taux_utilisation_capacite", label: "Taux utilisation capacit\u00e9 (%)", type: "percentage", tier: "T3" },
+        { id: "indicateurs_supply_chain", label: "Indicateurs Supply Chain (OTIF, Lead time)", type: "json", tier: "T4" },
+      ],
+      kpis: [],
+    },
+    {
       id: "supply_chain",
       label: "Supply Chain",
       description: "Fournisseurs, lead times, risques",
+      intro: "Votre chaîne d'approvisionnement est aussi forte que son maillon le plus faible. La dépendance à un fournisseur unique est un risque critique. Les données de stocks (Production) et de trésorerie (Finance) doivent être croisées.",
       icon: "Building2",
       pertinence: { T1: "H", T2: "I", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -1032,6 +1139,7 @@ const COOB_BLUEPRINT: DeptBlueprintConfig = {
       id: "logistique",
       label: "Logistique & Installations",
       description: "Baux, capacit\u00e9, layout usine",
+      intro: "Vos installations et votre capacité logistique déterminent votre potentiel de croissance physique. Les baux, la superficie et le taux d'utilisation révèlent si vous êtes en sous-capacité ou en surcapacité.",
       icon: "Building2",
       pertinence: { T1: "O", T2: "I", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -1045,23 +1153,10 @@ const COOB_BLUEPRINT: DeptBlueprintConfig = {
       kpis: [],
     },
     {
-      id: "amelioration_continue",
-      label: "Am\u00e9lioration Continue",
-      description: "Kaizen, Lean, 5S, Six Sigma",
-      icon: "TrendingUp",
-      pertinence: { T1: "O", T2: "I", T3: "C", T4: "C", T5: "C" },
-      fields: [
-        { id: "methodologies", label: "M\u00e9thodologies appliqu\u00e9es", type: "list", tier: "T3" },
-        { id: "projets_amelioration", label: "Projets d\u2019am\u00e9lioration en cours", type: "json", tier: "T4" },
-        { id: "score_5s", label: "Score 5S", type: "number", tier: "T4" },
-        { id: "responsable_amelioration", label: "Responsable am\u00e9lioration continue (d\u00e9di\u00e9)", type: "text", tier: "T4" },
-      ],
-      kpis: [],
-    },
-    {
       id: "gestion_fournisseurs",
       label: "Gestion Fournisseurs",
       description: "\u00c9valuation, SLA, performance",
+      intro: "L'évaluation structurée de vos fournisseurs réduit les risques et améliore la qualité. Les SLAs formels et les audits de la chaîne d'approvisionnement sont des prérequis pour les certifications ISO et les grands donneurs d'ordres.",
       icon: "ListChecks",
       pertinence: { T1: "I", T2: "C", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -1073,16 +1168,17 @@ const COOB_BLUEPRINT: DeptBlueprintConfig = {
       kpis: [],
     },
     {
-      id: "capacite_planification",
-      label: "Capacit\u00e9 & Planification",
-      description: "Suivi goulots d\u2019\u00e9tranglement, saisonnalit\u00e9, Theory of Constraints",
+      id: "amelioration_continue",
+      label: "Am\u00e9lioration Continue",
+      description: "Kaizen, Lean, 5S, Six Sigma",
+      intro: "L'amélioration continue (Lean, 5S, Six Sigma) transforme la culture de votre entreprise. Les gains de productivité au Québec sont un enjeu national — les PME qui adoptent ces méthodologies surpassent leurs concurrents de 20-30%.",
       icon: "TrendingUp",
-      pertinence: { T1: "I", T2: "C", T3: "C", T4: "C", T5: "C" },
+      pertinence: { T1: "O", T2: "I", T3: "C", T4: "C", T5: "C" },
       fields: [
-        { id: "goulots_etranglement", label: "Goulots d\u2019\u00e9tranglement identifi\u00e9s", type: "list", tier: "T3" },
-        { id: "saisonnalite", label: "Profil de saisonnalit\u00e9", type: "json", tier: "T3" },
-        { id: "taux_utilisation_capacite", label: "Taux utilisation capacit\u00e9 (%)", type: "percentage", tier: "T3" },
-        { id: "indicateurs_supply_chain", label: "Indicateurs Supply Chain (OTIF, Lead time)", type: "json", tier: "T4" },
+        { id: "methodologies", label: "M\u00e9thodologies appliqu\u00e9es", type: "list", tier: "T3" },
+        { id: "projets_amelioration", label: "Projets d\u2019am\u00e9lioration en cours", type: "json", tier: "T4" },
+        { id: "score_5s", label: "Score 5S", type: "number", tier: "T4" },
+        { id: "responsable_amelioration", label: "Responsable am\u00e9lioration continue (d\u00e9di\u00e9)", type: "text", tier: "T4" },
       ],
       kpis: [],
     },
@@ -1090,6 +1186,7 @@ const COOB_BLUEPRINT: DeptBlueprintConfig = {
       id: "kpis_operations",
       label: "KPIs Op\u00e9rations",
       description: "OTIF, productivit\u00e9, d\u00e9lai commandes",
+      intro: "Les KPIs opérationnels mesurent votre efficacité d'exécution. L'OTIF, la productivité par employé, le délai moyen des commandes et la rotation des stocks sont vos indicateurs de performance opérationnelle.",
       icon: "TrendingUp",
       pertinence: { T1: "H", T2: "O", T3: "C", T4: "C", T5: "C" },
       fields: [],
@@ -1104,6 +1201,7 @@ const COOB_BLUEPRINT: DeptBlueprintConfig = {
       id: "playbooks_operations",
       label: "Playbooks",
       description: "Playbooks op\u00e9rationnels par phase",
+      intro: "Les playbooks opérationnels guident l'optimisation : cartographie des processus critiques, audit de la chaîne d'approvisionnement et programme 5S pour l'excellence opérationnelle.",
       icon: "Rocket",
       pertinence: { T1: "H", T2: "O", T3: "I", T4: "C", T5: "C" },
       fields: [],
@@ -1126,6 +1224,7 @@ const CPOB_BLUEPRINT: DeptBlueprintConfig = {
       id: "planification_production",
       label: "Planification de la production",
       description: "Capacité, produits, BOM et systèmes de planification manufacturière",
+      intro: "La planification de la production aligne votre capacité avec la demande commerciale. Le BOM (Bill of Materials) et les systèmes MRP/MES structurent votre production. Les données de pipeline ventes alimentent vos prévisions.",
       icon: "Factory",
       pertinence: { T1: "H", T2: "I", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -1143,6 +1242,7 @@ const CPOB_BLUEPRINT: DeptBlueprintConfig = {
       id: "gestion_stocks",
       label: "Gestion des stocks",
       description: "Inventaires, rotation, points de commande et entreposage",
+      intro: "La gestion des stocks optimise votre fonds de roulement. La méthode FIFO/LIFO, les points de commande et la rotation des stocks sont les leviers clés. Un inventaire excessif immobilise du cash; un inventaire insuffisant perd des ventes.",
       icon: "Package",
       pertinence: { T1: "H", T2: "I", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -1160,6 +1260,7 @@ const CPOB_BLUEPRINT: DeptBlueprintConfig = {
       id: "qualite",
       label: "Qualité",
       description: "Systèmes qualité, non-conformités et coûts de la non-qualité",
+      intro: "L'assurance qualité protège votre réputation et réduit les coûts. Le taux de non-conformité et le coût de la non-qualité (CNQ) sont souvent sous-estimés par les PME. Les certifications ISO sont souvent exigées par vos donneurs d'ordres.",
       icon: "CheckCircle",
       pertinence: { T1: "I", T2: "I", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -1174,9 +1275,26 @@ const CPOB_BLUEPRINT: DeptBlueprintConfig = {
       ],
     },
     {
+      id: "equipements",
+      label: "Équipements & Maintenance",
+      description: "Actifs critiques, maintenance préventive et taux de rendement synthétique",
+      intro: "Vos équipements critiques sont le cœur de votre capacité de production. La maintenance préventive réduit les arrêts non planifiés. Le TRS (OEE) mesure l'efficacité globale — un TRS de 75% est considéré comme un benchmark de classe mondiale.",
+      icon: "Wrench",
+      pertinence: { T1: "O", T2: "I", T3: "C", T4: "C", T5: "C" },
+      fields: [
+        { id: "equipements_critiques", label: "Équipements critiques", type: "textarea", placeholder: "Liste des équipements essentiels à la production", tier: "T3" },
+        { id: "maintenance_preventive", label: "Maintenance préventive", type: "select", options: ["Programme formel", "Ad hoc", "Réactif seulement"], placeholder: "Type de maintenance", tier: "T3" },
+        { id: "trs_global", label: "TRS global (OEE)", type: "percentage", placeholder: "Taux de rendement synthétique %", tier: "T4" },
+      ],
+      kpis: [
+        { id: "oee", label: "OEE (Overall Equipment Effectiveness)", formule: "disponibilité × performance × qualité", benchmark: ">75%", seuils: { vert: 75, jaune: 55, rouge: 40 }, tier: "T4", unite: "%" },
+      ],
+    },
+    {
       id: "sst",
       label: "Santé & Sécurité au Travail (SST)",
       description: "Programme de prévention, CNESST, incidents et conformité SST",
+      intro: "La santé et sécurité au travail (SST) est une obligation légale et un devoir moral. Le programme de prévention est obligatoire dès le premier employé (CNESST). Le comité SST est requis à partir de 20 employés. Les taux de fréquence et le TCIR mesurent votre performance.",
       icon: "ShieldAlert",
       pertinence: { T1: "I", T2: "R", T3: "R", T4: "R", T5: "R" },
       fields: [
@@ -1198,24 +1316,10 @@ const CPOB_BLUEPRINT: DeptBlueprintConfig = {
       ],
     },
     {
-      id: "equipements",
-      label: "Équipements & Maintenance",
-      description: "Actifs critiques, maintenance préventive et taux de rendement synthétique",
-      icon: "Wrench",
-      pertinence: { T1: "O", T2: "I", T3: "C", T4: "C", T5: "C" },
-      fields: [
-        { id: "equipements_critiques", label: "Équipements critiques", type: "textarea", placeholder: "Liste des équipements essentiels à la production", tier: "T3" },
-        { id: "maintenance_preventive", label: "Maintenance préventive", type: "select", options: ["Programme formel", "Ad hoc", "Réactif seulement"], placeholder: "Type de maintenance", tier: "T3" },
-        { id: "trs_global", label: "TRS global (OEE)", type: "percentage", placeholder: "Taux de rendement synthétique %", tier: "T4" },
-      ],
-      kpis: [
-        { id: "oee", label: "OEE (Overall Equipment Effectiveness)", formule: "disponibilité × performance × qualité", benchmark: ">75%", seuils: { vert: 75, jaune: 55, rouge: 40 }, tier: "T4", unite: "%" },
-      ],
-    },
-    {
       id: "normes_certifications",
       label: "Normes & Certifications",
       description: "Certifications actives, audits et conformité réglementaire de production",
+      intro: "Les certifications (ISO 9001, IATF 16949, HACCP) sont souvent un permis d'opérer imposé par vos clients. La conformité réglementaire et les audits réguliers protègent votre accès aux marchés et renforcent votre crédibilité.",
       icon: "Award",
       pertinence: { T1: "O", T2: "I", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -1240,6 +1344,7 @@ const CHROB_BLUEPRINT: DeptBlueprintConfig = {
       id: "organigramme",
       label: "Organigramme & Effectifs",
       description: "Structure organisationnelle, effectifs et postes ouverts",
+      intro: "L'organigramme formalisé clarifie les rôles et les lignes de responsabilité. Le nombre d'employés exact détermine vos obligations réglementaires (équité salariale à 10+, Loi 96 à 25+, comité SST à 20+). Les postes ouverts révèlent vos besoins de croissance.",
       icon: "Users",
       pertinence: { T1: "H", T2: "C", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -1254,25 +1359,10 @@ const CHROB_BLUEPRINT: DeptBlueprintConfig = {
       kpis: [],
     },
     {
-      id: "remuneration",
-      label: "Rémunération & Avantages",
-      description: "Grilles salariales, avantages sociaux et masse salariale",
-      icon: "DollarSign",
-      pertinence: { T1: "I", T2: "C", T3: "R", T4: "R", T5: "R" },
-      fields: [
-        { id: "tarif_horaire_cible", label: "Tarif horaire ciblé (T1 Solo)", type: "currency", placeholder: "Tarif horaire en $", tier: "T1" },
-        { id: "avantages_sociaux", label: "Avantages sociaux", type: "textarea", placeholder: "Assurances, REER, congés, etc.", tier: "T2" },
-        { id: "grille_salariale", label: "Grille salariale", type: "select", options: ["Formelle", "Informelle", "Aucune"], placeholder: "Grille en place", tier: "T3" },
-        { id: "masse_salariale", label: "Masse salariale annuelle", type: "currency", placeholder: "Masse salariale totale en $", tier: "T3" },
-        { id: "budget_formation_pct", label: "Budget de formation (% masse salariale)", type: "percentage", placeholder: "% de la masse salariale", tier: "T4" },
-        { id: "manuel_employe_formel", label: "Manuel d'employé formel", type: "select", options: ["Oui", "Non"], placeholder: "Existence du manuel", tier: "T4" },
-      ],
-      kpis: [],
-    },
-    {
       id: "recrutement",
       label: "Recrutement",
       description: "Processus de recrutement, sources et délais d'embauche",
+      intro: "Le recrutement est le goulot d'étranglement #1 des PME québécoises (78% ont des difficultés). Le délai d'embauche, les canaux et le processus d'intégration déterminent votre capacité de croissance. Les besoins de la Direction et des Ventes alimentent vos priorités.",
       icon: "UserPlus",
       pertinence: { T1: "H", T2: "I", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -1286,9 +1376,27 @@ const CHROB_BLUEPRINT: DeptBlueprintConfig = {
       ],
     },
     {
+      id: "remuneration",
+      label: "Rémunération & Avantages",
+      description: "Grilles salariales, avantages sociaux et masse salariale",
+      intro: "La rémunération et les avantages sociaux sont vos outils principaux de rétention dans un marché en pénurie de main-d'œuvre. Les grilles salariales formelles réduisent les iniquités et les risques de litige. Les données Finance alimentent votre budget.",
+      icon: "DollarSign",
+      pertinence: { T1: "I", T2: "C", T3: "R", T4: "R", T5: "R" },
+      fields: [
+        { id: "tarif_horaire_cible", label: "Tarif horaire ciblé (T1 Solo)", type: "currency", placeholder: "Tarif horaire en $", tier: "T1" },
+        { id: "avantages_sociaux", label: "Avantages sociaux", type: "textarea", placeholder: "Assurances, REER, congés, etc.", tier: "T2" },
+        { id: "grille_salariale", label: "Grille salariale", type: "select", options: ["Formelle", "Informelle", "Aucune"], placeholder: "Grille en place", tier: "T3" },
+        { id: "masse_salariale", label: "Masse salariale annuelle", type: "currency", placeholder: "Masse salariale totale en $", tier: "T3" },
+        { id: "budget_formation_pct", label: "Budget de formation (% masse salariale)", type: "percentage", placeholder: "% de la masse salariale", tier: "T4" },
+        { id: "manuel_employe_formel", label: "Manuel d'employé formel", type: "select", options: ["Oui", "Non"], placeholder: "Existence du manuel", tier: "T4" },
+      ],
+      kpis: [],
+    },
+    {
       id: "formation",
       label: "Formation & Développement",
       description: "Plan de formation, budgets et heures de formation par employé",
+      intro: "La formation est un investissement, pas un coût. La Loi 90 oblige les entreprises de 2M$+ de masse salariale à investir 1% en formation. Les besoins en cybersécurité (CISO) et en SST (Production) définissent les priorités.",
       icon: "GraduationCap",
       pertinence: { T1: "I", T2: "I", T3: "C", T4: "R", T5: "R" },
       fields: [
@@ -1299,26 +1407,10 @@ const CHROB_BLUEPRINT: DeptBlueprintConfig = {
       kpis: [],
     },
     {
-      id: "conformite_rh",
-      label: "Conformité RH",
-      description: "Équité salariale, harcèlement, francisation et obligations légales",
-      icon: "Scale",
-      pertinence: { T1: "R", T2: "R", T3: "R", T4: "R", T5: "R" },
-      fields: [
-        { id: "equite_salariale", label: "Exercice d'équité salariale", type: "select", options: ["Complété", "En cours", "Non fait", "N/A (<10 emp)"], placeholder: "État de conformité", tier: "T3" },
-        { id: "date_exercice_equite", label: "Date de l'exercice initial d'équité salariale", type: "date", tier: "T3" },
-        { id: "politique_harcelement", label: "Politique de harcèlement", type: "select", options: ["Adoptée", "En rédaction", "Absente"], placeholder: "Politique formelle", tier: "T3" },
-        { id: "francisation", label: "Programme de francisation", type: "select", options: ["Conforme", "En cours", "N/A (<25 emp)"], placeholder: "Conformité OQLF", tier: "T3" },
-        { id: "attestation_oqlf", label: "Attestation OQLF (si >25 employés)", type: "select", options: ["Oui", "Non", "N/A (<25 emp)"], placeholder: "Attestation obtenue", tier: "T3" },
-        { id: "comite_francisation_100", label: "Comité de francisation (100+ employés)", type: "select", options: ["Actif", "N/A (<100 emp)", "Requis"], placeholder: "État du comité", tier: "T5" },
-        { id: "grilles_salariales_formelles", label: "Grilles salariales formelles", type: "select", options: ["Oui", "Non"], placeholder: "Grilles documentées", tier: "T5" },
-      ],
-      kpis: [],
-    },
-    {
       id: "culture_engagement",
       label: "Culture & Engagement",
       description: "Engagement des employés, culture d'entreprise et politiques de travail",
+      intro: "L'engagement des employés est le meilleur prédicteur de la performance et de la rétention. L'eNPS (Employee Net Promoter Score) mesure le sentiment. Les sondages d'engagement réguliers identifient les problèmes avant qu'ils ne deviennent des départs.",
       icon: "Heart",
       pertinence: { T1: "O", T2: "I", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -1335,6 +1427,7 @@ const CHROB_BLUEPRINT: DeptBlueprintConfig = {
       id: "succession",
       label: "Planification de la relève",
       description: "Succession, hauts potentiels et rétention des talents clés",
+      intro: "La planification de la relève protège votre entreprise contre les départs clés. Le taux de roulement annuel est votre signal d'alerte. Les hauts potentiels identifiés et le plan de succession formalisé assurent la continuité.",
       icon: "TrendingUp",
       pertinence: { T1: "I", T2: "I", T3: "I", T4: "C", T5: "C" },
       fields: [
@@ -1347,6 +1440,50 @@ const CHROB_BLUEPRINT: DeptBlueprintConfig = {
         { id: "turnover_kpi", label: "Taux de roulement", formule: "départs / effectif moyen × 100", benchmark: "<15%", seuils: { vert: 15, jaune: 25, rouge: 40 }, tier: "T3", unite: "%" },
         { id: "revenu_par_employe", label: "Revenu par employé", formule: "CA / effectif moyen", benchmark: ">150K$", seuils: { vert: 150000, jaune: 100000, rouge: 60000 }, tier: "T3", unite: "$" },
       ],
+    },
+    {
+      id: "conformite_rh",
+      label: "Conformité RH",
+      description: "Équité salariale, harcèlement, francisation et obligations légales",
+      intro: "La conformité RH au Québec est complexe et les sanctions sont réelles. L'équité salariale (10+ employés), la politique de harcèlement, la francisation (25+ employés) et l'attestation OQLF sont des obligations légales. Le département Juridique fournit le cadre.",
+      icon: "Scale",
+      pertinence: { T1: "R", T2: "R", T3: "R", T4: "R", T5: "R" },
+      fields: [
+        { id: "equite_salariale", label: "Exercice d'équité salariale", type: "select", options: ["Complété", "En cours", "Non fait", "N/A (<10 emp)"], placeholder: "État de conformité", tier: "T3" },
+        { id: "date_exercice_equite", label: "Date de l'exercice initial d'équité salariale", type: "date", tier: "T3" },
+        { id: "politique_harcelement", label: "Politique de harcèlement", type: "select", options: ["Adoptée", "En rédaction", "Absente"], placeholder: "Politique formelle", tier: "T3" },
+        { id: "francisation", label: "Programme de francisation", type: "select", options: ["Conforme", "En cours", "N/A (<25 emp)"], placeholder: "Conformité OQLF", tier: "T3" },
+        { id: "attestation_oqlf", label: "Attestation OQLF (si >25 employés)", type: "select", options: ["Oui", "Non", "N/A (<25 emp)"], placeholder: "Attestation obtenue", tier: "T3" },
+        { id: "comite_francisation_100", label: "Comité de francisation (100+ employés)", type: "select", options: ["Actif", "N/A (<100 emp)", "Requis"], placeholder: "État du comité", tier: "T5" },
+        { id: "grilles_salariales_formelles", label: "Grilles salariales formelles", type: "select", options: ["Oui", "Non"], placeholder: "Grilles documentées", tier: "T5" },
+      ],
+      kpis: [],
+    },
+    {
+      id: "kpis_rh",
+      label: "KPIs RH",
+      description: "Turnover, revenu par employé, délai d'embauche, eNPS",
+      intro: "Les KPIs RH mesurent votre capacité à attirer, développer et retenir les talents. Le taux de roulement, le revenu par employé et le délai d'embauche sont les indicateurs qui déterminent si votre gestion RH soutient ou freine votre croissance.",
+      icon: "TrendingUp",
+      pertinence: { T1: "H", T2: "I", T3: "C", T4: "C", T5: "C" },
+      fields: [],
+      kpis: [
+        { id: "turnover_global_kpi", label: "Taux de roulement global", formule: "départs / effectif moyen × 100", benchmark: "<15%", seuils: { vert: 15, jaune: 25, rouge: 40 }, tier: "T3", unite: "%" },
+        { id: "revenu_par_employe_kpi", label: "Revenu par employé", formule: "CA / effectif moyen", benchmark: ">150K$", seuils: { vert: 150000, jaune: 100000, rouge: 60000 }, tier: "T3", unite: "$" },
+        { id: "time_to_fill_global_kpi", label: "Délai moyen d'embauche", formule: "date embauche - date ouverture", benchmark: "<45 jours", seuils: { vert: 45, jaune: 75, rouge: 120 }, tier: "T3", unite: "jours" },
+        { id: "enps_global_kpi", label: "eNPS Global", formule: "(promoteurs - détracteurs) / total × 100", benchmark: ">30", seuils: { vert: 30, jaune: 10, rouge: -10 }, tier: "T3", unite: "" },
+      ],
+    },
+    {
+      id: "playbooks_rh",
+      label: "Playbooks",
+      description: "Playbooks RH par phase de croissance",
+      intro: "Les playbooks RH guident les actions critiques à chaque phase de croissance : plan de recrutement structuré, programme de rétention et plan de succession. Chaque playbook est adapté à votre taille et vos enjeux spécifiques.",
+      icon: "Rocket",
+      pertinence: { T1: "O", T2: "I", T3: "C", T4: "C", T5: "C" },
+      fields: [],
+      kpis: [],
+      playbooks: ["plan-recrutement-structure", "programme-retention-talents", "plan-succession-direction"],
     },
   ],
 };
@@ -1362,6 +1499,7 @@ const CINOB_BLUEPRINT: DeptBlueprintConfig = {
       id: "pipeline_innovation",
       label: "Pipeline d'innovation",
       description: "Backlog d'idées, projets de R&D actifs et pipeline d'innovation",
+      intro: "Votre pipeline d'innovation est le moteur de croissance à long terme. L'indice de vitalité (% du CA provenant de produits de moins de 3 ans) mesure votre dynamisme. Les besoins clients (Marketing) et les tendances (Stratégie) alimentent vos idées.",
       icon: "Lightbulb",
       pertinence: { T1: "O", T2: "I", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -1377,9 +1515,26 @@ const CINOB_BLUEPRINT: DeptBlueprintConfig = {
       playbooks: ["ideation-structuree", "lean-startup-pme"],
     },
     {
+      id: "prototypage",
+      label: "Prototypage & Tests",
+      description: "Prototypes actifs, tests utilisateurs et validation de concepts",
+      intro: "Le prototypage accélère la validation de vos idées avant l'investissement massif. Le Time-to-Market (TTM) mesure votre agilité d'innovation. Les tests utilisateurs réguliers réduisent le risque d'échec commercial.",
+      icon: "Cpu",
+      pertinence: { T1: "I", T2: "I", T3: "C", T4: "C", T5: "C" },
+      fields: [
+        { id: "prototypes_actifs", label: "Prototypes actifs", type: "number", placeholder: "Nombre de prototypes en cours", tier: "T2" },
+        { id: "budget_prototypage", label: "Budget alloué au prototypage", type: "currency", placeholder: "Budget en $", tier: "T3" },
+        { id: "tests_utilisateurs", label: "Tests utilisateurs", type: "select", options: ["Réguliers", "Occasionnels", "Jamais"], placeholder: "Fréquence des tests", tier: "T3" },
+      ],
+      kpis: [
+        { id: "ttm", label: "Time-to-Market", formule: "date lancement - date concept", benchmark: "<6 mois", seuils: { vert: 6, jaune: 12, rouge: 18 }, tier: "T3", unite: "mois" },
+      ],
+    },
+    {
       id: "propriete_intellectuelle",
       label: "Propriété intellectuelle",
       description: "Brevets, marques de commerce, secrets commerciaux et portefeuille PI",
+      intro: "La propriété intellectuelle est souvent le premier actif évalué lors d'un exit. Brevets, marques de commerce et secrets commerciaux doivent être documentés et protégés. Le département Juridique assure la protection légale.",
       icon: "Shield",
       pertinence: { T1: "I", T2: "C", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -1397,6 +1552,7 @@ const CINOB_BLUEPRINT: DeptBlueprintConfig = {
       id: "rsde",
       label: "RS&DE (Crédits R&D)",
       description: "Projets de R&D admissibles, réclamations et documentation RS&DE",
+      intro: "Les crédits RS&DE représentent jusqu'à 35% (fédéral) + 30% (provincial sur le premier million) de vos dépenses de R&D admissibles. La documentation est la clé — des projets bien documentés maximisent vos réclamations. Les données Finance valident l'admissibilité.",
       icon: "FileText",
       pertinence: { T1: "I", T2: "I", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -1420,6 +1576,7 @@ const CINOB_BLUEPRINT: DeptBlueprintConfig = {
       id: "veille",
       label: "Veille technologique & concurrentielle",
       description: "Sources de veille, tendances identifiées et intelligence de marché",
+      intro: "La veille technologique et concurrentielle alimente votre pipeline d'innovation. Les salons, publications et réseaux sont vos capteurs. Les tendances identifiées orientent vos investissements R&D et vos partenariats.",
       icon: "Eye",
       pertinence: { T1: "I", T2: "I", T3: "I", T4: "C", T5: "C" },
       fields: [
@@ -1430,24 +1587,10 @@ const CINOB_BLUEPRINT: DeptBlueprintConfig = {
       kpis: [],
     },
     {
-      id: "prototypage",
-      label: "Prototypage & Tests",
-      description: "Prototypes actifs, tests utilisateurs et validation de concepts",
-      icon: "Cpu",
-      pertinence: { T1: "I", T2: "I", T3: "C", T4: "C", T5: "C" },
-      fields: [
-        { id: "prototypes_actifs", label: "Prototypes actifs", type: "number", placeholder: "Nombre de prototypes en cours", tier: "T2" },
-        { id: "budget_prototypage", label: "Budget alloué au prototypage", type: "currency", placeholder: "Budget en $", tier: "T3" },
-        { id: "tests_utilisateurs", label: "Tests utilisateurs", type: "select", options: ["Réguliers", "Occasionnels", "Jamais"], placeholder: "Fréquence des tests", tier: "T3" },
-      ],
-      kpis: [
-        { id: "ttm", label: "Time-to-Market", formule: "date lancement - date concept", benchmark: "<6 mois", seuils: { vert: 6, jaune: 12, rouge: 18 }, tier: "T3", unite: "mois" },
-      ],
-    },
-    {
       id: "partenariats_rd",
       label: "Partenariats R&D",
       description: "Collaborations avec centres de recherche, universités et subventions",
+      intro: "Les partenariats R&D avec les universités, CCTT et centres de recherche québécois donnent accès à des ressources et subventions. Les programmes comme MITACS et le CRSNG financent la collaboration entreprise-recherche.",
       icon: "Handshake",
       pertinence: { T1: "O", T2: "I", T3: "I", T4: "C", T5: "C" },
       fields: [
@@ -1471,6 +1614,7 @@ const CROB_BLUEPRINT: DeptBlueprintConfig = {
       id: "pipeline_funnel",
       label: "Pipeline & Funnel de vente",
       description: "Étapes de vente, pipeline d'opportunités et taux de conversion",
+      intro: "Votre pipeline de vente est la meilleure prédiction de vos revenus futurs. Le Win Rate, la couverture et la vélocité du pipeline sont les 3 métriques que tout CEO doit connaître. Les leads marketing alimentent le haut du funnel.",
       icon: "TrendingUp",
       pertinence: { T1: "C", T2: "C", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -1493,6 +1637,7 @@ const CROB_BLUEPRINT: DeptBlueprintConfig = {
       id: "methodologie_vente",
       label: "Méthodologie de vente",
       description: "Processus de vente, scripts et qualification des prospects",
+      intro: "Une méthodologie de vente structurée (SPIN, Challenger, MEDDIC) augmente votre prévisibilité. Le processus de qualification filtre les prospects non rentables. Les scripts formalisés réduisent le temps de formation des nouveaux vendeurs.",
       icon: "BookOpen",
       pertinence: { T1: "I", T2: "I", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -1504,23 +1649,10 @@ const CROB_BLUEPRINT: DeptBlueprintConfig = {
       kpis: [],
     },
     {
-      id: "remuneration_ventes",
-      label: "Rémunération des ventes",
-      description: "Structure de commissions, OTE et quotas de l'équipe de vente",
-      icon: "DollarSign",
-      pertinence: { T1: "H", T2: "I", T3: "C", T4: "C", T5: "C" },
-      fields: [
-        { id: "structure_commission", label: "Structure de commission", type: "textarea", placeholder: "% base vs variable, paliers, etc.", tier: "T3" },
-        { id: "ote_moyen", label: "OTE moyen (On-Target Earnings)", type: "currency", placeholder: "Rémunération cible en $", tier: "T3" },
-        { id: "quotas", label: "Quotas de vente", type: "textarea", placeholder: "Objectifs individuels et d'équipe", tier: "T3" },
-        { id: "modelisation_quotas", label: "Modélisation de quotas de vente", type: "json", placeholder: "{\"rep1\": 500000, \"rep2\": 350000}", tier: "T4" },
-      ],
-      kpis: [],
-    },
-    {
       id: "comptes_cles",
       label: "Comptes clés & Rétention",
       description: "Clients majeurs, rétention, cycle de vente et concentration",
+      intro: "La gestion de vos comptes clés protège vos revenus récurrents. La concentration client (% CA du top client) est un risque souvent sous-estimé. Le cycle de vente moyen et le taux de rétention sont vos indicateurs de santé commerciale.",
       icon: "Star",
       pertinence: { T1: "I", T2: "C", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -1540,6 +1672,7 @@ const CROB_BLUEPRINT: DeptBlueprintConfig = {
       id: "territoires",
       label: "Territoires & Équipe",
       description: "Découpage territorial et dimensionnement de l'équipe de vente",
+      intro: "Le découpage territorial optimise la couverture de votre marché. Le dimensionnement de l'équipe de vente doit correspondre au potentiel de chaque territoire. Les données de marché (Stratégie) alimentent cette planification.",
       icon: "Map",
       pertinence: { T1: "H", T2: "O", T3: "I", T4: "C", T5: "C" },
       fields: [
@@ -1550,9 +1683,25 @@ const CROB_BLUEPRINT: DeptBlueprintConfig = {
       kpis: [],
     },
     {
+      id: "remuneration_ventes",
+      label: "Rémunération des ventes",
+      description: "Structure de commissions, OTE et quotas de l'équipe de vente",
+      intro: "La structure de rémunération des ventes aligne les comportements avec vos objectifs. Le ratio base/variable, les quotas et l'OTE déterminent la motivation. Les données RH et Finance doivent être cohérentes avec votre plan de commission.",
+      icon: "DollarSign",
+      pertinence: { T1: "H", T2: "I", T3: "C", T4: "C", T5: "C" },
+      fields: [
+        { id: "structure_commission", label: "Structure de commission", type: "textarea", placeholder: "% base vs variable, paliers, etc.", tier: "T3" },
+        { id: "ote_moyen", label: "OTE moyen (On-Target Earnings)", type: "currency", placeholder: "Rémunération cible en $", tier: "T3" },
+        { id: "quotas", label: "Quotas de vente", type: "textarea", placeholder: "Objectifs individuels et d'équipe", tier: "T3" },
+        { id: "modelisation_quotas", label: "Modélisation de quotas de vente", type: "json", placeholder: "{\"rep1\": 500000, \"rep2\": 350000}", tier: "T4" },
+      ],
+      kpis: [],
+    },
+    {
       id: "formation_ventes",
       label: "Formation Ventes",
       description: "Intégration des représentants, onboarding, formation continue",
+      intro: "La formation des vendeurs est un investissement à rendement rapide. Un onboarding structuré réduit le temps de ramp-up de 40%. Le Sales Enablement et les QBRs maintiennent la performance dans la durée.",
       icon: "Rocket",
       pertinence: { T1: "O", T2: "O", T3: "I", T4: "C", T5: "C" },
       fields: [
@@ -1576,6 +1725,7 @@ const CLOB_BLUEPRINT: DeptBlueprintConfig = {
       id: "structure_corporative",
       label: "Structure corporative",
       description: "Forme juridique, immatriculation, licences et gouvernance corporative",
+      intro: "La structure corporative est le squelette légal de votre entreprise. Le type d'entité (Inc., SENC, Enr.) a des implications fiscales, de responsabilité et de gouvernance majeures. Le livre des minutes doit être tenu à jour pour la protection des administrateurs.",
       icon: "Building",
       pertinence: { T1: "C", T2: "C", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -1593,9 +1743,43 @@ const CLOB_BLUEPRINT: DeptBlueprintConfig = {
       playbooks: ["incorporation-checklist", "gouvernance-pme"],
     },
     {
+      id: "contrats",
+      label: "Contrats",
+      description: "Contrats clients, fournisseurs, baux et registre centralisé",
+      intro: "Les contrats sont le bouclier de votre entreprise. Des modèles standardisés réduisent les risques et accélèrent les transactions. Le registre centralisé (CLM) prévient les renouvellements oubliés et les clauses défavorables.",
+      icon: "FileText",
+      pertinence: { T1: "I", T2: "C", T3: "C", T4: "C", T5: "C" },
+      fields: [
+        { id: "contrats_clients", label: "Contrats clients standardisés", type: "select", options: ["Oui", "Non", "Partiel"], placeholder: "Modèles de contrats clients", tier: "T1" },
+        { id: "contrats_fournisseurs", label: "Contrats fournisseurs", type: "number", placeholder: "Nombre de contrats actifs", tier: "T2" },
+        { id: "baux_actifs", label: "Baux actifs", type: "number", placeholder: "Nombre de baux en cours", tier: "T2" },
+        { id: "registre_contrats", label: "Registre des contrats", type: "select", options: ["Centralisé", "Partiel", "Inexistant"], placeholder: "État du registre", tier: "T3" },
+        { id: "registre_centralise_clm", label: "Registre centralisé des contrats (CLM)", type: "select", options: ["Oui", "Non"], placeholder: "Outil CLM en place", tier: "T4" },
+      ],
+      kpis: [
+        { id: "delai_contractuel", label: "Délai contractuel moyen", formule: "jours entre demande et signature", benchmark: "<15 jours", seuils: { vert: 15, jaune: 30, rouge: 60 }, tier: "T3", unite: "jours" },
+      ],
+    },
+    {
+      id: "pi_marques",
+      label: "PI & Marques",
+      description: "Brevets, marques déposées, domaines web et protection internationale",
+      intro: "La protection de votre propriété intellectuelle (marques, brevets, domaines) est un investissement stratégique. Les marques déposées à l'OPIC protègent votre identité. Les données du département Innovation alimentent votre stratégie PI.",
+      icon: "Copyright",
+      pertinence: { T1: "C", T2: "C", T3: "C", T4: "C", T5: "C" },
+      fields: [
+        { id: "domaines_web", label: "Domaines web", type: "list", placeholder: "example.com, example.ca, etc.", tier: "T1" },
+        { id: "marques_deposees", label: "Marques déposées", type: "list", placeholder: "Marques enregistrées à l'OPIC", tier: "T2" },
+        { id: "brevets_deposes", label: "Brevets déposés", type: "number", placeholder: "Nombre de brevets actifs", tier: "T3" },
+        { id: "pi_internationale", label: "PI internationale protégée", type: "select", options: ["Oui", "Non", "N/A"], placeholder: "Protection hors Canada", tier: "T5" },
+      ],
+      kpis: [],
+    },
+    {
       id: "conformite_loi25",
       label: "Conformité Loi 25 (Vie privée)",
       description: "Protection des renseignements personnels, RPRP, politique et évaluation",
+      intro: "La Loi 25 sur la protection des renseignements personnels s'applique à TOUTES les entreprises québécoises sans exception. Le RPRP doit être nommé, la politique publiée, et les incidents signalés en 72 heures. La non-conformité expose à des sanctions significatives.",
       icon: "Lock",
       pertinence: { T1: "R", T2: "R", T3: "R", T4: "R", T5: "R" },
       fields: [
@@ -1613,26 +1797,25 @@ const CLOB_BLUEPRINT: DeptBlueprintConfig = {
       ],
     },
     {
-      id: "contrats",
-      label: "Contrats",
-      description: "Contrats clients, fournisseurs, baux et registre centralisé",
-      icon: "FileText",
-      pertinence: { T1: "I", T2: "C", T3: "C", T4: "C", T5: "C" },
+      id: "reglementaire",
+      label: "Réglementaire",
+      description: "Obligations sectorielles et échéancier de conformité",
+      intro: "Les obligations réglementaires sectorielles varient considérablement. L'échéancier de conformité prévient les surprises et les sanctions. Le score de conformité global mesure votre exposition au risque réglementaire.",
+      icon: "Clipboard",
+      pertinence: { T1: "R", T2: "R", T3: "R", T4: "R", T5: "R" },
       fields: [
-        { id: "contrats_clients", label: "Contrats clients standardisés", type: "select", options: ["Oui", "Non", "Partiel"], placeholder: "Modèles de contrats clients", tier: "T1" },
-        { id: "contrats_fournisseurs", label: "Contrats fournisseurs", type: "number", placeholder: "Nombre de contrats actifs", tier: "T2" },
-        { id: "baux_actifs", label: "Baux actifs", type: "number", placeholder: "Nombre de baux en cours", tier: "T2" },
-        { id: "registre_contrats", label: "Registre des contrats", type: "select", options: ["Centralisé", "Partiel", "Inexistant"], placeholder: "État du registre", tier: "T3" },
-        { id: "registre_centralise_clm", label: "Registre centralisé des contrats (CLM)", type: "select", options: ["Oui", "Non"], placeholder: "Outil CLM en place", tier: "T4" },
+        { id: "obligations_sectorielles", label: "Obligations sectorielles", type: "textarea", placeholder: "Normes et réglementations spécifiques au secteur", tier: "T3" },
+        { id: "echeancier_conformite", label: "Échéancier de conformité", type: "textarea", placeholder: "Dates limites et obligations à venir", tier: "T3" },
       ],
       kpis: [
-        { id: "delai_contractuel", label: "Délai contractuel moyen", formule: "jours entre demande et signature", benchmark: "<15 jours", seuils: { vert: 15, jaune: 30, rouge: 60 }, tier: "T3", unite: "jours" },
+        { id: "score_conformite_global", label: "Score conformité global", formule: "obligations complétées / total × 100", benchmark: "100%", seuils: { vert: 90, jaune: 70, rouge: 50 }, tier: "T2", unite: "%" },
       ],
     },
     {
       id: "litiges",
       label: "Litiges & Assurances",
       description: "Litiges actifs, provisions, assurances responsabilité et couverture",
+      intro: "Les litiges actifs et potentiels sont un risque financier et réputationnel. Les provisions adéquates et les assurances appropriées (RC, E&O, D&O) protègent vos actifs. Un registre des litiges potentiels anticipe les problèmes.",
       icon: "AlertTriangle",
       pertinence: { T1: "I", T2: "I", T3: "I", T4: "C", T5: "C" },
       fields: [
@@ -1644,34 +1827,6 @@ const CLOB_BLUEPRINT: DeptBlueprintConfig = {
       ],
       kpis: [
         { id: "exposition_litiges", label: "Exposition litiges", formule: "provisions / CA × 100", benchmark: "<2%", seuils: { vert: 2, jaune: 5, rouge: 10 }, tier: "T3", unite: "%" },
-      ],
-    },
-    {
-      id: "pi_marques",
-      label: "PI & Marques",
-      description: "Brevets, marques déposées, domaines web et protection internationale",
-      icon: "Copyright",
-      pertinence: { T1: "C", T2: "C", T3: "C", T4: "C", T5: "C" },
-      fields: [
-        { id: "domaines_web", label: "Domaines web", type: "list", placeholder: "example.com, example.ca, etc.", tier: "T1" },
-        { id: "marques_deposees", label: "Marques déposées", type: "list", placeholder: "Marques enregistrées à l'OPIC", tier: "T2" },
-        { id: "brevets_deposes", label: "Brevets déposés", type: "number", placeholder: "Nombre de brevets actifs", tier: "T3" },
-        { id: "pi_internationale", label: "PI internationale protégée", type: "select", options: ["Oui", "Non", "N/A"], placeholder: "Protection hors Canada", tier: "T5" },
-      ],
-      kpis: [],
-    },
-    {
-      id: "reglementaire",
-      label: "Réglementaire",
-      description: "Obligations sectorielles et échéancier de conformité",
-      icon: "Clipboard",
-      pertinence: { T1: "R", T2: "R", T3: "R", T4: "R", T5: "R" },
-      fields: [
-        { id: "obligations_sectorielles", label: "Obligations sectorielles", type: "textarea", placeholder: "Normes et réglementations spécifiques au secteur", tier: "T3" },
-        { id: "echeancier_conformite", label: "Échéancier de conformité", type: "textarea", placeholder: "Dates limites et obligations à venir", tier: "T3" },
-      ],
-      kpis: [
-        { id: "score_conformite_global", label: "Score conformité global", formule: "obligations complétées / total × 100", benchmark: "100%", seuils: { vert: 90, jaune: 70, rouge: 50 }, tier: "T2", unite: "%" },
       ],
     },
   ],
@@ -1688,6 +1843,7 @@ const CISOB_BLUEPRINT: DeptBlueprintConfig = {
       id: "politiques_iam",
       label: "Politiques & IAM",
       description: "Authentification multi-facteurs, mots de passe et gestion des accès",
+      intro: "L'authentification multi-facteurs (MFA) et la gestion des accès sont votre première ligne de défense. 80% des brèches exploitent des identifiants compromis. Le gestionnaire de mots de passe et les procédures d'onboarding/offboarding sont des fondamentaux non négociables.",
       icon: "Key",
       pertinence: { T1: "C", T2: "C", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -1704,25 +1860,10 @@ const CISOB_BLUEPRINT: DeptBlueprintConfig = {
       playbooks: ["mfa-rollout", "zero-trust-pme"],
     },
     {
-      id: "sauvegardes",
-      label: "Sauvegardes & Reprise",
-      description: "Stratégie de backup, fréquence, plan de reprise et objectifs RPO/RTO",
-      icon: "HardDrive",
-      pertinence: { T1: "I", T2: "C", T3: "C", T4: "C", T5: "C" },
-      fields: [
-        { id: "strategie_backup", label: "Stratégie de backup", type: "select", options: ["3-2-1", "Cloud auto", "Local seulement", "Aucune"], placeholder: "Approche de sauvegarde", tier: "T1", required: true },
-        { id: "frequence_backup", label: "Fréquence de backup", type: "select", options: ["Continue", "Quotidienne", "Hebdomadaire", "Mensuelle", "Aucune"], placeholder: "Fréquence des sauvegardes", tier: "T1" },
-        { id: "drp", label: "Plan de reprise après sinistre (DRP)", type: "select", options: ["Testé", "Documenté", "Informel", "Absent"], placeholder: "État du DRP", tier: "T2" },
-        { id: "rpo_rto", label: "RPO/RTO définis", type: "select", options: ["Oui", "Partiellement", "Non"], placeholder: "Objectifs de reprise", tier: "T3" },
-        { id: "rto_cible", label: "RTO cible (heures)", type: "number", placeholder: "Heures max d'interruption acceptable", tier: "T3" },
-        { id: "rpo_cible", label: "RPO cible (heures)", type: "number", placeholder: "Heures max de données perdues acceptable", tier: "T3" },
-      ],
-      kpis: [],
-    },
-    {
       id: "vulnerabilites",
       label: "Vulnérabilités & Tests",
       description: "Scans de vulnérabilités, tests de pénétration et cadre NIST",
+      intro: "Les scans de vulnérabilités et les tests de pénétration révèlent vos faiblesses avant les attaquants. Le délai de patching est critique — chaque jour de retard augmente votre exposition. Le cadre NIST CSF structure votre approche.",
       icon: "Bug",
       pertinence: { T1: "O", T2: "I", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -1737,24 +1878,27 @@ const CISOB_BLUEPRINT: DeptBlueprintConfig = {
       ],
     },
     {
-      id: "formation_phishing",
-      label: "Formation & Phishing",
-      description: "Simulations de phishing, sensibilisation et formation en cybersécurité",
-      icon: "Fish",
-      pertinence: { T1: "O", T2: "I", T3: "C", T4: "C", T5: "C" },
+      id: "sauvegardes",
+      label: "Sauvegardes & Reprise",
+      description: "Stratégie de backup, fréquence, plan de reprise et objectifs RPO/RTO",
+      intro: "La stratégie 3-2-1 (3 copies, 2 médias, 1 hors-site) est le standard de l'industrie. Le plan de reprise (DRP) doit être testé régulièrement. Les objectifs RPO/RTO définissent votre tolérance aux pertes de données et aux interruptions.",
+      icon: "HardDrive",
+      pertinence: { T1: "I", T2: "C", T3: "C", T4: "C", T5: "C" },
       fields: [
-        { id: "derniere_simulation", label: "Dernière simulation de phishing", type: "date", tier: "T3" },
-        { id: "taux_clic_phishing", label: "Taux de clic phishing (%)", type: "percentage", placeholder: "% d'employés qui ont cliqué", tier: "T3" },
-        { id: "formation_securite", label: "Formation sécurité", type: "select", options: ["Annuelle obligatoire", "Ponctuelle", "Aucune"], placeholder: "Programme de formation", tier: "T3" },
+        { id: "strategie_backup", label: "Stratégie de backup", type: "select", options: ["3-2-1", "Cloud auto", "Local seulement", "Aucune"], placeholder: "Approche de sauvegarde", tier: "T1", required: true },
+        { id: "frequence_backup", label: "Fréquence de backup", type: "select", options: ["Continue", "Quotidienne", "Hebdomadaire", "Mensuelle", "Aucune"], placeholder: "Fréquence des sauvegardes", tier: "T1" },
+        { id: "drp", label: "Plan de reprise après sinistre (DRP)", type: "select", options: ["Testé", "Documenté", "Informel", "Absent"], placeholder: "État du DRP", tier: "T2" },
+        { id: "rpo_rto", label: "RPO/RTO définis", type: "select", options: ["Oui", "Partiellement", "Non"], placeholder: "Objectifs de reprise", tier: "T3" },
+        { id: "rto_cible", label: "RTO cible (heures)", type: "number", placeholder: "Heures max d'interruption acceptable", tier: "T3" },
+        { id: "rpo_cible", label: "RPO cible (heures)", type: "number", placeholder: "Heures max de données perdues acceptable", tier: "T3" },
       ],
-      kpis: [
-        { id: "phishing_score", label: "Score anti-phishing", formule: "100 - taux de clic phishing", benchmark: ">90%", seuils: { vert: 90, jaune: 75, rouge: 60 }, tier: "T3", unite: "%" },
-      ],
+      kpis: [],
     },
     {
       id: "incidents_reponse",
       label: "Incidents & Réponse",
       description: "Plan de réponse aux incidents, historique et équipe de sécurité",
+      intro: "Un plan de réponse aux incidents testé peut réduire le coût d'une brèche de 40%. La Loi 25 exige le signalement en 72 heures. Le registre des incidents et l'équipe CSIRT sont vos lignes de défense active.",
       icon: "Siren",
       pertinence: { T1: "I", T2: "I", T3: "C", T4: "C", T5: "C" },
       fields: [
@@ -1768,9 +1912,26 @@ const CISOB_BLUEPRINT: DeptBlueprintConfig = {
       ],
     },
     {
+      id: "formation_phishing",
+      label: "Formation & Phishing",
+      description: "Simulations de phishing, sensibilisation et formation en cybersécurité",
+      intro: "Le phishing est le vecteur d'attaque #1 — 91% des cyberattaques commencent par un courriel. Les simulations régulières et la formation obligatoire réduisent significativement le risque. Le taux de clic phishing est votre indicateur de vigilance.",
+      icon: "Fish",
+      pertinence: { T1: "O", T2: "I", T3: "C", T4: "C", T5: "C" },
+      fields: [
+        { id: "derniere_simulation", label: "Dernière simulation de phishing", type: "date", tier: "T3" },
+        { id: "taux_clic_phishing", label: "Taux de clic phishing (%)", type: "percentage", placeholder: "% d'employés qui ont cliqué", tier: "T3" },
+        { id: "formation_securite", label: "Formation sécurité", type: "select", options: ["Annuelle obligatoire", "Ponctuelle", "Aucune"], placeholder: "Programme de formation", tier: "T3" },
+      ],
+      kpis: [
+        { id: "phishing_score", label: "Score anti-phishing", formule: "100 - taux de clic phishing", benchmark: ">90%", seuils: { vert: 90, jaune: 75, rouge: 60 }, tier: "T3", unite: "%" },
+      ],
+    },
+    {
       id: "certifications_securite",
       label: "Certifications sécurité",
       description: "Certifications, frameworks de référence, cyberassurance et SOC",
+      intro: "Les certifications (SOC 2, ISO 27001) sont de plus en plus exigées par les clients B2B et les assureurs. La cyberassurance est devenue un prérequis pour les contrats d'entreprise. Le SOC externe (MSSP) démocratise la surveillance 24/7.",
       icon: "ShieldCheck",
       pertinence: { T1: "O", T2: "O", T3: "I", T4: "C", T5: "C" },
       fields: [
@@ -1784,6 +1945,284 @@ const CISOB_BLUEPRINT: DeptBlueprintConfig = {
     },
   ],
 };
+
+// ══════════════════════════════════════════════════════════════
+// CROSS-REFERENCE MAP — Le Blueprint Organisme
+// Les 12 départements forment UN SEUL blueprint segmenté.
+// Chaque entrée = données qu'une section CONSOMME depuis un autre département.
+// Clé: "DEPT.section_id" → tableau de sources depuis d'autres départements.
+// ══════════════════════════════════════════════════════════════
+
+export const CROSS_REFERENCE_MAP: Record<string, CrossRef[]> = {
+  // ── CEOB (Direction) — Le CEO consomme depuis TOUS les 11 départements ──
+  "CEOB.sommaire_executif": [
+    { sourceDept: "CMOB", sourceSection: "positionnement", sourceFields: ["uvp"], label: "Proposition de valeur (Marketing)" },
+    { sourceDept: "CSOB", sourceSection: "marche", sourceFields: ["tam", "sam", "som"], label: "Taille du marché (Stratégie)" },
+    { sourceDept: "CROB", sourceSection: "pipeline_funnel", sourceFields: ["valeur_pipeline"], label: "Pipeline ventes (Ventes)" },
+    { sourceDept: "CFOB", sourceSection: "modele_revenus", sourceFields: ["mrr", "chiffre_affaires_estime"], label: "Revenus (Finance)" },
+  ],
+  "CEOB.produits_services": [
+    { sourceDept: "CPOB", sourceSection: "planification_production", sourceFields: ["produits_principaux", "capacite_journaliere"], label: "Production (Usine)" },
+    { sourceDept: "CINOB", sourceSection: "pipeline_innovation", sourceFields: ["projets_actifs"], label: "Pipeline innovation (R&D)" },
+    { sourceDept: "CROB", sourceSection: "comptes_cles", sourceFields: ["taux_retention", "revenu_moyen_client"], label: "Rétention & revenus (Ventes)" },
+  ],
+  "CEOB.equipe_direction": [
+    { sourceDept: "CHROB", sourceSection: "organigramme", sourceFields: ["nb_employes_total", "postes_ouverts"], label: "Effectifs (RH)" },
+    { sourceDept: "CHROB", sourceSection: "succession", sourceFields: ["plan_succession", "hauts_potentiels"], label: "Plan de relève (RH)" },
+  ],
+  "CEOB.finances": [
+    { sourceDept: "CFOB", sourceSection: "budget_previsions", sourceFields: ["budget_annuel"], label: "Budget annuel (Finance)" },
+    { sourceDept: "CFOB", sourceSection: "modele_revenus", sourceFields: ["mrr", "arr"], label: "Revenus récurrents (Finance)" },
+    { sourceDept: "CFOB", sourceSection: "tresorerie", sourceFields: ["runway_mois", "burn_rate"], label: "Trésorerie (Finance)" },
+    { sourceDept: "CFOB", sourceSection: "etats_financiers", sourceFields: ["marge_baiia"], label: "Marge EBITDA (Finance)" },
+  ],
+  "CEOB.objectifs_vitaa": [
+    { sourceDept: "CROB", sourceSection: "pipeline_funnel", sourceFields: ["valeur_pipeline", "taux_conversion_global"], label: "Score Vente (Ventes)" },
+    { sourceDept: "CINOB", sourceSection: "pipeline_innovation", sourceFields: ["projets_actifs"], label: "Score Idée (Innovation)" },
+    { sourceDept: "CFOB", sourceSection: "tresorerie", sourceFields: ["runway_mois"], label: "Score Argent (Finance)" },
+  ],
+  "CEOB.swot": [
+    { sourceDept: "CSOB", sourceSection: "concurrence", sourceFields: ["concurrents_directs", "differenciateurs"], label: "Concurrence (Stratégie)" },
+    { sourceDept: "CSOB", sourceSection: "pestel", sourceFields: ["politique", "economique", "technologique"], label: "Environnement macro (Stratégie)" },
+    { sourceDept: "CMOB", sourceSection: "reputation", sourceFields: ["nps_actuel"], label: "Réputation (Marketing)" },
+  ],
+  "CEOB.gouvernance": [
+    { sourceDept: "CLOB", sourceSection: "structure_corporative", sourceFields: ["type_entite", "minutes_a_jour"], label: "Structure légale (Juridique)" },
+    { sourceDept: "CLOB", sourceSection: "conformite_loi25", sourceFields: ["responsable_prp", "politique_confidentialite"], label: "Conformité Loi 25 (Juridique)" },
+  ],
+  "CEOB.risques_sortie": [
+    { sourceDept: "CFOB", sourceSection: "valorisation", sourceFields: ["valorisation", "multiple_secteur"], label: "Valorisation (Finance)" },
+    { sourceDept: "CLOB", sourceSection: "litiges", sourceFields: ["litiges_actifs"], label: "Litiges actifs (Juridique)" },
+    { sourceDept: "CISOB", sourceSection: "incidents_reponse", sourceFields: ["incidents_12mois"], label: "Incidents sécurité (CISO)" },
+  ],
+  "CEOB.culture_esg": [
+    { sourceDept: "CHROB", sourceSection: "culture_engagement", sourceFields: ["enps", "politique_teletravail"], label: "Engagement employés (RH)" },
+    { sourceDept: "CPOB", sourceSection: "sst", sourceFields: ["incidents_12mois", "programme_prevention"], label: "SST (Production)" },
+  ],
+  "CEOB.conseil_administration": [
+    { sourceDept: "CLOB", sourceSection: "structure_corporative", sourceFields: ["type_entite", "actionnaires", "minutes_a_jour"], label: "Structure corporative (Juridique)" },
+    { sourceDept: "CHROB", sourceSection: "organigramme", sourceFields: ["nb_employes_total"], label: "Effectifs totaux (RH)" },
+    { sourceDept: "CFOB", sourceSection: "etats_financiers", sourceFields: ["marge_baiia"], label: "Performance financière (Finance)" },
+    { sourceDept: "CFOB", sourceSection: "budget_previsions", sourceFields: ["budget_annuel"], label: "Budget annuel (Finance)" },
+  ],
+
+  // ── CFOB (Finance) — Consomme revenus, coûts, masses salariales ──
+  "CFOB.budget_previsions": [
+    { sourceDept: "CMOB", sourceSection: "canaux_budget", sourceFields: ["budget_marketing"], label: "Budget marketing (Marketing)" },
+    { sourceDept: "CHROB", sourceSection: "remuneration", sourceFields: ["masse_salariale"], label: "Masse salariale (RH)" },
+    { sourceDept: "CINOB", sourceSection: "rsde", sourceFields: ["budget_rd"], label: "Budget R&D (Innovation)" },
+    { sourceDept: "CTOB", sourceSection: "infrastructure", sourceFields: ["cout_mensuel"], label: "Coûts infra (Technologie)" },
+  ],
+  "CFOB.modele_revenus": [
+    { sourceDept: "CROB", sourceSection: "pipeline_funnel", sourceFields: ["valeur_pipeline", "taux_conversion_global"], label: "Pipeline & conversion (Ventes)" },
+    { sourceDept: "CROB", sourceSection: "comptes_cles", sourceFields: ["revenu_moyen_client", "taux_retention"], label: "Revenus clients (Ventes)" },
+  ],
+  "CFOB.tresorerie": [
+    { sourceDept: "COOB", sourceSection: "supply_chain", sourceFields: ["cout_logistique_pct_ca"], label: "Coût logistique (Opérations)" },
+    { sourceDept: "CPOB", sourceSection: "gestion_stocks", sourceFields: ["valeur_inventaire"], label: "Valeur inventaire (Production)" },
+  ],
+  "CFOB.fiscalite": [
+    { sourceDept: "CINOB", sourceSection: "rsde", sourceFields: ["rsde_admissible", "depenses_rd_estimees"], label: "RS&DE (Innovation)" },
+    { sourceDept: "CHROB", sourceSection: "remuneration", sourceFields: ["masse_salariale", "budget_formation_pct"], label: "Masse salariale & formation (RH)" },
+  ],
+  "CFOB.valorisation": [
+    { sourceDept: "CEOB", sourceSection: "risques_sortie", sourceFields: ["exit_strategy", "valorisation_estimee"], label: "Stratégie de sortie (Direction)" },
+    { sourceDept: "CINOB", sourceSection: "propriete_intellectuelle", sourceFields: ["valorisation_actifs_incorporels"], label: "Actifs incorporels (Innovation)" },
+  ],
+
+  // ── CMOB (Marketing) — Consomme positionnement stratégique, feedback ventes ──
+  "CMOB.personas_icp": [
+    { sourceDept: "CROB", sourceSection: "comptes_cles", sourceFields: ["top_clients", "revenu_moyen_client"], label: "Clients actuels (Ventes)" },
+    { sourceDept: "CSOB", sourceSection: "marche", sourceFields: ["marche_cible_primaire"], label: "Marché cible (Stratégie)" },
+  ],
+  "CMOB.positionnement": [
+    { sourceDept: "CSOB", sourceSection: "avantage_concurrentiel", sourceFields: ["differenciateur_cle", "moats"], label: "Avantages concurrentiels (Stratégie)" },
+    { sourceDept: "CSOB", sourceSection: "concurrence", sourceFields: ["differenciateurs"], label: "Différenciateurs (Stratégie)" },
+  ],
+  "CMOB.canaux_budget": [
+    { sourceDept: "CFOB", sourceSection: "budget_previsions", sourceFields: ["budget_annuel"], label: "Budget global (Finance)" },
+    { sourceDept: "CROB", sourceSection: "pipeline_funnel", sourceFields: ["nb_opportunites"], label: "Opportunités générées (Ventes)" },
+  ],
+  "CMOB.reputation": [
+    { sourceDept: "CROB", sourceSection: "comptes_cles", sourceFields: ["taux_retention"], label: "Rétention clients (Ventes)" },
+    { sourceDept: "CEOB", sourceSection: "profil_public", sourceFields: ["note_reputation"], label: "Réputation publique (Direction)" },
+  ],
+
+  // ── CSOB (Stratégie) — Consomme vision, finances, marché ──
+  "CSOB.pestel": [
+    { sourceDept: "CLOB", sourceSection: "reglementaire", sourceFields: ["obligations_sectorielles"], label: "Réglementation (Juridique)" },
+    { sourceDept: "CTOB", sourceSection: "stack_technique", sourceFields: ["cloud_provider"], label: "Environnement tech (Technologie)" },
+  ],
+  "CSOB.marche": [
+    { sourceDept: "CROB", sourceSection: "comptes_cles", sourceFields: ["taux_concentration_client"], label: "Concentration client (Ventes)" },
+    { sourceDept: "CMOB", sourceSection: "personas_icp", sourceFields: ["icp_principal"], label: "Client idéal (Marketing)" },
+  ],
+  "CSOB.concurrence": [
+    { sourceDept: "CMOB", sourceSection: "positionnement", sourceFields: ["uvp"], label: "Positionnement (Marketing)" },
+    { sourceDept: "CINOB", sourceSection: "propriete_intellectuelle", sourceFields: ["brevets"], label: "Brevets (Innovation)" },
+  ],
+  "CSOB.avantage_concurrentiel": [
+    { sourceDept: "CINOB", sourceSection: "propriete_intellectuelle", sourceFields: ["brevets", "marques_commerce"], label: "PI & Brevets (Innovation)" },
+    { sourceDept: "CTOB", sourceSection: "stack_technique", sourceFields: ["langages", "frameworks"], label: "Stack technique (Technologie)" },
+    { sourceDept: "CPOB", sourceSection: "normes_certifications", sourceFields: ["certifications_actives"], label: "Certifications (Production)" },
+  ],
+  "CSOB.partenariats": [
+    { sourceDept: "CINOB", sourceSection: "partenariats_rd", sourceFields: ["partenaires_rd"], label: "Partenaires R&D (Innovation)" },
+    { sourceDept: "COOB", sourceSection: "supply_chain", sourceFields: ["fournisseurs_cles"], label: "Fournisseurs clés (Opérations)" },
+  ],
+
+  // ── COOB (Opérations) — Consomme production, RH, technologie ──
+  "COOB.processus": [
+    { sourceDept: "CTOB", sourceSection: "architecture_si", sourceFields: ["erp", "crm"], label: "Systèmes ERP/CRM (Technologie)" },
+    { sourceDept: "CPOB", sourceSection: "qualite", sourceFields: ["systeme_qualite"], label: "Système qualité (Production)" },
+  ],
+  "COOB.supply_chain": [
+    { sourceDept: "CPOB", sourceSection: "gestion_stocks", sourceFields: ["valeur_inventaire", "rotation_stocks"], label: "Stocks (Production)" },
+    { sourceDept: "CFOB", sourceSection: "tresorerie", sourceFields: ["creances_clients_dso", "dettes_fournisseurs_dpo"], label: "DSO/DPO (Finance)" },
+  ],
+  "COOB.capacite_planification": [
+    { sourceDept: "CPOB", sourceSection: "planification_production", sourceFields: ["capacite_journaliere"], label: "Capacité production (Usine)" },
+    { sourceDept: "CROB", sourceSection: "pipeline_funnel", sourceFields: ["valeur_pipeline"], label: "Demande prévue (Ventes)" },
+  ],
+
+  // ── CPOB (Production) — Consomme opérations, RH, technologie ──
+  "CPOB.planification_production": [
+    { sourceDept: "CROB", sourceSection: "pipeline_funnel", sourceFields: ["valeur_pipeline", "nb_opportunites"], label: "Demande commerciale (Ventes)" },
+    { sourceDept: "COOB", sourceSection: "supply_chain", sourceFields: ["fournisseurs_cles", "lead_time_moyen"], label: "Supply Chain (Opérations)" },
+  ],
+  "CPOB.sst": [
+    { sourceDept: "CHROB", sourceSection: "conformite_rh", sourceFields: ["equite_salariale"], label: "Conformité RH (RH)" },
+    { sourceDept: "CLOB", sourceSection: "reglementaire", sourceFields: ["obligations_sectorielles"], label: "Obligations (Juridique)" },
+  ],
+  "CPOB.qualite": [
+    { sourceDept: "CROB", sourceSection: "comptes_cles", sourceFields: ["taux_retention"], label: "Satisfaction clients (Ventes)" },
+    { sourceDept: "COOB", sourceSection: "amelioration_continue", sourceFields: ["methodologies"], label: "Méthodologies (Opérations)" },
+  ],
+
+  // ── CHROB (RH) — Consomme finance, juridique, opérations ──
+  "CHROB.remuneration": [
+    { sourceDept: "CFOB", sourceSection: "budget_previsions", sourceFields: ["budget_annuel"], label: "Budget global (Finance)" },
+    { sourceDept: "CLOB", sourceSection: "reglementaire", sourceFields: ["obligations_sectorielles"], label: "Obligations légales (Juridique)" },
+  ],
+  "CHROB.recrutement": [
+    { sourceDept: "CEOB", sourceSection: "equipe_direction", sourceFields: ["lacunes_equipe"], label: "Lacunes direction (Direction)" },
+    { sourceDept: "CROB", sourceSection: "territoires", sourceFields: ["nb_vendeurs"], label: "Besoins ventes (Ventes)" },
+  ],
+  "CHROB.conformite_rh": [
+    { sourceDept: "CLOB", sourceSection: "conformite_loi25", sourceFields: ["responsable_prp"], label: "RPRP Loi 25 (Juridique)" },
+    { sourceDept: "CEOB", sourceSection: "profil", sourceFields: ["nb_employes"], label: "Effectif (Direction)" },
+  ],
+  "CHROB.formation": [
+    { sourceDept: "CISOB", sourceSection: "formation_phishing", sourceFields: ["formation_securite"], label: "Formation sécurité (CISO)" },
+    { sourceDept: "CPOB", sourceSection: "sst", sourceFields: ["programme_prevention"], label: "Programme SST (Production)" },
+  ],
+
+  // ── CINOB (Innovation) — Consomme finance, stratégie, technologie ──
+  "CINOB.rsde": [
+    { sourceDept: "CFOB", sourceSection: "fiscalite", sourceFields: ["rsde"], label: "RS&DE fiscal (Finance)" },
+    { sourceDept: "CFOB", sourceSection: "budget_previsions", sourceFields: ["budget_annuel"], label: "Budget global (Finance)" },
+  ],
+  "CINOB.pipeline_innovation": [
+    { sourceDept: "CSOB", sourceSection: "diversification", sourceFields: ["matrice_ansoff", "marches_cibles"], label: "Diversification (Stratégie)" },
+    { sourceDept: "CMOB", sourceSection: "personas_icp", sourceFields: ["icp_principal"], label: "Besoins clients (Marketing)" },
+  ],
+  "CINOB.propriete_intellectuelle": [
+    { sourceDept: "CLOB", sourceSection: "pi_marques", sourceFields: ["marques_deposees", "brevets_deposes"], label: "PI légale (Juridique)" },
+  ],
+
+  // ── CROB (Ventes) — Consomme marketing, finance, stratégie ──
+  "CROB.pipeline_funnel": [
+    { sourceDept: "CMOB", sourceSection: "canaux_budget", sourceFields: ["canaux_actifs"], label: "Canaux marketing (Marketing)" },
+    { sourceDept: "CFOB", sourceSection: "modele_revenus", sourceFields: ["chiffre_affaires_estime"], label: "Objectif CA (Finance)" },
+  ],
+  "CROB.comptes_cles": [
+    { sourceDept: "CMOB", sourceSection: "personas_icp", sourceFields: ["icp_principal"], label: "ICP (Marketing)" },
+    { sourceDept: "CSOB", sourceSection: "concurrence", sourceFields: ["concurrents_directs", "differenciateurs"], label: "Concurrence (Stratégie)" },
+  ],
+  "CROB.remuneration_ventes": [
+    { sourceDept: "CFOB", sourceSection: "budget_previsions", sourceFields: ["budget_annuel"], label: "Budget global (Finance)" },
+    { sourceDept: "CHROB", sourceSection: "remuneration", sourceFields: ["grille_salariale"], label: "Grille salariale (RH)" },
+  ],
+
+  // ── CLOB (Juridique) — Consomme gouvernance, RH, sécurité ──
+  "CLOB.structure_corporative": [
+    { sourceDept: "CEOB", sourceSection: "gouvernance", sourceFields: ["entite_legale", "actionnaires", "convention_actionnaires"], label: "Gouvernance (Direction)" },
+  ],
+  "CLOB.conformite_loi25": [
+    { sourceDept: "CISOB", sourceSection: "incidents_reponse", sourceFields: ["registre_incidents_72h"], label: "Incidents 72h (CISO)" },
+    { sourceDept: "CTOB", sourceSection: "architecture_si", sourceFields: ["crm", "erp"], label: "Systèmes traitant des RP (Technologie)" },
+  ],
+  "CLOB.contrats": [
+    { sourceDept: "COOB", sourceSection: "logistique", sourceFields: ["baux_echeance"], label: "Baux actifs (Opérations)" },
+    { sourceDept: "COOB", sourceSection: "gestion_fournisseurs", sourceFields: ["sla_fournisseurs"], label: "SLAs fournisseurs (Opérations)" },
+  ],
+  "CLOB.pi_marques": [
+    { sourceDept: "CINOB", sourceSection: "propriete_intellectuelle", sourceFields: ["brevets", "marques_commerce"], label: "PI Innovation (Innovation)" },
+    { sourceDept: "CMOB", sourceSection: "positionnement", sourceFields: ["identite_visuelle_logo"], label: "Identité visuelle (Marketing)" },
+  ],
+
+  // ── CISOB (Sécurité) — Consomme technologie, juridique, RH ──
+  "CISOB.politiques_iam": [
+    { sourceDept: "CTOB", sourceSection: "stack_technique", sourceFields: ["gestionnaire_mdp"], label: "Gestionnaire MDP (Technologie)" },
+    { sourceDept: "CHROB", sourceSection: "organigramme", sourceFields: ["nb_employes_total"], label: "Effectif (RH)" },
+  ],
+  "CISOB.sauvegardes": [
+    { sourceDept: "CTOB", sourceSection: "infrastructure", sourceFields: ["serveurs", "monitoring"], label: "Infrastructure (Technologie)" },
+  ],
+  "CISOB.vulnerabilites": [
+    { sourceDept: "CTOB", sourceSection: "securite_applicative", sourceFields: ["dernier_pentest", "owasp_top10"], label: "Sécurité applicative (Technologie)" },
+  ],
+  "CISOB.incidents_reponse": [
+    { sourceDept: "CLOB", sourceSection: "conformite_loi25", sourceFields: ["registre_incidents_loi25"], label: "Registre Loi 25 (Juridique)" },
+  ],
+  "CISOB.certifications_securite": [
+    { sourceDept: "CTOB", sourceSection: "infrastructure", sourceFields: ["certifications_infra"], label: "Certifications infra (Technologie)" },
+    { sourceDept: "CPOB", sourceSection: "normes_certifications", sourceFields: ["certifications_actives"], label: "Certifications production (Production)" },
+  ],
+};
+
+/** Obtenir les cross-references pour une section d'un département */
+export function getCrossReferences(deptCode: string, sectionId: string): CrossRef[] {
+  return CROSS_REFERENCE_MAP[`${deptCode}.${sectionId}`] || [];
+}
+
+/** Obtenir TOUS les départements qui fournissent des données à un département donné */
+export function getLinkedDepartments(deptCode: string): string[] {
+  const linked = new Set<string>();
+  for (const [key, refs] of Object.entries(CROSS_REFERENCE_MAP)) {
+    if (key.startsWith(`${deptCode}.`)) {
+      for (const ref of refs) linked.add(ref.sourceDept);
+    }
+  }
+  return Array.from(linked);
+}
+
+/** Obtenir toutes les sections d'un département qui CONSOMMENT des données d'un autre département */
+export function getSectionsConsumingFrom(targetDept: string, sourceDept: string): { sectionId: string; refs: CrossRef[] }[] {
+  const results: { sectionId: string; refs: CrossRef[] }[] = [];
+  for (const [key, refs] of Object.entries(CROSS_REFERENCE_MAP)) {
+    if (key.startsWith(`${targetDept}.`)) {
+      const relevant = refs.filter(r => r.sourceDept === sourceDept);
+      if (relevant.length > 0) {
+        results.push({ sectionId: key.split(".")[1], refs: relevant });
+      }
+    }
+  }
+  return results;
+}
+
+/** Obtenir toutes les sections où un département est SOURCE (ses données sont consommées par d'autres) */
+export function getSectionsProvidingTo(sourceDept: string): { targetDept: string; targetSection: string; refs: CrossRef[] }[] {
+  const results: { targetDept: string; targetSection: string; refs: CrossRef[] }[] = [];
+  for (const [key, refs] of Object.entries(CROSS_REFERENCE_MAP)) {
+    const relevant = refs.filter(r => r.sourceDept === sourceDept);
+    if (relevant.length > 0) {
+      const [targetDept, targetSection] = key.split(".");
+      results.push({ targetDept, targetSection, refs: relevant });
+    }
+  }
+  return results;
+}
 
 // ══════════════════════════════════════════════════════════════
 // Registry — Tous les départements

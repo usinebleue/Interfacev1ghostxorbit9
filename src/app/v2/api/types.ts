@@ -625,6 +625,48 @@ export interface CascadeSuggestion {
 }
 
 
+// --- Classification des discussions (harmonisation S71) ---
+
+export type DiscussionTypeId = "operationnel" | "reflexion" | "blueprint" | "focus" | "conference" | "vision" | "code" | "document" | "libre";
+
+export const DISCUSSION_TYPE_CONFIG: Record<DiscussionTypeId, { label: string; emoji: string; color: string }> = {
+  operationnel: { label: "Operations", emoji: "⚙️", color: "bg-orange-100 text-orange-700" },
+  reflexion:    { label: "Reflexion",  emoji: "🧠", color: "bg-purple-100 text-purple-700" },
+  blueprint:    { label: "Strategie",  emoji: "🎯", color: "bg-blue-100 text-blue-700" },
+  focus:        { label: "Focus",      emoji: "🔍", color: "bg-cyan-100 text-cyan-700" },
+  conference:   { label: "Conference", emoji: "🎤", color: "bg-red-100 text-red-700" },
+  vision:       { label: "Vision",     emoji: "👓", color: "bg-indigo-100 text-indigo-700" },
+  code:         { label: "Code",       emoji: "💻", color: "bg-violet-100 text-violet-700" },
+  document:     { label: "Document",   emoji: "📄", color: "bg-teal-100 text-teal-700" },
+  libre:        { label: "Libre",      emoji: "💬", color: "bg-gray-100 text-gray-600" },
+};
+
+/** Detect discussion type from thread metadata */
+export function classifyThread(thread: Thread): DiscussionTypeId {
+  const { flowSection, mode, primaryBot, parentChantier, missionId } = thread;
+  const section = (flowSection || "").toLowerCase();
+
+  if (section.includes("board-room") || section.includes("war-room") || section.includes("think-room")) return "conference";
+  if (section.includes("blueprint")) return "blueprint";
+  if (section.includes("focus")) return "focus";
+  if (section.includes("vision")) return "vision";
+  if (primaryBot === "CTOB" && section.includes("code")) return "code";
+  if (section.includes("document")) return "document";
+  if (parentChantier || missionId) return "operationnel";
+  if (mode && mode !== "credo") return "reflexion";
+  return "libre";
+}
+
+// --- Classification des documents (harmonisation S71) ---
+
+export type DocumentTypeId = "importe" | "genere" | "template";
+
+export const DOCUMENT_TYPE_CONFIG: Record<DocumentTypeId, { label: string; emoji: string; color: string }> = {
+  importe:  { label: "Import",   emoji: "📁", color: "bg-slate-100 text-slate-600" },
+  genere:   { label: "Genere",   emoji: "✨", color: "bg-teal-100 text-teal-700" },
+  template: { label: "Template", emoji: "📋", color: "bg-violet-100 text-violet-700" },
+};
+
 // --- Noms d'affichage officiels des 12 bots (SOURCE UNIQUE) ---
 
 export const BOT_NAME: Record<string, string> = {
@@ -949,6 +991,7 @@ export interface DiagnosticCatalogue {
   data_points: DiagnosticDataPoint[];
   gaps_typiques: DiagnosticGap[];
   documents_generes: DiagnosticDocument[];
+  profilTypes?: string[];
 }
 
 export interface GapFournisseur {

@@ -36,6 +36,7 @@ import { useChantiers } from "../../api/hooks";
 import { CarlOsPulse } from "./CarlOsPulse";
 import { InputBar } from "../center/InputBar";
 import { BOT_NAME, BOT_ROLE, BOT_AVATAR } from "../../api/types";
+import { BOT_COLORS } from "../center/shared/simulation-data";
 
 // ──────────────────────────────────────────
 // Les 12 bots dans l'ordre C-Level
@@ -219,7 +220,7 @@ function TabEtat({ onQuickAction, onReflectionMode, onNavigate }: {
   }, [chantiers]);
 
   return (
-    <div className="p-3 space-y-3 overflow-y-auto h-full text-[9px]">
+    <div className="p-3 space-y-3 overflow-y-auto h-full text-[11px]">
       {/* Signaux — petit bandeau alerte */}
       <CarlOsPulse compact />
 
@@ -237,7 +238,7 @@ function TabEtat({ onQuickAction, onReflectionMode, onNavigate }: {
                 className="flex items-center gap-2 bg-gray-50 rounded-lg px-2.5 py-1.5 w-full text-left cursor-pointer hover:bg-orange-50 transition-colors"
               >
                 <a.icon className={cn("h-3.5 w-3.5 shrink-0", a.color)} />
-                <span className="text-gray-700 flex-1 truncate">{a.text}</span>
+                <span className="text-[11px] text-gray-700 flex-1 truncate">{a.text}</span>
                 <ArrowRight className="h-3.5 w-3.5 text-gray-300" />
               </button>
             ))}
@@ -261,7 +262,7 @@ function TabEtat({ onQuickAction, onReflectionMode, onNavigate }: {
                 )}
               >
                 <a.icon className={cn("h-3.5 w-3.5 shrink-0", a.color)} />
-                <span className="text-[9px] text-gray-700 font-medium truncate">{a.label}</span>
+                <span className="text-[11px] text-gray-700 font-medium truncate">{a.label}</span>
               </button>
             ))}
           </div>
@@ -281,7 +282,7 @@ function TabEtat({ onQuickAction, onReflectionMode, onNavigate }: {
                 )}
               >
                 <m.icon className={cn("h-3.5 w-3.5 shrink-0", m.color)} />
-                <span className="text-[9px] text-gray-700 font-medium truncate">{m.label}</span>
+                <span className="text-[11px] text-gray-700 font-medium truncate">{m.label}</span>
               </button>
             ))}
           </div>
@@ -318,31 +319,34 @@ function TabDiscussions() {
       {/* Bouton Nouvelle discussion — toujours visible */}
       <button
         onClick={handleNewDiscussion}
-        className="flex items-center justify-center gap-1.5 w-full px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors cursor-pointer"
+        className="flex items-center justify-center gap-1.5 w-full px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[9px] font-medium transition-colors cursor-pointer"
       >
         <MessageSquare className="h-3.5 w-3.5" />
         Nouvelle discussion
       </button>
 
-      {/* Discussion active */}
-      {activeThread && hasActiveMessages && (
-        <div className="flex items-center gap-1.5 bg-blue-50 rounded-lg px-3 py-2 border border-blue-200 group">
-          <MessageSquare className="h-3.5 w-3.5 text-blue-600 shrink-0" />
-          <button
-            onClick={() => setActiveView("live-chat")}
-            className="flex-1 text-left text-blue-700 font-medium truncate cursor-pointer hover:text-blue-800 transition-colors"
-          >
-            {activeThread.title || "Discussion en cours"}
-          </button>
-          <button
-            onClick={handleDeleteActive}
-            className="p-1 rounded hover:bg-red-100 text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
-            title="Supprimer"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      )}
+      {/* Discussion active — couleur du bot */}
+      {activeThread && hasActiveMessages && (() => {
+        const bc = BOT_COLORS[activeThread.primaryBot] || BOT_COLORS.CEOB;
+        return (
+          <div className={cn("flex items-center gap-1.5 rounded-lg px-3 py-2 border group", bc.bgLight, bc.border)}>
+            <div className={cn("w-2 h-2 rounded-full shrink-0", bc.dot)} />
+            <button
+              onClick={() => setActiveView("live-chat")}
+              className={cn("flex-1 text-left text-[9px] font-medium truncate cursor-pointer transition-colors", bc.text)}
+            >
+              {activeThread.title || "Discussion en cours"}
+            </button>
+            <button
+              onClick={handleDeleteActive}
+              className="p-1 rounded hover:bg-red-100 text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
+              title="Supprimer"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        );
+      })()}
 
       {!hasActiveMessages && parkedThreads.length === 0 && (
         <div className="flex flex-col items-center justify-center py-4 text-gray-400">
@@ -353,32 +357,32 @@ function TabDiscussions() {
       {/* Branches parkées — cliquables + supprimables */}
       {parkedThreads.length > 0 && (
         <div>
-          <div className="font-semibold text-gray-600 mb-2 text-[9px] uppercase tracking-wider flex items-center gap-1">
-            <GitBranch className="h-3.5 w-3.5 text-violet-500" /> Branches ({parkedThreads.length})
-          </div>
           <div className="space-y-1">
-            {parkedThreads.map((t) => (
-              <div key={t.id} className="flex items-center gap-1.5 bg-violet-50 rounded-lg px-2.5 py-1.5 border border-violet-100 group">
-                <Bookmark className="h-3.5 w-3.5 text-violet-500 shrink-0" />
-                <button
-                  onClick={() => {
-                    resumeThread(t.id);
-                    setActiveView("live-chat");
-                  }}
-                  className="flex-1 text-left text-gray-700 truncate cursor-pointer hover:text-violet-700 transition-colors"
-                  title="Reprendre cette branche"
-                >
-                  {t.title || "Branche sans titre"}
-                </button>
-                <button
-                  onClick={() => deleteThread(t.id)}
-                  className="p-1 rounded hover:bg-red-100 text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
-                  title="Supprimer"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ))}
+            {parkedThreads.map((t) => {
+              const bc = BOT_COLORS[t.primaryBot] || BOT_COLORS.CEOB;
+              return (
+                <div key={t.id} className={cn("flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 border group", bc.bgLight, bc.border)}>
+                  <div className={cn("w-2 h-2 rounded-full shrink-0", bc.dot)} />
+                  <button
+                    onClick={() => {
+                      resumeThread(t.id);
+                      setActiveView("live-chat");
+                    }}
+                    className={cn("flex-1 text-left text-[9px] truncate cursor-pointer transition-colors", bc.text)}
+                    title="Reprendre cette branche"
+                  >
+                    {t.title || "Branche sans titre"}
+                  </button>
+                  <button
+                    onClick={() => deleteThread(t.id)}
+                    className="p-1 rounded hover:bg-red-100 text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
+                    title="Supprimer"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -398,7 +402,7 @@ function TabEquipeAI() {
   };
 
   return (
-    <div className="p-2 overflow-y-auto h-full text-[9px]">
+    <div className="p-2 overflow-y-auto h-full text-[11px]">
       <div className="space-y-0.5">
         {ALL_BOTS.map((code) => {
           const isActive = activeBotCode === code;
@@ -459,7 +463,7 @@ function TabEquipeAI() {
 // ──────────────────────────────────────────
 function TabEquipeHumaine() {
   return (
-    <div className="flex flex-col items-center justify-center h-full text-gray-400 text-[9px] p-4">
+    <div className="flex flex-col items-center justify-center h-full text-gray-400 text-[11px] p-4">
       <UserCircle className="h-8 w-8 mb-2 text-gray-300" />
       <div className="font-medium text-gray-500">Mon équipe humaine</div>
       <div className="text-center mt-1">
@@ -506,7 +510,7 @@ export function CockpitPanel() {
   const tabs: { id: CockpitTab; label: string; icon: React.ElementType }[] = [
     { id: "etat", label: "État", icon: Activity },
     { id: "discussions", label: "Discussions", icon: MessageSquare },
-    { id: "equipe_ai", label: "Agents AI", icon: Bot },
+    { id: "equipe_ai", label: "Brain Team", icon: Bot },
     { id: "equipe_humaine", label: "Humains", icon: Users },
   ];
 
@@ -519,7 +523,7 @@ export function CockpitPanel() {
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={cn(
-              "flex-1 flex items-center justify-center gap-1 py-2 text-[9px] font-medium transition-colors cursor-pointer",
+              "flex-1 flex items-center justify-center gap-1 py-2 text-[11px] font-medium transition-colors cursor-pointer",
               activeTab === tab.id
                 ? "text-blue-600 border-b-2 border-blue-500 bg-white"
                 : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"

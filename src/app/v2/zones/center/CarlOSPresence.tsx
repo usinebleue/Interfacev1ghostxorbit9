@@ -101,7 +101,7 @@ export function CarlOSPresence() {
   const botCode = isDept ? activeBotCode : "CEOB";
   const botName = BOT_NAME[botCode] || "CarlOS";
   const botAvatar = BOT_AVATAR[botCode] || BOT_AVATAR["CEOB"];
-  const botRole = BOT_SUBTITLE[botCode] || "Agent AI";
+  const botRole = BOT_SUBTITLE[botCode] || "Brain Team";
 
   // Première visite → message enrichi sur le dashboard
   const isFirstVisit = activeView === "dashboard" && !sessionStorage.getItem("carlos_visited");

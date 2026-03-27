@@ -1065,10 +1065,14 @@ function TeamProposalCard({ proposal, onAccept, disabled }: TeamProposalCardProp
 export function LiveChat({
   onBack,
   compact = false,
+  splitMode = false,
+  splitTitle,
 }: {
   initialMode?: string;
   onBack?: () => void;
   compact?: boolean;
+  splitMode?: boolean;
+  splitTitle?: string;
 }) {
   const {
     messages, isTyping, activeReflectionMode, currentCREDOPhase, newConversation, sendMessage, sendMultiPerspective,
@@ -1349,119 +1353,196 @@ export function LiveChat({
 
   return (
     <div className="h-full flex flex-col bg-gradient-to-b from-gray-50 to-white">
-      {/* Header — Sprint 2: titre éditable + dots CREDO + équipe active */}
-      <div className={cn("bg-white/80 backdrop-blur-sm border-b shrink-0", compact ? "px-3 py-1.5" : "px-4 py-2")}>
-        {/* Ligne 1: Titre + actions */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 min-w-0">
-            {onBack && !compact && (
-              <button onClick={onBack} className="text-gray-400 hover:text-gray-600 cursor-pointer p-1 rounded-lg hover:bg-gray-100 transition-colors">
-                <ArrowLeft className="h-4 w-4" />
-              </button>
-            )}
-            {editingTitle ? (
-              <input
-                autoFocus
-                value={titleDraft}
-                onChange={(e) => setTitleDraft(e.target.value)}
-                onBlur={() => {
-                  if (titleDraft.trim() && activeThreadId) renameThread(activeThreadId, titleDraft.trim());
-                  setEditingTitle(false);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") { e.currentTarget.blur(); }
-                  if (e.key === "Escape") { setEditingTitle(false); }
-                }}
-                className="text-sm font-semibold text-gray-800 bg-transparent border-b border-blue-400 outline-none max-w-[300px] px-0.5"
-              />
-            ) : (
-              <button
-                onClick={() => {
-                  const current = threads.find(t => t.id === activeThreadId)?.title || "";
-                  setTitleDraft(current);
-                  setEditingTitle(true);
-                }}
-                className="flex items-center gap-1.5 min-w-0 group cursor-pointer"
-              >
-                <span className={cn("font-semibold text-gray-800 truncate", compact ? "text-xs max-w-[160px]" : "text-sm max-w-[300px]")}>
-                  {threads.find(t => t.id === activeThreadId)?.title || "Nouvelle discussion"}
-                </span>
-                <Pencil className="h-3.5 w-3.5 text-gray-300 group-hover:text-gray-500 transition-colors shrink-0" />
-              </button>
-            )}
-          </div>
-          <div className="flex items-center gap-1.5">
-            {messages.length > 0 && (
-              <button onClick={parkThread} className="text-gray-400 hover:text-amber-600 cursor-pointer p-1.5 rounded-lg hover:bg-amber-50 transition-colors" title="Parker">
-                <Clock className="h-3.5 w-3.5" />
-              </button>
-            )}
-            <button
-              onClick={() => { setShowCrystals(!showCrystals); setShowThreads(false); }}
-              className={cn("flex items-center gap-1 p-1.5 rounded-lg transition-colors cursor-pointer", showCrystals ? "bg-emerald-50 text-emerald-600" : "text-gray-400 hover:text-gray-600 hover:bg-gray-100")}
-              title="Mes Idees"
-            >
-              <Bookmark className="h-3.5 w-3.5" />
-              {crystals.length > 0 && <span className="text-[9px] font-bold bg-emerald-500 text-white px-1 rounded-full min-w-[14px] text-center">{crystals.length}</span>}
-            </button>
-            <button
-              onClick={() => { setShowThreads(!showThreads); setShowCrystals(false); }}
-              className={cn("flex items-center gap-1 p-1.5 rounded-lg transition-colors cursor-pointer", showThreads ? "bg-violet-50 text-violet-600" : "text-gray-400 hover:text-gray-600 hover:bg-gray-100")}
-              title="Threads"
-            >
-              <MessageSquare className="h-3.5 w-3.5" />
-              {parkedThreads.length > 0 && <span className="text-[9px] font-bold bg-amber-500 text-white px-1 rounded-full min-w-[14px] text-center">{parkedThreads.length}</span>}
-            </button>
-            {messages.length > 0 && (
-              <button onClick={newConversation} className="text-gray-400 hover:text-gray-600 cursor-pointer p-1.5 rounded-lg hover:bg-gray-100 transition-colors" title="Nouvelle discussion">
-                <Plus className="h-3.5 w-3.5" />
-              </button>
-            )}
-            <div className="flex items-center gap-1.5 bg-green-50 px-2 py-1 rounded-full">
-              <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-[9px] text-green-600 font-medium">LIVE</span>
-            </div>
-          </div>
-        </div>
-        {/* Ligne 2: Équipe active + dots CREDO + compteur échanges */}
-        {!compact && (
-          <div className="flex items-center justify-between mt-1">
-            <div className="flex items-center gap-1.5">
-              {activeRoster.map((code) => (
-                <BotAvatar key={code} code={code} size="sm" />
-              ))}
-              {activeRoster.length < 3 && (
-                <div className="w-6 h-6 rounded-full border border-dashed border-gray-300 flex items-center justify-center text-gray-400">
-                  <Plus className="h-3.5 w-3.5" />
-                </div>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
+      {/* Header — harmonisé avec FocusModeLayout en split mode */}
+      {(() => {
+        const botInfo = BOT_COLORS[activeBotCode] || BOT_COLORS.CEOB;
+        const SPLIT_GRADIENTS: Record<string, string> = {
+          CEOB: "bg-blue-600", CTOB: "bg-violet-600",
+          CFOB: "bg-emerald-600", CMOB: "bg-pink-600",
+          CSOB: "bg-red-600", COOB: "bg-orange-600",
+          CPOB: "bg-slate-600", CHROB: "bg-teal-600",
+          CINOB: "bg-rose-600", CROB: "bg-amber-600",
+          CLOB: "bg-indigo-600", CISOB: "bg-zinc-600",
+        };
+        const splitBg = SPLIT_GRADIENTS[activeBotCode] || "bg-blue-600";
+        const txtColor = splitMode ? "text-white" : "text-gray-800";
+        const txtMuted = splitMode ? "text-white/60" : "text-gray-400";
+        const hoverBg = splitMode ? "hover:bg-white/10" : "hover:bg-gray-100";
+        const hoverTxt = splitMode ? "hover:text-white" : "hover:text-gray-600";
+        return (
+          <div className={cn(
+            "shrink-0",
+            compact ? "px-3 py-1.5" : "px-4 py-2",
+            splitMode ? splitBg : "bg-white/80 backdrop-blur-sm border-b"
+          )}>
+            {/* Ligne 1: Titre + actions + équipe */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 min-w-0">
+                {onBack && !compact && (
+                  <button onClick={onBack} className={cn(txtMuted, hoverTxt, "cursor-pointer p-1 rounded-lg", hoverBg, "transition-colors")}>
+                    <ArrowLeft className="h-4 w-4" />
+                  </button>
+                )}
+                {/* Pas d'avatar en ligne 1 splitMode — déjà dans ligne 2 "Equipe" */}
+                {splitMode && splitTitle ? (
+                  /* En splitMode: titre fixe = le sujet global (Blueprint, DocForge, etc.) */
+                  <span className={cn("font-semibold truncate text-xs text-white max-w-[240px]")}>
+                    {splitTitle}
+                  </span>
+                ) : editingTitle ? (
+                  <input
+                    autoFocus
+                    value={titleDraft}
+                    onChange={(e) => setTitleDraft(e.target.value)}
+                    onBlur={() => {
+                      if (titleDraft.trim() && activeThreadId) renameThread(activeThreadId, titleDraft.trim());
+                      setEditingTitle(false);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") { e.currentTarget.blur(); }
+                      if (e.key === "Escape") { setEditingTitle(false); }
+                    }}
+                    className={cn("text-sm font-semibold bg-transparent border-b outline-none max-w-[300px] px-0.5", splitMode ? "text-white border-white/50" : "text-gray-800 border-blue-400")}
+                  />
+                ) : (
+                  <button
+                    onClick={() => {
+                      const current = threads.find(t => t.id === activeThreadId)?.title || "";
+                      setTitleDraft(current);
+                      setEditingTitle(true);
+                    }}
+                    className="flex items-center gap-1.5 min-w-0 group cursor-pointer"
+                  >
+                    <span className={cn("font-semibold truncate", txtColor, compact ? "text-xs max-w-[160px]" : "text-xs max-w-[240px]")}>
+                      {threads.find(t => t.id === activeThreadId)?.title || "Nouvelle discussion"}
+                    </span>
+                    <Pencil className={cn("h-3.5 w-3.5 transition-colors shrink-0", splitMode ? "text-white/30 group-hover:text-white/60" : "text-gray-300 group-hover:text-gray-500")} />
+                  </button>
+                )}
+              </div>
               <div className="flex items-center gap-1">
-                {CREDO_ORDER.map((phase) => {
-                  const cfg = CREDO_PHASE_CONFIG[phase];
-                  const isActive = currentCREDOPhase === phase;
-                  const isReached = isPhaseAtLeast(currentCREDOPhase, phase);
+                {messages.length > 0 && (
+                  <button onClick={parkThread} className={cn(txtMuted, hoverTxt, "cursor-pointer p-1.5 rounded-lg", hoverBg, "transition-colors flex items-center gap-1")} title="Parker">
+                    <Clock className="h-3.5 w-3.5" />
+                    {splitMode && <span className="text-[9px] font-medium">Parker</span>}
+                  </button>
+                )}
+                <button
+                  onClick={() => { setShowCrystals(!showCrystals); setShowThreads(false); }}
+                  className={cn("flex items-center gap-1 p-1.5 rounded-lg transition-colors cursor-pointer",
+                    showCrystals
+                      ? (splitMode ? "bg-white/20 text-white" : "bg-emerald-50 text-emerald-600")
+                      : cn(txtMuted, hoverTxt, hoverBg)
+                  )}
+                  title="Mes Idées"
+                >
+                  <Bookmark className="h-3.5 w-3.5" />
+                  {splitMode && <span className="text-[9px] font-medium">Idées</span>}
+                  {crystals.length > 0 && <span className={cn("text-[9px] font-bold px-1 rounded-full min-w-[14px] text-center", splitMode ? "bg-white/25 text-white" : "bg-emerald-500 text-white")}>{crystals.length}</span>}
+                </button>
+                <button
+                  onClick={() => { setShowThreads(!showThreads); setShowCrystals(false); }}
+                  className={cn("flex items-center gap-1 p-1.5 rounded-lg transition-colors cursor-pointer",
+                    showThreads
+                      ? (splitMode ? "bg-white/20 text-white" : "bg-violet-50 text-violet-600")
+                      : cn(txtMuted, hoverTxt, hoverBg)
+                  )}
+                  title="Threads"
+                >
+                  <MessageSquare className="h-3.5 w-3.5" />
+                  {splitMode && <span className="text-[9px] font-medium">Discussions</span>}
+                  {parkedThreads.length > 0 && <span className={cn("text-[9px] font-bold px-1 rounded-full min-w-[14px] text-center", splitMode ? "bg-white/25 text-white" : "bg-amber-500 text-white")}>{parkedThreads.length}</span>}
+                </button>
+                {messages.length > 0 && (
+                  <button onClick={newConversation} className={cn(txtMuted, hoverTxt, "cursor-pointer p-1.5 rounded-lg", hoverBg, "transition-colors flex items-center gap-1")} title="Nouvelle discussion">
+                    <Plus className="h-3.5 w-3.5" />
+                    {splitMode && <span className="text-[9px] font-medium">Nouveau</span>}
+                  </button>
+                )}
+                {!splitMode && (
+                  <div className="flex items-center gap-1.5 bg-green-50 px-2 py-1 rounded-full">
+                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                    <span className="text-[9px] text-green-600 font-medium">LIVE</span>
+                  </div>
+                )}
+              </div>
+            </div>
+            {/* Ligne 2: Équipe active (splitMode) — avatars + noms + ajouter agent */}
+            {splitMode && !compact && (
+              <div className="flex items-center gap-2 pt-1 mt-1 border-t border-white/15">
+                {activeRoster.map((code, idx) => {
+                  const info = BOT_COLORS[code];
                   return (
-                    <div
-                      key={phase}
-                      title={cfg?.label || phase}
-                      className={cn(
-                        "w-2 h-2 rounded-full transition-all",
-                        isActive ? cn(cfg?.color || "bg-gray-400", "ring-2 ring-offset-1 ring-gray-300 scale-125") :
-                        isReached ? (cfg?.color || "bg-gray-400") : "bg-gray-200"
+                    <div key={code} className="flex items-center gap-1">
+                      <BotAvatar code={code} size="sm" />
+                      <span className="text-[9px] text-white font-medium">{info?.name || code}</span>
+                      <span className="text-[9px] text-white/50">{info?.role || ""}</span>
+                      {activeRoster.length > 1 && (
+                        <button onClick={() => removeBotFromRoster(code)} className="text-white/30 hover:text-white/70 cursor-pointer transition-colors" title={`Retirer ${info?.name}`}>
+                          <span className="text-xs">×</span>
+                        </button>
                       )}
-                    />
+                    </div>
                   );
                 })}
+                {activeRoster.length < 3 && (
+                  <select
+                    onChange={(e) => { if (e.target.value) { addBotToRoster(e.target.value); e.target.value = ""; } }}
+                    className="text-[9px] text-white/70 bg-white/10 border border-dashed border-white/30 rounded-full px-2.5 py-0.5 cursor-pointer"
+                    defaultValue=""
+                  >
+                    <option value="" disabled className="text-gray-800 bg-white">+ Ajouter un agent</option>
+                    {Object.entries(BOT_COLORS)
+                      .filter(([c]) => !activeRoster.includes(c))
+                      .map(([c, info]) => (
+                        <option key={c} value={c} className="text-gray-800 bg-white">{info.name} — {info.role}</option>
+                      ))
+                    }
+                  </select>
+                )}
               </div>
-              <span className="text-[9px] text-gray-400 font-medium">
-                {CREDO_PHASE_CONFIG[currentCREDOPhase]?.label || "Connecter"}, {exchangeCount} éch
-              </span>
-            </div>
+            )}
+            {/* Ligne 2: Équipe active (mode normal) + dots CREDO */}
+            {!compact && !splitMode && (
+              <div className="flex items-center justify-between mt-1">
+                <div className="flex items-center gap-1.5">
+                  {activeRoster.map((code) => (
+                    <BotAvatar key={code} code={code} size="sm" />
+                  ))}
+                  {activeRoster.length < 3 && (
+                    <div className="w-6 h-6 rounded-full border border-dashed border-gray-300 flex items-center justify-center text-gray-400">
+                      <Plus className="h-3.5 w-3.5" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
+                    {CREDO_ORDER.map((phase) => {
+                      const cfg = CREDO_PHASE_CONFIG[phase];
+                      const isActive = currentCREDOPhase === phase;
+                      const isReached = isPhaseAtLeast(currentCREDOPhase, phase);
+                      return (
+                        <div
+                          key={phase}
+                          title={cfg?.label || phase}
+                          className={cn(
+                            "w-2 h-2 rounded-full transition-all",
+                            isActive ? cn(cfg?.color || "bg-gray-400", "ring-2 ring-offset-1 ring-gray-300 scale-125") :
+                            isReached ? (cfg?.color || "bg-gray-400") : "bg-gray-200"
+                          )}
+                        />
+                      );
+                    })}
+                  </div>
+                  <span className="text-[9px] text-gray-400 font-medium">
+                    {CREDO_PHASE_CONFIG[currentCREDOPhase]?.label || "Connecter"}, {exchangeCount} éch
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        );
+      })()}
 
       {/* Avatar video CarlOS */}
       {videoAvatarEnabled && (
@@ -1617,8 +1698,8 @@ export function LiveChat({
 
           {/* Perspectives bar retirée — trop d'options sans logique contextuelle */}
 
-          {/* Roster de bots actifs — équipe sélectionnée par CarlOS ou par le user */}
-          {activeRoster.length > 0 && messages.length > 0 && (
+          {/* Roster de bots actifs — en splitMode, l'équipe est dans le header */}
+          {!splitMode && activeRoster.length > 0 && messages.length > 0 && (
             <div className="flex items-center gap-2 py-2 px-3 bg-white/60 rounded-xl border border-gray-100">
               <Bot className="h-3 w-3 text-gray-400 shrink-0" />
               <span className="text-[10px] text-gray-400 font-medium shrink-0">Équipe active :</span>

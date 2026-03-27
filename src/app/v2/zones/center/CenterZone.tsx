@@ -80,6 +80,7 @@ import { AccueilHeroPage } from "./orbit9/AccueilHeroPage";
 import { PlaybookUsineBleuePage } from "./orbit9/PlaybookUsineBleuePage";
 // StrategiqueView archived → replaced by BlueprintView
 import { BlueprintView } from "./BlueprintView";
+import { AtelierHub } from "./atelier/AtelierHub";
 import { MonReseauView } from "./MonReseauView";
 import { StrategiqueReseauPage } from "./orbit9/StrategiqueReseauPage";
 import { FESidebarDroitePage } from "./orbit9/FESidebarDroitePage";
@@ -158,19 +159,20 @@ function MonEquipeHub() {
 }
 
 /** Couleur identitaire par bot — bande fine en haut du canevas */
+/** Couleurs harmonisées avec les gradients headers (from-X-600) */
 const BOT_BAND_COLORS: Record<string, string> = {
-  CEOB: "bg-blue-500",
-  CTOB: "bg-violet-500",
-  CFOB: "bg-emerald-500",
-  CMOB: "bg-pink-500",
-  CSOB: "bg-red-500",
-  COOB: "bg-orange-500",
-  CPOB: "bg-slate-400",
-  CHROB: "bg-teal-500",
-  CINOB: "bg-rose-500",
-  CROB: "bg-amber-500",
-  CLOB: "bg-indigo-500",
-  CISOB: "bg-zinc-400",
+  CEOB: "bg-blue-600",
+  CTOB: "bg-violet-600",
+  CFOB: "bg-emerald-600",
+  CMOB: "bg-pink-600",
+  CSOB: "bg-red-600",
+  COOB: "bg-orange-600",
+  CPOB: "bg-slate-600",
+  CHROB: "bg-teal-600",
+  CINOB: "bg-rose-600",
+  CROB: "bg-amber-600",
+  CLOB: "bg-indigo-600",
+  CISOB: "bg-zinc-600",
 };
 
 /** Labels CREDO par couche */
@@ -328,6 +330,7 @@ export function CenterZone() {
       {activeView === "branches" && <BranchPatternsDemo />}
       {activeView === "cahier" && <CahierSmartDemo />}
       {activeView === "scenarios" && <ScenarioHub />}
+      {activeView === "ateliers" && <AtelierHub />}
       {activeView === "detail" && <DepartmentDetailView />}
       {activeView === "live-chat" && <LiveChat />}
       {activeView === "orbit9-detail" && <Orbit9DetailView />}
@@ -421,7 +424,13 @@ export function CenterZone() {
           /* Atelier: LiveChat gauche (discussion bot) + FocusModeLayout droite (fabrication) */
           <>
             <div className="w-[40%] min-w-[280px] h-full overflow-hidden border-r border-gray-200">
-              <LiveChat />
+              <LiveChat splitMode splitTitle={
+                focusData.elementType === "blueprint_section" ? "Blueprint" :
+                focusData.elementType === "document_editor" ? "Document" :
+                focusData.elementType === "tim_code" ? "Code" :
+                focusData.elementType === "diagnostic_flow" ? "Diagnostic" :
+                "Atelier"
+              } />
             </div>
             <div className="flex-1 h-full overflow-hidden">
               <FocusModeLayout focusData={focusData} onClose={clearFocusMode} />

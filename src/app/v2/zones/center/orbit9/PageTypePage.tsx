@@ -27,7 +27,7 @@ import { PageHeader } from "../layouts/PageHeader";
 import { useFrameMaster } from "../../../context/FrameMasterContext";
 
 export const OFFICIAL_BOTS = [
-  { code: "CEOB", name: "CarlOS", role: "CEO", color: "blue", emoji: "👔", subtitle: "Agent AI manufacturier", profil: "/agents/generated/ceo-carlos-profil-v3.png", standby: "/agents/generated/ceo-carlos-standby-v3.png" },
+  { code: "CEOB", name: "CarlOS", role: "CEO", color: "blue", emoji: "👔", subtitle: "CEO — Brain Team", profil: "/agents/generated/ceo-carlos-profil-v3.png", standby: "/agents/generated/ceo-carlos-standby-v3.png" },
   { code: "CTOB", name: "Tim", role: "CTO", color: "violet", emoji: "💻", subtitle: "Technologie & Innovation", profil: "/agents/generated/cto-thierry-profil-v3.png", standby: "/agents/generated/cto-thierry-standby-v3.png" },
   { code: "CFOB", name: "Frank", role: "CFO", color: "emerald", emoji: "💰", subtitle: "Finance & Trésorerie", profil: "/agents/generated/cfo-francois-profil-v3.png", standby: "/agents/generated/cfo-francois-standby-v3.png" },
   { code: "CMOB", name: "Mathilde", role: "CMO", color: "pink", emoji: "📢", subtitle: "Marketing & Croissance", profil: "/agents/generated/cmo-martine-profil-v3.png", standby: "/agents/generated/cmo-martine-standby-v3.png" },

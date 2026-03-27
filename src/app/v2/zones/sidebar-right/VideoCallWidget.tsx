@@ -794,7 +794,7 @@ export function VideoCallWidget() {
               {BOT_NAME[activeBotCode] || botName}
             </div>
             <div className="text-[9px] text-white/70 font-medium tracking-[0.2em] uppercase drop-shadow-md mt-1">
-              {botRole} AI · Usine Bleue
+              {botRole} AI · Brain Team
             </div>
             {isInCall && lastTranscript && (
               <p className="text-[9px] text-white/50 mt-1.5 truncate italic">

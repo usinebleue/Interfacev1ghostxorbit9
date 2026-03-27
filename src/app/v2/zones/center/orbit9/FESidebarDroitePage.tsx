@@ -241,7 +241,7 @@ function SectionLayout() {
                     <Video className="h-8 w-8 text-gray-600" />
                     <div className="absolute bottom-2 left-2 right-2 bg-black/60 rounded px-2 py-1">
                       <div className="text-[8px] text-white font-bold">CarlOS</div>
-                      <div className="text-[7px] text-white/60">CEO — Agent AI</div>
+                      <div className="text-[7px] text-white/60">CEO — Brain Team</div>
                     </div>
                   </div>
                   <div className="flex items-center justify-between px-3 py-1.5 bg-gray-100">

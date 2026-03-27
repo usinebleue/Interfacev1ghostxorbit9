@@ -115,26 +115,33 @@ export function TopBarCockpit({ collapsed = false }: { collapsed?: boolean }) {
   const displayName = userProfile?.nom || currentUser;
   const displayPhoto = userProfile?.photo || "/agents/carl-fugere.jpg";
 
-  // Collapsed — user avatar + instance icon stacked
+  // Collapsed — logo icon + user avatar stacked
   if (collapsed) {
     return (
       <div className="h-12 flex items-center justify-center gap-1.5 px-1 shrink-0" style={{ backgroundColor: UB_BLUE }}>
-        <img src={displayPhoto} alt={displayName} className="w-6 h-6 rounded-full object-cover ring-1 ring-white/30" />
-        {activeBrand && (
-          <div
-            className="w-5 h-5 rounded flex items-center justify-center text-[9px] font-bold text-white shrink-0"
-            style={{ backgroundColor: activeBrand.color }}
-          >
-            {activeBrand.initials}
-          </div>
-        )}
+        <img
+          src="/logo-usine-bleue-icon.png"
+          alt="Usine Bleue"
+          className="h-6 object-contain cursor-pointer"
+          onClick={() => setActiveView("dashboard")}
+        />
       </div>
     );
   }
 
   return (
     <div className="h-12 flex items-center gap-2 px-3 shrink-0" style={{ backgroundColor: UB_BLUE }}>
-      {/* GAUCHE — User Profile (MOI) avec nom complet */}
+      {/* GAUCHE — Logo Usine Bleue */}
+      <img
+        src="/logo-usine-bleue.png"
+        alt="Usine Bleue"
+        className="h-7 object-contain cursor-pointer"
+        onClick={() => setActiveView("dashboard")}
+      />
+
+      <div className="flex-1" />
+
+      {/* DROITE — User Profile (MOI) */}
       <DropdownMenu>
         <DropdownMenuTrigger className="h-8 gap-1.5 px-1.5 text-white/80 hover:text-white hover:bg-white/10 inline-flex items-center rounded-md text-sm outline-none">
           <div className="relative">
@@ -143,7 +150,7 @@ export function TopBarCockpit({ collapsed = false }: { collapsed?: boolean }) {
           </div>
           <span className="text-[11px] text-white/80 max-w-[110px] truncate">{displayName}</span>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-56">
+        <DropdownMenuContent align="end" className="w-56">
           <DropdownMenuLabel className="text-xs text-muted-foreground">Mon compte</DropdownMenuLabel>
           <DropdownMenuItem onClick={() => setActiveView("espace-bureau")} className="flex items-center gap-2 cursor-pointer">
             <User className="h-3.5 w-3.5" />
@@ -204,97 +211,15 @@ export function TopBarCockpit({ collapsed = false }: { collapsed?: boolean }) {
             <Play className="h-3.5 w-3.5" />
             Scenarios de simulation
           </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setActiveView("ateliers")} className="flex items-center gap-2 cursor-pointer">
+            <Play className="h-3.5 w-3.5 text-violet-600" />
+            Ateliers split-screen
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => setAuthenticated(false)} className="flex items-center gap-2 cursor-pointer text-red-600">
             <LogOut className="h-3.5 w-3.5" />
             Se deconnecter
           </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      <div className="flex-1" />
-
-      {/* DROITE — Instance corporative (client) */}
-      <DropdownMenu onOpenChange={(open) => { if (open) loadKits(); }}>
-        <DropdownMenuTrigger className="h-8 gap-2 px-1.5 text-white/70 hover:text-white hover:bg-white/10 inline-flex items-center rounded-md text-sm outline-none">
-          {activeBrand ? (
-            <div
-              className="w-5 h-5 rounded flex items-center justify-center text-[9px] font-bold text-white shrink-0"
-              style={{ backgroundColor: activeBrand.color }}
-            >
-              {activeBrand.initials}
-            </div>
-          ) : (
-            <Building2 className="h-4 w-4" />
-          )}
-          {activeKit && (
-            <span className="text-[11px] text-white/60 max-w-[100px] truncate">
-              {activeKit.nom.replace(/ Inc\.$/, "").replace(/ Ltee$/, "")}
-            </span>
-          )}
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-72">
-          <DropdownMenuLabel className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Building2 className="h-3.5 w-3.5" />
-            Instance entreprise
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          {bigKits.map(kit => {
-            const brand = getKitBrand(kit.slug);
-            const isActive = kit.slug === activeSlug;
-            return (
-              <DropdownMenuItem
-                key={kit.slug}
-                onSelect={() => handleSwitch(kit.slug)}
-                className={cn("flex items-center gap-3 py-2.5 cursor-pointer", isActive && "bg-accent")}
-              >
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white shrink-0 shadow-sm"
-                  style={{ backgroundColor: brand.color }}
-                >
-                  {brand.initials}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium truncate">{kit.nom}</div>
-                  <div className="text-[11px] text-muted-foreground truncate">
-                    {kit.ticker ? `${kit.ticker} — ` : ""}{kit.secteur ? kit.secteur.split(" / ")[0] : kit.localisation}
-                  </div>
-                </div>
-                {isActive && <Check className="h-4 w-4 text-green-600 shrink-0" />}
-              </DropdownMenuItem>
-            );
-          })}
-          {otherKits.length > 0 && (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Users className="h-3.5 w-3.5" />
-                PME & tests
-              </DropdownMenuLabel>
-              {otherKits.map(kit => {
-                const brand = getKitBrand(kit.slug);
-                const isActive = kit.slug === activeSlug;
-                return (
-                  <DropdownMenuItem
-                    key={kit.slug}
-                    onSelect={() => handleSwitch(kit.slug)}
-                    className={cn("flex items-center gap-3 py-2 cursor-pointer", isActive && "bg-accent")}
-                  >
-                    <div
-                      className="w-6 h-6 rounded flex items-center justify-center text-[9px] font-bold text-white shrink-0"
-                      style={{ backgroundColor: brand.color }}
-                    >
-                      {brand.initials}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm truncate">{kit.nom}</div>
-                    </div>
-                    {isActive && <Check className="h-3.5 w-3.5 text-green-600 shrink-0" />}
-                  </DropdownMenuItem>
-                );
-              })}
-            </>
-          )}
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
@@ -322,6 +247,38 @@ export function TopBarChat() {
 export function TopBarContent() {
   const { activeView, activeBotCode, setActiveView, navigateToDepartment } = useFrameMaster();
 
+  const [kits, setKits] = useState<KitInfo[]>([]);
+  const [activeSlug, setActiveSlug] = useState<string | null>(null);
+  const [switching, setSwitching] = useState(false);
+
+  const loadKits = useCallback(async () => {
+    try {
+      const data = await api.getActiveKit();
+      setKits(data.kits_info || []);
+      setActiveSlug(data.kit);
+    } catch { /* silently fail */ }
+  }, []);
+
+  useEffect(() => { loadKits(); }, [loadKits]);
+
+  const handleSwitch = async (slug: string) => {
+    if (slug === activeSlug || switching) return;
+    setSwitching(true);
+    try {
+      await api.setKit(slug);
+      setActiveSlug(slug);
+      window.location.reload();
+    } catch { /* silently fail */ }
+    finally { setSwitching(false); }
+  };
+
+  const activeKit = kits.find(k => k.slug === activeSlug);
+  const activeBrand = activeSlug ? getKitBrand(activeSlug) : null;
+  const realKits = kits.filter(k => !k.slug.startsWith("test"));
+  const bigSlugs = ["couche-tard", "saputo", "wsp-global", "usine-bleue", "premier-tech", "consignaction", "fonds-ftq", "investissement-quebec"];
+  const bigKits = realKits.filter(k => bigSlugs.includes(k.slug));
+  const otherKits = realKits.filter(k => !bigSlugs.includes(k.slug));
+
   const NAV_ITEMS = [
     { id: "departement", label: "Mon Departement", icon: Building2,
       onClick: () => navigateToDepartment("CEOB"),
@@ -338,7 +295,8 @@ export function TopBarContent() {
   ];
 
   return (
-    <div className="h-12 flex items-center justify-center px-2 shrink-0 relative z-10" style={{ backgroundColor: UB_BLUE }}>
+    <div className="h-12 flex items-center px-2 shrink-0 relative z-10" style={{ backgroundColor: UB_BLUE }}>
+      <div className="flex-1" />
       <div className="flex items-center gap-0.5">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
@@ -360,6 +318,91 @@ export function TopBarContent() {
             </Button>
           );
         })}
+      </div>
+      <div className="flex-1 flex justify-end">
+        {/* Instance corporative — far right */}
+        <DropdownMenu onOpenChange={(open) => { if (open) loadKits(); }}>
+          <DropdownMenuTrigger className="h-8 gap-2 px-1.5 text-white/70 hover:text-white hover:bg-white/10 inline-flex items-center rounded-md text-sm outline-none">
+            {activeBrand ? (
+              <div
+                className="w-5 h-5 rounded flex items-center justify-center text-[9px] font-bold text-white shrink-0"
+                style={{ backgroundColor: activeBrand.color }}
+              >
+                {activeBrand.initials}
+              </div>
+            ) : (
+              <Building2 className="h-4 w-4" />
+            )}
+            {activeKit && (
+              <span className="text-[11px] text-white/60 max-w-[100px] truncate">
+                {activeKit.nom.replace(/ Inc\.$/, "").replace(/ Ltee$/, "")}
+              </span>
+            )}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-72">
+            <DropdownMenuLabel className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Building2 className="h-3.5 w-3.5" />
+              Instance entreprise
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {bigKits.map(kit => {
+              const brand = getKitBrand(kit.slug);
+              const isActive = kit.slug === activeSlug;
+              return (
+                <DropdownMenuItem
+                  key={kit.slug}
+                  onSelect={() => handleSwitch(kit.slug)}
+                  className={cn("flex items-center gap-3 py-2.5 cursor-pointer", isActive && "bg-accent")}
+                >
+                  <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white shrink-0 shadow-sm"
+                    style={{ backgroundColor: brand.color }}
+                  >
+                    {brand.initials}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium truncate">{kit.nom}</div>
+                    <div className="text-[11px] text-muted-foreground truncate">
+                      {kit.ticker ? `${kit.ticker} — ` : ""}{kit.secteur ? kit.secteur.split(" / ")[0] : kit.localisation}
+                    </div>
+                  </div>
+                  {isActive && <Check className="h-4 w-4 text-green-600 shrink-0" />}
+                </DropdownMenuItem>
+              );
+            })}
+            {otherKits.length > 0 && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Users className="h-3.5 w-3.5" />
+                  PME & tests
+                </DropdownMenuLabel>
+                {otherKits.map(kit => {
+                  const brand = getKitBrand(kit.slug);
+                  const isActive = kit.slug === activeSlug;
+                  return (
+                    <DropdownMenuItem
+                      key={kit.slug}
+                      onSelect={() => handleSwitch(kit.slug)}
+                      className={cn("flex items-center gap-3 py-2 cursor-pointer", isActive && "bg-accent")}
+                    >
+                      <div
+                        className="w-6 h-6 rounded flex items-center justify-center text-[9px] font-bold text-white shrink-0"
+                        style={{ backgroundColor: brand.color }}
+                      >
+                        {brand.initials}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm truncate">{kit.nom}</div>
+                      </div>
+                      {isActive && <Check className="h-3.5 w-3.5 text-green-600 shrink-0" />}
+                    </DropdownMenuItem>
+                  );
+                })}
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );

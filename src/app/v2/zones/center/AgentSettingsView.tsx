@@ -376,7 +376,7 @@ export function AgentSettingsView() {
               <div className="flex-1 min-w-0">
                 <div className="text-xl font-extrabold text-white drop-shadow-lg">{botName}</div>
                 <div className="text-sm text-white/80 font-medium">{botRole} — {botDept}</div>
-                <div className="text-xs text-white/60 mt-0.5">{BOT_SUBTITLE[activeBotCode] || "Agent AI Usine Bleue"}</div>
+                <div className="text-xs text-white/60 mt-0.5">{BOT_SUBTITLE[activeBotCode] || "Brain Team"}</div>
               </div>
               <div className="flex gap-1.5 shrink-0">
                 <span className="text-[9px] font-semibold text-white/90 bg-white/20 backdrop-blur-sm px-2.5 py-1 rounded-full">Trisociation active</span>

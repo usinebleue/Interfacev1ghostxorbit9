@@ -71,7 +71,7 @@ import { CarlOSPresence } from "../center/CarlOSPresence";
 import { SectionFrame } from "./shared/SectionFrame";
 import { DiscussionView } from "./DiscussionView";
 import { CatalogueUnifie } from "./shared/CatalogueUnifie";
-import { DocumentsView } from "./shared/DocumentsView";
+import { DocumentsUnifie } from "./shared/DocumentsUnifie";
 import { HierarchieGHML } from "./shared/HierarchieGHML";
 import type { TabDef } from "./shared/section-types";
 import type { DocForgeTemplateV2, DocForgeLibrary, DriveBrowseItem, UnifiedTemplate } from "../../api/types";
@@ -1546,178 +1546,295 @@ function TachesPage() {
 
 export function AgendaPage() {
   const [meetings, setMeetings] = useState<any[]>([]);
+  const [calendarEvents, setCalendarEvents] = useState<any[]>([]);
   const [loadingMeetings, setLoadingMeetings] = useState(true);
-  const [agendaViewMode, setAgendaViewMode] = useState<"cards" | "list" | "spreadsheet">("cards");
-  const [agendaSearch, setAgendaSearch] = useState("");
+  const [loadingCalendar, setLoadingCalendar] = useState(true);
+  const [agendaViewMode, setAgendaViewMode] = useState<"jour" | "semaine" | "mois">("semaine");
+  const [currentDate, setCurrentDate] = useState(new Date());
 
+  // Helper: YYYY-MM-DD
+  const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+  // Compute visible range based on view mode + currentDate
+  const getWeekStartFn = (d: Date) => {
+    const s = new Date(d); const day = s.getDay();
+    s.setDate(s.getDate() + (day === 0 ? -6 : 1 - day));
+    s.setHours(0, 0, 0, 0); return s;
+  };
+  const visibleRange = useMemo(() => {
+    if (agendaViewMode === "jour") {
+      return { start: fmt(currentDate), end: fmt(currentDate) };
+    } else if (agendaViewMode === "semaine") {
+      const ws = getWeekStartFn(currentDate);
+      const we = new Date(ws.getTime() + 6 * 86400000);
+      return { start: fmt(ws), end: fmt(we) };
+    } else {
+      const first = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      const last = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+      return { start: fmt(first), end: fmt(last) };
+    }
+  }, [agendaViewMode, currentDate]);
+
+  // Fetch meetings on mount
   useEffect(() => {
-    api.meetingList().then((r) => {
-      setMeetings(Array.isArray(r?.meetings) ? r.meetings : []);
-    }).catch(() => {}).finally(() => setLoadingMeetings(false));
+    api.meetingList().then((r) => setMeetings(Array.isArray(r?.meetings) ? r.meetings : []))
+      .catch(() => {}).finally(() => setLoadingMeetings(false));
   }, []);
 
-  const STATUS_COLORS: Record<string, string> = {
-    pending: "bg-amber-100 text-amber-700",
-    active: "bg-green-100 text-green-700",
-    ended: "bg-gray-100 text-gray-600",
-    scheduled: "bg-blue-100 text-blue-700",
+  // Fetch calendar events for visible range
+  useEffect(() => {
+    setLoadingCalendar(true);
+    api.calendarRange(visibleRange.start, visibleRange.end).then((r) => {
+      const evts = Array.isArray(r?.events) ? r.events : [];
+      setCalendarEvents(evts);
+    }).catch(() => {
+      setCalendarEvents([]);
+    }).finally(() => setLoadingCalendar(false));
+  }, [visibleRange.start, visibleRange.end]);
+
+  const BOT_GRADIENT: Record<string, string> = {
+    CEOB: "bg-blue-500", CTOB: "bg-violet-500", CFOB: "bg-emerald-500", CMOB: "bg-pink-500",
+    CSOB: "bg-red-500", COOB: "bg-orange-500", CPOB: "bg-slate-500", CHROB: "bg-teal-500",
+    CINOB: "bg-rose-500", CROB: "bg-amber-500", CLOB: "bg-indigo-500", CISOB: "bg-zinc-500",
   };
 
-  const STATUS_GRADIENTS: Record<string, string> = {
-    pending: "from-amber-500 to-amber-400",
-    active: "from-green-600 to-green-500",
-    ended: "from-gray-500 to-gray-400",
-    scheduled: "from-blue-600 to-blue-500",
-  };
-
+  // Merge all events into unified format
   const allEvents = useMemo(() => {
-    const realEvents = meetings.map((m: any) => ({
-      id: m.slug || m.id,
-      titre: m.title || m.slug,
-      heure: m.created_at ? new Date(m.created_at).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" }) : "",
-      date: m.created_at ? new Date(m.created_at) : new Date(),
-      type: m.status || "pending",
-      bot: m.bot_code || "CEOB",
-      duree: m.meeting_type || "meeting",
-    }));
-    if (realEvents.length === 0) {
-      const today = new Date();
-      return [
-        { id: "demo-1", titre: "Standup equipe dev", heure: "09:00", date: today, type: "scheduled", bot: "CTOB", duree: "30 min" },
-        { id: "demo-2", titre: "Pipeline ventes — point hebdo", heure: "14:00", date: today, type: "scheduled", bot: "CROB", duree: "45 min" },
-        { id: "demo-3", titre: "Comite direction", heure: "09:00", date: new Date(today.getTime() + 86400000), type: "scheduled", bot: "CEOB", duree: "1h30" },
-      ];
-    }
-    return realEvents;
-  }, [meetings]);
+    const events: { id: string; titre: string; heure: string; hourNum: number; date: Date; bot: string; duree: string; source: string }[] = [];
 
-  // Filter by search
-  const filteredEvents = useMemo(() => {
-    if (!agendaSearch.trim()) return allEvents;
-    const q = agendaSearch.toLowerCase();
-    return allEvents.filter(ev => ev.titre.toLowerCase().includes(q) || ev.bot.toLowerCase().includes(q));
-  }, [allEvents, agendaSearch]);
+    meetings.forEach((m: any) => {
+      const d = m.created_at ? new Date(m.created_at) : new Date();
+      const h = d.toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" });
+      events.push({ id: m.slug || m.id, titre: m.title || m.slug, heure: h, hourNum: d.getHours(), date: d, bot: m.bot_code || "CEOB", duree: m.meeting_type || "meeting", source: "meeting" });
+    });
 
-  const JOURS_LABELS = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
+    calendarEvents.forEach((c: any, idx: number) => {
+      if (typeof c === "string") {
+        // Legacy format: "HH:MM-HH:MM Titre"
+        const match = c.match(/^(\d{2}):(\d{2})-(\d{2}):(\d{2})\s+(.+)$/);
+        if (match) {
+          const hourStart = parseInt(match[1]);
+          const minuteStart = match[2];
+          const hourEnd = parseInt(match[3]);
+          const minuteEnd = match[4];
+          const titre = match[5];
+          const dureeMin = (hourEnd * 60 + parseInt(minuteEnd)) - (hourStart * 60 + parseInt(minuteStart));
+          const d = new Date(); d.setHours(hourStart, parseInt(minuteStart), 0, 0);
+          events.push({ id: `gcal-${idx}`, titre, heure: `${match[1]}:${minuteStart}`, hourNum: hourStart, date: d, bot: "CEOB", duree: dureeMin > 0 ? `${dureeMin} min` : "", source: "google" });
+        }
+      } else {
+        // Range format: {summary, start, end, date, formatted}
+        const d = c.start ? new Date(c.start) : (c.date ? new Date(c.date + "T00:00:00") : new Date());
+        const h = d.toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" });
+        const endD = c.end ? new Date(c.end) : null;
+        const dureeMin = endD ? Math.round((endD.getTime() - d.getTime()) / 60000) : 0;
+        events.push({ id: `gcal-${idx}`, titre: c.summary || "Evenement", heure: h, hourNum: d.getHours(), date: d, bot: "CEOB", duree: dureeMin > 0 ? `${dureeMin} min` : "", source: "google" });
+      }
+    });
+
+    return events;
+  }, [meetings, calendarEvents]);
+
+  const JOURS = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
+  const MOIS = ["Janvier", "Fevrier", "Mars", "Avril", "Mai", "Juin", "Juillet", "Aout", "Septembre", "Octobre", "Novembre", "Decembre"];
+  const HEURES = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+
+  // Navigation helpers
+  const navPrev = () => {
+    const d = new Date(currentDate);
+    if (agendaViewMode === "jour") d.setDate(d.getDate() - 1);
+    else if (agendaViewMode === "semaine") d.setDate(d.getDate() - 7);
+    else d.setMonth(d.getMonth() - 1);
+    setCurrentDate(d);
+  };
+  const navNext = () => {
+    const d = new Date(currentDate);
+    if (agendaViewMode === "jour") d.setDate(d.getDate() + 1);
+    else if (agendaViewMode === "semaine") d.setDate(d.getDate() + 7);
+    else d.setMonth(d.getMonth() + 1);
+    setCurrentDate(d);
+  };
+  const goToday = () => setCurrentDate(new Date());
+
+  const getWeekStart = getWeekStartFn;
+
+  const isSameDay = (a: Date, b: Date) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  const isToday = (d: Date) => isSameDay(d, new Date());
+
+  // Events for a specific day
+  const eventsForDay = (day: Date) => allEvents.filter(e => isSameDay(e.date, day));
+
+  // Title for current view
+  const viewTitle = agendaViewMode === "jour"
+    ? `${JOURS[currentDate.getDay()]} ${currentDate.getDate()} ${MOIS[currentDate.getMonth()]} ${currentDate.getFullYear()}`
+    : agendaViewMode === "semaine"
+    ? (() => { const ws = getWeekStart(currentDate); const we = new Date(ws.getTime() + 6 * 86400000); return `${ws.getDate()} - ${we.getDate()} ${MOIS[we.getMonth()]} ${we.getFullYear()}`; })()
+    : `${MOIS[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+
+  // Render an event block (reused across views)
+  const EventBlock = ({ ev, compact = false }: { ev: typeof allEvents[0]; compact?: boolean }) => (
+    <div className={cn("rounded-md px-2 py-1.5 text-white text-[9px] font-bold truncate cursor-pointer hover:opacity-80 transition-opacity shadow-sm", BOT_GRADIENT[ev.bot] || "bg-blue-500")}
+      title={`${ev.titre} — ${ev.heure} (${ev.duree})`}>
+      {compact ? ev.titre : <><span className="opacity-80">{ev.heure}</span> {ev.titre}</>}
+      {ev.duree && !compact && <span className="opacity-70 ml-1">({ev.duree})</span>}
+    </div>
+  );
 
   return (
     <div className="space-y-3">
-      {/* TOOLBAR — pattern chantier unifie */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <div className="relative flex-1 min-w-[150px]">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
-          <input type="text" placeholder="Rechercher..." value={agendaSearch} onChange={e => setAgendaSearch(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 bg-white" />
+      {/* HEADER GRADIENT */}
+      <div className="bg-gradient-to-r from-cyan-600 to-cyan-500 px-4 py-3 rounded-xl flex items-center gap-3">
+        <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-white/20">
+          <CalendarDays className="h-5 w-5 text-white" />
         </div>
-        <button onClick={() => api.meetingList().then((r) => setMeetings(Array.isArray(r?.meetings) ? r.meetings : [])).catch(() => {})}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer shrink-0">
-          Rafraichir
-        </button>
+        <div className="flex-1">
+          <h2 className="text-sm font-bold text-white">Agenda</h2>
+          <p className="text-xs text-white/70">{allEvents.length} evenement{allEvents.length > 1 ? "s" : ""}</p>
+        </div>
+      </div>
+
+      {/* TOOLBAR — navigation date + vue toggle */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {/* Date nav */}
+        <button onClick={navPrev} className="px-2 py-1.5 text-xs font-bold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">&lt;</button>
+        <button onClick={goToday} className="px-2.5 py-1.5 text-xs font-bold text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 cursor-pointer">Aujourd'hui</button>
+        <button onClick={navNext} className="px-2 py-1.5 text-xs font-bold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">&gt;</button>
+        <span className="text-xs font-bold text-gray-700 flex-1">{viewTitle}</span>
+
+        {/* View mode toggle — Jour / Semaine / Mois */}
         <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden shrink-0">
-          {([
-            { mode: "cards" as const, icon: LayoutGrid, title: "Cartes" },
-            { mode: "list" as const, icon: List, title: "Liste" },
-            { mode: "spreadsheet" as const, icon: Table2, title: "Tableur" },
-          ]).map(({ mode, icon: MIcon, title }) => (
+          {(["jour", "semaine", "mois"] as const).map(mode => (
             <button key={mode} onClick={() => setAgendaViewMode(mode)}
-              className={cn("p-1.5 transition-colors cursor-pointer", agendaViewMode === mode ? "bg-blue-600 text-white" : "bg-white text-gray-400 hover:text-gray-600")}
-              title={title}>
-              <MIcon className="h-3.5 w-3.5" />
+              className={cn("px-3 py-1.5 text-[9px] font-bold transition-colors cursor-pointer capitalize",
+                agendaViewMode === mode ? "bg-blue-600 text-white" : "bg-white text-gray-500 hover:text-gray-700")}>
+              {mode}
             </button>
           ))}
         </div>
-        <span className="text-[9px] font-bold text-gray-400">{filteredEvents.length} items</span>
       </div>
 
-      {loadingMeetings ? <LoadingSpinner /> : filteredEvents.length === 0 ? (
-        <EmptyState icon={CalendarDays} text={agendaSearch ? `Aucun resultat pour "${agendaSearch}"` : "Aucun evenement"} sub="Les meetings apparaitront ici" />
-      ) : null}
+      {(loadingMeetings || loadingCalendar) && <LoadingSpinner />}
 
-      {/* CARDS VIEW */}
-      {agendaViewMode === "cards" && !loadingMeetings && filteredEvents.length > 0 && (
-        <div className="grid grid-cols-2 gap-3">
-          {filteredEvents.map((ev) => {
-            const gradient = STATUS_GRADIENTS[ev.type] || "from-blue-600 to-blue-500";
+      {/* Aucun evenement */}
+      {!loadingMeetings && !loadingCalendar && allEvents.length === 0 && (
+        <div className="text-center py-8 text-gray-400 text-xs">Aucun evenement aujourd'hui</div>
+      )}
+
+      {/* ══ VUE JOUR — grille horaire verticale ══ */}
+      {!loadingMeetings && !loadingCalendar && agendaViewMode === "jour" && (
+        <div className="border border-gray-200 rounded-lg overflow-hidden">
+          {HEURES.map(h => {
+            const dayEvents = eventsForDay(currentDate).filter(e => e.hourNum === h);
             return (
-              <Card key={ev.id} className="p-0 overflow-hidden hover:shadow-md transition-shadow cursor-pointer group">
-                <div className={cn("bg-gradient-to-r px-4 py-3 flex items-center gap-3", gradient)}>
-                  {BOT_AVATAR[ev.bot] ? (
-                    <img src={BOT_AVATAR[ev.bot]} alt="" className="w-9 h-9 rounded-lg border border-white/30 shrink-0" />
-                  ) : (
-                    <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-white/20 shrink-0">
-                      <CalendarDays className="h-5 w-5 text-white" />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <span className="text-xs font-bold text-white block truncate">{ev.titre}</span>
-                  </div>
-                  <span className="text-[8px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-white/20 text-white/90">{ev.heure}</span>
-                  <ChevronRight className="h-4 w-4 text-white/50 group-hover:text-white transition-colors shrink-0" />
+              <div key={h} className="flex border-b border-gray-100 min-h-[40px]">
+                <div className="w-14 shrink-0 text-[9px] font-bold text-gray-400 text-right pr-2 py-2 bg-gray-50 border-r border-gray-200">
+                  {String(h).padStart(2, "0")}:00
                 </div>
-                <div className="px-4 py-3">
-                  <div className="flex items-center gap-2 text-[9px]">
-                    <span className={cn("px-1.5 py-0.5 rounded font-bold", STATUS_COLORS[ev.type] || "bg-gray-100 text-gray-600")}>{ev.type}</span>
-                    <span className="text-gray-400">{ev.duree}</span>
-                    <span className="text-gray-400">{JOURS_LABELS[ev.date.getDay()]} {ev.date.getDate()}</span>
-                  </div>
+                <div className="flex-1 px-2 py-1 space-y-0.5">
+                  {dayEvents.map(ev => <EventBlock key={ev.id} ev={ev} />)}
                 </div>
-              </Card>
+              </div>
             );
           })}
         </div>
       )}
 
-      {/* LIST VIEW */}
-      {agendaViewMode === "list" && !loadingMeetings && filteredEvents.length > 0 && (
-        <div className="space-y-1">
-          {filteredEvents.map((ev) => (
-            <div key={ev.id} className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer">
-              <span className={cn("w-2 h-2 rounded-full shrink-0",
-                ev.type === "active" ? "bg-green-500" : ev.type === "scheduled" ? "bg-blue-500" : ev.type === "pending" ? "bg-amber-400" : "bg-gray-300")} />
-              {BOT_AVATAR[ev.bot] ? (
-                <img src={BOT_AVATAR[ev.bot]} alt="" className="w-4 h-4 rounded-full shrink-0" />
-              ) : (
-                <div className="w-4 h-4 rounded-full bg-gray-200 shrink-0" />
-              )}
-              <span className="text-[9px] font-bold flex-1 truncate text-gray-800">{ev.titre}</span>
-              <span className="text-[8px] text-gray-400">{ev.heure}</span>
-              <span className={cn("text-[9px] px-1.5 py-0.5 rounded font-medium", STATUS_COLORS[ev.type] || "bg-gray-100 text-gray-600")}>{ev.type}</span>
-              <span className="text-[8px] text-gray-400">{ev.duree}</span>
-              <span className="text-[8px] text-gray-400">{JOURS_LABELS[ev.date.getDay()]} {ev.date.getDate()}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* SPREADSHEET VIEW */}
-      {agendaViewMode === "spreadsheet" && !loadingMeetings && filteredEvents.length > 0 && (
-        <div className="border border-gray-200 rounded-lg overflow-hidden overflow-x-auto">
-          <table className="w-full text-[9px] table-fixed">
-            <thead>
-              <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="text-left px-3 py-2 font-bold text-gray-500 uppercase text-[9px] w-[35%]">Titre</th>
-                <th className="text-left px-2 py-2 font-bold text-gray-500 uppercase text-[9px] w-[10%]">Heure</th>
-                <th className="text-left px-2 py-2 font-bold text-gray-500 uppercase text-[9px] w-[12%]">Bot</th>
-                <th className="text-left px-2 py-2 font-bold text-gray-500 uppercase text-[9px] w-[12%]">Statut</th>
-                <th className="text-left px-2 py-2 font-bold text-gray-500 uppercase text-[9px] w-[12%]">Duree</th>
-                <th className="text-left px-2 py-2 font-bold text-gray-500 uppercase text-[9px] w-[12%]">Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredEvents.map((ev) => (
-                <tr key={ev.id} className="border-b border-gray-100 hover:bg-blue-50/30 cursor-pointer transition-colors">
-                  <td className="px-3 py-2 font-medium text-gray-800 truncate">{ev.titre}</td>
-                  <td className="px-2 py-2 text-gray-500">{ev.heure}</td>
-                  <td className="px-2 py-2"><span className="px-1.5 py-0.5 rounded bg-gray-50 text-gray-600 border border-gray-200 font-medium">{ev.bot}</span></td>
-                  <td className="px-2 py-2"><span className={cn("px-1.5 py-0.5 rounded font-bold", STATUS_COLORS[ev.type] || "bg-gray-100 text-gray-600")}>{ev.type}</span></td>
-                  <td className="px-2 py-2 text-gray-500">{ev.duree}</td>
-                  <td className="px-2 py-2 text-gray-400">{JOURS_LABELS[ev.date.getDay()]} {ev.date.getDate()}</td>
-                </tr>
+      {/* ══ VUE SEMAINE — 7 colonnes avec heures ══ */}
+      {!loadingMeetings && !loadingCalendar && agendaViewMode === "semaine" && (() => {
+        const weekStart = getWeekStart(currentDate);
+        const weekDays = Array.from({ length: 7 }, (_, i) => new Date(weekStart.getTime() + i * 86400000));
+        return (
+          <div className="border border-gray-200 rounded-lg overflow-hidden">
+            {/* Header row — jours */}
+            <div className="flex border-b border-gray-200 bg-gray-50">
+              <div className="w-14 shrink-0 border-r border-gray-200" />
+              {weekDays.map((d, i) => (
+                <div key={i} className={cn("flex-1 text-center py-2 border-r border-gray-100 last:border-r-0",
+                  isToday(d) && "bg-blue-50")}>
+                  <div className="text-[9px] font-bold text-gray-500">{JOURS[(i + 1) % 7]}</div>
+                  <div className={cn("text-xs font-bold", isToday(d) ? "text-blue-600" : "text-gray-700")}>{d.getDate()}</div>
+                </div>
               ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+            </div>
+            {/* Hour rows */}
+            {HEURES.map(h => (
+              <div key={h} className="flex border-b border-gray-100 min-h-[36px]">
+                <div className="w-14 shrink-0 text-[9px] font-bold text-gray-400 text-right pr-2 py-1 bg-gray-50 border-r border-gray-200">
+                  {String(h).padStart(2, "0")}:00
+                </div>
+                {weekDays.map((d, i) => {
+                  const dayEv = eventsForDay(d).filter(e => e.hourNum === h);
+                  return (
+                    <div key={i} className={cn("flex-1 px-0.5 py-0.5 border-r border-gray-100 last:border-r-0 space-y-0.5",
+                      isToday(d) && "bg-blue-50/30")}>
+                      {dayEv.map(ev => <EventBlock key={ev.id} ev={ev} compact />)}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        );
+      })()}
+
+      {/* ══ VUE MOIS — grille calendrier classique ══ */}
+      {!loadingMeetings && !loadingCalendar && agendaViewMode === "mois" && (() => {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const startOffset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1; // Lundi = 0
+        const totalDays = lastDay.getDate();
+        const weeks: Date[][] = [];
+        let week: Date[] = [];
+        // Fill empty slots before month start
+        for (let i = 0; i < startOffset; i++) {
+          const d = new Date(year, month, 1 - startOffset + i);
+          week.push(d);
+        }
+        for (let d = 1; d <= totalDays; d++) {
+          week.push(new Date(year, month, d));
+          if (week.length === 7) { weeks.push(week); week = []; }
+        }
+        // Fill remaining
+        if (week.length > 0) {
+          let nextDay = 1;
+          while (week.length < 7) { week.push(new Date(year, month + 1, nextDay++)); }
+          weeks.push(week);
+        }
+        return (
+          <div className="border border-gray-200 rounded-lg overflow-hidden">
+            {/* Header — jours de la semaine */}
+            <div className="grid grid-cols-7 bg-gray-50 border-b border-gray-200">
+              {["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"].map(j => (
+                <div key={j} className="text-center py-2 text-[9px] font-bold text-gray-500">{j}</div>
+              ))}
+            </div>
+            {/* Weeks */}
+            {weeks.map((w, wi) => (
+              <div key={wi} className="grid grid-cols-7 border-b border-gray-100 last:border-b-0">
+                {w.map((d, di) => {
+                  const inMonth = d.getMonth() === month;
+                  const dayEv = eventsForDay(d);
+                  return (
+                    <div key={di} className={cn("min-h-[60px] p-1 border-r border-gray-100 last:border-r-0",
+                      !inMonth && "bg-gray-50/50", isToday(d) && "bg-blue-50")}>
+                      <div className={cn("text-[9px] font-bold mb-0.5",
+                        isToday(d) ? "text-blue-600" : inMonth ? "text-gray-700" : "text-gray-300")}>
+                        {d.getDate()}
+                      </div>
+                      <div className="space-y-0.5">
+                        {dayEv.slice(0, 3).map(ev => <EventBlock key={ev.id} ev={ev} compact />)}
+                        {dayEv.length > 3 && <div className="text-[8px] text-gray-400 font-medium">+{dayEv.length - 3} autres</div>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        );
+      })()}
     </div>
   );
 }
@@ -2696,7 +2813,7 @@ export function MonBureauView() {
       case "discussions":
         return <DiscussionView />;
       case "documents":
-        return <DocumentsView />;
+        return <DocumentsUnifie />;
       case "notifications":
         return <NotificationsPage />;
       case "outils":

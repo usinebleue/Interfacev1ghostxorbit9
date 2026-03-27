@@ -3,7 +3,7 @@
  * Sprint A — Frame Master V2
  */
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { api } from "./client";
 import type { StreamDoneEvent } from "./client";
 import type {
@@ -28,7 +28,10 @@ import type {
   PlaneTache,
   PlaneTacheDetail,
   PlaneTacheCreate,
+  Discussion,
+  DiscussionTypeId,
 } from "./types";
+import { classifyThread } from "./types";
 
 // Options contextuelles par defaut — arbre de developpement de la pensee (wireframe p.3)
 // Options hardcodées RETIRÉES — le backend drive les suggestions via msg.options
@@ -1816,6 +1819,42 @@ export function useDiscussions(status?: string) {
   }, [refresh]);
 
   return { discussions, loading, refresh, create, promote, archive };
+}
+
+// ══════════════════════════════════════════════
+// useMergedDiscussions — fusionne threads (localStorage) + discussions (DB)
+// ══════════════════════════════════════════════
+
+export interface MergedDiscussion {
+  thread: Thread;
+  dbDiscussion: Discussion | null;
+  discussionType: DiscussionTypeId;
+  chantier_id: number | null;
+  projet_id: number | null;
+  mission_id: number | null;
+}
+
+export function useMergedDiscussions(threads: Thread[]) {
+  const { discussions, loading, archive } = useDiscussions();
+
+  const merged = useMemo(() => {
+    const dbMap = new Map<string, Discussion>();
+    discussions.forEach(d => dbMap.set(d.external_id, d));
+
+    return threads.map((thread): MergedDiscussion => {
+      const db = dbMap.get(thread.id) || null;
+      return {
+        thread,
+        dbDiscussion: db,
+        discussionType: classifyThread(thread),
+        chantier_id: db?.contexte?.chantier_id as number | null ?? null,
+        projet_id: db?.contexte?.projet_id as number | null ?? null,
+        mission_id: db?.mission_id ?? null,
+      };
+    });
+  }, [threads, discussions]);
+
+  return { merged, loading, archive };
 }
 
 // ══════════════════════════════════════════════

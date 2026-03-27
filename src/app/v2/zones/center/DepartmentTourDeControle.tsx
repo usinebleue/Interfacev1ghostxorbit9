@@ -6,12 +6,12 @@
  */
 
 import { useState, useEffect, useMemo } from "react";
-import { Settings, Stethoscope, Flame, ListChecks, Rocket, Bot, Bell, Layers, Inbox, Brain, Search, SortAsc, SortDesc, ChevronDown, Plus, LayoutGrid, List, Columns, Table2, Building2, Target, Shield, TrendingUp, DollarSign, Compass } from "lucide-react";
+import { Settings, Stethoscope, Flame, ListChecks, Rocket, Bot, Layers, Inbox, Brain, Search, SortAsc, SortDesc, ChevronDown, Plus, LayoutGrid, List, Columns, Table2, Building2, Target, Shield, TrendingUp, DollarSign, Compass } from "lucide-react";
 import { Card } from "../../../components/ui/card";
 import { cn } from "../../../components/ui/utils";
 import { useFrameMaster } from "../../context/FrameMasterContext";
 import { useCanvasActions } from "../../context/CanvasActionContext";
-import { BOT_SUBTITLE, REFLECTION_MODES } from "../../api/types";
+import { BOT_SUBTITLE } from "../../api/types";
 import { api } from "../../api/client";
 import { useTaches, useBureau, useChantiers, useProjets } from "../../api/hooks";
 import type { Mission, DiagnosticCatalogue, TemplateDocumentaire, PlaybookSummary } from "../../api/types";
@@ -22,10 +22,11 @@ import type { TabDef } from "./shared/section-types";
 import { HierarchieGHML } from "./shared/HierarchieGHML";
 // CatalogueUnifie retire — contenu redistribue dans Chantiers (playbooks), Documents (templates), Sante (diagnostics)
 import { DiscussionView } from "./DiscussionView";
+import type { NavMode } from "./shared/NavigationToolbar";
 // DocumentsView retire — remplace par DocumentsUnifie (meme pattern HierarchieTab)
 import { SanteGlobaleView } from "./SanteGlobaleView";
 import { TabSommaire, TabObjectifs, HierarchieTab } from "./BlueprintView";
-import { AgendaPage, NotificationsPage } from "./MonBureauView";
+import { AgendaPage } from "./MonBureauView";
 import { DocumentsUnifie } from "./shared/DocumentsUnifie";
 import { BlueprintDepartement } from "./blueprint/BlueprintDepartement";
 
@@ -114,7 +115,7 @@ import {
   CalendarDays, Newspaper, Scale, ShieldCheck,
   Gauge, LineChart, Package, ClipboardList,
   GraduationCap, HeartPulse, AlertTriangle, Lock,
-  Briefcase, Globe, Zap, Eye, MessageSquare, Sparkles, Upload,
+  Briefcase, Globe, Zap, Eye, MessageSquare, Sparkles, Upload, Activity,
 } from "lucide-react";
 
 /* ============ CONFIGS PAR DEPARTEMENT — 10 blocs chacun ============ */
@@ -473,14 +474,15 @@ function TemplateGrid({ templates, onFocus, viewMode, setViewMode }: {
   }
 
   return (
-    <div className="space-y-2">
-      {/* Toolbar compact */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <div className="relative flex-1 min-w-[180px]">
+    <div className="space-y-3">
+      {/* Toolbar — meme layout que DocumentsUnifie */}
+      <div className="flex items-center gap-2">
+        <div className="flex-1 relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
           <input type="text" placeholder="Rechercher templates..." value={search} onChange={e => setSearch(e.target.value)}
             className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 bg-white" />
         </div>
+        <span className="text-[9px] font-bold text-gray-500 whitespace-nowrap">{filtered.length} items</span>
         {/* Sort */}
         <div className="relative">
           <button onClick={() => setShowSort(!showSort)}
@@ -499,53 +501,48 @@ function TemplateGrid({ templates, onFocus, viewMode, setViewMode }: {
             </div>
           )}
         </div>
-        {/* Dept filter chips */}
-        <div className="flex items-center gap-1 flex-wrap">
-          <button onClick={() => setDeptFilter(null)}
-            className={cn("px-2 py-1 text-[9px] font-bold rounded-full transition-colors border cursor-pointer",
-              !deptFilter ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:bg-gray-50")}>
-            Tous
-          </button>
-          {deptChips.map(d => (
-            <button key={d.code} onClick={() => setDeptFilter(d.code)}
-              className={cn("px-2 py-1 text-[9px] font-bold rounded-full transition-colors border cursor-pointer",
-                deptFilter === d.code ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:bg-gray-50")}>
-              {d.label}
-            </button>
-          ))}
-        </div>
         {/* View modes */}
-        <div className="flex items-center gap-0.5 border border-gray-200 rounded-lg p-0.5">
+        <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden shrink-0">
           {VIEW_MODES.map(vm => (
             <button key={vm.id} onClick={() => setViewMode(vm.id)}
-              className={cn("p-1.5 rounded-md transition-colors cursor-pointer", viewMode === vm.id ? "bg-blue-100 text-blue-600" : "text-gray-400 hover:text-gray-600 hover:bg-gray-50")}>
+              className={cn("p-1.5 transition-colors cursor-pointer", viewMode === vm.id ? "bg-blue-600 text-white" : "bg-white text-gray-400 hover:text-gray-600")}>
               <vm.icon className="h-3.5 w-3.5" />
             </button>
           ))}
         </div>
       </div>
 
-      {/* Category filter chips (2nd row) */}
-      {catChips.length > 1 && (
-        <div className="flex items-center gap-1 flex-wrap">
-          <span className="text-[9px] font-bold text-gray-400 mr-1">Categorie:</span>
-          <button onClick={() => setCatFilter(null)}
+      {/* Filter pills — Agent sur une ligne, Categorie sur l'autre */}
+      <div className="flex items-center gap-1.5 flex-wrap">
+        <span className="text-[9px] text-gray-400 font-medium">Agent:</span>
+        <button onClick={() => setDeptFilter(null)}
+          className={cn("px-2 py-0.5 text-[9px] font-bold rounded-full transition-colors border cursor-pointer",
+            !deptFilter ? "bg-violet-600 text-white border-violet-600" : "bg-white text-gray-500 border-gray-200 hover:border-gray-300")}>
+          Tous
+        </button>
+        {deptChips.map(d => (
+          <button key={d.code} onClick={() => setDeptFilter(d.code)}
             className={cn("px-2 py-0.5 text-[9px] font-bold rounded-full transition-colors border cursor-pointer",
-              !catFilter ? "bg-violet-600 text-white border-violet-600" : "bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:bg-gray-50")}>
-            Toutes
+              deptFilter === d.code ? "bg-violet-600 text-white border-violet-600" : "bg-white text-gray-500 border-gray-200 hover:border-gray-300")}>
+            {d.label}
           </button>
-          {catChips.map(cat => (
-            <button key={cat} onClick={() => setCatFilter(cat)}
-              className={cn("px-2 py-0.5 text-[9px] font-bold rounded-full transition-colors border cursor-pointer",
-                catFilter === cat ? "bg-violet-600 text-white border-violet-600" : "bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:bg-gray-50")}>
-              {cat}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Compteur resultats */}
-      <div className="text-[9px] text-gray-400">{filtered.length} template{filtered.length > 1 ? "s" : ""} sur {templates.length}</div>
+        ))}
+      </div>
+      <div className="flex items-center gap-1.5 flex-wrap">
+        <span className="text-[9px] text-gray-400 font-medium">Categorie:</span>
+        <button onClick={() => setCatFilter(null)}
+          className={cn("px-2 py-0.5 text-[9px] font-bold rounded-full transition-colors border cursor-pointer",
+            !catFilter ? "bg-amber-600 text-white border-amber-600" : "bg-white text-gray-500 border-gray-200 hover:border-gray-300")}>
+          Toutes
+        </button>
+        {catChips.map(cat => (
+          <button key={cat} onClick={() => setCatFilter(cat)}
+            className={cn("px-2 py-0.5 text-[9px] font-bold rounded-full transition-colors border cursor-pointer",
+              catFilter === cat ? "bg-amber-600 text-white border-amber-600" : "bg-white text-gray-500 border-gray-200 hover:border-gray-300")}>
+            {cat}
+          </button>
+        ))}
+      </div>
 
       {/* Content — 4 modes */}
       {viewMode === "list" ? (
@@ -641,7 +638,7 @@ function TemplateGrid({ templates, onFocus, viewMode, setViewMode }: {
 }
 
 /* ============ TABS DEPARTEMENT (11 tabs — structure identique 12 departements) ============ */
-type DeptTabId = "cockpit" | "blueprint" | "sante" | "chantiers" | "projets" | "missions" | "taches" | "discussions" | "documents" | "agenda" | "notifications" | "performance";
+type DeptTabId = "cockpit" | "blueprint" | "sante" | "chantiers" | "projets" | "missions" | "taches" | "discussions" | "documents" | "agenda" | "performance";
 const DEPT_TABS: TabDef[] = [
   { id: "cockpit", label: "Vue d'ensemble", icon: Gauge },
   { id: "blueprint", label: "Blueprint", icon: Layers },
@@ -653,7 +650,6 @@ const DEPT_TABS: TabDef[] = [
   { id: "discussions", label: "Discussions", icon: MessageSquare },
   { id: "documents", label: "Documents", icon: FileText },
   { id: "agenda", label: "Agenda", icon: CalendarDays },
-  { id: "notifications", label: "Notifications", icon: Bell },
   { id: "performance", label: "Performance AI", icon: Bot },
 ];
 
@@ -1712,8 +1708,9 @@ export function DepartmentTourDeControle() {
   const [projetsSub, setProjetsSub] = useState("tous");
   const [missionsSub, setMissionsSub] = useState("tous");
   const [tachesSub, setTachesSub] = useState("tous");
-  const [discSub, setDiscSub] = useState("toutes");
-  const [docsSub, setDocsSub] = useState("templates");
+  const [discSub, setDiscSub] = useState("tous");
+  const [docsSub, setDocsSub] = useState("tous");
+  const [santeSub, setSanteSub] = useState("vue-ensemble");
   const [missions, setMissions] = useState<Mission[]>([]);
   const [diagnostics, setDiagnostics] = useState<DiagnosticCatalogue[]>([]);
   const [templates, setTemplates] = useState<TemplateDocumentaire[]>([]);
@@ -2203,28 +2200,16 @@ export function DepartmentTourDeControle() {
         {/* ══════════════════════════════════════════ */}
         {deptTab === "discussions" && (() => {
           const subTabs: SubTabDef[] = [
-            { id: "toutes", label: "Toutes", gradient: "from-cyan-600 to-cyan-500" },
-            { id: "par-chantier", label: "Par chantier", gradient: "from-blue-600 to-blue-500" },
-            { id: "orphelines", label: "Orphelines", gradient: "from-gray-500 to-gray-400" },
-            { id: "modes", label: "Modes reflexion", icon: Brain, gradient: "from-purple-600 to-purple-500", count: REFLECTION_MODES.length },
+            { id: "tous", label: "Tous", gradient: "from-cyan-600 to-cyan-500" },
+            { id: "par-chantier", label: "Par Chantier", gradient: "from-blue-600 to-blue-500" },
+            { id: "par-projet", label: "Par Projet", gradient: "from-violet-600 to-violet-500" },
+            { id: "par-mission", label: "Par Mission", gradient: "from-amber-600 to-amber-500" },
+            { id: "par-tache", label: "Par Tache", gradient: "from-gray-500 to-gray-400" },
           ];
           return (
             <div className="space-y-3">
               <SectionHeader icon={MessageSquare} title="Discussions" subtitle="" tabs={subTabs} activeTab={discSub} onTabChange={setDiscSub} gradient={headerGradient} />
-              {discSub === "modes" ? (
-                <div className="space-y-2 max-h-[600px] overflow-auto">
-                  {REFLECTION_MODES.map(mode => (
-                    <button key={mode.id} onClick={() => handleFocus(`Discussion ${mode.label}`, "discussion", { mode: mode.id, label: mode.label })} className="w-full text-left border rounded-lg p-2.5 hover:shadow-md transition-all cursor-pointer group">
-                      <div className="flex items-center gap-2">
-                        <span className={cn("w-2.5 h-2.5 rounded-full shrink-0", mode.color)} />
-                        <span className="text-xs font-medium text-gray-800 group-hover:text-purple-600 transition-colors flex-1">{mode.label}</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <DiscussionView botFilter={activeBotCode} hideHeader groupByChantier={discSub === "par-chantier"} orphelinesOnly={discSub === "orphelines"} />
-              )}
+              <DiscussionView botFilter={activeBotCode} hideHeader navMode={discSub as NavMode} />
             </div>
           );
         })()}
@@ -2234,10 +2219,12 @@ export function DepartmentTourDeControle() {
         {/* ══════════════════════════════════════════ */}
         {deptTab === "documents" && (() => {
           const subTabs: SubTabDef[] = [
-            { id: "templates", label: "Templates", icon: FileText, gradient: "from-violet-600 to-violet-500", count: templates.length },
             { id: "tous", label: "Tous", gradient: "from-teal-600 to-teal-500" },
-            { id: "docforge", label: "DocForge", icon: Sparkles, gradient: "from-emerald-600 to-emerald-500" },
-            { id: "importe", label: "Importes", icon: Upload, gradient: "from-slate-600 to-slate-500" },
+            { id: "par-chantier", label: "Par Chantier", gradient: "from-blue-600 to-blue-500" },
+            { id: "par-projet", label: "Par Projet", gradient: "from-violet-600 to-violet-500" },
+            { id: "par-mission", label: "Par Mission", gradient: "from-amber-600 to-amber-500" },
+            { id: "par-tache", label: "Par Tache", gradient: "from-gray-500 to-gray-400" },
+            { id: "templates", label: "Templates", icon: FileText, gradient: "from-violet-600 to-violet-500", count: templates.length },
           ];
           return (
             <div className="space-y-3">
@@ -2245,7 +2232,7 @@ export function DepartmentTourDeControle() {
               {docsSub === "templates" ? (
                 <TemplateGrid templates={templates} onFocus={handleFocus} viewMode={tplViewMode} setViewMode={setTplViewMode} />
               ) : (
-                <DocumentsUnifie botFilter={activeBotCode} hideHeader typeFilter={docsSub === "tous" ? undefined : docsSub as "docforge" | "importe"} />
+                <DocumentsUnifie botFilter={activeBotCode} hideHeader navMode={docsSub as NavMode} />
               )}
             </div>
           );
@@ -2254,9 +2241,19 @@ export function DepartmentTourDeControle() {
         {/* ══════════════════════════════════════════ */}
         {/* TAB 3 — SANTE + DIAGNOSTICS                 */}
         {/* ══════════════════════════════════════════ */}
-        {deptTab === "sante" && (
-          <SanteGlobaleView />
-        )}
+        {deptTab === "sante" && (() => {
+          const santeSubTabs: SubTabDef[] = [
+            { id: "vue-ensemble", label: "Vue d'ensemble", icon: Activity, gradient: headerGradient },
+            { id: "diagnostics", label: "Diagnostics", icon: Stethoscope, gradient: headerGradient },
+            { id: "resultats", label: "Resultats", icon: BarChart3, gradient: headerGradient },
+          ];
+          return (
+            <div className="space-y-3">
+              <SectionHeader icon={HeartPulse} title="Sante" subtitle={activeBotCode === "CEOB" ? "Vue globale entreprise" : subtitle} tabs={santeSubTabs} activeTab={santeSub} onTabChange={setSanteSub} gradient={headerGradient} />
+              <SanteGlobaleView botCode={activeBotCode} santeSub={santeSub} />
+            </div>
+          );
+        })()}
 
 
         {/* ══════════════════════════════════════════ */}
@@ -2264,13 +2261,6 @@ export function DepartmentTourDeControle() {
         {/* ══════════════════════════════════════════ */}
         {deptTab === "agenda" && (
           <AgendaPage />
-        )}
-
-        {/* ══════════════════════════════════════════ */}
-        {/* TAB — NOTIFICATIONS                        */}
-        {/* ══════════════════════════════════════════ */}
-        {deptTab === "notifications" && (
-          <NotificationsPage />
         )}
 
         {/* ══════════════════════════════════════════ */}
