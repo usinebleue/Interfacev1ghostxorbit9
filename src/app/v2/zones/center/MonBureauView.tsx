@@ -1628,7 +1628,7 @@ export function AgendaPage() {
         const h = d.toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" });
         const endD = c.end ? new Date(c.end) : null;
         const dureeMin = endD ? Math.round((endD.getTime() - d.getTime()) / 60000) : 0;
-        events.push({ id: `gcal-${idx}`, titre: c.summary || "Evenement", heure: h, hourNum: d.getHours(), date: d, bot: "CEOB", duree: dureeMin > 0 ? `${dureeMin} min` : "", source: "google" });
+        events.push({ id: `gcal-${idx}`, titre: c.summary || "Événement", heure: h, hourNum: d.getHours(), date: d, bot: "CEOB", duree: dureeMin > 0 ? `${dureeMin} min` : "", source: "google" });
       }
     });
 
@@ -2189,7 +2189,7 @@ function TemplatesPage() {
     ressources: "Ressources naturelles",
     sante: "Sante / Sciences de la vie",
     transport: "Transport / Logistique",
-    social: "Economie sociale",
+    social: "Économie sociale",
   };
 
   const diagDepts = [...new Set(diagnosticsEnrichis.map(d => d.departement))];
@@ -2253,7 +2253,7 @@ function TemplatesPage() {
         >
           <div className="flex items-center gap-1.5">
             <Download className="h-3.5 w-3.5" />
-            Generateur ({templates.length})
+            Générateur ({templates.length})
           </div>
         </button>
         <button
@@ -2265,7 +2265,7 @@ function TemplatesPage() {
         >
           <div className="flex items-center gap-1.5">
             <FileText className="h-3.5 w-3.5" />
-            Bibliotheque ({templatesDoc.length})
+            Bibliothèque ({templatesDoc.length})
           </div>
         </button>
         <button
@@ -2478,7 +2478,7 @@ function TemplatesPage() {
                     ) : (
                       <Download className="h-3.5 w-3.5" />
                     )}
-                    Generer
+                    Générer
                   </button>
                 </div>
               </Card>
@@ -2494,7 +2494,7 @@ function TemplatesPage() {
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-auto">
           <DialogHeader>
             <DialogTitle>{previewData?.nom || "Apercu"}</DialogTitle>
-            <DialogDescription>Apercu du template — les placeholders seront remplaces a la generation.</DialogDescription>
+            <DialogDescription>Aperçu du template — les placeholders seront remplacés à la génération.</DialogDescription>
           </DialogHeader>
           <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed border rounded-lg p-4 bg-gray-50 max-h-[50vh] overflow-auto">
             {previewData?.contenu || "Chargement..."}
@@ -2507,7 +2507,7 @@ function TemplatesPage() {
               }}
               className="flex items-center gap-1.5 text-xs px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 cursor-pointer font-medium transition-colors"
             >
-              <Download className="h-3.5 w-3.5" /> Generer ce document
+              <Download className="h-3.5 w-3.5" /> Générer ce document
             </button>
           </DialogFooter>
         </DialogContent>

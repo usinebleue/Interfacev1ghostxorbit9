@@ -120,13 +120,13 @@ const CLEVEL_LINES: CLeveLineData[] = [
     bulletin: { heuresTravail: "247h", heuresSauvees: "82h", tauxSucces: "94%", tasksCompleted: "156" },
     angles: [
       { label: "Performance", icon: Gauge, maj: "26 fev", stats: [
-        { label: "Decisions prises", value: "12", icon: Gavel, trend: "up" },
+        { label: "Décisions prises", value: "12", icon: Gavel, trend: "up" },
         { label: "Pipeline total", value: "475K$", icon: BarChart3, trend: "up" },
         { label: "Score global", value: "92/100", icon: Award, trend: "up" },
         { label: "Revenu mensuel", value: "425K$", icon: DollarSign, trend: "up" },
       ]},
       { label: "Risques", icon: AlertTriangle, maj: "26 fev", stats: [
-        { label: "Decisions en attente", value: "3", icon: Clock, trend: "down" },
+        { label: "Décisions en attente", value: "3", icon: Clock, trend: "down" },
         { label: "Alertes actives", value: "5", icon: AlertTriangle, trend: "down" },
         { label: "Conformite", value: "96%", icon: CheckCircle, trend: "up" },
         { label: "Budget vs reel", value: "-3%", icon: Target, trend: "stable" },
@@ -141,7 +141,7 @@ const CLEVEL_LINES: CLeveLineData[] = [
         { label: "Projets actifs", value: "8", icon: FileText, trend: "up" },
         { label: "Budget global", value: "1.2M$", icon: Wallet, trend: "stable" },
         { label: "Reunions/sem", value: "12", icon: Calendar, trend: "stable" },
-        { label: "Decisions/sem", value: "8", icon: Gavel, trend: "up" },
+        { label: "Décisions/sem", value: "8", icon: Gavel, trend: "up" },
       ]},
       { label: "Equipe", icon: Users, maj: "25 fev", stats: [
         { label: "Satisfaction equipe", value: "4.3/5", icon: Heart, trend: "up" },

@@ -1,22 +1,38 @@
 /**
  * SectionReglages.tsx — [6] Reglages (fixe en bas du sidebar)
- * Sprint C — Restructuration Plateforme
+ * - Reglages agent (agent-settings)
+ * - Administration instance (reglages) — visible si role >= admin
  */
 
-import { Settings, SlidersHorizontal } from "lucide-react";
+import { Settings, Shield } from "lucide-react";
 import { cn } from "../../../components/ui/utils";
 import { useFrameMaster } from "../../context/FrameMasterContext";
+import { useAuth } from "../../context/AuthContext";
 
 interface Props {
   collapsed: boolean;
 }
 
 export function SectionReglages({ collapsed }: Props) {
-  const { activeView, setActiveView } = useFrameMaster();
+  const { activeView, setActiveView, navigateReglagesTab } = useFrameMaster();
+  const { can } = useAuth();
+  const canAdmin = can("manage_tenant");
 
   if (collapsed) {
     return (
-      <div className="border-t px-1 py-2">
+      <div className="border-t px-1 py-2 space-y-1">
+        {canAdmin && (
+          <button
+            onClick={() => navigateReglagesTab("dashboard")}
+            className={cn(
+              "w-full flex justify-center py-1.5 rounded hover:bg-accent transition-colors",
+              activeView === "reglages" && "bg-accent"
+            )}
+            title="Administration"
+          >
+            <Shield className="h-3.5 w-3.5 text-gray-400" />
+          </button>
+        )}
         <button
           onClick={() => setActiveView("agent-settings")}
           className={cn(
@@ -32,7 +48,20 @@ export function SectionReglages({ collapsed }: Props) {
   }
 
   return (
-    <div className="border-t px-1 py-2">
+    <div className="border-t px-1 py-2 space-y-0.5">
+      {canAdmin && (
+        <button
+          onClick={() => navigateReglagesTab("dashboard")}
+          className={cn(
+            "w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm hover:bg-accent transition-colors",
+            activeView === "reglages" && "bg-accent font-medium"
+          )}
+          title="Administration"
+        >
+          <Shield className="h-3.5 w-3.5 shrink-0 text-slate-500" />
+          <span className="truncate text-gray-600">Administration</span>
+        </button>
+      )}
       <button
         onClick={() => setActiveView("agent-settings")}
         className={cn(

@@ -7,6 +7,7 @@
 import { ApiProvider } from "./context/ApiContext";
 import { FrameMasterProvider, useFrameMaster } from "./context/FrameMasterContext";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { TenantProvider } from "./context/TenantContext";
 import { ChatProvider } from "./context/ChatContext";
 import { CanvasActionProvider } from "./context/CanvasActionContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -64,9 +65,11 @@ export default function AppV2() {
     <ErrorBoundary>
       <ApiProvider>
         <AuthProvider>
-          <FrameMasterProvider>
-            <AppRouter />
-          </FrameMasterProvider>
+          <TenantProvider>
+            <FrameMasterProvider>
+              <AppRouter />
+            </FrameMasterProvider>
+          </TenantProvider>
         </AuthProvider>
       </ApiProvider>
     </ErrorBoundary>

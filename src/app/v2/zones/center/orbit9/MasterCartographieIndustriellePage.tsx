@@ -24,8 +24,8 @@ import { useFrameMaster } from "../../../context/FrameMasterContext";
 
 const ACTEURS = [
   {
-    type: "Fabricants d'equipements/outils",
-    code: "FEQ",
+    type: "Experts / Consultants",
+    code: "EXP",
     desc: "Fournisseurs de machines, robots, systemes d'automatisation — 59% de l'offre (REAI 2019, convergence IT/OT)",
     categories: ["Robotique industrielle", "Cobots", "Systemes de vision", "Outillage CNC", "Equipements de soudage", "Convoyeurs/manutention"],
     color: "violet",

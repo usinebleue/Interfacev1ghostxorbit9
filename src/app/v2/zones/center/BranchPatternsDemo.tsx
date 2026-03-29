@@ -414,11 +414,11 @@ const SIM = {
 
 const REFLECTION_MODES = [
   { id: "analyse", label: "Analyse", icon: Eye, bg: "bg-blue-100", text: "text-blue-700", ring: "ring-blue-300" },
-  { id: "debat", label: "Debat", icon: Swords, bg: "bg-red-100", text: "text-red-700", ring: "ring-red-300" },
+  { id: "debat", label: "Débat", icon: Swords, bg: "bg-red-100", text: "text-red-700", ring: "ring-red-300" },
   { id: "brainstorm", label: "Brainstorm", icon: Lightbulb, bg: "bg-amber-100", text: "text-amber-700", ring: "ring-amber-300" },
-  { id: "strategie", label: "Strategie", icon: Target, bg: "bg-purple-100", text: "text-purple-700", ring: "ring-purple-300" },
+  { id: "strategie", label: "Stratégie", icon: Target, bg: "bg-purple-100", text: "text-purple-700", ring: "ring-purple-300" },
   { id: "innovation", label: "Innovation", icon: Sparkles, bg: "bg-pink-100", text: "text-pink-700", ring: "ring-pink-300" },
-  { id: "decision", label: "Decision", icon: CheckCircle2, bg: "bg-green-100", text: "text-green-700", ring: "ring-green-300" },
+  { id: "decision", label: "Décision", icon: CheckCircle2, bg: "bg-green-100", text: "text-green-700", ring: "ring-green-300" },
   { id: "crise", label: "Crise", icon: Zap, bg: "bg-orange-100", text: "text-orange-700", ring: "ring-orange-300" },
   { id: "deep", label: "Deep", icon: Brain, bg: "bg-indigo-100", text: "text-indigo-700", ring: "ring-indigo-300" },
 ];

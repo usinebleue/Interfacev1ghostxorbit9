@@ -8,6 +8,7 @@
 import { ScrollArea } from "../../../components/ui/scroll-area";
 import { Separator } from "../../../components/ui/separator";
 import { useFrameMaster } from "../../context/FrameMasterContext";
+import { useTenant } from "../../context/TenantContext";
 import { SectionMonEntreprise } from "./SectionMonEntreprise";
 // SectionMonBureau retirée — contenu absorbé dans les tabs département
 import { SectionMesSalles } from "./SectionMesSalles";
@@ -18,6 +19,7 @@ import { SectionReglages } from "./SectionReglages";
 
 export function SidebarLeft() {
   const { leftSidebarCollapsed } = useFrameMaster();
+  const { isDieu } = useTenant();
   const collapsed = leftSidebarCollapsed;
 
   return (
@@ -32,8 +34,12 @@ export function SidebarLeft() {
           <SectionMonEquipe collapsed={collapsed} />
           <Separator className="my-2" />
           <SectionMonReseau collapsed={collapsed} />
-          <Separator className="my-2" />
-          <SectionMasterGHML collapsed={collapsed} />
+          {isDieu && (
+            <>
+              <Separator className="my-2" />
+              <SectionMasterGHML collapsed={collapsed} />
+            </>
+          )}
         </div>
       </ScrollArea>
 

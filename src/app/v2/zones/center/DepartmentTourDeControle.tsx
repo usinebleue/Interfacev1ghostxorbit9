@@ -1448,7 +1448,7 @@ const PERF_SUB_TABS: { id: PerfSubTab; label: string }[] = [
   { id: "performance", label: "Performance" },
   { id: "roles", label: "Roles & Permissions" },
   { id: "composition", label: "Composition" },
-  { id: "reglages", label: "Reglages" },
+  { id: "reglages", label: "Réglages" },
 ];
 
 function PerformanceAIContent({ activeBotCode, subtitle, DeptIcon, headerGradient, stats, collaborators, botChantiers }: {
@@ -1696,9 +1696,10 @@ function PerformanceAIContent({ activeBotCode, subtitle, DeptIcon, headerGradien
 
 /* ============ COMPOSANT PRINCIPAL ============ */
 export function DepartmentTourDeControle() {
-  const { activeBotCode, activeBot, setActiveView } = useFrameMaster();
+  const { activeBotCode, activeBot, setActiveView, activeDeptTab, navigateDeptTab } = useFrameMaster();
   const { dispatch } = useCanvasActions();
-  const [deptTab, setDeptTab] = useState<DeptTabId>("cockpit");
+  const deptTab = activeDeptTab as DeptTabId;
+  const setDeptTab = navigateDeptTab;
   const [hierViewMode, setHierViewMode] = useState<"cards" | "list" | "kanban" | "spreadsheet">("cards");
   const [tplViewMode, setTplViewMode] = useState<"cards" | "list" | "kanban" | "spreadsheet">("cards");
   const [hierParentFilter, setHierParentFilter] = useState<{ type: string; id: number; titre: string } | null>(null);
@@ -1719,8 +1720,8 @@ export function DepartmentTourDeControle() {
   const { items: bureauItems } = useBureau();
 
   // Load data for Missions / Documents / Diagnostics / Playbooks tabs
+  // Note: deptTab reset to "cockpit" is handled by navigateToDepartment in context
   useEffect(() => {
-    setDeptTab("cockpit");
     const deptKey = BOT_TO_DEPT[activeBotCode] || "";
     api.listMissions().then(r => {
       const all = r.missions || [];

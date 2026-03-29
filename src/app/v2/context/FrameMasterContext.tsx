@@ -7,7 +7,7 @@ import { createContext, useContext, useState, useCallback, useRef, useEffect } f
 import type { BotInfo } from "../api/types";
 import { useAuth } from "./AuthContext";
 
-export type ActiveView = "dashboard" | "cockpit" | "health" | "department" | "detail" | "discussion" | "branches" | "cahier" | "scenarios" | "live-chat" | "canvas" | "orbit9-detail" | "agent-settings" | "espace-bureau" | "blueprint" | "board-room" | "war-room" | "think-room" | "mes-chantiers" | "mon-reseau" | "bible-visuelle" | "bible-technique" | "bible-ghml" | "master-roadmap" | "master-strategie" | "master-orbit9" | "master-communication" | "master-dette" | "master-routine" | "master-minedor" | "master-training" | "master-profils" | "master-parcours" | "master-navigation" | "master-angles-morts" | "master-capacites" | "master-instance-fonds" | "master-diagnostics" | "master-playbooks" | "master-bibliotheque-exec" | "master-marketing-360" | "master-guides-legaux" | "master-cortex-robot" | "master-hydro-quebec" | "master-flows" | "master-cartographie" | "master-oracle9" | "master-bible-live" | "bible-visuelle-cible" | "flow-usine-bleue" | "animation-showcase" | "agent-gallery" | "playbook-usine-bleue" | "fe-sidebar-droite" | "strategique-reseau" | "fe-mon-reseau" | "accueil-hero" | "bible-officielle" | "carlos-codes" | "diagnostic-ia" | "meeting-room" | "conference-ai" | "salles-hub" | "mon-entreprise" | "mon-equipe" | "status" | "onboarding" | "docforge" | "ateliers";
+export type ActiveView = "dashboard" | "cockpit" | "health" | "department" | "detail" | "discussion" | "branches" | "cahier" | "scenarios" | "live-chat" | "canvas" | "orbit9-detail" | "agent-settings" | "espace-bureau" | "blueprint" | "board-room" | "war-room" | "think-room" | "mes-chantiers" | "mon-reseau" | "bible-visuelle" | "bible-technique" | "bible-ghml" | "master-roadmap" | "master-strategie" | "master-orbit9" | "master-communication" | "master-dette" | "master-routine" | "master-minedor" | "master-training" | "master-profils" | "master-parcours" | "master-navigation" | "master-angles-morts" | "master-capacites" | "master-instance-fonds" | "master-diagnostics" | "master-playbooks" | "master-bibliotheque-exec" | "master-marketing-360" | "master-guides-legaux" | "master-cortex-robot" | "master-hydro-quebec" | "master-flows" | "master-cartographie" | "master-oracle9" | "master-bible-live" | "bible-visuelle-cible" | "flow-usine-bleue" | "animation-showcase" | "agent-gallery" | "playbook-usine-bleue" | "fe-sidebar-droite" | "strategique-reseau" | "fe-mon-reseau" | "accueil-hero" | "bible-officielle" | "carlos-codes" | "diagnostic-ia" | "meeting-room" | "conference-ai" | "salles-hub" | "mon-entreprise" | "mon-equipe" | "status" | "onboarding" | "docforge" | "ateliers" | "admin" | "reglages";
 
 export type EspaceSection = "idees" | "projets" | "documents" | "taches" | "outils" | "agenda" | "templates" | "discussions" | "notifications";
 
@@ -35,6 +35,10 @@ interface FrameMasterState {
   activeEquipeSection: EquipeSection;
   activeBureauSection: BureauSection;
   activeDiscussionTab: DiscussionTab;
+  /** Tab actif dans DepartmentTourDeControle (cockpit, chantiers, missions, etc.) */
+  activeDeptTab: string;
+  /** Tab actif dans AdminPanel (dashboard, tenants, users, etc.) */
+  activeAdminTab: string;
   /** D-109 — Source view quand on ouvre le LiveChat depuis une Room */
   chatSourceView: string | null;
   leftSidebarCollapsed: boolean;
@@ -65,6 +69,12 @@ interface FrameMasterActions {
   navigateEquipe: (section: EquipeSection) => void;
   navigateBureau: (section: BureauSection) => void;
   navigateDiscussionTab: (tab: DiscussionTab) => void;
+  /** Navigate vers un tab dans DepartmentTourDeControle */
+  navigateDeptTab: (tab: string) => void;
+  /** Navigate vers un tab dans AdminPanel */
+  navigateAdminTab: (tab: string) => void;
+  /** Navigate vers un tab dans AdminPanel mode instance (reglages) */
+  navigateReglagesTab: (tab: string) => void;
   /** D-109 — Ouvre le LiveChat avec contexte de la source (board-room, war-room, etc.) */
   navigateToChat: (sourceView: string) => void;
   /** Set active bot code directly (used by CanvasActionContext focus sync) */
@@ -94,6 +104,8 @@ export function FrameMasterProvider({
   const [activeEquipeSection, setActiveEquipeSection] = useState<EquipeSection>("bots");
   const [activeBureauSection, setActiveBureauSection] = useState<BureauSection>("taches");
   const [activeDiscussionTab, setActiveDiscussionTab] = useState<DiscussionTab>("overview");
+  const [activeDeptTab, setActiveDeptTab] = useState("cockpit");
+  const [activeAdminTab, setActiveAdminTab] = useState("dashboard");
   const [chatSourceView, setChatSourceView] = useState<string | null>(null);
   const [leftSidebarCollapsed, setLeftCollapsed] = useState(false);
   const [rightSidebarCollapsed, setRightCollapsed] = useState(false);
@@ -193,6 +205,20 @@ export function FrameMasterProvider({
     setActiveDiscussionTab(tab);
   }, []);
 
+  const navigateDeptTab = useCallback((tab: string) => {
+    setActiveDeptTab(tab);
+  }, []);
+
+  const navigateAdminTab = useCallback((tab: string) => {
+    setActiveAdminTab(tab);
+    setActiveView("admin");
+  }, []);
+
+  const navigateReglagesTab = useCallback((tab: string) => {
+    setActiveAdminTab(tab);
+    setActiveView("reglages");
+  }, []);
+
   const navigateToChat = useCallback((sourceView: string) => {
     setChatSourceView(sourceView);
     setActiveView("live-chat");
@@ -201,6 +227,8 @@ export function FrameMasterProvider({
   const navigateToDepartment = useCallback((botCode: string, view: ActiveView = "department") => {
     setActiveBotCode(botCode);
     setActiveView(view);
+    // Reset dept tab quand on change de departement (sidebar click)
+    setActiveDeptTab("cockpit");
   }, []);
 
   const registerLeftPanel = useCallback((api: { collapse: () => void; expand: () => void }) => {
@@ -238,6 +266,8 @@ export function FrameMasterProvider({
         activeEquipeSection,
         activeBureauSection,
         activeDiscussionTab,
+        activeDeptTab,
+        activeAdminTab,
         chatSourceView,
         leftSidebarCollapsed,
         rightSidebarCollapsed,
@@ -263,6 +293,9 @@ export function FrameMasterProvider({
         navigateEquipe,
         navigateBureau,
         navigateDiscussionTab,
+        navigateDeptTab,
+        navigateAdminTab,
+        navigateReglagesTab,
         navigateToChat,
         setActiveBotCode,
         registerLeftPanel,

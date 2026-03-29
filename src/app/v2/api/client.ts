@@ -1619,4 +1619,135 @@ export const api = {
   driveSearch(folderId: string, keyword: string, maxResults?: number): Promise<{ folder_id: string; keyword: string; results: any[]; count: number }> {
     return apiFetch("/drive/search", { method: "POST", body: JSON.stringify({ folder_id: folderId, keyword, max_results: maxResults || 50 }) });
   },
+
+  // --- Fondation Architecture ---
+
+  getVerticals(): Promise<any[]> {
+    return apiFetch("/verticals");
+  },
+  getRegions(params?: { level?: number; parent_id?: number; country_code?: string }): Promise<any[]> {
+    const q = new URLSearchParams();
+    if (params?.level) q.set("level", String(params.level));
+    if (params?.parent_id) q.set("parent_id", String(params.parent_id));
+    if (params?.country_code) q.set("country_code", params.country_code);
+    const qs = q.toString();
+    return apiFetch(`/regions${qs ? `?${qs}` : ""}`);
+  },
+  getSubscriptionTiers(): Promise<any[]> {
+    return apiFetch("/subscription/tiers");
+  },
+  getSubscriptionCurrent(): Promise<any> {
+    return apiFetch("/subscription/current");
+  },
+  baptizeBot(botName: string): Promise<{ status: string; bot_name: string }> {
+    return apiFetch("/user/baptize", { method: "POST", body: JSON.stringify({ bot_name: botName }) });
+  },
+  setUserMode(mode: "perso" | "pro"): Promise<any> {
+    return apiFetch("/user/mode", { method: "PUT", body: JSON.stringify({ mode }) });
+  },
+  getUtBalance(): Promise<any> {
+    return apiFetch("/ut/balance");
+  },
+  getUtTransactions(): Promise<any[]> {
+    return apiFetch("/ut/transactions");
+  },
+  getOrbit9Pioneers(verticalCode: string): Promise<{ vertical: string; pioneers: any[] }> {
+    return apiFetch(`/orbit9/pioneers/${verticalCode}`);
+  },
+
+  // ═══════════════════════════════════════
+  // Admin — Tenants CRUD
+  // ═══════════════════════════════════════
+
+  createTenant(data: Record<string, unknown>): Promise<any> {
+    return apiFetch("/tenants", { method: "POST", body: JSON.stringify(data) });
+  },
+  updateTenant(id: number, data: Record<string, unknown>): Promise<any> {
+    return apiFetch(`/tenants/${id}`, { method: "PUT", body: JSON.stringify(data) });
+  },
+  deleteTenant(id: number): Promise<{ ok: boolean }> {
+    return apiFetch(`/tenants/${id}`, { method: "DELETE" });
+  },
+
+  // ═══════════════════════════════════════
+  // Admin — Verticals CRUD
+  // ═══════════════════════════════════════
+
+  createVertical(data: Record<string, unknown>): Promise<any> {
+    return apiFetch("/verticals", { method: "POST", body: JSON.stringify(data) });
+  },
+  updateVertical(id: number, data: Record<string, unknown>): Promise<any> {
+    return apiFetch(`/verticals/${id}`, { method: "PUT", body: JSON.stringify(data) });
+  },
+  deleteVertical(id: number): Promise<{ ok: boolean }> {
+    return apiFetch(`/verticals/${id}`, { method: "DELETE" });
+  },
+
+  // ═══════════════════════════════════════
+  // Admin — System tools
+  // ═══════════════════════════════════════
+
+  listAuthEvents(limit = 50): Promise<any[]> {
+    return apiFetch(`/auth/events?limit=${limit}`);
+  },
+  listPricingOverrides(): Promise<any[]> {
+    return apiFetch("/admin/pricing");
+  },
+  createPricingOverride(data: Record<string, unknown>): Promise<any> {
+    return apiFetch("/admin/pricing", { method: "POST", body: JSON.stringify(data) });
+  },
+  deletePricingOverride(id: number): Promise<{ ok: boolean }> {
+    return apiFetch(`/admin/pricing/${id}`, { method: "DELETE" });
+  },
+  getSystemStatus(): Promise<any> {
+    return apiFetch("/status");
+  },
+  getTrainingStats(): Promise<any> {
+    return apiFetch("/training/stats");
+  },
+  getBibleTechnique(rescan = false): Promise<any> {
+    return apiFetch(`/admin/bible-technique${rescan ? "?rescan=true" : ""}`);
+  },
+
+  // ═══════════════════════════════════════
+  // Prospects
+  // ═══════════════════════════════════════
+
+  listProspectCampaigns(): Promise<any[]> {
+    return apiFetch("/prospects/campaigns");
+  },
+  listProspectSessions(): Promise<any[]> {
+    return apiFetch("/prospects/sessions");
+  },
+  listCampaignTargets(campaignId: number): Promise<any[]> {
+    return apiFetch(`/prospects/campaigns/${campaignId}/targets`);
+  },
+
+  // ═══════════════════════════════════════
+  // Telephonie
+  // ═══════════════════════════════════════
+
+  listPhoneAuth(): Promise<any[]> {
+    return apiFetch("/phone/auth");
+  },
+  listPhoneSessions(): Promise<any[]> {
+    return apiFetch("/phone/sessions");
+  },
+  listVocalSessions(): Promise<any[]> {
+    return apiFetch("/voice/sessions");
+  },
+
+  // ═══════════════════════════════════════
+  // Setup / Integrations
+  // ═══════════════════════════════════════
+
+  getTenantIntegrations(tenantId: number): Promise<any> {
+    return apiFetch(`/tenants/${tenantId}/integrations`);
+  },
+  saveTenantIntegration(tenantId: number, key: string, data: Record<string, unknown>): Promise<any> {
+    return apiFetch(`/tenants/${tenantId}/integrations/${key}`, { method: "PUT", body: JSON.stringify(data) });
+  },
+  testIntegration(tenantId: number, key: string): Promise<{ ok: boolean; message: string }> {
+    return apiFetch(`/tenants/${tenantId}/integrations/${key}/test`, { method: "POST" });
+  },
 };

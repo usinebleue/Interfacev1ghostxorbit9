@@ -42,8 +42,8 @@ const TABS = [
   { id: "entreprise", label: "4. Mon Entreprise", icon: Crown },
   { id: "bureau", label: "5. Mon Bureau", icon: Briefcase },
   { id: "salles", label: "6. Mes Salles", icon: Users },
-  { id: "reseau", label: "7. Mon Reseau", icon: Network },
-  { id: "reglages", label: "8. Reglages", icon: Settings },
+  { id: "reseau", label: "7. Mon Réseau", icon: Network },
+  { id: "reglages", label: "8. Réglages", icon: Settings },
   { id: "livechat", label: "9. LiveChat & Bulles", icon: MessageSquare },
   { id: "audit", label: "10. Audit", icon: AlertTriangle },
 ] as const;
@@ -73,10 +73,10 @@ export const MODES_REFLEXION = [
   { id: "credo",      label: "Standard",    icon: Zap,          color: "blue" },
   { id: "analyse",    label: "Analyse",     icon: Search,       color: "red" },
   { id: "brainstorm", label: "Brainstorm",  icon: Brain,        color: "amber" },
-  { id: "decision",   label: "Decision",    icon: Scale,        color: "indigo" },
+  { id: "decision",   label: "Décision",    icon: Scale,        color: "indigo" },
   { id: "crise",      label: "Crise",       icon: AlertTriangle, color: "red" },
-  { id: "strategie",  label: "Strategie",   icon: Target,       color: "emerald" },
-  { id: "debat",      label: "Debat",       icon: MessageSquare, color: "violet" },
+  { id: "strategie",  label: "Stratégie",   icon: Target,       color: "emerald" },
+  { id: "debat",      label: "Débat",       icon: MessageSquare, color: "violet" },
   { id: "innovation", label: "Innovation",  icon: Sparkles,     color: "fuchsia" },
   { id: "deep",       label: "Deep Resonance", icon: Brain,     color: "cyan" },
 ];
@@ -996,7 +996,7 @@ export function Tab4Headers() {
       <PatternCard title="8.6 AgentSettings Card Headers — 10 gradients differents!" where="AgentSettingsView.tsx — CHAQUE section a son gradient">
         <div className="grid grid-cols-3 gap-1.5">
           {[
-            { label: "Mode Decision", gradient: "from-blue-600 to-blue-500" },
+            { label: "Mode Décision", gradient: "from-blue-600 to-blue-500" },
             { label: "Competences", gradient: "from-gray-700 to-gray-600" },
             { label: "Style Comm.", gradient: "from-indigo-600 to-indigo-500" },
             { label: "Psychometrie", gradient: "from-violet-600 to-purple-500" },
@@ -1603,8 +1603,8 @@ function TabReglages() {
             <div className="py-1">
               {[
                 { label: "Mon Profil", icon: "👤" },
-                { label: "Reglages Generaux", icon: "⚙️" },
-                { label: "Reglages Agents AI", icon: "🤖" },
+                { label: "Réglages Généraux", icon: "⚙️" },
+                { label: "Réglages Agents AI", icon: "🤖" },
                 { label: "FAQ", icon: "❓" },
                 { label: "Abonnement", icon: "💳" },
               ].map(item => (
@@ -5818,7 +5818,7 @@ function TabMonEquipeAI() {
       <PatternCard title="8.6 AgentSettings Card Headers — 10 gradients differents!" where="AgentSettingsView.tsx — CHAQUE section a son gradient">
         <div className="grid grid-cols-3 gap-1.5">
           {[
-            { label: "Mode Decision", gradient: "from-blue-600 to-blue-500" },
+            { label: "Mode Décision", gradient: "from-blue-600 to-blue-500" },
             { label: "Competences", gradient: "from-gray-700 to-gray-600" },
             { label: "Style Comm.", gradient: "from-indigo-600 to-indigo-500" },
             { label: "Psychometrie", gradient: "from-violet-600 to-purple-500" },

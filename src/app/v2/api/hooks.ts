@@ -82,34 +82,34 @@ const MODE_LIVE_CONFIG: Record<string, ModeConfig> = {
     maxExchanges: 4,
   },
   analyse: {
-    options: ["Cause racine?", "Donnees manquantes", "Comparer avec un benchmark", "Conclusions?"],
+    options: ["Cause racine?", "Données manquantes", "Comparer avec un benchmark", "Conclusions?"],
     coachingIntro: "",
     coachingConverge: "L'analyse est solide. On formule les conclusions?",
-    synthesisPrompt: "Analyse structuree: (1) Probleme decompose, (2) Causes racines identifiees, (3) Donnees cles, (4) Conclusions, (5) Recommandations actionnables.",
+    synthesisPrompt: "Analyse structurée: (1) Problème décomposé, (2) Causes racines identifiées, (3) Données clés, (4) Conclusions, (5) Recommandations actionnables.",
     autoConsultBots: ["CTOB", "CFOB"],
     maxExchanges: 6,
   },
   decision: {
-    options: ["Quels criteres?", "Risques de chaque option", "Comparer Go vs No-Go", "Ma decision"],
+    options: ["Quels critères?", "Risques de chaque option", "Comparer Go vs No-Go", "Ma décision"],
     coachingIntro: "",
-    coachingConverge: "Les options sont evaluees. Pret a trancher?",
-    synthesisPrompt: "Matrice de decision: Options evaluees (criteres, risques, potentiel). Recommandation avec niveau de confiance. Conditions de succes du Go. Plan B si No-Go.",
+    coachingConverge: "Les options sont évaluées. Prêt à trancher?",
+    synthesisPrompt: "Matrice de décision: Options évaluées (critères, risques, potentiel). Recommandation avec niveau de confiance. Conditions de succès du Go. Plan B si No-Go.",
     autoConsultBots: ["CFOB", "CSOB"],
     maxExchanges: 5,
   },
   strategie: {
-    options: ["Forces et faiblesses", "Opportunites du marche", "Menaces a anticiper", "Plan d'execution"],
+    options: ["Forces et faiblesses", "Opportunités du marché", "Menaces à anticiper", "Plan d'exécution"],
     coachingIntro: "",
-    coachingConverge: "La strategie se dessine. On formalise le plan?",
-    synthesisPrompt: "Plan strategique: (1) Forces et faiblesses, (2) 3 axes prioritaires, (3) Quick wins (30 jours), (4) Moyen terme (90 jours), (5) Indicateurs de succes.",
+    coachingConverge: "La stratégie se dessine. On formalise le plan?",
+    synthesisPrompt: "Plan stratégique: (1) Forces et faiblesses, (2) 3 axes prioritaires, (3) Quick wins (30 jours), (4) Moyen terme (90 jours), (5) Indicateurs de succès.",
     autoConsultBots: ["CSOB", "CFOB"],
     maxExchanges: 7,
   },
   innovation: {
-    options: ["Technique disruptive?", "Qui fait ca ailleurs?", "Prototype minimal", "Potentiel marche"],
+    options: ["Technique disruptive?", "Qui fait ça ailleurs?", "Prototype minimal", "Potentiel marché"],
     coachingIntro: "",
-    coachingConverge: "On a identifie des pistes. On selectionne la plus prometteuse?",
-    synthesisPrompt: "Innovation brief: (1) Opportunite identifiee, (2) Solution proposee, (3) Differenciateur cle, (4) Premier prototype (description), (5) Marche potentiel, (6) Prochaine etape concrete.",
+    coachingConverge: "On a identifié des pistes. On sélectionne la plus prometteuse?",
+    synthesisPrompt: "Innovation brief: (1) Opportunité identifiée, (2) Solution proposée, (3) Différenciateur clé, (4) Premier prototype (description), (5) Marché potentiel, (6) Prochaine étape concrète.",
     autoConsultBots: ["CTOB", "CMOB"],
     maxExchanges: 6,
   },
@@ -429,6 +429,17 @@ export function useChat() {
       try { localStorage.removeItem(THREADS_KEY); } catch { /* noop */ }
     }
   }, []);
+
+  // BUG FIX S74: Safety net — auto-reset isTyping if stuck for 45+ seconds
+  useEffect(() => {
+    if (!isTyping) return;
+    const timeout = setTimeout(() => {
+      console.warn("[useChat] isTyping stuck for 45s — auto-resetting");
+      setIsTyping(false);
+      streamAbort.current = null;
+    }, 45_000);
+    return () => clearTimeout(timeout);
+  }, [isTyping]);
 
   // Persist threads to localStorage
   useEffect(() => {
@@ -899,7 +910,10 @@ export function useChat() {
     }
     setMessages([]);
     setActiveThreadId(null);
+    setActiveRoster(["CEOB"]); // BUG FIX S74: Reset roster to CarlOS only on new conversation
     idCounter.current = 0;
+    driftWarningCount.current = 0;
+    missionNudgeShownAt.current = 0;
   }, [activeThreadId, messages]);
 
   const parkThread = useCallback(() => {
@@ -911,6 +925,7 @@ export function useChat() {
       );
       setMessages([]);
       setActiveThreadId(null);
+      setActiveRoster(["CEOB"]); // BUG FIX S74: Reset roster when parking thread
       idCounter.current = 0;
     }
   }, [activeThreadId, messages]);

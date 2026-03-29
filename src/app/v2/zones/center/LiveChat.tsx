@@ -76,10 +76,10 @@ const MODE_CONFIG: Record<string, { label: string; icon: typeof Zap; color: stri
   credo: { label: "Standard", icon: Zap, color: "text-blue-500", bg: "bg-blue-50" },
   analyse: { label: "Analyse", icon: Zap, color: "text-red-500", bg: "bg-red-50" },
   brainstorm: { label: "Brainstorm", icon: Brain, color: "text-amber-500", bg: "bg-amber-50" },
-  decision: { label: "Decision", icon: Scale, color: "text-indigo-500", bg: "bg-indigo-50" },
+  decision: { label: "Décision", icon: Scale, color: "text-indigo-500", bg: "bg-indigo-50" },
   crise: { label: "Crise", icon: AlertTriangle, color: "text-red-600", bg: "bg-red-50" },
   strategie: { label: "Strategie", icon: Target, color: "text-emerald-500", bg: "bg-emerald-50" },
-  debat: { label: "Debat", icon: MessageSquare, color: "text-violet-500", bg: "bg-violet-50" },
+  debat: { label: "Débat", icon: MessageSquare, color: "text-violet-500", bg: "bg-violet-50" },
   innovation: { label: "Innovation", icon: Sparkles, color: "text-fuchsia-500", bg: "bg-fuchsia-50" },
   deep: { label: "Deep Resonance", icon: Brain, color: "text-cyan-500", bg: "bg-cyan-50" },
 };
@@ -466,29 +466,29 @@ function getThinkingSteps(mode: string): ThinkingStep[] {
       { icon: Cpu, label: "Analyse approfondie...", duration: 0 },
     ],
     brainstorm: [
-      { icon: Sparkles, label: "Ouverture du champ creatif...", duration: 1200 },
+      { icon: Sparkles, label: "Ouverture du champ créatif...", duration: 1200 },
       { icon: Users, label: "Convocation CMO + CEO...", duration: 1300 },
-      { icon: Brain, label: "Generation d'idees...", duration: 0 },
+      { icon: Brain, label: "Génération d'idées...", duration: 0 },
     ],
     debat: [
-      { icon: Users, label: "Positionnement des debatteurs...", duration: 1300 },
+      { icon: Users, label: "Positionnement des débatteurs...", duration: 1300 },
       { icon: MessageSquare, label: "Arguments et contre-arguments...", duration: 1500 },
       { icon: Scale, label: "Arbitrage en cours...", duration: 0 },
     ],
     decision: [
-      { icon: FileText, label: "Compilation des donnees...", duration: 1200 },
+      { icon: FileText, label: "Compilation des données...", duration: 1200 },
       { icon: Users, label: "Consultation CEO + CFO...", duration: 1400 },
-      { icon: Scale, label: "Evaluation Go/No-Go...", duration: 0 },
+      { icon: Scale, label: "Évaluation Go/No-Go...", duration: 0 },
     ],
     crise: [
-      { icon: AlertTriangle, label: "Evaluation de la severite...", duration: 800 },
+      { icon: AlertTriangle, label: "Évaluation de la sévérité...", duration: 800 },
       { icon: Users, label: "Mobilisation d'urgence COO + CEO...", duration: 1000 },
-      { icon: Cpu, label: "Plan d'action immediat...", duration: 0 },
+      { icon: Cpu, label: "Plan d'action immédiat...", duration: 0 },
     ],
     strategie: [
-      { icon: Target, label: "Cadrage strategique...", duration: 1300 },
+      { icon: Target, label: "Cadrage stratégique...", duration: 1300 },
       { icon: Users, label: "Consultation CSO + CFO + CEO...", duration: 1500 },
-      { icon: Cpu, label: "Elaboration du plan...", duration: 0 },
+      { icon: Cpu, label: "Élaboration du plan...", duration: 0 },
     ],
     innovation: [
       { icon: Sparkles, label: "Scan des possibilites...", duration: 1200 },
@@ -792,12 +792,12 @@ function ModeBar({ activeMode, onSelectMode, activeBranch, onAdvance, onComplete
   const modes = [
     { id: "brainstorm", label: "Brain", icon: Brain, color: "text-amber-600 bg-amber-50 border-amber-200" },
     { id: "crise", label: "Crise", icon: AlertTriangle, color: "text-red-600 bg-red-50 border-red-200" },
-    { id: "decision", label: "Decision", icon: Scale, color: "text-indigo-600 bg-indigo-50 border-indigo-200" },
+    { id: "decision", label: "Décision", icon: Scale, color: "text-indigo-600 bg-indigo-50 border-indigo-200" },
     { id: "analyse", label: "Analyse", icon: Search, color: "text-green-600 bg-green-50 border-green-200" },
     { id: "strategie", label: "Strat.", icon: Target, color: "text-emerald-600 bg-emerald-50 border-emerald-200" },
     { id: "innovation", label: "Innov.", icon: Sparkles, color: "text-fuchsia-600 bg-fuchsia-50 border-fuchsia-200" },
     { id: "deep", label: "Deep", icon: Brain, color: "text-cyan-600 bg-cyan-50 border-cyan-200" },
-    { id: "debat", label: "Debat", icon: MessageSquare, color: "text-violet-600 bg-violet-50 border-violet-200" },
+    { id: "debat", label: "Débat", icon: MessageSquare, color: "text-violet-600 bg-violet-50 border-violet-200" },
   ];
 
   return (
@@ -1186,15 +1186,15 @@ export function LiveChat({
 
   // Request synthesis from CarlOS — MUST be defined before handleOptionClick
   const SYNTHESIS_PROMPTS: Record<string, string> = {
-    credo: "Synthetise: (1) Tension identifiee, (2) Recherche faite, (3) Options exposees, (4) Meilleure option demontree, (5) Prochaines etapes concretes.",
-    debat: "Synthetise le debat: Position A (arguments + forces), Position B (arguments + forces), Verdict (quelle position est la plus solide et pourquoi), Decision recommandee.",
-    brainstorm: "Classe les idees par potentiel (fort/moyen/faible). Top 3 idees avec justification. Prochaine etape pour chaque top idee.",
-    crise: "Plan de crise: (1) Severite 1-10, (2) Actions immediates (30 min), (3) Communication a faire, (4) Responsable de chaque action, (5) Suivi dans 24h.",
-    analyse: "Analyse structuree: (1) Probleme decompose, (2) Causes racines identifiees, (3) Donnees cles, (4) Conclusions, (5) Recommandations actionnables.",
-    decision: "Matrice de decision: Options evaluees (criteres, risques, potentiel). Recommandation avec niveau de confiance. Conditions de succes du Go. Plan B si No-Go.",
-    strategie: "Plan strategique: (1) SWOT synthetise, (2) 3 axes strategiques prioritaires, (3) Quick wins (30 jours), (4) Moyen terme (90 jours), (5) Indicateurs de succes.",
-    innovation: "Innovation brief: (1) Opportunite identifiee, (2) Solution proposee, (3) Differenciateur cle, (4) Premier prototype, (5) Marche potentiel, (6) Prochaine etape.",
-    deep: "Deep insights: (1) Insight principal (ce qui n'etait pas evident), (2) Connexions inattendues, (3) Question que personne ne posait, (4) Recommandation contre-intuitive.",
+    credo: "Synthétise: (1) Tension identifiée, (2) Recherche faite, (3) Options exposées, (4) Meilleure option démontrée, (5) Prochaines étapes concrètes.",
+    debat: "Synthétise le débat: Position A (arguments + forces), Position B (arguments + forces), Verdict (quelle position est la plus solide et pourquoi), Décision recommandée.",
+    brainstorm: "Classe les idées par potentiel (fort/moyen/faible). Top 3 idées avec justification. Prochaine étape pour chaque top idée.",
+    crise: "Plan de crise: (1) Sévérité 1-10, (2) Actions immédiates (30 min), (3) Communication à faire, (4) Responsable de chaque action, (5) Suivi dans 24h.",
+    analyse: "Analyse structurée: (1) Problème décomposé, (2) Causes racines identifiées, (3) Données clés, (4) Conclusions, (5) Recommandations actionnables.",
+    decision: "Matrice de décision: Options évaluées (critères, risques, potentiel). Recommandation avec niveau de confiance. Conditions de succès du Go. Plan B si No-Go.",
+    strategie: "Plan stratégique: (1) SWOT synthétisé, (2) 3 axes stratégiques prioritaires, (3) Quick wins (30 jours), (4) Moyen terme (90 jours), (5) Indicateurs de succès.",
+    innovation: "Innovation brief: (1) Opportunité identifiée, (2) Solution proposée, (3) Différenciateur clé, (4) Premier prototype, (5) Marché potentiel, (6) Prochaine étape.",
+    deep: "Deep insights: (1) Insight principal (ce qui n'était pas évident), (2) Connexions inattendues, (3) Question que personne ne posait, (4) Recommandation contre-intuitive.",
   };
 
   const handleSynthesis = useCallback(() => {
@@ -1355,26 +1355,19 @@ export function LiveChat({
     <div className="h-full flex flex-col bg-gradient-to-b from-gray-50 to-white">
       {/* Header — harmonisé avec FocusModeLayout en split mode */}
       {(() => {
-        const botInfo = BOT_COLORS[activeBotCode] || BOT_COLORS.CEOB;
-        const SPLIT_GRADIENTS: Record<string, string> = {
-          CEOB: "bg-blue-600", CTOB: "bg-violet-600",
-          CFOB: "bg-emerald-600", CMOB: "bg-pink-600",
-          CSOB: "bg-red-600", COOB: "bg-orange-600",
-          CPOB: "bg-slate-600", CHROB: "bg-teal-600",
-          CINOB: "bg-rose-600", CROB: "bg-amber-600",
-          CLOB: "bg-indigo-600", CISOB: "bg-zinc-600",
-        };
-        const splitBg = SPLIT_GRADIENTS[activeBotCode] || "bg-blue-600";
         const txtColor = splitMode ? "text-white" : "text-gray-800";
         const txtMuted = splitMode ? "text-white/60" : "text-gray-400";
         const hoverBg = splitMode ? "hover:bg-white/10" : "hover:bg-gray-100";
         const hoverTxt = splitMode ? "hover:text-white" : "hover:text-gray-600";
         return (
-          <div className={cn(
-            "shrink-0",
-            compact ? "px-3 py-1.5" : "px-4 py-2",
-            splitMode ? splitBg : "bg-white/80 backdrop-blur-sm border-b"
-          )}>
+          <div
+            className={cn(
+              "shrink-0",
+              splitMode ? "h-12 px-4 flex flex-col justify-center" : (compact ? "px-3 py-1.5" : "px-4 py-2"),
+              !splitMode && "bg-white/80 backdrop-blur-sm border-b"
+            )}
+            style={splitMode ? { backgroundColor: "#073E5A" } : undefined}
+          >
             {/* Ligne 1: Titre + actions + équipe */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 min-w-0">
@@ -1467,8 +1460,8 @@ export function LiveChat({
                 )}
               </div>
             </div>
-            {/* Ligne 2: Équipe active (splitMode) — avatars + noms + ajouter agent */}
-            {splitMode && !compact && (
+            {/* Ligne 2: Équipe active (splitMode) — masquée car h-12 fixe harmonisé avec TopBarContent */}
+            {false && splitMode && !compact && (
               <div className="flex items-center gap-2 pt-1 mt-1 border-t border-white/15">
                 {activeRoster.map((code, idx) => {
                   const info = BOT_COLORS[code];

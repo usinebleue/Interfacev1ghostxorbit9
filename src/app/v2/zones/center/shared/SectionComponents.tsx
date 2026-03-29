@@ -4,7 +4,7 @@
  */
 
 import { useState, useCallback } from "react";
-import { ChevronRight, ChevronDown, BookOpen, Sparkles, Package, Play, Loader2, CheckCircle2 } from "lucide-react";
+import { ChevronRight, ChevronDown, BookOpen, Sparkles, Package, Play, Loader2, CheckCircle2, Inbox } from "lucide-react";
 import { cn } from "../../../../components/ui/utils";
 import { Card } from "../../../../components/ui/card";
 import {
@@ -26,12 +26,31 @@ export function StatusBadge({ status }: { status: keyof typeof STATUS_CONFIG }) 
   );
 }
 
-export function BotBadge({ code }: { code: string }) {
-  const info = BOT_INFO[code];
-  if (!info) return <span className="text-[9px] text-gray-400">{code}</span>;
+export function BotBadge({ code }: { code: string | { code?: string; nom?: string } }) {
+  const resolvedCode = typeof code === "object" ? (code?.code || "?") : code;
+  const info = BOT_INFO[resolvedCode];
+  if (!info) return <span className="text-[9px] text-gray-400">{resolvedCode}</span>;
   return (
     <span className={cn("text-[9px] font-bold text-white px-1.5 py-0.5 rounded bg-gradient-to-r", info.gradient)}>
-      {info.label}
+      {info.label || resolvedCode}
+    </span>
+  );
+}
+
+const VISIBILITY_CONFIG = {
+  interne:    { emoji: "\uD83D\uDD12", label: "Interne",    bg: "bg-gray-100",    text: "text-gray-600",  border: "border-gray-200" },
+  equipe:     { emoji: "\uD83D\uDC65", label: "\u00C9quipe",     bg: "bg-blue-50",     text: "text-blue-600",  border: "border-blue-200" },
+  client:     { emoji: "\uD83D\uDC41",  label: "Client",     bg: "bg-amber-50",    text: "text-amber-600", border: "border-amber-200" },
+  partenaire: { emoji: "\uD83C\uDF10", label: "Partenaire", bg: "bg-emerald-50",  text: "text-emerald-600", border: "border-emerald-200" },
+  reseau:     { emoji: "\uD83D\uDD17", label: "R\u00E9seau",     bg: "bg-purple-50",   text: "text-purple-600", border: "border-purple-200" },
+} as const;
+
+export function VisibilityBadge({ visibility }: { visibility: keyof typeof VISIBILITY_CONFIG }) {
+  const cfg = VISIBILITY_CONFIG[visibility] || VISIBILITY_CONFIG.interne;
+  return (
+    <span className={cn("text-[9px] font-medium px-1.5 py-0.5 rounded border inline-flex items-center gap-1", cfg.bg, cfg.text, cfg.border)}>
+      <span>{cfg.emoji}</span>
+      {cfg.label}
     </span>
   );
 }
@@ -179,6 +198,153 @@ export function KPICard({ kpi }: { kpi: KPIConfig }) {
         {kpi.sub && <div className="text-[9px] text-gray-400">{kpi.sub}</div>}
       </div>
     </button>
+  );
+}
+
+// ================================================================
+// BLOC — Card avec gradient header + liste items (pattern DepartmentTourDeControle)
+// ================================================================
+
+export interface BlocItem {
+  primary: string;
+  secondary: string;
+  value?: string;
+  valueColor?: string;
+  pct?: number;
+  pctColor?: string;
+}
+
+export interface BlocConfig {
+  icon: React.ElementType;
+  title: string;
+  gradient: string;
+  count?: number;
+  items: BlocItem[];
+}
+
+export function BlockHeader({ icon: Icon, title, count, gradient }: {
+  icon: React.ElementType;
+  title: string;
+  count?: number;
+  gradient: string;
+}) {
+  return (
+    <div className={cn("flex items-center gap-2 px-3 py-2.5 bg-gradient-to-r", gradient)}>
+      <Icon className="h-4 w-4 text-white" />
+      <h3 className="text-sm font-bold text-white flex-1">{title}</h3>
+      {count !== undefined && (
+        <span className="text-xs font-bold bg-white/25 text-white px-2 py-0.5 rounded-full">{count}</span>
+      )}
+    </div>
+  );
+}
+
+export function Bloc({ config, onClick }: { config: BlocConfig; onClick?: () => void }) {
+  return (
+    <Card className={cn("p-0 overflow-hidden rounded-xl shadow-sm transition-shadow", onClick ? "cursor-pointer hover:shadow-md" : "")} onClick={onClick}>
+      <BlockHeader icon={config.icon} title={config.title} count={config.count} gradient={config.gradient} />
+      <ul className="px-3 py-3 space-y-2.5">
+        {config.items.map((item, i) => (
+          <li key={i} className="text-xs text-gray-800">
+            {item.pct !== undefined ? (
+              <>
+                <div className="flex justify-between mb-0.5">
+                  <span className="font-medium">{item.primary}</span>
+                  <span className="font-bold">{item.pct}%</span>
+                </div>
+                <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div className={cn("h-full rounded-full", item.pctColor || "bg-blue-500")} style={{ width: `${item.pct}%` }} />
+                </div>
+                {item.secondary && <p className="text-[11px] text-gray-400 mt-0.5">{item.secondary}</p>}
+              </>
+            ) : item.value ? (
+              <>
+                <div className="flex justify-between">
+                  <span className="font-medium">{item.primary}</span>
+                  <span className={cn("font-bold", item.valueColor || "text-gray-700")}>{item.value}</span>
+                </div>
+                <p className="text-[11px] text-gray-400">{item.secondary}</p>
+              </>
+            ) : (
+              <>
+                <span className="font-medium">{item.primary}</span>
+                {item.secondary && <p className="text-[11px] text-gray-400">{item.secondary}</p>}
+              </>
+            )}
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
+// ================================================================
+// LOADING & EMPTY STATES
+// ================================================================
+
+export function LoadingState() {
+  return (
+    <div className="flex items-center justify-center py-8 gap-2 text-gray-400">
+      <Loader2 className="h-4 w-4 animate-spin" />
+      <span className="text-sm">Chargement...</span>
+    </div>
+  );
+}
+
+export function EmptyState({ message }: { message: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-8 gap-2 text-gray-400">
+      <Inbox className="h-8 w-8" />
+      <span className="text-sm">{message}</span>
+    </div>
+  );
+}
+
+// ================================================================
+// STAT GRID — 2 a 4 colonnes (pattern HierarchieGHML)
+// ================================================================
+
+export function StatGrid({ items }: { items: { value: number; label: string; color: string }[] }) {
+  return (
+    <div className={cn("grid gap-2",
+      items.length === 2 ? "grid-cols-2" :
+      items.length === 3 ? "grid-cols-3" :
+      "grid-cols-4"
+    )}>
+      {items.map((s) => (
+        <div key={s.label} className={cn("text-center p-2.5 rounded-lg border",
+          `bg-${s.color}-50 border-${s.color}-100`
+        )}>
+          <div className={cn("text-lg font-bold", `text-${s.color}-600`)}>{s.value}</div>
+          <div className={cn("text-[9px] font-medium", `text-${s.color}-600`)}>{s.label}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ================================================================
+// TAB SECTION HEADER — meme pattern que DepartmentTourDeControle SectionHeader
+// ================================================================
+
+export function TabSectionHeader({ icon: Icon, title, subtitle, gradient }: {
+  icon: React.ElementType;
+  title: string;
+  subtitle?: string;
+  gradient: string;
+}) {
+  return (
+    <div className={cn("bg-gradient-to-r rounded-xl p-4 transition-all duration-300", gradient)}>
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center">
+          <Icon className="h-4 w-4 text-white" />
+        </div>
+        <div>
+          <h2 className="text-lg font-bold text-white">{title}</h2>
+          {subtitle && <p className="text-sm text-white/70">{subtitle}</p>}
+        </div>
+      </div>
+    </div>
   );
 }
 

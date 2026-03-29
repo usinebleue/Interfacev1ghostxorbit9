@@ -28,7 +28,7 @@ import { useFrameMaster } from "../../../context/FrameMasterContext";
 
 const tabs = [
   { id: "identite", label: "Identite Produit" },
-  { id: "strategie", label: "Strategie & Lancement" },
+  { id: "strategie", label: "Stratégie & Lancement" },
   { id: "pricing", label: "Pricing & Segments" },
   { id: "projections", label: "Projections" },
   { id: "concurrence", label: "Concurrence" },

@@ -20,6 +20,11 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { cn } from "../../../components/ui/utils";
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from "../../../components/ui/resizable";
 import { useFrameMaster } from "../../context/FrameMasterContext";
 import { useCanvasActions } from "../../context/CanvasActionContext";
 import type { ActiveView } from "../../context/FrameMasterContext";
@@ -94,9 +99,11 @@ import { EquipeHumaineView } from "./EquipeHumaineView";
 import { ChatH2H } from "./ChatH2H";
 import { StatusView } from "./StatusView";
 import { OnboardingView } from "./OnboardingView";
+import { AdminPanel } from "./admin/AdminPanel";
 // DocForgeView archived — fusionné dans MonBureauView (DocForge sub-tab)
 import { useFlowGPS } from "../../api/hooks";
 import { BOT_NAME, BOT_ROLE, BOT_AVATAR, BOT_SUBTITLE } from "../../api/types";
+import { TopBarContent } from "../TopBar";
 
 // ═══════════════════════════════════════
 // MonEquipeHub — Grille de selection des 12 bots AI
@@ -313,8 +320,8 @@ export function CenterZone() {
   }, [setActiveView]);
 
   const handleStartChat = (_mode: string) => {
-    // Chat is now always visible in sidebar — just signal the canvas
-    setActiveView("live-chat");
+    // Chat is always visible in split — navigate to dashboard
+    setActiveView("dashboard");
   };
 
   // Determiner si on montre l'indicateur CREDO (quand pas en phase default C/C/C)
@@ -332,7 +339,6 @@ export function CenterZone() {
       {activeView === "scenarios" && <ScenarioHub />}
       {activeView === "ateliers" && <AtelierHub />}
       {activeView === "detail" && <DepartmentDetailView />}
-      {activeView === "live-chat" && <LiveChat />}
       {activeView === "orbit9-detail" && <Orbit9DetailView />}
       {activeView === "agent-settings" && <AgentSettingsView />}
       {activeView === "espace-bureau" && <MonBureauView />}
@@ -391,6 +397,8 @@ export function CenterZone() {
       {activeView === "chat-h2h" && <ChatH2H />}
       {activeView === "status" && <StatusView />}
       {activeView === "onboarding" && <OnboardingView />}
+      {activeView === "admin" && <AdminPanel mode="god" />}
+      {activeView === "reglages" && <AdminPanel mode="instance" />}
       {/* DocForge fusionné dans MonBureauView — plus de vue séparée */}
       {activeView === "canvas" && (
         <SmartCanvas
@@ -418,29 +426,44 @@ export function CenterZone() {
         </div>
       )}
 
-      {/* Vue principale — Atelier split-screen OU vue normale */}
+      {/* Vue principale — Split permanent: LiveChat gauche + Contenu droite */}
       <div className="flex-1 overflow-hidden flex">
-        {focusData ? (
-          /* Atelier: LiveChat gauche (discussion bot) + FocusModeLayout droite (fabrication) */
-          <>
-            <div className="w-[40%] min-w-[280px] h-full overflow-hidden border-r border-gray-200">
+        <ResizablePanelGroup
+          direction="horizontal"
+          autoSaveId="center-split-v1"
+          className="h-full"
+        >
+          {/* Panel gauche — LiveChat permanent */}
+          <ResizablePanel defaultSize={40} minSize={25} maxSize={60}>
+            <div className="h-full overflow-hidden">
               <LiveChat splitMode splitTitle={
-                focusData.elementType === "blueprint_section" ? "Blueprint" :
-                focusData.elementType === "document_editor" ? "Document" :
-                focusData.elementType === "tim_code" ? "Code" :
-                focusData.elementType === "diagnostic_flow" ? "Diagnostic" :
-                "Atelier"
+                focusData
+                  ? (focusData.elementType === "blueprint_section" ? "Blueprint" :
+                     focusData.elementType === "document_editor" ? "Document" :
+                     focusData.elementType === "tim_code" ? "Code" :
+                     focusData.elementType === "diagnostic_flow" ? "Diagnostic" :
+                     "Atelier")
+                  : undefined
               } />
             </div>
-            <div className="flex-1 h-full overflow-hidden">
-              <FocusModeLayout focusData={focusData} onClose={clearFocusMode} />
+          </ResizablePanel>
+
+          <ResizableHandle className="w-1 bg-gray-200 hover:bg-blue-400 transition-colors cursor-col-resize" />
+
+          {/* Panel droite — TopBar nav + Contenu (FocusMode OU vue normale) */}
+          <ResizablePanel defaultSize={60} minSize={30}>
+            <div className="h-full flex flex-col overflow-hidden">
+              <TopBarContent />
+              <div className="flex-1 overflow-hidden">
+                {focusData ? (
+                  <FocusModeLayout focusData={focusData} onClose={clearFocusMode} />
+                ) : (
+                  renderMainView()
+                )}
+              </div>
             </div>
-          </>
-        ) : (
-          <div className="flex-1 overflow-hidden">
-            {renderMainView()}
-          </div>
-        )}
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </div>
 
       {/* Overlay: Push Content Panel — DÉSACTIVÉ (Carl: pas de popups sauf urgences) */}

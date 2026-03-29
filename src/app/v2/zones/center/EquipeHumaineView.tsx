@@ -256,9 +256,10 @@ export function EquipeHumaineView() {
                 {/* Department scope */}
                 {member.department_scope && member.department_scope.length > 0 && (
                   <div className="flex gap-1">
-                    {member.department_scope.slice(0, 3).map((dept) => (
-                      <Badge key={dept} variant="outline" className="text-[9px]">{dept}</Badge>
-                    ))}
+                    {member.department_scope.slice(0, 3).map((dept: any, i: number) => {
+                      const label = typeof dept === "string" ? dept : dept?.code || dept?.nom || "?";
+                      return <Badge key={label + i} variant="outline" className="text-[9px]">{label}</Badge>;
+                    })}
                     {member.department_scope.length > 3 && (
                       <Badge variant="outline" className="text-[9px]">+{member.department_scope.length - 3}</Badge>
                     )}

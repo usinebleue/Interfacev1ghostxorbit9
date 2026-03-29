@@ -8,7 +8,7 @@
 
 // ── Types ──
 
-export type ProfilType = "MFG" | "FEQ" | "DEV" | "INT" | "DST" | "ORG";
+export type ProfilType = "MFG" | "EXP" | "DEV" | "INT" | "DST" | "ORG" | "OPS" | "FND";
 export type TailleCategorie = "petite" | "moyenne" | "grande";
 export type DeptTier = "CORE" | "EXPAND" | "FULL";
 
@@ -68,10 +68,10 @@ export const PROFIL_TYPES: ProfilTypeInfo[] = [
     color: "#f97316", stat: "13 694 établissements au QC",
   },
   {
-    code: "FEQ", nom: "Fabricant d'équipements",
-    description: "Conçoit et fabrique des machines, robots, systèmes d'automatisation",
-    sousCats: ["Robotique", "Cobots", "Vision industrielle", "Outillage CNC", "Soudage", "Convoyeurs"],
-    color: "#8b5cf6", stat: "59% de l'offre d'équipements",
+    code: "EXP", nom: "Expert / Consultant",
+    description: "Firme-conseil, expert sectoriel, formateur spécialisé en industrie",
+    sousCats: ["Conseil stratégique", "Expertise technique", "Formation industrielle", "Audit/Conformité", "Lean/Six Sigma", "Gestion de projet"],
+    color: "#8b5cf6", stat: "Expertise terrain multi-secteur",
   },
   {
     code: "DEV", nom: "Développeur logiciel",
@@ -97,11 +97,23 @@ export const PROFIL_TYPES: ProfilTypeInfo[] = [
     sousCats: ["Associations sectorielles", "Organismes gouvernementaux", "CCTT", "Accélérateurs"],
     color: "#14b8a6", stat: "REAI 130+ membres, STIQ, MEI",
   },
+  {
+    code: "OPS", nom: "Opérateur terrain",
+    description: "Technicien, superviseur, chef d'équipe — opère les machines et les processus au quotidien",
+    sousCats: ["Production", "Maintenance", "Qualité", "Logistique interne", "Supervision"],
+    color: "#6366f1", stat: "Première ligne de l'usine",
+  },
+  {
+    code: "FND", nom: "Investisseur / Fonds",
+    description: "Fonds d'investissement, capital-risque, institution financière, financement industriel",
+    sousCats: ["Capital-risque", "Fonds privés", "Financement public", "Anges investisseurs"],
+    color: "#eab308", stat: "Écosystème de financement QC",
+  },
 ];
 
 // ── Types supply-side (vendent aux manufacturiers) ──
 
-export const SUPPLY_SIDE_TYPES: ProfilType[] = ["FEQ", "DEV", "INT", "DST"];
+export const SUPPLY_SIDE_TYPES: ProfilType[] = ["EXP", "DEV", "INT", "DST"];
 
 // ── Catalogue de diagnostics (extensible — 100+ à terme) ──
 
@@ -114,7 +126,7 @@ export const DIAGNOSTIC_CATALOGUE: DiagnosticCatalogueItem[] = [
   {
     id: "cybersecurite-ot", nom: "Diagnostic Cybersécurité OT/IT",
     description: "Audit de votre posture sécurité: IT, OT, cloud, données. Standards ISO 27001, NIST.",
-    profilTypes: ["MFG", "FEQ", "DEV"], estimatedMinutes: 20, available: true,
+    profilTypes: ["MFG", "EXP", "DEV"], estimatedMinutes: 20, available: true,
   },
   {
     id: "supply-chain-4", nom: "Diagnostic Supply Chain 4.0",
@@ -129,14 +141,14 @@ export const DIAGNOSTIC_CATALOGUE: DiagnosticCatalogueItem[] = [
   {
     id: "readiness-export", nom: "Diagnostic Prêt à l'Export",
     description: "Évaluez votre capacité d'exportation: marchés, conformité, logistique, financement.",
-    profilTypes: ["MFG", "FEQ", "DEV"], estimatedMinutes: 20, available: true,
+    profilTypes: ["MFG", "EXP", "DEV"], estimatedMinutes: 20, available: true,
   },
 ];
 
 // ── Secteurs par type d'acteur ──
 
 export const SECTEURS_SCIAN: SecteurSCIAN[] = [
-  // MFG + FEQ
+  // MFG
   { code: "311", label: "Agroalimentaire" },
   { code: "3364", label: "Aérospatiale" },
   { code: "332", label: "Métallurgie" },
@@ -145,10 +157,14 @@ export const SECTEURS_SCIAN: SecteurSCIAN[] = [
   { code: "321", label: "Bois / Meuble" },
   { code: "334", label: "Électronique" },
   { code: "autre_manuf", label: "Autre manufacturier" },
-  // FEQ spécifique
-  { code: "feq_robot", label: "Robotique / Automatisation" },
-  { code: "feq_vision", label: "Vision / Inspection" },
-  { code: "feq_equip", label: "Équipements industriels" },
+  // EXP (Expert/Consultant)
+  { code: "exp_conseil", label: "Conseil stratégique" },
+  { code: "exp_technique", label: "Expertise technique" },
+  { code: "exp_formation", label: "Formation industrielle" },
+  // OPS (Opérateur terrain)
+  { code: "ops_production", label: "Opérations production" },
+  { code: "ops_maintenance", label: "Maintenance industrielle" },
+  { code: "ops_qualite", label: "Contrôle qualité" },
   // DEV
   { code: "dev_erp", label: "ERP / MES / SCADA" },
   { code: "dev_iot", label: "IoT / IA industriel" },
@@ -171,11 +187,13 @@ export const SECTEURS_SCIAN: SecteurSCIAN[] = [
 export function getSecteursForProfil(profil: ProfilType): SecteurSCIAN[] {
   const map: Record<ProfilType, string[]> = {
     MFG: ["311", "3364", "332", "326", "333", "321", "334", "autre_manuf"],
-    FEQ: ["feq_robot", "feq_vision", "feq_equip", "332", "333", "autre_manuf"],
+    EXP: ["exp_conseil", "exp_technique", "exp_formation", "autre"],
     DEV: ["dev_erp", "dev_iot", "dev_saas", "autre"],
     INT: ["int_auto", "int_conseil", "int_form", "autre"],
     DST: ["dst_dist", "dst_revente", "autre"],
     ORG: ["org_asso", "org_gouv", "org_cctt", "autre"],
+    OPS: ["ops_production", "ops_maintenance", "ops_qualite", "autre"],
+    FND: ["autre"],
   };
   return SECTEURS_SCIAN.filter(s => map[profil].includes(s.code));
 }
@@ -201,10 +219,10 @@ export const DEPARTEMENTS: DepartementInfo[] = [
   },
   {
     code: "CPOB", nom: "Production / Usine", tier: "CORE",
-    nomByProfil: { FEQ: "R&D / Fabrication", DEV: "Développement / Livraison", INT: "Livraison / Projets", DST: "Logistique / Distribution", ORG: "Programmes / Services" },
+    nomByProfil: { EXP: "Livraison / Mandats", DEV: "Développement / Livraison", INT: "Livraison / Projets", DST: "Logistique / Distribution", ORG: "Programmes / Services" },
     gapPhrase: "CPOB Factory analyse votre TRS, optimise la maintenance et détecte les anomalies qualité.",
     gapPhraseByProfil: {
-      FEQ: "CPOB optimise votre cycle R&D, votre fabrication spécialisée et votre service après-vente.",
+      EXP: "CPOB optimise votre gestion de mandats, votre livraison d'expertise et votre développement de pratique.",
       DEV: "CPOB accélère votre cycle de développement, votre CI/CD et votre support client.",
       INT: "CPOB gère la qualité de vos livraisons, le suivi client et vos revenus récurrents.",
       DST: "CPOB optimise votre chaîne logistique, vos inventaires et votre service client.",
@@ -1018,7 +1036,7 @@ export const ABSORPTION_QUESTIONS: DiagnosticQuestion[] = [
   },
 ];
 
-// ── Section Bonus Approche Client (supply-side types: FEQ, DEV, INT, DST) ──
+// ── Section Bonus Approche Client (supply-side types: EXP, DEV, INT, DST) ──
 
 export const APPROCHE_CLIENT_QUESTIONS: DiagnosticQuestion[] = [
   {

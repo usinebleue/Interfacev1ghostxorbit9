@@ -86,7 +86,7 @@ export const BLUEPRINT_TABS: TabDef[] = [
   { id: "taches", label: "Taches", icon: CheckCircle2 },
   { id: "timeline", label: "Timeline", icon: Calendar },
   { id: "catalogue", label: "Catalogue", icon: BookOpen },
-  { id: "equipe", label: "Equipe", icon: Users },
+  { id: "equipe", label: "Équipe", icon: Users },
 ];
 
 // ================================================================

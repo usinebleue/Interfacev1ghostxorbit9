@@ -105,24 +105,24 @@ const GHML_BLOCS: GHMLBloc[] = [
       { id: "master-routine", label: "RD.2 Routine de Dev", icon: Shield, color: "text-cyan-500" },
       { id: "master-diagnostics", label: "RD.3 Diagnostics (54)", icon: Stethoscope, color: "text-orange-600" },
       { id: "master-playbooks", label: "RD.4 Playbooks & Missions", icon: Play, color: "text-violet-600" },
-      { id: "master-bibliotheque-exec", label: "RD.5 Bibliotheque Execution", icon: Library, color: "text-indigo-600" },
+      { id: "master-bibliotheque-exec", label: "RD.5 Bibliothèque Exécution", icon: Library, color: "text-indigo-600" },
       { id: "master-angles-morts", label: "RD.6 Angles Morts & Risques", icon: EyeOff, color: "text-red-600" },
-      { id: "playbook-usine-bleue", label: "RD.7 Plan Strategique", icon: Rocket, color: "text-blue-600" },
-      { id: "strategique-reseau", label: "RD.8 Strategique Reseau", icon: Network, color: "text-orange-600" },
+      { id: "playbook-usine-bleue", label: "RD.7 Plan Stratégique", icon: Rocket, color: "text-blue-600" },
+      { id: "strategique-reseau", label: "RD.8 Stratégique Réseau", icon: Network, color: "text-orange-600" },
     ],
   },
   {
     bloc: "SA",
     label: "Strategies Affaires",
     items: [
-      { id: "master-strategie", label: "SA.1 Vision & Strategie", icon: Rocket, color: "text-red-500" },
+      { id: "master-strategie", label: "SA.1 Vision & Stratégie", icon: Rocket, color: "text-red-500" },
       { id: "master-instance-fonds", label: "SA.2 Instance Fonds & Investissement", icon: Landmark, color: "text-emerald-600" },
       { id: "master-orbit9", label: "SA.3 Orbit9 & Reseau", icon: Network, color: "text-orange-500" },
       { id: "master-profils", label: "SA.4 Profils & Demos", icon: Users, color: "text-sky-500" },
       { id: "master-marketing-360", label: "SA.5 Marketing 360", icon: Megaphone, color: "text-pink-600" },
       { id: "master-oracle9", label: "SA.6 Oracle9", icon: Radio, color: "text-amber-600" },
       { id: "flow-usine-bleue", label: "SA.7 Flow Transformation", icon: Rocket, color: "text-blue-500" },
-      { id: "master-capacites", label: "SA.8 Capacites & ROI", icon: Gauge, color: "text-blue-600" },
+      { id: "master-capacites", label: "SA.8 Capacités & ROI", icon: Gauge, color: "text-blue-600" },
     ],
   },
 ];
@@ -131,8 +131,16 @@ const GHML_BLOCS: GHMLBloc[] = [
 const ALL_ITEMS = GHML_BLOCS.flatMap((b) => b.items);
 
 export function SectionMasterGHML({ collapsed }: Props) {
-  const [open, setOpen] = useState(false);
   const { activeView, setActiveView } = useFrameMaster();
+  // Track which blocs are open independently
+  const [openBlocs, setOpenBlocs] = useState<Record<string, boolean>>({});
+
+  const toggleBloc = (bloc: string) => {
+    setOpenBlocs(prev => ({ ...prev, [bloc]: !prev[bloc] }));
+  };
+
+  // Auto-open the bloc that contains the active view
+  const activeBlocId = GHML_BLOCS.find(b => b.items.some(i => i.id === activeView))?.bloc;
 
   if (collapsed) {
     return (
@@ -160,49 +168,68 @@ export function SectionMasterGHML({ collapsed }: Props) {
     );
   }
 
+  // Header label
+  const masterLabel = (
+    <div className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+      <Sparkles className="h-3.5 w-3.5" />
+      Master BTML
+    </div>
+  );
+
   return (
-    <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger className="flex items-center gap-2 w-full px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground uppercase tracking-wide">
-        {open ? (
-          <ChevronDown className="h-3.5 w-3.5" />
-        ) : (
-          <ChevronRight className="h-3.5 w-3.5" />
-        )}
-        Master GHML
-      </CollapsibleTrigger>
+    <div className="space-y-0.5">
+      {masterLabel}
 
-      <CollapsibleContent>
-        <div className="space-y-0.5 px-1">
-          {GHML_BLOCS.map((bloc) => (
-            <div key={bloc.bloc}>
-              {/* Bloc header */}
-              <div className="flex items-center gap-1.5 px-2 pt-3 pb-1">
-                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">
-                  {bloc.bloc} — {bloc.label}
-                </span>
+      {GHML_BLOCS.map((bloc) => {
+        const isOpen = openBlocs[bloc.bloc] || activeBlocId === bloc.bloc;
+        const itemCount = bloc.items.length;
+        const hasActive = bloc.items.some(i => i.id === activeView);
+
+        return (
+          <Collapsible key={bloc.bloc} open={isOpen} onOpenChange={() => toggleBloc(bloc.bloc)}>
+            <CollapsibleTrigger className={cn(
+              "flex items-center gap-2 w-full px-3 py-2 text-xs font-bold hover:bg-accent/50 transition-colors rounded-md mx-1",
+              hasActive && "bg-accent/30"
+            )}>
+              {isOpen ? (
+                <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+              ) : (
+                <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+              )}
+              <span className="uppercase tracking-widest text-muted-foreground">
+                {bloc.bloc}
+              </span>
+              <span className="text-muted-foreground/60 font-normal">
+                {bloc.label}
+              </span>
+              <span className="ml-auto text-[9px] text-muted-foreground/40 font-mono">
+                {itemCount}
+              </span>
+            </CollapsibleTrigger>
+
+            <CollapsibleContent>
+              <div className="space-y-0.5 pl-2 pr-1 pb-1">
+                {bloc.items.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => setActiveView(item.id)}
+                      className={cn(
+                        "w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm hover:bg-accent transition-colors",
+                        activeView === item.id && "bg-accent font-medium"
+                      )}
+                    >
+                      <Icon className={cn("h-3.5 w-3.5 shrink-0", item.color)} />
+                      <span className="truncate">{item.label}</span>
+                    </button>
+                  );
+                })}
               </div>
-
-              {/* Bloc items */}
-              {bloc.items.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveView(item.id)}
-                    className={cn(
-                      "w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm hover:bg-accent transition-colors",
-                      activeView === item.id && "bg-accent font-medium"
-                    )}
-                  >
-                    <Icon className={cn("h-3.5 w-3.5 shrink-0", item.color)} />
-                    <span className="truncate">{item.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          ))}
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
+            </CollapsibleContent>
+          </Collapsible>
+        );
+      })}
+    </div>
   );
 }

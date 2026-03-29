@@ -50,7 +50,7 @@ const CATEGORIES: Category[] = [
     playbooks: [
       { id: "brainstorm", label: "Brainstorm", description: "Generation d'idees en equipe" },
       { id: "innovation", label: "Innovation", description: "Exploration de nouvelles solutions" },
-      { id: "resonance", label: "Deep Resonance", description: "Reflexion profonde guidee" },
+      { id: "resonance", label: "Deep Resonance", description: "Réflexion profonde guidée" },
     ],
   },
   {
@@ -147,9 +147,9 @@ const CATEGORIES: Category[] = [
     color: "from-indigo-500 to-blue-400",
     playbooks: [
       { id: "analyse", label: "Analyse", description: "Analyse approfondie" },
-      { id: "decision", label: "Prise de Decision", description: "Decision structuree" },
-      { id: "debat", label: "Debat", description: "Debat contradictoire" },
-      { id: "strategie", label: "Strategie", description: "Reflexion strategique" },
+      { id: "decision", label: "Prise de Décision", description: "Décision structurée" },
+      { id: "debat", label: "Débat", description: "Débat contradictoire" },
+      { id: "strategie", label: "Stratégie", description: "Réflexion stratégique" },
       { id: "credo", label: "Session CREDO", description: "Protocole CREDO complet" },
     ],
   },

@@ -15,16 +15,19 @@ import {
 } from "../../components/ui/resizable";
 import { useIsMobile } from "../../components/ui/use-mobile";
 import { useFrameMaster } from "../context/FrameMasterContext";
-import { TopBarCockpit, TopBarContent } from "../zones/TopBar";
+import { TopBarCockpit } from "../zones/TopBar";
 import { SidebarRight } from "../zones/sidebar-right/SidebarRight";
 import { CenterZone } from "../zones/center/CenterZone";
 import { FrameMasterMobile } from "./FrameMasterMobile";
 import { useGlassesEvents } from "../hooks/useGlassesEvents";
+import { useUrlSync } from "../hooks/useUrlSync";
 
 export function FrameMaster() {
   const isMobile = useIsMobile();
   // Poll glasses push events (Ray-Ban Meta -> frontend canvas actions)
   useGlassesEvents(1, true);
+  // Sync URL ↔ état navigation (back/forward + deep links)
+  useUrlSync();
   const {
     leftSidebarCollapsed,
     setLeftCollapsed,
@@ -86,13 +89,10 @@ export function FrameMaster() {
 
         <ResizableHandle className="cursor-col-resize" />
 
-        {/* ═══ PANEL DROITE — Canvas Central (nav + CenterZone) ═══ */}
+        {/* ═══ PANEL DROITE — Canvas Central (CenterZone gere TopBar en interne) ═══ */}
         <ResizablePanel defaultSize={84} minSize={60}>
-          <div className="h-full flex flex-col">
-            <TopBarContent />
-            <div className="flex-1 overflow-hidden">
-              <CenterZone />
-            </div>
+          <div className="h-full overflow-hidden">
+            <CenterZone />
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>

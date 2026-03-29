@@ -71,7 +71,7 @@ function BlocCEO({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string, 
   if (kpi) {
     if (kpi.priorite_1) items.push({ label: "Priorite #1", detail: String(kpi.priorite_1).slice(0, 60), sub: "Focus strategique" });
     if (kpi.score_sante_globale !== undefined) items.push({ label: "Sante globale", detail: `${kpi.score_sante_globale}/100`, sub: kpi.triangle_feu ? `Triangle: ${kpi.triangle_feu}` : "" });
-    if (kpi.decisions_ce_mois !== undefined) items.push({ label: "Decisions ce mois", detail: String(kpi.decisions_ce_mois), sub: kpi.projets_actifs ? `${kpi.projets_actifs} projets actifs` : "" });
+    if (kpi.decisions_ce_mois !== undefined) items.push({ label: "Décisions ce mois", detail: String(kpi.decisions_ce_mois), sub: kpi.projets_actifs ? `${kpi.projets_actifs} projets actifs` : "" });
     if (kpi.plan_strategique) items.push({ label: "Plan strategique", detail: String(kpi.plan_strategique).slice(0, 50), sub: "" });
     if (kpi.nb_sites) items.push({ label: "Sites", detail: Number(kpi.nb_sites).toLocaleString(), sub: kpi.nb_pays ? `${kpi.nb_pays} pays` : "" });
     if (kpi.revenus_milliards_usd) items.push({ label: "Revenus", detail: `${kpi.revenus_milliards_usd}G$ US`, sub: "" });

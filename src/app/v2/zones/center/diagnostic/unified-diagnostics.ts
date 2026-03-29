@@ -227,19 +227,20 @@ const DEPT_DIAGNOSTICS_V3: V3Dept[] = [
 // Quel type de client est concerne par quel departement
 // ══════════════════════════════════════════
 
+const ALL_PROFILS: ProfilType[] = ["MFG", "EXP", "DEV", "INT", "DST", "ORG", "OPS", "FND"];
 const DEPT_PROFIL_MAP: Record<string, ProfilType[]> = {
-  direction:   ["MFG", "FEQ", "DEV", "INT", "DST", "ORG"],
-  finance:     ["MFG", "FEQ", "DEV", "INT", "DST", "ORG"],
-  technologie: ["MFG", "FEQ", "DEV", "INT"],
-  marketing:   ["MFG", "FEQ", "DEV", "INT", "DST", "ORG"],
-  strategie:   ["MFG", "FEQ", "DEV", "INT", "DST", "ORG"],
-  operations:  ["MFG", "FEQ", "DST"],
-  production:  ["MFG", "FEQ"],
-  rh:          ["MFG", "FEQ", "DEV", "INT", "DST", "ORG"],
-  innovation:  ["MFG", "FEQ", "DEV"],
-  ventes:      ["MFG", "FEQ", "DEV", "INT", "DST"],
-  legal:       ["MFG", "FEQ", "DEV", "INT", "DST", "ORG"],
-  securite:    ["MFG", "FEQ", "DEV", "INT"],
+  direction:   ALL_PROFILS,
+  finance:     ALL_PROFILS,
+  technologie: ["MFG", "EXP", "DEV", "INT", "OPS"],
+  marketing:   ["MFG", "EXP", "DEV", "INT", "DST", "ORG"],
+  strategie:   ALL_PROFILS,
+  operations:  ["MFG", "EXP", "DST", "OPS"],
+  production:  ["MFG", "OPS"],
+  rh:          ALL_PROFILS,
+  innovation:  ["MFG", "EXP", "DEV"],
+  ventes:      ["MFG", "EXP", "DEV", "INT", "DST"],
+  legal:       ["MFG", "EXP", "DEV", "INT", "DST", "ORG"],
+  securite:    ["MFG", "EXP", "DEV", "INT", "OPS"],
 };
 
 // ══════════════════════════════════════════
@@ -319,7 +320,7 @@ export function buildUnifiedCatalogue(enrichis: DiagnosticCatalogue[]): UnifiedD
           })),
           measures: v3Diag.measures,
           rawDataPoints: v3Diag.dataPoints,
-          profilTypes: DEPT_PROFIL_MAP[dept.code] || ["MFG", "FEQ", "DEV", "INT", "DST", "ORG"],
+          profilTypes: DEPT_PROFIL_MAP[dept.code] || ALL_PROFILS,
           enrichi: true,
         });
       } else {
@@ -341,7 +342,7 @@ export function buildUnifiedCatalogue(enrichis: DiagnosticCatalogue[]): UnifiedD
           gaps_typiques: [],
           measures: v3Diag.measures,
           rawDataPoints: v3Diag.dataPoints,
-          profilTypes: DEPT_PROFIL_MAP[dept.code] || ["MFG", "FEQ", "DEV", "INT", "DST", "ORG"],
+          profilTypes: DEPT_PROFIL_MAP[dept.code] || ALL_PROFILS,
           enrichi: false,
         });
       }
@@ -378,7 +379,7 @@ export function buildUnifiedCatalogue(enrichis: DiagnosticCatalogue[]): UnifiedD
           fournisseurs_types: (g as any).fournisseurs_types || [],
           chantier_suggere: (g as any).chantier_suggere || "",
         })),
-        profilTypes: DEPT_PROFIL_MAP[e.departement] || ["MFG", "FEQ", "DEV", "INT", "DST", "ORG"],
+        profilTypes: DEPT_PROFIL_MAP[e.departement] || ALL_PROFILS,
         enrichi: true,
       });
     }

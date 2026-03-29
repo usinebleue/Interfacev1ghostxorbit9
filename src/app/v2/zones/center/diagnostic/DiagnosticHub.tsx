@@ -1,7 +1,7 @@
 /**
  * DiagnosticHub.tsx — Hub unifie des diagnostics (fusion 3 vagues)
  * Affiche dans Sante > sub-tab "diagnostics"
- * - Selecteur 6 types clients (MFG/FEQ/DEV/INT/DST/ORG)
+ * - Selecteur 8 types clients (MFG/EXP/DEV/INT/DST/ORG/OPS/FND)
  * - Filtres departement + recherche
  * - Grille catalogue filtree
  * - Click → dispatch focus "diagnostic_flow" → Atelier split-screen
@@ -12,7 +12,7 @@ import { useState, useEffect, useMemo } from "react";
 import {
   Stethoscope, Search, Clock,
   Factory, Building2,
-  Users, Server, Zap, Truck,
+  Users, Server, Truck, Briefcase, HardHat, Landmark,
 } from "lucide-react";
 import { cn } from "../../../../components/ui/utils";
 import { BOT_AVATAR } from "../../../api/types";
@@ -32,12 +32,14 @@ import {
 
 // ── Type client cards ──
 const PROFIL_CARDS: { code: ProfilType; icon: React.ElementType; color: string; bg: string }[] = [
-  { code: "MFG", icon: Factory,  color: "text-orange-600", bg: "bg-orange-50 border-orange-200 hover:bg-orange-100" },
-  { code: "FEQ", icon: Zap,      color: "text-purple-600", bg: "bg-purple-50 border-purple-200 hover:bg-purple-100" },
-  { code: "DEV", icon: Server,   color: "text-blue-600",   bg: "bg-blue-50 border-blue-200 hover:bg-blue-100" },
-  { code: "INT", icon: Users,    color: "text-emerald-600", bg: "bg-emerald-50 border-emerald-200 hover:bg-emerald-100" },
-  { code: "DST", icon: Truck,    color: "text-pink-600",   bg: "bg-pink-50 border-pink-200 hover:bg-pink-100" },
-  { code: "ORG", icon: Building2, color: "text-teal-600",  bg: "bg-teal-50 border-teal-200 hover:bg-teal-100" },
+  { code: "MFG", icon: Factory,    color: "text-orange-600",  bg: "bg-orange-50 border-orange-200 hover:bg-orange-100" },
+  { code: "EXP", icon: Briefcase,  color: "text-purple-600",  bg: "bg-purple-50 border-purple-200 hover:bg-purple-100" },
+  { code: "DEV", icon: Server,     color: "text-blue-600",    bg: "bg-blue-50 border-blue-200 hover:bg-blue-100" },
+  { code: "INT", icon: Users,      color: "text-emerald-600", bg: "bg-emerald-50 border-emerald-200 hover:bg-emerald-100" },
+  { code: "DST", icon: Truck,      color: "text-pink-600",    bg: "bg-pink-50 border-pink-200 hover:bg-pink-100" },
+  { code: "ORG", icon: Building2,  color: "text-teal-600",    bg: "bg-teal-50 border-teal-200 hover:bg-teal-100" },
+  { code: "OPS", icon: HardHat,    color: "text-indigo-600",  bg: "bg-indigo-50 border-indigo-200 hover:bg-indigo-100" },
+  { code: "FND", icon: Landmark,   color: "text-yellow-600",  bg: "bg-yellow-50 border-yellow-200 hover:bg-yellow-100" },
 ];
 
 // ── Department filter pills ──
@@ -47,14 +49,14 @@ const DEPT_FILTERS = [
   { key: "finance", label: "Finance" },
   { key: "technologie", label: "Tech" },
   { key: "marketing", label: "Marketing" },
-  { key: "strategie", label: "Strategie" },
+  { key: "strategie", label: "Stratégie" },
   { key: "operations", label: "Operations" },
   { key: "production", label: "Production" },
   { key: "rh", label: "RH" },
   { key: "innovation", label: "Innovation" },
   { key: "ventes", label: "Ventes" },
   { key: "legal", label: "Legal" },
-  { key: "securite", label: "Securite" },
+  { key: "securite", label: "Sécurité" },
 ] as const;
 
 // ── Props ──
@@ -162,8 +164,8 @@ export function DiagnosticHub({ botCode = "CEOB", completedCount = 0 }: Diagnost
         )}
       </div>
 
-      {/* ── Profil type selector (6 cards — toujours visibles, selection en surbrillance) ── */}
-      <div className="grid grid-cols-6 gap-1.5">
+      {/* ── Profil type selector (8 cards — 2 rangées de 4) ── */}
+      <div className="grid grid-cols-4 gap-1.5">
         {PROFIL_CARDS.map(({ code, icon: Icon, color, bg }) => {
           const info = PROFIL_TYPES_MAP[code];
           const isSelected = selectedProfil === code;

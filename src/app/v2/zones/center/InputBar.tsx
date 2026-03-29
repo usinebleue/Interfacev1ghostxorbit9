@@ -38,7 +38,7 @@ import { useSpeechToText } from "../../api/useVocal";
 // Modes de reflexion — CarlOS route automatiquement (Sherpa GPS)
 // L'utilisateur ne choisit PAS manuellement, mais on affiche le mode actif
 const MODE_META: Partial<Record<ReflectionMode, { label: string; icon: React.ElementType; color: string }>> = {
-  debat: { label: "Debat", icon: Swords, color: "bg-red-600" },
+  debat: { label: "Débat", icon: Swords, color: "bg-red-600" },
   brainstorm: { label: "Brainstorm", icon: Lightbulb, color: "bg-yellow-500" },
   crise: { label: "Crise", icon: Flame, color: "bg-orange-600" },
   analyse: { label: "Analyse", icon: Search, color: "bg-green-600" },

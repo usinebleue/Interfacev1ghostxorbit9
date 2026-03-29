@@ -32,9 +32,9 @@ const TABS = [
   { id: "entreprise", label: "3. Mon Entreprise", icon: Crown },
   { id: "bureau", label: "4. Mon Bureau", icon: Briefcase },
   { id: "salles", label: "5. Mes Salles", icon: DoorOpen },
-  { id: "equipe", label: "6. Mon Equipe AI", icon: Users },
-  { id: "reseau", label: "7. Mon Reseau", icon: Network },
-  { id: "reglages", label: "8. Reglages", icon: Settings },
+  { id: "equipe", label: "6. Mon Équipe AI", icon: Users },
+  { id: "reseau", label: "7. Mon Réseau", icon: Network },
+  { id: "reglages", label: "8. Réglages", icon: Settings },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
@@ -213,8 +213,8 @@ function TabStructure() {
         { code: "C.2.2.2", label: "Mon Bureau", tab: "Tab 4", color: "indigo", items: ["Idees", "Documents", "Outils", "Taches", "Agenda"] },
         { code: "C.2.2.3", label: "Mes Salles", tab: "Tab 5", color: "amber", items: ["Board Room", "War Room", "Think Room"] },
         { code: "C.2.2.4", label: "Mon Equipe AI", tab: "Tab 6", color: "violet", items: ["11 departements — meme pattern 4 tabs chacun"] },
-        { code: "C.2.2.5", label: "Mon Reseau", tab: "Tab 7", color: "orange", items: ["Profil", "Cellules", "Jumelage", "Pionniers", "Gouvernance", "Dashboard", "Industrie"] },
-        { code: "C.2.2.7", label: "Reglages", tab: "Tab 8", color: "gray", items: ["Profil", "Generaux", "Agents AI", "FAQ", "Abonnement"] },
+        { code: "C.2.2.5", label: "Mon Réseau", tab: "Tab 7", color: "orange", items: ["Profil", "Cellules", "Jumelage", "Pionniers", "Gouvernance", "Dashboard", "Industrie"] },
+        { code: "C.2.2.7", label: "Réglages", tab: "Tab 8", color: "gray", items: ["Profil", "Generaux", "Agents AI", "FAQ", "Abonnement"] },
       ].map(s => (
         <Card key={s.code} className={`p-3 bg-${s.color}-50/30 border-${s.color}-100`}>
           <div className="flex items-center gap-2 mb-1">
