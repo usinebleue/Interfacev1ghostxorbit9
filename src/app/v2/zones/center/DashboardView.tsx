@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { Briefcase, DollarSign, Cpu, Megaphone, Target, Loader2, Settings, Users, Lightbulb, HeartHandshake, Package, ShieldAlert, Scale, Zap, MessageSquare, Flame } from "lucide-react";
+import { Briefcase, DollarSign, Cpu, Megaphone, Target, Loader2, Settings, Users, Lightbulb, HeartHandshake, Package, ShieldAlert, Scale, Zap, MessageSquare, Flame, TrendingUp, Clock, Activity } from "lucide-react";
 import { Card } from "../../../components/ui/card";
 import { Badge } from "../../../components/ui/badge";
 import { cn } from "../../../components/ui/utils";
@@ -19,32 +19,20 @@ import { api } from "../../api/client";
 import type { KitActiveResponse } from "../../api/types";
 import { PageLayout } from "./layouts/PageLayout";
 
-/* ============ BLOCK HEADER — standard gradient (design-system.md) ============ */
-function BlockHeader({ icon: Icon, title, count, gradient }: {
+const UB_BLUE = "#073E5A";
+
+/* ============ BLOCK HEADER — pastel UB_BLUE (Carl S78) ============ */
+function BlockHeader({ icon: Icon, title, count }: {
   icon: React.ElementType;
   title: string;
   count?: number;
-  gradient?: string;
 }) {
-  if (gradient) {
-    return (
-      <div className={cn("flex items-center gap-2 px-3 py-2.5", gradient)}>
-        <Icon className="h-4 w-4 text-white" />
-        <h3 className="text-sm font-bold text-white flex-1">{title}</h3>
-        {count !== undefined && (
-          <span className="text-[9px] font-bold bg-white/25 text-white px-2 py-0.5 rounded-full">{count}</span>
-        )}
-      </div>
-    );
-  }
   return (
-    <div className="flex items-center gap-2 px-3 py-2.5 bg-gray-50 border-b">
-      <Icon className="h-4 w-4 text-gray-500" />
-      <h3 className="text-sm font-bold text-gray-700">{title}</h3>
+    <div className="flex items-center gap-2 px-3 py-2.5" style={{ backgroundColor: `${UB_BLUE}0D` }}>
+      <Icon className="h-4 w-4" style={{ color: `${UB_BLUE}B3` }} />
+      <h3 className="text-sm font-bold flex-1" style={{ color: UB_BLUE }}>{title}</h3>
       {count !== undefined && (
-        <Badge variant="destructive" className="text-[9px] px-1.5 py-0 h-4">
-          {count}
-        </Badge>
+        <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: `${UB_BLUE}1A`, color: UB_BLUE }}>{count}</span>
       )}
     </div>
   );
@@ -81,7 +69,7 @@ function BlocCEO({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string, 
   }
   return (
     <Card className="p-0 overflow-hidden rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
-      <BlockHeader icon={Briefcase} title="CarlOS — CEO" count={items.length} gradient="bg-gradient-to-r from-blue-600 to-blue-500" />
+      <BlockHeader icon={Briefcase} title="CarlOS — CEO" count={items.length} />
       <ul className="px-3 py-3 space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
           <li key={i} className="text-xs text-gray-800">
@@ -115,7 +103,7 @@ function BlocCFO({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string, 
   if (items.length === 0) items.push({ label: "Finances", value: "—", valueColor: "", sub: "Consultez Frank pour analyser" });
   return (
     <Card className="p-0 overflow-hidden rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
-      <BlockHeader icon={DollarSign} title="Frank — CFO" count={items.length > 1 ? items.length : undefined} gradient="bg-gradient-to-r from-emerald-600 to-emerald-500" />
+      <BlockHeader icon={DollarSign} title="Frank — CFO" count={items.length > 1 ? items.length : undefined} />
       <ul className="px-3 py-3 space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
           <li key={i} className="text-xs text-gray-800">
@@ -144,7 +132,7 @@ function BlocCTO({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string, 
   if (items.length === 0) items.push({ label: "Tech", value: "—", sub: "Consultez Tim pour evaluer" });
   return (
     <Card className="p-0 overflow-hidden rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
-      <BlockHeader icon={Cpu} title="Tim — CTO" gradient="bg-gradient-to-r from-violet-600 to-violet-500" />
+      <BlockHeader icon={Cpu} title="Tim — CTO" />
       <ul className="px-3 py-3 space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
           <li key={i} className="text-xs text-gray-800">
@@ -178,7 +166,7 @@ function BlocCMO({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string, 
   if (items.length === 0) items.push({ label: "Marketing", value: "—", valueColor: "", sub: "Consultez Mathilde pour planifier" });
   return (
     <Card className="p-0 overflow-hidden rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
-      <BlockHeader icon={Megaphone} title="Mathilde — CMO" gradient="bg-gradient-to-r from-pink-600 to-pink-500" />
+      <BlockHeader icon={Megaphone} title="Mathilde — CMO" />
       <ul className="px-3 py-3 space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
           <li key={i} className="text-xs text-gray-800">
@@ -206,7 +194,7 @@ function BlocCSO({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string, 
   if (items.length === 0) items.push({ label: "Strategie", detail: "—", sub: "Consultez Simone pour analyser" });
   return (
     <Card className="p-0 overflow-hidden rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
-      <BlockHeader icon={Target} title="Simone — CSO" gradient="bg-gradient-to-r from-red-600 to-red-500" />
+      <BlockHeader icon={Target} title="Simone — CSO" />
       <ul className="px-3 py-3 space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
           <li key={i} className="text-xs text-gray-800">
@@ -232,7 +220,7 @@ function BlocCOO({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string, 
   if (items.length === 0) items.push({ label: "Operations", value: "—", sub: "Consultez Olivier pour optimiser" });
   return (
     <Card className="p-0 overflow-hidden rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
-      <BlockHeader icon={Settings} title="Olivier — COO" gradient="bg-gradient-to-r from-orange-600 to-orange-500" />
+      <BlockHeader icon={Settings} title="Olivier — COO" />
       <ul className="px-3 py-3 space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
           <li key={i} className="text-xs text-gray-800">
@@ -257,7 +245,7 @@ function BlocRH({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string, u
   if (items.length === 0) items.push({ label: "Ressources humaines", value: "—", sub: "Consultez Helene pour evaluer" });
   return (
     <Card className="p-0 overflow-hidden rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
-      <BlockHeader icon={Users} title="Hélène — CHRO" gradient="bg-gradient-to-r from-teal-600 to-teal-500" />
+      <BlockHeader icon={Users} title="Hélène — CHRO" />
       <ul className="px-3 py-3 space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
           <li key={i} className="text-xs text-gray-800">
@@ -281,7 +269,7 @@ function BlocInnovation({ onClick, kpi }: { onClick?: () => void; kpi?: Record<s
   if (items.length === 0) items.push({ label: "Innovation", value: "—", sub: "Consultez Ines pour explorer" });
   return (
     <Card className="p-0 overflow-hidden rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
-      <BlockHeader icon={Lightbulb} title="Inès — CINO" gradient="bg-gradient-to-r from-rose-600 to-rose-500" />
+      <BlockHeader icon={Lightbulb} title="Inès — CINO" />
       <ul className="px-3 py-3 space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
           <li key={i} className="text-xs text-gray-800">
@@ -306,7 +294,7 @@ function BlocClients({ onClick, kpi }: { onClick?: () => void; kpi?: Record<stri
   if (items.length === 0) items.push({ label: "Securite & Conformite", value: "—", sub: "Consultez Sebastien pour auditer" });
   return (
     <Card className="p-0 overflow-hidden rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
-      <BlockHeader icon={HeartHandshake} title="Sébastien — CISO" gradient="bg-gradient-to-r from-zinc-600 to-zinc-500" />
+      <BlockHeader icon={HeartHandshake} title="Sébastien — CISO" />
       <ul className="px-3 py-3 space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
           <li key={i} className="text-xs text-gray-800">
@@ -330,7 +318,7 @@ function BlocProduit({ onClick, kpi }: { onClick?: () => void; kpi?: Record<stri
   if (items.length === 0) items.push({ label: "Usine & Produit", value: "—", sub: "Consultez Paco pour monitorer" });
   return (
     <Card className="p-0 overflow-hidden rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
-      <BlockHeader icon={Package} title="Paco — CPO" gradient="bg-gradient-to-r from-slate-600 to-slate-500" />
+      <BlockHeader icon={Package} title="Paco — CPO" />
       <ul className="px-3 py-3 space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
           <li key={i} className="text-xs text-gray-800">
@@ -354,7 +342,7 @@ function BlocRisques({ onClick, kpi }: { onClick?: () => void; kpi?: Record<stri
   if (items.length === 0) items.push({ label: "Risques", value: "—", sub: "Consultez Rich pour identifier" });
   return (
     <Card className="p-0 overflow-hidden rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
-      <BlockHeader icon={ShieldAlert} title="Rich — CRO" gradient="bg-gradient-to-r from-amber-600 to-amber-500" />
+      <BlockHeader icon={ShieldAlert} title="Rich — CRO" />
       <ul className="px-3 py-3 space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
           <li key={i} className="text-xs text-gray-800">
@@ -378,7 +366,7 @@ function BlocLegal({ onClick, kpi }: { onClick?: () => void; kpi?: Record<string
   if (items.length === 0) items.push({ label: "Legal", value: "—", sub: "Consultez Loulou pour verifier" });
   return (
     <Card className="p-0 overflow-hidden rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
-      <BlockHeader icon={Scale} title="Loulou — CLO" gradient="bg-gradient-to-r from-indigo-600 to-indigo-500" />
+      <BlockHeader icon={Scale} title="Loulou — CLO" />
       <ul className="px-3 py-3 space-y-2.5">
         {items.slice(0, 3).map((item, i) => (
           <li key={i} className="text-xs text-gray-800">
@@ -439,16 +427,45 @@ export function DashboardView() {
   return (
     <PageLayout maxWidth="5xl">
 
+        {/* VITAA — 5 piliers de valeur */}
+        <div className="grid grid-cols-5 gap-3 animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationFillMode: "both" }}>
+          {[
+            { letter: "V", label: "Ventes", value: kpis?.pipeline_total ?? 24, sub: "Pipeline actif", trend: "+12%", color: "#059669", icon: TrendingUp },
+            { letter: "I", label: "Idées", value: kpis?.idees_generees ?? 47, sub: "Idées générées", trend: "+8", color: "#7C3AED", icon: Lightbulb },
+            { letter: "T", label: "Temps", value: kpis?.heures_allouees ?? 186, sub: "Heures allouées", trend: "92%", color: "#2563EB", icon: Clock },
+            { letter: "A", label: "Argent", value: kpis?.chiffre_affaires ? `${(kpis.chiffre_affaires / 1000).toFixed(0)}K` : "1.2M", sub: "Chiffre d'affaires", trend: "+18%", color: "#D97706", icon: DollarSign },
+            { letter: "A", label: "Actifs", value: kpis?.actifs_total ?? 63, sub: "Actifs num. & phys.", trend: "+5", color: "#0D9488", icon: Activity },
+          ].map((p, i) => (
+            <Card key={i} className="p-0 overflow-hidden hover:shadow-md transition-shadow">
+              <div className="h-1" style={{ backgroundColor: p.color }} />
+              <div className="px-3 py-2.5">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: `${p.color}15`, color: p.color }}>{p.letter}</span>
+                  <span className="text-[9px] font-medium text-gray-500 uppercase tracking-wider">{p.label}</span>
+                </div>
+                <div className="text-2xl font-bold" style={{ color: UB_BLUE }}>{p.value}</div>
+                <div className="flex items-center justify-between mt-1">
+                  <span className="text-[9px] text-gray-400">{p.sub}</span>
+                  <span className="flex items-center gap-0.5 text-[9px] font-medium" style={{ color: p.color }}>
+                    <p.icon className="h-3.5 w-3.5" />
+                    {p.trend}
+                  </span>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+
         {/* Pipeline KPI — 3 box: Discussions | Missions | Chantiers */}
         <div className="grid grid-cols-3 gap-3 animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: "50ms", animationFillMode: "both" }}>
           {/* Box Discussions */}
           <Card className="p-0 overflow-hidden hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigateTo("discussions")}>
-            <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-violet-600 to-violet-500">
-              <MessageSquare className="h-4 w-4 text-white" />
-              <span className="text-sm font-bold text-white">Discussions</span>
+            <div className="flex items-center gap-2 px-3 py-2" style={{ backgroundColor: `${UB_BLUE}0D` }}>
+              <MessageSquare className="h-4 w-4" style={{ color: `${UB_BLUE}B3` }} />
+              <span className="text-sm font-bold" style={{ color: UB_BLUE }}>Discussions</span>
             </div>
             <div className="px-3 py-2 space-y-1">
-              <div className="text-2xl font-bold text-violet-600">{activeThreads.length}</div>
+              <div className="text-2xl font-bold" style={{ color: UB_BLUE }}>{activeThreads.length}</div>
               <div className="text-[9px] text-gray-400">active{activeThreads.length !== 1 ? "s" : ""}</div>
               {parkedThreads.length > 0 && (
                 <div className="text-[9px] text-amber-500">{parkedThreads.length} parkee{parkedThreads.length !== 1 ? "s" : ""}</div>
@@ -458,12 +475,12 @@ export function DashboardView() {
 
           {/* Box Missions */}
           <Card className="p-0 overflow-hidden hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigateTo("missions")}>
-            <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-500">
-              <Target className="h-4 w-4 text-white" />
-              <span className="text-sm font-bold text-white">Missions</span>
+            <div className="flex items-center gap-2 px-3 py-2" style={{ backgroundColor: `${UB_BLUE}0D` }}>
+              <Target className="h-4 w-4" style={{ color: `${UB_BLUE}B3` }} />
+              <span className="text-sm font-bold" style={{ color: UB_BLUE }}>Missions</span>
             </div>
             <div className="px-3 py-2 space-y-1">
-              <div className="text-2xl font-bold text-blue-600">{missionsEnCours.length}</div>
+              <div className="text-2xl font-bold" style={{ color: UB_BLUE }}>{missionsEnCours.length}</div>
               <div className="text-[9px] text-gray-400">en cours</div>
               <div className="flex items-center gap-2 text-[9px]">
                 {missionsEnAttente.length > 0 && <span className="text-amber-500">{missionsEnAttente.length} en attente</span>}
@@ -474,12 +491,12 @@ export function DashboardView() {
 
           {/* Box Chantiers */}
           <Card className="p-0 overflow-hidden hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigateTo("chantiers")}>
-            <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-amber-600 to-orange-500">
-              <Flame className="h-4 w-4 text-white" />
-              <span className="text-sm font-bold text-white">Chantiers</span>
+            <div className="flex items-center gap-2 px-3 py-2" style={{ backgroundColor: `${UB_BLUE}0D` }}>
+              <Flame className="h-4 w-4" style={{ color: `${UB_BLUE}B3` }} />
+              <span className="text-sm font-bold" style={{ color: UB_BLUE }}>Chantiers</span>
             </div>
             <div className="px-3 py-2 space-y-1">
-              <div className="text-2xl font-bold text-amber-600">{chantiers.length}</div>
+              <div className="text-2xl font-bold" style={{ color: UB_BLUE }}>{chantiers.length}</div>
               <div className="text-[9px] text-gray-400">
                 {chantiersBrule.length > 0 && <span className="text-red-500">{chantiersBrule.length} brule{chantiersBrule.length !== 1 ? "nt" : ""} </span>}
                 {chantiersCouve.length > 0 && <span className="text-amber-500">{chantiersCouve.length} couve{chantiersCouve.length !== 1 ? "nt" : ""}</span>}

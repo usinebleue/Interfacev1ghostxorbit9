@@ -1,19 +1,27 @@
 /**
- * AtelierCahierProjet.tsx — Atelier split-screen "Cahier de Projet" V2
+ * AtelierCahierProjet.tsx — Self-contained simulation "Cahier de Projet" V3
  * GAUCHE: Chat riche avec actions inline (challenge budget, ajuster KPIs, risques)
  * DROITE: Document cahier 7 sections qui se batit progressivement — pattern DocForge
- * Pattern: CarlOS guide → sections generees → utilisateur valide/challenge → cahier complet
+ * Pattern: CarlOS guide -> sections generees -> utilisateur valide/challenge -> cahier complet
  * Data: SIM_ACTE3 (cahier-smart-data.ts)
- * Sprint B — Atelier Simulations — Flow Usine Bleue
+ * Self-contained: TopBar, sub-tabs, split-screen, SBubble/SBtn/AutoAdvance
  */
 
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
+  ArrowLeft,
+  RotateCcw,
+  Home,
+  Building2,
+  Users,
+  Brain,
+  Globe,
+  Shield,
+  MessageSquare,
   FileText,
   CheckCircle2,
-  Building2,
   Gauge,
   Wrench,
   DollarSign,
@@ -22,30 +30,24 @@ import {
   ClipboardCheck,
   Sparkles,
   ArrowRight,
-  Zap,
   AlertTriangle,
   Target,
   Send,
   Pin,
-  Eye,
   Download,
   Lock,
-  MessageSquare,
-  ShieldQuestion,
-  Shield,
+  Mic,
 } from "lucide-react";
 import { cn } from "../../../../../components/ui/utils";
-import {
-  TypewriterText,
-  ThinkingAnimation,
-  BotBubble,
-  UserBubble,
-  BotAvatar,
-} from "../../shared/simulation-components";
+import { TypewriterText, BotAvatar } from "../../shared/simulation-components";
+import { BOT_COLORS } from "../../shared/simulation-data";
 import { SIM_ACTE3 } from "../../cahier-smart-data";
-import { AtelierLayout } from "../AtelierLayout";
 
-// ========== TYPES & CONSTANTS ==========
+// ═══════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════
+
+const UB_BLUE = "#073E5A";
 
 type Stage =
   | "intro"
@@ -60,19 +62,10 @@ type Stage =
   | "summary"
   | "ceremony";
 
-const STAGE_INDEX: Record<Stage, number> = {
-  intro: 0,
-  thinking: 1,
-  profil: 2,
-  diagnostic: 3,
-  solutions: 4,
-  budget: 5,
-  timeline: 6,
-  kpis: 7,
-  validation: 8,
-  summary: 9,
-  ceremony: 10,
-};
+const STAGE_ORDER: Stage[] = [
+  "intro", "thinking", "profil", "diagnostic", "solutions",
+  "budget", "timeline", "kpis", "validation", "summary", "ceremony",
+];
 
 const STAGE_LABELS: Record<Stage, string> = {
   intro: "Introduction",
@@ -98,7 +91,11 @@ const SECTION_ICONS: Record<number, React.ElementType> = {
   7: ClipboardCheck,
 };
 
-// ========== CHALLENGE DATA ==========
+const DEPT_SUBTABS = ["Vue d'ensemble", "Blueprint", "Sante", "Chantiers", "Projets", "Missions", "Taches", "Discussions", "Documents"];
+
+// ═══════════════════════════════════════
+// CHALLENGE DATA
+// ═══════════════════════════════════════
 
 const BUDGET_CHALLENGE =
   "Le budget de 1.1M$ brut semble eleve, mais decomposons : le CO2 transcritique (450K$) c'est 3x le cout d'un systeme HFC classique, MAIS les HFC seront interdits en 2028 — donc on evite un remplacement obligatoire dans 2 ans. Le cobot UR10e (185K$) se paye en 14 mois avec les economies de main d'oeuvre. Les subventions de 592K$ ramenent l'investissement net a 508K$ — soit 2.3% du CA annuel d'Aliments Boreal. Le financement BDC a 4.5% donne un cash-flow net positif de +13,700$/mois des le jour 1.";
@@ -113,11 +110,15 @@ const RISK_ANALYSIS = [
 const KPI_CHALLENGE =
   "Les cibles sont basees sur 23 projets similaires chez Energia — pas des projections theoriques. La reduction de -36% en consommation energetique est le MINIMUM observe (moyenne a -42%). Le throughput de +15% est conservateur — le cobot seul augmente la cadence de palettisation de +85%, le 15% tient compte du goulot en amont. Les 0 incidents SST sont realistes car le cobot elimine 100% du levage repetitif.";
 
-// ========== MAIN COMPONENT ==========
+// ═══════════════════════════════════════
+// MAIN COMPONENT
+// ═══════════════════════════════════════
 
-export function AtelierCahierProjet({ onBack }: { onBack: () => void }) {
+export function AtelierCahierProjet({ onBack }: { onBack?: () => void }) {
   const [stage, setStage] = useState<Stage>("intro");
-  const [introTyped, setIntroTyped] = useState(false);
+  const [typed, setTyped] = useState(false);
+  const chatRef = useRef<HTMLDivElement>(null);
+  const rightRef = useRef<HTMLDivElement>(null);
 
   // Challenge states
   const [showBudgetChallenge, setShowBudgetChallenge] = useState(false);
@@ -127,6 +128,16 @@ export function AtelierCahierProjet({ onBack }: { onBack: () => void }) {
   // Document section fill state (right panel)
   const [sectionsFilled, setSectionsFilled] = useState<number[]>([]);
   const [extractedNotes, setExtractedNotes] = useState<string[]>([]);
+
+  const si = STAGE_ORDER.indexOf(stage);
+
+  useEffect(() => {
+    if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
+  }, [stage, typed, showBudgetChallenge, showRiskAnalysis, showKpiChallenge]);
+
+  useEffect(() => {
+    if (rightRef.current) rightRef.current.scrollTop = 0;
+  }, [stage]);
 
   const fillSection = (num: number) => {
     if (!sectionsFilled.includes(num)) {
@@ -142,7 +153,7 @@ export function AtelierCahierProjet({ onBack }: { onBack: () => void }) {
 
   const handleReset = () => {
     setStage("intro");
-    setIntroTyped(false);
+    setTyped(false);
     setShowBudgetChallenge(false);
     setShowRiskAnalysis(false);
     setShowKpiChallenge(false);
@@ -150,127 +161,162 @@ export function AtelierCahierProjet({ onBack }: { onBack: () => void }) {
     setExtractedNotes([]);
   };
 
+  const goNext = (s: Stage) => { setTyped(false); setStage(s); };
+
+  const discussionContext =
+    si <= 1 ? "Cahier de Projet — Demarrage" :
+    si <= 3 ? "Cahier de Projet — Sections 1-2" :
+    si <= 5 ? "Cahier de Projet — Budget & Solutions" :
+    si <= 8 ? "Cahier de Projet — Plan & KPIs" :
+    "Cahier de Projet — Finalisation";
+
+  const filledCount = sectionsFilled.length;
+
   // ═══════════════════════════════════════
-  // CHAT CONTENT (Left Panel) — Rich interactions
+  // CHAT CONTENT (Left Panel)
   // ═══════════════════════════════════════
   const chatContent = (
     <>
       {/* CEO intro */}
-      {stage === "intro" && (
-        <BotBubble code="CEOB" text="" phaseLabel="Connecter">
-          <TypewriterText
-            text="L'integrateur est selectionne — Energia Solutions, score de 94%. Maintenant on construit le Cahier de Projet SMART : un document complet en 7 sections qui structure tout le projet. C'est le livrable final que le client et l'integrateur vont signer."
-            speed={10}
-            className="text-sm text-gray-800"
-            onComplete={() => setIntroTyped(true)}
-          />
-          {introTyped && (
-            <div className="mt-3 pt-3 border-t border-blue-100">
-              <button
-                onClick={() => setStage("thinking")}
-                className="text-xs bg-emerald-600 text-white px-4 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-emerald-700 font-medium cursor-pointer"
-              >
-                <Send className="h-3.5 w-3.5" /> Construire le cahier
-              </button>
-            </div>
+      {si >= 0 && (
+        <SBubble code="CEOB" collapsed={si > 0}>
+          {si === 0 ? (
+            <>
+              <TypewriterText
+                text="L'integrateur est selectionne — Energia Solutions, score de 94%. Maintenant on construit le Cahier de Projet SMART : un document complet en 7 sections qui structure tout le projet. C'est le livrable final que le client et l'integrateur vont signer."
+                speed={10}
+                className="text-sm text-gray-700"
+                onComplete={() => setTyped(true)}
+              />
+              {typed && <SBtn onClick={() => goNext("thinking")} icon={Send} label="Construire le cahier" />}
+            </>
+          ) : (
+            <p className="text-[9px] text-gray-400 italic">Energia Solutions selectionne (94%). Construction du Cahier SMART.</p>
           )}
-        </BotBubble>
-      )}
-      {stage !== "intro" && (
-        <BotBubble
-          code="CEOB"
-          text="Energia Solutions selectionne (94%). On construit le Cahier de Projet SMART en 7 sections."
-          phaseLabel="Connecter"
-          time="14:52"
-        />
+        </SBubble>
       )}
 
       {/* Building thinking */}
-      {stage === "thinking" && (
-        <ThinkingAnimation
-          steps={SIM_ACTE3.buildingThinking}
-          botEmoji=""
-          botCode="CEOB"
-          botName="CarlOS"
-          onComplete={() => {
-            fillSection(1);
-            fillSection(2);
-            setStage("profil");
-          }}
-        />
+      {si >= 1 && si <= 1 && (
+        <>
+          <SBubble code="CEOB" collapsed={false}>
+            <div className="space-y-2">
+              {SIM_ACTE3.buildingThinking.map((step, i) => (
+                <div key={i} className="flex items-center gap-2 text-[9px] text-gray-600 animate-in fade-in slide-in-from-left-2" style={{ animationDelay: `${i * 400}ms`, animationFillMode: "both", animationDuration: "500ms" }}>
+                  <div className="w-5 h-5 rounded bg-emerald-100 flex items-center justify-center shrink-0">
+                    <step.icon className="h-3.5 w-3.5 text-emerald-600" />
+                  </div>
+                  <span>{step.text}</span>
+                  <div className="flex gap-0.5 ml-auto">
+                    <div className="w-1 h-1 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <div className="w-1 h-1 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <div className="w-1 h-1 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </SBubble>
+          <AutoAdvance onComplete={() => { fillSection(1); fillSection(2); goNext("profil"); }} delay={3000} />
+        </>
       )}
 
       {/* Section 1-2: Profil + Diagnostic */}
-      {STAGE_INDEX[stage] >= STAGE_INDEX["profil"] && (
+      {si >= 2 && (
         <>
-          <BotBubble
-            code="CEOB"
-            text="Les 2 premieres sections sont generees : le profil complet d'Aliments Boreal (85 employes, 4 lignes, 45 SKUs, 18M$ CA) et l'analyse detaillee des 5 systemes critiques. On a 278,000$/an en pertes recuperables — refrigeration et palettisation en tete."
-            phaseLabel="Rechercher"
-            time="14:53"
-          />
-          <UserBubble text="C'est impressionnant la vitesse. Les chiffres du diagnostic sont bons — on avait estime a peu pres la meme chose en interne." time="14:54" />
+          <SBubble code="CEOB" collapsed={si > 2}>
+            {si === 2 ? (
+              <>
+                <TypewriterText
+                  text="Les 2 premieres sections sont generees : le profil complet d'Aliments Boreal (85 employes, 4 lignes, 45 SKUs, 18M$ CA) et l'analyse detaillee des 5 systemes critiques. On a 278,000$/an en pertes recuperables — refrigeration et palettisation en tete."
+                  speed={8}
+                  className="text-sm text-gray-700"
+                  onComplete={() => setTyped(true)}
+                />
+                {typed && (
+                  <SBtn onClick={() => goNext("diagnostic")} icon={ArrowRight} label="Generer les solutions" />
+                )}
+              </>
+            ) : (
+              <p className="text-[9px] text-gray-400 italic">Sections 1-2 generees — Profil + Diagnostic 278K$/an pertes</p>
+            )}
+          </SBubble>
 
-          {stage === "profil" && (
-            <div className="space-y-2 ml-2">
-              <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  onClick={() => setStage("diagnostic")}
-                  className="text-xs bg-emerald-600 text-white px-4 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-emerald-700 font-medium cursor-pointer"
-                >
-                  <ArrowRight className="h-3.5 w-3.5" /> Generer les solutions
-                </button>
+          {si === 2 && typed && (
+            <div className="flex justify-end">
+              <div className="bg-blue-600 text-white rounded-xl rounded-tr-none px-3 py-2 max-w-[85%] shadow-sm">
+                <p className="text-[9px]">C'est impressionnant la vitesse. Les chiffres du diagnostic sont bons — on avait estime a peu pres la meme chose en interne.</p>
               </div>
             </div>
           )}
         </>
       )}
 
-      {/* Section 3-4: Solutions + Budget */}
-      {STAGE_INDEX[stage] >= STAGE_INDEX["diagnostic"] && (
+      {/* Thinking for sections 3-4 */}
+      {si >= 3 && si <= 3 && (
         <>
-          {stage === "diagnostic" && (
-            <ThinkingAnimation
-              steps={[
+          <SBubble code="CEOB" collapsed={false}>
+            <div className="space-y-2">
+              {[
                 { icon: Wrench, text: "Conception du concept preliminaire..." },
                 { icon: DollarSign, text: "Calcul du montage financier..." },
-              ]}
-              botEmoji=""
-              botCode="CEOB"
-              botName="CarlOS"
-              onComplete={() => {
-                fillSection(3);
-                fillSection(4);
-                setStage("solutions");
-              }}
-            />
-          )}
+              ].map((step, i) => (
+                <div key={i} className="flex items-center gap-2 text-[9px] text-gray-600 animate-in fade-in slide-in-from-left-2" style={{ animationDelay: `${i * 400}ms`, animationFillMode: "both", animationDuration: "500ms" }}>
+                  <div className="w-5 h-5 rounded bg-emerald-100 flex items-center justify-center shrink-0">
+                    <step.icon className="h-3.5 w-3.5 text-emerald-600" />
+                  </div>
+                  <span>{step.text}</span>
+                  <div className="flex gap-0.5 ml-auto">
+                    <div className="w-1 h-1 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <div className="w-1 h-1 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <div className="w-1 h-1 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </SBubble>
+          <AutoAdvance onComplete={() => { fillSection(3); fillSection(4); goNext("solutions"); }} delay={2500} />
         </>
       )}
 
-      {STAGE_INDEX[stage] >= STAGE_INDEX["solutions"] && (
+      {/* Section 3-4: Solutions + Budget */}
+      {si >= 4 && (
         <>
-          <BotBubble
-            code="CEOB"
-            text="Sections 3 et 4 ajoutees : le concept preliminaire detaille les 4 solutions (CO2 transcritique, chaudieres condensation, cobot UR10e, HVAC+IoT) et le montage financier montre un investissement net de 508K$ apres 592K$ de subventions."
-            phaseLabel="Exposer"
-            time="14:55"
-          />
-          <BotBubble
-            code="CFOB"
-            text="Le financement BDC Pret vert a 4.5% sur 60 mois donne une mensualite de 9,480$. Avec 23,200$/mois d'economies, le cash-flow net est positif de +13,700$/mois des le premier jour."
-            phaseLabel="Demontrer"
-            time="14:56"
-          />
+          <SBubble code="CEOB" collapsed={si > 4}>
+            {si === 4 ? (
+              <TypewriterText
+                text="Sections 3 et 4 ajoutees : le concept preliminaire detaille les 4 solutions (CO2 transcritique, chaudieres condensation, cobot UR10e, HVAC+IoT) et le montage financier montre un investissement net de 508K$ apres 592K$ de subventions."
+                speed={8}
+                className="text-sm text-gray-700"
+                onComplete={() => setTyped(true)}
+              />
+            ) : (
+              <p className="text-[9px] text-gray-400 italic">Sections 3-4 — Solutions + Budget 508K$ net</p>
+            )}
+          </SBubble>
 
-          {stage === "solutions" && (
+          {si >= 4 && (
+            <SBubble code="CFOB" collapsed={si > 4}>
+              {si === 4 ? (
+                <TypewriterText
+                  text="Le financement BDC Pret vert a 4.5% sur 60 mois donne une mensualite de 9,480$. Avec 23,200$/mois d'economies, le cash-flow net est positif de +13,700$/mois des le premier jour."
+                  speed={8}
+                  className="text-sm text-gray-700"
+                  onComplete={() => {}}
+                />
+              ) : (
+                <p className="text-[9px] text-gray-400 italic">Frank — Cash-flow +13,700$/mois</p>
+              )}
+            </SBubble>
+          )}
+
+          {si === 4 && typed && (
             <div className="space-y-3 ml-2">
               <div className="flex items-center gap-2 flex-wrap">
                 <button
                   onClick={() => setShowBudgetChallenge(true)}
                   disabled={showBudgetChallenge}
                   className={cn(
-                    "text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all",
+                    "text-[9px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all",
                     showBudgetChallenge
                       ? "bg-emerald-100 text-emerald-700 border border-emerald-300"
                       : "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
@@ -279,10 +325,8 @@ export function AtelierCahierProjet({ onBack }: { onBack: () => void }) {
                   <Target className="h-3.5 w-3.5" /> Challenger le budget
                 </button>
                 <button
-                  onClick={() => {
-                    setStage("budget");
-                  }}
-                  className="text-xs bg-emerald-600 text-white px-4 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-emerald-700 font-medium cursor-pointer"
+                  onClick={() => goNext("budget")}
+                  className="text-[9px] bg-emerald-600 text-white px-4 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-emerald-700 font-medium cursor-pointer"
                 >
                   <ArrowRight className="h-3.5 w-3.5" /> Generer le plan
                 </button>
@@ -306,17 +350,17 @@ export function AtelierCahierProjet({ onBack }: { onBack: () => void }) {
                     <button
                       onClick={() => handleExtract("budget")}
                       className={cn(
-                        "text-[11px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all",
+                        "text-[9px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all",
                         extractedNotes.includes("budget")
                           ? "bg-green-100 text-green-700 border border-green-300"
                           : "bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100"
                       )}
                     >
-                      <Pin className="h-3.5 w-3.5" /> {extractedNotes.includes("budget") ? "Extrait ✓" : "Extraire l'argumentaire"}
+                      <Pin className="h-3.5 w-3.5" /> {extractedNotes.includes("budget") ? "Extrait" : "Extraire l'argumentaire"}
                     </button>
                     <button
-                      onClick={() => setStage("budget")}
-                      className="text-[11px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer bg-emerald-600 text-white hover:bg-emerald-700 transition-all"
+                      onClick={() => goNext("budget")}
+                      className="text-[9px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer bg-emerald-600 text-white hover:bg-emerald-700 transition-all"
                     >
                       <ArrowRight className="h-3.5 w-3.5" /> Continuer
                     </button>
@@ -328,47 +372,58 @@ export function AtelierCahierProjet({ onBack }: { onBack: () => void }) {
         </>
       )}
 
-      {/* Section 5: Timeline */}
-      {STAGE_INDEX[stage] >= STAGE_INDEX["budget"] && (
+      {/* Thinking for sections 5-6-7 */}
+      {si >= 5 && si <= 5 && (
         <>
-          {stage === "budget" && (
-            <ThinkingAnimation
-              steps={[
+          <SBubble code="CEOB" collapsed={false}>
+            <div className="space-y-2">
+              {[
                 { icon: Calendar, text: "Planification des 4 phases..." },
                 { icon: BarChart3, text: "Definition des KPIs de suivi..." },
                 { icon: CheckCircle2, text: "Preparation de la page de validation..." },
-              ]}
-              botEmoji=""
-              botCode="CEOB"
-              botName="CarlOS"
-              onComplete={() => {
-                fillSection(5);
-                fillSection(6);
-                fillSection(7);
-                setStage("timeline");
-              }}
-            />
-          )}
+              ].map((step, i) => (
+                <div key={i} className="flex items-center gap-2 text-[9px] text-gray-600 animate-in fade-in slide-in-from-left-2" style={{ animationDelay: `${i * 400}ms`, animationFillMode: "both", animationDuration: "500ms" }}>
+                  <div className="w-5 h-5 rounded bg-emerald-100 flex items-center justify-center shrink-0">
+                    <step.icon className="h-3.5 w-3.5 text-emerald-600" />
+                  </div>
+                  <span>{step.text}</span>
+                  <div className="flex gap-0.5 ml-auto">
+                    <div className="w-1 h-1 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <div className="w-1 h-1 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <div className="w-1 h-1 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </SBubble>
+          <AutoAdvance onComplete={() => { fillSection(5); fillSection(6); fillSection(7); goNext("timeline"); }} delay={2500} />
         </>
       )}
 
-      {STAGE_INDEX[stage] >= STAGE_INDEX["timeline"] && (
+      {/* Section 5-6-7: Timeline + KPIs + Validation */}
+      {si >= 6 && (
         <>
-          <BotBubble
-            code="CEOB"
-            text="Les 3 dernieres sections sont completes : le plan d'implantation en 4 phases sur 20 semaines sans arret de production, les 6 KPIs de suivi, et la page de validation avec les 3 signataires."
-            phaseLabel="Demontrer"
-            time="14:57"
-          />
+          <SBubble code="CEOB" collapsed={si > 6}>
+            {si === 6 ? (
+              <TypewriterText
+                text="Les 3 dernieres sections sont completes : le plan d'implantation en 4 phases sur 20 semaines sans arret de production, les 6 KPIs de suivi, et la page de validation avec les 3 signataires."
+                speed={8}
+                className="text-sm text-gray-700"
+                onComplete={() => setTyped(true)}
+              />
+            ) : (
+              <p className="text-[9px] text-gray-400 italic">Sections 5-6-7 — Plan 20 semaines + KPIs + Validation</p>
+            )}
+          </SBubble>
 
-          {stage === "timeline" && (
+          {si === 6 && typed && (
             <div className="space-y-3 ml-2">
               <div className="flex items-center gap-2 flex-wrap">
                 <button
                   onClick={() => setShowRiskAnalysis(true)}
                   disabled={showRiskAnalysis}
                   className={cn(
-                    "text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all",
+                    "text-[9px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all",
                     showRiskAnalysis
                       ? "bg-red-100 text-red-700 border border-red-300"
                       : "bg-red-50 text-red-700 border border-red-200 hover:bg-red-100"
@@ -380,7 +435,7 @@ export function AtelierCahierProjet({ onBack }: { onBack: () => void }) {
                   onClick={() => setShowKpiChallenge(true)}
                   disabled={showKpiChallenge}
                   className={cn(
-                    "text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all",
+                    "text-[9px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all",
                     showKpiChallenge
                       ? "bg-indigo-100 text-indigo-700 border border-indigo-300"
                       : "bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100"
@@ -389,8 +444,8 @@ export function AtelierCahierProjet({ onBack }: { onBack: () => void }) {
                   <Target className="h-3.5 w-3.5" /> Challenger les KPIs
                 </button>
                 <button
-                  onClick={() => setStage("summary")}
-                  className="text-xs bg-emerald-600 text-white px-4 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-emerald-700 font-medium cursor-pointer"
+                  onClick={() => goNext("summary")}
+                  className="text-[9px] bg-emerald-600 text-white px-4 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-emerald-700 font-medium cursor-pointer"
                 >
                   <BarChart3 className="h-3.5 w-3.5" /> Voir le resume
                 </button>
@@ -424,17 +479,17 @@ export function AtelierCahierProjet({ onBack }: { onBack: () => void }) {
                     <button
                       onClick={() => handleExtract("risques")}
                       className={cn(
-                        "text-[11px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all",
+                        "text-[9px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all",
                         extractedNotes.includes("risques")
                           ? "bg-green-100 text-green-700 border border-green-300"
                           : "bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100"
                       )}
                     >
-                      <Pin className="h-3.5 w-3.5" /> {extractedNotes.includes("risques") ? "Risques notes ✓" : "Noter les risques"}
+                      <Pin className="h-3.5 w-3.5" /> {extractedNotes.includes("risques") ? "Risques notes" : "Noter les risques"}
                     </button>
                     <button
-                      onClick={() => setStage("summary")}
-                      className="text-[11px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer bg-emerald-600 text-white hover:bg-emerald-700 transition-all"
+                      onClick={() => goNext("summary")}
+                      className="text-[9px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer bg-emerald-600 text-white hover:bg-emerald-700 transition-all"
                     >
                       <BarChart3 className="h-3.5 w-3.5" /> Resume du cahier
                     </button>
@@ -460,17 +515,17 @@ export function AtelierCahierProjet({ onBack }: { onBack: () => void }) {
                     <button
                       onClick={() => handleExtract("kpis")}
                       className={cn(
-                        "text-[11px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all",
+                        "text-[9px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all",
                         extractedNotes.includes("kpis")
                           ? "bg-green-100 text-green-700 border border-green-300"
                           : "bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100"
                       )}
                     >
-                      <Pin className="h-3.5 w-3.5" /> {extractedNotes.includes("kpis") ? "Extrait ✓" : "Extraire la justification"}
+                      <Pin className="h-3.5 w-3.5" /> {extractedNotes.includes("kpis") ? "Extrait" : "Extraire la justification"}
                     </button>
                     <button
-                      onClick={() => setStage("summary")}
-                      className="text-[11px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer bg-emerald-600 text-white hover:bg-emerald-700 transition-all"
+                      onClick={() => goNext("summary")}
+                      className="text-[9px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer bg-emerald-600 text-white hover:bg-emerald-700 transition-all"
                     >
                       <BarChart3 className="h-3.5 w-3.5" /> Resume du cahier
                     </button>
@@ -483,60 +538,56 @@ export function AtelierCahierProjet({ onBack }: { onBack: () => void }) {
       )}
 
       {/* Summary */}
-      {STAGE_INDEX[stage] >= STAGE_INDEX["summary"] && (
+      {si >= 9 && (
         <>
-          <BotBubble
-            code="CEOB"
-            text={SIM_ACTE3.ceremonyMessage}
-            phaseLabel="Obtenir"
-            time="14:58"
-          />
-
-          {stage === "summary" && (
-            <div className="space-y-2 ml-2">
-              <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  onClick={() => setStage("ceremony")}
-                  className="text-xs bg-emerald-600 text-white px-4 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-emerald-700 font-medium cursor-pointer"
-                >
-                  <Sparkles className="h-3.5 w-3.5" /> Finaliser le cahier
-                </button>
-              </div>
-            </div>
-          )}
+          <SBubble code="CEOB" collapsed={si > 9}>
+            {si === 9 ? (
+              <>
+                <TypewriterText
+                  text={SIM_ACTE3.ceremonyMessage}
+                  speed={8}
+                  className="text-sm text-gray-700"
+                  onComplete={() => setTyped(true)}
+                />
+                {typed && <SBtn onClick={() => goNext("ceremony")} icon={Sparkles} label="Finaliser le cahier" />}
+              </>
+            ) : (
+              <p className="text-[9px] text-gray-400 italic">Resume — 592K$ subventions, plan 4 phases, cahier complet</p>
+            )}
+          </SBubble>
         </>
       )}
 
       {/* Ceremony */}
-      {stage === "ceremony" && (
+      {si >= 10 && (
         <>
-          <BotBubble
-            code="CEOB"
-            text={SIM_ACTE3.hqMessage}
-            phaseLabel="Obtenir"
-            time="14:59"
-          />
-          <div className="space-y-2 ml-2">
-            <div className="flex items-center gap-2 flex-wrap">
-              <button
-                onClick={handleReset}
-                className="text-xs bg-gray-100 text-gray-600 px-4 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-gray-200 font-medium cursor-pointer border border-gray-200"
-              >
-                Recommencer
-              </button>
-            </div>
-          </div>
+          <SBubble code="CEOB" collapsed={false}>
+            <TypewriterText
+              text={SIM_ACTE3.hqMessage}
+              speed={8}
+              className="text-sm text-gray-700"
+              onComplete={() => setTyped(true)}
+            />
+            {typed && (
+              <div className="mt-3 pt-3 border-t border-gray-100">
+                <button
+                  onClick={handleReset}
+                  className="text-xs bg-gray-100 text-gray-600 px-4 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-gray-200 font-medium cursor-pointer border border-gray-200"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" /> Recommencer
+                </button>
+              </div>
+            )}
+          </SBubble>
         </>
       )}
     </>
   );
 
   // ═══════════════════════════════════════
-  // ATELIER CONTENT (Right Panel) — Document DocForge qui se batit
+  // RIGHT PANEL — Document DocForge
   // ═══════════════════════════════════════
-  const filledCount = sectionsFilled.length;
-
-  const atelierContent = (
+  const rightContent = (
     <div className="space-y-3">
       {/* Document header with progress */}
       <div className="bg-white border rounded-xl overflow-hidden shadow-sm">
@@ -545,7 +596,7 @@ export function AtelierCahierProjet({ onBack }: { onBack: () => void }) {
             <FileText className="h-5 w-5 text-emerald-700" />
             <div>
               <h3 className="text-sm font-bold text-emerald-900">Cahier de Projet SMART</h3>
-              <p className="text-[11px] text-emerald-700/70">Les sections se remplissent au fil de la construction</p>
+              <p className="text-[9px] text-emerald-700/70">Les sections se remplissent au fil de la construction</p>
             </div>
           </div>
           <div className="mt-2 flex items-center gap-2">
@@ -597,7 +648,7 @@ export function AtelierCahierProjet({ onBack }: { onBack: () => void }) {
       })}
 
       {/* Summary metrics */}
-      {STAGE_INDEX[stage] >= STAGE_INDEX["summary"] && (
+      {si >= 9 && (
         <div className="bg-white border-2 border-emerald-300 rounded-xl overflow-hidden shadow-sm">
           <div className="bg-gradient-to-r from-emerald-100 to-green-100 px-4 py-2.5 flex items-center gap-2 border-b border-emerald-200">
             <BarChart3 className="h-4 w-4 text-emerald-700" />
@@ -620,13 +671,13 @@ export function AtelierCahierProjet({ onBack }: { onBack: () => void }) {
                 </p>
                 <div className="space-y-1">
                   {extractedNotes.includes("budget") && (
-                    <p className="text-[11px] text-green-700">Budget: 508K$ net, cash-flow +13,700$/mois, HFC interdit 2028</p>
+                    <p className="text-[9px] text-green-700">Budget: 508K$ net, cash-flow +13,700$/mois, HFC interdit 2028</p>
                   )}
                   {extractedNotes.includes("risques") && (
-                    <p className="text-[11px] text-green-700">Risques: 4 identifies, tous avec mitigation, risque global = Faible</p>
+                    <p className="text-[9px] text-green-700">Risques: 4 identifies, tous avec mitigation, risque global = Faible</p>
                   )}
                   {extractedNotes.includes("kpis") && (
-                    <p className="text-[11px] text-green-700">KPIs: bases sur 23 projets reels, cibles conservatrices confirmees</p>
+                    <p className="text-[9px] text-green-700">KPIs: bases sur 23 projets reels, cibles conservatrices confirmees</p>
                   )}
                 </div>
               </div>
@@ -648,7 +699,7 @@ export function AtelierCahierProjet({ onBack }: { onBack: () => void }) {
               <p className="text-xs text-emerald-800 leading-relaxed">{SIM_ACTE3.hqMessage}</p>
             </div>
             <div className="flex items-center gap-2">
-              <button className="text-[11px] bg-white text-gray-600 border border-gray-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-gray-50 font-medium cursor-pointer">
+              <button className="text-[9px] bg-white text-gray-600 border border-gray-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-gray-50 font-medium cursor-pointer">
                 <Download className="h-3.5 w-3.5" /> Exporter le cahier
               </button>
             </div>
@@ -663,24 +714,182 @@ export function AtelierCahierProjet({ onBack }: { onBack: () => void }) {
     </div>
   );
 
+  // ═══════════════════════════════════════
+  // LAYOUT
+  // ═══════════════════════════════════════
   return (
-    <AtelierLayout
-      title="Cahier de Projet"
-      icon={FileText}
-      iconColor="text-emerald-600"
-      stage={STAGE_INDEX[stage]}
-      stageCount={11}
-      stageLabel={STAGE_LABELS[stage]}
-      onBack={onBack}
-      onReset={handleReset}
-      chatContent={chatContent}
-      atelierContent={atelierContent}
-      actions={[]}
-    />
+    <div className="h-full flex flex-col bg-white">
+      {/* Sim header */}
+      <div className="shrink-0 bg-white border-b border-gray-200 px-3 py-1.5 flex items-center gap-3">
+        <button onClick={() => onBack?.()} className="text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100 transition-colors cursor-pointer">
+          <ArrowLeft className="h-4 w-4" />
+        </button>
+        <FileText className="h-4 w-4 text-emerald-600" />
+        <span className="text-sm font-bold text-gray-800">Cahier de Projet</span>
+        <span className="text-xs text-gray-400">— {STAGE_LABELS[stage]}</span>
+        <div className="flex items-center gap-0.5 ml-auto">
+          {STAGE_ORDER.map((_, i) => (
+            <div key={i} className={cn("h-1 rounded-full transition-all",
+              i === si ? "w-4 bg-emerald-500" : i < si ? "w-2 bg-emerald-300" : "w-2 bg-gray-200"
+            )} />
+          ))}
+        </div>
+        <button onClick={handleReset} className="text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100 transition-colors cursor-pointer ml-1" title="Recommencer">
+          <RotateCcw className="h-3.5 w-3.5" />
+        </button>
+      </div>
+
+      {/* Color line */}
+      <div className="h-1 shrink-0 bg-emerald-500" />
+
+      <div className="flex-1 flex overflow-hidden">
+        {/* LEFT — Discussion (40%) */}
+        <div className="w-[40%] min-w-[280px] flex flex-col border-r border-gray-200 bg-white">
+          {/* Chat header */}
+          <div className="h-12 px-3 shrink-0 flex items-center gap-2" style={{ backgroundColor: UB_BLUE }}>
+            <BotAvatar code="CEOB" size="sm" />
+            <span className="text-[11px] text-white font-medium truncate flex-1">{discussionContext}</span>
+            <MessageSquare className="h-3.5 w-3.5 text-white/70" />
+          </div>
+
+          {/* Phase bar — emerald for cahier */}
+          <div className="shrink-0 px-3 py-1.5 bg-emerald-50 border-b border-emerald-200 flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              {[
+                { code: "CEOB" },
+                { code: "CFOB" },
+              ].map(b => (
+                <div key={b.code} className="flex items-center gap-1 bg-white/70 rounded-full px-1.5 py-0.5">
+                  <BotAvatar code={b.code} size="sm" />
+                  <span className="text-[8px] font-medium text-gray-600">{BOT_COLORS[b.code]?.name}</span>
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                </div>
+              ))}
+            </div>
+            <span className="text-[9px] font-bold text-emerald-700 ml-auto">{STAGE_LABELS[stage]}</span>
+            <span className="text-[9px] text-gray-400">{si + 1}/{STAGE_ORDER.length}</span>
+          </div>
+
+          <div ref={chatRef} className="flex-1 overflow-auto p-3 space-y-3">{chatContent}</div>
+
+          {/* Message input */}
+          <div className="shrink-0 border-t border-gray-200 px-3 py-2 flex items-center gap-2">
+            <div className="flex-1 bg-gray-100 rounded-lg px-3 py-2 text-[9px] text-gray-400">Ecrivez un message...</div>
+            <button className="p-1.5 text-gray-400 rounded-lg hover:bg-gray-100"><Mic className="h-3.5 w-3.5" /></button>
+            <button className="p-1.5 text-blue-500 rounded-lg hover:bg-blue-50"><Send className="h-3.5 w-3.5" /></button>
+          </div>
+        </div>
+
+        {/* RIGHT — Content (60%) */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* TopBar — 6 sections */}
+          <div className="h-12 px-2 shrink-0 flex items-center" style={{ backgroundColor: UB_BLUE }}>
+            <div className="flex-1 flex items-center gap-0.5">
+              {[
+                { id: "home", icon: Home, label: "Accueil" },
+                { id: "dept", icon: Building2, label: "Mon Departement" },
+                { id: "salles", icon: Users, label: "Mes Salles" },
+                { id: "equipe", icon: Brain, label: "Mon Equipe" },
+                { id: "reseau", icon: Globe, label: "Mon Reseau" },
+                { id: "admin", icon: Shield, label: "Admin" },
+              ].map(nav => (
+                <button key={nav.id} className={cn(
+                  "h-8 gap-1 px-2 text-[9px] rounded-md flex items-center transition-all",
+                  nav.id === "dept" ? "text-white bg-white/15" : "text-white/70 hover:text-white hover:bg-white/10"
+                )}>
+                  <nav.icon className="h-3.5 w-3.5" />
+                  <span>{nav.label}</span>
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-2 ml-auto">
+              <span className="text-[9px] text-white/40">Simulation</span>
+              <button onClick={handleReset} className="text-white/40 hover:text-white">
+                <RotateCcw className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Sub-tabs */}
+          <div className="shrink-0 bg-white border-b px-4 py-1.5 flex items-center gap-1 overflow-x-auto">
+            {DEPT_SUBTABS.map((tab, i) => (
+              <button key={tab} className={cn(
+                "px-3 py-1.5 text-xs font-medium rounded-md whitespace-nowrap transition-all",
+                i === 3 ? "bg-gray-900 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+              )}>
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          {/* Right panel header */}
+          <div className="shrink-0 px-4 py-2 bg-white border-b flex items-center gap-2">
+            <BotAvatar code="CEOB" size="sm" />
+            <BotAvatar code="CFOB" size="sm" />
+            <span className="text-[9px] text-gray-400 ml-auto">Bots actifs</span>
+          </div>
+
+          <div ref={rightRef} className="flex-1 overflow-y-auto px-4 py-3">
+            {rightContent}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
-// ========== DOCUMENT SECTION CARD ==========
+// ═══════════════════════════════════════
+// HELPER COMPONENTS
+// ═══════════════════════════════════════
+
+function SBubble({ code, children, collapsed }: { code: string; children: React.ReactNode; collapsed: boolean }) {
+  const bot = BOT_COLORS[code];
+  if (!bot) return null;
+  if (collapsed) {
+    return (
+      <div className="flex gap-2 items-center opacity-60">
+        <BotAvatar code={code} size="sm" />
+        <div className="text-[9px] text-gray-400">{children}</div>
+      </div>
+    );
+  }
+  return (
+    <div className="flex gap-2.5">
+      <BotAvatar code={code} size="md" />
+      <div className={cn("bg-white border rounded-xl rounded-tl-none px-3 py-2.5 max-w-[88%] shadow-sm border-l-2", bot.border)}>
+        <div className="flex items-center gap-2 mb-1">
+          <span className={cn("text-[11px] font-semibold", bot.text)}>{bot.name}</span>
+          <span className="text-[9px] text-gray-400">{bot.role}</span>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function SBtn({ onClick, icon: Icon, label, color }: { onClick: () => void; icon: React.ElementType; label: string; color?: string }) {
+  return (
+    <div className="mt-3 pt-3 border-t border-gray-100">
+      <button onClick={onClick}
+        className={cn("text-xs text-white px-4 py-2 rounded-full flex items-center gap-1.5 font-bold cursor-pointer shadow-md hover:shadow-lg transition-shadow",
+          color || "bg-emerald-600 hover:bg-emerald-700")}>
+        <Icon className="h-3.5 w-3.5" /> {label}
+      </button>
+    </div>
+  );
+}
+
+function AutoAdvance({ onComplete, delay }: { onComplete: () => void; delay: number }) {
+  useEffect(() => {
+    const timer = setTimeout(onComplete, delay);
+    return () => clearTimeout(timer);
+  }, [onComplete, delay]);
+  return null;
+}
+
+// ═══════════════════════════════════════
+// DOCUMENT SECTION CARD
+// ═══════════════════════════════════════
 
 function DocSectionCard({
   title,
@@ -726,7 +935,9 @@ function DocSectionCard({
   );
 }
 
-// ========== SECTION CONTENT RENDERERS ==========
+// ═══════════════════════════════════════
+// SECTION CONTENT RENDERERS
+// ═══════════════════════════════════════
 
 function SectionContent({ content }: { content: typeof SIM_ACTE3.sections[0]["content"] }) {
   switch (content.type) {
@@ -766,7 +977,7 @@ function SectionContent({ content }: { content: typeof SIM_ACTE3.sections[0]["co
                   </span>
                   <span className="text-[9px] text-red-600 font-bold ml-auto">{item.gaspillage}</span>
                 </div>
-                <p className="text-[11px] text-gray-600">{item.probleme}</p>
+                <p className="text-[9px] text-gray-600">{item.probleme}</p>
               </div>
             );
           })}
@@ -792,7 +1003,7 @@ function SectionContent({ content }: { content: typeof SIM_ACTE3.sections[0]["co
                 </span>
                 <span className="text-xs font-bold text-gray-800">{sol.nom}</span>
               </div>
-              <p className="text-[11px] text-gray-600 mb-1">{sol.details}</p>
+              <p className="text-[9px] text-gray-600 mb-1">{sol.details}</p>
               <div className="flex items-center gap-3">
                 <span className="text-[9px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-medium">{sol.cout}</span>
                 <span className="text-[9px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-medium">{sol.impact}</span>
@@ -817,7 +1028,7 @@ function SectionContent({ content }: { content: typeof SIM_ACTE3.sections[0]["co
         <div className="space-y-2">
           {rows.map((row, i) => (
             <div key={i} className={cn("flex items-center justify-between rounded-lg px-3 py-1.5", row.bg || "bg-gray-50")}>
-              <span className="text-[11px] text-gray-700">{row.label}</span>
+              <span className="text-[9px] text-gray-700">{row.label}</span>
               <span className={cn("text-xs font-bold", row.color)}>{row.value}</span>
             </div>
           ))}
@@ -846,7 +1057,7 @@ function SectionContent({ content }: { content: typeof SIM_ACTE3.sections[0]["co
                 <span className="text-xs font-bold text-gray-800">{phase.titre}</span>
                 <span className="text-[9px] text-gray-500 ml-auto">{phase.duree}</span>
               </div>
-              <p className="text-[11px] text-gray-600">{phase.desc}</p>
+              <p className="text-[9px] text-gray-600">{phase.desc}</p>
             </div>
           ))}
           <div className="bg-cyan-50 border border-cyan-200 rounded-lg px-3 py-2 text-center">
@@ -901,7 +1112,7 @@ function SectionContent({ content }: { content: typeof SIM_ACTE3.sections[0]["co
               <ClipboardCheck className="h-4 w-4 text-green-600 shrink-0" />
               <div className="flex-1">
                 <div className="text-xs font-bold text-gray-800">{sig.role}</div>
-                <div className="text-[11px] text-gray-500">{sig.nom}</div>
+                <div className="text-[9px] text-gray-500">{sig.nom}</div>
               </div>
               <span className="text-[9px] text-gray-400">{sig.date}</span>
             </div>

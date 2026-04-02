@@ -11,8 +11,9 @@ import { useState, useEffect, useCallback } from "react";
 import {
   Building2, Target, Layers, Rocket, DollarSign, Shield, Compass,
   TrendingUp, ListChecks, Settings, Flame, Save, Loader2,
-  CheckCircle2, AlertTriangle, Info, FileText, BookOpen,
-  ChevronRight, Sparkles, Link2, Users, Briefcase, Plus, Trash2, UserPlus, PenLine,
+  CheckCircle2, AlertTriangle, Info, FileText, BookOpen, Heart,
+  ChevronRight, Sparkles, Link2, Users, User, Briefcase, Plus, Trash2, UserPlus, PenLine,
+  Bot, Cpu, Zap, Activity, BarChart3, Star, MessageCircle,
 } from "lucide-react";
 import { Card } from "../../../../components/ui/card";
 import { cn } from "../../../../components/ui/utils";
@@ -454,6 +455,680 @@ const DEPT_KEY_FIELDS: Record<string, { sectionId: string; fieldId: string; labe
 interface KeyFieldValue { label: string; value: string }
 interface DeptScore { code: string; score: number; sections: number; gaps: number; gapLabels: string[]; keyFields: KeyFieldValue[] }
 
+// ── Blueprint Personnel — Objectifs et profil du dirigeant humain ──
+
+const PERSONAL_SECTIONS: { id: string; label: string; icon: React.ComponentType<{ className?: string }>; fields: { id: string; label: string }[] }[] = [
+  {
+    id: "vue_consolidee_perso",
+    label: "Vue consolidée",
+    icon: Layers,
+    fields: [],
+  },
+  {
+    id: "profil_dirigeant",
+    label: "Profil du dirigeant",
+    icon: User,
+    fields: [
+      { id: "nom_complet", label: "Nom complet" },
+      { id: "titre_poste", label: "Titre / Poste" },
+      { id: "annees_experience", label: "Années d'expérience" },
+      { id: "formation", label: "Formation académique" },
+      { id: "forces_principales", label: "Forces principales (top 3)" },
+      { id: "zones_developpement", label: "Zones de développement" },
+    ],
+  },
+  {
+    id: "vision_personnelle",
+    label: "Vision personnelle",
+    icon: Compass,
+    fields: [
+      { id: "mission_personnelle", label: "Ma mission en tant que dirigeant" },
+      { id: "valeurs_personnelles", label: "Mes 3 valeurs non-négociables" },
+      { id: "legacy", label: "L'héritage que je veux laisser" },
+      { id: "style_leadership", label: "Mon style de leadership" },
+    ],
+  },
+  {
+    id: "objectifs_12mois",
+    label: "Objectifs 12 mois",
+    icon: Target,
+    fields: [
+      { id: "obj_financier", label: "Objectif financier personnel" },
+      { id: "obj_croissance", label: "Objectif de croissance entreprise" },
+      { id: "obj_equipe", label: "Objectif d'équipe (recrutement, culture)" },
+      { id: "obj_innovation", label: "Objectif innovation / R&D" },
+      { id: "obj_reseau", label: "Objectif réseau / partenariats" },
+      { id: "obj_personnel", label: "Objectif personnel (santé, famille)" },
+    ],
+  },
+  {
+    id: "performance",
+    label: "Performance",
+    icon: BarChart3,
+    fields: [
+      { id: "kpi_principal", label: "KPI principal (chiffre clé à atteindre)" },
+      { id: "cible_ca", label: "Cible de CA / revenus" },
+      { id: "projets_livres", label: "Projets livrés ce trimestre" },
+      { id: "satisfaction_equipe", label: "Score satisfaction équipe" },
+      { id: "decisions_prises", label: "Décisions stratégiques prises ce mois" },
+      { id: "blocages_resolus", label: "Blocages résolus" },
+    ],
+  },
+  {
+    id: "developpement_competences",
+    label: "Développement & compétences",
+    icon: TrendingUp,
+    fields: [
+      { id: "competences_a_acquerir", label: "Compétences à acquérir cette année" },
+      { id: "formations_planifiees", label: "Formations / certifications planifiées" },
+      { id: "mentorat", label: "Mentorat (mentors actuels ou recherchés)" },
+      { id: "lectures_ressources", label: "Lectures / ressources clés" },
+    ],
+  },
+  {
+    id: "equilibre",
+    label: "Équilibre & bien-être",
+    icon: Heart,
+    fields: [
+      { id: "heures_semaine", label: "Heures de travail / semaine (cible)" },
+      { id: "delegation", label: "Ce que je dois déléguer" },
+      { id: "non_negociable", label: "Mon temps non-négociable (famille, santé)" },
+      { id: "indicateurs_bienetre", label: "Mes indicateurs de bien-être" },
+    ],
+  },
+  {
+    id: "succession_mentorat",
+    label: "Succession & mentorat",
+    icon: Users,
+    fields: [
+      { id: "plan_succession", label: "Plan de succession (qui peut me remplacer?)" },
+      { id: "personnes_cles", label: "Personnes clés à développer" },
+      { id: "transfert_connaissances", label: "Connaissances critiques à documenter" },
+      { id: "timeline_transition", label: "Horizon de transition (3-5-10 ans)" },
+    ],
+  },
+];
+
+// VITAA Personnel — les scores personnels de l'humain
+const VITAA_PERSONNEL = [
+  { letter: "V", label: "Vente (réseau, closing)", score: 72, avg: 50, color: "bg-blue-500" },
+  { letter: "I", label: "Idée (créativité, vision)", score: 85, avg: 50, color: "bg-purple-500" },
+  { letter: "T", label: "Temps (productivité, focus)", score: 38, avg: 50, color: "bg-emerald-500" },
+  { letter: "A", label: "Argent (gestion, levier)", score: 61, avg: 50, color: "bg-amber-500" },
+  { letter: "A", label: "Actif (assets, IP, équipe)", score: 45, avg: 50, color: "bg-red-500" },
+];
+
+function VitaaTable({ data, title }: { data: { letter: string; label: string; score: number; avg: number; color: string }[]; title: string }) {
+  return (
+    <div className="border rounded-xl overflow-hidden shadow-sm">
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-3 py-2 border-b border-blue-100 flex items-center gap-1.5">
+        <Heart className="h-3.5 w-3.5 text-blue-500" />
+        <span className="text-[9px] font-bold uppercase tracking-wider text-gray-700 flex-1">{title}</span>
+        <span className="flex items-center gap-1 text-[9px] text-gray-400"><span className="w-1.5 h-1.5 rounded-full bg-gray-300" /> Secteur</span>
+        <span className="flex items-center gap-1 text-[9px] text-gray-400 ml-2"><span className="w-1.5 h-1.5 rounded-full bg-blue-500" /> Toi</span>
+      </div>
+      <div className="p-2.5 space-y-2">
+        {data.map((p) => (
+          <div key={p.letter + p.label} className="rounded-lg px-1 -mx-1">
+            <div className="flex items-center gap-2 mb-0.5">
+              <div className={cn("w-5 h-5 rounded flex items-center justify-center text-white text-[9px] font-bold shrink-0", p.color)}>{p.letter[0]}</div>
+              <span className="text-xs font-medium text-gray-800 flex-1">{p.label}</span>
+              <span className={cn("text-xs font-bold", p.score >= p.avg ? "text-green-600" : "text-red-600")}>{p.score}</span>
+              <span className="text-[9px] text-gray-400 w-8">/ {p.avg}</span>
+              <span className={cn("text-[8px] px-1 py-0.5 rounded border font-medium",
+                p.score < 35 ? "text-red-600 bg-red-50 border-red-200" :
+                p.score < 50 ? "text-amber-600 bg-amber-50 border-amber-200" :
+                "text-green-600 bg-green-50 border-green-200"
+              )}>{p.score < 35 ? "critique" : p.score < 50 ? "risque" : "sain"}</span>
+            </div>
+            <div className="relative h-2.5 bg-gray-100 rounded-full overflow-hidden ml-7">
+              <div className="h-full rounded-full bg-gray-200/80 absolute" style={{ width: `${p.avg}%` }} />
+              <div className={cn("h-full rounded-full absolute", p.color)} style={{ width: `${p.score}%` }} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function VueConsolideePersonnel() {
+  const sections = PERSONAL_SECTIONS.filter(s => s.id !== "vue_consolidee_perso");
+  return (
+    <div className="space-y-3">
+      <VitaaTable data={VITAA_PERSONNEL} title="VITAA Personnel — Toi vs Secteur" />
+      <div className="grid grid-cols-2 gap-2">
+        {sections.map(s => {
+          const Icon = s.icon;
+          const filled = 0; // mock — pas encore de données
+          return (
+            <Card key={s.id} className="p-0 overflow-hidden rounded-xl shadow-sm">
+              <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-slate-600 to-slate-500">
+                <Icon className="h-3.5 w-3.5 text-white" />
+                <span className="text-xs font-bold text-white flex-1">{s.label}</span>
+                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/20 text-white">{filled}/{s.fields.length}</span>
+              </div>
+              <div className="px-3 py-2 space-y-1">
+                {s.fields.slice(0, 3).map(f => (
+                  <div key={f.id} className="flex items-center justify-between">
+                    <span className="text-[9px] text-gray-500 truncate flex-1">{f.label}</span>
+                    <span className="text-[9px] text-gray-300 italic ml-2">—</span>
+                  </div>
+                ))}
+                {s.fields.length > 3 && <span className="text-[9px] text-gray-400">+{s.fields.length - 3} champs...</span>}
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function BlueprintPersonnel({ botCode, headerGradient }: { botCode: string; headerGradient: string }) {
+  const [activePersonalSection, setActivePersonalSection] = useState(PERSONAL_SECTIONS[0].id);
+  const section = PERSONAL_SECTIONS.find(s => s.id === activePersonalSection) || PERSONAL_SECTIONS[0];
+
+  return (
+    <div className="flex gap-3">
+      {/* Sidebar — sections personnelles */}
+      <div className="w-[180px] shrink-0 space-y-0.5">
+        {PERSONAL_SECTIONS.map(s => {
+          const isActive = activePersonalSection === s.id;
+          const isConsolidee = s.id === "vue_consolidee_perso";
+          return (
+            <button
+              key={s.id}
+              onClick={() => setActivePersonalSection(s.id)}
+              className={cn(
+                "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
+                isActive ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent",
+                isConsolidee && !isActive && "bg-gradient-to-r from-slate-50 to-blue-50/50 border-blue-100/50"
+              )}
+            >
+              <div className="flex items-center gap-1.5">
+                <span className={cn("text-[9px] font-bold flex-1 leading-tight", isActive ? "text-blue-700" : "text-gray-700")}>
+                  {s.label}
+                </span>
+                {isActive && <ChevronRight className="h-3.5 w-3.5 text-blue-400" />}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Contenu — section active */}
+      <div className="flex-1 min-w-0">
+        {activePersonalSection === "vue_consolidee_perso" ? (
+          <VueConsolideePersonnel />
+        ) : (
+          <Card className="p-0 overflow-hidden rounded-xl shadow-sm">
+            <div className={cn("flex items-center gap-2 px-4 py-3 bg-gradient-to-r", headerGradient)}>
+              {(() => { const Icon = section.icon; return <Icon className="h-4 w-4 text-white" />; })()}
+              <span className="text-sm font-bold text-white flex-1">{section.label}</span>
+              <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/20 text-white font-bold">Personnel</span>
+            </div>
+            <div className="p-4 space-y-3">
+              {section.fields.map(f => (
+                <div key={f.id}>
+                  <label className="text-xs font-medium text-gray-700 mb-1 block">{f.label}</label>
+                  <textarea
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-800 resize-none focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 min-h-[60px]"
+                    rows={2}
+                    placeholder={`Décrivez: ${f.label.toLowerCase()}...`}
+                  />
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Blueprint Bot — Profil, Trisociation, Skills, APIs, Performance ──
+
+// Ghost Archetypes (from AgentSettingsView)
+const GHOST_ARCHETYPES: Record<string, { emoji: string; nom: string; categorie: string; signature: string }> = {
+  "Bezos": { emoji: "📦", nom: "L'Architecte Client", categorie: "Strategie", signature: "Obsession client, vision à rebours" },
+  "Sun Tzu": { emoji: "⚔️", nom: "Le Stratège Silencieux", categorie: "Strategie", signature: "Gagner sans combattre" },
+  "Munger": { emoji: "🧠", nom: "L'Inverseur", categorie: "Strategie", signature: "Modèles mentaux croisés" },
+  "Thiel": { emoji: "🔮", nom: "Le Contrarian", categorie: "Strategie", signature: "Vérités cachées, zéro à un" },
+  "Chanel": { emoji: "👗", nom: "L'Élégante", categorie: "Strategie", signature: "Marque personnelle comme arme" },
+  "Jobs": { emoji: "🍎", nom: "L'Épureur", categorie: "Innovation", signature: "Simplification radicale" },
+  "Musk": { emoji: "🚀", nom: "Le Disrupteur", categorie: "Innovation", signature: "Premiers principes, objectifs 10×" },
+  "Tesla": { emoji: "⚡", nom: "Le Catalyseur", categorie: "Innovation", signature: "Patterns universels, résonance" },
+  "Vinci": { emoji: "🎨", nom: "L'Universel", categorie: "Creativite", signature: "Fusion art et science" },
+  "Marc Aurèle": { emoji: "🏛️", nom: "Le Stoïque", categorie: "Leadership", signature: "Maîtrise de soi" },
+  "Churchill": { emoji: "🎩", nom: "L'Inébranlable", categorie: "Leadership", signature: "Persévérance absolue" },
+  "Oprah": { emoji: "💜", nom: "L'Authentique", categorie: "Leadership", signature: "Empathie et vérité" },
+  "Franklin": { emoji: "📜", nom: "Le Fondateur Sage", categorie: "Leadership", signature: "Pragmatisme, bâtir pour durer" },
+  "Buffett": { emoji: "💰", nom: "Le Gardien de Valeur", categorie: "Finance", signature: "Patience disciplinée" },
+  "Curie": { emoji: "🔬", nom: "La Méthodique", categorie: "Analyse", signature: "Données avant conclusions" },
+  "Deming": { emoji: "📊", nom: "Le Mesureur", categorie: "Operations", signature: "On améliore ce qu'on mesure" },
+  "Ohno": { emoji: "🏭", nom: "Le Flux", categorie: "Operations", signature: "Éliminer le gaspillage" },
+  "Nightingale": { emoji: "🕯️", nom: "La Pionnière", categorie: "Operations", signature: "Innovation par les données" },
+  "Mandela": { emoji: "✊", nom: "Le Transformateur", categorie: "Leadership", signature: "Leadership = service" },
+};
+
+const BOT_GHOSTS: Record<string, string[]> = {
+  CEOB: ["Bezos", "Munger", "Churchill"], CTOB: ["Musk", "Curie", "Vinci"],
+  CFOB: ["Buffett", "Munger", "Franklin"], CMOB: ["Jobs", "Tesla", "Oprah"],
+  CSOB: ["Sun Tzu", "Thiel", "Chanel"], COOB: ["Marc Aurèle", "Deming", "Nightingale"],
+  CPOB: ["Ohno", "Deming", "Nightingale"], CHROB: ["Oprah", "Marc Aurèle", "Deming"],
+  CINOB: ["Musk", "Curie", "Tesla"], CROB: ["Thiel", "Bezos", "Chanel"],
+  CLOB: ["Munger", "Franklin", "Marc Aurèle"], CISOB: ["Sun Tzu", "Curie", "Franklin"],
+};
+
+const BOT_PROFILES_BP: Record<string, { style: string; forces: string[]; approche: string; scores: Record<string, number> }> = {
+  CEOB: { style: "Directif et visionnaire", forces: ["Vision stratégique", "Prise de décision", "Leadership", "Gestion de crise"], approche: "Part du résultat client et remonte vers la stratégie.", scores: { strategique: 95, analytique: 75, creatif: 70, operationnel: 60, relationnel: 80 } },
+  CTOB: { style: "Innovateur et méthodique", forces: ["Architecture technique", "Innovation", "Résolution complexe", "Prototypage"], approche: "Premiers principes, challenge les contraintes.", scores: { strategique: 70, analytique: 90, creatif: 95, operationnel: 80, relationnel: 55 } },
+  CFOB: { style: "Prudent et discipliné", forces: ["Analyse financière", "Gestion du risque", "Valorisation", "Budget"], approche: "Valeur intrinsèque avant prix apparent.", scores: { strategique: 80, analytique: 95, creatif: 40, operationnel: 70, relationnel: 50 } },
+  CMOB: { style: "Créatif et empathique", forces: ["Positionnement", "Storytelling", "Audience", "Innovation marketing"], approche: "Simplifie le message, connexion émotionnelle.", scores: { strategique: 65, analytique: 60, creatif: 95, operationnel: 50, relationnel: 90 } },
+  CSOB: { style: "Stratège et incisif", forces: ["Analyse concurrentielle", "Planification", "Anticipation", "Marché"], approche: "Analyse les forces avant toute recommandation.", scores: { strategique: 95, analytique: 85, creatif: 60, operationnel: 50, relationnel: 45 } },
+  COOB: { style: "Méthodique et fiable", forces: ["Processus", "Qualité", "Logistique", "Amélioration continue"], approche: "Mesure tout, élimine le gaspillage.", scores: { strategique: 60, analytique: 80, creatif: 40, operationnel: 95, relationnel: 65 } },
+};
+
+const BOT_CAPACITES_BP: Record<string, { equivHumain: string; coutHumain: string; tachesCount: number; heuresMois: string }> = {
+  CEOB: { equivHumain: "CEO conseil", coutHumain: "100-200K$", tachesCount: 15, heuresMois: "80-120h" },
+  CTOB: { equivHumain: "CTO fractionnaire", coutHumain: "150-300K$", tachesCount: 16, heuresMois: "120-180h" },
+  CFOB: { equivHumain: "CFO fractionnaire", coutHumain: "150-250K$", tachesCount: 18, heuresMois: "100-160h" },
+  CMOB: { equivHumain: "Directeur marketing", coutHumain: "120-200K$", tachesCount: 14, heuresMois: "100-160h" },
+  CSOB: { equivHumain: "Consultant stratégie", coutHumain: "120-200K$", tachesCount: 12, heuresMois: "80-120h" },
+  COOB: { equivHumain: "Directeur opérations", coutHumain: "120-200K$", tachesCount: 15, heuresMois: "120-200h" },
+};
+
+const SLOT_LABELS_BP = ["Primaire", "Calibrateur", "Amplificateur"];
+const SLOT_COLORS = ["from-blue-600 to-blue-500", "from-violet-600 to-violet-500", "from-amber-600 to-amber-500"];
+const SLOT_BG = ["bg-blue-50 border-blue-200", "bg-violet-50 border-violet-200", "bg-amber-50 border-amber-200"];
+const SLOT_TEXT_C = ["text-blue-700", "text-violet-700", "text-amber-700"];
+
+const BOT_APIS: Record<string, { name: string; status: "active" | "config" | "off"; icon: string; color: string }[]> = {
+  CEOB: [
+    { name: "Gemini Pro 2.0", status: "active", icon: "LLM", color: "bg-blue-500" },
+    { name: "Claude Sonnet 4", status: "active", icon: "LLM", color: "bg-violet-500" },
+    { name: "ElevenLabs (Chris)", status: "active", icon: "TTS", color: "bg-emerald-500" },
+    { name: "Deepgram Nova-3", status: "active", icon: "STT", color: "bg-cyan-500" },
+    { name: "LiveKit WebRTC", status: "active", icon: "RTC", color: "bg-orange-500" },
+    { name: "Google Calendar", status: "config", icon: "CAL", color: "bg-amber-500" },
+    { name: "HubSpot CRM", status: "off", icon: "CRM", color: "bg-gray-400" },
+    { name: "Slack", status: "off", icon: "MSG", color: "bg-gray-400" },
+  ],
+  CTOB: [
+    { name: "Gemini Pro 2.0", status: "active", icon: "LLM", color: "bg-blue-500" },
+    { name: "GitHub Copilot", status: "active", icon: "DEV", color: "bg-gray-800" },
+    { name: "ElevenLabs (Daniel)", status: "active", icon: "TTS", color: "bg-emerald-500" },
+    { name: "Sentry", status: "config", icon: "MON", color: "bg-red-500" },
+    { name: "AWS CloudWatch", status: "off", icon: "INF", color: "bg-gray-400" },
+  ],
+};
+
+const VITAA_BOT: Record<string, { letter: string; label: string; score: number; avg: number; color: string }[]> = {
+  CEOB: [
+    { letter: "V", label: "Vente (leads qualifiés)", score: 68, avg: 50, color: "bg-blue-500" },
+    { letter: "I", label: "Idée (insights générés)", score: 82, avg: 50, color: "bg-purple-500" },
+    { letter: "T", label: "Temps (tâches/heure)", score: 91, avg: 50, color: "bg-emerald-500" },
+    { letter: "A", label: "Argent (ROI généré)", score: 74, avg: 50, color: "bg-amber-500" },
+    { letter: "A", label: "Actif (docs produits)", score: 56, avg: 50, color: "bg-red-500" },
+  ],
+};
+
+const BOT_SECTION_META: { id: string; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { id: "vue_consolidee_bot", label: "Vue consolidée", icon: Layers },
+  { id: "trisociation", label: "Trisociation & Ghosts", icon: Zap },
+  { id: "skills_profil", label: "Skills & profil cognitif", icon: Star },
+  { id: "apis_connexions", label: "APIs & connexions", icon: Cpu },
+  { id: "objectifs_missions", label: "Objectifs & missions", icon: Target },
+  { id: "performance_bot", label: "Performance", icon: BarChart3 },
+  { id: "reglages_bot", label: "Réglages", icon: Settings },
+];
+
+// ── Section: Trisociation (3 Ghosts interactifs) ──
+function BotTrisociationSection({ botCode }: { botCode: string }) {
+  const ghosts = BOT_GHOSTS[botCode] || BOT_GHOSTS.CEOB;
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-3 gap-3">
+        {ghosts.map((ghostName, i) => {
+          const arch = GHOST_ARCHETYPES[ghostName];
+          if (!arch) return null;
+          return (
+            <div key={i} className={cn("border rounded-xl overflow-hidden shadow-sm", SLOT_BG[i])}>
+              <div className={cn("bg-gradient-to-r px-3 py-2 flex items-center gap-2", SLOT_COLORS[i])}>
+                <span className="text-base">{arch.emoji}</span>
+                <div className="flex-1 min-w-0">
+                  <span className="text-[9px] font-bold text-white/70 uppercase tracking-wider">{SLOT_LABELS_BP[i]}</span>
+                  <div className="text-xs font-bold text-white truncate">{arch.nom}</div>
+                </div>
+              </div>
+              <div className="p-2.5 space-y-1.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-bold text-gray-800">{ghostName}</span>
+                  <span className={cn("text-[8px] px-1.5 py-0.5 rounded-full border font-medium", SLOT_BG[i], SLOT_TEXT_C[i])}>{arch.categorie}</span>
+                </div>
+                <p className="text-[9px] text-gray-600 italic leading-snug">"{arch.signature}"</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <Card className="p-0 overflow-hidden rounded-xl shadow-sm">
+        <div className="bg-gradient-to-r from-gray-700 to-gray-600 px-4 py-2.5 flex items-center gap-2">
+          <Zap className="h-4 w-4 text-white" />
+          <span className="text-xs font-bold text-white flex-1">Catalogue des Teintures Cognitives</span>
+          <span className="text-[9px] bg-white/20 text-white px-2 py-0.5 rounded-full">{Object.keys(GHOST_ARCHETYPES).length} archétypes</span>
+        </div>
+        <div className="p-3 grid grid-cols-2 gap-1.5 max-h-[300px] overflow-y-auto">
+          {Object.entries(GHOST_ARCHETYPES).map(([name, arch]) => {
+            const isActive = (BOT_GHOSTS[botCode] || []).includes(name);
+            return (
+              <div key={name} className={cn(
+                "flex items-center gap-2 px-2.5 py-2 rounded-lg border transition-all cursor-pointer",
+                isActive ? "bg-violet-50 border-violet-200 shadow-sm" : "bg-white border-gray-100 hover:border-gray-200 hover:bg-gray-50"
+              )}>
+                <span className="text-lg shrink-0">{arch.emoji}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[9px] font-bold text-gray-800 truncate">{name}</div>
+                  <div className="text-[9px] text-gray-500 truncate">{arch.nom}</div>
+                </div>
+                {isActive && <span className="w-2 h-2 rounded-full bg-violet-500 shrink-0" />}
+              </div>
+            );
+          })}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+// ── Section: Skills & Profil Cognitif ──
+function BotSkillsSection({ botCode }: { botCode: string }) {
+  const profile = BOT_PROFILES_BP[botCode] || BOT_PROFILES_BP.CEOB;
+  const scoreEntries = Object.entries(profile.scores);
+  const SCORE_COLORS: Record<string, string> = { strategique: "bg-blue-500", analytique: "bg-emerald-500", creatif: "bg-purple-500", operationnel: "bg-orange-500", relationnel: "bg-pink-500" };
+  const SCORE_LABELS: Record<string, string> = { strategique: "Stratégique", analytique: "Analytique", creatif: "Créatif", operationnel: "Opérationnel", relationnel: "Relationnel" };
+  return (
+    <div className="space-y-3">
+      <Card className="p-0 overflow-hidden rounded-xl shadow-sm">
+        <div className="bg-gradient-to-r from-violet-600 to-purple-500 px-4 py-2.5 flex items-center gap-2">
+          <Star className="h-4 w-4 text-white" />
+          <span className="text-xs font-bold text-white flex-1">Profil Psychométrique</span>
+          <span className="text-[9px] bg-white/20 text-white px-2 py-0.5 rounded-full">{profile.style}</span>
+        </div>
+        <div className="p-4 space-y-3">
+          {scoreEntries.map(([key, val]) => (
+            <div key={key} className="flex items-center gap-3">
+              <span className="text-[9px] font-medium text-gray-600 w-24 text-right">{SCORE_LABELS[key] || key}</span>
+              <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden relative">
+                <div className={cn("h-full rounded-full transition-all", SCORE_COLORS[key] || "bg-gray-400")} style={{ width: `${val}%` }} />
+                <span className="absolute inset-y-0 right-2 flex items-center text-[8px] font-bold text-gray-500">{val}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+      <Card className="p-0 overflow-hidden rounded-xl shadow-sm">
+        <div className="bg-gradient-to-r from-gray-700 to-gray-600 px-4 py-2.5 flex items-center gap-2">
+          <Shield className="h-4 w-4 text-white" />
+          <span className="text-xs font-bold text-white">Forces Principales</span>
+        </div>
+        <div className="p-3 grid grid-cols-2 gap-2">
+          {profile.forces.map((f, i) => (
+            <div key={i} className="flex items-center gap-2 bg-gradient-to-r from-gray-50 to-white rounded-lg px-3 py-2.5 border border-gray-100">
+              <div className="w-6 h-6 rounded-lg bg-violet-100 flex items-center justify-center shrink-0">
+                <Zap className="h-3.5 w-3.5 text-violet-600" />
+              </div>
+              <span className="text-[9px] font-medium text-gray-800">{f}</span>
+            </div>
+          ))}
+        </div>
+      </Card>
+      <Card className="p-0 overflow-hidden rounded-xl shadow-sm">
+        <div className="bg-gradient-to-r from-indigo-600 to-indigo-500 px-4 py-2.5 flex items-center gap-2">
+          <MessageCircle className="h-4 w-4 text-white" />
+          <span className="text-xs font-bold text-white">Style de Communication</span>
+        </div>
+        <div className="p-3">
+          <p className="text-xs text-gray-700 leading-relaxed bg-indigo-50/50 rounded-lg p-3 border border-indigo-100">{profile.approche}</p>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+// ── Section: APIs & Connexions ──
+function BotApisSection({ botCode }: { botCode: string }) {
+  const apis = BOT_APIS[botCode] || BOT_APIS.CEOB;
+  const active = apis.filter(a => a.status === "active");
+  const rest = apis.filter(a => a.status !== "active");
+  const renderApi = (a: typeof apis[0]) => (
+    <div key={a.name} className={cn(
+      "flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all",
+      a.status === "active" ? "bg-white border-gray-200 shadow-sm" :
+      a.status === "config" ? "bg-amber-50/50 border-amber-200" : "bg-gray-50 border-gray-100 opacity-60"
+    )}>
+      <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center text-white text-[9px] font-bold shrink-0", a.status === "off" ? "bg-gray-300" : a.color)}>{a.icon}</div>
+      <div className="flex-1 min-w-0">
+        <div className="text-xs font-bold text-gray-800 truncate">{a.name}</div>
+        <div className={cn("text-[9px] font-medium", a.status === "active" ? "text-emerald-600" : a.status === "config" ? "text-amber-600" : "text-gray-400")}>{a.status === "active" ? "Connecté" : a.status === "config" ? "À configurer" : "Désactivé"}</div>
+      </div>
+      <div className={cn("w-2.5 h-2.5 rounded-full shrink-0", a.status === "active" ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]" : a.status === "config" ? "bg-amber-400" : "bg-gray-300")} />
+    </div>
+  );
+  return (
+    <div className="space-y-3">
+      <Card className="p-0 overflow-hidden rounded-xl shadow-sm">
+        <div className="bg-gradient-to-r from-emerald-600 to-emerald-500 px-4 py-2.5 flex items-center gap-2">
+          <Activity className="h-4 w-4 text-white" />
+          <span className="text-xs font-bold text-white flex-1">Connexions Actives</span>
+          <span className="text-[9px] bg-white/25 text-white px-2 py-0.5 rounded-full font-bold">{active.length} live</span>
+        </div>
+        <div className="p-3 grid grid-cols-2 gap-2">{active.map(renderApi)}</div>
+      </Card>
+      {rest.length > 0 && (
+        <Card className="p-0 overflow-hidden rounded-xl shadow-sm">
+          <div className="bg-gradient-to-r from-gray-500 to-gray-400 px-4 py-2.5 flex items-center gap-2">
+            <Cpu className="h-4 w-4 text-white" />
+            <span className="text-xs font-bold text-white flex-1">À configurer / Disponibles</span>
+            <span className="text-[9px] bg-white/20 text-white px-2 py-0.5 rounded-full">{rest.length}</span>
+          </div>
+          <div className="p-3 grid grid-cols-2 gap-2">{rest.map(renderApi)}</div>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+// ── Section: Performance Bot ──
+function BotPerformanceSection({ botCode }: { botCode: string }) {
+  const cap = BOT_CAPACITES_BP[botCode] || BOT_CAPACITES_BP.CEOB;
+  const stats = [
+    { label: "Messages traités", value: "1,247", delta: "+18% ce mois", icon: MessageCircle, color: "text-blue-600", bg: "bg-blue-50" },
+    { label: "Tâches complétées", value: "89", delta: "12 en cours", icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-50" },
+    { label: "Temps réponse moy.", value: "2.3s", delta: "-0.4s vs mois dernier", icon: Activity, color: "text-violet-600", bg: "bg-violet-50" },
+    { label: "Coût mensuel API", value: "47$", delta: cap.coutHumain + " si humain", icon: DollarSign, color: "text-amber-600", bg: "bg-amber-50" },
+  ];
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-3">
+        {stats.map(s => {
+          const Icon = s.icon;
+          return (
+            <Card key={s.label} className="p-0 overflow-hidden rounded-xl shadow-sm">
+              <div className="px-3 py-3 flex items-start gap-3">
+                <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center shrink-0", s.bg)}>
+                  <Icon className={cn("h-4 w-4", s.color)} />
+                </div>
+                <div>
+                  <div className="text-[9px] text-gray-500 font-medium uppercase tracking-wider">{s.label}</div>
+                  <div className="text-xl font-bold text-gray-800">{s.value}</div>
+                  <div className="text-[9px] text-gray-400 mt-0.5">{s.delta}</div>
+                </div>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+      <Card className="p-0 overflow-hidden rounded-xl shadow-sm">
+        <div className="bg-gradient-to-r from-amber-600 to-amber-500 px-4 py-2.5 flex items-center gap-2">
+          <DollarSign className="h-4 w-4 text-white" />
+          <span className="text-xs font-bold text-white flex-1">ROI — Équivalent Humain</span>
+        </div>
+        <div className="p-3 flex items-center gap-4">
+          <div className="flex-1 text-center">
+            <div className="text-[9px] text-gray-500 uppercase font-bold">Agent IA</div>
+            <div className="text-lg font-bold text-emerald-600">47$/mois</div>
+            <div className="text-[9px] text-gray-400">{cap.tachesCount} tâches · {cap.heuresMois}</div>
+          </div>
+          <div className="text-2xl font-bold text-gray-300">vs</div>
+          <div className="flex-1 text-center">
+            <div className="text-[9px] text-gray-500 uppercase font-bold">{cap.equivHumain}</div>
+            <div className="text-lg font-bold text-red-500">{cap.coutHumain}/an</div>
+            <div className="text-[9px] text-gray-400">Même scope de travail</div>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+// ── Vue Consolidée Bot ──
+function VueConsolideeBot({ botCode }: { botCode: string }) {
+  const vitaa = VITAA_BOT[botCode] || VITAA_BOT.CEOB;
+  const ghosts = BOT_GHOSTS[botCode] || BOT_GHOSTS.CEOB;
+  const profile = BOT_PROFILES_BP[botCode] || BOT_PROFILES_BP.CEOB;
+  const apis = BOT_APIS[botCode] || BOT_APIS.CEOB;
+  const activeApis = apis.filter(a => a.status === "active");
+  return (
+    <div className="space-y-3">
+      <VitaaTable data={vitaa} title="VITAA Agent IA — Performance vs Benchmark" />
+      <div className="grid grid-cols-3 gap-2">
+        {ghosts.map((g, i) => {
+          const arch = GHOST_ARCHETYPES[g];
+          if (!arch) return null;
+          return (
+            <div key={i} className={cn("rounded-xl overflow-hidden border shadow-sm", SLOT_BG[i])}>
+              <div className={cn("bg-gradient-to-r px-2.5 py-1.5 flex items-center gap-1.5", SLOT_COLORS[i])}>
+                <span className="text-sm">{arch.emoji}</span>
+                <span className="text-[9px] font-bold text-white uppercase">{SLOT_LABELS_BP[i]}</span>
+              </div>
+              <div className="px-2.5 py-1.5">
+                <div className="text-[9px] font-bold text-gray-800">{g}</div>
+                <div className="text-[9px] text-gray-500">{arch.nom}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <Card className="p-0 overflow-hidden rounded-xl shadow-sm">
+          <div className="bg-gradient-to-r from-violet-600 to-purple-500 px-3 py-2 flex items-center gap-2">
+            <Star className="h-3.5 w-3.5 text-white" />
+            <span className="text-xs font-bold text-white">Skills</span>
+            <span className="text-[9px] bg-white/20 text-white px-1.5 py-0.5 rounded-full ml-auto">{profile.style}</span>
+          </div>
+          <div className="p-2.5 space-y-1.5">
+            {Object.entries(profile.scores).slice(0, 5).map(([k, v]) => (
+              <div key={k} className="flex items-center gap-2">
+                <span className="text-[9px] text-gray-500 w-16 text-right capitalize">{k}</span>
+                <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-full rounded-full bg-violet-400" style={{ width: `${v}%` }} />
+                </div>
+                <span className="text-[9px] font-bold text-gray-600 w-6">{v}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+        <Card className="p-0 overflow-hidden rounded-xl shadow-sm">
+          <div className="bg-gradient-to-r from-emerald-600 to-emerald-500 px-3 py-2 flex items-center gap-2">
+            <Cpu className="h-3.5 w-3.5 text-white" />
+            <span className="text-xs font-bold text-white">APIs</span>
+            <span className="text-[9px] bg-white/25 text-white px-1.5 py-0.5 rounded-full ml-auto">{activeApis.length} live</span>
+          </div>
+          <div className="p-2.5 space-y-1">
+            {activeApis.slice(0, 5).map(a => (
+              <div key={a.name} className="flex items-center gap-2">
+                <div className={cn("w-5 h-5 rounded flex items-center justify-center text-white text-[7px] font-bold shrink-0", a.color)}>{a.icon}</div>
+                <span className="text-[9px] text-gray-700 flex-1 truncate">{a.name}</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              </div>
+            ))}
+            {activeApis.length > 5 && <span className="text-[9px] text-gray-400">+{activeApis.length - 5} autres...</span>}
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function BlueprintBot({ botCode, headerGradient }: { botCode: string; headerGradient: string }) {
+  const [activeBotSection, setActiveBotSection] = useState(BOT_SECTION_META[0].id);
+  return (
+    <div className="flex gap-3">
+      <div className="w-[180px] shrink-0 space-y-0.5">
+        {BOT_SECTION_META.map(s => {
+          const isActive = activeBotSection === s.id;
+          const isConsolidee = s.id === "vue_consolidee_bot";
+          return (
+            <button key={s.id} onClick={() => setActiveBotSection(s.id)} className={cn(
+              "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
+              isActive ? "bg-violet-50 border border-violet-200 shadow-sm" : "hover:bg-gray-50 border border-transparent",
+              isConsolidee && !isActive && "bg-gradient-to-r from-violet-50/50 to-blue-50/50 border-violet-100/50"
+            )}>
+              <div className="flex items-center gap-1.5">
+                <span className={cn("text-[9px] font-bold flex-1 leading-tight", isActive ? "text-violet-700" : "text-gray-700")}>{s.label}</span>
+                {isActive && <ChevronRight className="h-3.5 w-3.5 text-violet-400" />}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+      <div className="flex-1 min-w-0">
+        {activeBotSection === "vue_consolidee_bot" && <VueConsolideeBot botCode={botCode} />}
+        {activeBotSection === "trisociation" && <BotTrisociationSection botCode={botCode} />}
+        {activeBotSection === "skills_profil" && <BotSkillsSection botCode={botCode} />}
+        {activeBotSection === "apis_connexions" && <BotApisSection botCode={botCode} />}
+        {activeBotSection === "performance_bot" && <BotPerformanceSection botCode={botCode} />}
+        {activeBotSection === "objectifs_missions" && (
+          <Card className="p-0 overflow-hidden rounded-xl shadow-sm">
+            <div className="bg-gradient-to-r from-violet-600 to-violet-500 px-4 py-3 flex items-center gap-2">
+              <Target className="h-4 w-4 text-white" />
+              <span className="text-sm font-bold text-white flex-1">Objectifs & Missions</span>
+              <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/20 text-white font-bold">Agent IA</span>
+            </div>
+            <div className="p-4 space-y-3">
+              {["Mission principale de l'agent", "Objectif ce trimestre", "Tâches actives assignées", "Chantiers en responsabilité", "KPI cible à atteindre"].map(f => (
+                <div key={f}>
+                  <label className="text-xs font-medium text-gray-700 mb-1 block">{f}</label>
+                  <textarea className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-800 resize-none focus:outline-none focus:ring-2 focus:ring-violet-300 focus:border-violet-300 min-h-[60px]" rows={2} placeholder={`${f}...`} />
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+        {activeBotSection === "reglages_bot" && (
+          <Card className="p-0 overflow-hidden rounded-xl shadow-sm">
+            <div className="bg-gradient-to-r from-gray-700 to-gray-600 px-4 py-3 flex items-center gap-2">
+              <Settings className="h-4 w-4 text-white" />
+              <span className="text-sm font-bold text-white flex-1">Réglages</span>
+            </div>
+            <div className="p-4 space-y-3">
+              {["Température (créativité 0.0 → 1.0)", "Max tokens par réponse", "Mode décision par défaut", "Langue principale", "Tonalité (formel / conversationnel)", "Auto-escalade vers le CEO (seuil)"].map(f => (
+                <div key={f}>
+                  <label className="text-xs font-medium text-gray-700 mb-1 block">{f}</label>
+                  <textarea className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-800 resize-none focus:outline-none focus:ring-2 focus:ring-violet-300 focus:border-violet-300 min-h-[60px]" rows={2} placeholder={`${f}...`} />
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
 function VueConsolidee({ tier }: { tier: SizeTier }) {
   const [scores, setScores] = useState<DeptScore[]>([]);
   const [loading, setLoading] = useState(true);
@@ -498,55 +1173,68 @@ function VueConsolidee({ tier }: { tier: SizeTier }) {
 
   if (loading) return <div className="flex items-center justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-gray-400" /></div>;
 
-  const avg = scores.length > 0 ? Math.round(scores.reduce((s, d) => s + d.score, 0) / scores.length) : 0;
-  const totalGaps = scores.reduce((s, d) => s + d.gaps, 0);
-  const filledKeyFields = scores.reduce((s, d) => s + d.keyFields.filter(kf => kf.value).length, 0);
-  const totalKeyFields = scores.reduce((s, d) => s + d.keyFields.length, 0);
-  const sorted = [...scores].sort((a, b) => b.gaps - a.gaps || a.score - b.score);
+  // Si tous les scores sont à 0 (aucun blueprint rempli = demo/simulation), injecter des données mock
+  const allEmpty = scores.every(d => d.score === 0);
+  const MOCK_SCORES: Record<string, { score: number; gaps: number; gapLabels: string[]; keyFields: KeyFieldValue[] }> = {
+    CTOB: { score: 45, gaps: 3, gapLabels: ["Stack technique", "Infrastructure"], keyFields: [{ label: "Cloud", value: "AWS" }, { label: "Coût infra/mois", value: "2 400$" }, { label: "Dette technique", value: "Moyenne" }] },
+    CFOB: { score: 72, gaps: 1, gapLabels: ["Trésorerie"], keyFields: [{ label: "CA estimé", value: "3.2M$" }, { label: "Solde bancaire", value: "485K$" }, { label: "Burn rate", value: "42K$/mois" }] },
+    CMOB: { score: 38, gaps: 4, gapLabels: ["Personas ICP", "Positionnement", "Canaux"], keyFields: [{ label: "ICP principal", value: "PME manufact. 50-200 emp." }, { label: "Budget marketing", value: "8 500$/mois" }] },
+    CSOB: { score: 61, gaps: 2, gapLabels: ["Concurrence", "Avantage concurrentiel"], keyFields: [{ label: "TAM", value: "890M$" }, { label: "Différenciateur", value: "IA + réseau REAI" }] },
+    COOB: { score: 55, gaps: 2, gapLabels: ["Supply chain", "Capacité"], keyFields: [{ label: "Utilisation capacité", value: "78%" }, { label: "Fournisseurs clés", value: "12 actifs" }] },
+    CPOB: { score: 29, gaps: 5, gapLabels: ["Planification", "Stocks", "Qualité"], keyFields: [{ label: "Capacité/jour", value: "—" }, { label: "Système qualité", value: "ISO en cours" }] },
+    CHROB: { score: 67, gaps: 1, gapLabels: ["Rémunération"], keyFields: [{ label: "Employés", value: "47" }, { label: "Postes ouverts", value: "3" }, { label: "Avantages sociaux", value: "Groupe + REER" }] },
+    CINOB: { score: 42, gaps: 3, gapLabels: ["Pipeline innovation", "PI"], keyFields: [{ label: "Projets R&D", value: "4 actifs" }, { label: "Brevets", value: "1 en cours" }] },
+    CROB: { score: 58, gaps: 2, gapLabels: ["Pipeline funnel", "Méthodologie"], keyFields: [{ label: "Pipeline ($)", value: "1.8M$" }, { label: "Opportunités", value: "23" }, { label: "CRM intégré", value: "HubSpot" }] },
+    CLOB: { score: 35, gaps: 4, gapLabels: ["Contrats", "PI/Marques", "Conformité"], keyFields: [{ label: "Type entité", value: "Inc. fédérale" }, { label: "Marques déposées", value: "2" }] },
+    CISOB: { score: 22, gaps: 5, gapLabels: ["Politiques IAM", "Vulnérabilités", "Sauvegardes"], keyFields: [{ label: "MFA", value: "Partiel" }, { label: "Dernier pentest", value: "Jamais" }, { label: "Backup", value: "Manuel" }] },
+  };
+  const effectiveScores = allEmpty
+    ? scores.map(d => ({ ...d, ...(MOCK_SCORES[d.code] || {}) }))
+    : scores;
+
+  const avg = effectiveScores.length > 0 ? Math.round(effectiveScores.reduce((s, d) => s + d.score, 0) / effectiveScores.length) : 0;
+  const totalGaps = effectiveScores.reduce((s, d) => s + d.gaps, 0);
+  const filledKeyFields = effectiveScores.reduce((s, d) => s + d.keyFields.filter(kf => kf.value).length, 0);
+  const totalKeyFields = effectiveScores.reduce((s, d) => s + d.keyFields.length, 0);
+  const sorted = [...effectiveScores].sort((a, b) => b.gaps - a.gaps || a.score - b.score);
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-4 gap-3">
-        <Card className="p-0 overflow-hidden">
-          <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-500">
-            <Layers className="h-4 w-4 text-white" />
-            <span className="text-sm font-bold text-white">Score moyen</span>
-          </div>
-          <div className="px-3 py-2">
-            <div className={cn("text-2xl font-bold", avg >= 70 ? "text-emerald-600" : avg >= 40 ? "text-amber-600" : "text-red-600")}>{avg}%</div>
-            <div className="text-[9px] text-gray-400">11 départements</div>
-          </div>
-        </Card>
-        <Card className="p-0 overflow-hidden">
-          <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-red-600 to-red-500">
-            <AlertTriangle className="h-4 w-4 text-white" />
-            <span className="text-sm font-bold text-white">Gaps critiques</span>
-          </div>
-          <div className="px-3 py-2">
-            <div className={cn("text-2xl font-bold", totalGaps === 0 ? "text-emerald-600" : "text-red-600")}>{totalGaps}</div>
-            <div className="text-[9px] text-gray-400">Sections obligatoires vides</div>
-          </div>
-        </Card>
-        <Card className="p-0 overflow-hidden">
-          <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-emerald-600 to-emerald-500">
-            <CheckCircle2 className="h-4 w-4 text-white" />
-            <span className="text-sm font-bold text-white">Couverture</span>
-          </div>
-          <div className="px-3 py-2">
-            <div className="text-2xl font-bold text-emerald-600">{scores.filter(d => d.score >= 50).length}/11</div>
-            <div className="text-[9px] text-gray-400">Au-dessus de 50%</div>
-          </div>
-        </Card>
-        <Card className="p-0 overflow-hidden">
-          <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-violet-600 to-violet-500">
-            <FileText className="h-4 w-4 text-white" />
-            <span className="text-sm font-bold text-white">Données clés</span>
-          </div>
-          <div className="px-3 py-2">
-            <div className="text-2xl font-bold text-violet-600">{filledKeyFields}/{totalKeyFields}</div>
-            <div className="text-[9px] text-gray-400">Champs stratégiques renseignés</div>
-          </div>
-        </Card>
+      {/* ── VITAA — Toi vs Secteur (copié de SanteGlobaleView) ── */}
+      <div className="border rounded-xl overflow-hidden shadow-sm">
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-3 py-2 border-b border-blue-100 flex items-center gap-1.5">
+          <Heart className="h-3.5 w-3.5 text-blue-500" />
+          <span className="text-[9px] font-bold uppercase tracking-wider text-gray-700 flex-1">VITAA — Toi vs Secteur</span>
+          <span className="flex items-center gap-1 text-[9px] text-gray-400"><span className="w-1.5 h-1.5 rounded-full bg-gray-300" /> Secteur</span>
+          <span className="flex items-center gap-1 text-[9px] text-gray-400 ml-2"><span className="w-1.5 h-1.5 rounded-full bg-blue-500" /> Toi</span>
+        </div>
+        <div className="p-2.5 space-y-2">
+          {[
+            { letter: "V", label: "Vente", score: 0, avg: 50, color: "bg-blue-500" },
+            { letter: "I", label: "Idee", score: 0, avg: 50, color: "bg-purple-500" },
+            { letter: "T", label: "Temps", score: 0, avg: 50, color: "bg-emerald-500" },
+            { letter: "A", label: "Argent", score: 0, avg: 50, color: "bg-amber-500" },
+            { letter: "A", label: "Actif", score: 0, avg: 50, color: "bg-red-500" },
+          ].map((p) => (
+            <div key={p.letter + p.label} className="rounded-lg px-1 -mx-1">
+              <div className="flex items-center gap-2 mb-0.5">
+                <div className={cn("w-5 h-5 rounded flex items-center justify-center text-white text-[9px] font-bold shrink-0", p.color)}>{p.letter[0]}</div>
+                <span className="text-xs font-medium text-gray-800 flex-1">{p.label}</span>
+                <span className={cn("text-xs font-bold", p.score >= p.avg ? "text-green-600" : "text-red-600")}>{p.score}</span>
+                <span className="text-[9px] text-gray-400 w-8">/ {p.avg}</span>
+                <span className={cn("text-[8px] px-1 py-0.5 rounded border font-medium",
+                  p.score < 35 ? "text-red-600 bg-red-50 border-red-200" :
+                  p.score < 50 ? "text-amber-600 bg-amber-50 border-amber-200" :
+                  "text-green-600 bg-green-50 border-green-200"
+                )}>{p.score < 35 ? "critique" : p.score < 50 ? "risque" : "sain"}</span>
+              </div>
+              <div className="relative h-2.5 bg-gray-100 rounded-full overflow-hidden ml-7">
+                <div className="h-full rounded-full bg-gray-200/80 absolute" style={{ width: `${p.avg}%` }} />
+                <div className={cn("h-full rounded-full absolute", p.color)} style={{ width: `${p.score}%` }} />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-2">
@@ -1044,20 +1732,19 @@ function ComitesManager({ botCode, deptLabel, headerGradient, data, onFieldChang
 
       <div className="flex gap-3">
         {/* Sidebar — liste des comités */}
-        <div className="w-[240px] shrink-0 space-y-1">
+        <div className="w-[180px] shrink-0 space-y-1">
           {comites.map(c => (
             <button
               key={c.id}
               onClick={() => setActiveComite(c.id)}
               className={cn(
-                "w-full px-2.5 py-2 rounded-lg text-left transition-all cursor-pointer group",
+                "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer group",
                 activeComite === c.id
                   ? "bg-blue-50 border border-blue-200 shadow-sm"
                   : "hover:bg-gray-50 border border-transparent"
               )}
             >
-              <div className="flex items-center gap-2">
-                <Briefcase className={cn("h-3.5 w-3.5 shrink-0", activeComite === c.id ? "text-blue-600" : "text-gray-400")} />
+              <div className="flex items-center gap-1.5">
                 <span className={cn("text-[9px] font-bold flex-1 leading-tight truncate", activeComite === c.id ? "text-blue-700" : "text-gray-700")}>
                   {c.nom || "Nouveau comité"}
                 </span>
@@ -1068,7 +1755,7 @@ function ComitesManager({ botCode, deptLabel, headerGradient, data, onFieldChang
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
               </div>
-              <div className="flex items-center gap-2 mt-0.5 pl-[22px]">
+              <div className="flex items-center gap-2 mt-0.5">
                 <span className="text-[9px] text-gray-400">{c.membres.length} membre{c.membres.length !== 1 ? "s" : ""}</span>
                 <span className="text-[9px] text-gray-300">·</span>
                 <span className="text-[9px] text-gray-400">{c.frequence}</span>
@@ -1296,7 +1983,7 @@ interface BlueprintDepartementProps {
   sizeTier?: SizeTier;
 }
 
-type HeaderView = "blueprint" | "ca" | "comites";
+type HeaderView = "blueprint" | "ca" | "comites" | "personnel" | "bot";
 
 export function BlueprintDepartement({ botCode, headerGradient, sizeTier: propTier }: BlueprintDepartementProps) {
   const config = getBlueprintConfig(botCode);
@@ -1402,7 +2089,7 @@ export function BlueprintDepartement({ botCode, headerGradient, sizeTier: propTi
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-sm font-bold text-white">Blueprint — {config.deptLabel}</h2>
+                <h2 className="text-sm font-bold text-white">Blueprint {headerView === "blueprint" ? config.deptLabel : headerView === "ca" ? "CA" : headerView === "comites" ? "Comités" : headerView === "personnel" ? "Personnel" : "Agent IA"}</h2>
                 <span className="text-sm font-bold bg-white/20 text-white px-2 py-0.5 rounded-full">{completionScore}%</span>
               </div>
               <p className="text-[9px] text-white/50">{SIZE_TIERS.find(t => t.id === tier)?.label} ({SIZE_TIERS.find(t => t.id === tier)?.range} emp.) · {PHASES.find(p => p.id === phase)?.emoji} {PHASES.find(p => p.id === phase)?.label}</p>
@@ -1416,7 +2103,7 @@ export function BlueprintDepartement({ botCode, headerGradient, sizeTier: propTi
               className={cn("px-3 py-1.5 rounded-lg text-[9px] font-bold flex items-center gap-1.5 transition-all cursor-pointer",
                 headerView === "blueprint" ? "bg-white/25 text-white" : "bg-white/10 text-white/50 hover:bg-white/20 hover:text-white")}
             >
-              <Layers className="h-3.5 w-3.5" /> Blueprint
+              <Layers className="h-3.5 w-3.5" /> Direction
             </button>
             {botCode === "CEOB" && (
               <button
@@ -1433,6 +2120,20 @@ export function BlueprintDepartement({ botCode, headerGradient, sizeTier: propTi
                 headerView === "comites" ? "bg-white/25 text-white" : "bg-white/10 text-white/50 hover:bg-white/20 hover:text-white")}
             >
               <Briefcase className="h-3.5 w-3.5" /> Comités
+            </button>
+            <button
+              onClick={() => setHeaderView("personnel")}
+              className={cn("px-3 py-1.5 rounded-lg text-[9px] font-bold flex items-center gap-1.5 transition-all cursor-pointer",
+                headerView === "personnel" ? "bg-white/25 text-white" : "bg-white/10 text-white/50 hover:bg-white/20 hover:text-white")}
+            >
+              <User className="h-3.5 w-3.5" /> Personnel
+            </button>
+            <button
+              onClick={() => setHeaderView("bot")}
+              className={cn("px-3 py-1.5 rounded-lg text-[9px] font-bold flex items-center gap-1.5 transition-all cursor-pointer",
+                headerView === "bot" ? "bg-white/25 text-white" : "bg-white/10 text-white/50 hover:bg-white/20 hover:text-white")}
+            >
+              <Bot className="h-3.5 w-3.5" /> Agent IA
             </button>
           </div>
         </div>
@@ -1464,15 +2165,24 @@ export function BlueprintDepartement({ botCode, headerGradient, sizeTier: propTi
         />
       )}
 
+      {/* VUE PERSONNEL — Blueprint Personnel du dirigeant */}
+      {headerView === "personnel" && (
+        <BlueprintPersonnel botCode={botCode} headerGradient={headerGradient} />
+      )}
+
+      {/* VUE BOT — Blueprint de l'Agent IA */}
+      {headerView === "bot" && (
+        <BlueprintBot botCode={botCode} headerGradient={headerGradient} />
+      )}
+
       {/* LAYOUT DOCFORGE — Sidebar TOC (240px) + Contenu (flex-1) */}
       {headerView === "blueprint" && (
         <div className="flex gap-3">
 
           {/* SIDEBAR — Table des matieres */}
-          <div className="w-[240px] shrink-0 space-y-1">
+          <div className="w-[180px] shrink-0 space-y-1">
             <div className="space-y-0.5 overflow-y-auto pr-1">
               {visibleSections.map(section => {
-                const Icon = resolveIcon(section.icon);
                 const pct = sectionProgress(section);
                 const p = section.pertinence[tier];
                 const isActive = activeSub === section.id;
@@ -1483,38 +2193,33 @@ export function BlueprintDepartement({ botCode, headerGradient, sizeTier: propTi
                     key={section.id}
                     onClick={() => setActiveSub(section.id)}
                     className={cn(
-                      "w-full px-2.5 py-2 rounded-lg text-left transition-all cursor-pointer",
+                      "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
                       isActive
                         ? "bg-blue-50 border border-blue-200 shadow-sm"
                         : "hover:bg-gray-50 border border-transparent",
                       isConsolidee && !isActive && "bg-gradient-to-r from-slate-50 to-blue-50/50 border-blue-100/50"
                     )}
                   >
-                    <div className="flex items-center gap-2">
-                      <Icon className={cn("h-3.5 w-3.5 shrink-0", isActive ? "text-blue-600" : "text-gray-400")} />
+                    <div className="flex items-center gap-1.5">
                       <span className={cn("text-[9px] font-bold flex-1 leading-tight", isActive ? "text-blue-700" : "text-gray-700")}>
                         {section.label}
                       </span>
                       {isActive && <ChevronRight className="h-3.5 w-3.5 text-blue-400" />}
                     </div>
 
-                    <div className="flex items-center gap-2 mt-1 pl-[22px]">
-                      {section.fields.length > 0 ? (
-                        <>
-                          <div className="flex-1 h-1 bg-gray-100 rounded-full overflow-hidden">
-                            <div
-                              className={cn("h-full rounded-full transition-all",
-                                pct === 100 ? "bg-emerald-500" : pct > 0 ? "bg-blue-500" : "bg-gray-200"
-                              )}
-                              style={{ width: `${pct}%` }}
-                            />
-                          </div>
-                          <span className="text-[9px] text-gray-400 shrink-0 w-6 text-right">{pct}%</span>
-                        </>
-                      ) : (
-                        <PertinenceBadge p={p} />
-                      )}
-                    </div>
+                    {section.fields.length > 0 && (
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className="flex-1 h-1 bg-gray-100 rounded-full overflow-hidden">
+                          <div
+                            className={cn("h-full rounded-full transition-all",
+                              pct === 100 ? "bg-emerald-500" : pct > 0 ? "bg-blue-500" : "bg-gray-200"
+                            )}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                        <span className="text-[9px] text-gray-400 shrink-0 w-6 text-right">{pct}%</span>
+                      </div>
+                    )}
                   </button>
                 );
               })}

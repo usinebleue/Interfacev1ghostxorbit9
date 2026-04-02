@@ -26,6 +26,13 @@ import {
   ChevronRight,
   Globe,
   Crown,
+  Layers,
+  LayoutDashboard,
+  Users,
+  Network,
+  Settings,
+  Shield,
+  ExternalLink,
 } from "lucide-react";
 import { cn } from "../../../../components/ui/utils";
 import { PageLayout } from "../layouts/PageLayout";
@@ -44,6 +51,15 @@ import { AtelierJumelage } from "./demos/AtelierJumelage";
 import { AtelierCahierProjet } from "./demos/AtelierCahierProjet";
 import { AtelierSiteWeb } from "./demos/AtelierSiteWeb";
 import { AtelierRealtorClient } from "./demos/AtelierRealtorClient";
+import { SimRefonteFrontendDemo } from "../scenarios/SimRefonteFrontendDemo";
+import { SimPhaseReflexion } from "./demos/SimPhaseReflexion";
+import { SimPhaseAtelier } from "./demos/SimPhaseAtelier";
+import { SimPhaseCOMMAND } from "./demos/SimPhaseCOMMAND";
+import { SimMonDepartement } from "./demos/SimMonDepartement";
+import { SimMesSalles } from "./demos/SimMesSalles";
+import { SimMonEquipe } from "./demos/SimMonEquipe";
+import { SimAdmin } from "./demos/SimAdmin";
+import { SimMonReseau } from "./demos/SimMonReseau";
 
 type AtelierView =
   | "hub"
@@ -52,7 +68,11 @@ type AtelierView =
   | "timcode"
   | "diagnostic" | "jumelage" | "cahier-projet"
   | "site-web"
-  | "realtor-client";
+  | "realtor-client"
+  | "refonte-s74"
+  | "sim-reflexion" | "sim-atelier" | "sim-command"
+  | "sim-departement" | "sim-salles" | "sim-equipe"
+  | "sim-admin" | "sim-reseau";
 
 interface AtelierCard {
   id: AtelierView;
@@ -226,6 +246,15 @@ export function AtelierHub() {
       case "cahier-projet": return <AtelierCahierProjet onBack={handleBack} />;
       case "site-web": return <AtelierSiteWeb onBack={handleBack} />;
       case "realtor-client": return <AtelierRealtorClient onBack={handleBack} />;
+      case "refonte-s74": return <SimRefonteFrontendDemo onTransition={handleBack} />;
+      case "sim-reflexion": return <SimPhaseReflexion onBack={handleBack} />;
+      case "sim-atelier": return <SimPhaseAtelier onBack={handleBack} />;
+      case "sim-command": return <SimPhaseCOMMAND onBack={handleBack} />;
+      case "sim-departement": return <SimMonDepartement onBack={handleBack} />;
+      case "sim-salles": return <SimMesSalles onBack={handleBack} />;
+      case "sim-equipe": return <SimMonEquipe onBack={handleBack} />;
+      case "sim-admin": return <SimAdmin onBack={handleBack} />;
+      case "sim-reseau": return <SimMonReseau onBack={handleBack} />;
     }
   }
 
@@ -309,6 +338,78 @@ export function AtelierHub() {
             }}
             onNavigate={setView}
           />
+          <AtelierCardButton
+            atelier={{
+              id: "refonte-s74",
+              title: "Refonte Frontend — Vision S74",
+              subtitle: "13 transformations — journee type",
+              icon: Layers,
+              color: "bg-blue-600",
+              bgGradient: "from-blue-50 to-indigo-50/50",
+              borderColor: "border-blue-300",
+              textColor: "text-blue-700",
+              description: "Visite guidee des 13 transformations de la video S74 : cascade, phases, feed vivant, VITAA, GPS, conference.",
+            }}
+            onNavigate={setView}
+          />
+        </div>
+      </div>
+
+      <div className="border-t border-gray-200" />
+
+      {/* Simulations Refonte S75 — 3 phases + 5 sections */}
+      <div>
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-rose-600 to-red-600 flex items-center justify-center">
+            <Layers className="h-4 w-4 text-white" />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold text-gray-800">Simulations Refonte</h2>
+            <p className="text-xs text-gray-500">3 phases en profondeur + 5 sections de l'app</p>
+          </div>
+          <div className="flex items-center gap-1 ml-auto text-[9px] text-gray-400">
+            <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">A</span>
+            <ChevronRight className="h-3.5 w-3.5" />
+            <span className="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">B</span>
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-4 mb-4">
+          <AtelierCardButton
+            atelier={{ id: "sim-reflexion", title: "Phase Analyse", subtitle: "15 stages — rouge pastel", icon: Brain, color: "bg-red-600", bgGradient: "from-red-50 to-rose-100/50", borderColor: "border-red-300", textColor: "text-red-700", description: "Multi-bot consultation, brainstorm, 5 pourquoi, deep search, challenge/defense, pre-rapport progressif." }}
+            onNavigate={setView}
+          />
+          <AtelierCardButton
+            atelier={{ id: "sim-atelier", title: "Phase Creation", subtitle: "15 stages — jaune pastel", icon: Target, color: "bg-amber-600", bgGradient: "from-amber-50 to-yellow-100/50", borderColor: "border-amber-300", textColor: "text-amber-700", description: "DocForge TOC, SWOT interactive, plan Gantt, cristallisation, cruncher budget, scan VITAA." }}
+            onNavigate={setView}
+          />
+          <AtelierCardButton
+            atelier={{ id: "sim-command", title: "Phase Execution", subtitle: "14 stages — vert pastel", icon: Zap, color: "bg-green-600", bgGradient: "from-green-50 to-emerald-100/50", borderColor: "border-green-300", textColor: "text-green-700", description: "Missions dashboard, tracking live, delegation, automatisation, blocage/escalade, ceremonie." }}
+            onNavigate={setView}
+          />
+        </div>
+        <div className="grid grid-cols-3 gap-4 mb-4">
+          <AtelierCardButton
+            atelier={{ id: "sim-departement", title: "Mon Departement", subtitle: "16 stages — drill-down", icon: LayoutDashboard, color: "bg-blue-600", bgGradient: "from-blue-50 to-indigo-100/50", borderColor: "border-blue-300", textColor: "text-blue-700", description: "Navigation cascade poupees russes: chantiers → projets → missions → taches. 11 tabs, breadcrumbs, CarlOS GPS." }}
+            onNavigate={setView}
+          />
+          <AtelierCardButton
+            atelier={{ id: "sim-salles", title: "Mes Salles", subtitle: "12 stages — 3 rooms", icon: Users, color: "bg-violet-600", bgGradient: "from-violet-50 to-purple-100/50", borderColor: "border-violet-300", textColor: "text-violet-700", description: "Think Room, War Room, Board Room. Playbooks, OODA, votes 12 bots, conference, historique." }}
+            onNavigate={setView}
+          />
+          <AtelierCardButton
+            atelier={{ id: "sim-reseau", title: "Mon Reseau", subtitle: "12 stages — Orbit9", icon: Network, color: "bg-teal-600", bgGradient: "from-teal-50 to-cyan-100/50", borderColor: "border-teal-300", textColor: "text-teal-700", description: "Profil reseau, cellules, jumelage scoring, marketplace, dashboard industrie, scout bot, transactions." }}
+            onNavigate={setView}
+          />
+        </div>
+        <div className="grid grid-cols-3 gap-4">
+          <AtelierCardButton
+            atelier={{ id: "sim-equipe", title: "Mon Equipe", subtitle: "10 stages — 12 bots", icon: Users, color: "bg-pink-600", bgGradient: "from-pink-50 to-rose-100/50", borderColor: "border-pink-300", textColor: "text-pink-700", description: "Grid 12 bots, trisociation, performance, equipe humaine, assignation, bot-to-bot, orchestrateur." }}
+            onNavigate={setView}
+          />
+          <AtelierCardButton
+            atelier={{ id: "sim-admin", title: "Admin", subtitle: "10 stages — panneau", icon: Settings, color: "bg-slate-600", bgGradient: "from-slate-50 to-gray-100/50", borderColor: "border-slate-300", textColor: "text-slate-700", description: "Dashboard admin, utilisateurs, packages, monitoring, telephonie, securite, trial-brain." }}
+            onNavigate={setView}
+          />
         </div>
       </div>
 
@@ -338,33 +439,46 @@ export function AtelierHub() {
 function AtelierCardButton({ atelier: a, onNavigate }: { atelier: AtelierCard; onNavigate: (id: AtelierView) => void }) {
   const Icon = a.icon;
   return (
-    <button
-      onClick={() => onNavigate(a.id)}
-      className={cn(
-        "text-left rounded-2xl border-2 overflow-hidden transition-all group flex flex-col",
-        "hover:shadow-lg hover:scale-[1.02] cursor-pointer",
-        a.borderColor,
-      )}
-    >
-      <div className={cn("h-2 shrink-0", a.color)} />
-      <div className={cn("p-5 bg-gradient-to-b flex-1 flex flex-col", a.bgGradient)}>
-        <div className="flex items-start gap-3 mb-3">
-          <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-white", a.color)}>
-            <Icon className="h-4 w-4" />
+    <div className={cn(
+      "relative text-left rounded-2xl border-2 overflow-hidden transition-all group flex flex-col",
+      "hover:shadow-lg hover:scale-[1.02]",
+      a.borderColor,
+    )}>
+      {/* Bouton pleine page */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          window.open(`/simulation/${a.id}`, '_blank', 'width=1440,height=900');
+        }}
+        className="absolute top-3 right-3 z-10 p-1.5 rounded-lg bg-white/80 text-gray-400 hover:bg-white hover:text-gray-700 shadow-sm opacity-0 group-hover:opacity-100 transition-all"
+        title="Ouvrir pleine page"
+      >
+        <ExternalLink className="h-3.5 w-3.5" />
+      </button>
+      <button
+        onClick={() => onNavigate(a.id)}
+        className="text-left flex flex-col flex-1 cursor-pointer"
+      >
+        <div className={cn("h-2 shrink-0", a.color)} />
+        <div className={cn("p-5 bg-gradient-to-b flex-1 flex flex-col", a.bgGradient)}>
+          <div className="flex items-start gap-3 mb-3">
+            <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-white", a.color)}>
+              <Icon className="h-4 w-4" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className={cn("text-sm font-bold", a.textColor)}>{a.title}</h3>
+              <p className="text-xs text-gray-500 mt-0.5">{a.subtitle}</p>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <h3 className={cn("text-sm font-bold", a.textColor)}>{a.title}</h3>
-            <p className="text-xs text-gray-500 mt-0.5">{a.subtitle}</p>
+          <p className="text-xs text-gray-600 leading-relaxed flex-1">{a.description}</p>
+          <div className={cn(
+            "mt-3 flex items-center gap-1.5 text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity",
+            a.textColor,
+          )}>
+            <Play className="h-3.5 w-3.5" /> Ouvrir l'atelier
           </div>
         </div>
-        <p className="text-xs text-gray-600 leading-relaxed flex-1">{a.description}</p>
-        <div className={cn(
-          "mt-3 flex items-center gap-1.5 text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity",
-          a.textColor,
-        )}>
-          <Play className="h-3.5 w-3.5" /> Ouvrir l'atelier
-        </div>
-      </div>
-    </button>
+      </button>
+    </div>
   );
 }

@@ -1,15 +1,27 @@
+"use client";
+
 /**
- * AtelierInnovation.tsx — Atelier split-screen "Mode Innovation" V2
- * GAUCHE: Chat riche avec actions inline (challenges, debats, extractions)
- * DROITE: Document innovation qui se batit progressivement (5 sections) — pattern DocForge
- * Data: INNOVATION_DATA (innovation-data.ts)
+ * AtelierInnovation.tsx — Mode Innovation — SIMULATION COMPLETE SELF-CONTAINED
+ * Pattern: SimPhaseReflexion gold standard — TopBar 6 sections, sub-tabs, breadcrumb, 40/60 split
+ * Flow: 8 stages — intro, thinking, 3 techniques laterales (Analogie/Inversion/Biomimetisme),
+ *       faisabilite-thinking, modele hybride, conclusion
+ * Challenge inline: CFO/CHRO challenges, CMO vs CFO debate, contre-argument, sentinel
+ * DocForge right panel: 5 sections with scoring bars
  * Sprint B — Atelier Simulations
  */
 
-"use client";
-
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
+  ArrowLeft,
+  ChevronRight,
+  RotateCcw,
+  Home,
+  Building2,
+  Users,
+  Brain,
+  Globe,
+  Shield,
+  MessageSquare,
   Sparkles,
   CheckCircle2,
   Lock,
@@ -18,7 +30,6 @@ import {
   Send,
   ShieldQuestion,
   Eye,
-  MessageSquare,
   AlertTriangle,
   Target,
   Lightbulb,
@@ -28,20 +39,27 @@ import {
   TrendingUp,
   Layers,
   Download,
+  Mic,
+  FileText,
 } from "lucide-react";
 import { cn } from "../../../../../components/ui/utils";
-import {
-  TypewriterText,
-  ThinkingAnimation,
-  BotBubble,
-  UserBubble,
-  SourcesList,
-} from "../../shared/simulation-components";
+import { TypewriterText, BotAvatar } from "../../shared/simulation-components";
 import { BOT_COLORS } from "../../shared/simulation-data";
 import { INNOVATION_DATA } from "../../scenarios/innovation-data";
-import { AtelierLayout } from "../AtelierLayout";
 
-// ========== TYPES ==========
+// ═══════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════
+
+const UB_BLUE = "#073E5A";
+
+type Phase = "reflexion" | "atelier" | "command";
+
+const PHASE_COLORS = {
+  reflexion: { bg: "bg-red-50", border: "border-red-200", text: "text-red-700", badge: "bg-red-100 text-red-700", dot: "bg-red-500", label: "Analyser" },
+  atelier: { bg: "bg-amber-50", border: "border-amber-200", text: "text-amber-700", badge: "bg-amber-100 text-amber-700", dot: "bg-amber-500", label: "Creer" },
+  command: { bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700", badge: "bg-emerald-100 text-emerald-700", dot: "bg-emerald-500", label: "Executer" },
+};
 
 type Stage =
   | "intro"
@@ -53,10 +71,10 @@ type Stage =
   | "faisabilite"
   | "conclusion";
 
-const STAGE_INDEX: Record<Stage, number> = {
-  intro: 0, thinking: 1, technique1: 2, technique2: 3,
-  technique3: 4, "faisabilite-thinking": 5, faisabilite: 6, conclusion: 7,
-};
+const STAGE_ORDER: Stage[] = [
+  "intro", "thinking", "technique1", "technique2",
+  "technique3", "faisabilite-thinking", "faisabilite", "conclusion",
+];
 
 const STAGE_LABELS: Record<Stage, string> = {
   intro: "Connecter", thinking: "Reflexion...", technique1: "Analogie",
@@ -64,7 +82,11 @@ const STAGE_LABELS: Record<Stage, string> = {
   "faisabilite-thinking": "Evaluation...", faisabilite: "Modele Hybride", conclusion: "Conclusion",
 };
 
-// ========== CHALLENGE DATA ==========
+const DEPT_SUBTABS = ["Vue d'ensemble", "Blueprint", "Sante", "Chantiers", "Projets", "Missions", "Taches", "Discussions", "Documents"];
+
+// ═══════════════════════════════════════
+// CHALLENGE DATA
+// ═══════════════════════════════════════
 
 const ANALOGIE_CHALLENGE =
   "3.6M$/an de revenus recurrents sur 200 equipements? C'est seduisant mais irealiste a court terme. Deployer des capteurs IoT sur 200 machines = 18-24 mois minimum. Et le taux d'adoption des contrats predictifs en PME manufacturiere est de 15-20%, pas 100%. Budget reel Phase 1 : 60-80 equipements max, soit 1.1-1.4M$/an.";
@@ -81,7 +103,9 @@ const BIOMIMETISME_CHALLENGE =
 const CONTRE_ARGUMENT =
   "Le modele hybride en 3 phases est elegant sur papier, mais chaque phase depend du succes de la precedente. Si la Phase 1 (formation) genere moins de 200K$ — et c'est probable vu les taux d'adoption reels — la Phase 2 (IoT) manque de budget. On construit un chateau de cartes. Mieux : lancer Phase 1 ET Phase 2 en parallele avec des budgets independants.";
 
-// ========== DOC SECTION CARD ==========
+// ═══════════════════════════════════════
+// DOC SECTION CARD
+// ═══════════════════════════════════════
 
 function DocSectionCard({ num, title, filled, children }: {
   num: number; title: string; filled: boolean; children?: React.ReactNode;
@@ -103,11 +127,13 @@ function DocSectionCard({ num, title, filled, children }: {
   );
 }
 
-// ========== MAIN COMPONENT ==========
+// ═══════════════════════════════════════
+// MAIN COMPONENT
+// ═══════════════════════════════════════
 
 export function AtelierInnovation({ onBack }: { onBack: () => void }) {
   const [stage, setStage] = useState<Stage>("intro");
-  const [introTyped, setIntroTyped] = useState(false);
+  const [typed, setTyped] = useState(false);
   const [showAnalogieChallenge, setShowAnalogieChallenge] = useState(false);
   const [showInversionDebat, setShowInversionDebat] = useState(false);
   const [showBiomimetismeChallenge, setShowBiomimetismeChallenge] = useState(false);
@@ -119,15 +145,29 @@ export function AtelierInnovation({ onBack }: { onBack: () => void }) {
   const [inversionFilled, setInversionFilled] = useState(false);
   const [biomimetismeFilled, setBiomimetismeFilled] = useState(false);
   const [modeleFilled, setModeleFilled] = useState(false);
+  const chatRef = useRef<HTMLDivElement>(null);
+  const rightRef = useRef<HTMLDivElement>(null);
+
+  const si = STAGE_ORDER.indexOf(stage);
+
+  useEffect(() => {
+    if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
+  }, [stage, typed, showAnalogieChallenge, showInversionDebat, showBiomimetismeChallenge, showContreArgument, showSentinel]);
+
+  useEffect(() => {
+    if (rightRef.current) rightRef.current.scrollTop = 0;
+  }, [stage]);
 
   const handleReset = () => {
-    setStage("intro"); setIntroTyped(false);
+    setStage("intro"); setTyped(false);
     setShowAnalogieChallenge(false); setShowInversionDebat(false);
     setShowBiomimetismeChallenge(false); setShowContreArgument(false);
     setChallengeCount(0); setShowSentinel(false);
     setContexteFilled(false); setAnalogieFilled(false);
     setInversionFilled(false); setBiomimetismeFilled(false); setModeleFilled(false);
   };
+
+  const goNext = (s: Stage) => { setTyped(false); setStage(s); };
 
   const handleChallenge = (setter: (v: boolean) => void) => {
     const next = challengeCount + 1;
@@ -138,150 +178,257 @@ export function AtelierInnovation({ onBack }: { onBack: () => void }) {
 
   const filledCount = [contexteFilled, analogieFilled, inversionFilled, biomimetismeFilled, modeleFilled].filter(Boolean).length;
 
-  // ========== CHAT CONTENT (LEFT) ==========
+  // Phase — innovation is always "atelier" phase (creative mode)
+  const currentPhase: Phase = si >= STAGE_ORDER.indexOf("thinking") ? "atelier" : "reflexion";
+
+  // Discussion context changes with stages
+  const discussionContext =
+    si <= STAGE_ORDER.indexOf("intro") ? "CarlOS — Mode Innovation" :
+    si <= STAGE_ORDER.indexOf("technique1") ? "Technique 1 — Analogie" :
+    si <= STAGE_ORDER.indexOf("technique2") ? "Technique 2 — Inversion" :
+    si <= STAGE_ORDER.indexOf("technique3") ? "Technique 3 — Biomimetisme" :
+    si <= STAGE_ORDER.indexOf("faisabilite") ? "Modele Hybride" :
+    "Innovation — Conclusion";
+
+  // Active bots per stage
+  const activeBots =
+    si <= STAGE_ORDER.indexOf("intro") ? [] :
+    si <= STAGE_ORDER.indexOf("technique1") ? [{ code: "CTOB" }] :
+    si <= STAGE_ORDER.indexOf("technique2") ? [{ code: "CTOB" }, { code: "CMOB" }] :
+    [{ code: "CTOB" }, { code: "CMOB" }, { code: "COOB" }];
+
+  // Breadcrumb
+  const breadcrumb: string[] =
+    si <= STAGE_ORDER.indexOf("intro") ? ["Innovation", "Connecter"] :
+    si <= STAGE_ORDER.indexOf("thinking") ? ["Innovation", "Reflexion"] :
+    si <= STAGE_ORDER.indexOf("technique1") ? ["Innovation", "3 Techniques", "Analogie"] :
+    si <= STAGE_ORDER.indexOf("technique2") ? ["Innovation", "3 Techniques", "Inversion"] :
+    si <= STAGE_ORDER.indexOf("technique3") ? ["Innovation", "3 Techniques", "Biomimetisme"] :
+    si <= STAGE_ORDER.indexOf("faisabilite") ? ["Innovation", "Synthese", "Modele Hybride"] :
+    ["Innovation", "Conclusion"];
+
+  // Active nav
+  const activeNav = "dept";
+  const activeSubTab = -1; // sub-tabs hidden during innovation mode
+
+  // ═══════════════════════════════════════
+  // CHAT CONTENT (LEFT)
+  // ═══════════════════════════════════════
+
   const chatContent = (
     <>
-      <UserBubble text={INNOVATION_DATA.userTension} time="15:10" />
+      {/* User tension */}
+      <div className="flex justify-end">
+        <div className="bg-blue-50 rounded-xl rounded-tr-none px-3 py-2 max-w-[80%]">
+          <p className="text-sm text-blue-900">{INNOVATION_DATA.userTension}</p>
+          <p className="text-[9px] text-blue-400 mt-1 text-right">15:10</p>
+        </div>
+      </div>
 
       {/* CEO intro */}
-      {stage === "intro" && (
-        <BotBubble code="CEOB" text="" phaseLabel="Connecter">
-          <TypewriterText
-            text={INNOVATION_DATA.ceoIntro}
-            speed={10}
-            className="text-sm text-gray-800"
-            onComplete={() => setIntroTyped(true)}
-          />
-          {introTyped && (
-            <div className="mt-2 flex gap-2 flex-wrap">
-              <button onClick={() => { setContexteFilled(true); setStage("thinking"); }} className="text-[9px] px-2.5 py-1 bg-pink-50 text-pink-700 rounded-full hover:bg-pink-100 flex items-center gap-1">
-                <Sparkles className="h-3.5 w-3.5" /> Lancer l'innovation
-              </button>
-              <button onClick={() => setContexteFilled(true)} className="text-[9px] px-2.5 py-1 bg-green-50 text-green-700 rounded-full hover:bg-green-100 flex items-center gap-1">
-                <Pin className="h-3.5 w-3.5" /> Extraire contexte
-              </button>
-            </div>
-          )}
-        </BotBubble>
-      )}
-      {stage !== "intro" && (
-        <BotBubble code="CEOB" text={INNOVATION_DATA.ceoIntro} phaseLabel="Connecter" time="15:10" />
+      {si >= 0 && (
+        <SBubble code="CEOB" collapsed={si > 0}>
+          {si === 0 ? (
+            <>
+              <TypewriterText
+                text={INNOVATION_DATA.ceoIntro}
+                speed={10}
+                className="text-sm text-gray-700"
+                onComplete={() => setTyped(true)}
+              />
+              {typed && (
+                <div className="mt-2 flex gap-2 flex-wrap">
+                  <button onClick={() => { setContexteFilled(true); goNext("thinking"); }} className="text-[9px] px-2.5 py-1 bg-pink-50 text-pink-700 rounded-full hover:bg-pink-100 flex items-center gap-1 cursor-pointer border border-pink-200">
+                    <Sparkles className="h-3.5 w-3.5" /> Lancer l'innovation
+                  </button>
+                  <button onClick={() => setContexteFilled(true)} className="text-[9px] px-2.5 py-1 bg-green-50 text-green-700 rounded-full hover:bg-green-100 flex items-center gap-1 cursor-pointer border border-green-200">
+                    <Pin className="h-3.5 w-3.5" /> Extraire contexte
+                  </button>
+                </div>
+              )}
+            </>
+          ) : <p className="text-[9px] text-gray-400 italic">Mode Innovation lance — 3 techniques laterales</p>}
+        </SBubble>
       )}
 
       {/* Thinking */}
       {stage === "thinking" && (
-        <ThinkingAnimation
-          steps={INNOVATION_DATA.ceoThinking}
-          botEmoji="🎩"
-          botCode="CEOB"
-          botName="CarlOS"
-          onComplete={() => setStage("technique1")}
-        />
+        <div className="bg-pink-50 border border-pink-200 rounded-xl p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="flex gap-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-pink-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+              <div className="w-1.5 h-1.5 rounded-full bg-pink-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+              <div className="w-1.5 h-1.5 rounded-full bg-pink-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+            </div>
+            <span className="text-[9px] text-pink-600 font-medium">CarlOS active le mode Innovation...</span>
+          </div>
+          <div className="space-y-1">
+            {INNOVATION_DATA.ceoThinking.map((step, i) => (
+              <div key={i} className="flex items-center gap-2 text-[9px] text-gray-600">
+                <BotAvatar code="CEOB" size="sm" />
+                <span>{step.text}</span>
+                <div className="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse ml-auto" />
+              </div>
+            ))}
+          </div>
+          <AutoAdvance onComplete={() => goNext("technique1")} delay={2500} />
+        </div>
       )}
 
       {/* === TECHNIQUE 1 — Analogie (CTO) === */}
-      {STAGE_INDEX[stage] >= STAGE_INDEX["technique1"] && (
-        <BotBubble code="CTOB" text="" phaseLabel="Technique 1 — Analogie" time="15:12">
-          <p className="text-sm text-gray-800">{INNOVATION_DATA.technique1.botProposal}</p>
-          <SourcesList sources={INNOVATION_DATA.technique1.sources} />
-          {stage === "technique1" && !showAnalogieChallenge && (
-            <div className="mt-2 flex gap-2 flex-wrap">
-              <button onClick={() => handleChallenge(setShowAnalogieChallenge)} className="text-[9px] px-2.5 py-1 bg-amber-50 text-amber-700 rounded-full hover:bg-amber-100 flex items-center gap-1">
-                <ShieldQuestion className="h-3.5 w-3.5" /> Challenger les chiffres
-              </button>
-              <button onClick={() => { setAnalogieFilled(true); setStage("technique2"); }} className="text-[9px] px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full hover:bg-blue-100 flex items-center gap-1">
-                <ArrowRight className="h-3.5 w-3.5" /> Technique 2
-              </button>
-              <button onClick={() => setAnalogieFilled(true)} className="text-[9px] px-2.5 py-1 bg-green-50 text-green-700 rounded-full hover:bg-green-100 flex items-center gap-1">
-                <Pin className="h-3.5 w-3.5" /> Extraire technique
-              </button>
-            </div>
-          )}
-        </BotBubble>
+      {si >= STAGE_ORDER.indexOf("technique1") && (
+        <SBubble code="CTOB" collapsed={si > STAGE_ORDER.indexOf("technique1") && !showAnalogieChallenge}>
+          {si === STAGE_ORDER.indexOf("technique1") || showAnalogieChallenge ? (
+            <>
+              <div className="mb-1">
+                <span className="text-[9px] bg-fuchsia-100 text-fuchsia-700 px-1.5 py-0.5 rounded-full font-bold">Technique 1 — Analogie</span>
+              </div>
+              <p className="text-sm text-gray-700">{INNOVATION_DATA.technique1.botProposal}</p>
+              {/* Inline sources */}
+              <div className="mt-2 space-y-1">
+                {INNOVATION_DATA.technique1.sources.map((src, i) => (
+                  <div key={i} className="flex items-center gap-2 bg-gray-50 rounded-lg px-2 py-1.5 border border-gray-200">
+                    <FileText className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                    <span className="text-[9px] text-gray-700 truncate">{src.label}</span>
+                  </div>
+                ))}
+              </div>
+              {stage === "technique1" && !showAnalogieChallenge && (
+                <div className="mt-2 flex gap-2 flex-wrap">
+                  <button onClick={() => handleChallenge(setShowAnalogieChallenge)} className="text-[9px] px-2.5 py-1 bg-amber-50 text-amber-700 rounded-full hover:bg-amber-100 flex items-center gap-1 cursor-pointer border border-amber-200">
+                    <ShieldQuestion className="h-3.5 w-3.5" /> Challenger les chiffres
+                  </button>
+                  <button onClick={() => { setAnalogieFilled(true); goNext("technique2"); }} className="text-[9px] px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full hover:bg-blue-100 flex items-center gap-1 cursor-pointer border border-blue-200">
+                    <ArrowRight className="h-3.5 w-3.5" /> Technique 2
+                  </button>
+                  <button onClick={() => setAnalogieFilled(true)} className="text-[9px] px-2.5 py-1 bg-green-50 text-green-700 rounded-full hover:bg-green-100 flex items-center gap-1 cursor-pointer border border-green-200">
+                    <Pin className="h-3.5 w-3.5" /> Extraire technique
+                  </button>
+                </div>
+              )}
+            </>
+          ) : <p className="text-[9px] text-gray-400 italic">Tim — Analogie: Abonnement Zero-Panne, 3.6M$/an</p>}
+        </SBubble>
       )}
 
       {showAnalogieChallenge && (
-        <BotBubble code="CFOB" text="" phaseLabel="Challenge — CFO" time="15:12">
-          <p className="text-sm text-gray-800">{ANALOGIE_CHALLENGE}</p>
-          <div className="mt-2 flex gap-2 flex-wrap">
-            <button onClick={() => { setAnalogieFilled(true); setStage("technique2"); }} className="text-[9px] px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full hover:bg-blue-100 flex items-center gap-1">
-              <ArrowRight className="h-3.5 w-3.5" /> Technique 2
-            </button>
+        <SBubble code="CFOB" collapsed={false}>
+          <div className="mb-1">
+            <span className="text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-bold">Challenge — CFO</span>
           </div>
-        </BotBubble>
+          <p className="text-sm text-gray-700">{ANALOGIE_CHALLENGE}</p>
+          <div className="mt-2 flex gap-2 flex-wrap">
+            <SBtn onClick={() => { setAnalogieFilled(true); goNext("technique2"); }} icon={ArrowRight} label="Technique 2" />
+          </div>
+        </SBubble>
       )}
 
       {/* === TECHNIQUE 2 — Inversion (CMO) === */}
-      {STAGE_INDEX[stage] >= STAGE_INDEX["technique2"] && (
-        <BotBubble code="CMOB" text="" phaseLabel="Technique 2 — Inversion" time="15:14">
-          <p className="text-sm text-gray-800">{INNOVATION_DATA.technique2.botProposal}</p>
-          <SourcesList sources={INNOVATION_DATA.technique2.sources} />
-          {stage === "technique2" && !showInversionDebat && (
-            <div className="mt-2 flex gap-2 flex-wrap">
-              <button onClick={() => handleChallenge(setShowInversionDebat)} className="text-[9px] px-2.5 py-1 bg-purple-50 text-purple-700 rounded-full hover:bg-purple-100 flex items-center gap-1">
-                <MessageSquare className="h-3.5 w-3.5" /> Debat CMO vs CFO
-              </button>
-              <button onClick={() => { setInversionFilled(true); setStage("technique3"); }} className="text-[9px] px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full hover:bg-blue-100 flex items-center gap-1">
-                <ArrowRight className="h-3.5 w-3.5" /> Technique 3
-              </button>
-              <button onClick={() => setInversionFilled(true)} className="text-[9px] px-2.5 py-1 bg-green-50 text-green-700 rounded-full hover:bg-green-100 flex items-center gap-1">
-                <Pin className="h-3.5 w-3.5" /> Extraire technique
-              </button>
-            </div>
-          )}
-        </BotBubble>
+      {si >= STAGE_ORDER.indexOf("technique2") && (
+        <SBubble code="CMOB" collapsed={si > STAGE_ORDER.indexOf("technique2") && !showInversionDebat}>
+          {si === STAGE_ORDER.indexOf("technique2") || showInversionDebat ? (
+            <>
+              <div className="mb-1">
+                <span className="text-[9px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-full font-bold">Technique 2 — Inversion</span>
+              </div>
+              <p className="text-sm text-gray-700">{INNOVATION_DATA.technique2.botProposal}</p>
+              {/* Inline sources */}
+              <div className="mt-2 space-y-1">
+                {INNOVATION_DATA.technique2.sources.map((src, i) => (
+                  <div key={i} className="flex items-center gap-2 bg-gray-50 rounded-lg px-2 py-1.5 border border-gray-200">
+                    <FileText className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                    <span className="text-[9px] text-gray-700 truncate">{src.label}</span>
+                  </div>
+                ))}
+              </div>
+              {stage === "technique2" && !showInversionDebat && (
+                <div className="mt-2 flex gap-2 flex-wrap">
+                  <button onClick={() => handleChallenge(setShowInversionDebat)} className="text-[9px] px-2.5 py-1 bg-purple-50 text-purple-700 rounded-full hover:bg-purple-100 flex items-center gap-1 cursor-pointer border border-purple-200">
+                    <MessageSquare className="h-3.5 w-3.5" /> Debat CMO vs CFO
+                  </button>
+                  <button onClick={() => { setInversionFilled(true); goNext("technique3"); }} className="text-[9px] px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full hover:bg-blue-100 flex items-center gap-1 cursor-pointer border border-blue-200">
+                    <ArrowRight className="h-3.5 w-3.5" /> Technique 3
+                  </button>
+                  <button onClick={() => setInversionFilled(true)} className="text-[9px] px-2.5 py-1 bg-green-50 text-green-700 rounded-full hover:bg-green-100 flex items-center gap-1 cursor-pointer border border-green-200">
+                    <Pin className="h-3.5 w-3.5" /> Extraire technique
+                  </button>
+                </div>
+              )}
+            </>
+          ) : <p className="text-[9px] text-gray-400 italic">Mathilde — Inversion: Performance-as-a-Service, 3.9M$/an</p>}
+        </SBubble>
       )}
 
       {showInversionDebat && (
         <>
-          <BotBubble code="CMOB" text="" phaseLabel="Reponse CMO" time="15:14">
-            <p className="text-sm text-gray-800">{INVERSION_DEBATE.cmob}</p>
-          </BotBubble>
-          <BotBubble code="CFOB" text="" phaseLabel="Reponse CFO" time="15:15">
-            <p className="text-sm text-gray-800">{INVERSION_DEBATE.cfob}</p>
-          </BotBubble>
+          <SBubble code="CMOB" collapsed={false}>
+            <div className="mb-1">
+              <span className="text-[9px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full font-bold">Reponse CMO</span>
+            </div>
+            <p className="text-sm text-gray-700">{INVERSION_DEBATE.cmob}</p>
+          </SBubble>
+          <SBubble code="CFOB" collapsed={false}>
+            <div className="mb-1">
+              <span className="text-[9px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full font-bold">Reponse CFO</span>
+            </div>
+            <p className="text-sm text-gray-700">{INVERSION_DEBATE.cfob}</p>
+          </SBubble>
           <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 mx-1">
             <p className="text-[9px] font-bold text-purple-800 mb-1 flex items-center gap-1"><Target className="h-3.5 w-3.5" /> Consensus</p>
             <p className="text-xs text-purple-700">{INVERSION_DEBATE.consensus}</p>
           </div>
           <div className="flex gap-2 flex-wrap px-1 mt-1">
-            <button onClick={() => { setInversionFilled(true); setStage("technique3"); }} className="text-[9px] px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full hover:bg-blue-100 flex items-center gap-1">
-              <ArrowRight className="h-3.5 w-3.5" /> Technique 3
-            </button>
+            <SBtn onClick={() => { setInversionFilled(true); goNext("technique3"); }} icon={ArrowRight} label="Technique 3" />
           </div>
         </>
       )}
 
       {/* === TECHNIQUE 3 — Biomimetisme (COO) === */}
-      {STAGE_INDEX[stage] >= STAGE_INDEX["technique3"] && (
-        <BotBubble code="COOB" text="" phaseLabel="Technique 3 — Biomimetisme" time="15:16">
-          <p className="text-sm text-gray-800">{INNOVATION_DATA.technique3.botProposal}</p>
-          <SourcesList sources={INNOVATION_DATA.technique3.sources} />
-          {stage === "technique3" && !showBiomimetismeChallenge && (
-            <div className="mt-2 flex gap-2 flex-wrap">
-              <button onClick={() => handleChallenge(setShowBiomimetismeChallenge)} className="text-[9px] px-2.5 py-1 bg-amber-50 text-amber-700 rounded-full hover:bg-amber-100 flex items-center gap-1">
-                <ShieldQuestion className="h-3.5 w-3.5" /> Challenger l'adoption
-              </button>
-              <button onClick={() => { setBiomimetismeFilled(true); setStage("faisabilite-thinking"); }} className="text-[9px] px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full hover:bg-blue-100 flex items-center gap-1">
-                <ArrowRight className="h-3.5 w-3.5" /> Evaluer & Fusionner
-              </button>
-              <button onClick={() => setBiomimetismeFilled(true)} className="text-[9px] px-2.5 py-1 bg-green-50 text-green-700 rounded-full hover:bg-green-100 flex items-center gap-1">
-                <Pin className="h-3.5 w-3.5" /> Extraire technique
-              </button>
-            </div>
-          )}
-        </BotBubble>
+      {si >= STAGE_ORDER.indexOf("technique3") && (
+        <SBubble code="COOB" collapsed={si > STAGE_ORDER.indexOf("technique3") && !showBiomimetismeChallenge}>
+          {si === STAGE_ORDER.indexOf("technique3") || showBiomimetismeChallenge ? (
+            <>
+              <div className="mb-1">
+                <span className="text-[9px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-bold">Technique 3 — Biomimetisme</span>
+              </div>
+              <p className="text-sm text-gray-700">{INNOVATION_DATA.technique3.botProposal}</p>
+              {/* Inline sources */}
+              <div className="mt-2 space-y-1">
+                {INNOVATION_DATA.technique3.sources.map((src, i) => (
+                  <div key={i} className="flex items-center gap-2 bg-gray-50 rounded-lg px-2 py-1.5 border border-gray-200">
+                    <FileText className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                    <span className="text-[9px] text-gray-700 truncate">{src.label}</span>
+                  </div>
+                ))}
+              </div>
+              {stage === "technique3" && !showBiomimetismeChallenge && (
+                <div className="mt-2 flex gap-2 flex-wrap">
+                  <button onClick={() => handleChallenge(setShowBiomimetismeChallenge)} className="text-[9px] px-2.5 py-1 bg-amber-50 text-amber-700 rounded-full hover:bg-amber-100 flex items-center gap-1 cursor-pointer border border-amber-200">
+                    <ShieldQuestion className="h-3.5 w-3.5" /> Challenger l'adoption
+                  </button>
+                  <button onClick={() => { setBiomimetismeFilled(true); goNext("faisabilite-thinking"); }} className="text-[9px] px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full hover:bg-blue-100 flex items-center gap-1 cursor-pointer border border-blue-200">
+                    <ArrowRight className="h-3.5 w-3.5" /> Evaluer & Fusionner
+                  </button>
+                  <button onClick={() => setBiomimetismeFilled(true)} className="text-[9px] px-2.5 py-1 bg-green-50 text-green-700 rounded-full hover:bg-green-100 flex items-center gap-1 cursor-pointer border border-green-200">
+                    <Pin className="h-3.5 w-3.5" /> Extraire technique
+                  </button>
+                </div>
+              )}
+            </>
+          ) : <p className="text-[9px] text-gray-400 italic">Olivier — Biomimetisme: Operateur Certifie, 2.7M$/an</p>}
+        </SBubble>
       )}
 
       {showBiomimetismeChallenge && (
-        <BotBubble code="CHROB" text="" phaseLabel="Challenge — CHRO" time="15:16">
-          <p className="text-sm text-gray-800">{BIOMIMETISME_CHALLENGE}</p>
-          <div className="mt-2 flex gap-2 flex-wrap">
-            <button onClick={() => { setBiomimetismeFilled(true); setStage("faisabilite-thinking"); }} className="text-[9px] px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full hover:bg-blue-100 flex items-center gap-1">
-              <ArrowRight className="h-3.5 w-3.5" /> Evaluer & Fusionner
-            </button>
+        <SBubble code="CHROB" collapsed={false}>
+          <div className="mb-1">
+            <span className="text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-bold">Challenge — CHRO</span>
           </div>
-        </BotBubble>
+          <p className="text-sm text-gray-700">{BIOMIMETISME_CHALLENGE}</p>
+          <div className="mt-2 flex gap-2 flex-wrap">
+            <SBtn onClick={() => { setBiomimetismeFilled(true); goNext("faisabilite-thinking"); }} icon={ArrowRight} label="Evaluer & Fusionner" />
+          </div>
+        </SBubble>
       )}
 
       {/* Sentinel */}
@@ -294,72 +441,99 @@ export function AtelierInnovation({ onBack }: { onBack: () => void }) {
 
       {/* Faisabilite thinking */}
       {stage === "faisabilite-thinking" && (
-        <ThinkingAnimation
-          steps={INNOVATION_DATA.syntheseThinking}
-          botEmoji="🎩"
-          botCode="CEOB"
-          botName="CarlOS"
-          onComplete={() => setStage("faisabilite")}
-        />
+        <div className="bg-pink-50 border border-pink-200 rounded-xl p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="flex gap-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-pink-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+              <div className="w-1.5 h-1.5 rounded-full bg-pink-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+              <div className="w-1.5 h-1.5 rounded-full bg-pink-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+            </div>
+            <span className="text-[9px] text-pink-600 font-medium">CarlOS fusionne les 3 techniques...</span>
+          </div>
+          <div className="space-y-1">
+            {INNOVATION_DATA.syntheseThinking.map((step, i) => (
+              <div key={i} className="flex items-center gap-2 text-[9px] text-gray-600">
+                <BotAvatar code="CEOB" size="sm" />
+                <span>{step.text}</span>
+                <div className="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse ml-auto" />
+              </div>
+            ))}
+          </div>
+          <AutoAdvance onComplete={() => goNext("faisabilite")} delay={2500} />
+        </div>
       )}
 
-      {/* === SYNTHESE === */}
-      {STAGE_INDEX[stage] >= STAGE_INDEX["faisabilite"] && (
-        <BotBubble code="CEOB" text="" phaseLabel="Modele Hybride" time="15:18">
-          <div className="space-y-2">
-            <p className="text-sm font-semibold text-gray-900">{INNOVATION_DATA.synthese.titre}</p>
-            <p className="text-sm text-gray-800">{INNOVATION_DATA.synthese.recommendation}</p>
-          </div>
-          {stage === "faisabilite" && !showContreArgument && (
-            <div className="mt-2 flex gap-2 flex-wrap">
-              <button onClick={() => handleChallenge(setShowContreArgument)} className="text-[9px] px-2.5 py-1 bg-red-50 text-red-700 rounded-full hover:bg-red-100 flex items-center gap-1">
-                <Eye className="h-3.5 w-3.5" /> Contre-argument
-              </button>
-              <button onClick={() => { setModeleFilled(true); setStage("conclusion"); }} className="text-[9px] px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full hover:bg-blue-100 flex items-center gap-1">
-                <ArrowRight className="h-3.5 w-3.5" /> Conclure
-              </button>
-              <button onClick={() => setModeleFilled(true)} className="text-[9px] px-2.5 py-1 bg-green-50 text-green-700 rounded-full hover:bg-green-100 flex items-center gap-1">
-                <Pin className="h-3.5 w-3.5" /> Extraire modele
-              </button>
-            </div>
-          )}
-        </BotBubble>
+      {/* === SYNTHESE — Modele Hybride === */}
+      {si >= STAGE_ORDER.indexOf("faisabilite") && (
+        <SBubble code="CEOB" collapsed={si > STAGE_ORDER.indexOf("faisabilite") && !showContreArgument}>
+          {si === STAGE_ORDER.indexOf("faisabilite") || showContreArgument ? (
+            <>
+              <div className="mb-1">
+                <span className="text-[9px] bg-pink-100 text-pink-700 px-1.5 py-0.5 rounded-full font-bold">Modele Hybride</span>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-gray-900">{INNOVATION_DATA.synthese.titre}</p>
+                <p className="text-sm text-gray-700">{INNOVATION_DATA.synthese.recommendation}</p>
+              </div>
+              {stage === "faisabilite" && !showContreArgument && (
+                <div className="mt-2 flex gap-2 flex-wrap">
+                  <button onClick={() => handleChallenge(setShowContreArgument)} className="text-[9px] px-2.5 py-1 bg-red-50 text-red-700 rounded-full hover:bg-red-100 flex items-center gap-1 cursor-pointer border border-red-200">
+                    <Eye className="h-3.5 w-3.5" /> Contre-argument
+                  </button>
+                  <button onClick={() => { setModeleFilled(true); goNext("conclusion"); }} className="text-[9px] px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full hover:bg-blue-100 flex items-center gap-1 cursor-pointer border border-blue-200">
+                    <ArrowRight className="h-3.5 w-3.5" /> Conclure
+                  </button>
+                  <button onClick={() => setModeleFilled(true)} className="text-[9px] px-2.5 py-1 bg-green-50 text-green-700 rounded-full hover:bg-green-100 flex items-center gap-1 cursor-pointer border border-green-200">
+                    <Pin className="h-3.5 w-3.5" /> Extraire modele
+                  </button>
+                </div>
+              )}
+            </>
+          ) : <p className="text-[9px] text-gray-400 italic">CarlOS — Modele Hybride en 3 phases</p>}
+        </SBubble>
       )}
 
       {showContreArgument && (
-        <BotBubble code="CFOB" text="" phaseLabel="Contre-argument — CFO" time="15:18">
-          <p className="text-sm text-gray-800">{CONTRE_ARGUMENT}</p>
-          <div className="mt-2 flex gap-2 flex-wrap">
-            <button onClick={() => { setModeleFilled(true); setStage("conclusion"); }} className="text-[9px] px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full hover:bg-blue-100 flex items-center gap-1">
-              <ArrowRight className="h-3.5 w-3.5" /> Conclure
-            </button>
+        <SBubble code="CFOB" collapsed={false}>
+          <div className="mb-1">
+            <span className="text-[9px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full font-bold">Contre-argument — CFO</span>
           </div>
-        </BotBubble>
+          <p className="text-sm text-gray-700">{CONTRE_ARGUMENT}</p>
+          <div className="mt-2 flex gap-2 flex-wrap">
+            <SBtn onClick={() => { setModeleFilled(true); goNext("conclusion"); }} icon={ArrowRight} label="Conclure" />
+          </div>
+        </SBubble>
       )}
 
       {/* Conclusion */}
       {stage === "conclusion" && (
-        <BotBubble code="CEOB" text="" phaseLabel="Obtenir" time="15:19">
+        <SBubble code="CEOB" collapsed={false}>
+          <div className="mb-1">
+            <span className="text-[9px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-bold">Obtenir</span>
+          </div>
           <div className="space-y-2">
             <p className="text-sm font-semibold text-gray-900">Innovation documentee.</p>
             <p className="text-xs text-gray-600">{INNOVATION_DATA.synthese.conclusion}</p>
           </div>
           <div className="mt-2 flex gap-2 flex-wrap">
-            <button className="text-[9px] px-2.5 py-1 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 flex items-center gap-1">
+            <button className="text-[9px] px-2.5 py-1 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 flex items-center gap-1 cursor-pointer border border-gray-200">
               <Download className="h-3.5 w-3.5" /> Exporter PDF
             </button>
-            <button className="text-[9px] px-2.5 py-1 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 flex items-center gap-1">
+            <button className="text-[9px] px-2.5 py-1 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 flex items-center gap-1 cursor-pointer border border-gray-200">
               <Send className="h-3.5 w-3.5" /> Envoyer au Board Room
             </button>
           </div>
-        </BotBubble>
+        </SBubble>
       )}
     </>
   );
 
-  // ========== DOCUMENT CONTENT (RIGHT) ==========
-  const atelierContent = (
-    <div className="space-y-3">
+  // ═══════════════════════════════════════
+  // RIGHT PANEL — DocForge Innovation Document
+  // ═══════════════════════════════════════
+
+  const rightContent = (
+    <div className="max-w-4xl mx-auto px-6 py-4 space-y-3">
       {/* Document header */}
       <div className="bg-gradient-to-r from-pink-50 to-fuchsia-50 border border-pink-200 rounded-xl p-4">
         <div className="flex items-center gap-2 mb-2">
@@ -507,19 +681,190 @@ export function AtelierInnovation({ onBack }: { onBack: () => void }) {
     </div>
   );
 
+  // ═══════════════════════════════════════
+  // ROOT LAYOUT (same frame as SimPhaseReflexion)
+  // ═══════════════════════════════════════
+
   return (
-    <AtelierLayout
-      title="Mode Innovation"
-      icon={Sparkles}
-      iconColor="text-pink-600"
-      stage={STAGE_INDEX[stage]}
-      stageCount={8}
-      stageLabel={STAGE_LABELS[stage]}
-      onBack={onBack}
-      onReset={handleReset}
-      chatContent={chatContent}
-      atelierContent={atelierContent}
-      actions={[]}
-    />
+    <div className="h-full flex flex-col bg-white">
+      {/* Sim header */}
+      <div className="shrink-0 bg-white border-b border-gray-200 px-3 py-1.5 flex items-center gap-3">
+        <button onClick={onBack} className="text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100 transition-colors cursor-pointer">
+          <ArrowLeft className="h-4 w-4" />
+        </button>
+        <Sparkles className="h-4 w-4 text-pink-600" />
+        <span className="text-sm font-bold text-gray-800">Mode Innovation</span>
+        <span className="text-xs text-gray-400">— {STAGE_LABELS[stage]}</span>
+        <div className="flex items-center gap-0.5 ml-auto">
+          {STAGE_ORDER.map((_, i) => (
+            <div key={i} className={cn("h-1 rounded-full transition-all",
+              i === si ? "w-4 bg-pink-500" : i < si ? "w-2 bg-pink-300" : "w-2 bg-gray-200"
+            )} />
+          ))}
+        </div>
+        <button onClick={handleReset} className="text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100 transition-colors cursor-pointer ml-1" title="Recommencer">
+          <RotateCcw className="h-3.5 w-3.5" />
+        </button>
+      </div>
+
+      {/* Color line */}
+      <div className={cn("h-1 shrink-0", "bg-pink-500")} />
+
+      <div className="flex-1 flex overflow-hidden">
+        {/* LEFT — Discussion (40%) */}
+        <div className="w-[40%] min-w-[280px] flex flex-col border-r border-gray-200 bg-white">
+          {/* Chat header */}
+          <div className="h-12 px-3 shrink-0 flex items-center gap-2" style={{ backgroundColor: UB_BLUE }}>
+            <BotAvatar code="CEOB" size="sm" />
+            <span className="text-[11px] text-white font-medium truncate flex-1">{discussionContext}</span>
+            <MessageSquare className="h-3.5 w-3.5 text-white/70" />
+          </div>
+
+          {/* Phase bar + bot avatars */}
+          <div className={cn("shrink-0 border-b px-3 py-1.5 flex items-center gap-2",
+            cn(PHASE_COLORS[currentPhase].bg, PHASE_COLORS[currentPhase].border)
+          )}>
+            {/* Bot team avatars LEFT */}
+            {activeBots.length > 0 && (
+              <div className="flex items-center gap-1.5">
+                {activeBots.map(b => (
+                  <div key={b.code} className="flex items-center gap-1 bg-white/70 rounded-full px-1.5 py-0.5">
+                    <BotAvatar code={b.code} size="sm" />
+                    <span className="text-[8px] font-medium text-gray-600">{BOT_COLORS[b.code]?.name}</span>
+                    <div className="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse" />
+                  </div>
+                ))}
+              </div>
+            )}
+            {/* Phase badges RIGHT */}
+            <div className="flex gap-1 ml-auto">
+              {(["reflexion", "atelier", "command"] as Phase[]).map(p => (
+                <span key={p} className={cn(
+                  "px-2 py-0.5 text-[9px] font-bold rounded-full flex items-center gap-1 transition-all",
+                  currentPhase === p ? PHASE_COLORS[p].badge : "bg-gray-100 text-gray-400"
+                )}>
+                  <span className={cn("w-2 h-2 rounded-full transition-all", currentPhase === p ? PHASE_COLORS[p].dot : "bg-gray-300")} />
+                  {PHASE_COLORS[p].label}
+                  {p === "command" && <Lock className="h-2.5 w-2.5 ml-0.5 opacity-50" />}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div ref={chatRef} className="flex-1 overflow-auto p-3 space-y-3">{chatContent}</div>
+
+          {/* Message input */}
+          <div className="shrink-0 border-t border-gray-200 px-3 py-2 flex items-center gap-2">
+            <div className="flex-1 bg-gray-100 rounded-lg px-3 py-2 text-xs text-gray-400">Ecrivez un message...</div>
+            <button className="p-1.5 text-gray-400 rounded-lg hover:bg-gray-100"><Mic className="h-4 w-4" /></button>
+            <button className="p-1.5 text-blue-500 rounded-lg hover:bg-blue-50"><Send className="h-4 w-4" /></button>
+          </div>
+        </div>
+
+        {/* RIGHT — Content (60%) */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* TopBar — 6 sections */}
+          <div className="h-12 px-2 shrink-0 flex items-center" style={{ backgroundColor: UB_BLUE }}>
+            <div className="flex-1 flex items-center gap-0.5">
+              {[
+                { id: "home", icon: Home, label: "Accueil" },
+                { id: "dept", icon: Building2, label: "Mon Departement" },
+                { id: "salles", icon: Users, label: "Mes Salles" },
+                { id: "equipe", icon: Brain, label: "Mon Equipe" },
+                { id: "reseau", icon: Globe, label: "Mon Reseau" },
+                { id: "admin", icon: Shield, label: "Admin" },
+              ].map(nav => (
+                <button key={nav.id} className={cn(
+                  "h-8 gap-1 px-2 text-[11px] rounded-md flex items-center transition-all",
+                  activeNav === nav.id ? "text-white bg-white/15" : "text-white/70 hover:text-white hover:bg-white/10"
+                )}>
+                  <nav.icon className="h-3.5 w-3.5" />
+                  <span>{nav.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Sub-tabs (hidden during innovation but structure preserved) */}
+          {activeNav === "dept" && activeSubTab >= 0 && (
+            <div className="shrink-0 border-b border-gray-200 bg-gray-50 px-2 py-1 flex items-center gap-0.5 overflow-x-auto">
+              {DEPT_SUBTABS.map((tab, i) => (
+                <button key={tab} className={cn(
+                  "px-3 py-1.5 text-xs font-medium rounded-md whitespace-nowrap transition-all",
+                  i === activeSubTab ? "bg-gray-900 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                )}>
+                  {tab}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Breadcrumb */}
+          {breadcrumb.length > 0 && (
+            <div className="shrink-0 border-b border-gray-200 bg-white px-3 py-2 flex items-center gap-1.5">
+              {breadcrumb.map((c, i, arr) => (
+                <div key={i} className="flex items-center gap-1.5">
+                  {i > 0 && <ChevronRight className="h-3.5 w-3.5 text-gray-300" />}
+                  <span className={cn("text-[11px]", i === arr.length - 1 ? "text-gray-800 font-medium" : "text-gray-400 hover:text-gray-600 cursor-pointer")}>{c}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Right panel content */}
+          <div ref={rightRef} className="flex-1 overflow-auto bg-white">
+            {rightContent}
+          </div>
+        </div>
+      </div>
+    </div>
   );
+}
+
+// ═══════════════════════════════════════
+// HELPER COMPONENTS
+// ═══════════════════════════════════════
+
+function SBubble({ code, children, collapsed }: { code: string; children: React.ReactNode; collapsed: boolean }) {
+  const bot = BOT_COLORS[code];
+  if (!bot) return null;
+  if (collapsed) {
+    return (
+      <div className="flex gap-2 items-center opacity-60">
+        <BotAvatar code={code} size="sm" />
+        <div className="text-[9px] text-gray-400">{children}</div>
+      </div>
+    );
+  }
+  return (
+    <div className="flex gap-2.5">
+      <BotAvatar code={code} size="md" />
+      <div className={cn("bg-white border rounded-xl rounded-tl-none px-3 py-2.5 max-w-[88%] shadow-sm border-l-2", bot.border)}>
+        <div className="flex items-center gap-2 mb-1">
+          <span className={cn("text-[11px] font-semibold", bot.text)}>{bot.name}</span>
+          <span className="text-[9px] text-gray-400">{bot.role}</span>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function SBtn({ onClick, icon: Icon, label }: { onClick: () => void; icon: React.ElementType; label: string }) {
+  return (
+    <div className="mt-3 pt-3 border-t border-gray-100">
+      <button onClick={onClick}
+        className="text-xs text-white px-4 py-2 rounded-full flex items-center gap-1.5 font-bold cursor-pointer shadow-md hover:shadow-lg transition-shadow bg-blue-600 hover:bg-blue-700">
+        <Icon className="h-3.5 w-3.5" /> {label}
+      </button>
+    </div>
+  );
+}
+
+function AutoAdvance({ onComplete, delay }: { onComplete: () => void; delay: number }) {
+  useEffect(() => {
+    const timer = setTimeout(onComplete, delay);
+    return () => clearTimeout(timer);
+  }, [onComplete, delay]);
+  return null;
 }

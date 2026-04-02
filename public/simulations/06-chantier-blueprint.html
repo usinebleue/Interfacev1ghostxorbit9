@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SIM-06 — Chantier = Blueprint des Projets</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: { 'ub-blue': '#073E5A' } } } }
+  </script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    .scrollbar-thin::-webkit-scrollbar { width: 4px; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+    .active-section { background-color: #EFF6FF; border-left: 3px solid #3B82F6; }
+  </style>
+</head>
+<body class="h-screen flex flex-col bg-white overflow-hidden">
+
+  <!-- LABEL with BEFORE/AFTER -->
+  <div class="bg-teal-600 text-white text-center py-2 text-sm font-medium flex items-center justify-center gap-4">
+    <span>SIM-06 — Chantier = Blueprint:</span>
+    <button id="btn-before" onclick="toggleView('before')" class="px-3 py-1 rounded bg-white/20 text-white text-xs font-bold">AVANT (Liste projets)</button>
+    <button id="btn-after" onclick="toggleView('after')" class="px-3 py-1 rounded bg-white text-teal-700 text-xs font-bold">APRÈS (Blueprint)</button>
+  </div>
+
+  <div class="flex-1 flex overflow-hidden">
+
+    <!-- LEFT SIDEBAR -->
+    <div class="w-14 border-r bg-white flex-shrink-0 flex flex-col items-center py-3 gap-3">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-blue-500 flex items-center justify-center">
+        <span class="text-white text-xs font-bold">UB</span>
+      </div>
+    </div>
+
+    <!-- CENTER -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+
+      <!-- TOP BAR -->
+      <div style="background-color: #073E5A;">
+        <div class="h-10 flex items-center px-2 border-b border-white/10">
+          <button class="h-7 gap-1 px-2 text-white bg-white/15 rounded flex items-center text-[11px] font-medium">Mon Département</button>
+        </div>
+        <div class="h-7 flex items-center px-2 gap-1" style="background-color: rgba(255,255,255,0.08);">
+          <span class="text-[9px] text-white/50">Direction</span>
+          <svg class="h-3.5 w-3.5 text-white/25" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          <span class="text-[9px] text-white font-medium">Chantier Marketing Q2</span>
+        </div>
+      </div>
+
+      <!-- CONTENT -->
+      <div class="flex-1 flex overflow-hidden">
+
+        <!-- LiveChat 40% -->
+        <div class="w-[40%] border-r flex flex-col bg-white">
+          <div class="h-12 flex items-center gap-2 px-3 border-b" style="background-color: #073E5A;">
+            <div class="w-8 h-8 rounded-full bg-pink-500 flex items-center justify-center text-white text-xs font-bold">MA</div>
+            <div>
+              <div class="text-white text-xs font-medium">Mathilde</div>
+              <div class="text-white/60 text-[10px]">CMO — Marketing</div>
+            </div>
+          </div>
+          <div class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50" id="chat-area">
+            <div class="flex gap-2">
+              <div class="w-6 h-6 rounded-full bg-pink-500 flex-shrink-0 flex items-center justify-center text-white text-[8px] font-bold mt-1">MA</div>
+              <div class="bg-white rounded-lg rounded-tl-none px-3 py-2 max-w-[85%] shadow-sm">
+                <p class="text-xs text-gray-800">Voici le Blueprint du chantier Marketing Q2. Clique sur une section pour qu'on la travaille ensemble en Atelier.</p>
+              </div>
+            </div>
+          </div>
+          <div class="border-t p-3 bg-white">
+            <div class="flex items-center gap-2">
+              <div class="flex-1 bg-gray-100 rounded-lg px-3 py-2 text-xs text-gray-400">Parle à Mathilde...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Content 60% -->
+        <div class="w-[60%] overflow-y-auto scrollbar-thin">
+
+          <!-- BEFORE: Simple list -->
+          <div id="view-before" class="hidden">
+            <div class="border-b px-4 py-2 flex gap-1">
+              <button class="px-3 py-1.5 text-xs font-medium rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700">Vue d'ensemble</button>
+              <button class="px-3 py-1.5 text-xs font-medium rounded-md bg-gray-900 text-white shadow-sm">Chantiers</button>
+            </div>
+            <div class="max-w-4xl mx-auto px-10 py-5 pb-12 space-y-3">
+              <div class="rounded-xl overflow-hidden shadow-sm">
+                <div class="bg-gradient-to-r from-pink-600 to-pink-500 px-3 py-2.5">
+                  <h3 class="text-sm font-bold text-white">Chantier Marketing Q2</h3>
+                  <p class="text-[10px] text-white/70">3 projets — 72%</p>
+                </div>
+              </div>
+              <!-- Simple list of projects -->
+              <div class="rounded-xl border p-3 hover:shadow-sm cursor-pointer">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                  <span class="text-xs font-medium text-gray-800">Campagne SEO</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">85%</span>
+                </div>
+                <div class="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden mt-2">
+                  <div class="h-full bg-green-500 rounded-full" style="width: 85%"></div>
+                </div>
+              </div>
+              <div class="rounded-xl border p-3 hover:shadow-sm cursor-pointer">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                  <span class="text-xs font-medium text-gray-800">LinkedIn Ads</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">45%</span>
+                </div>
+                <div class="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden mt-2">
+                  <div class="h-full bg-amber-500 rounded-full" style="width: 45%"></div>
+                </div>
+              </div>
+              <div class="rounded-xl border p-3 hover:shadow-sm cursor-pointer">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                  <span class="text-xs font-medium text-gray-800">Newsletter mensuelle</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">60%</span>
+                </div>
+                <div class="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden mt-2">
+                  <div class="h-full bg-amber-500 rounded-full" style="width: 60%"></div>
+                </div>
+              </div>
+              <div class="text-center py-6 text-gray-400 text-xs">
+                Vue simple — pas de structure Blueprint
+              </div>
+            </div>
+          </div>
+
+          <!-- AFTER: Blueprint DocForge style -->
+          <div id="view-after">
+            <div class="flex h-full">
+
+              <!-- Table of Contents sidebar -->
+              <div class="w-48 border-r bg-gray-50 flex-shrink-0 overflow-y-auto scrollbar-thin">
+                <div class="p-3">
+                  <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Table des matières</div>
+                  <div class="space-y-0.5">
+                    <button onclick="selectSection(0)" id="toc-0" class="w-full text-left px-2 py-1.5 rounded text-[10px] font-medium active-section">
+                      <div class="flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-green-400"></span>
+                        1. Objectifs
+                      </div>
+                    </button>
+                    <button onclick="selectSection(1)" id="toc-1" class="w-full text-left px-2 py-1.5 rounded text-[10px] text-gray-600 hover:bg-gray-100">
+                      <div class="flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-green-400"></span>
+                        2. Analyse SWOT
+                      </div>
+                    </button>
+                    <button onclick="selectSection(2)" id="toc-2" class="w-full text-left px-2 py-1.5 rounded text-[10px] text-gray-600 hover:bg-gray-100">
+                      <div class="flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-yellow-400"></span>
+                        3. Projet: SEO
+                      </div>
+                    </button>
+                    <button onclick="selectSection(3)" id="toc-3" class="w-full text-left px-2 py-1.5 rounded text-[10px] text-gray-600 hover:bg-gray-100">
+                      <div class="flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-yellow-400"></span>
+                        4. Projet: LinkedIn
+                      </div>
+                    </button>
+                    <button onclick="selectSection(4)" id="toc-4" class="w-full text-left px-2 py-1.5 rounded text-[10px] text-gray-600 hover:bg-gray-100">
+                      <div class="flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-red-400"></span>
+                        5. Projet: Newsletter
+                      </div>
+                    </button>
+                    <button onclick="selectSection(5)" id="toc-5" class="w-full text-left px-2 py-1.5 rounded text-[10px] text-gray-600 hover:bg-gray-100">
+                      <div class="flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-gray-300"></span>
+                        6. Budget & KPIs
+                      </div>
+                    </button>
+                    <button onclick="selectSection(6)" id="toc-6" class="w-full text-left px-2 py-1.5 rounded text-[10px] text-gray-600 hover:bg-gray-100">
+                      <div class="flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-gray-300"></span>
+                        7. Risques
+                      </div>
+                    </button>
+                    <button onclick="selectSection(7)" id="toc-7" class="w-full text-left px-2 py-1.5 rounded text-[10px] text-gray-600 hover:bg-gray-100">
+                      <div class="flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-gray-300"></span>
+                        8. Échéancier
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Section content -->
+              <div class="flex-1 overflow-y-auto scrollbar-thin" id="section-content">
+                <div class="max-w-3xl mx-auto px-8 py-5 pb-12">
+                  <!-- Header -->
+                  <div class="rounded-xl overflow-hidden shadow-sm mb-6">
+                    <div class="bg-gradient-to-r from-pink-600 to-pink-500 px-4 py-3 flex items-center gap-2">
+                      <h2 class="text-sm font-bold text-white">Blueprint — Chantier Marketing Q2</h2>
+                      <span class="ml-auto flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-yellow-400/30 text-white border border-yellow-300/40">
+                        <span class="w-2 h-2 rounded-full bg-yellow-400"></span>
+                        Atelier
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Section: Objectifs -->
+                  <div id="section-0" class="mb-6">
+                    <div class="flex items-center gap-2 mb-3">
+                      <span class="w-3 h-3 rounded-full bg-green-400"></span>
+                      <h3 class="text-sm font-bold text-gray-900">1. Objectifs</h3>
+                      <span class="px-1.5 py-0.5 rounded text-[8px] bg-green-100 text-green-700 font-medium">COMMAND</span>
+                      <button onclick="openAtelier(0)" class="ml-auto text-[10px] text-blue-600 hover:underline flex items-center gap-1">
+                        <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        Éditer en Atelier
+                      </button>
+                    </div>
+                    <div class="bg-white rounded-lg border p-4 text-xs text-gray-700 space-y-2">
+                      <p><strong>Objectif principal:</strong> Augmenter la visibilité en ligne de 40% d'ici fin Q2.</p>
+                      <p><strong>Objectifs secondaires:</strong></p>
+                      <ul class="list-disc ml-4 space-y-1">
+                        <li>Générer 200 leads qualifiés via SEO + LinkedIn</li>
+                        <li>Lancer newsletter mensuelle (500 abonnés cible)</li>
+                        <li>Positionner Usine Bleue comme référence IA manufacturière</li>
+                      </ul>
+                    </div>
+                  </div>
+
+                  <!-- Section: SWOT -->
+                  <div id="section-1" class="mb-6">
+                    <div class="flex items-center gap-2 mb-3">
+                      <span class="w-3 h-3 rounded-full bg-green-400"></span>
+                      <h3 class="text-sm font-bold text-gray-900">2. Analyse SWOT</h3>
+                      <span class="px-1.5 py-0.5 rounded text-[8px] bg-green-100 text-green-700 font-medium">COMMAND</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                      <div class="bg-green-50 rounded-lg p-3">
+                        <h4 class="text-[10px] font-bold text-green-800 mb-1">Forces</h4>
+                        <ul class="text-[10px] text-green-700 space-y-0.5">
+                          <li>- Expertise IA unique au QC</li>
+                          <li>- Réseau REAI (130 manufact.)</li>
+                        </ul>
+                      </div>
+                      <div class="bg-red-50 rounded-lg p-3">
+                        <h4 class="text-[10px] font-bold text-red-800 mb-1">Faiblesses</h4>
+                        <ul class="text-[10px] text-red-700 space-y-0.5">
+                          <li>- Notoriété limitée hors QC</li>
+                          <li>- Équipe marketing réduite</li>
+                        </ul>
+                      </div>
+                      <div class="bg-blue-50 rounded-lg p-3">
+                        <h4 class="text-[10px] font-bold text-blue-800 mb-1">Opportunités</h4>
+                        <ul class="text-[10px] text-blue-700 space-y-0.5">
+                          <li>- Marché ON en expansion</li>
+                          <li>- Subventions IA disponibles</li>
+                        </ul>
+                      </div>
+                      <div class="bg-amber-50 rounded-lg p-3">
+                        <h4 class="text-[10px] font-bold text-amber-800 mb-1">Menaces</h4>
+                        <ul class="text-[10px] text-amber-700 space-y-0.5">
+                          <li>- Concurrence US aggressive</li>
+                          <li>- Cycle de vente long</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Section: Projet SEO -->
+                  <div id="section-2" class="mb-6">
+                    <div class="flex items-center gap-2 mb-3">
+                      <span class="w-3 h-3 rounded-full bg-yellow-400"></span>
+                      <h3 class="text-sm font-bold text-gray-900">3. Projet: Campagne SEO</h3>
+                      <span class="px-1.5 py-0.5 rounded text-[8px] bg-yellow-100 text-yellow-700 font-medium">Atelier</span>
+                      <button onclick="openAtelier(2)" class="ml-auto text-[10px] text-blue-600 hover:underline flex items-center gap-1">
+                        <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        Travailler en Atelier
+                      </button>
+                    </div>
+                    <div class="bg-white rounded-lg border p-4 text-xs text-gray-700 space-y-2">
+                      <div class="flex items-center justify-between mb-2">
+                        <span class="text-gray-500">Progression</span>
+                        <span class="font-medium">85%</span>
+                      </div>
+                      <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div class="h-full bg-yellow-400 rounded-full" style="width: 85%"></div>
+                      </div>
+                      <p class="mt-2">3 missions: Audit technique (en cours), Mots-clés (complété), Contenu blog (à faire).</p>
+                    </div>
+                  </div>
+
+                  <!-- Section: Projet LinkedIn -->
+                  <div id="section-3" class="mb-6">
+                    <div class="flex items-center gap-2 mb-3">
+                      <span class="w-3 h-3 rounded-full bg-yellow-400"></span>
+                      <h3 class="text-sm font-bold text-gray-900">4. Projet: LinkedIn Ads</h3>
+                      <span class="px-1.5 py-0.5 rounded text-[8px] bg-yellow-100 text-yellow-700 font-medium">Atelier</span>
+                    </div>
+                    <div class="bg-white rounded-lg border border-dashed border-gray-300 p-4 text-xs text-gray-400 text-center">
+                      <p>Section en construction — cliquez "Travailler en Atelier" pour remplir avec Mathilde</p>
+                    </div>
+                  </div>
+
+                  <!-- Section: Newsletter (not started) -->
+                  <div id="section-4" class="mb-6">
+                    <div class="flex items-center gap-2 mb-3">
+                      <span class="w-3 h-3 rounded-full bg-red-400"></span>
+                      <h3 class="text-sm font-bold text-gray-900">5. Projet: Newsletter</h3>
+                      <span class="px-1.5 py-0.5 rounded text-[8px] bg-red-100 text-red-700 font-medium">Réflexion</span>
+                    </div>
+                    <div class="bg-white rounded-lg border border-dashed border-gray-300 p-4 text-xs text-gray-400 text-center">
+                      <p>Pas encore commencé — phase Réflexion requise d'abord</p>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="w-72 border-l bg-white flex-shrink-0 overflow-y-auto scrollbar-thin p-3">
+      <h3 class="text-xs font-semibold text-gray-900 mb-2">Blueprint</h3>
+      <div class="space-y-2 text-[10px] text-gray-600">
+        <p>Chaque chantier s'ouvre comme un Blueprint avec table des matières. Chaque section peut être travaillée en Atelier avec le bot.</p>
+        <div class="border-t pt-2 mt-2 space-y-1">
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-green-400"></span>
+            <span>= Section en COMMAND</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-yellow-400"></span>
+            <span>= Section en Atelier</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-red-400"></span>
+            <span>= Section en Réflexion</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-gray-300"></span>
+            <span>= Pas encore commencé</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function toggleView(view) {
+      document.getElementById('view-before').classList.toggle('hidden', view !== 'before');
+      document.getElementById('view-after').classList.toggle('hidden', view !== 'after');
+      document.getElementById('btn-before').className = view === 'before'
+        ? 'px-3 py-1 rounded bg-white text-teal-700 text-xs font-bold'
+        : 'px-3 py-1 rounded bg-white/20 text-white text-xs font-bold';
+      document.getElementById('btn-after').className = view === 'after'
+        ? 'px-3 py-1 rounded bg-white text-teal-700 text-xs font-bold'
+        : 'px-3 py-1 rounded bg-white/20 text-white text-xs font-bold';
+    }
+
+    function selectSection(index) {
+      // Update TOC highlighting
+      for (let i = 0; i <= 7; i++) {
+        const el = document.getElementById(`toc-${i}`);
+        if (i === index) {
+          el.className = 'w-full text-left px-2 py-1.5 rounded text-[10px] font-medium active-section';
+        } else {
+          el.className = 'w-full text-left px-2 py-1.5 rounded text-[10px] text-gray-600 hover:bg-gray-100';
+        }
+      }
+      // Scroll to section
+      const section = document.getElementById(`section-${index}`);
+      if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function openAtelier(sectionIndex) {
+      const sections = ['Objectifs', 'Analyse SWOT', 'Projet SEO', 'Projet LinkedIn', 'Projet Newsletter', 'Budget & KPIs', 'Risques', 'Échéancier'];
+      const chat = document.getElementById('chat-area');
+      const msg = document.createElement('div');
+      msg.className = 'flex gap-2';
+      msg.innerHTML = `
+        <div class="w-6 h-6 rounded-full bg-pink-500 flex-shrink-0 flex items-center justify-center text-white text-[8px] font-bold mt-1">MA</div>
+        <div class="bg-white rounded-lg rounded-tl-none px-3 py-2 max-w-[85%] shadow-sm">
+          <p class="text-xs text-gray-800">On ouvre la section "${sections[sectionIndex]}" en mode Atelier. Qu'est-ce que tu veux qu'on travaille?</p>
+        </div>
+      `;
+      chat.appendChild(msg);
+      chat.scrollTop = chat.scrollHeight;
+    }
+  </script>
+
+</body>
+</html>

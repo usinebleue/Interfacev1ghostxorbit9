@@ -168,6 +168,19 @@ const CEOB_BLUEPRINT: DeptBlueprintConfig = {
   intro: "Le département de la Direction est le chef d'orchestre de votre entreprise. Il consolide votre vision stratégique, votre structure corporative et la gestion de vos risques. C'est ici que se dessine le portrait complet de qui vous êtes, où vous allez, et comment vous y arriverez — votre plan d'affaires vivant.",
   subSections: [
     {
+      id: "vue_consolidee",
+      label: "Vue consolidée",
+      description: "Agrégation des 11 départements, alertes, gaps prioritaires",
+      intro: "Vue d'ensemble des 11 départements — le tableau de bord stratégique du CEO. Les scores, gaps critiques et données clés de chaque département en un coup d'œil. Les tensions entre départements sont signalées automatiquement.",
+      icon: "Layers",
+      pertinence: { T1: "H", T2: "O", T3: "I", T4: "C", T5: "C" },
+      fields: [],
+      kpis: [
+        { id: "score_global", label: "Score Santé Global", formule: "moyenne pondérée 12 depts", benchmark: "70/100", seuils: { vert: 70, jaune: 50, rouge: 30 }, tier: "T2", unite: "/100" },
+        { id: "nb_gaps_critiques", label: "Gaps critiques", formule: "sections C vides", benchmark: "0", seuils: { vert: 0, jaune: 3, rouge: 5 }, tier: "T2", unite: "" },
+      ],
+    },
+    {
       id: "sommaire_executif",
       label: "Sommaire Exécutif",
       description: "Résumé exécutif de l'entreprise — le pitch en 1 page",
@@ -508,19 +521,6 @@ const CEOB_BLUEPRINT: DeptBlueprintConfig = {
       fields: [],
       kpis: [],
       playbooks: ["plan-strategique-3-5ans", "preparation-ca", "due-diligence-vendeur"],
-    },
-    {
-      id: "vue_consolidee",
-      label: "Vue consolidée",
-      description: "Agrégation des 11 départements, alertes, gaps prioritaires",
-      intro: "Vue d'ensemble des 11 départements — le tableau de bord stratégique du CEO. Les scores, gaps critiques et données clés de chaque département en un coup d'œil. Les tensions entre départements sont signalées automatiquement.",
-      icon: "Layers",
-      pertinence: { T1: "H", T2: "O", T3: "I", T4: "C", T5: "C" },
-      fields: [],
-      kpis: [
-        { id: "score_global", label: "Score Santé Global", formule: "moyenne pondérée 12 depts", benchmark: "70/100", seuils: { vert: 70, jaune: 50, rouge: 30 }, tier: "T2", unite: "/100" },
-        { id: "nb_gaps_critiques", label: "Gaps critiques", formule: "sections C vides", benchmark: "0", seuils: { vert: 0, jaune: 3, rouge: 5 }, tier: "T2", unite: "" },
-      ],
     },
   ],
 };

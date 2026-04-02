@@ -1,0 +1,5581 @@
+"use client";
+
+/**
+ * SimAmorcer.tsx — Protocole AMORCER (self-contained)
+ *
+ * Carl vocal 11h26:
+ * - Tabs AMORCER dans le PANEL DROIT (pas en haut full-width)
+ * - Color line uniquement dans le panel droit
+ * - Bande breadcrumb drill-down sous les tabs (section cockpit)
+ * - PAS de bande pastel dans la discussion (juste couleur boutons)
+ * - Bots: ecrire "Equipe" + noms a cote des avatars
+ * - Observation = vue d'ensemble, Attention/Moderation = overlays
+ * - Qualite visuelle: reutiliser patterns design-system.md
+ *
+ * COULEURS: A=red, M=pink, O=blue, R=orange, C=yellow, E=green, R=emerald
+ */
+
+import { useState, useRef, useEffect } from "react";
+import {
+  AlertTriangle,
+  Scale,
+  Eye,
+  Brain,
+  Hammer,
+  Rocket,
+  BarChart3,
+  Send,
+  Users,
+  FolderOpen,
+  Target,
+  CheckCircle2,
+  Activity,
+  Zap,
+  TrendingDown,
+  TrendingUp,
+  DollarSign,
+  Clock,
+  ShieldAlert,
+  Lightbulb,
+  ArrowRight,
+  FileText,
+  Paperclip,
+  Filter,
+  ChevronRight,
+  Home,
+  Phone,
+  Video,
+  Glasses,
+  Image,
+  File,
+  Camera,
+  ChevronUp,
+  Globe,
+  Plus,
+  Palette,
+  Flame,
+  TowerControl,
+  Shield,
+  Bot,
+  Settings,
+  MessageSquare,
+  Bell,
+  Search,
+  Sparkles,
+  Star,
+  Calendar,
+  Briefcase,
+  Crown,
+  Compass,
+  Handshake,
+  Building2,
+  Layers,
+  LayoutDashboard,
+  HeartPulse,
+  Gauge,
+  Map,
+  Megaphone,
+  Package,
+  Stethoscope,
+  ChevronDown,
+  ArrowLeft,
+  Pencil,
+  Trash2,
+  Lock,
+  Mail,
+  Mic,
+  RefreshCw,
+  Link,
+  Cpu,
+  Factory,
+  Coins,
+  CreditCard,
+  Hexagon,
+  Trophy,
+  BookOpen,
+  Play,
+  Monitor,
+  UserCircle,
+  GitBranch,
+  ListChecks,
+  Copy,
+  Bookmark,
+  Swords,
+  Heart,
+  Loader2,
+  SortAsc,
+  LayoutGrid,
+  List,
+  Table2,
+  Network,
+  Atom,
+  GraduationCap,
+  Library,
+  User,
+  LogOut,
+  HelpCircle,
+  Inbox,
+  DoorOpen,
+  ShieldCheck,
+  PiggyBank,
+  Receipt,
+  Bug,
+  Wrench,
+  ClipboardList,
+  Newspaper,
+  LineChart,
+  CalendarDays,
+  Route,
+  EyeOff,
+  Landmark,
+  Gem,
+  Server,
+  Radio,
+  FileBarChart,
+  X,
+  Award,
+  Crosshair,
+  Pin,
+  Navigation,
+  ThumbsUp,
+  ThumbsDown,
+} from "lucide-react";
+import { cn } from "../../../../../components/ui/utils";
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from "../../../../../components/ui/resizable";
+import { TypewriterText, BotAvatar } from "../../shared/simulation-components";
+import { BlueprintDepartement } from "../../blueprint/BlueprintDepartement";
+import { CanvasActionProvider } from "../../../../context/CanvasActionContext";
+import { BOT_COLORS } from "../../shared/simulation-data";
+
+const UB_BLUE = "#073E5A";
+
+// ========== PHASE CONFIG (couleurs confirmees Carl) ==========
+
+type PhaseKey = "attention" | "moderation" | "observation" | "reflexion" | "creation" | "execution" | "retroaction";
+
+interface PhaseStyle {
+  label: string;
+  letter: string;
+  Icon: React.ElementType;
+  dot: string;
+  badge: string;
+  bg: string;
+  border: string;
+  text: string;
+  btnBg: string;
+  btnText: string;
+  btnBorder: string;
+  btnHover: string;
+  line: string;
+}
+
+const PC: Record<PhaseKey, PhaseStyle> = {
+  attention:   { label: "Attention",   letter: "A", Icon: AlertTriangle, dot: "bg-red-500",     badge: "bg-red-100 text-red-700",         bg: "bg-red-50",     border: "border-red-200",     text: "text-red-700",     btnBg: "bg-red-50",     btnText: "text-red-700",     btnBorder: "border-red-200",     btnHover: "hover:bg-red-100",     line: "bg-red-500" },
+  moderation:  { label: "Modération",  letter: "M", Icon: Scale,         dot: "bg-pink-500",    badge: "bg-pink-100 text-pink-700",       bg: "bg-pink-50",    border: "border-pink-200",    text: "text-pink-700",    btnBg: "bg-pink-50",    btnText: "text-pink-700",    btnBorder: "border-pink-200",    btnHover: "hover:bg-pink-100",    line: "bg-pink-500" },
+  observation: { label: "Observation", letter: "O", Icon: Eye,           dot: "bg-blue-500",    badge: "bg-blue-100 text-blue-700",       bg: "bg-blue-50",    border: "border-blue-200",    text: "text-blue-700",    btnBg: "bg-blue-50",    btnText: "text-blue-700",    btnBorder: "border-blue-200",    btnHover: "hover:bg-blue-100",    line: "bg-blue-500" },
+  reflexion:   { label: "Réflexion",   letter: "R", Icon: Brain,         dot: "bg-orange-500",  badge: "bg-orange-100 text-orange-700",   bg: "bg-orange-50",  border: "border-orange-200",  text: "text-orange-700",  btnBg: "bg-orange-50",  btnText: "text-orange-700",  btnBorder: "border-orange-200",  btnHover: "hover:bg-orange-100",  line: "bg-orange-500" },
+  creation:    { label: "Conception",    letter: "C", Icon: Hammer,        dot: "bg-yellow-500",  badge: "bg-yellow-100 text-yellow-700",   bg: "bg-yellow-50",  border: "border-yellow-200",  text: "text-yellow-700",  btnBg: "bg-yellow-50",  btnText: "text-yellow-700",  btnBorder: "border-yellow-200",  btnHover: "hover:bg-yellow-100",  line: "bg-yellow-500" },
+  execution:   { label: "Exécution",   letter: "E", Icon: Rocket,        dot: "bg-green-500",   badge: "bg-green-100 text-green-700",     bg: "bg-green-50",   border: "border-green-200",   text: "text-green-700",   btnBg: "bg-green-50",   btnText: "text-green-700",   btnBorder: "border-green-200",   btnHover: "hover:bg-green-100",   line: "bg-green-500" },
+  retroaction: { label: "Rétroaction", letter: "R", Icon: BarChart3,     dot: "bg-emerald-500", badge: "bg-emerald-100 text-emerald-700", bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700", btnBg: "bg-emerald-50", btnText: "text-emerald-700", btnBorder: "border-emerald-200", btnHover: "hover:bg-emerald-100", line: "bg-emerald-500" },
+};
+
+const PHASES: PhaseKey[] = ["attention", "moderation", "observation", "reflexion", "creation", "execution", "retroaction"];
+
+// ========== DASHBOARD DATA ==========
+
+const KPIS = [
+  { label: "Revenus Q4", value: "2.4M$", delta: "+8.3%", up: true, icon: DollarSign },
+  { label: "Pipeline", value: "890K$", delta: "-12%", up: false, icon: TrendingUp },
+  { label: "Équipe", value: "47", delta: "+3 ce mois", up: true, icon: Users },
+  { label: "Projets actifs", value: "12", delta: "3 en retard", up: false, icon: FolderOpen },
+];
+
+const CHANTIERS = [
+  { name: "Transformation Numérique", progress: 72, bot: "CTOB", botName: "Tim", phase: "execution" as PhaseKey },
+  { name: "Expansion Marché US", progress: 45, bot: "CSOB", botName: "Simone", phase: "reflexion" as PhaseKey },
+  { name: "Optimisation Production", progress: 88, bot: "CPOB", botName: "Paco", phase: "execution" as PhaseKey },
+  { name: "Restructuration RH", progress: 20, bot: "CHROB", botName: "Hélène", phase: "creation" as PhaseKey },
+];
+
+const PROJETS = [
+  { name: "Migration serveurs cloud", chantier: "Transformation Numérique", phase: "execution" as PhaseKey, bot: "CTOB" },
+  { name: "Soumission Hydro-Québec", chantier: "Expansion Marché US", phase: "reflexion" as PhaseKey, bot: "CSOB" },
+  { name: "Automatisation ligne 3", chantier: "Optimisation Production", phase: "retroaction" as PhaseKey, bot: "CPOB" },
+  { name: "Plan de rétention", chantier: "Restructuration RH", phase: "creation" as PhaseKey, bot: "CHROB" },
+];
+
+const MISSIONS_DATA = [
+  { name: "Audit coûts hébergement", bot: "CFOB", phase: "execution" as PhaseKey, urgent: false },
+  { name: "Analyse pipeline Q1", bot: "CROB", phase: "attention" as PhaseKey, urgent: true },
+  { name: "Benchmark concurrence US", bot: "CSOB", phase: "reflexion" as PhaseKey, urgent: false },
+  { name: "Prototype IA qualité", bot: "CTOB", phase: "creation" as PhaseKey, urgent: false },
+  { name: "Rapport rétention employés", bot: "CHROB", phase: "attention" as PhaseKey, urgent: true },
+];
+
+const INDUSTRIE_NEWS = [
+  { title: "Adoption IA manufacturière +39 pts en 2025", source: "STIQ", hot: true },
+  { title: "Pénurie main-d'œuvre: 25K postes vacants au Québec", source: "ISQ", hot: true },
+  { title: "Robotique collaborative: ROI moyen 18 mois", source: "IFR", hot: false },
+  { title: "Subventions CDPQ: 50M$ pour automatisation PME", source: "Gouv. QC", hot: false },
+];
+
+const BOT_FEED = [
+  { bot: "CFOB", action: "Rapport mensuel Q4 complété", time: "Il y a 2h" },
+  { bot: "CTOB", action: "Migration DB — phase 2 lancée", time: "Il y a 4h" },
+  { bot: "CMOB", action: "Campagne email analysée — taux 3.2%", time: "Il y a 6h" },
+  { bot: "CROB", action: "3 leads qualifiés cette semaine", time: "Hier" },
+];
+
+const DECISIONS_DATA = [
+  { id: "D-108", title: "Ajuster prix gamme A (+5%)", status: "Approuvée", sc: "text-emerald-600 bg-emerald-50" },
+  { id: "D-107", title: "Embauche développeur senior", status: "En attente", sc: "text-amber-600 bg-amber-50" },
+  { id: "D-106", title: "Renouvellement contrat fournisseur", status: "Approuvée", sc: "text-emerald-600 bg-emerald-50" },
+];
+
+// ========== ALERTS DATA ==========
+
+const ALERTS = [
+  { id: 1, severity: "critique" as const, icon: ShieldAlert, bc: "border-red-400", bgc: "bg-red-50", tc: "text-red-700",
+    title: "Marge brute en baisse de 4.2% vs Q3", source: "Frank (CFO)", bot: "CFOB",
+    detail: "Coûts matières premières +12% sans ajustement prix. Impact: 38K$/mois." },
+  { id: 2, severity: "critique" as const, icon: TrendingDown, bc: "border-red-400", bgc: "bg-red-50", tc: "text-red-700",
+    title: "Pipeline ventes stagne depuis 3 semaines", source: "Rich (CRO)", bot: "CROB",
+    detail: "Aucun nouveau lead qualifié. Conversion: 0.8% (cible 2.1%)." },
+  { id: 3, severity: "attention" as const, icon: Clock, bc: "border-amber-400", bgc: "bg-amber-50", tc: "text-amber-700",
+    title: "Retard livraison Infrastructure Tech", source: "Tim (CTO)", bot: "CTOB",
+    detail: "Migration serveurs en retard de 2 semaines. Bloquant déploiement Q1." },
+  { id: 4, severity: "attention" as const, icon: AlertTriangle, bc: "border-amber-400", bgc: "bg-amber-50", tc: "text-amber-700",
+    title: "3 employés clés en entrevue ailleurs", source: "Hélène (CHRO)", bot: "CHROB",
+    detail: "LinkedIn/Glassdoor: lead dev, dir. marketing, analyste senior." },
+  { id: 5, severity: "opportunite" as const, icon: Lightbulb, bc: "border-emerald-400", bgc: "bg-emerald-50", tc: "text-emerald-700",
+    title: "Appel d'offres Hydro-Québec — 12 jours", source: "Simone (CSO)", bot: "CSOB",
+    detail: "Contrat 2.1M$ en automatisation. Match: 87%. Pas de soumission encore." },
+];
+
+// ========== BOT TEAM ==========
+
+const TEAM = [
+  { code: "CFOB", name: "Frank CFO" },
+  { code: "CTOB", name: "Tim CTO" },
+  { code: "CSOB", name: "Simone CSO" },
+];
+
+// ========== ORBIT9 TYPES & DATA ==========
+
+type ContextMode = "brainteam" | "orbit9";
+
+interface VitaaScore { v: number; i: number; t: number; a1: number; a2: number; }
+interface CelluleMember { name: string; role: string; avatar: string; vitaa: VitaaScore; }
+interface Cellule {
+  name: string; type: "interne" | "externe"; members: number; maxMembers: number;
+  gradient: string; membres: CelluleMember[]; sousCellules: string[]; status: string;
+}
+
+const ORBIT9_CELLULES: Cellule[] = [
+  {
+    name: "Les Titans", type: "interne", members: 6, maxMembers: 9,
+    gradient: "from-teal-600 to-teal-500",
+    membres: [
+      { name: "Carl F.", role: "Fondateur", avatar: "CF", vitaa: { v: 0.7, i: 0.8, t: 0.6, a1: 0.5, a2: 0.4 } },
+      { name: "Marie D.", role: "Ops", avatar: "MD", vitaa: { v: 0.5, i: 0.6, t: 0.8, a1: 0.3, a2: 0.2 } },
+      { name: "Jean-P. L.", role: "Ventes", avatar: "JL", vitaa: { v: 0.9, i: 0.4, t: 0.5, a1: 0.7, a2: 0.6 } },
+      { name: "Sophie B.", role: "Marketing", avatar: "SB", vitaa: { v: 0.6, i: 0.7, t: 0.5, a1: 0.4, a2: 0.8 } },
+      { name: "Luc T.", role: "Tech", avatar: "LT", vitaa: { v: 0.3, i: 0.9, t: 0.7, a1: 0.6, a2: 0.3 } },
+      { name: "Nathalie R.", role: "Finance", avatar: "NR", vitaa: { v: 0.5, i: 0.5, t: 0.4, a1: 0.8, a2: 0.7 } },
+    ],
+    sousCellules: ["Marketing", "Ops", "Stratégie"],
+    status: "execution",
+  },
+  {
+    name: "Escouade Ventes", type: "interne", members: 3, maxMembers: 9,
+    gradient: "from-teal-600 to-teal-500",
+    membres: [
+      { name: "Jean-P. L.", role: "Lead Ventes", avatar: "JL", vitaa: { v: 0.9, i: 0.4, t: 0.5, a1: 0.7, a2: 0.6 } },
+      { name: "Marc A.", role: "Rep. Senior", avatar: "MA", vitaa: { v: 0.8, i: 0.3, t: 0.6, a1: 0.5, a2: 0.4 } },
+      { name: "Chantal V.", role: "Rep. Junior", avatar: "CV", vitaa: { v: 0.6, i: 0.5, t: 0.4, a1: 0.3, a2: 0.2 } },
+    ],
+    sousCellules: ["Prospection", "Closing"],
+    status: "creation",
+  },
+  {
+    name: "Innovation Lab", type: "interne", members: 4, maxMembers: 9,
+    gradient: "from-teal-600 to-teal-500",
+    membres: [
+      { name: "Luc T.", role: "Lead Tech", avatar: "LT", vitaa: { v: 0.3, i: 0.9, t: 0.7, a1: 0.6, a2: 0.3 } },
+      { name: "Amélie C.", role: "R&D", avatar: "AC", vitaa: { v: 0.4, i: 0.8, t: 0.9, a1: 0.5, a2: 0.4 } },
+      { name: "David M.", role: "Data", avatar: "DM", vitaa: { v: 0.2, i: 0.7, t: 0.8, a1: 0.4, a2: 0.3 } },
+      { name: "Sophie B.", role: "Design", avatar: "SB", vitaa: { v: 0.6, i: 0.7, t: 0.5, a1: 0.4, a2: 0.8 } },
+    ],
+    sousCellules: ["Prototypage", "Veille"],
+    status: "reflexion",
+  },
+  {
+    name: "Collab MetalPro", type: "externe", members: 5, maxMembers: 9,
+    gradient: "from-cyan-600 to-cyan-500",
+    membres: [
+      { name: "Carl F.", role: "Usine Bleue", avatar: "CF", vitaa: { v: 0.7, i: 0.8, t: 0.6, a1: 0.5, a2: 0.4 } },
+      { name: "Pierre G.", role: "MetalPro CEO", avatar: "PG", vitaa: { v: 0.8, i: 0.5, t: 0.4, a1: 0.6, a2: 0.7 } },
+      { name: "Anne L.", role: "MetalPro COO", avatar: "AL", vitaa: { v: 0.6, i: 0.4, t: 0.7, a1: 0.5, a2: 0.3 } },
+      { name: "François D.", role: "MetalPro CTO", avatar: "FD", vitaa: { v: 0.4, i: 0.7, t: 0.8, a1: 0.3, a2: 0.2 } },
+      { name: "Julie M.", role: "MetalPro Ventes", avatar: "JM", vitaa: { v: 0.9, i: 0.3, t: 0.5, a1: 0.6, a2: 0.5 } },
+    ],
+    sousCellules: ["Joint-Venture", "Distribution"],
+    status: "observation",
+  },
+];
+
+const ORBIT9_FEED = [
+  { type: "bot" as const, code: "CROB", text: "3 leads qualifiés cette semaine via Orbit⁹", time: "Il y a 2h" },
+  { type: "humain" as const, name: "Marie D.", text: "Nouveau contrat signé avec Emballages Éco+!", time: "Il y a 4h" },
+  { type: "bot-to-bot" as const, codes: ["CSOB", "CROB"], text: "Simone à Rich: Match Orbit⁹ trouvé — score 87%", time: "Hier" },
+  { type: "bot" as const, code: "CMOB", text: "Campagne cellule Les Titans — taux d'engagement 4.1%", time: "Hier" },
+  { type: "humain" as const, name: "Jean-P. L.", text: "Pipeline Q1 en bonne voie, 3 propositions envoyées", time: "Il y a 2j" },
+  { type: "bot" as const, code: "CFOB", text: "Budget cellule Innovation Lab: 82% utilisé, prévision OK", time: "Il y a 2j" },
+  { type: "bot-to-bot" as const, codes: ["CTOB", "CINOB"], text: "Tim à Inès: Prototype IoT v2 prêt pour validation", time: "Il y a 3j" },
+  { type: "humain" as const, name: "Luc T.", text: "Démo client réussie — MetalPro veut avancer", time: "Il y a 3j" },
+];
+
+const ORBIT9_CHAT = [
+  { code: "CEOB", text: "Mode Orbit⁹ activé. Tu as 4 cellules actives: 3 internes et 1 collaboration externe avec MetalPro. Les Titans brûlent fort — ton équipe principale est en feu." },
+  { code: "CSOB", text: "Match détecté: MetalPro cherche un fournisseur d'automatisation. Score Orbit⁹: 87%. Je recommande une rencontre cette semaine." },
+  { code: "CROB", text: "Pipeline cellule Escouade Ventes: 3 leads qualifiés cette semaine. Conversion à 2.3% — au-dessus de la cible." },
+];
+
+const ORBIT9_BOTS = ["CSOB", "CROB", "CMOB"];
+
+type Orbit9Tab = "dashboard" | "gouvernance" | "cellules" | "perso" | "vitaa" | "feed" | "jumelage" | "pionniers" | "evenements" | "creer-cellule";
+
+const O9_TABS: { key: Orbit9Tab; label: string; Icon: React.ElementType }[] = [
+  { key: "dashboard", label: "Dashboard", Icon: LayoutDashboard },
+  { key: "cellules", label: "Cellules", Icon: Atom },
+  { key: "jumelage", label: "Jumelage", Icon: Handshake },
+  { key: "gouvernance", label: "Gouvernance", Icon: Shield },
+  { key: "pionniers", label: "Pionniers", Icon: Rocket },
+  { key: "vitaa", label: "VITAA", Icon: Activity },
+  { key: "perso", label: "Mon profil", Icon: UserCircle },
+  { key: "feed", label: "Nouvelles", Icon: Newspaper },
+  { key: "evenements", label: "Événements", Icon: Calendar },
+];
+
+const ALL_BOTS = [
+  { code: "CEOB", name: "CarlOS" }, { code: "CTOB", name: "Tim" }, { code: "CFOB", name: "Frank" },
+  { code: "CMOB", name: "Mathilde" }, { code: "CSOB", name: "Simone" }, { code: "COOB", name: "Olivier" },
+  { code: "CPOB", name: "Paco" }, { code: "CHROB", name: "Hélène" }, { code: "CINOB", name: "Inès" },
+  { code: "CROB", name: "Rich" }, { code: "CLOB", name: "Loulou" }, { code: "CISOB", name: "Sébastien" },
+];
+
+// ========== CEOB BLOCS DATA (pattern DepartmentTourDeControle) ==========
+
+// CEOB blocs — headers PASTEL UB_BLUE + indicateurs d'état AMORCER
+// phase = état actuel du bloc (détermine l'indicateur coloré)
+const UB_LOGO = "#00B4D8"; // bleu cyan du mot "bleue" dans le logo Usine Bleue
+const UB_PASTEL = "bg-[#00B4D8]/10"; // pastel du bleu logo
+const CEOB_BLOCS = [
+  {
+    icon: Shield, title: "Pilotage Stratégique",
+    phase: "execution" as PhaseKey,
+    items: [
+      { primary: "Décisions actives", secondary: "Decision Log", value: "3" },
+      { primary: "Chantiers en cours", secondary: "3 départements impliqués", value: "3" },
+      { primary: "Bots actifs", secondary: "Ghost Team complète", value: "12" },
+    ],
+  },
+  {
+    icon: Target, title: "Objectifs CEO",
+    phase: "reflexion" as PhaseKey,
+    items: [
+      { primary: "Vision & roadmap", secondary: "Discutez avec CarlOS" },
+      { primary: "Objectif trimestre", secondary: "Pipeline +25% vs Q3" },
+      { primary: "Prochaine étape", secondary: "Diagnostic VITAA" },
+    ],
+  },
+  {
+    icon: ShieldAlert, title: "Gouvernance",
+    phase: "observation" as PhaseKey,
+    items: [
+      { primary: "Protocole CREDO", secondary: "5 phases opérationnelles", value: "Actif" },
+      { primary: "Protocole COMMAND", secondary: "Multi-domaine", value: "Actif" },
+      { primary: "Decision Log", secondary: "Capture automatique", value: "Prêt" },
+    ],
+  },
+  {
+    icon: DollarSign, title: "KPIs Entreprise",
+    phase: "attention" as PhaseKey,
+    items: [
+      { primary: "Revenus Q4", secondary: "+8.3% vs Q3", value: "2.4M$" },
+      { primary: "Pipeline ventes", secondary: "-12% (attention)", value: "890K$" },
+      { primary: "Marge brute", secondary: "En baisse de 4.2%", value: "38.1%" },
+    ],
+  },
+  {
+    icon: Globe, title: "Réseau & Expansion",
+    phase: "execution" as PhaseKey,
+    items: [
+      { primary: "Contacts Orbit⁹", secondary: "4 cellules actives", value: "24" },
+      { primary: "Opportunités", secondary: "Matching actif", value: "3" },
+      { primary: "Marché US", secondary: "Expansion en cours", value: "45%" },
+    ],
+  },
+  {
+    icon: MessageSquare, title: "Communication",
+    phase: "observation" as PhaseKey,
+    items: [
+      { primary: "Chat CarlOS", secondary: "Texte + vocal + vidéo", value: "Prêt" },
+      { primary: "Ghost Team", secondary: "Multi-perspectives actif", value: "12 bots" },
+      { primary: "Documents", secondary: "Templates + génération AI", value: "141" },
+    ],
+  },
+  {
+    icon: Crosshair, title: "Missions",
+    phase: "execution" as PhaseKey,
+    items: [
+      { primary: "Missions actives", secondary: "Réparties sur 3 chantiers", value: "8" },
+      { primary: "Missions complétées", secondary: "Ce trimestre", value: "14" },
+      { primary: "Tâches en cours", secondary: "Assignées aux bots", value: "23" },
+    ],
+  },
+  {
+    icon: HeartPulse, title: "Santé",
+    phase: "retroaction" as PhaseKey,
+    items: [
+      { primary: "Score VITAA", secondary: "Dernier diagnostic", value: "72%" },
+      { primary: "Triangle du Feu", secondary: "3 piliers actifs", value: "🔥" },
+      { primary: "Tendance", secondary: "Amélioration sur 30j", value: "+8%" },
+    ],
+  },
+  {
+    icon: Search, title: "Veille",
+    phase: "observation" as PhaseKey,
+    items: [
+      { primary: "Alertes sectorielles", secondary: "Actif après diagnostic", value: "5" },
+      { primary: "Veille concurrentielle", secondary: "Alimentée par CarlOS" },
+      { primary: "Tendances industrie", secondary: "IA adoption +39 pts" },
+    ],
+  },
+  {
+    icon: Brain, title: "Intelligence",
+    phase: "creation" as PhaseKey,
+    items: [
+      { primary: "Diagnostics", secondary: "5 types disponibles", value: "5" },
+      { primary: "Recommandations AI", secondary: "Générées après diagnostic" },
+      { primary: "Apprentissage", secondary: "CarlOS évolue avec vous" },
+    ],
+  },
+];
+
+// Reflexion section content for the magazine page
+const REFLEXION_SECTIONS = [
+  { id: "diagnostic", title: "Diagnostic Initial", icon: Stethoscope, color: "orange" },
+  { id: "perspectives", title: "Perspectives Multi-Bots", icon: Users, color: "blue" },
+  { id: "synthese", title: "Synthèse Croisée", icon: Target, color: "indigo" },
+  { id: "brainstorm", title: "Brainstorm & Idéation", icon: Lightbulb, color: "yellow" },
+  { id: "causes", title: "Analyse des Causes (5 Pourquoi)", icon: Search, color: "red" },
+  { id: "recherche", title: "Recherche & Validation", icon: Globe, color: "cyan" },
+  { id: "challenge", title: "Challenge & Contre-arguments", icon: Shield, color: "amber" },
+  { id: "prerapport", title: "Pré-rapport de Réflexion", icon: FileText, color: "emerald" },
+];
+
+// ========== MOCK DATA — copied from SimPhaseReflexion ==========
+
+const SPR_BRAINSTORM_IDEAS = [
+  { id: 1, text: "Campagne micro-influenceurs régionale", bot: "CMOB", tag: "Marketing", color: "bg-yellow-100 border-yellow-300" },
+  { id: 2, text: "Partenariat distributeurs automatisation", bot: "CSOB", tag: "Stratégie", color: "bg-blue-100 border-blue-300" },
+  { id: 3, text: "Webinaires VITAA pour prospects", bot: "CEOB", tag: "Contenu", color: "bg-green-100 border-green-300" },
+  { id: 4, text: "Programme referral clients existants", bot: "CFOB", tag: "Finance", color: "bg-pink-100 border-pink-300" },
+  { id: 5, text: "Contenu éducatif LinkedIn série", bot: "CMOB", tag: "Marketing", color: "bg-purple-100 border-purple-300" },
+  { id: 6, text: "Salon virtuel manufacturiers Q3", bot: "COOB", tag: "Opérations", color: "bg-orange-100 border-orange-300" },
+];
+
+const SPR_DEEP_SEARCH_SOURCES = [
+  { icon: FileText, title: "Rapport MESI 2025", detail: "Tendances numériques PME manufacturières", score: 94 },
+  { icon: BarChart3, title: "Benchmark secteur", detail: "Coût acquisition client SaaS B2B: 340-890$", score: 87 },
+  { icon: TrendingUp, title: "Étude CEFRIO", detail: "72% des PME sous-investissent en marketing digital", score: 91 },
+  { icon: Target, title: "Analyse concurrents", detail: "3 solutions comparables, aucune avec AI CEO intégrée", score: 82 },
+];
+
+const SPR_REPORT_SECTIONS = [
+  { id: 1, title: "Contexte et enjeux", content: "Le chantier Marketing Q2 vise à augmenter la visibilité d'Usine Bleue auprès des PME manufacturières du Québec. Budget actuel: 12K$/mois. Objectif: +40% de leads qualifiés." },
+  { id: 2, title: "Diagnostic initial", content: "3 tensions identifiées: coût acquisition élevé (780$/lead), faible conversion site web (1.2%), pipeline trop dépendant du bouche-à-oreille (65%)." },
+  { id: 3, title: "Perspectives multi-bot", content: "CMO: repositionner le message sur le ROI concret. CFO: budget réallocation content vs ads. CTO: automatiser le nurturing email." },
+  { id: 4, title: "Brainstorm — 6 idées", content: "Micro-influenceurs, partenariats distributeurs, webinaires VITAA, referral program, content LinkedIn, salon virtuel Q3." },
+  { id: 5, title: "Analyse 5 Pourquoi", content: "Cause racine: le messaging actuel parle de technologie, pas de résultats business. Les PME ne se reconnaissent pas." },
+  { id: 6, title: "Deep Search — 4 sources", content: "MESI 2025, benchmark SaaS B2B, étude CEFRIO, analyse concurrentielle. Consensus: le marché est prêt mais mal adressé." },
+  { id: 7, title: "Challenge et défense", content: "Challenge sur le budget: Frank démontre ROI > 3x avec le programme referral seul. Risque identifié: timeline agressive pour Q2." },
+  { id: 8, title: "Recommandations", content: "Prioriser: (1) Programme referral (quick win), (2) Content LinkedIn (moyen terme), (3) Webinaires VITAA (long terme). Budget total: 3,800$/mois." },
+];
+
+const SPR_DIAG_ITEMS = [
+  { label: "Présence web", what: "Qualité et modernité du site", score: 45, detail: "Site vieillissant, pas mobile-first", action: "Lancer un audit UX", bot: "CMOB",
+    expanded: { gap: "55% à combler", actions: ["Refonte mobile-first (priorité 1)", "Moderniser le design (UI/UX)", "Ajouter un chatbot de conversion"], impact: "Conversion +2.5% estimée", effort: "Moyen — 3-4 semaines" } },
+  { label: "SEO technique", what: "Visibilité dans les moteurs de recherche", score: 80, detail: "Bonne base, 47 optimisations", action: "Voir les recommandations", bot: "CTOB",
+    expanded: { gap: "20% à combler", actions: ["47 optimisations mineures identifiées", "Corriger les balises meta manquantes", "Améliorer le sitemap XML"], impact: "Trafic organique +15%", effort: "Faible — 1 semaine" } },
+  { label: "Conversion", what: "Taux de visiteurs qui deviennent clients", score: 32, detail: "Aucun CTA clair, pas de funnel", action: "Analyser le funnel", bot: "CMOB",
+    expanded: { gap: "68% à combler — CRITIQUE", actions: ["Créer un funnel de conversion 5 étapes", "Ajouter des CTA clairs sur chaque page", "Déployer un chatbot AI (conversion 3-4%)", "A/B tester les landing pages"], impact: "Conversion 1.2% → 3-4%", effort: "Élevé — 4-6 semaines" } },
+  { label: "Mobile", what: "Expérience sur téléphone et tablette", score: 65, detail: "Responsive basic, pas natif", action: "Test responsive", bot: "CTOB",
+    expanded: { gap: "35% à combler", actions: ["Optimiser le responsive (breakpoints)", "Tester sur 5 appareils cibles", "PWA pour expérience native"], impact: "Engagement mobile +40%", effort: "Moyen — 2-3 semaines" } },
+  { label: "Vitesse", what: "Temps de chargement des pages", score: 38, detail: "Bundle 4.2MB, images non opt.", action: "Optimiser le bundle", bot: "CTOB",
+    expanded: { gap: "62% à combler — CRITIQUE", actions: ["Réduire le bundle JS (code splitting)", "Optimiser les images (WebP, lazy load)", "CDN pour les assets statiques", "Cache navigateur agressif"], impact: "Temps chargement 4.8s → 1.5s", effort: "Moyen — 2 semaines" } },
+  { label: "Accessibilité", what: "Conformité aux standards d'accessibilité", score: 55, detail: "WCAG AA partiel", action: "Audit WCAG", bot: "COOB",
+    expanded: { gap: "45% à combler", actions: ["Audit WCAG 2.1 AA complet", "Corriger les contrastes de couleur", "Ajouter les attributs ARIA manquants"], impact: "Conformité légale + SEO bonus", effort: "Faible — 1-2 semaines" } },
+];
+
+// ========== MAIN COMPONENT ==========
+
+export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departement", o9Section = "cellules", showBlueprint: showBlueprintProp = false, onCloseBlueprint }: { onBack: () => void; attentionTrigger?: number; cockpitTab?: string; o9Section?: string; showBlueprint?: boolean; onCloseBlueprint?: () => void }) {
+  const chatRef = useRef<HTMLDivElement>(null);
+  const rightRef = useRef<HTMLDivElement>(null);
+
+  const [activePhase, setActivePhase] = useState<PhaseKey>("observation");
+  const [chatStage, setChatStage] = useState(0);
+  const [typed, setTyped] = useState(false);
+  const [inputText, setInputText] = useState("");
+  const [showAttachMenu, setShowAttachMenu] = useState(false);
+  const [showIconCatalog, setShowIconCatalog] = useState(false);
+  const [o9ChatTyped, setO9ChatTyped] = useState(false);
+  const [reflexionContext, setReflexionContext] = useState<string | null>(null);
+  const [showBlueprint, setShowBlueprint] = useState(showBlueprintProp);
+
+  useEffect(() => { setShowBlueprint(showBlueprintProp); if (showBlueprintProp) setActivePhase("observation"); }, [showBlueprintProp]);
+
+  const isOrbit9 = cockpitTab === "orbit9";
+
+  const pc = PC[activePhase];
+
+  useEffect(() => { setChatStage(0); setTyped(false); }, [activePhase]);
+  useEffect(() => { if (attentionTrigger > 0) { setActivePhase("attention"); } }, [attentionTrigger]);
+  useEffect(() => { chatRef.current && (chatRef.current.scrollTop = chatRef.current.scrollHeight); }, [chatStage, typed]);
+  useEffect(() => { rightRef.current && (rightRef.current.scrollTop = 0); }, [chatStage]);
+
+  const advance = () => { setTyped(false); setChatStage(s => s + 1); };
+  const startReflexion = (chantier: string) => { setReflexionContext(chantier); setActivePhase("reflexion"); };
+  const isDash = activePhase === "observation" || activePhase === "attention" || activePhase === "moderation";
+
+  return (
+    <div className="h-full flex flex-col bg-white">
+      <ResizablePanelGroup direction="horizontal" autoSaveId="sim-amorcer-split" className="flex-1">
+
+        {/* ═══ LEFT — Discussion ═══ */}
+        <ResizablePanel defaultSize={40} minSize={20} maxSize={60}>
+          <div className="h-full flex flex-col border-r border-gray-200 bg-white">
+
+            {/* Header UB_BLUE — dynamique selon cockpit tab */}
+            <div className="h-12 px-3 shrink-0 flex items-center gap-2" style={{ backgroundColor: UB_BLUE }}>
+              {isOrbit9 ? (
+                <>
+                  <Atom className="h-4 w-4 text-white" />
+                  <span className="text-[11px] text-white font-medium">Orbit<sup className="text-[8px]">9</sup></span>
+                  <div className="flex-1" />
+                  {/* Bande noms humains + bots (Carl vocal 14h24) */}
+                  {ORBIT9_CELLULES[0].membres.slice(0, 3).map((m, i) => (
+                    <span key={i} className="text-[9px] text-white/70 ml-1">{m.name}</span>
+                  ))}
+                  <span className="text-[9px] text-white/40 ml-0.5">+{ORBIT9_CELLULES[0].membres.length - 3}</span>
+                  {ORBIT9_BOTS.map(code => (
+                    <div key={code} className="w-5 h-5 rounded-full overflow-hidden ring-1 ring-white/30 ml-0.5">
+                      <BotAvatar code={code} size="sm" />
+                    </div>
+                  ))}
+                </>
+              ) : (
+                <>
+                  <Bot className="h-4 w-4 text-white" />
+                  <span className="text-[11px] text-white font-medium">Brain Team</span>
+                  <div className="flex-1" />
+                  <span className="text-[9px] text-white/50 font-medium mr-1">Cellules de travail</span>
+                  {TEAM.map(b => (
+                    <div key={b.code} className="flex items-center gap-1 ml-0.5">
+                      <div className="w-5 h-5 rounded-full overflow-hidden ring-1 ring-white/30">
+                        <BotAvatar code={b.code} size="sm" />
+                      </div>
+                      <span className="text-[9px] text-white/70 hidden xl:inline">{b.name}</span>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+
+            {/* Discussion — scrollable */}
+            <div ref={chatRef} className="flex-1 overflow-auto">
+              {isOrbit9 ? (
+                <div className="p-3 space-y-3">
+                  <Orbit9Chat typed={o9ChatTyped} setTyped={setO9ChatTyped} selectedCellule={null} />
+                </div>
+              ) : (
+                <div className="p-3 space-y-3">
+                  {activePhase === "reflexion" && (
+                    <ReflexionChat stage={chatStage} typed={typed} setTyped={setTyped} advance={advance} pc={pc} context={reflexionContext} />
+                  )}
+                  {activePhase === "observation" && (
+                    <ObservationChat typed={typed} setTyped={setTyped} />
+                  )}
+                  {activePhase === "attention" && (
+                    <AttentionChat stage={chatStage} typed={typed} setTyped={setTyped} advance={advance} pc={pc} />
+                  )}
+                  {activePhase === "moderation" && (
+                    <ModerationChat stage={chatStage} typed={typed} setTyped={setTyped} advance={advance} pc={pc} />
+                  )}
+                  {!isDash && (
+                    <PlaceholderChat phase={activePhase} />
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Input box style Claude AI — boutons integres dans la box */}
+            <div className="shrink-0 bg-white px-3 pb-2 pt-1">
+              <div className="relative rounded-2xl border border-gray-300 bg-white shadow-sm focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+                {/* Textarea */}
+                <textarea
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  placeholder="Parle à CarlOS..."
+                  className="w-full text-sm px-4 pt-3 pb-2 rounded-t-2xl border-0 focus:outline-none min-h-[70px] resize-none bg-transparent"
+                  rows={3}
+                />
+                {/* Barre de boutons integree en bas de la box */}
+                <div className="flex items-center gap-1 px-2 pb-2">
+                  {/* Menu + (piece jointe, Drive, GitHub, connecteurs) */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowAttachMenu(!showAttachMenu)}
+                      className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
+                      title="Ajouter"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
+                    {showAttachMenu && (
+                      <div className="absolute bottom-full left-0 mb-1 w-52 bg-white rounded-xl border border-gray-200 shadow-lg py-1 z-20">
+                        <button onClick={() => setShowAttachMenu(false)} className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-colors cursor-pointer text-left">
+                          <Paperclip className="h-4 w-4 text-gray-500" />
+                          <span className="text-xs text-gray-700">Pièce jointe</span>
+                        </button>
+                        <button onClick={() => setShowAttachMenu(false)} className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-colors cursor-pointer text-left">
+                          <Globe className="h-4 w-4 text-amber-500" />
+                          <span className="text-xs text-gray-700">Depuis Google Drive</span>
+                        </button>
+                        <button onClick={() => setShowAttachMenu(false)} className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-colors cursor-pointer text-left">
+                          <Zap className="h-4 w-4 text-gray-700" />
+                          <span className="text-xs text-gray-700">Depuis GitHub</span>
+                        </button>
+                        <div className="border-t border-gray-100 my-1" />
+                        <button onClick={() => setShowAttachMenu(false)} className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-colors cursor-pointer text-left">
+                          <Activity className="h-4 w-4 text-indigo-500" />
+                          <div>
+                            <span className="text-xs text-gray-700">Connecteurs API</span>
+                            <span className="block text-[9px] text-gray-400">Intégrez vos logiciels SaaS</span>
+                          </div>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 3 modes: Discussion, Conference, Vision */}
+                  <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer bg-blue-50 text-blue-600 hover:bg-blue-100" title="Discussion vocale">
+                    <Phone className="h-3.5 w-3.5" /><span className="hidden lg:inline">Discussion</span>
+                  </button>
+                  <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer bg-emerald-50 text-emerald-600 hover:bg-emerald-100" title="Conférence vidéo">
+                    <Video className="h-3.5 w-3.5" /><span className="hidden lg:inline">Conférence</span>
+                  </button>
+                  <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer bg-cyan-50 text-cyan-600 hover:bg-cyan-100" title="Vision Ray-Ban">
+                    <Glasses className="h-3.5 w-3.5" /><span className="hidden lg:inline">Vision</span>
+                  </button>
+
+                  <div className="flex-1" />
+
+                  {/* Bouton Envoyer — apparait quand il y a du texte */}
+                  <button
+                    className={cn(
+                      "p-2 rounded-lg transition-all cursor-pointer",
+                      inputText.trim()
+                        ? "bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
+                        : "bg-gray-100 text-gray-300 cursor-default"
+                    )}
+                    title="Envoyer"
+                    disabled={!inputText.trim()}
+                  >
+                    {inputText.trim() ? <ChevronUp className="h-4 w-4" /> : <Send className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+              {/* Disclaimer */}
+              <p className="text-center text-[9px] text-gray-400 mt-1.5">
+                Brain Team est une équipe d&apos;agents IA et peut faire des erreurs. Veuillez vérifier les réponses.
+              </p>
+            </div>
+          </div>
+        </ResizablePanel>
+
+        <ResizableHandle className="w-1 bg-gray-200 hover:bg-blue-400 transition-colors cursor-col-resize" />
+
+        {/* ═══ RIGHT — AMORCER tabs TOUJOURS en haut (Carl vocal 13h25) + contenu Orbit⁹ en dessous ═══ */}
+        <ResizablePanel defaultSize={60} minSize={30}>
+          <div className="h-full flex flex-col overflow-hidden">
+
+            {/* AMORCER tabs — TOUJOURS VISIBLES (Carl: "tu gardes toujours attention, modération...") */}
+            <div className="shrink-0 bg-white border-b border-gray-200 px-2 py-1.5 flex items-center gap-1">
+              {PHASES.map(p => {
+                const cfg = PC[p];
+                const isActive = p === activePhase && !showIconCatalog && (!showBlueprint || p === "observation");
+                return (
+                  <button
+                    key={p}
+                    onClick={() => { setActivePhase(p); setShowIconCatalog(false); setShowBlueprint(false); onCloseBlueprint?.(); }}
+                    className={cn(
+                      "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
+                      isActive
+                        ? cn(cfg.bg, cfg.text, "border", cfg.border, "shadow-sm")
+                        : "text-gray-500 hover:bg-gray-100 hover:text-gray-700",
+                    )}
+                  >
+                    <span className={cn(
+                      "w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0",
+                      isActive ? cfg.dot : "bg-gray-300",
+                    )}>
+                      {cfg.letter}
+                    </span>
+                    <cfg.Icon className={cn("h-3.5 w-3.5", isActive ? cfg.text : "text-gray-400")} />
+                    <span className="hidden xl:inline">{cfg.label}</span>
+                  </button>
+                );
+              })}
+              {/* Icônes catalog button */}
+              <div className="flex-1" />
+              <button
+                onClick={() => setShowIconCatalog(!showIconCatalog)}
+                className={cn(
+                  "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
+                  showIconCatalog
+                    ? "bg-gray-900 text-white shadow-sm"
+                    : "text-gray-400 hover:bg-gray-100 hover:text-gray-600",
+                )}
+                title="Catalogue d'icônes"
+              >
+                <Palette className="h-3.5 w-3.5" />
+                <span className="hidden xl:inline">Icônes</span>
+              </button>
+            </div>
+
+            {/* Color line */}
+            <div className={cn("h-1 shrink-0 transition-colors duration-300", pc.line)} />
+
+            {/* Breadcrumb */}
+            <div className="shrink-0 bg-white border-b border-gray-200 px-3 py-1.5 flex items-center gap-1.5">
+              {isOrbit9 ? (
+                <>
+                  <Atom className="h-3.5 w-3.5 text-teal-500" />
+                  <span className="text-[11px] text-teal-600 font-medium">Orbit<sup className="text-[8px]">9</sup></span>
+                  <ChevronRight className="h-3.5 w-3.5 text-gray-300" />
+                  <span className="text-[11px] text-gray-700 font-medium">
+                    {o9Section === "dashboard" ? "Dashboard" : o9Section === "gouvernance" ? "Gouvernance" : o9Section === "cellules" ? "Cellules" : o9Section === "perso" ? "Mon profil" : o9Section === "vitaa" ? "VITAA" : o9Section === "jumelage" ? "Jumelage" : o9Section === "pionniers" ? "Pionniers" : o9Section === "evenements" ? "Événements" : o9Section === "creer-cellule" ? "Créer une cellule" : "Nouvelles"}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Home className="h-3.5 w-3.5 text-gray-400" />
+                  <span className="text-[11px] text-gray-400">Département</span>
+                  <ChevronRight className="h-3.5 w-3.5 text-gray-300" />
+                  <span className="text-[11px] text-gray-700 font-medium">
+                    {showBlueprint ? "Blueprint" : activePhase === "reflexion" ? "Réflexion" : "Vue d'ensemble"}
+                  </span>
+                  {activePhase === "reflexion" && reflexionContext && (
+                    <>
+                      <ChevronRight className="h-3.5 w-3.5 text-gray-300" />
+                      <span className="text-[11px] font-medium text-orange-600">{reflexionContext}</span>
+                    </>
+                  )}
+                  {activePhase !== "observation" && activePhase !== "reflexion" && (
+                    <>
+                      <ChevronRight className="h-3.5 w-3.5 text-gray-300" />
+                      <span className={cn("text-[11px] font-medium", pc.text)}>{pc.label}</span>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Content */}
+            <div ref={rightRef} className="flex-1 overflow-auto bg-gray-50">
+              {showBlueprint ? (
+                <div className="max-w-4xl mx-auto px-6 py-4 pb-12 sim-blueprint-pastel">
+                  <style>{`
+                    .sim-blueprint-pastel [class*="bg-gradient-to-r"] {
+                      background-image: none !important;
+                      background-color: rgba(0, 180, 216, 0.1) !important;
+                    }
+                    .sim-blueprint-pastel [class*="bg-gradient-to-r"] * {
+                      color: #111827 !important;
+                    }
+                    .sim-blueprint-pastel [class*="bg-white\\/"] {
+                      background-color: rgba(0, 180, 216, 0.15) !important;
+                      color: #111827 !important;
+                    }
+                  `}</style>
+                  <CanvasActionProvider>
+                    <BlueprintDepartement botCode="CEOB" headerGradient="from-blue-600 to-blue-500" />
+                  </CanvasActionProvider>
+                </div>
+              ) : isOrbit9 ? (
+                <>
+                  {o9Section === "cellules" && <MesCellules onSelect={() => {}} activePhase={activePhase} />}
+                  {o9Section === "vitaa" && <VITAADashboard selectedCellule={ORBIT9_CELLULES[0]} />}
+                  {o9Section === "feed" && <FeedSocial activePhase={activePhase} />}
+                  {o9Section === "perso" && <MonProfilOrbit9 />}
+                  {o9Section === "dashboard" && <Orbit9Dashboard />}
+                  {o9Section === "gouvernance" && <Orbit9Gouvernance />}
+                  {o9Section === "jumelage" && <JumelageOrbit9 />}
+                  {o9Section === "pionniers" && <PionniersOrbit9 />}
+                  {o9Section === "evenements" && <EvenementsOrbit9 />}
+                  {o9Section === "creer-cellule" && <CreerCellulePage />}
+                </>
+              ) : showIconCatalog ? (
+                <IconCatalog />
+              ) : isDash ? (
+                <VueEnsemble phase={activePhase} chatStage={chatStage} onStartReflexion={startReflexion} />
+              ) : activePhase === "reflexion" ? (
+                <ReflexionMagazine stage={chatStage} context={reflexionContext} />
+              ) : (
+                <ChantierDrillDown phase={activePhase} />
+              )}
+            </div>
+          </div>
+        </ResizablePanel>
+
+      </ResizablePanelGroup>
+    </div>
+  );
+}
+
+// ========== CHAT HELPERS ==========
+
+function SBubble({ code, children, collapsed }: { code: string; children: React.ReactNode; collapsed?: boolean }) {
+  const name = BOT_COLORS[code]?.name || code;
+  const role = BOT_COLORS[code]?.role || "";
+  return (
+    <div className={cn("flex gap-2 transition-all", collapsed && "opacity-60")}>
+      <div className="w-7 h-7 rounded-full overflow-hidden shrink-0">
+        <BotAvatar code={code} size="sm" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5 mb-1">
+          <span className="text-[11px] font-semibold text-blue-700">{name}</span>
+          <span className="text-[9px] text-gray-400">{role}</span>
+        </div>
+        <div className="border rounded-lg px-3 py-2.5 border-l-[3px] border-l-blue-400 bg-blue-50/30">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SBtn({ onClick, icon: Icon, label, pc }: { onClick: () => void; icon: React.ElementType; label: string; pc: PhaseStyle }) {
+  return (
+    <button onClick={onClick} className={cn(
+      "mt-2 text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer border",
+      pc.btnBg, pc.btnText, pc.btnBorder, pc.btnHover
+    )}>
+      <Icon className="h-3.5 w-3.5" /> {label}
+    </button>
+  );
+}
+
+// ========== OBSERVATION CHAT ==========
+
+function ObservationChat({ typed, setTyped }: { typed: boolean; setTyped: (v: boolean) => void }) {
+  return (
+    <>
+      <SBubble code="CEOB">
+        <TypewriterText
+          text="Bonjour Carl. Voici ta vue d'ensemble. 12 projets actifs, 3 en retard. Ton pipeline est à 890K$ — en baisse de 12% ce mois. Les bots travaillent sur leurs missions. Besoin de mon attention sur quelque chose?"
+          speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)}
+        />
+      </SBubble>
+      {typed && (
+        <>
+          <SBubble code="CFOB" collapsed>
+            <p className="text-[9px] text-gray-500 italic">Frank — Rapport Q4 terminé, marges sous surveillance</p>
+          </SBubble>
+          <SBubble code="CTOB" collapsed>
+            <p className="text-[9px] text-gray-500 italic">Tim — Migration DB phase 2 en cours, ETA 3 jours</p>
+          </SBubble>
+          <SBubble code="CSOB" collapsed>
+            <p className="text-[9px] text-gray-500 italic">Simone — Appel d'offres HQ identifié, soumission à préparer</p>
+          </SBubble>
+        </>
+      )}
+    </>
+  );
+}
+
+// ========== ATTENTION CHAT (8 stages progressifs) ==========
+
+function AttentionChat({ stage, typed, setTyped, advance, pc }: {
+  stage: number; typed: boolean; setTyped: (v: boolean) => void; advance: () => void; pc: PhaseStyle;
+}) {
+  return (
+    <>
+      {stage >= 0 && (
+        <SBubble code="CEOB" collapsed={stage > 0}>
+          {stage === 0 ? (
+            <>
+              <TypewriterText text="Mode Attention activé. Je scanne ton environnement d'affaires pour détecter les signaux qui méritent ton focus immédiat." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && <SBtn onClick={advance} icon={Zap} label="Lancer le scan" pc={pc} />}
+            </>
+          ) : <p className="text-[9px] text-gray-400 italic">Démarrage scan — mode Attention</p>}
+        </SBubble>
+      )}
+
+      {stage >= 1 && (
+        <SBubble code="CEOB" collapsed={stage > 1}>
+          {stage === 1 ? (
+            <>
+              <TypewriterText text="Scan terminé. 5 signaux détectés: 2 alertes critiques, 2 tensions à surveiller, 1 opportunité à saisir. Les bots concernés sont en ligne." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && <SBtn onClick={advance} icon={AlertTriangle} label="Voir les alertes" pc={pc} />}
+            </>
+          ) : <p className="text-[9px] text-gray-400 italic">5 signaux — 2 critiques, 2 attention, 1 opportunité</p>}
+        </SBubble>
+      )}
+
+      {stage >= 2 && (
+        <SBubble code="CEOB" collapsed={stage > 2}>
+          {stage === 2 ? (
+            <>
+              <TypewriterText text="Alerte urgente: ta marge brute baisse de 4.2%. Frank a les détails. Le pipeline ventes stagne aussi — Rich a sonné l'alarme." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && <SBtn onClick={advance} icon={DollarSign} label="Analyse de Frank" pc={pc} />}
+            </>
+          ) : <p className="text-[9px] text-gray-400 italic">Priorisation — marge + pipeline</p>}
+        </SBubble>
+      )}
+
+      {stage >= 3 && (
+        <SBubble code="CFOB" collapsed={stage > 3}>
+          {stage === 3 ? (
+            <>
+              <TypewriterText text="Carl, la marge brute est passée de 42.3% à 38.1%. Cause: coûts matières +12% sans ajustement prix. Impact: 38K$/mois. Je recommande un ajustement de 5-7% sur les produits les plus touchés." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && <SBtn onClick={advance} icon={Activity} label="Risque tech de Tim" pc={pc} />}
+            </>
+          ) : <p className="text-[9px] text-gray-400 italic">Frank — marge en baisse, ajustement prix recommandé</p>}
+        </SBubble>
+      )}
+
+      {stage >= 4 && (
+        <SBubble code="CTOB" collapsed={stage > 4}>
+          {stage === 4 ? (
+            <>
+              <TypewriterText text="Le projet Infrastructure a 2 semaines de retard. 3 tables critiques sans backup automatisé. J'ai besoin de 2 jours de dev supplémentaires sinon le déploiement Q1 est compromis." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && <SBtn onClick={advance} icon={Lightbulb} label="Opportunité de Simone" pc={pc} />}
+            </>
+          ) : <p className="text-[9px] text-gray-400 italic">Tim — retard infra, 2 jours dev nécessaires</p>}
+        </SBubble>
+      )}
+
+      {stage >= 5 && (
+        <SBubble code="CSOB" collapsed={stage > 5}>
+          {stage === 5 ? (
+            <>
+              <TypewriterText text="Opportunité: Hydro-Québec — appel d'offres 2.1M$ en automatisation. Match Orbit9: 87%. Deadline 12 jours. On a les compétences mais pas de soumission. Je recommande le mode Conception rapidement." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && <SBtn onClick={advance} icon={BarChart3} label="Voir la synthèse" pc={pc} />}
+            </>
+          ) : <p className="text-[9px] text-gray-400 italic">Simone — HQ 2.1M$, 12 jours</p>}
+        </SBubble>
+      )}
+
+      {stage >= 6 && (
+        <SBubble code="CEOB" collapsed={stage > 6}>
+          {stage === 6 ? (
+            <>
+              <TypewriterText text="Synthèse: 3 actions prioritaires. (1) Ajustement prix — 38K$/mois. (2) Débloquer infra — 2 jours. (3) Soumission HQ — 12 jours. Je recommande de passer en Modération pour prioriser." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && <SBtn onClick={advance} icon={Target} label="Trier par priorité" pc={pc} />}
+            </>
+          ) : <p className="text-[9px] text-gray-400 italic">Synthèse — 3 actions prioritaires</p>}
+        </SBubble>
+      )}
+
+      {stage >= 7 && (
+        <div className="bg-gradient-to-r from-pink-50 to-pink-100 border border-pink-300 rounded-xl px-4 py-3">
+          <TypewriterText text="Prêt pour la Modération. Les 5 signaux sont documentés. On filtre et on décide quoi traiter en premier." speed={8} className="text-sm text-pink-800 font-medium" onComplete={() => setTyped(true)} />
+          {typed && (
+            <div className="mt-2 flex items-center gap-2">
+              <div className="w-3.5 h-3.5 rounded-full bg-red-500" />
+              <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+              <div className="w-3.5 h-3.5 rounded-full bg-pink-500 animate-pulse" />
+              <span className="text-[9px] text-pink-700 font-semibold ml-1">Attention → Modération</span>
+            </div>
+          )}
+        </div>
+      )}
+    </>
+  );
+}
+
+// ========== MODERATION CHAT ==========
+
+function ModerationChat({ stage, typed, setTyped, advance, pc }: {
+  stage: number; typed: boolean; setTyped: (v: boolean) => void; advance: () => void; pc: PhaseStyle;
+}) {
+  return (
+    <>
+      <SBubble code="CEOB" collapsed={stage > 0}>
+        {stage === 0 ? (
+          <>
+            <TypewriterText text="Mode Modération. On filtre et priorise les 5 signaux détectés. Je recommande: (1) Marge brute — impact financier immédiat. (2) Infra tech — bloquant. (3) Soumission HQ — deadline courte. Les 2 autres sont à surveiller." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+            {typed && <SBtn onClick={advance} icon={Filter} label="Appliquer le tri" pc={pc} />}
+          </>
+        ) : <p className="text-[9px] text-gray-400 italic">Tri appliqué — 3 prioritaires, 2 en surveillance</p>}
+      </SBubble>
+      {stage >= 1 && (
+        <SBubble code="CEOB">
+          <TypewriterText text="Tri appliqué. Les 3 priorités sont classées. Prêt à passer en Réflexion pour analyser en profondeur, ou en Conception pour agir directement?" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+          {typed && (
+            <div className="mt-2 flex gap-2">
+              <button className="text-xs bg-orange-50 text-orange-700 border border-orange-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-orange-100 font-medium cursor-pointer">
+                <Brain className="h-3.5 w-3.5" /> Réflexion
+              </button>
+              <button className="text-xs bg-yellow-50 text-yellow-700 border border-yellow-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-yellow-100 font-medium cursor-pointer">
+                <Hammer className="h-3.5 w-3.5" /> Conception
+              </button>
+            </div>
+          )}
+        </SBubble>
+      )}
+    </>
+  );
+}
+
+// ========== VUE D'ENSEMBLE (partagee observation/attention/moderation) ==========
+
+function VueEnsemble({ phase, chatStage, onStartReflexion }: { phase: PhaseKey; chatStage: number; onStartReflexion: (chantier: string) => void }) {
+  return (
+    <div className="max-w-4xl mx-auto px-6 py-4 space-y-4">
+
+      {/* ═══ ATTENTION: banner + alertes ═══ */}
+      {phase === "attention" && (
+        <div className="rounded-xl bg-gradient-to-r from-red-500 to-red-400 px-4 py-3 flex items-center gap-3 shadow-sm">
+          <AlertTriangle className="h-5 w-5 text-white shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-bold text-white">5 signaux détectés</p>
+            <p className="text-[9px] text-white/80">2 critiques · 2 à surveiller · 1 opportunité</p>
+          </div>
+        </div>
+      )}
+      {phase === "attention" && chatStage >= 1 && (
+        <div className="space-y-2">
+          {ALERTS.map(alert => (
+            <div key={alert.id} className={cn("rounded-xl border-l-4 border px-4 py-3", alert.bc, alert.bgc)}>
+              <div className="flex items-center gap-2">
+                <alert.icon className={cn("h-4 w-4 shrink-0", alert.tc)} />
+                <span className={cn("text-xs font-bold flex-1", alert.tc)}>{alert.title}</span>
+                <div className="flex items-center gap-1.5">
+                  <BotAvatar code={alert.bot} size="sm" />
+                  <span className="text-[9px] font-medium text-gray-600">{alert.source}</span>
+                </div>
+              </div>
+              <p className="text-[9px] text-gray-600 mt-1 ml-6">{alert.detail}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ═══ MODERATION: banner + alertes triees ═══ */}
+      {phase === "moderation" && (
+        <div className="rounded-xl bg-gradient-to-r from-pink-500 to-pink-400 px-4 py-3 flex items-center gap-3 shadow-sm">
+          <Scale className="h-5 w-5 text-white shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-bold text-white">Filtrage et priorisation</p>
+            <p className="text-[9px] text-white/80">Signaux triés par urgence et impact</p>
+          </div>
+          <div className="flex gap-1.5">
+            {["Urgence", "Impact", "Délai"].map(f => (
+              <span key={f} className="text-[9px] px-2 py-0.5 rounded-full bg-white/20 text-white font-medium">{f}</span>
+            ))}
+          </div>
+        </div>
+      )}
+      {phase === "moderation" && (
+        <div className="space-y-2">
+          {[...ALERTS].sort((a, b) => {
+            const ord: Record<string, number> = { critique: 0, attention: 1, opportunite: 2 };
+            return (ord[a.severity] ?? 9) - (ord[b.severity] ?? 9);
+          }).map((alert, i) => (
+            <div key={alert.id} className={cn("rounded-xl border-l-4 border px-4 py-3 flex items-start gap-3", alert.bc, alert.bgc)}>
+              <span className="text-lg font-bold text-gray-300 shrink-0 w-6 text-center">{i + 1}</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <alert.icon className={cn("h-4 w-4 shrink-0", alert.tc)} />
+                  <span className={cn("text-xs font-bold flex-1", alert.tc)}>{alert.title}</span>
+                  <span className="text-[9px] font-medium text-gray-500">{alert.source}</span>
+                </div>
+                <p className="text-[9px] text-gray-600 mt-1">{alert.detail}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ═══ VITAA — 5 piliers de valeur (même pattern que KPIs existants) ═══ */}
+      <div className="grid grid-cols-5 gap-3">
+        {[
+          { label: "Ventes", value: "890K$", delta: "+12%", up: true, icon: TrendingUp },
+          { label: "Idées", value: "47", delta: "+8 ce mois", up: true, icon: Lightbulb },
+          { label: "Temps", value: "186h", delta: "92% alloué", up: true, icon: Clock },
+          { label: "Argent", value: "2.4M$", delta: "+18%", up: true, icon: DollarSign },
+          { label: "Actifs", value: "63", delta: "+5 ce mois", up: true, icon: Activity },
+        ].map(kpi => (
+          <div key={kpi.label} className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+            <div className={cn("flex items-center gap-2 px-4 py-2.5 border-b border-gray-100", UB_PASTEL)}>
+              <kpi.icon className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+              <span className="text-sm font-bold text-gray-900">{kpi.label}</span>
+            </div>
+            <div className="px-4 py-3">
+              <div className="text-2xl font-bold text-gray-800">{kpi.value}</div>
+              <div className={cn("text-xs flex items-center gap-1 mt-0.5", kpi.up ? "text-emerald-600" : "text-red-500")}>
+                {kpi.up ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
+                {kpi.delta}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ═══ ROW 2 — Chantiers + Projets + Signaux d'attention ═══ */}
+      <div className="grid grid-cols-3 gap-3">
+        {/* Chantiers en cours — avec tags d'état AMORCER */}
+        <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+          <div className={cn("flex items-center gap-2 px-4 py-2.5 border-b border-gray-100", UB_PASTEL)}>
+            <FolderOpen className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+            <span className="text-sm font-bold text-gray-900">Chantiers</span>
+            <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600 ml-auto">{CHANTIERS.length}</span>
+          </div>
+          <div className="p-3 space-y-2">
+            {CHANTIERS.map(ch => {
+              const ps = PC[ch.phase];
+              return (
+                <div key={ch.name} className="flex items-center gap-2.5 cursor-pointer hover:bg-gray-50 rounded-lg p-1.5 -m-1.5 transition-colors group"
+                  onClick={() => onStartReflexion(ch.name)}>
+                  <BotAvatar code={ch.bot} size="sm" />
+                  <div className="flex-1 min-w-0">
+                    <span className="text-xs font-medium text-gray-800 truncate block">{ch.name}</span>
+                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mt-1">
+                      <div className={cn("h-full rounded-full transition-all duration-1000", ps.line)} style={{ width: `${ch.progress}%` }} />
+                    </div>
+                  </div>
+                  <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-medium shrink-0", ps.badge)}>{ps.label}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Projets actifs — avec tags d'état */}
+        <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+          <div className={cn("flex items-center gap-2 px-4 py-2.5 border-b border-gray-100", UB_PASTEL)}>
+            <Target className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+            <span className="text-sm font-bold text-gray-900">Projets</span>
+            <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600 ml-auto">{PROJETS.length}</span>
+          </div>
+          <div className="p-3 space-y-2">
+            {PROJETS.map(p => {
+              const ps = PC[p.phase];
+              return (
+                <div key={p.name} className="flex items-center gap-2.5 cursor-pointer hover:bg-gray-50 rounded-lg p-1.5 -m-1.5 transition-colors"
+                  onClick={() => onStartReflexion(p.name)}>
+                  <BotAvatar code={p.bot} size="sm" />
+                  <div className="flex-1 min-w-0">
+                    <span className="text-xs font-medium text-gray-800 truncate block">{p.name}</span>
+                    <span className="text-[9px] text-gray-400">{p.chantier}</span>
+                  </div>
+                  <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-medium shrink-0", ps.badge)}>{ps.label}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Signaux d'attention */}
+        <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+          <div className={cn("flex items-center gap-2 px-4 py-2.5 border-b border-gray-100", UB_PASTEL)}>
+            <AlertTriangle className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+            <span className="text-sm font-bold text-gray-900">Signaux</span>
+            <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-red-50 text-red-600 ml-auto">{ALERTS.filter(a => a.severity === "critique").length} urgents</span>
+          </div>
+          <div className="p-3 space-y-2">
+            {ALERTS.slice(0, 4).map(alert => (
+              <div key={alert.id} className={cn("flex items-start gap-2 rounded-lg p-2 cursor-pointer hover:shadow-sm transition-shadow", alert.bgc)}>
+                <alert.icon className={cn("h-3.5 w-3.5 shrink-0 mt-0.5", alert.tc)} />
+                <div className="flex-1 min-w-0">
+                  <span className={cn("text-xs font-medium block truncate", alert.tc)}>{alert.title}</span>
+                  <span className="text-[9px] text-gray-500">{alert.source}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ═══ ROW 3 — Missions + Industrie + Décisions ═══ */}
+      <div className="grid grid-cols-3 gap-3">
+        {/* Missions & Tâches */}
+        <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+          <div className={cn("flex items-center gap-2 px-4 py-2.5 border-b border-gray-100", UB_PASTEL)}>
+            <Crosshair className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+            <span className="text-sm font-bold text-gray-900">Missions</span>
+            <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600 ml-auto">{MISSIONS_DATA.length}</span>
+          </div>
+          <div className="p-3 space-y-2">
+            {MISSIONS_DATA.map(m => {
+              const ps = PC[m.phase];
+              return (
+                <div key={m.name} className="flex items-center gap-2.5">
+                  <BotAvatar code={m.bot} size="sm" />
+                  <span className="text-xs text-gray-700 flex-1 truncate">{m.name}</span>
+                  {m.urgent && <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" title="Urgent" />}
+                  <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-medium shrink-0", ps.badge)}>{ps.label}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Industrie & Benchmarks */}
+        <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+          <div className={cn("flex items-center gap-2 px-4 py-2.5 border-b border-gray-100", UB_PASTEL)}>
+            <LineChart className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+            <span className="text-sm font-bold text-gray-900">Industrie</span>
+          </div>
+          <div className="p-3 space-y-2">
+            {INDUSTRIE_NEWS.map((n, i) => (
+              <div key={i} className="flex items-start gap-2">
+                {n.hot ? <Flame className="h-3.5 w-3.5 text-orange-400 shrink-0 mt-0.5" /> : <Newspaper className="h-3.5 w-3.5 text-gray-400 shrink-0 mt-0.5" />}
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs text-gray-700 leading-snug block">{n.title}</span>
+                  <span className="text-[9px] text-gray-400">{n.source}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Décisions récentes */}
+        <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+          <div className={cn("flex items-center gap-2 px-4 py-2.5 border-b border-gray-100", UB_PASTEL)}>
+            <CheckCircle2 className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+            <span className="text-sm font-bold text-gray-900">Décisions</span>
+          </div>
+          <div className="divide-y divide-gray-50">
+            {DECISIONS_DATA.map(d => (
+              <div key={d.id} className="px-4 py-2.5 flex items-center gap-2.5">
+                <span className="text-[9px] font-mono text-gray-400 shrink-0">{d.id}</span>
+                <span className="text-xs text-gray-700 flex-1 truncate">{d.title}</span>
+                <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-medium", d.sc)}>{d.status}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ═══ ROW 4 — Activité bots + Réseau + Finances ═══ */}
+      <div className="grid grid-cols-3 gap-3">
+        {/* Activité récente */}
+        <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+          <div className={cn("flex items-center gap-2 px-4 py-2.5 border-b border-gray-100", UB_PASTEL)}>
+            <Activity className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+            <span className="text-sm font-bold text-gray-900">Activité bots</span>
+          </div>
+          <div className="divide-y divide-gray-50">
+            {BOT_FEED.map((act, i) => (
+              <div key={i} className="px-4 py-2.5 flex items-center gap-2.5">
+                <BotAvatar code={act.bot} size="sm" />
+                <span className="text-xs text-gray-700 flex-1 leading-snug">{act.action}</span>
+                <span className="text-[9px] text-gray-400 shrink-0">{act.time}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Réseau Orbit⁹ */}
+        <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+          <div className={cn("flex items-center gap-2 px-4 py-2.5 border-b border-gray-100", UB_PASTEL)}>
+            <Globe className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+            <span className="text-sm font-bold text-gray-900">Réseau Orbit<sup>9</sup></span>
+          </div>
+          <div className="p-4 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-600">Cellules actives</span>
+              <span className="text-sm font-bold text-gray-800">4</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-600">Contacts réseau</span>
+              <span className="text-sm font-bold text-gray-800">24</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-600">Opportunités matching</span>
+              <span className="text-sm font-bold text-gray-800">3</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-600">Expansion US</span>
+              <span className="text-sm font-bold text-gray-800">45%</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Finances */}
+        <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+          <div className={cn("flex items-center gap-2 px-4 py-2.5 border-b border-gray-100", UB_PASTEL)}>
+            <DollarSign className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+            <span className="text-sm font-bold text-gray-900">Finances</span>
+          </div>
+          <div className="p-4 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-600">Marge brute</span>
+              <span className="text-sm font-bold text-red-500">38.1% <TrendingDown className="h-3.5 w-3.5 inline" /></span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-600">Projets actifs</span>
+              <span className="text-sm font-bold text-gray-800">12</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-600">Budget utilisé</span>
+              <span className="text-sm font-bold text-amber-600">67%</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-600">Score VITAA</span>
+              <span className="text-sm font-bold text-gray-800">72%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ========== PLACEHOLDERS (Reflexion/Creation/Execution/Retroaction) ==========
+
+function PlaceholderChat({ phase }: { phase: PhaseKey }) {
+  const pc = PC[phase];
+  return (
+    <SBubble code="CEOB">
+      <p className="text-sm text-gray-700 leading-relaxed">
+        Mode <strong className={pc.text}>{pc.label}</strong> activé.{" "}
+        {phase === "reflexion" ? "On analyse en profondeur avec le Brain Team." :
+         phase === "creation" ? "On conceptualise les solutions et on bâtit les plans." :
+         phase === "execution" ? "Le protocole COMMAND prend le relais." :
+         "On mesure les résultats et tire les leçons."}
+      </p>
+    </SBubble>
+  );
+}
+
+// ========== REFLEXION CHAT (left panel — EXACT copy from SimPhaseReflexion) ==========
+
+function ReflexionChat({ stage, typed, setTyped, advance, pc, context }: {
+  stage: number; typed: boolean; setTyped: (v: boolean) => void; advance: () => void; pc: PhaseStyle; context: string | null;
+}) {
+  return (
+    <>
+      {/* Stage 0: reflexion-start — Animation invitation bots */}
+      {stage >= 0 && (
+        <>
+          {stage === 0 && (
+            <div className="flex items-center gap-1.5 ml-10 bg-orange-50 border border-orange-200 rounded-lg px-2 py-1">
+              <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
+              <span className="text-[9px] text-orange-600 font-medium">Mode Réflexion actif</span>
+            </div>
+          )}
+          <SBubble code="CEOB" collapsed={stage > 0}>
+            {stage === 0 ? (
+              <>
+                <TypewriterText text={`Mode Réflexion activé sur « ${context || "ce sujet"} ». Je mobilise 3 spécialistes pour cette mission.`} speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+                {typed && (
+                  <div className="mt-3 space-y-1.5">
+                    {[
+                      { code: "CMOB", name: "Mathilde", role: "CMO — Analyse marché", delay: "0ms" },
+                      { code: "CFOB", name: "Frank", role: "CFO — Budget et ROI", delay: "400ms" },
+                      { code: "CTOB", name: "Tim", role: "CTO — Faisabilité technique", delay: "800ms" },
+                    ].map(bot => (
+                      <div key={bot.code} className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-lg px-3 py-1.5 animate-in fade-in slide-in-from-left-2" style={{ animationDelay: bot.delay, animationFillMode: "both", animationDuration: "500ms" }}>
+                        <BotAvatar code={bot.code} size="sm" />
+                        <div className="flex-1">
+                          <span className="text-[9px] font-bold text-gray-700">{bot.name}</span>
+                          <span className="text-[8px] text-gray-500 ml-1.5">{bot.role}</span>
+                        </div>
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                        <span className="text-[8px] text-emerald-600 font-medium">Rejoint</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {typed && (
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {["Brainstorm", "Analyser", "Rechercher", "Challenger", "Deep Search", "5 Pourquoi"].map(b => (
+                      <span key={b} className="text-[9px] bg-orange-50 border border-orange-200 text-orange-700 px-2.5 py-1 rounded-full font-medium">{b}</span>
+                    ))}
+                  </div>
+                )}
+                {typed && <SBtn onClick={advance} icon={Search} label="Commencer l'analyse" pc={pc} />}
+              </>
+            ) : <p className="text-[9px] text-gray-400 italic">Analyse démarrée — 3 bots mobilisés</p>}
+          </SBubble>
+        </>
+      )}
+
+      {/* Stage 1: diagnostic — 3 questions de cadrage */}
+      {stage >= 1 && (
+        <>
+          <SBubble code="CEOB" collapsed={stage > 1}>
+            {stage === 1 ? (
+              <>
+                <TypewriterText text="Diagnostic initial — 3 questions de cadrage rapides pour orienter la réflexion:" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+                {typed && (
+                  <div className="mt-2 space-y-1.5">
+                    {[
+                      { q: "Q1", text: "Quel est votre coût d'acquisition actuel par lead?" },
+                      { q: "Q2", text: "D'où viennent vos leads aujourd'hui (%, par canal)?" },
+                      { q: "Q3", text: "Quel budget mensuel marketing total?" },
+                    ].map(item => (
+                      <div key={item.q} className="text-sm text-gray-700 bg-red-50 rounded-lg px-3 py-1.5 border-l-2 border-red-400">
+                        <span className="font-semibold text-red-700">{item.q}.</span> {item.text}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : <p className="text-[9px] text-gray-400 italic">Diagnostic — 3 questions de cadrage</p>}
+          </SBubble>
+          {stage === 1 && typed && (
+            <>
+              <div className="flex justify-end">
+                <div className="bg-blue-50 rounded-xl rounded-tr-none px-3 py-2 max-w-[80%]">
+                  <p className="text-sm text-blue-900">780$/lead environ. 65% bouche-à-oreille, 20% site web, 15% salons. Budget: 12K$/mois.</p>
+                </div>
+              </div>
+              <SBtn onClick={advance} icon={Users} label="Lancer la consultation multi-bot" pc={pc} />
+            </>
+          )}
+        </>
+      )}
+
+      {/* Stage 2: multi-consult — animation 3 bots en parallèle */}
+      {stage >= 2 && (
+        <>
+          {stage === 2 && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="flex gap-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-red-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                  <div className="w-1.5 h-1.5 rounded-full bg-red-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                  <div className="w-1.5 h-1.5 rounded-full bg-red-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+                </div>
+                <span className="text-[9px] text-red-600 font-medium">3 bots analysent en parallèle...</span>
+              </div>
+              <div className="space-y-1">
+                {[
+                  { code: "CMOB", text: "Mathilde analyse le positionnement marché..." },
+                  { code: "CFOB", text: "Frank modèle le budget et le ROI..." },
+                  { code: "CTOB", text: "Tim évalue la faisabilité technique..." },
+                ].map(b => (
+                  <div key={b.code} className="flex items-center gap-2 text-[9px] text-gray-600">
+                    <BotAvatar code={b.code} size="sm" />
+                    <span>{b.text}</span>
+                    <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse ml-auto" />
+                  </div>
+                ))}
+              </div>
+              <SBtn onClick={advance} icon={Eye} label="Voir les perspectives" pc={pc} />
+            </div>
+          )}
+          {stage > 2 && (
+            <div className="opacity-60">
+              <p className="text-[9px] text-gray-400 italic ml-9">Consultation multi-bot — 3 analyses parallèles</p>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Stage 3: perspective-cmo */}
+      {stage >= 3 && (
+        <SBubble code="CMOB" collapsed={stage > 3}>
+          {stage === 3 ? (
+            <>
+              <TypewriterText text="3 insights marché: (1) Le message actuel parle de technologie, pas de ROI — les PME décrochent. (2) Le canal LinkedIn est sous-exploité — 0 contenu organique depuis 3 mois. (3) Les concurrents investissent 3x plus en content marketing. Recommandation: pivoter le messaging vers les résultats business concrets." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && <SBtn onClick={advance} icon={DollarSign} label="Perspective CFO" pc={pc} />}
+            </>
+          ) : <p className="text-[9px] text-gray-400 italic">Mathilde — messaging ROI, LinkedIn, concurrence</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 4: perspective-cfo */}
+      {stage >= 4 && (
+        <SBubble code="CFOB" collapsed={stage > 4}>
+          {stage === 4 ? (
+            <>
+              <TypewriterText text="Analyse financière: Le CAC de 780$ est 2.3x au-dessus du benchmark SaaS B2B (340$). Le ROI marketing est de 1.8x — sous le seuil de 3x recommandé. Proposition: réallouer 40% du budget salons vers digital. Économie projetée: 2,880$/mois. ROI projeté: 3.2x en 6 mois." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && (
+                <div className="mt-2 bg-emerald-50 rounded-lg px-3 py-2 text-[9px]">
+                  <div className="flex items-center gap-4">
+                    <div><span className="font-bold text-emerald-700">CAC actuel:</span> 780$</div>
+                    <div><span className="font-bold text-emerald-700">Cible:</span> 340$</div>
+                    <div><span className="font-bold text-emerald-700">ROI projeté:</span> 3.2x</div>
+                  </div>
+                </div>
+              )}
+              {typed && <SBtn onClick={advance} icon={Brain} label="Perspective CTO" pc={pc} />}
+            </>
+          ) : <p className="text-[9px] text-gray-400 italic">Frank — CAC 780$ vs 340$, ROI 3.2x</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 5: perspective-cto */}
+      {stage >= 5 && (
+        <SBubble code="CTOB" collapsed={stage > 5}>
+          {stage === 5 ? (
+            <>
+              <TypewriterText text="Faisabilité technique: (1) Le site web convertit à 1.2% — déployer un chatbot AI augmenterait à 3-4%. (2) Email nurturing inexistant — on peut automatiser 80% avec les outils déjà bâtis. (3) Risque: timeline agressive pour Q2, je recommande Q2+Q3 pour les automatisations lourdes." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && (
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-[9px] bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full font-medium">Conversion: 1.2% → 3-4%</span>
+                  <span className="text-[9px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">Risque: timeline Q2</span>
+                </div>
+              )}
+              {typed && <SBtn onClick={advance} icon={Layers} label="Voir la synthèse" pc={pc} />}
+            </>
+          ) : <p className="text-[9px] text-gray-400 italic">Tim — conversion 1.2%→3-4%, nurturing auto</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 6: synthese */}
+      {stage >= 6 && (
+        <SBubble code="CEOB" collapsed={stage > 6}>
+          {stage === 6 ? (
+            <>
+              <TypewriterText text="Synthèse des 3 perspectives: Consensus sur le pivot messaging (ROI > tech). Divergence sur la timeline — Mathilde veut Q2 agressif, Tim recommande Q2+Q3. Frank confirme le budget est là si on réalloue les salons. Je recommande le brainstorm pour générer des idées concrètes." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && <SBtn onClick={advance} icon={Lightbulb} label="Lancer le Brainstorm" pc={pc} />}
+            </>
+          ) : <p className="text-[9px] text-gray-400 italic">Consensus messaging, divergence timeline</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 7: brainstorm */}
+      {stage >= 7 && (
+        <SBubble code="CEOB" collapsed={stage > 7}>
+          {stage === 7 ? (
+            <>
+              <TypewriterText text="Mode Brainstorm activé. 6 idées générées par l'équipe. Votez à droite pour prioriser — les idées plébiscitées seront intégrées au plan d'action. Chaque bot a contribué selon sa spécialité." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && <SBtn onClick={advance} icon={Layers} label="Synthétiser les idées" pc={pc} />}
+            </>
+          ) : <p className="text-[9px] text-gray-400 italic">6 idées, votes en cours</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 8: synthese-brainstorm — bonification itérative */}
+      {stage >= 8 && (
+        <SBubble code="CEOB" collapsed={stage > 8}>
+          {stage === 8 ? (
+            <>
+              <TypewriterText text="Synthèse des 6 idées + perspectives des 3 bots. Je combine les idées les plus votées avec les insights du diagnostic. Voici une proposition bonifiée à droite — on fusionne le referral program de Frank avec le contenu LinkedIn de Mathilde pour un plan intégré. Tu veux qu'on rechallenge ou qu'on creuse?" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  <span className="text-[9px] bg-orange-600 text-white px-2.5 py-1 rounded-full font-medium cursor-pointer">Rechallenger</span>
+                  <span className="text-[9px] bg-orange-100 text-orange-700 px-2.5 py-1 rounded-full font-medium cursor-pointer">Approfondir une idée</span>
+                  <span className="text-[9px] bg-orange-100 text-orange-700 px-2.5 py-1 rounded-full font-medium cursor-pointer">Ajouter mes idées</span>
+                  <span className="text-[9px] bg-orange-100 text-orange-700 px-2.5 py-1 rounded-full font-medium cursor-pointer">Valider et continuer</span>
+                </div>
+              )}
+              {typed && <SBtn onClick={advance} icon={Search} label="Creuser avec les 5 Pourquoi" pc={pc} />}
+            </>
+          ) : <p className="text-[9px] text-gray-400 italic">Synthèse brainstorm — plan intégré referral + LinkedIn</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 9: cinq-pourquoi */}
+      {stage >= 9 && (
+        <SBubble code="CEOB" collapsed={stage > 9}>
+          {stage === 9 ? (
+            <>
+              <TypewriterText text="Méthode 5 Pourquoi — on creuse la cause racine du problème de performance marketing. Le résultat est à droite dans l'arbre de causes." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && <SBtn onClick={advance} icon={Globe} label="Lancer le Deep Search" pc={pc} />}
+            </>
+          ) : <p className="text-[9px] text-gray-400 italic">Cause racine: messaging technique vs résultats</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 10: deep-search */}
+      {stage >= 10 && (
+        <SBubble code="CEOB" collapsed={stage > 10}>
+          {stage === 10 ? (
+            <>
+              <TypewriterText text="Deep Search lancé. Je cherche des données externes pour valider nos hypothèses. 4 sources trouvées avec des scores de pertinence. Les résultats s'affichent à droite." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && <SBtn onClick={advance} icon={Layers} label="Synthétiser les recherches" pc={pc} />}
+            </>
+          ) : <p className="text-[9px] text-gray-400 italic">4 sources externes validées</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 11: synthese-recherche */}
+      {stage >= 11 && (
+        <SBubble code="CEOB" collapsed={stage > 11}>
+          {stage === 11 ? (
+            <>
+              <TypewriterText text="Synthèse complète — je combine les 4 sources du Deep Search avec la cause racine des 5 Pourquoi et les idées du brainstorm. Résultats consolidés à droite: 3 constats validés, 2 hypothèses à vérifier, 1 risque identifié. On est prêt pour challenger les conclusions?" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  <span className="text-[9px] bg-orange-600 text-white px-2.5 py-1 rounded-full font-medium cursor-pointer">Challenger les conclusions</span>
+                  <span className="text-[9px] bg-orange-100 text-orange-700 px-2.5 py-1 rounded-full font-medium cursor-pointer">Relancer le Deep Search</span>
+                  <span className="text-[9px] bg-orange-100 text-orange-700 px-2.5 py-1 rounded-full font-medium cursor-pointer">Demander un 2e avis</span>
+                  <span className="text-[9px] bg-orange-100 text-orange-700 px-2.5 py-1 rounded-full font-medium cursor-pointer">Ajouter mes observations</span>
+                </div>
+              )}
+              {typed && <SBtn onClick={advance} icon={AlertTriangle} label="Challenger les conclusions" pc={pc} />}
+            </>
+          ) : <p className="text-[9px] text-gray-400 italic">Synthèse recherche — 3 constats, 2 hypothèses, 1 risque</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 12: challenge */}
+      {stage >= 12 && (
+        <>
+          {stage === 12 && (
+            <div className="flex justify-end">
+              <div className="bg-blue-50 rounded-xl rounded-tr-none px-3 py-2 max-w-[80%]">
+                <p className="text-sm text-blue-900">Je challenge le budget: 8K$/mois ça semble trop agressif vu notre taille.</p>
+              </div>
+            </div>
+          )}
+          <SBubble code="CFOB" collapsed={stage > 12}>
+            {stage === 12 ? (
+              <>
+                <TypewriterText text="Challenge accepté. Le programme referral seul coûte 1,200$/mois et génère un ROI de 4.2x. Si on priorise referral + contenu LinkedIn (budget combiné: 3,800$/mois), le ROI projeté est de 3.6x. C'est plus conservateur que le plan complet à 8K$, et on peut scaler après validation Q2." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+                {typed && (
+                  <div className="mt-2 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 text-[9px]">
+                    <div className="font-semibold text-emerald-700 mb-1">Plan révisé (conservateur):</div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>Referral: 1,200$/mois → ROI 4.2x</div>
+                      <div>LinkedIn: 2,600$/mois → ROI 2.8x</div>
+                      <div className="font-bold text-emerald-800 col-span-2">Total: 3,800$/mois → ROI combiné 3.6x</div>
+                    </div>
+                  </div>
+                )}
+                {typed && <SBtn onClick={advance} icon={FileText} label="Générer le pré-rapport" pc={pc} />}
+              </>
+            ) : <p className="text-[9px] text-gray-400 italic">Challenge budget — plan révisé 3,800$/mois</p>}
+          </SBubble>
+        </>
+      )}
+
+      {/* Stage 13: pre-rapport */}
+      {stage >= 13 && (
+        <SBubble code="CEOB" collapsed={stage > 13}>
+          {stage === 13 ? (
+            <>
+              <TypewriterText text="Le pré-rapport se construit à droite avec les 8 sections remplies durant cette Réflexion. Table des matières sur le côté, contenu à droite. Tu peux revoir chaque section. Quand tu es prêt, on cristallise en document ou on passe en Atelier." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && <SBtn onClick={advance} icon={Paperclip} label="Extraire et finaliser" pc={pc} />}
+            </>
+          ) : <p className="text-[9px] text-gray-400 italic">Pré-rapport 8 sections</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 14: extraction — 3 options finales */}
+      {stage >= 14 && (
+        <SBubble code="CEOB" collapsed={stage > 14}>
+          {stage === 14 ? (
+            <>
+              <TypewriterText text="Rapport complet. 3 options: cristalliser en document formel, passer en Atelier pour créer le plan d'action, ou continuer l'analyse avec d'autres outils." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && (
+                <div className="mt-2 space-y-1.5">
+                  {[
+                    { label: "Cristalliser en document", desc: "Génère un PDF avec les 8 sections", icon: FileText },
+                    { label: "Passer en Atelier", desc: "Créer le plan d'action concret", icon: Zap },
+                    { label: "Continuer l'analyse", desc: "SWOT, scénarios, benchmarks", icon: Search },
+                  ].map(opt => (
+                    <button key={opt.label} onClick={advance}
+                      className={cn("w-full flex items-center gap-2 border rounded-lg px-3 py-2 text-left cursor-pointer transition-colors", pc.bg, pc.border, pc.btnHover)}
+                    >
+                      <opt.icon className={cn("h-3.5 w-3.5 shrink-0", pc.text)} />
+                      <div className="flex-1">
+                        <p className="text-[9px] font-semibold text-gray-800">{opt.label}</p>
+                        <p className="text-[8px] text-gray-500">{opt.desc}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : <p className="text-[9px] text-gray-400 italic">3 options finales</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 15: transition — passage vers Conception */}
+      {stage >= 15 && (
+        <div className="bg-gradient-to-r from-orange-50 to-yellow-50 border border-orange-300 rounded-xl px-4 py-3">
+          <TypewriterText text="Prêt pour Créer! Les 8 sections sont sauvegardées. On va maintenant cristalliser le plan d'action concret à partir de tout ce qu'on a analysé." speed={10} className="text-sm text-orange-800 font-medium" onComplete={() => setTyped(true)} />
+          {typed && (
+            <div className="mt-2 flex items-center gap-2">
+              <div className="w-3.5 h-3.5 rounded-full bg-orange-500" />
+              <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+              <div className="w-3.5 h-3.5 rounded-full bg-yellow-500 animate-pulse" />
+              <span className="text-[9px] text-orange-700 font-semibold ml-1">Réflexion → Conception</span>
+            </div>
+          )}
+        </div>
+      )}
+    </>
+  );
+}
+
+// ========== REFLEXION MAGAZINE SUB-COMPONENTS (EXACT copy from SimPhaseReflexion — stacked) ==========
+
+function MagDiagnostic() {
+  const [expandedDiag, setExpandedDiag] = useState<string | null>(null);
+
+  return (
+    <div className="space-y-4">
+      {/* Zone titre */}
+      <div className="flex items-center gap-2 pb-2 border-b border-red-200">
+        <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+        <h3 className="text-sm font-bold text-gray-800">Zone d'analyse — Integration front-end</h3>
+        <span className="text-[9px] text-red-600 ml-auto font-medium">Mode Analyse actif</span>
+      </div>
+
+      {/* Boutons d'action dans le panel droit */}
+      <div className="flex flex-wrap gap-1.5">
+        {["Brainstorm", "Analyser", "Rechercher", "Challenger", "Deep Search", "5 Pourquoi"].map((b, i) => (
+          <span key={b} className={cn("text-[9px] px-2.5 py-1 rounded-full font-medium cursor-pointer transition-colors",
+            i === 0 ? "bg-red-600 text-white" : "bg-red-100 text-red-700 hover:bg-red-200"
+          )}>{b}</span>
+        ))}
+      </div>
+
+      {/* CarlOS GPS */}
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-3">
+        <Compass className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+        <div>
+          <p className="text-xs font-bold text-amber-800 flex items-center gap-1.5">
+            <Navigation className="h-3.5 w-3.5" /> CarlOS GPS — Lacune detectee
+          </p>
+          <p className="text-[9px] text-amber-700 mt-1">Ton Blueprint manque l'analyse SWOT web et les personas utilisateurs. Je te recommande de completer ces sections.</p>
+          <div className="flex gap-1.5 mt-2">
+            <span className="text-[9px] bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-amber-300">Completer le SWOT</span>
+            <span className="text-[9px] bg-white text-amber-700 px-2 py-0.5 rounded-full font-medium border border-amber-200 cursor-pointer hover:bg-amber-50">Plus tard</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Diagnostic integre */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <Brain className="h-4 w-4 text-red-600" />
+          <p className="text-xs font-bold text-gray-800">Diagnostic integre — Pre-analyse systeme</p>
+        </div>
+        <p className="text-[9px] text-gray-500 leading-relaxed">Les bots analysent en temps reel l'etat de votre mission. Cliquez sur un indicateur pour voir le detail et les actions recommandees.</p>
+        <div className="grid grid-cols-2 gap-2">
+          {SPR_DIAG_ITEMS.map(d => (
+            <div key={d.label}
+              onClick={() => setExpandedDiag(expandedDiag === d.label ? null : d.label)}
+              className={cn("bg-white border rounded-lg p-2 cursor-pointer transition-all",
+                expandedDiag === d.label ? "border-red-300 bg-red-50/30 ring-1 ring-red-200" : "border-gray-200 hover:border-red-300 hover:bg-red-50/20"
+              )}
+            >
+              <div className="flex items-center justify-between mb-0.5">
+                <span className="text-[9px] text-gray-700 font-medium">{d.label}</span>
+                <span className={cn("text-[9px] font-bold", d.score >= 70 ? "text-emerald-600" : d.score >= 50 ? "text-amber-600" : "text-red-600")}>{d.score}%</span>
+              </div>
+              <p className="text-[8px] text-gray-400 mb-1">{d.what}</p>
+              <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
+                <div className={cn("h-full rounded-full", d.score >= 70 ? "bg-emerald-500" : d.score >= 50 ? "bg-amber-500" : "bg-red-500")} style={{ width: `${d.score}%` }} />
+              </div>
+              <p className="text-[8px] text-gray-500 mt-1 font-medium">{d.detail}</p>
+              <div className="mt-1.5 flex items-center gap-1.5">
+                <BotAvatar code={d.bot} size="sm" />
+                <span className="text-[8px] text-gray-500">{BOT_COLORS[d.bot]?.name}</span>
+                <button className="text-[8px] bg-red-50 border border-red-200 text-red-700 px-2 py-0.5 rounded-full font-medium hover:bg-red-100 cursor-pointer ml-auto">{d.action}</button>
+              </div>
+
+              {expandedDiag === d.label && (
+                <div className="mt-2 pt-2 border-t border-red-200 space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className={cn("text-[8px] font-bold px-2 py-0.5 rounded-full",
+                      d.score < 40 ? "bg-red-100 text-red-700" : d.score < 60 ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"
+                    )}>{d.expanded.gap}</span>
+                    <span className="text-[8px] text-gray-400">Effort: {d.expanded.effort}</span>
+                  </div>
+                  <div className="space-y-0.5">
+                    {d.expanded.actions.map((a: string, j: number) => (
+                      <div key={j} className="flex items-center gap-1.5 text-[8px] text-gray-600">
+                        <div className="w-1 h-1 rounded-full bg-red-400 shrink-0" />
+                        <span>{a}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="bg-emerald-50 border border-emerald-200 rounded px-2 py-1 flex items-center gap-1.5">
+                    <TrendingUp className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                    <span className="text-[8px] text-emerald-700 font-medium">Impact: {d.expanded.impact}</span>
+                  </div>
+                  <div className="flex gap-1">
+                    <button className="text-[7px] bg-red-600 text-white px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-red-700">Lancer un chantier</button>
+                    <button className="text-[7px] bg-white border border-red-200 text-red-700 px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-red-50">Epingler</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MagBrainstorm() {
+  const [activeStep, setActiveStep] = useState(2);
+  const [expandedIdea, setExpandedIdea] = useState<number | null>(null);
+  const [brainstormVotes, setBrainstormVotes] = useState<Record<number, "up" | "down" | null>>({});
+
+  const STEPS = [
+    { label: "Cadrage", desc: "Definir le probleme et les contraintes avant de generer des idees." },
+    { label: "Vague 1", desc: "Generation libre — chaque bot propose des idees sans filtre, quantite > qualite." },
+    { label: "SCAMPER", desc: "Methode creative: Substituer, Combiner, Adapter, Modifier, Put to other use, Eliminer, Reorganiser." },
+    { label: "Clusters", desc: "Regrouper les idees par theme, identifier les convergences entre bots." },
+    { label: "Synthese", desc: "Fusionner les meilleures idees en propositions actionnables et budgetees." },
+  ];
+
+  const CLUSTERS = [
+    { theme: "Acquisition digitale", idees: ["Content LinkedIn", "Chatbot AI site web", "Mini-serie YouTube"], bot: "CMOB", score: 87, color: "border-pink-200 bg-pink-50" },
+    { theme: "Referral & reseau", idees: ["Programme referral", "Ambassadeurs clients", "Partenariat distributeurs"], bot: "CFOB", score: 92, color: "border-emerald-200 bg-emerald-50" },
+    { theme: "Evenements repenses", idees: ["Demo AI live mensuelle", "Salon virtuel Q3", "Webinaires VITAA"], bot: "COOB", score: 78, color: "border-orange-200 bg-orange-50" },
+  ];
+
+  const SYNTHESIS = [
+    { title: "Axe 1: Referral + Ambassadeurs", budget: "1,200$/mois", roi: "4.2x", timeline: "Semaine 1-2", priority: "QUICK WIN", color: "bg-emerald-50 border-emerald-200" },
+    { title: "Axe 2: Content LinkedIn + YouTube", budget: "2,600$/mois", roi: "2.8x", timeline: "Mois 1-3", priority: "MOYEN TERME", color: "bg-pink-50 border-pink-200" },
+    { title: "Axe 3: Demo AI live mensuelle", budget: "800$/mois", roi: "3.1x", timeline: "Mois 2", priority: "DIFFERENCIANT", color: "bg-violet-50 border-violet-200" },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <Lightbulb className="h-4 w-4 text-amber-500" />
+        <h3 className="text-sm font-bold text-gray-800">Brainstorm — Methode SCAMPER</h3>
+        <span className="text-[9px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-medium animate-pulse ml-auto">Live</span>
+      </div>
+
+      {/* Pipeline etapes SCAMPER */}
+      <div className="flex items-center gap-1 overflow-x-auto pb-1">
+        {STEPS.map((step, i) => (
+          <div key={i} className="flex items-center gap-1 shrink-0">
+            {i > 0 && <div className={cn("w-4 h-0.5", i <= activeStep ? "bg-red-400" : "bg-gray-200")} />}
+            <button
+              onClick={() => setActiveStep(i)}
+              className={cn("flex items-center gap-1 px-2 py-1 rounded-full text-[8px] font-medium cursor-pointer transition-all",
+                i < activeStep ? "bg-red-100 text-red-700" : i === activeStep ? "bg-red-500 text-white shadow-sm" : "bg-gray-100 text-gray-400 hover:bg-gray-200"
+              )}
+            >
+              {i < activeStep && <CheckCircle2 className="h-3.5 w-3.5" />}
+              {i === activeStep && <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}
+              {step.label}
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {/* Step description */}
+      <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 flex items-center gap-2">
+        <BookOpen className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+        <p className="text-[8px] text-gray-500">{STEPS[activeStep].desc}</p>
+      </div>
+
+      {/* STEP 0-1: Cadrage + Vague 1 */}
+      {activeStep <= 1 && (
+        <div>
+          <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-2 flex items-center gap-1">
+            <Lightbulb className="h-3.5 w-3.5 text-amber-500" /> {activeStep === 0 ? "Cadrage — Probleme a resoudre" : "Vague 1 — 6 idees brutes (zero filtre)"}
+          </p>
+          {activeStep === 0 ? (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+              <p className="text-xs font-bold text-red-800 mb-2">Probleme: Comment augmenter les leads qualifies de 40% en Q2?</p>
+              <div className="space-y-1 text-[9px] text-gray-600">
+                <p>Contrainte budget: max 8K$/mois</p>
+                <p>Contrainte temps: resultats mesurables avant fin Q2</p>
+                <p>Equipe: 3 bots mobilises (Mathilde, Frank, Tim)</p>
+              </div>
+              <button onClick={() => setActiveStep(1)} className="mt-3 text-[9px] bg-red-600 text-white px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-red-700">Lancer la generation d'idees</button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
+              {SPR_BRAINSTORM_IDEAS.map(idea => (
+                <div key={idea.id}
+                  onClick={() => setExpandedIdea(expandedIdea === idea.id ? null : idea.id)}
+                  className={cn("border rounded-lg px-3 py-2.5 cursor-pointer transition-all", idea.color,
+                    expandedIdea === idea.id ? "ring-1 ring-red-300 shadow-sm" : "hover:shadow-sm"
+                  )}
+                >
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <BotAvatar code={idea.bot} size="sm" />
+                    <span className="text-[9px] font-medium text-gray-700">{BOT_COLORS[idea.bot]?.name}</span>
+                    <span className="text-[8px] bg-white/60 text-gray-600 px-1.5 py-0.5 rounded ml-auto">{idea.tag}</span>
+                  </div>
+                  <p className="text-[9px] text-gray-800 mb-2">{idea.text}</p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setBrainstormVotes(prev => ({ ...prev, [idea.id]: prev[idea.id] === "up" ? null : "up" })); }}
+                      className={cn("p-0.5 rounded cursor-pointer transition-colors",
+                        brainstormVotes[idea.id] === "up" ? "text-green-600 bg-green-100" : "text-gray-400 hover:text-green-500"
+                      )}
+                    >
+                      <ThumbsUp className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setBrainstormVotes(prev => ({ ...prev, [idea.id]: prev[idea.id] === "down" ? null : "down" })); }}
+                      className={cn("p-0.5 rounded cursor-pointer transition-colors",
+                        brainstormVotes[idea.id] === "down" ? "text-red-600 bg-red-100" : "text-gray-400 hover:text-red-500"
+                      )}
+                    >
+                      <ThumbsDown className="h-3.5 w-3.5" />
+                    </button>
+                    <span className="text-[9px] text-gray-400 ml-auto">
+                      {brainstormVotes[idea.id] === "up" ? "+1" : brainstormVotes[idea.id] === "down" ? "-1" : ""}
+                    </span>
+                  </div>
+                  {expandedIdea === idea.id && (
+                    <div className="mt-2 pt-2 border-t border-gray-200 space-y-1">
+                      <p className="text-[8px] text-gray-600">Impact estime: eleve | Effort: moyen | Delai: 2-4 semaines</p>
+                      <div className="flex gap-1">
+                        <button className="text-[7px] bg-white border border-gray-200 text-gray-600 px-1.5 py-0.5 rounded font-medium cursor-pointer hover:bg-gray-50">Developper</button>
+                        <button className="text-[7px] bg-white border border-gray-200 text-gray-600 px-1.5 py-0.5 rounded font-medium cursor-pointer hover:bg-gray-50">Combiner</button>
+                        <button className="text-[7px] bg-white border border-gray-200 text-gray-600 px-1.5 py-0.5 rounded font-medium cursor-pointer hover:bg-gray-50">Challenger</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* STEP 2: SCAMPER Challenge */}
+      {activeStep === 2 && (
+        <div>
+          <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-2 flex items-center gap-1">
+            <Zap className="h-3.5 w-3.5 text-red-500" /> SCAMPER Challenge — COMBINER + ADAPTER + SUBSTITUER
+          </p>
+          <p className="text-[8px] text-gray-500 mb-2">Les bots appliquent les 7 leviers SCAMPER aux idees de la Vague 1 pour creer des combinaisons innovantes.</p>
+          <div className="space-y-1.5">
+            {[
+              { letter: "C", method: "Combiner", text: "Referral + LinkedIn: programme ambassadeur avec contenu co-cree par les clients satisfaits", bot: "CMOB", votes: 4, color: "bg-pink-50 border-pink-200" },
+              { letter: "A", method: "Adapter", text: "Adapter webinaire VITAA en mini-serie YouTube (5 episodes, 10min) — format snackable", bot: "CEOB", votes: 3, color: "bg-blue-50 border-blue-200" },
+              { letter: "S", method: "Substituer", text: "Remplacer les salons physiques par une demo AI live mensuelle — cout 10x moins cher", bot: "CTOB", votes: 5, color: "bg-violet-50 border-violet-200" },
+              { letter: "M", method: "Modifier", text: "Modifier le messaging: au lieu de 'AI CEO Bot', dire '40% plus de leads en 90 jours'", bot: "CMOB", votes: 6, color: "bg-amber-50 border-amber-200" },
+              { letter: "E", method: "Eliminer", text: "Eliminer les salons sans ROI mesurable — economie de 4,800$/trimestre", bot: "CFOB", votes: 4, color: "bg-emerald-50 border-emerald-200" },
+            ].map((note, i) => (
+              <div key={i} className={cn("rounded-lg p-2.5 border cursor-pointer hover:shadow-sm transition-all", note.color)}>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="w-5 h-5 rounded bg-red-500 text-white flex items-center justify-center text-[8px] font-bold shrink-0">{note.letter}</span>
+                  <span className="text-[8px] font-bold text-red-700">{note.method}</span>
+                  <BotAvatar code={note.bot} size="sm" />
+                  <span className="text-[8px] font-medium text-gray-500">{BOT_COLORS[note.bot]?.name}</span>
+                  <span className="flex items-center gap-0.5 text-[9px] text-amber-600 ml-auto">
+                    <Star className="h-3.5 w-3.5" /> {note.votes}
+                  </span>
+                </div>
+                <p className="text-[9px] text-gray-800">{note.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* STEP 3: Clusters */}
+      {activeStep === 3 && (
+        <div>
+          <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-2 flex items-center gap-1">
+            <Layers className="h-3.5 w-3.5 text-blue-500" /> Clusters — 3 themes identifies
+          </p>
+          <p className="text-[8px] text-gray-500 mb-2">Les idees convergent autour de 3 axes strategiques. Chaque cluster regroupe les propositions complementaires.</p>
+          <div className="space-y-2">
+            {CLUSTERS.map((cluster, i) => (
+              <div key={i} className={cn("rounded-xl p-3 border", cluster.color)}>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="w-6 h-6 rounded-full bg-white border border-gray-200 flex items-center justify-center text-[9px] font-bold text-gray-700">{i + 1}</span>
+                  <span className="text-xs font-bold text-gray-800">{cluster.theme}</span>
+                  <BotAvatar code={cluster.bot} size="sm" />
+                  <div className="ml-auto flex items-center gap-1">
+                    <div className="w-12 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                      <div className="h-full bg-red-500 rounded-full" style={{ width: `${cluster.score}%` }} />
+                    </div>
+                    <span className="text-[8px] font-bold text-gray-600">{cluster.score}%</span>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {cluster.idees.map((idee, j) => (
+                    <span key={j} className="text-[8px] bg-white border border-gray-200 text-gray-700 px-2 py-0.5 rounded-full">{idee}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* STEP 4: Synthese */}
+      {activeStep === 4 && (
+        <div>
+          <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-2 flex items-center gap-1">
+            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Synthese — 3 axes actionnables
+          </p>
+          <p className="text-[8px] text-gray-500 mb-2">Les clusters sont consolides en axes strategiques budgetes et planifies. Pret a passer en phase Creer.</p>
+          <div className="space-y-2">
+            {SYNTHESIS.map((axe, i) => (
+              <div key={i} className={cn("rounded-xl border p-3", axe.color)}>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs font-bold text-gray-800">{axe.title}</span>
+                  <span className="text-[7px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full font-bold ml-auto">{axe.priority}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="text-center">
+                    <p className="text-[8px] text-gray-400">Budget</p>
+                    <p className="text-[9px] font-bold text-gray-800">{axe.budget}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[8px] text-gray-400">ROI</p>
+                    <p className="text-[9px] font-bold text-emerald-700">{axe.roi}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[8px] text-gray-400">Timeline</p>
+                    <p className="text-[9px] font-bold text-gray-800">{axe.timeline}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 flex items-center gap-2 mt-2">
+            <DollarSign className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+            <span className="text-[9px] font-bold text-emerald-700">Budget total: 4,600$/mois — ROI combine: 3.4x</span>
+          </div>
+        </div>
+      )}
+
+      {/* Action buttons */}
+      <div className="flex flex-wrap gap-2">
+        <button className="text-[9px] bg-red-600 text-white px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-red-700">Ajouter une idee</button>
+        <button className="text-[9px] bg-red-50 border border-red-200 text-red-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-red-100">Combiner 2 idees</button>
+        <button className="text-[9px] bg-red-50 border border-red-200 text-red-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-red-100">Prioriser par votes</button>
+        <button className="text-[9px] bg-red-50 border border-red-200 text-red-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-red-100">Challenger une idee</button>
+        <button className="text-[9px] bg-red-50 border border-red-200 text-red-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-red-100">Epingler au rapport</button>
+      </div>
+    </div>
+  );
+}
+
+function MagSyntheseBrainstorm() {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <Layers className="h-4 w-4 text-red-600" />
+        <h3 className="text-sm font-bold text-gray-800">Synthese + Bonification — Idees consolidees</h3>
+        <span className="text-[9px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium ml-auto">Iteration 1</span>
+      </div>
+      <p className="text-[9px] text-gray-500">Les idees du brainstorm ont ete combinees avec les perspectives des 3 bots pour creer un plan integre.</p>
+
+      <div className="bg-white border-2 border-red-200 rounded-xl overflow-hidden">
+        <div className="bg-red-50 px-4 py-2 border-b border-red-200 flex items-center gap-2">
+          <Lightbulb className="h-3.5 w-3.5 text-red-600" />
+          <span className="text-xs font-bold text-red-800">Plan integre — Referral + Content LinkedIn</span>
+        </div>
+        <div className="p-4 space-y-3">
+          {[
+            { title: "Programme Referral", source: "Frank (CFO)", detail: "1,200$/mois, ROI 4.2x, lancement Q2 semaine 1", color: "border-emerald-300 bg-emerald-50" },
+            { title: "Content LinkedIn Educatif", source: "Mathilde (CMO)", detail: "Serie 12 posts, 1 webinaire/mois, budget 2,600$/mois", color: "border-pink-300 bg-pink-50" },
+            { title: "Chatbot AI site web", source: "Tim (CTO)", detail: "Deploiement semaine 3, conversion cible 3-4%", color: "border-violet-300 bg-violet-50" },
+          ].map((item, i) => (
+            <div key={i} className={cn("border rounded-lg p-3", item.color)}>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xs font-bold text-gray-800">{item.title}</span>
+                <span className="text-[8px] bg-white/70 text-gray-600 px-1.5 py-0.5 rounded ml-auto">{item.source}</span>
+              </div>
+              <p className="text-[9px] text-gray-700">{item.detail}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
+          <p className="text-[9px] text-gray-400 mb-1">AVANT bonification</p>
+          <p className="text-lg font-extrabold text-gray-400">6 idees</p>
+          <p className="text-[8px] text-gray-400">separees, non priorisees</p>
+        </div>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
+          <p className="text-[9px] text-red-600 mb-1">APRES bonification</p>
+          <p className="text-lg font-extrabold text-red-700">3 axes</p>
+          <p className="text-[8px] text-red-600">integres, budgetes, planifies</p>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <button className="text-[9px] bg-red-600 text-white px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-red-700">Rechallenger le plan</button>
+        <button className="text-[9px] bg-white border border-red-200 text-red-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-red-50">Re-synthetiser</button>
+        <button className="text-[9px] bg-white border border-red-200 text-red-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-red-50">Ajouter un axe</button>
+        <button className="text-[9px] bg-white border border-red-200 text-red-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-red-50">Affiner les budgets</button>
+      </div>
+    </div>
+  );
+}
+
+
+function MagCinqPourquoi() {
+  const [revealedLevel, setRevealedLevel] = useState(0);
+  const [showDebate, setShowDebate] = useState<number | null>(null);
+
+  const questions = [
+    {
+      q: "les leads ne convertissent pas",
+      a: "Le message ne resonne pas avec les PME.",
+      reflexion: "Est-ce que le probleme est le canal ou le message? Mathilde a valide: c'est le message.",
+      bot: "CMOB",
+      debate: {
+        challenger: "CFOB",
+        challengeText: "Et si c'etait le prix plutot que le message? Nos tarifs sont 20% au-dessus du marche.",
+        defense: "CMOB",
+        defenseText: "Non \u2014 les clients qui signent ne mentionnent jamais le prix. C'est le messaging: ils ne comprennent pas la valeur avant la demo.",
+        verdict: "Mathilde a raison. Le prix n'est pas le bloqueur \u2014 c'est la comprehension de la valeur.",
+      },
+    },
+    {
+      q: "le message ne resonne pas",
+      a: "On parle de features AI, pas de resultats business.",
+      reflexion: "Frank confirme: les clients actuels mentionnent toujours le ROI comme facteur #1 de decision.",
+      bot: "CFOB",
+      debate: {
+        challenger: "CTOB",
+        challengeText: "Les features sont quand meme importantes \u2014 c'est ce qui nous differencie techniquement.",
+        defense: "CFOB",
+        defenseText: "Tim, les PME n'achetent pas de la tech. Elles achetent du temps gagne et de l'argent economise. Le ROI, pas les specs.",
+        verdict: "Consensus: communiquer en resultats business, pas en features techniques.",
+      },
+    },
+    {
+      q: "parle-t-on de features",
+      a: "Le contenu est ecrit par des devs, pas par le marketing.",
+      reflexion: "Tim admet: l'equipe tech produit du contenu sans brief marketing. Aucun processus editorial.",
+      bot: "CTOB",
+      debate: {
+        challenger: "CMOB",
+        challengeText: "On pourrait former les devs a ecrire differemment plutot que tout centraliser au marketing.",
+        defense: "CTOB",
+        defenseText: "Realiste? Non. Les devs ecrivent du code, pas du copywriting. Il faut un processus: dev fournit les facts, marketing ecrit le message.",
+        verdict: "Processus editorial necessaire: separation faits techniques / messaging client.",
+      },
+    },
+    {
+      q: "les devs ecrivent le contenu",
+      a: "Pas de ressource marketing dediee, l'equipe est trop petite.",
+      reflexion: "CarlOS note: le budget marketing existe (12K$/mois) mais est mal alloue \u2014 65% en salons.",
+      bot: "CEOB",
+      debate: {
+        challenger: "CFOB",
+        challengeText: "Les salons generent quand meme 35% de nos leads actuels. On ne peut pas tout couper.",
+        defense: "CEOB",
+        defenseText: "Pas tout couper \u2014 reallouer. 65% en salons = 7,800$/mois pour 35% des leads. Si on met la moitie en digital, on double potentiellement pour moins cher.",
+        verdict: "Reallocation progressive: garder les 2 meilleurs salons, basculer le reste en digital.",
+      },
+    },
+  ];
+
+  useEffect(() => {
+    if (revealedLevel < questions.length + 1) {
+      const timer = setTimeout(() => setRevealedLevel(prev => prev + 1), 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [revealedLevel, questions.length]);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <Search className="h-4 w-4 text-red-500" />
+        <h3 className="text-sm font-bold text-gray-800">Analyse 5 Pourquoi \u2014 Cause racine</h3>
+        <span className="text-[9px] text-gray-400 ml-auto">Methode Ishikawa + Bonification</span>
+      </div>
+
+      {/* Progress indicator */}
+      <div className="flex items-center gap-1">
+        {[1, 2, 3, 4, 5].map(n => (
+          <div key={n} className="flex items-center gap-1">
+            {n > 1 && <div className={cn("w-6 h-0.5 transition-all duration-500", n <= revealedLevel ? "bg-red-400" : "bg-gray-200")} />}
+            <div className={cn("w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold transition-all duration-500",
+              n <= revealedLevel ? (n === 5 ? "bg-red-500 text-white scale-110" : "bg-red-100 text-red-700") : "bg-gray-100 text-gray-300"
+            )}>
+              {n <= revealedLevel && n < 5 ? <CheckCircle2 className="h-3.5 w-3.5 text-red-500" /> : n}
+            </div>
+          </div>
+        ))}
+        <span className="text-[8px] text-gray-400 ml-2">{Math.min(revealedLevel, 5)}/5 niveaux explores</span>
+      </div>
+
+      <div className="bg-white border rounded-xl px-4 py-3 space-y-1">
+        {questions.map((item, i) => (
+          <div key={i} className={cn("transition-all duration-700", i < revealedLevel ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 h-0 overflow-hidden")}>
+            <div className="flex items-start gap-3 py-1.5">
+              <span className={cn("shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold transition-all",
+                i < revealedLevel - 1 ? "bg-red-100 text-red-700" : "bg-red-500 text-white animate-pulse"
+              )}>{i + 1}</span>
+              <div className="flex-1">
+                <p className="text-xs"><span className="font-semibold text-red-700">Pourquoi</span> {item.q}?</p>
+                <p className="text-[9px] text-gray-600 mt-0.5">{"\u2192"} {item.a}</p>
+              </div>
+              {i < questions.length - 1 && <ArrowRight className="h-3.5 w-3.5 text-gray-300 shrink-0 mt-1" />}
+            </div>
+
+            <div className="ml-9 mt-0.5 mb-2">
+              <div className="flex items-start gap-2 bg-gray-50 rounded-lg px-3 py-1.5 border-l-2 border-gray-300">
+                <BotAvatar code={item.bot} size="sm" />
+                <div className="flex-1">
+                  <p className="text-[8px] text-gray-500 italic">{item.reflexion}</p>
+                </div>
+                <div className="flex gap-1 shrink-0">
+                  <button
+                    onClick={() => setShowDebate(showDebate === i ? null : i)}
+                    className={cn("text-[7px] px-1.5 py-0.5 rounded font-medium cursor-pointer transition-colors",
+                      showDebate === i ? "bg-red-100 border border-red-200 text-red-700" : "bg-white border border-gray-200 text-gray-500 hover:bg-gray-100"
+                    )}
+                  >
+                    {showDebate === i ? "Fermer" : "Voir le debat"}
+                  </button>
+                  <button className="text-[7px] bg-white border border-gray-200 text-gray-500 px-1.5 py-0.5 rounded font-medium cursor-pointer hover:bg-gray-100">Creuser</button>
+                  <button className="text-[7px] bg-white border border-gray-200 text-gray-500 px-1.5 py-0.5 rounded font-medium cursor-pointer hover:bg-gray-100">Pivoter</button>
+                </div>
+              </div>
+
+              {showDebate === i && (
+                <div className="mt-1.5 ml-2 space-y-1.5 border-l-2 border-red-200 pl-3 animate-in fade-in duration-300">
+                  <div className="flex items-start gap-2">
+                    <BotAvatar code={item.debate.challenger} size="sm" />
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg rounded-tl-none px-2.5 py-1.5 flex-1">
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <span className="text-[8px] font-bold text-amber-700">{BOT_COLORS[item.debate.challenger]?.name}</span>
+                        <span className="text-[7px] bg-amber-200 text-amber-800 px-1 py-0.5 rounded">Challenge</span>
+                      </div>
+                      <p className="text-[8px] text-gray-700">{item.debate.challengeText}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <BotAvatar code={item.debate.defense} size="sm" />
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-lg rounded-tl-none px-2.5 py-1.5 flex-1">
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <span className="text-[8px] font-bold text-emerald-700">{BOT_COLORS[item.debate.defense]?.name}</span>
+                        <span className="text-[7px] bg-emerald-200 text-emerald-800 px-1 py-0.5 rounded">Defense</span>
+                      </div>
+                      <p className="text-[8px] text-gray-700">{item.debate.defenseText}</p>
+                    </div>
+                  </div>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg px-2.5 py-1.5 flex items-center gap-2">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                    <p className="text-[8px] text-blue-700 font-medium">{item.debate.verdict}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+
+        {/* Cause racine */}
+        <div className={cn("pt-2 border-t border-red-200 transition-all duration-700",
+          revealedLevel >= 5 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
+        )}>
+          <div className="flex items-start gap-3">
+            <span className="shrink-0 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center text-[9px] font-bold">5</span>
+            <div className="flex-1">
+              <p className="text-xs font-bold text-red-800">CAUSE RACINE</p>
+              <p className="text-[9px] text-red-700 mt-0.5">L'absence de strategie de contenu structuree fait que le messaging reste technique au lieu d'etre oriente resultats business.</p>
+            </div>
+          </div>
+          <div className="ml-9 mt-2 bg-red-50 rounded-lg px-3 py-2 border border-red-200">
+            <p className="text-[9px] font-bold text-red-700 mb-1">Bonification \u2014 Synthese des 4 debats:</p>
+            <div className="space-y-1">
+              {questions.map((item, i) => (
+                <div key={i} className="flex items-center gap-1.5 text-[8px] text-red-600">
+                  <span className="w-3 h-3 rounded-full bg-red-200 flex items-center justify-center text-[7px] font-bold text-red-700 shrink-0">{i + 1}</span>
+                  <span>{item.debate.verdict}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-1.5 mt-2">
+              <button className="text-[8px] bg-red-200 text-red-800 px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-red-300">Epingler cette synthese</button>
+              <button className="text-[8px] bg-white text-red-700 px-2 py-0.5 rounded-full font-medium border border-red-200 cursor-pointer hover:bg-red-50">Relancer un 5 Pourquoi</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <button className="text-[9px] bg-red-600 text-white px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-red-700">Creuser cette cause</button>
+        <button className="text-[9px] bg-white border border-red-200 text-red-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-red-50">Pivoter l'analyse</button>
+        <button className="text-[9px] bg-white border border-red-200 text-red-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-red-50">Synthese des causes</button>
+        <button className="text-[9px] bg-white border border-red-200 text-red-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-red-50">Challenger la conclusion</button>
+        <button className="text-[9px] bg-white border border-red-200 text-red-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-red-50">Combiner avec le brainstorm</button>
+      </div>
+    </div>
+  );
+}
+
+function MagDeepSearch() {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <Globe className="h-4 w-4 text-blue-600" />
+        <h3 className="text-sm font-bold text-gray-800">Deep Search \u2014 4 sources validees</h3>
+        <span className="text-[9px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium ml-auto">Recherche terminee</span>
+      </div>
+      <p className="text-[9px] text-gray-500">Sources externes trouvees pour valider les hypotheses du diagnostic. Chaque source a un score de pertinence.</p>
+      <div className="space-y-2">
+        {SPR_DEEP_SEARCH_SOURCES.map((src, i) => {
+          const Icon = src.icon;
+          return (
+            <div key={i} className="bg-white border border-blue-200 rounded-xl p-3 flex items-start gap-3 hover:shadow-sm transition-shadow cursor-pointer">
+              <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+                <Icon className="h-4 w-4 text-blue-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-gray-800">{src.title}</p>
+                <p className="text-[9px] text-gray-600 mt-0.5">{src.detail}</p>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
+                  <span className="text-[9px] font-bold text-blue-600">{src.score}%</span>
+                </div>
+                <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <button className="text-[9px] bg-blue-600 text-white px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-blue-700">Approfondir une source</button>
+        <button className="text-[9px] bg-white border border-blue-200 text-blue-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-blue-50">Relancer la recherche</button>
+        <button className="text-[9px] bg-white border border-blue-200 text-blue-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-blue-50">Combiner les sources</button>
+        <button className="text-[9px] bg-white border border-blue-200 text-blue-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-blue-50">Synthese des donnees</button>
+        <button className="text-[9px] bg-white border border-blue-200 text-blue-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-blue-50">Extraire les chiffres cles</button>
+      </div>
+    </div>
+  );
+}
+
+function MagSyntheseRecherche() {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <Layers className="h-4 w-4 text-blue-600" />
+        <h3 className="text-sm font-bold text-gray-800">Synthese des recherches \u2014 Consolidation</h3>
+        <span className="text-[9px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium ml-auto">Tous les resultats</span>
+      </div>
+      <p className="text-[9px] text-gray-500">Consolidation du Deep Search, des 5 Pourquoi et du brainstorm bonifie en 3 constats actionnables.</p>
+
+      <div className="space-y-2">
+        <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider flex items-center gap-1">
+          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Constats valides (3)
+        </p>
+        {[
+          { id: 1, text: "Le marche est pret (MESI + CEFRIO confirment): 72% des PME sous-investissent en marketing digital", score: 94 },
+          { id: 2, text: "Le messaging technique = cause racine du faible taux de conversion (1.2%)", score: 91 },
+          { id: 3, text: "Le programme referral est le quick win le plus rentable (ROI 4.2x confirme par benchmark)", score: 87 },
+        ].map(c => (
+          <div key={c.id} className="bg-white border border-emerald-200 rounded-lg p-3 flex items-start gap-3">
+            <span className="shrink-0 w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[9px] font-bold">{c.id}</span>
+            <p className="text-[9px] text-gray-700 flex-1">{c.text}</p>
+            <span className="text-[9px] font-bold text-emerald-600 shrink-0">{c.score}%</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="space-y-2">
+        <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider flex items-center gap-1">
+          <Search className="h-3.5 w-3.5 text-amber-500" /> Hypotheses a verifier (2)
+        </p>
+        {[
+          { text: "Le chatbot AI peut reellement tripler la conversion (besoin A/B test)", action: "Lancer un test" },
+          { text: "Le contenu LinkedIn educatif va generer des leads qualifies (3 mois minimum)", action: "Definir les KPIs" },
+        ].map((h, i) => (
+          <div key={i} className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center gap-3">
+            <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+            <p className="text-[9px] text-gray-700 flex-1">{h.text}</p>
+            <button className="text-[8px] bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-amber-300 shrink-0">{h.action}</button>
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-center gap-3">
+        <AlertTriangle className="h-4 w-4 text-red-500 shrink-0" />
+        <div className="flex-1">
+          <p className="text-[9px] font-bold text-red-800">Risque identifie</p>
+          <p className="text-[9px] text-red-700">Timeline Q2 agressive pour tout deployer \u2014 Tim recommande Q2+Q3</p>
+        </div>
+        <button className="text-[8px] bg-red-200 text-red-800 px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-red-300 shrink-0">Mitiger</button>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <button className="text-[9px] bg-blue-600 text-white px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-blue-700">Challenger ces conclusions</button>
+        <button className="text-[9px] bg-white border border-blue-200 text-blue-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-blue-50">Relancer le Deep Search</button>
+        <button className="text-[9px] bg-white border border-blue-200 text-blue-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-blue-50">Combiner avec d'autres donnees</button>
+        <button className="text-[9px] bg-white border border-blue-200 text-blue-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-blue-50">Exporter la synthese</button>
+      </div>
+    </div>
+  );
+}
+
+function MagChallenge() {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <AlertTriangle className="h-4 w-4 text-amber-600" />
+        <h3 className="text-sm font-bold text-gray-800">Challenge / Defense</h3>
+      </div>
+      <div className="bg-white border-2 border-amber-300 rounded-xl overflow-hidden">
+        <div className="bg-amber-50 px-4 py-2 border-b border-amber-200 flex items-center gap-2">
+          <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
+          <span className="text-xs font-bold text-amber-800">Challenge: Budget trop agressif (8K$/mois)</span>
+        </div>
+        <div className="p-4 space-y-3">
+          <div className="flex items-start gap-3">
+            <BotAvatar code="CFOB" size="sm" />
+            <div className="flex-1 bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+              <p className="text-xs text-gray-700">Defense par <span className="font-bold text-emerald-700">Frank (CFO)</span>:</p>
+              <p className="text-[9px] text-gray-600 mt-1">Le programme referral seul coute 1,200$/mois avec un ROI de 4.2x. Plan revise a 3,800$/mois pour un ROI de 3.6x. Conservateur et validable en Q2.</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <div className="text-center bg-white border border-gray-200 rounded-lg p-2">
+              <p className="text-lg font-extrabold text-emerald-600">3.6x</p>
+              <p className="text-[9px] text-gray-500">ROI projete</p>
+            </div>
+            <div className="text-center bg-white border border-gray-200 rounded-lg p-2">
+              <p className="text-lg font-extrabold text-blue-600">3,800$</p>
+              <p className="text-[9px] text-gray-500">/mois revise</p>
+            </div>
+            <div className="text-center bg-white border border-gray-200 rounded-lg p-2">
+              <p className="text-lg font-extrabold text-amber-600">-53%</p>
+              <p className="text-[9px] text-gray-500">vs plan initial</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <button className="text-[9px] bg-emerald-600 text-white px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-emerald-700">Accepter le plan revise</button>
+        <button className="text-[9px] bg-white border border-amber-200 text-amber-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-amber-50">Re-challenger</button>
+        <button className="text-[9px] bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-gray-50">Demander un 2e avis</button>
+        <button className="text-[9px] bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-gray-50">Synthese des arguments</button>
+      </div>
+    </div>
+  );
+}
+
+function MagPreRapport() {
+  const [activeAction, setActiveAction] = useState<{ sectionId: number; action: string } | null>(null);
+  const [pinnedSection, setPinnedSection] = useState<number | null>(null);
+  const sectionsFilled = SPR_REPORT_SECTIONS.map(s => s.id);
+
+  const APPROFONDIR_RESULTS: Record<number, { bot: string; expanded: string; data: string[] }> = {
+    2: {
+      bot: "CEOB",
+      expanded: "Analyse approfondie des 3 tensions: Le cout d'acquisition de 780$/lead est 2.3x le benchmark SaaS B2B (340$). La conversion de 1.2% est critique \u2014 la moyenne secteur est 2.8%. La dependance au bouche-a-oreille (65%) rend le pipeline fragile et imprevisible.",
+      data: ["CAC: 780$ vs 340$ benchmark (-56% a atteindre)", "Conversion: 1.2% vs 2.8% secteur (+133% requis)", "Pipeline: 65% referral = risque concentration"],
+    },
+    3: {
+      bot: "CMOB",
+      expanded: "Chaque perspective apporte un axe complementaire. Mathilde cible le messaging (ROI > tech), Frank optimise l'allocation budget, Tim identifie les leviers techniques. Les 3 convergent sur un point: le contenu doit parler resultats, pas features.",
+      data: ["Messaging: 0 mention ROI sur le site actuel", "Budget: 7,800$/mois en salons (65%), 0$/mois en digital", "Tech: chatbot AI = conversion 3-4% (vs 1.2% actuel)"],
+    },
+  };
+
+  const REFORMULER_RESULTS: Record<number, { before: string; after: string; bot: string }> = {
+    2: {
+      before: "3 tensions identifiees: cout acquisition eleve (780$/lead), faible conversion site web (1.2%), pipeline trop dependant du bouche-a-oreille (65%).",
+      after: "Le pipeline marketing presente 3 failles structurelles: un cout d'acquisition 2.3x au-dessus du benchmark (780$ vs 340$), un tunnel de conversion defaillant (1.2% vs 2.8% secteur), et une dependance critique au bouche-a-oreille (65%) qui fragilise la previsibilite.",
+      bot: "CEOB",
+    },
+    5: {
+      before: "Cause racine: le messaging actuel parle de technologie, pas de resultats business. Les PME ne se reconnaissent pas.",
+      after: "La cause fondamentale est un desalignement entre le discours (features technologiques) et ce que les decideurs PME recherchent (ROI mesurable, temps gagne, risques reduits). Ce gap messaging \u2192 attentes client explique 80% de la perte de leads qualifies.",
+      bot: "CMOB",
+    },
+  };
+
+  const handleAction = (sectionId: number, action: string) => {
+    if (activeAction?.sectionId === sectionId && activeAction?.action === action) {
+      setActiveAction(null);
+    } else {
+      setActiveAction({ sectionId, action });
+    }
+  };
+
+  const handlePin = (sectionId: number) => {
+    setPinnedSection(sectionId);
+    setTimeout(() => setPinnedSection(null), 2000);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <FileText className="h-4 w-4 text-red-600" />
+        <h3 className="text-sm font-bold text-gray-800">Pre-rapport \u2014 Analyse Marketing Q2</h3>
+        <span className="text-[9px] text-gray-500 ml-auto">{sectionsFilled.length} / {SPR_REPORT_SECTIONS.length} sections</span>
+      </div>
+
+      <div className="flex gap-4">
+        {/* TOC sidebar */}
+        <div className="w-44 shrink-0 space-y-1">
+          <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-2">Table des matieres</p>
+          {SPR_REPORT_SECTIONS.map(s => {
+            const filled = sectionsFilled.includes(s.id);
+            const isActive = activeAction?.sectionId === s.id;
+            return (
+              <div key={s.id} className={cn("flex items-center gap-1.5 text-[9px] px-2 py-1 rounded cursor-pointer transition-all",
+                isActive ? "bg-red-100 text-red-700 font-medium ring-1 ring-red-300" :
+                filled ? "bg-green-50 text-green-700 font-medium" : "text-gray-400 hover:bg-gray-50",
+                pinnedSection === s.id ? "animate-pulse ring-2 ring-blue-400" : ""
+              )}>
+                {filled ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" /> : <div className="w-3.5 h-3.5 rounded-full border border-gray-300 shrink-0" />}
+                <span className="truncate">{s.id}. {s.title}</span>
+              </div>
+            );
+          })}
+          <div className="mt-3 text-[9px] text-gray-500 px-2">
+            <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+              <div className="h-full bg-red-500 rounded-full transition-all" style={{ width: `${(sectionsFilled.length / SPR_REPORT_SECTIONS.length) * 100}%` }} />
+            </div>
+            <span className="mt-1 block">{Math.round((sectionsFilled.length / SPR_REPORT_SECTIONS.length) * 100)}% complet</span>
+          </div>
+
+          <div className="mt-3 pt-2 border-t border-gray-200 space-y-1">
+            <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-1">Actions</p>
+            {[
+              { label: "Re-synthetiser tout", icon: RefreshCw },
+              { label: "Reorganiser les sections", icon: Layers },
+              { label: "Fusionner 2 sections", icon: Zap },
+              { label: "Ajouter une section", icon: Lightbulb },
+            ].map(a => (
+              <button key={a.label} className="w-full flex items-center gap-1.5 text-[8px] text-gray-500 hover:text-red-600 hover:bg-red-50 px-2 py-1 rounded cursor-pointer transition-colors text-left">
+                <a.icon className="h-3.5 w-3.5 shrink-0" /> {a.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        {/* Content */}
+        <div className="flex-1 space-y-3">
+          {SPR_REPORT_SECTIONS.filter(s => sectionsFilled.includes(s.id)).map(s => (
+            <div key={s.id} className={cn("border-l-[3px] rounded-r-lg px-3 py-2.5 group transition-all",
+              activeAction?.sectionId === s.id ? "border-red-500 bg-red-50 ring-1 ring-red-200" : "border-red-400 bg-red-50/50",
+              pinnedSection === s.id ? "ring-2 ring-blue-400 animate-pulse" : ""
+            )}>
+              <div className="flex items-center gap-2 mb-1">
+                <h4 className="text-[9px] font-bold text-red-700">{s.id}. {s.title}</h4>
+                <span className="text-[7px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded ml-auto">
+                  {s.id <= 2 ? "CarlOS" : s.id === 3 ? "Multi-bot" : s.id === 4 ? "Brainstorm" : s.id === 5 ? "5 Pourquoi" : s.id === 6 ? "Deep Search" : s.id === 7 ? "Frank" : "CarlOS"}
+                </span>
+              </div>
+              <p className="text-[9px] text-gray-700 leading-relaxed">{s.content}</p>
+
+              <div className="flex flex-wrap gap-1.5 mt-2 opacity-70 group-hover:opacity-100 transition-opacity">
+                <button onClick={() => handlePin(s.id)}
+                  className={cn("text-[8px] font-medium cursor-pointer flex items-center gap-1 rounded-full px-2 py-0.5 transition-colors",
+                    pinnedSection === s.id ? "text-blue-700 bg-blue-100 border border-blue-300" : "text-red-600 hover:text-red-700 bg-white border border-red-200 hover:bg-red-50"
+                  )}>
+                  <Pin className="h-3.5 w-3.5" /> {pinnedSection === s.id ? "Epingle!" : "Epingler"}
+                </button>
+                <button onClick={() => handleAction(s.id, "approfondir")}
+                  className={cn("text-[8px] font-medium cursor-pointer flex items-center gap-1 rounded-full px-2 py-0.5 transition-colors",
+                    activeAction?.sectionId === s.id && activeAction?.action === "approfondir" ? "text-violet-700 bg-violet-100 border border-violet-300" : "text-gray-500 hover:text-gray-700 bg-white border border-gray-200 hover:bg-gray-50"
+                  )}>
+                  <BookOpen className="h-3.5 w-3.5" /> Approfondir
+                </button>
+                <button onClick={() => handleAction(s.id, "reformuler")}
+                  className={cn("text-[8px] font-medium cursor-pointer flex items-center gap-1 rounded-full px-2 py-0.5 transition-colors",
+                    activeAction?.sectionId === s.id && activeAction?.action === "reformuler" ? "text-amber-700 bg-amber-100 border border-amber-300" : "text-gray-500 hover:text-gray-700 bg-white border border-gray-200 hover:bg-gray-50"
+                  )}>
+                  <RefreshCw className="h-3.5 w-3.5" /> Reformuler
+                </button>
+                <button className="text-[8px] text-gray-500 hover:text-gray-700 font-medium cursor-pointer flex items-center gap-1 bg-white border border-gray-200 rounded-full px-2 py-0.5 hover:bg-gray-50">
+                  <AlertTriangle className="h-3.5 w-3.5" /> Challenger
+                </button>
+                <button className="text-[8px] text-gray-500 hover:text-gray-700 font-medium cursor-pointer flex items-center gap-1 bg-white border border-gray-200 rounded-full px-2 py-0.5 hover:bg-gray-50">
+                  <Layers className="h-3.5 w-3.5" /> Fusionner
+                </button>
+              </div>
+
+              {/* APPROFONDIR result */}
+              {activeAction?.sectionId === s.id && activeAction?.action === "approfondir" && (
+                <div className="mt-3 border-t border-red-200 pt-3 space-y-2">
+                  {APPROFONDIR_RESULTS[s.id] ? (
+                    <>
+                      <div className="flex items-center gap-2 mb-1">
+                        <BotAvatar code={APPROFONDIR_RESULTS[s.id].bot} size="sm" />
+                        <span className="text-[8px] font-bold text-violet-700">Analyse approfondie par {BOT_COLORS[APPROFONDIR_RESULTS[s.id].bot]?.name}</span>
+                        <div className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse ml-auto" />
+                      </div>
+                      <p className="text-[9px] text-gray-700 leading-relaxed bg-violet-50 rounded-lg px-3 py-2 border border-violet-200">
+                        {APPROFONDIR_RESULTS[s.id].expanded}
+                      </p>
+                      <div className="space-y-1">
+                        {APPROFONDIR_RESULTS[s.id].data.map((d, j) => (
+                          <div key={j} className="flex items-center gap-2 text-[8px] text-violet-700 bg-white rounded px-2.5 py-1 border border-violet-100">
+                            <BarChart3 className="h-3.5 w-3.5 text-violet-400 shrink-0" />
+                            <span>{d}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex gap-1.5">
+                        <button className="text-[8px] bg-violet-600 text-white px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-violet-700">Integrer au rapport</button>
+                        <button className="text-[8px] bg-white text-violet-700 px-2 py-0.5 rounded-full font-medium border border-violet-200 cursor-pointer hover:bg-violet-50">Encore plus profond</button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex items-center gap-2 bg-violet-50 rounded-lg px-3 py-2 border border-violet-200">
+                      <BotAvatar code="CEOB" size="sm" />
+                      <div className="flex-1">
+                        <p className="text-[8px] text-violet-700 font-medium">CarlOS analyse cette section en profondeur...</p>
+                        <div className="flex gap-1 mt-1">
+                          <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                          <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                          <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* REFORMULER result */}
+              {activeAction?.sectionId === s.id && activeAction?.action === "reformuler" && (
+                <div className="mt-3 border-t border-red-200 pt-3 space-y-2">
+                  {REFORMULER_RESULTS[s.id] ? (
+                    <>
+                      <div className="flex items-center gap-2 mb-1">
+                        <BotAvatar code={REFORMULER_RESULTS[s.id].bot} size="sm" />
+                        <span className="text-[8px] font-bold text-amber-700">Reformulation par {BOT_COLORS[REFORMULER_RESULTS[s.id].bot]?.name}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-2.5">
+                          <p className="text-[7px] text-gray-400 font-bold uppercase mb-1">Avant</p>
+                          <p className="text-[8px] text-gray-500 line-through leading-relaxed">{REFORMULER_RESULTS[s.id].before}</p>
+                        </div>
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-2.5">
+                          <p className="text-[7px] text-amber-600 font-bold uppercase mb-1">Apres</p>
+                          <p className="text-[8px] text-amber-800 leading-relaxed">{REFORMULER_RESULTS[s.id].after}</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-1.5">
+                        <button className="text-[8px] bg-amber-600 text-white px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-amber-700">Appliquer la reformulation</button>
+                        <button className="text-[8px] bg-white text-amber-700 px-2 py-0.5 rounded-full font-medium border border-amber-200 cursor-pointer hover:bg-amber-50">Autre version</button>
+                        <button onClick={() => setActiveAction(null)} className="text-[8px] bg-white text-gray-500 px-2 py-0.5 rounded-full font-medium border border-gray-200 cursor-pointer hover:bg-gray-50">Garder l'original</button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex items-center gap-2 bg-amber-50 rounded-lg px-3 py-2 border border-amber-200">
+                      <BotAvatar code="CEOB" size="sm" />
+                      <div className="flex-1">
+                        <p className="text-[8px] text-amber-700 font-medium">CarlOS reformule cette section...</p>
+                        <div className="flex gap-1 mt-1">
+                          <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                          <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                          <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MagTransition() {
+  return (
+    <div className="py-4">
+      <div className="bg-gradient-to-r from-amber-100 to-yellow-100 border-2 border-amber-300 rounded-xl px-6 py-6 text-center">
+        <div className="flex items-center justify-center gap-4 mb-4">
+          <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center">
+            <Brain className="h-5 w-5 text-white" />
+          </div>
+          <ArrowRight className="h-5 w-5 text-amber-600" />
+          <div className="w-10 h-10 rounded-full bg-amber-500 flex items-center justify-center animate-pulse">
+            <Target className="h-5 w-5 text-white" />
+          </div>
+        </div>
+        <p className="text-sm font-bold text-amber-800">Pret pour Creer</p>
+        <p className="text-xs text-amber-600 mt-1">8 sections d'analyse sauvegardees \u2014 Phase Analyse completee</p>
+        <div className="mt-4 flex gap-2 justify-center">
+          <button className="text-xs bg-amber-600 text-white px-4 py-2 rounded-full font-bold cursor-pointer hover:bg-amber-700">Passer en mode Creer</button>
+          <button className="text-xs bg-white text-amber-700 px-4 py-2 rounded-full font-bold border border-amber-300 cursor-pointer hover:bg-amber-50">Cristalliser d'abord</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ========== REFLEXION MAGAZINE PAGE (right panel \u2014 stacked sections from SimPhaseReflexion) ==========
+
+function ReflexionMagazine({ stage, context }: { stage: number; context: string | null }) {
+  return (
+    <div className="max-w-4xl mx-auto px-6 py-4 space-y-8 pb-12">
+      {/* Empty state */}
+      {stage < 1 && (
+        <div className="text-center py-12">
+          <Brain className="h-8 w-8 text-orange-300 mx-auto mb-3" />
+          <p className="text-sm text-gray-400">Le diagnostic commence...</p>
+          <p className="text-[9px] text-gray-300">Les sections apparaitront au fur et a mesure de l'analyse</p>
+        </div>
+      )}
+      {/* Diagnostic \u2014 appears at stage 1 */}
+      {stage >= 1 && <MagDiagnostic />}
+      {/* Brainstorm \u2014 appears at stage 7 */}
+      {stage >= 7 && <MagBrainstorm />}
+      {/* Synthese brainstorm \u2014 appears at stage 8 */}
+      {stage >= 8 && <MagSyntheseBrainstorm />}
+      {/* 5 Pourquoi \u2014 appears at stage 9 */}
+      {stage >= 9 && <MagCinqPourquoi />}
+      {/* Deep Search \u2014 appears at stage 10 */}
+      {stage >= 10 && <MagDeepSearch />}
+      {/* Synthese recherche \u2014 appears at stage 11 */}
+      {stage >= 11 && <MagSyntheseRecherche />}
+      {/* Challenge \u2014 appears at stage 12 */}
+      {stage >= 12 && <MagChallenge />}
+      {/* Pre-rapport \u2014 appears at stage 13 */}
+      {stage >= 13 && <MagPreRapport />}
+      {/* Transition \u2014 appears at stage 15 */}
+      {stage >= 15 && <MagTransition />}
+    </div>
+  );
+}
+
+
+// ========== CHANTIER DRILL-DOWN DATA ==========
+
+const CHANTIER_DRILLDOWN = [
+  {
+    name: "Transformation Numérique", bot: "CTOB", botName: "Tim", progress: 72, bar: "bg-blue-500",
+    projets: [
+      { name: "Site web corporatif", progress: 85, missions: ["Maquette V1", "Contenu rédactionnel", "Tests QA", "SEO technique"] },
+      { name: "CRM intégration", progress: 45, missions: ["Audit besoins", "Migration données", "Formation équipe"] },
+      { name: "Automatisation usine", progress: 60, missions: ["Capteurs IoT", "Dashboard temps réel", "Alertes automatisées"] },
+    ],
+  },
+  {
+    name: "Expansion Marché US", bot: "CSOB", botName: "Simone", progress: 45, bar: "bg-indigo-500",
+    projets: [
+      { name: "Étude de marché", progress: 90, missions: ["Analyse concurrence", "Segments cibles", "Positionnement prix"] },
+      { name: "Partenariats distribution", progress: 30, missions: ["Prospection", "Négociations", "Contrats"] },
+    ],
+  },
+  {
+    name: "Optimisation Production", bot: "CPOB", botName: "Paco", progress: 88, bar: "bg-emerald-500",
+    projets: [
+      { name: "Ligne A — Lean", progress: 95, missions: ["5S implantation", "Kaizen sprint", "Mesure OEE"] },
+      { name: "Maintenance prédictive", progress: 70, missions: ["Collecte données", "Modèle ML", "Alertes prédictives"] },
+    ],
+  },
+];
+
+function ChantierDrillDown({ phase }: { phase: PhaseKey }) {
+  const pc = PC[phase];
+  const [openChantier, setOpenChantier] = useState(0);
+  const [openProjet, setOpenProjet] = useState(0);
+
+  return (
+    <div className="max-w-4xl mx-auto px-6 py-4 space-y-3">
+      {/* En-tete de phase */}
+      <div className={cn("rounded-xl border overflow-hidden shadow-sm", pc.border)}>
+        <div className={cn("flex items-center gap-3 px-4 py-3", pc.bg)}>
+          <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", pc.dot)}>
+            <pc.Icon className="h-4 w-4 text-white" />
+          </div>
+          <div className="flex-1">
+            <p className={cn("text-sm font-bold", pc.text)}>{pc.label}</p>
+            <p className="text-[9px] text-gray-500">
+              {phase === "reflexion" ? "Chantiers en phase d'analyse — Brain Team actif" :
+               phase === "creation" ? "Chantiers en conception — Plans et documents" :
+               phase === "execution" ? "Chantiers en exécution — Protocole COMMAND actif" :
+               "Mesure des résultats et apprentissages"}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Chantiers drill-down */}
+      {CHANTIER_DRILLDOWN.map((ch, ci) => (
+        <div key={ci} className={cn("rounded-xl border overflow-hidden shadow-sm bg-white", openChantier === ci ? "border-blue-200" : "border-gray-200")}>
+          <button
+            onClick={() => setOpenChantier(ci)}
+            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors"
+          >
+            <BotAvatar code={ch.bot} size="sm" />
+            <div className="flex-1 min-w-0 text-left">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-gray-800 truncate">{ch.name}</span>
+                <span className="text-[9px] text-gray-400">{ch.botName}</span>
+              </div>
+              <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mt-1 max-w-[200px]">
+                <div className={cn("h-full rounded-full", ch.bar)} style={{ width: `${ch.progress}%` }} />
+              </div>
+            </div>
+            <span className="text-xs font-bold text-gray-500">{ch.progress}%</span>
+            <ChevronRight className={cn("h-4 w-4 text-gray-400 transition-transform", openChantier === ci && "rotate-90")} />
+          </button>
+
+          {openChantier === ci && (
+            <div className="border-t border-gray-200">
+              {ch.projets.map((proj, pi) => (
+                <div key={pi} className="border-b border-gray-100 last:border-0">
+                  <button
+                    onClick={() => setOpenProjet(pi)}
+                    className="flex items-center gap-2 w-full px-4 py-2.5 pl-8 text-left cursor-pointer hover:bg-gray-50 transition-colors"
+                  >
+                    <Target className="h-3.5 w-3.5 text-indigo-400 shrink-0" />
+                    <span className="text-[11px] text-gray-700 font-medium truncate flex-1">{proj.name}</span>
+                    <span className="text-[9px] text-gray-400">{proj.progress}%</span>
+                    <ChevronRight className={cn("h-3.5 w-3.5 text-gray-300 transition-transform", openChantier === ci && openProjet === pi && "rotate-90")} />
+                  </button>
+
+                  {openProjet === pi && (
+                    <div className="bg-gray-50/50">
+                      {proj.missions.map((m, mi) => (
+                        <div key={mi} className="flex items-center gap-2 px-4 py-2 pl-14 hover:bg-gray-100 transition-colors">
+                          <FileText className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                          <span className="text-[11px] text-gray-600 flex-1">{m}</span>
+                          {mi === 0 && <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ========== ICON CATALOG V2 (Carl vocal 13h35 + msg: icônes réelles de l'app + CTA bulles + simulation) ==========
+
+type IconEntry = { Icon: React.ElementType; label: string; usage: string; color?: string };
+type IconTier = {
+  tier: string;
+  tierColor: string;
+  tierBg: string;
+  tierDesc: string;
+  sections: { title: string; icons: IconEntry[] }[];
+};
+
+const ICON_TIERS: IconTier[] = [
+  // ===================== A. PLATEFORME — PRIMAIRE (données réelles du code déployé) =====================
+  {
+    tier: "PRIMAIRE",
+    tierColor: "text-red-700",
+    tierBg: "bg-red-50 border-red-200",
+    tierDesc: "Sections principales de la plateforme — Icônes RÉELLES telles que déployées sur dev.usinebleue.ai",
+    sections: [
+      {
+        title: "Sidebar — Sections de navigation",
+        icons: [
+          { Icon: Building2, label: "Mon Département", usage: "Section entreprise (sidebar)", color: "text-blue-600" },
+          { Icon: DoorOpen, label: "Mes Salles", usage: "Think Room, War Room, Board Room", color: "text-amber-500" },
+          { Icon: Cpu, label: "Tim — CTO", usage: "Mon Équipe AI (sidebar)", color: "text-violet-500" },
+          { Icon: DollarSign, label: "Frank — CFO", usage: "Mon Équipe AI (sidebar)", color: "text-emerald-500" },
+          { Icon: Megaphone, label: "Mathilde — CMO", usage: "Mon Équipe AI (sidebar)", color: "text-pink-500" },
+          { Icon: Target, label: "Simone — CSO", usage: "Mon Équipe AI (sidebar)", color: "text-red-500" },
+          { Icon: Settings, label: "Olivier — COO", usage: "Mon Équipe AI (sidebar)", color: "text-orange-500" },
+          { Icon: Factory, label: "Paco — CPO", usage: "Mon Équipe AI (sidebar)", color: "text-slate-500" },
+          { Icon: Users, label: "Hélène — CHRO", usage: "Mon Équipe AI (sidebar)", color: "text-teal-500" },
+          { Icon: Lightbulb, label: "Inès — CINO", usage: "Mon Équipe AI (sidebar)", color: "text-rose-500" },
+          { Icon: TrendingUp, label: "Rich — CRO", usage: "Mon Équipe AI (sidebar)", color: "text-amber-500" },
+          { Icon: Scale, label: "Loulou — CLO", usage: "Mon Équipe AI (sidebar)", color: "text-indigo-500" },
+          { Icon: ShieldCheck, label: "Sébastien — CISO", usage: "Mon Équipe AI (sidebar)", color: "text-zinc-500" },
+        ],
+      },
+      {
+        title: "Hiérarchie officielle — Drill-down + Blueprint tabs",
+        icons: [
+          { Icon: Building2, label: "Sommaire", usage: "Blueprint tab 1", color: "text-gray-700" },
+          { Icon: Target, label: "Objectifs", usage: "Blueprint tab 2", color: "text-gray-700" },
+          { Icon: Layers, label: "Vue d'ensemble", usage: "Blueprint tab 3", color: "text-gray-700" },
+          { Icon: Flame, label: "Chantiers", usage: "Niveau 1 + Blueprint tab — ambre", color: "text-amber-600" },
+          { Icon: Package, label: "Projets", usage: "Niveau 2 + Blueprint tab — émeraude", color: "text-emerald-600" },
+          { Icon: ListChecks, label: "Missions", usage: "Niveau 3 + Blueprint tab — bleu", color: "text-blue-600" },
+          { Icon: CheckCircle2, label: "Tâches", usage: "Niveau 4 + Blueprint tab — vert", color: "text-green-600" },
+          { Icon: Calendar, label: "Timeline", usage: "Blueprint tab 8", color: "text-gray-700" },
+          { Icon: BookOpen, label: "Catalogue", usage: "Blueprint tab 9", color: "text-gray-700" },
+          { Icon: Users, label: "Équipe", usage: "Blueprint tab 10", color: "text-gray-700" },
+        ],
+      },
+      {
+        title: "Département — Sections communes (headers gradient)",
+        icons: [
+          { Icon: MessageSquare, label: "Discussions", usage: "Header violet-700", color: "text-violet-600" },
+          { Icon: FileText, label: "Documents", usage: "Header indigo-700", color: "text-indigo-600" },
+          { Icon: HeartPulse, label: "Santé", usage: "Header pink-700", color: "text-pink-600" },
+          { Icon: Stethoscope, label: "Diagnostics", usage: "Bloc santé département", color: "text-orange-600" },
+          { Icon: Newspaper, label: "Veille", usage: "Bloc veille par département", color: "text-indigo-500" },
+          { Icon: CalendarDays, label: "Agenda", usage: "Bloc agenda par département", color: "text-cyan-500" },
+          { Icon: LineChart, label: "Métriques", usage: "Bloc indicateurs/métriques", color: "text-amber-500" },
+          { Icon: BarChart3, label: "Benchmarks", usage: "Bloc benchmarks par département", color: "text-slate-500" },
+        ],
+      },
+      {
+        title: "Master GHML — Icônes des 31 pages",
+        icons: [
+          { Icon: BookOpen, label: "Bible Visuelle", usage: "FE.1 Bible officielle", color: "text-emerald-500" },
+          { Icon: Sparkles, label: "Lab Animations", usage: "FE.4 Animations showcase", color: "text-amber-500" },
+          { Icon: Route, label: "Atlas des Flows", usage: "FE.6 Parcours utilisateur", color: "text-cyan-600" },
+          { Icon: Server, label: "Bible Technique", usage: "BE.1 Architecture backend", color: "text-emerald-500" },
+          { Icon: Atom, label: "Bible GHML", usage: "BE.2 Langage BTML complet", color: "text-violet-500" },
+          { Icon: Radio, label: "Stack Communication", usage: "BE.3 LiveKit/Telnyx/ElevenLabs", color: "text-teal-500" },
+          { Icon: GraduationCap, label: "Entraînement", usage: "BE.5 Fine-tuning agents", color: "text-purple-500" },
+          { Icon: Bot, label: "Cortex Robot", usage: "BE.6 Robot humanoïde", color: "text-gray-700" },
+          { Icon: Gem, label: "Mine d'Or & Data", usage: "BE.7 Données Usine Bleue", color: "text-yellow-500" },
+          { Icon: EyeOff, label: "Angles Morts", usage: "RD.6 Risques identifiés", color: "text-red-600" },
+          { Icon: Landmark, label: "Fonds & Investissement", usage: "SA.2 Stratégie financière", color: "text-emerald-600" },
+        ],
+      },
+    ],
+  },
+  // ===================== B. PLATEFORME — SECONDAIRE =====================
+  {
+    tier: "SECONDAIRE",
+    tierColor: "text-amber-700",
+    tierBg: "bg-amber-50 border-amber-200",
+    tierDesc: "CTA des bulles de chat, modes de réflexion, tabs Blueprint — Icônes fonctionnelles",
+    sections: [
+      {
+        title: "CTA — Boutons dans les bulles de chat",
+        icons: [
+          { Icon: Copy, label: "Copier", usage: "Copier le message (footer bulle)", color: "text-gray-500" },
+          { Icon: Bookmark, label: "Cristalliser", usage: "Sauvegarder un message clé", color: "text-amber-500" },
+          { Icon: Clock, label: "Parker", usage: "Parker/sauvegarder le fil", color: "text-gray-500" },
+          { Icon: Users, label: "Consulter", usage: "Ouvrir dropdown sélection bot", color: "text-blue-500" },
+          { Icon: Swords, label: "Challenge", usage: "Lancer un débat contradictoire", color: "text-orange-500" },
+          { Icon: Plus, label: "Nouveau fil", usage: "Créer une branche de discussion", color: "text-gray-500" },
+          { Icon: Pencil, label: "Modifier titre", usage: "Éditer le titre du fil", color: "text-gray-400" },
+          { Icon: Heart, label: "Sentiment", usage: "Réaction positive/appréciation", color: "text-pink-500" },
+          { Icon: ArrowRight, label: "Cascade", usage: "Navigation vers section suggérée", color: "text-blue-500" },
+        ],
+      },
+      {
+        title: "CTA — Barre de saisie (InputBar)",
+        icons: [
+          { Icon: Send, label: "Envoyer", usage: "Bouton bleu quand texte actif", color: "text-blue-600" },
+          { Icon: Paperclip, label: "Pièce jointe", usage: "Attacher un fichier", color: "text-gray-500" },
+          { Icon: Mic, label: "Vocal", usage: "Activer/désactiver le micro", color: "text-gray-500" },
+          { Icon: Phone, label: "Discussion", usage: "Appel vocal LiveKit", color: "text-blue-600" },
+          { Icon: Video, label: "Conférence", usage: "Vidéo Tavus/LiveKit", color: "text-emerald-600" },
+          { Icon: Glasses, label: "Vision", usage: "Ray-Ban Meta / Vision Live", color: "text-cyan-600" },
+        ],
+      },
+      {
+        title: "Modes de réflexion (8+1)",
+        icons: [
+          { Icon: Zap, label: "CREDO (Standard)", usage: "Mode par défaut", color: "text-blue-600" },
+          { Icon: Search, label: "Analyse", usage: "Analyse approfondie", color: "text-blue-500" },
+          { Icon: Lightbulb, label: "Brainstorm", usage: "Génération d'idées", color: "text-yellow-500" },
+          { Icon: Scale, label: "Décision", usage: "Prise de décision", color: "text-indigo-500" },
+          { Icon: AlertTriangle, label: "Crise", usage: "Gestion de crise", color: "text-red-500" },
+          { Icon: Target, label: "Stratégie", usage: "Planification stratégique", color: "text-green-500" },
+          { Icon: MessageSquare, label: "Débat", usage: "Argumentation contradictoire", color: "text-orange-500" },
+          { Icon: Sparkles, label: "Innovation", usage: "Disruption/innovation", color: "text-violet-500" },
+          { Icon: Brain, label: "Deep Resonance", usage: "Réflexion profonde", color: "text-purple-600" },
+        ],
+      },
+      {
+        title: "Thinking Animation (étapes dans les bulles)",
+        icons: [
+          { Icon: Users, label: "Assemblage équipe", usage: "Recrutement des bots pertinents", color: "text-blue-500" },
+          { Icon: Brain, label: "Idéation", usage: "Phase créative/cognitive", color: "text-purple-500" },
+          { Icon: Target, label: "Cadrage stratégique", usage: "Alignement objectifs", color: "text-green-500" },
+          { Icon: Scale, label: "Évaluation", usage: "Analyse des options", color: "text-indigo-500" },
+          { Icon: Cpu, label: "Plan d'action", usage: "Compilation COMMAND", color: "text-gray-700" },
+          { Icon: Loader2, label: "Chargement", usage: "Animation spin pendant traitement", color: "text-blue-400" },
+          { Icon: CheckCircle2, label: "Étape complétée", usage: "Confirmation visuelle verte", color: "text-green-500" },
+        ],
+      },
+      {
+        title: "Département — 13 Tabs + blocs spécialisés",
+        icons: [
+          { Icon: Layers, label: "Vue d'ensemble", usage: "Tab 1 — overview département", color: "text-gray-700" },
+          { Icon: Flame, label: "Chantiers", usage: "Tab 2 — liste chantiers ambre", color: "text-amber-600" },
+          { Icon: Package, label: "Projets", usage: "Tab 3 — projets émeraude", color: "text-emerald-600" },
+          { Icon: ListChecks, label: "Missions", usage: "Tab 4 — missions bleu", color: "text-blue-600" },
+          { Icon: CheckCircle2, label: "Tâches", usage: "Tab 5 — tâches vert", color: "text-green-600" },
+          { Icon: MessageSquare, label: "Discussions", usage: "Tab 6 — fils violet", color: "text-violet-600" },
+          { Icon: FileText, label: "Documents", usage: "Tab 7 — docs indigo", color: "text-indigo-600" },
+          { Icon: HeartPulse, label: "Santé", usage: "Tab 8 — diagnostics rose", color: "text-pink-600" },
+          { Icon: Stethoscope, label: "Diagnostic IA", usage: "Tab 9 — diagnostic orange", color: "text-orange-600" },
+          { Icon: Rocket, label: "Playbooks", usage: "Tab 10 — scénarios", color: "text-purple-600" },
+          { Icon: Bot, label: "Agent IA", usage: "Tab 11 — profil bot", color: "text-blue-600" },
+          { Icon: Crown, label: "Direction", usage: "Tab CEOB — CEO overview", color: "text-amber-500" },
+        ],
+      },
+      {
+        title: "Blocs KPI par département (icônes spécifiques)",
+        icons: [
+          { Icon: PiggyBank, label: "Budget", usage: "Bloc finance — Frank CFO", color: "text-emerald-500" },
+          { Icon: Receipt, label: "Factures", usage: "Bloc comptabilité", color: "text-gray-600" },
+          { Icon: Bug, label: "Bugs", usage: "Bloc tech — Tim CTO", color: "text-red-500" },
+          { Icon: Wrench, label: "Maintenance", usage: "Bloc production — Paco CPO", color: "text-slate-500" },
+          { Icon: ClipboardList, label: "Conformité", usage: "Bloc légal — Loulou CLO", color: "text-indigo-500" },
+          { Icon: Newspaper, label: "Veille", usage: "Bloc veille sectorielle", color: "text-blue-500" },
+          { Icon: FileBarChart, label: "Rapports", usage: "Bloc reporting", color: "text-gray-600" },
+          { Icon: LayoutGrid, label: "Grille", usage: "Vue mode grille documents", color: "text-gray-500" },
+          { Icon: List, label: "Liste", usage: "Vue mode liste", color: "text-gray-500" },
+          { Icon: Table2, label: "Table", usage: "Vue mode tableau", color: "text-gray-500" },
+        ],
+      },
+    ],
+  },
+  // ===================== C. PLATEFORME — TERTIAIRE =====================
+  {
+    tier: "TERTIAIRE",
+    tierColor: "text-gray-600",
+    tierBg: "bg-gray-50 border-gray-200",
+    tierDesc: "Icônes UI, utilitaires, et navigation — Réutilisables librement",
+    sections: [
+      {
+        title: "Navigation & flèches",
+        icons: [
+          { Icon: ChevronRight, label: "Naviguer", usage: "Drill-down / Suivant", color: "text-gray-400" },
+          { Icon: ChevronDown, label: "Expandre", usage: "Ouvrir dropdown / accordion", color: "text-gray-400" },
+          { Icon: ChevronUp, label: "Réduire", usage: "Fermer dropdown / accordion", color: "text-gray-400" },
+          { Icon: ArrowLeft, label: "Retour", usage: "Navigation arrière", color: "text-gray-500" },
+          { Icon: ArrowRight, label: "Aller à", usage: "Navigation avant / CTA", color: "text-blue-500" },
+          { Icon: X, label: "Fermer", usage: "Fermer modal / panel", color: "text-gray-400" },
+        ],
+      },
+      {
+        title: "Actions CRUD",
+        icons: [
+          { Icon: Plus, label: "Ajouter", usage: "Créer un nouvel élément", color: "text-blue-500" },
+          { Icon: Pencil, label: "Modifier", usage: "Éditer un élément", color: "text-gray-500" },
+          { Icon: Trash2, label: "Supprimer", usage: "Supprimer un élément", color: "text-red-500" },
+          { Icon: Filter, label: "Filtrer", usage: "Appliquer des filtres", color: "text-gray-500" },
+          { Icon: RefreshCw, label: "Rafraîchir", usage: "Recharger les données", color: "text-gray-500" },
+          { Icon: Search, label: "Chercher", usage: "Barre de recherche", color: "text-gray-400" },
+          { Icon: SortAsc, label: "Tri", usage: "Trier les éléments", color: "text-gray-500" },
+        ],
+      },
+      {
+        title: "États & indicateurs (Triangle du Feu)",
+        icons: [
+          { Icon: Flame, label: "Brûle", usage: "État urgent — 3+ piliers actifs", color: "text-red-500" },
+          { Icon: Clock, label: "Couve", usage: "État en surveillance — 2 piliers", color: "text-amber-500" },
+          { Icon: Lock, label: "Meurt", usage: "État bloqué — 1 pilier", color: "text-gray-400" },
+          { Icon: Activity, label: "Activité", usage: "Indicateur santé/live", color: "text-green-500" },
+          { Icon: TrendingUp, label: "Hausse", usage: "Tendance positive delta", color: "text-emerald-600" },
+          { Icon: TrendingDown, label: "Baisse", usage: "Tendance négative delta", color: "text-red-500" },
+          { Icon: ShieldAlert, label: "Alerte sécu", usage: "Notification sécurité", color: "text-red-600" },
+          { Icon: Inbox, label: "Vide", usage: "État vide / pas de données", color: "text-gray-300" },
+        ],
+      },
+      {
+        title: "Communication & média",
+        icons: [
+          { Icon: Phone, label: "Appel vocal", usage: "Démarrer appel LiveKit", color: "text-blue-600" },
+          { Icon: Video, label: "Vidéo", usage: "Conférence vidéo Tavus", color: "text-emerald-600" },
+          { Icon: Glasses, label: "Vision", usage: "Ray-Ban Meta / Vision Live", color: "text-cyan-600" },
+          { Icon: Mail, label: "Courriel", usage: "Notification email", color: "text-gray-500" },
+          { Icon: Bell, label: "Notification", usage: "Alerte / notification", color: "text-amber-500" },
+          { Icon: Link, label: "Lien", usage: "Connexion / URL", color: "text-blue-500" },
+          { Icon: Globe, label: "Web", usage: "Réseau / API externe", color: "text-amber-500" },
+        ],
+      },
+      {
+        title: "Business & contenu",
+        icons: [
+          { Icon: DollarSign, label: "Finance", usage: "Revenus / budgets", color: "text-emerald-600" },
+          { Icon: Briefcase, label: "Business", usage: "Affaires / entreprise", color: "text-gray-600" },
+          { Icon: CreditCard, label: "Facturation", usage: "Paiements / abonnement", color: "text-gray-600" },
+          { Icon: Coins, label: "Monnaie", usage: "Coûts / monétisation", color: "text-amber-500" },
+          { Icon: FileText, label: "Document", usage: "Fichiers & documents", color: "text-indigo-500" },
+          { Icon: Star, label: "Favoris", usage: "Évaluation / préférence", color: "text-yellow-500" },
+          { Icon: Calendar, label: "Agenda", usage: "Dates / événements", color: "text-cyan-500" },
+          { Icon: GitBranch, label: "Pipeline", usage: "Workflow / branches", color: "text-violet-500" },
+          { Icon: Play, label: "Démarrer", usage: "Lancer playbook / scénario", color: "text-green-500" },
+          { Icon: Monitor, label: "Écran", usage: "Interface / affichage", color: "text-gray-600" },
+        ],
+      },
+      {
+        title: "Réseau & Orbit9",
+        icons: [
+          { Icon: Handshake, label: "Partenariat", usage: "Jumelage Orbit9", color: "text-emerald-500" },
+          { Icon: Hexagon, label: "Cellule", usage: "Cellule trisociation", color: "text-violet-500" },
+          { Icon: Compass, label: "Explorer", usage: "Navigation / découverte", color: "text-cyan-500" },
+          { Icon: Trophy, label: "Classement", usage: "Récompenses / leaderboard", color: "text-amber-500" },
+          { Icon: Network, label: "Réseau", usage: "Connexions inter-entreprises", color: "text-blue-500" },
+          { Icon: GraduationCap, label: "Formation", usage: "Apprentissage / onboarding", color: "text-purple-500" },
+          { Icon: Library, label: "Bibliothèque", usage: "Catalogue de ressources", color: "text-indigo-500" },
+          { Icon: Atom, label: "BTML", usage: "Vue moléculaire BTML", color: "text-violet-500" },
+        ],
+      },
+    ],
+  },
+  // ===================== D. SIMULATION AMORCER — ICÔNES UTILISÉES ICI =====================
+  {
+    tier: "SIMULATION",
+    tierColor: "text-blue-700",
+    tierBg: "bg-blue-50 border-blue-200",
+    tierDesc: "Icônes spécifiquement utilisées dans cette simulation AMORCER",
+    sections: [
+      {
+        title: "7 phases AMORCER — Tabs principaux",
+        icons: [
+          { Icon: AlertTriangle, label: "A — Attention", usage: "Phase 1 — scan signaux critiques", color: "text-red-500" },
+          { Icon: Scale, label: "M — Modération", usage: "Phase 2 — filtrage priorisation", color: "text-pink-500" },
+          { Icon: Eye, label: "O — Observation", usage: "Phase 3 — vue d'ensemble", color: "text-blue-500" },
+          { Icon: Brain, label: "R — Réflexion", usage: "Phase 4 — analyse profonde", color: "text-orange-500" },
+          { Icon: Hammer, label: "C — Conception", usage: "Phase 5 — plans et solutions", color: "text-yellow-500" },
+          { Icon: Rocket, label: "E — Exécution", usage: "Phase 6 — protocole COMMAND", color: "text-green-500" },
+          { Icon: BarChart3, label: "R — Rétroaction", usage: "Phase 7 — mesure résultats", color: "text-emerald-500" },
+        ],
+      },
+      {
+        title: "Cockpit (panneau gauche SimulationFullPage)",
+        icons: [
+          { Icon: TowerControl, label: "Tour de contrôle", usage: "Bandeau principal cockpit", color: "text-gray-700" },
+          { Icon: AlertTriangle, label: "Attention", usage: "Bandeau alertes (rouge pastel)", color: "text-red-500" },
+          { Icon: Zap, label: "Département", usage: "Bandeau direction (UB_BLUE pastel)", color: "text-blue-600" },
+          { Icon: Flame, label: "Chantiers", usage: "Drill-down N1 — ambre", color: "text-amber-600" },
+          { Icon: Package, label: "Projets", usage: "Drill-down N2 — émeraude", color: "text-emerald-600" },
+          { Icon: ListChecks, label: "Missions", usage: "Drill-down N3 — bleu", color: "text-blue-600" },
+          { Icon: CheckCircle2, label: "Tâches", usage: "Drill-down N4 — vert", color: "text-green-500" },
+          { Icon: Bot, label: "Brain Team", usage: "Tab équipe AI (12 cartes)", color: "text-blue-600" },
+          { Icon: Users, label: "Humains", usage: "Tab équipe humaine (3 cartes)", color: "text-gray-600" },
+          { Icon: ArrowRight, label: "Aller", usage: "CTA 'Aller au département'", color: "text-blue-500" },
+          { Icon: MessageSquare, label: "Écrire", usage: "CTA 'Écrire un message'", color: "text-violet-500" },
+        ],
+      },
+      {
+        title: "Discussion (colonne chat sim)",
+        icons: [
+          { Icon: Send, label: "Envoyer", usage: "Bouton envoi (bleu quand actif)", color: "text-blue-600" },
+          { Icon: Plus, label: "Menu +", usage: "Menu contextuel attachments", color: "text-gray-400" },
+          { Icon: Paperclip, label: "Pièce jointe", usage: "Option dans menu +", color: "text-gray-500" },
+          { Icon: Globe, label: "Google Drive", usage: "Option dans menu +", color: "text-amber-500" },
+          { Icon: Zap, label: "GitHub", usage: "Option dans menu +", color: "text-gray-700" },
+          { Icon: Activity, label: "Connecteurs", usage: "Option dans menu + (API)", color: "text-indigo-500" },
+        ],
+      },
+      {
+        title: "UI navigation simulation",
+        icons: [
+          { Icon: Palette, label: "Catalogue icônes", usage: "Bouton ouverture ce catalogue", color: "text-gray-500" },
+          { Icon: Home, label: "Accueil", usage: "Breadcrumb racine", color: "text-gray-400" },
+          { Icon: ChevronRight, label: "Breadcrumb", usage: "Séparateur fil d'Ariane", color: "text-gray-300" },
+          { Icon: ChevronDown, label: "Expandre", usage: "Ouvrir sous-niveaux", color: "text-gray-400" },
+        ],
+      },
+    ],
+  },
+];
+
+function IconCatalog() {
+  const totalIcons = ICON_TIERS.reduce((sum, t) => sum + t.sections.reduce((s, sec) => s + sec.icons.length, 0), 0);
+  return (
+    <div className="max-w-4xl mx-auto px-6 py-4 space-y-5">
+      {/* Header */}
+      <div className="rounded-xl bg-gradient-to-r from-gray-800 to-gray-700 px-4 py-3 shadow-sm">
+        <p className="text-sm font-bold text-white">Catalogue d'icônes — Plateforme GhostX</p>
+        <p className="text-[9px] text-white/70 mt-0.5">
+          {totalIcons} icônes · {ICON_TIERS.length} niveaux · Sections réelles de l'app + Simulation AMORCER
+        </p>
+      </div>
+
+      {ICON_TIERS.map((tier, ti) => (
+        <div key={ti} className="space-y-3">
+          {/* Tier header */}
+          <div className={cn("rounded-lg border px-4 py-2.5", tier.tierBg)}>
+            <div className="flex items-center gap-2">
+              <span className={cn("text-[9px] font-black tracking-wider uppercase", tier.tierColor)}>{tier.tier}</span>
+              <span className="text-[9px] text-gray-500">·</span>
+              <span className="text-[9px] text-gray-500">{tier.sections.reduce((s, sec) => s + sec.icons.length, 0)} icônes</span>
+            </div>
+            <p className="text-[9px] text-gray-600 mt-0.5">{tier.tierDesc}</p>
+          </div>
+
+          {/* Sections within tier */}
+          {tier.sections.map((section, si) => (
+            <div key={si} className="rounded-xl border border-gray-200 overflow-hidden bg-white shadow-sm">
+              <div className="px-4 py-2 border-b border-gray-100 bg-gray-50">
+                <p className="text-xs font-bold text-gray-800">{section.title}</p>
+              </div>
+              <div className="p-3 grid grid-cols-2 gap-2">
+                {section.icons.map((item, ii) => (
+                  <div key={ii} className="flex items-center gap-2.5 px-3 py-2 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors">
+                    <div className={cn(
+                      "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
+                      item.color ? "bg-white border border-gray-200" : "bg-gray-100"
+                    )}>
+                      <item.Icon className={cn("h-4 w-4", item.color || "text-gray-700")} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-[11px] font-bold text-gray-800 block">{item.label}</span>
+                      <span className="text-[9px] text-gray-500 block truncate">{item.usage}</span>
+                      {item.color && (
+                        <span className="text-[9px] text-gray-400 font-mono block">{item.color.replace("text-", "")}</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ========== ORBIT9 SECTION MENU (style Bureau > Département Direction — Carl vocal 13h25) ==========
+
+function Orbit9SectionMenu({ activeSection, onSection }: { activeSection: Orbit9Tab; onSection: (s: Orbit9Tab) => void }) {
+  return (
+    <div className="rounded-xl border border-teal-200 bg-teal-50/50 overflow-hidden">
+      <div className="px-3 py-2 flex items-center gap-2 border-b border-teal-200 bg-teal-50">
+        <Atom className="h-3.5 w-3.5 text-teal-500" />
+        <span className="text-[11px] font-bold text-teal-800">Réseau Orbit<sup className="text-[8px]">9</sup></span>
+      </div>
+      <div className="p-2 grid grid-cols-3 gap-1.5">
+        {O9_TABS.map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => onSection(tab.key)}
+            className={cn(
+              "flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-[11px] font-medium transition-all cursor-pointer",
+              activeSection === tab.key
+                ? "bg-teal-600 text-white shadow-sm"
+                : "bg-white text-gray-600 hover:bg-teal-100 hover:text-teal-700 border border-gray-200"
+            )}
+          >
+            <tab.Icon className="h-3.5 w-3.5" />
+            {tab.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ========== ORBIT9 CELLULES COMPACT — liste compacte dans le left panel (Carl vocal 13h48: "même structure que chantiers") ==========
+
+function Orbit9CellulesCompact({ onSelect, selectedCellule }: { onSelect: (i: number) => void; selectedCellule: number | null }) {
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-1.5 px-1">
+        <Atom className="h-3.5 w-3.5 text-teal-500" />
+        <span className="text-[11px] font-bold text-gray-700">Cellules</span>
+        <span className="text-[9px] text-gray-400 ml-auto">{ORBIT9_CELLULES.length}</span>
+      </div>
+      {ORBIT9_CELLULES.map((cell, i) => {
+        const ph = PC[cell.status as PhaseKey];
+        return (
+          <button
+            key={i}
+            onClick={() => onSelect(i)}
+            className={cn(
+              "w-full rounded-lg border px-3 py-2 text-left transition-all cursor-pointer",
+              selectedCellule === i
+                ? "border-teal-300 bg-teal-50 shadow-sm"
+                : "border-gray-200 bg-white hover:border-teal-200 hover:bg-teal-50/30"
+            )}
+          >
+            <div className="flex items-center gap-2">
+              <div className={cn("w-2 h-2 rounded-full shrink-0", ph?.dot || "bg-gray-400")} />
+              <span className="text-xs font-medium text-gray-800 flex-1 truncate">{cell.name}</span>
+              <span className={cn(
+                "text-[9px] px-1.5 py-0.5 rounded-full font-medium shrink-0",
+                cell.type === "interne" ? "bg-teal-50 text-teal-600" : "bg-cyan-50 text-cyan-600"
+              )}>
+                {cell.type === "interne" ? "Int" : "Ext"}
+              </span>
+            </div>
+            <div className="flex items-center gap-3 mt-1.5">
+              <div className="flex items-center gap-1">
+                <Users className="h-3.5 w-3.5 text-gray-400" />
+                <span className="text-[9px] text-gray-500">{cell.members}/{cell.maxMembers}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Layers className="h-3.5 w-3.5 text-gray-400" />
+                <span className="text-[9px] text-gray-500">{cell.sousCellules.length}</span>
+              </div>
+              <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-teal-400"
+                  style={{ width: `${Math.round((cell.membres.reduce((s, m) => s + (m.vitaa.v + m.vitaa.i + m.vitaa.t) / 3, 0) / cell.membres.length) * 100)}%` }}
+                />
+              </div>
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ========== ORBIT9 CHAT — animé style feed réseau social (Carl vocal 13h25) ==========
+
+function Orbit9Chat({ typed, setTyped, selectedCellule }: { typed: boolean; setTyped: (v: boolean) => void; selectedCellule: number | null }) {
+  const [feedIndex, setFeedIndex] = useState(0);
+
+  useEffect(() => {
+    if (!typed) return;
+    if (feedIndex >= ORBIT9_FEED.length) return;
+    const timer = setTimeout(() => setFeedIndex(i => i + 1), 1800);
+    return () => clearTimeout(timer);
+  }, [typed, feedIndex]);
+
+  const cellule = selectedCellule !== null ? ORBIT9_CELLULES[selectedCellule] : null;
+
+  return (
+    <>
+      {/* CarlOS intro */}
+      <SBubble code="CEOB">
+        <TypewriterText
+          text="Mode Orbit⁹ activé. Tu as 4 cellules: 3 internes et 1 collab avec MetalPro. Les Titans brûlent fort 🔥 — ton équipe principale est en feu. Voici le fil d'actualité de ton réseau."
+          speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)}
+        />
+      </SBubble>
+
+      {/* Animated feed — items appear one by one like tweets */}
+      {typed && ORBIT9_FEED.slice(0, feedIndex).map((item, i) => (
+        <div key={i} className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 transition-all duration-500">
+          <div className="flex items-start gap-2.5">
+            {item.type === "bot" && (
+              <div className="w-7 h-7 rounded-full overflow-hidden shrink-0 ring-2 ring-blue-100">
+                <BotAvatar code={item.code!} size="sm" />
+              </div>
+            )}
+            {item.type === "humain" && (
+              <div className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 ring-2 ring-emerald-50">
+                <User className="h-3.5 w-3.5 text-emerald-600" />
+              </div>
+            )}
+            {item.type === "bot-to-bot" && (
+              <div className="flex -space-x-2 shrink-0">
+                {(item as { codes: string[] }).codes.map((code: string) => (
+                  <div key={code} className="w-6 h-6 rounded-full overflow-hidden ring-2 ring-violet-50">
+                    <BotAvatar code={code} size="sm" />
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <span className={cn("text-[11px] font-bold",
+                  item.type === "bot" ? "text-blue-700" :
+                  item.type === "humain" ? "text-emerald-700" : "text-violet-700"
+                )}>
+                  {item.type === "bot" ? (BOT_COLORS[item.code!]?.name || item.code) :
+                   item.type === "humain" ? (item as { name: string }).name : "Bot-to-Bot"}
+                </span>
+                <span className={cn("text-[8px] px-1.5 py-0.5 rounded-full font-medium",
+                  item.type === "bot" ? "bg-blue-50 text-blue-500" :
+                  item.type === "humain" ? "bg-emerald-50 text-emerald-500" :
+                  "bg-violet-50 text-violet-500"
+                )}>
+                  {item.type === "bot" ? "🤖 Bot" : item.type === "humain" ? "👤 Humain" : "🔗 B2B"}
+                </span>
+                <span className="text-[8px] text-gray-400 ml-auto">{item.time}</span>
+              </div>
+              <p className="text-xs text-gray-700 leading-relaxed">{item.text}</p>
+              {/* Engagement buttons */}
+              <div className="flex items-center gap-3 mt-1.5">
+                <button className="flex items-center gap-1 text-[9px] text-gray-400 hover:text-blue-500 cursor-pointer transition-colors">
+                  <MessageSquare className="h-3.5 w-3.5" /> Répondre
+                </button>
+                <button className="flex items-center gap-1 text-[9px] text-gray-400 hover:text-emerald-500 cursor-pointer transition-colors">
+                  <Heart className="h-3.5 w-3.5" /> {i + 2}
+                </button>
+                <button className="flex items-center gap-1 text-[9px] text-gray-400 hover:text-amber-500 cursor-pointer transition-colors">
+                  <Bookmark className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+
+      {/* Cellule context message */}
+      {typed && cellule && (
+        <SBubble code="CSOB">
+          <p className="text-sm text-gray-700">
+            <Atom className="h-3.5 w-3.5 inline text-teal-500 mr-1" />
+            Cellule <strong className="text-teal-700">{cellule.name}</strong> — {cellule.members}/{cellule.maxMembers} membres.
+            {" "}Phase: <strong>{PC[cellule.status as PhaseKey]?.label || cellule.status}</strong>
+          </p>
+        </SBubble>
+      )}
+
+      {/* Loading indicator while feed is still arriving */}
+      {typed && feedIndex < ORBIT9_FEED.length && (
+        <div className="flex items-center gap-2 px-3 py-2">
+          <Loader2 className="h-3.5 w-3.5 text-teal-400 animate-spin" />
+          <span className="text-[9px] text-gray-400">Chargement du fil...</span>
+        </div>
+      )}
+    </>
+  );
+}
+
+// ========== MES CELLULES — Vue Observation (enrichie depuis CellulesPage.tsx + MonReseauView) ==========
+
+function MesCellules({ onSelect, activePhase }: { onSelect: (i: number) => void; activePhase?: PhaseKey }) {
+  const totalMembres = ORBIT9_CELLULES.reduce((s, c) => s + c.members, 0);
+  const maxTotal = ORBIT9_CELLULES.reduce((s, c) => s + c.maxMembers, 0);
+  const avgPerCell = Math.round(totalMembres / ORBIT9_CELLULES.length);
+  const getDiscount = (n: number) => n >= 9 ? 25 : n >= 7 ? 20 : n >= 5 ? 15 : n >= 3 ? 10 : 0;
+  const discount = getDiscount(avgPerCell);
+  const nextTier = avgPerCell < 3 ? 3 : avgPerCell < 5 ? 5 : avgPerCell < 7 ? 7 : avgPerCell < 9 ? 9 : 9;
+  const connections = Math.floor(totalMembres * (totalMembres - 1) / 2);
+  const economie = totalMembres * 450;
+  const phCfg = activePhase ? PC[activePhase] : null;
+
+  return (
+    <div className="max-w-4xl mx-auto px-6 py-4 space-y-4">
+      {/* Phase indicator */}
+      {phCfg && (
+        <div className="flex items-center gap-2">
+          <phCfg.Icon className="h-3.5 w-3.5 text-blue-500" />
+          <span className={cn("text-[9px] font-medium px-2 py-0.5 rounded-full", phCfg.badge)}>{phCfg.label}</span>
+          <span className="text-[9px] text-gray-400">Vue d'ensemble du réseau et des cellules</span>
+        </div>
+      )}
+
+      {/* Header pastel */}
+      <div className="rounded-xl bg-teal-50 border border-teal-200 px-4 py-3 flex items-center gap-3">
+        <Atom className="h-5 w-5 text-teal-600" />
+        <div className="flex-1">
+          <p className="text-sm font-bold text-teal-800">Mes Cellules</p>
+          <p className="text-[9px] text-teal-500">{ORBIT9_CELLULES.length} cellules · {totalMembres}/{maxTotal} membres · {ORBIT9_CELLULES.filter(c => c.type === "interne").length} internes · {ORBIT9_CELLULES.filter(c => c.type === "externe").length} externe</p>
+        </div>
+      </div>
+
+      {/* KPIs (Membres, Rabais, Connexions B2B, Économie) */}
+      <div className="grid grid-cols-4 gap-3">
+        {[
+          { label: "Membres", value: `${totalMembres}/${maxTotal}`, icon: Users, grad: "from-emerald-600 to-emerald-500", vc: "text-emerald-600", sub: `${maxTotal - totalMembres} places disponibles` },
+          { label: "Rabais actif", value: `-${discount}%`, icon: DollarSign, grad: "from-emerald-600 to-emerald-500", vc: "text-emerald-600", sub: avgPerCell < 9 ? `Prochain: -${getDiscount(nextTier)}% à ${nextTier}` : "Maximum!" },
+          { label: "Connexions B2B", value: `${connections}`, icon: Network, grad: "from-blue-600 to-blue-500", vc: "text-blue-600", sub: "Loi de Metcalfe: n(n-1)/2" },
+          { label: "Économie/mois", value: `${economie.toLocaleString()}$`, icon: TrendingUp, grad: "from-green-600 to-green-500", vc: "text-green-600", sub: "Collective pour le réseau" },
+        ].map(kpi => (
+          <div key={kpi.label} className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+            <div className={cn("flex items-center gap-2 px-3 py-2 bg-gradient-to-r", kpi.grad)}>
+              <kpi.icon className="h-4 w-4 text-white" />
+              <span className="text-xs font-bold text-white">{kpi.label}</span>
+            </div>
+            <div className="px-3 py-2">
+              <div className={cn("text-2xl font-bold", kpi.vc)}>{kpi.value}</div>
+              <div className="text-[9px] text-gray-500">{kpi.sub}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Progression rabais de groupe */}
+      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
+        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
+          <DollarSign className="h-4 w-4 text-teal-600" />
+          <span className="text-sm font-bold text-teal-800">Progression du rabais de groupe</span>
+        </div>
+        <div className="p-4">
+          <p className="text-[9px] text-gray-500 mb-3">Plus vous avez de membres par cellule, plus le rabais collectif augmente. Le palier atteint ne redescend JAMAIS, même si des membres quittent.</p>
+          <div className="flex items-center gap-1 mb-2">
+            {[1,2,3,4,5,6,7,8,9].map(n => (
+              <div key={n} className="flex-1 flex flex-col items-center">
+                <div className={cn("w-full h-3.5 rounded-sm transition-all",
+                  n <= avgPerCell ? "bg-emerald-500" : n <= avgPerCell + 1 ? "bg-emerald-200" : "bg-gray-100"
+                )} />
+                <span className="text-[9px] text-gray-400 mt-0.5">{n}</span>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center justify-between text-[9px] text-gray-500">
+            <span>0% (solo)</span>
+            <span className="font-semibold text-emerald-600">← Moyenne: {avgPerCell} membres → -{discount}%</span>
+            <span>-25% (9 max)</span>
+          </div>
+          <div className="mt-3 grid grid-cols-4 gap-2">
+            {[
+              { seuil: "3+", pct: "10%", active: avgPerCell >= 3 },
+              { seuil: "5+", pct: "15%", active: avgPerCell >= 5 },
+              { seuil: "7+", pct: "20%", active: avgPerCell >= 7 },
+              { seuil: "9", pct: "25%", active: avgPerCell >= 9 },
+            ].map(tier => (
+              <div key={tier.seuil} className={cn("text-center py-1.5 rounded-lg text-[9px] font-medium border",
+                tier.active ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-gray-50 border-gray-200 text-gray-400"
+              )}>
+                {tier.seuil} = -{tier.pct}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Cellules cards — enrichies (B2B connexions + rabais par cellule) */}
+      {ORBIT9_CELLULES.map((cell, i) => {
+        const stDot = PC[cell.status as PhaseKey]?.dot || "bg-gray-400";
+        const stLabel = PC[cell.status as PhaseKey]?.label || cell.status;
+        const stBadge = PC[cell.status as PhaseKey]?.badge || "bg-gray-100 text-gray-700";
+        const cellDiscount = getDiscount(cell.members);
+        const cellConn = Math.floor(cell.members * (cell.members - 1) / 2);
+        return (
+          <button key={i} onClick={() => onSelect(i)} className="w-full rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white hover:shadow-md transition-shadow cursor-pointer text-left">
+            <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
+              <Atom className="h-4 w-4 text-teal-600" />
+              <span className="text-sm font-bold text-teal-800 flex-1">{cell.name}</span>
+              <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-medium",
+                cell.type === "interne" ? "bg-teal-100 text-teal-700" : "bg-cyan-100 text-cyan-700"
+              )}>{cell.type === "interne" ? "Interne" : "Externe"}</span>
+              <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1", stBadge)}>
+                <span className={cn("w-2 h-2 rounded-full", stDot)} />
+                {stLabel}
+              </span>
+            </div>
+            <div className="p-4">
+              <div className="flex items-center gap-4 mb-3">
+                <div className="flex items-center gap-1.5">
+                  <Users className="h-3.5 w-3.5 text-gray-400" />
+                  <span className="text-xs text-gray-600">{cell.members}/{cell.maxMembers}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Layers className="h-3.5 w-3.5 text-gray-400" />
+                  <span className="text-xs text-gray-600">{cell.sousCellules.length} s-cellules</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Network className="h-3.5 w-3.5 text-gray-400" />
+                  <span className="text-xs text-gray-600">{cellConn} B2B</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <DollarSign className="h-3.5 w-3.5 text-gray-400" />
+                  <span className="text-xs text-emerald-600 font-medium">-{cellDiscount}%</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1">
+                {cell.membres.slice(0, 6).map((m, mi) => (
+                  <div key={mi} className="w-6 h-6 rounded-full bg-teal-100 flex items-center justify-center text-[9px] font-bold text-teal-700 ring-1 ring-white">{m.avatar}</div>
+                ))}
+                {cell.membres.length > 6 && <span className="text-[9px] text-gray-400 ml-1">+{cell.membres.length - 6}</span>}
+                <div className="flex-1" />
+                {cell.sousCellules.map(sc => (
+                  <span key={sc} className="text-[9px] px-2 py-0.5 rounded-full bg-teal-50 text-teal-600 font-medium">{sc}</span>
+                ))}
+              </div>
+            </div>
+          </button>
+        );
+      })}
+
+      {/* Performance des Cellules */}
+      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
+        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
+          <BarChart3 className="h-4 w-4 text-teal-600" />
+          <span className="text-sm font-bold text-teal-800">Performance des Cellules</span>
+        </div>
+        <div className="p-4 space-y-3">
+          <p className="text-[9px] text-gray-500">Métriques de productivité et de collaboration par cellule. En mode Observation, ces données sont en lecture seule.</p>
+          {[
+            { cellule: "Les Titans", heuresSauvees: 42, livrables: "87%", roi: "2.4x", confiance: 92 },
+            { cellule: "Escouade Ventes", heuresSauvees: 18, livrables: "94%", roi: "1.6x", confiance: 85 },
+            { cellule: "Innovation Lab", heuresSauvees: 12, livrables: "100%", roi: "—", confiance: 78 },
+            { cellule: "Collab MetalPro", heuresSauvees: 28, livrables: "91%", roi: "1.8x", confiance: 88 },
+          ].map(cell => (
+            <div key={cell.cellule} className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+              <div className="text-[9px] font-bold text-gray-800 mb-2">{cell.cellule}</div>
+              <div className="grid grid-cols-4 gap-2">
+                <div className="text-center"><div className="text-sm font-bold text-sky-600">{cell.heuresSauvees}h</div><div className="text-[9px] text-gray-500">Heures sauvées</div></div>
+                <div className="text-center"><div className="text-sm font-bold text-emerald-600">{cell.livrables}</div><div className="text-[9px] text-gray-500">Livrables à temps</div></div>
+                <div className="text-center"><div className="text-sm font-bold text-violet-600">{cell.roi}</div><div className="text-[9px] text-gray-500">ROI chantiers</div></div>
+                <div className="text-center"><div className="text-sm font-bold text-orange-600">{cell.confiance}/100</div><div className="text-[9px] text-gray-500">Confiance</div></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Meetings Cellule — LiveKit */}
+      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
+        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
+          <Video className="h-4 w-4 text-teal-600" />
+          <span className="text-sm font-bold text-teal-800">Meetings Cellule</span>
+          <span className="text-[9px] px-2 py-0.5 rounded-full font-medium bg-teal-100 text-teal-700">LiveKit</span>
+        </div>
+        <div className="p-4 space-y-2">
+          <p className="text-[9px] text-gray-500 mb-2">Meetings SUR la plateforme. CarlOS transcrit, détecte les tensions et génère les action items en temps réel.</p>
+          {[
+            { cellule: "Les Titans", date: "12 avril 14:00", participants: ["Carl F.", "Marie D.", "Jean-P. L."], sujet: "Revue Q1 + pipeline ventes", status: "planifie" as const },
+            { cellule: "Collab MetalPro", date: "14 avril 10:00", participants: ["Carl F.", "Pierre G.", "François D."], sujet: "Kick-off projet robotique — specs & échéancier", status: "planifie" as const },
+            { cellule: "Les Titans", date: "8 avril 14:00", participants: ["Carl F.", "Marie D.", "Luc T."], sujet: "Revue tech + roadmap Q2", status: "termine" as const },
+          ].map(m => (
+            <div key={m.date + m.cellule} className={cn("flex items-center gap-3 p-3 rounded-lg border",
+              m.status === "termine" ? "bg-gray-50 border-gray-200" : "bg-teal-50/50 border-teal-200"
+            )}>
+              <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
+                m.status === "termine" ? "bg-gray-100" : "bg-teal-100"
+              )}>
+                <Video className={cn("h-3.5 w-3.5", m.status === "termine" ? "text-gray-400" : "text-teal-600")} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[9px] font-bold text-gray-800">{m.cellule}</div>
+                <div className="text-[9px] text-gray-600 truncate">{m.sujet}</div>
+                <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                  {m.participants.map(p => (
+                    <span key={p} className="text-[9px] bg-white text-gray-500 px-1.5 py-0.5 rounded border border-gray-200">{p}</span>
+                  ))}
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <div className="text-[9px] font-bold text-gray-700">{m.date}</div>
+                <span className={cn("text-[9px] font-medium px-1.5 py-0.5 rounded-full",
+                  m.status === "termine" ? "bg-gray-100 text-gray-500" : "bg-teal-100 text-teal-700"
+                )}>{m.status === "termine" ? "Terminé" : "Planifié"}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* CarlOS Médiateur Proactif */}
+      <div className="rounded-xl border border-violet-200 overflow-hidden shadow-sm bg-white">
+        <div className="bg-violet-50 border-b border-violet-200 px-4 py-2.5 flex items-center gap-2">
+          <Bot className="h-4 w-4 text-violet-600" />
+          <span className="text-sm font-bold text-violet-800">CarlOS — Médiateur Proactif</span>
+          <span className="text-[9px] px-2 py-0.5 rounded-full font-medium bg-violet-100 text-violet-700">Futur</span>
+        </div>
+        <div className="p-4 space-y-3">
+          <p className="text-[9px] text-gray-500">CarlOS écoute les meetings entre membres d'une cellule, détecte les tensions en temps réel, intervient pour corriger les interactions et génère automatiquement les action items.</p>
+          {[
+            { text: "Détection: SoudurePlus a dit « on va essayer » — langage flou avec historique 2 retards/3. Intervention envoyée.", time: "Il y a 2h", Icon: AlertTriangle, color: "text-amber-500" },
+            { text: "Action items générés du meeting du 8 avril: 4 tâches assignées automatiquement.", time: "Hier", Icon: CheckCircle2, color: "text-emerald-500" },
+            { text: "Budget chantier MetalPro à 78% — recommandation: réviser scope avant dépassement.", time: "Il y a 3 jours", Icon: Bell, color: "text-red-500" },
+          ].map((log, i) => (
+            <div key={i} className="flex items-start gap-2 p-2.5 bg-violet-50/50 rounded-lg border border-violet-100">
+              <log.Icon className={cn("h-3.5 w-3.5 shrink-0 mt-0.5", log.color)} />
+              <div className="flex-1">
+                <p className="text-[9px] text-gray-700">{log.text}</p>
+                <span className="text-[9px] text-gray-400">{log.time}</span>
+              </div>
+            </div>
+          ))}
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { label: "Transcription live", desc: "Deepgram capte chaque mot en temps réel", Icon: Activity },
+              { label: "Détection tensions", desc: "Analyse sémantique des engagements flous", Icon: AlertTriangle },
+              { label: "Actions auto", desc: "Tâches assignées sans effort humain", Icon: CheckCircle2 },
+            ].map(feat => (
+              <div key={feat.label} className="p-2 bg-white rounded-lg border border-violet-100">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <feat.Icon className="h-3.5 w-3.5 text-violet-600" />
+                  <span className="text-[9px] font-bold text-violet-800">{feat.label}</span>
+                </div>
+                <p className="text-[9px] text-gray-600">{feat.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Opportunités actives — Système Main Levée */}
+      <div className="rounded-xl border border-amber-200 overflow-hidden shadow-sm bg-white">
+        <div className="bg-amber-50 border-b border-amber-200 px-4 py-2.5 flex items-center gap-2">
+          <Handshake className="h-4 w-4 text-amber-600" />
+          <span className="text-sm font-bold text-amber-800">Opportunités actives</span>
+          <span className="text-[9px] px-2 py-0.5 rounded-full font-medium bg-amber-100 text-amber-700">Système Main Levée</span>
+        </div>
+        <div className="p-4 space-y-3">
+          <p className="text-[9px] text-gray-500">Les opportunités sont attribuées au premier partenaire qualifié qui lève la main. En Observation, vous voyez les matchings en cours.</p>
+          {[
+            { besoin: "Robot soudage MIG/TIG automatisé", client: "MetalPro", score: 87, status: "active" as const, candidats: 3 },
+            { besoin: "Cellule injection automatisée + vision qualité", client: "QC Plasturgie", score: 72, status: "scout" as const, candidats: 1 },
+            { besoin: "Emballage automatisé ligne #3 — HACCP", client: "Alimentation Boréal", score: 91, status: "complete" as const, candidats: 2 },
+          ].map((match, i) => (
+            <div key={i} className="p-3 rounded-lg border border-gray-100 bg-gray-50">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-bold text-gray-800">{match.besoin}</span>
+                <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-medium",
+                  match.status === "complete" ? "bg-emerald-100 text-emerald-700" :
+                  match.status === "scout" ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"
+                )}>{match.status === "complete" ? "Complété" : match.status === "scout" ? "Scout requis" : "Actif"}</span>
+              </div>
+              <div className="flex items-center gap-3 text-[9px] text-gray-500">
+                <span>Client: {match.client}</span>
+                <span>Score: <strong className="text-blue-600">{match.score}%</strong></span>
+                <span>{match.candidats} candidat(s)</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Activité récente */}
+      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
+        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
+          <RefreshCw className="h-4 w-4 text-teal-600" />
+          <span className="text-sm font-bold text-teal-800">Activité récente</span>
+        </div>
+        <div className="p-4 space-y-2">
+          {[
+            { time: "Il y a 1h", text: "Bot CTO d'AutomaTech a envoyé les specs du cobot à Bot CTO d'Usinage Précision", Icon: Network, color: "text-blue-600", bg: "bg-blue-100" },
+            { time: "Il y a 3h", text: "Nouveau matching détecté: LogiFlow peut optimiser l'entrepôt de MetalPro", Icon: Search, color: "text-green-600", bg: "bg-green-100" },
+            { time: "Hier", text: "Budget projet soudage mis à jour: 125K$ → 145K$ (ajout formation)", Icon: DollarSign, color: "text-amber-600", bg: "bg-amber-100" },
+            { time: "2 jours", text: "Innovation Lab a complété la revue tech du prototype Alpha", Icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-100" },
+          ].map((act, i) => (
+            <div key={i} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50">
+              <div className={cn("w-7 h-7 rounded-full flex items-center justify-center shrink-0", act.bg)}>
+                <act.Icon className={cn("h-3.5 w-3.5", act.color)} />
+              </div>
+              <p className="text-xs text-gray-600 flex-1">{act.text}</p>
+              <span className="text-[9px] text-gray-400 shrink-0">{act.time}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* CarlOS Proactif */}
+      <div className="rounded-xl border border-blue-200 overflow-hidden shadow-sm bg-gradient-to-r from-blue-50 to-indigo-50">
+        <div className="p-4 flex items-start gap-3">
+          <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-[9px] font-bold shrink-0">C</div>
+          <div className="flex-1">
+            <h3 className="text-xs font-bold text-blue-800">CarlOS — Facilitateur de Cellule Proactif</h3>
+            <p className="text-[9px] text-blue-600 mt-1 italic">"Carl, j'ai remarqué quelque chose. Tu travailles régulièrement avec Automation Plus, Acier Québec et PrécisionCNC. Si vous formiez une Cellule Orbit⁹, vos bots se coordonneraient et vous économiseriez TOUS 15%. Tu veux que je prépare les invitations?"</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ========== CELLULE DRILL-DOWN ==========
+
+function CelluleDrillDown({ cellule, onBack }: { cellule: Cellule; onBack: () => void }) {
+  const avgVitaa = {
+    v: cellule.membres.reduce((s, m) => s + m.vitaa.v, 0) / cellule.membres.length,
+    i: cellule.membres.reduce((s, m) => s + m.vitaa.i, 0) / cellule.membres.length,
+    t: cellule.membres.reduce((s, m) => s + m.vitaa.t, 0) / cellule.membres.length,
+    a1: cellule.membres.reduce((s, m) => s + m.vitaa.a1, 0) / cellule.membres.length,
+    a2: cellule.membres.reduce((s, m) => s + m.vitaa.a2, 0) / cellule.membres.length,
+  };
+  const vit = avgVitaa.v * avgVitaa.i * avgVitaa.t;
+  const formulaResult = Math.exp(vit);
+
+  return (
+    <div className="max-w-4xl mx-auto px-6 py-4 space-y-4">
+      {/* Back + header */}
+      <button onClick={onBack} className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 cursor-pointer">
+        <ArrowLeft className="h-3.5 w-3.5" /> Retour aux cellules
+      </button>
+
+      <div className="rounded-xl bg-teal-50 border border-teal-200 px-4 py-3 flex items-center gap-3">
+        <Atom className="h-5 w-5 text-teal-600" />
+        <div className="flex-1">
+          <p className="text-sm font-bold text-teal-800">{cellule.name}</p>
+          <p className="text-[9px] text-teal-500">{cellule.members} membres · {cellule.type}</p>
+        </div>
+        <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1",
+          PC[cellule.status as PhaseKey]?.badge || "bg-gray-100 text-gray-700"
+        )}>
+          <span className={cn("w-2 h-2 rounded-full", PC[cellule.status as PhaseKey]?.dot || "bg-gray-400")} />
+          {PC[cellule.status as PhaseKey]?.label || cellule.status}
+        </span>
+      </div>
+
+      {/* VITAA collectif compact */}
+      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
+        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
+          <Activity className="h-4 w-4 text-teal-600" />
+          <span className="text-sm font-bold text-teal-800">Score VITAA collectif</span>
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-teal-100 text-teal-700">e^(V×I×T) = {formulaResult.toFixed(2)}</span>
+        </div>
+        <div className="p-4 space-y-2">
+          {[
+            { label: "Vente", key: "v" as const, color: "bg-red-500" },
+            { label: "Idée", key: "i" as const, color: "bg-blue-500" },
+            { label: "Temps", key: "t" as const, color: "bg-amber-500" },
+            { label: "Argent", key: "a1" as const, color: "bg-emerald-500" },
+            { label: "Actif", key: "a2" as const, color: "bg-violet-500" },
+          ].map(p => (
+            <div key={p.key} className="flex items-center gap-3">
+              <span className="text-[11px] text-gray-600 w-12 shrink-0">{p.label}</span>
+              <div className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                <div className={cn("h-full rounded-full transition-all duration-1000", p.color)} style={{ width: `${avgVitaa[p.key] * 100}%` }} />
+              </div>
+              <span className="text-[11px] font-bold text-gray-700 w-8 text-right">{(avgVitaa[p.key] * 100).toFixed(0)}%</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Membres */}
+      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
+        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
+          <Users className="h-4 w-4 text-teal-600" />
+          <span className="text-sm font-bold text-teal-800">Membres</span>
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-teal-100 text-teal-700">{cellule.members}</span>
+        </div>
+        <div className="divide-y divide-gray-100">
+          {cellule.membres.map((m, i) => {
+            const mvit = m.vitaa.v * m.vitaa.i * m.vitaa.t;
+            return (
+              <div key={i} className="px-4 py-3 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-[11px] font-bold text-teal-700">
+                  {m.avatar}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-gray-800">{m.name}</span>
+                    <span className="text-[9px] text-gray-400">{m.role}</span>
+                  </div>
+                  <div className="flex gap-1.5 mt-1">
+                    {[
+                      { label: "V", val: m.vitaa.v, color: "bg-red-400" },
+                      { label: "I", val: m.vitaa.i, color: "bg-blue-400" },
+                      { label: "T", val: m.vitaa.t, color: "bg-amber-400" },
+                      { label: "A", val: m.vitaa.a1, color: "bg-emerald-400" },
+                      { label: "A", val: m.vitaa.a2, color: "bg-violet-400" },
+                    ].map((p, pi) => (
+                      <div key={pi} className="flex items-center gap-0.5">
+                        <span className="text-[8px] text-gray-400">{p.label}</span>
+                        <div className="w-10 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                          <div className={cn("h-full rounded-full", p.color)} style={{ width: `${p.val * 100}%` }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <span className="text-[9px] font-mono text-gray-400">V×I×T={mvit.toFixed(2)}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Sous-cellules */}
+      <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+        <div className="bg-gradient-to-r from-violet-600 to-violet-500 px-4 py-2.5 flex items-center gap-2">
+          <Layers className="h-4 w-4 text-white" />
+          <span className="text-sm font-bold text-white">Sous-cellules</span>
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-white/90 text-violet-800">{cellule.sousCellules.length}</span>
+        </div>
+        <div className="p-4 flex flex-wrap gap-2">
+          {cellule.sousCellules.map(sc => (
+            <div key={sc} className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 transition-colors">
+              <Atom className="h-3.5 w-3.5 text-violet-400" />
+              <span className="text-xs font-medium text-gray-700">{sc}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ========== VITAA DASHBOARD ==========
+
+function VITAADashboard({ selectedCellule }: { selectedCellule: Cellule }) {
+  const avg = {
+    v: selectedCellule.membres.reduce((s, m) => s + m.vitaa.v, 0) / selectedCellule.membres.length,
+    i: selectedCellule.membres.reduce((s, m) => s + m.vitaa.i, 0) / selectedCellule.membres.length,
+    t: selectedCellule.membres.reduce((s, m) => s + m.vitaa.t, 0) / selectedCellule.membres.length,
+    a1: selectedCellule.membres.reduce((s, m) => s + m.vitaa.a1, 0) / selectedCellule.membres.length,
+    a2: selectedCellule.membres.reduce((s, m) => s + m.vitaa.a2, 0) / selectedCellule.membres.length,
+  };
+  const vit = avg.v * avg.i * avg.t;
+  const formulaResult = Math.exp(vit);
+
+  // Solo scores (first member as example)
+  const solo = selectedCellule.membres[0]?.vitaa || { v: 0, i: 0, t: 0, a1: 0, a2: 0 };
+  const soloVit = solo.v * solo.i * solo.t;
+
+  const pillars = [
+    { label: "Vente", short: "V", avg: avg.v, solo: solo.v, color: "bg-red-500", soloColor: "bg-red-300" },
+    { label: "Idée", short: "I", avg: avg.i, solo: solo.i, color: "bg-blue-500", soloColor: "bg-blue-300" },
+    { label: "Temps", short: "T", avg: avg.t, solo: solo.t, color: "bg-amber-500", soloColor: "bg-amber-300" },
+    { label: "Argent", short: "A₁", avg: avg.a1, solo: solo.a1, color: "bg-emerald-500", soloColor: "bg-emerald-300" },
+    { label: "Actif", short: "A₂", avg: avg.a2, solo: solo.a2, color: "bg-violet-500", soloColor: "bg-violet-300" },
+  ];
+
+  const fireStatus = selectedCellule.status;
+
+  return (
+    <div className="max-w-4xl mx-auto px-6 py-4 space-y-4">
+      {/* Header pastel */}
+      <div className="rounded-xl bg-teal-50 border border-teal-200 px-4 py-3 flex items-center gap-3">
+        <Activity className="h-5 w-5 text-teal-600" />
+        <div className="flex-1">
+          <p className="text-sm font-bold text-teal-800">VITAA × Orbit⁹ — {selectedCellule.name}</p>
+          <p className="text-[9px] text-teal-500">Scoring des 5 piliers · Triangle du Feu · Formule exponentielle</p>
+        </div>
+      </div>
+
+      {/* Formule + Triangle du Feu */}
+      <div className="grid grid-cols-2 gap-3">
+        {/* Formule */}
+        <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+          <div className="bg-gradient-to-r from-indigo-600 to-indigo-500 px-4 py-2.5 flex items-center gap-2">
+            <Zap className="h-4 w-4 text-white" />
+            <span className="text-sm font-bold text-white">Formule e^(V×I×T)</span>
+          </div>
+          <div className="p-4 text-center">
+            <div className="text-4xl font-bold text-indigo-600">{formulaResult.toFixed(2)}</div>
+            <p className="text-[9px] text-gray-400 mt-1 font-mono">e^({avg.v.toFixed(2)} × {avg.i.toFixed(2)} × {avg.t.toFixed(2)}) = e^({vit.toFixed(3)})</p>
+            <p className="text-[11px] text-gray-500 mt-2">Score collectif de la cellule</p>
+          </div>
+        </div>
+
+        {/* Phase AMORCER */}
+        <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+          <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
+            <Atom className="h-4 w-4 text-teal-600" />
+            <span className="text-sm font-bold text-teal-800">Phase AMORCER</span>
+          </div>
+          <div className="p-4 text-center">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <span className={cn("w-3 h-3 rounded-full", PC[fireStatus as PhaseKey]?.dot || "bg-gray-400")} />
+              <span className="text-2xl font-bold text-gray-800">{PC[fireStatus as PhaseKey]?.label || fireStatus}</span>
+            </div>
+            <p className="text-[11px] text-gray-500">
+              Score collectif e^(V×I×T) = {formulaResult.toFixed(2)}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Comparaison Seul vs Cellule */}
+      <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
+          <BarChart3 className="h-4 w-4 text-teal-600" />
+          <span className="text-sm font-bold text-teal-800">Seul vs Cellule</span>
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-teal-100 text-teal-700">
+            Solo: e^{soloVit.toFixed(2)} = {Math.exp(soloVit).toFixed(2)} | Cellule: {formulaResult.toFixed(2)}
+          </span>
+        </div>
+        <div className="p-4 space-y-3">
+          {pillars.map(p => (
+            <div key={p.short} className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-gray-600 w-12 shrink-0">{p.label}</span>
+                <span className="text-[9px] text-gray-400 w-8">Solo</span>
+                <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className={cn("h-full rounded-full transition-all duration-1000", p.soloColor)} style={{ width: `${p.solo * 100}%` }} />
+                </div>
+                <span className="text-[9px] font-bold text-gray-500 w-8 text-right">{(p.solo * 100).toFixed(0)}%</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-gray-600 w-12 shrink-0" />
+                <span className="text-[9px] text-blue-500 w-8">Cell.</span>
+                <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className={cn("h-full rounded-full transition-all duration-1000", p.color)} style={{ width: `${p.avg * 100}%` }} />
+                </div>
+                <span className="text-[9px] font-bold text-gray-700 w-8 text-right">{(p.avg * 100).toFixed(0)}%</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* FAAS — grisé */}
+      <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white opacity-50">
+        <div className="bg-gradient-to-r from-gray-500 to-gray-400 px-4 py-2.5 flex items-center gap-2">
+          <Lock className="h-4 w-4 text-white" />
+          <span className="text-sm font-bold text-white">FAAS — Mode Perso</span>
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-amber-100 text-amber-700">Bientôt</span>
+        </div>
+        <div className="p-4 text-center">
+          <p className="text-xs text-gray-400">Le scoring FAAS (Fun, Autonomie, Argent, Sens) sera disponible en mode perso.</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ========== NOUVELLES & INTELLIGENCE INDUSTRIE ==========
+
+function FeedSocial({ activePhase }: { activePhase?: PhaseKey }) {
+  const [subTab, setSubTab] = useState<"fil" | "industrie" | "opportunites">("fil");
+  const ph = PC[activePhase || "observation"];
+
+  // Extra industry news items to complement ORBIT9_FEED
+  const INDUSTRIE_NEWS = [
+    { type: "industrie" as const, icon: Factory, text: "Adoption IA manufacturière QC atteint 43% — bond de +39 pts depuis 2019", source: "STIQ/MEIE 2025", time: "Aujourd'hui", color: "violet" },
+    { type: "industrie" as const, icon: TrendingUp, text: "Programme Grand V (IQ): 1 G$ déployé en 5 mois — 225 projets financés", source: "IQ 2024-2025", time: "Cette semaine", color: "emerald" },
+    { type: "industrie" as const, icon: AlertTriangle, text: "Productivité QC à 65.90$/h — écart de -10.5% vs Ontario persiste", source: "ISQ 2024", time: "Cette semaine", color: "amber" },
+    { type: "industrie" as const, icon: Cpu, text: "51% des PME ont un ERP mais seulement 3% complètement connecté — dette technique massive", source: "MEIE 2025", time: "Il y a 3j", color: "blue" },
+    { type: "industrie" as const, icon: Globe, text: "76% des PME exportent aux USA — risque tarifaire Trump 2025 pousse à diversifier", source: "STIQ 2025", time: "Il y a 5j", color: "indigo" },
+  ];
+
+  // Combined feed for "Fil" tab: interleave orbit9 + industrie
+  const combinedFeed = [
+    ...ORBIT9_FEED.map(f => ({ ...f, category: "orbit9" as const })),
+    ...INDUSTRIE_NEWS.map(n => ({ ...n, category: "industrie" as const })),
+  ].sort(() => 0.5 - Math.random()).slice(0, 12); // shuffle and limit
+
+  return (
+    <div className="max-w-4xl mx-auto px-6 py-4 space-y-4">
+      {/* Header pastel */}
+      <div className="rounded-xl bg-teal-50 border border-teal-200 px-4 py-3 flex items-center gap-3">
+        <Newspaper className="h-5 w-5 text-teal-600" />
+        <div className="flex-1">
+          <p className="text-sm font-bold text-teal-800">Nouvelles & Intelligence Industrie</p>
+          <p className="text-[9px] text-teal-500">Fil Orbit⁹ + données manufacturières Québec 2024-2026</p>
+        </div>
+        <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-medium", ph.badge)}>
+          {ph.label}
+        </span>
+      </div>
+
+      {/* 4 KPIs industrie */}
+      <div className="grid grid-cols-4 gap-2">
+        {[
+          { value: "218 G$", label: "Revenus Manuf. QC", trend: "+22.8%", up: true, color: "emerald" },
+          { value: "417K", label: "Emplois Manufacturiers", trend: "-0.8%", up: false, color: "blue" },
+          { value: "43%", label: "Adoption IA (PME)", trend: "+39 pts", up: true, color: "violet" },
+          { value: "65.90$/h", label: "Productivité QC", trend: "-10.5% vs ON", up: false, color: "amber" },
+        ].map(kpi => (
+          <div key={kpi.label} className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+            <div className={cn("px-3 py-1.5 bg-gradient-to-r", `from-${kpi.color}-600 to-${kpi.color}-500`)}>
+              <span className="text-[9px] font-bold text-white">{kpi.label}</span>
+            </div>
+            <div className="px-3 py-2">
+              <p className={cn("text-lg font-bold", `text-${kpi.color}-600`)}>{kpi.value}</p>
+              <p className="text-[9px]">
+                <span className={kpi.up ? "text-green-600 font-bold" : "text-red-500 font-bold"}>{kpi.trend}</span>
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Sub-tabs */}
+      <div className="flex items-center gap-1">
+        {([
+          { key: "fil" as const, label: "Fil Orbit⁹", Icon: Newspaper },
+          { key: "industrie" as const, label: "Intelligence Industrie", Icon: Factory },
+          { key: "opportunites" as const, label: "Opportunités", Icon: Lightbulb },
+        ]).map(tab => (
+          <button key={tab.key} onClick={() => setSubTab(tab.key)} className={cn(
+            "px-3 py-1.5 text-xs font-medium rounded-lg flex items-center gap-1.5 cursor-pointer transition-all",
+            subTab === tab.key ? "bg-gray-900 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+          )}>
+            <tab.Icon className="h-3.5 w-3.5" /> {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ===== FIL ORBIT⁹ ===== */}
+      {subTab === "fil" && (
+        <div className="space-y-3">
+          {/* Activity summary */}
+          <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-50 border border-gray-200">
+            <Activity className="h-3.5 w-3.5 text-teal-500" />
+            <span className="text-[9px] text-gray-500">
+              <strong className="text-gray-700">{ORBIT9_FEED.length} activités Orbit⁹</strong> + <strong className="text-gray-700">{INDUSTRIE_NEWS.length} nouvelles industrie</strong> — dernières 72h
+            </span>
+          </div>
+
+          {/* Feed items */}
+          <div className="space-y-2">
+            {combinedFeed.map((item, i) => (
+              <div key={i} className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white px-4 py-3">
+                <div className="flex items-start gap-3">
+                  {/* Avatar / Icon */}
+                  {"code" in item && item.type === "bot" && (
+                    <div className="w-7 h-7 rounded-full overflow-hidden shrink-0">
+                      <BotAvatar code={(item as { code: string }).code} size="sm" />
+                    </div>
+                  )}
+                  {"name" in item && item.type === "humain" && (
+                    <div className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                      <User className="h-3.5 w-3.5 text-emerald-600" />
+                    </div>
+                  )}
+                  {"codes" in item && item.type === "bot-to-bot" && (
+                    <div className="flex -space-x-2 shrink-0">
+                      {(item as { codes: string[] }).codes.map((code: string) => (
+                        <div key={code} className="w-6 h-6 rounded-full overflow-hidden ring-1 ring-white">
+                          <BotAvatar code={code} size="sm" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {"icon" in item && item.type === "industrie" && (() => {
+                    const IIcon = (item as { icon: React.ElementType }).icon;
+                    return (
+                      <div className={cn("w-7 h-7 rounded-full flex items-center justify-center shrink-0", `bg-${(item as { color: string }).color}-100`)}>
+                        <IIcon className={cn("h-3.5 w-3.5", `text-${(item as { color: string }).color}-600`)} />
+                      </div>
+                    );
+                  })()}
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      {"code" in item && item.type === "bot" && (
+                        <span className="text-[11px] font-semibold text-blue-700">{BOT_COLORS[(item as { code: string }).code]?.name || (item as { code: string }).code}</span>
+                      )}
+                      {"name" in item && item.type === "humain" && (
+                        <span className="text-[11px] font-semibold text-emerald-700">{(item as { name: string }).name}</span>
+                      )}
+                      {item.type === "bot-to-bot" && (
+                        <span className="text-[11px] font-semibold text-violet-700">Bot-to-Bot</span>
+                      )}
+                      {item.type === "industrie" && (
+                        <span className="text-[11px] font-semibold text-indigo-700">Intelligence Industrie</span>
+                      )}
+                      <span className={cn(
+                        "text-[9px] px-1.5 py-0.5 rounded-full font-medium",
+                        item.type === "bot" ? "bg-blue-50 text-blue-600" :
+                        item.type === "humain" ? "bg-emerald-50 text-emerald-600" :
+                        item.type === "bot-to-bot" ? "bg-violet-50 text-violet-600" :
+                        "bg-indigo-50 text-indigo-600"
+                      )}>
+                        {item.type === "bot" ? "Bot" : item.type === "humain" ? "Humain" : item.type === "bot-to-bot" ? "B2B" : "Industrie"}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-700">{item.text}</p>
+                    {"source" in item && (
+                      <p className="text-[9px] text-gray-400 italic mt-0.5">{(item as { source: string }).source}</p>
+                    )}
+                  </div>
+                  <span className="text-[9px] text-gray-400 shrink-0">{item.time}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* CarlOS Proactif */}
+          <div className="rounded-xl border-2 border-teal-200 bg-teal-50/50 p-4">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-full overflow-hidden shrink-0">
+                <BotAvatar code="CEOB" size="sm" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-teal-800 mb-1">CarlOS — Résumé Intelligence</p>
+                <p className="text-xs text-gray-700 leading-relaxed">
+                  L'adoption de l'IA au Québec fait un bond historique à 43% (+39 pts en 5 ans). Tes cellules Orbit⁹ sont bien positionnées: 3 leads qualifiés cette semaine, un match à 87% avec MetalPro, et l'Escouade Ventes performe au-dessus des cibles. Le programme Grand V de 1 G$ ouvre des opportunités de financement pour tes membres.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== INTELLIGENCE INDUSTRIE ===== */}
+      {subTab === "industrie" && (
+        <div className="space-y-4">
+          {/* Portrait manufacturier */}
+          <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+            <div className="bg-gradient-to-r from-cyan-100 to-blue-100 px-4 py-2.5 border-b border-cyan-200">
+              <div className="flex items-center gap-2">
+                <BarChart3 className="h-4 w-4 text-cyan-600" />
+                <span className="text-sm font-bold text-cyan-900">Portrait Manufacturier Québec 2024-2026</span>
+              </div>
+            </div>
+            <div className="p-4">
+              <div className="grid grid-cols-3 gap-3 mb-4">
+                {[
+                  { label: "Établissements", value: "13,694", detail: "800+ en automatisation", source: "ISQ/REAI 2024" },
+                  { label: "ERP Adoption", value: "51%", detail: "Seulement 3% connecté", source: "MEIE 2025" },
+                  { label: "Maturité Numérique Haute", value: "19%", detail: "24% font 4+ types d'innovation", source: "MEIE/STIQ 2025" },
+                ].map(s => (
+                  <div key={s.label} className="p-3 rounded-lg bg-gray-50 border border-gray-200">
+                    <p className="text-[9px] text-gray-400 uppercase font-bold mb-1">{s.label}</p>
+                    <p className="text-lg font-bold text-gray-800">{s.value}</p>
+                    <p className="text-[9px] text-gray-500">{s.detail}</p>
+                    <p className="text-[9px] text-gray-400 italic mt-1">{s.source}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Adoption techno bars */}
+              <p className="text-xs font-bold text-gray-700 mb-2">Taux d'Adoption Technologique (PME QC)</p>
+              <div className="space-y-2">
+                {[
+                  { tech: "CAO/DAO", rate: 61 },
+                  { tech: "ERP/MRP", rate: 51 },
+                  { tech: "Infonuagique", rate: 49 },
+                  { tech: "IA / Machine Learning", rate: 43 },
+                  { tech: "Robotique / FMS / MES", rate: 38 },
+                  { tech: "Impression 3D", rate: 16 },
+                ].map(t => (
+                  <div key={t.tech} className="flex items-center gap-2">
+                    <span className="text-[9px] text-gray-600 min-w-[120px]">{t.tech}</span>
+                    <div className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className={cn("h-full rounded-full", t.rate >= 50 ? "bg-emerald-500" : t.rate >= 30 ? "bg-blue-500" : "bg-amber-500")} style={{ width: `${t.rate}%` }} />
+                    </div>
+                    <span className="text-[9px] font-bold text-gray-700 min-w-[28px] text-right">{t.rate}%</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[9px] text-gray-400 mt-2 italic">Sources: MEIE 2025, STIQ, StatCan</p>
+            </div>
+          </div>
+
+          {/* Top secteurs */}
+          <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+            <div className="bg-gradient-to-r from-emerald-100 to-teal-100 px-4 py-2.5 border-b border-emerald-200">
+              <div className="flex items-center gap-2">
+                <Factory className="h-4 w-4 text-emerald-600" />
+                <span className="text-sm font-bold text-emerald-900">Top Secteurs — 62% du PIB Manufacturier</span>
+              </div>
+            </div>
+            <div className="p-4">
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { secteur: "Transport / Aérospatiale", poids: "17.1%" },
+                  { secteur: "Produits Métalliques", poids: "14.6%" },
+                  { secteur: "Aliments", poids: "13.5%" },
+                  { secteur: "Première Transfo. Métaux", poids: "12.9%" },
+                  { secteur: "Machines", poids: "8.5%" },
+                  { secteur: "Chimie", poids: "8.5%" },
+                ].map(s => (
+                  <div key={s.secteur} className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200">
+                    <p className="text-xs font-bold text-emerald-800">{s.secteur}</p>
+                    <p className="text-[9px] text-emerald-600 font-bold">{s.poids} du PIB</p>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[9px] text-gray-400 mt-2 italic">Source: STIQ Baromètre 16e édition 2025</p>
+            </div>
+          </div>
+
+          {/* ROI transformation numérique */}
+          <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+            <div className="bg-gradient-to-r from-emerald-100 to-green-100 px-4 py-2.5 border-b border-emerald-200">
+              <div className="flex items-center gap-2">
+                <DollarSign className="h-4 w-4 text-emerald-600" />
+                <span className="text-sm font-bold text-emerald-900">ROI de la Transformation Numérique</span>
+              </div>
+            </div>
+            <div className="p-4">
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <div className="p-3 rounded-lg bg-gray-50 border border-gray-200 text-center">
+                  <p className="text-[9px] text-gray-400 uppercase font-bold mb-1">Retour moyen</p>
+                  <p className="text-2xl font-bold text-emerald-600">1.60$</p>
+                  <p className="text-[9px] text-gray-500">par dollar investi en techno</p>
+                </div>
+                <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-center">
+                  <p className="text-[9px] text-emerald-600 uppercase font-bold mb-1">Leaders numériques</p>
+                  <p className="text-2xl font-bold text-emerald-700">2.40$</p>
+                  <p className="text-[9px] text-emerald-600">par dollar investi</p>
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                {[
+                  { impact: "Productivité augmentée", pct: "56%" },
+                  { impact: "Tâches répétitives réduites", pct: "56%" },
+                  { impact: "Coûts diminués", pct: "36%" },
+                  { impact: "Qualité améliorée", pct: "30%" },
+                  { impact: "Rentabilité < 2 ans", pct: "55%" },
+                ].map(r => (
+                  <div key={r.impact} className="flex items-center gap-2 p-2 rounded bg-gray-50">
+                    <span className="text-xs text-gray-700 flex-1">{r.impact}</span>
+                    <span className="text-xs font-bold text-emerald-600">{r.pct}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 mt-3 p-2 rounded-lg bg-blue-50 border border-blue-200">
+                <Zap className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+                <span className="text-[9px] text-blue-700">L'IA générative permet d'économiser 2.05h pour chaque 0.97h investie (FCEI 2025)</span>
+              </div>
+              <p className="text-[9px] text-gray-400 mt-2 italic">Sources: STIQ 16e éd. 2025 / FCEI 2025</p>
+            </div>
+          </div>
+
+          {/* Obstacles à l'adoption */}
+          <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+            <div className="bg-gradient-to-r from-red-100 to-orange-100 px-4 py-2.5 border-b border-red-200">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-red-600" />
+                <span className="text-sm font-bold text-red-900">Obstacles à l'Adoption — 2024-2026</span>
+              </div>
+            </div>
+            <div className="p-4">
+              <div className="space-y-2">
+                {[
+                  { obstacle: "Manque de connaissances sur l'IA", pct: 67 },
+                  { obstacle: "Manque de personnel qualifié", pct: 66 },
+                  { obstacle: "Manque de temps", pct: 66 },
+                  { obstacle: "Difficulté à évaluer le ROI", pct: 53 },
+                  { obstacle: "Manque de compétences numériques", pct: 51 },
+                  { obstacle: "Coûts élevés", pct: 48 },
+                ].map(o => (
+                  <div key={o.obstacle}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs text-gray-700 flex-1">{o.obstacle}</span>
+                      <span className="text-xs font-bold text-gray-700">{o.pct}%</span>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div className={cn("h-full rounded-full", o.pct >= 60 ? "bg-red-400" : o.pct >= 50 ? "bg-amber-400" : "bg-blue-400")} style={{ width: `${o.pct}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[9px] text-gray-400 mt-2 italic">Source: STIQ 2025 / FCEI 2025</p>
+            </div>
+          </div>
+
+          {/* Sources de données */}
+          <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+            <div className="bg-gradient-to-r from-teal-100 to-emerald-100 px-4 py-2.5 border-b border-teal-200">
+              <div className="flex items-center gap-2">
+                <Bot className="h-4 w-4 text-teal-600" />
+                <span className="text-sm font-bold text-teal-900">Sources de Données — 28 Références</span>
+              </div>
+            </div>
+            <div className="p-4">
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { source: "ISQ (Inst. Statistique QC)", type: "Provincial" },
+                  { source: "STIQ Baromètre 16e éd.", type: "Provincial" },
+                  { source: "MEIE (Min. Économie)", type: "Provincial" },
+                  { source: "Statistique Canada", type: "Fédéral" },
+                  { source: "REAI (130+ membres)", type: "Associatif" },
+                  { source: "IFR World Robotics", type: "International" },
+                  { source: "Invest. Québec (Grand V)", type: "Provincial" },
+                  { source: "FCEI / BDC", type: "Fédéral" },
+                  { source: "Scale AI / Mila", type: "Écosystème IA" },
+                ].map(s => (
+                  <div key={s.source} className="p-2 rounded-lg bg-teal-50 border border-teal-200">
+                    <p className="text-xs font-bold text-teal-800">{s.source}</p>
+                    <p className="text-[9px] text-teal-600">{s.type}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== OPPORTUNITÉS ===== */}
+      {subTab === "opportunites" && (
+        <div className="space-y-4">
+          {/* 6 opportunités stratégiques */}
+          <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+            <div className="bg-gradient-to-r from-indigo-100 to-violet-100 px-4 py-2.5 border-b border-indigo-200">
+              <div className="flex items-center gap-2">
+                <Lightbulb className="h-4 w-4 text-indigo-600" />
+                <span className="text-sm font-bold text-indigo-900">Opportunités Stratégiques — 2024-2026</span>
+              </div>
+            </div>
+            <div className="p-4 space-y-2">
+              {[
+                { sector: "IA Générative & Prédictive", opportunity: "43% adoption mais 47% n'utilisent toujours pas l'IA — marché massif non pénétré", impact: "Très élevé", data: "+39 pts depuis 2019", source: "STIQ/MEIE 2025" },
+                { sector: "ERP & Intégration Systèmes", opportunity: "51% ont un ERP mais SEULEMENT 3% complètement connecté — dette technique massive", impact: "Critique", data: "14% d'interconnexion élevée", source: "MEIE 2025" },
+                { sector: "Cybersécurité OT", opportunity: "Convergence IT/OT + Loi 25 = besoin explosif", impact: "Élevé", data: "Cloud à 48.5% = surface d'attaque élargie", source: "FCCQ 2024" },
+                { sector: "Automatisation PME", opportunity: "73% utilisent l'automatisation MAIS investissement moyen PME = 40,715$/an seulement", impact: "Élevé", data: "ROI cobot 14-18 mois, 1.60$/$ investi", source: "MEIE/FCEI 2025" },
+                { sector: "ESG & Dév. Durable", opportunity: "Grand V lie les milliards à la 'productivité durable' — nouveau critère obligatoire", impact: "Moyen-élevé", data: "IoT + IA pour optimiser conso énergétique", source: "IQ 2024-2025" },
+                { sector: "Diversification Export", opportunity: "76% exportent aux USA — risque tarifaire = urgence diversification", impact: "Stratégique", data: "29% des innovantes exportent hors USA", source: "STIQ 2025" },
+              ].map((o, i) => (
+                <div key={i} className="p-3 rounded-lg border border-gray-100 hover:shadow-sm">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Lightbulb className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
+                    <span className="text-sm font-semibold text-gray-800 flex-1">{o.sector}</span>
+                    <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium",
+                      o.impact === "Critique" ? "bg-red-50 text-red-600" :
+                      o.impact === "Très élevé" ? "bg-orange-50 text-orange-600" :
+                      "bg-indigo-50 text-indigo-600"
+                    )}>{o.impact}</span>
+                  </div>
+                  <p className="text-xs text-gray-600 mb-1">{o.opportunity}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] font-bold text-blue-600">{o.data}</span>
+                    <span className="text-[9px] text-gray-400 italic">{o.source}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Contexte mondial robotique */}
+          <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+            <div className="bg-gradient-to-r from-gray-100 to-slate-100 px-4 py-2.5 border-b border-gray-200">
+              <div className="flex items-center gap-2">
+                <Globe className="h-4 w-4 text-gray-600" />
+                <span className="text-sm font-bold text-gray-900">Contexte Mondial — Densité Robotique (IFR 2024-2025)</span>
+              </div>
+            </div>
+            <div className="p-4">
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { pays: "Corée du Sud", densite: "1,012", note: "Leader mondial" },
+                  { pays: "Singapour", densite: "770", note: "2e mondial" },
+                  { pays: "Chine", densite: "470", note: "Doublement en 4 ans" },
+                  { pays: "Canada", densite: "~200", note: "3,800 installations 2024" },
+                ].map(p => (
+                  <div key={p.pays} className="p-2.5 rounded-lg bg-gray-50 border border-gray-200">
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="text-xs font-bold text-gray-800">{p.pays}</span>
+                      <span className="text-xs font-bold text-blue-600">{p.densite}/10K</span>
+                    </div>
+                    <p className="text-[9px] text-gray-500">{p.note}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[9px] text-gray-400 mt-2 italic">Densité = robots pour 10,000 employés. Moyenne mondiale record: 162 (2023). Source: IFR 2025</p>
+            </div>
+          </div>
+
+          {/* Coûts par solution */}
+          <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+            <div className="bg-gradient-to-r from-amber-100 to-orange-100 px-4 py-2.5 border-b border-amber-200">
+              <div className="flex items-center gap-2">
+                <DollarSign className="h-4 w-4 text-amber-600" />
+                <span className="text-sm font-bold text-amber-900">Coûts par Type de Solution</span>
+              </div>
+            </div>
+            <div className="p-4 space-y-2">
+              {[
+                { type: "Robot Collaboratif (Cobot)", total: "124k$", materiel: "25-75k$" },
+                { type: "Robot Industriel 6 axes", total: "403k$", materiel: "80-250k$" },
+                { type: "Robot Mobile AMR", total: "183k$", materiel: "40-120k$" },
+                { type: "Système Vision IA", total: "89k$", materiel: "15-60k$" },
+              ].map(r => (
+                <div key={r.type} className="flex items-center justify-between p-2.5 rounded-lg border border-gray-200">
+                  <div>
+                    <p className="text-xs font-semibold text-gray-800">{r.type}</p>
+                    <p className="text-[9px] text-gray-500">Matériel: {r.materiel}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-blue-700">{r.total}</p>
+                    <p className="text-[9px] text-gray-400">1ère année</p>
+                  </div>
+                </div>
+              ))}
+              <div className="flex items-center gap-2 mt-2 p-2 rounded-lg bg-amber-50 border border-amber-200">
+                <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                <span className="text-[9px] text-amber-700">Estimations — IFR 2024, REAI, fournisseurs QC. Varient selon intégrateur.</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Études de référence */}
+          <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+            <div className="bg-gradient-to-r from-blue-100 to-cyan-100 px-4 py-2.5 border-b border-blue-200">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-bold text-blue-900">Études de Référence 2024-2026</span>
+              </div>
+            </div>
+            <div className="p-4 space-y-1.5">
+              {[
+                { title: "Baromètre industriel québécois 16e éd.", source: "STIQ", year: "2025" },
+                { title: "Enquête numérique manufacturier QC", source: "MEIE", year: "2025" },
+                { title: "Rapport annuel d'activités 2024-2025", source: "Investissement Québec", year: "2025" },
+                { title: "World Robotics Report", source: "IFR", year: "2025" },
+                { title: "Transformation numérique des PME", source: "FCEI", year: "2025" },
+                { title: "Adoption et utilisation de l'IA au QC", source: "ISQ / StatCan", year: "2025" },
+                { title: "Impact de l'IA sur les entreprises QC", source: "Aviseo / CPQ", year: "2024" },
+                { title: "Rapport écosystème tech Québec", source: "Québec Tech", year: "2025" },
+              ].map((doc, i) => (
+                <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg border border-gray-100">
+                  <FileText className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-800">{doc.title}</p>
+                    <p className="text-[9px] text-gray-400">{doc.source} · {doc.year}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ========== MON PROFIL ORBIT9 (enrichi: fiche entreprise + VITAA perso + personnalisation) ==========
+
+function MonProfilOrbit9() {
+  const [celluleName, setCelluleName] = useState("Les Titans");
+  const myVitaa = ORBIT9_CELLULES[0].membres[0].vitaa; // Carl F. = premier membre
+
+  return (
+    <div className="max-w-4xl mx-auto px-6 py-4 space-y-4">
+      {/* Header pastel */}
+      <div className="rounded-xl bg-teal-50 border border-teal-200 px-4 py-3 flex items-center gap-3">
+        <UserCircle className="h-5 w-5 text-teal-600" />
+        <div className="flex-1">
+          <p className="text-sm font-bold text-teal-800">Mon Profil Orbit⁹</p>
+          <p className="text-[9px] text-teal-500">Fiche entreprise, scores VITAA, personnalisation</p>
+        </div>
+      </div>
+
+      {/* Fiche entreprise */}
+      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
+        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
+          <Building2 className="h-4 w-4 text-teal-600" />
+          <span className="text-sm font-bold text-teal-800">Fiche entreprise</span>
+        </div>
+        <div className="p-4 space-y-3">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">
+              <Camera className="h-5 w-5 text-gray-300" />
+            </div>
+            <div className="flex-1 space-y-1.5">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-gray-700 w-24">Entreprise</span>
+                <span className="text-xs text-gray-800 font-bold">Usine Bleue AI</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-gray-700 w-24">Secteur</span>
+                <span className="text-xs text-gray-600">Automatisation industrielle</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-gray-700 w-24">Région</span>
+                <span className="text-xs text-gray-600">Québec, Canada</span>
+              </div>
+            </div>
+          </div>
+          {/* Certifications */}
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {["ISO 9001", "Membre REAI", "Pionnier V1"].map(cert => (
+              <span key={cert} className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 font-medium border border-emerald-200">
+                {cert}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Mon score VITAA */}
+      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
+        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
+          <Activity className="h-4 w-4 text-teal-600" />
+          <span className="text-sm font-bold text-teal-800">Mon score VITAA</span>
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-teal-100 text-teal-700">
+            e^(V×I×T) = {Math.exp(myVitaa.v * myVitaa.i * myVitaa.t).toFixed(2)}
+          </span>
+        </div>
+        <div className="p-4 space-y-2">
+          {[
+            { label: "Vente", val: myVitaa.v, color: "bg-red-500" },
+            { label: "Idée", val: myVitaa.i, color: "bg-blue-500" },
+            { label: "Temps", val: myVitaa.t, color: "bg-amber-500" },
+            { label: "Argent", val: myVitaa.a1, color: "bg-emerald-500" },
+            { label: "Actif", val: myVitaa.a2, color: "bg-violet-500" },
+          ].map(p => (
+            <div key={p.label} className="flex items-center gap-3">
+              <span className="text-[11px] text-gray-600 w-12 shrink-0">{p.label}</span>
+              <div className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                <div className={cn("h-full rounded-full transition-all duration-1000", p.color)} style={{ width: `${p.val * 100}%` }} />
+              </div>
+              <span className="text-[11px] font-bold text-gray-700 w-8 text-right">{(p.val * 100).toFixed(0)}%</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Indice de confiance */}
+      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
+        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
+          <ShieldCheck className="h-4 w-4 text-teal-600" />
+          <span className="text-sm font-bold text-teal-800">Indice de confiance</span>
+        </div>
+        <div className="p-4">
+          <div className="flex items-center gap-4">
+            <div className="text-3xl font-bold text-teal-600">87%</div>
+            <div className="flex-1 space-y-1">
+              {[
+                { label: "Profil complété", val: 90 },
+                { label: "Engagements tenus", val: 85 },
+                { label: "Activité réseau", val: 78 },
+              ].map(m => (
+                <div key={m.label} className="flex items-center gap-2">
+                  <span className="text-[9px] text-gray-500 w-28 shrink-0">{m.label}</span>
+                  <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-full rounded-full bg-teal-400" style={{ width: `${m.val}%` }} />
+                  </div>
+                  <span className="text-[9px] font-bold text-gray-600 w-8 text-right">{m.val}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Personnalisation — nom cellule + bots */}
+      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
+        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
+          <Settings className="h-4 w-4 text-teal-600" />
+          <span className="text-sm font-bold text-teal-800">Personnalisation</span>
+        </div>
+        <div className="p-4 space-y-3">
+          <div>
+            <label className="text-[11px] font-medium text-gray-600 mb-1 block">Nom de ma cellule</label>
+            <input
+              type="text"
+              value={celluleName}
+              onChange={(e) => setCelluleName(e.target.value)}
+              className="w-full text-sm px-3 py-2 rounded-lg border border-gray-300 focus:border-teal-400 focus:ring-2 focus:ring-teal-100 outline-none"
+              placeholder="Nom de la cellule..."
+            />
+          </div>
+          <div>
+            <label className="text-[11px] font-medium text-gray-600 mb-1.5 block">Mes bots</label>
+            <div className="space-y-2">
+              {[
+                { code: "CEOB", defaultName: "CarlOS" },
+                { code: "CSOB", defaultName: "Simone" },
+                { code: "CROB", defaultName: "Rich" },
+              ].map(bot => (
+                <div key={bot.code} className="flex items-center gap-3">
+                  <div className="w-7 h-7 rounded-full overflow-hidden shrink-0">
+                    <BotAvatar code={bot.code} size="sm" />
+                  </div>
+                  <input
+                    type="text"
+                    defaultValue={bot.defaultName}
+                    className="flex-1 text-xs px-2.5 py-1.5 rounded-lg border border-gray-200 focus:border-teal-400 focus:ring-2 focus:ring-teal-100 outline-none"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Toggle Perso/Pro — disabled */}
+      <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white opacity-50">
+        <div className="bg-gray-100 border-b border-gray-200 px-4 py-2.5 flex items-center gap-2">
+          <Lock className="h-4 w-4 text-gray-400" />
+          <span className="text-sm font-bold text-gray-500">Mode Perso / Pro</span>
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-amber-100 text-amber-700">Bientôt</span>
+        </div>
+        <div className="p-4 text-center">
+          <p className="text-xs text-gray-400">Basculez entre votre profil personnel (FAAS) et professionnel (VITAA).</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ========== ORBIT9 DASHBOARD ==========
+
+function Orbit9Dashboard() {
+  return (
+    <div className="max-w-4xl mx-auto px-6 py-4 space-y-4">
+      {/* Header pastel */}
+      <div className="rounded-xl bg-teal-50 border border-teal-200 px-4 py-3 flex items-center gap-3">
+        <LayoutDashboard className="h-5 w-5 text-teal-600" />
+        <div className="flex-1">
+          <p className="text-sm font-bold text-teal-800">Dashboard Orbit⁹</p>
+          <p className="text-[9px] text-teal-500">Vue d'ensemble de votre réseau de cellules</p>
+        </div>
+      </div>
+
+      {/* KPIs réseau */}
+      <div className="grid grid-cols-4 gap-3">
+        {[
+          { label: "Cellules", value: "4", icon: Atom, grad: "from-teal-600 to-teal-500", vc: "text-teal-600" },
+          { label: "Membres", value: "18", icon: Users, grad: "from-emerald-600 to-emerald-500", vc: "text-emerald-600" },
+          { label: "Matches", value: "7", icon: Handshake, grad: "from-violet-600 to-violet-500", vc: "text-violet-600" },
+          { label: "Score moyen", value: "72%", icon: Activity, grad: "from-amber-600 to-amber-500", vc: "text-amber-600" },
+        ].map(kpi => (
+          <div key={kpi.label} className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+            <div className={cn("flex items-center gap-2 px-3 py-2 bg-gradient-to-r", kpi.grad)}>
+              <kpi.icon className="h-4 w-4 text-white" />
+              <span className="text-xs font-bold text-white">{kpi.label}</span>
+            </div>
+            <div className="px-3 py-2">
+              <div className={cn("text-2xl font-bold", kpi.vc)}>{kpi.value}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ROI réseau */}
+      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
+        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
+          <TrendingUp className="h-4 w-4 text-teal-600" />
+          <span className="text-sm font-bold text-teal-800">ROI Réseau</span>
+        </div>
+        <div className="p-4 grid grid-cols-3 gap-4">
+          {[
+            { label: "Revenus générés", value: "47K$", sub: "via cellules", color: "text-emerald-600" },
+            { label: "Coût évité", value: "12K$", sub: "mutualisation", color: "text-blue-600" },
+            { label: "Temps gagné", value: "340h", sub: "ce trimestre", color: "text-violet-600" },
+          ].map(r => (
+            <div key={r.label} className="text-center">
+              <div className={cn("text-2xl font-bold", r.color)}>{r.value}</div>
+              <div className="text-[11px] text-gray-600">{r.label}</div>
+              <div className="text-[9px] text-gray-400">{r.sub}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Cellules actives */}
+      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
+        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
+          <Atom className="h-4 w-4 text-teal-600" />
+          <span className="text-sm font-bold text-teal-800">Cellules actives</span>
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-teal-100 text-teal-700">4</span>
+        </div>
+        <div className="divide-y divide-gray-100">
+          {ORBIT9_CELLULES.map((cell, i) => {
+            const ph = PC[cell.status as PhaseKey];
+            return (
+              <div key={i} className="px-4 py-3 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-teal-50">
+                  <Atom className="h-4 w-4 text-teal-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs font-medium text-gray-800">{cell.name}</span>
+                  <span className="text-[9px] text-gray-400 ml-2">{cell.type}</span>
+                </div>
+                <span className="text-[9px] text-gray-500">{cell.members}/{cell.maxMembers}</span>
+                <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1",
+                  ph?.badge || "bg-gray-100 text-gray-700"
+                )}>
+                  <span className={cn("w-1.5 h-1.5 rounded-full", ph?.dot || "bg-gray-400")} />
+                  {ph?.label || cell.status}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Matches récents */}
+      <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+        <div className="bg-gradient-to-r from-violet-600 to-violet-500 px-4 py-2.5 flex items-center gap-2">
+          <Handshake className="h-4 w-4 text-white" />
+          <span className="text-sm font-bold text-white">Matches récents</span>
+        </div>
+        <div className="divide-y divide-gray-100">
+          {[
+            { pair: "Usine Bleue ↔ MetalPro", score: 87, bot: "CSOB" },
+            { pair: "Usine Bleue ↔ TechFab", score: 73, bot: "CROB" },
+            { pair: "Cellule Ops ↔ LogiTrans", score: 65, bot: "COOB" },
+          ].map((m, i) => (
+            <div key={i} className="px-4 py-2.5 flex items-center gap-3">
+              <BotAvatar code={m.bot} size="sm" />
+              <span className="text-xs text-gray-700 flex-1">{m.pair}</span>
+              <div className="w-20 h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-full bg-violet-500 rounded-full" style={{ width: `${m.score}%` }} />
+              </div>
+              <span className="text-[9px] font-bold text-violet-600">{m.score}%</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ========== ORBIT9 GOUVERNANCE (4 sub-tabs: Principes, Rôles, TimeTokens, Matrice Sortie + Standards qualité) ==========
+
+function Orbit9Gouvernance() {
+  type GovTab = "principes" | "roles" | "timetokens" | "sortie";
+  const [govTab, setGovTab] = useState<GovTab>("principes");
+  const GOV_TABS: { key: GovTab; label: string; Icon: React.ElementType }[] = [
+    { key: "principes", label: "Principes", Icon: BookOpen },
+    { key: "roles", label: "Rôles", Icon: Users },
+    { key: "timetokens", label: "TimeTokens", Icon: DollarSign },
+    { key: "sortie", label: "Matrice Sortie", Icon: Scale },
+  ];
+
+  return (
+    <div className="max-w-4xl mx-auto px-6 py-4 space-y-4">
+      {/* Header + intro */}
+      <div className="rounded-xl bg-teal-50 border border-teal-200 px-4 py-3">
+        <div className="flex items-center gap-3 mb-2">
+          <Shield className="h-5 w-5 text-teal-600" />
+          <div className="flex-1">
+            <p className="text-sm font-bold text-teal-800">Gouvernance Augmentée par IA</p>
+            <p className="text-[9px] text-teal-500">Inspiré Holacracy — adapté pour la collaboration IA + Humain</p>
+          </div>
+        </div>
+        <p className="text-xs text-teal-700 leading-relaxed">
+          Le pouvoir ne réside pas dans une personne mais dans un <strong>processus défini</strong>. Chaque décision suit un protocole transparent où les bots IA et les humains ont des rôles clairs avec des responsabilités précises.
+        </p>
+      </div>
+
+      {/* Sub-tabs */}
+      <div className="flex gap-1.5">
+        {GOV_TABS.map(t => (
+          <button key={t.key} onClick={() => setGovTab(t.key)} className={cn(
+            "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
+            govTab === t.key ? "bg-gray-900 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+          )}>
+            <t.Icon className="h-3.5 w-3.5" />
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ═══ TAB: PRINCIPES ═══ */}
+      {govTab === "principes" && (<>
+        {/* 5 principes fondateurs */}
+        <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
+          <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
+            <BookOpen className="h-4 w-4 text-teal-600" />
+            <span className="text-sm font-bold text-teal-800">5 Principes fondateurs</span>
+          </div>
+          <div className="p-4 space-y-3">
+            {[
+              { title: "Basé sur les TENSIONS", icon: Zap, color: "text-amber-500", bgColor: "bg-amber-50 border-amber-200",
+                desc: "Une tension = un écart entre la situation actuelle et ce qui pourrait être. C'est le moteur de toute amélioration.",
+                examples: ["Le budget du projet n'est pas clair (problème)", "On pourrait automatiser ce processus (opportunité)"] },
+              { title: "Rôles dynamiques, pas hiérarchie statique", icon: RefreshCw, color: "text-blue-500", bgColor: "bg-blue-50 border-blue-200",
+                desc: "Les agents IA ET les humains occupent des rôles avec responsabilités précises. Ces rôles évoluent selon les tensions rencontrées.",
+                examples: ["CarlOS a des responsabilités définies qui peuvent évoluer", "Rôles ajustés via réunions de gouvernance"] },
+              { title: "Deux types de réunions distinctes", icon: Layers, color: "text-violet-500", bgColor: "bg-violet-50 border-violet-200",
+                desc: "Gouvernance (structure: qui fait quoi) vs Tactique (opérations: quoi est en retard). Jamais mélangées.",
+                examples: ["Gouvernance: \"Clarifier qui gère les subventions — CFO ou CTO?\"", "Tactique: \"Le devis pour Acier Québec est en retard\""] },
+              { title: "Intégration des propositions", icon: CheckCircle2, color: "text-emerald-500", bgColor: "bg-emerald-50 border-emerald-200",
+                desc: "Chaque proposition est testée par consentement (pas par consensus). Une objection est valide seulement si elle protège un rôle existant.",
+                examples: ["Proposition → Questions → Réactions → Objections → Intégration", "Le silence = consentement implicite"] },
+              { title: "Transparence radicale des données", icon: Eye, color: "text-teal-500", bgColor: "bg-teal-50 border-teal-200",
+                desc: "Chaque bot partage ses métriques, ses décisions et ses rationnels. Tout est auditable par tous les membres de la cellule.",
+                examples: ["Historique complet de chaque décision par les bots", "Dashboards temps réel accessibles à tous"] },
+            ].map((p, i) => (
+              <div key={i} className={cn("rounded-lg border p-3", p.bgColor)}>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <p.icon className={cn("h-4 w-4", p.color)} />
+                  <span className="text-xs font-bold text-gray-800">{p.title}</span>
+                </div>
+                <p className="text-[11px] text-gray-600 leading-relaxed mb-2">{p.desc}</p>
+                <div className="space-y-1">
+                  {p.examples.map((ex, ei) => (
+                    <div key={ei} className="flex items-start gap-1.5">
+                      <span className="text-[9px] text-gray-400 mt-0.5">→</span>
+                      <span className="text-[9px] text-gray-500 italic">{ex}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Protocole décisionnel (processus en 5 étapes) */}
+        <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
+          <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
+            <Route className="h-4 w-4 text-teal-600" />
+            <span className="text-sm font-bold text-teal-800">Processus décisionnel</span>
+          </div>
+          <div className="p-4">
+            <p className="text-[11px] text-gray-500 mb-3">Chaque décision du réseau suit ce processus en 5 étapes. Les bots IA participent à chaque étape aux côtés des humains.</p>
+            <div className="flex items-center gap-1">
+              {[
+                { label: "Proposition", color: "bg-blue-500" },
+                { label: "Questions", color: "bg-sky-500" },
+                { label: "Réactions", color: "bg-amber-500" },
+                { label: "Objections", color: "bg-orange-500" },
+                { label: "Intégration", color: "bg-emerald-500" },
+              ].map((st, si) => (
+                <div key={si} className="flex-1 flex flex-col items-center relative">
+                  <div className={cn("w-7 h-7 rounded-full flex items-center justify-center text-white text-[9px] font-bold", st.color)}>{si + 1}</div>
+                  <span className="text-[9px] font-medium text-gray-600 mt-1 text-center leading-tight">{st.label}</span>
+                  {si < 4 && <div className="absolute top-3.5 left-[60%] w-[80%] h-0.5 bg-gray-200" />}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Règles actives de la cellule */}
+        <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
+          <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
+            <ListChecks className="h-4 w-4 text-teal-600" />
+            <span className="text-sm font-bold text-teal-800">Règles actives</span>
+          </div>
+          <div className="p-4 space-y-2">
+            {[
+              { rule: "Maximum 9 membres par cellule", icon: Users, active: true },
+              { rule: "Trisociation obligatoire (3 OS par bot)", icon: Atom, active: true },
+              { rule: "Scoring VITAA minimum 40% pour rester actif", icon: Activity, active: true },
+              { rule: "Anti-cartel: pas de monopole sectoriel", icon: ShieldAlert, active: true },
+              { rule: "Rotation des rôles tous les 90 jours", icon: RefreshCw, active: false },
+            ].map((r, i) => (
+              <div key={i} className={cn("flex items-center gap-3 px-3 py-2 rounded-lg border", r.active ? "border-gray-200 bg-white" : "border-gray-100 bg-gray-50 opacity-50")}>
+                <r.icon className={cn("h-3.5 w-3.5 shrink-0", r.active ? "text-teal-500" : "text-gray-400")} />
+                <span className="text-xs text-gray-700 flex-1">{r.rule}</span>
+                <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-medium", r.active ? "bg-emerald-50 text-emerald-600" : "bg-gray-100 text-gray-400")}>{r.active ? "Actif" : "Bientôt"}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </>)}
+
+      {/* ═══ TAB: RÔLES ═══ */}
+      {govTab === "roles" && (<>
+        <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
+          <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
+            <Users className="h-4 w-4 text-teal-600" />
+            <span className="text-sm font-bold text-teal-800">Rôles dans le Cercle Orbit⁹</span>
+          </div>
+          <div className="p-4">
+            <p className="text-[11px] text-gray-500 mb-3">Chaque cercle (cellule) possède 4 rôles structurels. Les agents IA et les humains se partagent ces responsabilités.</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            { role: "Facilitateur", occupant: "CarlOS (CEO-AI)", type: "Agent IA", typeColor: "bg-violet-50 text-violet-600", icon: Bot, color: "text-violet-500", border: "border-violet-200",
+              duties: ["Faciliter les réunions de gouvernance", "S'assurer que le processus est respecté", "Détecter les tensions non-exprimées"] },
+            { role: "Secrétaire", occupant: "Olivier (COO-AI)", type: "Agent IA", typeColor: "bg-violet-50 text-violet-600", icon: Bot, color: "text-blue-500", border: "border-blue-200",
+              duties: ["Enregistrer les décisions", "Maintenir les registres", "Planifier les réunions"] },
+            { role: "Leader du Cercle", occupant: "Carl (Fondateur)", type: "Humain", typeColor: "bg-blue-50 text-blue-600", icon: Crown, color: "text-amber-500", border: "border-amber-200",
+              duties: ["Vision stratégique", "Allocation des ressources", "Décisions finales sur la direction"] },
+            { role: "Représentant", occupant: "Élu par le cercle", type: "Humain", typeColor: "bg-blue-50 text-blue-600", icon: Compass, color: "text-emerald-500", border: "border-emerald-200",
+              duties: ["Représenter le cercle dans les cercles supérieurs", "Reporter les tensions du cercle", "Protéger les intérêts du cercle"] },
+          ].map((r, i) => (
+            <div key={i} className={cn("rounded-xl border overflow-hidden shadow-sm bg-white", r.border)}>
+              <div className="px-3 py-2.5 bg-gray-50 border-b border-gray-200 flex items-center gap-2">
+                <r.icon className={cn("h-4 w-4", r.color)} />
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs font-bold text-gray-800">{r.role}</span>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="text-[9px] text-gray-500">{r.occupant}</span>
+                    <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium", r.typeColor)}>{r.type}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="p-3 space-y-1.5">
+                {r.duties.map((d, di) => (
+                  <div key={di} className="flex items-start gap-1.5">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-gray-300 shrink-0 mt-0.5" />
+                    <span className="text-[11px] text-gray-600">{d}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </>)}
+
+      {/* ═══ TAB: TIMETOKENS ═══ */}
+      {govTab === "timetokens" && (<>
+        {/* KPIs */}
+        <div className="grid grid-cols-4 gap-3">
+          {[
+            { label: "TT accumulés", value: "1,240", icon: Coins, grad: "from-violet-600 to-violet-500", vc: "text-violet-600", sub: "Vos contributions" },
+            { label: "Phase", value: "V1", icon: Server, grad: "from-emerald-600 to-emerald-500", vc: "text-emerald-600", sub: "Off-chain (SQLite)" },
+            { label: "Formule", value: "5D", icon: Cpu, grad: "from-blue-600 to-blue-500", vc: "text-blue-600", sub: "A × D × I × Z × P" },
+            { label: "Valeur TT", value: "~3.2$", icon: DollarSign, grad: "from-amber-600 to-amber-500", vc: "text-amber-600", sub: "Par token (estimé)" },
+          ].map(kpi => (
+            <div key={kpi.label} className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+              <div className={cn("flex items-center gap-2 px-3 py-2 bg-gradient-to-r", kpi.grad)}>
+                <kpi.icon className="h-4 w-4 text-white" />
+                <span className="text-xs font-bold text-white">{kpi.label}</span>
+              </div>
+              <div className="px-3 py-2">
+                <div className={cn("text-2xl font-bold", kpi.vc)}>{kpi.value}</div>
+                <div className="text-[9px] text-gray-400">{kpi.sub}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Pourquoi les bots rendent les smart contracts meilleurs */}
+        <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
+          <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-teal-600" />
+            <span className="text-sm font-bold text-teal-800">Pourquoi les Bots rendent les TimeTokens fiables</span>
+          </div>
+          <div className="p-4">
+            <p className="text-[11px] text-gray-500 mb-3">Dans une DAO traditionnelle, les humains auto-déclarent leurs contributions. Avec CarlOS, les bots mesurent automatiquement — zéro manipulation possible.</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-lg border border-red-200 bg-red-50/50 p-3 space-y-1.5">
+                <span className="text-[9px] font-bold text-red-600 uppercase">DAO Traditionnelle</span>
+                {["Humains auto-déclarent leurs contributions", "\"J'ai travaillé 40h\" — vraiment?", "Gaming du système, conflits, bureaucratie"].map((t, i) => (
+                  <div key={i} className="flex items-start gap-1.5"><X className="h-3.5 w-3.5 text-red-400 shrink-0 mt-0.5" /><span className="text-[9px] text-gray-600">{t}</span></div>
+                ))}
+              </div>
+              <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-3 space-y-1.5">
+                <span className="text-[9px] font-bold text-emerald-600 uppercase">Solution CarlOS</span>
+                {["Bots trackent automatiquement chaque action", "CTO Bot mesure les heures de dev réelles", "Zéro self-reporting, zéro gaming"].map((t, i) => (
+                  <div key={i} className="flex items-start gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" /><span className="text-[9px] text-gray-600">{t}</span></div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Évolution en 3 phases */}
+        <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
+          <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
+            <Route className="h-4 w-4 text-teal-600" />
+            <span className="text-sm font-bold text-teal-800">Évolution en 3 phases</span>
+          </div>
+          <div className="p-4 flex gap-3">
+            {[
+              { phase: "Phase 1", label: "Off-Chain", desc: "SQLite local, tracking par bots, rapports mensuels", status: "Actif", statusColor: "bg-emerald-50 text-emerald-600", border: "border-emerald-300", color: "text-emerald-600" },
+              { phase: "Phase 2", label: "Hybrid", desc: "PostgreSQL centralisé, API REST, audit trail immutable", status: "12-24 mois", statusColor: "bg-blue-50 text-blue-600", border: "border-blue-200", color: "text-blue-600" },
+              { phase: "Phase 3", label: "On-Chain", desc: "Ethereum/Polygon L2, smart contracts, distribution auto", status: "24-36 mois", statusColor: "bg-violet-50 text-violet-600", border: "border-violet-200", color: "text-violet-600" },
+            ].map((ph, pi) => (
+              <div key={pi} className={cn("flex-1 rounded-xl border p-3", ph.border)}>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className={cn("text-[9px] font-bold", ph.color)}>{ph.phase}</span>
+                  <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium ml-auto", ph.statusColor)}>{ph.status}</span>
+                </div>
+                <p className="text-xs font-bold text-gray-800 mb-1">{ph.label}</p>
+                <p className="text-[9px] text-gray-500 leading-relaxed">{ph.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </>)}
+
+      {/* ═══ TAB: MATRICE SORTIE ═══ */}
+      {govTab === "sortie" && (<>
+        <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
+          <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
+            <Scale className="h-4 w-4 text-teal-600" />
+            <span className="text-sm font-bold text-teal-800">Matrice de Sortie — 4 Quadrants</span>
+          </div>
+          <div className="p-4">
+            <p className="text-[11px] text-gray-500 mb-3">Quand un membre quitte une cellule, le protocole de sortie dépend du contexte. Chaque scénario a un processus clair pour protéger toutes les parties.</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            { title: "Volontaire + Bons termes", icon: CheckCircle2, border: "border-emerald-200", bg: "bg-emerald-50", color: "text-emerald-600",
+              desc: "Rachat TimeTokens à valeur marchande. Transition planifiée sur 90 jours. Les bots continuent le suivi pendant la période de transition." },
+            { title: "Volontaire + Conflit", icon: Scale, border: "border-amber-200", bg: "bg-amber-50", color: "text-amber-600",
+              desc: "Médiation intégrative par CarlOS basée sur le protocole CREDO. Arbitrage neutre si échec de la médiation. Protection PI via TimeTokens." },
+            { title: "Involontaire (Performance)", icon: AlertTriangle, border: "border-orange-200", bg: "bg-orange-50", color: "text-orange-600",
+              desc: "3 niveaux d'avertissement progressifs. Plan d'amélioration sur 60 jours avec coaching de CarlOS. VITAA < 40% pendant 3 mois = sortie." },
+            { title: "Événement externe", icon: Shield, border: "border-red-200", bg: "bg-red-50", color: "text-red-600",
+              desc: "Clause de succession automatique. Un suppléant désigné prend le relai immédiatement. Continuité orbitale garantie — la cellule ne s'arrête jamais." },
+          ].map((q, i) => (
+            <div key={i} className={cn("rounded-xl border overflow-hidden shadow-sm bg-white", q.border)}>
+              <div className={cn("px-3 py-2.5 border-b flex items-center gap-2", q.bg, q.border)}>
+                <q.icon className={cn("h-4 w-4", q.color)} />
+                <span className="text-xs font-bold text-gray-800">{q.title}</span>
+              </div>
+              <div className="p-3">
+                <p className="text-[11px] text-gray-600 leading-relaxed">{q.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Protection PI */}
+        <div className="rounded-xl border border-violet-200 bg-violet-50/50 p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Lock className="h-4 w-4 text-violet-500" />
+            <span className="text-xs font-bold text-violet-800">Protection de la Propriété Intellectuelle</span>
+          </div>
+          <p className="text-[11px] text-gray-600 leading-relaxed mb-2">
+            Chaque contribution intellectuelle est trackée via TimeTokens et attribuée de façon <strong>irréversible</strong>. Quitter un cercle ne supprime pas vos contributions — elles restent traçables à jamais.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {["Revenus distribués", "Équité dans les co-créations", "Commission sur nouveaux membres"].map((b, i) => (
+              <span key={i} className="text-[9px] px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 font-medium">{b}</span>
+            ))}
+          </div>
+        </div>
+      </>)}
+
+      {/* ═══ STANDARDS QUALITÉ (toujours visible) ═══ */}
+      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
+        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
+          <Star className="h-4 w-4 text-teal-600" />
+          <span className="text-sm font-bold text-teal-800">Standards Qualité — Seuils Minimaux</span>
+        </div>
+        <div className="p-3">
+          <p className="text-[9px] text-gray-400 mb-2">Réévaluation annuelle de chaque membre. Le réseau élite maintient ses standards.</p>
+          <div className="grid grid-cols-2 gap-1.5">
+            {[
+              { label: "Certifications à jour", seuil: "Min. 1 active", ok: true },
+              { label: "Assurances valides", seuil: "Responsabilité + spécifique", ok: true },
+              { label: "Score réputation", seuil: "> 70/100", ok: true },
+              { label: "Litiges ouverts", seuil: "0 majeur", ok: true },
+              { label: "Taux livraison à temps", seuil: "> 80%", ok: true },
+              { label: "Charte réseau signée", seuil: "Obligatoire", ok: true },
+              { label: "Activité réseau", seuil: "Min. 1 interaction/90 jours", ok: false },
+              { label: "Références vérifiées", seuil: "Min. 2 actives", ok: true },
+            ].map((sq, qi) => (
+              <div key={qi} className={cn("flex items-center gap-2 px-2.5 py-1.5 rounded-lg", sq.ok ? "bg-emerald-50" : "bg-amber-50")}>
+                {sq.ok ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" /> : <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />}
+                <div className="flex-1 min-w-0">
+                  <span className="text-[9px] font-medium text-gray-700 block truncate">{sq.label}</span>
+                  <span className="text-[9px] text-gray-400 block truncate">{sq.seuil}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ========== JUMELAGE ORBIT9 ==========
+
+function JumelageOrbit9() {
+  const matches = [
+    { a: "Usine Bleue AI", b: "MetalPro Inc.", score: 87, status: "Introduction", bot: "CSOB" },
+    { a: "Usine Bleue AI", b: "TechFab Solutions", score: 73, status: "Qualification", bot: "CROB" },
+    { a: "Escouade Ventes", b: "Emballages Éco+", score: 68, status: "Découverte", bot: "CROB" },
+    { a: "Innovation Lab", b: "LogiTrans QC", score: 65, status: "Qualification", bot: "COOB" },
+  ];
+  return (
+    <div className="max-w-4xl mx-auto px-6 py-4 space-y-4">
+      <div className="rounded-xl bg-teal-50 border border-teal-200 px-4 py-3 flex items-center gap-3">
+        <Handshake className="h-5 w-5 text-teal-600" />
+        <div className="flex-1">
+          <p className="text-sm font-bold text-teal-800">Jumelage Orbit⁹</p>
+          <p className="text-[9px] text-teal-500">Pipeline de jumelage inter-entreprises · 5 étapes</p>
+        </div>
+      </div>
+      {/* Pipeline visuel */}
+      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
+        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
+          <Route className="h-4 w-4 text-teal-600" />
+          <span className="text-sm font-bold text-teal-800">Pipeline</span>
+        </div>
+        <div className="p-4">
+          <div className="flex items-center gap-1">
+            {[
+              { label: "Découverte", icon: Search, color: "bg-teal-500", active: true },
+              { label: "Qualification", icon: Target, color: "bg-blue-500", active: true },
+              { label: "Introduction", icon: Handshake, color: "bg-violet-500", active: false },
+              { label: "Collaboration", icon: Rocket, color: "bg-emerald-500", active: false },
+              { label: "Intégration", icon: Atom, color: "bg-amber-500", active: false },
+            ].map((st, si) => (
+              <div key={si} className="flex-1 flex flex-col items-center relative">
+                <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-white", st.active ? st.color : "bg-gray-300")}>
+                  <st.icon className="h-3.5 w-3.5" />
+                </div>
+                <span className={cn("text-[9px] font-medium mt-1 text-center", st.active ? "text-gray-700" : "text-gray-400")}>{st.label}</span>
+                {si < 4 && <div className={cn("absolute top-4 left-[60%] w-[80%] h-0.5", st.active ? "bg-teal-300" : "bg-gray-200")} />}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      {/* Matches en cours */}
+      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
+        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
+          <Handshake className="h-4 w-4 text-teal-600" />
+          <span className="text-sm font-bold text-teal-800">Matches en cours</span>
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-teal-100 text-teal-700">{matches.length}</span>
+        </div>
+        <div className="divide-y divide-gray-100">
+          {matches.map((m, i) => (
+            <div key={i} className="px-4 py-3 flex items-center gap-3">
+              <div className="w-7 h-7 rounded-full overflow-hidden shrink-0"><BotAvatar code={m.bot} size="sm" /></div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-gray-800">{m.a} ↔ {m.b}</p>
+                <p className="text-[9px] text-gray-400">Étape: {m.status}</p>
+              </div>
+              <div className="w-16 h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-full bg-teal-500 rounded-full" style={{ width: `${m.score}%` }} />
+              </div>
+              <span className="text-[9px] font-bold text-teal-600">{m.score}%</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ========== PIONNIERS ORBIT9 ==========
+
+function PionniersOrbit9() {
+  const sectors = [
+    { name: "Automatisation", status: "pris" as const, company: "AutomaTech Inc.", contact: "Martin L." },
+    { name: "Usinage / Métal", status: "pris" as const, company: "Usinage Précision QC", contact: "Jean-P. R." },
+    { name: "Plastique", status: "prospect" as const, company: "PlastiForm (en discussion)", contact: "—" },
+    { name: "Logistique", status: "pris" as const, company: "LogiFlow", contact: "Sophie D." },
+    { name: "Soudage", status: "pris" as const, company: "MetalPro Inc.", contact: "Pierre T." },
+    { name: "Alimentaire", status: "disponible" as const, company: "", contact: "" },
+    { name: "Pharmaceutique", status: "disponible" as const, company: "", contact: "" },
+    { name: "Emballage", status: "prospect" as const, company: "En discussion", contact: "—" },
+    { name: "Électronique", status: "disponible" as const, company: "", contact: "" },
+  ];
+  const pris = sectors.filter(s => s.status === "pris").length;
+  const prospects = sectors.filter(s => s.status === "prospect").length;
+
+  return (
+    <div className="max-w-4xl mx-auto px-6 py-4 space-y-4">
+      {/* Phase indicator */}
+      <div className="flex items-center gap-2">
+        <Eye className="h-3.5 w-3.5 text-blue-500" />
+        <span className="text-[9px] font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">Observation</span>
+        <span className="text-[9px] text-gray-400">État du cercle des pionniers et stratégie de recrutement</span>
+      </div>
+
+      {/* Header pastel */}
+      <div className="rounded-xl bg-teal-50 border border-teal-200 px-4 py-3 flex items-center gap-3">
+        <Rocket className="h-5 w-5 text-teal-600" />
+        <div className="flex-1">
+          <p className="text-sm font-bold text-teal-800">Cercle des Pionniers Orbit⁹</p>
+          <p className="text-[9px] text-teal-500">9 places · 9 leaders · 1 par secteur stratégique · Les portes ferment</p>
+        </div>
+        <span className="text-xs font-bold text-teal-700 bg-teal-100 px-2.5 py-0.5 rounded-full">{pris}/9</span>
+      </div>
+
+      {/* KPIs */}
+      <div className="grid grid-cols-4 gap-3">
+        {[
+          { label: "Confirmés", value: `${pris}`, icon: Users, grad: "from-indigo-600 to-indigo-500", vc: "text-indigo-600", sub: "Pionniers actifs" },
+          { label: "En discussion", value: `${prospects}`, icon: Clock, grad: "from-amber-600 to-amber-500", vc: "text-amber-600", sub: "Prospects actifs" },
+          { label: "Prix pionnier", value: "1,350$", icon: DollarSign, grad: "from-green-600 to-green-500", vc: "text-green-600", sub: "/mois vs 2,500$ vague 2" },
+          { label: "Économie/an", value: "13,800$", icon: Target, grad: "from-emerald-600 to-emerald-500", vc: "text-emerald-600", sub: "Garanti à vie" },
+        ].map(kpi => (
+          <div key={kpi.label} className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+            <div className={cn("flex items-center gap-2 px-3 py-2 bg-gradient-to-r", kpi.grad)}>
+              <kpi.icon className="h-4 w-4 text-white" />
+              <span className="text-xs font-bold text-white">{kpi.label}</span>
+            </div>
+            <div className="px-3 py-2">
+              <div className={cn("text-2xl font-bold", kpi.vc)}>{kpi.value}</div>
+              <div className="text-[9px] text-gray-500">{kpi.sub}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Modèle de croissance 9 → 81 */}
+      <div className="rounded-xl border border-indigo-200 overflow-hidden shadow-sm bg-gradient-to-r from-indigo-50 to-blue-50">
+        <div className="bg-indigo-50 border-b border-indigo-200 px-4 py-2.5 flex items-center gap-2">
+          <Rocket className="h-4 w-4 text-indigo-600" />
+          <span className="text-sm font-bold text-indigo-800">Modèle de Croissance — 9 × 9 = 81</span>
+        </div>
+        <div className="p-4">
+          <p className="text-[9px] text-gray-600 mb-3">Chaque pionnier anime sa propre Cellule Orbit⁹. Effet réseau: les bots de toutes les cellules communiquent entre eux.</p>
+          <div className="flex items-center justify-between gap-3">
+            {[
+              { value: "9", label: "Pionniers", desc: "1 leader / secteur", color: "indigo", Icon: Rocket },
+              { value: "×9", label: "Cellule chacun", desc: "Chaque pionnier recrute", color: "blue", Icon: Users },
+              { value: "81", label: "Membres actifs", desc: "Réseau auto-suffisant", color: "emerald", Icon: Target },
+            ].map((step, i) => (
+              <div key={i} className="flex items-center gap-3 flex-1">
+                <div className={cn("p-3 rounded-xl border text-center flex-1", `bg-${step.color}-100 border-${step.color}-200`)}>
+                  <step.Icon className={cn("h-5 w-5 mx-auto mb-1", `text-${step.color}-600`)} />
+                  <p className={cn("text-2xl font-bold", `text-${step.color}-700`)}>{step.value}</p>
+                  <p className="text-xs font-semibold text-gray-700">{step.label}</p>
+                  <p className="text-[9px] text-gray-500">{step.desc}</p>
+                </div>
+                {i < 2 && <ArrowRight className="h-5 w-5 text-gray-300 shrink-0" />}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Grille 9 places — 1 leader par secteur */}
+      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
+        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
+          <Target className="h-4 w-4 text-teal-600" />
+          <span className="text-sm font-bold text-teal-800">9 Places — 1 Leader par Secteur Stratégique</span>
+        </div>
+        <div className="p-4">
+          <div className="grid grid-cols-3 gap-2">
+            {sectors.map((s, i) => (
+              <div key={i} className={cn("p-3 rounded-lg border transition-all",
+                s.status === "pris" ? "bg-indigo-50 border-indigo-200" :
+                s.status === "prospect" ? "bg-amber-50 border-amber-200 border-dashed" :
+                "bg-gray-50 border-gray-200 border-dashed"
+              )}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className={cn("text-xs font-bold",
+                    s.status === "pris" ? "text-indigo-700" :
+                    s.status === "prospect" ? "text-amber-700" : "text-gray-500"
+                  )}>{s.name}</span>
+                  {s.status === "pris" ? <CheckCircle2 className="h-3.5 w-3.5 text-indigo-600" /> :
+                   s.status === "prospect" ? <Clock className="h-3.5 w-3.5 text-amber-600" /> :
+                   <Plus className="h-3.5 w-3.5 text-gray-400" />}
+                </div>
+                <p className="text-[9px] text-gray-500">{s.company || "Disponible"}</p>
+                {s.contact && s.contact !== "—" && <p className="text-[9px] text-gray-400 mt-0.5">Contact: {s.contact}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Package Pionnier — Conditions à Vie */}
+      <div className="rounded-xl border-2 border-indigo-300 overflow-hidden shadow-lg bg-white">
+        <div className="bg-indigo-50 border-b border-indigo-200 px-4 py-2.5 flex items-center gap-2">
+          <Award className="h-4 w-4 text-indigo-600" />
+          <span className="text-sm font-bold text-indigo-800">Package Pionnier — Conditions à Vie</span>
+        </div>
+        <div className="p-4">
+          <p className="text-[9px] text-gray-500 mb-3">En devenant pionnier, vous verrouillez ces avantages de façon permanente, même quand le prix augmente pour les vagues suivantes.</p>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { Icon: Users, label: "C-Suite complet (6 bots)", detail: "1,350$/mois vs 2,500$ vague 2 = -46% garanti à vie" },
+              { Icon: GraduationCap, label: "Ambassadeur Or automatique", detail: "Statut premium dès le jour 1 (normalement 3 cercles + 25 membres)" },
+              { Icon: Crown, label: "Onboarding VIP gratuit", detail: "Carl s'assoit avec toi. Setup complet. Valeur 500$." },
+              { Icon: DollarSign, label: "Commission 5% sur ton cercle", detail: "Tu recrutes tes partenaires → tu gagnes sur leur abonnement" },
+              { Icon: Rocket, label: "6 mois d'avance", detail: "Tes bots apprennent ton business pendant que la vague 2 attend" },
+              { Icon: Target, label: "Voix au roadmap produit", detail: "Tu influences ce qu'on développe. Accès direct à l'équipe." },
+            ].map((perk, i) => (
+              <div key={i} className="flex items-start gap-2 p-2.5 rounded-lg hover:bg-indigo-50/50">
+                <perk.Icon className="h-4 w-4 text-indigo-600 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-xs font-semibold text-indigo-800">{perk.label}</p>
+                  <p className="text-[9px] text-indigo-600">{perk.detail}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Script de Rencontre — 45 min, 5 actes */}
+      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
+        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
+          <Handshake className="h-4 w-4 text-teal-600" />
+          <span className="text-sm font-bold text-teal-800">Script de Rencontre — 45 min, 5 actes</span>
+        </div>
+        <div className="p-4">
+          <p className="text-[9px] text-gray-500 mb-3">En personne (JAMAIS Zoom). Café ou bureau du prospect. iPad avec CarlOS prêt à rouler. Pas de PowerPoint.</p>
+          <div className="space-y-2">
+            {[
+              { act: "1", title: "L'Accroche", dur: "5 min", desc: "Tu portes 8 chapeaux. Pas de CFO, CTO, CMO. Tu gères les urgences lundi au vendredi. Je me trompe?", color: "blue" },
+              { act: "2", title: "Démo Live iPad", dur: "15 min", desc: "CarlOS analyse en temps réel. Les mots s'écrivent devant le prospect. Le WOW moment.", color: "indigo" },
+              { act: "3", title: "Exclusivité Sectorielle", dur: "10 min", desc: "Tableau 9 places physique. « Ta place [Secteur] = toi ou [concurrent]. Je le rencontre vendredi. »", color: "violet" },
+              { act: "4", title: "Conditions Pionnier", dur: "5 min", desc: "1 consultant = 5-10K$/mois. Toi = 6 cerveaux C-Level 24/7 pour 1,350$. = 61$/jour ouvrable.", color: "purple" },
+              { act: "5", title: "Le Close", dur: "10 min", desc: "4 closes: Direct / Compétitif / Deadline 48h / Affordability. Lien Stripe prêt par texto.", color: "fuchsia" },
+            ].map(act => (
+              <div key={act.act} className="flex items-start gap-3 p-2.5 rounded-lg hover:bg-gray-50">
+                <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold shrink-0", `bg-${act.color}-600`)}>{act.act}</div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-gray-800">{act.title}</span>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">{act.dur}</span>
+                  </div>
+                  <p className="text-[9px] text-gray-500 mt-0.5">{act.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Calendrier Sprint 30 Jours */}
+      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
+        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-teal-600" />
+          <span className="text-sm font-bold text-teal-800">Calendrier Sprint 30 Jours</span>
+        </div>
+        <div className="p-4">
+          <p className="text-[9px] text-gray-500 mb-3">Plan de recrutement des 9 pionniers en 4 semaines. Pression progressive, urgence croissante.</p>
+          <div className="grid grid-cols-4 gap-2">
+            {[
+              { week: "Sem 1", title: "Les 3 premiers", desc: "3 rencontres. Post LinkedIn « 3/9 prises »", status: "done" as const },
+              { week: "Sem 2", title: "Momentum", desc: "3 suivants. « 6 places prises. Il en reste 3. »", status: "active" as const },
+              { week: "Sem 3", title: "Urgence max", desc: "3 derniers. Pression maximale. « Cercle COMPLET. »", status: "pending" as const },
+              { week: "Sem 4", title: "Fermeture", desc: "Relance indécis 48h. Kick-off collectif 9 pionniers.", status: "pending" as const },
+            ].map(w => (
+              <div key={w.week} className={cn("p-3 rounded-lg border",
+                w.status === "done" ? "bg-emerald-50 border-emerald-200" :
+                w.status === "active" ? "bg-blue-50 border-blue-300" : "bg-gray-50 border-gray-200"
+              )}>
+                <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-full inline-block mb-1",
+                  w.status === "done" ? "bg-emerald-100 text-emerald-600" :
+                  w.status === "active" ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-500"
+                )}>{w.week}</span>
+                <p className="text-xs font-bold text-gray-800">{w.title}</p>
+                <p className="text-[9px] text-gray-500 mt-1">{w.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Processus de sélection rigoureux */}
+      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
+        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
+          <Shield className="h-4 w-4 text-teal-600" />
+          <span className="text-sm font-bold text-teal-800">Processus de Sélection Rigoureux</span>
+        </div>
+        <div className="p-4">
+          <p className="text-[9px] text-gray-500 mb-3">Réseau élite augmenté AI — on ne prend pas n'importe qui. Même les fournisseurs invités gratuitement passent par le processus complet.</p>
+          <div className="grid grid-cols-4 gap-2">
+            {[
+              { step: "1", title: "Invitation", desc: "Client UB a besoin d'un fournisseur → CarlOS invite le prospect gratuitement", Icon: Bell },
+              { step: "2", title: "Qualification AI", desc: "CarlOS valide: réputation web, NEQ, LinkedIn, références, certifications, litiges", Icon: Bot },
+              { step: "3", title: "Critères REAI", desc: "Entreprise 2+ ans, assurances valides, 0 litige majeur, 1+ certification, charte signée", Icon: CheckCircle2 },
+              { step: "4", title: "Admission", desc: "Score calculé → Profil créé → Sceaux vérifiés → CarlOS assigne → Premier jumelage", Icon: Crown },
+            ].map(s => (
+              <div key={s.step} className="p-2.5 bg-gray-50 rounded-lg border border-gray-100">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="text-[9px] font-black bg-teal-200 text-teal-800 w-4 h-4 rounded-full flex items-center justify-center">{s.step}</span>
+                  <s.Icon className="h-3.5 w-3.5 text-teal-600" />
+                  <span className="text-[9px] font-bold text-gray-800">{s.title}</span>
+                </div>
+                <p className="text-[9px] text-gray-600 leading-relaxed">{s.desc}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 p-2 bg-teal-50 rounded-lg">
+            <p className="text-[9px] text-teal-800 font-semibold text-center">
+              FLYWHEEL: Fournisseur invité gratuitement → découvre CarlOS → devient client → invite SES fournisseurs → réseau grossit
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ========== EVENEMENTS ORBIT9 ==========
+
+function EvenementsOrbit9() {
+  const events = [
+    { title: "Meetup Pionniers #1", date: "15 avril 2026", type: "Présentiel", lieu: "Montréal", attendees: 9, color: "bg-teal-500" },
+    { title: "Webinaire VITAA 101", date: "22 avril 2026", type: "Virtuel", lieu: "Zoom", attendees: 25, color: "bg-blue-500" },
+    { title: "Hackathon Bot-to-Bot", date: "5 mai 2026", type: "Hybride", lieu: "Québec", attendees: 18, color: "bg-violet-500" },
+    { title: "Conférence Orbit⁹ v1.0", date: "15 juin 2026", type: "Présentiel", lieu: "Montréal", attendees: 81, color: "bg-amber-500" },
+  ];
+  return (
+    <div className="max-w-4xl mx-auto px-6 py-4 space-y-4">
+      <div className="rounded-xl bg-teal-50 border border-teal-200 px-4 py-3 flex items-center gap-3">
+        <Calendar className="h-5 w-5 text-teal-600" />
+        <div className="flex-1">
+          <p className="text-sm font-bold text-teal-800">Événements Orbit⁹</p>
+          <p className="text-[9px] text-teal-500">{events.length} événements à venir</p>
+        </div>
+      </div>
+      <div className="space-y-3">
+        {events.map((evt, i) => (
+          <div key={i} className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
+            <div className="flex items-stretch">
+              <div className={cn("w-1.5 shrink-0", evt.color)} />
+              <div className="flex-1 px-4 py-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-bold text-gray-800">{evt.title}</span>
+                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-teal-50 text-teal-600 font-medium">{evt.type}</span>
+                </div>
+                <div className="flex items-center gap-4 text-[9px] text-gray-500">
+                  <span className="flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" /> {evt.date}</span>
+                  <span className="flex items-center gap-1"><Map className="h-3.5 w-3.5" /> {evt.lieu}</span>
+                  <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {evt.attendees}</span>
+                </div>
+              </div>
+              <div className="flex items-center px-3">
+                <button className="text-[9px] bg-teal-50 text-teal-700 border border-teal-200 px-3 py-1.5 rounded-full hover:bg-teal-100 font-medium cursor-pointer">S'inscrire</button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ========== CREER CELLULE PAGE ==========
+
+function CreerCellulePage() {
+  const [step, setStep] = useState(1);
+  const [nom, setNom] = useState("");
+  const [cellType, setCellType] = useState<"interne" | "externe">("interne");
+  return (
+    <div className="max-w-4xl mx-auto px-6 py-4 space-y-4">
+      <div className="rounded-xl bg-teal-50 border border-teal-200 px-4 py-3 flex items-center gap-3">
+        <Plus className="h-5 w-5 text-teal-600" />
+        <div className="flex-1">
+          <p className="text-sm font-bold text-teal-800">Créer une cellule</p>
+          <p className="text-[9px] text-teal-500">Étape {step}/3 — {step === 1 ? "Informations" : step === 2 ? "Membres" : "Confirmation"}</p>
+        </div>
+      </div>
+      {/* Progress */}
+      <div className="flex items-center gap-2">
+        {[1, 2, 3].map(s => (
+          <div key={s} className="flex-1 flex items-center gap-2">
+            <div className={cn("w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold", s <= step ? "bg-teal-600 text-white" : "bg-gray-200 text-gray-400")}>{s}</div>
+            <span className={cn("text-[9px] font-medium", s <= step ? "text-teal-700" : "text-gray-400")}>{s === 1 ? "Infos" : s === 2 ? "Membres" : "Confirmer"}</span>
+            {s < 3 && <div className={cn("flex-1 h-0.5 rounded", s < step ? "bg-teal-400" : "bg-gray-200")} />}
+          </div>
+        ))}
+      </div>
+      {/* Step 1 */}
+      {step === 1 && (
+        <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
+          <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
+            <Pencil className="h-4 w-4 text-teal-600" />
+            <span className="text-sm font-bold text-teal-800">Informations de base</span>
+          </div>
+          <div className="p-4 space-y-4">
+            <div>
+              <label className="text-[11px] font-medium text-gray-600 mb-1 block">Nom de la cellule</label>
+              <input type="text" value={nom} onChange={e => setNom(e.target.value)} className="w-full text-sm px-3 py-2 rounded-lg border border-gray-300 focus:border-teal-400 focus:ring-2 focus:ring-teal-100 outline-none" placeholder="Ex: Les Titans, Escouade Innovation..." />
+            </div>
+            <div>
+              <label className="text-[11px] font-medium text-gray-600 mb-1.5 block">Type de cellule</label>
+              <div className="flex gap-3">
+                {([{ val: "interne" as const, label: "Interne", desc: "Équipe interne", icon: Building2 }, { val: "externe" as const, label: "Externe", desc: "Collaboration inter-entreprises", icon: Globe }]).map(t => (
+                  <button key={t.val} onClick={() => setCellType(t.val)} className={cn("flex-1 rounded-xl border p-3 text-left cursor-pointer transition-all", cellType === t.val ? "border-teal-300 bg-teal-50" : "border-gray-200 hover:border-teal-200")}>
+                    <t.icon className={cn("h-4 w-4 mb-1", cellType === t.val ? "text-teal-600" : "text-gray-400")} />
+                    <p className="text-xs font-medium text-gray-800">{t.label}</p>
+                    <p className="text-[9px] text-gray-400">{t.desc}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-[11px] font-medium text-gray-600 mb-1 block">Description (optionnel)</label>
+              <textarea className="w-full text-xs px-3 py-2 rounded-lg border border-gray-300 focus:border-teal-400 focus:ring-2 focus:ring-teal-100 outline-none h-20 resize-none" placeholder="Objectif de cette cellule..." />
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Step 2 */}
+      {step === 2 && (
+        <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
+          <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
+            <Users className="h-4 w-4 text-teal-600" />
+            <span className="text-sm font-bold text-teal-800">Ajouter des membres</span>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-teal-100 text-teal-700">Max 9</span>
+          </div>
+          <div className="p-4 space-y-3">
+            <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-teal-200 bg-teal-50/50">
+              <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-[11px] font-bold text-teal-700">CF</div>
+              <div className="flex-1"><span className="text-xs font-medium text-gray-800">Carl F.</span><span className="text-[9px] text-gray-400 ml-2">Fondateur</span></div>
+              <Crown className="h-3.5 w-3.5 text-amber-500" />
+            </div>
+            {[2, 3, 4, 5, 6, 7, 8, 9].map(slot => (
+              <button key={slot} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border border-dashed border-gray-300 hover:border-teal-300 hover:bg-teal-50/30 cursor-pointer transition-all">
+                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"><Plus className="h-3.5 w-3.5 text-gray-400" /></div>
+                <span className="text-xs text-gray-400">Ajouter le membre #{slot}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {/* Step 3 */}
+      {step === 3 && (
+        <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
+          <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-teal-600" />
+            <span className="text-sm font-bold text-teal-800">Confirmer la création</span>
+          </div>
+          <div className="p-4 space-y-3">
+            <div className="flex items-center gap-3">
+              <Atom className="h-5 w-5 text-teal-500" />
+              <div>
+                <p className="text-sm font-bold text-gray-800">{nom || "Ma nouvelle cellule"}</p>
+                <p className="text-[9px] text-gray-400">{cellType === "interne" ? "Cellule interne" : "Cellule externe"} · 1 membre</p>
+              </div>
+            </div>
+            <div className="bg-teal-50 rounded-lg p-3 text-[11px] text-teal-700">CarlOS va configurer votre cellule et activer les bots.</div>
+          </div>
+        </div>
+      )}
+      {/* Nav buttons */}
+      <div className="flex items-center justify-between">
+        {step > 1 ? <button onClick={() => setStep(s => s - 1)} className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1 cursor-pointer"><ArrowLeft className="h-3.5 w-3.5" /> Précédent</button> : <div />}
+        <button onClick={() => step < 3 ? setStep(s => s + 1) : null} className={cn("text-xs font-medium px-4 py-2 rounded-full flex items-center gap-1.5 cursor-pointer transition-all", step < 3 ? "bg-teal-600 text-white hover:bg-teal-700" : "bg-emerald-600 text-white hover:bg-emerald-700")}>
+          {step < 3 ? (<>Suivant <ArrowRight className="h-3.5 w-3.5" /></>) : (<><CheckCircle2 className="h-3.5 w-3.5" /> Créer la cellule</>)}
+        </button>
+      </div>
+    </div>
+  );
+}

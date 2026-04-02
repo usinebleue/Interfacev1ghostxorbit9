@@ -42,6 +42,7 @@ import { TabTelephonie } from "./TabTelephonie";
 import { TabAide } from "./TabAide";
 import { TabBibleTechnique } from "./TabBibleTechnique";
 import { SimulationSprint1 } from "./SimulationSprint1";
+// SimulationVideoS74 moved to ScenarioHub as immersive experience
 
 // ═══════════════════════════════════════
 // Tab definitions avec gating

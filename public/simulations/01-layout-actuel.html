@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SIM-01 — Layout Actuel (Baseline)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'ub-blue': '#073E5A',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    .scrollbar-thin::-webkit-scrollbar { width: 4px; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+  </style>
+</head>
+<body class="h-screen flex flex-col bg-white overflow-hidden">
+
+  <!-- ============ MAIN LAYOUT ============ -->
+  <div class="flex-1 flex overflow-hidden">
+
+    <!-- ======== LEFT SIDEBAR (w-56) ======== -->
+    <div class="w-56 border-r bg-white flex-shrink-0 overflow-y-auto scrollbar-thin">
+      <!-- Logo -->
+      <div class="px-3 py-3 flex items-center gap-2 border-b">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-blue-500 flex items-center justify-center">
+          <span class="text-white text-xs font-bold">UB</span>
+        </div>
+        <div>
+          <div class="text-sm font-semibold text-gray-900">Usine Bleue</div>
+          <div class="text-[10px] text-gray-400">CarlOS v3.3</div>
+        </div>
+      </div>
+
+      <div class="py-2">
+        <!-- Section Mon Entreprise -->
+        <div class="px-2 mb-1">
+          <div class="flex items-center gap-1.5 px-2 py-1.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+            <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+            Mon Département
+          </div>
+          <div class="space-y-0.5">
+            <a href="#" class="flex items-center gap-2 px-3 py-1.5 rounded-md bg-gray-100 text-gray-900 text-xs font-medium">
+              <svg class="h-3.5 w-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+              Vue d'ensemble
+            </a>
+            <a href="#" class="flex items-center gap-2 px-3 py-1.5 rounded-md text-gray-600 hover:bg-gray-50 text-xs">
+              <svg class="h-3.5 w-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+              Blueprint
+            </a>
+            <a href="#" class="flex items-center gap-2 px-3 py-1.5 rounded-md text-gray-600 hover:bg-gray-50 text-xs">
+              <svg class="h-3.5 w-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+              Santé
+            </a>
+            <a href="#" class="flex items-center gap-2 px-3 py-1.5 rounded-md text-gray-600 hover:bg-gray-50 text-xs">
+              <svg class="h-3.5 w-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+              Chantiers
+            </a>
+            <a href="#" class="flex items-center gap-2 px-3 py-1.5 rounded-md text-gray-600 hover:bg-gray-50 text-xs">
+              <svg class="h-3.5 w-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+              Projets
+            </a>
+            <a href="#" class="flex items-center gap-2 px-3 py-1.5 rounded-md text-gray-600 hover:bg-gray-50 text-xs">
+              <svg class="h-3.5 w-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+              Missions
+            </a>
+            <a href="#" class="flex items-center gap-2 px-3 py-1.5 rounded-md text-gray-600 hover:bg-gray-50 text-xs">
+              <svg class="h-3.5 w-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+              Tâches
+            </a>
+            <a href="#" class="flex items-center gap-2 px-3 py-1.5 rounded-md text-gray-600 hover:bg-gray-50 text-xs">
+              <svg class="h-3.5 w-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+              Discussions
+            </a>
+            <a href="#" class="flex items-center gap-2 px-3 py-1.5 rounded-md text-gray-600 hover:bg-gray-50 text-xs">
+              <svg class="h-3.5 w-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+              Documents
+            </a>
+          </div>
+        </div>
+
+        <div class="border-t my-2"></div>
+
+        <!-- Section Mes Salles -->
+        <div class="px-2 mb-1">
+          <div class="flex items-center gap-1.5 px-2 py-1.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+            <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+            Mes Salles
+          </div>
+          <div class="space-y-0.5">
+            <a href="#" class="flex items-center gap-2 px-3 py-1.5 rounded-md text-gray-600 hover:bg-gray-50 text-xs">
+              <span class="text-sm">🧠</span> Think Room
+            </a>
+            <a href="#" class="flex items-center gap-2 px-3 py-1.5 rounded-md text-gray-600 hover:bg-gray-50 text-xs">
+              <span class="text-sm">⚔️</span> War Room
+            </a>
+            <a href="#" class="flex items-center gap-2 px-3 py-1.5 rounded-md text-gray-600 hover:bg-gray-50 text-xs">
+              <span class="text-sm">🏛️</span> Board Room
+            </a>
+          </div>
+        </div>
+
+        <div class="border-t my-2"></div>
+
+        <!-- Section Mon Équipe -->
+        <div class="px-2 mb-1">
+          <div class="flex items-center gap-1.5 px-2 py-1.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+            <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+            Mon Équipe AI
+          </div>
+          <div class="space-y-0.5">
+            <a href="#" class="flex items-center gap-2 px-3 py-1.5 rounded-md text-gray-600 hover:bg-gray-50 text-xs">
+              <div class="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center text-[8px] text-white font-bold">CO</div>
+              CarlOS <span class="text-gray-400 ml-auto text-[10px]">CEO</span>
+            </a>
+            <a href="#" class="flex items-center gap-2 px-3 py-1.5 rounded-md text-gray-600 hover:bg-gray-50 text-xs">
+              <div class="w-5 h-5 rounded-full bg-violet-500 flex items-center justify-center text-[8px] text-white font-bold">TI</div>
+              Tim <span class="text-gray-400 ml-auto text-[10px]">CTO</span>
+            </a>
+            <a href="#" class="flex items-center gap-2 px-3 py-1.5 rounded-md text-gray-600 hover:bg-gray-50 text-xs">
+              <div class="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center text-[8px] text-white font-bold">FR</div>
+              Frank <span class="text-gray-400 ml-auto text-[10px]">CFO</span>
+            </a>
+            <a href="#" class="flex items-center gap-2 px-3 py-1.5 rounded-md text-gray-600 hover:bg-gray-50 text-xs">
+              <div class="w-5 h-5 rounded-full bg-pink-500 flex items-center justify-center text-[8px] text-white font-bold">MA</div>
+              Mathilde <span class="text-gray-400 ml-auto text-[10px]">CMO</span>
+            </a>
+            <a href="#" class="flex items-center gap-2 px-3 py-1.5 rounded-md text-gray-600 hover:bg-gray-50 text-xs">
+              <div class="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center text-[8px] text-white font-bold">SI</div>
+              Simone <span class="text-gray-400 ml-auto text-[10px]">CSO</span>
+            </a>
+            <a href="#" class="flex items-center gap-2 px-3 py-1.5 rounded-md text-gray-600 hover:bg-gray-50 text-xs">
+              <div class="w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center text-[8px] text-white font-bold">OL</div>
+              Olivier <span class="text-gray-400 ml-auto text-[10px]">COO</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="border-t my-2"></div>
+
+        <!-- Section Mon Réseau -->
+        <div class="px-2 mb-1">
+          <div class="flex items-center gap-1.5 px-2 py-1.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+            <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+            Mon Réseau
+          </div>
+          <div class="space-y-0.5">
+            <a href="#" class="flex items-center gap-2 px-3 py-1.5 rounded-md text-gray-600 hover:bg-gray-50 text-xs">Orbit9 Matching</a>
+            <a href="#" class="flex items-center gap-2 px-3 py-1.5 rounded-md text-gray-600 hover:bg-gray-50 text-xs">Pionniers</a>
+            <a href="#" class="flex items-center gap-2 px-3 py-1.5 rounded-md text-gray-600 hover:bg-gray-50 text-xs">Marketplace</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom settings -->
+      <div class="border-t mt-auto px-2 py-2">
+        <a href="#" class="flex items-center gap-2 px-3 py-1.5 rounded-md text-gray-600 hover:bg-gray-50 text-xs">
+          <svg class="h-3.5 w-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          Réglages
+        </a>
+      </div>
+    </div>
+
+    <!-- ======== CENTER CONTENT ======== -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+
+      <!-- TOP BAR -->
+      <div style="background-color: #073E5A;">
+        <!-- Bar 1: Navigation (h-10) -->
+        <div class="h-10 flex items-center px-2 border-b border-white/10">
+          <div class="flex items-center gap-1">
+            <button class="h-7 gap-1 px-2 text-white bg-white/15 hover:bg-white/20 rounded flex items-center text-[11px] font-medium">
+              <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+              Mon Département
+            </button>
+            <button class="h-7 gap-1 px-2 text-white/70 hover:text-white hover:bg-white/10 rounded flex items-center text-[11px]">
+              <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+              Mon Bureau
+            </button>
+            <button class="h-7 gap-1 px-2 text-white/70 hover:text-white hover:bg-white/10 rounded flex items-center text-[11px]">
+              <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              Mon Réseau
+            </button>
+            <button class="h-7 gap-1 px-2 text-white/70 hover:text-white hover:bg-white/10 rounded flex items-center text-[11px]">
+              <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              Admin
+            </button>
+          </div>
+          <!-- User profile -->
+          <div class="ml-auto flex items-center gap-1.5">
+            <div class="relative">
+              <div class="w-7 h-7 rounded-full bg-gray-400 ring-1 ring-white/30 flex items-center justify-center text-white text-[10px] font-bold">CF</div>
+              <div class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-500 border-2" style="border-color: #073E5A;"></div>
+            </div>
+            <span class="text-[11px] text-white/80 max-w-[110px] truncate">Carl F.</span>
+          </div>
+        </div>
+
+        <!-- Bar 2: Department Tabs (h-8) -->
+        <div class="h-8 flex items-center px-2 border-b border-white/10" style="background-color: rgba(255,255,255,0.05);">
+          <div class="flex items-center gap-1 overflow-x-auto">
+            <button class="h-6 flex items-center gap-1 px-1.5 whitespace-nowrap shrink-0 rounded text-white bg-white/15 font-medium text-[9px]">Direction</button>
+            <button class="h-6 flex items-center gap-1 px-1.5 whitespace-nowrap shrink-0 rounded text-white/40 hover:text-white/70 hover:bg-white/10 text-[9px]">Ventes</button>
+            <button class="h-6 flex items-center gap-1 px-1.5 whitespace-nowrap shrink-0 rounded text-white/40 hover:text-white/70 hover:bg-white/10 text-[9px]">Finance</button>
+            <button class="h-6 flex items-center gap-1 px-1.5 whitespace-nowrap shrink-0 rounded text-white/40 hover:text-white/70 hover:bg-white/10 text-[9px]">Marketing</button>
+            <button class="h-6 flex items-center gap-1 px-1.5 whitespace-nowrap shrink-0 rounded text-white/40 hover:text-white/70 hover:bg-white/10 text-[9px]">Stratégie</button>
+            <button class="h-6 flex items-center gap-1 px-1.5 whitespace-nowrap shrink-0 rounded text-white/40 hover:text-white/70 hover:bg-white/10 text-[9px]">Opérations</button>
+            <button class="h-6 flex items-center gap-1 px-1.5 whitespace-nowrap shrink-0 rounded text-white/40 hover:text-white/70 hover:bg-white/10 text-[9px]">Usine</button>
+            <button class="h-6 flex items-center gap-1 px-1.5 whitespace-nowrap shrink-0 rounded text-white/40 hover:text-white/70 hover:bg-white/10 text-[9px]">RH</button>
+            <button class="h-6 flex items-center gap-1 px-1.5 whitespace-nowrap shrink-0 rounded text-white/40 hover:text-white/70 hover:bg-white/10 text-[9px]">Innovation</button>
+            <button class="h-6 flex items-center gap-1 px-1.5 whitespace-nowrap shrink-0 rounded text-white/40 hover:text-white/70 hover:bg-white/10 text-[9px]">Revenus</button>
+            <button class="h-6 flex items-center gap-1 px-1.5 whitespace-nowrap shrink-0 rounded text-white/40 hover:text-white/70 hover:bg-white/10 text-[9px]">Juridique</button>
+            <button class="h-6 flex items-center gap-1 px-1.5 whitespace-nowrap shrink-0 rounded text-white/40 hover:text-white/70 hover:bg-white/10 text-[9px]">Sécurité</button>
+          </div>
+        </div>
+
+        <!-- Bar 3: Breadcrumb (h-7) -->
+        <div class="h-7 flex items-center px-2 gap-1" style="background-color: rgba(255,255,255,0.08);">
+          <span class="text-[9px] text-white/50">Direction</span>
+          <svg class="h-3.5 w-3.5 text-white/25" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          <span class="text-[9px] text-white font-medium">Vue d'ensemble</span>
+        </div>
+      </div>
+
+      <!-- CONTENT SPLIT: LiveChat (40%) | Dashboard (60%) -->
+      <div class="flex-1 flex overflow-hidden">
+
+        <!-- LiveChat Panel (40%) -->
+        <div class="w-[40%] border-r flex flex-col bg-white">
+          <!-- Chat Header -->
+          <div class="h-12 flex items-center gap-2 px-3 border-b" style="background-color: #073E5A;">
+            <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold">CO</div>
+            <div>
+              <div class="text-white text-xs font-medium">CarlOS</div>
+              <div class="text-white/60 text-[10px]">CEO — Direction</div>
+            </div>
+            <div class="ml-auto flex items-center gap-1">
+              <button class="h-7 w-7 rounded flex items-center justify-center text-white/70 hover:bg-white/10">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+              </button>
+              <button class="h-7 w-7 rounded flex items-center justify-center text-white/70 hover:bg-white/10">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Chat Messages -->
+          <div class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+            <!-- Bot message -->
+            <div class="flex gap-2">
+              <div class="w-6 h-6 rounded-full bg-blue-500 flex-shrink-0 flex items-center justify-center text-white text-[8px] font-bold mt-1">CO</div>
+              <div class="bg-white rounded-lg rounded-tl-none px-3 py-2 max-w-[85%] shadow-sm">
+                <p class="text-xs text-gray-800">Salut Carl! On travaille sur le chantier Marketing Q2 — où est-ce qu'on en est?</p>
+                <div class="flex items-center gap-1.5 mt-1">
+                  <span class="text-[9px] text-gray-400">CarlOS</span>
+                  <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                  <span class="text-[9px] text-blue-400">Connecter</span>
+                </div>
+              </div>
+            </div>
+            <!-- User message -->
+            <div class="flex justify-end">
+              <div class="bg-blue-600 text-white rounded-lg rounded-tr-none px-3 py-2 max-w-[85%]">
+                <p class="text-xs">On avance bien! Le SEO est en analyse, le budget est validé par Frank.</p>
+              </div>
+            </div>
+            <!-- Bot message -->
+            <div class="flex gap-2">
+              <div class="w-6 h-6 rounded-full bg-blue-500 flex-shrink-0 flex items-center justify-center text-white text-[8px] font-bold mt-1">CO</div>
+              <div class="bg-white rounded-lg rounded-tl-none px-3 py-2 max-w-[85%] shadow-sm">
+                <p class="text-xs text-gray-800">Parfait. Le rapport SEO de Tim montre 3 quick wins possibles. Tu veux qu'on brainstorm sur les priorités ou qu'on passe directement à l'exécution?</p>
+                <div class="flex items-center gap-1.5 mt-1">
+                  <span class="text-[9px] text-gray-400">CarlOS</span>
+                  <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+                  <span class="text-[9px] text-purple-400">Rechercher</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Chat Input -->
+          <div class="border-t p-3 bg-white">
+            <div class="flex items-center gap-2">
+              <div class="flex-1 bg-gray-100 rounded-lg px-3 py-2 text-xs text-gray-400">Parle à CarlOS...</div>
+              <button class="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center text-white">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dashboard Panel (60%) -->
+        <div class="w-[60%] overflow-y-auto scrollbar-thin">
+          <!-- Sub-tabs -->
+          <div class="border-b px-4 py-2 flex gap-1">
+            <button class="px-3 py-1.5 text-xs font-medium rounded-md bg-gray-900 text-white shadow-sm flex items-center gap-1.5">
+              <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+              Vue d'ensemble
+            </button>
+            <button class="px-3 py-1.5 text-xs font-medium rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 flex items-center gap-1.5">Blueprint</button>
+            <button class="px-3 py-1.5 text-xs font-medium rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 flex items-center gap-1.5">Santé</button>
+            <button class="px-3 py-1.5 text-xs font-medium rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 flex items-center gap-1.5">Chantiers</button>
+            <button class="px-3 py-1.5 text-xs font-medium rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 flex items-center gap-1.5">Projets</button>
+            <button class="px-3 py-1.5 text-xs font-medium rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 flex items-center gap-1.5">Missions</button>
+            <button class="px-3 py-1.5 text-xs font-medium rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 flex items-center gap-1.5">Tâches</button>
+            <button class="px-3 py-1.5 text-xs font-medium rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 flex items-center gap-1.5">Documents</button>
+          </div>
+
+          <!-- Dashboard Content -->
+          <div class="max-w-4xl mx-auto px-10 py-5 pb-12 space-y-4">
+
+            <!-- 3 KPI Cards Row -->
+            <div class="grid grid-cols-3 gap-3">
+              <!-- KPI 1 -->
+              <div class="rounded-xl overflow-hidden shadow-sm">
+                <div class="bg-gradient-to-r from-blue-600 to-blue-500 px-3 py-2.5 flex items-center gap-2">
+                  <svg class="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                  <h3 class="text-sm font-bold text-white flex-1">Chantiers</h3>
+                  <span class="text-[9px] font-bold bg-white/25 text-white px-2 py-0.5 rounded-full">4</span>
+                </div>
+                <div class="px-3 py-3 space-y-2.5">
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs text-gray-800">Marketing Q2</span>
+                    <span class="text-[10px] text-emerald-600 font-medium">72%</span>
+                  </div>
+                  <div class="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="h-full bg-blue-500 rounded-full" style="width: 72%"></div>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs text-gray-800">Expansion Ontario</span>
+                    <span class="text-[10px] text-amber-600 font-medium">35%</span>
+                  </div>
+                  <div class="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="h-full bg-blue-500 rounded-full" style="width: 35%"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- KPI 2 -->
+              <div class="rounded-xl overflow-hidden shadow-sm">
+                <div class="bg-gradient-to-r from-violet-600 to-violet-500 px-3 py-2.5 flex items-center gap-2">
+                  <svg class="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                  <h3 class="text-sm font-bold text-white flex-1">Missions</h3>
+                  <span class="text-[9px] font-bold bg-white/25 text-white px-2 py-0.5 rounded-full">12</span>
+                </div>
+                <div class="px-3 py-3 space-y-2.5">
+                  <div class="text-xs text-gray-800">Audit SEO technique</div>
+                  <div class="text-xs text-gray-800">Prévisions Q3 trésorerie</div>
+                  <div class="text-xs text-gray-800">Benchmark concurrents</div>
+                </div>
+              </div>
+
+              <!-- KPI 3 -->
+              <div class="rounded-xl overflow-hidden shadow-sm">
+                <div class="bg-gradient-to-r from-emerald-600 to-emerald-500 px-3 py-2.5 flex items-center gap-2">
+                  <svg class="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                  <h3 class="text-sm font-bold text-white flex-1">Tâches</h3>
+                  <span class="text-[9px] font-bold bg-white/25 text-white px-2 py-0.5 rounded-full">28</span>
+                </div>
+                <div class="px-3 py-3 space-y-2.5">
+                  <div class="flex items-center gap-2 text-xs text-gray-800">
+                    <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                    18 complétées
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-800">
+                    <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                    7 en cours
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-800">
+                    <span class="w-2 h-2 rounded-full bg-gray-400"></span>
+                    3 à faire
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bot Cards Grid -->
+            <div class="grid grid-cols-3 gap-3">
+              <!-- Bot Card: CarlOS -->
+              <div class="rounded-xl overflow-hidden shadow-sm cursor-pointer hover:shadow-md transition-shadow p-0">
+                <div class="bg-gradient-to-r from-blue-600 to-blue-500 px-3 py-2.5 flex items-center gap-2">
+                  <div class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-white text-[8px] font-bold">CO</div>
+                  <div>
+                    <h3 class="text-xs font-bold text-white">CarlOS</h3>
+                    <p class="text-[9px] text-white/70">CEO — Direction</p>
+                  </div>
+                </div>
+                <ul class="px-3 py-3 space-y-2.5">
+                  <li class="text-xs text-gray-800">4 chantiers actifs</li>
+                  <li class="text-xs text-gray-800">12 missions en cours</li>
+                  <li class="text-xs text-gray-800">Dernière activité: il y a 5 min</li>
+                </ul>
+              </div>
+
+              <!-- Bot Card: Tim -->
+              <div class="rounded-xl overflow-hidden shadow-sm cursor-pointer hover:shadow-md transition-shadow p-0">
+                <div class="bg-gradient-to-r from-violet-600 to-violet-500 px-3 py-2.5 flex items-center gap-2">
+                  <div class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-white text-[8px] font-bold">TI</div>
+                  <div>
+                    <h3 class="text-xs font-bold text-white">Tim</h3>
+                    <p class="text-[9px] text-white/70">CTO — Technologie</p>
+                  </div>
+                </div>
+                <ul class="px-3 py-3 space-y-2.5">
+                  <li class="text-xs text-gray-800">Audit SEO technique</li>
+                  <li class="text-xs text-gray-800">Migration infrastructure</li>
+                  <li class="text-xs text-gray-800">Dernière activité: il y a 12 min</li>
+                </ul>
+              </div>
+
+              <!-- Bot Card: Frank -->
+              <div class="rounded-xl overflow-hidden shadow-sm cursor-pointer hover:shadow-md transition-shadow p-0">
+                <div class="bg-gradient-to-r from-emerald-600 to-emerald-500 px-3 py-2.5 flex items-center gap-2">
+                  <div class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-white text-[8px] font-bold">FR</div>
+                  <div>
+                    <h3 class="text-xs font-bold text-white">Frank</h3>
+                    <p class="text-[9px] text-white/70">CFO — Finance</p>
+                  </div>
+                </div>
+                <ul class="px-3 py-3 space-y-2.5">
+                  <li class="text-xs text-gray-800">Budget Q2 validé</li>
+                  <li class="text-xs text-gray-800">Prévisions trésorerie</li>
+                  <li class="text-xs text-gray-800">Dernière activité: il y a 1h</li>
+                </ul>
+              </div>
+
+              <!-- Bot Card: Mathilde -->
+              <div class="rounded-xl overflow-hidden shadow-sm cursor-pointer hover:shadow-md transition-shadow p-0">
+                <div class="bg-gradient-to-r from-pink-600 to-pink-500 px-3 py-2.5 flex items-center gap-2">
+                  <div class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-white text-[8px] font-bold">MA</div>
+                  <div>
+                    <h3 class="text-xs font-bold text-white">Mathilde</h3>
+                    <p class="text-[9px] text-white/70">CMO — Marketing</p>
+                  </div>
+                </div>
+                <ul class="px-3 py-3 space-y-2.5">
+                  <li class="text-xs text-gray-800">Campagne LinkedIn Q2</li>
+                  <li class="text-xs text-gray-800">Stratégie contenu</li>
+                  <li class="text-xs text-gray-800">Dernière activité: il y a 30 min</li>
+                </ul>
+              </div>
+
+              <!-- Bot Card: Simone -->
+              <div class="rounded-xl overflow-hidden shadow-sm cursor-pointer hover:shadow-md transition-shadow p-0">
+                <div class="bg-gradient-to-r from-red-600 to-red-500 px-3 py-2.5 flex items-center gap-2">
+                  <div class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-white text-[8px] font-bold">SI</div>
+                  <div>
+                    <h3 class="text-xs font-bold text-white">Simone</h3>
+                    <p class="text-[9px] text-white/70">CSO — Stratégie</p>
+                  </div>
+                </div>
+                <ul class="px-3 py-3 space-y-2.5">
+                  <li class="text-xs text-gray-800">Analyse concurrentielle</li>
+                  <li class="text-xs text-gray-800">Positionnement Ontario</li>
+                  <li class="text-xs text-gray-800">Dernière activité: il y a 2h</li>
+                </ul>
+              </div>
+
+              <!-- Bot Card: Olivier -->
+              <div class="rounded-xl overflow-hidden shadow-sm cursor-pointer hover:shadow-md transition-shadow p-0">
+                <div class="bg-gradient-to-r from-orange-600 to-orange-500 px-3 py-2.5 flex items-center gap-2">
+                  <div class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-white text-[8px] font-bold">OL</div>
+                  <div>
+                    <h3 class="text-xs font-bold text-white">Olivier</h3>
+                    <p class="text-[9px] text-white/70">COO — Opérations</p>
+                  </div>
+                </div>
+                <ul class="px-3 py-3 space-y-2.5">
+                  <li class="text-xs text-gray-800">Optimisation processus</li>
+                  <li class="text-xs text-gray-800">KPI opérationnels Q2</li>
+                  <li class="text-xs text-gray-800">Dernière activité: il y a 45 min</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Diagnostic Section -->
+            <div class="rounded-xl overflow-hidden shadow-sm">
+              <div class="bg-gradient-to-r from-cyan-600 to-cyan-500 px-3 py-2.5 flex items-center gap-2">
+                <svg class="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                <h3 class="text-sm font-bold text-white flex-1">Diagnostic VITAA</h3>
+              </div>
+              <div class="px-3 py-3 grid grid-cols-5 gap-3">
+                <div class="text-center">
+                  <div class="text-lg font-bold text-blue-600">78</div>
+                  <div class="text-[9px] text-gray-500 uppercase">Vente</div>
+                </div>
+                <div class="text-center">
+                  <div class="text-lg font-bold text-violet-600">65</div>
+                  <div class="text-[9px] text-gray-500 uppercase">Idée</div>
+                </div>
+                <div class="text-center">
+                  <div class="text-lg font-bold text-amber-600">82</div>
+                  <div class="text-[9px] text-gray-500 uppercase">Temps</div>
+                </div>
+                <div class="text-center">
+                  <div class="text-lg font-bold text-emerald-600">91</div>
+                  <div class="text-[9px] text-gray-500 uppercase">Argent</div>
+                </div>
+                <div class="text-center">
+                  <div class="text-lg font-bold text-red-600">54</div>
+                  <div class="text-[9px] text-gray-500 uppercase">Actif</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======== RIGHT INFO PANEL (w-72) ======== -->
+    <div class="w-72 border-l bg-white flex-shrink-0 overflow-y-auto scrollbar-thin">
+      <div class="p-3 border-b">
+        <h3 class="text-xs font-semibold text-gray-900">Alertes</h3>
+      </div>
+      <div class="p-3 space-y-2">
+        <div class="bg-red-50 rounded-lg p-2.5 text-xs">
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-red-500"></span>
+            <span class="font-medium text-red-800">Budget dépassement Q2</span>
+          </div>
+          <p class="text-red-600 mt-1 text-[10px]">Frank a signalé un dépassement de 12% sur le poste marketing.</p>
+        </div>
+        <div class="bg-amber-50 rounded-lg p-2.5 text-xs">
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+            <span class="font-medium text-amber-800">Mission en retard</span>
+          </div>
+          <p class="text-amber-600 mt-1 text-[10px]">Benchmark concurrents — deadline dépassée de 3 jours.</p>
+        </div>
+        <div class="bg-green-50 rounded-lg p-2.5 text-xs">
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-green-500"></span>
+            <span class="font-medium text-green-800">Chantier complété</span>
+          </div>
+          <p class="text-green-600 mt-1 text-[10px]">Refonte site web livré — 100% des tâches complétées.</p>
+        </div>
+      </div>
+
+      <div class="border-t p-3">
+        <h3 class="text-xs font-semibold text-gray-900 mb-2">Bots actifs</h3>
+        <div class="space-y-2">
+          <div class="flex items-center gap-2">
+            <div class="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center text-[7px] text-white font-bold">CO</div>
+            <div class="flex-1">
+              <div class="text-[10px] font-medium text-gray-800">CarlOS</div>
+              <div class="text-[9px] text-gray-400">Analyse chantier Marketing</div>
+            </div>
+            <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="w-5 h-5 rounded-full bg-violet-500 flex items-center justify-center text-[7px] text-white font-bold">TI</div>
+            <div class="flex-1">
+              <div class="text-[10px] font-medium text-gray-800">Tim</div>
+              <div class="text-[9px] text-gray-400">Audit SEO en cours</div>
+            </div>
+            <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center text-[7px] text-white font-bold">FR</div>
+            <div class="flex-1">
+              <div class="text-[10px] font-medium text-gray-800">Frank</div>
+              <div class="text-[9px] text-gray-400">En veille</div>
+            </div>
+            <div class="w-1.5 h-1.5 rounded-full bg-gray-300"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ======== BOTTOM BAR ======== -->
+  <div class="h-8 border-t bg-gray-50 flex items-center px-3 text-[9px] text-gray-400">
+    <span>CarlOS v3.3</span>
+    <span class="mx-2">|</span>
+    <span>Usine Bleue AI</span>
+    <span class="ml-auto flex items-center gap-1">
+      <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+      Connecté
+    </span>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SIM-03 — 3 Phases Visuelles (Réflexion / Atelier / COMMAND)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: { 'ub-blue': '#073E5A' } } } }
+  </script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    .scrollbar-thin::-webkit-scrollbar { width: 4px; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+    .phase-reflexion { background-color: rgba(254, 202, 202, 0.15); }
+    .phase-atelier { background-color: rgba(253, 230, 138, 0.15); }
+    .phase-command { background-color: rgba(187, 247, 208, 0.15); }
+  </style>
+</head>
+<body class="h-screen flex flex-col bg-white overflow-hidden">
+
+  <!-- LABEL -->
+  <div class="bg-gradient-to-r from-red-400 via-yellow-400 to-green-400 text-white text-center py-2 text-sm font-medium">
+    SIM-03 — 3 Phases Visuelles: Réflexion (rouge) > Atelier (jaune) > COMMAND (vert)
+  </div>
+
+  <div class="flex-1 flex overflow-hidden">
+
+    <!-- LEFT SIDEBAR -->
+    <div class="w-14 border-r bg-white flex-shrink-0 flex flex-col items-center py-3 gap-3">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-blue-500 flex items-center justify-center">
+        <span class="text-white text-xs font-bold">UB</span>
+      </div>
+    </div>
+
+    <!-- CENTER -->
+    <div class="flex-1 flex flex-col overflow-hidden" id="main-area">
+
+      <!-- TOP BAR with Phase Indicator -->
+      <div style="background-color: #073E5A;">
+        <div class="h-10 flex items-center px-2 border-b border-white/10">
+          <button class="h-7 gap-1 px-2 text-white bg-white/15 rounded flex items-center text-[11px] font-medium">Mon Département</button>
+
+          <!-- PHASE INDICATOR — NEW -->
+          <div class="ml-auto flex items-center gap-2 mr-3" id="phase-indicator">
+            <button onclick="setPhase('reflexion')" id="btn-reflexion" class="flex items-center gap-1 h-7 px-2 rounded text-[11px] font-medium bg-red-400/30 text-red-200 border border-red-400/40">
+              <span class="w-2.5 h-2.5 rounded-full bg-red-400"></span>
+              Réflexion
+            </button>
+            <button onclick="setPhase('atelier')" id="btn-atelier" class="flex items-center gap-1 h-7 px-2 rounded text-[11px] text-white/40 hover:text-white/70 hover:bg-white/10">
+              <span class="w-2.5 h-2.5 rounded-full bg-yellow-400 opacity-40"></span>
+              Atelier
+            </button>
+            <button onclick="setPhase('command')" id="btn-command" class="flex items-center gap-1 h-7 px-2 rounded text-[11px] text-white/40 hover:text-white/70 hover:bg-white/10">
+              <span class="w-2.5 h-2.5 rounded-full bg-green-400 opacity-40"></span>
+              COMMAND
+            </button>
+          </div>
+        </div>
+        <div class="h-8 flex items-center px-2 border-b border-white/10" style="background-color: rgba(255,255,255,0.05);">
+          <button class="h-6 px-1.5 rounded text-white bg-white/15 font-medium text-[9px]">Direction</button>
+        </div>
+        <div class="h-7 flex items-center px-2 gap-1" style="background-color: rgba(255,255,255,0.08);">
+          <span class="text-[9px] text-white/50">Direction</span>
+          <svg class="h-3.5 w-3.5 text-white/25" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          <span class="text-[9px] text-white font-medium">Chantiers</span>
+        </div>
+      </div>
+
+      <!-- CONTENT with phase tint -->
+      <div class="flex-1 flex overflow-hidden" id="content-area">
+
+        <!-- LiveChat 40% -->
+        <div class="w-[40%] border-r flex flex-col bg-white">
+          <div class="h-12 flex items-center gap-2 px-3 border-b" style="background-color: #073E5A;">
+            <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold">CO</div>
+            <div>
+              <div class="text-white text-xs font-medium">CarlOS</div>
+              <div class="text-white/60 text-[10px]">CEO — Direction</div>
+            </div>
+          </div>
+          <div class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50" id="chat-area">
+            <div class="flex gap-2">
+              <div class="w-6 h-6 rounded-full bg-blue-500 flex-shrink-0 flex items-center justify-center text-white text-[8px] font-bold mt-1">CO</div>
+              <div class="bg-white rounded-lg rounded-tl-none px-3 py-2 max-w-[85%] shadow-sm">
+                <p class="text-xs text-gray-800">On est en mode Réflexion. Utilise les boutons ci-dessous pour brainstormer, analyser ou challenger.</p>
+              </div>
+            </div>
+          </div>
+          <!-- Phase-specific action buttons -->
+          <div class="border-t p-3 bg-white" id="action-buttons">
+            <!-- Populated by JS -->
+          </div>
+          <div class="border-t p-3 bg-white">
+            <div class="flex items-center gap-2">
+              <div class="flex-1 bg-gray-100 rounded-lg px-3 py-2 text-xs text-gray-400">Parle à CarlOS...</div>
+              <button class="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center text-white">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Content Panel 60% -->
+        <div class="w-[60%] overflow-y-auto scrollbar-thin" id="right-panel">
+          <div class="border-b px-4 py-2 flex gap-1">
+            <button class="px-3 py-1.5 text-xs font-medium rounded-md bg-gray-900 text-white shadow-sm">Chantiers</button>
+            <button class="px-3 py-1.5 text-xs font-medium rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700">Projets</button>
+            <button class="px-3 py-1.5 text-xs font-medium rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700">Missions</button>
+          </div>
+
+          <div class="max-w-4xl mx-auto px-10 py-5 pb-12 space-y-3" id="items-list">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL - Legend -->
+    <div class="w-72 border-l bg-white flex-shrink-0 overflow-y-auto scrollbar-thin p-3">
+      <h3 class="text-xs font-semibold text-gray-900 mb-3">Phases visuelles</h3>
+
+      <div class="space-y-3">
+        <div class="rounded-lg overflow-hidden">
+          <div class="bg-red-100 px-3 py-2 flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-red-400"></span>
+            <span class="text-xs font-bold text-red-800">Réflexion</span>
+          </div>
+          <div class="bg-red-50 px-3 py-2 space-y-1">
+            <p class="text-[10px] text-red-700">Phase d'analyse et de recherche. On explore, on questionne, on challenger.</p>
+            <div class="flex flex-wrap gap-1 mt-1">
+              <span class="px-1.5 py-0.5 rounded text-[8px] bg-red-200 text-red-800">Brainstorm</span>
+              <span class="px-1.5 py-0.5 rounded text-[8px] bg-red-200 text-red-800">Analyser</span>
+              <span class="px-1.5 py-0.5 rounded text-[8px] bg-red-200 text-red-800">Rechercher</span>
+              <span class="px-1.5 py-0.5 rounded text-[8px] bg-red-200 text-red-800">Challenger</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-lg overflow-hidden">
+          <div class="bg-yellow-100 px-3 py-2 flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-yellow-400"></span>
+            <span class="text-xs font-bold text-yellow-800">Atelier</span>
+          </div>
+          <div class="bg-yellow-50 px-3 py-2 space-y-1">
+            <p class="text-[10px] text-yellow-700">Phase de construction. On cristallise, on synthétise, on crée.</p>
+            <div class="flex flex-wrap gap-1 mt-1">
+              <span class="px-1.5 py-0.5 rounded text-[8px] bg-yellow-200 text-yellow-800">Cristalliser</span>
+              <span class="px-1.5 py-0.5 rounded text-[8px] bg-yellow-200 text-yellow-800">Synthétiser</span>
+              <span class="px-1.5 py-0.5 rounded text-[8px] bg-yellow-200 text-yellow-800">Plan d'action</span>
+              <span class="px-1.5 py-0.5 rounded text-[8px] bg-yellow-200 text-yellow-800">Fil parallèle</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-lg overflow-hidden">
+          <div class="bg-green-100 px-3 py-2 flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-green-400"></span>
+            <span class="text-xs font-bold text-green-800">COMMAND</span>
+          </div>
+          <div class="bg-green-50 px-3 py-2 space-y-1">
+            <p class="text-[10px] text-green-700">Phase d'exécution. On déploie, on track, on avance.</p>
+            <div class="flex flex-wrap gap-1 mt-1">
+              <span class="px-1.5 py-0.5 rounded text-[8px] bg-green-200 text-green-800">Exécuter</span>
+              <span class="px-1.5 py-0.5 rounded text-[8px] bg-green-200 text-green-800">Déployer</span>
+              <span class="px-1.5 py-0.5 rounded text-[8px] bg-green-200 text-green-800">Tracker</span>
+              <span class="px-1.5 py-0.5 rounded text-[8px] bg-green-200 text-green-800">Étape suivante</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="border-t pt-3">
+          <p class="text-[10px] text-gray-500">La progression est séquentielle: on ne peut pas passer en COMMAND sans avoir fait l'Atelier. On ne peut pas faire l'Atelier sans avoir réfléchi.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const phases = {
+      reflexion: {
+        color: 'red', label: 'Réflexion', tint: 'phase-reflexion',
+        buttons: [
+          { icon: '🧠', label: 'Brainstorm', desc: 'Explorer librement' },
+          { icon: '🔍', label: 'Analyser', desc: 'Approfondir un sujet' },
+          { icon: '📊', label: 'Rechercher', desc: 'Trouver des données' },
+          { icon: '⚡', label: 'Challenger', desc: 'Tester les hypothèses' },
+        ]
+      },
+      atelier: {
+        color: 'yellow', label: 'Atelier', tint: 'phase-atelier',
+        buttons: [
+          { icon: '💎', label: 'Cristalliser', desc: 'Synthèse des idées' },
+          { icon: '📝', label: 'Synthétiser', desc: 'Résumé structuré' },
+          { icon: '📋', label: 'Plan d\'action', desc: 'Étapes concrètes' },
+          { icon: '🔀', label: 'Fil parallèle', desc: 'Perspective alternative' },
+        ]
+      },
+      command: {
+        color: 'green', label: 'COMMAND', tint: 'phase-command',
+        buttons: [
+          { icon: '🚀', label: 'Exécuter', desc: 'Lancer la mission' },
+          { icon: '📤', label: 'Déployer', desc: 'Mettre en production' },
+          { icon: '📍', label: 'Tracker', desc: 'Suivre l\'avancement' },
+          { icon: '➡️', label: 'Étape suivante', desc: 'Prochaine action' },
+        ]
+      }
+    };
+
+    const items = [
+      { name: 'Marketing Q2', phase: 'atelier', progress: 72, color: 'pink' },
+      { name: 'Expansion Ontario', phase: 'reflexion', progress: 35, color: 'red' },
+      { name: 'Optimisation trésorerie', phase: 'command', progress: 88, color: 'emerald' },
+      { name: 'Pipeline ventes Q3', phase: 'reflexion', progress: 15, color: 'orange' },
+      { name: 'Refonte processus RH', phase: 'atelier', progress: 60, color: 'violet' },
+    ];
+
+    let currentPhase = 'reflexion';
+
+    function setPhase(phase) {
+      currentPhase = phase;
+
+      // Update phase indicator buttons
+      ['reflexion', 'atelier', 'command'].forEach(p => {
+        const btn = document.getElementById(`btn-${p}`);
+        const cfg = phases[p];
+        if (p === phase) {
+          btn.className = `flex items-center gap-1 h-7 px-2 rounded text-[11px] font-medium bg-${cfg.color}-400/30 text-${cfg.color}-200 border border-${cfg.color}-400/40`;
+          btn.querySelector('span').className = `w-2.5 h-2.5 rounded-full bg-${cfg.color}-400`;
+        } else {
+          btn.className = 'flex items-center gap-1 h-7 px-2 rounded text-[11px] text-white/40 hover:text-white/70 hover:bg-white/10';
+          btn.querySelector('span').className = `w-2.5 h-2.5 rounded-full bg-${cfg.color}-400 opacity-40`;
+        }
+      });
+
+      // Apply tint
+      const area = document.getElementById('content-area');
+      area.className = `flex-1 flex overflow-hidden ${phases[phase].tint}`;
+
+      // Update action buttons
+      renderActionButtons();
+
+      // Update items
+      renderItems();
+    }
+
+    function renderActionButtons() {
+      const container = document.getElementById('action-buttons');
+      const cfg = phases[currentPhase];
+      container.innerHTML = `
+        <div class="flex flex-wrap gap-1.5">
+          ${cfg.buttons.map(b => `
+            <button class="flex items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-medium bg-${cfg.color}-50 text-${cfg.color}-700 hover:bg-${cfg.color}-100 border border-${cfg.color}-200 transition-colors">
+              <span>${b.icon}</span> ${b.label}
+            </button>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function renderItems() {
+      const container = document.getElementById('items-list');
+      const phaseColors = { reflexion: 'red', atelier: 'yellow', command: 'green' };
+      const phaseLabels = { reflexion: 'Réflexion', atelier: 'Atelier', command: 'COMMAND' };
+
+      container.innerHTML = items.map(item => {
+        const pc = phaseColors[item.phase];
+        return `
+          <div class="rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer">
+            <div class="bg-gradient-to-r from-${item.color}-600 to-${item.color}-500 px-3 py-2.5 flex items-center gap-2">
+              <svg class="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+              <h3 class="text-sm font-bold text-white flex-1">${item.name}</h3>
+              <!-- Phase badge -->
+              <span class="flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-${pc}-400/30 text-white border border-${pc}-300/40">
+                <span class="w-2 h-2 rounded-full bg-${pc}-400"></span>
+                ${phaseLabels[item.phase]}
+              </span>
+            </div>
+            <div class="px-3 py-3">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs text-gray-500">Progression</span>
+                <span class="text-xs font-medium text-gray-700">${item.progress}%</span>
+              </div>
+              <div class="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                <div class="h-full bg-${pc}-400 rounded-full" style="width: ${item.progress}%"></div>
+              </div>
+              <!-- Phase progress dots -->
+              <div class="flex items-center gap-3 mt-2">
+                <div class="flex items-center gap-1">
+                  <span class="w-3 h-3 rounded-full ${item.phase === 'reflexion' || item.phase === 'atelier' || item.phase === 'command' ? 'bg-red-400' : 'bg-gray-200'}"></span>
+                  <span class="text-[9px] text-gray-500">Réflexion</span>
+                </div>
+                <div class="w-4 h-px ${item.phase === 'atelier' || item.phase === 'command' ? 'bg-yellow-400' : 'bg-gray-200'}"></div>
+                <div class="flex items-center gap-1">
+                  <span class="w-3 h-3 rounded-full ${item.phase === 'atelier' || item.phase === 'command' ? 'bg-yellow-400' : 'bg-gray-200'}"></span>
+                  <span class="text-[9px] text-gray-500">Atelier</span>
+                </div>
+                <div class="w-4 h-px ${item.phase === 'command' ? 'bg-green-400' : 'bg-gray-200'}"></div>
+                <div class="flex items-center gap-1">
+                  <span class="w-3 h-3 rounded-full ${item.phase === 'command' ? 'bg-green-400' : 'bg-gray-200'}"></span>
+                  <span class="text-[9px] text-gray-500">COMMAND</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Init
+    setPhase('reflexion');
+  </script>
+
+</body>
+</html>

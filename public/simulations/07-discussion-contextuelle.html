@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SIM-07 — Discussion Contextuelle par Entité</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: { 'ub-blue': '#073E5A' } } } }
+  </script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    .scrollbar-thin::-webkit-scrollbar { width: 4px; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+    .fade { animation: fadeIn 0.2s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  </style>
+</head>
+<body class="h-screen flex flex-col bg-white overflow-hidden">
+
+  <!-- LABEL -->
+  <div class="bg-blue-600 text-white text-center py-2 text-sm font-medium">
+    SIM-07 — Discussion Contextuelle: la conversation change automatiquement selon l'entité sélectionnée
+  </div>
+
+  <div class="flex-1 flex overflow-hidden">
+
+    <!-- LEFT SIDEBAR -->
+    <div class="w-14 border-r bg-white flex-shrink-0 flex flex-col items-center py-3 gap-3">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-blue-500 flex items-center justify-center">
+        <span class="text-white text-xs font-bold">UB</span>
+      </div>
+    </div>
+
+    <!-- CENTER -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+
+      <!-- TOP BAR -->
+      <div style="background-color: #073E5A;">
+        <div class="h-10 flex items-center px-2 border-b border-white/10">
+          <button class="h-7 gap-1 px-2 text-white bg-white/15 rounded flex items-center text-[11px] font-medium">Mon Département</button>
+        </div>
+        <div class="h-7 flex items-center px-2 gap-1" style="background-color: rgba(255,255,255,0.08);">
+          <span id="breadcrumb-text" class="text-[9px] text-white font-medium">Accueil</span>
+        </div>
+      </div>
+
+      <!-- CONTENT -->
+      <div class="flex-1 flex overflow-hidden">
+
+        <!-- LiveChat 40% — DYNAMIC -->
+        <div class="w-[40%] border-r flex flex-col bg-white">
+          <!-- Chat Header — changes with context -->
+          <div class="h-12 flex items-center gap-2 px-3 border-b" style="background-color: #073E5A;" id="chat-header">
+            <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold" id="chat-avatar">CO</div>
+            <div>
+              <div class="text-white text-xs font-medium" id="chat-bot-name">CarlOS</div>
+              <div class="text-white/60 text-[10px]" id="chat-context-label">Discussion générale</div>
+            </div>
+            <!-- Thread indicator -->
+            <div class="ml-auto flex items-center gap-1" id="thread-indicator">
+              <span class="text-[9px] text-white/40" id="thread-count">3 messages</span>
+            </div>
+          </div>
+          <!-- Chat messages — swapped per context -->
+          <div class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50" id="chat-messages">
+            <!-- Populated by JS -->
+          </div>
+          <div class="border-t p-3 bg-white">
+            <div class="flex items-center gap-2">
+              <div class="flex-1 bg-gray-100 rounded-lg px-3 py-2 text-xs text-gray-400" id="chat-placeholder">Parle à CarlOS...</div>
+              <button class="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center text-white">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Content 60% -->
+        <div class="w-[60%] overflow-y-auto scrollbar-thin">
+          <div class="border-b px-4 py-2 flex gap-1">
+            <button onclick="navigateTo('home')" id="tab-home" class="px-3 py-1.5 text-xs font-medium rounded-md bg-gray-900 text-white shadow-sm">Accueil</button>
+            <button onclick="navigateTo('chantier-marketing')" id="tab-chantier" class="px-3 py-1.5 text-xs font-medium rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700">Chantier Marketing</button>
+            <button onclick="navigateTo('projet-seo')" id="tab-projet" class="px-3 py-1.5 text-xs font-medium rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700">Projet SEO</button>
+          </div>
+
+          <div class="max-w-4xl mx-auto px-10 py-5 pb-12" id="content-area">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="w-72 border-l bg-white flex-shrink-0 overflow-y-auto scrollbar-thin p-3">
+      <h3 class="text-xs font-semibold text-gray-900 mb-3">Discussions actives</h3>
+      <div class="space-y-2" id="discussions-list">
+        <!-- Populated by JS -->
+      </div>
+      <div class="border-t mt-4 pt-3">
+        <h4 class="text-xs font-semibold text-gray-900 mb-2">Comment ça marche</h4>
+        <div class="text-[10px] text-gray-500 space-y-1">
+          <p>Chaque entité (chantier, projet, mission) a sa propre discussion.</p>
+          <p>Quand vous naviguez vers une entité, sa discussion s'ouvre automatiquement.</p>
+          <p>L'historique persiste quand vous revenez.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Discussion threads per entity
+    const discussions = {
+      'home': {
+        botName: 'CarlOS', botCode: 'CO', botColor: 'blue', context: 'Discussion générale',
+        messages: [
+          { from: 'bot', text: 'Bonjour Carl! Bonne journée aujourd\'hui. Tim a fini le brainstorm SEO et Frank a bouclé les prévisions Q3.' },
+          { from: 'user', text: 'Parfait, montre-moi le chantier Marketing.' },
+          { from: 'bot', text: 'Clique sur "Chantier Marketing" dans les onglets pour y accéder. La discussion va basculer automatiquement!' },
+        ]
+      },
+      'chantier-marketing': {
+        botName: 'Mathilde', botCode: 'MA', botColor: 'pink', context: 'Chantier Marketing Q2',
+        messages: [
+          { from: 'bot', text: 'On travaille sur le chantier Marketing Q2 — 72% d\'avancement. Le projet SEO est presque terminé.' },
+          { from: 'user', text: 'Le LinkedIn Ads, on en est où?' },
+          { from: 'bot', text: 'LinkedIn Ads est à 45%. Le ciblage audiences est défini, reste les visuels. Tu veux qu\'on brainstorm sur les visuels?' },
+          { from: 'user', text: 'Oui, allons-y.' },
+          { from: 'bot', text: 'Je propose 3 directions créatives: 1) Témoignages manufacturiers, 2) Chiffres d\'impact (40% productivité), 3) Avant/après IA. Laquelle te parle?' },
+        ]
+      },
+      'projet-seo': {
+        botName: 'Tim', botCode: 'TI', botColor: 'violet', context: 'Projet Campagne SEO',
+        messages: [
+          { from: 'bot', text: 'Projet SEO: 85% complété. Audit technique fait, mots-clés validés. Il reste le contenu blog.' },
+          { from: 'user', text: 'Quels sont les quick wins identifiés?' },
+          { from: 'bot', text: '3 quick wins: 1) Meta descriptions manquantes sur 40 pages, 2) Compression images (économie 2s de chargement), 3) Schema markup pour les services. Total impact estimé: +25% traffic organique en 6 semaines.' },
+        ]
+      }
+    };
+
+    let currentContext = 'home';
+
+    function navigateTo(context) {
+      currentContext = context;
+      const d = discussions[context];
+
+      // Update tabs
+      ['home', 'chantier', 'projet'].forEach(t => {
+        const el = document.getElementById(`tab-${t}`);
+        const isActive = (t === 'home' && context === 'home') ||
+                         (t === 'chantier' && context === 'chantier-marketing') ||
+                         (t === 'projet' && context === 'projet-seo');
+        el.className = isActive
+          ? 'px-3 py-1.5 text-xs font-medium rounded-md bg-gray-900 text-white shadow-sm'
+          : 'px-3 py-1.5 text-xs font-medium rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700';
+      });
+
+      // Update breadcrumb
+      const bcText = {
+        'home': 'Accueil',
+        'chantier-marketing': 'Direction > Chantier Marketing Q2',
+        'projet-seo': 'Direction > Marketing Q2 > Campagne SEO'
+      };
+      document.getElementById('breadcrumb-text').textContent = bcText[context];
+
+      // Update chat header
+      document.getElementById('chat-avatar').textContent = d.botCode;
+      document.getElementById('chat-avatar').className = `w-8 h-8 rounded-full bg-${d.botColor}-500 flex items-center justify-center text-white text-xs font-bold`;
+      document.getElementById('chat-bot-name').textContent = d.botName;
+      document.getElementById('chat-context-label').textContent = d.context;
+      document.getElementById('chat-placeholder').textContent = `Parle à ${d.botName}...`;
+      document.getElementById('thread-count').textContent = `${d.messages.length} messages`;
+
+      // Update chat messages
+      const chatContainer = document.getElementById('chat-messages');
+      chatContainer.innerHTML = d.messages.map(m => {
+        if (m.from === 'bot') {
+          return `
+            <div class="flex gap-2 fade">
+              <div class="w-6 h-6 rounded-full bg-${d.botColor}-500 flex-shrink-0 flex items-center justify-center text-white text-[8px] font-bold mt-1">${d.botCode}</div>
+              <div class="bg-white rounded-lg rounded-tl-none px-3 py-2 max-w-[85%] shadow-sm">
+                <p class="text-xs text-gray-800">${m.text}</p>
+              </div>
+            </div>
+          `;
+        } else {
+          return `
+            <div class="flex justify-end fade">
+              <div class="bg-blue-600 text-white rounded-lg rounded-tr-none px-3 py-2 max-w-[85%]">
+                <p class="text-xs">${m.text}</p>
+              </div>
+            </div>
+          `;
+        }
+      }).join('');
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+
+      // Update content
+      renderContent(context);
+
+      // Update discussions list
+      renderDiscussionsList();
+    }
+
+    function renderContent(context) {
+      const container = document.getElementById('content-area');
+      if (context === 'home') {
+        container.innerHTML = `
+          <div class="space-y-3">
+            <h3 class="text-sm font-bold text-gray-900">Accueil — Direction</h3>
+            <div class="grid grid-cols-2 gap-3">
+              <div class="rounded-xl overflow-hidden shadow-sm cursor-pointer hover:shadow-md" onclick="navigateTo('chantier-marketing')">
+                <div class="bg-gradient-to-r from-pink-600 to-pink-500 px-3 py-2.5">
+                  <h3 class="text-xs font-bold text-white">Marketing Q2</h3>
+                  <p class="text-[9px] text-white/70">72% — 5 messages</p>
+                </div>
+              </div>
+              <div class="rounded-xl overflow-hidden shadow-sm cursor-pointer hover:shadow-md">
+                <div class="bg-gradient-to-r from-red-600 to-red-500 px-3 py-2.5">
+                  <h3 class="text-xs font-bold text-white">Expansion Ontario</h3>
+                  <p class="text-[9px] text-white/70">35% — 2 messages</p>
+                </div>
+              </div>
+            </div>
+            <p class="text-xs text-gray-500 mt-4">Cliquez sur un chantier — la discussion change automatiquement!</p>
+          </div>
+        `;
+      } else if (context === 'chantier-marketing') {
+        container.innerHTML = `
+          <div class="space-y-3">
+            <div class="rounded-xl overflow-hidden shadow-sm">
+              <div class="bg-gradient-to-r from-pink-600 to-pink-500 px-4 py-3">
+                <h3 class="text-sm font-bold text-white">Chantier Marketing Q2</h3>
+                <p class="text-[10px] text-white/70">3 projets — 72%</p>
+              </div>
+            </div>
+            <div class="space-y-2">
+              <div class="rounded-xl border p-3 cursor-pointer hover:shadow-sm" onclick="navigateTo('projet-seo')">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-medium text-gray-800">Campagne SEO</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">85%</span>
+                </div>
+                <div class="w-full h-1.5 bg-gray-100 rounded-full mt-2"><div class="h-full bg-blue-500 rounded-full" style="width:85%"></div></div>
+              </div>
+              <div class="rounded-xl border p-3">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-medium text-gray-800">LinkedIn Ads</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">45%</span>
+                </div>
+                <div class="w-full h-1.5 bg-gray-100 rounded-full mt-2"><div class="h-full bg-amber-500 rounded-full" style="width:45%"></div></div>
+              </div>
+              <div class="rounded-xl border p-3">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-medium text-gray-800">Newsletter</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">60%</span>
+                </div>
+                <div class="w-full h-1.5 bg-gray-100 rounded-full mt-2"><div class="h-full bg-amber-500 rounded-full" style="width:60%"></div></div>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (context === 'projet-seo') {
+        container.innerHTML = `
+          <div class="space-y-3">
+            <button onclick="navigateTo('chantier-marketing')" class="text-xs text-blue-600 hover:underline flex items-center gap-1">
+              <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+              Retour à Marketing Q2
+            </button>
+            <div class="rounded-xl overflow-hidden shadow-sm">
+              <div class="bg-gradient-to-r from-violet-600 to-violet-500 px-4 py-3">
+                <h3 class="text-sm font-bold text-white">Projet: Campagne SEO</h3>
+                <p class="text-[10px] text-white/70">85% — Tim (CTO)</p>
+              </div>
+            </div>
+            <div class="space-y-2">
+              <div class="rounded-lg border p-3 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                <span class="text-xs text-gray-800">Audit technique SEO</span>
+                <span class="text-[10px] text-amber-600 ml-auto">En cours</span>
+              </div>
+              <div class="rounded-lg border p-3 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                <span class="text-xs text-gray-800">Recherche mots-clés</span>
+                <span class="text-[10px] text-green-600 ml-auto">Complétée</span>
+              </div>
+              <div class="rounded-lg border p-3 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-gray-400"></span>
+                <span class="text-xs text-gray-800">Création contenu blog</span>
+                <span class="text-[10px] text-gray-500 ml-auto">À faire</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    function renderDiscussionsList() {
+      const container = document.getElementById('discussions-list');
+      const contextNames = {
+        'home': 'Discussion générale',
+        'chantier-marketing': 'Chantier Marketing Q2',
+        'projet-seo': 'Projet Campagne SEO'
+      };
+      const contextColors = { 'home': 'blue', 'chantier-marketing': 'pink', 'projet-seo': 'violet' };
+
+      container.innerHTML = Object.keys(discussions).map(key => {
+        const d = discussions[key];
+        const isActive = key === currentContext;
+        return `
+          <div class="rounded-lg p-2 cursor-pointer ${isActive ? 'bg-blue-50 ring-1 ring-blue-200' : 'hover:bg-gray-50'}" onclick="navigateTo('${key}')">
+            <div class="flex items-center gap-2">
+              <div class="w-5 h-5 rounded-full bg-${contextColors[key]}-500 flex items-center justify-center text-white text-[7px] font-bold">${d.botCode}</div>
+              <div class="flex-1 min-w-0">
+                <div class="text-[10px] font-medium text-gray-800 truncate">${contextNames[key]}</div>
+                <div class="text-[9px] text-gray-400 truncate">${d.messages[d.messages.length-1].text.substring(0, 40)}...</div>
+              </div>
+              <span class="text-[8px] text-gray-400">${d.messages.length}</span>
+              ${isActive ? '<div class="w-1.5 h-1.5 rounded-full bg-blue-500"></div>' : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Init
+    navigateTo('home');
+  </script>
+
+</body>
+</html>

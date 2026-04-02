@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SIM-09 — Blueprint Personnel par Humain</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: { 'ub-blue': '#073E5A' } } } }
+  </script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    .scrollbar-thin::-webkit-scrollbar { width: 4px; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+    .active-section { background-color: #EFF6FF; border-left: 3px solid #3B82F6; }
+  </style>
+</head>
+<body class="h-screen flex flex-col bg-white overflow-hidden">
+
+  <!-- LABEL -->
+  <div class="bg-indigo-600 text-white text-center py-2 text-sm font-medium">
+    SIM-09 — Blueprint Personnel: profil humain remplissable via discussion avec CarlOS
+  </div>
+
+  <div class="flex-1 flex overflow-hidden">
+
+    <!-- LEFT SIDEBAR -->
+    <div class="w-14 border-r bg-white flex-shrink-0 flex flex-col items-center py-3 gap-3">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-blue-500 flex items-center justify-center">
+        <span class="text-white text-xs font-bold">UB</span>
+      </div>
+    </div>
+
+    <!-- CENTER -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+
+      <!-- TOP BAR -->
+      <div style="background-color: #073E5A;">
+        <div class="h-10 flex items-center px-2 border-b border-white/10">
+          <button class="h-7 gap-1 px-2 text-white/70 hover:text-white hover:bg-white/10 rounded flex items-center text-[11px]">Mon Département</button>
+          <button class="h-7 gap-1 px-2 text-white bg-white/15 rounded flex items-center text-[11px] font-medium ml-1">Mon Bureau</button>
+        </div>
+        <div class="h-7 flex items-center px-2 gap-1" style="background-color: rgba(255,255,255,0.08);">
+          <span class="text-[9px] text-white/50">Mon Bureau</span>
+          <svg class="h-3.5 w-3.5 text-white/25" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          <span class="text-[9px] text-white font-medium">Mon Blueprint</span>
+        </div>
+      </div>
+
+      <!-- CONTENT -->
+      <div class="flex-1 flex overflow-hidden">
+
+        <!-- LiveChat 40% -->
+        <div class="w-[40%] border-r flex flex-col bg-white">
+          <div class="h-12 flex items-center gap-2 px-3 border-b" style="background-color: #073E5A;">
+            <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold">CO</div>
+            <div>
+              <div class="text-white text-xs font-medium">CarlOS</div>
+              <div class="text-white/60 text-[10px]">Coach personnel</div>
+            </div>
+          </div>
+          <div class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50" id="chat-area">
+            <div class="flex gap-2">
+              <div class="w-6 h-6 rounded-full bg-blue-500 flex-shrink-0 flex items-center justify-center text-white text-[8px] font-bold mt-1">CO</div>
+              <div class="bg-white rounded-lg rounded-tl-none px-3 py-2 max-w-[85%] shadow-sm">
+                <p class="text-xs text-gray-800">C'est ton Blueprint personnel, Carl. C'est ici que tu définis ton "Pourquoi", ta mission, tes valeurs et tes objectifs. Clique sur une section pour qu'on la travaille ensemble.</p>
+              </div>
+            </div>
+          </div>
+          <div class="border-t p-3 bg-white">
+            <div class="flex items-center gap-2">
+              <div class="flex-1 bg-gray-100 rounded-lg px-3 py-2 text-xs text-gray-400">Parle à CarlOS...</div>
+              <button class="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center text-white">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Blueprint Content 60% -->
+        <div class="w-[60%] flex overflow-hidden">
+
+          <!-- Table of Contents -->
+          <div class="w-44 border-r bg-gray-50 flex-shrink-0 overflow-y-auto scrollbar-thin">
+            <div class="p-3">
+              <div class="flex items-center gap-2 mb-3">
+                <div class="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 text-xs font-bold">CF</div>
+                <div>
+                  <div class="text-xs font-semibold text-gray-900">Carl Fugère</div>
+                  <div class="text-[9px] text-gray-400">CEO — Usine Bleue</div>
+                </div>
+              </div>
+
+              <div class="text-[9px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Mon Blueprint</div>
+              <div class="space-y-0.5">
+                <button onclick="selectSection('pourquoi')" id="toc-pourquoi" class="w-full text-left px-2 py-1.5 rounded text-[10px] font-medium active-section">
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-green-400"></span>
+                    Mon Pourquoi
+                  </div>
+                </button>
+                <button onclick="selectSection('mission')" id="toc-mission" class="w-full text-left px-2 py-1.5 rounded text-[10px] text-gray-600 hover:bg-gray-100">
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-green-400"></span>
+                    Ma Mission
+                  </div>
+                </button>
+                <button onclick="selectSection('valeurs')" id="toc-valeurs" class="w-full text-left px-2 py-1.5 rounded text-[10px] text-gray-600 hover:bg-gray-100">
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-yellow-400"></span>
+                    Mes Valeurs
+                  </div>
+                </button>
+                <button onclick="selectSection('forces')" id="toc-forces" class="w-full text-left px-2 py-1.5 rounded text-[10px] text-gray-600 hover:bg-gray-100">
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-green-400"></span>
+                    Mes Forces
+                  </div>
+                </button>
+                <button onclick="selectSection('objectifs')" id="toc-objectifs" class="w-full text-left px-2 py-1.5 rounded text-[10px] text-gray-600 hover:bg-gray-100">
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-yellow-400"></span>
+                    Mes Objectifs
+                  </div>
+                </button>
+                <button onclick="selectSection('chantiers')" id="toc-chantiers" class="w-full text-left px-2 py-1.5 rounded text-[10px] text-gray-600 hover:bg-gray-100">
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-gray-300"></span>
+                    Mes Chantiers
+                  </div>
+                </button>
+                <button onclick="selectSection('vitaa')" id="toc-vitaa" class="w-full text-left px-2 py-1.5 rounded text-[10px] text-gray-600 hover:bg-gray-100">
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-gray-300"></span>
+                    Score VITAA
+                  </div>
+                </button>
+              </div>
+
+              <div class="border-t mt-3 pt-3">
+                <div class="text-[9px] text-gray-400">Complétude</div>
+                <div class="w-full h-2 bg-gray-200 rounded-full mt-1 overflow-hidden">
+                  <div class="h-full bg-blue-500 rounded-full" style="width: 57%"></div>
+                </div>
+                <div class="text-[9px] text-gray-500 mt-0.5">4/7 sections remplies</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section Content -->
+          <div class="flex-1 overflow-y-auto scrollbar-thin">
+            <div class="max-w-3xl mx-auto px-8 py-5 pb-12" id="section-content">
+
+              <!-- Header -->
+              <div class="rounded-xl overflow-hidden shadow-sm mb-6">
+                <div class="bg-gradient-to-r from-indigo-600 to-indigo-500 px-4 py-3 flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white text-sm font-bold">CF</div>
+                  <div>
+                    <h2 class="text-sm font-bold text-white">Blueprint Personnel — Carl Fugère</h2>
+                    <p class="text-[10px] text-white/70">CEO, Usine Bleue AI — 26 ans d'expérience</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Section: Pourquoi -->
+              <div id="sec-pourquoi" class="mb-6">
+                <div class="flex items-center gap-2 mb-3">
+                  <span class="w-3 h-3 rounded-full bg-green-400"></span>
+                  <h3 class="text-sm font-bold text-gray-900">Mon Pourquoi</h3>
+                  <span class="px-1.5 py-0.5 rounded text-[8px] bg-green-100 text-green-700 font-medium">Rempli</span>
+                  <button onclick="openAtelier('pourquoi')" class="ml-auto text-[10px] text-blue-600 hover:underline flex items-center gap-1">
+                    <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    Réviser
+                  </button>
+                </div>
+                <div class="bg-white rounded-lg border p-4 text-xs text-gray-700">
+                  <p class="italic text-gray-500 mb-2">"Pourquoi je fais ce que je fais chaque matin?"</p>
+                  <p>Parce que je crois que chaque PME manufacturière au Québec mérite d'avoir accès à l'IA pour se transformer. J'ai vu trop d'entreprises familiales fermer par manque d'outils. GhostX, c'est démocratiser l'intelligence artificielle pour les gens qui construisent des choses concrètes.</p>
+                </div>
+              </div>
+
+              <!-- Section: Mission -->
+              <div id="sec-mission" class="mb-6">
+                <div class="flex items-center gap-2 mb-3">
+                  <span class="w-3 h-3 rounded-full bg-green-400"></span>
+                  <h3 class="text-sm font-bold text-gray-900">Ma Mission</h3>
+                  <span class="px-1.5 py-0.5 rounded text-[8px] bg-green-100 text-green-700 font-medium">Rempli</span>
+                </div>
+                <div class="bg-white rounded-lg border p-4 text-xs text-gray-700">
+                  <p class="font-medium text-gray-900 mb-2">Bâtir le premier OS d'intelligence d'affaires pour les PME du Québec.</p>
+                  <p>Connecter 130+ manufacturiers du REAI avec des Ghosts IA qui comprennent leur réalité terrain. Créer un écosystème où chaque entrepreneur a son CarlOS.</p>
+                </div>
+              </div>
+
+              <!-- Section: Valeurs (in progress) -->
+              <div id="sec-valeurs" class="mb-6">
+                <div class="flex items-center gap-2 mb-3">
+                  <span class="w-3 h-3 rounded-full bg-yellow-400"></span>
+                  <h3 class="text-sm font-bold text-gray-900">Mes Valeurs</h3>
+                  <span class="px-1.5 py-0.5 rounded text-[8px] bg-yellow-100 text-yellow-700 font-medium">En cours</span>
+                  <button onclick="openAtelier('valeurs')" class="ml-auto text-[10px] text-blue-600 hover:underline flex items-center gap-1">
+                    <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    Continuer en Atelier
+                  </button>
+                </div>
+                <div class="bg-white rounded-lg border p-4 text-xs text-gray-700">
+                  <div class="flex flex-wrap gap-2 mb-3">
+                    <span class="px-2 py-1 rounded-full bg-indigo-100 text-indigo-700 font-medium">Authenticité</span>
+                    <span class="px-2 py-1 rounded-full bg-indigo-100 text-indigo-700 font-medium">Impact concret</span>
+                    <span class="px-2 py-1 rounded-full bg-indigo-100 text-indigo-700 font-medium">Vitesse</span>
+                    <span class="px-2 py-1 rounded-full bg-gray-100 text-gray-400 border border-dashed border-gray-300">+ Ajouter</span>
+                  </div>
+                  <p class="text-gray-400 italic">Descriptions à compléter avec CarlOS...</p>
+                </div>
+              </div>
+
+              <!-- Section: Forces -->
+              <div id="sec-forces" class="mb-6">
+                <div class="flex items-center gap-2 mb-3">
+                  <span class="w-3 h-3 rounded-full bg-green-400"></span>
+                  <h3 class="text-sm font-bold text-gray-900">Mes Forces</h3>
+                  <span class="px-1.5 py-0.5 rounded text-[8px] bg-green-100 text-green-700 font-medium">Rempli</span>
+                </div>
+                <div class="bg-white rounded-lg border p-4 text-xs text-gray-700">
+                  <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-blue-50 rounded-lg p-3">
+                      <div class="font-medium text-blue-800 mb-1">Vendeur né</div>
+                      <p class="text-[10px] text-blue-600">50M+ en ventes cumulées. Capacité à closer n'importe quel deal.</p>
+                    </div>
+                    <div class="bg-violet-50 rounded-lg p-3">
+                      <div class="font-medium text-violet-800 mb-1">Visionnaire</div>
+                      <p class="text-[10px] text-violet-600">7 entreprises créées. Voit les opportunités avant les autres.</p>
+                    </div>
+                    <div class="bg-emerald-50 rounded-lg p-3">
+                      <div class="font-medium text-emerald-800 mb-1">Réseau</div>
+                      <p class="text-[10px] text-emerald-600">130+ manufacturiers au REAI. Connecté partout au Québec.</p>
+                    </div>
+                    <div class="bg-amber-50 rounded-lg p-3">
+                      <div class="font-medium text-amber-800 mb-1">Résilience</div>
+                      <p class="text-[10px] text-amber-600">26 ans d'entrepreneuriat. A survécu à tout. Rebondit toujours.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Section: Objectifs (in progress) -->
+              <div id="sec-objectifs" class="mb-6">
+                <div class="flex items-center gap-2 mb-3">
+                  <span class="w-3 h-3 rounded-full bg-yellow-400"></span>
+                  <h3 class="text-sm font-bold text-gray-900">Mes Objectifs</h3>
+                  <span class="px-1.5 py-0.5 rounded text-[8px] bg-yellow-100 text-yellow-700 font-medium">En cours</span>
+                  <button onclick="openAtelier('objectifs')" class="ml-auto text-[10px] text-blue-600 hover:underline flex items-center gap-1">
+                    <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    Continuer en Atelier
+                  </button>
+                </div>
+                <div class="bg-white rounded-lg border p-4 text-xs text-gray-700 space-y-2">
+                  <div class="flex items-center gap-2">
+                    <svg class="h-4 w-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                    <span>Lancer GhostX avec 9 Pionniers d'ici juin 2026</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <svg class="h-4 w-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span class="text-gray-400">Atteindre 81 clients d'ici Q4 2026</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <svg class="h-4 w-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span class="text-gray-400">Objectif 3 à définir...</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Section: Chantiers (not started) -->
+              <div id="sec-chantiers" class="mb-6">
+                <div class="flex items-center gap-2 mb-3">
+                  <span class="w-3 h-3 rounded-full bg-gray-300"></span>
+                  <h3 class="text-sm font-bold text-gray-900">Mes Chantiers</h3>
+                  <span class="px-1.5 py-0.5 rounded text-[8px] bg-gray-100 text-gray-500 font-medium">Pas commencé</span>
+                </div>
+                <div class="bg-white rounded-lg border border-dashed border-gray-300 p-4 text-xs text-gray-400 text-center">
+                  <p>Les chantiers personnels seront liés aux chantiers de l'entreprise.</p>
+                  <p class="mt-1">Cliquez "Travailler en Atelier" pour définir vos responsabilités.</p>
+                  <button onclick="openAtelier('chantiers')" class="mt-2 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 text-[10px] font-medium hover:bg-blue-100">Commencer avec CarlOS</button>
+                </div>
+              </div>
+
+              <!-- Section: VITAA Score (not started) -->
+              <div id="sec-vitaa" class="mb-6">
+                <div class="flex items-center gap-2 mb-3">
+                  <span class="w-3 h-3 rounded-full bg-gray-300"></span>
+                  <h3 class="text-sm font-bold text-gray-900">Score VITAA Personnel</h3>
+                  <span class="px-1.5 py-0.5 rounded text-[8px] bg-gray-100 text-gray-500 font-medium">Pas commencé</span>
+                </div>
+                <div class="bg-white rounded-lg border border-dashed border-gray-300 p-4 text-xs text-gray-400 text-center">
+                  <p>Votre diagnostic VITAA personnel sera généré après avoir rempli toutes les sections.</p>
+                  <div class="flex justify-center gap-4 mt-3">
+                    <div class="text-center"><div class="text-lg font-bold text-gray-300">?</div><div class="text-[8px]">Vente</div></div>
+                    <div class="text-center"><div class="text-lg font-bold text-gray-300">?</div><div class="text-[8px]">Idée</div></div>
+                    <div class="text-center"><div class="text-lg font-bold text-gray-300">?</div><div class="text-[8px]">Temps</div></div>
+                    <div class="text-center"><div class="text-lg font-bold text-gray-300">?</div><div class="text-[8px]">Argent</div></div>
+                    <div class="text-center"><div class="text-lg font-bold text-gray-300">?</div><div class="text-[8px]">Actif</div></div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="w-72 border-l bg-white flex-shrink-0 overflow-y-auto scrollbar-thin p-3">
+      <h3 class="text-xs font-semibold text-gray-900 mb-2">Blueprint Personnel</h3>
+      <div class="text-[10px] text-gray-500 space-y-2">
+        <p>Chaque utilisateur a son Blueprint personnel. CarlOS aide à le remplir section par section via la discussion.</p>
+        <p>Le Blueprint personnel se connecte aux chantiers de l'entreprise (forces liées aux rôles).</p>
+      </div>
+
+      <div class="border-t mt-3 pt-3">
+        <h4 class="text-xs font-semibold text-gray-900 mb-2">Intégrations</h4>
+        <div class="space-y-1.5 text-[10px]">
+          <div class="flex items-center gap-2 text-gray-600">
+            <svg class="h-3 w-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+            Forces → Chantiers (rôles)
+          </div>
+          <div class="flex items-center gap-2 text-gray-600">
+            <svg class="h-3 w-3 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+            Objectifs → KPIs
+          </div>
+          <div class="flex items-center gap-2 text-gray-600">
+            <svg class="h-3 w-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+            VITAA → Scan automatique
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const sections = ['pourquoi', 'mission', 'valeurs', 'forces', 'objectifs', 'chantiers', 'vitaa'];
+
+    function selectSection(id) {
+      sections.forEach(s => {
+        const el = document.getElementById(`toc-${s}`);
+        el.className = s === id
+          ? 'w-full text-left px-2 py-1.5 rounded text-[10px] font-medium active-section'
+          : 'w-full text-left px-2 py-1.5 rounded text-[10px] text-gray-600 hover:bg-gray-100';
+      });
+      const section = document.getElementById(`sec-${id}`);
+      if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function openAtelier(sectionId) {
+      const labels = {
+        pourquoi: 'Mon Pourquoi', mission: 'Ma Mission', valeurs: 'Mes Valeurs',
+        forces: 'Mes Forces', objectifs: 'Mes Objectifs', chantiers: 'Mes Chantiers', vitaa: 'Score VITAA'
+      };
+      const chat = document.getElementById('chat-area');
+      const msg = document.createElement('div');
+      msg.className = 'flex gap-2';
+      msg.innerHTML = `
+        <div class="w-6 h-6 rounded-full bg-blue-500 flex-shrink-0 flex items-center justify-center text-white text-[8px] font-bold mt-1">CO</div>
+        <div class="bg-white rounded-lg rounded-tl-none px-3 py-2 max-w-[85%] shadow-sm">
+          <p class="text-xs text-gray-800">Parfait, on travaille sur "${labels[sectionId]}". Dis-moi comment tu vois ça, et je t'aide à structurer.</p>
+        </div>
+      `;
+      chat.appendChild(msg);
+      chat.scrollTop = chat.scrollHeight;
+    }
+  </script>
+
+</body>
+</html>

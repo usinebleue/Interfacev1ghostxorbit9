@@ -15,6 +15,7 @@ import { FrameMaster } from "./layout/FrameMaster";
 import { LoginView } from "../components/LoginView";
 import { WelcomeOnboardingView } from "./zones/center/WelcomeOnboardingView";
 import { MeetingGuestPage } from "./zones/center/MeetingGuestPage";
+import { SimulationFullPage } from "./zones/center/atelier/SimulationFullPage";
 
 function AppRouter() {
   const { isOnboarded, setAuthenticated, setOnboarded } = useFrameMaster();
@@ -25,6 +26,12 @@ function AppRouter() {
   const meetingMatch = path.match(/^\/meeting\/([a-z0-9]+)$/);
   if (meetingMatch) {
     return <MeetingGuestPage slug={meetingMatch[1]} />;
+  }
+
+  // Route bypass: /simulation/{id} = full-page simulation (pas d'auth)
+  const simMatch = path.match(/^\/simulation\/([a-z0-9-]+)$/);
+  if (simMatch) {
+    return <SimulationFullPage simulationId={simMatch[1]} />;
   }
 
   // Loading spinner while checking JWT on mount
