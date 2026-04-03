@@ -25,6 +25,7 @@ import {
   Phone,
   Video,
   MessageSquare,
+  Gauge,
   Users,
   UserCircle,
   Mic,
@@ -54,9 +55,6 @@ import {
   FolderOpen,
   FileCheck,
   CheckCircle2,
-  ShieldAlert,
-  TrendingDown,
-  AlertTriangle,
   TowerControl,
   Settings,
   ArrowRight,
@@ -198,14 +196,11 @@ const BOT_AVATAR: Record<string, string> = {
   CISOB: "/agents/generated/ciso-secbot-profil-v3.png",
 };
 
-// Département de direction — 8 items en grid 4x2 (Carl vocal 13h09: + Réglages + Admin, Dashboard au lieu de Vue d'ensemble)
+// Département de direction — 3 items (Carl S78: retirer Documents, Réglages, Admin)
 const DEPT_ITEMS = [
-  { label: "Dashboard", icon: Sparkles, state: null },
-  { label: "Blueprint", icon: ClipboardList, state: null },
-  { label: "Agenda", icon: Target, state: null },
-  { label: "Documents", icon: FileCheck, state: null },
-  { label: "Réglages", icon: Settings, state: null },
-  { label: "Admin", icon: Shield, state: null },
+  { label: "Dashboard", icon: Gauge, state: null },
+  { label: "Blueprint", icon: Layers, state: null },
+  { label: "Agenda", icon: Calendar, state: null },
 ];
 
 // État AMORCER → dot couleur pour les items (Carl vocal 12h53: "se servir des modes d'attention")
@@ -360,8 +355,6 @@ export function SimulationFullPage({ simulationId }: { simulationId: string }) {
                     <div className="mx-3 mt-2 shrink-0 px-3 py-1.5 rounded-t-lg flex items-center gap-2" style={{ backgroundColor: UB_BLUE }}>
                       <TowerControl className="h-3.5 w-3.5 text-white/80" />
                       <span className="text-[11px] font-bold text-white">Tour de contrôle</span>
-                      <div className="flex-1" />
-                      <span className="text-[9px] text-white/50">2 alertes</span>
                     </div>
                   )}
 
@@ -378,51 +371,6 @@ export function SimulationFullPage({ simulationId }: { simulationId: string }) {
                       </div>
                     </div>
                   </div>
-
-                  {/* État / alertes — sous l'image CarlOS */}
-                  {simulationId === "sim-amorcer" ? (
-                    <div className="mb-1 shrink-0">
-                      {/* Bande "Attention" pastel rouge, texte noir (Carl vocal 13h03: section header pattern) */}
-                      <div className="mx-3 mt-2 px-3 py-1.5 bg-red-100 flex items-center gap-2 rounded-t-lg">
-                        <AlertTriangle className="h-3.5 w-3.5 text-red-600" />
-                        <span className="text-[11px] font-bold text-gray-900">Attention</span>
-                      </div>
-                    <div className="mx-3 mt-2 space-y-2">
-                      <button
-                        onClick={() => setAmorcerTrigger(t => t + 1)}
-                        className="w-full rounded-xl bg-white border border-red-200 border-l-[3px] border-l-red-500 px-3 py-2.5 flex items-start gap-2.5 hover:bg-red-50 hover:shadow-sm transition-all cursor-pointer text-left group"
-                      >
-                        <div className="w-7 h-7 rounded-full bg-red-100 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-red-200 transition-colors">
-                          <ShieldAlert className="h-3.5 w-3.5 text-red-600" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <span className="text-[11px] font-bold text-red-700 block truncate">Marge brute en baisse de 4.2%</span>
-                          <span className="text-[9px] text-red-500/70">Frank (CFO) · Impact: 38K$/mois</span>
-                        </div>
-                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0 mt-1.5" />
-                      </button>
-                      <button
-                        onClick={() => setAmorcerTrigger(t => t + 1)}
-                        className="w-full rounded-xl bg-white border border-red-200 border-l-[3px] border-l-red-500 px-3 py-2.5 flex items-start gap-2.5 hover:bg-red-50 hover:shadow-sm transition-all cursor-pointer text-left group"
-                      >
-                        <div className="w-7 h-7 rounded-full bg-red-100 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-red-200 transition-colors">
-                          <TrendingDown className="h-3.5 w-3.5 text-red-600" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <span className="text-[11px] font-bold text-red-700 block truncate">Pipeline ventes stagne</span>
-                          <span className="text-[9px] text-red-500/70">Rich (CRO) · Conversion: 0.8%</span>
-                        </div>
-                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0 mt-1.5" />
-                      </button>
-                    </div>
-                    </div>
-                  ) : (
-                    <div className="mx-3 mt-2.5 mb-1 shrink-0 px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-200 flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full shrink-0 bg-green-500 animate-pulse" />
-                      <span className="text-[11px] font-semibold text-green-600 truncate flex-1">Tout est calme</span>
-                      <Activity className="h-3.5 w-3.5 text-gray-300" />
-                    </div>
-                  )}
 
                   {/* CockpitPanel — 3 tabs */}
                   <div className="flex-1 overflow-hidden flex flex-col mt-2">
@@ -464,7 +412,7 @@ export function SimulationFullPage({ simulationId }: { simulationId: string }) {
         <ResizableHandle className="cursor-col-resize" />
 
         {/* ═══ ZONE 2 — SIMULATION (discussion + contenu) ═══ */}
-        <ResizablePanel defaultSize={82} minSize={50}>
+        <ResizablePanel defaultSize={90} minSize={50}>
           {simulationId === "sim-amorcer" ? (
             /* AMORCER: self-contained, gere ses propres tabs/phases */
             <div className="h-full overflow-hidden">
@@ -511,6 +459,7 @@ function CockpitCollapsed() {
 // ========== TAB BUREAU (Département + 3 phases avec bandes colorées) ==========
 
 function TabBureauMock({ onBlueprint }: { onBlueprint?: () => void }) {
+  const [activeDeptItem, setActiveDeptItem] = useState<string | null>(null);
   return (
     <div className="overflow-y-auto h-full text-[11px]">
       {/* Bande — Département de direction (Carl vocal 13h30: pastel UB_BLUE) */}
@@ -522,11 +471,16 @@ function TabBureauMock({ onBlueprint }: { onBlueprint?: () => void }) {
         {DEPT_ITEMS.map((item) => (
           <button
             key={item.label}
-            onClick={item.label === "Blueprint" && onBlueprint ? onBlueprint : undefined}
-            className="relative flex flex-col items-center gap-1 px-1.5 py-2 rounded-lg border text-center transition-all cursor-pointer bg-gray-50 hover:bg-gray-100 border-gray-200"
+            onClick={() => { setActiveDeptItem(item.label); if (item.label === "Blueprint" && onBlueprint) onBlueprint(); }}
+            className={cn(
+              "relative flex flex-col items-center gap-1 px-1.5 py-2 rounded-lg border text-center transition-all cursor-pointer",
+              activeDeptItem === item.label
+                ? "bg-blue-50 border-blue-300 text-blue-700"
+                : "bg-gray-50 hover:bg-gray-100 border-gray-200 text-gray-600"
+            )}
           >
-            <item.icon className="h-3.5 w-3.5 shrink-0 text-gray-600" />
-            <span className="text-[9px] font-medium truncate w-full text-gray-600">{item.label}</span>
+            <item.icon className={cn("h-3.5 w-3.5 shrink-0", activeDeptItem === item.label ? "text-blue-600" : "text-gray-600")} />
+            <span className="text-[9px] font-medium truncate w-full">{item.label}</span>
             {item.state && (
               <span className={cn("absolute top-1 right-1 w-2 h-2 rounded-full", STATE_DOT[item.state])} />
             )}

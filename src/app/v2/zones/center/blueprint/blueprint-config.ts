@@ -169,7 +169,7 @@ const CEOB_BLUEPRINT: DeptBlueprintConfig = {
   subSections: [
     {
       id: "vue_consolidee",
-      label: "Vue consolidée",
+      label: "Vue d'ensemble",
       description: "Agrégation des 11 départements, alertes, gaps prioritaires",
       intro: "Vue d'ensemble des 11 départements — le tableau de bord stratégique du CEO. Les scores, gaps critiques et données clés de chaque département en un coup d'œil. Les tensions entre départements sont signalées automatiquement.",
       icon: "Layers",
