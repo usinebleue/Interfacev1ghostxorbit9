@@ -147,7 +147,7 @@ import {
   ResizableHandle,
 } from "../../../../../components/ui/resizable";
 import { TypewriterText, BotAvatar } from "../../shared/simulation-components";
-import { BlueprintDepartement } from "../../blueprint/BlueprintDepartement";
+import { BlueprintDepartement, BlueprintDataRoom, BlueprintPlaybooks } from "../../blueprint/BlueprintDepartement";
 import { CanvasActionProvider } from "../../../../context/CanvasActionContext";
 import { BOT_COLORS } from "../../shared/simulation-data";
 
@@ -525,7 +525,7 @@ const SPR_DIAG_ITEMS = [
 
 // ========== MAIN COMPONENT ==========
 
-export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departement", o9Section = "cellules", showBlueprint: showBlueprintProp = false, onCloseBlueprint }: { onBack: () => void; attentionTrigger?: number; cockpitTab?: string; o9Section?: string; showBlueprint?: boolean; onCloseBlueprint?: () => void }) {
+export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departement", o9Section = "cellules", rightSection: rightSectionProp = null, onCloseSection }: { onBack: () => void; attentionTrigger?: number; cockpitTab?: string; o9Section?: string; rightSection?: string | null; onCloseSection?: () => void }) {
   const chatRef = useRef<HTMLDivElement>(null);
   const rightRef = useRef<HTMLDivElement>(null);
 
@@ -537,9 +537,11 @@ export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departe
   const [showIconCatalog, setShowIconCatalog] = useState(false);
   const [o9ChatTyped, setO9ChatTyped] = useState(false);
   const [reflexionContext, setReflexionContext] = useState<string | null>(null);
-  const [showBlueprint, setShowBlueprint] = useState(showBlueprintProp);
+  const [rightSection, setRightSection] = useState<string | null>(rightSectionProp);
 
-  useEffect(() => { setShowBlueprint(showBlueprintProp); if (showBlueprintProp) setActivePhase("observation"); }, [showBlueprintProp]);
+  const showBlueprint = !!rightSection;
+
+  useEffect(() => { setRightSection(rightSectionProp); if (rightSectionProp) setActivePhase("observation"); }, [rightSectionProp]);
 
   const isOrbit9 = cockpitTab === "orbit9";
 
@@ -723,7 +725,7 @@ export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departe
                 return (
                   <button
                     key={p}
-                    onClick={() => { setActivePhase(p); setShowIconCatalog(false); setShowBlueprint(false); onCloseBlueprint?.(); }}
+                    onClick={() => { setActivePhase(p); setShowIconCatalog(false); setRightSection(null); onCloseSection?.(); }}
                     className={cn(
                       "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
                       isActive
@@ -779,7 +781,7 @@ export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departe
                   <span className="text-[11px] text-gray-400">Département</span>
                   <ChevronRight className="h-3.5 w-3.5 text-gray-300" />
                   <span className="text-[11px] text-gray-700 font-medium">
-                    {showBlueprint ? "Blueprint" : activePhase === "reflexion" ? "Réflexion" : "Vue d'ensemble"}
+                    {rightSection === "blueprint" ? "Blueprint" : rightSection === "dataroom" ? "Data Room" : rightSection === "playbooks" ? "Playbook Store" : activePhase === "reflexion" ? "Réflexion" : "Vue d'ensemble"}
                   </span>
                   {activePhase === "reflexion" && reflexionContext && (
                     <>
@@ -799,7 +801,7 @@ export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departe
 
             {/* Content */}
             <div ref={rightRef} className="flex-1 overflow-auto bg-gray-50">
-              {showBlueprint ? (
+              {rightSection ? (
                 <div className="max-w-4xl mx-auto px-6 py-4 pb-12 sim-blueprint-pastel">
                   <style>{`
                     .sim-blueprint-pastel [class*="bg-gradient-to-r"] {
@@ -815,7 +817,9 @@ export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departe
                     }
                   `}</style>
                   <CanvasActionProvider>
-                    <BlueprintDepartement botCode="CEOB" headerGradient="from-blue-600 to-blue-500" />
+                    {rightSection === "blueprint" && <BlueprintDepartement botCode="CEOB" headerGradient="from-blue-600 to-blue-500" />}
+                    {rightSection === "dataroom" && <BlueprintDataRoom botCode="CEOB" headerGradient="from-blue-600 to-blue-500" />}
+                    {rightSection === "playbooks" && <BlueprintPlaybooks botCode="CEOB" headerGradient="from-blue-600 to-blue-500" />}
                   </CanvasActionProvider>
                 </div>
               ) : isOrbit9 ? (

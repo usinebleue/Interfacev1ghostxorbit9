@@ -264,7 +264,7 @@ export function SimulationFullPage({ simulationId }: { simulationId: string }) {
   const [activeBotCode, setActiveBotCode] = useState("CEOB");
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [amorcerTrigger, setAmorcerTrigger] = useState<number>(0);
-  const [showBlueprint, setShowBlueprint] = useState(false);
+  const [rightSection, setRightSection] = useState<string | null>(null);
 
   const leftPanelRef = useRef<ImperativePanelHandle>(null);
 
@@ -400,7 +400,7 @@ export function SimulationFullPage({ simulationId }: { simulationId: string }) {
                       ))}
                     </div>
                     <div className="flex-1 overflow-hidden">
-                      {cockpitTab === "departement" && <TabBureauMock onBlueprint={() => setShowBlueprint(true)} />}
+                      {cockpitTab === "departement" && <TabBureauMock onSection={(s) => setRightSection(s)} />}
                       {cockpitTab === "equipe_ai" && <TabEquipeAIMock activeBotCode={activeBotCode} onSelectBot={setActiveBotCode} />}
                       {cockpitTab === "orbit9" && <TabOrbit9Cockpit selectedCellule={o9SelectedCellule} onSelectCellule={setO9SelectedCellule} activeSection={o9Section} onSection={setO9Section} />}
                     </div>
@@ -420,7 +420,7 @@ export function SimulationFullPage({ simulationId }: { simulationId: string }) {
           {simulationId === "sim-amorcer" ? (
             /* AMORCER: self-contained, gere ses propres tabs/phases */
             <div className="h-full overflow-hidden">
-              <SimAmorcer onBack={handleBack} attentionTrigger={amorcerTrigger} cockpitTab={cockpitTab} o9Section={o9Section} showBlueprint={showBlueprint} onCloseBlueprint={() => setShowBlueprint(false)} />
+              <SimAmorcer onBack={handleBack} attentionTrigger={amorcerTrigger} cockpitTab={cockpitTab} o9Section={o9Section} rightSection={rightSection} onCloseSection={() => setRightSection(null)} />
             </div>
           ) : (
             /* Standard: cache le header interne + color line (deja en pleine largeur au-dessus) */
@@ -462,7 +462,9 @@ function CockpitCollapsed() {
 
 // ========== TAB BUREAU (Département + 3 phases avec bandes colorées) ==========
 
-function TabBureauMock({ onBlueprint }: { onBlueprint?: () => void }) {
+const SECTION_MAP: Record<string, string> = { "Blueprint": "blueprint", "Data Room": "dataroom", "Playbook Store": "playbooks" };
+
+function TabBureauMock({ onSection }: { onSection?: (section: string) => void }) {
   const [activeDeptItem, setActiveDeptItem] = useState<string | null>(null);
   return (
     <div className="overflow-y-auto h-full text-[11px]">
@@ -475,7 +477,7 @@ function TabBureauMock({ onBlueprint }: { onBlueprint?: () => void }) {
         {DEPT_ITEMS.map((item) => (
           <button
             key={item.label}
-            onClick={() => { setActiveDeptItem(item.label); if (item.label === "Blueprint" && onBlueprint) onBlueprint(); }}
+            onClick={() => { setActiveDeptItem(item.label); const s = SECTION_MAP[item.label]; if (s && onSection) onSection(s); }}
             className={cn(
               "relative flex flex-col items-center gap-1 px-1.5 py-2 rounded-lg border text-center transition-all cursor-pointer",
               activeDeptItem === item.label
