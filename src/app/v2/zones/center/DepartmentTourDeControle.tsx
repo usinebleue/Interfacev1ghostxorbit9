@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect, useMemo } from "react";
-import { Settings, Stethoscope, Flame, ListChecks, Rocket, Bot, Layers, Inbox, Brain, Search, SortAsc, SortDesc, ChevronDown, Plus, LayoutGrid, List, Columns, Table2, Building2, Target, Shield, TrendingUp, DollarSign, Compass } from "lucide-react";
+import { Settings, Stethoscope, Flame, ListChecks, Rocket, Bot, Layers, Inbox, Brain, Search, SortAsc, SortDesc, ChevronDown, Plus, LayoutGrid, List, Columns, Table2, Building2, Target, Shield, TrendingUp, DollarSign, Compass, Database, BookOpen } from "lucide-react";
 import { Card } from "../../../components/ui/card";
 import { cn } from "../../../components/ui/utils";
 import { useFrameMaster } from "../../context/FrameMasterContext";
@@ -28,7 +28,7 @@ import { SanteGlobaleView } from "./SanteGlobaleView";
 import { TabSommaire, TabObjectifs, HierarchieTab } from "./BlueprintView";
 import { AgendaPage } from "./MonBureauView";
 import { DocumentsUnifie } from "./shared/DocumentsUnifie";
-import { BlueprintDepartement } from "./blueprint/BlueprintDepartement";
+import { BlueprintDepartement, BlueprintDataRoom, BlueprintPlaybooks } from "./blueprint/BlueprintDepartement";
 
 /* ============ BLOCK HEADER — meme style que DashboardView ============ */
 function BlockHeader({ icon: Icon, title, count, gradient }: {
@@ -638,10 +638,12 @@ function TemplateGrid({ templates, onFocus, viewMode, setViewMode }: {
 }
 
 /* ============ TABS DEPARTEMENT (11 tabs — structure identique 12 departements) ============ */
-type DeptTabId = "cockpit" | "blueprint" | "sante" | "chantiers" | "projets" | "missions" | "taches" | "discussions" | "documents" | "agenda" | "performance";
+type DeptTabId = "cockpit" | "blueprint" | "dataroom" | "playbooks" | "sante" | "chantiers" | "projets" | "missions" | "taches" | "discussions" | "documents" | "agenda" | "performance";
 const DEPT_TABS: TabDef[] = [
   { id: "cockpit", label: "Vue d'ensemble", icon: Gauge },
   { id: "blueprint", label: "Blueprint", icon: Layers },
+  { id: "dataroom", label: "Data Room", icon: Database },
+  { id: "playbooks", label: "Playbook Store", icon: BookOpen },
   { id: "sante", label: "Sante", icon: HeartPulse },
   { id: "chantiers", label: "Chantiers", icon: Flame },
   { id: "projets", label: "Projets", icon: Package },
@@ -2030,6 +2032,20 @@ export function DepartmentTourDeControle() {
         {/* ══════════════════════════════════════════ */}
         {deptTab === "blueprint" && (
           <BlueprintDepartement botCode={activeBotCode} headerGradient={headerGradient} />
+        )}
+
+        {/* ══════════════════════════════════════════ */}
+        {/* TAB — DATA ROOM */}
+        {/* ══════════════════════════════════════════ */}
+        {deptTab === "dataroom" && (
+          <BlueprintDataRoom botCode={activeBotCode} headerGradient={headerGradient} />
+        )}
+
+        {/* ══════════════════════════════════════════ */}
+        {/* TAB — PLAYBOOK STORE */}
+        {/* ══════════════════════════════════════════ */}
+        {deptTab === "playbooks" && (
+          <BlueprintPlaybooks botCode={activeBotCode} headerGradient={headerGradient} />
         )}
 
         {/* ══════════════════════════════════════════ */}

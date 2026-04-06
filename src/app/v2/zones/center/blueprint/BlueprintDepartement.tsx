@@ -4519,7 +4519,7 @@ function mockTaille(titre: string, type: string): string {
   return kb > 500 ? `${(kb / 100).toFixed(1)} MB` : `${kb} KB`;
 }
 
-function BlueprintDataRoom({ botCode, headerGradient }: { botCode: string; headerGradient: string }) {
+export function BlueprintDataRoom({ botCode, headerGradient }: { botCode: string; headerGradient: string }) {
   // Department navigation — sidebar shows ALL departments
   const [activeDept, setActiveDept] = useState(botCode);
   const [expandedDepts, setExpandedDepts] = useState<Set<string>>(new Set([botCode]));
@@ -5955,7 +5955,7 @@ function PlaybookBuilder() {
 // BLUEPRINT PLAYBOOKS — Conteneur principal avec sidebar 8 items
 // ══════════════════════════════════════════
 
-function BlueprintPlaybooks({ botCode, headerGradient }: { botCode: string; headerGradient: string }) {
+export function BlueprintPlaybooks({ botCode, headerGradient }: { botCode: string; headerGradient: string }) {
   const [activeView, setActiveView] = useState<PlaybookStoreView>("decouvrir");
   const [selectedPlaybook, setSelectedPlaybook] = useState<typeof PLAYBOOK_STORE_DATA[0] | null>(null);
   const [expandCategories, setExpandCategories] = useState(false);
@@ -6090,7 +6090,7 @@ interface BlueprintDepartementProps {
   sizeTier?: SizeTier;
 }
 
-type HeaderView = "blueprint" | "ca" | "comites" | "personnel" | "bot" | "dataroom" | "playbooks";
+type HeaderView = "blueprint" | "ca" | "comites" | "personnel" | "bot";
 
 export function BlueprintDepartement({ botCode, headerGradient, sizeTier: propTier }: BlueprintDepartementProps) {
   const config = getBlueprintConfig(botCode);
@@ -6200,8 +6200,6 @@ export function BlueprintDepartement({ botCode, headerGradient, sizeTier: propTi
                 headerView === "comites" ? "Comités" :
                 headerView === "personnel" ? "Personnel" :
                 headerView === "bot" ? "Brain Team" :
-                headerView === "dataroom" ? "Data Room" :
-                headerView === "playbooks" ? "Playbook Store" :
                 config.deptLabel
               }</h2>
           </div>
@@ -6220,8 +6218,6 @@ export function BlueprintDepartement({ botCode, headerGradient, sizeTier: propTi
           { key: "comites" as HeaderView, label: "Comités", icon: GitBranch, show: true },
           { key: "personnel" as HeaderView, label: "Personnel", icon: User, show: true },
           { key: "bot" as HeaderView, label: "Brain Team", icon: Bot, show: true },
-          { key: "dataroom" as HeaderView, label: "Data Room", icon: Database, show: true },
-          { key: "playbooks" as HeaderView, label: "Playbook Store", icon: BookOpen, show: true },
         ]).filter(t => t.show).map(tab => (
           <button
             key={tab.key}
@@ -6273,16 +6269,6 @@ export function BlueprintDepartement({ botCode, headerGradient, sizeTier: propTi
       {/* VUE BOT — Blueprint de l'Agent IA */}
       {headerView === "bot" && (
         <BlueprintBot botCode={botCode} headerGradient={headerGradient} />
-      )}
-
-      {/* VUE DATA ROOM — Documents par département */}
-      {headerView === "dataroom" && (
-        <BlueprintDataRoom botCode={botCode} headerGradient={headerGradient} />
-      )}
-
-      {/* VUE PLAYBOOKS — Mes playbooks + Recommandés + Store */}
-      {headerView === "playbooks" && (
-        <BlueprintPlaybooks botCode={botCode} headerGradient={headerGradient} />
       )}
 
       {/* LAYOUT DOCFORGE — Sidebar TOC (240px) + Contenu (flex-1) */}
