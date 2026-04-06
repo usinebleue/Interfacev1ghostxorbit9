@@ -65,6 +65,8 @@ import {
   Atom,
   Handshake,
   Calendar,
+  Database,
+  BookOpen,
 } from "lucide-react";
 import { cn } from "../../../../components/ui/utils";
 import { BOT_COLORS } from "../shared/simulation-data";
@@ -200,6 +202,8 @@ const BOT_AVATAR: Record<string, string> = {
 const DEPT_ITEMS = [
   { label: "Dashboard", icon: Gauge, state: null },
   { label: "Blueprint", icon: Layers, state: null },
+  { label: "Data Room", icon: Database, state: null },
+  { label: "Playbook Store", icon: BookOpen, state: null },
   { label: "Agenda", icon: Calendar, state: null },
 ];
 
