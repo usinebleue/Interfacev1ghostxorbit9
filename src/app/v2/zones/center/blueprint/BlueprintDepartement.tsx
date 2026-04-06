@@ -7,7 +7,7 @@
  * CEOB = le plus complet (16 sections + Vue d'ensemble des 11 autres departements)
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Building2, Target, Layers, Rocket, DollarSign, Shield, Compass,
   TrendingUp, ListChecks, Settings, Flame, Save, Loader2,
@@ -18,6 +18,7 @@ import {
   LayoutList, LayoutGrid, Table2, FolderOpen, Filter,
   Package, Calendar, Clock, Lock, Bug, Headphones, Palette, MessageSquare,
   ChevronDown, ArrowUp, ArrowDown, ArrowUpDown, Upload,
+  Crown, Eye, Factory, Wrench, Bookmark, Pause, Play, Share2, RotateCcw, ExternalLink,
 } from "lucide-react";
 import { Card } from "../../../../components/ui/card";
 import { cn } from "../../../../components/ui/utils";
@@ -130,7 +131,7 @@ function KPIDisplay({ kpi, value }: { kpi: KPIDef; value?: number }) {
   const displayValue = value ?? 0;
   const color = displayValue >= kpi.seuils.vert ? "text-emerald-600" : displayValue >= kpi.seuils.jaune ? "text-amber-600" : "text-red-600";
   return (
-    <Card className="p-0 overflow-hidden">
+    <Card className="p-0 gap-0 overflow-hidden">
       <div className="px-3 py-2 bg-gradient-to-r from-gray-700 to-gray-600 flex items-center gap-2">
         <TrendingUp className="h-3.5 w-3.5 text-white" />
         <span className="text-xs font-bold text-white">{kpi.label}</span>
@@ -460,109 +461,158 @@ const DEPT_KEY_FIELDS: Record<string, { sectionId: string; fieldId: string; labe
 interface KeyFieldValue { label: string; value: string }
 interface DeptScore { code: string; score: number; sections: number; gaps: number; gapLabels: string[]; keyFields: KeyFieldValue[] }
 
-// ── Blueprint Personnel — Objectifs et profil du dirigeant humain ──
+// ── Blueprint Personnel — Profil riche du dirigeant humain ──
 
-const PERSONAL_SECTIONS: { id: string; label: string; icon: React.ComponentType<{ className?: string }>; fields: { id: string; label: string }[] }[] = [
+// ── Blueprint Personnel — Sections avec vrais FieldDef qui persistent via canvas API ──
+// Les clés "personnel.xxx" se sauvegardent dans le même canvas (blueprint_CEOB)
+// et alimentent les sections Direction (profil, objectifs_vitaa, equipe_direction, etc.)
+
+const PERSONAL_SECTIONS: { id: string; label: string; icon: React.ComponentType<{ className?: string }>; fields: FieldDef[] }[] = [
   {
-    id: "vue_consolidee_perso",
-    label: "Vue d'ensemble",
-    icon: Layers,
-    fields: [],
-  },
-  {
-    id: "profil_dirigeant",
-    label: "Profil du dirigeant",
-    icon: User,
+    id: "personnel_identite", label: "Mon Profil", icon: User,
     fields: [
-      { id: "nom_complet", label: "Nom complet" },
-      { id: "titre_poste", label: "Titre / Poste" },
-      { id: "annees_experience", label: "Années d'expérience" },
-      { id: "formation", label: "Formation académique" },
-      { id: "forces_principales", label: "Forces principales (top 3)" },
-      { id: "zones_developpement", label: "Zones de développement" },
+      { id: "nom_complet", label: "Nom complet", type: "text", tier: "T1" as SizeTier, required: true, placeholder: "Ex: Carl Fugere" },
+      { id: "titre_poste", label: "Titre / Poste", type: "text", tier: "T1" as SizeTier, required: true, placeholder: "Ex: CEO & Fondateur" },
+      { id: "entreprise", label: "Entreprise", type: "text", tier: "T1" as SizeTier, placeholder: "Ex: Usine Bleue AI" },
+      { id: "parcours_resume", label: "Parcours en bref", type: "textarea", tier: "T1" as SizeTier, placeholder: "26 ans d'experience, 7 entreprises, 50M$+ en ventes..." },
+      { id: "forces_cles", label: "Forces cles (une par ligne)", type: "list", tier: "T1" as SizeTier, placeholder: "Vision strategique\nLeadership entrepreneurial\nDeveloppement d'affaires" },
     ],
   },
   {
-    id: "vision_personnelle",
-    label: "Vision personnelle",
-    icon: Compass,
+    id: "personnel_vitaa", label: "Scores VITAA", icon: Heart,
     fields: [
-      { id: "mission_personnelle", label: "Ma mission en tant que dirigeant" },
-      { id: "valeurs_personnelles", label: "Mes 3 valeurs non-négociables" },
-      { id: "legacy", label: "L'héritage que je veux laisser" },
-      { id: "style_leadership", label: "Mon style de leadership" },
+      { id: "score_vente", label: "Score Vente — reseau, closing (0-100)", type: "number", tier: "T1" as SizeTier, placeholder: "72" },
+      { id: "score_idee", label: "Score Idee — creativite, vision (0-100)", type: "number", tier: "T1" as SizeTier, placeholder: "85" },
+      { id: "score_temps", label: "Score Temps — productivite, focus (0-100)", type: "number", tier: "T1" as SizeTier, placeholder: "38" },
+      { id: "score_argent", label: "Score Argent — gestion, levier (0-100)", type: "number", tier: "T1" as SizeTier, placeholder: "61" },
+      { id: "score_actif", label: "Score Actif — assets, IP, equipe (0-100)", type: "number", tier: "T1" as SizeTier, placeholder: "45" },
     ],
   },
   {
-    id: "objectifs_12mois",
-    label: "Objectifs 12 mois",
-    icon: Target,
+    id: "personnel_vision", label: "Vision & Leadership", icon: Compass,
     fields: [
-      { id: "obj_financier", label: "Objectif financier personnel" },
-      { id: "obj_croissance", label: "Objectif de croissance entreprise" },
-      { id: "obj_equipe", label: "Objectif d'équipe (recrutement, culture)" },
-      { id: "obj_innovation", label: "Objectif innovation / R&D" },
-      { id: "obj_reseau", label: "Objectif réseau / partenariats" },
-      { id: "obj_personnel", label: "Objectif personnel (santé, famille)" },
+      { id: "mission_personnelle", label: "Ma mission en tant que dirigeant", type: "textarea", tier: "T1" as SizeTier, required: true, placeholder: "Pourquoi je fais ce que je fais. Ce qui me drive." },
+      { id: "vision_personnelle", label: "Ma vision pour l'entreprise (5-10 ans)", type: "textarea", tier: "T1" as SizeTier, placeholder: "Ou je veux amener l'entreprise" },
+      { id: "valeurs", label: "Mes valeurs non-negociables (une par ligne)", type: "list", tier: "T1" as SizeTier, required: true, placeholder: "Authenticite — Dire la verite meme quand ca fait mal\nExcellence — Livrer le meilleur\nInnovation — Remettre en question" },
+      { id: "style_primaire", label: "Style de leadership primaire", type: "select", tier: "T1" as SizeTier, options: ["Visionnaire", "Coach", "Directif", "Collaboratif", "Analytique", "Transformationnel", "Servant Leader"] },
+      { id: "style_secondaire", label: "Style de leadership secondaire", type: "select", tier: "T1" as SizeTier, options: ["Visionnaire", "Coach", "Directif", "Collaboratif", "Analytique", "Transformationnel", "Servant Leader"] },
+      { id: "style_description", label: "Comment je dirige au quotidien", type: "textarea", tier: "T1" as SizeTier, placeholder: "Part de la destination finale et remonte vers l'execution..." },
+      { id: "legacy", label: "L'heritage que je veux laisser", type: "textarea", tier: "T2" as SizeTier, placeholder: "Quel impact durable apres mon depart?" },
     ],
   },
   {
-    id: "performance",
-    label: "Performance",
-    icon: BarChart3,
+    id: "personnel_objectifs", label: "Objectifs 12 mois", icon: Target,
     fields: [
-      { id: "kpi_principal", label: "KPI principal (chiffre clé à atteindre)" },
-      { id: "cible_ca", label: "Cible de CA / revenus" },
-      { id: "projets_livres", label: "Projets livrés ce trimestre" },
-      { id: "satisfaction_equipe", label: "Score satisfaction équipe" },
-      { id: "decisions_prises", label: "Décisions stratégiques prises ce mois" },
-      { id: "blocages_resolus", label: "Blocages résolus" },
+      { id: "objectif_1", label: "Objectif #1", type: "textarea", tier: "T1" as SizeTier, required: true, placeholder: "Ex: Lancer Brain Team en mode Pioneer (9 clients)" },
+      { id: "objectif_1_cible", label: "Objectif #1 — Echeance", type: "text", tier: "T1" as SizeTier, placeholder: "Q2 2026" },
+      { id: "objectif_2", label: "Objectif #2", type: "textarea", tier: "T1" as SizeTier, placeholder: "Ex: Atteindre 50K$ MRR" },
+      { id: "objectif_2_cible", label: "Objectif #2 — Echeance", type: "text", tier: "T1" as SizeTier, placeholder: "Q4 2026" },
+      { id: "objectif_3", label: "Objectif #3", type: "textarea", tier: "T1" as SizeTier, placeholder: "Ex: Recruter 3 developpeurs" },
+      { id: "objectif_3_cible", label: "Objectif #3 — Echeance", type: "text", tier: "T1" as SizeTier, placeholder: "Q3 2026" },
+      { id: "objectif_4", label: "Objectif #4", type: "textarea", tier: "T2" as SizeTier, placeholder: "Ex: Fermer ronde seed 500K$" },
+      { id: "objectif_4_cible", label: "Objectif #4 — Echeance", type: "text", tier: "T2" as SizeTier, placeholder: "Q2 2026" },
+      { id: "objectif_5", label: "Objectif #5", type: "textarea", tier: "T2" as SizeTier, placeholder: "Ex: 130 a 200 membres REAI" },
+      { id: "objectif_5_cible", label: "Objectif #5 — Echeance", type: "text", tier: "T2" as SizeTier, placeholder: "Q4 2026" },
     ],
   },
   {
-    id: "developpement_competences",
-    label: "Développement & compétences",
-    icon: TrendingUp,
+    id: "personnel_performance", label: "Performance", icon: BarChart3,
     fields: [
-      { id: "competences_a_acquerir", label: "Compétences à acquérir cette année" },
-      { id: "formations_planifiees", label: "Formations / certifications planifiées" },
-      { id: "mentorat", label: "Mentorat (mentors actuels ou recherchés)" },
-      { id: "lectures_ressources", label: "Lectures / ressources clés" },
+      { id: "kpi_pipeline", label: "Pipeline qualifie ($)", type: "currency", tier: "T1" as SizeTier, placeholder: "320000" },
+      { id: "kpi_pipeline_cible", label: "Pipeline — Cible ($)", type: "currency", tier: "T1" as SizeTier, placeholder: "500000" },
+      { id: "kpi_mrr", label: "MRR ($)", type: "currency", tier: "T1" as SizeTier, placeholder: "12500" },
+      { id: "kpi_mrr_cible", label: "MRR — Cible ($)", type: "currency", tier: "T1" as SizeTier, placeholder: "50000" },
+      { id: "projets_livres", label: "Projets livres (ce trimestre)", type: "number", tier: "T1" as SizeTier, placeholder: "7" },
+      { id: "projets_cible", label: "Projets — Cible", type: "number", tier: "T1" as SizeTier, placeholder: "12" },
+      { id: "satisfaction_equipe", label: "Satisfaction equipe (%)", type: "percentage", tier: "T2" as SizeTier, placeholder: "82" },
+      { id: "decisions_strategiques", label: "Decisions strategiques (ce trimestre)", type: "number", tier: "T2" as SizeTier, placeholder: "23" },
     ],
   },
   {
-    id: "equilibre",
-    label: "Équilibre & bien-être",
-    icon: Heart,
+    id: "personnel_developpement", label: "Developpement", icon: TrendingUp,
     fields: [
-      { id: "heures_semaine", label: "Heures de travail / semaine (cible)" },
-      { id: "delegation", label: "Ce que je dois déléguer" },
-      { id: "non_negociable", label: "Mon temps non-négociable (famille, santé)" },
-      { id: "indicateurs_bienetre", label: "Mes indicateurs de bien-être" },
+      { id: "competences_a_developper", label: "Competences a developper (une par ligne)", type: "list", tier: "T1" as SizeTier, placeholder: "Vente enterprise (B2B SaaS)\nGestion de produit (Product-Led Growth)\nLevee de fonds (Pitch, Term Sheets)" },
+      { id: "formations", label: "Formations en cours ou planifiees (une par ligne)", type: "list", tier: "T1" as SizeTier, placeholder: "YC Startup School — complete\nReforge Growth Series — planifie\nAI Leadership (Stanford) — planifie" },
+      { id: "mentorat", label: "Mentorat (mentors actuels et recherches)", type: "list", tier: "T1" as SizeTier, placeholder: "Mentor SaaS B2B — recherche\nReseau REAI — mentorat reciproque — actif" },
+      { id: "lectures", label: "Lectures / Apprentissages en cours", type: "list", tier: "T2" as SizeTier, placeholder: "Livres, podcasts, cours en ligne..." },
     ],
   },
   {
-    id: "succession_mentorat",
-    label: "Succession & mentorat",
-    icon: Users,
+    id: "personnel_equilibre", label: "Equilibre", icon: Heart,
     fields: [
-      { id: "plan_succession", label: "Plan de succession (qui peut me remplacer?)" },
-      { id: "personnes_cles", label: "Personnes clés à développer" },
-      { id: "transfert_connaissances", label: "Connaissances critiques à documenter" },
-      { id: "timeline_transition", label: "Horizon de transition (3-5-10 ans)" },
+      { id: "heures_actuelles", label: "Heures de travail / semaine (actuelles)", type: "number", tier: "T1" as SizeTier, required: true, placeholder: "58" },
+      { id: "heures_cible", label: "Heures de travail / semaine (cible)", type: "number", tier: "T1" as SizeTier, placeholder: "45" },
+      { id: "taches_a_deleguer", label: "Taches a deleguer (une par ligne)", type: "list", tier: "T1" as SizeTier, placeholder: "Support technique niveau 1\nGestion des deploiements\nAdmin comptable" },
+      { id: "temps_non_negociable", label: "Temps non-negociable (une par ligne)", type: "list", tier: "T1" as SizeTier, required: true, placeholder: "Souper en famille 5x/sem\nSport 3x/sem\nDeconnexion dimanche" },
+      { id: "indicateurs_stress", label: "Indicateurs de stress a surveiller", type: "list", tier: "T2" as SizeTier, placeholder: "Insomnie, irritabilite, micro-management..." },
+    ],
+  },
+  {
+    id: "personnel_succession", label: "Succession", icon: Users,
+    fields: [
+      { id: "horizon", label: "Horizon de planification", type: "select", tier: "T1" as SizeTier, options: ["1-2 ans", "3-5 ans", "5-10 ans", "10+ ans"] },
+      { id: "plan_succession", label: "Plan de succession", type: "textarea", tier: "T1" as SizeTier, placeholder: "Batir une equipe de leadership autonome..." },
+      { id: "personnes_cles", label: "Personnes cles (une par ligne: Nom — Role — Readiness %)", type: "list", tier: "T1" as SizeTier, placeholder: "Tim (CTOB) — CTO — 75%\nRich (CROB) — VP Ventes — 45%\nOlivier (COOB) — COO — 60%" },
+      { id: "connaissances_critiques", label: "Connaissances critiques a documenter (une par ligne)", type: "list", tier: "T1" as SizeTier, placeholder: "Vision produit & roadmap\nRelations REAI (130+ contacts)\nArchitecture BTML\nVente consultative" },
+      { id: "scenario_urgence", label: "Scenario d'urgence (si absent 6 mois)", type: "textarea", tier: "T2" as SizeTier, placeholder: "Qui prend les decisions? Quels processus survivent?" },
     ],
   },
 ];
 
-// VITAA Personnel — les scores personnels de l'humain
-const VITAA_PERSONNEL = [
-  { letter: "V", label: "Vente (réseau, closing)", score: 72, avg: 50, color: "bg-blue-500" },
-  { letter: "I", label: "Idée (créativité, vision)", score: 85, avg: 50, color: "bg-purple-500" },
-  { letter: "T", label: "Temps (productivité, focus)", score: 38, avg: 50, color: "bg-emerald-500" },
-  { letter: "A", label: "Argent (gestion, levier)", score: 61, avg: 50, color: "bg-amber-500" },
-  { letter: "A", label: "Actif (assets, IP, équipe)", score: 45, avg: 50, color: "bg-red-500" },
-];
+// ── Données de simulation — pre-remplissage pour "Vue completee" ──
+const SIMULATION_DATA: Record<string, string> = {
+  "personnel_identite.nom_complet": "Carl Fugere",
+  "personnel_identite.titre_poste": "CEO & Fondateur",
+  "personnel_identite.entreprise": "Usine Bleue AI",
+  "personnel_identite.parcours_resume": "26 ans d'experience entrepreneuriale, 7 entreprises, 50M$+ en ventes cumulees. Fondateur du REAI (reseau de 130+ manufacturiers au Quebec).",
+  "personnel_identite.forces_cles": "Vision strategique\nLeadership entrepreneurial\nDeveloppement d'affaires\nReseautage et partenariats",
+  "personnel_vitaa.score_vente": "72",
+  "personnel_vitaa.score_idee": "85",
+  "personnel_vitaa.score_temps": "38",
+  "personnel_vitaa.score_argent": "61",
+  "personnel_vitaa.score_actif": "45",
+  "personnel_vision.mission_personnelle": "Je crois que chaque dirigeant de PME merite un copilote IA qui comprend sa realite. Brain Team est cette revolution — un conseil d'administration virtuel accessible, abordable et aligne sur les besoins reels du terrain.",
+  "personnel_vision.vision_personnelle": "Devenir la plateforme #1 d'intelligence d'affaires pour les PME manufacturieres au Canada, avec 1000+ entreprises actives d'ici 2029.",
+  "personnel_vision.valeurs": "Authenticite — Dire la verite, meme quand ca fait mal\nExcellence — Livrer le meilleur dans les contraintes reelles\nInnovation — Remettre en question chaque processus",
+  "personnel_vision.style_primaire": "Visionnaire",
+  "personnel_vision.style_secondaire": "Directif",
+  "personnel_vision.style_description": "Part de la destination finale et remonte vers l'execution. Communique la vision de facon obsessive, prend des decisions rapides et assume les consequences.",
+  "personnel_vision.legacy": "Avoir donne aux PME quebecoises les memes outils d'intelligence d'affaires que les Fortune 500, a une fraction du cout.",
+  "personnel_objectifs.objectif_1": "Lancer Brain Team en mode Pioneer (9 clients)",
+  "personnel_objectifs.objectif_1_cible": "Q2 2026",
+  "personnel_objectifs.objectif_2": "Atteindre 50K$ MRR",
+  "personnel_objectifs.objectif_2_cible": "Q4 2026",
+  "personnel_objectifs.objectif_3": "Recruter 3 developpeurs",
+  "personnel_objectifs.objectif_3_cible": "Q3 2026",
+  "personnel_objectifs.objectif_4": "Fermer ronde seed 500K$",
+  "personnel_objectifs.objectif_4_cible": "Q2 2026",
+  "personnel_objectifs.objectif_5": "130 a 200 membres REAI",
+  "personnel_objectifs.objectif_5_cible": "Q4 2026",
+  "personnel_performance.kpi_pipeline": "320000",
+  "personnel_performance.kpi_pipeline_cible": "500000",
+  "personnel_performance.kpi_mrr": "12500",
+  "personnel_performance.kpi_mrr_cible": "50000",
+  "personnel_performance.projets_livres": "7",
+  "personnel_performance.projets_cible": "12",
+  "personnel_performance.satisfaction_equipe": "82",
+  "personnel_performance.decisions_strategiques": "23",
+  "personnel_developpement.competences_a_developper": "Vente enterprise (B2B SaaS)\nGestion de produit (Product-Led Growth)\nLevee de fonds (Pitch, Term Sheets)",
+  "personnel_developpement.formations": "YC Startup School — complete\nReforge Growth Series — planifie\nAI Leadership (Stanford Online) — planifie",
+  "personnel_developpement.mentorat": "Mentor en SaaS B2B — recherche\nReseau REAI — mentorat reciproque — actif",
+  "personnel_developpement.lectures": "Zero to One (Peter Thiel)\nThe Hard Thing About Hard Things (Ben Horowitz)",
+  "personnel_equilibre.heures_actuelles": "58",
+  "personnel_equilibre.heures_cible": "45",
+  "personnel_equilibre.taches_a_deleguer": "Support technique niveau 1\nGestion des deploiements\nAdmin comptable\nPlanification meetings recurrents",
+  "personnel_equilibre.temps_non_negociable": "Souper en famille 5x/sem\nSport 3x/sem\nDeconnexion dimanche",
+  "personnel_equilibre.indicateurs_stress": "Insomnie\nMicro-management\nSauter des repas",
+  "personnel_succession.horizon": "5-10 ans",
+  "personnel_succession.plan_succession": "Batir une equipe de leadership autonome capable de gerer les operations sans dependance quotidienne au fondateur. Objectif: ne plus etre indispensable d'ici 2031.",
+  "personnel_succession.personnes_cles": "Tim (CTOB) — CTO, pipeline technique autonome — 75%\nRich (CROB) — VP Ventes, pipeline commercial — 45%\nOlivier (COOB) — COO, operations quotidiennes — 60%",
+  "personnel_succession.connaissances_critiques": "Vision produit & roadmap\nRelations REAI (130+ contacts)\nArchitecture BTML / GHML\nProcessus de vente consultative",
+  "personnel_succession.scenario_urgence": "Tim assume la direction technique, Rich prend le pipeline ventes, Olivier gere les operations. CA consultatif prend les decisions strategiques majeures.",
+};
 
+// VitaaTable — EXACTE copie de l'ancien code, branchée sur les données réelles via `data` prop
 function VitaaTable({ data, title }: { data: { letter: string; label: string; score: number; avg: number; color: string }[]; title: string }) {
   return (
     <div className="border rounded-xl overflow-hidden shadow-sm">
@@ -597,95 +647,591 @@ function VitaaTable({ data, title }: { data: { letter: string; label: string; sc
   );
 }
 
-function VueConsolideePersonnel() {
-  const sections = PERSONAL_SECTIONS.filter(s => s.id !== "vue_consolidee_perso");
-  return (
-    <div className="space-y-3">
-      <VitaaTable data={VITAA_PERSONNEL} title="VITAA Personnel — Toi vs Secteur" />
-      <div className="grid grid-cols-2 gap-2">
-        {sections.map(s => {
-          const Icon = s.icon;
-          const filled = 0; // mock — pas encore de données
-          return (
-            <Card key={s.id} className="p-0 overflow-hidden rounded-xl shadow-sm">
-              <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-slate-600 to-slate-500">
-                <Icon className="h-3.5 w-3.5 text-white" />
-                <span className="text-xs font-bold text-white flex-1">{s.label}</span>
-                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/20 text-white">{filled}/{s.fields.length}</span>
-              </div>
-              <div className="px-3 py-2 space-y-1">
-                {s.fields.slice(0, 3).map(f => (
-                  <div key={f.id} className="flex items-center justify-between">
-                    <span className="text-[9px] text-gray-500 truncate flex-1">{f.label}</span>
-                    <span className="text-[9px] text-gray-300 italic ml-2">—</span>
-                  </div>
-                ))}
-                {s.fields.length > 3 && <span className="text-[9px] text-gray-400">+{s.fields.length - 3} champs...</span>}
-              </div>
-            </Card>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
+function BlueprintPersonnel({ botCode, headerGradient, data, onFieldChange, onSave, saving, dirty, tier }: {
+  botCode: string; headerGradient: string;
+  data: Record<string, string>;
+  onFieldChange: (fieldId: string, value: string) => void;
+  onSave: () => void;
+  saving: boolean;
+  dirty: boolean;
+  tier: SizeTier;
+}) {
+  const [activeSection, setActiveSection] = useState(PERSONAL_SECTIONS[0].id);
+  const [previewMode, setPreviewMode] = useState(true);
 
-function BlueprintPersonnel({ botCode, headerGradient }: { botCode: string; headerGradient: string }) {
-  const [activePersonalSection, setActivePersonalSection] = useState(PERSONAL_SECTIONS[0].id);
-  const section = PERSONAL_SECTIONS.find(s => s.id === activePersonalSection) || PERSONAL_SECTIONS[0];
+  // En mode preview: fusionner données réelles + simulation pour les champs vides
+  const d = previewMode
+    ? { ...SIMULATION_DATA, ...Object.fromEntries(Object.entries(data).filter(([, v]) => v !== "")) }
+    : data;
+
+  const scrollToSection = (id: string) => {
+    setActiveSection(id);
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  // Calculer progression par section (champs remplis / total)
+  const sectionProgress = (section: typeof PERSONAL_SECTIONS[0]) => {
+    const fields = getFieldsForTier(section.fields, tier);
+    const filled = fields.filter(f => {
+      const v = d[`${section.id}.${f.id}`];
+      return v !== undefined && v !== "" && v !== "[]";
+    }).length;
+    return fields.length > 0 ? Math.round((filled / fields.length) * 100) : 0;
+  };
+
+  // Helper: lire une valeur depuis d (données fusionnées en preview)
+  const val = (key: string) => d[key] || "";
+  const num = (key: string) => parseInt(d[key] || "0", 10) || 0;
+  const lines = (key: string) => (d[key] || "").split("\n").filter(Boolean);
+
+  // Nom depuis les données saisies (ou placeholder)
+  const nom = d["personnel_identite.nom_complet"] || "Mon Profil";
+  const titre = d["personnel_identite.titre_poste"] || "";
+  const entreprise = d["personnel_identite.entreprise"] || "";
 
   return (
     <div className="flex gap-3">
-      {/* Sidebar — sections personnelles */}
-      <div className="w-[180px] shrink-0 space-y-0.5">
+      {/* Sidebar — sections nav avec progression */}
+      <div className="w-[180px] shrink-0 space-y-0.5 sticky top-0 self-start">
         {PERSONAL_SECTIONS.map(s => {
-          const isActive = activePersonalSection === s.id;
-          const isConsolidee = s.id === "vue_consolidee_perso";
+          const isActive = activeSection === s.id;
+          const Icon = s.icon;
+          const progress = sectionProgress(s);
           return (
-            <button
-              key={s.id}
-              onClick={() => setActivePersonalSection(s.id)}
-              className={cn(
-                "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
-                isActive ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent",
-                isConsolidee && !isActive && "bg-gradient-to-r from-slate-50 to-blue-50/50 border-blue-100/50"
-              )}
-            >
+            <button key={s.id} onClick={() => scrollToSection(s.id)} className={cn(
+              "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
+              isActive ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent"
+            )}>
               <div className="flex items-center gap-1.5">
-                <span className={cn("text-[9px] font-bold flex-1 leading-tight", isActive ? "text-blue-700" : "text-gray-700")}>
-                  {s.label}
-                </span>
-                {isActive && <ChevronRight className="h-3.5 w-3.5 text-blue-400" />}
+                <Icon className={cn("h-3.5 w-3.5 shrink-0", isActive ? "text-blue-500" : "text-gray-400")} />
+                <span className={cn("text-[10px] font-bold flex-1 leading-tight", isActive ? "text-blue-700" : "text-gray-700")}>{s.label}</span>
+                <span className={cn("text-[8px] font-bold px-1.5 py-0.5 rounded-full",
+                  progress === 0 ? "bg-gray-100 text-gray-400" :
+                  progress < 50 ? "bg-amber-50 text-amber-600" :
+                  progress < 100 ? "bg-blue-50 text-blue-600" :
+                  "bg-emerald-50 text-emerald-600"
+                )}>{progress}%</span>
               </div>
             </button>
           );
         })}
       </div>
 
-      {/* Contenu — section active */}
-      <div className="flex-1 min-w-0">
-        {activePersonalSection === "vue_consolidee_perso" ? (
-          <VueConsolideePersonnel />
-        ) : (
-          <Card className="p-0 overflow-hidden rounded-xl shadow-sm">
-            <div className={cn("flex items-center gap-2 px-4 py-3 bg-gradient-to-r", headerGradient)}>
-              {(() => { const Icon = section.icon; return <Icon className="h-4 w-4 text-white" />; })()}
-              <span className="text-sm font-bold text-white flex-1">{section.label}</span>
-              <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/20 text-white font-bold">Personnel</span>
+      {/* Contenu — sections avec vrais champs editables */}
+      <div className="flex-1 min-w-0 space-y-4">
+        {/* ── HERO — Dynamique depuis les données saisies ── */}
+        <div className={cn("relative bg-gradient-to-r rounded-xl overflow-hidden", headerGradient)}>
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="relative flex items-center gap-4 p-4">
+            <img src="/agents/carl-fugere.jpg" alt={nom} className="w-16 h-16 rounded-xl object-cover border-2 border-white/30 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-lg font-bold text-white">{nom}</h3>
+                {titre && <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white">{titre}</span>}
+                {entreprise && <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white">{entreprise}</span>}
+              </div>
+              <p className="text-xs text-white/80">
+                {data["personnel_vision.mission_personnelle"]
+                  ? data["personnel_vision.mission_personnelle"].slice(0, 150) + (data["personnel_vision.mission_personnelle"].length > 150 ? "..." : "")
+                  : "Remplissez votre profil personnel pour alimenter le Blueprint de votre entreprise."}
+              </p>
             </div>
-            <div className="p-4 space-y-3">
-              {section.fields.map(f => (
-                <div key={f.id}>
-                  <label className="text-xs font-medium text-gray-700 mb-1 block">{f.label}</label>
-                  <textarea
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-800 resize-none focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 min-h-[60px]"
-                    rows={2}
-                    placeholder={`Décrivez: ${f.label.toLowerCase()}...`}
-                  />
+            {/* Toggle Vue complétée / Mode édition */}
+            <button
+              onClick={() => setPreviewMode(!previewMode)}
+              className={cn(
+                "shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
+                previewMode
+                  ? "bg-white text-gray-800 shadow-sm hover:bg-gray-50"
+                  : "bg-white/20 text-white hover:bg-white/30"
+              )}
+            >
+              {previewMode ? <PenLine className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+              {previewMode ? "Mode edition" : "Vue completee"}
+            </button>
+          </div>
+        </div>
+
+        {/* ── MODE PREVIEW: Version visuelle riche (celle d'avant les champs editables) ── */}
+        {previewMode ? (
+          <div className="space-y-4">
+            {/* ── VITAAFAST — VITAA (5 piliers) + FAAS (4 piliers) côte à côte ── */}
+            <div className="grid grid-cols-2 gap-2">
+              {/* VITAA — 5 piliers d'affaires */}
+              <div className="border rounded-xl overflow-hidden shadow-sm">
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-3 py-2 border-b border-blue-100 flex items-center gap-1.5">
+                  <Heart className="h-3.5 w-3.5 text-blue-500" />
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-gray-700 flex-1">VITAA — Piliers d'affaires</span>
                 </div>
-              ))}
+                <div className="p-2.5 space-y-1.5">
+                  {[
+                    { letter: "V", label: "Vente", score: num("personnel_vitaa.score_vente"), color: "bg-blue-500" },
+                    { letter: "I", label: "Idee", score: num("personnel_vitaa.score_idee"), color: "bg-purple-500" },
+                    { letter: "T", label: "Temps", score: num("personnel_vitaa.score_temps"), color: "bg-emerald-500" },
+                    { letter: "A", label: "Argent", score: num("personnel_vitaa.score_argent"), color: "bg-amber-500" },
+                    { letter: "A", label: "Actif", score: num("personnel_vitaa.score_actif"), color: "bg-red-500" },
+                  ].map((p) => (
+                    <div key={p.letter + p.label}>
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <div className={cn("w-5 h-5 rounded flex items-center justify-center text-white text-[9px] font-bold shrink-0", p.color)}>{p.letter}</div>
+                        <span className="text-[9px] font-medium text-gray-800 flex-1">{p.label}</span>
+                        <span className={cn("text-xs font-bold", p.score >= 50 ? "text-green-600" : p.score >= 35 ? "text-amber-600" : "text-red-600")}>{p.score}</span>
+                        <span className={cn("text-[8px] px-1 py-0.5 rounded border font-medium",
+                          p.score < 35 ? "text-red-600 bg-red-50 border-red-200" :
+                          p.score < 50 ? "text-amber-600 bg-amber-50 border-amber-200" :
+                          "text-green-600 bg-green-50 border-green-200"
+                        )}>{p.score < 35 ? "critique" : p.score < 50 ? "risque" : "sain"}</span>
+                      </div>
+                      <div className="relative h-2 bg-gray-100 rounded-full overflow-hidden ml-7">
+                        <div className={cn("h-full rounded-full absolute", p.color)} style={{ width: `${p.score}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                  <div className="pt-1.5 border-t border-gray-100 mt-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] font-bold text-gray-500 uppercase">Score VITAA</span>
+                      <span className="text-sm font-bold text-gray-800">{Math.round((num("personnel_vitaa.score_vente") + num("personnel_vitaa.score_idee") + num("personnel_vitaa.score_temps") + num("personnel_vitaa.score_argent") + num("personnel_vitaa.score_actif")) / 5)}/100</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* FAAS — 4 piliers relationnels */}
+              <div className="border rounded-xl overflow-hidden shadow-sm">
+                <div className="bg-gradient-to-r from-rose-50 to-pink-50 px-3 py-2 border-b border-rose-100 flex items-center gap-1.5">
+                  <Users className="h-3.5 w-3.5 text-rose-500" />
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-gray-700 flex-1">FAAS — Capital social</span>
+                </div>
+                <div className="p-2.5 space-y-1.5">
+                  {[
+                    { letter: "F", label: "Fraternite", score: 52, color: "bg-rose-500", desc: "Cohesion equipe, retention, culture" },
+                    { letter: "A", label: "Alliance", score: 35, color: "bg-pink-500", desc: "Partenaires B2B, co-creation, REAI" },
+                    { letter: "A", label: "Associes", score: 28, color: "bg-fuchsia-500", desc: "CA, mentors, conseillers, pairs" },
+                    { letter: "S", label: "Social", score: 44, color: "bg-violet-500", desc: "Reputation, thought leadership" },
+                  ].map((p) => (
+                    <div key={p.letter + p.label}>
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <div className={cn("w-5 h-5 rounded flex items-center justify-center text-white text-[9px] font-bold shrink-0", p.color)}>{p.letter}</div>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-[9px] font-medium text-gray-800">{p.label}</span>
+                          <p className="text-[8px] text-gray-400 leading-tight truncate">{p.desc}</p>
+                        </div>
+                        <span className={cn("text-xs font-bold", p.score >= 50 ? "text-green-600" : p.score >= 35 ? "text-amber-600" : "text-red-600")}>{p.score}</span>
+                        <span className={cn("text-[8px] px-1 py-0.5 rounded border font-medium",
+                          p.score < 35 ? "text-red-600 bg-red-50 border-red-200" :
+                          p.score < 50 ? "text-amber-600 bg-amber-50 border-amber-200" :
+                          "text-green-600 bg-green-50 border-green-200"
+                        )}>{p.score < 35 ? "critique" : p.score < 50 ? "risque" : "sain"}</span>
+                      </div>
+                      <div className="relative h-2 bg-gray-100 rounded-full overflow-hidden ml-7">
+                        <div className={cn("h-full rounded-full absolute", p.color)} style={{ width: `${p.score}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                  <div className="pt-1.5 border-t border-gray-100 mt-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] font-bold text-gray-500 uppercase">Score FAAS</span>
+                      <span className="text-sm font-bold text-gray-800">40/100</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </Card>
+
+            {/* ── MON PROFIL ── */}
+            <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
+              <div className="bg-gradient-to-r from-gray-700 to-gray-600 px-4 py-2.5 flex items-center gap-2">
+                <User className="h-4 w-4 text-white" />
+                <span className="text-xs font-bold text-white flex-1">Mon Profil</span>
+              </div>
+              <div className="p-4 space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div><div className="text-[10px] text-gray-400 uppercase mb-0.5">Poste</div><div className="text-sm font-bold text-gray-800">{val("personnel_identite.titre_poste") || "—"}</div></div>
+                  <div><div className="text-[10px] text-gray-400 uppercase mb-0.5">Entreprise</div><div className="text-sm font-bold text-gray-800">{val("personnel_identite.entreprise") || "—"}</div></div>
+                </div>
+                {val("personnel_identite.parcours_resume") && (
+                  <div className="bg-gray-50 border border-gray-100 rounded-lg p-3">
+                    <div className="text-[10px] text-gray-400 uppercase mb-1">Parcours</div>
+                    <p className="text-xs text-gray-700 leading-relaxed">{val("personnel_identite.parcours_resume")}</p>
+                  </div>
+                )}
+                {val("personnel_identite.forces_cles") && (
+                  <div>
+                    <div className="text-[10px] text-gray-400 uppercase mb-1.5">Forces cles</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {lines("personnel_identite.forces_cles").map((f, i) => (
+                        <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-medium border border-blue-100">{f}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Card>
+
+            {/* ── VISION & LEADERSHIP ── */}
+            <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
+              <div className="bg-gradient-to-r from-gray-700 to-gray-600 px-4 py-2.5 flex items-center gap-2">
+                <Compass className="h-4 w-4 text-white" />
+                <span className="text-xs font-bold text-white flex-1">Vision & Leadership</span>
+              </div>
+              <div className="p-4 space-y-3">
+                {val("personnel_vision.mission_personnelle") && (
+                  <div className="border rounded-lg px-3 py-2.5 border-l-[3px] border-l-blue-400 bg-blue-50/30">
+                    <div className="text-[10px] text-gray-400 uppercase mb-0.5">Mission</div>
+                    <p className="text-sm text-gray-700 leading-relaxed">{val("personnel_vision.mission_personnelle")}</p>
+                  </div>
+                )}
+                {val("personnel_vision.vision_personnelle") && (
+                  <div className="border rounded-lg px-3 py-2.5 border-l-[3px] border-l-violet-400 bg-violet-50/30">
+                    <div className="text-[10px] text-gray-400 uppercase mb-0.5">Vision 3-5 ans</div>
+                    <p className="text-sm text-gray-700 leading-relaxed">{val("personnel_vision.vision_personnelle")}</p>
+                  </div>
+                )}
+                {val("personnel_vision.valeurs") && (
+                  <div>
+                    <div className="text-[10px] text-gray-400 uppercase mb-1.5">Valeurs fondamentales</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {lines("personnel_vision.valeurs").map((v, i) => (
+                        <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 font-medium border border-violet-100">{v}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="grid grid-cols-2 gap-3">
+                  {val("personnel_vision.style_primaire") && (
+                    <div className="bg-gray-50 border border-gray-100 rounded-lg p-3">
+                      <div className="text-[10px] text-gray-400 uppercase mb-0.5">Style primaire</div>
+                      <div className="text-sm font-bold text-gray-800">{val("personnel_vision.style_primaire")}</div>
+                    </div>
+                  )}
+                  {val("personnel_vision.style_secondaire") && (
+                    <div className="bg-gray-50 border border-gray-100 rounded-lg p-3">
+                      <div className="text-[10px] text-gray-400 uppercase mb-0.5">Style secondaire</div>
+                      <div className="text-sm font-bold text-gray-800">{val("personnel_vision.style_secondaire")}</div>
+                    </div>
+                  )}
+                </div>
+                {val("personnel_vision.legacy") && (
+                  <div className="border rounded-lg px-3 py-2.5 border-l-[3px] border-l-amber-400 bg-amber-50/30">
+                    <div className="text-[10px] text-gray-400 uppercase mb-0.5">Legacy</div>
+                    <p className="text-xs text-gray-700 leading-relaxed italic">{val("personnel_vision.legacy")}</p>
+                  </div>
+                )}
+              </div>
+            </Card>
+
+            {/* ── OBJECTIFS 12 MOIS ── */}
+            <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
+              <div className="bg-gradient-to-r from-gray-700 to-gray-600 px-4 py-2.5 flex items-center gap-2">
+                <Target className="h-4 w-4 text-white" />
+                <span className="text-xs font-bold text-white flex-1">Objectifs 12 mois</span>
+              </div>
+              <div className="p-4 space-y-2">
+                {[1, 2, 3, 4, 5].map(i => {
+                  const obj = val(`personnel_objectifs.objectif_${i}`);
+                  const cible = val(`personnel_objectifs.objectif_${i}_cible`);
+                  if (!obj) return null;
+                  return (
+                    <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg border border-gray-100">
+                      <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shrink-0">
+                        <span className="text-xs font-bold text-white">{i}</span>
+                      </div>
+                      <div className="flex-1 min-w-0"><div className="text-xs font-bold text-gray-800">{obj}</div></div>
+                      {cible && <span className="shrink-0 text-[9px] font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100">{cible}</span>}
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+
+            {/* ── PERFORMANCE — KPI cards ── */}
+            <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
+              <div className="bg-gradient-to-r from-gray-700 to-gray-600 px-4 py-2.5 flex items-center gap-2">
+                <BarChart3 className="h-4 w-4 text-white" />
+                <span className="text-xs font-bold text-white flex-1">Performance</span>
+              </div>
+              <div className="p-4 space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { label: "Pipeline", key: "kpi_pipeline", cible: "kpi_pipeline_cible", suffix: "$", color: "from-green-600 to-green-500", textColor: "text-green-600" },
+                    { label: "MRR", key: "kpi_mrr", cible: "kpi_mrr_cible", suffix: "$/mois", color: "from-blue-600 to-blue-500", textColor: "text-blue-600" },
+                    { label: "Projets livres", key: "projets_livres", cible: "projets_cible", suffix: "", color: "from-violet-600 to-violet-500", textColor: "text-violet-600" },
+                    { label: "Satisfaction", key: "satisfaction_equipe", cible: "", suffix: "%", color: "from-amber-600 to-amber-500", textColor: "text-amber-600" },
+                  ].map(kpi => {
+                    const v = num(`personnel_performance.${kpi.key}`);
+                    const c = num(`personnel_performance.${kpi.cible}`);
+                    const pct = c > 0 ? Math.min(100, Math.round((v / c) * 100)) : 0;
+                    const formatted = v >= 1000 ? `${Math.round(v / 1000)}K` : `${v}`;
+                    return (
+                      <Card key={kpi.key} className="p-0 gap-0 overflow-hidden">
+                        <div className={cn("flex items-center gap-2 px-3 py-2 bg-gradient-to-r", kpi.color)}>
+                          <span className="text-xs font-bold text-white">{kpi.label}</span>
+                        </div>
+                        <div className="px-3 py-2">
+                          <div className={cn("text-2xl font-bold", kpi.textColor)}>{formatted}{kpi.suffix}</div>
+                          {c > 0 && (
+                            <>
+                              <div className="text-[10px] text-gray-500">Cible: {c >= 1000 ? `${Math.round(c / 1000)}K` : c}{kpi.suffix}</div>
+                              <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden mt-1">
+                                <div className={cn("h-full rounded-full transition-all duration-700", pct >= 75 ? "bg-emerald-500" : pct >= 50 ? "bg-amber-400" : "bg-red-400")} style={{ width: `${pct}%` }} />
+                              </div>
+                              <div className="text-[9px] text-gray-400 mt-0.5">{pct}% atteint</div>
+                            </>
+                          )}
+                          {!c && kpi.key === "satisfaction_equipe" && <div className="text-[10px] text-gray-500">Score equipe</div>}
+                        </div>
+                      </Card>
+                    );
+                  })}
+                </div>
+                {val("personnel_performance.decisions_strategiques") && (
+                  <div className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
+                    <Target className="h-3.5 w-3.5 text-gray-400" />
+                    <span className="text-xs text-gray-600">Decisions strategiques:</span>
+                    <span className="text-sm font-bold text-gray-800">{val("personnel_performance.decisions_strategiques")}</span>
+                  </div>
+                )}
+              </div>
+            </Card>
+
+            {/* ── DEVELOPPEMENT ── */}
+            <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
+              <div className="bg-gradient-to-r from-gray-700 to-gray-600 px-4 py-2.5 flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-white" />
+                <span className="text-xs font-bold text-white flex-1">Developpement</span>
+              </div>
+              <div className="p-4 space-y-3">
+                {[
+                  { key: "competences_a_developper", label: "Competences a developper", color: "bg-blue-50 text-blue-700 border-blue-100", icon: Target },
+                  { key: "formations", label: "Formations", color: "bg-emerald-50 text-emerald-700 border-emerald-100", icon: BookOpen },
+                  { key: "mentorat", label: "Mentorat", color: "bg-violet-50 text-violet-700 border-violet-100", icon: Users },
+                  { key: "lectures", label: "Lectures", color: "bg-amber-50 text-amber-700 border-amber-100", icon: FileText },
+                ].map(cat => {
+                  const items = lines(`personnel_developpement.${cat.key}`);
+                  if (items.length === 0) return null;
+                  const CatIcon = cat.icon;
+                  return (
+                    <div key={cat.key}>
+                      <div className="flex items-center gap-1.5 mb-1.5">
+                        <CatIcon className="h-3.5 w-3.5 text-gray-400" />
+                        <span className="text-[10px] font-bold text-gray-500 uppercase">{cat.label}</span>
+                      </div>
+                      <div className="space-y-1">
+                        {items.map((item, i) => (
+                          <div key={i} className={cn("text-xs px-2.5 py-1.5 rounded-lg border font-medium", cat.color)}>{item}</div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+
+            {/* ── EQUILIBRE ── */}
+            {(() => {
+              const actuel = num("personnel_equilibre.heures_actuelles");
+              const cible = num("personnel_equilibre.heures_cible");
+              const maxH = Math.max(actuel, cible, 60);
+              return (
+                <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
+                  <div className="bg-gradient-to-r from-gray-700 to-gray-600 px-4 py-2.5 flex items-center gap-2">
+                    <Heart className="h-4 w-4 text-white" />
+                    <span className="text-xs font-bold text-white flex-1">Equilibre</span>
+                  </div>
+                  <div className="p-4 space-y-3">
+                    <div className="bg-gray-50 border border-gray-100 rounded-lg p-3">
+                      <div className="text-[10px] text-gray-400 uppercase mb-2">Charge de travail (heures/semaine)</div>
+                      <div className="space-y-2">
+                        <div>
+                          <div className="flex items-center justify-between mb-0.5">
+                            <span className="text-xs text-gray-600">Actuel</span>
+                            <span className={cn("text-sm font-bold", actuel > cible ? "text-red-600" : "text-emerald-600")}>{actuel}h</span>
+                          </div>
+                          <div className="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
+                            <div className={cn("h-full rounded-full transition-all duration-700", actuel > cible ? "bg-red-400" : "bg-emerald-400")} style={{ width: `${(actuel / maxH) * 100}%` }} />
+                          </div>
+                        </div>
+                        <div>
+                          <div className="flex items-center justify-between mb-0.5">
+                            <span className="text-xs text-gray-600">Cible</span>
+                            <span className="text-sm font-bold text-blue-600">{cible}h</span>
+                          </div>
+                          <div className="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
+                            <div className="h-full rounded-full bg-blue-400 transition-all duration-700" style={{ width: `${(cible / maxH) * 100}%` }} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    {[
+                      { key: "taches_a_deleguer", label: "A deleguer", icon: Share2, color: "text-amber-600" },
+                      { key: "temps_non_negociable", label: "Temps non-negociable", icon: Lock, color: "text-emerald-600" },
+                      { key: "indicateurs_stress", label: "Indicateurs de stress", icon: AlertTriangle, color: "text-red-500" },
+                    ].map(cat => {
+                      const items = lines(`personnel_equilibre.${cat.key}`);
+                      if (items.length === 0) return null;
+                      const CatIcon = cat.icon;
+                      return (
+                        <div key={cat.key}>
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <CatIcon className={cn("h-3.5 w-3.5", cat.color)} />
+                            <span className="text-[10px] font-bold text-gray-500 uppercase">{cat.label}</span>
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {items.map((item, i) => (
+                              <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 font-medium border border-gray-200">{item}</span>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </Card>
+              );
+            })()}
+
+            {/* ── SUCCESSION ── */}
+            <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
+              <div className="bg-gradient-to-r from-gray-700 to-gray-600 px-4 py-2.5 flex items-center gap-2">
+                <Users className="h-4 w-4 text-white" />
+                <span className="text-xs font-bold text-white flex-1">Succession</span>
+              </div>
+              <div className="p-4 space-y-3">
+                {val("personnel_succession.horizon") && (
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-3.5 w-3.5 text-gray-400" />
+                    <span className="text-xs text-gray-600">Horizon:</span>
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">{val("personnel_succession.horizon")}</span>
+                  </div>
+                )}
+                {val("personnel_succession.plan_succession") && (
+                  <div className="border rounded-lg px-3 py-2.5 border-l-[3px] border-l-blue-400 bg-blue-50/30">
+                    <p className="text-xs text-gray-700 leading-relaxed">{val("personnel_succession.plan_succession")}</p>
+                  </div>
+                )}
+                {val("personnel_succession.personnes_cles") && (
+                  <div>
+                    <div className="text-[10px] text-gray-400 uppercase mb-1.5">Personnes cles</div>
+                    <div className="space-y-1.5">
+                      {lines("personnel_succession.personnes_cles").map((p, i) => {
+                        const pctMatch = p.match(/(\d+)%/);
+                        const pct = pctMatch ? parseInt(pctMatch[1], 10) : 0;
+                        return (
+                          <div key={i} className="flex items-center gap-2 p-2 rounded-lg border border-gray-100">
+                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-gray-600 to-gray-500 flex items-center justify-center shrink-0">
+                              <User className="h-3.5 w-3.5 text-white" />
+                            </div>
+                            <span className="text-xs text-gray-700 flex-1">{p.replace(/\s*—\s*\d+%$/, "")}</span>
+                            {pct > 0 && (
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                  <div className={cn("h-full rounded-full transition-all duration-700", pct >= 70 ? "bg-emerald-500" : pct >= 40 ? "bg-amber-400" : "bg-red-400")} style={{ width: `${pct}%` }} />
+                                </div>
+                                <span className="text-[9px] font-bold text-gray-500">{pct}%</span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                {val("personnel_succession.connaissances_critiques") && (
+                  <div>
+                    <div className="text-[10px] text-gray-400 uppercase mb-1.5">Connaissances critiques</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {lines("personnel_succession.connaissances_critiques").map((k, i) => (
+                        <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-red-50 text-red-700 font-medium border border-red-100">{k}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {val("personnel_succession.scenario_urgence") && (
+                  <div className="border rounded-lg px-3 py-2.5 border-l-[3px] border-l-amber-400 bg-amber-50/30">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+                      <span className="text-[10px] font-bold text-amber-700 uppercase">Scenario d'urgence</span>
+                    </div>
+                    <p className="text-xs text-gray-700 leading-relaxed">{val("personnel_succession.scenario_urgence")}</p>
+                  </div>
+                )}
+              </div>
+            </Card>
+
+            {/* Bandeau info */}
+            <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+              <Info className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+              <span className="text-[10px] text-blue-700">
+                Vue completee — les champs vides sont remplis avec des donnees d'exemple. Cliquez "Mode edition" pour modifier.
+              </span>
+            </div>
+          </div>
+        ) : (
+          /* ── MODE EDITION: Toutes les sections avec champs editables ── */
+          <>
+            {PERSONAL_SECTIONS.map(section => {
+              const Icon = section.icon;
+              const fields = getFieldsForTier(section.fields, tier);
+              const wideFields = fields.filter(isWideField);
+              const narrowFields = fields.filter(f => !isWideField(f));
+
+              return (
+                <div key={section.id} id={section.id} className="space-y-3">
+                  <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
+                    <div className={cn("flex items-center gap-2 px-4 py-3 bg-gradient-to-r", headerGradient)}>
+                      <Icon className="h-4 w-4 text-white" />
+                      <span className="text-sm font-bold text-white flex-1">{section.label}</span>
+                      <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/20 text-white font-bold">Personnel</span>
+                    </div>
+                    <div className="p-4 space-y-3">
+                      {narrowFields.length > 0 && (
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                          {narrowFields.map(field => (
+                            <div key={field.id}>
+                              <label className="text-xs font-medium text-gray-700 mb-1 block">{field.label}</label>
+                              <BlueprintField
+                                field={field}
+                                value={data[`${section.id}.${field.id}`] || ""}
+                                onChange={v => onFieldChange(`${section.id}.${field.id}`, v)}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {wideFields.map(field => (
+                        <div key={field.id}>
+                          <label className="text-xs font-medium text-gray-700 mb-1 block">{field.label}</label>
+                          <BlueprintField
+                            field={field}
+                            value={data[`${section.id}.${field.id}`] || ""}
+                            onChange={v => onFieldChange(`${section.id}.${field.id}`, v)}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                </div>
+              );
+            })}
+
+            {/* Bouton sauvegarder global */}
+            <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+              <span className="text-[9px] text-gray-400">{dirty ? "Modifications non sauvegardees" : "A jour"}</span>
+              <button
+                onClick={onSave}
+                disabled={saving || !dirty}
+                className={cn(
+                  "flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all",
+                  dirty
+                    ? "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
+                    : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                )}
+              >
+                {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                {saving ? "Sauvegarde..." : "Sauvegarder"}
+              </button>
+            </div>
+          </>
         )}
       </div>
     </div>
@@ -727,21 +1273,33 @@ const BOT_GHOSTS: Record<string, string[]> = {
 };
 
 const BOT_PROFILES_BP: Record<string, { style: string; forces: string[]; approche: string; scores: Record<string, number> }> = {
-  CEOB: { style: "Directif et visionnaire", forces: ["Vision stratégique", "Prise de décision", "Leadership", "Gestion de crise"], approche: "Part du résultat client et remonte vers la stratégie.", scores: { strategique: 95, analytique: 75, creatif: 70, operationnel: 60, relationnel: 80 } },
-  CTOB: { style: "Innovateur et méthodique", forces: ["Architecture technique", "Innovation", "Résolution complexe", "Prototypage"], approche: "Premiers principes, challenge les contraintes.", scores: { strategique: 70, analytique: 90, creatif: 95, operationnel: 80, relationnel: 55 } },
-  CFOB: { style: "Prudent et discipliné", forces: ["Analyse financière", "Gestion du risque", "Valorisation", "Budget"], approche: "Valeur intrinsèque avant prix apparent.", scores: { strategique: 80, analytique: 95, creatif: 40, operationnel: 70, relationnel: 50 } },
-  CMOB: { style: "Créatif et empathique", forces: ["Positionnement", "Storytelling", "Audience", "Innovation marketing"], approche: "Simplifie le message, connexion émotionnelle.", scores: { strategique: 65, analytique: 60, creatif: 95, operationnel: 50, relationnel: 90 } },
-  CSOB: { style: "Stratège et incisif", forces: ["Analyse concurrentielle", "Planification", "Anticipation", "Marché"], approche: "Analyse les forces avant toute recommandation.", scores: { strategique: 95, analytique: 85, creatif: 60, operationnel: 50, relationnel: 45 } },
-  COOB: { style: "Méthodique et fiable", forces: ["Processus", "Qualité", "Logistique", "Amélioration continue"], approche: "Mesure tout, élimine le gaspillage.", scores: { strategique: 60, analytique: 80, creatif: 40, operationnel: 95, relationnel: 65 } },
+  CEOB: { style: "Directif et visionnaire", forces: ["Vision strategique", "Prise de decision", "Leadership", "Gestion de crise"], approche: "Part du resultat client et remonte vers la strategie.", scores: { strategique: 95, analytique: 75, creatif: 70, operationnel: 60, relationnel: 80 } },
+  CTOB: { style: "Innovateur et methodique", forces: ["Architecture technique", "Innovation", "Resolution complexe", "Prototypage"], approche: "Premiers principes, challenge les contraintes.", scores: { strategique: 70, analytique: 90, creatif: 95, operationnel: 80, relationnel: 55 } },
+  CFOB: { style: "Prudent et discipline", forces: ["Analyse financiere", "Gestion du risque", "Valorisation", "Budget"], approche: "Valeur intrinseque avant prix apparent.", scores: { strategique: 80, analytique: 95, creatif: 40, operationnel: 70, relationnel: 50 } },
+  CMOB: { style: "Creatif et empathique", forces: ["Positionnement", "Storytelling", "Audience", "Innovation marketing"], approche: "Simplifie le message, connexion emotionnelle.", scores: { strategique: 65, analytique: 60, creatif: 95, operationnel: 50, relationnel: 90 } },
+  CSOB: { style: "Stratege et incisif", forces: ["Analyse concurrentielle", "Planification", "Anticipation", "Marche"], approche: "Analyse les forces avant toute recommandation.", scores: { strategique: 95, analytique: 85, creatif: 60, operationnel: 50, relationnel: 45 } },
+  COOB: { style: "Methodique et fiable", forces: ["Processus", "Qualite", "Logistique", "Amelioration continue"], approche: "Mesure tout, elimine le gaspillage.", scores: { strategique: 60, analytique: 80, creatif: 40, operationnel: 95, relationnel: 65 } },
+  CPOB: { style: "Pragmatique et terrain", forces: ["Planification production", "Lean manufacturing", "Maintenance preventive", "5S / Kaizen"], approche: "Elimine le gaspillage, optimise chaque poste.", scores: { strategique: 45, analytique: 75, creatif: 35, operationnel: 98, relationnel: 55 } },
+  CHROB: { style: "Bienveillante et structuree", forces: ["Recrutement", "Retention des talents", "Culture d'entreprise", "Formation"], approche: "Chaque employe est un investissement, pas un cout.", scores: { strategique: 65, analytique: 60, creatif: 55, operationnel: 70, relationnel: 95 } },
+  CINOB: { style: "Curieux et disruptif", forces: ["Veille technologique", "R&D", "Propriete intellectuelle", "Transfert techno"], approche: "Explorer les frontieres, valider par l'experimentation.", scores: { strategique: 75, analytique: 90, creatif: 95, operationnel: 45, relationnel: 50 } },
+  CROB: { style: "Chasseur et persuasif", forces: ["Developpement d'affaires", "Closing", "Pipeline CRM", "Pricing"], approche: "Chaque interaction est une opportunite de creer de la valeur.", scores: { strategique: 80, analytique: 70, creatif: 65, operationnel: 60, relationnel: 90 } },
+  CLOB: { style: "Rigoureux et protecteur", forces: ["Conformite legale", "Contrats", "Propriete intellectuelle", "Loi 25 / RGPD"], approche: "Proteger l'entreprise avant, pas apres le probleme.", scores: { strategique: 70, analytique: 90, creatif: 30, operationnel: 65, relationnel: 45 } },
+  CISOB: { style: "Vigilant et methodique", forces: ["Cybersecurite", "Audit de vulnerabilites", "Plan de reponse", "Conformite NIST"], approche: "La securite est un processus continu, pas un produit.", scores: { strategique: 65, analytique: 95, creatif: 40, operationnel: 85, relationnel: 40 } },
 };
 
-const BOT_CAPACITES_BP: Record<string, { equivHumain: string; coutHumain: string; tachesCount: number; heuresMois: string }> = {
-  CEOB: { equivHumain: "CEO conseil", coutHumain: "100-200K$", tachesCount: 15, heuresMois: "80-120h" },
-  CTOB: { equivHumain: "CTO fractionnaire", coutHumain: "150-300K$", tachesCount: 16, heuresMois: "120-180h" },
-  CFOB: { equivHumain: "CFO fractionnaire", coutHumain: "150-250K$", tachesCount: 18, heuresMois: "100-160h" },
-  CMOB: { equivHumain: "Directeur marketing", coutHumain: "120-200K$", tachesCount: 14, heuresMois: "100-160h" },
-  CSOB: { equivHumain: "Consultant stratégie", coutHumain: "120-200K$", tachesCount: 12, heuresMois: "80-120h" },
-  COOB: { equivHumain: "Directeur opérations", coutHumain: "120-200K$", tachesCount: 15, heuresMois: "120-200h" },
+const BOT_CAPACITES_BP: Record<string, { equivHumain: string; coutHumain: string; tachesCount: number; heuresMois: string; coutIA: string }> = {
+  CEOB: { equivHumain: "CEO conseil", coutHumain: "100-200K$", tachesCount: 15, heuresMois: "80-120h", coutIA: "47$" },
+  CTOB: { equivHumain: "CTO fractionnaire", coutHumain: "150-300K$", tachesCount: 16, heuresMois: "120-180h", coutIA: "62$" },
+  CFOB: { equivHumain: "CFO fractionnaire", coutHumain: "150-250K$", tachesCount: 18, heuresMois: "100-160h", coutIA: "38$" },
+  CMOB: { equivHumain: "Directeur marketing", coutHumain: "120-200K$", tachesCount: 14, heuresMois: "100-160h", coutIA: "55$" },
+  CSOB: { equivHumain: "Consultant strategie", coutHumain: "120-200K$", tachesCount: 12, heuresMois: "80-120h", coutIA: "41$" },
+  COOB: { equivHumain: "Directeur operations", coutHumain: "120-200K$", tachesCount: 15, heuresMois: "120-200h", coutIA: "52$" },
+  CPOB: { equivHumain: "Directeur usine", coutHumain: "100-180K$", tachesCount: 20, heuresMois: "140-220h", coutIA: "58$" },
+  CHROB: { equivHumain: "DRH fractionnaire", coutHumain: "100-180K$", tachesCount: 14, heuresMois: "80-140h", coutIA: "35$" },
+  CINOB: { equivHumain: "VP Innovation", coutHumain: "130-220K$", tachesCount: 10, heuresMois: "60-100h", coutIA: "44$" },
+  CROB: { equivHumain: "VP Ventes", coutHumain: "120-250K$", tachesCount: 16, heuresMois: "100-160h", coutIA: "49$" },
+  CLOB: { equivHumain: "Avocat d'entreprise", coutHumain: "150-300K$", tachesCount: 12, heuresMois: "60-100h", coutIA: "32$" },
+  CISOB: { equivHumain: "CISO fractionnaire", coutHumain: "140-250K$", tachesCount: 18, heuresMois: "100-160h", coutIA: "56$" },
 };
 
 const SLOT_LABELS_BP = ["Primaire", "Calibrateur", "Amplificateur"];
@@ -756,151 +1314,411 @@ const BOT_APIS: Record<string, { name: string; status: "active" | "config" | "of
     { name: "ElevenLabs (Chris)", status: "active", icon: "TTS", color: "bg-emerald-500" },
     { name: "Deepgram Nova-3", status: "active", icon: "STT", color: "bg-cyan-500" },
     { name: "LiveKit WebRTC", status: "active", icon: "RTC", color: "bg-orange-500" },
+    { name: "Tavus Video Avatar", status: "active", icon: "VID", color: "bg-pink-500" },
+    { name: "PostgreSQL (carlosdb)", status: "active", icon: "DB", color: "bg-indigo-500" },
+    { name: "Telnyx Telephonie", status: "active", icon: "TEL", color: "bg-teal-500" },
     { name: "Google Calendar", status: "config", icon: "CAL", color: "bg-amber-500" },
-    { name: "HubSpot CRM", status: "off", icon: "CRM", color: "bg-gray-400" },
-    { name: "Slack", status: "off", icon: "MSG", color: "bg-gray-400" },
+    { name: "Slack Notifications", status: "off", icon: "MSG", color: "bg-purple-500" },
   ],
   CTOB: [
     { name: "Gemini Pro 2.0", status: "active", icon: "LLM", color: "bg-blue-500" },
     { name: "GitHub Copilot", status: "active", icon: "DEV", color: "bg-gray-800" },
     { name: "ElevenLabs (Daniel)", status: "active", icon: "TTS", color: "bg-emerald-500" },
-    { name: "Sentry", status: "config", icon: "MON", color: "bg-red-500" },
-    { name: "AWS CloudWatch", status: "off", icon: "INF", color: "bg-gray-400" },
+    { name: "Sentry", status: "active", icon: "MON", color: "bg-red-500" },
+    { name: "PostgreSQL", status: "active", icon: "DB", color: "bg-indigo-500" },
+    { name: "Docker Engine", status: "active", icon: "CNT", color: "bg-blue-600" },
+    { name: "Nginx Reverse Proxy", status: "active", icon: "SRV", color: "bg-green-600" },
+    { name: "AWS CloudWatch", status: "config", icon: "INF", color: "bg-cyan-600" },
+    { name: "Vercel Deploy", status: "off", icon: "CD", color: "bg-gray-700" },
+  ],
+  CFOB: [
+    { name: "Gemini Pro 2.0", status: "active", icon: "LLM", color: "bg-blue-500" },
+    { name: "QuickBooks Online", status: "active", icon: "FIN", color: "bg-emerald-600" },
+    { name: "ElevenLabs (James)", status: "active", icon: "TTS", color: "bg-emerald-500" },
+    { name: "PostgreSQL", status: "active", icon: "DB", color: "bg-indigo-500" },
+    { name: "Stripe Payments", status: "config", icon: "PAY", color: "bg-violet-500" },
+    { name: "Wave Accounting", status: "config", icon: "FIN", color: "bg-blue-400" },
+    { name: "Dext (factures)", status: "off", icon: "OCR", color: "bg-teal-500" },
+  ],
+  CMOB: [
+    { name: "Gemini Pro 2.0", status: "active", icon: "LLM", color: "bg-blue-500" },
+    { name: "ElevenLabs (Sarah)", status: "active", icon: "TTS", color: "bg-emerald-500" },
+    { name: "Canva API", status: "active", icon: "DSN", color: "bg-cyan-500" },
+    { name: "Google Analytics 4", status: "active", icon: "ANA", color: "bg-amber-500" },
+    { name: "HubSpot Marketing", status: "config", icon: "MKT", color: "bg-orange-500" },
+    { name: "Mailchimp", status: "config", icon: "EML", color: "bg-amber-600" },
+    { name: "Meta Ads Manager", status: "config", icon: "ADS", color: "bg-blue-600" },
+    { name: "Hootsuite", status: "off", icon: "SOC", color: "bg-gray-600" },
+  ],
+  CSOB: [
+    { name: "Gemini Pro 2.0", status: "active", icon: "LLM", color: "bg-blue-500" },
+    { name: "ElevenLabs (Nicole)", status: "active", icon: "TTS", color: "bg-emerald-500" },
+    { name: "LinkedIn Sales Nav", status: "config", icon: "CRM", color: "bg-blue-700" },
+    { name: "Apollo.io", status: "config", icon: "PRO", color: "bg-violet-500" },
+    { name: "ZoomInfo", status: "off", icon: "DAT", color: "bg-orange-600" },
+    { name: "Pipedrive", status: "off", icon: "CRM", color: "bg-green-600" },
+  ],
+  COOB: [
+    { name: "Gemini Pro 2.0", status: "active", icon: "LLM", color: "bg-blue-500" },
+    { name: "ElevenLabs (Marcus)", status: "active", icon: "TTS", color: "bg-emerald-500" },
+    { name: "Notion", status: "active", icon: "DOC", color: "bg-gray-800" },
+    { name: "Monday.com", status: "config", icon: "PMO", color: "bg-red-500" },
+    { name: "Jira", status: "config", icon: "TKT", color: "bg-blue-600" },
+    { name: "Slack", status: "config", icon: "MSG", color: "bg-purple-500" },
+    { name: "Power Automate", status: "off", icon: "AUT", color: "bg-blue-500" },
+  ],
+  CPOB: [
+    { name: "Gemini Flash 2.0", status: "active", icon: "LLM", color: "bg-blue-500" },
+    { name: "ElevenLabs (Tom)", status: "active", icon: "TTS", color: "bg-emerald-500" },
+    { name: "Epicor ERP", status: "config", icon: "ERP", color: "bg-orange-600" },
+    { name: "SCADA Interface", status: "config", icon: "IOT", color: "bg-teal-600" },
+    { name: "Siemens MindSphere", status: "off", icon: "IOT", color: "bg-cyan-700" },
+    { name: "MES (Mfg Exec)", status: "off", icon: "MES", color: "bg-gray-600" },
+  ],
+  CHROB: [
+    { name: "Gemini Pro 2.0", status: "active", icon: "LLM", color: "bg-blue-500" },
+    { name: "ElevenLabs (Emily)", status: "active", icon: "TTS", color: "bg-emerald-500" },
+    { name: "BambooHR", status: "config", icon: "RH", color: "bg-teal-500" },
+    { name: "Indeed Posting", status: "config", icon: "JOB", color: "bg-blue-500" },
+    { name: "Workday", status: "off", icon: "RH", color: "bg-orange-500" },
+    { name: "Teams (comm interne)", status: "off", icon: "MSG", color: "bg-violet-600" },
+  ],
+  CINOB: [
+    { name: "Gemini Pro 2.0", status: "active", icon: "LLM", color: "bg-blue-500" },
+    { name: "Claude Opus 4", status: "active", icon: "LLM", color: "bg-violet-500" },
+    { name: "ElevenLabs (Aria)", status: "active", icon: "TTS", color: "bg-emerald-500" },
+    { name: "Miro (ideation)", status: "active", icon: "WB", color: "bg-amber-500" },
+    { name: "Google Patents", status: "config", icon: "PAT", color: "bg-amber-600" },
+    { name: "Figma API", status: "off", icon: "DSN", color: "bg-purple-500" },
+  ],
+  CROB: [
+    { name: "Gemini Pro 2.0", status: "active", icon: "LLM", color: "bg-blue-500" },
+    { name: "ElevenLabs (Brian)", status: "active", icon: "TTS", color: "bg-emerald-500" },
+    { name: "HubSpot CRM", status: "active", icon: "CRM", color: "bg-orange-500" },
+    { name: "PandaDoc", status: "active", icon: "DOC", color: "bg-green-500" },
+    { name: "Calendly", status: "config", icon: "CAL", color: "bg-blue-400" },
+    { name: "Gong.io (calls)", status: "config", icon: "ANA", color: "bg-purple-600" },
+    { name: "Salesforce", status: "off", icon: "CRM", color: "bg-blue-600" },
+  ],
+  CLOB: [
+    { name: "Gemini Pro 2.0", status: "active", icon: "LLM", color: "bg-blue-500" },
+    { name: "Claude Sonnet 4", status: "active", icon: "LLM", color: "bg-violet-500" },
+    { name: "ElevenLabs (Grace)", status: "active", icon: "TTS", color: "bg-emerald-500" },
+    { name: "DocuSign", status: "config", icon: "SGN", color: "bg-amber-500" },
+    { name: "Clio (gestion juridique)", status: "config", icon: "LAW", color: "bg-indigo-500" },
+    { name: "LexisNexis", status: "off", icon: "RCH", color: "bg-red-600" },
+  ],
+  CISOB: [
+    { name: "Gemini Pro 2.0", status: "active", icon: "LLM", color: "bg-blue-500" },
+    { name: "ElevenLabs (Adam)", status: "active", icon: "TTS", color: "bg-emerald-500" },
+    { name: "Snyk", status: "active", icon: "SEC", color: "bg-purple-600" },
+    { name: "Cloudflare WAF", status: "active", icon: "WAF", color: "bg-orange-500" },
+    { name: "CrowdStrike", status: "config", icon: "EDR", color: "bg-red-600" },
+    { name: "HashiCorp Vault", status: "config", icon: "KEY", color: "bg-gray-700" },
+    { name: "Nessus Scanner", status: "off", icon: "SCN", color: "bg-teal-600" },
   ],
 };
 
 const VITAA_BOT: Record<string, { letter: string; label: string; score: number; avg: number; color: string }[]> = {
   CEOB: [
-    { letter: "V", label: "Vente (leads qualifiés)", score: 68, avg: 50, color: "bg-blue-500" },
-    { letter: "I", label: "Idée (insights générés)", score: 82, avg: 50, color: "bg-purple-500" },
-    { letter: "T", label: "Temps (tâches/heure)", score: 91, avg: 50, color: "bg-emerald-500" },
-    { letter: "A", label: "Argent (ROI généré)", score: 74, avg: 50, color: "bg-amber-500" },
+    { letter: "V", label: "Vente (leads qualifies)", score: 68, avg: 50, color: "bg-blue-500" },
+    { letter: "I", label: "Idee (insights generes)", score: 82, avg: 50, color: "bg-purple-500" },
+    { letter: "T", label: "Temps (taches/heure)", score: 91, avg: 50, color: "bg-emerald-500" },
+    { letter: "A", label: "Argent (ROI genere)", score: 74, avg: 50, color: "bg-amber-500" },
     { letter: "A", label: "Actif (docs produits)", score: 56, avg: 50, color: "bg-red-500" },
+  ],
+  CTOB: [
+    { letter: "V", label: "Vente (solutions tech)", score: 42, avg: 50, color: "bg-blue-500" },
+    { letter: "I", label: "Idee (architectures)", score: 94, avg: 50, color: "bg-purple-500" },
+    { letter: "T", label: "Temps (sprints livres)", score: 88, avg: 50, color: "bg-emerald-500" },
+    { letter: "A", label: "Argent (cout infra)", score: 71, avg: 50, color: "bg-amber-500" },
+    { letter: "A", label: "Actif (code + docs)", score: 85, avg: 50, color: "bg-red-500" },
+  ],
+  CFOB: [
+    { letter: "V", label: "Vente (pricing)", score: 55, avg: 50, color: "bg-blue-500" },
+    { letter: "I", label: "Idee (modeles financiers)", score: 78, avg: 50, color: "bg-purple-500" },
+    { letter: "T", label: "Temps (rapports auto)", score: 92, avg: 50, color: "bg-emerald-500" },
+    { letter: "A", label: "Argent (tresorerie)", score: 96, avg: 50, color: "bg-amber-500" },
+    { letter: "A", label: "Actif (etats financiers)", score: 88, avg: 50, color: "bg-red-500" },
+  ],
+  CMOB: [
+    { letter: "V", label: "Vente (leads marketing)", score: 82, avg: 50, color: "bg-blue-500" },
+    { letter: "I", label: "Idee (campagnes)", score: 91, avg: 50, color: "bg-purple-500" },
+    { letter: "T", label: "Temps (contenu/sem)", score: 76, avg: 50, color: "bg-emerald-500" },
+    { letter: "A", label: "Argent (ROAS)", score: 64, avg: 50, color: "bg-amber-500" },
+    { letter: "A", label: "Actif (brand assets)", score: 72, avg: 50, color: "bg-red-500" },
+  ],
+  CSOB: [
+    { letter: "V", label: "Vente (pipeline)", score: 88, avg: 50, color: "bg-blue-500" },
+    { letter: "I", label: "Idee (strategies)", score: 85, avg: 50, color: "bg-purple-500" },
+    { letter: "T", label: "Temps (analyses/sem)", score: 70, avg: 50, color: "bg-emerald-500" },
+    { letter: "A", label: "Argent (marges)", score: 72, avg: 50, color: "bg-amber-500" },
+    { letter: "A", label: "Actif (plans strat)", score: 65, avg: 50, color: "bg-red-500" },
+  ],
+  COOB: [
+    { letter: "V", label: "Vente (delivery)", score: 48, avg: 50, color: "bg-blue-500" },
+    { letter: "I", label: "Idee (processus)", score: 62, avg: 50, color: "bg-purple-500" },
+    { letter: "T", label: "Temps (efficacite)", score: 95, avg: 50, color: "bg-emerald-500" },
+    { letter: "A", label: "Argent (couts ops)", score: 84, avg: 50, color: "bg-amber-500" },
+    { letter: "A", label: "Actif (SOPs)", score: 90, avg: 50, color: "bg-red-500" },
+  ],
+  CPOB: [
+    { letter: "V", label: "Vente (capacite prod)", score: 38, avg: 50, color: "bg-blue-500" },
+    { letter: "I", label: "Idee (ameliorations)", score: 55, avg: 50, color: "bg-purple-500" },
+    { letter: "T", label: "Temps (OEE/TRS)", score: 92, avg: 50, color: "bg-emerald-500" },
+    { letter: "A", label: "Argent (cout/unite)", score: 88, avg: 50, color: "bg-amber-500" },
+    { letter: "A", label: "Actif (equipements)", score: 78, avg: 50, color: "bg-red-500" },
+  ],
+  CHROB: [
+    { letter: "V", label: "Vente (marque employeur)", score: 52, avg: 50, color: "bg-blue-500" },
+    { letter: "I", label: "Idee (programmes RH)", score: 68, avg: 50, color: "bg-purple-500" },
+    { letter: "T", label: "Temps (embauche moy)", score: 74, avg: 50, color: "bg-emerald-500" },
+    { letter: "A", label: "Argent (cout embauche)", score: 62, avg: 50, color: "bg-amber-500" },
+    { letter: "A", label: "Actif (talents retenus)", score: 71, avg: 50, color: "bg-red-500" },
+  ],
+  CINOB: [
+    { letter: "V", label: "Vente (produits R&D)", score: 35, avg: 50, color: "bg-blue-500" },
+    { letter: "I", label: "Idee (brevets/concepts)", score: 96, avg: 50, color: "bg-purple-500" },
+    { letter: "T", label: "Temps (prototypes)", score: 65, avg: 50, color: "bg-emerald-500" },
+    { letter: "A", label: "Argent (budget R&D)", score: 58, avg: 50, color: "bg-amber-500" },
+    { letter: "A", label: "Actif (PI deposee)", score: 45, avg: 50, color: "bg-red-500" },
+  ],
+  CROB: [
+    { letter: "V", label: "Vente (closing rate)", score: 92, avg: 50, color: "bg-blue-500" },
+    { letter: "I", label: "Idee (offres)", score: 72, avg: 50, color: "bg-purple-500" },
+    { letter: "T", label: "Temps (cycle vente)", score: 78, avg: 50, color: "bg-emerald-500" },
+    { letter: "A", label: "Argent (revenus)", score: 90, avg: 50, color: "bg-amber-500" },
+    { letter: "A", label: "Actif (propositions)", score: 68, avg: 50, color: "bg-red-500" },
+  ],
+  CLOB: [
+    { letter: "V", label: "Vente (contrats signes)", score: 45, avg: 50, color: "bg-blue-500" },
+    { letter: "I", label: "Idee (cadres legaux)", score: 70, avg: 50, color: "bg-purple-500" },
+    { letter: "T", label: "Temps (revisions)", score: 85, avg: 50, color: "bg-emerald-500" },
+    { letter: "A", label: "Argent (risques evites)", score: 92, avg: 50, color: "bg-amber-500" },
+    { letter: "A", label: "Actif (politiques)", score: 82, avg: 50, color: "bg-red-500" },
+  ],
+  CISOB: [
+    { letter: "V", label: "Vente (certifications)", score: 40, avg: 50, color: "bg-blue-500" },
+    { letter: "I", label: "Idee (defenses)", score: 75, avg: 50, color: "bg-purple-500" },
+    { letter: "T", label: "Temps (scans/jour)", score: 94, avg: 50, color: "bg-emerald-500" },
+    { letter: "A", label: "Argent (incidents evites)", score: 88, avg: 50, color: "bg-amber-500" },
+    { letter: "A", label: "Actif (politiques sec)", score: 80, avg: 50, color: "bg-red-500" },
   ],
 };
 
 const BOT_SECTION_META: { id: string; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-  { id: "vue_consolidee_bot", label: "Vue d'ensemble", icon: Layers },
-  { id: "trisociation", label: "Trisociation & Ghosts", icon: Zap },
-  { id: "skills_profil", label: "Skills & profil cognitif", icon: Star },
-  { id: "apis_connexions", label: "APIs & connexions", icon: Cpu },
-  { id: "objectifs_missions", label: "Objectifs & missions", icon: Target },
-  { id: "performance_bot", label: "Performance", icon: BarChart3 },
-  { id: "reglages_bot", label: "Réglages", icon: Settings },
+  { id: "sec-overview", label: "Vue d'ensemble", icon: Eye },
+  { id: "sec-outils", label: "Outils & APIs", icon: Cpu },
+  { id: "sec-config", label: "Configuration", icon: Settings },
 ];
 
-// ── Section: Trisociation (3 Ghosts interactifs) ──
-function BotTrisociationSection({ botCode }: { botCode: string }) {
-  const ghosts = BOT_GHOSTS[botCode] || BOT_GHOSTS.CEOB;
-  return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-3 gap-3">
-        {ghosts.map((ghostName, i) => {
-          const arch = GHOST_ARCHETYPES[ghostName];
-          if (!arch) return null;
-          return (
-            <div key={i} className={cn("border rounded-xl overflow-hidden shadow-sm", SLOT_BG[i])}>
-              <div className={cn("bg-gradient-to-r px-3 py-2 flex items-center gap-2", SLOT_COLORS[i])}>
-                <span className="text-base">{arch.emoji}</span>
-                <div className="flex-1 min-w-0">
-                  <span className="text-[9px] font-bold text-white/70 uppercase tracking-wider">{SLOT_LABELS_BP[i]}</span>
-                  <div className="text-xs font-bold text-white truncate">{arch.nom}</div>
-                </div>
-              </div>
-              <div className="p-2.5 space-y-1.5">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-bold text-gray-800">{ghostName}</span>
-                  <span className={cn("text-[8px] px-1.5 py-0.5 rounded-full border font-medium", SLOT_BG[i], SLOT_TEXT_C[i])}>{arch.categorie}</span>
-                </div>
-                <p className="text-[9px] text-gray-600 italic leading-snug">"{arch.signature}"</p>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      <Card className="p-0 overflow-hidden rounded-xl shadow-sm">
-        <div className="bg-gradient-to-r from-gray-700 to-gray-600 px-4 py-2.5 flex items-center gap-2">
-          <Zap className="h-4 w-4 text-white" />
-          <span className="text-xs font-bold text-white flex-1">Catalogue des Teintures Cognitives</span>
-          <span className="text-[9px] bg-white/20 text-white px-2 py-0.5 rounded-full">{Object.keys(GHOST_ARCHETYPES).length} archétypes</span>
-        </div>
-        <div className="p-3 grid grid-cols-2 gap-1.5 max-h-[300px] overflow-y-auto">
-          {Object.entries(GHOST_ARCHETYPES).map(([name, arch]) => {
-            const isActive = (BOT_GHOSTS[botCode] || []).includes(name);
-            return (
-              <div key={name} className={cn(
-                "flex items-center gap-2 px-2.5 py-2 rounded-lg border transition-all cursor-pointer",
-                isActive ? "bg-violet-50 border-violet-200 shadow-sm" : "bg-white border-gray-100 hover:border-gray-200 hover:bg-gray-50"
-              )}>
-                <span className="text-lg shrink-0">{arch.emoji}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[9px] font-bold text-gray-800 truncate">{name}</div>
-                  <div className="text-[9px] text-gray-500 truncate">{arch.nom}</div>
-                </div>
-                {isActive && <span className="w-2 h-2 rounded-full bg-violet-500 shrink-0" />}
-              </div>
-            );
-          })}
-        </div>
-      </Card>
-    </div>
-  );
-}
+// ── Modes de décision (de AgentSettingsView) ──
+const DECISION_MODES: { id: string; label: string; icon: React.ComponentType<{ className?: string }>; color: string; bgColor: string; gradient: string; description: string; comportement: string; exemple: string }[] = [
+  { id: "strategique", label: "Strategique", icon: Target, color: "text-blue-600", bgColor: "bg-blue-50 border-blue-300", gradient: "from-blue-600 to-blue-500", description: "Vision long terme, implications systemiques", comportement: "Pense a 3-5 ans, analyse les effets de second ordre.", exemple: "Quels sont les risques invisibles a 3 ans?" },
+  { id: "tactique", label: "Tactique", icon: Zap, color: "text-amber-600", bgColor: "bg-amber-50 border-amber-300", gradient: "from-amber-600 to-amber-500", description: "Action concrete dans les 48h", comportement: "Compresse l'analyse, pousse vers des actions immediates.", exemple: "Quelle est l'action precise pour demain matin?" },
+  { id: "analytique", label: "Analytique", icon: BarChart3, color: "text-emerald-600", bgColor: "bg-emerald-50 border-emerald-300", gradient: "from-emerald-600 to-emerald-500", description: "Data-driven, hypotheses testables", comportement: "Demande les donnees avant de conclure. Structure en comparatifs.", exemple: "Quelles donnees me manquent pour valider?" },
+  { id: "creatif", label: "Creatif", icon: Sparkles, color: "text-purple-600", bgColor: "bg-purple-50 border-purple-300", gradient: "from-purple-600 to-fuchsia-500", description: "Angles inattendus, rapprochements", comportement: "Sort des sentiers battus. Propose 3 options non-conventionnelles.", exemple: "Et si on faisait l'exact oppose?" },
+  { id: "crise", label: "Crise", icon: AlertTriangle, color: "text-red-600", bgColor: "bg-red-50 border-red-300", gradient: "from-red-600 to-red-500", description: "Triage immediat, zero superflu", comportement: "Repond direct. Structure en: 24h / 7j / ignorer.", exemple: "L'unique chose a regler aujourd'hui?" },
+];
 
-// ── Section: Skills & Profil Cognitif ──
-function BotSkillsSection({ botCode }: { botCode: string }) {
-  const profile = BOT_PROFILES_BP[botCode] || BOT_PROFILES_BP.CEOB;
-  const scoreEntries = Object.entries(profile.scores);
-  const SCORE_COLORS: Record<string, string> = { strategique: "bg-blue-500", analytique: "bg-emerald-500", creatif: "bg-purple-500", operationnel: "bg-orange-500", relationnel: "bg-pink-500" };
-  const SCORE_LABELS: Record<string, string> = { strategique: "Stratégique", analytique: "Analytique", creatif: "Créatif", operationnel: "Opérationnel", relationnel: "Relationnel" };
-  return (
-    <div className="space-y-3">
-      <Card className="p-0 overflow-hidden rounded-xl shadow-sm">
-        <div className="bg-gradient-to-r from-violet-600 to-purple-500 px-4 py-2.5 flex items-center gap-2">
-          <Star className="h-4 w-4 text-white" />
-          <span className="text-xs font-bold text-white flex-1">Profil Psychométrique</span>
-          <span className="text-[9px] bg-white/20 text-white px-2 py-0.5 rounded-full">{profile.style}</span>
-        </div>
-        <div className="p-4 space-y-3">
-          {scoreEntries.map(([key, val]) => (
-            <div key={key} className="flex items-center gap-3">
-              <span className="text-[9px] font-medium text-gray-600 w-24 text-right">{SCORE_LABELS[key] || key}</span>
-              <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden relative">
-                <div className={cn("h-full rounded-full transition-all", SCORE_COLORS[key] || "bg-gray-400")} style={{ width: `${val}%` }} />
-                <span className="absolute inset-y-0 right-2 flex items-center text-[8px] font-bold text-gray-500">{val}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
-      <Card className="p-0 overflow-hidden rounded-xl shadow-sm">
-        <div className="bg-gradient-to-r from-gray-700 to-gray-600 px-4 py-2.5 flex items-center gap-2">
-          <Shield className="h-4 w-4 text-white" />
-          <span className="text-xs font-bold text-white">Forces Principales</span>
-        </div>
-        <div className="p-3 grid grid-cols-2 gap-2">
-          {profile.forces.map((f, i) => (
-            <div key={i} className="flex items-center gap-2 bg-gradient-to-r from-gray-50 to-white rounded-lg px-3 py-2.5 border border-gray-100">
-              <div className="w-6 h-6 rounded-lg bg-violet-100 flex items-center justify-center shrink-0">
-                <Zap className="h-3.5 w-3.5 text-violet-600" />
-              </div>
-              <span className="text-[9px] font-medium text-gray-800">{f}</span>
-            </div>
-          ))}
-        </div>
-      </Card>
-      <Card className="p-0 overflow-hidden rounded-xl shadow-sm">
-        <div className="bg-gradient-to-r from-indigo-600 to-indigo-500 px-4 py-2.5 flex items-center gap-2">
-          <MessageCircle className="h-4 w-4 text-white" />
-          <span className="text-xs font-bold text-white">Style de Communication</span>
-        </div>
-        <div className="p-3">
-          <p className="text-xs text-gray-700 leading-relaxed bg-indigo-50/50 rounded-lg p-3 border border-indigo-100">{profile.approche}</p>
-        </div>
-      </Card>
-    </div>
-  );
-}
+// ── Catégories d'archétypes pour le catalogue ──
+const ARCHETYPE_CATEGORIES = ["Strategie", "Innovation", "Leadership", "Finance", "Analyse", "Creativite", "Operations"];
+const CATEGORY_META: Record<string, { emoji: string; badgeClass: string }> = {
+  Strategie:   { emoji: "⚔️",  badgeClass: "text-blue-600 bg-blue-50 border-blue-200" },
+  Innovation:  { emoji: "🚀",  badgeClass: "text-violet-600 bg-violet-50 border-violet-200" },
+  Leadership:  { emoji: "🏛️",  badgeClass: "text-amber-600 bg-amber-50 border-amber-200" },
+  Finance:     { emoji: "💰",  badgeClass: "text-emerald-600 bg-emerald-50 border-emerald-200" },
+  Analyse:     { emoji: "🔬",  badgeClass: "text-cyan-600 bg-cyan-50 border-cyan-200" },
+  Creativite:  { emoji: "✨",  badgeClass: "text-pink-600 bg-pink-50 border-pink-200" },
+  Operations:  { emoji: "🏭",  badgeClass: "text-orange-600 bg-orange-50 border-orange-200" },
+};
+
+// ── Missions & objectifs par bot ──
+const BOT_MISSIONS: Record<string, { mission: string; objectifs: { label: string; progres: number; cible: string }[]; chantiers: { nom: string; statut: "actif" | "pause" | "complete" }[] }> = {
+  CEOB: {
+    mission: "Orchestrer l'ensemble des operations de l'entreprise, prendre les decisions strategiques et coordonner l'equipe de 11 agents specialises.",
+    objectifs: [
+      { label: "Augmenter le score VITAA global a 65/100", progres: 72, cible: "Q2 2026" },
+      { label: "Deployer 3 playbooks Pioneer par trimestre", progres: 45, cible: "Q2 2026" },
+      { label: "Reduire le temps de decision de 48h a 4h", progres: 88, cible: "Q1 2026" },
+    ],
+    chantiers: [
+      { nom: "Blueprint Direction", statut: "actif" },
+      { nom: "Gouvernance IA", statut: "actif" },
+      { nom: "Onboarding Pioneer", statut: "pause" },
+    ],
+  },
+  CTOB: {
+    mission: "Maintenir et faire evoluer l'architecture technique, superviser les deploiements et assurer la fiabilite de la plateforme.",
+    objectifs: [
+      { label: "Uptime 99.9% sur VPS1 et VPS2", progres: 98, cible: "Continu" },
+      { label: "Reduire la dette technique de 40%", progres: 35, cible: "Q3 2026" },
+      { label: "Migrer 3 services vers architecture microservices", progres: 20, cible: "Q3 2026" },
+    ],
+    chantiers: [
+      { nom: "Migration Telnyx", statut: "pause" },
+      { nom: "Infrastructure 2 VPS", statut: "complete" },
+      { nom: "Pipeline CI/CD", statut: "actif" },
+    ],
+  },
+  CFOB: {
+    mission: "Gerer la sante financiere, produire les previsions et rapports, controler les couts et maximiser la rentabilite.",
+    objectifs: [
+      { label: "Marge brute > 60%", progres: 82, cible: "Q2 2026" },
+      { label: "Budget API < 150$/mois", progres: 94, cible: "Continu" },
+      { label: "Produire le rapport financier mensuel automatise", progres: 60, cible: "Q2 2026" },
+    ],
+    chantiers: [
+      { nom: "Modelisation financiere SaaS", statut: "actif" },
+      { nom: "Audit couts Q1", statut: "complete" },
+    ],
+  },
+  CMOB: {
+    mission: "Developper la notoriete de la marque, generer des leads qualifies et creer du contenu engageant pour les PME manufacturieres.",
+    objectifs: [
+      { label: "Generer 50 MQL/mois", progres: 38, cible: "Q3 2026" },
+      { label: "Publier 12 contenus/mois sur LinkedIn", progres: 75, cible: "Continu" },
+      { label: "Taux d'ouverture newsletters > 35%", progres: 65, cible: "Q2 2026" },
+    ],
+    chantiers: [
+      { nom: "Campagne lancement Pioneer", statut: "actif" },
+      { nom: "Refonte site web", statut: "pause" },
+    ],
+  },
+  CSOB: {
+    mission: "Analyser le marche et la concurrence, definir le positionnement strategique et identifier les opportunites de croissance.",
+    objectifs: [
+      { label: "Completer l'analyse concurrentielle Q2", progres: 55, cible: "Q2 2026" },
+      { label: "Identifier 10 segments de marche inexploites", progres: 70, cible: "Q2 2026" },
+      { label: "Plan strategique 2026-2028", progres: 25, cible: "Q3 2026" },
+    ],
+    chantiers: [
+      { nom: "Veille concurrentielle", statut: "actif" },
+      { nom: "Strategie expansion US", statut: "pause" },
+    ],
+  },
+  COOB: {
+    mission: "Optimiser les processus operationnels, gerer la chaine d'approvisionnement et assurer la qualite de livraison.",
+    objectifs: [
+      { label: "Reduire les delais de livraison de 20%", progres: 45, cible: "Q3 2026" },
+      { label: "Taux de satisfaction client > 90%", progres: 82, cible: "Continu" },
+      { label: "Documenter 100% des SOPs critiques", progres: 68, cible: "Q2 2026" },
+    ],
+    chantiers: [
+      { nom: "Optimisation workflow", statut: "actif" },
+      { nom: "Certification ISO 9001", statut: "pause" },
+    ],
+  },
+  CPOB: {
+    mission: "Gerer la planification de production, optimiser le rendement usine et deployer les pratiques Lean manufacturing.",
+    objectifs: [
+      { label: "OEE/TRS > 75%", progres: 68, cible: "Q3 2026" },
+      { label: "Zero arret non planifie/mois", progres: 40, cible: "Q3 2026" },
+      { label: "Reduire les rejets de 30%", progres: 55, cible: "Q2 2026" },
+    ],
+    chantiers: [
+      { nom: "Programme 5S", statut: "actif" },
+      { nom: "Maintenance preventive IoT", statut: "pause" },
+    ],
+  },
+  CHROB: {
+    mission: "Recruter et retenir les meilleurs talents, developper la culture d'entreprise et assurer la conformite RH.",
+    objectifs: [
+      { label: "Taux de retention > 85%", progres: 78, cible: "Continu" },
+      { label: "Temps d'embauche moyen < 30 jours", progres: 62, cible: "Q2 2026" },
+      { label: "100% des employes formes sur Brain Team", progres: 35, cible: "Q3 2026" },
+    ],
+    chantiers: [
+      { nom: "Programme d'accueil", statut: "actif" },
+      { nom: "Sondage engagement", statut: "complete" },
+    ],
+  },
+  CINOB: {
+    mission: "Piloter la recherche et developpement, identifier les technologies emergentes et proteger la propriete intellectuelle.",
+    objectifs: [
+      { label: "Deposer 2 brevets en 2026", progres: 15, cible: "Q4 2026" },
+      { label: "Lancer 1 POC par trimestre", progres: 50, cible: "Continu" },
+      { label: "Veille techno hebdomadaire", progres: 90, cible: "Continu" },
+    ],
+    chantiers: [
+      { nom: "POC Agent autonome V2", statut: "actif" },
+      { nom: "Etude faisabilite edge AI", statut: "pause" },
+    ],
+  },
+  CROB: {
+    mission: "Maximiser les revenus par le developpement d'affaires, la gestion du pipeline CRM et l'optimisation du cycle de vente.",
+    objectifs: [
+      { label: "Pipeline qualifie > 500K$", progres: 62, cible: "Q2 2026" },
+      { label: "Taux de closing > 25%", progres: 78, cible: "Continu" },
+      { label: "Revenu recurrent mensuel (MRR) > 50K$", progres: 38, cible: "Q4 2026" },
+    ],
+    chantiers: [
+      { nom: "Programme referral REAI", statut: "actif" },
+      { nom: "Expansion marche Ontario", statut: "pause" },
+    ],
+  },
+  CLOB: {
+    mission: "Proteger les interets legaux de l'entreprise, gerer les contrats et assurer la conformite reglementaire (Loi 25, CNESST).",
+    objectifs: [
+      { label: "Conformite Loi 25 a 100%", progres: 85, cible: "Q2 2026" },
+      { label: "Reviser tous les contrats fournisseurs", progres: 60, cible: "Q2 2026" },
+      { label: "Politique de confidentialite V2", progres: 90, cible: "Q1 2026" },
+    ],
+    chantiers: [
+      { nom: "Audit conformite Loi 25", statut: "actif" },
+      { nom: "Revision contrats SaaS", statut: "actif" },
+    ],
+  },
+  CISOB: {
+    mission: "Proteger l'infrastructure contre les cybermenaces, gerer les vulnerabilites et maintenir la posture de securite.",
+    objectifs: [
+      { label: "Zero breche de securite", progres: 100, cible: "Continu" },
+      { label: "Score NIST CSF > 3.5/5", progres: 55, cible: "Q3 2026" },
+      { label: "Tests de penetration trimestriels", progres: 50, cible: "Continu" },
+    ],
+    chantiers: [
+      { nom: "Hardening VPS1 + VPS2", statut: "complete" },
+      { nom: "Programme sensibilisation phishing", statut: "actif" },
+    ],
+  },
+};
+
+// ── Stats performance differenciees par bot ──
+const BOT_STATS: Record<string, { messages: string; taches: string; tempsRep: string; deltaMsgs: string; deltaTaches: string; deltaTemps: string }> = {
+  CEOB: { messages: "1,247", taches: "89", tempsRep: "2.3s", deltaMsgs: "+18%", deltaTaches: "12 en cours", deltaTemps: "-0.4s" },
+  CTOB: { messages: "834", taches: "142", tempsRep: "1.8s", deltaMsgs: "+24%", deltaTaches: "8 en cours", deltaTemps: "-0.2s" },
+  CFOB: { messages: "612", taches: "67", tempsRep: "3.1s", deltaMsgs: "+12%", deltaTaches: "5 en cours", deltaTemps: "-0.6s" },
+  CMOB: { messages: "956", taches: "78", tempsRep: "2.7s", deltaMsgs: "+31%", deltaTaches: "9 en cours", deltaTemps: "-0.3s" },
+  CSOB: { messages: "487", taches: "45", tempsRep: "4.2s", deltaMsgs: "+8%", deltaTaches: "3 en cours", deltaTemps: "+0.1s" },
+  COOB: { messages: "723", taches: "112", tempsRep: "2.0s", deltaMsgs: "+15%", deltaTaches: "14 en cours", deltaTemps: "-0.5s" },
+  CPOB: { messages: "541", taches: "156", tempsRep: "1.5s", deltaMsgs: "+22%", deltaTaches: "11 en cours", deltaTemps: "-0.3s" },
+  CHROB: { messages: "398", taches: "52", tempsRep: "3.5s", deltaMsgs: "+9%", deltaTaches: "6 en cours", deltaTemps: "-0.2s" },
+  CINOB: { messages: "312", taches: "38", tempsRep: "5.1s", deltaMsgs: "+45%", deltaTaches: "4 en cours", deltaTemps: "+0.8s" },
+  CROB: { messages: "1,089", taches: "94", tempsRep: "1.9s", deltaMsgs: "+28%", deltaTaches: "15 en cours", deltaTemps: "-0.7s" },
+  CLOB: { messages: "267", taches: "41", tempsRep: "4.8s", deltaMsgs: "+5%", deltaTaches: "3 en cours", deltaTemps: "-0.1s" },
+  CISOB: { messages: "445", taches: "98", tempsRep: "1.2s", deltaMsgs: "+19%", deltaTaches: "7 en cours", deltaTemps: "-0.4s" },
+};
+
+// ── Configuration par bot ──
+const BOT_CONFIG: Record<string, { temperature: number; tonalite: string; modele: string; langue: string; escalade: string; delegation: string[] }> = {
+  CEOB: { temperature: 0.7, tonalite: "Conversationnel", modele: "Gemini Pro 2.0", langue: "Francais (QC)", escalade: "—", delegation: ["CTOB", "CFOB", "CSOB"] },
+  CTOB: { temperature: 0.4, tonalite: "Technique", modele: "Gemini Pro 2.0", langue: "Francais (QC)", escalade: "CEOB si budget > 10K$", delegation: ["CISOB", "CINOB"] },
+  CFOB: { temperature: 0.3, tonalite: "Formel", modele: "Gemini Pro 2.0", langue: "Francais (QC)", escalade: "CEOB si montant > 50K$", delegation: ["CLOB"] },
+  CMOB: { temperature: 0.8, tonalite: "Creatif", modele: "Gemini Pro 2.0", langue: "Francais (QC)", escalade: "CEOB si campagne > 5K$", delegation: ["CROB"] },
+  CSOB: { temperature: 0.5, tonalite: "Analytique", modele: "Gemini Pro 2.0", langue: "Francais (QC)", escalade: "CEOB si pivot strategique", delegation: ["CROB", "CMOB"] },
+  COOB: { temperature: 0.4, tonalite: "Directif", modele: "Gemini Pro 2.0", langue: "Francais (QC)", escalade: "CEOB si arret production", delegation: ["CPOB"] },
+  CPOB: { temperature: 0.3, tonalite: "Terrain", modele: "Gemini Flash 2.0", langue: "Francais (QC)", escalade: "COOB si defaut qualite", delegation: [] },
+  CHROB: { temperature: 0.6, tonalite: "Bienveillant", modele: "Gemini Pro 2.0", langue: "Francais (QC)", escalade: "CEOB si litige", delegation: [] },
+  CINOB: { temperature: 0.9, tonalite: "Exploratoire", modele: "Claude Opus 4", langue: "Francais (QC)", escalade: "CTOB si faisabilite technique", delegation: [] },
+  CROB: { temperature: 0.6, tonalite: "Persuasif", modele: "Gemini Pro 2.0", langue: "Francais (QC)", escalade: "CEOB si deal > 100K$", delegation: [] },
+  CLOB: { temperature: 0.2, tonalite: "Juridique", modele: "Claude Sonnet 4", langue: "Francais (QC)", escalade: "CEOB si risque legal eleve", delegation: [] },
+  CISOB: { temperature: 0.3, tonalite: "Alerte", modele: "Gemini Pro 2.0", langue: "Francais (QC)", escalade: "CEOB + CTOB si breche detectee", delegation: [] },
+};
+
+// ── Section: Trisociation (3 Ghosts interactifs) ──
+// BotTrisociationSection supprimé — fusionné dans BotConfigSection
+
+// BotSkillsSection supprimé — psychométrique fusionné dans BotPerformanceSection
 
 // ── Section: APIs & Connexions ──
 function BotApisSection({ botCode }: { botCode: string }) {
@@ -918,13 +1736,19 @@ function BotApisSection({ botCode }: { botCode: string }) {
         <div className="text-xs font-bold text-gray-800 truncate">{a.name}</div>
         <div className={cn("text-[9px] font-medium", a.status === "active" ? "text-emerald-600" : a.status === "config" ? "text-amber-600" : "text-gray-400")}>{a.status === "active" ? "Connecté" : a.status === "config" ? "À configurer" : "Désactivé"}</div>
       </div>
-      <div className={cn("w-2.5 h-2.5 rounded-full shrink-0", a.status === "active" ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]" : a.status === "config" ? "bg-amber-400" : "bg-gray-300")} />
+      <button className={cn("text-[9px] px-2.5 py-1 rounded-full font-medium border cursor-pointer transition-all shrink-0",
+        a.status === "active" ? "bg-red-50 text-red-600 border-red-200 hover:bg-red-100" :
+        a.status === "config" ? "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100" :
+        "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+      )}>
+        {a.status === "active" ? "Déconnecter" : a.status === "config" ? "Configurer" : "Activer"}
+      </button>
     </div>
   );
   return (
     <div className="space-y-3">
-      <Card className="p-0 overflow-hidden rounded-xl shadow-sm">
-        <div className="bg-gradient-to-r from-emerald-600 to-emerald-500 px-4 py-2.5 flex items-center gap-2">
+      <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
+        <div className="bg-gradient-to-r from-gray-700 to-gray-600 px-4 py-2.5 flex items-center gap-2">
           <Activity className="h-4 w-4 text-white" />
           <span className="text-xs font-bold text-white flex-1">Connexions Actives</span>
           <span className="text-[9px] bg-white/25 text-white px-2 py-0.5 rounded-full font-bold">{active.length} live</span>
@@ -932,7 +1756,7 @@ function BotApisSection({ botCode }: { botCode: string }) {
         <div className="p-3 grid grid-cols-2 gap-2">{active.map(renderApi)}</div>
       </Card>
       {rest.length > 0 && (
-        <Card className="p-0 overflow-hidden rounded-xl shadow-sm">
+        <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
           <div className="bg-gradient-to-r from-gray-500 to-gray-400 px-4 py-2.5 flex items-center gap-2">
             <Cpu className="h-4 w-4 text-white" />
             <span className="text-xs font-bold text-white flex-1">À configurer / Disponibles</span>
@@ -945,189 +1769,410 @@ function BotApisSection({ botCode }: { botCode: string }) {
   );
 }
 
-// ── Section: Performance Bot ──
-function BotPerformanceSection({ botCode }: { botCode: string }) {
-  const cap = BOT_CAPACITES_BP[botCode] || BOT_CAPACITES_BP.CEOB;
-  const stats = [
-    { label: "Messages traités", value: "1,247", delta: "+18% ce mois", icon: MessageCircle, color: "text-blue-600", bg: "bg-blue-50" },
-    { label: "Tâches complétées", value: "89", delta: "12 en cours", icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-50" },
-    { label: "Temps réponse moy.", value: "2.3s", delta: "-0.4s vs mois dernier", icon: Activity, color: "text-violet-600", bg: "bg-violet-50" },
-    { label: "Coût mensuel API", value: "47$", delta: cap.coutHumain + " si humain", icon: DollarSign, color: "text-amber-600", bg: "bg-amber-50" },
-  ];
+// BotPerformanceSection supprimé — KPIs, psychométrique et ROI intégrés dans BlueprintBot Vue d'ensemble
+
+// ── Avatar paths pour tous les bots ──
+const BOT_AVATAR_MAP: Record<string, string> = {
+  CEOB: "/agents/generated/ceo-carlos-profil-v3.png",
+  CTOB: "/agents/generated/cto-thierry-profil-v3.png",
+  CFOB: "/agents/generated/cfo-francois-profil-v3.png",
+  CMOB: "/agents/generated/cmo-martine-profil-v3.png",
+  CSOB: "/agents/generated/cso-sophie-profil-v3.png",
+  COOB: "/agents/generated/coo-olivier-profil-v3.png",
+  CPOB: "/agents/generated/factory-bot-profil-v3.png",
+  CHROB: "/agents/generated/chro-helene-profil-v3.png",
+  CINOB: "/agents/generated/cino-ines-profil-v3.png",
+  CROB: "/agents/generated/cro-raphael-profil-v3.png",
+  CLOB: "/agents/generated/clo-louise-profil-v3.png",
+  CISOB: "/agents/generated/ciso-secbot-profil-v3.png",
+};
+
+const BOT_DISPLAY: Record<string, { name: string; role: string; dept: string }> = {
+  CEOB: { name: "CarlOS", role: "CEO", dept: "Direction" },
+  CTOB: { name: "Tim", role: "CTO", dept: "Technologie & Innovation" },
+  CFOB: { name: "Frank", role: "CFO", dept: "Finance & Tresorerie" },
+  CMOB: { name: "Mathilde", role: "CMO", dept: "Marketing & Croissance" },
+  CSOB: { name: "Simone", role: "CSO", dept: "Strategie & Ventes" },
+  COOB: { name: "Olivier", role: "COO", dept: "Operations & Production" },
+  CPOB: { name: "Paco", role: "CPO", dept: "Automatisation & Usine" },
+  CHROB: { name: "Helene", role: "CHRO", dept: "Ressources Humaines" },
+  CINOB: { name: "Ines", role: "CINO", dept: "Innovation & R&D" },
+  CROB: { name: "Rich", role: "CRO", dept: "Revenus & Croissance" },
+  CLOB: { name: "Loulou", role: "CLO", dept: "Juridique & Conformite" },
+  CISOB: { name: "Sebastien", role: "CISO", dept: "Securite & Cyber" },
+};
+
+const BOT_GRADIENT: Record<string, string> = {
+  CEOB: "from-blue-600 to-indigo-600", CTOB: "from-violet-600 to-purple-600",
+  CFOB: "from-emerald-600 to-teal-600", CMOB: "from-pink-600 to-rose-600",
+  CSOB: "from-red-600 to-orange-600", COOB: "from-orange-600 to-amber-600",
+  CPOB: "from-amber-600 to-yellow-600", CHROB: "from-teal-600 to-cyan-600",
+  CINOB: "from-rose-600 to-pink-600", CROB: "from-amber-600 to-orange-600",
+  CLOB: "from-indigo-600 to-blue-600", CISOB: "from-gray-600 to-slate-600",
+};
+
+// VueConsolideeBot supprimé — remplacé par BlueprintBot (page unique avec ancres)
+
+// ── Section: Configuration Complete (Parametres + Mode Decision + Trisociation + Catalogue) ──
+function BotConfigSection({ botCode }: { botCode: string }) {
+  const initial = BOT_CONFIG[botCode] || BOT_CONFIG.CEOB;
+  const d = BOT_DISPLAY[botCode] || BOT_DISPLAY.CEOB;
+  const ghosts = BOT_GHOSTS[botCode] || BOT_GHOSTS.CEOB;
+  const [saved, setSaved] = useState(false);
+  const [activeMode, setActiveMode] = useState("strategique");
+  const [localGhosts, setLocalGhosts] = useState<string[]>(ghosts);
+  const [editingSlot, setEditingSlot] = useState<number | null>(null);
+  const handleSave = () => { setSaved(true); setTimeout(() => setSaved(false), 2000); };
+  const currentMode = DECISION_MODES.find(m => m.id === activeMode)!;
+  const ghostSet = new Set(localGhosts);
+  const allArchetypes = Object.entries(GHOST_ARCHETYPES);
+  const handleAssign = (name: string) => {
+    if (editingSlot === null) return;
+    const next = [...localGhosts];
+    next[editingSlot] = name;
+    setLocalGhosts(next);
+    setEditingSlot(null);
+  };
+
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-3">
-        {stats.map(s => {
-          const Icon = s.icon;
-          return (
-            <Card key={s.label} className="p-0 overflow-hidden rounded-xl shadow-sm">
-              <div className="px-3 py-3 flex items-start gap-3">
-                <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center shrink-0", s.bg)}>
-                  <Icon className={cn("h-4 w-4", s.color)} />
-                </div>
-                <div>
-                  <div className="text-[9px] text-gray-500 font-medium uppercase tracking-wider">{s.label}</div>
-                  <div className="text-xl font-bold text-gray-800">{s.value}</div>
-                  <div className="text-[9px] text-gray-400 mt-0.5">{s.delta}</div>
-                </div>
-              </div>
-            </Card>
-          );
-        })}
-      </div>
-      <Card className="p-0 overflow-hidden rounded-xl shadow-sm">
-        <div className="bg-gradient-to-r from-amber-600 to-amber-500 px-4 py-2.5 flex items-center gap-2">
-          <DollarSign className="h-4 w-4 text-white" />
-          <span className="text-xs font-bold text-white flex-1">ROI — Équivalent Humain</span>
+      {/* ── 1. Mode de Decision ── */}
+      <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
+        <div className={cn("bg-gradient-to-r px-4 py-2.5 flex items-center gap-2", currentMode.gradient)}>
+          <Target className="h-4 w-4 text-white" />
+          <span className="text-xs font-bold text-white flex-1">Mode de Decision</span>
+          <span className="text-[9px] bg-white/20 text-white px-2 py-0.5 rounded-full font-bold">{currentMode.label}</span>
         </div>
-        <div className="p-3 flex items-center gap-4">
-          <div className="flex-1 text-center">
-            <div className="text-[9px] text-gray-500 uppercase font-bold">Agent IA</div>
-            <div className="text-lg font-bold text-emerald-600">47$/mois</div>
-            <div className="text-[9px] text-gray-400">{cap.tachesCount} tâches · {cap.heuresMois}</div>
+        <div className="p-3 space-y-2.5">
+          <div className="grid grid-cols-5 gap-1.5">
+            {DECISION_MODES.map(mode => {
+              const MIcon = mode.icon;
+              const isActive = activeMode === mode.id;
+              return (
+                <button key={mode.id} onClick={() => setActiveMode(mode.id)}
+                  className={cn("flex flex-col items-center gap-1 p-2 rounded-lg border transition-all cursor-pointer",
+                    isActive ? cn(mode.bgColor, "shadow-sm") : "bg-gray-50 border-gray-200 hover:bg-white")}>
+                  <MIcon className={cn("h-3.5 w-3.5", isActive ? mode.color : "text-gray-400")} />
+                  <span className={cn("text-[9px] font-bold", isActive ? mode.color : "text-gray-500")}>{mode.label}</span>
+                </button>
+              );
+            })}
           </div>
-          <div className="text-2xl font-bold text-gray-300">vs</div>
-          <div className="flex-1 text-center">
-            <div className="text-[9px] text-gray-500 uppercase font-bold">{cap.equivHumain}</div>
-            <div className="text-lg font-bold text-red-500">{cap.coutHumain}/an</div>
-            <div className="text-[9px] text-gray-400">Même scope de travail</div>
+          <div className={cn("rounded-lg border p-2.5 space-y-1", currentMode.bgColor)}>
+            <p className={cn("text-[10px] font-bold", currentMode.color)}>{currentMode.description}</p>
+            <p className="text-[10px] text-gray-700 leading-relaxed">{currentMode.comportement}</p>
+            <div className="flex items-start gap-1.5 bg-white/60 rounded-md px-2 py-1.5">
+              <MessageCircle className="h-3.5 w-3.5 text-gray-400 shrink-0 mt-0.5" />
+              <p className="text-[9px] text-gray-600 italic">"{currentMode.exemple}"</p>
+            </div>
           </div>
         </div>
       </Card>
-    </div>
-  );
-}
 
-// ── Vue Consolidée Bot ──
-function VueConsolideeBot({ botCode }: { botCode: string }) {
-  const vitaa = VITAA_BOT[botCode] || VITAA_BOT.CEOB;
-  const ghosts = BOT_GHOSTS[botCode] || BOT_GHOSTS.CEOB;
-  const profile = BOT_PROFILES_BP[botCode] || BOT_PROFILES_BP.CEOB;
-  const apis = BOT_APIS[botCode] || BOT_APIS.CEOB;
-  const activeApis = apis.filter(a => a.status === "active");
-  return (
-    <div className="space-y-3">
-      <VitaaTable data={vitaa} title="VITAA Agent IA — Performance vs Benchmark" />
-      <div className="grid grid-cols-3 gap-2">
-        {ghosts.map((g, i) => {
-          const arch = GHOST_ARCHETYPES[g];
-          if (!arch) return null;
-          return (
-            <div key={i} className={cn("rounded-xl overflow-hidden border shadow-sm", SLOT_BG[i])}>
-              <div className={cn("bg-gradient-to-r px-2.5 py-1.5 flex items-center gap-1.5", SLOT_COLORS[i])}>
-                <span className="text-sm">{arch.emoji}</span>
-                <span className="text-[9px] font-bold text-white uppercase">{SLOT_LABELS_BP[i]}</span>
+      {/* ── 2. Trisociation — Skins Cognitifs ── */}
+      <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
+        <div className="bg-gradient-to-r from-gray-700 to-gray-600 px-4 py-2.5 flex items-center gap-2">
+          <Zap className="h-4 w-4 text-white" />
+          <span className="text-xs font-bold text-white flex-1">Skins Cognitifs — Trisociation</span>
+          <span className="text-[9px] bg-white/20 text-white px-2 py-0.5 rounded-full">{localGhosts.length} actifs</span>
+        </div>
+        <div className="p-3 space-y-2">
+          <p className="text-[10px] text-gray-500 leading-relaxed">
+            Configurez les 3 archetypes qui definissent le comportement, le style de reflexion et les priorites de {d.name}.
+          </p>
+          <div className="grid grid-cols-3 gap-2">
+            {localGhosts.map((ghostName, i) => {
+              const arch = GHOST_ARCHETYPES[ghostName];
+              if (!arch) return null;
+              const isEditing = editingSlot === i;
+              return (
+                <div key={i} className={cn("border rounded-xl overflow-hidden", SLOT_BG[i], isEditing && "ring-2 ring-violet-300")}>
+                  <div className={cn("bg-gradient-to-r px-2.5 py-1.5 flex items-center gap-1.5", SLOT_COLORS[i])}>
+                    <span className="text-sm">{arch.emoji}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[8px] font-bold text-white/70 uppercase">{SLOT_LABELS_BP[i]}</div>
+                      <div className="text-[10px] font-bold text-white truncate">{arch.nom}</div>
+                    </div>
+                  </div>
+                  <div className="p-2">
+                    <span className={cn("text-[8px] font-medium px-1.5 py-0.5 rounded-full border", CATEGORY_META[arch.categorie]?.badgeClass || "text-gray-600 bg-gray-50 border-gray-200")}>{arch.categorie}</span>
+                    <p className="text-[8px] text-gray-500 italic truncate mt-1">"{arch.signature}"</p>
+                    <button onClick={() => setEditingSlot(isEditing ? null : i)} className={cn("w-full mt-1.5 text-[9px] px-2 py-1 rounded-full flex items-center justify-center gap-1 font-medium cursor-pointer border transition-all",
+                      i === 0 ? "bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100" :
+                      i === 1 ? "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100" :
+                      "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100"
+                    )}>
+                      <Settings className="h-3.5 w-3.5" /> {isEditing ? "Fermer" : "Modifier"}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {editingSlot !== null && (
+            <div className="border border-dashed border-violet-200 rounded-xl p-3 bg-violet-50/30">
+              <div className="text-[9px] font-bold text-violet-600 uppercase tracking-wider mb-2">
+                Choisir une teinture pour le slot {SLOT_LABELS_BP[editingSlot]}
               </div>
-              <div className="px-2.5 py-1.5">
-                <div className="text-[9px] font-bold text-gray-800">{g}</div>
-                <div className="text-[9px] text-gray-500">{arch.nom}</div>
+              <div className="space-y-1.5 max-h-[250px] overflow-y-auto">
+                {ARCHETYPE_CATEGORIES.map(cat => {
+                  const catMeta = CATEGORY_META[cat];
+                  const items = allArchetypes.filter(([, a]) => a.categorie === cat);
+                  if (items.length === 0) return null;
+                  return (
+                    <div key={cat}>
+                      <div className="flex items-center gap-1.5 px-1 py-1">
+                        <span className="text-sm">{catMeta.emoji}</span>
+                        <span className="text-[9px] font-bold text-gray-600">{cat}</span>
+                        <span className="text-[8px] text-gray-400">({items.length})</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        {items.map(([name, arch]) => {
+                          const isCurrent = name === localGhosts[editingSlot];
+                          const isUsed = ghostSet.has(name) && !isCurrent;
+                          return (
+                            <button key={name} onClick={() => !isUsed && handleAssign(name)} className={cn("flex items-center gap-2 px-2.5 py-1.5 rounded-lg border text-left transition-all",
+                              isCurrent ? "border-violet-300 bg-violet-50 shadow-sm" :
+                              isUsed ? "border-gray-200 bg-gray-50 opacity-40 cursor-not-allowed" :
+                              "border-gray-100 hover:bg-gray-50 hover:border-gray-200 cursor-pointer"
+                            )}>
+                              <span className="text-sm shrink-0">{arch.emoji}</span>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-[9px] font-bold text-gray-800 truncate">{arch.nom}</div>
+                                <div className="text-[8px] text-gray-500 truncate">{arch.signature.slice(0, 40)}...</div>
+                              </div>
+                              {isCurrent && <CheckCircle2 className="h-3.5 w-3.5 text-violet-500 shrink-0" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
-          );
-        })}
-      </div>
-      <div className="grid grid-cols-2 gap-2">
-        <Card className="p-0 overflow-hidden rounded-xl shadow-sm">
-          <div className="bg-gradient-to-r from-violet-600 to-purple-500 px-3 py-2 flex items-center gap-2">
-            <Star className="h-3.5 w-3.5 text-white" />
-            <span className="text-xs font-bold text-white">Skills</span>
-            <span className="text-[9px] bg-white/20 text-white px-1.5 py-0.5 rounded-full ml-auto">{profile.style}</span>
+          )}
+        </div>
+      </Card>
+
+      {/* ── 3. Parametres Agent ── */}
+      <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
+        <div className="bg-gradient-to-r from-gray-700 to-gray-600 px-4 py-2.5 flex items-center gap-2">
+          <Settings className="h-4 w-4 text-white" />
+          <span className="text-xs font-bold text-white flex-1">Parametres — {d.name}</span>
+        </div>
+        <div className="p-3 space-y-3">
+          <div className="flex items-center justify-between px-3 py-2.5 rounded-lg border border-gray-100 bg-gray-50/50">
+            <span className="text-xs font-medium text-gray-700">Escalade</span>
+            <span className="text-[9px] font-bold text-gray-800">{initial.escalade}</span>
           </div>
-          <div className="p-2.5 space-y-1.5">
-            {Object.entries(profile.scores).slice(0, 5).map(([k, v]) => (
-              <div key={k} className="flex items-center gap-2">
-                <span className="text-[9px] text-gray-500 w-16 text-right capitalize">{k}</span>
-                <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-full rounded-full bg-violet-400" style={{ width: `${v}%` }} />
-                </div>
-                <span className="text-[9px] font-bold text-gray-600 w-6">{v}</span>
+          {initial.delegation.length > 0 && (
+            <div>
+              <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Delegation vers</span>
+              <div className="flex flex-wrap gap-1.5">
+                {initial.delegation.map(code => {
+                  const dd = BOT_DISPLAY[code];
+                  return dd ? (
+                    <span key={code} className="text-[9px] px-2.5 py-1 rounded-full bg-violet-50 text-violet-700 border border-violet-200 font-medium">{dd.name} ({dd.role})</span>
+                  ) : null;
+                })}
+                <button className="text-[9px] px-2.5 py-1 rounded-full bg-gray-50 text-gray-500 border border-dashed border-gray-300 font-medium cursor-pointer hover:bg-gray-100 flex items-center gap-1.5">
+                  <Plus className="h-3.5 w-3.5" /> Ajouter
+                </button>
               </div>
-            ))}
-          </div>
-        </Card>
-        <Card className="p-0 overflow-hidden rounded-xl shadow-sm">
-          <div className="bg-gradient-to-r from-emerald-600 to-emerald-500 px-3 py-2 flex items-center gap-2">
-            <Cpu className="h-3.5 w-3.5 text-white" />
-            <span className="text-xs font-bold text-white">APIs</span>
-            <span className="text-[9px] bg-white/25 text-white px-1.5 py-0.5 rounded-full ml-auto">{activeApis.length} live</span>
-          </div>
-          <div className="p-2.5 space-y-1">
-            {activeApis.slice(0, 5).map(a => (
-              <div key={a.name} className="flex items-center gap-2">
-                <div className={cn("w-5 h-5 rounded flex items-center justify-center text-white text-[7px] font-bold shrink-0", a.color)}>{a.icon}</div>
-                <span className="text-[9px] text-gray-700 flex-1 truncate">{a.name}</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              </div>
-            ))}
-            {activeApis.length > 5 && <span className="text-[9px] text-gray-400">+{activeApis.length - 5} autres...</span>}
-          </div>
-        </Card>
+            </div>
+          )}
+        </div>
+      </Card>
+
+      {/* ── Sauvegarder ── */}
+      <div className="flex items-center justify-center">
+        <button onClick={handleSave} className={cn(
+          "text-xs px-6 py-2.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all shadow-sm",
+          saved ? "bg-emerald-600 text-white" : "bg-violet-600 text-white hover:bg-violet-700"
+        )}>
+          {saved ? <><CheckCircle2 className="h-3.5 w-3.5" /> Sauvegarde!</> : <><Save className="h-3.5 w-3.5" /> Sauvegarder la configuration</>}
+        </button>
       </div>
     </div>
   );
 }
 
 function BlueprintBot({ botCode, headerGradient }: { botCode: string; headerGradient: string }) {
-  const [activeBotSection, setActiveBotSection] = useState(BOT_SECTION_META[0].id);
+  const [activeAnchor, setActiveAnchor] = useState(BOT_SECTION_META[0].id);
+  const vitaa = VITAA_BOT[botCode] || VITAA_BOT.CEOB;
+  const profile = BOT_PROFILES_BP[botCode] || BOT_PROFILES_BP.CEOB;
+  const cap = BOT_CAPACITES_BP[botCode] || BOT_CAPACITES_BP.CEOB;
+  const display = BOT_DISPLAY[botCode] || BOT_DISPLAY.CEOB;
+  const avatar = BOT_AVATAR_MAP[botCode] || BOT_AVATAR_MAP.CEOB;
+  const gradient = BOT_GRADIENT[botCode] || BOT_GRADIENT.CEOB;
+  const missions = BOT_MISSIONS[botCode] || BOT_MISSIONS.CEOB;
+  const botStats = BOT_STATS[botCode] || BOT_STATS.CEOB;
+
+  const SCORE_LABELS: Record<string, string> = { strategique: "Strategique", analytique: "Analytique", creatif: "Creatif", operationnel: "Operationnel", relationnel: "Relationnel" };
+  const SCORE_COLORS: Record<string, string> = { strategique: "bg-blue-500", analytique: "bg-emerald-500", creatif: "bg-purple-500", operationnel: "bg-orange-500", relationnel: "bg-pink-500" };
+
+  const kpis = [
+    { label: "Messages", value: botStats.messages, sub: botStats.deltaMsgs + " ce mois", icon: MessageCircle, gradient: "from-blue-600 to-blue-500", color: "text-blue-600" },
+    { label: "Taches", value: botStats.taches, sub: botStats.deltaTaches, icon: CheckCircle2, gradient: "from-emerald-600 to-emerald-500", color: "text-emerald-600" },
+    { label: "Temps rep.", value: botStats.tempsRep, sub: botStats.deltaTemps + " vs mois dernier", icon: Activity, gradient: "from-violet-600 to-violet-500", color: "text-violet-600" },
+    { label: "Cout/mois", value: cap.coutIA, sub: cap.coutHumain + " si humain", icon: DollarSign, gradient: "from-amber-600 to-amber-500", color: "text-amber-600" },
+  ];
+
+  const scrollToSection = (id: string) => {
+    setActiveAnchor(id);
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
     <div className="flex gap-3">
-      <div className="w-[180px] shrink-0 space-y-0.5">
+      <div className="w-[180px] shrink-0 space-y-0.5 sticky top-0 self-start">
         {BOT_SECTION_META.map(s => {
-          const isActive = activeBotSection === s.id;
-          const isConsolidee = s.id === "vue_consolidee_bot";
+          const isActive = activeAnchor === s.id;
+          const Icon = s.icon;
           return (
-            <button key={s.id} onClick={() => setActiveBotSection(s.id)} className={cn(
+            <button key={s.id} onClick={() => scrollToSection(s.id)} className={cn(
               "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
-              isActive ? "bg-violet-50 border border-violet-200 shadow-sm" : "hover:bg-gray-50 border border-transparent",
-              isConsolidee && !isActive && "bg-gradient-to-r from-violet-50/50 to-blue-50/50 border-violet-100/50"
+              isActive ? "bg-violet-50 border border-violet-200 shadow-sm" : "hover:bg-gray-50 border border-transparent"
             )}>
               <div className="flex items-center gap-1.5">
-                <span className={cn("text-[9px] font-bold flex-1 leading-tight", isActive ? "text-violet-700" : "text-gray-700")}>{s.label}</span>
+                <Icon className={cn("h-3.5 w-3.5 shrink-0", isActive ? "text-violet-500" : "text-gray-400")} />
+                <span className={cn("text-[10px] font-bold flex-1 leading-tight", isActive ? "text-violet-700" : "text-gray-700")}>{s.label}</span>
                 {isActive && <ChevronRight className="h-3.5 w-3.5 text-violet-400" />}
               </div>
             </button>
           );
         })}
       </div>
-      <div className="flex-1 min-w-0">
-        {activeBotSection === "vue_consolidee_bot" && <VueConsolideeBot botCode={botCode} />}
-        {activeBotSection === "trisociation" && <BotTrisociationSection botCode={botCode} />}
-        {activeBotSection === "skills_profil" && <BotSkillsSection botCode={botCode} />}
-        {activeBotSection === "apis_connexions" && <BotApisSection botCode={botCode} />}
-        {activeBotSection === "performance_bot" && <BotPerformanceSection botCode={botCode} />}
-        {activeBotSection === "objectifs_missions" && (
-          <Card className="p-0 overflow-hidden rounded-xl shadow-sm">
-            <div className="bg-gradient-to-r from-violet-600 to-violet-500 px-4 py-3 flex items-center gap-2">
-              <Target className="h-4 w-4 text-white" />
-              <span className="text-sm font-bold text-white flex-1">Objectifs & Missions</span>
-              <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/20 text-white font-bold">Agent IA</span>
+      <div className="flex-1 min-w-0 space-y-4">
+        {/* ── HERO — Photo + Mission ── */}
+        <div className={cn("relative bg-gradient-to-r rounded-xl overflow-hidden", gradient)}>
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="relative flex items-center gap-4 p-4">
+            <img src={avatar} alt={display.name} className="w-20 h-20 rounded-xl object-cover border-2 border-white/30 shadow-lg shrink-0" />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-lg font-bold text-white">{display.name}</h3>
+                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white">{display.role}</span>
+                <span className="flex items-center gap-1 text-[9px] font-medium text-emerald-200">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]" />
+                  Actif
+                </span>
+              </div>
+              <p className="text-xs text-white/90 leading-relaxed">{missions.mission}</p>
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/15 text-white font-medium">{display.dept}</span>
+                <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/15 text-white font-medium">{profile.style}</span>
+                <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/15 text-white font-medium">{cap.tachesCount} taches/mois</span>
+              </div>
             </div>
-            <div className="p-4 space-y-3">
-              {["Mission principale de l'agent", "Objectif ce trimestre", "Tâches actives assignées", "Chantiers en responsabilité", "KPI cible à atteindre"].map(f => (
-                <div key={f}>
-                  <label className="text-xs font-medium text-gray-700 mb-1 block">{f}</label>
-                  <textarea className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-800 resize-none focus:outline-none focus:ring-2 focus:ring-violet-300 focus:border-violet-300 min-h-[60px]" rows={2} placeholder={`${f}...`} />
+          </div>
+        </div>
+
+        {/* ── VUE D'ENSEMBLE ── */}
+        <div id="sec-overview" className="space-y-3">
+          {/* VITAA + Profil Psychometrique côte à côte */}
+          <div className="grid grid-cols-2 gap-3">
+            <VitaaTable data={vitaa} title={`VITAA — ${display.name}`} />
+            <div className="border rounded-xl overflow-hidden shadow-sm">
+              <div className="bg-gradient-to-r from-gray-700 to-gray-600 px-3 py-2 flex items-center gap-1.5">
+                <Star className="h-3.5 w-3.5 text-white" />
+                <span className="text-[9px] font-bold uppercase tracking-wider text-white flex-1">Profil Psychometrique</span>
+                <span className="text-[9px] bg-white/20 text-white px-2 py-0.5 rounded-full">{profile.style}</span>
+              </div>
+              <div className="p-2.5 space-y-2">
+                {Object.entries(profile.scores).map(([key, val]) => (
+                  <div key={key}>
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="text-[9px] font-medium text-gray-600">{SCORE_LABELS[key] || key}</span>
+                      <span className={cn("text-[9px] font-bold", val >= 80 ? "text-emerald-600" : val >= 60 ? "text-blue-600" : "text-gray-500")}>{val}/100</span>
+                    </div>
+                    <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className={cn("h-full rounded-full", SCORE_COLORS[key] || "bg-gray-400")} style={{ width: `${val}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* 4 KPIs */}
+          <div className="grid grid-cols-4 gap-3">
+            {kpis.map(k => {
+              const Icon = k.icon;
+              return (
+                <Card key={k.label} className="p-0 overflow-hidden">
+                  <div className={cn("flex items-center gap-2 px-3 py-2 bg-gradient-to-r", k.gradient)}>
+                    <Icon className="h-4 w-4 text-white" />
+                    <span className="text-sm font-bold text-white">{k.label}</span>
+                  </div>
+                  <div className="px-3 py-2">
+                    <div className={cn("text-2xl font-bold", k.color)}>{k.value}</div>
+                    <div className="text-[10px] text-gray-500">{k.sub}</div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+
+          {/* ROI compact + Objectifs côte à côte */}
+          <div className="grid grid-cols-2 gap-3">
+            {/* ROI small box */}
+            <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
+              <div className="bg-gradient-to-r from-gray-700 to-gray-600 px-3 py-2 flex items-center gap-1.5">
+                <DollarSign className="h-3.5 w-3.5 text-white" />
+                <span className="text-[9px] font-bold uppercase tracking-wider text-white">ROI — Equiv. Humain</span>
+              </div>
+              <div className="p-3 flex items-center gap-3">
+                <div className="flex-1">
+                  <div className="text-[9px] text-gray-500 uppercase font-bold">Agent IA</div>
+                  <div className="text-xl font-bold text-emerald-600">{cap.coutIA}/mois</div>
+                  <div className="text-[9px] text-gray-400">{cap.tachesCount} taches · {cap.heuresMois}</div>
                 </div>
-              ))}
-            </div>
-          </Card>
-        )}
-        {activeBotSection === "reglages_bot" && (
-          <Card className="p-0 overflow-hidden rounded-xl shadow-sm">
-            <div className="bg-gradient-to-r from-gray-700 to-gray-600 px-4 py-3 flex items-center gap-2">
-              <Settings className="h-4 w-4 text-white" />
-              <span className="text-sm font-bold text-white flex-1">Réglages</span>
-            </div>
-            <div className="p-4 space-y-3">
-              {["Température (créativité 0.0 → 1.0)", "Max tokens par réponse", "Mode décision par défaut", "Langue principale", "Tonalité (formel / conversationnel)", "Auto-escalade vers le CEO (seuil)"].map(f => (
-                <div key={f}>
-                  <label className="text-xs font-medium text-gray-700 mb-1 block">{f}</label>
-                  <textarea className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-800 resize-none focus:outline-none focus:ring-2 focus:ring-violet-300 focus:border-violet-300 min-h-[60px]" rows={2} placeholder={`${f}...`} />
+                <div className="text-lg font-bold text-gray-300">vs</div>
+                <div className="flex-1">
+                  <div className="text-[9px] text-gray-500 uppercase font-bold">{cap.equivHumain}</div>
+                  <div className="text-xl font-bold text-red-500">{cap.coutHumain}/an</div>
+                  <div className="text-[9px] text-gray-400">Meme scope</div>
                 </div>
-              ))}
-            </div>
-          </Card>
-        )}
+              </div>
+            </Card>
+
+            {/* Objectifs */}
+            <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
+              <div className="bg-gradient-to-r from-gray-700 to-gray-600 px-3 py-2 flex items-center gap-1.5">
+                <Target className="h-3.5 w-3.5 text-white" />
+                <span className="text-[9px] font-bold uppercase tracking-wider text-white flex-1">Objectifs</span>
+                <span className="text-[9px] bg-white/20 text-white px-2 py-0.5 rounded-full">{missions.objectifs.length} actifs</span>
+              </div>
+              <div className="p-2.5 space-y-2">
+                {missions.objectifs.map((obj, i) => (
+                  <div key={i}>
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="text-[9px] font-medium text-gray-800 truncate flex-1 mr-2">{obj.label}</span>
+                      <span className={cn("text-[9px] font-bold shrink-0", obj.progres >= 75 ? "text-emerald-600" : obj.progres >= 50 ? "text-blue-600" : "text-amber-600")}>{obj.progres}%</span>
+                    </div>
+                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className={cn("h-full rounded-full", obj.progres >= 75 ? "bg-emerald-500" : obj.progres >= 50 ? "bg-blue-500" : "bg-amber-500")} style={{ width: `${obj.progres}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+
+        </div>
+
+        {/* ── OUTILS & CONNEXIONS ── */}
+        <div id="sec-outils">
+          <BotApisSection botCode={botCode} />
+        </div>
+
+        {/* ── CONFIGURATION ── */}
+        <div id="sec-config">
+          <BotConfigSection botCode={botCode} />
+        </div>
       </div>
     </div>
   );
@@ -1226,7 +2271,7 @@ function VueConsolidee({ tier }: { tier: SizeTier }) {
                   <div className={cn("w-5 h-5 rounded flex items-center justify-center text-white text-[9px] font-bold shrink-0", p.color)}>{p.letter}</div>
                   <span className="text-[9px] font-medium text-gray-800 flex-1">{p.label}</span>
                   <span className={cn("text-xs font-bold", p.score >= 50 ? "text-green-600" : p.score >= 35 ? "text-amber-600" : "text-red-600")}>{p.score}</span>
-                  <span className={cn("text-[8px] px-1 py-0.5 rounded border font-medium",
+                  <span className={cn("text-[9px] px-1 py-0.5 rounded border font-medium",
                     p.score < 35 ? "text-red-600 bg-red-50 border-red-200" :
                     p.score < 50 ? "text-amber-600 bg-amber-50 border-amber-200" :
                     "text-green-600 bg-green-50 border-green-200"
@@ -1264,10 +2309,10 @@ function VueConsolidee({ tier }: { tier: SizeTier }) {
                   <div className={cn("w-5 h-5 rounded flex items-center justify-center text-white text-[9px] font-bold shrink-0", p.color)}>{p.letter}</div>
                   <div className="flex-1 min-w-0">
                     <span className="text-[9px] font-medium text-gray-800">{p.label}</span>
-                    <p className="text-[8px] text-gray-400 leading-tight truncate">{p.desc}</p>
+                    <p className="text-[9px] text-gray-400 leading-tight truncate">{p.desc}</p>
                   </div>
                   <span className={cn("text-xs font-bold", p.score >= 50 ? "text-green-600" : p.score >= 35 ? "text-amber-600" : "text-red-600")}>{p.score}</span>
-                  <span className={cn("text-[8px] px-1 py-0.5 rounded border font-medium",
+                  <span className={cn("text-[9px] px-1 py-0.5 rounded border font-medium",
                     p.score < 35 ? "text-red-600 bg-red-50 border-red-200" :
                     p.score < 50 ? "text-amber-600 bg-amber-50 border-amber-200" :
                     "text-green-600 bg-green-50 border-green-200"
@@ -1298,7 +2343,7 @@ function VueConsolidee({ tier }: { tier: SizeTier }) {
             <Card
               key={dept.code}
               className={cn(
-                "p-0 overflow-hidden rounded-xl shadow-sm transition-all cursor-pointer hover:shadow-md",
+                "p-0 gap-0 overflow-hidden rounded-xl shadow-sm transition-all cursor-pointer hover:shadow-md",
                 dept.gaps > 0 ? "ring-1 ring-red-200" : "",
                 isExpanded && "ring-1 ring-blue-300"
               )}
@@ -1401,6 +2446,54 @@ const CA_DEFAULT: ConseilAdmin = {
   charte: "Non", assurance_do: "Non", prochaine_reunion: "", membres: [],
 };
 
+// ── Mock data — Conseil d'Administration ──
+
+const CA_MOCK_REUNIONS = [
+  { date: "2026-03-15", type: "Trimestrielle", participants: 7, duree: "2h30", statut_pv: "Approuvé", sujet: "Bilan Q1 et orientations stratégiques" },
+  { date: "2026-01-20", type: "Extraordinaire", participants: 5, duree: "1h15", statut_pv: "Approuvé", sujet: "Approbation budget 2026" },
+  { date: "2025-12-12", type: "Trimestrielle", participants: 8, duree: "3h00", statut_pv: "Approuvé", sujet: "Bilan annuel et planification" },
+  { date: "2026-04-25", type: "Trimestrielle", participants: 0, duree: "—", statut_pv: "À venir", sujet: "Revue Q1 et croissance" },
+];
+
+const CA_MOCK_CONFERENCES = [
+  { date: "2026-03-10", sujet: "Analyse SWOT avec CarlOS", duree: "45min", bots: ["CEOB", "CSOB", "CFOB"], participants: 5 },
+  { date: "2026-02-15", sujet: "Scénario de croissance M&A", duree: "1h10", bots: ["CEOB", "CFOB", "CROB"], participants: 6 },
+  { date: "2026-01-28", sujet: "Revue technologique annuelle", duree: "55min", bots: ["CTOB", "CINOB", "CEOB"], participants: 4 },
+];
+
+const CA_MOCK_DOCUMENTS = [
+  { titre: "Charte du CA", statut: "Actif", maj: "2026-01-15", type: "Gouvernance" },
+  { titre: "Code d'éthique et de conduite", statut: "Actif", maj: "2025-11-20", type: "Éthique" },
+  { titre: "Politique D&O (Assurance)", statut: "En révision", maj: "2026-03-01", type: "Assurance" },
+  { titre: "Matrice RACI — Responsabilités CA", statut: "Brouillon", maj: "2026-02-28", type: "Opérationnel" },
+  { titre: "Politique sur les conflits d'intérêts", statut: "Actif", maj: "2025-09-10", type: "Conformité" },
+  { titre: "Règlements généraux de l'organisation", statut: "Actif", maj: "2024-06-15", type: "Juridique" },
+];
+
+const CA_BLUEPRINT_COMPLETIONS = [65, 82, 45, 73, 58, 91, 38, 70];
+
+// ── Mock data — Comités ──
+
+const COMITES_SUGGESTED_TEMPLATES = [
+  { nom: "Comité stratégique", description: "Orientations long terme, analyse compétitive, M&A", frequence: "Trimestrielle" },
+  { nom: "Comité SST", description: "Santé et sécurité au travail, conformité, prévention", frequence: "Mensuelle" },
+  { nom: "Comité R&D", description: "Innovation, prototypes, veille technologique", frequence: "Bimensuelle" },
+  { nom: "Comité finance", description: "Budget, trésorerie, investissements, audit interne", frequence: "Mensuelle" },
+  { nom: "Comité RH", description: "Recrutement, rétention, formation, culture", frequence: "Mensuelle" },
+];
+
+const COMITE_MOCK_REUNIONS = [
+  { date: "2026-03-20", type: "Régulière", participants: 5, duree: "1h30", statut_pv: "Approuvé", sujet: "Suivi des actions et objectifs Q1" },
+  { date: "2026-02-18", type: "Régulière", participants: 4, duree: "1h15", statut_pv: "Approuvé", sujet: "Bilan mensuel et ajustements" },
+  { date: "2026-01-15", type: "Spéciale", participants: 6, duree: "2h00", statut_pv: "Approuvé", sujet: "Planification annuelle 2026" },
+];
+
+const COMITE_MOCK_DOCUMENTS = [
+  { titre: "Mandat du comité", statut: "Actif", maj: "2026-01-10", type: "Gouvernance" },
+  { titre: "Procès-verbal — Mars 2026", statut: "Approuvé", maj: "2026-03-22", type: "PV" },
+  { titre: "Feuille de route 2026", statut: "En révision", maj: "2026-02-28", type: "Planification" },
+];
+
 function ConseilAdminManager({ headerGradient, data, onFieldChange, onSave, saving, dirty }: {
   headerGradient: string;
   data: Record<string, string>;
@@ -1409,6 +2502,7 @@ function ConseilAdminManager({ headerGradient, data, onFieldChange, onSave, savi
   saving: boolean;
   dirty: boolean;
 }) {
+  const [activeCASection, setActiveCASection] = useState("tableau");
   const KEY = "ca_conseil";
   const ca: ConseilAdmin = parseJSON(data[KEY] || "", CA_DEFAULT);
 
@@ -1432,253 +2526,475 @@ function ConseilAdminManager({ headerGradient, data, onFieldChange, onSave, savi
   const nbIndependants = ca.membres.filter(m => m.independant).length;
   const nbExternes = ca.membres.filter(m => m.type === "externe").length;
 
+  const CA_SECTIONS = [
+    { id: "tableau", label: "Vue d'ensemble", icon: BarChart3, meta: `${ca.membres.length} membres` },
+    { id: "membres", label: "Membres du CA", icon: Users, meta: `${ca.membres.length} actifs` },
+    { id: "reunions", label: "Réunions & PV", icon: Calendar, meta: `${CA_MOCK_REUNIONS.length} réunions` },
+    { id: "conferences", label: "Conférences AI", icon: Headphones, meta: `${CA_MOCK_CONFERENCES.length} sessions` },
+    { id: "documents", label: "Documents & Charte", icon: FileText, meta: `${CA_MOCK_DOCUMENTS.length} docs` },
+    { id: "blueprints", label: "Blueprints personnels", icon: Target, meta: `${ca.membres.length} profils` },
+    { id: "gouvernance", label: "Gouvernance", icon: Shield, meta: ca.charte === "Oui" ? "Charte active" : "À configurer" },
+    { id: "surveillance", label: "Surveillance financière", icon: DollarSign, meta: "4 indicateurs" },
+  ];
+
   return (
-    <div className="space-y-3">
-      <Card className="p-0 overflow-hidden rounded-xl shadow-sm">
-        <div className={cn("flex items-center gap-2 px-4 py-3 bg-gradient-to-r", headerGradient)}>
-          <Users className="h-4 w-4 text-white" />
-          <span className="text-sm font-bold text-white flex-1">Conseil d'administration</span>
-          <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/20 text-white font-medium">{ca.membres.length} membre{ca.membres.length !== 1 ? "s" : ""}</span>
-        </div>
-        <div className="px-4 py-3 bg-gradient-to-r from-slate-50 to-blue-50/20 border-b border-gray-100">
-          <p className="text-xs text-gray-600 leading-relaxed">
-            Le conseil d'administration est l'organe de gouvernance suprême de votre organisation. Les membres du CA ont accès à la plateforme pour suivre les résultats, participer aux réunions (Conférence AI) et recevoir les minutes automatiquement.
-          </p>
-        </div>
-      </Card>
+    <div className="flex gap-3">
+      {/* Sidebar TOC */}
+      <div className="w-[180px] shrink-0 space-y-1">
+        {CA_SECTIONS.map(s => {
+          const Icon = s.icon;
+          return (
+            <button key={s.id} onClick={() => setActiveCASection(s.id)} className={cn(
+              "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
+              activeCASection === s.id ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent"
+            )}>
+              <div className="flex items-center gap-1.5">
+                <Icon className={cn("h-3.5 w-3.5", activeCASection === s.id ? "text-blue-600" : "text-gray-400")} />
+                <span className={cn("text-[10px] font-bold leading-tight", activeCASection === s.id ? "text-blue-700" : "text-gray-700")}>{s.label}</span>
+              </div>
+              <div className="text-[9px] text-gray-400 ml-[20px]">{s.meta}</div>
+            </button>
+          );
+        })}
+      </div>
 
-      {/* KPIs rapides */}
-      {ca.membres.length > 0 && (
-        <div className="grid grid-cols-4 gap-3">
-          <Card className="p-0 overflow-hidden">
-            <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-500">
-              <Users className="h-4 w-4 text-white" />
-              <span className="text-sm font-bold text-white">Membres</span>
-            </div>
-            <div className="px-3 py-2">
-              <div className="text-2xl font-bold text-blue-600">{ca.membres.length}</div>
-              <div className="text-[9px] text-gray-400">Total CA</div>
-            </div>
-          </Card>
-          <Card className="p-0 overflow-hidden">
-            <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-emerald-600 to-emerald-500">
-              <Shield className="h-4 w-4 text-white" />
-              <span className="text-sm font-bold text-white">Indépendants</span>
-            </div>
-            <div className="px-3 py-2">
-              <div className="text-2xl font-bold text-emerald-600">{nbIndependants}</div>
-              <div className="text-[9px] text-gray-400">{ca.membres.length > 0 ? Math.round((nbIndependants / ca.membres.length) * 100) : 0}% du CA</div>
-            </div>
-          </Card>
-          <Card className="p-0 overflow-hidden">
-            <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-amber-600 to-amber-500">
-              <UserPlus className="h-4 w-4 text-white" />
-              <span className="text-sm font-bold text-white">Externes</span>
-            </div>
-            <div className="px-3 py-2">
-              <div className="text-2xl font-bold text-amber-600">{nbExternes}</div>
-              <div className="text-[9px] text-gray-400">Invités plateforme</div>
-            </div>
-          </Card>
-          <Card className="p-0 overflow-hidden">
-            <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-violet-600 to-violet-500">
-              <Briefcase className="h-4 w-4 text-white" />
-              <span className="text-sm font-bold text-white">Réunions</span>
-            </div>
-            <div className="px-3 py-2">
-              <div className="text-2xl font-bold text-violet-600">{ca.frequence || "—"}</div>
-              <div className="text-[9px] text-gray-400">{ca.format}</div>
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {/* Configuration + Membres */}
-      <Card className="p-0 overflow-hidden rounded-xl shadow-sm">
-        <div className={cn("flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-gray-700 to-gray-600")}>
-          <Settings className="h-3.5 w-3.5 text-white" />
-          <span className="text-xs font-bold text-white">Configuration du CA</span>
-        </div>
-        <div className="p-4 space-y-4">
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="text-xs font-bold text-gray-600 mb-1 block">Président(e) du CA</label>
-              <input className={inputBase} value={ca.president} onChange={e => update({ president: e.target.value })} placeholder="Nom du président(e)" />
-            </div>
-            <div>
-              <label className="text-xs font-bold text-gray-600 mb-1 block">Fréquence des réunions</label>
-              <select className={inputBase} value={ca.frequence} onChange={e => update({ frequence: e.target.value })}>
-                <option value="Mensuelle">Mensuelle</option>
-                <option value="Bimestrielle">Bimestrielle</option>
-                <option value="Trimestrielle">Trimestrielle</option>
-                <option value="Semestrielle">Semestrielle</option>
-                <option value="Annuelle">Annuelle</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-bold text-gray-600 mb-1 block">Format</label>
-              <select className={inputBase} value={ca.format} onChange={e => update({ format: e.target.value })}>
-                <option value="Conférence AI">Conférence AI</option>
-                <option value="Présentiel">Présentiel</option>
-                <option value="Hybride">Hybride</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-bold text-gray-600 mb-1 block">Prochaine réunion</label>
-              <input type="date" className={inputBase} value={ca.prochaine_reunion} onChange={e => update({ prochaine_reunion: e.target.value })} />
-            </div>
-            <div>
-              <label className="text-xs font-bold text-gray-600 mb-1 block">Charte du CA</label>
-              <select className={inputBase} value={ca.charte} onChange={e => update({ charte: e.target.value })}>
-                <option value="Oui">Oui</option>
-                <option value="En rédaction">En rédaction</option>
-                <option value="Non">Non</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-bold text-gray-600 mb-1 block">Assurance D&O</label>
-              <select className={inputBase} value={ca.assurance_do} onChange={e => update({ assurance_do: e.target.value })}>
-                <option value="Oui">Oui</option>
-                <option value="En évaluation">En évaluation</option>
-                <option value="Non">Non</option>
-              </select>
-            </div>
+      {/* Content */}
+      <div className="flex-1 min-w-0 space-y-3">
+        {/* Header card */}
+        <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
+          <div className={cn("flex items-center gap-2 px-4 py-3 bg-gradient-to-r", headerGradient)}>
+            <Users className="h-4 w-4 text-white" />
+            <span className="text-sm font-bold text-white flex-1">Conseil d'administration</span>
+            <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/20 text-white font-medium">{ca.membres.length} membre{ca.membres.length !== 1 ? "s" : ""}</span>
           </div>
-        </div>
-      </Card>
-
-      {/* Membres du CA */}
-      <Card className="p-0 overflow-hidden rounded-xl shadow-sm">
-        <div className={cn("flex items-center justify-between px-4 py-2.5 bg-gradient-to-r", headerGradient)}>
-          <div className="flex items-center gap-2">
-            <Users className="h-3.5 w-3.5 text-white" />
-            <span className="text-xs font-bold text-white">Membres du conseil ({ca.membres.length})</span>
+          <div className="px-4 py-3 bg-gradient-to-r from-slate-50 to-blue-50/20">
+            <p className="text-xs text-gray-600 leading-relaxed">
+              Le conseil d'administration est l'organe de gouvernance suprême de votre organisation. Les membres du CA ont accès à la plateforme pour suivre les résultats, participer aux réunions (Conférence AI) et recevoir les minutes automatiquement.
+            </p>
           </div>
-          <button
-            onClick={addMembre}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-bold bg-white/20 text-white hover:bg-white/30 transition-all cursor-pointer"
-          >
-            <UserPlus className="h-3.5 w-3.5" /> Ajouter un membre
+        </Card>
+
+          {/* 1. Tableau de bord */}
+          {activeCASection === "tableau" && (<>
+            <div className="grid grid-cols-4 gap-3">
+              <Card className="p-0 gap-0 overflow-hidden">
+                <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-500">
+                  <Users className="h-4 w-4 text-white" />
+                  <span className="text-sm font-bold text-white">Membres</span>
+                </div>
+                <div className="px-3 py-2">
+                  <div className="text-2xl font-bold text-blue-600">{ca.membres.length}</div>
+                  <div className="text-[9px] text-gray-400">Total CA</div>
+                </div>
+              </Card>
+              <Card className="p-0 gap-0 overflow-hidden">
+                <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-emerald-600 to-emerald-500">
+                  <Shield className="h-4 w-4 text-white" />
+                  <span className="text-sm font-bold text-white">Indépendants</span>
+                </div>
+                <div className="px-3 py-2">
+                  <div className="text-2xl font-bold text-emerald-600">{nbIndependants}</div>
+                  <div className="text-[9px] text-gray-400">{ca.membres.length > 0 ? Math.round((nbIndependants / ca.membres.length) * 100) : 0}% du CA</div>
+                </div>
+              </Card>
+              <Card className="p-0 gap-0 overflow-hidden">
+                <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-amber-600 to-amber-500">
+                  <UserPlus className="h-4 w-4 text-white" />
+                  <span className="text-sm font-bold text-white">Externes</span>
+                </div>
+                <div className="px-3 py-2">
+                  <div className="text-2xl font-bold text-amber-600">{nbExternes}</div>
+                  <div className="text-[9px] text-gray-400">Invités plateforme</div>
+                </div>
+              </Card>
+              <Card className="p-0 gap-0 overflow-hidden">
+                <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-violet-600 to-violet-500">
+                  <Briefcase className="h-4 w-4 text-white" />
+                  <span className="text-sm font-bold text-white">Réunions</span>
+                </div>
+                <div className="px-3 py-2">
+                  <div className="text-2xl font-bold text-violet-600">{ca.frequence || "—"}</div>
+                  <div className="text-[9px] text-gray-400">{ca.format}</div>
+                </div>
+              </Card>
+            </div>
+            <Card className="p-4 rounded-xl shadow-sm">
+              <div className="grid grid-cols-3 gap-4">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-3.5 w-3.5 text-gray-400" />
+                  <div>
+                    <div className="text-[9px] text-gray-400">Prochaine réunion</div>
+                    <div className="text-xs font-bold text-gray-700">{ca.prochaine_reunion || "Non planifiée"}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <FileText className="h-3.5 w-3.5 text-gray-400" />
+                  <div>
+                    <div className="text-[9px] text-gray-400">Charte du CA</div>
+                    <div className="text-xs font-bold text-gray-700">{ca.charte}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Shield className="h-3.5 w-3.5 text-gray-400" />
+                  <div>
+                    <div className="text-[9px] text-gray-400">Assurance D&O</div>
+                    <div className="text-xs font-bold text-gray-700">{ca.assurance_do}</div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </>)}
+
+          {/* 2. Membres du CA */}
+          {activeCASection === "membres" && (
+            <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
+              <div className={cn("flex items-center justify-between px-4 py-2.5 bg-gradient-to-r", headerGradient)}>
+                <div className="flex items-center gap-2">
+                  <Users className="h-3.5 w-3.5 text-white" />
+                  <span className="text-xs font-bold text-white">Membres du conseil ({ca.membres.length})</span>
+                </div>
+                <button onClick={addMembre} className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-bold bg-white/20 text-white hover:bg-white/30 transition-all cursor-pointer">
+                  <UserPlus className="h-3.5 w-3.5" /> Ajouter un membre
+                </button>
+              </div>
+              <div className="p-4">
+                {ca.membres.length === 0 ? (
+                  <div className="text-center py-8 border border-dashed border-gray-200 rounded-lg">
+                    <Users className="h-6 w-6 text-gray-200 mx-auto mb-2" />
+                    <p className="text-xs text-gray-400 mb-3">Aucun membre au conseil d'administration</p>
+                    <button onClick={addMembre} className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 cursor-pointer transition-all mx-auto">
+                      <UserPlus className="h-3.5 w-3.5" /> Ajouter le premier membre
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {ca.membres.map((m, idx) => (
+                      <div key={idx} className={cn("rounded-lg border px-3 py-3 group transition-all", m.type === "externe" ? "border-amber-200 bg-amber-50/30" : "border-gray-200 bg-white")}>
+                        <div className="grid grid-cols-6 gap-2 items-center">
+                          <div>
+                            <label className="text-[9px] text-gray-400 block mb-0.5">Nom</label>
+                            <input className="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white" value={m.nom} onChange={e => updateMembre(idx, { nom: e.target.value })} placeholder="Nom complet" />
+                          </div>
+                          <div>
+                            <label className="text-[9px] text-gray-400 block mb-0.5">Rôle au CA</label>
+                            <input className="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white" value={m.titre} onChange={e => updateMembre(idx, { titre: e.target.value })} placeholder="Président, Secrétaire..." />
+                          </div>
+                          <div>
+                            <label className="text-[9px] text-gray-400 block mb-0.5">Expertise</label>
+                            <input className="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white" value={m.expertise} onChange={e => updateMembre(idx, { expertise: e.target.value })} placeholder="Finance, Juridique..." />
+                          </div>
+                          <div>
+                            <label className="text-[9px] text-gray-400 block mb-0.5">Courriel</label>
+                            <input className="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white" value={m.courriel} onChange={e => updateMembre(idx, { courriel: e.target.value })} placeholder="courriel@..." />
+                          </div>
+                          <div className="flex gap-2">
+                            <div className="flex-1">
+                              <label className="text-[9px] text-gray-400 block mb-0.5">Type</label>
+                              <select className="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white" value={m.type} onChange={e => updateMembre(idx, { type: e.target.value as "interne" | "externe" })}>
+                                <option value="interne">Interne</option>
+                                <option value="externe">Externe</option>
+                              </select>
+                            </div>
+                            <div className="flex-1">
+                              <label className="text-[9px] text-gray-400 block mb-0.5">Indépendant</label>
+                              <select className="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white" value={m.independant ? "oui" : "non"} onChange={e => updateMembre(idx, { independant: e.target.value === "oui" })}>
+                                <option value="oui">Oui</option>
+                                <option value="non">Non</option>
+                              </select>
+                            </div>
+                          </div>
+                          <div className="flex items-end gap-2">
+                            <div className="flex-1">
+                              <label className="text-[9px] text-gray-400 block mb-0.5">Membre depuis</label>
+                              <input type="date" className="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white" value={m.depuis} onChange={e => updateMembre(idx, { depuis: e.target.value })} />
+                            </div>
+                            <button onClick={() => removeMembre(idx)} className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-400 transition-all cursor-pointer shrink-0 pb-1">
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {ca.membres.some(m => m.type === "externe") && (
+                  <div className="mt-3 flex items-start gap-2 bg-amber-50 rounded-lg px-3 py-2 border border-amber-200/50">
+                    <Info className="h-3.5 w-3.5 text-amber-500 mt-0.5 shrink-0" />
+                    <p className="text-[9px] text-amber-700 leading-relaxed">
+                      Les membres externes recevront une invitation par courriel pour accéder à la plateforme Brain Team en tant qu'administrateur invité. Ils pourront consulter les résultats, participer aux Conférences AI du CA et recevoir les minutes automatiquement.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </Card>
+          )}
+
+          {/* 3. Réunions & PV */}
+          {activeCASection === "reunions" && (<>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-gray-600">Historique des réunions</span>
+              <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-bold bg-blue-600 text-white hover:bg-blue-700 cursor-pointer transition-all">
+                <Plus className="h-3.5 w-3.5" /> Planifier une réunion
+              </button>
+            </div>
+            <div className="space-y-2">
+              {CA_MOCK_REUNIONS.map((r, i) => (
+                <Card key={i} className="px-4 py-3 rounded-xl shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="text-center min-w-[80px]">
+                        <div className="text-xs font-bold text-gray-700">{r.date}</div>
+                        <div className="text-[9px] text-gray-400">{r.duree}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-gray-700">{r.sujet}</div>
+                        <div className="text-[9px] text-gray-400">{r.type} · {r.participants} participants</div>
+                      </div>
+                    </div>
+                    <span className={cn(
+                      "text-[9px] font-bold px-2 py-0.5 rounded-full shrink-0",
+                      r.statut_pv === "Approuvé" ? "bg-emerald-50 text-emerald-700" :
+                      r.statut_pv === "À venir" ? "bg-blue-50 text-blue-600" :
+                      "bg-amber-50 text-amber-700"
+                    )}>{r.statut_pv}</span>
+                  </div>
+                </Card>
+              ))}
+            </div>
+            <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg border border-blue-100">
+              <Sparkles className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+              <p className="text-[9px] text-blue-700">Brain Team peut générer automatiquement les procès-verbaux de vos réunions à partir des transcriptions de Conférence AI.</p>
+            </div>
+          </>)}
+
+          {/* 4. Conférences AI */}
+          {activeCASection === "conferences" && (<>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-gray-600">Conférences AI du board</span>
+              <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-bold bg-blue-600 text-white hover:bg-blue-700 cursor-pointer transition-all">
+                <Headphones className="h-3.5 w-3.5" /> Lancer une Conférence AI
+              </button>
+            </div>
+            <Card className="p-4 rounded-xl shadow-sm bg-gradient-to-r from-violet-50 to-blue-50/30 border border-violet-100">
+              <div className="flex items-start gap-3">
+                <Bot className="h-5 w-5 text-violet-500 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-xs font-bold text-violet-700 mb-1">Conférence AI pour le CA</p>
+                  <p className="text-[9px] text-violet-600 leading-relaxed">Brain Team peut animer des sessions de conseil d'administration avec vos bots spécialisés (CEO, CFO, CSO...). Chaque bot apporte son expertise unique pour enrichir les discussions stratégiques.</p>
+                </div>
+              </div>
+            </Card>
+            <div className="space-y-2">
+              {CA_MOCK_CONFERENCES.map((c, i) => (
+                <Card key={i} className="px-4 py-3 rounded-xl shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="text-center min-w-[80px]">
+                        <div className="text-xs font-bold text-gray-700">{c.date}</div>
+                        <div className="text-[9px] text-gray-400">{c.duree}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-gray-700">{c.sujet}</div>
+                        <div className="text-[9px] text-gray-400">{c.participants} participants · Bots: {c.bots.join(", ")}</div>
+                      </div>
+                    </div>
+                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 shrink-0">Terminée</span>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </>)}
+
+          {/* 5. Documents & Charte */}
+          {activeCASection === "documents" && (<>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-gray-600">Documents de gouvernance</span>
+              <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-bold bg-blue-600 text-white hover:bg-blue-700 cursor-pointer transition-all">
+                <Sparkles className="h-3.5 w-3.5" /> Générer un document avec AI
+              </button>
+            </div>
+            <div className="space-y-2">
+              {CA_MOCK_DOCUMENTS.map((d, i) => (
+                <Card key={i} className="px-4 py-3 rounded-xl shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-xs font-bold text-gray-700">{d.titre}</div>
+                      <div className="text-[9px] text-gray-400">{d.type} · Dernière MAJ: {d.maj}</div>
+                    </div>
+                    <span className={cn(
+                      "text-[9px] font-bold px-2 py-0.5 rounded-full shrink-0",
+                      d.statut === "Actif" ? "bg-emerald-50 text-emerald-700" :
+                      d.statut === "En révision" ? "bg-amber-50 text-amber-700" :
+                      "bg-gray-100 text-gray-500"
+                    )}>{d.statut}</span>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </>)}
+
+          {/* 6. Blueprints personnels */}
+          {activeCASection === "blueprints" && (<>
+            <Card className="p-4 rounded-xl shadow-sm bg-gradient-to-r from-blue-50 to-indigo-50/30 border border-blue-100">
+              <div className="flex items-start gap-3">
+                <Target className="h-5 w-5 text-blue-500 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-xs font-bold text-blue-700 mb-1">Blueprints personnels du CA</p>
+                  <p className="text-[9px] text-blue-600 leading-relaxed">Chaque administrateur complète son blueprint personnel pour aligner ses intentions et compétences avec la croissance de l'organisation. Ce processus est guidé par Brain Team.</p>
+                </div>
+              </div>
+            </Card>
+            {ca.membres.length === 0 ? (
+              <div className="text-center py-8 border border-dashed border-gray-200 rounded-lg">
+                <Target className="h-6 w-6 text-gray-200 mx-auto mb-2" />
+                <p className="text-xs text-gray-400">Ajoutez des membres au CA pour voir leurs blueprints personnels</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                {ca.membres.map((m, i) => {
+                  const completion = CA_BLUEPRINT_COMPLETIONS[i % CA_BLUEPRINT_COMPLETIONS.length];
+                  return (
+                    <Card key={i} className="px-4 py-3 rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-all">
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <div className="text-xs font-bold text-gray-700">{m.nom || "Sans nom"}</div>
+                          <div className="text-[9px] text-gray-400">{m.titre || "Membre du CA"}</div>
+                        </div>
+                        <span className={cn("text-xs font-bold", completion >= 75 ? "text-emerald-600" : completion >= 50 ? "text-amber-600" : "text-red-500")}>{completion}%</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div className={cn("h-full rounded-full transition-all", completion >= 75 ? "bg-emerald-500" : completion >= 50 ? "bg-amber-400" : "bg-red-400")} style={{ width: `${completion}%` }} />
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </>)}
+
+          {/* 7. Gouvernance */}
+          {activeCASection === "gouvernance" && (
+            <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
+              <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-gray-700 to-gray-600">
+                <Settings className="h-3.5 w-3.5 text-white" />
+                <span className="text-xs font-bold text-white">Configuration du CA</span>
+              </div>
+              <div className="p-4 space-y-4">
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-xs font-bold text-gray-600 mb-1 block">Président(e) du CA</label>
+                    <input className={inputBase} value={ca.president} onChange={e => update({ president: e.target.value })} placeholder="Nom du président(e)" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-600 mb-1 block">Fréquence des réunions</label>
+                    <select className={inputBase} value={ca.frequence} onChange={e => update({ frequence: e.target.value })}>
+                      <option value="Mensuelle">Mensuelle</option>
+                      <option value="Bimestrielle">Bimestrielle</option>
+                      <option value="Trimestrielle">Trimestrielle</option>
+                      <option value="Semestrielle">Semestrielle</option>
+                      <option value="Annuelle">Annuelle</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-600 mb-1 block">Format</label>
+                    <select className={inputBase} value={ca.format} onChange={e => update({ format: e.target.value })}>
+                      <option value="Conférence AI">Conférence AI</option>
+                      <option value="Présentiel">Présentiel</option>
+                      <option value="Hybride">Hybride</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-600 mb-1 block">Prochaine réunion</label>
+                    <input type="date" className={inputBase} value={ca.prochaine_reunion} onChange={e => update({ prochaine_reunion: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-600 mb-1 block">Charte du CA</label>
+                    <select className={inputBase} value={ca.charte} onChange={e => update({ charte: e.target.value })}>
+                      <option value="Oui">Oui</option>
+                      <option value="En rédaction">En rédaction</option>
+                      <option value="Non">Non</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-600 mb-1 block">Assurance D&O</label>
+                    <select className={inputBase} value={ca.assurance_do} onChange={e => update({ assurance_do: e.target.value })}>
+                      <option value="Oui">Oui</option>
+                      <option value="En évaluation">En évaluation</option>
+                      <option value="Non">Non</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {/* 8. Surveillance financière */}
+          {activeCASection === "surveillance" && (<>
+            <div className="grid grid-cols-4 gap-3">
+              <Card className="p-0 gap-0 overflow-hidden">
+                <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-emerald-600 to-emerald-500">
+                  <DollarSign className="h-4 w-4 text-white" />
+                  <span className="text-sm font-bold text-white">Revenu YTD</span>
+                </div>
+                <div className="px-3 py-2">
+                  <div className="text-2xl font-bold text-emerald-600">2.4M$</div>
+                  <div className="text-[9px] text-gray-400">+12% vs objectif</div>
+                </div>
+              </Card>
+              <Card className="p-0 gap-0 overflow-hidden">
+                <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-500">
+                  <TrendingUp className="h-4 w-4 text-white" />
+                  <span className="text-sm font-bold text-white">EBITDA</span>
+                </div>
+                <div className="px-3 py-2">
+                  <div className="text-2xl font-bold text-blue-600">18.5%</div>
+                  <div className="text-[9px] text-gray-400">Marge opérationnelle</div>
+                </div>
+              </Card>
+              <Card className="p-0 gap-0 overflow-hidden">
+                <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-violet-600 to-violet-500">
+                  <Activity className="h-4 w-4 text-white" />
+                  <span className="text-sm font-bold text-white">Cash Flow</span>
+                </div>
+                <div className="px-3 py-2">
+                  <div className="text-2xl font-bold text-violet-600">+340K$</div>
+                  <div className="text-[9px] text-gray-400">Flux de trésorerie</div>
+                </div>
+              </Card>
+              <Card className="p-0 gap-0 overflow-hidden">
+                <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-amber-600 to-amber-500">
+                  <Shield className="h-4 w-4 text-white" />
+                  <span className="text-sm font-bold text-white">Ratio dette</span>
+                </div>
+                <div className="px-3 py-2">
+                  <div className="text-2xl font-bold text-amber-600">1.8x</div>
+                  <div className="text-[9px] text-gray-400">Dette/EBITDA</div>
+                </div>
+              </Card>
+            </div>
+            <Card className="p-4 rounded-xl shadow-sm bg-gradient-to-r from-emerald-50 to-blue-50/20 border border-emerald-100">
+              <div className="flex items-start gap-3">
+                <DollarSign className="h-5 w-5 text-emerald-500 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-xs font-bold text-emerald-700 mb-1">Surveillance financière automatisée</p>
+                  <p className="text-[9px] text-emerald-600 leading-relaxed">Ce tableau de bord est alimenté automatiquement par les données de votre département Finance. Les administrateurs du CA peuvent suivre la santé financière en temps réel.</p>
+                </div>
+              </div>
+            </Card>
+          </>)}
+
+        {/* Save */}
+        <div className="flex items-center justify-between pt-1">
+          <span className="text-[9px] text-gray-400">{dirty ? "Modifications non sauvegardées" : "À jour"}</span>
+          <button onClick={onSave} disabled={saving || !dirty} className={cn(
+            "flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all",
+            dirty ? "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer" : "bg-gray-100 text-gray-400 cursor-not-allowed"
+          )}>
+            {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+            {saving ? "Sauvegarde..." : "Sauvegarder"}
           </button>
         </div>
 
-        <div className="p-4">
-          {ca.membres.length === 0 ? (
-            <div className="text-center py-8 border border-dashed border-gray-200 rounded-lg">
-              <Users className="h-6 w-6 text-gray-200 mx-auto mb-2" />
-              <p className="text-xs text-gray-400 mb-3">Aucun membre au conseil d'administration</p>
-              <button
-                onClick={addMembre}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 cursor-pointer transition-all mx-auto"
-              >
-                <UserPlus className="h-3.5 w-3.5" /> Ajouter le premier membre
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {ca.membres.map((m, idx) => (
-                <div key={idx} className={cn(
-                  "rounded-lg border px-3 py-3 group transition-all",
-                  m.type === "externe" ? "border-amber-200 bg-amber-50/30" : "border-gray-200 bg-white"
-                )}>
-                  <div className="grid grid-cols-6 gap-2 items-center">
-                    <div>
-                      <label className="text-[9px] text-gray-400 block mb-0.5">Nom</label>
-                      <input
-                        className="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white"
-                        value={m.nom} onChange={e => updateMembre(idx, { nom: e.target.value })} placeholder="Nom complet"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[9px] text-gray-400 block mb-0.5">Rôle au CA</label>
-                      <input
-                        className="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white"
-                        value={m.titre} onChange={e => updateMembre(idx, { titre: e.target.value })} placeholder="Président, Secrétaire..."
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[9px] text-gray-400 block mb-0.5">Expertise</label>
-                      <input
-                        className="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white"
-                        value={m.expertise} onChange={e => updateMembre(idx, { expertise: e.target.value })} placeholder="Finance, Juridique..."
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[9px] text-gray-400 block mb-0.5">Courriel</label>
-                      <input
-                        className="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white"
-                        value={m.courriel} onChange={e => updateMembre(idx, { courriel: e.target.value })} placeholder="courriel@..."
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <div className="flex-1">
-                        <label className="text-[9px] text-gray-400 block mb-0.5">Type</label>
-                        <select
-                          className="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white"
-                          value={m.type} onChange={e => updateMembre(idx, { type: e.target.value as "interne" | "externe" })}
-                        >
-                          <option value="interne">Interne</option>
-                          <option value="externe">Externe</option>
-                        </select>
-                      </div>
-                      <div className="flex-1">
-                        <label className="text-[9px] text-gray-400 block mb-0.5">Indépendant</label>
-                        <select
-                          className="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white"
-                          value={m.independant ? "oui" : "non"} onChange={e => updateMembre(idx, { independant: e.target.value === "oui" })}
-                        >
-                          <option value="oui">Oui</option>
-                          <option value="non">Non</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div className="flex items-end gap-2">
-                      <div className="flex-1">
-                        <label className="text-[9px] text-gray-400 block mb-0.5">Membre depuis</label>
-                        <input
-                          type="date"
-                          className="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white"
-                          value={m.depuis} onChange={e => updateMembre(idx, { depuis: e.target.value })}
-                        />
-                      </div>
-                      <button
-                        onClick={() => removeMembre(idx)}
-                        className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-400 transition-all cursor-pointer shrink-0 pb-1"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {ca.membres.some(m => m.type === "externe") && (
-            <div className="mt-3 flex items-start gap-2 bg-amber-50 rounded-lg px-3 py-2 border border-amber-200/50">
-              <Info className="h-3.5 w-3.5 text-amber-500 mt-0.5 shrink-0" />
-              <p className="text-[9px] text-amber-700 leading-relaxed">
-                Les membres externes recevront une invitation par courriel pour accéder à la plateforme GhostX en tant qu'administrateur invité. Ils pourront consulter les résultats de l'organisation, participer aux Conférences AI du CA et recevoir les minutes automatiquement.
-              </p>
-            </div>
-          )}
-        </div>
-      </Card>
-
-      {/* Save */}
-      <div className="flex items-center justify-between pt-1">
-        <span className="text-[9px] text-gray-400">{dirty ? "Modifications non sauvegardées" : "À jour"}</span>
-        <button
-          onClick={onSave}
-          disabled={saving || !dirty}
-          className={cn(
-            "flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all",
-            dirty ? "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer" : "bg-gray-100 text-gray-400 cursor-not-allowed"
-          )}
-        >
-          {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-          {saving ? "Sauvegarde..." : "Sauvegarder"}
-        </button>
       </div>
     </div>
   );
@@ -1763,109 +3079,195 @@ function ComitesManager({ botCode, deptLabel, headerGradient, data, onFieldChang
     updateComite(comiteId, { membres: c.membres.map((m, i) => i === idx ? { ...m, ...patch } : m) });
   };
 
+  const [showOverview, setShowOverview] = useState(true);
+  const [comiteTab, setComiteTab] = useState<"config" | "participants" | "reunions" | "documents">("config");
   const active = comites.find(c => c.id === activeComite);
   const inputBase = "w-full text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent bg-white";
 
+  const COMITE_TABS = [
+    { id: "config" as const, label: "Config" },
+    { id: "participants" as const, label: "Participants" },
+    { id: "reunions" as const, label: "Réunions" },
+    { id: "documents" as const, label: "Documents" },
+  ];
+
+  const totalParticipants = comites.reduce((sum, c) => sum + c.membres.length, 0);
+
   return (
-    <div className="space-y-3">
-      <Card className="p-0 overflow-hidden rounded-xl shadow-sm">
-        <div className={cn("flex items-center gap-2 px-4 py-3 bg-gradient-to-r", headerGradient)}>
-          <Briefcase className="h-4 w-4 text-white" />
-          <span className="text-sm font-bold text-white flex-1">Comités — {deptLabel}</span>
-          <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/20 text-white font-medium">{comites.length} comité{comites.length !== 1 ? "s" : ""}</span>
-        </div>
-        <div className="px-4 py-3 bg-gradient-to-r from-slate-50 to-blue-50/20 border-b border-gray-100">
-          <p className="text-xs text-gray-600 leading-relaxed">
-            Créez et gérez les comités liés au département {deptLabel}. Chaque comité peut avoir des participants internes (employés) et externes (invités), avec la possibilité de lancer des Conférences AI et de distribuer les minutes automatiquement.
-          </p>
-        </div>
-      </Card>
+    <div className="flex gap-3">
+      {/* Sidebar — Vue d'ensemble + liste des comités */}
+      <div className="w-[180px] shrink-0 space-y-1">
+        {/* Vue d'ensemble */}
+        <button onClick={() => { setShowOverview(true); setActiveComite(null); }} className={cn(
+          "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
+          showOverview && !activeComite ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent"
+        )}>
+          <div className="flex items-center gap-1.5">
+            <BarChart3 className={cn("h-3.5 w-3.5", showOverview && !activeComite ? "text-blue-600" : "text-gray-400")} />
+            <span className={cn("text-[10px] font-bold leading-tight", showOverview && !activeComite ? "text-blue-700" : "text-gray-700")}>Vue d'ensemble</span>
+          </div>
+          <div className="text-[9px] text-gray-400 ml-[20px]">{comites.length} comités</div>
+        </button>
 
-      <div className="flex gap-3">
-        {/* Sidebar — liste des comités */}
-        <div className="w-[180px] shrink-0 space-y-1">
-          {comites.map(c => (
-            <button
-              key={c.id}
-              onClick={() => setActiveComite(c.id)}
-              className={cn(
-                "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer group",
-                activeComite === c.id
-                  ? "bg-blue-50 border border-blue-200 shadow-sm"
-                  : "hover:bg-gray-50 border border-transparent"
-              )}
-            >
-              <div className="flex items-center gap-1.5">
-                <span className={cn("text-[9px] font-bold flex-1 leading-tight truncate", activeComite === c.id ? "text-blue-700" : "text-gray-700")}>
-                  {c.nom || "Nouveau comité"}
-                </span>
-                <button
-                  onClick={e => { e.stopPropagation(); removeComite(c.id); }}
-                  className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-400 transition-all cursor-pointer"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
+        {/* Séparateur */}
+        {comites.length > 0 && <div className="border-t border-gray-100 my-1" />}
+
+        {/* Liste comités */}
+        {comites.map(c => (
+          <button key={c.id} onClick={() => { setActiveComite(c.id); setShowOverview(false); setComiteTab("config"); }} className={cn(
+            "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer group",
+            activeComite === c.id && !showOverview ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent"
+          )}>
+            <div className="flex items-center gap-1.5">
+              <span className={cn("text-[10px] font-bold flex-1 leading-tight truncate", activeComite === c.id && !showOverview ? "text-blue-700" : "text-gray-700")}>
+                {c.nom || "Nouveau comité"}
+              </span>
+              <button onClick={e => { e.stopPropagation(); removeComite(c.id); }} className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-400 transition-all cursor-pointer">
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-[9px] text-gray-400">{c.membres.length} membre{c.membres.length !== 1 ? "s" : ""}</span>
+              <span className="text-[9px] text-gray-300">·</span>
+              <span className="text-[9px] text-gray-400">{c.frequence}</span>
+            </div>
+          </button>
+        ))}
+
+        {/* Bouton ajouter */}
+        <button onClick={addComite} className="w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer hover:bg-gray-50 border border-dashed border-gray-200 mt-1">
+          <div className="flex items-center gap-1.5">
+            <Plus className="h-3.5 w-3.5 text-gray-400" />
+            <span className="text-[10px] font-bold text-gray-400">Nouveau comité</span>
+          </div>
+        </button>
+      </div>
+
+      {/* Contenu */}
+      <div className="flex-1 min-w-0 space-y-3">
+        {/* Header card */}
+        <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
+          <div className={cn("flex items-center gap-2 px-4 py-3 bg-gradient-to-r", headerGradient)}>
+            <Briefcase className="h-4 w-4 text-white" />
+            <span className="text-sm font-bold text-white flex-1">Comités — {deptLabel}</span>
+            <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/20 text-white font-medium">{comites.length} comité{comites.length !== 1 ? "s" : ""}</span>
+          </div>
+          <div className="px-4 py-3 bg-gradient-to-r from-slate-50 to-blue-50/20">
+            <p className="text-xs text-gray-600 leading-relaxed">
+              Créez et gérez les comités liés au département {deptLabel}. Chaque comité peut avoir des participants internes (employés) et externes (invités), avec la possibilité de lancer des Conférences AI et de distribuer les minutes automatiquement.
+            </p>
+          </div>
+        </Card>
+
+          {/* Vue d'ensemble */}
+          {(showOverview || !activeComite) && (<>
+            <div className="grid grid-cols-4 gap-3">
+              <Card className="p-0 gap-0 overflow-hidden">
+                <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-500">
+                  <Briefcase className="h-4 w-4 text-white" />
+                  <span className="text-sm font-bold text-white">Comités</span>
+                </div>
+                <div className="px-3 py-2">
+                  <div className="text-2xl font-bold text-blue-600">{comites.length}</div>
+                  <div className="text-[9px] text-gray-400">Total actifs</div>
+                </div>
+              </Card>
+              <Card className="p-0 gap-0 overflow-hidden">
+                <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-emerald-600 to-emerald-500">
+                  <Users className="h-4 w-4 text-white" />
+                  <span className="text-sm font-bold text-white">Participants</span>
+                </div>
+                <div className="px-3 py-2">
+                  <div className="text-2xl font-bold text-emerald-600">{totalParticipants}</div>
+                  <div className="text-[9px] text-gray-400">Total membres</div>
+                </div>
+              </Card>
+              <Card className="p-0 gap-0 overflow-hidden">
+                <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-violet-600 to-violet-500">
+                  <Calendar className="h-4 w-4 text-white" />
+                  <span className="text-sm font-bold text-white">Réunions</span>
+                </div>
+                <div className="px-3 py-2">
+                  <div className="text-2xl font-bold text-violet-600">{comites.filter(c => c.prochaine_reunion).length}</div>
+                  <div className="text-[9px] text-gray-400">Planifiées</div>
+                </div>
+              </Card>
+              <Card className="p-0 gap-0 overflow-hidden">
+                <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-amber-600 to-amber-500">
+                  <Activity className="h-4 w-4 text-white" />
+                  <span className="text-sm font-bold text-white">Taux activité</span>
+                </div>
+                <div className="px-3 py-2">
+                  <div className="text-2xl font-bold text-amber-600">{comites.length > 0 ? Math.round((comites.filter(c => c.membres.length > 0).length / comites.length) * 100) : 0}%</div>
+                  <div className="text-[9px] text-gray-400">Comités actifs</div>
+                </div>
+              </Card>
+            </div>
+
+            {/* Résumé des comités */}
+            {comites.length > 0 && (
+              <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
+                <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-gray-700 to-gray-600">
+                  <ListChecks className="h-3.5 w-3.5 text-white" />
+                  <span className="text-xs font-bold text-white">Résumé des comités</span>
+                </div>
+                <div className="p-3 space-y-2">
+                  {comites.map(c => (
+                    <div key={c.id} onClick={() => { setActiveComite(c.id); setShowOverview(false); setComiteTab("config"); }} className="flex items-center justify-between px-3 py-2 rounded-lg border border-gray-100 hover:bg-gray-50 cursor-pointer transition-all">
+                      <div>
+                        <div className="text-xs font-bold text-gray-700">{c.nom || "Sans nom"}</div>
+                        <div className="text-[9px] text-gray-400">{c.responsable || "Pas de responsable"} · {c.membres.length} membres · {c.frequence}</div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {c.prochaine_reunion && <span className="text-[9px] text-blue-600 font-medium">{c.prochaine_reunion}</span>}
+                        <ChevronRight className="h-3.5 w-3.5 text-gray-300" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+
+            {/* Modèles suggérés */}
+            <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
+              <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-gray-700 to-gray-600">
+                <Sparkles className="h-3.5 w-3.5 text-white" />
+                <span className="text-xs font-bold text-white">Modèles de comités suggérés</span>
               </div>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-[9px] text-gray-400">{c.membres.length} membre{c.membres.length !== 1 ? "s" : ""}</span>
-                <span className="text-[9px] text-gray-300">·</span>
-                <span className="text-[9px] text-gray-400">{c.frequence}</span>
+              <div className="p-3 grid grid-cols-2 gap-2">
+                {COMITES_SUGGESTED_TEMPLATES.map((t, i) => (
+                  <div key={i} onClick={() => {
+                    const id = `comite_${Date.now()}_${i}`;
+                    const newC: Comite = { id, nom: t.nom, frequence: t.frequence, format: "Conférence AI", description: t.description, responsable: "", prochaine_reunion: "", membres: [] };
+                    updateComites([...comites, newC]);
+                    setActiveComite(id);
+                    setShowOverview(false);
+                    setComiteTab("config");
+                  }} className="px-3 py-2 rounded-lg border border-dashed border-gray-200 hover:border-blue-300 hover:bg-blue-50/30 cursor-pointer transition-all">
+                    <div className="text-xs font-bold text-gray-700">{t.nom}</div>
+                    <div className="text-[9px] text-gray-400">{t.description}</div>
+                    <div className="text-[9px] text-blue-500 font-medium mt-1">{t.frequence}</div>
+                  </div>
+                ))}
               </div>
-            </button>
-          ))}
+            </Card>
+          </>)}
 
-        </div>
+          {/* Comité actif avec sous-tabs */}
+          {!showOverview && active && (<>
+            {/* Sous-tabs */}
+            <div className="flex items-center gap-1 pb-1">
+              {COMITE_TABS.map(t => (
+                <button key={t.id} onClick={() => setComiteTab(t.id)} className={cn(
+                  "px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
+                  comiteTab === t.id ? "bg-gray-900 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                )}>{t.label}</button>
+              ))}
+            </div>
 
-        {/* Contenu — comité actif */}
-        <div className="flex-1 min-w-0 space-y-3">
-          {active ? (
-            <>
-              {/* KPIs du comité */}
-              <div className="grid grid-cols-4 gap-3">
-                <Card className="p-0 overflow-hidden">
-                  <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-500">
-                    <Users className="h-4 w-4 text-white" />
-                    <span className="text-sm font-bold text-white">Participants</span>
-                  </div>
-                  <div className="px-3 py-2">
-                    <div className="text-2xl font-bold text-blue-600">{active.membres.length}</div>
-                    <div className="text-[9px] text-gray-400">{active.membres.filter(m => m.type === "interne").length} int. / {active.membres.filter(m => m.type === "externe").length} ext.</div>
-                  </div>
-                </Card>
-                <Card className="p-0 overflow-hidden">
-                  <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-violet-600 to-violet-500">
-                    <Briefcase className="h-4 w-4 text-white" />
-                    <span className="text-sm font-bold text-white">Fréquence</span>
-                  </div>
-                  <div className="px-3 py-2">
-                    <div className="text-2xl font-bold text-violet-600">{active.frequence || "—"}</div>
-                    <div className="text-[9px] text-gray-400">{active.format}</div>
-                  </div>
-                </Card>
-                <Card className="p-0 overflow-hidden">
-                  <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-amber-600 to-amber-500">
-                    <UserPlus className="h-4 w-4 text-white" />
-                    <span className="text-sm font-bold text-white">Externes</span>
-                  </div>
-                  <div className="px-3 py-2">
-                    <div className="text-2xl font-bold text-amber-600">{active.membres.filter(m => m.type === "externe").length}</div>
-                    <div className="text-[9px] text-gray-400">Invités plateforme</div>
-                  </div>
-                </Card>
-                <Card className="p-0 overflow-hidden">
-                  <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-emerald-600 to-emerald-500">
-                    <CheckCircle2 className="h-4 w-4 text-white" />
-                    <span className="text-sm font-bold text-white">Statut</span>
-                  </div>
-                  <div className="px-3 py-2">
-                    <div className="text-2xl font-bold text-emerald-600">{active.membres.length > 0 ? "Actif" : "—"}</div>
-                    <div className="text-[9px] text-gray-400">{active.nom || "Non nommé"}</div>
-                  </div>
-                </Card>
-              </div>
-
-              {/* Configuration du comité */}
-              <Card className="p-0 overflow-hidden rounded-xl shadow-sm">
+            {/* Tab: Config */}
+            {comiteTab === "config" && (
+              <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
                 <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-gray-700 to-gray-600">
                   <Settings className="h-3.5 w-3.5 text-white" />
                   <span className="text-xs font-bold text-white">Configuration du comité</span>
@@ -1910,41 +3312,33 @@ function ComitesManager({ botCode, deptLabel, headerGradient, data, onFieldChang
                   </div>
                 </div>
               </Card>
+            )}
 
-              {/* Membres du comité */}
-              <Card className="p-0 overflow-hidden rounded-xl shadow-sm">
+            {/* Tab: Participants */}
+            {comiteTab === "participants" && (
+              <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
                 <div className={cn("flex items-center justify-between px-4 py-2.5 bg-gradient-to-r", headerGradient)}>
                   <div className="flex items-center gap-2">
                     <Users className="h-3.5 w-3.5 text-white" />
                     <span className="text-xs font-bold text-white">Participants ({active.membres.length})</span>
                   </div>
-                  <button
-                    onClick={() => addMembre(active.id)}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-bold bg-white/20 text-white hover:bg-white/30 transition-all cursor-pointer"
-                  >
+                  <button onClick={() => addMembre(active.id)} className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-bold bg-white/20 text-white hover:bg-white/30 transition-all cursor-pointer">
                     <UserPlus className="h-3.5 w-3.5" /> Ajouter un participant
                   </button>
                 </div>
-
                 <div className="p-4">
                   {active.membres.length === 0 ? (
                     <div className="text-center py-8 border border-dashed border-gray-200 rounded-lg">
                       <Users className="h-6 w-6 text-gray-200 mx-auto mb-2" />
                       <p className="text-xs text-gray-400 mb-3">Aucun participant dans ce comité</p>
-                      <button
-                        onClick={() => addMembre(active.id)}
-                        className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 cursor-pointer transition-all mx-auto"
-                      >
+                      <button onClick={() => addMembre(active.id)} className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 cursor-pointer transition-all mx-auto">
                         <UserPlus className="h-3.5 w-3.5" /> Ajouter le premier participant
                       </button>
                     </div>
                   ) : (
                     <div className="space-y-2">
                       {active.membres.map((m, idx) => (
-                        <div key={idx} className={cn(
-                          "rounded-lg border px-3 py-3 group transition-all",
-                          m.type === "externe" ? "border-amber-200 bg-amber-50/30" : "border-gray-200 bg-white"
-                        )}>
+                        <div key={idx} className={cn("rounded-lg border px-3 py-3 group transition-all", m.type === "externe" ? "border-amber-200 bg-amber-50/30" : "border-gray-200 bg-white")}>
                           <div className="grid grid-cols-5 gap-2 items-center">
                             <div>
                               <label className="text-[9px] text-gray-400 block mb-0.5">Nom</label>
@@ -1966,10 +3360,7 @@ function ComitesManager({ botCode, deptLabel, headerGradient, data, onFieldChang
                               </select>
                             </div>
                             <div className="flex items-end">
-                              <button
-                                onClick={() => removeMembre(active.id, idx)}
-                                className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-400 transition-all cursor-pointer shrink-0 pb-1"
-                              >
+                              <button onClick={() => removeMembre(active.id, idx)} className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-400 transition-all cursor-pointer shrink-0 pb-1">
                                 <Trash2 className="h-3.5 w-3.5" />
                               </button>
                             </div>
@@ -1978,7 +3369,6 @@ function ComitesManager({ botCode, deptLabel, headerGradient, data, onFieldChang
                       ))}
                     </div>
                   )}
-
                   {active.membres.some(m => m.type === "externe") && (
                     <div className="mt-3 flex items-start gap-2 bg-amber-50 rounded-lg px-3 py-2 border border-amber-200/50">
                       <Info className="h-3.5 w-3.5 text-amber-500 mt-0.5 shrink-0" />
@@ -1989,38 +3379,97 @@ function ComitesManager({ botCode, deptLabel, headerGradient, data, onFieldChang
                   )}
                 </div>
               </Card>
+            )}
 
-              {/* Save */}
-              <div className="flex items-center justify-between pt-1">
-                <span className="text-[9px] text-gray-400">{dirty ? "Modifications non sauvegardées" : "À jour"}</span>
-                <button
-                  onClick={onSave}
-                  disabled={saving || !dirty}
-                  className={cn(
-                    "flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all",
-                    dirty ? "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer" : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  )}
-                >
-                  {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-                  {saving ? "Sauvegarde..." : "Sauvegarder"}
+            {/* Tab: Réunions */}
+            {comiteTab === "reunions" && (<>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-gray-600">Historique des réunions — {active.nom || "Comité"}</span>
+                <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-bold bg-blue-600 text-white hover:bg-blue-700 cursor-pointer transition-all">
+                  <Plus className="h-3.5 w-3.5" /> Planifier une réunion
                 </button>
               </div>
-            </>
-          ) : (
+              <div className="space-y-2">
+                {COMITE_MOCK_REUNIONS.map((r, i) => (
+                  <Card key={i} className="px-4 py-3 rounded-xl shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="text-center min-w-[80px]">
+                          <div className="text-xs font-bold text-gray-700">{r.date}</div>
+                          <div className="text-[9px] text-gray-400">{r.duree}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs font-bold text-gray-700">{r.sujet}</div>
+                          <div className="text-[9px] text-gray-400">{r.type} · {r.participants} participants</div>
+                        </div>
+                      </div>
+                      <span className={cn(
+                        "text-[9px] font-bold px-2 py-0.5 rounded-full shrink-0",
+                        r.statut_pv === "Approuvé" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+                      )}>{r.statut_pv}</span>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg border border-blue-100">
+                <Sparkles className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                <p className="text-[9px] text-blue-700">Brain Team peut générer les procès-verbaux automatiquement à partir des transcriptions de Conférence AI.</p>
+              </div>
+            </>)}
+
+            {/* Tab: Documents */}
+            {comiteTab === "documents" && (<>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-gray-600">Documents — {active.nom || "Comité"}</span>
+                <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-bold bg-blue-600 text-white hover:bg-blue-700 cursor-pointer transition-all">
+                  <Sparkles className="h-3.5 w-3.5" /> Générer avec AI
+                </button>
+              </div>
+              <div className="space-y-2">
+                {COMITE_MOCK_DOCUMENTS.map((d, i) => (
+                  <Card key={i} className="px-4 py-3 rounded-xl shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-xs font-bold text-gray-700">{d.titre}</div>
+                        <div className="text-[9px] text-gray-400">{d.type} · Dernière MAJ: {d.maj}</div>
+                      </div>
+                      <span className={cn(
+                        "text-[9px] font-bold px-2 py-0.5 rounded-full shrink-0",
+                        d.statut === "Actif" || d.statut === "Approuvé" ? "bg-emerald-50 text-emerald-700" :
+                        d.statut === "En révision" ? "bg-amber-50 text-amber-700" :
+                        "bg-gray-100 text-gray-500"
+                      )}>{d.statut}</span>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </>)}
+
+            {/* Save */}
+            <div className="flex items-center justify-between pt-1">
+              <span className="text-[9px] text-gray-400">{dirty ? "Modifications non sauvegardées" : "À jour"}</span>
+              <button onClick={onSave} disabled={saving || !dirty} className={cn(
+                "flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all",
+                dirty ? "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer" : "bg-gray-100 text-gray-400 cursor-not-allowed"
+              )}>
+                {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                {saving ? "Sauvegarde..." : "Sauvegarder"}
+              </button>
+            </div>
+          </>)}
+
+          {/* Empty state quand pas de comités et overview */}
+          {!showOverview && !active && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Briefcase className="h-8 w-8 text-gray-200 mb-3" />
-              <p className="text-xs text-gray-400 mb-2">Aucun comité créé pour {deptLabel}</p>
-              <button
-                onClick={addComite}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 cursor-pointer transition-all"
-              >
+              <p className="text-xs text-gray-400 mb-2">Sélectionnez un comité ou créez-en un nouveau</p>
+              <button onClick={addComite} className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 cursor-pointer transition-all">
                 <Plus className="h-3.5 w-3.5" /> Créer un premier comité
               </button>
             </div>
           )}
         </div>
       </div>
-    </div>
   );
 }
 
@@ -2696,7 +4145,7 @@ function DataRoomVueConsolidee({ onNavigateDept }: { onNavigateDept: (deptCode: 
     <div className="space-y-4">
       {/* ── KPI Cards — 4 metriques cles (design-system standard) ── */}
       <div className="grid grid-cols-4 gap-3">
-        <Card className="p-0 overflow-hidden">
+        <Card className="p-0 gap-0 overflow-hidden">
           <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-500">
             <FileText className="h-4 w-4 text-white" />
             <span className="text-sm font-bold text-white">Documents</span>
@@ -2706,7 +4155,7 @@ function DataRoomVueConsolidee({ onNavigateDept }: { onNavigateDept: (deptCode: 
             <div className="text-[9px] text-gray-500">{totalActifs} actifs · {totalDocs - totalActifs} en cours</div>
           </div>
         </Card>
-        <Card className="p-0 overflow-hidden">
+        <Card className="p-0 gap-0 overflow-hidden">
           <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-purple-600 to-purple-500">
             <Layers className="h-4 w-4 text-white" />
             <span className="text-sm font-bold text-white">Templates</span>
@@ -2716,7 +4165,7 @@ function DataRoomVueConsolidee({ onNavigateDept }: { onNavigateDept: (deptCode: 
             <div className="text-[9px] text-gray-500">12 departements couverts</div>
           </div>
         </Card>
-        <Card className="p-0 overflow-hidden">
+        <Card className="p-0 gap-0 overflow-hidden">
           <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-emerald-600 to-emerald-500">
             <Activity className="h-4 w-4 text-white" />
             <span className="text-sm font-bold text-white">Sante Doc.</span>
@@ -2726,7 +4175,7 @@ function DataRoomVueConsolidee({ onNavigateDept }: { onNavigateDept: (deptCode: 
             <div className="text-[9px] text-gray-500">{totalCritiques} critiques a traiter</div>
           </div>
         </Card>
-        <Card className="p-0 overflow-hidden">
+        <Card className="p-0 gap-0 overflow-hidden">
           <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-amber-600 to-amber-500">
             <Database className="h-4 w-4 text-white" />
             <span className="text-sm font-bold text-white">Types actifs</span>
@@ -2753,9 +4202,9 @@ function DataRoomVueConsolidee({ onNavigateDept }: { onNavigateDept: (deptCode: 
                 <div className={cn("w-8 h-8 rounded-lg mx-auto flex items-center justify-center", asset.bgColor)}>
                   <asset.icon className={cn("h-4 w-4", asset.iconColor)} />
                 </div>
-                <div className={cn("text-lg font-bold", asset.valueColor)}>{count}</div>
+                <div className={cn("text-2xl font-bold", asset.valueColor)}>{count}</div>
                 <div className="text-[9px] font-bold text-gray-700">{asset.label}</div>
-                <div className="text-[7px] text-gray-400 leading-tight">{asset.desc}</div>
+                <div className="text-[9px] text-gray-400 leading-tight">{asset.desc}</div>
               </div>
             );
           })}
@@ -3159,7 +4608,7 @@ function BlueprintDataRoom({ botCode, headerGradient }: { botCode: string; heade
           >
             <div className="flex items-center gap-1.5">
               <Building2 className={cn("h-3.5 w-3.5 shrink-0", activeFolder === "_consolidee" ? "text-blue-500" : "text-gray-400")} />
-              <span className={cn("text-[9px] font-bold flex-1", activeFolder === "_consolidee" ? "text-blue-700" : "text-gray-700")}>Vue d'ensemble</span>
+              <span className={cn("text-[10px] font-bold flex-1", activeFolder === "_consolidee" ? "text-blue-700" : "text-gray-700")}>Vue d'ensemble</span>
               <span className="text-[9px] text-gray-400">12</span>
             </div>
           </button>
@@ -3185,7 +4634,7 @@ function BlueprintDataRoom({ botCode, headerGradient }: { botCode: string; heade
               >
                 <div className="flex items-center gap-1.5">
                   <ChevronDown className={cn("h-3.5 w-3.5 shrink-0 transition-transform", isExpanded ? "" : "-rotate-90", isDeptActive ? "text-blue-500" : "text-gray-400")} />
-                  <span className={cn("text-[9px] font-bold flex-1 leading-tight", isDeptActive ? "text-blue-700" : "text-gray-700")}>
+                  <span className={cn("text-[10px] font-bold flex-1 leading-tight", isDeptActive ? "text-blue-700" : "text-gray-700")}>
                     {DEPT_LABELS[deptCode] || deptCode}
                   </span>
                   <span className="text-[9px] text-gray-400">{totalDocs}</span>
@@ -3205,7 +4654,7 @@ function BlueprintDataRoom({ botCode, headerGradient }: { botCode: string; heade
                   >
                     <div className="flex items-center gap-1.5">
                       <FolderOpen className={cn("h-3.5 w-3.5 shrink-0", isActive ? "text-blue-500" : "text-gray-400")} />
-                      <span className={cn("text-[9px] font-medium flex-1 leading-tight", isActive ? "text-blue-700" : "text-gray-600")}>
+                      <span className={cn("text-[10px] font-medium flex-1 leading-tight", isActive ? "text-blue-700" : "text-gray-600")}>
                         {s.label}
                       </span>
                       <span className="text-[9px] text-gray-400">{s.documents.length}</span>
@@ -3238,7 +4687,7 @@ function BlueprintDataRoom({ botCode, headerGradient }: { botCode: string; heade
             >
               <div className="flex items-center gap-1.5">
                 <TsIcon className={cn("h-3.5 w-3.5 shrink-0", isActive ? "text-blue-500" : "text-gray-400")} />
-                <span className={cn("text-[9px] font-bold flex-1", isActive ? "text-blue-700" : "text-gray-700")}>{ts.label}</span>
+                <span className={cn("text-[10px] font-bold flex-1", isActive ? "text-blue-700" : "text-gray-700")}>{ts.label}</span>
               </div>
             </button>
           );
@@ -3257,7 +4706,7 @@ function BlueprintDataRoom({ botCode, headerGradient }: { botCode: string; heade
         >
           <div className="flex items-center gap-1.5">
             <Layers className={cn("h-3.5 w-3.5 shrink-0", activeFolder === "_templates" ? "text-blue-500" : "text-gray-400")} />
-            <span className={cn("text-[9px] font-bold flex-1", activeFolder === "_templates" ? "text-blue-700" : "text-gray-700")}>Templates</span>
+            <span className={cn("text-[10px] font-bold flex-1", activeFolder === "_templates" ? "text-blue-700" : "text-gray-700")}>Templates</span>
             <span className="text-[9px] text-gray-400">{templates.length}</span>
           </div>
         </button>
@@ -3265,18 +4714,13 @@ function BlueprintDataRoom({ botCode, headerGradient }: { botCode: string; heade
 
       {/* Contenu — full height */}
       <div className="flex-1 min-w-0 space-y-2">
-        {/* ── Breadcrumb (SharePoint style) ── */}
+        {/* ── Rectangle bleu pastel — titre sous-section active ── */}
         {(isFolderView || activeFolder === "_templates" || activeFolder === "chantiers" || TRANSVERSAL_SECTIONS.some(ts => ts.id === activeFolder)) && (
-          <div className="flex items-center gap-1 text-[9px] text-gray-400 px-1">
-            <button onClick={() => { if (botCode === "CEOB") { setActiveDept("CEOB"); setActiveFolder("_consolidee"); } }} className="hover:text-blue-600 cursor-pointer font-medium">Data Room</button>
-            <ChevronRight className="h-3.5 w-3.5" />
-            {activeDept && activeDept !== "CEOB" && isFolderView && (<>
-              <span className="text-gray-500 font-medium">{DEPT_LABELS[activeDept] || activeDept}</span>
-              <ChevronRight className="h-3.5 w-3.5" />
-            </>)}
-            <span className="text-gray-700 font-bold">
+          <div className={cn("bg-gradient-to-r rounded-lg px-4 py-2.5 flex items-center gap-3", headerGradient)}>
+            <Database className="h-5 w-5 text-white" />
+            <h2 className="text-sm font-bold text-white">
               {activeFolder === "_templates" ? "Templates" : activeFolder === "chantiers" ? "Chantiers (REAI)" : TRANSVERSAL_SECTIONS.find(ts => ts.id === activeFolder)?.label || activeSection?.label || ""}
-            </span>
+            </h2>
           </div>
         )}
 
@@ -3596,393 +5040,566 @@ const PILIER_COLORS: Record<string, { bg: string; text: string; border: string }
   Actif: { bg: "bg-red-50", text: "text-red-700", border: "border-red-200" },
 };
 
-// Collections thematiques pour le Store
-const STORE_COLLECTIONS: { id: string; label: string; icon: React.ElementType; playbookIds: string[] }[] = [
-  { id: "essentiels", label: "Les Essentiels pour Demarrer", icon: Star, playbookIds: ["pb-001", "pb-071", "pb-100", "pb-025", "pb-050", "pb-091"] },
-  { id: "conformite", label: "Pack Conformite Quebec", icon: Shield, playbookIds: ["pb-090", "pb-075", "pb-024", "pb-077", "pb-085", "pb-104"] },
-  { id: "croissance", label: "Accelerateurs de Croissance", icon: Rocket, playbookIds: ["pb-010", "pb-012", "pb-038", "pb-037", "pb-045", "pb-028"] },
+// ── Collections V2 (12 collections curateés) ──
+const STORE_COLLECTIONS_V2: { id: string; label: string; description: string; icon: React.ElementType; gradient: string; playbookIds: string[] }[] = [
+  { id: "essentiels", label: "Les Essentiels pour demarrer", description: "Les 6 playbooks fondamentaux que chaque PME devrait activer en premier", icon: Star, gradient: "from-blue-500 to-indigo-500", playbookIds: ["pb-001", "pb-071", "pb-100", "pb-025", "pb-050", "pb-091"] },
+  { id: "conformite", label: "Kit Conformite Quebec", description: "Respectez la Loi 25, CNESST, normes SST et obligations environnementales", icon: Shield, gradient: "from-emerald-500 to-teal-500", playbookIds: ["pb-090", "pb-075", "pb-024", "pb-077", "pb-085", "pb-104"] },
+  { id: "croissance", label: "Accelerateurs de Croissance", description: "Boostez vos ventes, marketing et expansion avec des workflows automatises", icon: Rocket, gradient: "from-orange-500 to-red-500", playbookIds: ["pb-010", "pb-012", "pb-038", "pb-037", "pb-045", "pb-028"] },
+  { id: "nouveau-ceo", label: "Kit Nouveau CEO", description: "Les 10 premiers playbooks qu'un nouveau dirigeant devrait activer", icon: Crown, gradient: "from-purple-500 to-pink-500", playbookIds: ["pb-001", "pb-028", "pb-100", "pb-071", "pb-050", "pb-091", "pb-003", "pb-008", "pb-025", "pb-030"] },
+  { id: "diagnostic", label: "Diagnostic Complet", description: "Passez votre entreprise au scanner — finance, tech, RH, securite, operations", icon: Search, gradient: "from-cyan-500 to-blue-500", playbookIds: ["pb-028", "pb-100", "pb-047", "pb-050", "pb-071", "pb-037"] },
+  { id: "crise", label: "Kit Urgence & Crise", description: "Playbooks d'urgence pour les situations critiques — cash flow, incident, rappel produit", icon: AlertTriangle, gradient: "from-red-500 to-rose-500", playbookIds: ["pb-028", "pb-100", "pb-085", "pb-104", "pb-090"] },
+  { id: "operations", label: "Automatisation Operations", description: "Production, inventaire, qualite, maintenance — automatisez le plancher", icon: Settings, gradient: "from-gray-500 to-slate-500", playbookIds: ["pb-050", "pb-058", "pb-060", "pb-062", "pb-064"] },
+  { id: "scale-up", label: "Scale-Up Pack", description: "Pour les entreprises T3-T5 (50+ employes) pretes a passer au niveau superieur", icon: TrendingUp, gradient: "from-violet-500 to-purple-500", playbookIds: ["pb-010", "pb-012", "pb-037", "pb-045", "pb-003"] },
+  { id: "manufacturier", label: "Kit Manufacturier", description: "Specifiquement concu pour les PME manufacturieres quebecoises", icon: Factory, gradient: "from-amber-500 to-yellow-500", playbookIds: ["pb-050", "pb-058", "pb-060", "pb-062", "pb-090", "pb-075"] },
+  { id: "intelligence", label: "Intelligence Concurrentielle", description: "SWOT, veille concurrentielle, positionnement, analyse de marche", icon: Eye, gradient: "from-indigo-500 to-blue-500", playbookIds: ["pb-047", "pb-045", "pb-037", "pb-010"] },
+  { id: "rh-complet", label: "Kit RH Complet", description: "Recrutement, onboarding, evaluation de performance, plan de formation", icon: Users, gradient: "from-pink-500 to-rose-500", playbookIds: ["pb-071", "pb-074", "pb-077", "pb-082"] },
+  { id: "planification", label: "Planification Strategique Annuelle", description: "Budget, OKR, plan d'action annuel, revue de performance — tout le cycle", icon: Calendar, gradient: "from-teal-500 to-emerald-500", playbookIds: ["pb-001", "pb-003", "pb-008", "pb-010", "pb-028"] },
 ];
 
-function PlaybookCard({ pb, installed, recommended, onOpenDetail }: { pb: typeof PLAYBOOK_STORE_DATA[0]; installed?: boolean; recommended?: string; onOpenDetail?: (pb: typeof PLAYBOOK_STORE_DATA[0]) => void }) {
+// Playbook de la semaine (hero)
+// Top 3 playbooks de la semaine
+const FEATURED_PLAYBOOKS: { playbookId: string; editorial: string; rank: number; gradient: string }[] = [
+  { playbookId: "pb-028", editorial: "Le diagnostic financier le plus complet. Frank et CarlOS analysent vos donnees et generent un plan d'action concret.", rank: 1, gradient: "from-blue-600 via-indigo-600 to-purple-600" },
+  { playbookId: "pb-045", editorial: "L'atelier BMC le plus populaire du Store. Simone et CarlOS vous guident pas a pas pour structurer votre modele d'affaires.", rank: 2, gradient: "from-rose-600 via-pink-600 to-fuchsia-600" },
+  { playbookId: "pb-100", editorial: "Votre premiere ligne de defense. Sebastien et Tim auditent votre posture securite et identifient les failles critiques.", rank: 3, gradient: "from-emerald-600 via-teal-600 to-cyan-600" },
+];
+
+// ── Workflows reels par playbook ──
+const PLAYBOOK_WORKFLOWS: Record<string, { num: number; label: string; bot: string; duree: string; input?: string; validation?: boolean; livrable?: string }[]> = {
+  "pb-028": [
+    { num: 1, label: "Collecte des parametres et perimetre d'analyse", bot: "CarlOS", duree: "~1 min", input: "Confirmez le perimetre" },
+    { num: 2, label: "Import des donnees financieres", bot: "Frank", duree: "~2 min" },
+    { num: 3, label: "Calcul des ratios de liquidite et solvabilite", bot: "Frank", duree: "~3 min" },
+    { num: 4, label: "Analyse comparative sectorielle", bot: "Frank", duree: "~3 min", validation: true },
+    { num: 5, label: "Generation du rapport PDF", bot: "Frank", duree: "~2 min" },
+    { num: 6, label: "Recommandations strategiques priorisees", bot: "CarlOS", duree: "~2 min" },
+    { num: 7, label: "Livraison et plan d'action", bot: "CarlOS", duree: "~2 min", livrable: "rapport_diagnostic_financier.pdf" },
+  ],
+  "pb-100": [
+    { num: 1, label: "Inventaire des actifs informatiques", bot: "Sebastien", duree: "~5 min" },
+    { num: 2, label: "Analyse des configurations de securite", bot: "Sebastien", duree: "~10 min" },
+    { num: 3, label: "Verification MFA et politiques d'acces", bot: "Sebastien", duree: "~5 min", validation: true },
+    { num: 4, label: "Scan des vulnerabilites connues", bot: "Tim", duree: "~10 min" },
+    { num: 5, label: "Evaluation des sauvegardes", bot: "Sebastien", duree: "~5 min" },
+    { num: 6, label: "Generation du rapport d'audit", bot: "Sebastien", duree: "~5 min", livrable: "rapport_audit_securite.pdf" },
+  ],
+};
+
+// ── Reviews mock ──
+const PLAYBOOK_REVIEWS: Record<string, { auteur: string; role: string; industrie: string; rating: number; titre: string; texte: string; date: string; resultat?: string }[]> = {
+  "pb-028": [
+    { auteur: "Marc D.", role: "Dir. Operations", industrie: "Manufacturier, Quebec", rating: 5, titre: "Exactement ce dont on avait besoin", texte: "Le diagnostic a revele 3 problemes qu'on ne voyait pas. Le plan d'action etait concret et applicable.", date: "2026-03-15", resultat: "Temps de diagnostic reduit de 40%" },
+    { auteur: "Julie L.", role: "CFO", industrie: "Distribution, Montreal", rating: 4, titre: "Tres bon mais manque de granularite", texte: "L'analyse est pertinente mais j'aurais aime plus de details sur les ratios sectoriels.", date: "2026-02-10" },
+    { auteur: "Pierre B.", role: "CEO", industrie: "Alimentaire, Trois-Rivieres", rating: 5, titre: "On l'utilise chaque trimestre maintenant", texte: "Simple, rapide, et le rapport est professionnel. Nos investisseurs sont impressionnes.", date: "2026-01-28", resultat: "Adopte comme outil trimestriel" },
+  ],
+  "pb-100": [
+    { auteur: "Sophie G.", role: "Dir. TI", industrie: "Logistique, Laval", rating: 5, titre: "A revele des failles critiques", texte: "On pensait etre OK. L'audit a trouve 7 failles dont 2 critiques. Corrigees en 48h grace au plan.", date: "2026-03-01", resultat: "Score securite +35 points" },
+    { auteur: "Eric T.", role: "CEO", industrie: "Manufacturier, Sherbrooke", rating: 4, titre: "Bon point de depart", texte: "Pour le prix, c'est un excellent premier audit. On a enchaine avec le plan de reponse incidents.", date: "2026-02-20" },
+  ],
+};
+
+// ── Livrables mock ──
+const PLAYBOOK_LIVRABLES: Record<string, { nom: string; type: string; icon: React.ElementType }[]> = {
+  "pb-028": [
+    { nom: "Rapport de diagnostic financier", type: "PDF", icon: FileText },
+    { nom: "Tableau comparatif industrie", type: "Excel", icon: Table2 },
+    { nom: "Plan d'action priorise", type: "PDF", icon: CheckCircle2 },
+  ],
+  "pb-100": [
+    { nom: "Rapport d'audit securite", type: "PDF", icon: Shield },
+    { nom: "Matrice de risques", type: "Excel", icon: AlertTriangle },
+    { nom: "Plan de correction (12 actions)", type: "PDF", icon: Wrench },
+  ],
+};
+
+// ── Dept icons mapping for category grid ──
+const DEPT_ICONS: Record<string, React.ElementType> = {
+  CEOB: Building2, CTOB: Cpu, CFOB: DollarSign, CMOB: Palette,
+  CSOB: Compass, COOB: Settings, CPOB: Factory, CHROB: Users,
+  CINOB: Sparkles, CROB: TrendingUp, CLOB: Shield, CISOB: Lock,
+};
+
+function PlaybookCardV2({ pb, installed, recommended, badge, onOpenDetail }: { pb: typeof PLAYBOOK_STORE_DATA[0]; installed?: boolean; recommended?: boolean; badge?: "nouveau" | "populaire" | "trending"; onOpenDetail?: (pb: typeof PLAYBOOK_STORE_DATA[0]) => void }) {
   const niveauStyle = NIVEAU_BADGE[pb.niveau] || NIVEAU_BADGE.Standard;
+  const deptColor = DEPT_COLORS[pb.departement] || DEPT_COLORS.CEOB;
+  const isInstalled = installed || INSTALLED_PLAYBOOKS.includes(pb.id);
   return (
-    <Card className="p-0 overflow-hidden rounded-xl shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => onOpenDetail?.(pb)}>
+    <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm hover:shadow-md hover:border-blue-200 transition-all cursor-pointer group" onClick={() => onOpenDetail?.(pb)}>
+      {/* Mini gradient header */}
+      <div className={cn("h-1.5 bg-gradient-to-r", deptColor.gradient)} />
       <div className="px-3 py-2.5 space-y-1.5">
-        <div className="flex items-start gap-2">
-          <BookOpen className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />
+        <div className="flex items-start justify-between gap-1">
           <div className="flex-1 min-w-0">
-            <div className="text-xs font-bold text-gray-800 leading-tight">{pb.nom}</div>
-            <p className="text-[9px] text-gray-500 mt-0.5 line-clamp-2">{pb.description}</p>
+            <div className="text-xs font-bold text-gray-800 leading-tight line-clamp-1">{pb.nom}</div>
+            <p className="text-[9px] text-gray-500 mt-0.5 line-clamp-1">{pb.description}</p>
           </div>
+          {badge === "nouveau" && <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 shrink-0">Nouveau</span>}
+          {badge === "populaire" && <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 shrink-0">Populaire</span>}
+          {badge === "trending" && <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-orange-50 text-orange-700 shrink-0">Trending</span>}
+          {!badge && recommended && <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-green-50 text-green-700 shrink-0">IA Recommande</span>}
+          {!badge && !recommended && isInstalled && <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 shrink-0 flex items-center gap-0.5"><CheckCircle2 className="h-3.5 w-3.5" />Installe</span>}
         </div>
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded", niveauStyle.bg, niveauStyle.text)}>{pb.niveau}</span>
-          <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded", pb.prix === "Gratuit" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700")}>{pb.prix}</span>
-          {installed && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700">Installe</span>}
-          {recommended && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-50 text-red-700">Recommande</span>}
-        </div>
-        <div className="flex items-center justify-between text-[9px] text-gray-400">
-          <span>{pb.bots.join(", ")}</span>
-          <span>{pb.etapes} etapes · {pb.duree}</span>
-        </div>
-        <div className="flex items-center gap-2 text-[9px]">
-          <div className="flex items-center gap-0.5">
-            {[1,2,3,4,5].map(s => (
-              <Star key={s} className={cn("h-3.5 w-3.5", s <= Math.round(pb.rating) ? "text-amber-400 fill-amber-400" : "text-gray-200")} />
+        {/* Bot avatars + rating */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1">
+            {pb.bots.slice(0, 3).map((bot, i) => (
+              <span key={i} className="text-[8px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full">{bot}</span>
             ))}
-            <span className="text-gray-500 ml-1">{pb.rating}</span>
+            {pb.bots.length > 3 && <span className="text-[8px] text-gray-400">+{pb.bots.length - 3}</span>}
           </div>
-          <span className="text-gray-400">{pb.downloads} installations</span>
+          <div className="flex items-center gap-0.5">
+            <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
+            <span className="text-[9px] font-bold text-gray-600">{pb.rating}</span>
+            <span className="text-[8px] text-gray-400">({pb.downloads})</span>
+          </div>
+        </div>
+        {/* Badges row */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className={cn("text-[8px] font-bold px-1.5 py-0.5 rounded", niveauStyle.bg, niveauStyle.text)}>{pb.niveau}</span>
+          <span className={cn("text-[8px] font-bold px-1.5 py-0.5 rounded", pb.prix === "Gratuit" ? "bg-emerald-50 text-emerald-700" : "bg-purple-50 text-purple-700")}>{pb.prix === "Gratuit" ? "Inclus" : pb.prix}</span>
+          <span className="text-[8px] text-gray-400">{pb.duree}</span>
         </div>
       </div>
     </Card>
   );
 }
 
-// ── Fiche Playbook Detaillee (modal overlay) ──
-function PlaybookFicheDetail({ pb, onClose }: { pb: typeof PLAYBOOK_STORE_DATA[0]; onClose: () => void }) {
+// ── Fiche Playbook Detaillee INLINE (PAS de modal — drill-down dans le panel) ──
+function PlaybookFicheDetailInline({ pb, onBack }: { pb: typeof PLAYBOOK_STORE_DATA[0]; onBack: () => void }) {
   const niveauStyle = NIVEAU_BADGE[pb.niveau] || NIVEAU_BADGE.Standard;
   const isInstalled = INSTALLED_PLAYBOOKS.includes(pb.id);
-  // Generate mock workflow steps from etapes count
-  const mockSteps = Array.from({ length: pb.etapes }, (_, i) => ({
-    num: i + 1,
-    label: i === 0 ? "Collecte des donnees et parametres initiaux" :
-           i === pb.etapes - 1 ? "Generation du livrable final et validation" :
-           i === 1 ? `Analyse et traitement par ${pb.bots[0]}` :
-           i === 2 && pb.bots.length > 1 ? `Collaboration ${pb.bots[0]} + ${pb.bots[Math.min(1, pb.bots.length - 1)]}` :
-           `Etape ${i + 1} — Traitement automatise`,
-    bot: pb.bots[i % pb.bots.length],
-    needsApproval: i === Math.floor(pb.etapes / 2),
+  const deptColor = DEPT_COLORS[pb.departement] || DEPT_COLORS.CEOB;
+  const pilierColor = PILIER_COLORS[pb.pilier] || PILIER_COLORS.Actif;
+  const workflows = PLAYBOOK_WORKFLOWS[pb.id] || Array.from({ length: pb.etapes }, (_, i) => ({
+    num: i + 1, label: i === 0 ? "Collecte des donnees et parametres" : i === pb.etapes - 1 ? "Generation du livrable final" : `Etape ${i + 1} — Traitement automatise`, bot: pb.bots[i % pb.bots.length], duree: "~2 min", validation: i === Math.floor(pb.etapes / 2),
   }));
+  const reviews = PLAYBOOK_REVIEWS[pb.id] || [];
+  const livrables = PLAYBOOK_LIVRABLES[pb.id] || [];
+  const similarDept = PLAYBOOK_STORE_DATA.filter(p => p.departement === pb.departement && p.id !== pb.id).slice(0, 3);
+  const similarPilier = PLAYBOOK_STORE_DATA.filter(p => p.pilier === pb.pilier && p.id !== pb.id && p.departement !== pb.departement).slice(0, 3);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto m-4" onClick={e => e.stopPropagation()}>
-        {/* Header */}
-        <div className="px-4 py-3 border-b border-gray-100">
-          <div className="flex items-center justify-between">
-            <button onClick={onClose} className="text-[9px] text-gray-400 hover:text-gray-600 cursor-pointer">← Retour</button>
-            <div className="flex items-center gap-1.5">
-              <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded", niveauStyle.bg, niveauStyle.text)}>{pb.niveau}</span>
-              <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded", pb.prix === "Gratuit" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700")}>{pb.prix}</span>
-            </div>
-          </div>
-          <h3 className="text-sm font-bold text-gray-900 mt-2">{pb.nom}</h3>
-          <p className="text-[9px] text-gray-500 mt-1">{pb.description}</p>
-          <div className="flex items-center gap-3 mt-2 text-[9px] text-gray-400">
-            <div className="flex items-center gap-0.5">
-              {[1,2,3,4,5].map(s => (
-                <Star key={s} className={cn("h-3.5 w-3.5", s <= Math.round(pb.rating) ? "text-amber-400 fill-amber-400" : "text-gray-200")} />
-              ))}
-              <span className="ml-1">{pb.rating}/5</span>
-            </div>
-            <span>{pb.downloads} installations</span>
-            <span>{pb.duree}</span>
-            <span>{pb.etapes} etapes</span>
-          </div>
-        </div>
+    <div className="space-y-3">
+      {/* Back button */}
+      <button onClick={onBack} className="text-[9px] text-blue-600 hover:text-blue-800 font-bold cursor-pointer flex items-center gap-1">
+        <ChevronRight className="h-3.5 w-3.5 rotate-180" /> Retour au Store
+      </button>
 
-        {/* Equipe IA impliquee */}
-        <div className="px-4 py-3 border-b border-gray-100">
-          <h4 className="text-[9px] font-bold text-gray-700 uppercase tracking-wider mb-2">Equipe IA impliquee</h4>
-          <div className="flex items-center gap-2 flex-wrap">
-            {pb.bots.map((bot, i) => (
-              <div key={i} className="flex items-center gap-1.5 bg-gray-50 rounded-lg px-2 py-1">
-                <Bot className="h-3.5 w-3.5 text-blue-500" />
-                <span className="text-[9px] font-bold text-gray-700">{bot}</span>
+      {/* Section 1 — Hero */}
+      <div className={cn("bg-gradient-to-r rounded-xl px-4 py-4", deptColor.gradient)}>
+        <div className="flex items-center gap-1.5 mb-2">
+          <span className={cn("text-[8px] font-bold px-1.5 py-0.5 rounded bg-white/20 text-white")}>{pb.niveau}</span>
+          <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-white/20 text-white">{pb.prix === "Gratuit" ? "Inclus" : pb.prix}</span>
+          <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-white/20 text-white">{DEPT_LABELS[pb.departement]}</span>
+        </div>
+        <h3 className="text-sm font-bold text-white">{pb.nom}</h3>
+        <p className="text-[10px] text-white/80 mt-1">{pb.description}</p>
+        <div className="flex items-center gap-3 mt-3 text-[9px] text-white/70">
+          <div className="flex items-center gap-0.5">
+            {[1,2,3,4,5].map(s => (
+              <Star key={s} className={cn("h-3.5 w-3.5", s <= Math.round(pb.rating) ? "text-white fill-white" : "text-white/30")} />
+            ))}
+            <span className="ml-1 text-white">{pb.rating}/5</span>
+          </div>
+          <span>{pb.downloads} activations</span>
+          <span>{pb.duree}</span>
+          <span>{pb.etapes} etapes</span>
+        </div>
+        <div className="mt-3 flex items-center gap-2">
+          {isInstalled ? (
+            <button className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-blue-700 bg-white rounded-lg cursor-pointer hover:bg-blue-50 transition-colors">
+              <Rocket className="h-3.5 w-3.5" /> Executer
+            </button>
+          ) : pb.prix === "Gratuit" ? (
+            <button className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-emerald-700 bg-white rounded-lg cursor-pointer hover:bg-emerald-50 transition-colors">
+              <Plus className="h-3.5 w-3.5" /> Activer ce playbook
+            </button>
+          ) : (
+            <button className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-amber-700 bg-white rounded-lg cursor-pointer hover:bg-amber-50 transition-colors">
+              <ShoppingBag className="h-3.5 w-3.5" /> Acheter {pb.prix}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Section 2 — Ce que ce playbook fait */}
+      <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
+        <div className="px-4 py-3">
+          <h4 className="text-[9px] font-bold text-gray-700 uppercase tracking-wider mb-2">Ce que ce playbook fait</h4>
+          <div className="space-y-1.5">
+            {(pb.description + ". Analyse automatique de vos donnees. Generation d'un rapport complet. Plan d'action priorise.").split(". ").filter(Boolean).slice(0, 4).map((point, i) => (
+              <div key={i} className="flex items-start gap-2">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                <span className="text-[9px] text-gray-700">{point.trim()}</span>
               </div>
             ))}
           </div>
         </div>
+      </Card>
 
-        {/* Etapes du workflow */}
-        <div className="px-4 py-3 border-b border-gray-100">
-          <h4 className="text-[9px] font-bold text-gray-700 uppercase tracking-wider mb-2">Etapes du workflow</h4>
+      {/* Section 3 — Equipe IA impliquee */}
+      <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
+        <div className="px-4 py-3">
+          <h4 className="text-[9px] font-bold text-gray-700 uppercase tracking-wider mb-2">Equipe IA impliquee</h4>
           <div className="space-y-1.5">
-            {mockSteps.map(step => (
+            {pb.bots.map((bot, i) => (
+              <div key={i} className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-1.5">
+                <Bot className="h-3.5 w-3.5 text-blue-500" />
+                <span className="text-[9px] font-bold text-gray-800 flex-1">{bot}</span>
+                <span className="text-[8px] text-gray-400">{i === 0 ? "Pilote" : i === 1 ? "Analyste" : "Support"}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Card>
+
+      {/* Section 4 — Workflow */}
+      <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
+        <div className="px-4 py-3">
+          <h4 className="text-[9px] font-bold text-gray-700 uppercase tracking-wider mb-2">Workflow ({workflows.length} etapes)</h4>
+          <div className="space-y-2">
+            {workflows.map((step) => (
               <div key={step.num} className="flex items-start gap-2">
-                <span className="text-[9px] font-bold text-white bg-blue-600 rounded-full w-4 h-4 flex items-center justify-center shrink-0 mt-0.5">{step.num}</span>
-                <div className="flex-1">
-                  <span className="text-[9px] text-gray-700">{step.label}</span>
-                  <span className="text-[9px] text-gray-400 ml-1">({step.bot})</span>
-                  {step.needsApproval && <span className="text-[9px] text-amber-600 ml-1 font-bold">⚠ Approbation requise</span>}
+                <span className="text-[8px] font-bold text-white bg-blue-600 rounded-full w-5 h-5 flex items-center justify-center shrink-0 mt-0.5">{step.num}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9px] text-gray-700">{step.label}</span>
+                    <span className="text-[8px] text-gray-400 shrink-0 ml-2">{step.duree}</span>
+                  </div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[8px] text-blue-600 font-bold">{step.bot}</span>
+                    {step.validation && <span className="text-[8px] text-amber-600 font-bold flex items-center gap-0.5"><AlertTriangle className="h-3.5 w-3.5" /> Validation requise</span>}
+                    {step.livrable && <span className="text-[8px] text-emerald-600 font-bold flex items-center gap-0.5"><FileText className="h-3.5 w-3.5" /> {step.livrable}</span>}
+                    {step.input && <span className="text-[8px] text-gray-500 italic">{step.input}</span>}
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         </div>
+      </Card>
 
-        {/* Info supplementaire */}
-        <div className="px-4 py-3 border-b border-gray-100 grid grid-cols-2 gap-3">
-          <div>
-            <h4 className="text-[9px] font-bold text-gray-700 uppercase tracking-wider mb-1">Departement</h4>
-            <span className="text-[9px] text-gray-600">{DEPT_LABELS[pb.departement] || pb.departement}</span>
+      {/* Section 5 — Ce que vous recevez (livrables) */}
+      {livrables.length > 0 && (
+        <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
+          <div className="px-4 py-3">
+            <h4 className="text-[9px] font-bold text-gray-700 uppercase tracking-wider mb-2">Ce que vous recevez</h4>
+            <div className="space-y-1.5">
+              {livrables.map((l, i) => {
+                const LivIcon = l.icon;
+                return (
+                  <div key={i} className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-1.5">
+                    <LivIcon className="h-3.5 w-3.5 text-gray-500" />
+                    <span className="text-[9px] text-gray-700 flex-1">{l.nom}</span>
+                    <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-gray-200 text-gray-600">{l.type}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-          <div>
-            <h4 className="text-[9px] font-bold text-gray-700 uppercase tracking-wider mb-1">Categorie</h4>
-            <span className="text-[9px] text-gray-600">{pb.categorie}</span>
+        </Card>
+      )}
+
+      {/* Section 6 — Avis utilisateurs */}
+      {reviews.length > 0 && (
+        <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
+          <div className="px-4 py-3">
+            <h4 className="text-[9px] font-bold text-gray-700 uppercase tracking-wider mb-2">Avis utilisateurs</h4>
+            {/* Rating distribution */}
+            <div className="space-y-0.5 mb-3">
+              {[5,4,3,2,1].map(stars => {
+                const count = reviews.filter(r => r.rating === stars).length;
+                const pct = reviews.length > 0 ? (count / reviews.length) * 100 : 0;
+                return (
+                  <div key={stars} className="flex items-center gap-1.5">
+                    <span className="text-[8px] text-gray-500 w-3">{stars}</span>
+                    <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
+                    <div className="flex-1 bg-gray-100 rounded-full h-1.5"><div className="bg-amber-400 rounded-full h-1.5" style={{ width: `${pct}%` }} /></div>
+                    <span className="text-[8px] text-gray-400 w-3">{count}</span>
+                  </div>
+                );
+              })}
+            </div>
+            {/* Reviews */}
+            <div className="space-y-2">
+              {reviews.map((r, i) => (
+                <div key={i} className="border-t border-gray-100 pt-2">
+                  <div className="flex items-center gap-1 mb-0.5">
+                    {[1,2,3,4,5].map(s => <Star key={s} className={cn("h-3.5 w-3.5", s <= r.rating ? "text-amber-400 fill-amber-400" : "text-gray-200")} />)}
+                    <span className="text-[9px] font-bold text-gray-800 ml-1">{r.titre}</span>
+                  </div>
+                  <p className="text-[9px] text-gray-600">{r.texte}</p>
+                  <div className="flex items-center gap-2 mt-1 text-[8px] text-gray-400">
+                    <span>{r.auteur}, {r.role}</span>
+                    <span>{r.industrie}</span>
+                    {r.resultat && <span className="text-emerald-600 font-bold">{r.resultat}</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-          <div>
-            <h4 className="text-[9px] font-bold text-gray-700 uppercase tracking-wider mb-1">Pilier VITAA</h4>
-            <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded", PILIER_COLORS[pb.pilier]?.bg || "bg-gray-50", PILIER_COLORS[pb.pilier]?.text || "text-gray-700")}>{pb.pilier}</span>
+        </Card>
+      )}
+
+      {/* Section 7 — Playbooks similaires */}
+      {(similarDept.length > 0 || similarPilier.length > 0) && (
+        <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
+          <div className="px-4 py-3 space-y-3">
+            {similarDept.length > 0 && (
+              <div>
+                <h4 className="text-[9px] font-bold text-gray-700 uppercase tracking-wider mb-2">Souvent active ensemble</h4>
+                <div className="grid grid-cols-3 gap-2">
+                  {similarDept.map(sp => (
+                    <div key={sp.id} className="bg-gray-50 rounded-lg px-2 py-1.5 cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => { /* would navigate */ }}>
+                      <div className="text-[8px] font-bold text-gray-800 line-clamp-1">{sp.nom}</div>
+                      <div className="text-[8px] text-gray-400">{sp.bots[0]}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {similarPilier.length > 0 && (
+              <div>
+                <h4 className="text-[9px] font-bold text-gray-700 uppercase tracking-wider mb-2">Vous pourriez aussi aimer</h4>
+                <div className="grid grid-cols-3 gap-2">
+                  {similarPilier.map(sp => (
+                    <div key={sp.id} className="bg-gray-50 rounded-lg px-2 py-1.5 cursor-pointer hover:bg-gray-100 transition-colors">
+                      <div className="text-[8px] font-bold text-gray-800 line-clamp-1">{sp.nom}</div>
+                      <div className="text-[8px] text-gray-400">{sp.bots[0]}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-          <div>
-            <h4 className="text-[9px] font-bold text-gray-700 uppercase tracking-wider mb-1">Duree estimee</h4>
-            <span className="text-[9px] text-gray-600">{pb.duree}</span>
+        </Card>
+      )}
+
+      {/* Section 8 — Details techniques */}
+      <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
+        <div className="px-4 py-3">
+          <h4 className="text-[9px] font-bold text-gray-700 uppercase tracking-wider mb-2">Details</h4>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+            <div><span className="text-[8px] text-gray-400 block">Departement</span><span className="text-[9px] text-gray-700">{DEPT_LABELS[pb.departement] || pb.departement}</span></div>
+            <div><span className="text-[8px] text-gray-400 block">Categorie</span><span className="text-[9px] text-gray-700">{pb.categorie}</span></div>
+            <div><span className="text-[8px] text-gray-400 block">Pilier VITAA</span><span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded", pilierColor.bg, pilierColor.text)}>{pb.pilier}</span></div>
+            <div><span className="text-[8px] text-gray-400 block">Duree estimee</span><span className="text-[9px] text-gray-700">{pb.duree}</span></div>
+            <div><span className="text-[8px] text-gray-400 block">Createur</span><span className="text-[9px] text-gray-700">Brain Team (officiel)</span></div>
+            <div><span className="text-[8px] text-gray-400 block">Version</span><span className="text-[9px] text-gray-700">1.0</span></div>
           </div>
         </div>
-
-        {/* Action button */}
-        <div className="px-4 py-3 flex items-center gap-2">
-          {isInstalled ? (
-            <button className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors cursor-pointer">
-              <Rocket className="h-3.5 w-3.5" /> Executer
-            </button>
-          ) : pb.prix === "Gratuit" ? (
-            <button className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors cursor-pointer">
-              <Plus className="h-3.5 w-3.5" /> Installer
-            </button>
-          ) : (
-            <button className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors cursor-pointer">
-              <ShoppingBag className="h-3.5 w-3.5" /> Acheter {pb.prix}
-            </button>
-          )}
-          <button className="px-3 py-2 text-xs font-bold text-gray-600 bg-white hover:bg-gray-50 border border-gray-200 rounded-lg transition-colors cursor-pointer">
-            <Star className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      </div>
+      </Card>
     </div>
   );
 }
 
-// ── Mes Playbooks — En cours + Completes + Installes ──
-function PlaybookMesInstalled({ botCode, onOpenDetail }: { botCode: string; onOpenDetail: (pb: typeof PLAYBOOK_STORE_DATA[0]) => void }) {
-  const installed = PLAYBOOK_STORE_DATA.filter(pb => INSTALLED_PLAYBOOKS.includes(pb.id) && (botCode === "CEOB" || pb.departement === botCode));
+// ══════════════════════════════════════════
+// PLAYBOOK STORE — Vues individuelles
+// ══════════════════════════════════════════
+
+type PlaybookStoreView = "decouvrir" | "categorie" | "collections" | "installed" | "encours" | "historique" | "builder";
+
+// ── Vue DECOUVRIR (homepage du Store) ──
+function PlaybookDecouvrir({ botCode, onOpenDetail, onNavigate }: { botCode: string; onOpenDetail: (pb: typeof PLAYBOOK_STORE_DATA[0]) => void; onNavigate: (view: PlaybookStoreView, extra?: { dept?: string; collection?: string }) => void }) {
+  const featuredItems = FEATURED_PLAYBOOKS.map(f => ({ ...f, pb: PLAYBOOK_STORE_DATA.find(p => p.id === f.playbookId) })).filter(f => f.pb);
+  const recommended = RECOMMENDED_PLAYBOOKS.map(r => ({ ...r, pb: PLAYBOOK_STORE_DATA.find(p => p.id === r.playbookId) })).filter(r => r.pb && (botCode === "CEOB" || r.pb!.departement === botCode));
+  const popular = [...PLAYBOOK_STORE_DATA].sort((a, b) => b.downloads - a.downloads).slice(0, 6);
+  const recent = [...PLAYBOOK_STORE_DATA].slice(-6).reverse();
 
   return (
     <div className="space-y-4">
-      {/* En cours d'execution */}
-      {RUNNING_PLAYBOOKS.length > 0 && (
+      {/* Intro — Bienvenue dans le Playbook Store */}
+      <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border border-blue-100 rounded-xl px-4 py-4">
+        <h3 className="text-sm font-bold text-gray-900">Bienvenue dans le Playbook Store</h3>
+        <p className="text-[10px] text-gray-600 leading-relaxed mt-1">
+          Votre equipe IA est prete a travailler pour vous. Un playbook, c'est un processus d'affaires complet,
+          execute automatiquement par vos bots — de la collecte de donnees jusqu'a la livraison du resultat final.
+        </p>
+        <div className="grid grid-cols-3 gap-3 mt-3">
+          <div className="bg-white rounded-lg px-3 py-2 border border-gray-100">
+            <span className="text-[9px] font-bold text-gray-800">1. Choisissez</span>
+            <p className="text-[8px] text-gray-500 leading-relaxed mt-1">Parcourez {PLAYBOOK_STORE_DATA.length} playbooks classes par departement, difficulte et objectif. Diagnostic financier, audit securite, conformite Loi 25, plan marketing — tout y est.</p>
+          </div>
+          <div className="bg-white rounded-lg px-3 py-2 border border-gray-100">
+            <span className="text-[9px] font-bold text-gray-800">2. Activez</span>
+            <p className="text-[8px] text-gray-500 leading-relaxed mt-1">Un clic et vos bots se mettent au travail. Frank analyse vos finances, Tim audite votre securite, Mathilde cree votre contenu — chacun son expertise.</p>
+          </div>
+          <div className="bg-white rounded-lg px-3 py-2 border border-gray-100">
+            <span className="text-[9px] font-bold text-gray-800">3. Recevez</span>
+            <p className="text-[8px] text-gray-500 leading-relaxed mt-1">Rapports PDF, tableaux Excel, plans d'action priorises — des livrables concrets que vous pouvez utiliser immediatement avec votre equipe.</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Section 1 — Top 3 Playbooks de la semaine */}
+      {featuredItems.length > 0 && (
         <div>
-          <h3 className="text-[9px] font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-            <Activity className="h-3.5 w-3.5 text-emerald-500" /> En cours d'execution ({RUNNING_PLAYBOOKS.length})
-          </h3>
-          <div className="space-y-2">
-            {RUNNING_PLAYBOOKS.map(run => {
-              const pb = PLAYBOOK_STORE_DATA.find(p => p.id === run.playbookId);
-              if (!pb) return null;
+          <div className="flex items-center gap-2 mb-3">
+            <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
+            <h3 className="text-xs font-bold text-gray-800">Top 3 — Playbooks de la semaine</h3>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            {featuredItems.map(f => {
+              if (!f.pb) return null;
+              const livrables = PLAYBOOK_LIVRABLES[f.pb.id] || [];
               return (
-                <Card key={run.playbookId} className="p-0 overflow-hidden rounded-xl border-l-4 border-l-emerald-500">
-                  <div className="px-3 py-2.5 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-full", run.statut === "actif" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700")}>
-                          {run.statut === "actif" ? "Actif" : "En pause"}
-                        </span>
-                        <span className="text-xs font-bold text-gray-800">{pb.nom}</span>
-                      </div>
-                      <span className="text-[9px] font-bold text-gray-500">{run.progress}%</span>
+                <div key={f.playbookId} className={cn("relative bg-gradient-to-r rounded-xl overflow-hidden cursor-pointer group hover:shadow-lg transition-shadow", f.gradient)} onClick={() => onOpenDetail(f.pb!)}>
+                  {/* Decorative circles */}
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+                  <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+                  <div className="relative p-4">
+                    {/* Rank badge + pills */}
+                    <div className="flex items-center gap-1.5 mb-2.5">
+                      <span className={cn("text-[9px] font-bold w-6 h-6 rounded-full flex items-center justify-center gap-0.5", f.rank === 1 ? "bg-amber-400 text-amber-900" : "bg-white/20 text-white")}>
+                        {f.rank === 1 && <Crown className="h-3.5 w-3.5" />}
+                        {f.rank !== 1 && f.rank}
+                      </span>
+                      <span className="text-[8px] font-medium px-2 py-0.5 rounded-full bg-white/15 text-white">{f.pb.niveau}</span>
+                      <span className="text-[8px] font-medium px-2 py-0.5 rounded-full bg-white/15 text-white">{f.pb.prix === "Gratuit" ? "Inclus" : f.pb.prix}</span>
                     </div>
-                    {/* Progress bar */}
-                    <div className="w-full bg-gray-100 rounded-full h-1.5">
-                      <div className="bg-emerald-500 h-1.5 rounded-full transition-all" style={{ width: `${run.progress}%` }} />
-                    </div>
-                    <div className="flex items-center justify-between text-[9px] text-gray-500">
-                      <span>Etape: {run.etapeActuelle}</span>
-                      <span>Bot actif: <span className="font-bold text-gray-700">{run.botActif}</span></span>
-                    </div>
-                    <div className="flex items-center justify-between text-[9px]">
-                      <span className="text-gray-400">Temps restant: {run.tempsRestant}</span>
-                      <div className="flex items-center gap-1">
-                        {pb.bots.map((bot, i) => (
-                          <span key={i} className={cn("px-1 py-0.5 rounded text-[9px]", bot === run.botActif ? "bg-emerald-100 text-emerald-700 font-bold" : "bg-gray-100 text-gray-400")}>{bot}</span>
+                    {/* Title */}
+                    <h4 className="text-sm font-bold text-white leading-tight">{f.pb.nom}</h4>
+                    <p className="text-[9px] text-white/80 mt-1.5 line-clamp-3 leading-relaxed">{f.editorial}</p>
+                    {/* Rating */}
+                    <div className="flex items-center gap-1.5 mt-3">
+                      <div className="flex items-center gap-0.5">
+                        {[1,2,3,4,5].map(s => (
+                          <Star key={s} className={cn("h-3.5 w-3.5", s <= Math.round(f.pb!.rating) ? "text-amber-300 fill-amber-300" : "text-white/20")} />
                         ))}
                       </div>
+                      <span className="text-[9px] text-white font-bold">{f.pb.rating}/5</span>
                     </div>
-                    {run.actionRequise && (
-                      <div className="bg-amber-50 border border-amber-200 rounded-lg px-2 py-1.5 flex items-center gap-2">
-                        <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-                        <span className="text-[9px] text-amber-700 flex-1">{run.actionRequise}</span>
-                        <button className="text-[9px] font-bold text-amber-700 bg-amber-200 hover:bg-amber-300 px-2 py-0.5 rounded cursor-pointer">Fournir</button>
-                      </div>
-                    )}
+                    {/* Stats */}
+                    <div className="flex items-center gap-3 mt-2 text-[8px] text-white/70">
+                      <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />{f.pb.downloads} activations</span>
+                      <span>{f.pb.etapes} etapes</span>
+                      <span>{f.pb.duree}</span>
+                    </div>
+                    {/* 2 CTA buttons */}
+                    <div className="flex gap-2 mt-4">
+                      <button className="flex-1 px-3 py-2 text-[9px] font-bold bg-white text-gray-900 rounded-lg shadow-md hover:shadow-lg cursor-pointer transition-all flex items-center justify-center gap-1">
+                        <Rocket className="h-3.5 w-3.5" /> Decouvrir
+                      </button>
+                      <button className="flex-1 px-3 py-2 text-[9px] font-bold text-white bg-white/15 hover:bg-white/25 rounded-lg cursor-pointer transition-colors flex items-center justify-center gap-1">
+                        <Eye className="h-3.5 w-3.5" /> Previsualiser
+                      </button>
+                    </div>
                   </div>
-                </Card>
+                </div>
               );
             })}
           </div>
         </div>
       )}
 
-      {/* Recemment completes */}
-      {COMPLETED_PLAYBOOKS.length > 0 && (
+      {/* Section 2 — Recommandes pour vous */}
+      {recommended.length > 0 && (
         <div>
-          <h3 className="text-[9px] font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-            <CheckCircle2 className="h-3.5 w-3.5 text-blue-500" /> Recemment completes
-          </h3>
-          <div className="grid grid-cols-3 gap-2">
-            {COMPLETED_PLAYBOOKS.map(cp => {
-              const pb = PLAYBOOK_STORE_DATA.find(p => p.id === cp.playbookId);
-              if (!pb) return null;
-              const pilierColor = PILIER_COLORS[cp.pilierImpact] || PILIER_COLORS.Actif;
-              return (
-                <Card key={cp.playbookId} className="p-0 overflow-hidden rounded-xl cursor-pointer hover:shadow-md transition-shadow" onClick={() => onOpenDetail(pb)}>
-                  <div className="px-2.5 py-2 space-y-1">
-                    <div className="text-[9px] font-bold text-gray-800 leading-tight">{pb.nom}</div>
-                    <div className="text-[9px] text-gray-400">{pb.bots.join(" + ")}</div>
-                    <div className="text-[9px] text-gray-400">Termine le {cp.completeLe}</div>
-                    <div className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded inline-block", pilierColor.bg, pilierColor.text)}>Impact: {cp.impact}</div>
-                    <button className="w-full text-[9px] font-bold text-blue-600 hover:text-blue-700 mt-1 cursor-pointer">Voir les livrables</button>
-                  </div>
-                </Card>
-              );
-            })}
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5"><Target className="h-3.5 w-3.5 text-green-500" /> Recommandes pour vous</h3>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {recommended.slice(0, 6).map(r => r.pb && (
+              <PlaybookCardV2 key={r.playbookId} pb={r.pb} recommended onOpenDetail={onOpenDetail} />
+            ))}
           </div>
         </div>
       )}
 
-      {/* Mes playbooks installes */}
+      {/* Section 3 — Populaires cette semaine */}
       <div>
-        <h3 className="text-[9px] font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-          <BookOpen className="h-3.5 w-3.5 text-gray-400" /> Mes playbooks installes ({installed.length})
-        </h3>
-        {installed.length === 0 ? (
-          <p className="text-[9px] text-gray-400 text-center py-4">Aucun playbook installe — explorez le Store</p>
-        ) : (
-          <div className="grid grid-cols-2 gap-2">
-            {installed.map(pb => <PlaybookCard key={pb.id} pb={pb} installed onOpenDetail={onOpenDetail} />)}
-          </div>
-        )}
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5"><TrendingUp className="h-3.5 w-3.5 text-amber-500" /> Populaires cette semaine</h3>
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          {popular.map(pb => (
+            <PlaybookCardV2 key={pb.id} pb={pb} badge={pb.downloads > 500 ? "populaire" : undefined} onOpenDetail={onOpenDetail} />
+          ))}
+        </div>
+      </div>
+
+      {/* Section 4 — Nouveautes */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5"><Sparkles className="h-3.5 w-3.5 text-blue-500" /> Recemment ajoutes</h3>
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          {recent.map(pb => (
+            <PlaybookCardV2 key={pb.id} pb={pb} badge="nouveau" onOpenDetail={onOpenDetail} />
+          ))}
+        </div>
+      </div>
+
+      {/* Section 5 — Navigation par departement */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5"><LayoutGrid className="h-3.5 w-3.5 text-gray-500" /> Explorer par departement</h3>
+        </div>
+        <div className="grid grid-cols-4 gap-2">
+          {Object.entries(DEPT_LABELS).map(([code, label]) => {
+            const DIcon = DEPT_ICONS[code] || Building2;
+            const dColor = DEPT_COLORS[code] || DEPT_COLORS.CEOB;
+            const count = PLAYBOOK_STORE_DATA.filter(p => p.departement === code).length;
+            return (
+              <Card key={code} className="p-0 gap-0 overflow-hidden rounded-lg cursor-pointer hover:shadow-md hover:border-blue-200 transition-all" onClick={() => onNavigate("categorie", { dept: code })}>
+                <div className={cn("h-1 bg-gradient-to-r", dColor.gradient)} />
+                <div className="px-2.5 py-2 text-center">
+                  <DIcon className={cn("h-4 w-4 mx-auto mb-1", dColor.text)} />
+                  <div className="text-[9px] font-bold text-gray-800">{label}</div>
+                  <div className="text-[8px] text-gray-400">{count} playbooks</div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Section 6 — Collections */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5"><Bookmark className="h-3.5 w-3.5 text-purple-500" /> Collections</h3>
+          <button onClick={() => onNavigate("collections")} className="text-[9px] text-blue-500 hover:text-blue-700 cursor-pointer font-bold">Voir tout</button>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {STORE_COLLECTIONS_V2.slice(0, 4).map(col => {
+            const ColIcon = col.icon;
+            return (
+              <Card key={col.id} className="p-0 gap-0 overflow-hidden rounded-xl cursor-pointer hover:shadow-md transition-all" onClick={() => onNavigate("collections", { collection: col.id })}>
+                <div className={cn("bg-gradient-to-r px-3 py-3", col.gradient)}>
+                  <ColIcon className="h-4 w-4 text-white mb-1" />
+                  <div className="text-[10px] font-bold text-white">{col.label}</div>
+                  <div className="text-[8px] text-white/70 mt-0.5 line-clamp-1">{col.description}</div>
+                  <div className="text-[8px] text-white/60 mt-1">{col.playbookIds.length} playbooks</div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Section 7 — Bandeau Marketplace */}
+      <div className="bg-blue-50/50 border border-blue-100 rounded-lg px-3 py-2 flex items-center gap-2">
+        <Info className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+        <span className="text-[9px] text-blue-700">Playbook Store · {PLAYBOOK_STORE_DATA.length} playbooks disponibles · 85% createur / 15% plateforme</span>
+        <button onClick={() => onNavigate("builder")} className="text-[9px] text-blue-600 hover:text-blue-800 font-bold cursor-pointer ml-auto shrink-0">Publiez le votre</button>
       </div>
     </div>
   );
 }
 
-// ── Recommandes — Gaps VITAA + Saisonnalite Quebec ──
-function PlaybookRecommandes({ botCode, onOpenDetail }: { botCode: string; onOpenDetail: (pb: typeof PLAYBOOK_STORE_DATA[0]) => void }) {
-  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
-
-  const recs = RECOMMENDED_PLAYBOOKS
-    .map(r => ({ ...r, pb: PLAYBOOK_STORE_DATA.find(p => p.id === r.playbookId) }))
-    .filter(r => r.pb && (botCode === "CEOB" || r.pb!.departement === botCode) && !dismissed.has(r.playbookId));
-
-  const seasonal = SEASONAL_PLAYBOOKS
-    .map(s => ({ ...s, pb: PLAYBOOK_STORE_DATA.find(p => p.id === s.playbookId) }))
-    .filter(s => s.pb && !dismissed.has(s.playbookId));
-
-  return (
-    <div className="space-y-4">
-      {/* Header score VITAA */}
-      <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-100 rounded-xl px-3 py-2.5">
-        <div className="flex items-center gap-2">
-          <Target className="h-4 w-4 text-blue-600" />
-          <div>
-            <span className="text-[9px] font-bold text-gray-800">Recommandations strategiques pour votre PME</span>
-            <span className="text-[9px] text-gray-500 ml-2">Score VITAA actuel: 62/100</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Gaps VITAA prioritaires */}
-      {recs.length > 0 && (
-        <div>
-          <h3 className="text-[9px] font-bold text-red-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-            <AlertTriangle className="h-3.5 w-3.5" /> Priorite haute — Gaps identifies
-          </h3>
-          <div className="space-y-2">
-            {recs.map(r => {
-              if (!r.pb) return null;
-              const pilierColor = PILIER_COLORS[r.pilier] || PILIER_COLORS.Actif;
-              return (
-                <Card key={r.playbookId} className={cn("p-0 overflow-hidden rounded-xl border-l-4", pilierColor.border)}>
-                  <div className="px-3 py-2.5 space-y-2">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 cursor-pointer" onClick={() => onOpenDetail(r.pb!)}>
-                        <div className="text-xs font-bold text-gray-800">{r.pb.nom}</div>
-                        <div className="flex items-center gap-1.5 mt-1">
-                          <Bot className="h-3.5 w-3.5 text-blue-500" />
-                          <span className="text-[9px] text-gray-500">{r.pb.bots.join(", ")}</span>
-                          <span className="text-[9px] text-gray-400">·</span>
-                          <span className="text-[9px] text-gray-500">{r.pb.duree}</span>
-                          <span className="text-[9px] text-gray-400">·</span>
-                          <span className={cn("text-[9px] font-bold", r.pb.prix === "Gratuit" ? "text-emerald-600" : "text-amber-600")}>{r.pb.prix}</span>
-                        </div>
-                      </div>
-                      <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0", pilierColor.bg, pilierColor.text)}>{r.pilier}</span>
-                    </div>
-                    <div className={cn("rounded px-2 py-1 text-[9px]", pilierColor.bg, pilierColor.text)}>
-                      {r.raison}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => onOpenDetail(r.pb!)} className="flex-1 text-[9px] font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg px-3 py-1.5 transition-colors cursor-pointer text-center">
-                        {r.pb.prix === "Gratuit" ? "Installer" : `Acheter ${r.pb.prix}`}
-                      </button>
-                      <button onClick={() => setDismissed(prev => new Set([...prev, r.playbookId]))} className="text-[9px] text-gray-400 hover:text-gray-600 px-2 py-1.5 cursor-pointer">
-                        Ignorer
-                      </button>
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Saisonnalite & Conformite Quebec */}
-      {seasonal.length > 0 && (
-        <div>
-          <h3 className="text-[9px] font-bold text-amber-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-            <Calendar className="h-3.5 w-3.5" /> Saisonnalite & Conformite Quebec
-          </h3>
-          <div className="space-y-2">
-            {seasonal.map(s => {
-              if (!s.pb) return null;
-              return (
-                <Card key={s.playbookId} className="p-0 overflow-hidden rounded-xl border-l-4 border-l-amber-400">
-                  <div className="px-3 py-2.5 space-y-1.5">
-                    <div className="flex items-start justify-between cursor-pointer" onClick={() => onOpenDetail(s.pb!)}>
-                      <div>
-                        <div className="text-xs font-bold text-gray-800">{s.pb.nom}</div>
-                        <div className="text-[9px] text-gray-500 mt-0.5">{s.pb.bots.join(", ")} · {s.pb.duree} · {s.pb.prix}</div>
-                      </div>
-                      <span className="text-[9px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded shrink-0">Echeance: {s.echeance}</span>
-                    </div>
-                    <div className="bg-amber-50 rounded px-2 py-1 text-[9px] text-amber-700">{s.raison}</div>
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => onOpenDetail(s.pb!)} className="flex-1 text-[9px] font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-lg px-3 py-1.5 transition-colors cursor-pointer text-center">
-                        {s.pb.prix === "Gratuit" ? "Installer" : `Acheter ${s.pb.prix}`}
-                      </button>
-                      <button onClick={() => setDismissed(prev => new Set([...prev, s.playbookId]))} className="text-[9px] text-gray-400 hover:text-gray-600 px-2 py-1.5 cursor-pointer">
-                        Ignorer
-                      </button>
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {recs.length === 0 && seasonal.length === 0 && (
-        <p className="text-[9px] text-gray-400 text-center py-8">Aucune recommandation pour ce departement</p>
-      )}
-    </div>
-  );
-}
-
-// ── Store — Marketplace avec collections + filtres departement ──
-function PlaybookStore({ botCode, onOpenDetail }: { botCode: string; onOpenDetail: (pb: typeof PLAYBOOK_STORE_DATA[0]) => void }) {
+// ── Vue CATEGORIE (filtree par departement) ──
+function PlaybookCategorie({ botCode, selectedDept, onOpenDetail, onBack }: { botCode: string; selectedDept: string; onOpenDetail: (pb: typeof PLAYBOOK_STORE_DATA[0]) => void; onBack: () => void }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterNiveau, setFilterNiveau] = useState<string>("all");
-  const [filterDept, setFilterDept] = useState<string>("all");
   const [filterPrix, setFilterPrix] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("populaires");
 
-  const available = PLAYBOOK_STORE_DATA.filter(pb => {
-    if (filterDept !== "all" && pb.departement !== filterDept) return false;
-    if (botCode !== "CEOB" && filterDept === "all" && pb.departement !== botCode) return false;
+  const deptColor = DEPT_COLORS[selectedDept] || DEPT_COLORS.CEOB;
+  const deptLabel = DEPT_LABELS[selectedDept] || selectedDept;
+  const DIcon = DEPT_ICONS[selectedDept] || Building2;
+
+  let filtered = PLAYBOOK_STORE_DATA.filter(pb => {
+    if (pb.departement !== selectedDept) return false;
     if (searchTerm && !pb.nom.toLowerCase().includes(searchTerm.toLowerCase()) && !pb.categorie.toLowerCase().includes(searchTerm.toLowerCase()) && !pb.description.toLowerCase().includes(searchTerm.toLowerCase())) return false;
     if (filterNiveau !== "all" && pb.niveau !== filterNiveau) return false;
     if (filterPrix === "gratuit" && pb.prix !== "Gratuit") return false;
@@ -3990,151 +5607,475 @@ function PlaybookStore({ botCode, onOpenDetail }: { botCode: string; onOpenDetai
     return true;
   });
 
+  if (sortBy === "populaires") filtered.sort((a, b) => b.downloads - a.downloads);
+  else if (sortBy === "rating") filtered.sort((a, b) => b.rating - a.rating);
+  else if (sortBy === "alpha") filtered.sort((a, b) => a.nom.localeCompare(b.nom));
+
+  const installedCount = filtered.filter(p => INSTALLED_PLAYBOOKS.includes(p.id)).length;
+  const runningCount = RUNNING_PLAYBOOKS.filter(r => { const p = PLAYBOOK_STORE_DATA.find(x => x.id === r.playbookId); return p?.departement === selectedDept; }).length;
+
   return (
     <div className="space-y-3">
-      {/* Search + filters */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <div className="flex-1 min-w-[200px] relative">
-          <Search className="h-3.5 w-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            placeholder="Rechercher un processus, un objectif ou un bot..."
-            className="w-full text-xs border border-gray-200 rounded-lg pl-8 pr-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-300"
-          />
+      {/* Header gradient */}
+      <div className={cn("bg-gradient-to-r rounded-xl px-4 py-3", deptColor.gradient)}>
+        <div className="flex items-center gap-2">
+          <DIcon className="h-4 w-4 text-white" />
+          <h3 className="text-sm font-bold text-white">Playbooks — {deptLabel}</h3>
         </div>
-        {botCode === "CEOB" && (
-          <select value={filterDept} onChange={e => setFilterDept(e.target.value)} className="text-[9px] border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-300">
-            <option value="all">Tous departements</option>
-            {Object.entries(DEPT_LABELS).map(([code, label]) => (
-              <option key={code} value={code}>{label}</option>
-            ))}
-          </select>
-        )}
-        <select value={filterNiveau} onChange={e => setFilterNiveau(e.target.value)} className="text-[9px] border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-300">
-          <option value="all">Tous niveaux</option>
+        <div className="text-[9px] text-white/70 mt-1">{filtered.length} playbooks · {installedCount} installes · {runningCount} en cours</div>
+      </div>
+
+      {/* Barre filtres */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex-1 min-w-[180px] relative">
+          <Search className="h-3.5 w-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+          <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Rechercher..." className="w-full text-xs border border-gray-200 rounded-lg pl-8 pr-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-300" />
+        </div>
+        <select value={filterNiveau} onChange={e => setFilterNiveau(e.target.value)} className="text-[9px] border border-gray-200 rounded-lg px-2 py-1.5">
+          <option value="all">Difficulte</option>
           <option value="Quick Win">Quick Win</option>
           <option value="Standard">Standard</option>
           <option value="Avance">Avance</option>
           <option value="Enterprise">Enterprise</option>
         </select>
-        <select value={filterPrix} onChange={e => setFilterPrix(e.target.value)} className="text-[9px] border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-300">
-          <option value="all">Tous prix</option>
-          <option value="gratuit">Gratuit</option>
+        <select value={filterPrix} onChange={e => setFilterPrix(e.target.value)} className="text-[9px] border border-gray-200 rounded-lg px-2 py-1.5">
+          <option value="all">Prix</option>
+          <option value="gratuit">Inclus</option>
           <option value="premium">Premium</option>
+        </select>
+        <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="text-[9px] border border-gray-200 rounded-lg px-2 py-1.5">
+          <option value="populaires">Populaires</option>
+          <option value="rating">Mieux notes</option>
+          <option value="alpha">Alphabetique</option>
         </select>
       </div>
 
-      {/* Collections horizontales (seulement si pas de recherche active) */}
-      {!searchTerm && filterDept === "all" && filterNiveau === "all" && filterPrix === "all" && STORE_COLLECTIONS.map(col => {
-        const colPlaybooks = col.playbookIds.map(id => PLAYBOOK_STORE_DATA.find(p => p.id === id)).filter(Boolean) as typeof PLAYBOOK_STORE_DATA;
-        if (colPlaybooks.length === 0) return null;
-        const ColIcon = col.icon;
-        return (
-          <div key={col.id}>
-            <h3 className="text-[9px] font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <ColIcon className="h-3.5 w-3.5 text-blue-500" /> {col.label}
-            </h3>
-            <div className="flex gap-2 overflow-x-auto pb-1">
-              {colPlaybooks.map(pb => (
-                <div key={pb.id} className="min-w-[200px] max-w-[200px]">
-                  <PlaybookCard pb={pb} installed={INSTALLED_PLAYBOOKS.includes(pb.id)} onOpenDetail={onOpenDetail} />
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-      })}
+      {/* Compteur */}
+      <span className="text-[9px] text-gray-400">{filtered.length} playbooks trouves</span>
 
-      {/* Separateur si collections affichees */}
-      {!searchTerm && filterDept === "all" && filterNiveau === "all" && filterPrix === "all" && (
-        <div className="h-px bg-gray-100 my-2" />
-      )}
-
-      {/* Commission info */}
-      <div className="bg-blue-50/50 border border-blue-100 rounded-lg px-3 py-2 flex items-center gap-2">
-        <Info className="h-3.5 w-3.5 text-blue-500 shrink-0" />
-        <span className="text-[9px] text-blue-700">Marketplace: 85% createur / 15% plateforme Brain Team · {available.length} playbooks disponibles</span>
-      </div>
-
-      {/* Grid complete */}
-      <div className="grid grid-cols-2 gap-2">
-        {available.map(pb => (
-          <PlaybookCard key={pb.id} pb={pb} installed={INSTALLED_PLAYBOOKS.includes(pb.id)} onOpenDetail={onOpenDetail} />
-        ))}
-      </div>
-
-      {available.length === 0 && (
-        <p className="text-[9px] text-gray-400 text-center py-8">Aucun playbook ne correspond a vos criteres</p>
+      {/* Grille */}
+      {filtered.length > 0 ? (
+        <div className="grid grid-cols-2 gap-3">
+          {filtered.map(pb => <PlaybookCardV2 key={pb.id} pb={pb} onOpenDetail={onOpenDetail} />)}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <Search className="h-8 w-8 text-gray-200 mb-3" />
+          <p className="text-xs text-gray-400 mb-2">Aucun playbook ne correspond a vos criteres</p>
+          <button onClick={() => { setSearchTerm(""); setFilterNiveau("all"); setFilterPrix("all"); }} className="text-[9px] text-blue-600 font-bold cursor-pointer">Reinitialiser les filtres</button>
+        </div>
       )}
     </div>
   );
 }
 
-function BlueprintPlaybooks({ botCode, headerGradient }: { botCode: string; headerGradient: string }) {
-  const [activePlaybookView, setActivePlaybookView] = useState<"installed" | "recommandes" | "store">("installed");
-  const [selectedPlaybook, setSelectedPlaybook] = useState<typeof PLAYBOOK_STORE_DATA[0] | null>(null);
+// ── Vue COLLECTIONS ──
+function PlaybookCollectionsView({ selectedCollection, onOpenDetail, onSelectCollection, onBack }: { selectedCollection: string | null; onOpenDetail: (pb: typeof PLAYBOOK_STORE_DATA[0]) => void; onSelectCollection: (id: string | null) => void; onBack: () => void }) {
+  if (selectedCollection) {
+    const col = STORE_COLLECTIONS_V2.find(c => c.id === selectedCollection);
+    if (!col) return null;
+    const ColIcon = col.icon;
+    const playbooks = col.playbookIds.map(id => PLAYBOOK_STORE_DATA.find(p => p.id === id)).filter(Boolean) as typeof PLAYBOOK_STORE_DATA;
+    return (
+      <div className="space-y-3">
+        <button onClick={() => onSelectCollection(null)} className="text-[9px] text-blue-600 hover:text-blue-800 font-bold cursor-pointer flex items-center gap-1">
+          <ChevronRight className="h-3.5 w-3.5 rotate-180" /> Retour aux collections
+        </button>
+        <div className={cn("bg-gradient-to-r rounded-xl px-4 py-3", col.gradient)}>
+          <ColIcon className="h-4 w-4 text-white mb-1" />
+          <h3 className="text-sm font-bold text-white">{col.label}</h3>
+          <p className="text-[9px] text-white/80 mt-1">{col.description}</p>
+          <span className="text-[8px] text-white/60 mt-1 block">{playbooks.length} playbooks</span>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {playbooks.map(pb => <PlaybookCardV2 key={pb.id} pb={pb} onOpenDetail={onOpenDetail} />)}
+        </div>
+      </div>
+    );
+  }
 
-  const views = [
-    { id: "installed" as const, label: "Mes Playbooks", icon: BookOpen, count: INSTALLED_PLAYBOOKS.length },
-    { id: "recommandes" as const, label: "Recommandes", icon: Sparkles, count: RECOMMENDED_PLAYBOOKS.length },
-    { id: "store" as const, label: "Store", icon: ShoppingBag, count: PLAYBOOK_STORE_DATA.length },
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-3">
+        {STORE_COLLECTIONS_V2.map(col => {
+          const ColIcon = col.icon;
+          return (
+            <Card key={col.id} className="p-0 gap-0 overflow-hidden rounded-xl cursor-pointer hover:shadow-md transition-all" onClick={() => onSelectCollection(col.id)}>
+              <div className={cn("bg-gradient-to-r px-3 py-3", col.gradient)}>
+                <ColIcon className="h-4 w-4 text-white mb-1" />
+                <div className="text-[10px] font-bold text-white">{col.label}</div>
+                <div className="text-[8px] text-white/70 mt-0.5 line-clamp-2">{col.description}</div>
+                <div className="text-[8px] text-white/60 mt-1">{col.playbookIds.length} playbooks</div>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── Vue MES PLAYBOOKS (installes seulement) ──
+function PlaybookMesInstalledView({ botCode, onOpenDetail }: { botCode: string; onOpenDetail: (pb: typeof PLAYBOOK_STORE_DATA[0]) => void }) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const installed = PLAYBOOK_STORE_DATA.filter(pb => INSTALLED_PLAYBOOKS.includes(pb.id) && (botCode === "CEOB" || pb.departement === botCode));
+  const filtered = searchTerm ? installed.filter(pb => pb.nom.toLowerCase().includes(searchTerm.toLowerCase())) : installed;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5"><BookOpen className="h-3.5 w-3.5 text-gray-400" /> Mes playbooks installes ({installed.length})</h3>
+      </div>
+      {installed.length > 3 && (
+        <div className="relative">
+          <Search className="h-3.5 w-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+          <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Filtrer mes playbooks..." className="w-full text-xs border border-gray-200 rounded-lg pl-8 pr-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-300" />
+        </div>
+      )}
+      {filtered.length === 0 ? (
+        <p className="text-[9px] text-gray-400 text-center py-8">Aucun playbook installe — explorez le Store</p>
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          {filtered.map(pb => <PlaybookCardV2 key={pb.id} pb={pb} installed onOpenDetail={onOpenDetail} />)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Vue EN COURS (executions actives) ──
+function PlaybookEnCours({ onOpenDetail }: { onOpenDetail: (pb: typeof PLAYBOOK_STORE_DATA[0]) => void }) {
+  if (RUNNING_PLAYBOOKS.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <Activity className="h-8 w-8 text-gray-200 mb-3" />
+        <p className="text-xs text-gray-400 mb-1">Aucun playbook en cours d'execution</p>
+        <p className="text-[9px] text-gray-300">Lancez-en un depuis le Store</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {RUNNING_PLAYBOOKS.map(run => {
+        const pb = PLAYBOOK_STORE_DATA.find(p => p.id === run.playbookId);
+        if (!pb) return null;
+        return (
+          <Card key={run.playbookId} className="p-0 gap-0 overflow-hidden rounded-xl border-l-4 border-l-emerald-500">
+            <div className="px-3 py-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className={cn("text-[8px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-1", run.statut === "actif" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700")}>
+                    {run.statut === "actif" && <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />}
+                    {run.statut === "actif" ? "Actif" : "En pause"}
+                  </span>
+                  <span className="text-xs font-bold text-gray-800 cursor-pointer hover:text-blue-600" onClick={() => onOpenDetail(pb)}>{pb.nom}</span>
+                </div>
+                <span className="text-[9px] font-bold text-gray-500">{run.progress}%</span>
+              </div>
+              {/* Progress bar */}
+              <div className="w-full bg-gray-100 rounded-full h-2">
+                <div className="bg-emerald-500 h-2 rounded-full transition-all" style={{ width: `${run.progress}%` }} />
+              </div>
+              <div className="flex items-center justify-between text-[9px] text-gray-500">
+                <span>Etape: <span className="text-gray-700">{run.etapeActuelle}</span></span>
+                <span>Bot actif: <span className="font-bold text-gray-700">{run.botActif}</span></span>
+              </div>
+              <div className="flex items-center justify-between text-[9px]">
+                <span className="text-gray-400">Temps restant: {run.tempsRestant}</span>
+                <div className="flex items-center gap-1">
+                  {pb.bots.map((bot, i) => (
+                    <span key={i} className={cn("px-1.5 py-0.5 rounded text-[8px]", bot === run.botActif ? "bg-emerald-100 text-emerald-700 font-bold" : "bg-gray-100 text-gray-400")}>{bot}</span>
+                  ))}
+                </div>
+              </div>
+              {run.actionRequise && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-2 flex items-center gap-2">
+                  <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                  <span className="text-[9px] text-amber-700 flex-1">{run.actionRequise}</span>
+                  <button className="text-[9px] font-bold text-amber-700 bg-amber-200 hover:bg-amber-300 px-2.5 py-1 rounded cursor-pointer">Fournir</button>
+                </div>
+              )}
+              {/* Action buttons */}
+              <div className="flex items-center gap-2 pt-1">
+                <button className="flex items-center gap-1 text-[9px] font-bold text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 px-2.5 py-1 rounded-lg cursor-pointer transition-colors">
+                  <Pause className="h-3.5 w-3.5" /> Pause
+                </button>
+                <button className="flex items-center gap-1 text-[9px] font-bold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-lg cursor-pointer transition-colors">
+                  <Trash2 className="h-3.5 w-3.5" /> Annuler
+                </button>
+                <button onClick={() => onOpenDetail(pb)} className="flex items-center gap-1 text-[9px] font-bold text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-lg cursor-pointer transition-colors ml-auto">
+                  <FileText className="h-3.5 w-3.5" /> Details
+                </button>
+              </div>
+            </div>
+          </Card>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Vue HISTORIQUE (completes + livrables) ──
+function PlaybookHistorique({ onOpenDetail }: { onOpenDetail: (pb: typeof PLAYBOOK_STORE_DATA[0]) => void }) {
+  if (COMPLETED_PLAYBOOKS.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <Clock className="h-8 w-8 text-gray-200 mb-3" />
+        <p className="text-xs text-gray-400 mb-1">Aucun playbook complete</p>
+        <p className="text-[9px] text-gray-300">Vos playbooks termines apparaitront ici avec leurs livrables</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {COMPLETED_PLAYBOOKS.map(cp => {
+        const pb = PLAYBOOK_STORE_DATA.find(p => p.id === cp.playbookId);
+        if (!pb) return null;
+        const pilierColor = PILIER_COLORS[cp.pilierImpact] || PILIER_COLORS.Actif;
+        const livrables = PLAYBOOK_LIVRABLES[pb.id] || [];
+        return (
+          <Card key={cp.playbookId} className="p-0 gap-0 overflow-hidden rounded-xl">
+            <div className="px-3 py-3 space-y-2">
+              <div className="flex items-start justify-between">
+                <div className="flex-1 cursor-pointer" onClick={() => onOpenDetail(pb)}>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                    <span className="text-xs font-bold text-gray-800">{pb.nom}</span>
+                  </div>
+                  <div className="text-[9px] text-gray-400 mt-0.5 ml-5">Complete le {cp.completeLe}</div>
+                </div>
+                <span className={cn("text-[8px] font-bold px-1.5 py-0.5 rounded shrink-0", pilierColor.bg, pilierColor.text)}>Impact: {cp.impact}</span>
+              </div>
+              <div className="flex items-center gap-1 ml-5">
+                {pb.bots.map((bot, i) => (
+                  <span key={i} className="text-[8px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">{bot}</span>
+                ))}
+              </div>
+              {/* Livrables */}
+              {livrables.length > 0 && (
+                <div className="ml-5 space-y-1">
+                  <span className="text-[8px] font-bold text-gray-500 uppercase tracking-wider">Livrables</span>
+                  {livrables.map((l, i) => {
+                    const LivIcon = l.icon;
+                    return (
+                      <div key={i} className="flex items-center gap-2 bg-gray-50 rounded-lg px-2.5 py-1">
+                        <LivIcon className="h-3.5 w-3.5 text-gray-400" />
+                        <span className="text-[9px] text-gray-700 flex-1">{l.nom}</span>
+                        <span className="text-[8px] text-gray-400">{l.type}</span>
+                        <button className="text-[8px] font-bold text-blue-600 hover:text-blue-800 cursor-pointer">Ouvrir</button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              {/* Action buttons */}
+              <div className="flex items-center gap-2 ml-5 pt-1">
+                <button className="flex items-center gap-1 text-[9px] font-bold text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 px-2.5 py-1 rounded-lg cursor-pointer transition-colors">
+                  <RotateCcw className="h-3.5 w-3.5" /> Relancer
+                </button>
+                <button className="flex items-center gap-1 text-[9px] font-bold text-amber-500 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-lg cursor-pointer transition-colors">
+                  <Star className="h-3.5 w-3.5" /> Evaluer
+                </button>
+                <button className="flex items-center gap-1 text-[9px] font-bold text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-lg cursor-pointer transition-colors">
+                  <Share2 className="h-3.5 w-3.5" /> Partager
+                </button>
+              </div>
+            </div>
+          </Card>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Vue PLAYBOOK BUILDER (mock) ──
+function PlaybookBuilder() {
+  return (
+    <div className="space-y-4">
+      <div className="text-center py-4">
+        <Wrench className="h-8 w-8 text-gray-300 mx-auto mb-3" />
+        <h3 className="text-sm font-bold text-gray-800">Playbook Builder</h3>
+        <p className="text-[9px] text-gray-500 mt-1 max-w-sm mx-auto">Creez vos propres playbooks et publiez-les dans le Playbook Store.</p>
+      </div>
+
+      {/* KPIs mock */}
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { label: "Mes brouillons", value: "0", icon: FileText, color: "text-gray-500" },
+          { label: "Publies", value: "0", icon: Upload, color: "text-blue-500" },
+          { label: "Revenus", value: "0.00$", icon: DollarSign, color: "text-emerald-500" },
+        ].map(kpi => (
+          <Card key={kpi.label} className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
+            <div className="px-3 py-2.5 text-center">
+              <kpi.icon className={cn("h-4 w-4 mx-auto mb-1", kpi.color)} />
+              <div className="text-sm font-bold text-gray-800">{kpi.value}</div>
+              <div className="text-[8px] text-gray-400">{kpi.label}</div>
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      {/* CTA disabled */}
+      <button className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-bold text-gray-400 bg-gray-100 rounded-lg cursor-not-allowed" disabled>
+        <Plus className="h-3.5 w-3.5" /> Creer un nouveau playbook
+      </button>
+
+      {/* Comment ca marche */}
+      <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
+        <div className="px-4 py-3">
+          <h4 className="text-[9px] font-bold text-gray-700 uppercase tracking-wider mb-2">Comment ca marche</h4>
+          <div className="space-y-2">
+            {[
+              "Definissez les etapes du workflow",
+              "Assignez les bots a chaque etape",
+              "Testez avec vos donnees",
+              "Publiez dans le Store (85% createur / 15% plateforme)",
+            ].map((step, i) => (
+              <div key={i} className="flex items-start gap-2">
+                <span className="text-[8px] font-bold text-white bg-blue-600 rounded-full w-5 h-5 flex items-center justify-center shrink-0">{i + 1}</span>
+                <span className="text-[9px] text-gray-700">{step}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Card>
+
+      {/* Motivation */}
+      <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-100 rounded-xl px-4 py-3 text-center">
+        <p className="text-[9px] text-purple-700 font-bold">Les meilleurs createurs gagnent 2000-5000$/mois avec leurs playbooks.</p>
+        <p className="text-[8px] text-purple-500 mt-1">Bientot disponible</p>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════
+// BLUEPRINT PLAYBOOKS — Conteneur principal avec sidebar 8 items
+// ══════════════════════════════════════════
+
+function BlueprintPlaybooks({ botCode, headerGradient }: { botCode: string; headerGradient: string }) {
+  const [activeView, setActiveView] = useState<PlaybookStoreView>("decouvrir");
+  const [selectedPlaybook, setSelectedPlaybook] = useState<typeof PLAYBOOK_STORE_DATA[0] | null>(null);
+  const [expandCategories, setExpandCategories] = useState(false);
+  const [selectedCategorie, setSelectedCategorie] = useState<string | null>(null);
+  const [selectedCollection, setSelectedCollection] = useState<string | null>(null);
+
+  const handleNavigate = (view: PlaybookStoreView, extra?: { dept?: string; collection?: string }) => {
+    setSelectedPlaybook(null);
+    if (extra?.dept) { setSelectedCategorie(extra.dept); setActiveView("categorie"); }
+    else if (extra?.collection) { setSelectedCollection(extra.collection); setActiveView("collections"); }
+    else setActiveView(view);
+  };
+
+  const handleOpenDetail = (pb: typeof PLAYBOOK_STORE_DATA[0]) => setSelectedPlaybook(pb);
+  const handleBack = () => setSelectedPlaybook(null);
+
+  const SIDEBAR_ITEMS: { id: PlaybookStoreView; label: string; icon: React.ElementType; count?: number; dot?: boolean; separator?: boolean }[] = [
+    { id: "decouvrir", label: "Decouvrir", icon: Sparkles, count: PLAYBOOK_STORE_DATA.length },
+    { id: "categorie", label: "Categories", icon: LayoutGrid },
+    { id: "collections", label: "Collections", icon: Bookmark, count: STORE_COLLECTIONS_V2.length },
+    { id: "installed", label: "Mes Playbooks", icon: BookOpen, count: INSTALLED_PLAYBOOKS.length, separator: true },
+    { id: "encours", label: "En cours", icon: Activity, count: RUNNING_PLAYBOOKS.length, dot: RUNNING_PLAYBOOKS.length > 0 },
+    { id: "historique", label: "Historique", icon: Clock, count: COMPLETED_PLAYBOOKS.length },
+    { id: "builder", label: "Playbook Builder", icon: Wrench, separator: true },
   ];
+
+  const VIEW_LABELS: Record<PlaybookStoreView, string> = {
+    decouvrir: "Decouvrir", categorie: "Categories", collections: "Collections",
+    installed: "Mes Playbooks", encours: "En cours", historique: "Historique", builder: "Playbook Builder",
+  };
 
   return (
     <div className="flex gap-3">
       {/* Sidebar TOC */}
       <div className="w-[180px] shrink-0 space-y-0.5">
-        {views.map(v => {
-          const isActive = activePlaybookView === v.id;
+        {SIDEBAR_ITEMS.map((item, idx) => {
+          const isActive = activeView === item.id;
           return (
-            <button
-              key={v.id}
-              onClick={() => setActivePlaybookView(v.id)}
-              className={cn(
-                "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
-                isActive ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent"
+            <div key={item.id}>
+              {item.separator && idx > 0 && <div className="h-px bg-gray-100 mx-2 my-2" />}
+              <button
+                onClick={() => {
+                  if (item.id === "categorie") { setExpandCategories(!expandCategories); if (!expandCategories) setActiveView("categorie"); }
+                  else { setActiveView(item.id); setSelectedPlaybook(null); }
+                }}
+                className={cn(
+                  "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
+                  isActive ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent"
+                )}
+              >
+                <div className="flex items-center gap-1.5">
+                  <item.icon className={cn("h-3.5 w-3.5", isActive ? "text-blue-500" : "text-gray-400")} />
+                  <span className={cn("text-[10px] font-bold flex-1 leading-tight", isActive ? "text-blue-700" : "text-gray-700")}>{item.label}</span>
+                  {item.dot && <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />}
+                  {item.count !== undefined && <span className="text-[9px] text-gray-400">{item.count}</span>}
+                  {item.id === "categorie" && <ChevronDown className={cn("h-3.5 w-3.5 text-gray-400 transition-transform", expandCategories && "rotate-180")} />}
+                </div>
+              </button>
+              {/* Expandable categories */}
+              {item.id === "categorie" && expandCategories && (
+                <div className="ml-3 mt-0.5 space-y-0.5">
+                  {Object.entries(DEPT_LABELS).map(([code, label]) => {
+                    const isActiveDept = activeView === "categorie" && selectedCategorie === code;
+                    return (
+                      <button key={code} onClick={() => { setSelectedCategorie(code); setActiveView("categorie"); setSelectedPlaybook(null); }}
+                        className={cn("w-full px-2 py-1 rounded text-left text-[9px] cursor-pointer transition-all",
+                          isActiveDept ? "bg-blue-50 text-blue-700 font-bold" : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                        )}>
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
               )}
-            >
-              <div className="flex items-center gap-1.5">
-                <v.icon className={cn("h-3.5 w-3.5", isActive ? "text-blue-500" : "text-gray-400")} />
-                <span className={cn("text-[9px] font-bold flex-1 leading-tight", isActive ? "text-blue-700" : "text-gray-700")}>
-                  {v.label}
-                </span>
-                <span className="text-[9px] text-gray-400">{v.count}</span>
-              </div>
-            </button>
+            </div>
           );
         })}
-
-        {/* Stats rapides */}
-        <div className="h-px bg-gray-100 mx-2 my-2" />
-        <div className="px-2.5 space-y-1">
-          <div className="flex items-center justify-between text-[9px]">
-            <span className="text-gray-400">En cours</span>
-            <span className="font-bold text-emerald-600">{RUNNING_PLAYBOOKS.length}</span>
-          </div>
-          <div className="flex items-center justify-between text-[9px]">
-            <span className="text-gray-400">Completes</span>
-            <span className="font-bold text-blue-600">{COMPLETED_PLAYBOOKS.length}</span>
-          </div>
-          <div className="flex items-center justify-between text-[9px]">
-            <span className="text-gray-400">Installes</span>
-            <span className="font-bold text-gray-600">{INSTALLED_PLAYBOOKS.length}</span>
-          </div>
-        </div>
       </div>
 
       {/* Contenu */}
-      <div className="flex-1 min-w-0">
-        {activePlaybookView === "installed" && <PlaybookMesInstalled botCode={botCode} onOpenDetail={setSelectedPlaybook} />}
-        {activePlaybookView === "recommandes" && <PlaybookRecommandes botCode={botCode} onOpenDetail={setSelectedPlaybook} />}
-        {activePlaybookView === "store" && <PlaybookStore botCode={botCode} onOpenDetail={setSelectedPlaybook} />}
-      </div>
+      <div className="flex-1 min-w-0 space-y-2">
+        {/* Header */}
+        <div className={cn("bg-gradient-to-r rounded-lg px-4 py-2.5", headerGradient)}>
+          <h2 className="text-sm font-bold text-white">Playbook Store{activeView !== "decouvrir" ? ` — ${VIEW_LABELS[activeView]}` : ""}</h2>
+        </div>
 
-      {/* Modal fiche detaillee */}
-      {selectedPlaybook && <PlaybookFicheDetail pb={selectedPlaybook} onClose={() => setSelectedPlaybook(null)} />}
+        {/* Fiche detaillee INLINE (drill-down) */}
+        {selectedPlaybook ? (
+          <PlaybookFicheDetailInline pb={selectedPlaybook} onBack={handleBack} />
+        ) : (
+          <>
+            {activeView === "decouvrir" && <PlaybookDecouvrir botCode={botCode} onOpenDetail={handleOpenDetail} onNavigate={handleNavigate} />}
+            {activeView === "categorie" && selectedCategorie && <PlaybookCategorie botCode={botCode} selectedDept={selectedCategorie} onOpenDetail={handleOpenDetail} onBack={() => setActiveView("decouvrir")} />}
+            {activeView === "categorie" && !selectedCategorie && (
+              <div className="grid grid-cols-3 gap-3">
+                {Object.entries(DEPT_LABELS).map(([code, label]) => {
+                  const DIcon = DEPT_ICONS[code] || Building2;
+                  const dColor = DEPT_COLORS[code] || DEPT_COLORS.CEOB;
+                  const count = PLAYBOOK_STORE_DATA.filter(p => p.departement === code).length;
+                  return (
+                    <Card key={code} className="p-0 gap-0 overflow-hidden rounded-lg cursor-pointer hover:shadow-md hover:border-blue-200 transition-all" onClick={() => { setSelectedCategorie(code); }}>
+                      <div className={cn("h-1.5 bg-gradient-to-r", dColor.gradient)} />
+                      <div className="px-3 py-2.5 text-center">
+                        <DIcon className={cn("h-4 w-4 mx-auto mb-1", dColor.text)} />
+                        <div className="text-[9px] font-bold text-gray-800">{label}</div>
+                        <div className="text-[8px] text-gray-400">{count} playbooks</div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+            {activeView === "collections" && <PlaybookCollectionsView selectedCollection={selectedCollection} onOpenDetail={handleOpenDetail} onSelectCollection={setSelectedCollection} onBack={() => setActiveView("decouvrir")} />}
+            {activeView === "installed" && <PlaybookMesInstalledView botCode={botCode} onOpenDetail={handleOpenDetail} />}
+            {activeView === "encours" && <PlaybookEnCours onOpenDetail={handleOpenDetail} />}
+            {activeView === "historique" && <PlaybookHistorique onOpenDetail={handleOpenDetail} />}
+            {activeView === "builder" && <PlaybookBuilder />}
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -4260,7 +6201,7 @@ export function BlueprintDepartement({ botCode, headerGradient, sizeTier: propTi
                 headerView === "personnel" ? "Personnel" :
                 headerView === "bot" ? "Brain Team" :
                 headerView === "dataroom" ? "Data Room" :
-                headerView === "playbooks" ? "Playbooks" :
+                headerView === "playbooks" ? "Playbook Store" :
                 config.deptLabel
               }</h2>
           </div>
@@ -4280,7 +6221,7 @@ export function BlueprintDepartement({ botCode, headerGradient, sizeTier: propTi
           { key: "personnel" as HeaderView, label: "Personnel", icon: User, show: true },
           { key: "bot" as HeaderView, label: "Brain Team", icon: Bot, show: true },
           { key: "dataroom" as HeaderView, label: "Data Room", icon: Database, show: true },
-          { key: "playbooks" as HeaderView, label: "Playbooks", icon: BookOpen, show: true },
+          { key: "playbooks" as HeaderView, label: "Playbook Store", icon: BookOpen, show: true },
         ]).filter(t => t.show).map(tab => (
           <button
             key={tab.key}
@@ -4326,21 +6267,12 @@ export function BlueprintDepartement({ botCode, headerGradient, sizeTier: propTi
 
       {/* VUE PERSONNEL — Blueprint Personnel du dirigeant */}
       {headerView === "personnel" && (
-        <BlueprintPersonnel botCode={botCode} headerGradient={headerGradient} />
+        <BlueprintPersonnel botCode={botCode} headerGradient={headerGradient} data={data} onFieldChange={handleFieldChange} onSave={handleSave} saving={saving} dirty={dirty} tier={tier} />
       )}
 
       {/* VUE BOT — Blueprint de l'Agent IA */}
       {headerView === "bot" && (
         <BlueprintBot botCode={botCode} headerGradient={headerGradient} />
-      )}
-
-      {/* SECTION HEADER — Rectangle bleu entre boutons et contenu (Data Room / Playbooks) */}
-      {(headerView === "dataroom" || headerView === "playbooks") && (
-        <div className={cn("bg-gradient-to-r rounded-lg px-4 py-2.5 flex items-center gap-3", headerGradient)}>
-          {headerView === "dataroom" ? <Database className="h-5 w-5 text-white" /> : <BookOpen className="h-5 w-5 text-white" />}
-          <h2 className="text-lg font-bold text-white">{headerView === "dataroom" ? "Data Room" : "Playbooks"}</h2>
-          <span className="text-xs text-white/60 ml-auto">{config.deptLabel}</span>
-        </div>
       )}
 
       {/* VUE DATA ROOM — Documents par département */}
@@ -4379,7 +6311,7 @@ export function BlueprintDepartement({ botCode, headerGradient, sizeTier: propTi
                     )}
                   >
                     <div className="flex items-center gap-1.5">
-                      <span className={cn("text-[9px] font-bold flex-1 leading-tight", isActive ? "text-blue-700" : "text-gray-700")}>
+                      <span className={cn("text-[10px] font-bold flex-1 leading-tight", isActive ? "text-blue-700" : "text-gray-700")}>
                         {section.label}
                       </span>
                       {isActive && <ChevronRight className="h-3.5 w-3.5 text-blue-400" />}
@@ -4409,7 +6341,7 @@ export function BlueprintDepartement({ botCode, headerGradient, sizeTier: propTi
             {activeSection && activeSection.id === "vue_consolidee" && botCode === "CEOB" ? (
               <VueConsolidee tier={tier} />
             ) : activeSection && (
-              <Card className="p-0 overflow-hidden rounded-xl shadow-sm">
+              <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
                 {/* Section header gradient */}
                 <div className={cn("flex items-center gap-2 px-4 py-3 bg-gradient-to-r", headerGradient)}>
                   {(() => { const Icon = resolveIcon(activeSection.icon); return <Icon className="h-4 w-4 text-white" />; })()}
@@ -4424,8 +6356,8 @@ export function BlueprintDepartement({ botCode, headerGradient, sizeTier: propTi
                   <PertinenceBadge p={activeSection.pertinence[tier]} />
                 </div>
 
-                {/* Bloc d'introduction — bien visible */}
-                <div className="px-4 py-3 bg-gradient-to-r from-slate-50 to-blue-50/20 border-b border-gray-100">
+                {/* Bloc d'introduction */}
+                <div className="px-4 py-3 bg-gradient-to-r from-slate-50 to-blue-50/20">
                   <p className="text-xs text-gray-600 font-medium leading-relaxed">{activeSection.description}</p>
                   {activeSection.intro && (
                     <div className="mt-2 flex items-start gap-2 bg-white/60 rounded-lg px-3 py-2 border border-blue-100/50">
