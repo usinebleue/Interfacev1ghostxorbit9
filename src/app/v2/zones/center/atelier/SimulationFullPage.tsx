@@ -67,6 +67,7 @@ import {
   Calendar,
   Database,
   BookOpen,
+  Palette,
 } from "lucide-react";
 import { cn } from "../../../../components/ui/utils";
 import { BOT_COLORS } from "../shared/simulation-data";
@@ -96,6 +97,7 @@ import { AtelierCahierProjet } from "./demos/AtelierCahierProjet";
 import { AtelierSiteWeb } from "./demos/AtelierSiteWeb";
 import { AtelierRealtorClient } from "./demos/AtelierRealtorClient";
 import { SimAmorcer } from "./demos/SimAmorcer";
+import { DEPT_SHORT_LABEL, DEPT_DASH_ICON } from "../blueprint/BlueprintDepartement";
 
 const UB_BLUE = "#073E5A";
 
@@ -264,7 +266,8 @@ export function SimulationFullPage({ simulationId }: { simulationId: string }) {
   const [activeBotCode, setActiveBotCode] = useState("CEOB");
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [amorcerTrigger, setAmorcerTrigger] = useState<number>(0);
-  const [rightSection, setRightSection] = useState<string | null>(null);
+  const [rightSection, setRightSection] = useState<string | null>("dashboard");
+  const [showIconCatalog, setShowIconCatalog] = useState(false);
 
   const leftPanelRef = useRef<ImperativePanelHandle>(null);
 
@@ -302,6 +305,21 @@ export function SimulationFullPage({ simulationId }: { simulationId: string }) {
         <span className="text-sm font-bold text-gray-800">{simMeta.title}</span>
         <span className="text-xs text-gray-400">— Simulation</span>
         <div className="flex-1" />
+        {simulationId === "sim-amorcer" && (
+          <button
+            onClick={() => setShowIconCatalog(!showIconCatalog)}
+            className={cn(
+              "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-medium transition-all cursor-pointer mr-2",
+              showIconCatalog
+                ? "bg-gray-900 text-white shadow-sm"
+                : "text-gray-400 hover:bg-gray-100 hover:text-gray-600",
+            )}
+            title="Catalogue d'icônes"
+          >
+            <Palette className="h-3.5 w-3.5" />
+            <span className="hidden xl:inline">Icônes</span>
+          </button>
+        )}
         <span className="text-[9px] text-gray-400">ID: {simulationId}</span>
       </div>
 
@@ -386,7 +404,7 @@ export function SimulationFullPage({ simulationId }: { simulationId: string }) {
                       ]).map(tab => (
                         <button
                           key={tab.id}
-                          onClick={() => setCockpitTab(tab.id)}
+                          onClick={() => { setCockpitTab(tab.id); if (tab.id === "orbit9") setRightSection(null); else if (tab.id === "departement" && !rightSection) setRightSection("dashboard"); }}
                           className={cn(
                             "flex-1 flex items-center justify-center gap-1 py-2 text-[11px] font-medium transition-colors cursor-pointer",
                             cockpitTab === tab.id
@@ -400,8 +418,8 @@ export function SimulationFullPage({ simulationId }: { simulationId: string }) {
                       ))}
                     </div>
                     <div className="flex-1 overflow-hidden">
-                      {cockpitTab === "departement" && <TabBureauMock onSection={(s) => setRightSection(s)} />}
-                      {cockpitTab === "equipe_ai" && <TabEquipeAIMock activeBotCode={activeBotCode} onSelectBot={setActiveBotCode} />}
+                      {cockpitTab === "departement" && <TabBureauMock onSection={(s) => setRightSection(s)} activeBotCode={activeBotCode} />}
+                      {cockpitTab === "equipe_ai" && <TabEquipeAIMock activeBotCode={activeBotCode} onSelectBot={(code) => { setActiveBotCode(code); setRightSection("dashboard"); }} />}
                       {cockpitTab === "orbit9" && <TabOrbit9Cockpit selectedCellule={o9SelectedCellule} onSelectCellule={setO9SelectedCellule} activeSection={o9Section} onSection={setO9Section} />}
                     </div>
                   </div>
@@ -420,7 +438,7 @@ export function SimulationFullPage({ simulationId }: { simulationId: string }) {
           {simulationId === "sim-amorcer" ? (
             /* AMORCER: self-contained, gere ses propres tabs/phases */
             <div className="h-full overflow-hidden">
-              <SimAmorcer onBack={handleBack} attentionTrigger={amorcerTrigger} cockpitTab={cockpitTab} o9Section={o9Section} rightSection={rightSection} onCloseSection={() => setRightSection(null)} />
+              <SimAmorcer onBack={handleBack} attentionTrigger={amorcerTrigger} cockpitTab={cockpitTab} o9Section={o9Section} onO9Section={setO9Section} rightSection={rightSection} onCloseSection={() => setRightSection(null)} activeBotCode={activeBotCode} showIconCatalog={showIconCatalog} />
             </div>
           ) : (
             /* Standard: cache le header interne + color line (deja en pleine largeur au-dessus) */
@@ -462,16 +480,18 @@ function CockpitCollapsed() {
 
 // ========== TAB BUREAU (Département + 3 phases avec bandes colorées) ==========
 
-const SECTION_MAP: Record<string, string> = { "Blueprint": "blueprint", "Data Room": "dataroom", "Playbook Store": "playbooks" };
+const SECTION_MAP: Record<string, string> = { "Dashboard": "dashboard", "Blueprint": "blueprint", "Data Room": "dataroom", "Playbook Store": "playbooks" };
 
-function TabBureauMock({ onSection }: { onSection?: (section: string) => void }) {
-  const [activeDeptItem, setActiveDeptItem] = useState<string | null>(null);
+function TabBureauMock({ onSection, activeBotCode = "CEOB" }: { onSection?: (section: string) => void; activeBotCode?: string }) {
+  const [activeDeptItem, setActiveDeptItem] = useState<string | null>("Dashboard");
+  const DeptIconComp = DEPT_DASH_ICON[activeBotCode] || Zap;
+  const deptName = DEPT_SHORT_LABEL[activeBotCode] || "Direction";
   return (
     <div className="overflow-y-auto h-full text-[11px]">
-      {/* Bande — Département de direction (Carl vocal 13h30: pastel UB_BLUE) */}
+      {/* Bande — Département dynamique (pastel UB_BLUE) */}
       <div className="mx-3 mt-2 px-3 py-1.5 flex items-center gap-2 rounded-t-lg" style={{ backgroundColor: "rgba(7,62,90,0.12)" }}>
-        <Zap className="h-3.5 w-3.5" style={{ color: UB_BLUE }} />
-        <span className="text-[11px] font-bold text-gray-900">Département de direction</span>
+        <DeptIconComp className="h-3.5 w-3.5" style={{ color: UB_BLUE }} />
+        <span className="text-[11px] font-bold text-gray-900">Département {deptName}</span>
       </div>
       <div className="px-3 py-2 grid grid-cols-3 gap-1.5 border-b border-gray-200">
         {DEPT_ITEMS.map((item) => (
@@ -795,15 +815,14 @@ const O9_CELLULES: O9Cellule[] = [
 // ========== TAB ORBIT9 — dans le cockpit gauche (remplace "Humains") ==========
 
 const O9_MENU = [
-  { key: "dashboard", label: "Dashboard", icon: Home },
+  { key: "dashboard", label: "Accueil", icon: Home },
+  { key: "blueprint", label: "Blueprint", icon: BookOpen },
   { key: "cellules", label: "Cellules", icon: Atom },
   { key: "jumelage", label: "Jumelage", icon: Handshake },
   { key: "gouvernance", label: "Gouvernance", icon: Shield },
   { key: "pionniers", label: "Pionniers", icon: Rocket },
   { key: "vitaa", label: "VITAA", icon: Activity },
   { key: "perso", label: "Mon profil", icon: UserCircle },
-  { key: "feed", label: "Nouvelles", icon: Newspaper },
-  { key: "evenements", label: "Événements", icon: Calendar },
 ];
 
 function TabOrbit9Cockpit({ selectedCellule, onSelectCellule, activeSection, onSection }: { selectedCellule: number | null; onSelectCellule: (i: number | null) => void; activeSection: string; onSection: (s: string) => void }) {

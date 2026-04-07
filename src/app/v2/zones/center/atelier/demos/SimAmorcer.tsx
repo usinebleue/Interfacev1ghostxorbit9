@@ -24,6 +24,7 @@ import {
   Hammer,
   Rocket,
   BarChart3,
+  MessageCircle,
   Send,
   Users,
   FolderOpen,
@@ -147,7 +148,10 @@ import {
   ResizableHandle,
 } from "../../../../../components/ui/resizable";
 import { TypewriterText, BotAvatar } from "../../shared/simulation-components";
-import { BlueprintDepartement, BlueprintDataRoom, BlueprintPlaybooks } from "../../blueprint/BlueprintDepartement";
+import { BlueprintDepartement, BlueprintDataRoom, BlueprintPlaybooks, DeptDashboardView, DEPT_DASH_ICON, DEPT_FULL_LABEL, DEPT_SHORT_LABEL, BLUEPRINT_HEADER_TABS, type HeaderView } from "../../blueprint/BlueprintDepartement";
+import { HierarchieTab } from "../../BlueprintView";
+import { SanteGlobaleView } from "../../SanteGlobaleView";
+import { DocumentsUnifie } from "../../shared/DocumentsUnifie";
 import { CanvasActionProvider } from "../../../../context/CanvasActionContext";
 import { BOT_COLORS } from "../../shared/simulation-data";
 
@@ -155,7 +159,7 @@ const UB_BLUE = "#073E5A";
 
 // ========== PHASE CONFIG (couleurs confirmees Carl) ==========
 
-type PhaseKey = "attention" | "moderation" | "observation" | "reflexion" | "creation" | "execution" | "retroaction";
+type PhaseKey = "attention" | "moderation" | "observation" | "reflexion" | "creation" | "execution" | "retroaction" | "discussion";
 
 interface PhaseStyle {
   label: string;
@@ -174,6 +178,7 @@ interface PhaseStyle {
 }
 
 const PC: Record<PhaseKey, PhaseStyle> = {
+  discussion:  { label: "Discussion",  letter: "D", Icon: MessageCircle,  dot: "bg-sky-500",     badge: "bg-sky-100 text-sky-700",         bg: "bg-sky-50",     border: "border-sky-200",     text: "text-sky-700",     btnBg: "bg-sky-50",     btnText: "text-sky-700",     btnBorder: "border-sky-200",     btnHover: "hover:bg-sky-100",     line: "bg-sky-500" },
   attention:   { label: "Attention",   letter: "A", Icon: AlertTriangle, dot: "bg-red-500",     badge: "bg-red-100 text-red-700",         bg: "bg-red-50",     border: "border-red-200",     text: "text-red-700",     btnBg: "bg-red-50",     btnText: "text-red-700",     btnBorder: "border-red-200",     btnHover: "hover:bg-red-100",     line: "bg-red-500" },
   moderation:  { label: "Modération",  letter: "M", Icon: Scale,         dot: "bg-pink-500",    badge: "bg-pink-100 text-pink-700",       bg: "bg-pink-50",    border: "border-pink-200",    text: "text-pink-700",    btnBg: "bg-pink-50",    btnText: "text-pink-700",    btnBorder: "border-pink-200",    btnHover: "hover:bg-pink-100",    line: "bg-pink-500" },
   observation: { label: "Observation", letter: "O", Icon: Eye,           dot: "bg-blue-500",    badge: "bg-blue-100 text-blue-700",       bg: "bg-blue-50",    border: "border-blue-200",    text: "text-blue-700",    btnBg: "bg-blue-50",    btnText: "text-blue-700",    btnBorder: "border-blue-200",    btnHover: "hover:bg-blue-100",    line: "bg-blue-500" },
@@ -347,18 +352,17 @@ const ORBIT9_CHAT = [
 
 const ORBIT9_BOTS = ["CSOB", "CROB", "CMOB"];
 
-type Orbit9Tab = "dashboard" | "gouvernance" | "cellules" | "perso" | "vitaa" | "feed" | "jumelage" | "pionniers" | "evenements" | "creer-cellule";
+type Orbit9Tab = "dashboard" | "blueprint" | "cellules" | "jumelage" | "gouvernance" | "pionniers" | "vitaa" | "perso" | "creer-cellule";
 
 const O9_TABS: { key: Orbit9Tab; label: string; Icon: React.ElementType }[] = [
-  { key: "dashboard", label: "Dashboard", Icon: LayoutDashboard },
+  { key: "dashboard", label: "Accueil", Icon: Home },
+  { key: "blueprint", label: "Blueprint", Icon: BookOpen },
   { key: "cellules", label: "Cellules", Icon: Atom },
   { key: "jumelage", label: "Jumelage", Icon: Handshake },
   { key: "gouvernance", label: "Gouvernance", Icon: Shield },
   { key: "pionniers", label: "Pionniers", Icon: Rocket },
   { key: "vitaa", label: "VITAA", Icon: Activity },
   { key: "perso", label: "Mon profil", Icon: UserCircle },
-  { key: "feed", label: "Nouvelles", Icon: Newspaper },
-  { key: "evenements", label: "Événements", Icon: Calendar },
 ];
 
 const ALL_BOTS = [
@@ -525,7 +529,7 @@ const SPR_DIAG_ITEMS = [
 
 // ========== MAIN COMPONENT ==========
 
-export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departement", o9Section = "cellules", rightSection: rightSectionProp = null, onCloseSection }: { onBack: () => void; attentionTrigger?: number; cockpitTab?: string; o9Section?: string; rightSection?: string | null; onCloseSection?: () => void }) {
+export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departement", o9Section = "cellules", onO9Section, rightSection: rightSectionProp = null, onCloseSection, activeBotCode = "CEOB", showIconCatalog = false }: { onBack: () => void; attentionTrigger?: number; cockpitTab?: string; o9Section?: string; onO9Section?: (s: string) => void; rightSection?: string | null; onCloseSection?: () => void; activeBotCode?: string; showIconCatalog?: boolean }) {
   const chatRef = useRef<HTMLDivElement>(null);
   const rightRef = useRef<HTMLDivElement>(null);
 
@@ -534,10 +538,11 @@ export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departe
   const [typed, setTyped] = useState(false);
   const [inputText, setInputText] = useState("");
   const [showAttachMenu, setShowAttachMenu] = useState(false);
-  const [showIconCatalog, setShowIconCatalog] = useState(false);
   const [o9ChatTyped, setO9ChatTyped] = useState(false);
   const [reflexionContext, setReflexionContext] = useState<string | null>(null);
   const [rightSection, setRightSection] = useState<string | null>(rightSectionProp);
+  const [blueprintHeaderView, setBlueprintHeaderView] = useState<HeaderView>("blueprint");
+  const [blueprintStats, setBlueprintStats] = useState<{ tier: string; tierLabel: string; score: number } | null>(null);
 
   const showBlueprint = !!rightSection;
 
@@ -717,87 +722,67 @@ export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departe
         <ResizablePanel defaultSize={60} minSize={30}>
           <div className="h-full flex flex-col overflow-hidden">
 
-            {/* AMORCER tabs — TOUJOURS VISIBLES (Carl: "tu gardes toujours attention, modération...") */}
-            <div className="shrink-0 bg-white border-b border-gray-200 px-2 py-1.5 flex items-center gap-1">
-              {PHASES.map(p => {
-                const cfg = PC[p];
-                const isActive = p === activePhase && !showIconCatalog && (!showBlueprint || p === "observation");
-                return (
-                  <button
-                    key={p}
-                    onClick={() => { setActivePhase(p); setShowIconCatalog(false); setRightSection(null); onCloseSection?.(); }}
-                    className={cn(
-                      "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
-                      isActive
-                        ? cn(cfg.bg, cfg.text, "border", cfg.border, "shadow-sm")
-                        : "text-gray-500 hover:bg-gray-100 hover:text-gray-700",
-                    )}
-                  >
-                    <span className={cn(
-                      "w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0",
-                      isActive ? cfg.dot : "bg-gray-300",
-                    )}>
-                      {cfg.letter}
-                    </span>
-                    <cfg.Icon className={cn("h-3.5 w-3.5", isActive ? cfg.text : "text-gray-400")} />
-                    <span className="hidden xl:inline">{cfg.label}</span>
-                  </button>
-                );
-              })}
-              {/* Icônes catalog button */}
-              <div className="flex-1" />
-              <button
-                onClick={() => setShowIconCatalog(!showIconCatalog)}
-                className={cn(
-                  "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
-                  showIconCatalog
-                    ? "bg-gray-900 text-white shadow-sm"
-                    : "text-gray-400 hover:bg-gray-100 hover:text-gray-600",
-                )}
-                title="Catalogue d'icônes"
-              >
-                <Palette className="h-3.5 w-3.5" />
-                <span className="hidden xl:inline">Icônes</span>
-              </button>
-            </div>
-
-            {/* Color line */}
-            <div className={cn("h-1 shrink-0 transition-colors duration-300", pc.line)} />
-
-            {/* Breadcrumb */}
-            <div className="shrink-0 bg-white border-b border-gray-200 px-3 py-1.5 flex items-center gap-1.5">
-              {isOrbit9 ? (
-                <>
-                  <Atom className="h-3.5 w-3.5 text-teal-500" />
-                  <span className="text-[11px] text-teal-600 font-medium">Orbit<sup className="text-[8px]">9</sup></span>
-                  <ChevronRight className="h-3.5 w-3.5 text-gray-300" />
-                  <span className="text-[11px] text-gray-700 font-medium">
-                    {o9Section === "dashboard" ? "Dashboard" : o9Section === "gouvernance" ? "Gouvernance" : o9Section === "cellules" ? "Cellules" : o9Section === "perso" ? "Mon profil" : o9Section === "vitaa" ? "VITAA" : o9Section === "jumelage" ? "Jumelage" : o9Section === "pionniers" ? "Pionniers" : o9Section === "evenements" ? "Événements" : o9Section === "creer-cellule" ? "Créer une cellule" : "Nouvelles"}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <Home className="h-3.5 w-3.5 text-gray-400" />
-                  <span className="text-[11px] text-gray-400">Département</span>
-                  <ChevronRight className="h-3.5 w-3.5 text-gray-300" />
-                  <span className="text-[11px] text-gray-700 font-medium">
-                    {rightSection === "blueprint" ? "Blueprint" : rightSection === "dataroom" ? "Data Room" : rightSection === "playbooks" ? "Playbook Store" : activePhase === "reflexion" ? "Réflexion" : "Vue d'ensemble"}
-                  </span>
-                  {activePhase === "reflexion" && reflexionContext && (
+            {/* Header département pastel h-12 — intègre les sous-tabs de la section active */}
+            {(() => {
+              const DeptIcon = isOrbit9 ? Atom : (DEPT_DASH_ICON[activeBotCode] || Home);
+              const deptLabel = isOrbit9 ? "" : (DEPT_FULL_LABEL[activeBotCode] || "");
+              const O9_LABEL: Record<string, string> = { dashboard: "Dashboard", blueprint: "Blueprint", chantiers: "Chantiers", projets: "Projets", missions: "Missions", taches: "Tâches", discussions: "Discussions", documents: "Documents", agenda: "Agenda", "sante-reseau": "Santé réseau", cellules: "Cellules", jumelage: "Jumelage", gouvernance: "Gouvernance", pionniers: "Pionniers", vitaa: "VITAA", perso: "Mon profil", feed: "Nouvelles", evenements: "Événements", "creer-cellule": "Créer une cellule" };
+              const sectionLabel = isOrbit9
+                ? (O9_LABEL[o9Section] || "Orbit⁹")
+                : rightSection === "dashboard" ? "Dashboard" : rightSection === "blueprint" ? "Blueprint" : rightSection === "dataroom" ? "Data Room" : rightSection === "playbooks" ? "Playbook Store" : activePhase === "reflexion" ? "Réflexion" : "Dashboard";
+              const titleText = isOrbit9
+                ? `Orbit⁹ — ${sectionLabel}`
+                : `Département ${deptLabel} — ${sectionLabel}`;
+              const showBlueprintTabs = !isOrbit9 && rightSection === "blueprint";
+              return (
+                <div className="h-12 px-3 shrink-0 flex items-center gap-2 border-b border-gray-200" style={{ backgroundColor: "rgba(0, 180, 216, 0.12)" }}>
+                  <DeptIcon className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+                  <span className="text-[11px] font-bold text-gray-900 shrink-0">{titleText}</span>
+                  {/* Sous-tabs Blueprint — séparés par un divider vertical */}
+                  {showBlueprintTabs && (
                     <>
-                      <ChevronRight className="h-3.5 w-3.5 text-gray-300" />
+                      <div className="w-px h-5 bg-gray-300 mx-1.5" />
+                      <div className="flex items-center gap-1">
+                        {BLUEPRINT_HEADER_TABS.filter(t => !t.ceoOnly || activeBotCode === "CEOB").map(tab => (
+                          <button
+                            key={tab.key}
+                            onClick={() => setBlueprintHeaderView(tab.key)}
+                            className="px-2 py-1 rounded-md text-[10px] font-medium flex items-center gap-1 transition-all cursor-pointer"
+                            style={blueprintHeaderView === tab.key
+                              ? { backgroundColor: UB_BLUE, color: "#fff", boxShadow: "0 1px 2px rgba(0,0,0,0.15)" }
+                              : {}
+                            }
+                          >
+                            <tab.icon className="h-3.5 w-3.5" />
+                            {tab.key === "blueprint" ? (DEPT_SHORT_LABEL[activeBotCode] || "Direction") : tab.label}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                  {!isOrbit9 && activePhase === "reflexion" && reflexionContext && !rightSection && (
+                    <>
+                      <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
                       <span className="text-[11px] font-medium text-orange-600">{reflexionContext}</span>
                     </>
                   )}
-                  {activePhase !== "observation" && activePhase !== "reflexion" && (
+                  {!isOrbit9 && activePhase !== "observation" && activePhase !== "reflexion" && !rightSection && (
                     <>
-                      <ChevronRight className="h-3.5 w-3.5 text-gray-300" />
+                      <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
                       <span className={cn("text-[11px] font-medium", pc.text)}>{pc.label}</span>
                     </>
                   )}
-                </>
-              )}
-            </div>
+                  <div className="flex-1" />
+                  {/* Tier + % completion à droite pour Blueprint */}
+                  {showBlueprintTabs && blueprintStats && (
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-[10px] text-gray-500">{blueprintStats.tierLabel}</span>
+                      <span className="text-[10px] font-bold bg-gray-900 text-white px-2 py-0.5 rounded-full">{blueprintStats.score}%</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Content */}
             <div ref={rightRef} className="flex-1 overflow-auto bg-gray-50">
@@ -817,24 +802,26 @@ export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departe
                     }
                   `}</style>
                   <CanvasActionProvider>
-                    {rightSection === "blueprint" && <BlueprintDepartement botCode="CEOB" headerGradient="from-blue-600 to-blue-500" />}
-                    {rightSection === "dataroom" && <BlueprintDataRoom botCode="CEOB" headerGradient="from-blue-600 to-blue-500" />}
-                    {rightSection === "playbooks" && <BlueprintPlaybooks botCode="CEOB" headerGradient="from-blue-600 to-blue-500" />}
+                    {rightSection === "dashboard" && <DeptDashboardView botCode={activeBotCode} onAction={(phase, context) => { setActivePhase(phase as PhaseKey); setReflexionContext(context); setRightSection(null); }} />}
+                    {rightSection === "blueprint" && <BlueprintDepartement botCode={activeBotCode} headerGradient="from-blue-600 to-blue-500" hideHeader activeHeaderView={blueprintHeaderView} onHeaderViewChange={setBlueprintHeaderView} onStats={setBlueprintStats} />}
+                    {rightSection === "dataroom" && <BlueprintDataRoom botCode={activeBotCode} headerGradient="from-blue-600 to-blue-500" showHeader />}
+                    {rightSection === "playbooks" && <BlueprintPlaybooks botCode={activeBotCode} headerGradient="from-blue-600 to-blue-500" showHeader />}
                   </CanvasActionProvider>
                 </div>
               ) : isOrbit9 ? (
-                <>
+                <div className="max-w-4xl mx-auto px-6 py-4 pb-12">
+                  <CanvasActionProvider>
+                  {o9Section === "dashboard" && <Orbit9SocialHome />}
+                  {o9Section === "blueprint" && <Orbit9BlueprintCollaboration />}
                   {o9Section === "cellules" && <MesCellules onSelect={() => {}} activePhase={activePhase} />}
                   {o9Section === "vitaa" && <VITAADashboard selectedCellule={ORBIT9_CELLULES[0]} />}
-                  {o9Section === "feed" && <FeedSocial activePhase={activePhase} />}
                   {o9Section === "perso" && <MonProfilOrbit9 />}
-                  {o9Section === "dashboard" && <Orbit9Dashboard />}
                   {o9Section === "gouvernance" && <Orbit9Gouvernance />}
                   {o9Section === "jumelage" && <JumelageOrbit9 />}
                   {o9Section === "pionniers" && <PionniersOrbit9 />}
-                  {o9Section === "evenements" && <EvenementsOrbit9 />}
                   {o9Section === "creer-cellule" && <CreerCellulePage />}
-                </>
+                  </CanvasActionProvider>
+                </div>
               ) : showIconCatalog ? (
                 <IconCatalog />
               ) : isDash ? (
@@ -1054,71 +1041,7 @@ function ModerationChat({ stage, typed, setTyped, advance, pc }: {
 
 function VueEnsemble({ phase, chatStage, onStartReflexion }: { phase: PhaseKey; chatStage: number; onStartReflexion: (chantier: string) => void }) {
   return (
-    <div className="max-w-4xl mx-auto px-6 py-4 space-y-4">
-
-      {/* ═══ ATTENTION: banner + alertes ═══ */}
-      {phase === "attention" && (
-        <div className="rounded-xl bg-gradient-to-r from-red-500 to-red-400 px-4 py-3 flex items-center gap-3 shadow-sm">
-          <AlertTriangle className="h-5 w-5 text-white shrink-0" />
-          <div className="flex-1">
-            <p className="text-sm font-bold text-white">5 signaux détectés</p>
-            <p className="text-[9px] text-white/80">2 critiques · 2 à surveiller · 1 opportunité</p>
-          </div>
-        </div>
-      )}
-      {phase === "attention" && chatStage >= 1 && (
-        <div className="space-y-2">
-          {ALERTS.map(alert => (
-            <div key={alert.id} className={cn("rounded-xl border-l-4 border px-4 py-3", alert.bc, alert.bgc)}>
-              <div className="flex items-center gap-2">
-                <alert.icon className={cn("h-4 w-4 shrink-0", alert.tc)} />
-                <span className={cn("text-xs font-bold flex-1", alert.tc)}>{alert.title}</span>
-                <div className="flex items-center gap-1.5">
-                  <BotAvatar code={alert.bot} size="sm" />
-                  <span className="text-[9px] font-medium text-gray-600">{alert.source}</span>
-                </div>
-              </div>
-              <p className="text-[9px] text-gray-600 mt-1 ml-6">{alert.detail}</p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* ═══ MODERATION: banner + alertes triees ═══ */}
-      {phase === "moderation" && (
-        <div className="rounded-xl bg-gradient-to-r from-pink-500 to-pink-400 px-4 py-3 flex items-center gap-3 shadow-sm">
-          <Scale className="h-5 w-5 text-white shrink-0" />
-          <div className="flex-1">
-            <p className="text-sm font-bold text-white">Filtrage et priorisation</p>
-            <p className="text-[9px] text-white/80">Signaux triés par urgence et impact</p>
-          </div>
-          <div className="flex gap-1.5">
-            {["Urgence", "Impact", "Délai"].map(f => (
-              <span key={f} className="text-[9px] px-2 py-0.5 rounded-full bg-white/20 text-white font-medium">{f}</span>
-            ))}
-          </div>
-        </div>
-      )}
-      {phase === "moderation" && (
-        <div className="space-y-2">
-          {[...ALERTS].sort((a, b) => {
-            const ord: Record<string, number> = { critique: 0, attention: 1, opportunite: 2 };
-            return (ord[a.severity] ?? 9) - (ord[b.severity] ?? 9);
-          }).map((alert, i) => (
-            <div key={alert.id} className={cn("rounded-xl border-l-4 border px-4 py-3 flex items-start gap-3", alert.bc, alert.bgc)}>
-              <span className="text-lg font-bold text-gray-300 shrink-0 w-6 text-center">{i + 1}</span>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <alert.icon className={cn("h-4 w-4 shrink-0", alert.tc)} />
-                  <span className={cn("text-xs font-bold flex-1", alert.tc)}>{alert.title}</span>
-                  <span className="text-[9px] font-medium text-gray-500">{alert.source}</span>
-                </div>
-                <p className="text-[9px] text-gray-600 mt-1">{alert.detail}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+    <div className="space-y-4">
 
       {/* ═══ VITAA — 5 piliers de valeur (même pattern que KPIs existants) ═══ */}
       <div className="grid grid-cols-5 gap-3">
@@ -2893,7 +2816,7 @@ const ICON_TIERS: IconTier[] = [
           { Icon: Target, label: "Simone — CSO", usage: "Mon Équipe AI (sidebar)", color: "text-red-500" },
           { Icon: Settings, label: "Olivier — COO", usage: "Mon Équipe AI (sidebar)", color: "text-orange-500" },
           { Icon: Factory, label: "Paco — CPO", usage: "Mon Équipe AI (sidebar)", color: "text-slate-500" },
-          { Icon: Users, label: "Hélène — CHRO", usage: "Mon Équipe AI (sidebar)", color: "text-teal-500" },
+          { Icon: Users, label: "Hélène — CHRO", usage: "Mon Équipe AI (sidebar)", color: "text-cyan-500" },
           { Icon: Lightbulb, label: "Inès — CINO", usage: "Mon Équipe AI (sidebar)", color: "text-rose-500" },
           { Icon: TrendingUp, label: "Rich — CRO", usage: "Mon Équipe AI (sidebar)", color: "text-amber-500" },
           { Icon: Scale, label: "Loulou — CLO", usage: "Mon Équipe AI (sidebar)", color: "text-indigo-500" },
@@ -2936,7 +2859,7 @@ const ICON_TIERS: IconTier[] = [
           { Icon: Route, label: "Atlas des Flows", usage: "FE.6 Parcours utilisateur", color: "text-cyan-600" },
           { Icon: Server, label: "Bible Technique", usage: "BE.1 Architecture backend", color: "text-emerald-500" },
           { Icon: Atom, label: "Bible GHML", usage: "BE.2 Langage BTML complet", color: "text-violet-500" },
-          { Icon: Radio, label: "Stack Communication", usage: "BE.3 LiveKit/Telnyx/ElevenLabs", color: "text-teal-500" },
+          { Icon: Radio, label: "Stack Communication", usage: "BE.3 LiveKit/Telnyx/ElevenLabs", color: "text-cyan-500" },
           { Icon: GraduationCap, label: "Entraînement", usage: "BE.5 Fine-tuning agents", color: "text-purple-500" },
           { Icon: Bot, label: "Cortex Robot", usage: "BE.6 Robot humanoïde", color: "text-gray-700" },
           { Icon: Gem, label: "Mine d'Or & Data", usage: "BE.7 Données Usine Bleue", color: "text-yellow-500" },
@@ -3243,10 +3166,10 @@ function IconCatalog() {
 
 function Orbit9SectionMenu({ activeSection, onSection }: { activeSection: Orbit9Tab; onSection: (s: Orbit9Tab) => void }) {
   return (
-    <div className="rounded-xl border border-teal-200 bg-teal-50/50 overflow-hidden">
-      <div className="px-3 py-2 flex items-center gap-2 border-b border-teal-200 bg-teal-50">
-        <Atom className="h-3.5 w-3.5 text-teal-500" />
-        <span className="text-[11px] font-bold text-teal-800">Réseau Orbit<sup className="text-[8px]">9</sup></span>
+    <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+      <div className="px-3 py-2 flex items-center gap-2 border-b border-gray-100 bg-[#00B4D8]/10">
+        <Atom className="h-3.5 w-3.5 text-gray-900 stroke-[2.5]" />
+        <span className="text-[11px] font-bold text-gray-900">Réseau Orbit<sup className="text-[8px]">9</sup></span>
       </div>
       <div className="p-2 grid grid-cols-3 gap-1.5">
         {O9_TABS.map(tab => (
@@ -3256,8 +3179,8 @@ function Orbit9SectionMenu({ activeSection, onSection }: { activeSection: Orbit9
             className={cn(
               "flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-[11px] font-medium transition-all cursor-pointer",
               activeSection === tab.key
-                ? "bg-teal-600 text-white shadow-sm"
-                : "bg-white text-gray-600 hover:bg-teal-100 hover:text-teal-700 border border-gray-200"
+                ? "bg-gray-900 text-white shadow-sm"
+                : "bg-white text-gray-600 hover:bg-gray-100 hover:text-gray-700 border border-gray-200"
             )}
           >
             <tab.Icon className="h-3.5 w-3.5" />
@@ -3275,7 +3198,7 @@ function Orbit9CellulesCompact({ onSelect, selectedCellule }: { onSelect: (i: nu
   return (
     <div className="space-y-1.5">
       <div className="flex items-center gap-1.5 px-1">
-        <Atom className="h-3.5 w-3.5 text-teal-500" />
+        <Atom className="h-3.5 w-3.5 text-gray-900" />
         <span className="text-[11px] font-bold text-gray-700">Cellules</span>
         <span className="text-[9px] text-gray-400 ml-auto">{ORBIT9_CELLULES.length}</span>
       </div>
@@ -3288,8 +3211,8 @@ function Orbit9CellulesCompact({ onSelect, selectedCellule }: { onSelect: (i: nu
             className={cn(
               "w-full rounded-lg border px-3 py-2 text-left transition-all cursor-pointer",
               selectedCellule === i
-                ? "border-teal-300 bg-teal-50 shadow-sm"
-                : "border-gray-200 bg-white hover:border-teal-200 hover:bg-teal-50/30"
+                ? "border-blue-200 bg-blue-50 shadow-sm"
+                : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
             )}
           >
             <div className="flex items-center gap-2">
@@ -3297,7 +3220,7 @@ function Orbit9CellulesCompact({ onSelect, selectedCellule }: { onSelect: (i: nu
               <span className="text-xs font-medium text-gray-800 flex-1 truncate">{cell.name}</span>
               <span className={cn(
                 "text-[9px] px-1.5 py-0.5 rounded-full font-medium shrink-0",
-                cell.type === "interne" ? "bg-teal-50 text-teal-600" : "bg-cyan-50 text-cyan-600"
+                cell.type === "interne" ? "bg-gray-100 text-gray-600" : "bg-cyan-50 text-cyan-600"
               )}>
                 {cell.type === "interne" ? "Int" : "Ext"}
               </span>
@@ -3313,7 +3236,7 @@ function Orbit9CellulesCompact({ onSelect, selectedCellule }: { onSelect: (i: nu
               </div>
               <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-teal-400"
+                  className="h-full rounded-full bg-blue-400"
                   style={{ width: `${Math.round((cell.membres.reduce((s, m) => s + (m.vitaa.v + m.vitaa.i + m.vitaa.t) / 3, 0) / cell.membres.length) * 100)}%` }}
                 />
               </div>
@@ -3412,8 +3335,8 @@ function Orbit9Chat({ typed, setTyped, selectedCellule }: { typed: boolean; setT
       {typed && cellule && (
         <SBubble code="CSOB">
           <p className="text-sm text-gray-700">
-            <Atom className="h-3.5 w-3.5 inline text-teal-500 mr-1" />
-            Cellule <strong className="text-teal-700">{cellule.name}</strong> — {cellule.members}/{cellule.maxMembers} membres.
+            <Atom className="h-3.5 w-3.5 inline text-blue-500 mr-1" />
+            Cellule <strong className="text-gray-800">{cellule.name}</strong> — {cellule.members}/{cellule.maxMembers} membres.
             {" "}Phase: <strong>{PC[cellule.status as PhaseKey]?.label || cellule.status}</strong>
           </p>
         </SBubble>
@@ -3422,7 +3345,7 @@ function Orbit9Chat({ typed, setTyped, selectedCellule }: { typed: boolean; setT
       {/* Loading indicator while feed is still arriving */}
       {typed && feedIndex < ORBIT9_FEED.length && (
         <div className="flex items-center gap-2 px-3 py-2">
-          <Loader2 className="h-3.5 w-3.5 text-teal-400 animate-spin" />
+          <Loader2 className="h-3.5 w-3.5 text-blue-400 animate-spin" />
           <span className="text-[9px] text-gray-400">Chargement du fil...</span>
         </div>
       )}
@@ -3444,7 +3367,7 @@ function MesCellules({ onSelect, activePhase }: { onSelect: (i: number) => void;
   const phCfg = activePhase ? PC[activePhase] : null;
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-4 space-y-4">
+    <div className="space-y-4">
       {/* Phase indicator */}
       {phCfg && (
         <div className="flex items-center gap-2">
@@ -3455,29 +3378,29 @@ function MesCellules({ onSelect, activePhase }: { onSelect: (i: number) => void;
       )}
 
       {/* Header pastel */}
-      <div className="rounded-xl bg-teal-50 border border-teal-200 px-4 py-3 flex items-center gap-3">
-        <Atom className="h-5 w-5 text-teal-600" />
+      <div className="rounded-xl border border-gray-200 px-4 py-3 flex items-center gap-3 bg-[#00B4D8]/10">
+        <Atom className="h-5 w-5 text-gray-900 stroke-[2.5]" />
         <div className="flex-1">
-          <p className="text-sm font-bold text-teal-800">Mes Cellules</p>
-          <p className="text-[9px] text-teal-500">{ORBIT9_CELLULES.length} cellules · {totalMembres}/{maxTotal} membres · {ORBIT9_CELLULES.filter(c => c.type === "interne").length} internes · {ORBIT9_CELLULES.filter(c => c.type === "externe").length} externe</p>
+          <p className="text-sm font-bold text-gray-900">Mes Cellules</p>
+          <p className="text-[9px] text-gray-500">{ORBIT9_CELLULES.length} cellules · {totalMembres}/{maxTotal} membres · {ORBIT9_CELLULES.filter(c => c.type === "interne").length} internes · {ORBIT9_CELLULES.filter(c => c.type === "externe").length} externe</p>
         </div>
       </div>
 
       {/* KPIs (Membres, Rabais, Connexions B2B, Économie) */}
       <div className="grid grid-cols-4 gap-3">
         {[
-          { label: "Membres", value: `${totalMembres}/${maxTotal}`, icon: Users, grad: "from-emerald-600 to-emerald-500", vc: "text-emerald-600", sub: `${maxTotal - totalMembres} places disponibles` },
-          { label: "Rabais actif", value: `-${discount}%`, icon: DollarSign, grad: "from-emerald-600 to-emerald-500", vc: "text-emerald-600", sub: avgPerCell < 9 ? `Prochain: -${getDiscount(nextTier)}% à ${nextTier}` : "Maximum!" },
-          { label: "Connexions B2B", value: `${connections}`, icon: Network, grad: "from-blue-600 to-blue-500", vc: "text-blue-600", sub: "Loi de Metcalfe: n(n-1)/2" },
-          { label: "Économie/mois", value: `${economie.toLocaleString()}$`, icon: TrendingUp, grad: "from-green-600 to-green-500", vc: "text-green-600", sub: "Collective pour le réseau" },
+          { label: "Membres", value: `${totalMembres}/${maxTotal}`, icon: Users, sub: `${maxTotal - totalMembres} places disponibles`, up: true },
+          { label: "Rabais actif", value: `-${discount}%`, icon: DollarSign, sub: avgPerCell < 9 ? `Prochain: -${getDiscount(nextTier)}% à ${nextTier}` : "Maximum!", up: true },
+          { label: "Connexions B2B", value: `${connections}`, icon: Network, sub: "Loi de Metcalfe: n(n-1)/2", up: true },
+          { label: "Économie/mois", value: `${economie.toLocaleString()}$`, icon: TrendingUp, sub: "Collective pour le réseau", up: true },
         ].map(kpi => (
           <div key={kpi.label} className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
-            <div className={cn("flex items-center gap-2 px-3 py-2 bg-gradient-to-r", kpi.grad)}>
-              <kpi.icon className="h-4 w-4 text-white" />
-              <span className="text-xs font-bold text-white">{kpi.label}</span>
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+              <kpi.icon className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+              <span className="text-sm font-bold text-gray-900">{kpi.label}</span>
             </div>
-            <div className="px-3 py-2">
-              <div className={cn("text-2xl font-bold", kpi.vc)}>{kpi.value}</div>
+            <div className="px-4 py-3">
+              <div className="text-2xl font-bold text-gray-800">{kpi.value}</div>
               <div className="text-[9px] text-gray-500">{kpi.sub}</div>
             </div>
           </div>
@@ -3485,10 +3408,10 @@ function MesCellules({ onSelect, activePhase }: { onSelect: (i: number) => void;
       </div>
 
       {/* Progression rabais de groupe */}
-      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
-        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
-          <DollarSign className="h-4 w-4 text-teal-600" />
-          <span className="text-sm font-bold text-teal-800">Progression du rabais de groupe</span>
+      <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+          <DollarSign className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+          <span className="text-sm font-bold text-gray-900">Progression du rabais de groupe</span>
         </div>
         <div className="p-4">
           <p className="text-[9px] text-gray-500 mb-3">Plus vous avez de membres par cellule, plus le rabais collectif augmente. Le palier atteint ne redescend JAMAIS, même si des membres quittent.</p>
@@ -3533,11 +3456,11 @@ function MesCellules({ onSelect, activePhase }: { onSelect: (i: number) => void;
         const cellConn = Math.floor(cell.members * (cell.members - 1) / 2);
         return (
           <button key={i} onClick={() => onSelect(i)} className="w-full rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white hover:shadow-md transition-shadow cursor-pointer text-left">
-            <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
-              <Atom className="h-4 w-4 text-teal-600" />
-              <span className="text-sm font-bold text-teal-800 flex-1">{cell.name}</span>
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+              <Atom className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+              <span className="text-sm font-bold text-gray-900 flex-1">{cell.name}</span>
               <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-medium",
-                cell.type === "interne" ? "bg-teal-100 text-teal-700" : "bg-cyan-100 text-cyan-700"
+                cell.type === "interne" ? "bg-gray-100 text-gray-600" : "bg-cyan-100 text-cyan-700"
               )}>{cell.type === "interne" ? "Interne" : "Externe"}</span>
               <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1", stBadge)}>
                 <span className={cn("w-2 h-2 rounded-full", stDot)} />
@@ -3565,12 +3488,12 @@ function MesCellules({ onSelect, activePhase }: { onSelect: (i: number) => void;
               </div>
               <div className="flex items-center gap-1">
                 {cell.membres.slice(0, 6).map((m, mi) => (
-                  <div key={mi} className="w-6 h-6 rounded-full bg-teal-100 flex items-center justify-center text-[9px] font-bold text-teal-700 ring-1 ring-white">{m.avatar}</div>
+                  <div key={mi} className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-[9px] font-bold text-gray-700 ring-1 ring-white">{m.avatar}</div>
                 ))}
                 {cell.membres.length > 6 && <span className="text-[9px] text-gray-400 ml-1">+{cell.membres.length - 6}</span>}
                 <div className="flex-1" />
                 {cell.sousCellules.map(sc => (
-                  <span key={sc} className="text-[9px] px-2 py-0.5 rounded-full bg-teal-50 text-teal-600 font-medium">{sc}</span>
+                  <span key={sc} className="text-[9px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">{sc}</span>
                 ))}
               </div>
             </div>
@@ -3579,10 +3502,10 @@ function MesCellules({ onSelect, activePhase }: { onSelect: (i: number) => void;
       })}
 
       {/* Performance des Cellules */}
-      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
-        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
-          <BarChart3 className="h-4 w-4 text-teal-600" />
-          <span className="text-sm font-bold text-teal-800">Performance des Cellules</span>
+      <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+          <BarChart3 className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+          <span className="text-sm font-bold text-gray-900">Performance des Cellules</span>
         </div>
         <div className="p-4 space-y-3">
           <p className="text-[9px] text-gray-500">Métriques de productivité et de collaboration par cellule. En mode Observation, ces données sont en lecture seule.</p>
@@ -3606,11 +3529,11 @@ function MesCellules({ onSelect, activePhase }: { onSelect: (i: number) => void;
       </div>
 
       {/* Meetings Cellule — LiveKit */}
-      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
-        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
-          <Video className="h-4 w-4 text-teal-600" />
-          <span className="text-sm font-bold text-teal-800">Meetings Cellule</span>
-          <span className="text-[9px] px-2 py-0.5 rounded-full font-medium bg-teal-100 text-teal-700">LiveKit</span>
+      <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+          <Video className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+          <span className="text-sm font-bold text-gray-900">Meetings Cellule</span>
+          <span className="text-[9px] px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600">LiveKit</span>
         </div>
         <div className="p-4 space-y-2">
           <p className="text-[9px] text-gray-500 mb-2">Meetings SUR la plateforme. CarlOS transcrit, détecte les tensions et génère les action items en temps réel.</p>
@@ -3620,12 +3543,12 @@ function MesCellules({ onSelect, activePhase }: { onSelect: (i: number) => void;
             { cellule: "Les Titans", date: "8 avril 14:00", participants: ["Carl F.", "Marie D.", "Luc T."], sujet: "Revue tech + roadmap Q2", status: "termine" as const },
           ].map(m => (
             <div key={m.date + m.cellule} className={cn("flex items-center gap-3 p-3 rounded-lg border",
-              m.status === "termine" ? "bg-gray-50 border-gray-200" : "bg-teal-50/50 border-teal-200"
+              m.status === "termine" ? "bg-gray-50 border-gray-200" : "bg-[#00B4D8]/5 border-gray-200"
             )}>
               <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
-                m.status === "termine" ? "bg-gray-100" : "bg-teal-100"
+                m.status === "termine" ? "bg-gray-100" : "bg-[#00B4D8]/10"
               )}>
-                <Video className={cn("h-3.5 w-3.5", m.status === "termine" ? "text-gray-400" : "text-teal-600")} />
+                <Video className={cn("h-3.5 w-3.5", m.status === "termine" ? "text-gray-400" : "text-gray-700")} />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-[9px] font-bold text-gray-800">{m.cellule}</div>
@@ -3639,7 +3562,7 @@ function MesCellules({ onSelect, activePhase }: { onSelect: (i: number) => void;
               <div className="text-right shrink-0">
                 <div className="text-[9px] font-bold text-gray-700">{m.date}</div>
                 <span className={cn("text-[9px] font-medium px-1.5 py-0.5 rounded-full",
-                  m.status === "termine" ? "bg-gray-100 text-gray-500" : "bg-teal-100 text-teal-700"
+                  m.status === "termine" ? "bg-gray-100 text-gray-500" : "bg-gray-100 text-gray-600"
                 )}>{m.status === "termine" ? "Terminé" : "Planifié"}</span>
               </div>
             </div>
@@ -3648,11 +3571,11 @@ function MesCellules({ onSelect, activePhase }: { onSelect: (i: number) => void;
       </div>
 
       {/* CarlOS Médiateur Proactif */}
-      <div className="rounded-xl border border-violet-200 overflow-hidden shadow-sm bg-white">
-        <div className="bg-violet-50 border-b border-violet-200 px-4 py-2.5 flex items-center gap-2">
-          <Bot className="h-4 w-4 text-violet-600" />
-          <span className="text-sm font-bold text-violet-800">CarlOS — Médiateur Proactif</span>
-          <span className="text-[9px] px-2 py-0.5 rounded-full font-medium bg-violet-100 text-violet-700">Futur</span>
+      <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+          <Bot className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+          <span className="text-sm font-bold text-gray-900">CarlOS — Médiateur Proactif</span>
+          <span className="text-[9px] px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600">Futur</span>
         </div>
         <div className="p-4 space-y-3">
           <p className="text-[9px] text-gray-500">CarlOS écoute les meetings entre membres d'une cellule, détecte les tensions en temps réel, intervient pour corriger les interactions et génère automatiquement les action items.</p>
@@ -3688,11 +3611,11 @@ function MesCellules({ onSelect, activePhase }: { onSelect: (i: number) => void;
       </div>
 
       {/* Opportunités actives — Système Main Levée */}
-      <div className="rounded-xl border border-amber-200 overflow-hidden shadow-sm bg-white">
-        <div className="bg-amber-50 border-b border-amber-200 px-4 py-2.5 flex items-center gap-2">
-          <Handshake className="h-4 w-4 text-amber-600" />
-          <span className="text-sm font-bold text-amber-800">Opportunités actives</span>
-          <span className="text-[9px] px-2 py-0.5 rounded-full font-medium bg-amber-100 text-amber-700">Système Main Levée</span>
+      <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+          <Handshake className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+          <span className="text-sm font-bold text-gray-900">Opportunités actives</span>
+          <span className="text-[9px] px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600">Système Main Levée</span>
         </div>
         <div className="p-4 space-y-3">
           <p className="text-[9px] text-gray-500">Les opportunités sont attribuées au premier partenaire qualifié qui lève la main. En Observation, vous voyez les matchings en cours.</p>
@@ -3720,10 +3643,10 @@ function MesCellules({ onSelect, activePhase }: { onSelect: (i: number) => void;
       </div>
 
       {/* Activité récente */}
-      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
-        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
-          <RefreshCw className="h-4 w-4 text-teal-600" />
-          <span className="text-sm font-bold text-teal-800">Activité récente</span>
+      <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+          <RefreshCw className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+          <span className="text-sm font-bold text-gray-900">Activité récente</span>
         </div>
         <div className="p-4 space-y-2">
           {[
@@ -3744,12 +3667,12 @@ function MesCellules({ onSelect, activePhase }: { onSelect: (i: number) => void;
       </div>
 
       {/* CarlOS Proactif */}
-      <div className="rounded-xl border border-blue-200 overflow-hidden shadow-sm bg-gradient-to-r from-blue-50 to-indigo-50">
+      <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-[#00B4D8]/10">
         <div className="p-4 flex items-start gap-3">
-          <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-[9px] font-bold shrink-0">C</div>
+          <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-white text-[9px] font-bold shrink-0">C</div>
           <div className="flex-1">
-            <h3 className="text-xs font-bold text-blue-800">CarlOS — Facilitateur de Cellule Proactif</h3>
-            <p className="text-[9px] text-blue-600 mt-1 italic">"Carl, j'ai remarqué quelque chose. Tu travailles régulièrement avec Automation Plus, Acier Québec et PrécisionCNC. Si vous formiez une Cellule Orbit⁹, vos bots se coordonneraient et vous économiseriez TOUS 15%. Tu veux que je prépare les invitations?"</p>
+            <h3 className="text-xs font-bold text-gray-900">CarlOS — Facilitateur de Cellule Proactif</h3>
+            <p className="text-[9px] text-gray-600 mt-1 italic">"Carl, j'ai remarqué quelque chose. Tu travailles régulièrement avec Automation Plus, Acier Québec et PrécisionCNC. Si vous formiez une Cellule Orbit⁹, vos bots se coordonneraient et vous économiseriez TOUS 15%. Tu veux que je prépare les invitations?"</p>
           </div>
         </div>
       </div>
@@ -3771,17 +3694,17 @@ function CelluleDrillDown({ cellule, onBack }: { cellule: Cellule; onBack: () =>
   const formulaResult = Math.exp(vit);
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-4 space-y-4">
+    <div className="space-y-4">
       {/* Back + header */}
       <button onClick={onBack} className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 cursor-pointer">
         <ArrowLeft className="h-3.5 w-3.5" /> Retour aux cellules
       </button>
 
-      <div className="rounded-xl bg-teal-50 border border-teal-200 px-4 py-3 flex items-center gap-3">
-        <Atom className="h-5 w-5 text-teal-600" />
+      <div className="rounded-xl border border-gray-200 px-4 py-3 flex items-center gap-3 bg-[#00B4D8]/10">
+        <Atom className="h-5 w-5 text-gray-900 stroke-[2.5]" />
         <div className="flex-1">
-          <p className="text-sm font-bold text-teal-800">{cellule.name}</p>
-          <p className="text-[9px] text-teal-500">{cellule.members} membres · {cellule.type}</p>
+          <p className="text-sm font-bold text-gray-900">{cellule.name}</p>
+          <p className="text-[9px] text-gray-500">{cellule.members} membres · {cellule.type}</p>
         </div>
         <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1",
           PC[cellule.status as PhaseKey]?.badge || "bg-gray-100 text-gray-700"
@@ -3792,11 +3715,11 @@ function CelluleDrillDown({ cellule, onBack }: { cellule: Cellule; onBack: () =>
       </div>
 
       {/* VITAA collectif compact */}
-      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
-        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
-          <Activity className="h-4 w-4 text-teal-600" />
-          <span className="text-sm font-bold text-teal-800">Score VITAA collectif</span>
-          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-teal-100 text-teal-700">e^(V×I×T) = {formulaResult.toFixed(2)}</span>
+      <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+          <Activity className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+          <span className="text-sm font-bold text-gray-900">Score VITAA collectif</span>
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600">e^(V×I×T) = {formulaResult.toFixed(2)}</span>
         </div>
         <div className="p-4 space-y-2">
           {[
@@ -3818,18 +3741,18 @@ function CelluleDrillDown({ cellule, onBack }: { cellule: Cellule; onBack: () =>
       </div>
 
       {/* Membres */}
-      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
-        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
-          <Users className="h-4 w-4 text-teal-600" />
-          <span className="text-sm font-bold text-teal-800">Membres</span>
-          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-teal-100 text-teal-700">{cellule.members}</span>
+      <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+          <Users className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+          <span className="text-sm font-bold text-gray-900">Membres</span>
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600">{cellule.members}</span>
         </div>
         <div className="divide-y divide-gray-100">
           {cellule.membres.map((m, i) => {
             const mvit = m.vitaa.v * m.vitaa.i * m.vitaa.t;
             return (
               <div key={i} className="px-4 py-3 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-[11px] font-bold text-teal-700">
+                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-[11px] font-bold text-gray-700">
                   {m.avatar}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -3863,10 +3786,10 @@ function CelluleDrillDown({ cellule, onBack }: { cellule: Cellule; onBack: () =>
 
       {/* Sous-cellules */}
       <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
-        <div className="bg-gradient-to-r from-violet-600 to-violet-500 px-4 py-2.5 flex items-center gap-2">
-          <Layers className="h-4 w-4 text-white" />
-          <span className="text-sm font-bold text-white">Sous-cellules</span>
-          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-white/90 text-violet-800">{cellule.sousCellules.length}</span>
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+          <Layers className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+          <span className="text-sm font-bold text-gray-900">Sous-cellules</span>
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600">{cellule.sousCellules.length}</span>
         </div>
         <div className="p-4 flex flex-wrap gap-2">
           {cellule.sousCellules.map(sc => (
@@ -3909,13 +3832,13 @@ function VITAADashboard({ selectedCellule }: { selectedCellule: Cellule }) {
   const fireStatus = selectedCellule.status;
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-4 space-y-4">
+    <div className="space-y-4">
       {/* Header pastel */}
-      <div className="rounded-xl bg-teal-50 border border-teal-200 px-4 py-3 flex items-center gap-3">
-        <Activity className="h-5 w-5 text-teal-600" />
+      <div className="rounded-xl border border-gray-200 px-4 py-3 flex items-center gap-3 bg-[#00B4D8]/10">
+        <Activity className="h-5 w-5 text-gray-900 stroke-[2.5]" />
         <div className="flex-1">
-          <p className="text-sm font-bold text-teal-800">VITAA × Orbit⁹ — {selectedCellule.name}</p>
-          <p className="text-[9px] text-teal-500">Scoring des 5 piliers · Triangle du Feu · Formule exponentielle</p>
+          <p className="text-sm font-bold text-gray-900">VITAA × Orbit⁹ — {selectedCellule.name}</p>
+          <p className="text-[9px] text-gray-500">Scoring des 5 piliers · Triangle du Feu · Formule exponentielle</p>
         </div>
       </div>
 
@@ -3923,9 +3846,9 @@ function VITAADashboard({ selectedCellule }: { selectedCellule: Cellule }) {
       <div className="grid grid-cols-2 gap-3">
         {/* Formule */}
         <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
-          <div className="bg-gradient-to-r from-indigo-600 to-indigo-500 px-4 py-2.5 flex items-center gap-2">
-            <Zap className="h-4 w-4 text-white" />
-            <span className="text-sm font-bold text-white">Formule e^(V×I×T)</span>
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+            <Zap className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+            <span className="text-sm font-bold text-gray-900">Formule e^(V×I×T)</span>
           </div>
           <div className="p-4 text-center">
             <div className="text-4xl font-bold text-indigo-600">{formulaResult.toFixed(2)}</div>
@@ -3936,9 +3859,9 @@ function VITAADashboard({ selectedCellule }: { selectedCellule: Cellule }) {
 
         {/* Phase AMORCER */}
         <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
-          <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
-            <Atom className="h-4 w-4 text-teal-600" />
-            <span className="text-sm font-bold text-teal-800">Phase AMORCER</span>
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+            <Atom className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+            <span className="text-sm font-bold text-gray-900">Phase AMORCER</span>
           </div>
           <div className="p-4 text-center">
             <div className="flex items-center justify-center gap-2 mb-2">
@@ -3954,10 +3877,10 @@ function VITAADashboard({ selectedCellule }: { selectedCellule: Cellule }) {
 
       {/* Comparaison Seul vs Cellule */}
       <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
-        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
-          <BarChart3 className="h-4 w-4 text-teal-600" />
-          <span className="text-sm font-bold text-teal-800">Seul vs Cellule</span>
-          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-teal-100 text-teal-700">
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+          <BarChart3 className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+          <span className="text-sm font-bold text-gray-900">Seul vs Cellule</span>
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600">
             Solo: e^{soloVit.toFixed(2)} = {Math.exp(soloVit).toFixed(2)} | Cellule: {formulaResult.toFixed(2)}
           </span>
         </div>
@@ -3987,9 +3910,9 @@ function VITAADashboard({ selectedCellule }: { selectedCellule: Cellule }) {
 
       {/* FAAS — grisé */}
       <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white opacity-50">
-        <div className="bg-gradient-to-r from-gray-500 to-gray-400 px-4 py-2.5 flex items-center gap-2">
-          <Lock className="h-4 w-4 text-white" />
-          <span className="text-sm font-bold text-white">FAAS — Mode Perso</span>
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-gray-100">
+          <Lock className="h-4 w-4 text-gray-400" />
+          <span className="text-sm font-bold text-gray-500">FAAS — Mode Perso</span>
           <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-amber-100 text-amber-700">Bientôt</span>
         </div>
         <div className="p-4 text-center">
@@ -4022,13 +3945,13 @@ function FeedSocial({ activePhase }: { activePhase?: PhaseKey }) {
   ].sort(() => 0.5 - Math.random()).slice(0, 12); // shuffle and limit
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-4 space-y-4">
+    <div className="space-y-4">
       {/* Header pastel */}
-      <div className="rounded-xl bg-teal-50 border border-teal-200 px-4 py-3 flex items-center gap-3">
-        <Newspaper className="h-5 w-5 text-teal-600" />
+      <div className="rounded-xl border border-gray-200 px-4 py-3 flex items-center gap-3 bg-[#00B4D8]/10">
+        <Newspaper className="h-5 w-5 text-gray-900 stroke-[2.5]" />
         <div className="flex-1">
-          <p className="text-sm font-bold text-teal-800">Nouvelles & Intelligence Industrie</p>
-          <p className="text-[9px] text-teal-500">Fil Orbit⁹ + données manufacturières Québec 2024-2026</p>
+          <p className="text-sm font-bold text-gray-900">Nouvelles & Intelligence Industrie</p>
+          <p className="text-[9px] text-gray-500">Fil Orbit⁹ + données manufacturières Québec 2024-2026</p>
         </div>
         <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-medium", ph.badge)}>
           {ph.label}
@@ -4038,19 +3961,21 @@ function FeedSocial({ activePhase }: { activePhase?: PhaseKey }) {
       {/* 4 KPIs industrie */}
       <div className="grid grid-cols-4 gap-2">
         {[
-          { value: "218 G$", label: "Revenus Manuf. QC", trend: "+22.8%", up: true, color: "emerald" },
-          { value: "417K", label: "Emplois Manufacturiers", trend: "-0.8%", up: false, color: "blue" },
-          { value: "43%", label: "Adoption IA (PME)", trend: "+39 pts", up: true, color: "violet" },
-          { value: "65.90$/h", label: "Productivité QC", trend: "-10.5% vs ON", up: false, color: "amber" },
+          { value: "218 G$", label: "Revenus Manuf. QC", trend: "+22.8%", up: true, icon: Factory },
+          { value: "417K", label: "Emplois Manufacturiers", trend: "-0.8%", up: false, icon: Users },
+          { value: "43%", label: "Adoption IA (PME)", trend: "+39 pts", up: true, icon: Cpu },
+          { value: "65.90$/h", label: "Productivité QC", trend: "-10.5% vs ON", up: false, icon: TrendingUp },
         ].map(kpi => (
           <div key={kpi.label} className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
-            <div className={cn("px-3 py-1.5 bg-gradient-to-r", `from-${kpi.color}-600 to-${kpi.color}-500`)}>
-              <span className="text-[9px] font-bold text-white">{kpi.label}</span>
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+              <kpi.icon className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+              <span className="text-sm font-bold text-gray-900">{kpi.label}</span>
             </div>
-            <div className="px-3 py-2">
-              <p className={cn("text-lg font-bold", `text-${kpi.color}-600`)}>{kpi.value}</p>
-              <p className="text-[9px]">
-                <span className={kpi.up ? "text-green-600 font-bold" : "text-red-500 font-bold"}>{kpi.trend}</span>
+            <div className="px-4 py-3">
+              <p className="text-2xl font-bold text-gray-800">{kpi.value}</p>
+              <p className={cn("text-xs flex items-center gap-1 mt-0.5", kpi.up ? "text-emerald-600" : "text-red-500")}>
+                {kpi.up ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
+                {kpi.trend}
               </p>
             </div>
           </div>
@@ -4078,7 +4003,7 @@ function FeedSocial({ activePhase }: { activePhase?: PhaseKey }) {
         <div className="space-y-3">
           {/* Activity summary */}
           <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-50 border border-gray-200">
-            <Activity className="h-3.5 w-3.5 text-teal-500" />
+            <Activity className="h-3.5 w-3.5 text-gray-900 stroke-[2.5]" />
             <span className="text-[9px] text-gray-500">
               <strong className="text-gray-700">{ORBIT9_FEED.length} activités Orbit⁹</strong> + <strong className="text-gray-700">{INDUSTRIE_NEWS.length} nouvelles industrie</strong> — dernières 72h
             </span>
@@ -4154,13 +4079,13 @@ function FeedSocial({ activePhase }: { activePhase?: PhaseKey }) {
           </div>
 
           {/* CarlOS Proactif */}
-          <div className="rounded-xl border-2 border-teal-200 bg-teal-50/50 p-4">
+          <div className="rounded-xl border border-gray-200 bg-[#00B4D8]/10 p-4">
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 rounded-full overflow-hidden shrink-0">
                 <BotAvatar code="CEOB" size="sm" />
               </div>
               <div>
-                <p className="text-xs font-bold text-teal-800 mb-1">CarlOS — Résumé Intelligence</p>
+                <p className="text-xs font-bold text-gray-900 mb-1">CarlOS — Résumé Intelligence</p>
                 <p className="text-xs text-gray-700 leading-relaxed">
                   L'adoption de l'IA au Québec fait un bond historique à 43% (+39 pts en 5 ans). Tes cellules Orbit⁹ sont bien positionnées: 3 leads qualifiés cette semaine, un match à 87% avec MetalPro, et l'Escouade Ventes performe au-dessus des cibles. Le programme Grand V de 1 G$ ouvre des opportunités de financement pour tes membres.
                 </p>
@@ -4175,10 +4100,10 @@ function FeedSocial({ activePhase }: { activePhase?: PhaseKey }) {
         <div className="space-y-4">
           {/* Portrait manufacturier */}
           <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
-            <div className="bg-gradient-to-r from-cyan-100 to-blue-100 px-4 py-2.5 border-b border-cyan-200">
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
               <div className="flex items-center gap-2">
                 <BarChart3 className="h-4 w-4 text-cyan-600" />
-                <span className="text-sm font-bold text-cyan-900">Portrait Manufacturier Québec 2024-2026</span>
+                <span className="text-sm font-bold text-gray-900">Portrait Manufacturier Québec 2024-2026</span>
               </div>
             </div>
             <div className="p-4">
@@ -4223,10 +4148,10 @@ function FeedSocial({ activePhase }: { activePhase?: PhaseKey }) {
 
           {/* Top secteurs */}
           <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
-            <div className="bg-gradient-to-r from-emerald-100 to-teal-100 px-4 py-2.5 border-b border-emerald-200">
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
               <div className="flex items-center gap-2">
                 <Factory className="h-4 w-4 text-emerald-600" />
-                <span className="text-sm font-bold text-emerald-900">Top Secteurs — 62% du PIB Manufacturier</span>
+                <span className="text-sm font-bold text-gray-900">Top Secteurs — 62% du PIB Manufacturier</span>
               </div>
             </div>
             <div className="p-4">
@@ -4251,10 +4176,10 @@ function FeedSocial({ activePhase }: { activePhase?: PhaseKey }) {
 
           {/* ROI transformation numérique */}
           <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
-            <div className="bg-gradient-to-r from-emerald-100 to-green-100 px-4 py-2.5 border-b border-emerald-200">
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
               <div className="flex items-center gap-2">
                 <DollarSign className="h-4 w-4 text-emerald-600" />
-                <span className="text-sm font-bold text-emerald-900">ROI de la Transformation Numérique</span>
+                <span className="text-sm font-bold text-gray-900">ROI de la Transformation Numérique</span>
               </div>
             </div>
             <div className="p-4">
@@ -4294,10 +4219,10 @@ function FeedSocial({ activePhase }: { activePhase?: PhaseKey }) {
 
           {/* Obstacles à l'adoption */}
           <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
-            <div className="bg-gradient-to-r from-red-100 to-orange-100 px-4 py-2.5 border-b border-red-200">
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 text-red-600" />
-                <span className="text-sm font-bold text-red-900">Obstacles à l'Adoption — 2024-2026</span>
+                <span className="text-sm font-bold text-gray-900">Obstacles à l'Adoption — 2024-2026</span>
               </div>
             </div>
             <div className="p-4">
@@ -4327,10 +4252,10 @@ function FeedSocial({ activePhase }: { activePhase?: PhaseKey }) {
 
           {/* Sources de données */}
           <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
-            <div className="bg-gradient-to-r from-teal-100 to-emerald-100 px-4 py-2.5 border-b border-teal-200">
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
               <div className="flex items-center gap-2">
-                <Bot className="h-4 w-4 text-teal-600" />
-                <span className="text-sm font-bold text-teal-900">Sources de Données — 28 Références</span>
+                <Bot className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+                <span className="text-sm font-bold text-gray-900">Sources de Données — 28 Références</span>
               </div>
             </div>
             <div className="p-4">
@@ -4346,9 +4271,9 @@ function FeedSocial({ activePhase }: { activePhase?: PhaseKey }) {
                   { source: "FCEI / BDC", type: "Fédéral" },
                   { source: "Scale AI / Mila", type: "Écosystème IA" },
                 ].map(s => (
-                  <div key={s.source} className="p-2 rounded-lg bg-teal-50 border border-teal-200">
-                    <p className="text-xs font-bold text-teal-800">{s.source}</p>
-                    <p className="text-[9px] text-teal-600">{s.type}</p>
+                  <div key={s.source} className="p-2 rounded-lg bg-gray-50 border border-gray-200">
+                    <p className="text-xs font-bold text-gray-800">{s.source}</p>
+                    <p className="text-[9px] text-gray-600">{s.type}</p>
                   </div>
                 ))}
               </div>
@@ -4362,10 +4287,10 @@ function FeedSocial({ activePhase }: { activePhase?: PhaseKey }) {
         <div className="space-y-4">
           {/* 6 opportunités stratégiques */}
           <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
-            <div className="bg-gradient-to-r from-indigo-100 to-violet-100 px-4 py-2.5 border-b border-indigo-200">
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
               <div className="flex items-center gap-2">
                 <Lightbulb className="h-4 w-4 text-indigo-600" />
-                <span className="text-sm font-bold text-indigo-900">Opportunités Stratégiques — 2024-2026</span>
+                <span className="text-sm font-bold text-gray-900">Opportunités Stratégiques — 2024-2026</span>
               </div>
             </div>
             <div className="p-4 space-y-2">
@@ -4399,7 +4324,7 @@ function FeedSocial({ activePhase }: { activePhase?: PhaseKey }) {
 
           {/* Contexte mondial robotique */}
           <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
-            <div className="bg-gradient-to-r from-gray-100 to-slate-100 px-4 py-2.5 border-b border-gray-200">
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
               <div className="flex items-center gap-2">
                 <Globe className="h-4 w-4 text-gray-600" />
                 <span className="text-sm font-bold text-gray-900">Contexte Mondial — Densité Robotique (IFR 2024-2025)</span>
@@ -4428,10 +4353,10 @@ function FeedSocial({ activePhase }: { activePhase?: PhaseKey }) {
 
           {/* Coûts par solution */}
           <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
-            <div className="bg-gradient-to-r from-amber-100 to-orange-100 px-4 py-2.5 border-b border-amber-200">
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
               <div className="flex items-center gap-2">
                 <DollarSign className="h-4 w-4 text-amber-600" />
-                <span className="text-sm font-bold text-amber-900">Coûts par Type de Solution</span>
+                <span className="text-sm font-bold text-gray-900">Coûts par Type de Solution</span>
               </div>
             </div>
             <div className="p-4 space-y-2">
@@ -4461,10 +4386,10 @@ function FeedSocial({ activePhase }: { activePhase?: PhaseKey }) {
 
           {/* Études de référence */}
           <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
-            <div className="bg-gradient-to-r from-blue-100 to-cyan-100 px-4 py-2.5 border-b border-blue-200">
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
               <div className="flex items-center gap-2">
                 <FileText className="h-4 w-4 text-blue-600" />
-                <span className="text-sm font-bold text-blue-900">Études de Référence 2024-2026</span>
+                <span className="text-sm font-bold text-gray-900">Études de Référence 2024-2026</span>
               </div>
             </div>
             <div className="p-4 space-y-1.5">
@@ -4501,21 +4426,21 @@ function MonProfilOrbit9() {
   const myVitaa = ORBIT9_CELLULES[0].membres[0].vitaa; // Carl F. = premier membre
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-4 space-y-4">
+    <div className="space-y-4">
       {/* Header pastel */}
-      <div className="rounded-xl bg-teal-50 border border-teal-200 px-4 py-3 flex items-center gap-3">
-        <UserCircle className="h-5 w-5 text-teal-600" />
+      <div className="rounded-xl border border-gray-200 px-4 py-3 flex items-center gap-3 bg-[#00B4D8]/10">
+        <UserCircle className="h-5 w-5 text-gray-900 stroke-[2.5]" />
         <div className="flex-1">
-          <p className="text-sm font-bold text-teal-800">Mon Profil Orbit⁹</p>
-          <p className="text-[9px] text-teal-500">Fiche entreprise, scores VITAA, personnalisation</p>
+          <p className="text-sm font-bold text-gray-900">Mon Profil Orbit⁹</p>
+          <p className="text-[9px] text-gray-500">Fiche entreprise, scores VITAA, personnalisation</p>
         </div>
       </div>
 
       {/* Fiche entreprise */}
-      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
-        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
-          <Building2 className="h-4 w-4 text-teal-600" />
-          <span className="text-sm font-bold text-teal-800">Fiche entreprise</span>
+      <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+          <Building2 className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+          <span className="text-sm font-bold text-gray-900">Fiche entreprise</span>
         </div>
         <div className="p-4 space-y-3">
           <div className="flex items-center gap-4">
@@ -4549,11 +4474,11 @@ function MonProfilOrbit9() {
       </div>
 
       {/* Mon score VITAA */}
-      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
-        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
-          <Activity className="h-4 w-4 text-teal-600" />
-          <span className="text-sm font-bold text-teal-800">Mon score VITAA</span>
-          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-teal-100 text-teal-700">
+      <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+          <Activity className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+          <span className="text-sm font-bold text-gray-900">Mon score VITAA</span>
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600">
             e^(V×I×T) = {Math.exp(myVitaa.v * myVitaa.i * myVitaa.t).toFixed(2)}
           </span>
         </div>
@@ -4577,14 +4502,14 @@ function MonProfilOrbit9() {
       </div>
 
       {/* Indice de confiance */}
-      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
-        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
-          <ShieldCheck className="h-4 w-4 text-teal-600" />
-          <span className="text-sm font-bold text-teal-800">Indice de confiance</span>
+      <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+          <ShieldCheck className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+          <span className="text-sm font-bold text-gray-900">Indice de confiance</span>
         </div>
         <div className="p-4">
           <div className="flex items-center gap-4">
-            <div className="text-3xl font-bold text-teal-600">87%</div>
+            <div className="text-3xl font-bold text-gray-800">87%</div>
             <div className="flex-1 space-y-1">
               {[
                 { label: "Profil complété", val: 90 },
@@ -4594,7 +4519,7 @@ function MonProfilOrbit9() {
                 <div key={m.label} className="flex items-center gap-2">
                   <span className="text-[9px] text-gray-500 w-28 shrink-0">{m.label}</span>
                   <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                    <div className="h-full rounded-full bg-teal-400" style={{ width: `${m.val}%` }} />
+                    <div className="h-full rounded-full bg-blue-400" style={{ width: `${m.val}%` }} />
                   </div>
                   <span className="text-[9px] font-bold text-gray-600 w-8 text-right">{m.val}%</span>
                 </div>
@@ -4605,10 +4530,10 @@ function MonProfilOrbit9() {
       </div>
 
       {/* Personnalisation — nom cellule + bots */}
-      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
-        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
-          <Settings className="h-4 w-4 text-teal-600" />
-          <span className="text-sm font-bold text-teal-800">Personnalisation</span>
+      <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+          <Settings className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+          <span className="text-sm font-bold text-gray-900">Personnalisation</span>
         </div>
         <div className="p-4 space-y-3">
           <div>
@@ -4617,7 +4542,7 @@ function MonProfilOrbit9() {
               type="text"
               value={celluleName}
               onChange={(e) => setCelluleName(e.target.value)}
-              className="w-full text-sm px-3 py-2 rounded-lg border border-gray-300 focus:border-teal-400 focus:ring-2 focus:ring-teal-100 outline-none"
+              className="w-full text-sm px-3 py-2 rounded-lg border border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none"
               placeholder="Nom de la cellule..."
             />
           </div>
@@ -4636,7 +4561,7 @@ function MonProfilOrbit9() {
                   <input
                     type="text"
                     defaultValue={bot.defaultName}
-                    className="flex-1 text-xs px-2.5 py-1.5 rounded-lg border border-gray-200 focus:border-teal-400 focus:ring-2 focus:ring-teal-100 outline-none"
+                    className="flex-1 text-xs px-2.5 py-1.5 rounded-lg border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none"
                   />
                 </div>
               ))}
@@ -4660,125 +4585,14 @@ function MonProfilOrbit9() {
   );
 }
 
-// ========== ORBIT9 DASHBOARD ==========
-
-function Orbit9Dashboard() {
-  return (
-    <div className="max-w-4xl mx-auto px-6 py-4 space-y-4">
-      {/* Header pastel */}
-      <div className="rounded-xl bg-teal-50 border border-teal-200 px-4 py-3 flex items-center gap-3">
-        <LayoutDashboard className="h-5 w-5 text-teal-600" />
-        <div className="flex-1">
-          <p className="text-sm font-bold text-teal-800">Dashboard Orbit⁹</p>
-          <p className="text-[9px] text-teal-500">Vue d'ensemble de votre réseau de cellules</p>
-        </div>
-      </div>
-
-      {/* KPIs réseau */}
-      <div className="grid grid-cols-4 gap-3">
-        {[
-          { label: "Cellules", value: "4", icon: Atom, grad: "from-teal-600 to-teal-500", vc: "text-teal-600" },
-          { label: "Membres", value: "18", icon: Users, grad: "from-emerald-600 to-emerald-500", vc: "text-emerald-600" },
-          { label: "Matches", value: "7", icon: Handshake, grad: "from-violet-600 to-violet-500", vc: "text-violet-600" },
-          { label: "Score moyen", value: "72%", icon: Activity, grad: "from-amber-600 to-amber-500", vc: "text-amber-600" },
-        ].map(kpi => (
-          <div key={kpi.label} className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
-            <div className={cn("flex items-center gap-2 px-3 py-2 bg-gradient-to-r", kpi.grad)}>
-              <kpi.icon className="h-4 w-4 text-white" />
-              <span className="text-xs font-bold text-white">{kpi.label}</span>
-            </div>
-            <div className="px-3 py-2">
-              <div className={cn("text-2xl font-bold", kpi.vc)}>{kpi.value}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* ROI réseau */}
-      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
-        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
-          <TrendingUp className="h-4 w-4 text-teal-600" />
-          <span className="text-sm font-bold text-teal-800">ROI Réseau</span>
-        </div>
-        <div className="p-4 grid grid-cols-3 gap-4">
-          {[
-            { label: "Revenus générés", value: "47K$", sub: "via cellules", color: "text-emerald-600" },
-            { label: "Coût évité", value: "12K$", sub: "mutualisation", color: "text-blue-600" },
-            { label: "Temps gagné", value: "340h", sub: "ce trimestre", color: "text-violet-600" },
-          ].map(r => (
-            <div key={r.label} className="text-center">
-              <div className={cn("text-2xl font-bold", r.color)}>{r.value}</div>
-              <div className="text-[11px] text-gray-600">{r.label}</div>
-              <div className="text-[9px] text-gray-400">{r.sub}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Cellules actives */}
-      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
-        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
-          <Atom className="h-4 w-4 text-teal-600" />
-          <span className="text-sm font-bold text-teal-800">Cellules actives</span>
-          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-teal-100 text-teal-700">4</span>
-        </div>
-        <div className="divide-y divide-gray-100">
-          {ORBIT9_CELLULES.map((cell, i) => {
-            const ph = PC[cell.status as PhaseKey];
-            return (
-              <div key={i} className="px-4 py-3 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-teal-50">
-                  <Atom className="h-4 w-4 text-teal-500" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <span className="text-xs font-medium text-gray-800">{cell.name}</span>
-                  <span className="text-[9px] text-gray-400 ml-2">{cell.type}</span>
-                </div>
-                <span className="text-[9px] text-gray-500">{cell.members}/{cell.maxMembers}</span>
-                <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1",
-                  ph?.badge || "bg-gray-100 text-gray-700"
-                )}>
-                  <span className={cn("w-1.5 h-1.5 rounded-full", ph?.dot || "bg-gray-400")} />
-                  {ph?.label || cell.status}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Matches récents */}
-      <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
-        <div className="bg-gradient-to-r from-violet-600 to-violet-500 px-4 py-2.5 flex items-center gap-2">
-          <Handshake className="h-4 w-4 text-white" />
-          <span className="text-sm font-bold text-white">Matches récents</span>
-        </div>
-        <div className="divide-y divide-gray-100">
-          {[
-            { pair: "Usine Bleue ↔ MetalPro", score: 87, bot: "CSOB" },
-            { pair: "Usine Bleue ↔ TechFab", score: 73, bot: "CROB" },
-            { pair: "Cellule Ops ↔ LogiTrans", score: 65, bot: "COOB" },
-          ].map((m, i) => (
-            <div key={i} className="px-4 py-2.5 flex items-center gap-3">
-              <BotAvatar code={m.bot} size="sm" />
-              <span className="text-xs text-gray-700 flex-1">{m.pair}</span>
-              <div className="w-20 h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full bg-violet-500 rounded-full" style={{ width: `${m.score}%` }} />
-              </div>
-              <span className="text-[9px] font-bold text-violet-600">{m.score}%</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
+// ========== ORBIT9 DASHBOARD — Remplacé par DeptDashboardView botCode="ORBIT9" (Pattern A) ==========
+// Config ORBIT9 dans BlueprintDepartement.tsx → DEPT_DASHBOARD_SECTIONS.ORBIT9
 
 // ========== ORBIT9 GOUVERNANCE (4 sub-tabs: Principes, Rôles, TimeTokens, Matrice Sortie + Standards qualité) ==========
 
-function Orbit9Gouvernance() {
+function Orbit9Gouvernance({ fixedTab }: { fixedTab?: "principes" | "roles" | "timetokens" | "sortie" } = {}) {
   type GovTab = "principes" | "roles" | "timetokens" | "sortie";
-  const [govTab, setGovTab] = useState<GovTab>("principes");
+  const [govTab, setGovTab] = useState<GovTab>(fixedTab || "principes");
   const GOV_TABS: { key: GovTab; label: string; Icon: React.ElementType }[] = [
     { key: "principes", label: "Principes", Icon: BookOpen },
     { key: "roles", label: "Rôles", Icon: Users },
@@ -4787,41 +4601,43 @@ function Orbit9Gouvernance() {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-4 space-y-4">
+    <div className="space-y-4">
       {/* Header + intro */}
-      <div className="rounded-xl bg-teal-50 border border-teal-200 px-4 py-3">
+      <div className="rounded-xl border border-gray-200 px-4 py-3 bg-[#00B4D8]/10">
         <div className="flex items-center gap-3 mb-2">
-          <Shield className="h-5 w-5 text-teal-600" />
+          <Shield className="h-5 w-5 text-gray-900 stroke-[2.5]" />
           <div className="flex-1">
-            <p className="text-sm font-bold text-teal-800">Gouvernance Augmentée par IA</p>
-            <p className="text-[9px] text-teal-500">Inspiré Holacracy — adapté pour la collaboration IA + Humain</p>
+            <p className="text-sm font-bold text-gray-900">Gouvernance Augmentée par IA</p>
+            <p className="text-[9px] text-gray-500">Inspiré Holacracy — adapté pour la collaboration IA + Humain</p>
           </div>
         </div>
-        <p className="text-xs text-teal-700 leading-relaxed">
+        <p className="text-xs text-gray-700 leading-relaxed">
           Le pouvoir ne réside pas dans une personne mais dans un <strong>processus défini</strong>. Chaque décision suit un protocole transparent où les bots IA et les humains ont des rôles clairs avec des responsabilités précises.
         </p>
       </div>
 
-      {/* Sub-tabs */}
-      <div className="flex gap-1.5">
-        {GOV_TABS.map(t => (
-          <button key={t.key} onClick={() => setGovTab(t.key)} className={cn(
-            "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
-            govTab === t.key ? "bg-gray-900 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-          )}>
-            <t.Icon className="h-3.5 w-3.5" />
-            {t.label}
-          </button>
-        ))}
-      </div>
+      {/* Sub-tabs (hidden when fixedTab is set from Blueprint sidebar) */}
+      {!fixedTab && (
+        <div className="flex gap-1.5">
+          {GOV_TABS.map(t => (
+            <button key={t.key} onClick={() => setGovTab(t.key)} className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
+              govTab === t.key ? "bg-gray-900 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+            )}>
+              <t.Icon className="h-3.5 w-3.5" />
+              {t.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* ═══ TAB: PRINCIPES ═══ */}
       {govTab === "principes" && (<>
         {/* 5 principes fondateurs */}
-        <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
-          <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
-            <BookOpen className="h-4 w-4 text-teal-600" />
-            <span className="text-sm font-bold text-teal-800">5 Principes fondateurs</span>
+        <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+            <BookOpen className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+            <span className="text-sm font-bold text-gray-900">5 Principes fondateurs</span>
           </div>
           <div className="p-4 space-y-3">
             {[
@@ -4837,7 +4653,7 @@ function Orbit9Gouvernance() {
               { title: "Intégration des propositions", icon: CheckCircle2, color: "text-emerald-500", bgColor: "bg-emerald-50 border-emerald-200",
                 desc: "Chaque proposition est testée par consentement (pas par consensus). Une objection est valide seulement si elle protège un rôle existant.",
                 examples: ["Proposition → Questions → Réactions → Objections → Intégration", "Le silence = consentement implicite"] },
-              { title: "Transparence radicale des données", icon: Eye, color: "text-teal-500", bgColor: "bg-teal-50 border-teal-200",
+              { title: "Transparence radicale des données", icon: Eye, color: "text-cyan-500", bgColor: "bg-cyan-50 border-cyan-200",
                 desc: "Chaque bot partage ses métriques, ses décisions et ses rationnels. Tout est auditable par tous les membres de la cellule.",
                 examples: ["Historique complet de chaque décision par les bots", "Dashboards temps réel accessibles à tous"] },
             ].map((p, i) => (
@@ -4861,10 +4677,10 @@ function Orbit9Gouvernance() {
         </div>
 
         {/* Protocole décisionnel (processus en 5 étapes) */}
-        <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
-          <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
-            <Route className="h-4 w-4 text-teal-600" />
-            <span className="text-sm font-bold text-teal-800">Processus décisionnel</span>
+        <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+            <Route className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+            <span className="text-sm font-bold text-gray-900">Processus décisionnel</span>
           </div>
           <div className="p-4">
             <p className="text-[11px] text-gray-500 mb-3">Chaque décision du réseau suit ce processus en 5 étapes. Les bots IA participent à chaque étape aux côtés des humains.</p>
@@ -4887,10 +4703,10 @@ function Orbit9Gouvernance() {
         </div>
 
         {/* Règles actives de la cellule */}
-        <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
-          <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
-            <ListChecks className="h-4 w-4 text-teal-600" />
-            <span className="text-sm font-bold text-teal-800">Règles actives</span>
+        <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+            <ListChecks className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+            <span className="text-sm font-bold text-gray-900">Règles actives</span>
           </div>
           <div className="p-4 space-y-2">
             {[
@@ -4901,7 +4717,7 @@ function Orbit9Gouvernance() {
               { rule: "Rotation des rôles tous les 90 jours", icon: RefreshCw, active: false },
             ].map((r, i) => (
               <div key={i} className={cn("flex items-center gap-3 px-3 py-2 rounded-lg border", r.active ? "border-gray-200 bg-white" : "border-gray-100 bg-gray-50 opacity-50")}>
-                <r.icon className={cn("h-3.5 w-3.5 shrink-0", r.active ? "text-teal-500" : "text-gray-400")} />
+                <r.icon className={cn("h-3.5 w-3.5 shrink-0", r.active ? "text-blue-500" : "text-gray-400")} />
                 <span className="text-xs text-gray-700 flex-1">{r.rule}</span>
                 <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-medium", r.active ? "bg-emerald-50 text-emerald-600" : "bg-gray-100 text-gray-400")}>{r.active ? "Actif" : "Bientôt"}</span>
               </div>
@@ -4912,10 +4728,10 @@ function Orbit9Gouvernance() {
 
       {/* ═══ TAB: RÔLES ═══ */}
       {govTab === "roles" && (<>
-        <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
-          <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
-            <Users className="h-4 w-4 text-teal-600" />
-            <span className="text-sm font-bold text-teal-800">Rôles dans le Cercle Orbit⁹</span>
+        <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+            <Users className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+            <span className="text-sm font-bold text-gray-900">Rôles dans le Cercle Orbit⁹</span>
           </div>
           <div className="p-4">
             <p className="text-[11px] text-gray-500 mb-3">Chaque cercle (cellule) possède 4 rôles structurels. Les agents IA et les humains se partagent ces responsabilités.</p>
@@ -4962,29 +4778,29 @@ function Orbit9Gouvernance() {
         {/* KPIs */}
         <div className="grid grid-cols-4 gap-3">
           {[
-            { label: "TT accumulés", value: "1,240", icon: Coins, grad: "from-violet-600 to-violet-500", vc: "text-violet-600", sub: "Vos contributions" },
-            { label: "Phase", value: "V1", icon: Server, grad: "from-emerald-600 to-emerald-500", vc: "text-emerald-600", sub: "Off-chain (SQLite)" },
-            { label: "Formule", value: "5D", icon: Cpu, grad: "from-blue-600 to-blue-500", vc: "text-blue-600", sub: "A × D × I × Z × P" },
-            { label: "Valeur TT", value: "~3.2$", icon: DollarSign, grad: "from-amber-600 to-amber-500", vc: "text-amber-600", sub: "Par token (estimé)" },
+            { label: "TT accumulés", value: "1,240", icon: Coins, sub: "Vos contributions" },
+            { label: "Phase", value: "V1", icon: Server, sub: "Off-chain (SQLite)" },
+            { label: "Formule", value: "5D", icon: Cpu, sub: "A × D × I × Z × P" },
+            { label: "Valeur TT", value: "~3.2$", icon: DollarSign, sub: "Par token (estimé)" },
           ].map(kpi => (
             <div key={kpi.label} className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
-              <div className={cn("flex items-center gap-2 px-3 py-2 bg-gradient-to-r", kpi.grad)}>
-                <kpi.icon className="h-4 w-4 text-white" />
-                <span className="text-xs font-bold text-white">{kpi.label}</span>
+              <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+                <kpi.icon className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+                <span className="text-sm font-bold text-gray-900">{kpi.label}</span>
               </div>
-              <div className="px-3 py-2">
-                <div className={cn("text-2xl font-bold", kpi.vc)}>{kpi.value}</div>
-                <div className="text-[9px] text-gray-400">{kpi.sub}</div>
+              <div className="px-4 py-3">
+                <div className="text-2xl font-bold text-gray-800">{kpi.value}</div>
+                <div className="text-[9px] text-gray-500">{kpi.sub}</div>
               </div>
             </div>
           ))}
         </div>
 
         {/* Pourquoi les bots rendent les smart contracts meilleurs */}
-        <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
-          <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-teal-600" />
-            <span className="text-sm font-bold text-teal-800">Pourquoi les Bots rendent les TimeTokens fiables</span>
+        <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+            <Sparkles className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+            <span className="text-sm font-bold text-gray-900">Pourquoi les Bots rendent les TimeTokens fiables</span>
           </div>
           <div className="p-4">
             <p className="text-[11px] text-gray-500 mb-3">Dans une DAO traditionnelle, les humains auto-déclarent leurs contributions. Avec CarlOS, les bots mesurent automatiquement — zéro manipulation possible.</p>
@@ -5006,10 +4822,10 @@ function Orbit9Gouvernance() {
         </div>
 
         {/* Évolution en 3 phases */}
-        <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
-          <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
-            <Route className="h-4 w-4 text-teal-600" />
-            <span className="text-sm font-bold text-teal-800">Évolution en 3 phases</span>
+        <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+            <Route className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+            <span className="text-sm font-bold text-gray-900">Évolution en 3 phases</span>
           </div>
           <div className="p-4 flex gap-3">
             {[
@@ -5032,10 +4848,10 @@ function Orbit9Gouvernance() {
 
       {/* ═══ TAB: MATRICE SORTIE ═══ */}
       {govTab === "sortie" && (<>
-        <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
-          <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
-            <Scale className="h-4 w-4 text-teal-600" />
-            <span className="text-sm font-bold text-teal-800">Matrice de Sortie — 4 Quadrants</span>
+        <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+            <Scale className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+            <span className="text-sm font-bold text-gray-900">Matrice de Sortie — 4 Quadrants</span>
           </div>
           <div className="p-4">
             <p className="text-[11px] text-gray-500 mb-3">Quand un membre quitte une cellule, le protocole de sortie dépend du contexte. Chaque scénario a un processus clair pour protéger toutes les parties.</p>
@@ -5083,10 +4899,10 @@ function Orbit9Gouvernance() {
       </>)}
 
       {/* ═══ STANDARDS QUALITÉ (toujours visible) ═══ */}
-      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
-        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
-          <Star className="h-4 w-4 text-teal-600" />
-          <span className="text-sm font-bold text-teal-800">Standards Qualité — Seuils Minimaux</span>
+      <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+          <Star className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+          <span className="text-sm font-bold text-gray-900">Standards Qualité — Seuils Minimaux</span>
         </div>
         <div className="p-3">
           <p className="text-[9px] text-gray-400 mb-2">Réévaluation annuelle de chaque membre. Le réseau élite maintient ses standards.</p>
@@ -5126,24 +4942,24 @@ function JumelageOrbit9() {
     { a: "Innovation Lab", b: "LogiTrans QC", score: 65, status: "Qualification", bot: "COOB" },
   ];
   return (
-    <div className="max-w-4xl mx-auto px-6 py-4 space-y-4">
-      <div className="rounded-xl bg-teal-50 border border-teal-200 px-4 py-3 flex items-center gap-3">
-        <Handshake className="h-5 w-5 text-teal-600" />
+    <div className="space-y-4">
+      <div className="rounded-xl border border-gray-200 px-4 py-3 flex items-center gap-3 bg-[#00B4D8]/10">
+        <Handshake className="h-5 w-5 text-gray-900 stroke-[2.5]" />
         <div className="flex-1">
-          <p className="text-sm font-bold text-teal-800">Jumelage Orbit⁹</p>
-          <p className="text-[9px] text-teal-500">Pipeline de jumelage inter-entreprises · 5 étapes</p>
+          <p className="text-sm font-bold text-gray-900">Jumelage Orbit⁹</p>
+          <p className="text-[9px] text-gray-500">Pipeline de jumelage inter-entreprises · 5 étapes</p>
         </div>
       </div>
       {/* Pipeline visuel */}
-      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
-        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
-          <Route className="h-4 w-4 text-teal-600" />
-          <span className="text-sm font-bold text-teal-800">Pipeline</span>
+      <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+          <Route className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+          <span className="text-sm font-bold text-gray-900">Pipeline</span>
         </div>
         <div className="p-4">
           <div className="flex items-center gap-1">
             {[
-              { label: "Découverte", icon: Search, color: "bg-teal-500", active: true },
+              { label: "Découverte", icon: Search, color: "bg-blue-500", active: true },
               { label: "Qualification", icon: Target, color: "bg-blue-500", active: true },
               { label: "Introduction", icon: Handshake, color: "bg-violet-500", active: false },
               { label: "Collaboration", icon: Rocket, color: "bg-emerald-500", active: false },
@@ -5154,18 +4970,18 @@ function JumelageOrbit9() {
                   <st.icon className="h-3.5 w-3.5" />
                 </div>
                 <span className={cn("text-[9px] font-medium mt-1 text-center", st.active ? "text-gray-700" : "text-gray-400")}>{st.label}</span>
-                {si < 4 && <div className={cn("absolute top-4 left-[60%] w-[80%] h-0.5", st.active ? "bg-teal-300" : "bg-gray-200")} />}
+                {si < 4 && <div className={cn("absolute top-4 left-[60%] w-[80%] h-0.5", st.active ? "bg-blue-300" : "bg-gray-200")} />}
               </div>
             ))}
           </div>
         </div>
       </div>
       {/* Matches en cours */}
-      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
-        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
-          <Handshake className="h-4 w-4 text-teal-600" />
-          <span className="text-sm font-bold text-teal-800">Matches en cours</span>
-          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-teal-100 text-teal-700">{matches.length}</span>
+      <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+          <Handshake className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+          <span className="text-sm font-bold text-gray-900">Matches en cours</span>
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600">{matches.length}</span>
         </div>
         <div className="divide-y divide-gray-100">
           {matches.map((m, i) => (
@@ -5176,9 +4992,9 @@ function JumelageOrbit9() {
                 <p className="text-[9px] text-gray-400">Étape: {m.status}</p>
               </div>
               <div className="w-16 h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full bg-teal-500 rounded-full" style={{ width: `${m.score}%` }} />
+                <div className="h-full bg-blue-500 rounded-full" style={{ width: `${m.score}%` }} />
               </div>
-              <span className="text-[9px] font-bold text-teal-600">{m.score}%</span>
+              <span className="text-[9px] font-bold text-blue-600">{m.score}%</span>
             </div>
           ))}
         </div>
@@ -5205,7 +5021,7 @@ function PionniersOrbit9() {
   const prospects = sectors.filter(s => s.status === "prospect").length;
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-4 space-y-4">
+    <div className="space-y-4">
       {/* Phase indicator */}
       <div className="flex items-center gap-2">
         <Eye className="h-3.5 w-3.5 text-blue-500" />
@@ -5214,30 +5030,30 @@ function PionniersOrbit9() {
       </div>
 
       {/* Header pastel */}
-      <div className="rounded-xl bg-teal-50 border border-teal-200 px-4 py-3 flex items-center gap-3">
-        <Rocket className="h-5 w-5 text-teal-600" />
+      <div className="rounded-xl border border-gray-200 px-4 py-3 flex items-center gap-3 bg-[#00B4D8]/10">
+        <Rocket className="h-5 w-5 text-gray-900 stroke-[2.5]" />
         <div className="flex-1">
-          <p className="text-sm font-bold text-teal-800">Cercle des Pionniers Orbit⁹</p>
-          <p className="text-[9px] text-teal-500">9 places · 9 leaders · 1 par secteur stratégique · Les portes ferment</p>
+          <p className="text-sm font-bold text-gray-900">Cercle des Pionniers Orbit⁹</p>
+          <p className="text-[9px] text-gray-500">9 places · 9 leaders · 1 par secteur stratégique · Les portes ferment</p>
         </div>
-        <span className="text-xs font-bold text-teal-700 bg-teal-100 px-2.5 py-0.5 rounded-full">{pris}/9</span>
+        <span className="text-xs font-bold text-gray-600 bg-gray-100 px-2.5 py-0.5 rounded-full">{pris}/9</span>
       </div>
 
       {/* KPIs */}
       <div className="grid grid-cols-4 gap-3">
         {[
-          { label: "Confirmés", value: `${pris}`, icon: Users, grad: "from-indigo-600 to-indigo-500", vc: "text-indigo-600", sub: "Pionniers actifs" },
-          { label: "En discussion", value: `${prospects}`, icon: Clock, grad: "from-amber-600 to-amber-500", vc: "text-amber-600", sub: "Prospects actifs" },
-          { label: "Prix pionnier", value: "1,350$", icon: DollarSign, grad: "from-green-600 to-green-500", vc: "text-green-600", sub: "/mois vs 2,500$ vague 2" },
-          { label: "Économie/an", value: "13,800$", icon: Target, grad: "from-emerald-600 to-emerald-500", vc: "text-emerald-600", sub: "Garanti à vie" },
+          { label: "Confirmés", value: `${pris}`, icon: Users, sub: "Pionniers actifs" },
+          { label: "En discussion", value: `${prospects}`, icon: Clock, sub: "Prospects actifs" },
+          { label: "Prix pionnier", value: "1,350$", icon: DollarSign, sub: "/mois vs 2,500$ vague 2" },
+          { label: "Économie/an", value: "13,800$", icon: Target, sub: "Garanti à vie" },
         ].map(kpi => (
           <div key={kpi.label} className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
-            <div className={cn("flex items-center gap-2 px-3 py-2 bg-gradient-to-r", kpi.grad)}>
-              <kpi.icon className="h-4 w-4 text-white" />
-              <span className="text-xs font-bold text-white">{kpi.label}</span>
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+              <kpi.icon className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+              <span className="text-sm font-bold text-gray-900">{kpi.label}</span>
             </div>
-            <div className="px-3 py-2">
-              <div className={cn("text-2xl font-bold", kpi.vc)}>{kpi.value}</div>
+            <div className="px-4 py-3">
+              <div className="text-2xl font-bold text-gray-800">{kpi.value}</div>
               <div className="text-[9px] text-gray-500">{kpi.sub}</div>
             </div>
           </div>
@@ -5245,10 +5061,10 @@ function PionniersOrbit9() {
       </div>
 
       {/* Modèle de croissance 9 → 81 */}
-      <div className="rounded-xl border border-indigo-200 overflow-hidden shadow-sm bg-gradient-to-r from-indigo-50 to-blue-50">
-        <div className="bg-indigo-50 border-b border-indigo-200 px-4 py-2.5 flex items-center gap-2">
-          <Rocket className="h-4 w-4 text-indigo-600" />
-          <span className="text-sm font-bold text-indigo-800">Modèle de Croissance — 9 × 9 = 81</span>
+      <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+          <Rocket className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+          <span className="text-sm font-bold text-gray-900">Modèle de Croissance — 9 × 9 = 81</span>
         </div>
         <div className="p-4">
           <p className="text-[9px] text-gray-600 mb-3">Chaque pionnier anime sa propre Cellule Orbit⁹. Effet réseau: les bots de toutes les cellules communiquent entre eux.</p>
@@ -5273,10 +5089,10 @@ function PionniersOrbit9() {
       </div>
 
       {/* Grille 9 places — 1 leader par secteur */}
-      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
-        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
-          <Target className="h-4 w-4 text-teal-600" />
-          <span className="text-sm font-bold text-teal-800">9 Places — 1 Leader par Secteur Stratégique</span>
+      <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+          <Target className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+          <span className="text-sm font-bold text-gray-900">9 Places — 1 Leader par Secteur Stratégique</span>
         </div>
         <div className="p-4">
           <div className="grid grid-cols-3 gap-2">
@@ -5304,10 +5120,10 @@ function PionniersOrbit9() {
       </div>
 
       {/* Package Pionnier — Conditions à Vie */}
-      <div className="rounded-xl border-2 border-indigo-300 overflow-hidden shadow-lg bg-white">
-        <div className="bg-indigo-50 border-b border-indigo-200 px-4 py-2.5 flex items-center gap-2">
-          <Award className="h-4 w-4 text-indigo-600" />
-          <span className="text-sm font-bold text-indigo-800">Package Pionnier — Conditions à Vie</span>
+      <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+          <Award className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+          <span className="text-sm font-bold text-gray-900">Package Pionnier — Conditions à Vie</span>
         </div>
         <div className="p-4">
           <p className="text-[9px] text-gray-500 mb-3">En devenant pionnier, vous verrouillez ces avantages de façon permanente, même quand le prix augmente pour les vagues suivantes.</p>
@@ -5333,10 +5149,10 @@ function PionniersOrbit9() {
       </div>
 
       {/* Script de Rencontre — 45 min, 5 actes */}
-      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
-        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
-          <Handshake className="h-4 w-4 text-teal-600" />
-          <span className="text-sm font-bold text-teal-800">Script de Rencontre — 45 min, 5 actes</span>
+      <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+          <Handshake className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+          <span className="text-sm font-bold text-gray-900">Script de Rencontre — 45 min, 5 actes</span>
         </div>
         <div className="p-4">
           <p className="text-[9px] text-gray-500 mb-3">En personne (JAMAIS Zoom). Café ou bureau du prospect. iPad avec CarlOS prêt à rouler. Pas de PowerPoint.</p>
@@ -5364,10 +5180,10 @@ function PionniersOrbit9() {
       </div>
 
       {/* Calendrier Sprint 30 Jours */}
-      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
-        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-teal-600" />
-          <span className="text-sm font-bold text-teal-800">Calendrier Sprint 30 Jours</span>
+      <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+          <Calendar className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+          <span className="text-sm font-bold text-gray-900">Calendrier Sprint 30 Jours</span>
         </div>
         <div className="p-4">
           <p className="text-[9px] text-gray-500 mb-3">Plan de recrutement des 9 pionniers en 4 semaines. Pression progressive, urgence croissante.</p>
@@ -5395,10 +5211,10 @@ function PionniersOrbit9() {
       </div>
 
       {/* Processus de sélection rigoureux */}
-      <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
-        <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
-          <Shield className="h-4 w-4 text-teal-600" />
-          <span className="text-sm font-bold text-teal-800">Processus de Sélection Rigoureux</span>
+      <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+          <Shield className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+          <span className="text-sm font-bold text-gray-900">Processus de Sélection Rigoureux</span>
         </div>
         <div className="p-4">
           <p className="text-[9px] text-gray-500 mb-3">Réseau élite augmenté AI — on ne prend pas n'importe qui. Même les fournisseurs invités gratuitement passent par le processus complet.</p>
@@ -5411,16 +5227,16 @@ function PionniersOrbit9() {
             ].map(s => (
               <div key={s.step} className="p-2.5 bg-gray-50 rounded-lg border border-gray-100">
                 <div className="flex items-center gap-1.5 mb-1">
-                  <span className="text-[9px] font-black bg-teal-200 text-teal-800 w-4 h-4 rounded-full flex items-center justify-center">{s.step}</span>
-                  <s.Icon className="h-3.5 w-3.5 text-teal-600" />
+                  <span className="text-[9px] font-black bg-blue-200 text-blue-800 w-4 h-4 rounded-full flex items-center justify-center">{s.step}</span>
+                  <s.Icon className="h-3.5 w-3.5 text-blue-600" />
                   <span className="text-[9px] font-bold text-gray-800">{s.title}</span>
                 </div>
                 <p className="text-[9px] text-gray-600 leading-relaxed">{s.desc}</p>
               </div>
             ))}
           </div>
-          <div className="mt-3 p-2 bg-teal-50 rounded-lg">
-            <p className="text-[9px] text-teal-800 font-semibold text-center">
+          <div className="mt-3 p-2 bg-[#00B4D8]/10 rounded-lg">
+            <p className="text-[9px] text-gray-800 font-semibold text-center">
               FLYWHEEL: Fournisseur invité gratuitement → découvre CarlOS → devient client → invite SES fournisseurs → réseau grossit
             </p>
           </div>
@@ -5434,29 +5250,29 @@ function PionniersOrbit9() {
 
 function EvenementsOrbit9() {
   const events = [
-    { title: "Meetup Pionniers #1", date: "15 avril 2026", type: "Présentiel", lieu: "Montréal", attendees: 9, color: "bg-teal-500" },
+    { title: "Meetup Pionniers #1", date: "15 avril 2026", type: "Présentiel", lieu: "Montréal", attendees: 9, color: "bg-blue-500" },
     { title: "Webinaire VITAA 101", date: "22 avril 2026", type: "Virtuel", lieu: "Zoom", attendees: 25, color: "bg-blue-500" },
     { title: "Hackathon Bot-to-Bot", date: "5 mai 2026", type: "Hybride", lieu: "Québec", attendees: 18, color: "bg-violet-500" },
     { title: "Conférence Orbit⁹ v1.0", date: "15 juin 2026", type: "Présentiel", lieu: "Montréal", attendees: 81, color: "bg-amber-500" },
   ];
   return (
-    <div className="max-w-4xl mx-auto px-6 py-4 space-y-4">
-      <div className="rounded-xl bg-teal-50 border border-teal-200 px-4 py-3 flex items-center gap-3">
-        <Calendar className="h-5 w-5 text-teal-600" />
+    <div className="space-y-4">
+      <div className="rounded-xl border border-gray-200 px-4 py-3 flex items-center gap-3 bg-[#00B4D8]/10">
+        <Calendar className="h-5 w-5 text-gray-900 stroke-[2.5]" />
         <div className="flex-1">
-          <p className="text-sm font-bold text-teal-800">Événements Orbit⁹</p>
-          <p className="text-[9px] text-teal-500">{events.length} événements à venir</p>
+          <p className="text-sm font-bold text-gray-900">Événements Orbit⁹</p>
+          <p className="text-[9px] text-gray-500">{events.length} événements à venir</p>
         </div>
       </div>
       <div className="space-y-3">
         {events.map((evt, i) => (
-          <div key={i} className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
+          <div key={i} className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
             <div className="flex items-stretch">
               <div className={cn("w-1.5 shrink-0", evt.color)} />
               <div className="flex-1 px-4 py-3">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs font-bold text-gray-800">{evt.title}</span>
-                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-teal-50 text-teal-600 font-medium">{evt.type}</span>
+                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">{evt.type}</span>
                 </div>
                 <div className="flex items-center gap-4 text-[9px] text-gray-500">
                   <span className="flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" /> {evt.date}</span>
@@ -5465,7 +5281,7 @@ function EvenementsOrbit9() {
                 </div>
               </div>
               <div className="flex items-center px-3">
-                <button className="text-[9px] bg-teal-50 text-teal-700 border border-teal-200 px-3 py-1.5 rounded-full hover:bg-teal-100 font-medium cursor-pointer">S'inscrire</button>
+                <button className="text-[9px] bg-[#00B4D8]/10 text-gray-700 border border-gray-200 px-3 py-1.5 rounded-full hover:bg-gray-100 font-medium cursor-pointer">S'inscrire</button>
               </div>
             </div>
           </div>
@@ -5482,42 +5298,42 @@ function CreerCellulePage() {
   const [nom, setNom] = useState("");
   const [cellType, setCellType] = useState<"interne" | "externe">("interne");
   return (
-    <div className="max-w-4xl mx-auto px-6 py-4 space-y-4">
-      <div className="rounded-xl bg-teal-50 border border-teal-200 px-4 py-3 flex items-center gap-3">
-        <Plus className="h-5 w-5 text-teal-600" />
+    <div className="space-y-4">
+      <div className="rounded-xl border border-gray-200 px-4 py-3 flex items-center gap-3 bg-[#00B4D8]/10">
+        <Plus className="h-5 w-5 text-gray-900 stroke-[2.5]" />
         <div className="flex-1">
-          <p className="text-sm font-bold text-teal-800">Créer une cellule</p>
-          <p className="text-[9px] text-teal-500">Étape {step}/3 — {step === 1 ? "Informations" : step === 2 ? "Membres" : "Confirmation"}</p>
+          <p className="text-sm font-bold text-gray-900">Créer une cellule</p>
+          <p className="text-[9px] text-gray-500">Étape {step}/3 — {step === 1 ? "Informations" : step === 2 ? "Membres" : "Confirmation"}</p>
         </div>
       </div>
       {/* Progress */}
       <div className="flex items-center gap-2">
         {[1, 2, 3].map(s => (
           <div key={s} className="flex-1 flex items-center gap-2">
-            <div className={cn("w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold", s <= step ? "bg-teal-600 text-white" : "bg-gray-200 text-gray-400")}>{s}</div>
-            <span className={cn("text-[9px] font-medium", s <= step ? "text-teal-700" : "text-gray-400")}>{s === 1 ? "Infos" : s === 2 ? "Membres" : "Confirmer"}</span>
-            {s < 3 && <div className={cn("flex-1 h-0.5 rounded", s < step ? "bg-teal-400" : "bg-gray-200")} />}
+            <div className={cn("w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold", s <= step ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-400")}>{s}</div>
+            <span className={cn("text-[9px] font-medium", s <= step ? "text-blue-700" : "text-gray-400")}>{s === 1 ? "Infos" : s === 2 ? "Membres" : "Confirmer"}</span>
+            {s < 3 && <div className={cn("flex-1 h-0.5 rounded", s < step ? "bg-blue-400" : "bg-gray-200")} />}
           </div>
         ))}
       </div>
       {/* Step 1 */}
       {step === 1 && (
-        <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
-          <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
-            <Pencil className="h-4 w-4 text-teal-600" />
-            <span className="text-sm font-bold text-teal-800">Informations de base</span>
+        <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+            <Pencil className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+            <span className="text-sm font-bold text-gray-900">Informations de base</span>
           </div>
           <div className="p-4 space-y-4">
             <div>
               <label className="text-[11px] font-medium text-gray-600 mb-1 block">Nom de la cellule</label>
-              <input type="text" value={nom} onChange={e => setNom(e.target.value)} className="w-full text-sm px-3 py-2 rounded-lg border border-gray-300 focus:border-teal-400 focus:ring-2 focus:ring-teal-100 outline-none" placeholder="Ex: Les Titans, Escouade Innovation..." />
+              <input type="text" value={nom} onChange={e => setNom(e.target.value)} className="w-full text-sm px-3 py-2 rounded-lg border border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none" placeholder="Ex: Les Titans, Escouade Innovation..." />
             </div>
             <div>
               <label className="text-[11px] font-medium text-gray-600 mb-1.5 block">Type de cellule</label>
               <div className="flex gap-3">
                 {([{ val: "interne" as const, label: "Interne", desc: "Équipe interne", icon: Building2 }, { val: "externe" as const, label: "Externe", desc: "Collaboration inter-entreprises", icon: Globe }]).map(t => (
-                  <button key={t.val} onClick={() => setCellType(t.val)} className={cn("flex-1 rounded-xl border p-3 text-left cursor-pointer transition-all", cellType === t.val ? "border-teal-300 bg-teal-50" : "border-gray-200 hover:border-teal-200")}>
-                    <t.icon className={cn("h-4 w-4 mb-1", cellType === t.val ? "text-teal-600" : "text-gray-400")} />
+                  <button key={t.val} onClick={() => setCellType(t.val)} className={cn("flex-1 rounded-xl border p-3 text-left cursor-pointer transition-all", cellType === t.val ? "border-blue-300 bg-blue-50" : "border-gray-200 hover:border-blue-200")}>
+                    <t.icon className={cn("h-4 w-4 mb-1", cellType === t.val ? "text-blue-600" : "text-gray-400")} />
                     <p className="text-xs font-medium text-gray-800">{t.label}</p>
                     <p className="text-[9px] text-gray-400">{t.desc}</p>
                   </button>
@@ -5526,27 +5342,27 @@ function CreerCellulePage() {
             </div>
             <div>
               <label className="text-[11px] font-medium text-gray-600 mb-1 block">Description (optionnel)</label>
-              <textarea className="w-full text-xs px-3 py-2 rounded-lg border border-gray-300 focus:border-teal-400 focus:ring-2 focus:ring-teal-100 outline-none h-20 resize-none" placeholder="Objectif de cette cellule..." />
+              <textarea className="w-full text-xs px-3 py-2 rounded-lg border border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none h-20 resize-none" placeholder="Objectif de cette cellule..." />
             </div>
           </div>
         </div>
       )}
       {/* Step 2 */}
       {step === 2 && (
-        <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
-          <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
-            <Users className="h-4 w-4 text-teal-600" />
-            <span className="text-sm font-bold text-teal-800">Ajouter des membres</span>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-teal-100 text-teal-700">Max 9</span>
+        <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+            <Users className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+            <span className="text-sm font-bold text-gray-900">Ajouter des membres</span>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">Max 9</span>
           </div>
           <div className="p-4 space-y-3">
-            <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-teal-200 bg-teal-50/50">
-              <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-[11px] font-bold text-teal-700">CF</div>
+            <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-blue-200 bg-blue-50/50">
+              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-[11px] font-bold text-gray-700">CF</div>
               <div className="flex-1"><span className="text-xs font-medium text-gray-800">Carl F.</span><span className="text-[9px] text-gray-400 ml-2">Fondateur</span></div>
               <Crown className="h-3.5 w-3.5 text-amber-500" />
             </div>
             {[2, 3, 4, 5, 6, 7, 8, 9].map(slot => (
-              <button key={slot} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border border-dashed border-gray-300 hover:border-teal-300 hover:bg-teal-50/30 cursor-pointer transition-all">
+              <button key={slot} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border border-dashed border-gray-300 hover:border-blue-300 hover:bg-blue-50/30 cursor-pointer transition-all">
                 <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"><Plus className="h-3.5 w-3.5 text-gray-400" /></div>
                 <span className="text-xs text-gray-400">Ajouter le membre #{slot}</span>
               </button>
@@ -5556,30 +5372,1009 @@ function CreerCellulePage() {
       )}
       {/* Step 3 */}
       {step === 3 && (
-        <div className="rounded-xl border border-teal-200 overflow-hidden shadow-sm bg-white">
-          <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-teal-600" />
-            <span className="text-sm font-bold text-teal-800">Confirmer la création</span>
+        <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+            <CheckCircle2 className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+            <span className="text-sm font-bold text-gray-900">Confirmer la création</span>
           </div>
           <div className="p-4 space-y-3">
             <div className="flex items-center gap-3">
-              <Atom className="h-5 w-5 text-teal-500" />
+              <Atom className="h-5 w-5 text-blue-500" />
               <div>
                 <p className="text-sm font-bold text-gray-800">{nom || "Ma nouvelle cellule"}</p>
                 <p className="text-[9px] text-gray-400">{cellType === "interne" ? "Cellule interne" : "Cellule externe"} · 1 membre</p>
               </div>
             </div>
-            <div className="bg-teal-50 rounded-lg p-3 text-[11px] text-teal-700">CarlOS va configurer votre cellule et activer les bots.</div>
+            <div className="bg-[#00B4D8]/10 rounded-lg p-3 text-[11px] text-gray-700">CarlOS va configurer votre cellule et activer les bots.</div>
           </div>
         </div>
       )}
       {/* Nav buttons */}
       <div className="flex items-center justify-between">
         {step > 1 ? <button onClick={() => setStep(s => s - 1)} className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1 cursor-pointer"><ArrowLeft className="h-3.5 w-3.5" /> Précédent</button> : <div />}
-        <button onClick={() => step < 3 ? setStep(s => s + 1) : null} className={cn("text-xs font-medium px-4 py-2 rounded-full flex items-center gap-1.5 cursor-pointer transition-all", step < 3 ? "bg-teal-600 text-white hover:bg-teal-700" : "bg-emerald-600 text-white hover:bg-emerald-700")}>
+        <button onClick={() => step < 3 ? setStep(s => s + 1) : null} className={cn("text-xs font-medium px-4 py-2 rounded-full flex items-center gap-1.5 cursor-pointer transition-all", step < 3 ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-emerald-600 text-white hover:bg-emerald-700")}>
           {step < 3 ? (<>Suivant <ArrowRight className="h-3.5 w-3.5" /></>) : (<><CheckCircle2 className="h-3.5 w-3.5" /> Créer la cellule</>)}
         </button>
       </div>
+    </div>
+  );
+}
+
+// ========== ORBIT9 BLUEPRINT COLLABORATION (Pattern B — DocForge sidebar) ==========
+
+type O9BpSection = "vue_consolidee" | "profil" | "capacites" | "cellules" | "jumelage" | "vitaafast" | "gouvernance" | "roles" | "timetokens" | "pionniers" | "croissance" | "sortie";
+
+const O9_BP_SECTIONS: { id: O9BpSection; label: string; Icon: React.ElementType }[] = [
+  { id: "vue_consolidee", label: "Vue consolidée", Icon: LayoutDashboard },
+  { id: "profil", label: "Profil réseau", Icon: Building2 },
+  { id: "capacites", label: "Capacités & Offres", Icon: Package },
+  { id: "cellules", label: "Cellules", Icon: Atom },
+  { id: "jumelage", label: "Jumelage", Icon: Handshake },
+  { id: "vitaafast", label: "VITAAFAST collectif", Icon: Activity },
+  { id: "gouvernance", label: "Gouvernance S3", Icon: Shield },
+  { id: "roles", label: "Rôles & Responsab.", Icon: Users },
+  { id: "timetokens", label: "TimeTokens", Icon: Coins },
+  { id: "pionniers", label: "Pionniers", Icon: Rocket },
+  { id: "croissance", label: "Croissance 9→81", Icon: TrendingUp },
+  { id: "sortie", label: "Matrice de sortie", Icon: Scale },
+];
+
+// ========== ORBIT9 SOCIAL HOME — Page d'accueil sociale vivante ==========
+
+function Orbit9SocialHome() {
+  const UB_P = "bg-[#00B4D8]/10";
+
+  const kpis = [
+    { label: "Cellules actives", value: "7", delta: "+2 ce mois", up: true, Icon: Atom },
+    { label: "Membres réseau", value: "34", delta: "+5 cette sem.", up: true, Icon: Users },
+    { label: "Matches actifs", value: "12", delta: "3 en attente", up: true, Icon: Handshake },
+    { label: "Score VITAA", value: "78", delta: "+4 pts", up: true, Icon: Activity },
+    { label: "ROI Réseau", value: "42K$", delta: "+18% Q1", up: true, Icon: TrendingUp },
+  ];
+
+  const alertes = [
+    { text: "Score confiance MetalPro en baisse (72→64)", type: "warning" as const, time: "Il y a 35min" },
+    { text: "Contrat Boréal expire dans 12 jours — renouvellement requis", type: "urgent" as const, time: "Il y a 2h" },
+    { text: "Ghost Delegate: 2 négociations en attente d'approbation", type: "info" as const, time: "Il y a 4h" },
+  ];
+
+  const vedette = {
+    name: "Les Titans", type: "Interne", members: 6, score: 92,
+    badge: "Or" as const, trend: "+8 pts ce mois",
+    avatars: ["CF", "TM", "SM", "OL", "PC", "HL"],
+  };
+
+  const matches = [
+    { company: "MetalPro Inc.", score: 87, stage: "Qualification", agent: "Simone", stageColor: "bg-amber-100 text-amber-700" },
+    { company: "Boréal Automatisation", score: 91, stage: "Intégration", agent: "Rich", stageColor: "bg-emerald-100 text-emerald-700" },
+    { company: "Précision Aéro", score: 74, stage: "Découverte", agent: "CarlOS", stageColor: "bg-blue-100 text-blue-700" },
+  ];
+
+  const feed = [
+    { avatar: "CS", name: "CarlOS", text: "Trisociation complétée: Carl × Marc (Boréal) — Résumé: entente cadre d'approvisionnement signée. Valeur estimée: 180K$/an.", time: "Il y a 45min", type: "trisociation" as const, icon: Phone },
+    { avatar: "RH", name: "Rich", text: "Lead qualifié: Précision Aéro cherche un partenaire soudure TIG/MIG. Score match: 74%. Pipeline mis à jour.", time: "Il y a 2h", type: "match" as const, icon: Handshake },
+    { avatar: "SM", name: "Simone", text: "Analyse stratégique: le secteur manufacturier Québec montre une consolidation accélérée. 3 opportunités de cellules identifiées.", time: "Il y a 3h", type: "strategie" as const, icon: Target },
+    { avatar: "OL", name: "Olivier", text: "Mission complétée: Audit processus livraison cellule Escouade Ventes. Recommandation: standardiser les SLA inter-membres.", time: "Il y a 5h", type: "mission" as const, icon: CheckCircle2 },
+    { avatar: "TM", name: "Tim", text: "Infrastructure réseau: latence API Orbit9 réduite de 340ms → 120ms. Trisociation LiveKit stable à 99.2%.", time: "Il y a 6h", type: "tech" as const, icon: Cpu },
+    { avatar: "IN", name: "Inès", text: "Veille techno: nouveau framework d'agents collaboratifs publié par Stanford. Pertinence pour Ghost Delegate: haute.", time: "Hier", type: "veille" as const, icon: Lightbulb },
+  ];
+
+  const intel = [
+    { title: "Consolidation manufacturière QC", source: "Deloitte 2026", tag: "Tendance" },
+    { title: "Subvention MESI — automatisation PME", source: "Gouvernement QC", tag: "Opportunité" },
+    { title: "Pénurie soudeurs certifiés +23%", source: "CSMO Métallurgie", tag: "Risque" },
+  ];
+
+  const events = [
+    { title: "Trisociation — MetalPro × Usine Bleue", date: "8 avril", time: "10h00", type: "trisociation" },
+    { title: "Assemblée gouvernance S3 — Titans", date: "10 avril", time: "14h00", type: "gouvernance" },
+    { title: "Webinaire IA manufacturier", date: "12 avril", time: "11h00", type: "webinaire" },
+  ];
+
+  const pionniers = [
+    { name: "Carl F.", status: "fondateur" }, { name: "Marc B.", status: "pionnier" },
+    { name: "Sophie M.", status: "pionnier" }, { name: "Jean-F. L.", status: "pionnier" },
+    { name: "Nathalie R.", status: "pionnier" }, { name: "Patrick D.", status: "nouveau" },
+    { name: "—", status: "vide" }, { name: "—", status: "vide" }, { name: "—", status: "vide" },
+  ];
+
+  const delegate = {
+    status: "actif" as const, negotiations: 2, lastAction: "Contre-offre envoyée à MetalPro (rabais 8%)",
+    preflight: ["Marge minimale: 22%", "Pas d'exclusivité >12 mois", "Paiement net 30 max"],
+  };
+
+  const badgeColor: Record<string, string> = { Bronze: "bg-amber-700", Argent: "bg-gray-400", Or: "bg-yellow-500", Platine: "bg-purple-500" };
+  const typeIcon: Record<string, string> = { trisociation: "bg-cyan-50", match: "bg-emerald-50", strategie: "bg-violet-50", mission: "bg-blue-50", tech: "bg-gray-50", veille: "bg-amber-50" };
+
+  return (
+    <div className="space-y-4">
+      {/* ═══ HEADER ═══ */}
+      <div className="bg-gradient-to-r from-cyan-600 to-blue-600 rounded-xl p-5">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+            <Atom className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-white">Orbit⁹ — Réseau</h1>
+            <p className="text-sm text-white/70">7 cellules · 34 membres · 12 matches actifs</p>
+          </div>
+          <div className="ml-auto flex items-center gap-2">
+            <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-400/20 text-emerald-100 text-xs font-medium">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />Ghost Delegate actif
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* ═══ ROW 0 — KPIs ═══ */}
+      <div className="grid grid-cols-5 gap-3">
+        {kpis.map(k => (
+          <div key={k.label} className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+            <div className={cn("flex items-center gap-2 px-3 py-2 border-b border-gray-100", UB_P)}>
+              <k.Icon className="h-3.5 w-3.5 text-gray-900 stroke-[2.5]" />
+              <span className="text-[10px] font-bold text-gray-900">{k.label}</span>
+            </div>
+            <div className="px-3 py-2.5">
+              <div className="text-2xl font-bold text-gray-900">{k.value}</div>
+              <div className="flex items-center gap-1 mt-0.5">
+                {k.up ? <TrendingUp className="h-3.5 w-3.5 text-emerald-500" /> : <TrendingDown className="h-3.5 w-3.5 text-red-500" />}
+                <span className={cn("text-[9px] font-medium", k.up ? "text-emerald-600" : "text-red-600")}>{k.delta}</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ═══ ROW 1 — Alertes + Cellule vedette + Matches pipeline ═══ */}
+      <div className="grid grid-cols-3 gap-3">
+        {/* Signaux & Alertes */}
+        <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+          <div className={cn("flex items-center gap-2 px-4 py-2.5 border-b border-gray-100", UB_P)}>
+            <AlertTriangle className="h-3.5 w-3.5 text-gray-900 stroke-[2.5]" />
+            <span className="text-xs font-bold text-gray-900">Signaux & Alertes</span>
+            <span className="ml-auto text-[9px] px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-medium">{alertes.length}</span>
+          </div>
+          <div className="divide-y divide-gray-50">
+            {alertes.map((a, i) => (
+              <div key={i} className="px-4 py-2.5 flex items-start gap-2">
+                <div className={cn("w-2 h-2 rounded-full mt-1.5 shrink-0", a.type === "urgent" ? "bg-red-500" : a.type === "warning" ? "bg-amber-500" : "bg-blue-500")} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] text-gray-700 leading-snug">{a.text}</p>
+                  <span className="text-[9px] text-gray-400">{a.time}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Cellule vedette */}
+        <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+          <div className={cn("flex items-center gap-2 px-4 py-2.5 border-b border-gray-100", UB_P)}>
+            <Star className="h-3.5 w-3.5 text-gray-900 stroke-[2.5]" />
+            <span className="text-xs font-bold text-gray-900">Cellule vedette</span>
+          </div>
+          <div className="px-4 py-3">
+            <div className="flex items-center gap-2">
+              <h4 className="text-sm font-bold text-gray-900">{vedette.name}</h4>
+              <span className={cn("text-[8px] px-2 py-0.5 rounded-full text-white font-bold", badgeColor[vedette.badge])}>{vedette.badge}</span>
+              <span className="text-[9px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">{vedette.type}</span>
+            </div>
+            <div className="flex items-center gap-1 mt-2">
+              {vedette.avatars.map(a => (
+                <div key={a} className="w-7 h-7 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white text-[8px] font-bold -ml-1 first:ml-0 border-2 border-white">{a}</div>
+              ))}
+            </div>
+            <div className="mt-2 flex items-center justify-between">
+              <div className="flex items-center gap-1">
+                <span className="text-lg font-bold text-gray-900">{vedette.score}</span>
+                <span className="text-[9px] text-gray-500">/100</span>
+              </div>
+              <span className="text-[9px] text-emerald-600 font-medium flex items-center gap-1"><TrendingUp className="h-3.5 w-3.5" />{vedette.trend}</span>
+            </div>
+            <div className="mt-1.5 w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full" style={{ width: `${vedette.score}%` }} />
+            </div>
+          </div>
+        </div>
+
+        {/* Matches en cours */}
+        <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+          <div className={cn("flex items-center gap-2 px-4 py-2.5 border-b border-gray-100", UB_P)}>
+            <Handshake className="h-3.5 w-3.5 text-gray-900 stroke-[2.5]" />
+            <span className="text-xs font-bold text-gray-900">Matches en cours</span>
+            <span className="ml-auto text-[9px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">{matches.length}</span>
+          </div>
+          <div className="divide-y divide-gray-50">
+            {matches.map((m, i) => (
+              <div key={i} className="px-4 py-2.5 flex items-center gap-2">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-semibold text-gray-900 truncate">{m.company}</span>
+                    <span className="text-[9px] font-bold text-cyan-600">{m.score}%</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className={cn("text-[8px] px-1.5 py-0.5 rounded-full font-medium", m.stageColor)}>{m.stage}</span>
+                    <span className="text-[9px] text-gray-400">via {m.agent}</span>
+                  </div>
+                </div>
+                <ChevronRight className="h-3.5 w-3.5 text-gray-300 shrink-0" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ═══ ROW 2 — Fil d'activité (2 cols) + Intelligence + Événements ═══ */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="col-span-2 rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+          <div className={cn("flex items-center gap-2 px-4 py-2.5 border-b border-gray-100", UB_P)}>
+            <Newspaper className="h-3.5 w-3.5 text-gray-900 stroke-[2.5]" />
+            <span className="text-xs font-bold text-gray-900">Fil d'activité</span>
+          </div>
+          <div className="divide-y divide-gray-50 max-h-[320px] overflow-y-auto">
+            {feed.map((f, i) => {
+              const FIcon = f.icon;
+              return (
+                <div key={i} className={cn("px-4 py-3 flex items-start gap-3", typeIcon[f.type])}>
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-white text-[9px] font-bold shrink-0">{f.avatar}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold text-gray-900">{f.name}</span>
+                      <FIcon className="h-3.5 w-3.5 text-gray-400" />
+                      <span className="text-[9px] text-gray-400 ml-auto shrink-0">{f.time}</span>
+                    </div>
+                    <p className="text-[10px] text-gray-600 mt-0.5 leading-relaxed">{f.text}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+            <div className={cn("flex items-center gap-2 px-4 py-2.5 border-b border-gray-100", UB_P)}>
+              <Factory className="h-3.5 w-3.5 text-gray-900 stroke-[2.5]" />
+              <span className="text-xs font-bold text-gray-900">Intelligence industrie</span>
+            </div>
+            <div className="divide-y divide-gray-50">
+              {intel.map((item, i) => (
+                <div key={i} className="px-4 py-2.5">
+                  <span className={cn("text-[8px] px-1.5 py-0.5 rounded-full font-medium",
+                    item.tag === "Opportunité" ? "bg-emerald-100 text-emerald-700" : item.tag === "Risque" ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"
+                  )}>{item.tag}</span>
+                  <p className="text-[10px] font-medium text-gray-900 mt-1">{item.title}</p>
+                  <span className="text-[9px] text-gray-400">{item.source}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+            <div className={cn("flex items-center gap-2 px-4 py-2.5 border-b border-gray-100", UB_P)}>
+              <Calendar className="h-3.5 w-3.5 text-gray-900 stroke-[2.5]" />
+              <span className="text-xs font-bold text-gray-900">Prochains événements</span>
+            </div>
+            <div className="divide-y divide-gray-50">
+              {events.map((ev, i) => (
+                <div key={i} className="px-4 py-2.5 flex items-center gap-2">
+                  <div className="text-center shrink-0 w-10">
+                    <div className="text-[9px] font-bold text-cyan-600">{ev.date}</div>
+                    <div className="text-[8px] text-gray-400">{ev.time}</div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-medium text-gray-900 truncate">{ev.title}</p>
+                    <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">{ev.type}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ═══ ROW 3 — Pionniers + Économie réseau + Ghost Delegate ═══ */}
+      <div className="grid grid-cols-3 gap-3">
+        {/* Pionniers 9x9 */}
+        <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+          <div className={cn("flex items-center gap-2 px-4 py-2.5 border-b border-gray-100", UB_P)}>
+            <Rocket className="h-3.5 w-3.5 text-gray-900 stroke-[2.5]" />
+            <span className="text-xs font-bold text-gray-900">Pionniers</span>
+            <span className="ml-auto text-[9px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">6/9</span>
+          </div>
+          <div className="px-4 py-3">
+            <div className="grid grid-cols-3 gap-2">
+              {pionniers.map((p, i) => (
+                <div key={i} className={cn("rounded-lg p-2 text-center border",
+                  p.status === "fondateur" ? "bg-yellow-50 border-yellow-200" :
+                  p.status === "pionnier" ? "bg-cyan-50 border-cyan-200" :
+                  p.status === "nouveau" ? "bg-emerald-50 border-emerald-200" :
+                  "bg-gray-50 border-dashed border-gray-200"
+                )}>
+                  <div className={cn("w-7 h-7 rounded-full mx-auto flex items-center justify-center text-[8px] font-bold",
+                    p.status === "vide" ? "bg-gray-100 text-gray-300" : "bg-gradient-to-br from-cyan-500 to-blue-600 text-white"
+                  )}>{p.status === "vide" ? "?" : p.name.split(" ").map(w => w[0]).join("")}</div>
+                  <div className="text-[8px] text-gray-600 mt-1 truncate">{p.name}</div>
+                  {p.status !== "vide" && (
+                    <span className={cn("text-[7px] px-1 rounded-full",
+                      p.status === "fondateur" ? "bg-yellow-200 text-yellow-800" :
+                      p.status === "nouveau" ? "bg-emerald-200 text-emerald-800" :
+                      "bg-cyan-200 text-cyan-800"
+                    )}>{p.status}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+            <p className="text-[9px] text-gray-400 mt-2 text-center">3 places restantes pour compléter le cercle fondateur</p>
+          </div>
+        </div>
+
+        {/* Économie réseau */}
+        <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+          <div className={cn("flex items-center gap-2 px-4 py-2.5 border-b border-gray-100", UB_P)}>
+            <DollarSign className="h-3.5 w-3.5 text-gray-900 stroke-[2.5]" />
+            <span className="text-xs font-bold text-gray-900">Économie réseau</span>
+          </div>
+          <div className="px-4 py-3 space-y-3">
+            <div>
+              <div className="flex items-baseline gap-1">
+                <span className="text-2xl font-bold text-gray-900">42K$</span>
+                <span className="text-[9px] text-emerald-600 font-medium">+18% Q1</span>
+              </div>
+              <span className="text-[9px] text-gray-500">Valeur totale générée par le réseau</span>
+            </div>
+            <div className="space-y-2">
+              {[
+                { label: "Revenus partagés", val: "28K$", pct: 67 },
+                { label: "Temps économisé", val: "8.5K$", pct: 20 },
+                { label: "Négociations optimisées", val: "5.5K$", pct: 13 },
+              ].map(r => (
+                <div key={r.label}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9px] text-gray-600">{r.label}</span>
+                    <span className="text-[9px] font-bold text-gray-900">{r.val}</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-gray-100 rounded-full mt-0.5">
+                    <div className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full" style={{ width: `${r.pct}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center gap-1.5 pt-1">
+              <Coins className="h-3.5 w-3.5 text-amber-500" />
+              <span className="text-[9px] text-gray-600">TimeTokens en circulation: <strong>1,240 TT</strong></span>
+            </div>
+          </div>
+        </div>
+
+        {/* Ghost Delegate */}
+        <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+          <div className={cn("flex items-center gap-2 px-4 py-2.5 border-b border-gray-100", UB_P)}>
+            <Bot className="h-3.5 w-3.5 text-gray-900 stroke-[2.5]" />
+            <span className="text-xs font-bold text-gray-900">Ghost Delegate</span>
+            <span className="ml-auto flex items-center gap-1.5 text-[9px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />Actif
+            </span>
+          </div>
+          <div className="px-4 py-3 space-y-3">
+            <div>
+              <span className="text-[9px] text-gray-500">Dernière action</span>
+              <p className="text-[10px] font-medium text-gray-900 mt-0.5">{delegate.lastAction}</p>
+            </div>
+            <div>
+              <span className="text-[9px] text-gray-500">Négociations actives</span>
+              <div className="text-lg font-bold text-gray-900">{delegate.negotiations}</div>
+            </div>
+            <div>
+              <span className="text-[9px] text-gray-500 flex items-center gap-1.5"><Shield className="h-3.5 w-3.5" />Pre-flight Check (garde-fous)</span>
+              <div className="mt-1 space-y-1">
+                {delegate.preflight.map((rule, i) => (
+                  <div key={i} className="flex items-center gap-1.5">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                    <span className="text-[9px] text-gray-600">{rule}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Orbit9BlueprintCollaboration() {
+  const [activeSub, setActiveSub] = useState<O9BpSection>("vue_consolidee");
+
+  return (
+    <div className="space-y-4">
+      {/* Header gradient */}
+      <div className="rounded-xl overflow-hidden bg-gradient-to-r from-blue-600 to-cyan-500 p-4 text-white">
+        <div className="flex items-center gap-3">
+          <BookOpen className="h-5 w-5 text-white" />
+          <div className="flex-1">
+            <h2 className="text-sm font-bold">Blueprint Collaboration Orbit⁹</h2>
+            <p className="text-xs text-white/80">Guide structuré pour déployer et gérer votre réseau collaboratif</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 mt-2">
+          <div className="flex-1 h-1.5 bg-white/20 rounded-full overflow-hidden">
+            <div className="h-full rounded-full bg-white transition-all duration-700" style={{ width: '35%' }} />
+          </div>
+          <span className="text-[10px] font-bold text-white">35%</span>
+        </div>
+      </div>
+
+      <div className="flex gap-3">
+        {/* SIDEBAR — Table des matières */}
+        <div className="w-[180px] shrink-0 space-y-0.5">
+          {O9_BP_SECTIONS.map(section => {
+            const isActive = activeSub === section.id;
+            const isConsolidee = section.id === "vue_consolidee";
+            return (
+              <button
+                key={section.id}
+                onClick={() => setActiveSub(section.id)}
+                className={cn(
+                  "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
+                  isActive
+                    ? "bg-blue-50 border border-blue-200 shadow-sm"
+                    : "hover:bg-gray-50 border border-transparent",
+                  isConsolidee && !isActive && "bg-gradient-to-r from-slate-50 to-blue-50/50 border-blue-100/50"
+                )}
+              >
+                <div className="flex items-center gap-1.5">
+                  <section.Icon className={cn("h-3.5 w-3.5 shrink-0", isActive ? "text-blue-600" : "text-gray-400")} />
+                  <span className={cn("text-[10px] font-bold flex-1 leading-tight", isActive ? "text-blue-700" : "text-gray-700")}>
+                    {section.label}
+                  </span>
+                  {isActive && <ChevronRight className="h-3.5 w-3.5 text-blue-400" />}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* CONTENU — Section active */}
+        <div className="flex-1 min-w-0">
+          {activeSub === "vue_consolidee" && <O9BpConsolidee onNav={setActiveSub} />}
+          {activeSub === "profil" && <MonProfilOrbit9 />}
+          {activeSub === "capacites" && <O9BpCapacites />}
+          {activeSub === "cellules" && <MesCellules onSelect={() => {}} />}
+          {activeSub === "jumelage" && <JumelageOrbit9 />}
+          {activeSub === "vitaafast" && <VITAADashboard selectedCellule={ORBIT9_CELLULES[0]} />}
+          {activeSub === "gouvernance" && <Orbit9Gouvernance fixedTab="principes" />}
+          {activeSub === "roles" && <Orbit9Gouvernance fixedTab="roles" />}
+          {activeSub === "timetokens" && <Orbit9Gouvernance fixedTab="timetokens" />}
+          {activeSub === "pionniers" && <PionniersOrbit9 />}
+          {activeSub === "croissance" && <CreerCellulePage />}
+          {activeSub === "sortie" && <Orbit9Gouvernance fixedTab="sortie" />}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Vue consolidée — résumé de toutes les sections du Blueprint Collaboration
+function O9BpConsolidee({ onNav }: { onNav: (id: O9BpSection) => void }) {
+  const summaries: { id: O9BpSection; Icon: React.ElementType; title: string; value: string; detail: string }[] = [
+    { id: "profil", Icon: Building2, title: "Profil réseau", value: "87%", detail: "Indice de confiance" },
+    { id: "capacites", Icon: Package, title: "Capacités & Offres", value: "5", detail: "Capacités listées" },
+    { id: "cellules", Icon: Atom, title: "Cellules", value: "4", detail: "Cellules actives" },
+    { id: "jumelage", Icon: Handshake, title: "Jumelage", value: "4", detail: "Matches en cours" },
+    { id: "vitaafast", Icon: Activity, title: "VITAAFAST", value: "76%", detail: "Score collectif" },
+    { id: "gouvernance", Icon: Shield, title: "Gouvernance S3", value: "5", detail: "Principes actifs" },
+    { id: "roles", Icon: Users, title: "Rôles", value: "4", detail: "Rôles définis" },
+    { id: "timetokens", Icon: Coins, title: "TimeTokens", value: "1,240", detail: "TT accumulés" },
+    { id: "pionniers", Icon: Rocket, title: "Pionniers", value: "4/9", detail: "Places confirmées" },
+    { id: "croissance", Icon: TrendingUp, title: "Croissance", value: "9→81", detail: "Objectif réseau" },
+    { id: "sortie", Icon: Scale, title: "Matrice sortie", value: "4", detail: "Scénarios documentés" },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+          <LayoutDashboard className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+          <span className="text-sm font-bold text-gray-900">Vue consolidée</span>
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600 ml-auto">12 sections</span>
+        </div>
+        <div className="p-4">
+          <p className="text-xs text-gray-600 mb-4">Aperçu de votre Blueprint Collaboration. Cliquez une section pour la compléter.</p>
+          <div className="grid grid-cols-3 gap-2">
+            {summaries.map(s => (
+              <button
+                key={s.id}
+                onClick={() => onNav(s.id)}
+                className="p-3 rounded-lg border border-gray-200 hover:border-blue-200 hover:bg-blue-50/30 text-left transition-all cursor-pointer"
+              >
+                <div className="flex items-center gap-1.5 mb-1">
+                  <s.Icon className="h-3.5 w-3.5 text-gray-500" />
+                  <span className="text-[9px] font-bold text-gray-700">{s.title}</span>
+                </div>
+                <div className="text-lg font-bold text-gray-800">{s.value}</div>
+                <div className="text-[9px] text-gray-400">{s.detail}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Capacités & Offres — ce que l'entreprise offre au réseau et ce qu'elle cherche
+function O9BpCapacites() {
+  const offres = [
+    { label: "Automatisation industrielle", level: "Expert", color: "bg-emerald-50 border-emerald-200 text-emerald-700" },
+    { label: "Intégration robotique", level: "Expert", color: "bg-emerald-50 border-emerald-200 text-emerald-700" },
+    { label: "IA appliquée manufacturier", level: "Avancé", color: "bg-blue-50 border-blue-200 text-blue-700" },
+    { label: "Consultation stratégique", level: "Intermédiaire", color: "bg-amber-50 border-amber-200 text-amber-700" },
+    { label: "Formation technique", level: "Avancé", color: "bg-blue-50 border-blue-200 text-blue-700" },
+  ];
+  const besoins = [
+    { label: "Soudure spécialisée TIG/MIG", urgence: "Élevé", color: "text-red-600" },
+    { label: "Usinage CNC 5 axes", urgence: "Moyen", color: "text-amber-600" },
+    { label: "Transport & logistique régional", urgence: "Moyen", color: "text-amber-600" },
+    { label: "Tests qualité / certification", urgence: "Faible", color: "text-gray-500" },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-xl border border-gray-200 px-4 py-3 flex items-center gap-3 bg-[#00B4D8]/10">
+        <Package className="h-5 w-5 text-gray-900 stroke-[2.5]" />
+        <div className="flex-1">
+          <p className="text-sm font-bold text-gray-900">Capacités & Offres</p>
+          <p className="text-[9px] text-gray-500">Ce que vous offrez au réseau et ce que vous cherchez</p>
+        </div>
+      </div>
+
+      {/* Ce que nous offrons */}
+      <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+          <Rocket className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+          <span className="text-sm font-bold text-gray-900">Ce que nous offrons</span>
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600 ml-auto">{offres.length}</span>
+        </div>
+        <div className="p-4 space-y-2">
+          {offres.map((o, i) => (
+            <div key={i} className="flex items-center gap-3 px-3 py-2 rounded-lg border border-gray-100 bg-gray-50">
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+              <span className="text-xs text-gray-800 flex-1">{o.label}</span>
+              <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-medium border", o.color)}>{o.level}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Ce que nous cherchons */}
+      <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+          <Search className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+          <span className="text-sm font-bold text-gray-900">Ce que nous cherchons</span>
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600 ml-auto">{besoins.length}</span>
+        </div>
+        <div className="p-4 space-y-2">
+          {besoins.map((b, i) => (
+            <div key={i} className="flex items-center gap-3 px-3 py-2 rounded-lg border border-gray-100 bg-gray-50">
+              <Target className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+              <span className="text-xs text-gray-800 flex-1">{b.label}</span>
+              <span className={cn("text-[9px] font-medium", b.color)}>Urgence: {b.urgence}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* CarlOS suggestion */}
+      <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-[#00B4D8]/10">
+        <div className="p-4 flex items-start gap-3">
+          <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-white text-[9px] font-bold shrink-0">C</div>
+          <div className="flex-1">
+            <h3 className="text-xs font-bold text-gray-900">CarlOS — Suggestion</h3>
+            <p className="text-[9px] text-gray-600 mt-1 italic">{`"D'après vos besoins en soudure TIG/MIG, MetalPro Inc. dans le cercle des Pionniers est un match à 87%. Je peux organiser une introduction?"`}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ========== PATTERN C — SECTION HEADER (local, same as DepartmentTourDeControle) ==========
+
+interface O9SubTabDef {
+  id: string;
+  label: string;
+  icon?: React.ElementType;
+  gradient: string;
+  count?: number;
+}
+
+function O9SectionHeader({ icon: Icon, title, subtitle, tabs, activeTab, onTabChange, gradient }: {
+  icon: React.ElementType;
+  title: string;
+  subtitle: string;
+  tabs: O9SubTabDef[];
+  activeTab: string;
+  onTabChange: (id: string) => void;
+  gradient?: string;
+}) {
+  const currentGradient = gradient || tabs.find(t => t.id === activeTab)?.gradient || "from-cyan-600 to-blue-500";
+  return (
+    <div className={cn("bg-gradient-to-r rounded-xl p-4 transition-all duration-300", currentGradient)}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center">
+            <Icon className="h-4 w-4 text-white" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-white">{title}</h2>
+            {subtitle && <p className="text-sm text-white/70">{subtitle}</p>}
+          </div>
+        </div>
+        <div className="flex gap-1.5 flex-wrap justify-end">
+          {tabs.map(tab => {
+            const TabIcon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => onTabChange(tab.id)}
+                className={cn(
+                  "px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5",
+                  activeTab === tab.id
+                    ? "bg-white/25 text-white shadow-sm"
+                    : "text-white/60 hover:bg-white/10 hover:text-white/80"
+                )}
+              >
+                {TabIcon && <TabIcon className="h-3.5 w-3.5" />}
+                {tab.label}
+                {tab.count !== undefined && tab.count > 0 && (
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/20">{tab.count}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const O9_GRADIENT = "from-cyan-600 to-blue-500";
+
+const O9_HIER_FILTERS: O9SubTabDef[] = [
+  { id: "tous", label: "Tous", gradient: O9_GRADIENT },
+  { id: "interne", label: "Internes", gradient: "from-slate-600 to-slate-500" },
+  { id: "externe", label: "Externes", gradient: "from-emerald-600 to-emerald-500" },
+  { id: "inter-cellules", label: "Inter-cellules", gradient: "from-amber-600 to-amber-500" },
+];
+
+// ========== TAB SECONDAIRE: CHANTIERS RÉSEAU ==========
+
+function O9ChantiersTab({ onSection }: { onSection: (tab: string, filter?: { type: string; id: number; titre: string }) => void }) {
+  const [sub, setSub] = useState("tous");
+  const [parentFilter, setParentFilter] = useState<{ type: string; id: number; titre: string } | null>(null);
+  const [viewMode, setViewMode] = useState<"cards" | "list" | "kanban" | "spreadsheet">("cards");
+
+  return (
+    <div className="space-y-3">
+      <O9SectionHeader icon={Flame} title="Chantiers réseau" subtitle="Initiatives collaboratives" tabs={O9_HIER_FILTERS} activeTab={sub} onTabChange={setSub} gradient={O9_GRADIENT} />
+      <HierarchieTab
+        key={`o9-chantiers-${sub}`}
+        level="chantiers"
+        compact
+        categorieFilter={sub === "tous" ? undefined : sub}
+        goTo={(tab, filter) => {
+          const mapped = tab as string;
+          if (mapped === "chantiers" || mapped === "projets" || mapped === "missions" || mapped === "taches") {
+            onSection(mapped, filter || undefined);
+          }
+        }}
+        parentFilter={parentFilter}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+      />
+    </div>
+  );
+}
+
+// ========== TAB SECONDAIRE: PROJETS RÉSEAU ==========
+
+function O9ProjetsTab({ onSection, initialFilter }: { onSection: (tab: string, filter?: { type: string; id: number; titre: string }) => void; initialFilter?: { type: string; id: number; titre: string } | null }) {
+  const [sub, setSub] = useState("tous");
+  const [parentFilter, setParentFilter] = useState<{ type: string; id: number; titre: string } | null>(initialFilter || null);
+  const [viewMode, setViewMode] = useState<"cards" | "list" | "kanban" | "spreadsheet">("cards");
+
+  return (
+    <div className="space-y-3">
+      <O9SectionHeader icon={Package} title="Projets réseau" subtitle="Projets inter-entreprises" tabs={O9_HIER_FILTERS} activeTab={sub} onTabChange={setSub} gradient={O9_GRADIENT} />
+      <HierarchieTab
+        key={`o9-projets-${sub}`}
+        level="projets"
+        compact
+        categorieFilter={sub === "tous" ? undefined : sub}
+        goTo={(tab, filter) => {
+          const mapped = tab as string;
+          if (mapped === "chantiers" || mapped === "projets" || mapped === "missions" || mapped === "taches") {
+            onSection(mapped, filter || undefined);
+          }
+        }}
+        parentFilter={parentFilter}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+      />
+    </div>
+  );
+}
+
+// ========== TAB SECONDAIRE: MISSIONS RÉSEAU + MARKETPLACE ==========
+
+function O9MissionsTab({ onSection, initialFilter }: { onSection: (tab: string, filter?: { type: string; id: number; titre: string }) => void; initialFilter?: { type: string; id: number; titre: string } | null }) {
+  const [sub, setSub] = useState("tous");
+  const [parentFilter, setParentFilter] = useState<{ type: string; id: number; titre: string } | null>(initialFilter || null);
+  const [viewMode, setViewMode] = useState<"cards" | "list" | "kanban" | "spreadsheet">("cards");
+
+  const missionFilters: O9SubTabDef[] = [
+    ...O9_HIER_FILTERS,
+    { id: "marketplace", label: "Marketplace", icon: Sparkles, gradient: "from-purple-600 to-pink-500" },
+  ];
+
+  return (
+    <div className="space-y-3">
+      <O9SectionHeader icon={ListChecks} title="Missions réseau" subtitle="Collaboration et marketplace" tabs={missionFilters} activeTab={sub} onTabChange={setSub} gradient={O9_GRADIENT} />
+      {sub === "marketplace" ? (
+        <O9MissionMarketplace />
+      ) : (
+        <HierarchieTab
+          key={`o9-missions-${sub}`}
+          level="missions"
+          compact
+          categorieFilter={sub === "tous" ? undefined : sub}
+          goTo={(tab, filter) => {
+            const mapped = tab as string;
+            if (mapped === "chantiers" || mapped === "projets" || mapped === "missions" || mapped === "taches") {
+              onSection(mapped, filter || undefined);
+            }
+          }}
+          parentFilter={parentFilter}
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+        />
+      )}
+    </div>
+  );
+}
+
+/** Mission Marketplace — Missions publiées par les bots AI cherchant des mains humaines */
+function O9MissionMarketplace() {
+  const MARKETPLACE_MISSIONS = [
+    { id: 1, bot: "CTOB", botName: "Tim", title: "Audit sécurité réseau partenaire", reward: "15 TT", urgency: "haute", skills: ["Cybersécurité", "Audit"], desc: "Besoin d'un expert humain pour valider les configurations réseau du partenaire MetalPro." },
+    { id: 2, bot: "CROB", botName: "Rich", title: "Visite terrain — qualification prospect", reward: "25 TT", urgency: "moyenne", skills: ["Ventes B2B", "Terrain"], desc: "Prospect qualifié à 78% mais nécessite une rencontre physique pour conclure." },
+    { id: 3, bot: "COOB", botName: "Olivier", title: "Inspection qualité lot #2847", reward: "10 TT", urgency: "haute", skills: ["Qualité", "Manufacturier"], desc: "Lot en attente — inspection manuelle requise avant expédition." },
+    { id: 4, bot: "CINOB", botName: "Inès", title: "Test utilisateur prototype V3", reward: "20 TT", urgency: "basse", skills: ["UX", "R&D"], desc: "Prototype prêt, besoin de 5 testeurs humains pour feedback." },
+    { id: 5, bot: "CMOB", botName: "Mathilde", title: "Témoignage vidéo client satisfait", reward: "12 TT", urgency: "moyenne", skills: ["Communication", "Vidéo"], desc: "Client identifié et d'accord — besoin de tourner le témoignage." },
+  ];
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 px-1">
+        <Sparkles className="h-3.5 w-3.5 text-purple-500" />
+        <span className="text-xs text-gray-500">Missions où les bots AI cherchent des mains humaines — rémunérées en TimeTokens</span>
+      </div>
+      <div className="grid grid-cols-1 gap-3">
+        {MARKETPLACE_MISSIONS.map(m => (
+          <div key={m.id} className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+            <div className={cn("flex items-center gap-2 px-4 py-2.5 border-b border-gray-100", "bg-purple-50")}>
+              <Bot className="h-3.5 w-3.5 text-purple-600 stroke-[2.5]" />
+              <span className="text-xs font-bold text-gray-900">{m.botName} demande</span>
+              <span className={cn("ml-auto text-[9px] px-2 py-0.5 rounded-full font-medium",
+                m.urgency === "haute" ? "bg-red-100 text-red-700" : m.urgency === "moyenne" ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-600"
+              )}>{m.urgency}</span>
+            </div>
+            <div className="px-4 py-3">
+              <h4 className="text-sm font-semibold text-gray-900">{m.title}</h4>
+              <p className="text-[10px] text-gray-500 mt-1">{m.desc}</p>
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                {m.skills.map(s => (
+                  <span key={s} className="text-[9px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">{s}</span>
+                ))}
+                <span className="ml-auto text-xs font-bold text-emerald-600 flex items-center gap-1">
+                  <Coins className="h-3.5 w-3.5" />{m.reward}
+                </span>
+              </div>
+              <button className="mt-3 w-full px-3 py-1.5 rounded-lg bg-purple-600 text-white text-xs font-medium hover:bg-purple-700 transition-colors cursor-pointer">
+                Accepter la mission
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ========== TAB SECONDAIRE: TÂCHES RÉSEAU ==========
+
+function O9TachesTab({ onSection, initialFilter }: { onSection: (tab: string, filter?: { type: string; id: number; titre: string }) => void; initialFilter?: { type: string; id: number; titre: string } | null }) {
+  const [sub, setSub] = useState("tous");
+  const [parentFilter, setParentFilter] = useState<{ type: string; id: number; titre: string } | null>(initialFilter || null);
+  const [viewMode, setViewMode] = useState<"cards" | "list" | "kanban" | "spreadsheet">("cards");
+
+  return (
+    <div className="space-y-3">
+      <O9SectionHeader icon={CheckCircle2} title="Tâches réseau" subtitle="Actions collaboratives" tabs={O9_HIER_FILTERS} activeTab={sub} onTabChange={setSub} gradient={O9_GRADIENT} />
+      <HierarchieTab
+        key={`o9-taches-${sub}`}
+        level="taches"
+        compact
+        categorieFilter={sub === "tous" ? undefined : sub}
+        goTo={(tab, filter) => {
+          const mapped = tab as string;
+          if (mapped === "chantiers" || mapped === "projets" || mapped === "missions" || mapped === "taches") {
+            onSection(mapped, filter || undefined);
+          }
+        }}
+        parentFilter={parentFilter}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+      />
+    </div>
+  );
+}
+
+// ========== TAB SECONDAIRE: DISCUSSIONS (INDUSTRY ROOMS) ==========
+
+function O9DiscussionsTab() {
+  const INDUSTRY_ROOMS = [
+    { id: "manufacturing", name: "Productivité manufacturière", members: 34, messages: 128, icon: Factory, color: "bg-blue-50 text-blue-600" },
+    { id: "ai-adoption", name: "Adoption IA en PME", members: 52, messages: 203, icon: Brain, color: "bg-purple-50 text-purple-600" },
+    { id: "supply-chain", name: "Chaîne d'approvisionnement", members: 28, messages: 87, icon: Route, color: "bg-amber-50 text-amber-600" },
+    { id: "workforce", name: "Main-d'œuvre & talents", members: 41, messages: 156, icon: Users, color: "bg-emerald-50 text-emerald-600" },
+    { id: "sustainability", name: "Développement durable", members: 19, messages: 45, icon: Globe, color: "bg-green-50 text-green-600" },
+    { id: "automation", name: "Automatisation industrielle", members: 37, messages: 167, icon: Cpu, color: "bg-cyan-50 text-cyan-600" },
+  ];
+
+  const [activeRoom, setActiveRoom] = useState<string | null>(null);
+  const room = INDUSTRY_ROOMS.find(r => r.id === activeRoom);
+
+  if (room) {
+    const RoomIcon = room.icon;
+    return (
+      <div className="space-y-3">
+        <button onClick={() => setActiveRoom(null)} className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 cursor-pointer">
+          <ArrowLeft className="h-3.5 w-3.5" />Retour aux salles
+        </button>
+        <div className={cn("bg-gradient-to-r rounded-xl p-4", O9_GRADIENT)}>
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center"><RoomIcon className="h-4 w-4 text-white" /></div>
+            <div>
+              <h2 className="text-lg font-bold text-white">{room.name}</h2>
+              <p className="text-sm text-white/70">{room.members} membres · {room.messages} messages</p>
+            </div>
+          </div>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <div className="space-y-3">
+            {[
+              { author: "Carl F.", time: "Il y a 2h", text: "Quelqu'un a testé les nouveaux robots collaboratifs Universal Robots? On évalue le UR20 pour notre ligne." },
+              { author: "CarlOS", time: "Il y a 1h45", text: "Résumé Trisociation: Marc (Boréal) et Sophie (MetalPro) ont discuté intégration UR20. Conclusion: ROI positif en 14 mois si volume > 500 pièces/jour.", isBot: true },
+              { author: "Sophie M.", time: "Il y a 1h", text: "On l'a déployé il y a 6 mois. Retour: fiable, mais formation opérateurs = 3 semaines minimum." },
+            ].map((msg, i) => (
+              <div key={i} className={cn("p-3 rounded-lg", msg.isBot ? "bg-[#00B4D8]/10" : "bg-gray-50")}>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-bold text-gray-900">{msg.author}</span>
+                  {msg.isBot && <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-cyan-100 text-cyan-700 font-medium">AI</span>}
+                  <span className="text-[9px] text-gray-400 ml-auto">{msg.time}</span>
+                </div>
+                <p className="text-[10px] text-gray-600">{msg.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <O9SectionHeader icon={MessageSquare} title="Discussions" subtitle="Industry Rooms du réseau" tabs={[
+        { id: "actives", label: "Actives", gradient: O9_GRADIENT },
+        { id: "mes-salles", label: "Mes salles", gradient: "from-slate-600 to-slate-500" },
+      ]} activeTab="actives" onTabChange={() => {}} gradient={O9_GRADIENT} />
+      <div className="grid grid-cols-2 gap-3">
+        {INDUSTRY_ROOMS.map(r => {
+          const RIcon = r.icon;
+          return (
+            <button key={r.id} onClick={() => setActiveRoom(r.id)} className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white text-left cursor-pointer hover:shadow-md transition-shadow">
+              <div className={cn("flex items-center gap-2 px-4 py-2.5 border-b border-gray-100", "bg-[#00B4D8]/10")}>
+                <RIcon className="h-3.5 w-3.5 text-gray-900 stroke-[2.5]" />
+                <span className="text-xs font-bold text-gray-900">{r.name}</span>
+              </div>
+              <div className="px-4 py-3">
+                <div className="flex items-center gap-3 text-[10px] text-gray-500">
+                  <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />{r.members}</span>
+                  <span className="flex items-center gap-1"><MessageCircle className="h-3.5 w-3.5" />{r.messages}</span>
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ========== TAB SECONDAIRE: DOCUMENTS ==========
+
+function O9DocumentsTab() {
+  return (
+    <div className="space-y-3">
+      <O9SectionHeader icon={FileText} title="Documents" subtitle="Ressources partagées du réseau" tabs={[
+        { id: "tous", label: "Tous", gradient: O9_GRADIENT },
+        { id: "partages", label: "Partagés", gradient: "from-emerald-600 to-emerald-500" },
+        { id: "mes-docs", label: "Mes docs", gradient: "from-slate-600 to-slate-500" },
+      ]} activeTab="tous" onTabChange={() => {}} gradient={O9_GRADIENT} />
+      <DocumentsUnifie botFilter="CEOB" hideHeader />
+    </div>
+  );
+}
+
+// ========== TAB SECONDAIRE: AGENDA ==========
+
+function O9AgendaTab() {
+  const UPCOMING_EVENTS = [
+    { id: 1, title: "Trisociation — MetalPro × Usine Bleue", date: "8 avril 2026", time: "10h00", type: "trisociation", icon: Handshake, color: "bg-cyan-50 text-cyan-600" },
+    { id: 2, title: "Assemblée gouvernance S3 — Cellule Titans", date: "10 avril 2026", time: "14h00", type: "gouvernance", icon: Shield, color: "bg-purple-50 text-purple-600" },
+    { id: 3, title: "Webinaire — IA en manufacturier", date: "12 avril 2026", time: "11h00", type: "webinaire", icon: Globe, color: "bg-blue-50 text-blue-600" },
+    { id: 4, title: "Revue pipeline — Escouade Ventes", date: "14 avril 2026", time: "09h00", type: "cellule", icon: Atom, color: "bg-emerald-50 text-emerald-600" },
+    { id: 5, title: "Demo produit — Prospect Boréal", date: "15 avril 2026", time: "15h30", type: "prospect", icon: Rocket, color: "bg-amber-50 text-amber-600" },
+    { id: 6, title: "Formation TimeTokens — Nouveaux membres", date: "17 avril 2026", time: "13h00", type: "formation", icon: GraduationCap, color: "bg-pink-50 text-pink-600" },
+  ];
+
+  return (
+    <div className="space-y-3">
+      <O9SectionHeader icon={Calendar} title="Agenda réseau" subtitle="Événements et rencontres" tabs={[
+        { id: "a-venir", label: "À venir", gradient: O9_GRADIENT },
+        { id: "passes", label: "Passés", gradient: "from-slate-600 to-slate-500" },
+        { id: "mes-rdv", label: "Mes RDV", gradient: "from-emerald-600 to-emerald-500" },
+      ]} activeTab="a-venir" onTabChange={() => {}} gradient={O9_GRADIENT} />
+      <div className="space-y-2">
+        {UPCOMING_EVENTS.map(ev => {
+          const EvIcon = ev.icon;
+          return (
+            <div key={ev.id} className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+              <div className="flex items-center gap-3 px-4 py-3">
+                <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center", ev.color.split(" ")[0])}>
+                  <EvIcon className={cn("h-4 w-4", ev.color.split(" ")[1])} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-xs font-semibold text-gray-900 truncate">{ev.title}</h4>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[10px] text-gray-500">{ev.date}</span>
+                    <span className="text-[10px] font-medium text-gray-700">{ev.time}</span>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">{ev.type}</span>
+                  </div>
+                </div>
+                <ChevronRight className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ========== TAB SECONDAIRE: SANTÉ RÉSEAU ==========
+
+function O9SanteReseauTab() {
+  return (
+    <div className="space-y-3">
+      <O9SectionHeader icon={HeartPulse} title="Santé réseau" subtitle="Diagnostic holistique de l'écosystème" tabs={[
+        { id: "vue-ensemble", label: "Vue d'ensemble", gradient: O9_GRADIENT },
+        { id: "diagnostics", label: "Diagnostics", gradient: "from-violet-600 to-violet-500" },
+        { id: "resultats", label: "Résultats", gradient: "from-emerald-600 to-emerald-500" },
+      ]} activeTab="vue-ensemble" onTabChange={() => {}} gradient={O9_GRADIENT} />
+      <SanteGlobaleView botCode="CEOB" santeSub="vue-ensemble" />
     </div>
   );
 }

@@ -10,7 +10,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Building2, Target, Layers, Rocket, DollarSign, Shield, Compass,
-  TrendingUp, ListChecks, Settings, Flame, Save, Loader2,
+  TrendingUp, TrendingDown, ListChecks, Settings, Flame, Save, Loader2,
   CheckCircle2, AlertTriangle, Info, FileText, BookOpen, Heart,
   ChevronRight, Sparkles, Link2, Users, User, Briefcase, Plus, Trash2, UserPlus, PenLine,
   Bot, Cpu, Zap, Activity, BarChart3, Star, MessageCircle,
@@ -18,11 +18,15 @@ import {
   LayoutList, LayoutGrid, Table2, FolderOpen, Filter,
   Package, Calendar, Clock, Lock, Bug, Headphones, Palette, MessageSquare,
   ChevronDown, ArrowUp, ArrowDown, ArrowUpDown, Upload,
-  Crown, Eye, Factory, Wrench, Bookmark, Pause, Play, Share2, RotateCcw, ExternalLink,
+  Crown, Eye, Factory, Wrench, Bookmark, Pause, Play, Share2, RotateCcw, ExternalLink, Brain, Hammer,
+  Megaphone, Scale, ShieldCheck, Lightbulb, Gauge, Globe, Handshake, Banknote,
+  Receipt, Wallet, PieChart, GraduationCap, HardHat, ClipboardCheck, Truck, Award,
+  Newspaper, Network, Phone, Gavel, FileLock, Cog, Atom,
 } from "lucide-react";
 import { Card } from "../../../../components/ui/card";
 import { cn } from "../../../../components/ui/utils";
 import { api } from "../../../api/client";
+import { BOT_AVATAR, BOT_NAME } from "../../../api/types";
 import { BLUEPRINT_TEMPLATES, getTemplatesForBot, type BlueprintTemplate } from "./blueprint-templates";
 import { useCanvasActions } from "../../../context/CanvasActionContext";
 import {
@@ -132,9 +136,9 @@ function KPIDisplay({ kpi, value }: { kpi: KPIDef; value?: number }) {
   const color = displayValue >= kpi.seuils.vert ? "text-emerald-600" : displayValue >= kpi.seuils.jaune ? "text-amber-600" : "text-red-600";
   return (
     <Card className="p-0 gap-0 overflow-hidden">
-      <div className="px-3 py-2 bg-gradient-to-r from-gray-700 to-gray-600 flex items-center gap-2">
-        <TrendingUp className="h-3.5 w-3.5 text-white" />
-        <span className="text-xs font-bold text-white">{kpi.label}</span>
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-100 bg-[#00B4D8]/10">
+        <TrendingUp className="h-3.5 w-3.5 text-gray-900 stroke-[2.5]" />
+        <span className="text-xs font-bold text-gray-900">{kpi.label}</span>
       </div>
       <div className="px-3 py-2">
         <div className={cn("text-2xl font-bold", color)}>{displayValue}{kpi.unite}</div>
@@ -252,12 +256,14 @@ const DEPT_COLORS: Record<string, { gradient: string; text: string }> = {
   CROB: { gradient: "from-amber-600 to-amber-500", text: "text-amber-700" },
   CLOB: { gradient: "from-indigo-600 to-indigo-500", text: "text-indigo-600" },
   CISOB: { gradient: "from-gray-600 to-gray-500", text: "text-gray-600" },
+  ORBIT9: { gradient: "from-cyan-600 to-blue-500", text: "text-cyan-600" },
 };
 
 const DEPT_LABELS: Record<string, string> = {
   CEOB: "Direction", CTOB: "Technologie", CFOB: "Finance", CMOB: "Marketing",
   CSOB: "Stratégie", COOB: "Opérations", CPOB: "Production", CHROB: "RH",
   CINOB: "Innovation", CROB: "Ventes", CLOB: "Juridique", CISOB: "Sécurité",
+  ORBIT9: "Collaboration Orbit⁹",
 };
 
 interface LinkedFieldValue {
@@ -691,7 +697,41 @@ function BlueprintPersonnel({ botCode, headerGradient, data, onFieldChange, onSa
   const entreprise = d["personnel_identite.entreprise"] || "";
 
   return (
-    <div className="flex gap-3">
+    <div className="space-y-3">
+      {/* ── HERO — Dynamique depuis les données saisies — full width ── */}
+      <div className={cn("relative bg-gradient-to-r rounded-xl overflow-hidden", headerGradient)}>
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+        <div className="relative flex items-center gap-4 p-4">
+          <img src="/agents/carl-fugere.jpg" alt={nom} className="w-16 h-16 rounded-xl object-cover border-2 border-white/30 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="text-lg font-bold text-white">{nom}</h3>
+              {titre && <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white">{titre}</span>}
+              {entreprise && <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white">{entreprise}</span>}
+            </div>
+            <p className="text-xs text-white/80">
+              {data["personnel_vision.mission_personnelle"]
+                ? data["personnel_vision.mission_personnelle"].slice(0, 150) + (data["personnel_vision.mission_personnelle"].length > 150 ? "..." : "")
+                : "Remplissez votre profil personnel pour alimenter le Blueprint de votre entreprise."}
+            </p>
+          </div>
+          {/* Toggle Vue complétée / Mode édition */}
+          <button
+            onClick={() => setPreviewMode(!previewMode)}
+            className={cn(
+              "shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
+              previewMode
+                ? "bg-white text-gray-800 shadow-sm hover:bg-gray-50"
+                : "bg-white/20 text-white hover:bg-white/30"
+            )}
+          >
+            {previewMode ? <PenLine className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+            {previewMode ? "Mode edition" : "Vue completee"}
+          </button>
+        </div>
+      </div>
+
+      <div className="flex gap-3">
       {/* Sidebar — sections nav avec progression */}
       <div className="w-[180px] shrink-0 space-y-0.5 sticky top-0 self-start">
         {PERSONAL_SECTIONS.map(s => {
@@ -720,38 +760,6 @@ function BlueprintPersonnel({ botCode, headerGradient, data, onFieldChange, onSa
 
       {/* Contenu — sections avec vrais champs editables */}
       <div className="flex-1 min-w-0 space-y-4">
-        {/* ── HERO — Dynamique depuis les données saisies ── */}
-        <div className={cn("relative bg-gradient-to-r rounded-xl overflow-hidden", headerGradient)}>
-          <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="relative flex items-center gap-4 p-4">
-            <img src="/agents/carl-fugere.jpg" alt={nom} className="w-16 h-16 rounded-xl object-cover border-2 border-white/30 shrink-0" />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="text-lg font-bold text-white">{nom}</h3>
-                {titre && <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white">{titre}</span>}
-                {entreprise && <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white">{entreprise}</span>}
-              </div>
-              <p className="text-xs text-white/80">
-                {data["personnel_vision.mission_personnelle"]
-                  ? data["personnel_vision.mission_personnelle"].slice(0, 150) + (data["personnel_vision.mission_personnelle"].length > 150 ? "..." : "")
-                  : "Remplissez votre profil personnel pour alimenter le Blueprint de votre entreprise."}
-              </p>
-            </div>
-            {/* Toggle Vue complétée / Mode édition */}
-            <button
-              onClick={() => setPreviewMode(!previewMode)}
-              className={cn(
-                "shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
-                previewMode
-                  ? "bg-white text-gray-800 shadow-sm hover:bg-gray-50"
-                  : "bg-white/20 text-white hover:bg-white/30"
-              )}
-            >
-              {previewMode ? <PenLine className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-              {previewMode ? "Mode edition" : "Vue completee"}
-            </button>
-          </div>
-        </div>
 
         {/* ── MODE PREVIEW: Version visuelle riche (celle d'avant les champs editables) ── */}
         {previewMode ? (
@@ -841,9 +849,9 @@ function BlueprintPersonnel({ botCode, headerGradient, data, onFieldChange, onSa
 
             {/* ── MON PROFIL ── */}
             <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
-              <div className="bg-gradient-to-r from-gray-700 to-gray-600 px-4 py-2.5 flex items-center gap-2">
-                <User className="h-4 w-4 text-white" />
-                <span className="text-xs font-bold text-white flex-1">Mon Profil</span>
+              <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+                <User className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+                <span className="text-sm font-bold text-gray-900 flex-1">Mon Profil</span>
               </div>
               <div className="p-4 space-y-3">
                 <div className="grid grid-cols-2 gap-3">
@@ -871,9 +879,9 @@ function BlueprintPersonnel({ botCode, headerGradient, data, onFieldChange, onSa
 
             {/* ── VISION & LEADERSHIP ── */}
             <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
-              <div className="bg-gradient-to-r from-gray-700 to-gray-600 px-4 py-2.5 flex items-center gap-2">
-                <Compass className="h-4 w-4 text-white" />
-                <span className="text-xs font-bold text-white flex-1">Vision & Leadership</span>
+              <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+                <Compass className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+                <span className="text-sm font-bold text-gray-900 flex-1">Vision & Leadership</span>
               </div>
               <div className="p-4 space-y-3">
                 {val("personnel_vision.mission_personnelle") && (
@@ -923,9 +931,9 @@ function BlueprintPersonnel({ botCode, headerGradient, data, onFieldChange, onSa
 
             {/* ── OBJECTIFS 12 MOIS ── */}
             <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
-              <div className="bg-gradient-to-r from-gray-700 to-gray-600 px-4 py-2.5 flex items-center gap-2">
-                <Target className="h-4 w-4 text-white" />
-                <span className="text-xs font-bold text-white flex-1">Objectifs 12 mois</span>
+              <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+                <Target className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+                <span className="text-sm font-bold text-gray-900 flex-1">Objectifs 12 mois</span>
               </div>
               <div className="p-4 space-y-2">
                 {[1, 2, 3, 4, 5].map(i => {
@@ -947,9 +955,9 @@ function BlueprintPersonnel({ botCode, headerGradient, data, onFieldChange, onSa
 
             {/* ── PERFORMANCE — KPI cards ── */}
             <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
-              <div className="bg-gradient-to-r from-gray-700 to-gray-600 px-4 py-2.5 flex items-center gap-2">
-                <BarChart3 className="h-4 w-4 text-white" />
-                <span className="text-xs font-bold text-white flex-1">Performance</span>
+              <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+                <BarChart3 className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+                <span className="text-sm font-bold text-gray-900 flex-1">Performance</span>
               </div>
               <div className="p-4 space-y-3">
                 <div className="grid grid-cols-2 gap-3">
@@ -997,9 +1005,9 @@ function BlueprintPersonnel({ botCode, headerGradient, data, onFieldChange, onSa
 
             {/* ── DEVELOPPEMENT ── */}
             <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
-              <div className="bg-gradient-to-r from-gray-700 to-gray-600 px-4 py-2.5 flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-white" />
-                <span className="text-xs font-bold text-white flex-1">Developpement</span>
+              <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+                <TrendingUp className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+                <span className="text-sm font-bold text-gray-900 flex-1">Developpement</span>
               </div>
               <div className="p-4 space-y-3">
                 {[
@@ -1035,9 +1043,9 @@ function BlueprintPersonnel({ botCode, headerGradient, data, onFieldChange, onSa
               const maxH = Math.max(actuel, cible, 60);
               return (
                 <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
-                  <div className="bg-gradient-to-r from-gray-700 to-gray-600 px-4 py-2.5 flex items-center gap-2">
-                    <Heart className="h-4 w-4 text-white" />
-                    <span className="text-xs font-bold text-white flex-1">Equilibre</span>
+                  <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+                    <Heart className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+                    <span className="text-sm font-bold text-gray-900 flex-1">Equilibre</span>
                   </div>
                   <div className="p-4 space-y-3">
                     <div className="bg-gray-50 border border-gray-100 rounded-lg p-3">
@@ -1092,9 +1100,9 @@ function BlueprintPersonnel({ botCode, headerGradient, data, onFieldChange, onSa
 
             {/* ── SUCCESSION ── */}
             <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
-              <div className="bg-gradient-to-r from-gray-700 to-gray-600 px-4 py-2.5 flex items-center gap-2">
-                <Users className="h-4 w-4 text-white" />
-                <span className="text-xs font-bold text-white flex-1">Succession</span>
+              <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+                <Users className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+                <span className="text-sm font-bold text-gray-900 flex-1">Succession</span>
               </div>
               <div className="p-4 space-y-3">
                 {val("personnel_succession.horizon") && (
@@ -1233,6 +1241,7 @@ function BlueprintPersonnel({ botCode, headerGradient, data, onFieldChange, onSa
             </div>
           </>
         )}
+      </div>
       </div>
     </div>
   );
@@ -1748,19 +1757,19 @@ function BotApisSection({ botCode }: { botCode: string }) {
   return (
     <div className="space-y-3">
       <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
-        <div className="bg-gradient-to-r from-gray-700 to-gray-600 px-4 py-2.5 flex items-center gap-2">
-          <Activity className="h-4 w-4 text-white" />
-          <span className="text-xs font-bold text-white flex-1">Connexions Actives</span>
-          <span className="text-[9px] bg-white/25 text-white px-2 py-0.5 rounded-full font-bold">{active.length} live</span>
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+          <Activity className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+          <span className="text-sm font-bold text-gray-900 flex-1">Connexions Actives</span>
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600">{active.length} live</span>
         </div>
         <div className="p-3 grid grid-cols-2 gap-2">{active.map(renderApi)}</div>
       </Card>
       {rest.length > 0 && (
         <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
-          <div className="bg-gradient-to-r from-gray-500 to-gray-400 px-4 py-2.5 flex items-center gap-2">
-            <Cpu className="h-4 w-4 text-white" />
-            <span className="text-xs font-bold text-white flex-1">À configurer / Disponibles</span>
-            <span className="text-[9px] bg-white/20 text-white px-2 py-0.5 rounded-full">{rest.length}</span>
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+            <Cpu className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+            <span className="text-sm font-bold text-gray-900 flex-1">À configurer / Disponibles</span>
+            <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600">{rest.length}</span>
           </div>
           <div className="p-3 grid grid-cols-2 gap-2">{rest.map(renderApi)}</div>
         </Card>
@@ -1871,9 +1880,9 @@ function BotConfigSection({ botCode }: { botCode: string }) {
 
       {/* ── 2. Trisociation — Skins Cognitifs ── */}
       <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
-        <div className="bg-gradient-to-r from-gray-700 to-gray-600 px-4 py-2.5 flex items-center gap-2">
-          <Zap className="h-4 w-4 text-white" />
-          <span className="text-xs font-bold text-white flex-1">Skins Cognitifs — Trisociation</span>
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+          <Zap className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+          <span className="text-sm font-bold text-gray-900 flex-1">Skins Cognitifs — Trisociation</span>
           <span className="text-[9px] bg-white/20 text-white px-2 py-0.5 rounded-full">{localGhosts.length} actifs</span>
         </div>
         <div className="p-3 space-y-2">
@@ -1957,9 +1966,9 @@ function BotConfigSection({ botCode }: { botCode: string }) {
 
       {/* ── 3. Parametres Agent ── */}
       <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
-        <div className="bg-gradient-to-r from-gray-700 to-gray-600 px-4 py-2.5 flex items-center gap-2">
-          <Settings className="h-4 w-4 text-white" />
-          <span className="text-xs font-bold text-white flex-1">Parametres — {d.name}</span>
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+          <Settings className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+          <span className="text-sm font-bold text-gray-900 flex-1">Parametres — {d.name}</span>
         </div>
         <div className="p-3 space-y-3">
           <div className="flex items-center justify-between px-3 py-2.5 rounded-lg border border-gray-100 bg-gray-50/50">
@@ -2026,7 +2035,32 @@ function BlueprintBot({ botCode, headerGradient }: { botCode: string; headerGrad
   };
 
   return (
-    <div className="flex gap-3">
+    <div className="space-y-3">
+      {/* ── HERO — Photo + Mission — full width ── */}
+      <div className={cn("relative bg-gradient-to-r rounded-xl overflow-hidden", gradient)}>
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+        <div className="relative flex items-center gap-4 p-4">
+          <img src={avatar} alt={display.name} className="w-20 h-20 rounded-xl object-cover border-2 border-white/30 shadow-lg shrink-0" />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="text-lg font-bold text-white">{display.name}</h3>
+              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white">{display.role}</span>
+              <span className="flex items-center gap-1 text-[9px] font-medium text-emerald-200">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]" />
+                Actif
+              </span>
+            </div>
+            <p className="text-xs text-white/90 leading-relaxed">{missions.mission}</p>
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/15 text-white font-medium">{display.dept}</span>
+              <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/15 text-white font-medium">{profile.style}</span>
+              <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/15 text-white font-medium">{cap.tachesCount} taches/mois</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex gap-3">
       <div className="w-[180px] shrink-0 space-y-0.5 sticky top-0 self-start">
         {BOT_SECTION_META.map(s => {
           const isActive = activeAnchor === s.id;
@@ -2046,29 +2080,6 @@ function BlueprintBot({ botCode, headerGradient }: { botCode: string; headerGrad
         })}
       </div>
       <div className="flex-1 min-w-0 space-y-4">
-        {/* ── HERO — Photo + Mission ── */}
-        <div className={cn("relative bg-gradient-to-r rounded-xl overflow-hidden", gradient)}>
-          <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="relative flex items-center gap-4 p-4">
-            <img src={avatar} alt={display.name} className="w-20 h-20 rounded-xl object-cover border-2 border-white/30 shadow-lg shrink-0" />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="text-lg font-bold text-white">{display.name}</h3>
-                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white">{display.role}</span>
-                <span className="flex items-center gap-1 text-[9px] font-medium text-emerald-200">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]" />
-                  Actif
-                </span>
-              </div>
-              <p className="text-xs text-white/90 leading-relaxed">{missions.mission}</p>
-              <div className="flex items-center gap-2 mt-2">
-                <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/15 text-white font-medium">{display.dept}</span>
-                <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/15 text-white font-medium">{profile.style}</span>
-                <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/15 text-white font-medium">{cap.tachesCount} taches/mois</span>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* ── VUE D'ENSEMBLE ── */}
         <div id="sec-overview" className="space-y-3">
@@ -2076,9 +2087,9 @@ function BlueprintBot({ botCode, headerGradient }: { botCode: string; headerGrad
           <div className="grid grid-cols-2 gap-3">
             <VitaaTable data={vitaa} title={`VITAA — ${display.name}`} />
             <div className="border rounded-xl overflow-hidden shadow-sm">
-              <div className="bg-gradient-to-r from-gray-700 to-gray-600 px-3 py-2 flex items-center gap-1.5">
-                <Star className="h-3.5 w-3.5 text-white" />
-                <span className="text-[9px] font-bold uppercase tracking-wider text-white flex-1">Profil Psychometrique</span>
+              <div className="flex items-center gap-1.5 px-3 py-2 border-b border-gray-100 bg-[#00B4D8]/10">
+                <Star className="h-3.5 w-3.5 text-gray-900 stroke-[2.5]" />
+                <span className="text-[9px] font-bold uppercase tracking-wider text-gray-900 flex-1">Profil Psychometrique</span>
                 <span className="text-[9px] bg-white/20 text-white px-2 py-0.5 rounded-full">{profile.style}</span>
               </div>
               <div className="p-2.5 space-y-2">
@@ -2120,9 +2131,9 @@ function BlueprintBot({ botCode, headerGradient }: { botCode: string; headerGrad
           <div className="grid grid-cols-2 gap-3">
             {/* ROI small box */}
             <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
-              <div className="bg-gradient-to-r from-gray-700 to-gray-600 px-3 py-2 flex items-center gap-1.5">
-                <DollarSign className="h-3.5 w-3.5 text-white" />
-                <span className="text-[9px] font-bold uppercase tracking-wider text-white">ROI — Equiv. Humain</span>
+              <div className="flex items-center gap-1.5 px-3 py-2 border-b border-gray-100 bg-[#00B4D8]/10">
+                <DollarSign className="h-3.5 w-3.5 text-gray-900 stroke-[2.5]" />
+                <span className="text-[9px] font-bold uppercase tracking-wider text-gray-900">ROI — Equiv. Humain</span>
               </div>
               <div className="p-3 flex items-center gap-3">
                 <div className="flex-1">
@@ -2141,9 +2152,9 @@ function BlueprintBot({ botCode, headerGradient }: { botCode: string; headerGrad
 
             {/* Objectifs */}
             <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
-              <div className="bg-gradient-to-r from-gray-700 to-gray-600 px-3 py-2 flex items-center gap-1.5">
-                <Target className="h-3.5 w-3.5 text-white" />
-                <span className="text-[9px] font-bold uppercase tracking-wider text-white flex-1">Objectifs</span>
+              <div className="flex items-center gap-1.5 px-3 py-2 border-b border-gray-100 bg-[#00B4D8]/10">
+                <Target className="h-3.5 w-3.5 text-gray-900 stroke-[2.5]" />
+                <span className="text-[9px] font-bold uppercase tracking-wider text-gray-900 flex-1">Objectifs</span>
                 <span className="text-[9px] bg-white/20 text-white px-2 py-0.5 rounded-full">{missions.objectifs.length} actifs</span>
               </div>
               <div className="p-2.5 space-y-2">
@@ -2173,6 +2184,7 @@ function BlueprintBot({ botCode, headerGradient }: { botCode: string; headerGrad
         <div id="sec-config">
           <BotConfigSection botCode={botCode} />
         </div>
+      </div>
       </div>
     </div>
   );
@@ -2538,7 +2550,27 @@ function ConseilAdminManager({ headerGradient, data, onFieldChange, onSave, savi
   ];
 
   return (
-    <div className="flex gap-3">
+    <div className="space-y-3">
+      {/* Header — style Personnel/Bot */}
+      <div className={cn("relative bg-gradient-to-r rounded-xl overflow-hidden", headerGradient)}>
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+        <div className="relative flex items-center gap-4 p-4">
+          <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+            <Users className="h-6 w-6 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="text-lg font-bold text-white">Conseil d'administration</h3>
+              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white">{ca.membres.length} membre{ca.membres.length !== 1 ? "s" : ""}</span>
+            </div>
+            <p className="text-xs text-white/80">
+              L'organe de gouvernance suprême de votre organisation. Suivez les résultats, participez aux réunions (Conférence AI) et recevez les minutes automatiquement.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex gap-3">
       {/* Sidebar TOC */}
       <div className="w-[180px] shrink-0 space-y-1">
         {CA_SECTIONS.map(s => {
@@ -2560,19 +2592,6 @@ function ConseilAdminManager({ headerGradient, data, onFieldChange, onSave, savi
 
       {/* Content */}
       <div className="flex-1 min-w-0 space-y-3">
-        {/* Header card */}
-        <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
-          <div className={cn("flex items-center gap-2 px-4 py-3 bg-gradient-to-r", headerGradient)}>
-            <Users className="h-4 w-4 text-white" />
-            <span className="text-sm font-bold text-white flex-1">Conseil d'administration</span>
-            <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/20 text-white font-medium">{ca.membres.length} membre{ca.membres.length !== 1 ? "s" : ""}</span>
-          </div>
-          <div className="px-4 py-3 bg-gradient-to-r from-slate-50 to-blue-50/20">
-            <p className="text-xs text-gray-600 leading-relaxed">
-              Le conseil d'administration est l'organe de gouvernance suprême de votre organisation. Les membres du CA ont accès à la plateforme pour suivre les résultats, participer aux réunions (Conférence AI) et recevoir les minutes automatiquement.
-            </p>
-          </div>
-        </Card>
 
           {/* 1. Tableau de bord */}
           {activeCASection === "tableau" && (<>
@@ -2875,9 +2894,9 @@ function ConseilAdminManager({ headerGradient, data, onFieldChange, onSave, savi
           {/* 7. Gouvernance */}
           {activeCASection === "gouvernance" && (
             <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
-              <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-gray-700 to-gray-600">
-                <Settings className="h-3.5 w-3.5 text-white" />
-                <span className="text-xs font-bold text-white">Configuration du CA</span>
+              <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+                <Settings className="h-3.5 w-3.5 text-gray-900 stroke-[2.5]" />
+                <span className="text-xs font-bold text-gray-900">Configuration du CA</span>
               </div>
               <div className="p-4 space-y-4">
                 <div className="grid grid-cols-3 gap-4">
@@ -2996,6 +3015,7 @@ function ConseilAdminManager({ headerGradient, data, onFieldChange, onSave, savi
         </div>
 
       </div>
+      </div>
     </div>
   );
 }
@@ -3094,7 +3114,27 @@ function ComitesManager({ botCode, deptLabel, headerGradient, data, onFieldChang
   const totalParticipants = comites.reduce((sum, c) => sum + c.membres.length, 0);
 
   return (
-    <div className="flex gap-3">
+    <div className="space-y-3">
+      {/* Header — style Personnel/Bot */}
+      <div className={cn("relative bg-gradient-to-r rounded-xl overflow-hidden", headerGradient)}>
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+        <div className="relative flex items-center gap-4 p-4">
+          <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+            <Briefcase className="h-6 w-6 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="text-lg font-bold text-white">Comités — {deptLabel}</h3>
+              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white">{comites.length} comité{comites.length !== 1 ? "s" : ""}</span>
+            </div>
+            <p className="text-xs text-white/80">
+              Créez et gérez les comités du département. Participants internes et externes, Conférences AI et minutes automatiques.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex gap-3">
       {/* Sidebar — Vue d'ensemble + liste des comités */}
       <div className="w-[180px] shrink-0 space-y-1">
         {/* Vue d'ensemble */}
@@ -3145,19 +3185,6 @@ function ComitesManager({ botCode, deptLabel, headerGradient, data, onFieldChang
 
       {/* Contenu */}
       <div className="flex-1 min-w-0 space-y-3">
-        {/* Header card */}
-        <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
-          <div className={cn("flex items-center gap-2 px-4 py-3 bg-gradient-to-r", headerGradient)}>
-            <Briefcase className="h-4 w-4 text-white" />
-            <span className="text-sm font-bold text-white flex-1">Comités — {deptLabel}</span>
-            <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/20 text-white font-medium">{comites.length} comité{comites.length !== 1 ? "s" : ""}</span>
-          </div>
-          <div className="px-4 py-3 bg-gradient-to-r from-slate-50 to-blue-50/20">
-            <p className="text-xs text-gray-600 leading-relaxed">
-              Créez et gérez les comités liés au département {deptLabel}. Chaque comité peut avoir des participants internes (employés) et externes (invités), avec la possibilité de lancer des Conférences AI et de distribuer les minutes automatiquement.
-            </p>
-          </div>
-        </Card>
 
           {/* Vue d'ensemble */}
           {(showOverview || !activeComite) && (<>
@@ -3207,9 +3234,9 @@ function ComitesManager({ botCode, deptLabel, headerGradient, data, onFieldChang
             {/* Résumé des comités */}
             {comites.length > 0 && (
               <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
-                <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-gray-700 to-gray-600">
-                  <ListChecks className="h-3.5 w-3.5 text-white" />
-                  <span className="text-xs font-bold text-white">Résumé des comités</span>
+                <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+                  <ListChecks className="h-3.5 w-3.5 text-gray-900 stroke-[2.5]" />
+                  <span className="text-xs font-bold text-gray-900">Résumé des comités</span>
                 </div>
                 <div className="p-3 space-y-2">
                   {comites.map(c => (
@@ -3230,9 +3257,9 @@ function ComitesManager({ botCode, deptLabel, headerGradient, data, onFieldChang
 
             {/* Modèles suggérés */}
             <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
-              <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-gray-700 to-gray-600">
-                <Sparkles className="h-3.5 w-3.5 text-white" />
-                <span className="text-xs font-bold text-white">Modèles de comités suggérés</span>
+              <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+                <Sparkles className="h-3.5 w-3.5 text-gray-900 stroke-[2.5]" />
+                <span className="text-xs font-bold text-gray-900">Modèles de comités suggérés</span>
               </div>
               <div className="p-3 grid grid-cols-2 gap-2">
                 {COMITES_SUGGESTED_TEMPLATES.map((t, i) => (
@@ -3268,9 +3295,9 @@ function ComitesManager({ botCode, deptLabel, headerGradient, data, onFieldChang
             {/* Tab: Config */}
             {comiteTab === "config" && (
               <Card className="p-0 gap-0 overflow-hidden rounded-xl shadow-sm">
-                <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-gray-700 to-gray-600">
-                  <Settings className="h-3.5 w-3.5 text-white" />
-                  <span className="text-xs font-bold text-white">Configuration du comité</span>
+                <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+                  <Settings className="h-3.5 w-3.5 text-gray-900 stroke-[2.5]" />
+                  <span className="text-xs font-bold text-gray-900">Configuration du comité</span>
                 </div>
                 <div className="p-4">
                   <div className="grid grid-cols-3 gap-4">
@@ -3469,6 +3496,7 @@ function ComitesManager({ botCode, deptLabel, headerGradient, data, onFieldChang
             </div>
           )}
         </div>
+      </div>
       </div>
   );
 }
@@ -4189,9 +4217,9 @@ function DataRoomVueConsolidee({ onNavigateDept }: { onNavigateDept: (deptCode: 
 
       {/* ── 6 Types d'actifs numeriques ── */}
       <div className="border rounded-xl overflow-hidden shadow-sm">
-        <div className="bg-gradient-to-r from-gray-700 to-gray-600 px-4 py-2.5 flex items-center gap-2">
-          <Database className="h-4 w-4 text-white" />
-          <span className="text-sm font-bold text-white">6 types d'actifs numeriques</span>
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+          <Database className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+          <span className="text-sm font-bold text-gray-900">6 types d'actifs numeriques</span>
           <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/20 text-white font-medium">{allDocs.length} total</span>
         </div>
         <div className="grid grid-cols-6 divide-x divide-gray-100">
@@ -4519,7 +4547,7 @@ function mockTaille(titre: string, type: string): string {
   return kb > 500 ? `${(kb / 100).toFixed(1)} MB` : `${kb} KB`;
 }
 
-export function BlueprintDataRoom({ botCode, headerGradient }: { botCode: string; headerGradient: string }) {
+export function BlueprintDataRoom({ botCode, headerGradient, showHeader = false }: { botCode: string; headerGradient: string; showHeader?: boolean }) {
   // Department navigation — sidebar shows ALL departments
   const [activeDept, setActiveDept] = useState(botCode);
   const [expandedDepts, setExpandedDepts] = useState<Set<string>>(new Set([botCode]));
@@ -4594,6 +4622,26 @@ export function BlueprintDataRoom({ botCode, headerGradient }: { botCode: string
   });
 
   return (
+    <div className="space-y-3">
+      {/* Header gradient hero (style Blueprint) */}
+      {showHeader && (
+        <div className={cn("relative bg-gradient-to-r rounded-xl overflow-hidden", headerGradient)}>
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="relative flex items-center gap-4 p-4">
+            <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+              <Database className="h-6 w-6 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-lg font-bold text-white">Data Room</h3>
+                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white">{sections.length} dossiers</span>
+                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white">{sections.reduce((s, c) => s + c.documents.length, 0)} documents</span>
+              </div>
+              <p className="text-xs text-white/80">Documents stratégiques, rapports, politiques et ressources classés par département.</p>
+            </div>
+          </div>
+        </div>
+      )}
     <div className="flex gap-3">
       {/* Sidebar — Navigation 12 départements (accordion) */}
       <div className="w-[180px] shrink-0 overflow-y-auto max-h-[calc(100vh-200px)] space-y-0.5">
@@ -4864,6 +4912,7 @@ export function BlueprintDataRoom({ botCode, headerGradient }: { botCode: string
         )}
       </div>
     </div>
+    </div>
   );
 }
 
@@ -4991,6 +5040,27 @@ const PLAYBOOK_STORE_DATA: { id: string; nom: string; departement: string; bots:
   { id: "pb-302", nom: "Integration nouvel employe complete", departement: "CHROB", bots: ["Helene", "Tim", "Loulou", "Olivier"], etapes: 15, duree: "90 jours", niveau: "Avance", prix: "$49", rating: 4.6, downloads: 567, categorie: "Onboarding", pilier: "Temps", description: "Contrat + acces IT + plan 30-60-90 + formation securite + evaluation probation." },
   { id: "pb-303", nom: "Dossier reclamation RS&DE", departement: "CINOB", bots: ["Ines", "Frank", "Tim", "Sebastien"], etapes: 14, duree: "4 sem.", niveau: "Enterprise", prix: "$199", rating: 4.5, downloads: 178, categorie: "Fiscalite", pilier: "Argent", description: "Logs techniques, narration scientifique, donnees financieres T661 et credit Quebec." },
   { id: "pb-304", nom: "Plan d'affaires complet", departement: "CEOB", bots: ["CarlOS", "Frank", "Mathilde", "Simone"], etapes: 20, duree: "2 sem.", niveau: "Avance", prix: "$99", rating: 4.7, downloads: 456, categorie: "Strategie", pilier: "Idee", description: "Synthese executive + projections 3 ans + strategie acquisition + analyse macro." },
+  // ═══ COLLABORATION ORBIT⁹ — 20 playbooks réseau ═══
+  { id: "pb-O9-001", nom: "Qualification match Orbit⁹", departement: "ORBIT9", bots: ["CarlOS", "Simone"], etapes: 5, duree: "15min", niveau: "Quick Win", prix: "Gratuit", rating: 4.7, downloads: 890, categorie: "Jumelage", pilier: "Vente", description: "Scoring automatise d'un match potentiel: VITAA croise, complementarite sectorielle, anti-cartel." },
+  { id: "pb-O9-002", nom: "Creation cellule collaborative", departement: "ORBIT9", bots: ["CarlOS", "Olivier"], etapes: 7, duree: "30min", niveau: "Standard", prix: "Gratuit", rating: 4.6, downloads: 567, categorie: "Cellules", pilier: "Actif", description: "Wizard de creation de cellule: nom, type, membres, sous-cellules, gouvernance initiale." },
+  { id: "pb-O9-003", nom: "Onboarding nouveau membre reseau", departement: "ORBIT9", bots: ["CarlOS", "Helene"], etapes: 9, duree: "45min", niveau: "Standard", prix: "Gratuit", rating: 4.8, downloads: 1234, categorie: "Integration", pilier: "Temps", description: "Profil entreprise, qualification AI, criteres REAI, charte reseau, premier jumelage." },
+  { id: "pb-O9-004", nom: "Trisociation LiveKit — Meeting 3 bots", departement: "ORBIT9", bots: ["CarlOS", "Simone", "Rich"], etapes: 6, duree: "1h", niveau: "Standard", prix: "Gratuit", rating: 4.9, downloads: 345, categorie: "Conference AI", pilier: "Idee", description: "Session collaborative avec 3 bots en trisociation pour debloquer un chantier inter-entreprises." },
+  { id: "pb-O9-005", nom: "Evaluation VITAA collectif", departement: "ORBIT9", bots: ["CarlOS"], etapes: 5, duree: "20min", niveau: "Quick Win", prix: "Gratuit", rating: 4.5, downloads: 678, categorie: "Scoring", pilier: "Actif", description: "Calcul du score VITAA agrege de la cellule avec formule e^(V*I*T) et Triangle du Feu." },
+  { id: "pb-O9-006", nom: "Sprint recrutement pionniers", departement: "ORBIT9", bots: ["CarlOS", "Rich", "Mathilde"], etapes: 12, duree: "4 sem.", niveau: "Avance", prix: "$149", rating: 4.7, downloads: 234, categorie: "Pionniers", pilier: "Vente", description: "Plan 30 jours de recrutement des 9 pionniers: rencontres, scripts, urgence progressive." },
+  { id: "pb-O9-007", nom: "Negociation accord collaboration", departement: "ORBIT9", bots: ["CarlOS", "Loulou", "Frank"], etapes: 8, duree: "1 sem.", niveau: "Standard", prix: "$49", rating: 4.4, downloads: 345, categorie: "Juridique", pilier: "Actif", description: "Structuration des termes: portee, duree, PI, TimeTokens, clause de sortie." },
+  { id: "pb-O9-008", nom: "Mediation proactive CarlOS", departement: "ORBIT9", bots: ["CarlOS"], etapes: 6, duree: "30min", niveau: "Standard", prix: "Gratuit", rating: 4.6, downloads: 456, categorie: "Gouvernance", pilier: "Temps", description: "Detection de tensions en meeting, intervention calibree, generation d'action items." },
+  { id: "pb-O9-009", nom: "Distribution TimeTokens mensuelle", departement: "ORBIT9", bots: ["CarlOS", "Frank"], etapes: 5, duree: "15min", niveau: "Quick Win", prix: "Gratuit", rating: 4.5, downloads: 567, categorie: "TimeTokens", pilier: "Argent", description: "Calcul des contributions, formule 5D (A*D*I*Z*P), attribution et rapport." },
+  { id: "pb-O9-010", nom: "Audit qualite membre reseau", departement: "ORBIT9", bots: ["CarlOS", "Sebastien"], etapes: 8, duree: "35min", niveau: "Standard", prix: "$49", rating: 4.3, downloads: 234, categorie: "Qualite", pilier: "Actif", description: "Verification certifications, assurances, score reputation, litiges, taux livraison." },
+  { id: "pb-O9-011", nom: "Planification evenement reseau", departement: "ORBIT9", bots: ["CarlOS", "Olivier", "Mathilde"], etapes: 10, duree: "2 sem.", niveau: "Standard", prix: "$49", rating: 4.4, downloads: 178, categorie: "Evenements", pilier: "Actif", description: "Organisation meetup/webinaire: logistique, invitations, contenu, suivi post-evenement." },
+  { id: "pb-O9-012", nom: "Scoring VITAAFAST cellule", departement: "ORBIT9", bots: ["CarlOS"], etapes: 4, duree: "10min", niveau: "Quick Win", prix: "Gratuit", rating: 4.6, downloads: 789, categorie: "Scoring", pilier: "Actif", description: "Evaluation rapide des 5 piliers VITAA pour une cellule specifique avec benchmarks." },
+  { id: "pb-O9-013", nom: "Rotation roles Orbit⁹ (gouvernance)", departement: "ORBIT9", bots: ["CarlOS", "Olivier"], etapes: 6, duree: "20min", niveau: "Standard", prix: "Gratuit", rating: 4.3, downloads: 345, categorie: "Gouvernance", pilier: "Temps", description: "Processus de rotation des 4 roles structurels tous les 90 jours." },
+  { id: "pb-O9-014", nom: "Processus de sortie ordonnee", departement: "ORBIT9", bots: ["CarlOS", "Loulou", "Frank"], etapes: 8, duree: "90 jours", niveau: "Avance", prix: "$99", rating: 4.2, downloads: 123, categorie: "Juridique", pilier: "Argent", description: "Protocole selon la matrice 4 quadrants: rachat TT, transition, PI, succession." },
+  { id: "pb-O9-015", nom: "Qualification fournisseur invite", departement: "ORBIT9", bots: ["CarlOS", "Sebastien"], etapes: 5, duree: "15min", niveau: "Quick Win", prix: "Gratuit", rating: 4.7, downloads: 890, categorie: "Qualification", pilier: "Actif", description: "Validation automatisee: reputation web, NEQ, LinkedIn, references, certifications." },
+  { id: "pb-O9-016", nom: "Session jumelage assiste IA", departement: "ORBIT9", bots: ["CarlOS", "Simone", "Rich"], etapes: 6, duree: "45min", niveau: "Standard", prix: "Gratuit", rating: 4.8, downloads: 567, categorie: "Jumelage", pilier: "Vente", description: "Introduction structuree entre 2 entreprises: brief, presentation croisee, next steps." },
+  { id: "pb-O9-017", nom: "Revue trimestrielle cellule", departement: "ORBIT9", bots: ["CarlOS", "Olivier", "Frank"], etapes: 8, duree: "1h", niveau: "Standard", prix: "Gratuit", rating: 4.5, downloads: 456, categorie: "Performance", pilier: "Temps", description: "Bilan VITAA collectif, ROI chantiers, heures sauvees, objectifs Q+1." },
+  { id: "pb-O9-018", nom: "Anti-cartel compliance check", departement: "ORBIT9", bots: ["CarlOS", "Loulou"], etapes: 4, duree: "10min", niveau: "Quick Win", prix: "Gratuit", rating: 4.4, downloads: 345, categorie: "Conformite", pilier: "Actif", description: "Verification automatique qu'aucune cellule ne cree de monopole sectoriel." },
+  { id: "pb-O9-019", nom: "Ghost Delegate — Briefing bot-to-bot", departement: "ORBIT9", bots: ["CarlOS", "Tim"], etapes: 5, duree: "15min", niveau: "Quick Win", prix: "Gratuit", rating: 4.6, downloads: 678, categorie: "Delegation", pilier: "Temps", description: "CarlOS prepare et envoie un delegue virtuel pour representer l'entreprise dans une cellule." },
+  { id: "pb-O9-020", nom: "Rapport impact reseau annuel", departement: "ORBIT9", bots: ["CarlOS", "Frank", "Simone"], etapes: 12, duree: "1 sem.", niveau: "Avance", prix: "$99", rating: 4.7, downloads: 234, categorie: "Reporting", pilier: "Argent", description: "Bilan complet: economie collective, connexions B2B, ROI reseau, croissance 9→81." },
 ];
 
 const INSTALLED_PLAYBOOKS = ["pb-001", "pb-003", "pb-008", "pb-020", "pb-025", "pb-030", "pb-037", "pb-050", "pb-058", "pb-071", "pb-074", "pb-082", "pb-090", "pb-091", "pb-104", "pb-200", "pb-202"];
@@ -5117,6 +5187,7 @@ const DEPT_ICONS: Record<string, React.ElementType> = {
   CEOB: Building2, CTOB: Cpu, CFOB: DollarSign, CMOB: Palette,
   CSOB: Compass, COOB: Settings, CPOB: Factory, CHROB: Users,
   CINOB: Sparkles, CROB: TrendingUp, CLOB: Shield, CISOB: Lock,
+  ORBIT9: Atom,
 };
 
 function PlaybookCardV2({ pb, installed, recommended, badge, onOpenDetail }: { pb: typeof PLAYBOOK_STORE_DATA[0]; installed?: boolean; recommended?: boolean; badge?: "nouveau" | "populaire" | "trending"; onOpenDetail?: (pb: typeof PLAYBOOK_STORE_DATA[0]) => void }) {
@@ -5408,25 +5479,33 @@ function PlaybookDecouvrir({ botCode, onOpenDetail, onNavigate }: { botCode: str
 
   return (
     <div className="space-y-4">
-      {/* Intro — Bienvenue dans le Playbook Store */}
-      <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border border-blue-100 rounded-xl px-4 py-4">
-        <h3 className="text-sm font-bold text-gray-900">Bienvenue dans le Playbook Store</h3>
-        <p className="text-[10px] text-gray-600 leading-relaxed mt-1">
-          Votre equipe IA est prete a travailler pour vous. Un playbook, c'est un processus d'affaires complet,
-          execute automatiquement par vos bots — de la collecte de donnees jusqu'a la livraison du resultat final.
-        </p>
-        <div className="grid grid-cols-3 gap-3 mt-3">
-          <div className="bg-white rounded-lg px-3 py-2 border border-gray-100">
-            <span className="text-[9px] font-bold text-gray-800">1. Choisissez</span>
-            <p className="text-[8px] text-gray-500 leading-relaxed mt-1">Parcourez {PLAYBOOK_STORE_DATA.length} playbooks classes par departement, difficulte et objectif. Diagnostic financier, audit securite, conformite Loi 25, plan marketing — tout y est.</p>
+      {/* Comment ça fonctionne — 3 étapes */}
+      <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+          <Sparkles className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+          <h3 className="text-sm font-bold text-gray-900">Comment ca fonctionne ?</h3>
+        </div>
+        <div className="grid grid-cols-3 gap-3 p-4">
+          <div className="rounded-xl border border-blue-100 bg-blue-50/50 px-3 py-3 text-center">
+            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-2">
+              <span className="text-sm font-bold text-blue-700">1</span>
+            </div>
+            <span className="text-[10px] font-bold text-gray-900 block">Choisissez</span>
+            <p className="text-[8px] text-gray-500 leading-relaxed mt-1">Parcourez {PLAYBOOK_STORE_DATA.length} playbooks classes par departement, difficulte et objectif.</p>
           </div>
-          <div className="bg-white rounded-lg px-3 py-2 border border-gray-100">
-            <span className="text-[9px] font-bold text-gray-800">2. Activez</span>
-            <p className="text-[8px] text-gray-500 leading-relaxed mt-1">Un clic et vos bots se mettent au travail. Frank analyse vos finances, Tim audite votre securite, Mathilde cree votre contenu — chacun son expertise.</p>
+          <div className="rounded-xl border border-amber-100 bg-amber-50/50 px-3 py-3 text-center">
+            <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-2">
+              <span className="text-sm font-bold text-amber-700">2</span>
+            </div>
+            <span className="text-[10px] font-bold text-gray-900 block">Activez</span>
+            <p className="text-[8px] text-gray-500 leading-relaxed mt-1">Un clic et vos bots se mettent au travail — chacun son expertise, tout en automatique.</p>
           </div>
-          <div className="bg-white rounded-lg px-3 py-2 border border-gray-100">
-            <span className="text-[9px] font-bold text-gray-800">3. Recevez</span>
-            <p className="text-[8px] text-gray-500 leading-relaxed mt-1">Rapports PDF, tableaux Excel, plans d'action priorises — des livrables concrets que vous pouvez utiliser immediatement avec votre equipe.</p>
+          <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 px-3 py-3 text-center">
+            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-2">
+              <span className="text-sm font-bold text-emerald-700">3</span>
+            </div>
+            <span className="text-[10px] font-bold text-gray-900 block">Recevez</span>
+            <p className="text-[8px] text-gray-500 leading-relaxed mt-1">Rapports PDF, tableaux Excel, plans d'action — des livrables concrets, prets a utiliser.</p>
           </div>
         </div>
       </div>
@@ -5955,7 +6034,7 @@ function PlaybookBuilder() {
 // BLUEPRINT PLAYBOOKS — Conteneur principal avec sidebar 8 items
 // ══════════════════════════════════════════
 
-export function BlueprintPlaybooks({ botCode, headerGradient }: { botCode: string; headerGradient: string }) {
+export function BlueprintPlaybooks({ botCode, headerGradient, showHeader = false }: { botCode: string; headerGradient: string; showHeader?: boolean }) {
   const [activeView, setActiveView] = useState<PlaybookStoreView>("decouvrir");
   const [selectedPlaybook, setSelectedPlaybook] = useState<typeof PLAYBOOK_STORE_DATA[0] | null>(null);
   const [expandCategories, setExpandCategories] = useState(false);
@@ -5988,6 +6067,25 @@ export function BlueprintPlaybooks({ botCode, headerGradient }: { botCode: strin
   };
 
   return (
+    <div className="space-y-3">
+      {/* Header gradient hero (style Blueprint) */}
+      {showHeader && (
+        <div className={cn("relative bg-gradient-to-r rounded-xl overflow-hidden", headerGradient)}>
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="relative flex items-center gap-4 p-4">
+            <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+              <BookOpen className="h-6 w-6 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-lg font-bold text-white">Bienvenue dans le Playbook Store</h3>
+                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white">{PLAYBOOK_STORE_DATA.length} playbooks</span>
+              </div>
+              <p className="text-xs text-white/80">Votre equipe IA est prete a travailler pour vous. Un playbook, c'est un processus d'affaires complet, execute automatiquement par vos bots — de la collecte de donnees jusqu'a la livraison du resultat final.</p>
+            </div>
+          </div>
+        </div>
+      )}
     <div className="flex gap-3">
       {/* Sidebar TOC */}
       <div className="w-[180px] shrink-0 space-y-0.5">
@@ -6037,10 +6135,12 @@ export function BlueprintPlaybooks({ botCode, headerGradient }: { botCode: strin
 
       {/* Contenu */}
       <div className="flex-1 min-w-0 space-y-2">
-        {/* Header */}
-        <div className={cn("bg-gradient-to-r rounded-lg px-4 py-2.5", headerGradient)}>
-          <h2 className="text-sm font-bold text-white">Playbook Store{activeView !== "decouvrir" ? ` — ${VIEW_LABELS[activeView]}` : ""}</h2>
-        </div>
+        {/* Header — masqué si showHeader est actif (évite le dédoublement) */}
+        {!showHeader && (
+          <div className={cn("bg-gradient-to-r rounded-lg px-4 py-2.5", headerGradient)}>
+            <h2 className="text-sm font-bold text-white">Playbook Store{activeView !== "decouvrir" ? ` — ${VIEW_LABELS[activeView]}` : ""}</h2>
+          </div>
+        )}
 
         {/* Fiche detaillee INLINE (drill-down) */}
         {selectedPlaybook ? (
@@ -6077,6 +6177,1079 @@ export function BlueprintPlaybooks({ botCode, headerGradient }: { botCode: strin
         )}
       </div>
     </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════
+// ══════════════════════════════════════════
+// DEPT DASHBOARD VIEW — Dashboard par département (12 bots)
+// Pattern: gradient header + 5 VITAA + 3 rows × 3 blocs (style UB_PASTEL)
+// ══════════════════════════════════════════
+
+const UB_PASTEL_DEPT = "bg-[#00B4D8]/10";
+
+// Phase colors AMORCER (badge only — same as VueEnsemble/SimAmorcer PC map)
+type PhaseKey = "attention" | "moderation" | "observation" | "reflexion" | "creation" | "execution" | "retroaction" | "discussion";
+const PHASE_COLORS: Record<PhaseKey, { label: string; badge: string; dot: string }> = {
+  discussion:   { label: "Discussion",   badge: "bg-blue-100 text-blue-700",     dot: "bg-blue-500" },
+  attention:    { label: "Attention",    badge: "bg-red-100 text-red-700",       dot: "bg-red-500" },
+  moderation:   { label: "Modération",   badge: "bg-pink-100 text-pink-700",     dot: "bg-pink-500" },
+  observation:  { label: "Observation",  badge: "bg-blue-100 text-blue-700",     dot: "bg-blue-500" },
+  reflexion:    { label: "Réflexion",    badge: "bg-orange-100 text-orange-700", dot: "bg-orange-500" },
+  creation:     { label: "Conception",   badge: "bg-yellow-100 text-yellow-700", dot: "bg-yellow-500" },
+  execution:    { label: "Exécution",    badge: "bg-green-100 text-green-700",   dot: "bg-green-500" },
+  retroaction:  { label: "Rétroaction",  badge: "bg-emerald-100 text-emerald-700", dot: "bg-emerald-500" },
+};
+
+interface VitaaItem {
+  label: string;
+  value: string;
+  delta: string;
+  up: boolean;
+  icon: React.ElementType;
+}
+
+interface DashboardBlocItem {
+  primary: string;
+  value?: string;
+  valueColor?: string;
+  pct?: number;
+  pctColor?: string;
+  secondary: string;
+  bot?: string;
+  phase?: PhaseKey;
+  urgent?: boolean;
+}
+
+interface DashboardBlocConfig {
+  icon: React.ElementType;
+  title: string;
+  count?: number;
+  items: DashboardBlocItem[];
+}
+
+interface DeptDashboardConfig {
+  deptLabel: string;
+  deptFullLabel?: string;
+  summary: string;
+  vitaa: VitaaItem[];
+  row1: DashboardBlocConfig[];
+  row2: DashboardBlocConfig[];
+  row3: DashboardBlocConfig[];
+}
+
+const DEPT_GRADIENT: Record<string, string> = {
+  CEOB: "from-blue-700 to-blue-500",
+  CFOB: "from-emerald-600 to-emerald-500",
+  CTOB: "from-violet-600 to-violet-500",
+  CPOB: "from-slate-700 to-slate-600",
+  COOB: "from-orange-600 to-orange-500",
+  CROB: "from-amber-600 to-amber-500",
+  CMOB: "from-pink-600 to-pink-500",
+  CSOB: "from-red-600 to-red-500",
+  CHROB: "from-teal-600 to-teal-500",
+  CISOB: "from-zinc-700 to-zinc-600",
+  CLOB: "from-indigo-600 to-indigo-500",
+  CINOB: "from-rose-600 to-rose-500",
+};
+
+export const DEPT_DASH_ICON: Record<string, React.ElementType> = {
+  CEOB: Zap, CFOB: DollarSign, CTOB: Cpu, CPOB: Factory, COOB: Settings,
+  CROB: TrendingUp, CMOB: Megaphone, CSOB: Target, CHROB: Users,
+  CISOB: ShieldCheck, CLOB: Scale, CINOB: Lightbulb,
+};
+
+export const DEPT_FULL_LABEL: Record<string, string> = {
+  CEOB: "de la direction", CROB: "des ventes", CFOB: "des finances",
+  CMOB: "marketing", CTOB: "de la technologie", COOB: "des opérations",
+  CPOB: "de la production", CHROB: "des ressources humaines",
+  CINOB: "de l'innovation & R&D", CSOB: "de la stratégie",
+  CLOB: "juridique", CISOB: "de la sécurité",
+};
+
+export const DEPT_SHORT_LABEL: Record<string, string> = {
+  CEOB: "Direction", CROB: "Ventes", CFOB: "Finance",
+  CMOB: "Marketing", CTOB: "Technologie", COOB: "Opérations",
+  CPOB: "Production", CHROB: "RH", CINOB: "Innovation",
+  CSOB: "Stratégie", CLOB: "Juridique", CISOB: "Sécurité",
+};
+
+const DEPT_DASHBOARD_SECTIONS: Record<string, DeptDashboardConfig> = {
+  CEOB: {
+    deptLabel: "Direction",
+    deptFullLabel: "de la direction",
+    summary: "Vue consolidée de l'entreprise — pilotage stratégique et gouvernance",
+    vitaa: [
+      { label: "Ventes", value: "890K$", delta: "+12%", up: true, icon: TrendingUp },
+      { label: "Idées", value: "47", delta: "+8 ce mois", up: true, icon: Lightbulb },
+      { label: "Temps", value: "186h", delta: "92% alloué", up: true, icon: Clock },
+      { label: "Argent", value: "2.4M$", delta: "+18%", up: true, icon: DollarSign },
+      { label: "Actifs", value: "63", delta: "+5 ce mois", up: true, icon: Activity },
+    ],
+    row1: [
+      { icon: AlertTriangle, title: "Signaux", items: [
+        { primary: "Subvention MESI", value: "Nouveau", valueColor: "text-green-600", secondary: "50K$ — manufacturiers innovants" },
+        { primary: "Tarifs douaniers US", value: "Alerte", valueColor: "text-red-600", urgent: true, secondary: "Impact potentiel 8% revenus", phase: "attention" },
+        { primary: "Tendance IA manuf.", secondary: "Article CEFRIO — adoption +40%" },
+      ]},
+      { icon: ClipboardCheck, title: "Décisions", count: 8, items: [
+        { primary: "Expansion Laval", value: "En cours", valueColor: "text-blue-600", secondary: "D-097 — validée mars", phase: "execution" },
+        { primary: "Nouveau CRM", value: "Approuvé", valueColor: "text-green-600", secondary: "D-101 — budget 45K$", phase: "retroaction" },
+        { primary: "Restructuration prod.", value: "En attente", valueColor: "text-amber-600", secondary: "D-103 — analyse ROI", phase: "reflexion" },
+      ]},
+      { icon: Target, title: "OKR", count: 4, items: [
+        { primary: "Croissance 15%", pct: 72, pctColor: "bg-green-500", secondary: "Objectif annuel", phase: "execution" },
+        { primary: "Satisfaction client >90", pct: 88, pctColor: "bg-green-500", secondary: "NPS actuel: 88", phase: "retroaction" },
+        { primary: "Marge brute 35%", pct: 91, pctColor: "bg-green-500", secondary: "En avance sur cible", phase: "retroaction" },
+      ]},
+    ],
+    row2: [
+      { icon: Users, title: "Comité", count: 3, items: [
+        { primary: "CA mensuel", value: "12 avr.", secondary: "5 points à l'ordre du jour" },
+        { primary: "Comité stratégique", value: "18 avr.", secondary: "Revue portefeuille", phase: "reflexion" },
+        { primary: "1:1 avec Frank (CFO)", value: "8 avr.", secondary: "Budget Q2" },
+      ]},
+      { icon: Shield, title: "Gouvernance", count: 2, items: [
+        { primary: "Conformité LPRPDE", pct: 85, pctColor: "bg-green-500", secondary: "Audit complété mars", phase: "retroaction" },
+        { primary: "Politique ESG", value: "V2", valueColor: "text-blue-600", secondary: "Mise à jour trimestrielle", phase: "execution" },
+        { primary: "Registre risques", value: "14", secondary: "3 risques élevés", phase: "attention" },
+      ]},
+      { icon: TrendingUp, title: "Pipeline", count: 7, items: [
+        { primary: "Pipeline total", value: "3.2M$", valueColor: "text-green-600", secondary: "32 opportunités actives" },
+        { primary: "Taux conversion", pct: 24, pctColor: "bg-amber-500", secondary: "Cible: 30%", phase: "reflexion" },
+        { primary: "Temps moyen cycle", value: "42j", secondary: "En baisse vs Q4 (51j)", phase: "retroaction" },
+      ]},
+    ],
+    row3: [
+      { icon: ListChecks, title: "Tâches", count: 23, items: [
+        { primary: "Valider budget marketing Q2", value: "Urgent", valueColor: "text-red-600", secondary: "Échéance: 10 avril", urgent: true, phase: "attention" },
+        { primary: "Revoir proposition Laval", value: "Normal", valueColor: "text-blue-600", secondary: "Échéance: 15 avril", phase: "reflexion" },
+        { primary: "Feedback plan embauche", value: "Normal", valueColor: "text-blue-600", secondary: "Échéance: 12 avril" },
+      ]},
+      { icon: Calendar, title: "Agenda", count: 6, items: [
+        { primary: "Board meeting", value: "12 avr. 9h", secondary: "Salle virtuelle — 12 participants" },
+        { primary: "Client Boréal", value: "10 avr. 14h", secondary: "Renouvellement contrat", phase: "execution" },
+        { primary: "Demo investisseurs", value: "18 avr. 10h", secondary: "Série A — pitch deck", phase: "creation" },
+      ]},
+      { icon: Gauge, title: "Consolidé", count: 5, items: [
+        { primary: "Revenus Q1", value: "1.2M$", valueColor: "text-green-600", secondary: "+12% vs objectif", phase: "retroaction" },
+        { primary: "Marge nette", value: "8.4%", valueColor: "text-amber-600", secondary: "Cible: 10%", phase: "reflexion" },
+        { primary: "Effectifs", value: "47", secondary: "3 postes ouverts" },
+      ]},
+    ],
+  },
+
+  CROB: {
+    deptLabel: "Ventes",
+    deptFullLabel: "des ventes",
+    summary: "Pipeline commercial, contacts et performance des revenus",
+    vitaa: [
+      { label: "Ventes", value: "3.2M$", delta: "pipeline actif", up: true, icon: TrendingUp },
+      { label: "Idées", value: "18", delta: "+6 leads", up: true, icon: Lightbulb },
+      { label: "Temps", value: "210h", delta: "88% alloué", up: true, icon: Clock },
+      { label: "Argent", value: "1.8M$", delta: "Q1 réalisé", up: true, icon: DollarSign },
+      { label: "Actifs", value: "247", delta: "contacts", up: true, icon: Activity },
+    ],
+    row1: [
+      { icon: AlertTriangle, title: "Signaux", items: [
+        { primary: "Appel d'offres HQ", value: "Nouveau", valueColor: "text-green-600", secondary: "Automation industrielle — 500K$" },
+        { primary: "Concurrent Acme", value: "Alerte", valueColor: "text-red-600", urgent: true, secondary: "Nouveau produit lancé", phase: "attention" },
+        { primary: "Tendance secteur", secondary: "Demande +15% automatisation" },
+      ]},
+      { icon: Users, title: "Contacts", count: 247, items: [
+        { primary: "Leads qualifiés", value: "18", valueColor: "text-green-600", secondary: "Nouveaux ce mois" },
+        { primary: "Relances en retard", value: "7", valueColor: "text-red-600", secondary: ">5 jours sans suivi", phase: "attention" },
+        { primary: "Score moyen lead", pct: 62, pctColor: "bg-blue-500", secondary: "Scoring automatique" },
+      ]},
+      { icon: FileText, title: "Soumissions", count: 12, items: [
+        { primary: "En attente réponse", value: "5", valueColor: "text-amber-600", secondary: "Valeur: 890K$", phase: "reflexion" },
+        { primary: "Envoyées ce mois", value: "8", secondary: "Délai moyen: 3.2 jours" },
+        { primary: "Taux acceptation", pct: 42, pctColor: "bg-green-500", secondary: "Vs 38% trimestre passé", phase: "retroaction" },
+      ]},
+    ],
+    row2: [
+      { icon: BarChart3, title: "Prévisions", items: [
+        { primary: "Q2 projeté", value: "1.8M$", valueColor: "text-green-600", secondary: "Confiance: 72%" },
+        { primary: "Annuel projeté", value: "6.4M$", valueColor: "text-blue-600", secondary: "Budget: 7M$" },
+        { primary: "Écart budget", value: "-8.6%", valueColor: "text-amber-600", secondary: "Plan rattrapage actif", phase: "reflexion" },
+      ]},
+      { icon: Globe, title: "Territoires", count: 4, items: [
+        { primary: "Montréal/Laval", value: "1.4M$", valueColor: "text-green-600", secondary: "42% du pipeline" },
+        { primary: "Québec/Est", value: "680K$", secondary: "21% du pipeline" },
+        { primary: "Rive-Sud/Montérégie", value: "540K$", secondary: "17% du pipeline" },
+      ]},
+      { icon: Award, title: "Performance", items: [
+        { primary: "Atteinte quota", pct: 78, pctColor: "bg-green-500", secondary: "Q1 — 78% du 1.5M$", phase: "execution" },
+        { primary: "Deals perdus", value: "6", valueColor: "text-red-600", secondary: "Analyse: prix (3), délais (2)", phase: "attention" },
+        { primary: "Upsell existants", value: "4", valueColor: "text-green-600", secondary: "Valeur: 120K$", phase: "execution" },
+      ]},
+    ],
+    row3: [
+      { icon: ListChecks, title: "Tâches", count: 18, items: [
+        { primary: "Relance clients Boréal", value: "Urgent", valueColor: "text-red-600", secondary: "Échéance: 8 avril", urgent: true, phase: "attention" },
+        { primary: "Mise à jour CRM", value: "Normal", valueColor: "text-blue-600", secondary: "12 fiches à compléter", phase: "execution" },
+        { primary: "Proposition AutomatePro", value: "Normal", valueColor: "text-blue-600", secondary: "Échéance: 15 avril", phase: "creation" },
+      ]},
+      { icon: Calendar, title: "Agenda", items: [
+        { primary: "Revue pipeline", value: "8 avr. 9h", secondary: "Équipe ventes complète" },
+        { primary: "Client Boréal", value: "10 avr. 14h", secondary: "Renouvellement contrat", phase: "execution" },
+        { primary: "Formation CRM", value: "15 avr. 10h", secondary: "Nouveaux outils scoring" },
+      ]},
+      { icon: TrendingUp, title: "Pipeline ventes", count: 32, items: [
+        { primary: "Valeur totale", value: "3.2M$", valueColor: "text-green-600", secondary: "32 opportunités actives" },
+        { primary: "Closings ce mois", value: "4", valueColor: "text-blue-600", secondary: "Valeur: 380K$", phase: "execution" },
+        { primary: "Win rate", pct: 28, pctColor: "bg-amber-500", secondary: "Cible: 35%", phase: "reflexion" },
+      ]},
+    ],
+  },
+
+  CFOB: {
+    deptLabel: "Finances",
+    deptFullLabel: "des finances",
+    summary: "Santé financière, trésorerie et conformité comptable",
+    vitaa: [
+      { label: "Ventes", value: "287K$", delta: "A/R ouvert", up: false, icon: TrendingUp },
+      { label: "Idées", value: "6", delta: "projets actifs", up: true, icon: Lightbulb },
+      { label: "Temps", value: "160h", delta: "95% alloué", up: true, icon: Clock },
+      { label: "Argent", value: "1.2M$", delta: "cash dispo", up: true, icon: DollarSign },
+      { label: "Actifs", value: "1.8M$", delta: "nets", up: true, icon: Activity },
+    ],
+    row1: [
+      { icon: AlertTriangle, title: "Signaux", items: [
+        { primary: "Taux directeur BoC", value: "Info", valueColor: "text-blue-600", secondary: "Prochaine annonce: 16 avril" },
+        { primary: "RS&DE fédéral", value: "Nouveau", valueColor: "text-green-600", secondary: "Crédit estimé: 68K$" },
+        { primary: "Réforme fiscale QC", secondary: "Impact PME manufacturières" },
+      ]},
+      { icon: Receipt, title: "Facturation", count: 28, items: [
+        { primary: "À recevoir", value: "287K$", valueColor: "text-amber-600", secondary: "28 factures ouvertes" },
+        { primary: "En retard >30j", value: "43K$", valueColor: "text-red-600", secondary: "4 clients — suivi actif", phase: "attention" },
+        { primary: "DSO moyen", value: "38j", secondary: "Cible: <35 jours" },
+      ]},
+      { icon: Wallet, title: "Trésorerie", items: [
+        { primary: "Solde bancaire", value: "1.2M$", valueColor: "text-green-600", secondary: "Au 6 avril 2026" },
+        { primary: "Runway", value: "14 mois", valueColor: "text-green-600", secondary: "Au rythme actuel", phase: "retroaction" },
+        { primary: "Prochaine paie", value: "15 avr.", secondary: "Montant: 189K$" },
+      ]},
+    ],
+    row2: [
+      { icon: ShoppingBag, title: "Dépenses", items: [
+        { primary: "Opérationnelles", value: "187K$/mois", secondary: "Stable vs Q4" },
+        { primary: "Matières premières", value: "94K$/mois", valueColor: "text-amber-600", secondary: "+8% vs trimestre passé", phase: "attention" },
+        { primary: "Demandes en attente", value: "6", secondary: "Approbation requise", phase: "reflexion" },
+      ]},
+      { icon: BarChart3, title: "Prévisions", items: [
+        { primary: "Revenus Q2", value: "1.9M$", valueColor: "text-blue-600", secondary: "Projection optimiste" },
+        { primary: "Cash flow projeté", value: "+120K$", valueColor: "text-green-600", secondary: "Avant investissements" },
+        { primary: "Break-even mensuel", value: "260K$", secondary: "Atteint depuis Q4", phase: "retroaction" },
+      ]},
+      { icon: PieChart, title: "Budgets", count: 8, items: [
+        { primary: "Marketing", pct: 82, pctColor: "bg-green-500", secondary: "12K$ de 14.5K$ utilisé" },
+        { primary: "R&D", pct: 65, pctColor: "bg-blue-500", secondary: "32K$ de 50K$ utilisé" },
+        { primary: "Opérations", pct: 93, pctColor: "bg-amber-500", secondary: "Attention — bientôt dépassé", phase: "attention" },
+      ]},
+    ],
+    row3: [
+      { icon: ListChecks, title: "Tâches", count: 14, items: [
+        { primary: "Rapport financier Q1", value: "Urgent", valueColor: "text-red-600", secondary: "Échéance: 10 avril", urgent: true, phase: "attention" },
+        { primary: "Revoir budgets départements", value: "Normal", valueColor: "text-blue-600", secondary: "Échéance: 15 avril", phase: "reflexion" },
+        { primary: "Dossier RS&DE", value: "Normal", valueColor: "text-blue-600", secondary: "Échéance: 30 avril", phase: "creation" },
+      ]},
+      { icon: Calendar, title: "Agenda", items: [
+        { primary: "Comité audit", value: "10 avr. 10h", secondary: "Révision Q1" },
+        { primary: "Revue mensuelle", value: "12 avr. 14h", secondary: "CFO + Direction" },
+        { primary: "Clôture Q1", value: "15 avr.", secondary: "Deadline comptable", phase: "execution" },
+      ]},
+      { icon: BookOpen, title: "Grand-livre", items: [
+        { primary: "Revenus YTD", value: "3.6M$", valueColor: "text-green-600", secondary: "Sur budget de 3.5M$", phase: "retroaction" },
+        { primary: "Dépenses YTD", value: "3.1M$", secondary: "Sous budget de 3.2M$", phase: "retroaction" },
+        { primary: "EBITDA", value: "412K$", valueColor: "text-green-600", secondary: "Marge: 11.4%", phase: "retroaction" },
+      ]},
+    ],
+  },
+
+  CMOB: {
+    deptLabel: "Marketing",
+    deptFullLabel: "marketing",
+    summary: "Campagnes, contenu et génération de leads qualifiés",
+    vitaa: [
+      { label: "Ventes", value: "18", delta: "+40% leads", up: true, icon: TrendingUp },
+      { label: "Idées", value: "12", delta: "contenus", up: true, icon: Lightbulb },
+      { label: "Temps", value: "140h", delta: "85% alloué", up: true, icon: Clock },
+      { label: "Argent", value: "14.5K$", delta: "/mois budget", up: true, icon: DollarSign },
+      { label: "Actifs", value: "2,340", delta: "followers", up: true, icon: Activity },
+    ],
+    row1: [
+      { icon: AlertTriangle, title: "Signaux", items: [
+        { primary: "IA marketing B2B", value: "Tendance", valueColor: "text-blue-600", secondary: "Adoption +35% en 2026" },
+        { primary: "LinkedIn algorithme", value: "Info", valueColor: "text-blue-600", secondary: "Changements Q2 2026" },
+        { primary: "Marketing manufacturier", secondary: "Étude CEFRIO — budget moyen" },
+      ]},
+      { icon: FileText, title: "Contenu", count: 12, items: [
+        { primary: "Articles publiés", value: "8", secondary: "Ce trimestre — blog + LinkedIn", phase: "retroaction" },
+        { primary: "Vidéos témoignages", value: "3", secondary: "Clients Boréal, MetalPro, TechFab", phase: "retroaction" },
+        { primary: "En production", value: "4", valueColor: "text-blue-600", secondary: "2 articles + 2 études de cas", phase: "execution" },
+      ]},
+      { icon: Users, title: "Leads", count: 18, items: [
+        { primary: "Leads ce mois", value: "18", valueColor: "text-green-600", secondary: "Qualifiés par scoring" },
+        { primary: "Coût par lead", value: "420$", secondary: "Cible: <500$" },
+        { primary: "Conversion lead→client", pct: 12, pctColor: "bg-amber-500", secondary: "Cible: 15%", phase: "reflexion" },
+      ]},
+    ],
+    row2: [
+      { icon: Globe, title: "Réseaux sociaux", items: [
+        { primary: "LinkedIn followers", value: "2,340", secondary: "+180 ce mois" },
+        { primary: "Engagement moyen", pct: 4, pctColor: "bg-green-500", secondary: "4.2% — excellent pour B2B", phase: "retroaction" },
+        { primary: "Publications/sem.", value: "5", secondary: "Cible atteinte", phase: "retroaction" },
+      ]},
+      { icon: Search, title: "SEO / Web", items: [
+        { primary: "Trafic mensuel", value: "4,200", secondary: "+22% vs mois dernier" },
+        { primary: "Mots-clés page 1", value: "34", valueColor: "text-green-600", secondary: "Sur 120 ciblés", phase: "retroaction" },
+        { primary: "Taux rebond", value: "42%", secondary: "En amélioration (-5 pts)", phase: "reflexion" },
+      ]},
+      { icon: BarChart3, title: "Analytics", items: [
+        { primary: "ROI marketing", value: "3.2x", valueColor: "text-green-600", secondary: "Sur 12 mois glissants", phase: "retroaction" },
+        { primary: "CAC", value: "2,100$", secondary: "Coût acquisition client" },
+        { primary: "LTV/CAC ratio", value: "4.8", valueColor: "text-green-600", secondary: "Excellent — >3 cible", phase: "retroaction" },
+      ]},
+    ],
+    row3: [
+      { icon: ListChecks, title: "Tâches", count: 16, items: [
+        { primary: "Validation contenu LinkedIn", value: "Urgent", valueColor: "text-red-600", secondary: "Échéance: 8 avril", urgent: true, phase: "attention" },
+        { primary: "Rapport analytics Q1", value: "Normal", valueColor: "text-blue-600", secondary: "Échéance: 12 avril" },
+        { primary: "Préparation webinaire", value: "Normal", valueColor: "text-blue-600", secondary: "Échéance: 20 avril", phase: "creation" },
+      ]},
+      { icon: Calendar, title: "Agenda", count: 3, items: [
+        { primary: "Petit-déjeuner REAI", value: "24 avr.", secondary: "Présentation Brain Team" },
+        { primary: "Webinaire mensuel", value: "22 avr.", secondary: "Thème: diagnostic VITAA" },
+        { primary: "Salon manufacturier", value: "8-9 mai", secondary: "Kiosque réservé — Mtl" },
+      ]},
+      { icon: Megaphone, title: "Campagnes", count: 4, items: [
+        { primary: "Campagne LinkedIn Q2", pct: 45, pctColor: "bg-pink-500", secondary: "Lancement: 15 avril", phase: "execution" },
+        { primary: "Email nurturing", value: "Actif", valueColor: "text-green-600", secondary: "Taux ouverture: 34%", phase: "execution" },
+        { primary: "Webinaire VITAA", value: "Planifié", valueColor: "text-blue-600", secondary: "22 avril — 40 inscrits", phase: "creation" },
+      ]},
+    ],
+  },
+
+  CTOB: {
+    deptLabel: "Technologie",
+    deptFullLabel: "de la technologie",
+    summary: "Infrastructure technique, sprints et sécurité informatique",
+    vitaa: [
+      { label: "Ventes", value: "12K", delta: "req/jour", up: true, icon: TrendingUp },
+      { label: "Idées", value: "8", delta: "features", up: true, icon: Lightbulb },
+      { label: "Temps", value: "200h", delta: "90% alloué", up: true, icon: Clock },
+      { label: "Argent", value: "45K$", delta: "infra/mois", up: true, icon: DollarSign },
+      { label: "Actifs", value: "52", delta: "repos", up: true, icon: Activity },
+    ],
+    row1: [
+      { icon: AlertTriangle, title: "Signaux", items: [
+        { primary: "Claude 4.5 Opus", value: "Nouveau", valueColor: "text-green-600", secondary: "Évaluer pour T4 routing" },
+        { primary: "LiveKit 2.0", value: "Stable", valueColor: "text-blue-600", secondary: "Migration planifiée Q2" },
+        { primary: "React 19", secondary: "RC — tester compatibilité" },
+      ]},
+      { icon: Database, title: "Infrastructure", items: [
+        { primary: "Uptime", pct: 99, pctColor: "bg-green-500", secondary: "99.7% — 30 derniers jours", phase: "retroaction" },
+        { primary: "VPS1 (dev)", value: "OK", valueColor: "text-green-600", secondary: "CPU: 23%, RAM: 68%" },
+        { primary: "VPS2 (prod)", value: "OK", valueColor: "text-green-600", secondary: "CPU: 12%, RAM: 45%" },
+      ]},
+      { icon: Bug, title: "Bugs", count: 7, items: [
+        { primary: "Critiques", value: "0", valueColor: "text-green-600", secondary: "Aucun bloquant", phase: "retroaction" },
+        { primary: "Majeurs", value: "2", valueColor: "text-amber-600", secondary: "Voice coupure + search bar", phase: "attention" },
+        { primary: "Mineurs", value: "5", secondary: "Backlog priorisé", phase: "reflexion" },
+      ]},
+    ],
+    row2: [
+      { icon: ShieldCheck, title: "Sécurité", items: [
+        { primary: "Score sécurité", pct: 87, pctColor: "bg-green-500", secondary: "Dernier scan: 5 avril", phase: "retroaction" },
+        { primary: "Vulnérabilités", value: "1", valueColor: "text-amber-600", secondary: "Low — dépendance npm", phase: "attention" },
+        { primary: "Certificat SSL", value: "OK", valueColor: "text-green-600", secondary: "Expire: 2 juin 2026", phase: "retroaction" },
+      ]},
+      { icon: Settings, title: "DevOps", items: [
+        { primary: "Déploiements/sem.", value: "8", secondary: "CI/CD automatisé", phase: "execution" },
+        { primary: "Temps build", value: "2.3 min", secondary: "Vite + TypeScript" },
+        { primary: "Tests passants", pct: 94, pctColor: "bg-green-500", secondary: "94/100 — 6 skippés", phase: "retroaction" },
+      ]},
+      { icon: BarChart3, title: "Métriques", items: [
+        { primary: "Latence API p95", value: "180ms", valueColor: "text-green-600", secondary: "Cible: <200ms", phase: "retroaction" },
+        { primary: "Erreurs 5xx/jour", value: "3", secondary: "En baisse (-70% vs mars)" },
+        { primary: "Requêtes/jour", value: "12K", secondary: "Peak: 850/heure" },
+      ]},
+    ],
+    row3: [
+      { icon: ListChecks, title: "Tâches", count: 31, items: [
+        { primary: "Migration DB phase 2", value: "Urgent", valueColor: "text-red-600", secondary: "Deadline: 10 avril", urgent: true, phase: "attention" },
+        { primary: "API Orbit9 endpoints", value: "Normal", valueColor: "text-blue-600", secondary: "5 endpoints restants", phase: "execution" },
+        { primary: "Fix voice pipeline", value: "Urgent", valueColor: "text-red-600", secondary: "Coupure après 2 min", urgent: true, phase: "attention" },
+      ]},
+      { icon: Calendar, title: "Agenda", items: [
+        { primary: "Sprint review", value: "12 avr. 14h", secondary: "Demo + rétrospective" },
+        { primary: "Tech debt review", value: "15 avr. 10h", secondary: "Priorisation Q2", phase: "reflexion" },
+        { primary: "Infra planning", value: "18 avr. 9h", secondary: "Scale VPS3?", phase: "reflexion" },
+      ]},
+      { icon: Rocket, title: "Sprint actif", count: 12, items: [
+        { primary: "Sprint 14 — CarlOS v2", pct: 65, pctColor: "bg-violet-500", secondary: "8/12 stories complétées", phase: "execution" },
+        { primary: "Vélocité", value: "34 pts", secondary: "Moyenne: 31 pts" },
+        { primary: "Fin sprint", value: "12 avr.", secondary: "Demo vendredi 14h" },
+      ]},
+    ],
+  },
+
+  COOB: {
+    deptLabel: "Opérations",
+    deptFullLabel: "des opérations",
+    summary: "Processus, logistique, fournisseurs et contrôle qualité",
+    vitaa: [
+      { label: "Ventes", value: "91%", delta: "on-time", up: true, icon: TrendingUp },
+      { label: "Idées", value: "5", delta: "kaizen", up: true, icon: Lightbulb },
+      { label: "Temps", value: "180h", delta: "88% alloué", up: true, icon: Clock },
+      { label: "Argent", value: "18K$", delta: "/mois transport", up: true, icon: DollarSign },
+      { label: "Actifs", value: "24", delta: "fournisseurs", up: true, icon: Activity },
+    ],
+    row1: [
+      { icon: AlertTriangle, title: "Signaux", items: [
+        { primary: "Norme ISO 9001:2025", value: "Info", valueColor: "text-blue-600", secondary: "Transition requise d'ici 2027" },
+        { primary: "Tarifs douaniers US", value: "Alerte", valueColor: "text-red-600", urgent: true, secondary: "Impact fournisseurs", phase: "attention" },
+        { primary: "Lean 4.0 Québec", secondary: "Programme MESI — subvention dispo" },
+      ]},
+      { icon: Truck, title: "Logistique", items: [
+        { primary: "Livraisons à temps", pct: 91, pctColor: "bg-green-500", secondary: "Ce mois — cible: 95%" },
+        { primary: "Coût transport", value: "18K$/mois", secondary: "Stable vs Q4" },
+        { primary: "Retours/défauts", value: "1.2%", valueColor: "text-green-600", secondary: "Sous la cible de 2%", phase: "retroaction" },
+      ]},
+      { icon: Handshake, title: "Fournisseurs", count: 24, items: [
+        { primary: "Fournisseurs actifs", value: "24", secondary: "6 critiques identifiés" },
+        { primary: "Score qualité moy.", pct: 88, pctColor: "bg-green-500", secondary: "Évaluation trimestrielle", phase: "retroaction" },
+        { primary: "En retard livraison", value: "2", valueColor: "text-amber-600", secondary: "Acier Québec, PlastiCo", phase: "attention" },
+      ]},
+    ],
+    row2: [
+      { icon: Award, title: "Qualité", items: [
+        { primary: "Taux conformité", pct: 97, pctColor: "bg-green-500", secondary: "ISO 9001 maintenu", phase: "retroaction" },
+        { primary: "NCR ouverts", value: "3", valueColor: "text-amber-600", secondary: "2 mineurs, 1 majeur", phase: "attention" },
+        { primary: "Audits planifiés", value: "2", secondary: "Avril: interne + client" },
+      ]},
+      { icon: BarChart3, title: "Capacité", items: [
+        { primary: "Utilisation capacité", pct: 78, pctColor: "bg-blue-500", secondary: "Marge disponible" },
+        { primary: "Goulot identifié", value: "CNC 3 axes", secondary: "Taux utilisation: 94%", phase: "attention" },
+        { primary: "Heures dispo.", value: "320h/mois", secondary: "Avant overtime" },
+      ]},
+      { icon: Gauge, title: "Métriques", items: [
+        { primary: "Coût/unité", value: "23.40$", secondary: "Cible: 22.50$ (-4%)" },
+        { primary: "Lead time moyen", value: "8.5j", secondary: "Cible: 7 jours", phase: "reflexion" },
+        { primary: "Taux rebut", value: "2.1%", valueColor: "text-amber-600", secondary: "Cible: <1.5%", phase: "attention" },
+      ]},
+    ],
+    row3: [
+      { icon: ListChecks, title: "Tâches", count: 22, items: [
+        { primary: "Audit 5S ligne B", value: "Urgent", valueColor: "text-red-600", secondary: "Échéance: 8 avril", urgent: true, phase: "attention" },
+        { primary: "Renouveler contrat transport", value: "Normal", valueColor: "text-blue-600", secondary: "Expire: 30 avril", phase: "reflexion" },
+        { primary: "Mise à jour procédures", value: "Normal", valueColor: "text-blue-600", secondary: "3 SOP à réviser", phase: "execution" },
+      ]},
+      { icon: Calendar, title: "Agenda", items: [
+        { primary: "Audit interne ISO", value: "14 avr.", secondary: "2 jours — production + logistique" },
+        { primary: "Revue fournisseurs", value: "20 avr.", secondary: "6 fournisseurs critiques" },
+        { primary: "Kaizen workshop", value: "22 avr.", secondary: "Ligne A — assemblage" },
+      ]},
+      { icon: Settings, title: "Processus", count: 8, items: [
+        { primary: "Processus documentés", pct: 72, pctColor: "bg-orange-500", secondary: "26/36 complétés", phase: "execution" },
+        { primary: "Efficacité globale", pct: 84, pctColor: "bg-green-500", secondary: "OEE — cible: 85%" },
+        { primary: "Améliorations actives", value: "5", secondary: "Kaizen en cours", phase: "execution" },
+      ]},
+    ],
+  },
+
+  CPOB: {
+    deptLabel: "Production",
+    deptFullLabel: "de la production",
+    summary: "Lignes de production, maintenance, inventaire et commandes",
+    vitaa: [
+      { label: "Ventes", value: "8", delta: "commandes", up: true, icon: TrendingUp },
+      { label: "Idées", value: "3", delta: "améliorations", up: true, icon: Lightbulb },
+      { label: "Temps", value: "720h", delta: "production", up: true, icon: Clock },
+      { label: "Argent", value: "340K$", delta: "inventaire", up: true, icon: DollarSign },
+      { label: "Actifs", value: "3", delta: "lignes", up: true, icon: Activity },
+    ],
+    row1: [
+      { icon: AlertTriangle, title: "Signaux", items: [
+        { primary: "Robot collaboratif", value: "Étude", valueColor: "text-blue-600", secondary: "Universal Robots UR10e", phase: "reflexion" },
+        { primary: "Industrie 4.0", secondary: "Programme MESI — capteurs IoT" },
+        { primary: "Formation CNESST", value: "Requis", valueColor: "text-amber-600", secondary: "Renouvellement annuel", phase: "attention" },
+      ]},
+      { icon: Award, title: "Qualité", items: [
+        { primary: "First pass yield", pct: 96, pctColor: "bg-green-500", secondary: "Cible: 95%", phase: "retroaction" },
+        { primary: "PPM défauts", value: "340", secondary: "En baisse — cible: <500", phase: "retroaction" },
+        { primary: "Réclamations client", value: "1", secondary: "En traitement — MetalPro", phase: "execution" },
+      ]},
+      { icon: Wrench, title: "Maintenance", count: 4, items: [
+        { primary: "Préventive planifiée", value: "4", secondary: "Ce mois", phase: "execution" },
+        { primary: "MTBF", value: "720h", valueColor: "text-green-600", secondary: "En hausse (+80h vs Q4)", phase: "retroaction" },
+        { primary: "Pièces en commande", value: "3", secondary: "Délai: 5-8 jours", phase: "reflexion" },
+      ]},
+    ],
+    row2: [
+      { icon: Package, title: "Inventaire", items: [
+        { primary: "Matières premières", value: "340K$", secondary: "Rotation: 6x/an" },
+        { primary: "Produits finis", value: "180K$", secondary: "12 jours de stock" },
+        { primary: "Seuils critiques", value: "2 items", valueColor: "text-red-600", secondary: "Aluminium + joints", phase: "attention" },
+      ]},
+      { icon: ClipboardCheck, title: "Commandes", count: 18, items: [
+        { primary: "En production", value: "8", secondary: "Valeur: 420K$", phase: "execution" },
+        { primary: "En attente", value: "6", secondary: "Matériel en commande", phase: "reflexion" },
+        { primary: "Retard", value: "1", valueColor: "text-red-600", secondary: "Client Boréal — 3j", phase: "attention" },
+      ]},
+      { icon: BarChart3, title: "Indicateurs", items: [
+        { primary: "OEE global", pct: 84, pctColor: "bg-green-500", secondary: "Cible: 85%" },
+        { primary: "Takt time", value: "4.2 min", secondary: "Vs cible: 4.0 min" },
+        { primary: "Overtime", value: "8%", valueColor: "text-amber-600", secondary: "Cible: <5%", phase: "attention" },
+      ]},
+    ],
+    row3: [
+      { icon: ListChecks, title: "Tâches", count: 20, items: [
+        { primary: "Calibration CNC #4", value: "Urgent", valueColor: "text-red-600", secondary: "Échéance: 8 avril", urgent: true, phase: "attention" },
+        { primary: "Formation nouvel opérateur", value: "Normal", valueColor: "text-blue-600", secondary: "Semaine du 14 avril", phase: "execution" },
+        { primary: "5S ligne B", value: "Planifié", valueColor: "text-blue-600", secondary: "Audit: 20 avril", phase: "creation" },
+      ]},
+      { icon: Calendar, title: "Agenda", items: [
+        { primary: "Maintenance CNC #2", value: "10 avr.", secondary: "Préventive — 4h arrêt", phase: "execution" },
+        { primary: "Audit qualité client", value: "14 avr.", secondary: "MetalPro — ligne A" },
+        { primary: "Réunion production", value: "Lun. 7h30", secondary: "Revue hebdomadaire" },
+      ]},
+      { icon: Factory, title: "Lignes", count: 3, items: [
+        { primary: "Ligne A — Assemblage", pct: 92, pctColor: "bg-green-500", secondary: "Plein régime", phase: "execution" },
+        { primary: "Ligne B — Usinage", pct: 78, pctColor: "bg-blue-500", secondary: "Capacité disponible" },
+        { primary: "Ligne C — Finition", pct: 65, pctColor: "bg-amber-500", secondary: "Maintenance préventive 10 avr.", phase: "reflexion" },
+      ]},
+    ],
+  },
+
+  CHROB: {
+    deptLabel: "Ressources Humaines",
+    deptFullLabel: "des ressources humaines",
+    summary: "Effectifs, recrutement, formation et climat organisationnel",
+    vitaa: [
+      { label: "Ventes", value: "47", delta: "employés", up: true, icon: TrendingUp },
+      { label: "Idées", value: "3", delta: "postes ouverts", up: false, icon: Lightbulb },
+      { label: "Temps", value: "240h", delta: "formation Q1", up: true, icon: Clock },
+      { label: "Argent", value: "189K$", delta: "/mois paie", up: true, icon: DollarSign },
+      { label: "Actifs", value: "12", delta: "certifications", up: true, icon: Activity },
+    ],
+    row1: [
+      { icon: AlertTriangle, title: "Signaux", items: [
+        { primary: "Pénurie main-d'œuvre QC", value: "Alerte", valueColor: "text-red-600", urgent: true, secondary: "Secteur manufacturier -8%", phase: "attention" },
+        { primary: "Loi 96 francisation", value: "Info", valueColor: "text-blue-600", secondary: "Nouvelles obligations 2026" },
+        { primary: "Tendance télétravail", secondary: "Hybride 3j/sem. — norme PME" },
+      ]},
+      { icon: Search, title: "Recrutement", count: 3, items: [
+        { primary: "Postes ouverts", value: "3", secondary: "Machiniste, soudeur, dev", phase: "execution" },
+        { primary: "Candidatures actives", value: "12", secondary: "Pipeline recrutement" },
+        { primary: "Délai embauche moy.", value: "28j", secondary: "Cible: <21 jours", phase: "reflexion" },
+      ]},
+      { icon: GraduationCap, title: "Formation", items: [
+        { primary: "Heures formation Q1", value: "240h", secondary: "Budget: 18K$ / 25K$", phase: "retroaction" },
+        { primary: "Certifications actives", value: "12", secondary: "CNESST, ISO, soudure", phase: "retroaction" },
+        { primary: "Plan développement", pct: 60, pctColor: "bg-blue-500", secondary: "28/47 employés couverts", phase: "execution" },
+      ]},
+    ],
+    row2: [
+      { icon: DollarSign, title: "Paie", items: [
+        { primary: "Masse salariale", value: "189K$/mois", secondary: "47 employés" },
+        { primary: "Avantages sociaux", value: "22K$/mois", secondary: "Assurances + REER" },
+        { primary: "Heures supp.", value: "8%", valueColor: "text-amber-600", secondary: "Production — cible: <5%", phase: "attention" },
+      ]},
+      { icon: Shield, title: "Conformité", items: [
+        { primary: "CNESST", value: "Conforme", valueColor: "text-green-600", secondary: "Dernier audit: mars", phase: "retroaction" },
+        { primary: "Normes du travail", value: "Conforme", valueColor: "text-green-600", secondary: "Prochaine vérification: Q3", phase: "retroaction" },
+        { primary: "Équité salariale", value: "En cours", valueColor: "text-blue-600", secondary: "Exercice 2026", phase: "execution" },
+      ]},
+      { icon: Heart, title: "Climat", items: [
+        { primary: "Satisfaction globale", pct: 78, pctColor: "bg-green-500", secondary: "Sondage Q1 2026", phase: "retroaction" },
+        { primary: "Engagement", pct: 72, pctColor: "bg-blue-500", secondary: "En hausse (+4 pts)" },
+        { primary: "Absentéisme", value: "3.2%", valueColor: "text-green-600", secondary: "Sous la cible de 4%", phase: "retroaction" },
+      ]},
+    ],
+    row3: [
+      { icon: ListChecks, title: "Tâches", count: 12, items: [
+        { primary: "Entrevues machiniste", value: "Urgent", valueColor: "text-red-600", secondary: "3 candidats cette semaine", urgent: true, phase: "attention" },
+        { primary: "Évaluation mi-année", value: "Planifié", valueColor: "text-blue-600", secondary: "Début: 15 avril", phase: "creation" },
+        { primary: "Mise à jour manuel", value: "Normal", valueColor: "text-blue-600", secondary: "Politique télétravail" },
+      ]},
+      { icon: Calendar, title: "Agenda", items: [
+        { primary: "Entrevues machiniste", value: "8-10 avr.", secondary: "3 candidats shortlistés", phase: "execution" },
+        { primary: "Formation sécurité", value: "15 avr.", secondary: "Production — obligatoire" },
+        { primary: "5 à 7 équipe", value: "25 avr.", secondary: "Team building mensuel" },
+      ]},
+      { icon: Users, title: "Effectifs", items: [
+        { primary: "Total employés", value: "47", secondary: "44 temps plein + 3 temps partiel" },
+        { primary: "Roulement annuel", value: "8%", valueColor: "text-green-600", secondary: "Industrie: 12%", phase: "retroaction" },
+        { primary: "Ancienneté moyenne", value: "4.2 ans", secondary: "En hausse (+0.5 an)", phase: "retroaction" },
+      ]},
+    ],
+  },
+
+  CINOB: {
+    deptLabel: "Innovation & R&D",
+    deptFullLabel: "de l'innovation & R&D",
+    summary: "Projets de recherche, brevets, veille technologique et crédits RS&DE",
+    vitaa: [
+      { label: "Ventes", value: "3", delta: "projets R&D", up: true, icon: TrendingUp },
+      { label: "Idées", value: "8", delta: "idées soumises", up: true, icon: Lightbulb },
+      { label: "Temps", value: "160h", delta: "R&D", up: true, icon: Clock },
+      { label: "Argent", value: "200K$", delta: "budget annuel", up: true, icon: DollarSign },
+      { label: "Actifs", value: "2", delta: "brevets", up: true, icon: Activity },
+    ],
+    row1: [
+      { icon: AlertTriangle, title: "Signaux", items: [
+        { primary: "IA manufacturière", value: "Tendance", valueColor: "text-blue-600", secondary: "Adoption +40% en 2026" },
+        { primary: "Crédits RS&DE", value: "Info", valueColor: "text-green-600", secondary: "Total estimé: 92K$" },
+        { primary: "Industrie 4.0 Québec", secondary: "Programme MESI — capteurs IoT" },
+      ]},
+      { icon: FileLock, title: "Brevets", count: 2, items: [
+        { primary: "BTML framework", value: "Déposé", valueColor: "text-blue-600", secondary: "Demande provisoire — mars 2026", phase: "retroaction" },
+        { primary: "Diagnostic VITAA", value: "En prep.", valueColor: "text-amber-600", secondary: "Consultation avocat brevets", phase: "creation" },
+        { primary: "Portfolio PI", value: "2", secondary: "Valeur estimée: 180K$" },
+      ]},
+      { icon: Search, title: "Veille techno", items: [
+        { primary: "Articles suivis", value: "34", secondary: "IA, IoT, vision par ordinateur" },
+        { primary: "Brevets concurrents", value: "8", secondary: "Monitoring mensuel" },
+        { primary: "Rapport mensuel", value: "Publié", valueColor: "text-green-600", secondary: "Mars 2026 disponible", phase: "retroaction" },
+      ]},
+    ],
+    row2: [
+      { icon: DollarSign, title: "Budget R&D", items: [
+        { primary: "Budget annuel", value: "200K$", secondary: "Dépensé: 68K$ (Q1)" },
+        { primary: "RS&DE admissible", value: "148K$", valueColor: "text-green-600", secondary: "Crédit estimé: 68K$", phase: "retroaction" },
+        { primary: "Subventions", value: "50K$", valueColor: "text-green-600", secondary: "MESI confirmé", phase: "retroaction" },
+      ]},
+      { icon: Handshake, title: "Partenariats", count: 3, items: [
+        { primary: "Université Laval", value: "Actif", valueColor: "text-green-600", secondary: "Projet IA manufacturing", phase: "execution" },
+        { primary: "CRIQ", value: "Actif", valueColor: "text-green-600", secondary: "Essais matériaux", phase: "execution" },
+        { primary: "NRC-IRAP", value: "En discussion", valueColor: "text-blue-600", secondary: "Financement R&D fédéral", phase: "reflexion" },
+      ]},
+      { icon: Lightbulb, title: "Pipeline idées", count: 8, items: [
+        { primary: "Idées soumises", value: "8", secondary: "Ce trimestre — employés", phase: "creation" },
+        { primary: "En évaluation", value: "3", secondary: "Comité innovation", phase: "reflexion" },
+        { primary: "Implémentées", value: "2", valueColor: "text-green-600", secondary: "Kaizen + outil interne", phase: "retroaction" },
+      ]},
+    ],
+    row3: [
+      { icon: ListChecks, title: "Tâches", count: 10, items: [
+        { primary: "Rapport RS&DE Q1", value: "Urgent", valueColor: "text-red-600", secondary: "Échéance: 15 avril", urgent: true, phase: "attention" },
+        { primary: "POC capteurs ligne A", value: "Normal", valueColor: "text-blue-600", secondary: "Installation test", phase: "execution" },
+        { primary: "Benchmark outils IA", value: "Normal", valueColor: "text-blue-600", secondary: "Évaluation 3 solutions" },
+      ]},
+      { icon: Calendar, title: "Agenda", items: [
+        { primary: "Comité R&D", value: "12 avr. 13h", secondary: "Revue projets trimestrielle" },
+        { primary: "Visite U. Laval", value: "18 avr.", secondary: "Lab IA manufacturing" },
+        { primary: "Deadline RS&DE", value: "15 avr.", secondary: "Documents comptables", phase: "execution" },
+      ]},
+      { icon: Rocket, title: "Projets R&D", count: 3, items: [
+        { primary: "CarlOS v2 — IA", pct: 65, pctColor: "bg-rose-500", secondary: "Phase: prototype avancé", phase: "execution" },
+        { primary: "Capteurs IoT usine", pct: 30, pctColor: "bg-blue-500", secondary: "Phase: étude faisabilité", phase: "reflexion" },
+        { primary: "Vision qualité auto", pct: 15, pctColor: "bg-amber-500", secondary: "Phase: recherche", phase: "creation" },
+      ]},
+    ],
+  },
+
+  CSOB: {
+    deptLabel: "Stratégie",
+    deptFullLabel: "de la stratégie",
+    summary: "Positionnement concurrentiel, alliances stratégiques et expansion",
+    vitaa: [
+      { label: "Ventes", value: "4.2%", delta: "part marché", up: true, icon: TrendingUp },
+      { label: "Idées", value: "3", delta: "alliances", up: true, icon: Lightbulb },
+      { label: "Temps", value: "120h", delta: "stratégie", up: true, icon: Clock },
+      { label: "Argent", value: "0$", delta: "pas de budget propre", up: true, icon: DollarSign },
+      { label: "Actifs", value: "14", delta: "risques suivis", up: false, icon: Activity },
+    ],
+    row1: [
+      { icon: AlertTriangle, title: "Signaux", items: [
+        { primary: "Budget fédéral 2026", value: "Info", valueColor: "text-blue-600", secondary: "Programmes PME manufacturing" },
+        { primary: "IA générative B2B", secondary: "McKinsey: +23% productivité" },
+        { primary: "Nearshoring trend", secondary: "Opportunité: US → QC" },
+      ]},
+      { icon: Eye, title: "Concurrents", count: 5, items: [
+        { primary: "Acme Solutions", value: "Alerte", valueColor: "text-red-600", urgent: true, secondary: "Nouveau produit — mars", phase: "attention" },
+        { primary: "TechFab QC", value: "Stable", valueColor: "text-blue-600", secondary: "Même segment" },
+        { primary: "Mouvements détectés", value: "3", secondary: "Ce trimestre" },
+      ]},
+      { icon: Handshake, title: "Alliances", count: 4, items: [
+        { primary: "REAI", value: "Actif", valueColor: "text-green-600", secondary: "130+ manufacturiers", phase: "execution" },
+        { primary: "Partenariat distributeur", value: "Négociation", valueColor: "text-amber-600", secondary: "AutomatePro — exclusivité", phase: "reflexion" },
+        { primary: "Consortium IA", value: "Membre", secondary: "MILA + IVADO", phase: "retroaction" },
+      ]},
+    ],
+    row2: [
+      { icon: Globe, title: "Expansion", items: [
+        { primary: "Expansion Laval", value: "En cours", valueColor: "text-blue-600", secondary: "Ouverture Q3 2026", phase: "execution" },
+        { primary: "Ontario", value: "Étude", valueColor: "text-amber-600", secondary: "Marché: 2,400 PME cibles", phase: "reflexion" },
+        { primary: "Export US", value: "Phase 0", secondary: "Veille réglementaire" },
+      ]},
+      { icon: AlertTriangle, title: "Risques", count: 14, items: [
+        { primary: "Tarifs US", value: "Élevé", valueColor: "text-red-600", secondary: "Impact: 8% revenus", phase: "attention" },
+        { primary: "Pénurie main-d'œuvre", value: "Moyen", valueColor: "text-amber-600", secondary: "3 postes ouverts", phase: "attention" },
+        { primary: "Concentration clients", value: "Moyen", valueColor: "text-amber-600", secondary: "Top 3 = 35% revenus", phase: "reflexion" },
+      ]},
+      { icon: BarChart3, title: "Indicateurs", items: [
+        { primary: "Score stratégique", pct: 76, pctColor: "bg-green-500", secondary: "Composite — 8 dimensions" },
+        { primary: "Alignement équipe", pct: 82, pctColor: "bg-green-500", secondary: "Sondage trimestriel", phase: "retroaction" },
+        { primary: "Agilité décisionnelle", value: "3.2j", secondary: "Temps moyen décision" },
+      ]},
+    ],
+    row3: [
+      { icon: ListChecks, title: "Tâches", count: 9, items: [
+        { primary: "Analyse impact tarifs", value: "Urgent", valueColor: "text-red-600", secondary: "Scénarios pour le CA", urgent: true, phase: "attention" },
+        { primary: "Étude Ontario", value: "Normal", valueColor: "text-blue-600", secondary: "Phase 1 — desk research", phase: "reflexion" },
+        { primary: "Mise à jour SWOT", value: "Normal", valueColor: "text-blue-600", secondary: "Version Q2" },
+      ]},
+      { icon: Calendar, title: "Agenda", items: [
+        { primary: "Comité stratégique", value: "18 avr. 9h", secondary: "Revue portefeuille", phase: "reflexion" },
+        { primary: "Board meeting", value: "12 avr.", secondary: "Présentation expansion" },
+        { primary: "Veille concurrentielle", value: "Hebdo lun.", secondary: "Rapport automatisé" },
+      ]},
+      { icon: Compass, title: "Positionnement", items: [
+        { primary: "Part de marché QC", value: "4.2%", secondary: "Manufacturiers automatisés" },
+        { primary: "Avantage concurrentiel", value: "IA+Humain", secondary: "Positionnement unique", phase: "retroaction" },
+        { primary: "NPS marché", pct: 72, pctColor: "bg-green-500", secondary: "Enquête Q1 2026", phase: "retroaction" },
+      ]},
+    ],
+  },
+
+  CLOB: {
+    deptLabel: "Juridique",
+    deptFullLabel: "juridique",
+    summary: "Contrats, conformité réglementaire, propriété intellectuelle et litiges",
+    vitaa: [
+      { label: "Ventes", value: "34", delta: "contrats actifs", up: true, icon: TrendingUp },
+      { label: "Idées", value: "1", delta: "litige", up: false, icon: Lightbulb },
+      { label: "Temps", value: "80h", delta: "juridique", up: true, icon: Clock },
+      { label: "Argent", value: "34K$", delta: "frais YTD", up: true, icon: DollarSign },
+      { label: "Actifs", value: "287", delta: "documents", up: true, icon: Activity },
+    ],
+    row1: [
+      { icon: AlertTriangle, title: "Signaux", items: [
+        { primary: "Loi C-27 fédérale", value: "Suivi", valueColor: "text-blue-600", secondary: "Impact données IA" },
+        { primary: "Tarifs douaniers US", value: "Alerte", valueColor: "text-red-600", urgent: true, secondary: "Révision contrats export", phase: "attention" },
+        { primary: "Réforme droit travail QC", secondary: "Projet de loi en cours" },
+      ]},
+      { icon: Shield, title: "Conformité", items: [
+        { primary: "LPRPDE", pct: 85, pctColor: "bg-green-500", secondary: "Audit mars — conforme", phase: "retroaction" },
+        { primary: "Loi 25 (QC)", pct: 90, pctColor: "bg-green-500", secondary: "PIA complété", phase: "retroaction" },
+        { primary: "CNESST/SST", value: "Conforme", valueColor: "text-green-600", secondary: "Prochaine inspection: Q3", phase: "retroaction" },
+      ]},
+      { icon: Gavel, title: "Litiges", count: 1, items: [
+        { primary: "Litiges actifs", value: "1", secondary: "Fournisseur — vice caché", phase: "attention" },
+        { primary: "Montant en jeu", value: "45K$", secondary: "Médiation en cours", phase: "execution" },
+        { primary: "Provision comptable", value: "20K$", secondary: "Risque modéré" },
+      ]},
+    ],
+    row2: [
+      { icon: Lock, title: "Propriété intel.", count: 4, items: [
+        { primary: "Marques déposées", value: "2", secondary: "Brain Team + Usine Bleue", phase: "retroaction" },
+        { primary: "Brevets", value: "1 déposé", valueColor: "text-blue-600", secondary: "BTML framework", phase: "execution" },
+        { primary: "NDA actifs", value: "8", secondary: "Clients + partenaires" },
+      ]},
+      { icon: Crown, title: "Gouvernance", items: [
+        { primary: "Structure corporative", value: "À jour", valueColor: "text-green-600", secondary: "REQ renouvelé", phase: "retroaction" },
+        { primary: "Convention actionnaires", value: "V3", secondary: "Mise à jour: février 2026", phase: "retroaction" },
+        { primary: "Registre résolutions", value: "À jour", valueColor: "text-green-600", secondary: "12 résolutions 2026", phase: "retroaction" },
+      ]},
+      { icon: Database, title: "Registre", items: [
+        { primary: "Documents archivés", value: "287", secondary: "Classement numérique" },
+        { primary: "Échéances actives", value: "14", secondary: "Renouvellements + deadlines" },
+        { primary: "Templates légaux", value: "12", secondary: "NDA, contrat, bail, etc." },
+      ]},
+    ],
+    row3: [
+      { icon: ListChecks, title: "Tâches", count: 8, items: [
+        { primary: "Renouvellement contrat Boréal", value: "Urgent", valueColor: "text-red-600", secondary: "Expire: 30 avril", urgent: true, phase: "attention" },
+        { primary: "Revue NDA partenaire", value: "Normal", valueColor: "text-blue-600", secondary: "AutomatePro", phase: "reflexion" },
+        { primary: "Mise à jour politique PI", value: "Normal", valueColor: "text-blue-600", secondary: "Inventions employés" },
+      ]},
+      { icon: Calendar, title: "Agenda", items: [
+        { primary: "Médiation litige", value: "14 avr.", secondary: "Avocat Me Tremblay", phase: "execution" },
+        { primary: "Consultation PI", value: "18 avr.", secondary: "Brevet #2 — VITAA", phase: "reflexion" },
+        { primary: "Assemblée annuelle", value: "30 avr.", secondary: "Résolutions + PV" },
+      ]},
+      { icon: FileText, title: "Contrats", count: 34, items: [
+        { primary: "Contrats actifs", value: "34", secondary: "Clients + fournisseurs" },
+        { primary: "Renouvellements Q2", value: "6", valueColor: "text-amber-600", secondary: "2 critiques — avril", phase: "attention" },
+        { primary: "En négociation", value: "3", secondary: "Valeur: 280K$", phase: "execution" },
+      ]},
+    ],
+  },
+
+  CISOB: {
+    deptLabel: "Sécurité",
+    deptFullLabel: "de la sécurité",
+    summary: "Cybersécurité, contrôle d'accès, gestion des incidents et conformité",
+    vitaa: [
+      { label: "Ventes", value: "87", delta: "/100 score", up: true, icon: TrendingUp },
+      { label: "Idées", value: "0", delta: "incidents", up: true, icon: Lightbulb },
+      { label: "Temps", value: "100h", delta: "sécu/mois", up: true, icon: Clock },
+      { label: "Argent", value: "420$", delta: "/employé", up: true, icon: DollarSign },
+      { label: "Actifs", value: "52", delta: "comptes", up: true, icon: Activity },
+    ],
+    row1: [
+      { icon: AlertTriangle, title: "Signaux", items: [
+        { primary: "Ransomware PME", value: "Alerte", valueColor: "text-red-600", urgent: true, secondary: "Hausse +60% au Canada", phase: "attention" },
+        { primary: "Zero Trust architecture", value: "Tendance", valueColor: "text-blue-600", secondary: "Adoption croissante PME" },
+        { primary: "Loi 25 échéances", secondary: "Prochaine phase: septembre 2026" },
+      ]},
+      { icon: Lock, title: "Accès", items: [
+        { primary: "Comptes actifs", value: "52", secondary: "47 employés + 5 services" },
+        { primary: "MFA activé", pct: 94, pctColor: "bg-green-500", secondary: "49/52 comptes", phase: "retroaction" },
+        { primary: "Revue accès", value: "Planifiée", valueColor: "text-blue-600", secondary: "Prochaine: 15 avril", phase: "reflexion" },
+      ]},
+      { icon: AlertTriangle, title: "Incidents", count: 0, items: [
+        { primary: "Incidents ce mois", value: "0", valueColor: "text-green-600", secondary: "Aucun incident", phase: "retroaction" },
+        { primary: "Tentatives bloquées", value: "127", secondary: "Firewall + rate limiting" },
+        { primary: "Phishing détecté", value: "3", secondary: "Emails bloqués cette semaine" },
+      ]},
+    ],
+    row2: [
+      { icon: Shield, title: "Conformité", items: [
+        { primary: "SOC 2 Type I", value: "En cours", valueColor: "text-blue-600", secondary: "Audit prévu Q3", phase: "execution" },
+        { primary: "LPRPDE / Loi 25", pct: 90, pctColor: "bg-green-500", secondary: "Données personnelles", phase: "retroaction" },
+        { primary: "Politique BYOD", value: "Active", valueColor: "text-green-600", secondary: "12 appareils gérés", phase: "retroaction" },
+      ]},
+      { icon: Bug, title: "Vulnérabilités", items: [
+        { primary: "Critiques", value: "0", valueColor: "text-green-600", secondary: "Scan: 5 avril", phase: "retroaction" },
+        { primary: "Élevées", value: "1", valueColor: "text-amber-600", secondary: "npm dependency — fix planifié", phase: "attention" },
+        { primary: "Patch cadence", value: "48h", valueColor: "text-green-600", secondary: "Moyenne critique → déployé", phase: "retroaction" },
+      ]},
+      { icon: GraduationCap, title: "Formation", items: [
+        { primary: "Sensibilisation sécu.", pct: 82, pctColor: "bg-green-500", secondary: "39/47 formés ce trimestre", phase: "execution" },
+        { primary: "Score test phishing", pct: 88, pctColor: "bg-green-500", secondary: "Dernier test: mars", phase: "retroaction" },
+        { primary: "Prochaine session", value: "22 avr.", secondary: "Nouvelles menaces IA" },
+      ]},
+    ],
+    row3: [
+      { icon: ListChecks, title: "Tâches", count: 10, items: [
+        { primary: "Revue accès trimestrielle", value: "Urgent", valueColor: "text-red-600", secondary: "Échéance: 15 avril", urgent: true, phase: "attention" },
+        { primary: "Patch npm dependency", value: "Normal", valueColor: "text-blue-600", secondary: "Vulnérabilité élevée", phase: "execution" },
+        { primary: "Test backup restore", value: "Planifié", valueColor: "text-blue-600", secondary: "Test mensuel", phase: "creation" },
+      ]},
+      { icon: Calendar, title: "Agenda", items: [
+        { primary: "Revue accès", value: "15 avr.", secondary: "Tous les comptes" },
+        { primary: "Test intrusion", value: "20 avr.", secondary: "Pentest externe annuel" },
+        { primary: "Formation phishing", value: "22 avr.", secondary: "Simulation mensuelle" },
+      ]},
+      { icon: ShieldCheck, title: "Posture sécurité", items: [
+        { primary: "Score global", pct: 87, pctColor: "bg-green-500", secondary: "Dernière évaluation: 5 avril", phase: "retroaction" },
+        { primary: "Politique sécurité", value: "V4", valueColor: "text-green-600", secondary: "Mise à jour: mars 2026", phase: "retroaction" },
+        { primary: "Formation complétée", pct: 82, pctColor: "bg-green-500", secondary: "39/47 employés", phase: "execution" },
+      ]},
+    ],
+  },
+
+  // ══════════════════════════════════════════
+  // ORBIT9 — Dashboard réseau collaboratif
+  // Même pattern que les départements mais pour le réseau inter-entreprises
+  // ══════════════════════════════════════════
+  ORBIT9: {
+    deptLabel: "Orbit9",
+    deptFullLabel: "du réseau collaboratif",
+    summary: "Tour de contrôle du réseau — cellules, jumelages, intelligence et économie collaborative",
+    vitaa: [
+      { label: "Cellules", value: "4", delta: "+1 ce mois", up: true, icon: Atom },
+      { label: "Membres", value: "18", delta: "+3 ce trimestre", up: true, icon: Users },
+      { label: "Matches", value: "7", delta: "+2 cette semaine", up: true, icon: Handshake },
+      { label: "Score VITAA", value: "76%", delta: "+5 pts", up: true, icon: Activity },
+      { label: "ROI Réseau", value: "59K$", delta: "+22% Q1", up: true, icon: TrendingUp },
+    ],
+    row1: [
+      { icon: AlertTriangle, title: "Signaux & Alertes", count: 5, items: [
+        { primary: "Score confiance MetalPro", value: "-8%", valueColor: "text-red-600", urgent: true, secondary: "Trust Engine — baisse détectée ce mois", phase: "attention" },
+        { primary: "Contrat Cellule Ops", value: "Expire 30 avr.", valueColor: "text-amber-600", secondary: "Renouvellement requis — LogiTrans", phase: "attention" },
+        { primary: "Ghost Delegate", value: "2 requêtes", valueColor: "text-blue-600", secondary: "Négociations en attente d'approbation", phase: "reflexion" },
+      ]},
+      { icon: Star, title: "Cellule vedette", items: [
+        { primary: "Les Titans", value: "87%", valueColor: "text-green-600", secondary: "Score le plus élevé — 3 leads convertis", phase: "retroaction" },
+        { primary: "ROI cellule", value: "12K$", valueColor: "text-emerald-600", secondary: "Ce trimestre — en hausse +18%", phase: "execution" },
+        { primary: "Distinction", value: "Or", valueColor: "text-amber-600", secondary: "Badge confiance — 6 mois consécutifs", phase: "retroaction" },
+      ]},
+      { icon: Handshake, title: "Matches en cours", count: 3, items: [
+        { primary: "Usine Bleue ↔ MetalPro", pct: 87, pctColor: "bg-green-500", secondary: "Automatisation — appel d'offres 2.1M$", phase: "execution" },
+        { primary: "Usine Bleue ↔ TechFab", pct: 73, pctColor: "bg-blue-500", secondary: "Distribution équipements", phase: "reflexion" },
+        { primary: "Cellule Ops ↔ LogiTrans", pct: 65, pctColor: "bg-amber-500", secondary: "Supply chain mutualisée", phase: "observation" },
+      ]},
+    ],
+    row2: [
+      { icon: Newspaper, title: "Fil d'activité", count: 8, items: [
+        { primary: "3 leads qualifiés (Rich)", value: "Bot", valueColor: "text-blue-600", secondary: "Scoring automatique cette semaine", phase: "execution" },
+        { primary: "Contrat Éco+ signé", value: "Humain", valueColor: "text-emerald-600", secondary: "Cellule Les Titans — 45K$", phase: "retroaction" },
+        { primary: "Match Orbit9 trouvé", value: "B2B", valueColor: "text-violet-600", secondary: "Simone → Rich — score 87%", phase: "reflexion" },
+      ]},
+      { icon: Factory, title: "Intelligence industrie", count: 5, items: [
+        { primary: "Adoption IA manufacturing", value: "43%", valueColor: "text-green-600", secondary: "+39 pts depuis 2019 — STIQ/MEIE", phase: "retroaction" },
+        { primary: "Programme Grand V (IQ)", value: "1 G$", valueColor: "text-blue-600", secondary: "225 projets financés en 5 mois", phase: "execution" },
+        { primary: "Productivité QC", value: "65.90$/h", valueColor: "text-amber-600", secondary: "-10.5% vs Ontario — écart persistant", phase: "attention" },
+      ]},
+      { icon: Calendar, title: "Prochains événements", count: 4, items: [
+        { primary: "Meetup Pionniers #1", value: "15 avr.", secondary: "Montréal — 9 participants", phase: "execution" },
+        { primary: "Webinaire VITAA 101", value: "22 avr.", secondary: "Virtuel — 25 inscrits", phase: "creation" },
+        { primary: "Hackathon Bot-to-Bot", value: "5 mai", secondary: "Hybride — Québec — 18 équipes", phase: "creation" },
+      ]},
+    ],
+    row3: [
+      { icon: Rocket, title: "Pionniers", count: 9, items: [
+        { primary: "Sièges occupés", value: "3/9", valueColor: "text-blue-600", secondary: "33% rempli — 6 places restantes", phase: "execution" },
+        { primary: "Prochaine cible", value: "Distrib.", valueColor: "text-amber-600", secondary: "Distributeur automatisation recherché", phase: "reflexion" },
+        { primary: "Tarif pionnier", value: "1,350$/m", secondary: "Exclusivité sectorielle garantie", phase: "retroaction" },
+      ]},
+      { icon: DollarSign, title: "Économie réseau", items: [
+        { primary: "Revenus générés", value: "47K$", valueColor: "text-emerald-600", secondary: "Ce trimestre — via cellules actives", phase: "retroaction" },
+        { primary: "Coûts évités", value: "12K$", valueColor: "text-blue-600", secondary: "Mutualisation achats & ressources", phase: "retroaction" },
+        { primary: "TimeTokens distribués", value: "2,340 UT", secondary: "+180 ce mois — économie active", phase: "execution" },
+      ]},
+      { icon: Bot, title: "Ghost Delegate", items: [
+        { primary: "Statut agent", value: "Actif", valueColor: "text-green-600", secondary: "Pre-flight check: OK", phase: "execution" },
+        { primary: "Négociations autonomes", value: "3", valueColor: "text-blue-600", secondary: "Ce mois — 2 conclues, 1 en cours", phase: "execution" },
+        { primary: "Briefing matinal", value: "Prêt", valueColor: "text-green-600", secondary: "Prochain: 6h00 demain", phase: "retroaction" },
+      ]},
+    ],
+  },
+};
+
+// 5 états de travail — boutons d'action sur chaque item
+const WORK_ACTIONS: { key: PhaseKey; icon: React.ElementType; label: string; hover: string }[] = [
+  { key: "discussion",  icon: MessageCircle, label: "Discuter",   hover: "hover:bg-blue-50 hover:text-blue-700" },
+  { key: "reflexion",   icon: Brain,         label: "Réfléchir",  hover: "hover:bg-orange-50 hover:text-orange-700" },
+  { key: "creation",    icon: Hammer,        label: "Concevoir",  hover: "hover:bg-yellow-50 hover:text-yellow-700" },
+  { key: "execution",   icon: Rocket,        label: "Exécuter",   hover: "hover:bg-green-50 hover:text-green-700" },
+  { key: "retroaction", icon: BarChart3,     label: "Mesurer",    hover: "hover:bg-emerald-50 hover:text-emerald-700" },
+];
+
+function DashboardBloc({ config, onAction }: { config: DashboardBlocConfig; onAction?: (phase: PhaseKey, context: string) => void }) {
+  const Icon = config.icon;
+  return (
+    <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+      <div className={cn("flex items-center gap-2 px-4 py-2.5 border-b border-gray-100", UB_PASTEL_DEPT)}>
+        <Icon className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+        <span className="text-sm font-bold text-gray-900">{config.title}</span>
+        {config.count !== undefined && (
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600 ml-auto">{config.count}</span>
+        )}
+      </div>
+      <ul className="p-3 space-y-1">
+        {config.items.map((item, i) => {
+          const ps = item.phase ? PHASE_COLORS[item.phase] : null;
+          return (
+            <li key={i} className="group relative">
+              <div className="flex items-center gap-2.5 cursor-pointer hover:bg-gray-50 rounded-lg p-1.5 -m-1.5 transition-colors text-xs text-gray-800">
+                {/* Urgent dot */}
+                {item.urgent && <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" title="Urgent" />}
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  {item.pct !== undefined ? (
+                    <>
+                      <div className="flex justify-between mb-0.5">
+                        <span className="font-medium">{item.primary}</span>
+                        <span className="font-bold">{item.pct}%</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div className={cn("h-full rounded-full", item.pctColor || "bg-blue-500")} style={{ width: `${item.pct}%` }} />
+                      </div>
+                      {item.secondary && <p className="text-[11px] text-gray-400 mt-0.5">{item.secondary}</p>}
+                    </>
+                  ) : item.value ? (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="font-medium">{item.primary}</span>
+                        <span className={cn("font-bold", item.valueColor || "text-gray-700")}>{item.value}</span>
+                      </div>
+                      <p className="text-[11px] text-gray-400">{item.secondary}</p>
+                    </>
+                  ) : (
+                    <>
+                      <span className="font-medium">{item.primary}</span>
+                      {item.secondary && <p className="text-[11px] text-gray-400">{item.secondary}</p>}
+                    </>
+                  )}
+                </div>
+
+                {/* Phase badge — style chantier slider gauche (dot + label bold) */}
+                {ps && (
+                  <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-bold flex items-center gap-1 shrink-0", ps.badge)}>
+                    <span className={cn("w-2 h-2 rounded-full", ps.dot)} />
+                    {ps.label}
+                  </span>
+                )}
+              </div>
+
+              {/* 4 action buttons — visible on hover */}
+              {onAction && (
+                <div className="hidden group-hover:flex items-center gap-1 absolute right-1.5 top-1/2 -translate-y-1/2 bg-white/95 backdrop-blur-sm rounded-lg shadow-sm border border-gray-200 px-1 py-0.5">
+                  {WORK_ACTIONS.map(wa => (
+                    <button
+                      key={wa.key}
+                      onClick={(e) => { e.stopPropagation(); onAction(wa.key, item.primary); }}
+                      className={cn("p-1 rounded-md transition-colors cursor-pointer text-gray-400", wa.hover)}
+                      title={wa.label}
+                    >
+                      <wa.icon className="h-3.5 w-3.5" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+export function DeptDashboardView({ botCode, onAction }: { botCode: string; onAction?: (phase: string, context: string) => void }) {
+  const config = DEPT_DASHBOARD_SECTIONS[botCode] || DEPT_DASHBOARD_SECTIONS.CEOB;
+
+  const handleAction = onAction as ((phase: PhaseKey, context: string) => void) | undefined;
+
+  return (
+    <div className="space-y-4">
+      {/* VITAA — 5 piliers */}
+      <div className="grid grid-cols-5 gap-3">
+        {config.vitaa.map(kpi => (
+          <div key={kpi.label} className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+            <div className={cn("flex items-center gap-2 px-4 py-2.5 border-b border-gray-100", UB_PASTEL_DEPT)}>
+              <kpi.icon className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+              <span className="text-sm font-bold text-gray-900">{kpi.label}</span>
+            </div>
+            <div className="px-4 py-3">
+              <div className="text-2xl font-bold text-gray-800">{kpi.value}</div>
+              <div className={cn("text-xs flex items-center gap-1 mt-0.5", kpi.up ? "text-emerald-600" : "text-red-500")}>
+                {kpi.up ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
+                {kpi.delta}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Row 1 — blocs principaux */}
+      <div className="grid grid-cols-3 gap-3">
+        {config.row1.map((bloc, i) => (
+          <DashboardBloc key={i} config={bloc} onAction={handleAction} />
+        ))}
+      </div>
+
+      {/* Row 2 — blocs secondaires */}
+      <div className="grid grid-cols-3 gap-3">
+        {config.row2.map((bloc, i) => (
+          <DashboardBloc key={i} config={bloc} onAction={handleAction} />
+        ))}
+      </div>
+
+      {/* Row 3 — blocs transversaux */}
+      <div className="grid grid-cols-3 gap-3">
+        {config.row3.map((bloc, i) => (
+          <DashboardBloc key={i} config={bloc} onAction={handleAction} />
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -6088,16 +7261,34 @@ interface BlueprintDepartementProps {
   botCode: string;
   headerGradient: string;
   sizeTier?: SizeTier;
+  /** Quand true, le header gradient interne est caché (intégré dans la top barre parent) */
+  hideHeader?: boolean;
+  /** State lifté: vue active (blueprint/ca/comites/personnel/bot) contrôlée par le parent */
+  activeHeaderView?: HeaderView;
+  /** Callback quand l'utilisateur change de sous-tab */
+  onHeaderViewChange?: (view: HeaderView) => void;
+  /** Callback pour remonter tier + score au parent */
+  onStats?: (stats: { tier: string; tierLabel: string; score: number }) => void;
 }
 
-type HeaderView = "blueprint" | "ca" | "comites" | "personnel" | "bot";
+export type HeaderView = "blueprint" | "ca" | "comites" | "personnel" | "bot";
 
-export function BlueprintDepartement({ botCode, headerGradient, sizeTier: propTier }: BlueprintDepartementProps) {
+export const BLUEPRINT_HEADER_TABS: { key: HeaderView; label: string; icon: React.ElementType; ceoOnly?: boolean }[] = [
+  { key: "blueprint", label: "Direction", icon: Zap },
+  { key: "ca", label: "CA", icon: Users, ceoOnly: true },
+  { key: "comites", label: "Comités", icon: GitBranch },
+  { key: "personnel", label: "Personnel", icon: User },
+  { key: "bot", label: "Brain Team", icon: Bot },
+];
+
+export function BlueprintDepartement({ botCode, headerGradient, sizeTier: propTier, hideHeader, activeHeaderView, onHeaderViewChange, onStats }: BlueprintDepartementProps) {
   const config = getBlueprintConfig(botCode);
   const { dispatch } = useCanvasActions();
   const [tier, setTier] = useState<SizeTier>(propTier || "T2");
   const [phase, setPhase] = useState<Phase>("startup");
-  const [headerView, setHeaderView] = useState<HeaderView>("blueprint");
+  const [headerViewLocal, setHeaderViewLocal] = useState<HeaderView>("blueprint");
+  const headerView = activeHeaderView ?? headerViewLocal;
+  const setHeaderView = onHeaderViewChange ?? setHeaderViewLocal;
   const [activeSub, setActiveSub] = useState<string>("");
   const [data, setData] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
@@ -6167,10 +7358,17 @@ export function BlueprintDepartement({ botCode, headerGradient, sizeTier: propTi
   // Filtrer CA et comités hors de la sidebar (CEOB seulement — ils ont leurs propres boutons header)
   const allVisibleSections = getVisibleSubSections(config, tier);
   const HEADER_SECTION_IDS = botCode === "CEOB" ? ["conseil_administration"] : [];
-  const visibleSections = allVisibleSections.filter(s => !HEADER_SECTION_IDS.includes(s.id));
+  const visibleSections = allVisibleSections.filter(s => !HEADER_SECTION_IDS.includes(s.id) && !s.id.startsWith("playbooks_"));
   const caSection = allVisibleSections.find(s => s.id === "conseil_administration");
   const activeSection = visibleSections.find(s => s.id === activeSub) || visibleSections[0];
   const completionScore = calculateCompletionScore(config, tier, data as Record<string, unknown>);
+
+  useEffect(() => {
+    if (onStats) {
+      const tierInfo = SIZE_TIERS.find(t => t.id === tier);
+      onStats({ tier, tierLabel: tierInfo?.label || tier, score: completionScore });
+    }
+  }, [tier, completionScore, onStats]);
 
   if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-gray-400" /></div>;
 
@@ -6187,53 +7385,49 @@ export function BlueprintDepartement({ botCode, headerGradient, sizeTier: propTi
 
   return (
     <div className="space-y-3">
-      {/* HEADER — Titre dynamique selon tab actif + tier/phase/score */}
-      <div className={cn("bg-gradient-to-r rounded-xl px-4 py-3 transition-all duration-300", headerGradient)}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-              <Layers className="h-4 w-4 text-white" />
+      {/* HEADER — caché quand hideHeader (intégré dans top barre parent) */}
+      {!hideHeader && (
+        <div className={cn("bg-gradient-to-r rounded-xl px-4 py-3 transition-all duration-300", headerGradient)}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                <Layers className="h-4 w-4 text-white" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-white">Blueprint — {
+                  headerView === "blueprint" ? config.deptLabel :
+                  headerView === "ca" ? "Conseil d'administration" :
+                  headerView === "comites" ? "Comités" :
+                  headerView === "personnel" ? "Personnel" :
+                  headerView === "bot" ? "Brain Team" :
+                  config.deptLabel
+                }</h2>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-[9px] text-white/60">{SIZE_TIERS.find(t => t.id === tier)?.label} · {PHASES.find(p => p.id === phase)?.emoji} {PHASES.find(p => p.id === phase)?.label}</span>
+                  <span className="text-[10px] font-bold bg-white/20 text-white px-2 py-0.5 rounded-full">{completionScore}%</span>
+                </div>
+              </div>
             </div>
-            <h2 className="text-base font-bold text-white">Blueprint {
-                headerView === "blueprint" ? config.deptLabel :
-                headerView === "ca" ? "CA" :
-                headerView === "comites" ? "Comités" :
-                headerView === "personnel" ? "Personnel" :
-                headerView === "bot" ? "Brain Team" :
-                config.deptLabel
-              }</h2>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[9px] text-white/60">{SIZE_TIERS.find(t => t.id === tier)?.label} · {PHASES.find(p => p.id === phase)?.emoji} {PHASES.find(p => p.id === phase)?.label}</span>
-            <span className="text-sm font-bold bg-white/20 text-white px-2.5 py-1 rounded-full">{completionScore}%</span>
+            <div className="flex items-center gap-1 flex-wrap justify-end">
+              {BLUEPRINT_HEADER_TABS.filter(t => !t.ceoOnly || botCode === "CEOB").map(tab => (
+                <button
+                  key={tab.key}
+                  onClick={() => setHeaderView(tab.key)}
+                  className={cn(
+                    "px-2.5 py-1 rounded-lg text-[10px] font-medium flex items-center gap-1 transition-all cursor-pointer",
+                    headerView === tab.key
+                      ? "bg-white/25 text-white shadow-sm"
+                      : "text-white/60 hover:bg-white/10 hover:text-white"
+                  )}
+                >
+                  <tab.icon className="h-3.5 w-3.5" />
+                  {tab.key === "blueprint" ? config.deptLabel : tab.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
-
-      {/* SOUS-TABS — Centrées, texte plus gros pour occuper l'espace */}
-      <div className="flex items-center justify-center gap-1.5 flex-wrap">
-        {([
-          { key: "blueprint" as HeaderView, label: "Direction", icon: Zap, show: true },
-          { key: "ca" as HeaderView, label: "CA", icon: Users, show: botCode === "CEOB" },
-          { key: "comites" as HeaderView, label: "Comités", icon: GitBranch, show: true },
-          { key: "personnel" as HeaderView, label: "Personnel", icon: User, show: true },
-          { key: "bot" as HeaderView, label: "Brain Team", icon: Bot, show: true },
-        ]).filter(t => t.show).map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setHeaderView(tab.key)}
-            className={cn(
-              "px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-all cursor-pointer",
-              headerView === tab.key
-                ? "bg-gray-900 text-white shadow-sm"
-                : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-            )}
-          >
-            <tab.icon className="h-3.5 w-3.5" />
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      )}
 
       {/* VUE CA — Conseil d'administration */}
       {headerView === "ca" && (
@@ -6273,7 +7467,32 @@ export function BlueprintDepartement({ botCode, headerGradient, sizeTier: propTi
 
       {/* LAYOUT DOCFORGE — Sidebar TOC (240px) + Contenu (flex-1) */}
       {headerView === "blueprint" && (
-        <div className="flex gap-3">
+        <div className="space-y-3">
+          {/* Intro header — style Personnel/Bot */}
+          <div className={cn("relative bg-gradient-to-r rounded-xl overflow-hidden", headerGradient)}>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+            <div className="relative flex items-center gap-4 p-4">
+              <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+                <Layers className="h-6 w-6 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="text-lg font-bold text-white">Blueprint — {config.deptLabel}</h3>
+                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white">{visibleSections.length} sections</span>
+                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white">{SIZE_TIERS.find(t => t.id === tier)?.label}</span>
+                </div>
+                <p className="text-xs text-white/80">{config.intro || "Aperçu stratégique de votre Blueprint d'entreprise. Complétez les sections pour structurer votre vision, vos objectifs et votre plan d'action."}</p>
+                <div className="flex items-center gap-3 mt-2">
+                  <div className="flex-1 h-1.5 bg-white/20 rounded-full overflow-hidden">
+                    <div className="h-full rounded-full bg-white transition-all duration-700" style={{ width: `${completionScore}%` }} />
+                  </div>
+                  <span className="text-[10px] font-bold text-white">{completionScore}%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
 
           {/* SIDEBAR — Table des matieres */}
           <div className="w-[180px] shrink-0 space-y-1">
@@ -6371,6 +7590,7 @@ export function BlueprintDepartement({ botCode, headerGradient, sizeTier: propTi
               </Card>
             )}
           </div>
+        </div>
         </div>
       )}
     </div>
