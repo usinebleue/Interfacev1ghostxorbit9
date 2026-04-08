@@ -68,6 +68,8 @@ import {
   Database,
   BookOpen,
   Palette,
+  Eye,
+  DoorOpen,
 } from "lucide-react";
 import { cn } from "../../../../components/ui/utils";
 import { BOT_COLORS } from "../shared/simulation-data";
@@ -136,7 +138,7 @@ const SIMULATION_META: Record<string, { title: string; icon: React.ElementType; 
   "sim-atelier": { title: "Phase Création", icon: Brain, colorLine: "bg-amber-500" },
   "sim-command": { title: "Phase Exécution", icon: Brain, colorLine: "bg-emerald-500" },
   "sim-departement": { title: "Mon Département", icon: Brain, colorLine: "bg-blue-600" },
-  "sim-salles": { title: "Mes Salles", icon: Brain, colorLine: "bg-violet-500" },
+  "sim-salles": { title: "Conférence AI", icon: Video, colorLine: "bg-violet-500" },
   "sim-equipe": { title: "Mon Équipe", icon: Brain, colorLine: "bg-cyan-500" },
   "sim-admin": { title: "Administration", icon: Brain, colorLine: "bg-gray-500" },
   "sim-reseau": { title: "Mon Réseau", icon: Brain, colorLine: "bg-indigo-500" },
@@ -200,13 +202,18 @@ const BOT_AVATAR: Record<string, string> = {
   CISOB: "/agents/generated/ciso-secbot-profil-v3.png",
 };
 
-// Département de direction — 3 items (Carl S78: retirer Documents, Réglages, Admin)
-const DEPT_ITEMS = [
-  { label: "Dashboard", icon: Gauge, state: null },
+// Département — grille 2x4 boutons (Carl S82: réorganisation)
+const DEPT_ITEMS_WITH_SECTIONS: { label: string; icon: React.ElementType; state: string | null }[] = [
+  // Rangée 1
+  { label: "Cockpit", icon: Gauge, state: null },
+  { label: "Chantiers", icon: Flame, state: null },
+  { label: "Conférence AI", icon: Video, state: null },
+  { label: "Agenda", icon: Calendar, state: null },
+  // Rangée 2
   { label: "Blueprint", icon: Layers, state: null },
   { label: "Data Room", icon: Database, state: null },
   { label: "Playbook Store", icon: BookOpen, state: null },
-  { label: "Agenda", icon: Calendar, state: null },
+  { label: "Orbit9", icon: Atom, state: null },
 ];
 
 // État AMORCER → dot couleur pour les items (Carl vocal 12h53: "se servir des modes d'attention")
@@ -218,6 +225,13 @@ const STATE_DOT: Record<string, string> = {
   creation: "bg-yellow-500",
   execution: "bg-green-500",
   retroaction: "bg-emerald-500",
+};
+
+// Couleur icône par département (design-system.md)
+const DEPT_ICON_COLOR: Record<string, string> = {
+  CEOB: "text-blue-600", CTOB: "text-violet-600", CFOB: "text-emerald-600", CMOB: "text-pink-600",
+  CSOB: "text-red-600", COOB: "text-orange-600", CPOB: "text-amber-600", CHROB: "text-teal-600",
+  CINOB: "text-rose-600", CROB: "text-amber-700", CLOB: "text-indigo-600", CISOB: "text-gray-600",
 };
 
 // Brain Team — département + last action + état (Carl vocal 13h09: mini business card)
@@ -266,7 +280,7 @@ export function SimulationFullPage({ simulationId }: { simulationId: string }) {
   const [activeBotCode, setActiveBotCode] = useState("CEOB");
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [amorcerTrigger, setAmorcerTrigger] = useState<number>(0);
-  const [rightSection, setRightSection] = useState<string | null>("dashboard");
+  const [rightSection, setRightSection] = useState<string | null>("cockpit");
   const [showIconCatalog, setShowIconCatalog] = useState(false);
 
   const leftPanelRef = useRef<ImperativePanelHandle>(null);
@@ -394,17 +408,16 @@ export function SimulationFullPage({ simulationId }: { simulationId: string }) {
                     </div>
                   </div>
 
-                  {/* CockpitPanel — 3 tabs */}
+                  {/* CockpitPanel — 2 tabs (Bureau + Orbit9) */}
                   <div className="flex-1 overflow-hidden flex flex-col mt-2">
                     <div className="flex border-b shrink-0 bg-gray-50/50">
                       {([
                         { id: "departement" as const, label: "Bureau", icon: Home },
-                        { id: "equipe_ai" as const, label: "Brain Team", icon: Bot },
                         { id: "orbit9" as const, label: "Orbit⁹", icon: Atom },
                       ]).map(tab => (
                         <button
                           key={tab.id}
-                          onClick={() => { setCockpitTab(tab.id); if (tab.id === "orbit9") setRightSection(null); else if (tab.id === "departement" && !rightSection) setRightSection("dashboard"); }}
+                          onClick={() => { setCockpitTab(tab.id); if (tab.id === "orbit9") setRightSection(null); else if (tab.id === "departement" && !rightSection) setRightSection("cockpit"); }}
                           className={cn(
                             "flex-1 flex items-center justify-center gap-1 py-2 text-[11px] font-medium transition-colors cursor-pointer",
                             cockpitTab === tab.id
@@ -418,8 +431,7 @@ export function SimulationFullPage({ simulationId }: { simulationId: string }) {
                       ))}
                     </div>
                     <div className="flex-1 overflow-hidden">
-                      {cockpitTab === "departement" && <TabBureauMock onSection={(s) => setRightSection(s)} activeBotCode={activeBotCode} />}
-                      {cockpitTab === "equipe_ai" && <TabEquipeAIMock activeBotCode={activeBotCode} onSelectBot={(code) => { setActiveBotCode(code); setRightSection("dashboard"); }} />}
+                      {cockpitTab === "departement" && <TabBureauMock onSection={(s) => setRightSection(s)} activeBotCode={activeBotCode} onSelectBot={(code) => { setActiveBotCode(code); setRightSection("cockpit"); }} />}
                       {cockpitTab === "orbit9" && <TabOrbit9Cockpit selectedCellule={o9SelectedCellule} onSelectCellule={setO9SelectedCellule} activeSection={o9Section} onSection={setO9Section} />}
                     </div>
                   </div>
@@ -480,24 +492,30 @@ function CockpitCollapsed() {
 
 // ========== TAB BUREAU (Département + 3 phases avec bandes colorées) ==========
 
-const SECTION_MAP: Record<string, string> = { "Dashboard": "dashboard", "Blueprint": "blueprint", "Data Room": "dataroom", "Playbook Store": "playbooks" };
+const SECTION_MAP: Record<string, string> = { "Cockpit": "cockpit", "Blueprint": "blueprint", "Data Room": "dataroom", "Playbook Store": "playbooks", "Conférence AI": "conferenceai" };
 
-function TabBureauMock({ onSection, activeBotCode = "CEOB" }: { onSection?: (section: string) => void; activeBotCode?: string }) {
-  const [activeDeptItem, setActiveDeptItem] = useState<string | null>("Dashboard");
+function TabBureauMock({ onSection, activeBotCode = "CEOB", onSelectBot }: { onSection?: (section: string) => void; activeBotCode?: string; onSelectBot?: (code: string) => void }) {
+  const [activeDeptItem, setActiveDeptItem] = useState<string | null>("Cockpit");
+  const [cockpitSubTab, setCockpitSubTab] = useState<"brainteam" | "cellules">("brainteam");
   const DeptIconComp = DEPT_DASH_ICON[activeBotCode] || Zap;
   const deptName = DEPT_SHORT_LABEL[activeBotCode] || "Direction";
+
   return (
-    <div className="overflow-y-auto h-full text-[11px]">
-      {/* Bande — Département dynamique (pastel UB_BLUE) */}
-      <div className="mx-3 mt-2 px-3 py-1.5 flex items-center gap-2 rounded-t-lg" style={{ backgroundColor: "rgba(7,62,90,0.12)" }}>
-        <DeptIconComp className="h-3.5 w-3.5" style={{ color: UB_BLUE }} />
+    <div className="overflow-y-auto h-full text-[11px] flex flex-col">
+      {/* Bande — Département dynamique (pastel bleu cyan + icône couleur dept) */}
+      <div className="mx-3 mt-2 px-3 py-1.5 flex items-center gap-2 rounded-t-lg shrink-0 bg-[#00B4D8]/10">
+        <DeptIconComp className={cn("h-3.5 w-3.5", DEPT_ICON_COLOR[activeBotCode] || "text-blue-600")} />
         <span className="text-[11px] font-bold text-gray-900">Département {deptName}</span>
       </div>
-      <div className="px-3 py-2 grid grid-cols-3 gap-1.5 border-b border-gray-200">
-        {DEPT_ITEMS.map((item) => (
+      <div className="px-3 py-2 grid grid-cols-4 gap-1.5 shrink-0">
+        {DEPT_ITEMS_WITH_SECTIONS.map((item) => (
           <button
             key={item.label}
-            onClick={() => { setActiveDeptItem(item.label); const s = SECTION_MAP[item.label]; if (s && onSection) onSection(s); }}
+            onClick={() => {
+              setActiveDeptItem(item.label);
+              const s = SECTION_MAP[item.label];
+              if (s && onSection) onSection(s);
+            }}
             className={cn(
               "relative flex flex-col items-center gap-1 px-1.5 py-2 rounded-lg border text-center transition-all cursor-pointer",
               activeDeptItem === item.label
@@ -506,7 +524,7 @@ function TabBureauMock({ onSection, activeBotCode = "CEOB" }: { onSection?: (sec
             )}
           >
             <item.icon className={cn("h-3.5 w-3.5 shrink-0", activeDeptItem === item.label ? "text-blue-600" : "text-gray-600")} />
-            <span className="text-[9px] font-medium truncate w-full">{item.label}</span>
+            <span className="text-[9px] font-medium w-full leading-tight text-center">{item.label}</span>
             {item.state && (
               <span className={cn("absolute top-1 right-1 w-2 h-2 rounded-full", STATE_DOT[item.state])} />
             )}
@@ -514,12 +532,199 @@ function TabBureauMock({ onSection, activeBotCode = "CEOB" }: { onSection?: (sec
         ))}
       </div>
 
-      {/* Chantiers drill-down (Carl vocal 13h30: pastel UB_BLUE + icône orange) */}
-      <div className="mx-3 mt-2 px-3 py-1.5 flex items-center gap-2 rounded-t-lg" style={{ backgroundColor: "rgba(7,62,90,0.12)" }}>
-        <Flame className="h-3.5 w-3.5 text-orange-500" />
-        <span className="text-[11px] font-bold text-gray-900">Chantiers</span>
+      {/* ═══ TABS PERMANENTS — Brain Team + Mes Cellules (Carl S82) ═══ */}
+      <div className="flex border-y border-gray-200 shrink-0 bg-gray-50/50 mt-1">
+        {([
+          { id: "brainteam" as const, label: "Brain Team", icon: Bot },
+          { id: "cellules" as const, label: "Mes Cellules", icon: Network },
+        ]).map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setCockpitSubTab(tab.id)}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-1 py-2 text-[11px] font-medium transition-colors cursor-pointer",
+              cockpitSubTab === tab.id
+                ? "text-blue-600 border-b-2 border-blue-500 bg-white"
+                : "text-gray-500 hover:text-gray-700 hover:bg-gray-50",
+            )}
+          >
+            <tab.icon className="h-3.5 w-3.5" />
+            {tab.label}
+          </button>
+        ))}
       </div>
-      <TabChantiersMock />
+
+      {/* Contenu du tab actif */}
+      <div className="flex-1 overflow-y-auto min-h-0">
+        {cockpitSubTab === "brainteam" && (
+          <TabEquipeAIMock activeBotCode={activeBotCode || "CEOB"} onSelectBot={onSelectBot || (() => {})} embedded />
+        )}
+        {cockpitSubTab === "cellules" && (
+          <CockpitCellulesList />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ========== COCKPIT CELLULES LIST (tab permanent — Carl S82) ==========
+
+function CockpitCellulesList() {
+  const [selectedCellule, setSelectedCellule] = useState<number | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newType, setNewType] = useState<"interne" | "externe">("interne");
+
+  return (
+    <div className="text-[11px]">
+      {selectedCellule !== null ? (
+        /* ═══ DRILL-DOWN — cartes d'identité humains (copié de TabOrbit9Cockpit) ═══ */
+        <div className="p-3 space-y-1.5">
+          <button
+            onClick={() => setSelectedCellule(null)}
+            className="flex items-center gap-1.5 text-[11px] text-blue-600 hover:text-blue-800 cursor-pointer font-medium mb-1"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Retour
+          </button>
+          {/* Header cellule pastel */}
+          <div className="rounded-lg px-2.5 py-2 bg-teal-50 border border-teal-200 flex items-center gap-2">
+            <Network className="h-3.5 w-3.5 text-teal-600" />
+            <span className="text-[11px] font-bold text-teal-800 flex-1">{O9_CELLULES[selectedCellule].name}</span>
+            <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-bold flex items-center gap-1 shrink-0", STATE_TAG[O9_CELLULES[selectedCellule].status] || "bg-gray-100 text-gray-700")}>
+              <span className={cn("w-2 h-2 rounded-full", STATE_DOT[O9_CELLULES[selectedCellule].status] || "bg-gray-400")} />
+              {STATE_LABEL[O9_CELLULES[selectedCellule].status] || O9_CELLULES[selectedCellule].status}
+            </span>
+          </div>
+          {/* Cartes humains avec photos */}
+          {O9_CELLULES[selectedCellule].membres.map((m, i) => (
+            <div key={i} className="rounded-lg border border-gray-200 hover:border-gray-300 bg-white transition-all overflow-hidden">
+              <div className="flex items-center gap-2 px-2.5 py-2">
+                <div className="relative w-7 h-7 rounded-full overflow-hidden shrink-0 bg-gray-100">
+                  <img src={m.photo} alt={m.name} className="w-full h-full object-cover" />
+                  <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white bg-green-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-[11px] font-semibold text-gray-800">{m.name}</span>
+                  <span className="text-[9px] text-gray-400 block truncate">{m.role} · {O9_CELLULES[selectedCellule].name}</span>
+                </div>
+              </div>
+              <div className="border-t border-gray-100 px-2.5 py-1.5 flex items-center gap-2 bg-gray-50/50">
+                <span className="text-[11px] font-bold text-gray-600 truncate flex-1">Actif dans la cellule</span>
+                <button className="flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-800 cursor-pointer shrink-0">
+                  <MessageSquare className="h-3.5 w-3.5" />
+                  <span className="hidden xl:inline">Écrire</span>
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        /* ═══ LISTE DES CELLULES (copié de TabOrbit9Cockpit) ═══ */
+        <div className="p-3 space-y-1.5">
+          {/* Créer cellule EN HAUT */}
+          <button
+            onClick={() => setShowCreate(!showCreate)}
+            className="w-full px-3 py-2 bg-teal-50 text-teal-700 rounded-lg border border-teal-200 hover:bg-teal-100 transition-colors cursor-pointer font-medium text-[11px] flex items-center justify-center gap-1.5"
+          >
+            <Network className="h-3.5 w-3.5" />
+            {showCreate ? "Annuler" : "Créer une cellule"}
+          </button>
+
+          {/* Section création inline */}
+          {showCreate && (
+            <div className="rounded-lg border border-teal-200 overflow-hidden bg-white">
+              <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-teal-50 border-b border-teal-100">
+                <Network className="h-3.5 w-3.5 text-teal-600" />
+                <span className="text-[11px] font-bold text-teal-800">Nouvelle cellule</span>
+              </div>
+              <div className="p-2.5 space-y-2.5">
+                <div>
+                  <label className="text-[9px] font-medium text-gray-500 mb-1 block">Nom</label>
+                  <input
+                    type="text"
+                    value={newName}
+                    onChange={e => setNewName(e.target.value)}
+                    className="w-full text-[11px] px-2.5 py-1.5 rounded-lg border border-gray-300 focus:border-teal-400 focus:ring-2 focus:ring-teal-100 outline-none"
+                    placeholder="Ex: Les Titans..."
+                  />
+                </div>
+                <div>
+                  <label className="text-[9px] font-medium text-gray-500 mb-1 block">Type</label>
+                  <div className="flex gap-1.5">
+                    {([
+                      { val: "interne" as const, label: "Interne" },
+                      { val: "externe" as const, label: "Externe" },
+                    ]).map(t => (
+                      <button
+                        key={t.val}
+                        onClick={() => setNewType(t.val)}
+                        className={cn(
+                          "flex-1 rounded-lg border px-2 py-1.5 text-[9px] font-medium cursor-pointer transition-all text-center",
+                          newType === t.val ? "border-teal-300 bg-teal-50 text-teal-700" : "border-gray-200 text-gray-500 hover:border-teal-200"
+                        )}
+                      >
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <button
+                  className="w-full px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors cursor-pointer font-medium text-[11px] flex items-center justify-center gap-1.5"
+                >
+                  <Network className="h-3.5 w-3.5" />
+                  Créer
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Liste cellules — click → drill-down vers membres */}
+          {O9_CELLULES.map((cell, i) => {
+            const stDot = STATE_DOT[cell.status] || "bg-gray-400";
+            const stLabel = STATE_LABEL[cell.status] || "";
+            const stTag = STATE_TAG[cell.status] || "";
+            return (
+              <div key={i} className="rounded-lg border border-gray-200 overflow-hidden">
+                <button
+                  onClick={() => setSelectedCellule(i)}
+                  className="flex items-center gap-2 w-full px-2.5 py-2 text-left cursor-pointer hover:bg-gray-50 transition-colors"
+                >
+                  <Network className="h-3.5 w-3.5 text-teal-500 shrink-0" />
+                  <span className="text-[11px] font-semibold text-gray-800 truncate flex-1">{cell.name}</span>
+                  <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-bold flex items-center gap-1 shrink-0", stTag)}>
+                    <span className={cn("w-2 h-2 rounded-full", stDot)} />
+                    {stLabel}
+                  </span>
+                  <ChevronRight className="h-3.5 w-3.5 text-gray-300 shrink-0" />
+                </button>
+                <div className="border-t border-gray-100 px-2.5 py-1.5 flex items-center gap-2 bg-gray-50/50">
+                  <div className="flex items-center gap-1">
+                    <Users className="h-3.5 w-3.5 text-gray-400" />
+                    <span className="text-[9px] text-gray-500">{cell.members}/{cell.maxMembers}</span>
+                  </div>
+                  <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium shrink-0",
+                    cell.type === "interne" ? "bg-teal-50 text-teal-600" : "bg-cyan-50 text-cyan-600"
+                  )}>
+                    {cell.type === "interne" ? "Interne" : "Externe"}
+                  </span>
+                  <div className="flex-1" />
+                  <div className="flex items-center gap-0.5">
+                    {cell.membres.slice(0, 4).map((m, mi) => (
+                      <div key={mi} className="w-5 h-5 rounded-full overflow-hidden ring-1 ring-white shrink-0">
+                        <img src={m.photo} alt={m.name} className="w-full h-full object-cover" />
+                      </div>
+                    ))}
+                    {cell.membres.length > 4 && (
+                      <span className="text-[8px] text-gray-400 ml-0.5">+{cell.membres.length - 4}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -646,9 +851,9 @@ function TabChantiersMock() {
 
 // ========== TAB EQUIPE AI ==========
 
-function TabEquipeAIMock({ activeBotCode, onSelectBot }: { activeBotCode: string; onSelectBot: (code: string) => void }) {
+function TabEquipeAIMock({ activeBotCode, onSelectBot, embedded = false }: { activeBotCode: string; onSelectBot: (code: string) => void; embedded?: boolean }) {
   return (
-    <div className="p-2 overflow-y-auto h-full text-[11px]">
+    <div className={cn("p-2 text-[11px]", !embedded && "overflow-y-auto h-full")}>
       <div className="space-y-1.5">
         {BOT_CODES.map((code) => {
           const isActive = activeBotCode === code;
@@ -662,14 +867,17 @@ function TabEquipeAIMock({ activeBotCode, onSelectBot }: { activeBotCode: string
                 isActive ? "border-blue-200 bg-blue-50/50" : "border-gray-200 hover:border-gray-300 bg-white",
               )}
             >
-              {/* Top: avatar + nom + rôle + département */}
+              {/* Header département — pastel bleu */}
+              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#00B4D8]/10">
+                <span className="text-[9px] font-bold text-gray-600 truncate">{dept}</span>
+              </div>
+              {/* Avatar + nom + rôle */}
               <div className="flex items-center gap-2 px-2.5 py-2">
                 <div className="relative w-7 h-7 rounded-full overflow-hidden shrink-0 bg-gray-100">
                   <img src={BOT_AVATAR[code]} alt={BOT_NAME[code]} className="w-full h-full object-cover" />
                 </div>
                 <button onClick={() => onSelectBot(code)} className="flex-1 min-w-0 text-left cursor-pointer">
                   <span className={cn("text-[11px] font-semibold", isActive ? "text-blue-700" : "text-gray-800")}>{BOT_NAME[code]} {BOT_ROLE[code]}</span>
-                  <span className="text-[9px] text-gray-400 block truncate">Dép. {dept}</span>
                 </button>
                 {actions && (
                   <span className={cn("text-[11px] px-2 py-0.5 rounded-full font-bold shrink-0 flex items-center gap-1", STATE_TAG[actions.state])}>
@@ -846,7 +1054,7 @@ function TabOrbit9Cockpit({ selectedCellule, onSelectCellule, activeSection, onS
             )}
           >
             <item.icon className={cn("h-3.5 w-3.5 shrink-0", activeSection === item.key ? "text-teal-600" : "text-gray-600")} />
-            <span className="text-[9px] font-medium truncate w-full">{item.label}</span>
+            <span className="text-[9px] font-medium w-full leading-tight text-center">{item.label}</span>
           </button>
         ))}
       </div>

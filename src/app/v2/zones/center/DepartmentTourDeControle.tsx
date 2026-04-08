@@ -28,7 +28,7 @@ import { SanteGlobaleView } from "./SanteGlobaleView";
 import { TabSommaire, TabObjectifs, HierarchieTab } from "./BlueprintView";
 import { AgendaPage } from "./MonBureauView";
 import { DocumentsUnifie } from "./shared/DocumentsUnifie";
-import { BlueprintDepartement, BlueprintDataRoom, BlueprintPlaybooks } from "./blueprint/BlueprintDepartement";
+import { BlueprintDepartement, BlueprintDataRoom, BlueprintPlaybooks, BlueprintConferenceAI, DeptDashboardView } from "./blueprint/BlueprintDepartement";
 
 /* ============ BLOCK HEADER — meme style que DashboardView ============ */
 function BlockHeader({ icon: Icon, title, count, gradient }: {
@@ -115,7 +115,7 @@ import {
   CalendarDays, Newspaper, Scale, ShieldCheck,
   Gauge, LineChart, Package, ClipboardList,
   GraduationCap, HeartPulse, AlertTriangle, Lock,
-  Briefcase, Globe, Zap, Eye, MessageSquare, Sparkles, Upload, Activity,
+  Briefcase, Globe, Zap, Eye, MessageSquare, Sparkles, Upload, Activity, Video,
 } from "lucide-react";
 
 /* ============ CONFIGS PAR DEPARTEMENT — 10 blocs chacun ============ */
@@ -638,12 +638,13 @@ function TemplateGrid({ templates, onFocus, viewMode, setViewMode }: {
 }
 
 /* ============ TABS DEPARTEMENT (11 tabs — structure identique 12 departements) ============ */
-type DeptTabId = "cockpit" | "blueprint" | "dataroom" | "playbooks" | "sante" | "chantiers" | "projets" | "missions" | "taches" | "discussions" | "documents" | "agenda" | "performance";
+type DeptTabId = "cockpit" | "blueprint" | "dataroom" | "playbooks" | "conferenceai" | "sante" | "chantiers" | "projets" | "missions" | "taches" | "discussions" | "documents" | "agenda" | "performance";
 const DEPT_TABS: TabDef[] = [
   { id: "cockpit", label: "Vue d'ensemble", icon: Gauge },
   { id: "blueprint", label: "Blueprint", icon: Layers },
   { id: "dataroom", label: "Data Room", icon: Database },
   { id: "playbooks", label: "Playbook Store", icon: BookOpen },
+  { id: "conferenceai", label: "Conference AI", icon: Video },
   { id: "sante", label: "Sante", icon: HeartPulse },
   { id: "chantiers", label: "Chantiers", icon: Flame },
   { id: "projets", label: "Projets", icon: Package },
@@ -1843,187 +1844,7 @@ export function DepartmentTourDeControle() {
         {/* TAB 1 — COCKPIT (KPIs + blocs essentiels)  */}
         {/* ══════════════════════════════════════════ */}
         {deptTab === "cockpit" && (
-          <div className="space-y-4">
-            {/* KPI Cards — 4 cards: Chantiers, Projets, Missions, Taches */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <Card className="p-0 overflow-hidden transition-shadow hover:shadow-lg cursor-pointer" onClick={() => setDeptTab("chantiers")}>
-                <div className={cn("flex items-center gap-2 px-3 py-2 bg-gradient-to-r", headerGradient)}>
-                  <Flame className="h-4 w-4 text-white" />
-                  <span className="text-sm font-bold text-white">Chantiers</span>
-                </div>
-                <div className="px-3 py-2">
-                  <p className="text-2xl font-extrabold text-gray-900">{stats.chantiers}</p>
-                  <p className="text-[9px] text-gray-500">{stats.projets} projets actifs</p>
-                </div>
-              </Card>
-              <Card className="p-0 overflow-hidden transition-shadow hover:shadow-lg cursor-pointer" onClick={() => setDeptTab("projets")}>
-                <div className={cn("flex items-center gap-2 px-3 py-2 bg-gradient-to-r", headerGradient)}>
-                  <Package className="h-4 w-4 text-white" />
-                  <span className="text-sm font-bold text-white">Projets</span>
-                </div>
-                <div className="px-3 py-2">
-                  <p className="text-2xl font-extrabold text-gray-900">{stats.projets}</p>
-                  <p className="text-[9px] text-gray-500">{stats.projetsDone} termines</p>
-                </div>
-              </Card>
-              <Card className="p-0 overflow-hidden transition-shadow hover:shadow-lg cursor-pointer" onClick={() => setDeptTab("missions")}>
-                <div className={cn("flex items-center gap-2 px-3 py-2 bg-gradient-to-r", headerGradient)}>
-                  <ListChecks className="h-4 w-4 text-white" />
-                  <span className="text-sm font-bold text-white">Missions</span>
-                </div>
-                <div className="px-3 py-2">
-                  <p className="text-2xl font-extrabold text-gray-900">{stats.missionsApi}</p>
-                  <p className="text-[9px] text-gray-500">{stats.tachesOpen} taches ouvertes</p>
-                </div>
-              </Card>
-              <Card className="p-0 overflow-hidden transition-shadow hover:shadow-lg cursor-pointer" onClick={() => setDeptTab("taches")}>
-                <div className={cn("flex items-center gap-2 px-3 py-2 bg-gradient-to-r", headerGradient)}>
-                  <CheckCircle2 className="h-4 w-4 text-white" />
-                  <span className="text-sm font-bold text-white">Taches ouvertes</span>
-                </div>
-                <div className="px-3 py-2">
-                  <p className="text-2xl font-extrabold text-gray-900">{stats.tachesOpen}</p>
-                  <p className="text-[9px] text-gray-500">{stats.docsCount} documents</p>
-                </div>
-              </Card>
-            </div>
-
-            {/* Blocs essentiels — row 1 */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-              {config.row1.map((bloc, i) => (
-                <Bloc key={i} config={bloc} onClick={() => handleBlocClick(bloc)} />
-              ))}
-            </div>
-
-            {/* Blocs essentiels — row 2 */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-              {config.row2.map((bloc, i) => (
-                <Bloc key={i} config={bloc} onClick={() => handleBlocClick(bloc)} />
-              ))}
-            </div>
-
-            {/* Progression chantiers — click to switch tab */}
-            <Card className="p-0 overflow-hidden">
-              <div className={cn("flex items-center gap-2 px-3 py-2 bg-gradient-to-r", headerGradient)}>
-                <LineChart className="h-4 w-4 text-white" />
-                <span className="text-sm font-bold text-white">Progression des chantiers</span>
-                {botChantiers.length > 0 && (
-                  <span className="text-[9px] font-bold bg-white/25 text-white px-2 py-0.5 rounded-full ml-auto">{botChantiers.length}</span>
-                )}
-              </div>
-              <div className="p-3 space-y-2.5">
-                {botChantiers.length === 0 ? (
-                  <p className="text-[9px] text-gray-400 text-center py-4">Aucun chantier assigne</p>
-                ) : (
-                  botChantiers.slice(0, 8).map(ch => {
-                    const projCount = allProjets.filter(p => p.chantier_id === ch.id).length;
-                    const projDone = allProjets.filter(p => p.chantier_id === ch.id && (p.status === "completee" || p.status === "complete")).length;
-                    const pct = projCount > 0 ? Math.round((projDone / projCount) * 100) : 0;
-                    const apiToLocal: Record<string, string> = { completee: "done", complete: "done", active: "en-cours", en_attente: "a-faire", archivee: "bloque" };
-                    const mappedStatus = apiToLocal[ch.status] || "a-faire";
-                    const sc = STATUS_CONFIG[mappedStatus] || STATUS_CONFIG["a-faire"];
-                    return (
-                      <div key={ch.id} className="cursor-pointer hover:bg-gray-50 rounded p-1 -m-1 transition-colors" onClick={() => setDeptTab("chantiers")}>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded", sc.bg, sc.text)}>{sc.label}</span>
-                          <span className="text-xs text-gray-700 flex-1 truncate">{ch.titre}</span>
-                          <span className="text-[9px] text-gray-400">{projDone}/{projCount} projets</span>
-                        </div>
-                        <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                          <div className={cn("h-full rounded-full transition-all", pct === 100 ? "bg-green-500" : "bg-blue-500")} style={{ width: `${pct}%` }} />
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </Card>
-
-            {/* Trial-Brain Training Status — visible pour CTOB (Tim) */}
-            {(activeBotCode === "CTOB") && (() => {
-              const trainingMissions = missions.filter(m => m.contexte?.type === "training_ghml");
-              if (trainingMissions.length === 0) return null;
-              const active = trainingMissions.find(m => m.status === "en-cours") || trainingMissions.find(m => m.status === "a-faire");
-              const lastDone = trainingMissions.find(m => m.status === "completee");
-              return (
-                <Card className="p-0 overflow-hidden">
-                  <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-violet-700 to-violet-600">
-                    <Cpu className="h-4 w-4 text-white" />
-                    <span className="text-sm font-bold text-white">Trial-Brain — Entrainement IA</span>
-                    <span className="text-[9px] font-bold bg-white/25 text-white px-2 py-0.5 rounded-full ml-auto">
-                      {trainingMissions.filter(m => m.status === "completee").length}/{trainingMissions.length} runs
-                    </span>
-                  </div>
-                  <div className="p-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {active && (
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded",
-                            active.status === "en-cours" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600"
-                          )}>
-                            {active.status === "en-cours" ? "EN COURS" : "PROCHAIN"}
-                          </span>
-                          <span className="text-xs font-medium text-gray-900 truncate">{active.titre}</span>
-                        </div>
-                        {active.contexte?.pod_id && (
-                          <div className="text-[9px] text-gray-500 space-y-0.5">
-                            <p>Pod: <span className="font-mono text-gray-700">{active.contexte.pod_id}</span></p>
-                            {active.contexte.last_progress && <p>Progress: <span className="font-medium text-violet-600">{active.contexte.last_progress}</span></p>}
-                            {active.contexte.loss_train != null && <p>Loss train: <span className="font-medium text-green-600">{active.contexte.loss_train}</span></p>}
-                            {active.contexte.loss_eval != null && <p>Loss eval: <span className="font-medium text-green-600">{active.contexte.loss_eval}</span></p>}
-                          </div>
-                        )}
-                        {!active.contexte?.pod_id && active.status === "a-faire" && (
-                          <p className="text-[9px] text-gray-400">En attente du prochain schedule (8h ou 20h)</p>
-                        )}
-                        {active.progression > 0 && (
-                          <div className="w-full bg-gray-100 rounded-full h-1.5">
-                            <div className="bg-violet-500 h-1.5 rounded-full transition-all" style={{ width: `${Math.min(active.progression, 100)}%` }} />
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    {lastDone && (
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-green-100 text-green-700">COMPLETE</span>
-                          <span className="text-xs font-medium text-gray-900 truncate">{lastDone.titre}</span>
-                        </div>
-                        <div className="text-[9px] text-gray-500 space-y-0.5">
-                          {lastDone.contexte?.loss_train != null && <p>Loss train: <span className="font-medium text-green-600">{lastDone.contexte.loss_train}</span></p>}
-                          {lastDone.contexte?.loss_eval != null && <p>Loss eval: <span className="font-medium text-green-600">{lastDone.contexte.loss_eval}</span></p>}
-                          {lastDone.contexte?.dataset_pairs && <p>Dataset: <span className="font-medium">{Number(lastDone.contexte.dataset_pairs).toLocaleString()} paires</span></p>}
-                          {lastDone.completed_at && <p>Termine: {new Date(lastDone.completed_at).toLocaleDateString("fr-CA")}</p>}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </Card>
-              );
-            })()}
-
-            {/* Collaborateurs */}
-            {collaborators.length > 0 && (
-              <Card className="p-0 overflow-hidden">
-                <div className={cn("flex items-center gap-2 px-3 py-2 bg-gradient-to-r", headerGradient)}>
-                  <Users className="h-4 w-4 text-white" />
-                  <span className="text-sm font-bold text-white">Collaborateurs</span>
-                  <span className="text-[9px] font-bold bg-white/25 text-white px-2 py-0.5 rounded-full ml-auto">{collaborators.length}</span>
-                </div>
-                <div className="p-3 flex flex-wrap gap-2">
-                  {collaborators.map(code => {
-                    const info = BOT_INFO[code];
-                    return (
-                      <div key={code} className={cn("flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[9px] font-medium bg-gradient-to-r text-white shadow-sm", info?.gradient || "from-gray-500 to-gray-400")}>
-                        <Bot className="h-3.5 w-3.5" />
-                        {info?.label || code} ({info?.short || ""})
-                      </div>
-                    );
-                  })}
-                </div>
-              </Card>
-            )}
-          </div>
+          <DeptDashboardView botCode={activeBotCode} />
         )}
 
         {/* ══════════════════════════════════════════ */}
@@ -2046,6 +1867,13 @@ export function DepartmentTourDeControle() {
         {/* ══════════════════════════════════════════ */}
         {deptTab === "playbooks" && (
           <BlueprintPlaybooks botCode={activeBotCode} headerGradient={headerGradient} />
+        )}
+
+        {/* ══════════════════════════════════════════ */}
+        {/* TAB — CONFERENCE AI (vue focalisee sur les playbooks conference depuis le Store) */}
+        {/* ══════════════════════════════════════════ */}
+        {deptTab === "conferenceai" && (
+          <BlueprintConferenceAI headerGradient={headerGradient} onNavigateToStore={() => setDeptTab("playbooks" as DeptTabId)} />
         )}
 
         {/* ══════════════════════════════════════════ */}

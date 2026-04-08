@@ -511,17 +511,6 @@ const CEOB_BLUEPRINT: DeptBlueprintConfig = {
         { id: "taux_atteinte_okr", label: "Taux d'atteinte OKR", formule: "OKR atteints / OKR totaux × 100", benchmark: "70%", seuils: { vert: 70, jaune: 50, rouge: 30 }, tier: "T3", unite: "%" },
       ],
     },
-    {
-      id: "playbooks_direction",
-      label: "Playbooks",
-      description: "Playbooks stratégiques par phase",
-      intro: "Les playbooks stratégiques guident les actions concrètes pour chaque phase de croissance. Du plan stratégique 3-5 ans à la préparation du CA, chaque playbook est un mode d'emploi éprouvé adapté à votre taille.",
-      icon: "Rocket",
-      pertinence: { T1: "O", T2: "I", T3: "C", T4: "C", T5: "C" },
-      fields: [],
-      kpis: [],
-      playbooks: ["plan-strategique-3-5ans", "preparation-ca", "due-diligence-vendeur"],
-    },
   ],
 };
 

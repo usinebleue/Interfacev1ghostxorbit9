@@ -148,7 +148,7 @@ import {
   ResizableHandle,
 } from "../../../../../components/ui/resizable";
 import { TypewriterText, BotAvatar } from "../../shared/simulation-components";
-import { BlueprintDepartement, BlueprintDataRoom, BlueprintPlaybooks, DeptDashboardView, DEPT_DASH_ICON, DEPT_FULL_LABEL, DEPT_SHORT_LABEL, BLUEPRINT_HEADER_TABS, type HeaderView } from "../../blueprint/BlueprintDepartement";
+import { BlueprintDepartement, BlueprintDataRoom, BlueprintPlaybooks, BlueprintConferenceAI, DeptDashboardView, CockpitStoreView, DEPT_DASH_ICON, DEPT_FULL_LABEL, DEPT_SHORT_LABEL, BLUEPRINT_HEADER_TABS, type HeaderView } from "../../blueprint/BlueprintDepartement";
 import { HierarchieTab } from "../../BlueprintView";
 import { SanteGlobaleView } from "../../SanteGlobaleView";
 import { DocumentsUnifie } from "../../shared/DocumentsUnifie";
@@ -729,7 +729,7 @@ export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departe
               const O9_LABEL: Record<string, string> = { dashboard: "Dashboard", blueprint: "Blueprint", chantiers: "Chantiers", projets: "Projets", missions: "Missions", taches: "Tâches", discussions: "Discussions", documents: "Documents", agenda: "Agenda", "sante-reseau": "Santé réseau", cellules: "Cellules", jumelage: "Jumelage", gouvernance: "Gouvernance", pionniers: "Pionniers", vitaa: "VITAA", perso: "Mon profil", feed: "Nouvelles", evenements: "Événements", "creer-cellule": "Créer une cellule" };
               const sectionLabel = isOrbit9
                 ? (O9_LABEL[o9Section] || "Orbit⁹")
-                : rightSection === "dashboard" ? "Dashboard" : rightSection === "blueprint" ? "Blueprint" : rightSection === "dataroom" ? "Data Room" : rightSection === "playbooks" ? "Playbook Store" : activePhase === "reflexion" ? "Réflexion" : "Dashboard";
+                : rightSection === "dashboard" ? "Cockpit" : rightSection === "cockpit" ? "Cockpit" : rightSection === "blueprint" ? "Blueprint" : rightSection === "dataroom" ? "Data Room" : rightSection === "playbooks" ? "Playbook Store" : rightSection === "conferenceai" ? "Conference AI" : activePhase === "reflexion" ? "Réflexion" : "Cockpit";
               const titleText = isOrbit9
                 ? `Orbit⁹ — ${sectionLabel}`
                 : `Département ${deptLabel} — ${sectionLabel}`;
@@ -803,9 +803,11 @@ export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departe
                   `}</style>
                   <CanvasActionProvider>
                     {rightSection === "dashboard" && <DeptDashboardView botCode={activeBotCode} onAction={(phase, context) => { setActivePhase(phase as PhaseKey); setReflexionContext(context); setRightSection(null); }} />}
+                    {rightSection === "cockpit" && <CockpitStoreView embedded initialDept={activeBotCode} onAction={(phase, context) => { setActivePhase(phase as PhaseKey); setReflexionContext(context); setRightSection(null); }} />}
                     {rightSection === "blueprint" && <BlueprintDepartement botCode={activeBotCode} headerGradient="from-blue-600 to-blue-500" hideHeader activeHeaderView={blueprintHeaderView} onHeaderViewChange={setBlueprintHeaderView} onStats={setBlueprintStats} />}
                     {rightSection === "dataroom" && <BlueprintDataRoom botCode={activeBotCode} headerGradient="from-blue-600 to-blue-500" showHeader />}
                     {rightSection === "playbooks" && <BlueprintPlaybooks botCode={activeBotCode} headerGradient="from-blue-600 to-blue-500" showHeader />}
+                    {rightSection === "conferenceai" && <BlueprintConferenceAI headerGradient="from-blue-600 to-blue-500" onNavigateToStore={() => setRightSection("playbooks")} />}
                   </CanvasActionProvider>
                 </div>
               ) : isOrbit9 ? (
