@@ -88,6 +88,7 @@ import {
   RefreshCw,
   Link,
   Cpu,
+  Cog,
   Factory,
   Coins,
   CreditCard,
@@ -111,6 +112,7 @@ import {
   Network,
   Atom,
   GraduationCap,
+  HardHat,
   Library,
   User,
   LogOut,
@@ -140,6 +142,7 @@ import {
   Navigation,
   ThumbsUp,
   ThumbsDown,
+  Database,
 } from "lucide-react";
 import { cn } from "../../../../../components/ui/utils";
 import {
@@ -148,20 +151,20 @@ import {
   ResizableHandle,
 } from "../../../../../components/ui/resizable";
 import { TypewriterText, BotAvatar } from "../../shared/simulation-components";
-import { BlueprintDepartement, BlueprintDataRoom, BlueprintPlaybooks, BlueprintConferenceAI, DeptDashboardView, CockpitStoreView, DEPT_DASH_ICON, DEPT_FULL_LABEL, DEPT_SHORT_LABEL, BLUEPRINT_HEADER_TABS, type HeaderView } from "../../blueprint/BlueprintDepartement";
+import { BlueprintDepartement, BlueprintDataRoom, BlueprintPlaybooks, BlueprintConferenceAI, CockpitStoreView, DEPT_DASH_ICON, DEPT_FULL_LABEL, DEPT_SHORT_LABEL, BLUEPRINT_HEADER_TABS, type HeaderView } from "../../blueprint/BlueprintDepartement";
 import { HierarchieTab } from "../../BlueprintView";
 import { SanteGlobaleView } from "../../SanteGlobaleView";
 import { DocumentsUnifie } from "../../shared/DocumentsUnifie";
 import { CanvasActionProvider } from "../../../../context/CanvasActionContext";
 import { BOT_COLORS } from "../../shared/simulation-data";
 
-const UB_BLUE = "#073E5A";
+export const UB_BLUE = "#073E5A";
 
 // ========== PHASE CONFIG (couleurs confirmees Carl) ==========
 
-type PhaseKey = "attention" | "moderation" | "observation" | "reflexion" | "creation" | "execution" | "retroaction" | "discussion";
+export type PhaseKey = "attention" | "moderation" | "observation" | "reflexion" | "creation" | "execution" | "retroaction" | "discussion";
 
-interface PhaseStyle {
+export interface PhaseStyle {
   label: string;
   letter: string;
   Icon: React.ElementType;
@@ -177,7 +180,7 @@ interface PhaseStyle {
   line: string;
 }
 
-const PC: Record<PhaseKey, PhaseStyle> = {
+export const PC: Record<PhaseKey, PhaseStyle> = {
   discussion:  { label: "Discussion",  letter: "D", Icon: MessageCircle,  dot: "bg-sky-500",     badge: "bg-sky-100 text-sky-700",         bg: "bg-sky-50",     border: "border-sky-200",     text: "text-sky-700",     btnBg: "bg-sky-50",     btnText: "text-sky-700",     btnBorder: "border-sky-200",     btnHover: "hover:bg-sky-100",     line: "bg-sky-500" },
   attention:   { label: "Attention",   letter: "A", Icon: AlertTriangle, dot: "bg-red-500",     badge: "bg-red-100 text-red-700",         bg: "bg-red-50",     border: "border-red-200",     text: "text-red-700",     btnBg: "bg-red-50",     btnText: "text-red-700",     btnBorder: "border-red-200",     btnHover: "hover:bg-red-100",     line: "bg-red-500" },
   moderation:  { label: "Modération",  letter: "M", Icon: Scale,         dot: "bg-pink-500",    badge: "bg-pink-100 text-pink-700",       bg: "bg-pink-50",    border: "border-pink-200",    text: "text-pink-700",    btnBg: "bg-pink-50",    btnText: "text-pink-700",    btnBorder: "border-pink-200",    btnHover: "hover:bg-pink-100",    line: "bg-pink-500" },
@@ -188,32 +191,32 @@ const PC: Record<PhaseKey, PhaseStyle> = {
   retroaction: { label: "Rétroaction", letter: "R", Icon: BarChart3,     dot: "bg-emerald-500", badge: "bg-emerald-100 text-emerald-700", bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700", btnBg: "bg-emerald-50", btnText: "text-emerald-700", btnBorder: "border-emerald-200", btnHover: "hover:bg-emerald-100", line: "bg-emerald-500" },
 };
 
-const PHASES: PhaseKey[] = ["attention", "moderation", "observation", "reflexion", "creation", "execution", "retroaction"];
+export const PHASES: PhaseKey[] = ["attention", "moderation", "observation", "reflexion", "creation", "execution", "retroaction"];
 
 // ========== DASHBOARD DATA ==========
 
-const KPIS = [
+export const KPIS = [
   { label: "Revenus Q4", value: "2.4M$", delta: "+8.3%", up: true, icon: DollarSign },
   { label: "Pipeline", value: "890K$", delta: "-12%", up: false, icon: TrendingUp },
   { label: "Équipe", value: "47", delta: "+3 ce mois", up: true, icon: Users },
   { label: "Projets actifs", value: "12", delta: "3 en retard", up: false, icon: FolderOpen },
 ];
 
-const CHANTIERS = [
+export const CHANTIERS = [
   { name: "Transformation Numérique", progress: 72, bot: "CTOB", botName: "Tim", phase: "execution" as PhaseKey },
   { name: "Expansion Marché US", progress: 45, bot: "CSOB", botName: "Simone", phase: "reflexion" as PhaseKey },
   { name: "Optimisation Production", progress: 88, bot: "CPOB", botName: "Paco", phase: "execution" as PhaseKey },
   { name: "Restructuration RH", progress: 20, bot: "CHROB", botName: "Hélène", phase: "creation" as PhaseKey },
 ];
 
-const PROJETS = [
+export const PROJETS = [
   { name: "Migration serveurs cloud", chantier: "Transformation Numérique", phase: "execution" as PhaseKey, bot: "CTOB" },
   { name: "Soumission Hydro-Québec", chantier: "Expansion Marché US", phase: "reflexion" as PhaseKey, bot: "CSOB" },
   { name: "Automatisation ligne 3", chantier: "Optimisation Production", phase: "retroaction" as PhaseKey, bot: "CPOB" },
   { name: "Plan de rétention", chantier: "Restructuration RH", phase: "creation" as PhaseKey, bot: "CHROB" },
 ];
 
-const MISSIONS_DATA = [
+export const MISSIONS_DATA = [
   { name: "Audit coûts hébergement", bot: "CFOB", phase: "execution" as PhaseKey, urgent: false },
   { name: "Analyse pipeline Q1", bot: "CROB", phase: "attention" as PhaseKey, urgent: true },
   { name: "Benchmark concurrence US", bot: "CSOB", phase: "reflexion" as PhaseKey, urgent: false },
@@ -221,21 +224,21 @@ const MISSIONS_DATA = [
   { name: "Rapport rétention employés", bot: "CHROB", phase: "attention" as PhaseKey, urgent: true },
 ];
 
-const INDUSTRIE_NEWS = [
+export const INDUSTRIE_NEWS = [
   { title: "Adoption IA manufacturière +39 pts en 2025", source: "STIQ", hot: true },
   { title: "Pénurie main-d'œuvre: 25K postes vacants au Québec", source: "ISQ", hot: true },
   { title: "Robotique collaborative: ROI moyen 18 mois", source: "IFR", hot: false },
   { title: "Subventions CDPQ: 50M$ pour automatisation PME", source: "Gouv. QC", hot: false },
 ];
 
-const BOT_FEED = [
+export const BOT_FEED = [
   { bot: "CFOB", action: "Rapport mensuel Q4 complété", time: "Il y a 2h" },
   { bot: "CTOB", action: "Migration DB — phase 2 lancée", time: "Il y a 4h" },
   { bot: "CMOB", action: "Campagne email analysée — taux 3.2%", time: "Il y a 6h" },
   { bot: "CROB", action: "3 leads qualifiés cette semaine", time: "Hier" },
 ];
 
-const DECISIONS_DATA = [
+export const DECISIONS_DATA = [
   { id: "D-108", title: "Ajuster prix gamme A (+5%)", status: "Approuvée", sc: "text-emerald-600 bg-emerald-50" },
   { id: "D-107", title: "Embauche développeur senior", status: "En attente", sc: "text-amber-600 bg-amber-50" },
   { id: "D-106", title: "Renouvellement contrat fournisseur", status: "Approuvée", sc: "text-emerald-600 bg-emerald-50" },
@@ -243,7 +246,7 @@ const DECISIONS_DATA = [
 
 // ========== ALERTS DATA ==========
 
-const ALERTS = [
+export const ALERTS = [
   { id: 1, severity: "critique" as const, icon: ShieldAlert, bc: "border-red-400", bgc: "bg-red-50", tc: "text-red-700",
     title: "Marge brute en baisse de 4.2% vs Q3", source: "Frank (CFO)", bot: "CFOB",
     detail: "Coûts matières premières +12% sans ajustement prix. Impact: 38K$/mois." },
@@ -263,7 +266,7 @@ const ALERTS = [
 
 // ========== BOT TEAM ==========
 
-const TEAM = [
+export const TEAM = [
   { code: "CFOB", name: "Frank CFO" },
   { code: "CTOB", name: "Tim CTO" },
   { code: "CSOB", name: "Simone CSO" },
@@ -280,7 +283,7 @@ interface Cellule {
   gradient: string; membres: CelluleMember[]; sousCellules: string[]; status: string;
 }
 
-const ORBIT9_CELLULES: Cellule[] = [
+export const ORBIT9_CELLULES: Cellule[] = [
   {
     name: "Les Titans", type: "interne", members: 6, maxMembers: 9,
     gradient: "from-teal-600 to-teal-500",
@@ -377,7 +380,7 @@ const ALL_BOTS = [
 // CEOB blocs — headers PASTEL UB_BLUE + indicateurs d'état AMORCER
 // phase = état actuel du bloc (détermine l'indicateur coloré)
 const UB_LOGO = "#00B4D8"; // bleu cyan du mot "bleue" dans le logo Usine Bleue
-const UB_PASTEL = "bg-[#00B4D8]/10"; // pastel du bleu logo
+export const UB_PASTEL = "bg-[#00B4D8]/10"; // pastel du bleu logo
 const CEOB_BLOCS = [
   {
     icon: Shield, title: "Pilotage Stratégique",
@@ -729,7 +732,7 @@ export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departe
               const O9_LABEL: Record<string, string> = { dashboard: "Dashboard", blueprint: "Blueprint", chantiers: "Chantiers", projets: "Projets", missions: "Missions", taches: "Tâches", discussions: "Discussions", documents: "Documents", agenda: "Agenda", "sante-reseau": "Santé réseau", cellules: "Cellules", jumelage: "Jumelage", gouvernance: "Gouvernance", pionniers: "Pionniers", vitaa: "VITAA", perso: "Mon profil", feed: "Nouvelles", evenements: "Événements", "creer-cellule": "Créer une cellule" };
               const sectionLabel = isOrbit9
                 ? (O9_LABEL[o9Section] || "Orbit⁹")
-                : rightSection === "dashboard" ? "Cockpit" : rightSection === "cockpit" ? "Cockpit" : rightSection === "blueprint" ? "Blueprint" : rightSection === "dataroom" ? "Data Room" : rightSection === "playbooks" ? "Playbook Store" : rightSection === "conferenceai" ? "Conference AI" : activePhase === "reflexion" ? "Réflexion" : "Cockpit";
+                : rightSection === "cockpit" ? "Cockpit" : rightSection === "blueprint" ? "Blueprint" : rightSection === "dataroom" ? "Data Room" : rightSection === "playbooks" ? "Playbook Store" : rightSection === "conferenceai" ? "Conference AI" : activePhase === "reflexion" ? "Réflexion" : "Cockpit";
               const titleText = isOrbit9
                 ? `Orbit⁹ — ${sectionLabel}`
                 : `Département ${deptLabel} — ${sectionLabel}`;
@@ -802,7 +805,6 @@ export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departe
                     }
                   `}</style>
                   <CanvasActionProvider>
-                    {rightSection === "dashboard" && <DeptDashboardView botCode={activeBotCode} onAction={(phase, context) => { setActivePhase(phase as PhaseKey); setReflexionContext(context); setRightSection(null); }} />}
                     {rightSection === "cockpit" && <CockpitStoreView embedded initialDept={activeBotCode} onAction={(phase, context) => { setActivePhase(phase as PhaseKey); setReflexionContext(context); setRightSection(null); }} />}
                     {rightSection === "blueprint" && <BlueprintDepartement botCode={activeBotCode} headerGradient="from-blue-600 to-blue-500" hideHeader activeHeaderView={blueprintHeaderView} onHeaderViewChange={setBlueprintHeaderView} onStats={setBlueprintStats} />}
                     {rightSection === "dataroom" && <BlueprintDataRoom botCode={activeBotCode} headerGradient="from-blue-600 to-blue-500" showHeader />}
@@ -844,7 +846,7 @@ export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departe
 
 // ========== CHAT HELPERS ==========
 
-function SBubble({ code, children, collapsed }: { code: string; children: React.ReactNode; collapsed?: boolean }) {
+export function SBubble({ code, children, collapsed }: { code: string; children: React.ReactNode; collapsed?: boolean }) {
   const name = BOT_COLORS[code]?.name || code;
   const role = BOT_COLORS[code]?.role || "";
   return (
@@ -878,7 +880,7 @@ function SBtn({ onClick, icon: Icon, label, pc }: { onClick: () => void; icon: R
 
 // ========== OBSERVATION CHAT ==========
 
-function ObservationChat({ typed, setTyped }: { typed: boolean; setTyped: (v: boolean) => void }) {
+export function ObservationChat({ typed, setTyped }: { typed: boolean; setTyped: (v: boolean) => void }) {
   return (
     <>
       <SBubble code="CEOB">
@@ -906,7 +908,7 @@ function ObservationChat({ typed, setTyped }: { typed: boolean; setTyped: (v: bo
 
 // ========== ATTENTION CHAT (8 stages progressifs) ==========
 
-function AttentionChat({ stage, typed, setTyped, advance, pc }: {
+export function AttentionChat({ stage, typed, setTyped, advance, pc }: {
   stage: number; typed: boolean; setTyped: (v: boolean) => void; advance: () => void; pc: PhaseStyle;
 }) {
   return (
@@ -1007,7 +1009,7 @@ function AttentionChat({ stage, typed, setTyped, advance, pc }: {
 
 // ========== MODERATION CHAT ==========
 
-function ModerationChat({ stage, typed, setTyped, advance, pc }: {
+export function ModerationChat({ stage, typed, setTyped, advance, pc }: {
   stage: number; typed: boolean; setTyped: (v: boolean) => void; advance: () => void; pc: PhaseStyle;
 }) {
   return (
@@ -1041,7 +1043,7 @@ function ModerationChat({ stage, typed, setTyped, advance, pc }: {
 
 // ========== VUE D'ENSEMBLE (partagee observation/attention/moderation) ==========
 
-function VueEnsemble({ phase, chatStage, onStartReflexion }: { phase: PhaseKey; chatStage: number; onStartReflexion: (chantier: string) => void }) {
+export function VueEnsemble({ phase, chatStage, onStartReflexion }: { phase: PhaseKey; chatStage: number; onStartReflexion: (chantier: string) => void }) {
   return (
     <div className="space-y-4">
 
@@ -1283,7 +1285,7 @@ function VueEnsemble({ phase, chatStage, onStartReflexion }: { phase: PhaseKey; 
 
 // ========== PLACEHOLDERS (Reflexion/Creation/Execution/Retroaction) ==========
 
-function PlaceholderChat({ phase }: { phase: PhaseKey }) {
+export function PlaceholderChat({ phase }: { phase: PhaseKey }) {
   const pc = PC[phase];
   return (
     <SBubble code="CEOB">
@@ -1300,7 +1302,7 @@ function PlaceholderChat({ phase }: { phase: PhaseKey }) {
 
 // ========== REFLEXION CHAT (left panel — EXACT copy from SimPhaseReflexion) ==========
 
-function ReflexionChat({ stage, typed, setTyped, advance, pc, context }: {
+export function ReflexionChat({ stage, typed, setTyped, advance, pc, context }: {
   stage: number; typed: boolean; setTyped: (v: boolean) => void; advance: () => void; pc: PhaseStyle; context: string | null;
 }) {
   return (
@@ -2646,7 +2648,7 @@ function MagTransition() {
 
 // ========== REFLEXION MAGAZINE PAGE (right panel \u2014 stacked sections from SimPhaseReflexion) ==========
 
-function ReflexionMagazine({ stage, context }: { stage: number; context: string | null }) {
+export function ReflexionMagazine({ stage, context }: { stage: number; context: string | null }) {
   return (
     <div className="max-w-4xl mx-auto px-6 py-4 space-y-8 pb-12">
       {/* Empty state */}
@@ -2682,7 +2684,7 @@ function ReflexionMagazine({ stage, context }: { stage: number; context: string 
 
 // ========== CHANTIER DRILL-DOWN DATA ==========
 
-const CHANTIER_DRILLDOWN = [
+export const CHANTIER_DRILLDOWN = [
   {
     name: "Transformation Numérique", bot: "CTOB", botName: "Tim", progress: 72, bar: "bg-blue-500",
     projets: [
@@ -2707,7 +2709,7 @@ const CHANTIER_DRILLDOWN = [
   },
 ];
 
-function ChantierDrillDown({ phase }: { phase: PhaseKey }) {
+export function ChantierDrillDown({ phase }: { phase: PhaseKey }) {
   const pc = PC[phase];
   const [openChantier, setOpenChantier] = useState(0);
   const [openProjet, setOpenProjet] = useState(0);
@@ -2788,9 +2790,9 @@ function ChantierDrillDown({ phase }: { phase: PhaseKey }) {
   );
 }
 
-// ========== ICON CATALOG V2 (Carl vocal 13h35 + msg: icônes réelles de l'app + CTA bulles + simulation) ==========
+// ========== ICON CATALOG V3 — Cristallisation officielle (audit 134 icônes, 206 fichiers) ==========
 
-type IconEntry = { Icon: React.ElementType; label: string; usage: string; color?: string };
+type IconEntry = { Icon: React.ElementType; label: string; usage: string; color?: string; files?: number };
 type IconTier = {
   tier: string;
   tierColor: string;
@@ -2800,322 +2802,312 @@ type IconTier = {
 };
 
 const ICON_TIERS: IconTier[] = [
-  // ===================== A. PLATEFORME — PRIMAIRE (données réelles du code déployé) =====================
+  // ═══════════════════════════════════════════════════════════════════════
+  // A. OFFICIELLES — Structure du Frame Amorcer V3 (3 zones + header)
+  // Chaque icône = UN SEUL usage. Pas de doublons entre sections.
+  // ═══════════════════════════════════════════════════════════════════════
   {
-    tier: "PRIMAIRE",
-    tierColor: "text-red-700",
-    tierBg: "bg-red-50 border-red-200",
-    tierDesc: "Sections principales de la plateforme — Icônes RÉELLES telles que déployées sur dev.usinebleue.ai",
+    tier: "OFFICIELLES",
+    tierColor: "text-emerald-700",
+    tierBg: "bg-emerald-50 border-emerald-200",
+    tierDesc: "Icônes verrouillées du frame Brain Team. Une icône = un seul usage. Ne pas réutiliser ailleurs.",
     sections: [
       {
-        title: "Sidebar — Sections de navigation",
+        title: "Header principal — Barre blanche Brain Team",
         icons: [
-          { Icon: Building2, label: "Mon Département", usage: "Section entreprise (sidebar)", color: "text-blue-600" },
-          { Icon: DoorOpen, label: "Mes Salles", usage: "Think Room, War Room, Board Room", color: "text-amber-500" },
-          { Icon: Cpu, label: "Tim — CTO", usage: "Mon Équipe AI (sidebar)", color: "text-violet-500" },
-          { Icon: DollarSign, label: "Frank — CFO", usage: "Mon Équipe AI (sidebar)", color: "text-emerald-500" },
-          { Icon: Megaphone, label: "Mathilde — CMO", usage: "Mon Équipe AI (sidebar)", color: "text-pink-500" },
-          { Icon: Target, label: "Simone — CSO", usage: "Mon Équipe AI (sidebar)", color: "text-red-500" },
-          { Icon: Settings, label: "Olivier — COO", usage: "Mon Équipe AI (sidebar)", color: "text-orange-500" },
-          { Icon: Factory, label: "Paco — CPO", usage: "Mon Équipe AI (sidebar)", color: "text-slate-500" },
-          { Icon: Users, label: "Hélène — CHRO", usage: "Mon Équipe AI (sidebar)", color: "text-cyan-500" },
-          { Icon: Lightbulb, label: "Inès — CINO", usage: "Mon Équipe AI (sidebar)", color: "text-rose-500" },
-          { Icon: TrendingUp, label: "Rich — CRO", usage: "Mon Équipe AI (sidebar)", color: "text-amber-500" },
-          { Icon: Scale, label: "Loulou — CLO", usage: "Mon Équipe AI (sidebar)", color: "text-indigo-500" },
-          { Icon: ShieldCheck, label: "Sébastien — CISO", usage: "Mon Équipe AI (sidebar)", color: "text-zinc-500" },
+          { Icon: Palette, label: "Icônes", usage: "Ouvrir le catalogue d'icônes (ce panneau)", color: "text-gray-500" },
+          { Icon: Settings, label: "Réglages", usage: "Configuration et préférences utilisateur", color: "text-gray-500" },
+          { Icon: ShieldAlert, label: "Admin", usage: "Panneau d'administration", color: "text-red-600" },
         ],
       },
       {
-        title: "Hiérarchie officielle — Drill-down + Blueprint tabs",
+        title: "Zone 1 — Tour de Contrôle (panneau gauche 280px)",
         icons: [
-          { Icon: Building2, label: "Sommaire", usage: "Blueprint tab 1", color: "text-gray-700" },
-          { Icon: Target, label: "Objectifs", usage: "Blueprint tab 2", color: "text-gray-700" },
-          { Icon: Layers, label: "Vue d'ensemble", usage: "Blueprint tab 3", color: "text-gray-700" },
-          { Icon: Flame, label: "Chantiers", usage: "Niveau 1 + Blueprint tab — ambre", color: "text-amber-600" },
-          { Icon: Package, label: "Projets", usage: "Niveau 2 + Blueprint tab — émeraude", color: "text-emerald-600" },
-          { Icon: ListChecks, label: "Missions", usage: "Niveau 3 + Blueprint tab — bleu", color: "text-blue-600" },
-          { Icon: CheckCircle2, label: "Tâches", usage: "Niveau 4 + Blueprint tab — vert", color: "text-green-600" },
-          { Icon: Calendar, label: "Timeline", usage: "Blueprint tab 8", color: "text-gray-700" },
-          { Icon: BookOpen, label: "Catalogue", usage: "Blueprint tab 9", color: "text-gray-700" },
-          { Icon: Users, label: "Équipe", usage: "Blueprint tab 10", color: "text-gray-700" },
+          { Icon: TowerControl, label: "Tour de contrôle", usage: "Header du panneau gauche — navigation et bots", color: "text-gray-700" },
+          { Icon: Home, label: "Bureau", usage: "Tab Bureau — vue département", color: "text-gray-700" },
+          { Icon: Atom, label: "Orbit⁹", usage: "Tab Orbit⁹ — réseau inter-entreprises", color: "text-teal-500" },
+          { Icon: Bot, label: "Brain Team", usage: "Sub-tab — liste des 12 bots C-Level", color: "text-blue-600" },
+          { Icon: Network, label: "Mes Cellules", usage: "Sub-tab — cellules de trisociation", color: "text-teal-500" },
+          { Icon: ArrowRight, label: "Aller", usage: "Naviguer vers le département d'un bot", color: "text-blue-600" },
         ],
       },
       {
-        title: "Département — Sections communes (headers gradient)",
+        title: "Tour de Contrôle — 8 boutons grille navigation",
         icons: [
-          { Icon: MessageSquare, label: "Discussions", usage: "Header violet-700", color: "text-violet-600" },
-          { Icon: FileText, label: "Documents", usage: "Header indigo-700", color: "text-indigo-600" },
-          { Icon: HeartPulse, label: "Santé", usage: "Header pink-700", color: "text-pink-600" },
-          { Icon: Stethoscope, label: "Diagnostics", usage: "Bloc santé département", color: "text-orange-600" },
-          { Icon: Newspaper, label: "Veille", usage: "Bloc veille par département", color: "text-indigo-500" },
-          { Icon: CalendarDays, label: "Agenda", usage: "Bloc agenda par département", color: "text-cyan-500" },
-          { Icon: LineChart, label: "Métriques", usage: "Bloc indicateurs/métriques", color: "text-amber-500" },
-          { Icon: BarChart3, label: "Benchmarks", usage: "Bloc benchmarks par département", color: "text-slate-500" },
+          { Icon: Gauge, label: "Cockpit", usage: "Vue cockpit du département — KPIs et performance", color: "text-gray-600" },
+          { Icon: Flame, label: "Chantiers", usage: "Chantiers stratégiques du département", color: "text-red-500" },
+          { Icon: Video, label: "Conférence AI", usage: "Conférence vidéo avec les bots", color: "text-emerald-600" },
+          { Icon: Calendar, label: "Agenda", usage: "Calendrier et événements", color: "text-cyan-500" },
+          { Icon: Layers, label: "Blueprint", usage: "Document stratégique du département", color: "text-gray-700" },
+          { Icon: Database, label: "Data Room", usage: "Données et registres", color: "text-gray-600" },
+          { Icon: BookOpen, label: "Playbook Store", usage: "Bibliothèque de playbooks", color: "text-indigo-500" },
+          { Icon: Atom, label: "Orbit9", usage: "Accès au réseau Orbit⁹", color: "text-teal-500" },
         ],
       },
       {
-        title: "Master GHML — Icônes des 31 pages",
+        title: "Tour de Contrôle — Menu Orbit⁹ (8 sections)",
         icons: [
-          { Icon: BookOpen, label: "Bible Visuelle", usage: "FE.1 Bible officielle", color: "text-emerald-500" },
-          { Icon: Sparkles, label: "Lab Animations", usage: "FE.4 Animations showcase", color: "text-amber-500" },
-          { Icon: Route, label: "Atlas des Flows", usage: "FE.6 Parcours utilisateur", color: "text-cyan-600" },
-          { Icon: Server, label: "Bible Technique", usage: "BE.1 Architecture backend", color: "text-emerald-500" },
-          { Icon: Atom, label: "Bible GHML", usage: "BE.2 Langage BTML complet", color: "text-violet-500" },
-          { Icon: Radio, label: "Stack Communication", usage: "BE.3 LiveKit/Telnyx/ElevenLabs", color: "text-cyan-500" },
-          { Icon: GraduationCap, label: "Entraînement", usage: "BE.5 Fine-tuning agents", color: "text-purple-500" },
-          { Icon: Bot, label: "Cortex Robot", usage: "BE.6 Robot humanoïde", color: "text-gray-700" },
-          { Icon: Gem, label: "Mine d'Or & Data", usage: "BE.7 Données Usine Bleue", color: "text-yellow-500" },
-          { Icon: EyeOff, label: "Angles Morts", usage: "RD.6 Risques identifiés", color: "text-red-600" },
-          { Icon: Landmark, label: "Fonds & Investissement", usage: "SA.2 Stratégie financière", color: "text-emerald-600" },
+          { Icon: Home, label: "Accueil", usage: "Page d'accueil sociale Orbit⁹", color: "text-gray-700" },
+          { Icon: BookOpen, label: "Blueprint", usage: "Blueprint collaboration réseau", color: "text-indigo-500" },
+          { Icon: Atom, label: "Cellules", usage: "Gestion des cellules de trisociation", color: "text-teal-500" },
+          { Icon: Handshake, label: "Jumelage", usage: "Partenariats inter-entreprises", color: "text-emerald-500" },
+          { Icon: Shield, label: "Gouvernance", usage: "Règles et gouvernance du réseau", color: "text-gray-600" },
+          { Icon: Rocket, label: "Pionniers", usage: "Programme des premiers adopteurs", color: "text-green-500" },
+          { Icon: Activity, label: "VITAA", usage: "Scoring 5 piliers (Vente, Idée, Temps, Argent, Actif)", color: "text-blue-500" },
+          { Icon: UserCircle, label: "Mon profil", usage: "Profil utilisateur Orbit⁹", color: "text-gray-500" },
+        ],
+      },
+      {
+        title: "Zone 2 — Discussion (panneau central 500px)",
+        icons: [
+          { Icon: Phone, label: "Discussion vocale", usage: "Appel vocal LiveKit", color: "text-blue-600" },
+          { Icon: Video, label: "Conférence vidéo", usage: "Vidéo Tavus/LiveKit", color: "text-emerald-600" },
+          { Icon: Glasses, label: "Vision", usage: "Ray-Ban Meta / Vision Live", color: "text-cyan-600" },
+          { Icon: Plus, label: "Ajouter", usage: "Menu pièces jointes et connecteurs", color: "text-gray-500" },
+          { Icon: Send, label: "Envoyer", usage: "Soumettre le message", color: "text-blue-600" },
+          { Icon: Paperclip, label: "Pièce jointe", usage: "Attacher un fichier", color: "text-gray-500" },
+          { Icon: Globe, label: "Google Drive", usage: "Import depuis Drive", color: "text-amber-500" },
+        ],
+      },
+      {
+        title: "Zone 3 — Atelier (panneau droit flex-1) — 5 Actions AMORCER",
+        icons: [
+          { Icon: MessageCircle, label: "Discussion", usage: "Déclenche une discussion sur un point d'intérêt — action par défaut", color: "text-sky-500" },
+          { Icon: Brain, label: "Réflexion", usage: "Déclenche la réflexion approfondie — techniques de brassage d'idées", color: "text-orange-500" },
+          { Icon: Hammer, label: "Conception", usage: "Déclenche la structuration et planification", color: "text-yellow-500" },
+          { Icon: Rocket, label: "Exécution", usage: "Déclenche le lancement et la production", color: "text-green-500" },
+          { Icon: BarChart3, label: "Rétroaction", usage: "Déclenche le bilan et le feedback", color: "text-emerald-500" },
+        ],
+      },
+      {
+        title: "Atelier — 2 états d'alerte (automatiques)",
+        icons: [
+          { Icon: AlertTriangle, label: "Attention", usage: "Alerte bot sur une section cockpit — signal à traiter", color: "text-red-500" },
+          { Icon: Scale, label: "Modération", usage: "Modération naturelle de l'utilisateur — arbitrage", color: "text-pink-500" },
+        ],
+      },
+      {
+        title: "Hiérarchie de travail — Entités drill-down",
+        icons: [
+          { Icon: Flame, label: "Chantier", usage: "Initiative stratégique — niveau le plus haut", color: "text-red-500" },
+          { Icon: FolderOpen, label: "Projet", usage: "Projet regroupé sous un chantier", color: "text-blue-600" },
+          { Icon: Target, label: "Mission", usage: "Mission assignée à un bot ou utilisateur", color: "text-green-600" },
+          { Icon: ListChecks, label: "Tâche", usage: "Tâche élémentaire à compléter", color: "text-gray-600" },
         ],
       },
     ],
   },
-  // ===================== B. PLATEFORME — SECONDAIRE =====================
+  // ═══════════════════════════════════════════════════════════════════════
+  // B. SPÉCIALISÉES — Contextuelles au domaine
+  // Icônes qui ne sont PAS dans la structure du frame mais dans le contenu
+  // ═══════════════════════════════════════════════════════════════════════
   {
-    tier: "SECONDAIRE",
+    tier: "SPÉCIALISÉES",
     tierColor: "text-amber-700",
     tierBg: "bg-amber-50 border-amber-200",
-    tierDesc: "CTA des bulles de chat, modes de réflexion, tabs Blueprint — Icônes fonctionnelles",
+    tierDesc: "Icônes de contenu — départements, techniques de réflexion, finance. Pas dans la navigation du frame.",
     sections: [
       {
-        title: "CTA — Boutons dans les bulles de chat",
+        title: "12 Bots C-Level — Icônes de département (une par bot, réservée)",
         icons: [
-          { Icon: Copy, label: "Copier", usage: "Copier le message (footer bulle)", color: "text-gray-500" },
+          { Icon: Crown, label: "CarlOS — CEO", usage: "Direction générale", color: "text-blue-600" },
+          { Icon: Cpu, label: "Tim — CTO", usage: "Technologie", color: "text-violet-500" },
+          { Icon: DollarSign, label: "Frank — CFO", usage: "Finances", color: "text-emerald-500" },
+          { Icon: Megaphone, label: "Mathilde — CMO", usage: "Marketing (Palette dans grille playbooks)", color: "text-pink-500" },
+          { Icon: Compass, label: "Simone — CSO", usage: "Stratégie", color: "text-red-500" },
+          { Icon: Settings, label: "Olivier — COO", usage: "Opérations", color: "text-orange-500" },
+          { Icon: Factory, label: "Paco — CPO", usage: "Usine / Production", color: "text-slate-500" },
+          { Icon: Users, label: "Hélène — CHRO", usage: "Ressources Humaines", color: "text-cyan-500" },
+          { Icon: Lightbulb, label: "Inès — CINO", usage: "Innovation (Sparkles dans grille playbooks)", color: "text-rose-500" },
+          { Icon: TrendingUp, label: "Rich — CRO", usage: "Revenus", color: "text-amber-500" },
+          { Icon: Scale, label: "Loulou — CLO", usage: "Juridique (Shield dans grille playbooks)", color: "text-indigo-500" },
+          { Icon: ShieldCheck, label: "Sébastien — CISO", usage: "Sécurité", color: "text-zinc-500" },
+        ],
+      },
+      {
+        title: "Techniques de réflexion — Sous-modes dans la phase Réflexion",
+        icons: [
+          { Icon: Search, label: "Analyse", usage: "Analyse approfondie d'un sujet", color: "text-orange-400" },
+          { Icon: Sparkles, label: "Brainstorm", usage: "Génération d'idées créatives", color: "text-orange-400" },
+          { Icon: Crosshair, label: "Décision", usage: "Cadrage pour prise de décision", color: "text-orange-400" },
+          { Icon: ShieldAlert, label: "Crise", usage: "Gestion de crise — cas spécial urgence", color: "text-red-600" },
+          { Icon: Swords, label: "Débat", usage: "Argumentation contradictoire multi-bots", color: "text-orange-400" },
+          { Icon: Eye, label: "Innovation", usage: "Exploration disruptive et veille", color: "text-orange-400" },
+          { Icon: Brain, label: "Deep Resonance", usage: "Réflexion profonde avec tous les bots", color: "text-orange-600" },
+        ],
+      },
+      {
+        title: "Finance & Business",
+        icons: [
+          { Icon: DollarSign, label: "Revenus", usage: "Finance, budgets, KPI monétaires", color: "text-emerald-600" },
+          { Icon: CreditCard, label: "Facturation", usage: "Paiements, abonnement", color: "text-gray-600" },
+          { Icon: Coins, label: "Monnaie", usage: "Coûts, TimeTokens", color: "text-amber-500" },
+          { Icon: PiggyBank, label: "Budget", usage: "Épargne, budget département", color: "text-emerald-500" },
+          { Icon: Briefcase, label: "Business", usage: "Affaires, entreprise", color: "text-gray-600" },
+          { Icon: Star, label: "Favoris", usage: "Évaluation, rating, préférence", color: "text-yellow-500" },
+        ],
+      },
+      {
+        title: "CTA — Actions dans les bulles de chat",
+        icons: [
+          { Icon: Copy, label: "Copier", usage: "Copier le message", color: "text-gray-500" },
           { Icon: Bookmark, label: "Cristalliser", usage: "Sauvegarder un message clé", color: "text-amber-500" },
-          { Icon: Clock, label: "Parker", usage: "Parker/sauvegarder le fil", color: "text-gray-500" },
-          { Icon: Users, label: "Consulter", usage: "Ouvrir dropdown sélection bot", color: "text-blue-500" },
-          { Icon: Swords, label: "Challenge", usage: "Lancer un débat contradictoire", color: "text-orange-500" },
-          { Icon: Plus, label: "Nouveau fil", usage: "Créer une branche de discussion", color: "text-gray-500" },
-          { Icon: Pencil, label: "Modifier titre", usage: "Éditer le titre du fil", color: "text-gray-400" },
-          { Icon: Heart, label: "Sentiment", usage: "Réaction positive/appréciation", color: "text-pink-500" },
-          { Icon: ArrowRight, label: "Cascade", usage: "Navigation vers section suggérée", color: "text-blue-500" },
-        ],
-      },
-      {
-        title: "CTA — Barre de saisie (InputBar)",
-        icons: [
-          { Icon: Send, label: "Envoyer", usage: "Bouton bleu quand texte actif", color: "text-blue-600" },
-          { Icon: Paperclip, label: "Pièce jointe", usage: "Attacher un fichier", color: "text-gray-500" },
-          { Icon: Mic, label: "Vocal", usage: "Activer/désactiver le micro", color: "text-gray-500" },
-          { Icon: Phone, label: "Discussion", usage: "Appel vocal LiveKit", color: "text-blue-600" },
-          { Icon: Video, label: "Conférence", usage: "Vidéo Tavus/LiveKit", color: "text-emerald-600" },
-          { Icon: Glasses, label: "Vision", usage: "Ray-Ban Meta / Vision Live", color: "text-cyan-600" },
-        ],
-      },
-      {
-        title: "Modes de réflexion (8+1)",
-        icons: [
-          { Icon: Zap, label: "CREDO (Standard)", usage: "Mode par défaut", color: "text-blue-600" },
-          { Icon: Search, label: "Analyse", usage: "Analyse approfondie", color: "text-blue-500" },
-          { Icon: Lightbulb, label: "Brainstorm", usage: "Génération d'idées", color: "text-yellow-500" },
-          { Icon: Scale, label: "Décision", usage: "Prise de décision", color: "text-indigo-500" },
-          { Icon: AlertTriangle, label: "Crise", usage: "Gestion de crise", color: "text-red-500" },
-          { Icon: Target, label: "Stratégie", usage: "Planification stratégique", color: "text-green-500" },
-          { Icon: MessageSquare, label: "Débat", usage: "Argumentation contradictoire", color: "text-orange-500" },
-          { Icon: Sparkles, label: "Innovation", usage: "Disruption/innovation", color: "text-violet-500" },
-          { Icon: Brain, label: "Deep Resonance", usage: "Réflexion profonde", color: "text-purple-600" },
-        ],
-      },
-      {
-        title: "Thinking Animation (étapes dans les bulles)",
-        icons: [
-          { Icon: Users, label: "Assemblage équipe", usage: "Recrutement des bots pertinents", color: "text-blue-500" },
-          { Icon: Brain, label: "Idéation", usage: "Phase créative/cognitive", color: "text-purple-500" },
-          { Icon: Target, label: "Cadrage stratégique", usage: "Alignement objectifs", color: "text-green-500" },
-          { Icon: Scale, label: "Évaluation", usage: "Analyse des options", color: "text-indigo-500" },
-          { Icon: Cpu, label: "Plan d'action", usage: "Compilation COMMAND", color: "text-gray-700" },
-          { Icon: Loader2, label: "Chargement", usage: "Animation spin pendant traitement", color: "text-blue-400" },
-          { Icon: CheckCircle2, label: "Étape complétée", usage: "Confirmation visuelle verte", color: "text-green-500" },
-        ],
-      },
-      {
-        title: "Département — 13 Tabs + blocs spécialisés",
-        icons: [
-          { Icon: Layers, label: "Vue d'ensemble", usage: "Tab 1 — overview département", color: "text-gray-700" },
-          { Icon: Flame, label: "Chantiers", usage: "Tab 2 — liste chantiers ambre", color: "text-amber-600" },
-          { Icon: Package, label: "Projets", usage: "Tab 3 — projets émeraude", color: "text-emerald-600" },
-          { Icon: ListChecks, label: "Missions", usage: "Tab 4 — missions bleu", color: "text-blue-600" },
-          { Icon: CheckCircle2, label: "Tâches", usage: "Tab 5 — tâches vert", color: "text-green-600" },
-          { Icon: MessageSquare, label: "Discussions", usage: "Tab 6 — fils violet", color: "text-violet-600" },
-          { Icon: FileText, label: "Documents", usage: "Tab 7 — docs indigo", color: "text-indigo-600" },
-          { Icon: HeartPulse, label: "Santé", usage: "Tab 8 — diagnostics rose", color: "text-pink-600" },
-          { Icon: Stethoscope, label: "Diagnostic IA", usage: "Tab 9 — diagnostic orange", color: "text-orange-600" },
-          { Icon: Rocket, label: "Playbooks", usage: "Tab 10 — scénarios", color: "text-purple-600" },
-          { Icon: Bot, label: "Agent IA", usage: "Tab 11 — profil bot", color: "text-blue-600" },
-          { Icon: Crown, label: "Direction", usage: "Tab CEOB — CEO overview", color: "text-amber-500" },
-        ],
-      },
-      {
-        title: "Blocs KPI par département (icônes spécifiques)",
-        icons: [
-          { Icon: PiggyBank, label: "Budget", usage: "Bloc finance — Frank CFO", color: "text-emerald-500" },
-          { Icon: Receipt, label: "Factures", usage: "Bloc comptabilité", color: "text-gray-600" },
-          { Icon: Bug, label: "Bugs", usage: "Bloc tech — Tim CTO", color: "text-red-500" },
-          { Icon: Wrench, label: "Maintenance", usage: "Bloc production — Paco CPO", color: "text-slate-500" },
-          { Icon: ClipboardList, label: "Conformité", usage: "Bloc légal — Loulou CLO", color: "text-indigo-500" },
-          { Icon: Newspaper, label: "Veille", usage: "Bloc veille sectorielle", color: "text-blue-500" },
-          { Icon: FileBarChart, label: "Rapports", usage: "Bloc reporting", color: "text-gray-600" },
-          { Icon: LayoutGrid, label: "Grille", usage: "Vue mode grille documents", color: "text-gray-500" },
-          { Icon: List, label: "Liste", usage: "Vue mode liste", color: "text-gray-500" },
-          { Icon: Table2, label: "Table", usage: "Vue mode tableau", color: "text-gray-500" },
+          { Icon: ThumbsUp, label: "Accord", usage: "Réaction positive", color: "text-green-500" },
+          { Icon: ThumbsDown, label: "Désaccord", usage: "Réaction négative", color: "text-red-400" },
         ],
       },
     ],
   },
-  // ===================== C. PLATEFORME — TERTIAIRE =====================
+  // ═══════════════════════════════════════════════════════════════════════
+  // C. UTILITAIRES — Chrome UI minimale + statuts
+  // Icônes de navigation pure, pas de contenu. Le minimum nécessaire.
+  // ═══════════════════════════════════════════════════════════════════════
   {
-    tier: "TERTIAIRE",
+    tier: "UTILITAIRES",
     tierColor: "text-gray-600",
     tierBg: "bg-gray-50 border-gray-200",
-    tierDesc: "Icônes UI, utilitaires, et navigation — Réutilisables librement",
+    tierDesc: "Navigation et indicateurs de base. Le strict minimum — pas tout a besoin d'une icône.",
     sections: [
       {
-        title: "Navigation & flèches",
+        title: "Navigation",
         icons: [
-          { Icon: ChevronRight, label: "Naviguer", usage: "Drill-down / Suivant", color: "text-gray-400" },
-          { Icon: ChevronDown, label: "Expandre", usage: "Ouvrir dropdown / accordion", color: "text-gray-400" },
-          { Icon: ChevronUp, label: "Réduire", usage: "Fermer dropdown / accordion", color: "text-gray-400" },
-          { Icon: ArrowLeft, label: "Retour", usage: "Navigation arrière", color: "text-gray-500" },
-          { Icon: ArrowRight, label: "Aller à", usage: "Navigation avant / CTA", color: "text-blue-500" },
-          { Icon: X, label: "Fermer", usage: "Fermer modal / panel", color: "text-gray-400" },
+          { Icon: ArrowLeft, label: "Retour", usage: "Navigation arrière, drill-down", color: "text-gray-400" },
+          { Icon: ChevronRight, label: "Suivant", usage: "Breadcrumb, drill-down", color: "text-gray-400" },
+          { Icon: ChevronDown, label: "Ouvrir", usage: "Accordion, dropdown", color: "text-gray-400" },
+          { Icon: X, label: "Fermer", usage: "Dismiss, fermer", color: "text-gray-400" },
+          { Icon: Search, label: "Recherche", usage: "Barre de recherche", color: "text-gray-500" },
         ],
       },
       {
-        title: "Actions CRUD",
+        title: "Indicateurs",
         icons: [
-          { Icon: Plus, label: "Ajouter", usage: "Créer un nouvel élément", color: "text-blue-500" },
-          { Icon: Pencil, label: "Modifier", usage: "Éditer un élément", color: "text-gray-500" },
-          { Icon: Trash2, label: "Supprimer", usage: "Supprimer un élément", color: "text-red-500" },
-          { Icon: Filter, label: "Filtrer", usage: "Appliquer des filtres", color: "text-gray-500" },
-          { Icon: RefreshCw, label: "Rafraîchir", usage: "Recharger les données", color: "text-gray-500" },
-          { Icon: Search, label: "Chercher", usage: "Barre de recherche", color: "text-gray-400" },
-          { Icon: SortAsc, label: "Tri", usage: "Trier les éléments", color: "text-gray-500" },
+          { Icon: CheckCircle2, label: "Succès", usage: "Complétion, validation", color: "text-green-500" },
+          { Icon: TrendingUp, label: "Hausse", usage: "Croissance, progression", color: "text-green-500" },
+          { Icon: TrendingDown, label: "Baisse", usage: "Déclin, alerte", color: "text-red-500" },
+          { Icon: Clock, label: "Temps", usage: "Délai, en attente", color: "text-amber-500" },
+          { Icon: Lock, label: "Bloqué", usage: "Accès fermé, meurt", color: "text-gray-400" },
         ],
       },
       {
-        title: "États & indicateurs (Triangle du Feu)",
+        title: "Actions de contenu",
         icons: [
-          { Icon: Flame, label: "Brûle", usage: "État urgent — 3+ piliers actifs", color: "text-red-500" },
-          { Icon: Clock, label: "Couve", usage: "État en surveillance — 2 piliers", color: "text-amber-500" },
-          { Icon: Lock, label: "Meurt", usage: "État bloqué — 1 pilier", color: "text-gray-400" },
-          { Icon: Activity, label: "Activité", usage: "Indicateur santé/live", color: "text-green-500" },
-          { Icon: TrendingUp, label: "Hausse", usage: "Tendance positive delta", color: "text-emerald-600" },
-          { Icon: TrendingDown, label: "Baisse", usage: "Tendance négative delta", color: "text-red-500" },
-          { Icon: ShieldAlert, label: "Alerte sécu", usage: "Notification sécurité", color: "text-red-600" },
-          { Icon: Inbox, label: "Vide", usage: "État vide / pas de données", color: "text-gray-300" },
-        ],
-      },
-      {
-        title: "Communication & média",
-        icons: [
-          { Icon: Phone, label: "Appel vocal", usage: "Démarrer appel LiveKit", color: "text-blue-600" },
-          { Icon: Video, label: "Vidéo", usage: "Conférence vidéo Tavus", color: "text-emerald-600" },
-          { Icon: Glasses, label: "Vision", usage: "Ray-Ban Meta / Vision Live", color: "text-cyan-600" },
-          { Icon: Mail, label: "Courriel", usage: "Notification email", color: "text-gray-500" },
-          { Icon: Bell, label: "Notification", usage: "Alerte / notification", color: "text-amber-500" },
-          { Icon: Link, label: "Lien", usage: "Connexion / URL", color: "text-blue-500" },
-          { Icon: Globe, label: "Web", usage: "Réseau / API externe", color: "text-amber-500" },
-        ],
-      },
-      {
-        title: "Business & contenu",
-        icons: [
-          { Icon: DollarSign, label: "Finance", usage: "Revenus / budgets", color: "text-emerald-600" },
-          { Icon: Briefcase, label: "Business", usage: "Affaires / entreprise", color: "text-gray-600" },
-          { Icon: CreditCard, label: "Facturation", usage: "Paiements / abonnement", color: "text-gray-600" },
-          { Icon: Coins, label: "Monnaie", usage: "Coûts / monétisation", color: "text-amber-500" },
-          { Icon: FileText, label: "Document", usage: "Fichiers & documents", color: "text-indigo-500" },
-          { Icon: Star, label: "Favoris", usage: "Évaluation / préférence", color: "text-yellow-500" },
-          { Icon: Calendar, label: "Agenda", usage: "Dates / événements", color: "text-cyan-500" },
-          { Icon: GitBranch, label: "Pipeline", usage: "Workflow / branches", color: "text-violet-500" },
-          { Icon: Play, label: "Démarrer", usage: "Lancer playbook / scénario", color: "text-green-500" },
-          { Icon: Monitor, label: "Écran", usage: "Interface / affichage", color: "text-gray-600" },
-        ],
-      },
-      {
-        title: "Réseau & Orbit9",
-        icons: [
-          { Icon: Handshake, label: "Partenariat", usage: "Jumelage Orbit9", color: "text-emerald-500" },
-          { Icon: Hexagon, label: "Cellule", usage: "Cellule trisociation", color: "text-violet-500" },
-          { Icon: Compass, label: "Explorer", usage: "Navigation / découverte", color: "text-cyan-500" },
-          { Icon: Trophy, label: "Classement", usage: "Récompenses / leaderboard", color: "text-amber-500" },
-          { Icon: Network, label: "Réseau", usage: "Connexions inter-entreprises", color: "text-blue-500" },
-          { Icon: GraduationCap, label: "Formation", usage: "Apprentissage / onboarding", color: "text-purple-500" },
-          { Icon: Library, label: "Bibliothèque", usage: "Catalogue de ressources", color: "text-indigo-500" },
-          { Icon: Atom, label: "BTML", usage: "Vue moléculaire BTML", color: "text-violet-500" },
+          { Icon: FileText, label: "Document", usage: "Fichiers, rapports", color: "text-indigo-600" },
+          { Icon: Pencil, label: "Modifier", usage: "Édition", color: "text-gray-600" },
+          { Icon: Play, label: "Démarrer", usage: "Lancer un playbook", color: "text-green-500" },
         ],
       },
     ],
   },
-  // ===================== D. SIMULATION AMORCER — ICÔNES UTILISÉES ICI =====================
+  // ═══════════════════════════════════════════════════════════════════════
+  // D. RÈGLES — Ce qui NE PREND PAS d'icône + Pool variable
+  // Philosophie : moins d'icônes = moins de bruit. Texte suffit souvent.
+  // ═══════════════════════════════════════════════════════════════════════
   {
-    tier: "SIMULATION",
+    tier: "RÈGLES",
     tierColor: "text-blue-700",
     tierBg: "bg-blue-50 border-blue-200",
-    tierDesc: "Icônes spécifiquement utilisées dans cette simulation AMORCER",
+    tierDesc: "Pas tout a besoin d'une icône. Voici ce qui en prend et ce qui n'en prend PAS.",
     sections: [
       {
-        title: "7 phases AMORCER — Tabs principaux",
+        title: "⛔ VERROUILLÉES — Ne JAMAIS réutiliser dans le contenu",
         icons: [
-          { Icon: AlertTriangle, label: "A — Attention", usage: "Phase 1 — scan signaux critiques", color: "text-red-500" },
-          { Icon: Scale, label: "M — Modération", usage: "Phase 2 — filtrage priorisation", color: "text-pink-500" },
-          { Icon: Eye, label: "O — Observation", usage: "Phase 3 — vue d'ensemble", color: "text-blue-500" },
-          { Icon: Brain, label: "R — Réflexion", usage: "Phase 4 — analyse profonde", color: "text-orange-500" },
-          { Icon: Hammer, label: "C — Conception", usage: "Phase 5 — plans et solutions", color: "text-yellow-500" },
-          { Icon: Rocket, label: "E — Exécution", usage: "Phase 6 — protocole COMMAND", color: "text-green-500" },
-          { Icon: BarChart3, label: "R — Rétroaction", usage: "Phase 7 — mesure résultats", color: "text-emerald-500" },
+          { Icon: AlertTriangle, label: "Attention", usage: "RÉSERVÉ — alerte bot uniquement", color: "text-red-500" },
+          { Icon: Scale, label: "Modération", usage: "RÉSERVÉ — état d'alerte uniquement", color: "text-pink-500" },
+          { Icon: Target, label: "Mission", usage: "RÉSERVÉ — hiérarchie de travail", color: "text-green-600" },
+          { Icon: Brain, label: "Réflexion", usage: "RÉSERVÉ — phase AMORCER", color: "text-orange-500" },
+          { Icon: Rocket, label: "Exécution", usage: "RÉSERVÉ — phase AMORCER + Pionniers", color: "text-green-500" },
+          { Icon: Crown, label: "CarlOS CEO", usage: "RÉSERVÉ — bot CEO", color: "text-blue-600" },
+          { Icon: Cpu, label: "Tim CTO", usage: "RÉSERVÉ — bot CTO", color: "text-violet-500" },
+          { Icon: Megaphone, label: "Mathilde CMO", usage: "RÉSERVÉ — bot CMO", color: "text-pink-500" },
+          { Icon: Factory, label: "Paco CPO", usage: "RÉSERVÉ — bot CPO", color: "text-slate-500" },
+          { Icon: Lightbulb, label: "Inès CINO", usage: "RÉSERVÉ — bot CINO", color: "text-rose-500" },
         ],
       },
       {
-        title: "Cockpit (panneau gauche SimulationFullPage)",
+        title: "✅ Prend une icône — Éléments variables qui en ont BESOIN",
         icons: [
-          { Icon: TowerControl, label: "Tour de contrôle", usage: "Bandeau principal cockpit", color: "text-gray-700" },
-          { Icon: AlertTriangle, label: "Attention", usage: "Bandeau alertes (rouge pastel)", color: "text-red-500" },
-          { Icon: Zap, label: "Département", usage: "Bandeau direction (UB_BLUE pastel)", color: "text-blue-600" },
-          { Icon: Flame, label: "Chantiers", usage: "Drill-down N1 — ambre", color: "text-amber-600" },
-          { Icon: Package, label: "Projets", usage: "Drill-down N2 — émeraude", color: "text-emerald-600" },
-          { Icon: ListChecks, label: "Missions", usage: "Drill-down N3 — bleu", color: "text-blue-600" },
-          { Icon: CheckCircle2, label: "Tâches", usage: "Drill-down N4 — vert", color: "text-green-500" },
-          { Icon: Bot, label: "Brain Team", usage: "Tab équipe AI (12 cartes)", color: "text-blue-600" },
-          { Icon: Users, label: "Humains", usage: "Tab équipe humaine (3 cartes)", color: "text-gray-600" },
-          { Icon: ArrowRight, label: "Aller", usage: "CTA 'Aller au département'", color: "text-blue-500" },
-          { Icon: MessageSquare, label: "Écrire", usage: "CTA 'Écrire un message'", color: "text-violet-500" },
+          { Icon: Users, label: "Départements (12)", usage: "Chaque bot a son icône dédiée (section B)", color: "text-gray-600" },
+          { Icon: Activity, label: "Piliers VITAA (5)", usage: "V-I-T-A-A avec couleurs distinctes", color: "text-blue-500" },
+          { Icon: FileText, label: "Types de docs (3-4)", usage: "Playbook, Blueprint, Rapport, Template", color: "text-indigo-500" },
         ],
       },
       {
-        title: "Discussion (colonne chat sim)",
+        title: "❌ PAS d'icône — Le texte suffit",
         icons: [
-          { Icon: Send, label: "Envoyer", usage: "Bouton envoi (bleu quand actif)", color: "text-blue-600" },
-          { Icon: Plus, label: "Menu +", usage: "Menu contextuel attachments", color: "text-gray-400" },
-          { Icon: Paperclip, label: "Pièce jointe", usage: "Option dans menu +", color: "text-gray-500" },
-          { Icon: Globe, label: "Google Drive", usage: "Option dans menu +", color: "text-amber-500" },
-          { Icon: Zap, label: "GitHub", usage: "Option dans menu +", color: "text-gray-700" },
-          { Icon: Activity, label: "Connecteurs", usage: "Option dans menu + (API)", color: "text-indigo-500" },
+          { Icon: X, label: "Sections internes", usage: "Les sections dans un Cockpit, Blueprint, Data Room — texte + numérotation", color: "text-gray-300" },
+          { Icon: X, label: "Familles conférence", usage: "Les 15 familles ConferenceAI — texte suffit, pas 15 icônes", color: "text-gray-300" },
+          { Icon: X, label: "Registres Data Room", usage: "Les 6-8 registres par département — texte suffit", color: "text-gray-300" },
+          { Icon: X, label: "Catégories playbooks", usage: "Les catégories de playbooks — la couleur département suffit", color: "text-gray-300" },
+          { Icon: X, label: "Sous-items de liste", usage: "Les éléments dans une liste — bullet + texte", color: "text-gray-300" },
+          { Icon: X, label: "KPI individuels", usage: "Les KPIs dans les cockpits — la valeur parle d'elle-même", color: "text-gray-300" },
+        ],
+      },
+    ],
+  },
+  // ═══════════════════════════════════════════════════════════════════════
+  // E. CONTENU VARIABLE — Banque d'icônes pour boxes et catégories
+  // Ces icônes sont LIBRES — aucun conflit avec les officielles.
+  // À utiliser dans: boxes cockpit, types playbooks, familles conférence.
+  // ═══════════════════════════════════════════════════════════════════════
+  {
+    tier: "CONTENU VARIABLE",
+    tierColor: "text-purple-700",
+    tierBg: "bg-purple-50 border-purple-200",
+    tierDesc: "Banque d'icônes libres pour les boxes cockpit, types de playbooks, familles conférence. Aucune ne duplique une icône officielle.",
+    sections: [
+      {
+        title: "Pool libre — Disponibles pour boxes et catégories",
+        icons: [
+          { Icon: Bell, label: "Signaux", usage: "Notifications, alertes dans boxes cockpit", color: "text-amber-500" },
+          { Icon: Award, label: "Performance", usage: "Objectifs, OKR, résultats atteints", color: "text-yellow-600" },
+          { Icon: Star, label: "Évaluation", usage: "Rating, scoring, favoris", color: "text-yellow-500" },
+          { Icon: Receipt, label: "Transactions", usage: "Facturation, achats, comptabilité", color: "text-gray-600" },
+          { Icon: Stethoscope, label: "Diagnostic", usage: "Audit, évaluation, santé org.", color: "text-red-500" },
+          { Icon: GraduationCap, label: "Formation", usage: "Coaching, apprentissage, certifications", color: "text-sky-600" },
+          { Icon: Wrench, label: "Maintenance", usage: "Outils, réparation, configuration", color: "text-gray-500" },
+          { Icon: Briefcase, label: "Affaires", usage: "Portfolio, contrats, projets business", color: "text-gray-600" },
+          { Icon: Package, label: "Produits", usage: "Livraisons, stocks, fabrication", color: "text-orange-500" },
+          { Icon: Newspaper, label: "Veille", usage: "Articles, nouvelles, tendances", color: "text-blue-500" },
+          { Icon: PiggyBank, label: "Budget", usage: "Épargne, budget département", color: "text-emerald-500" },
+          { Icon: CreditCard, label: "Paiements", usage: "Abonnements, transactions carte", color: "text-gray-600" },
+          { Icon: Coins, label: "Monnaie", usage: "Coûts, TimeTokens, devise", color: "text-amber-500" },
+          { Icon: Trophy, label: "Milestones", usage: "Récompenses, jalons, accomplissements", color: "text-yellow-600" },
+          { Icon: Route, label: "Processus", usage: "Workflow, parcours, étapes", color: "text-blue-500" },
+          { Icon: LineChart, label: "Analyses", usage: "Graphiques, courbes, tendances", color: "text-indigo-500" },
+          { Icon: CalendarDays, label: "Planification", usage: "Horaires, échéances (≠ Agenda)", color: "text-cyan-500" },
+          { Icon: FileBarChart, label: "Rapports", usage: "Rapports analytiques, bilans", color: "text-indigo-600" },
+          { Icon: Radio, label: "Diffusion", usage: "Communication, annonces, podcast", color: "text-violet-500" },
+          { Icon: Bug, label: "Problèmes", usage: "Bugs, incidents techniques", color: "text-red-400" },
         ],
       },
       {
-        title: "UI navigation simulation",
+        title: "✅ Conflits corrigés — Remplacements effectués dans le code",
         icons: [
-          { Icon: Palette, label: "Catalogue icônes", usage: "Bouton ouverture ce catalogue", color: "text-gray-500" },
-          { Icon: Home, label: "Accueil", usage: "Breadcrumb racine", color: "text-gray-400" },
-          { Icon: ChevronRight, label: "Breadcrumb", usage: "Séparateur fil d'Ariane", color: "text-gray-300" },
-          { Icon: ChevronDown, label: "Expandre", usage: "Ouvrir sous-niveaux", color: "text-gray-400" },
+          { Icon: Flame, label: "Chantier (playbook)", usage: "Était Layers (Blueprint) → corrigé en Flame (cohérent avec hiérarchie)", color: "text-green-500" },
+          { Icon: Bell, label: "Signaux (cockpit)", usage: "Était AlertTriangle (Attention) → corrigé en Bell (notification)", color: "text-green-500" },
+          { Icon: Award, label: "OKR (cockpit)", usage: "Était Target (Mission) → corrigé en Award (objectifs)", color: "text-green-500" },
+          { Icon: Handshake, label: "Médiation (conférence)", usage: "Était Scale (Modération) → corrigé en Handshake", color: "text-green-500" },
+          { Icon: Sparkles, label: "Idées VITAA + Créativité", usage: "Était Lightbulb (Inès CINO) → corrigé en Sparkles", color: "text-green-500" },
+          { Icon: Cog, label: "Cognitif (playbook)", usage: "Était Brain (Réflexion) → corrigé en Cog", color: "text-green-500" },
+          { Icon: User, label: "Comité/Contacts (cockpit)", usage: "Était Users (Membres) → corrigé en User (singulier)", color: "text-green-500" },
+          { Icon: HardHat, label: "Verticaux (conférence)", usage: "Était Factory (Paco CPO) → corrigé en HardHat (industrie)", color: "text-green-500" },
+          { Icon: Newspaper, label: "Campagnes (cockpit)", usage: "Était Megaphone (Mathilde CMO) → corrigé en Newspaper", color: "text-green-500" },
+          { Icon: Route, label: "Personnel (conférence)", usage: "Était Compass (Simone CSO) → corrigé en Route (parcours)", color: "text-green-500" },
         ],
       },
     ],
   },
 ];
 
-function IconCatalog() {
+export function IconCatalog() {
   const totalIcons = ICON_TIERS.reduce((sum, t) => sum + t.sections.reduce((s, sec) => s + sec.icons.length, 0), 0);
   return (
     <div className="max-w-4xl mx-auto px-6 py-4 space-y-5">
       {/* Header */}
       <div className="rounded-xl bg-gradient-to-r from-gray-800 to-gray-700 px-4 py-3 shadow-sm">
-        <p className="text-sm font-bold text-white">Catalogue d'icônes — Plateforme GhostX</p>
+        <p className="text-sm font-bold text-white">Catalogue d'icônes — Brain Team</p>
         <p className="text-[9px] text-white/70 mt-0.5">
-          {totalIcons} icônes · {ICON_TIERS.length} niveaux · Sections réelles de l'app + Simulation AMORCER
+          {totalIcons} icônes · {ICON_TIERS.length} niveaux · Frame Amorcer V3
         </p>
       </div>
 
@@ -3357,7 +3349,7 @@ function Orbit9Chat({ typed, setTyped, selectedCellule }: { typed: boolean; setT
 
 // ========== MES CELLULES — Vue Observation (enrichie depuis CellulesPage.tsx + MonReseauView) ==========
 
-function MesCellules({ onSelect, activePhase }: { onSelect: (i: number) => void; activePhase?: PhaseKey }) {
+export function MesCellules({ onSelect, activePhase }: { onSelect: (i: number) => void; activePhase?: PhaseKey }) {
   const totalMembres = ORBIT9_CELLULES.reduce((s, c) => s + c.members, 0);
   const maxTotal = ORBIT9_CELLULES.reduce((s, c) => s + c.maxMembers, 0);
   const avgPerCell = Math.round(totalMembres / ORBIT9_CELLULES.length);
@@ -3808,7 +3800,7 @@ function CelluleDrillDown({ cellule, onBack }: { cellule: Cellule; onBack: () =>
 
 // ========== VITAA DASHBOARD ==========
 
-function VITAADashboard({ selectedCellule }: { selectedCellule: Cellule }) {
+export function VITAADashboard({ selectedCellule }: { selectedCellule: Cellule }) {
   const avg = {
     v: selectedCellule.membres.reduce((s, m) => s + m.vitaa.v, 0) / selectedCellule.membres.length,
     i: selectedCellule.membres.reduce((s, m) => s + m.vitaa.i, 0) / selectedCellule.membres.length,
@@ -4423,7 +4415,7 @@ function FeedSocial({ activePhase }: { activePhase?: PhaseKey }) {
 
 // ========== MON PROFIL ORBIT9 (enrichi: fiche entreprise + VITAA perso + personnalisation) ==========
 
-function MonProfilOrbit9() {
+export function MonProfilOrbit9() {
   const [celluleName, setCelluleName] = useState("Les Titans");
   const myVitaa = ORBIT9_CELLULES[0].membres[0].vitaa; // Carl F. = premier membre
 
@@ -4592,7 +4584,7 @@ function MonProfilOrbit9() {
 
 // ========== ORBIT9 GOUVERNANCE (4 sub-tabs: Principes, Rôles, TimeTokens, Matrice Sortie + Standards qualité) ==========
 
-function Orbit9Gouvernance({ fixedTab }: { fixedTab?: "principes" | "roles" | "timetokens" | "sortie" } = {}) {
+export function Orbit9Gouvernance({ fixedTab }: { fixedTab?: "principes" | "roles" | "timetokens" | "sortie" } = {}) {
   type GovTab = "principes" | "roles" | "timetokens" | "sortie";
   const [govTab, setGovTab] = useState<GovTab>(fixedTab || "principes");
   const GOV_TABS: { key: GovTab; label: string; Icon: React.ElementType }[] = [
@@ -4936,7 +4928,7 @@ function Orbit9Gouvernance({ fixedTab }: { fixedTab?: "principes" | "roles" | "t
 
 // ========== JUMELAGE ORBIT9 ==========
 
-function JumelageOrbit9() {
+export function JumelageOrbit9() {
   const matches = [
     { a: "Usine Bleue AI", b: "MetalPro Inc.", score: 87, status: "Introduction", bot: "CSOB" },
     { a: "Usine Bleue AI", b: "TechFab Solutions", score: 73, status: "Qualification", bot: "CROB" },
@@ -5007,7 +4999,7 @@ function JumelageOrbit9() {
 
 // ========== PIONNIERS ORBIT9 ==========
 
-function PionniersOrbit9() {
+export function PionniersOrbit9() {
   const sectors = [
     { name: "Automatisation", status: "pris" as const, company: "AutomaTech Inc.", contact: "Martin L." },
     { name: "Usinage / Métal", status: "pris" as const, company: "Usinage Précision QC", contact: "Jean-P. R." },
@@ -5295,7 +5287,7 @@ function EvenementsOrbit9() {
 
 // ========== CREER CELLULE PAGE ==========
 
-function CreerCellulePage() {
+export function CreerCellulePage() {
   const [step, setStep] = useState(1);
   const [nom, setNom] = useState("");
   const [cellType, setCellType] = useState<"interne" | "externe">("interne");
@@ -5423,7 +5415,7 @@ const O9_BP_SECTIONS: { id: O9BpSection; label: string; Icon: React.ElementType 
 
 // ========== ORBIT9 SOCIAL HOME — Page d'accueil sociale vivante ==========
 
-function Orbit9SocialHome() {
+export function Orbit9SocialHome() {
   const UB_P = "bg-[#00B4D8]/10";
 
   const kpis = [
@@ -5785,7 +5777,7 @@ function Orbit9SocialHome() {
   );
 }
 
-function Orbit9BlueprintCollaboration() {
+export function Orbit9BlueprintCollaboration() {
   const [activeSub, setActiveSub] = useState<O9BpSection>("vue_consolidee");
 
   return (

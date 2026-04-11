@@ -16,13 +16,25 @@ import { LoginView } from "../components/LoginView";
 import { WelcomeOnboardingView } from "./zones/center/WelcomeOnboardingView";
 import { MeetingGuestPage } from "./zones/center/MeetingGuestPage";
 import { SimulationFullPage } from "./zones/center/atelier/SimulationFullPage";
+import { FrameMasterAmorcer } from "../v3/FrameMasterAmorcer";
 
 function AppRouter() {
   const { isOnboarded, setAuthenticated, setOnboarded } = useFrameMaster();
   const auth = useAuth();
 
-  // Route bypass: /meeting/{slug} = page guest externe (pas d'auth)
+  // Route bypass: /amorcer = V3 shell (3 colonnes)
   const path = window.location.pathname;
+  if (path === "/amorcer") {
+    return (
+      <CanvasActionProvider>
+        <ChatProvider>
+          <FrameMasterAmorcer />
+        </ChatProvider>
+      </CanvasActionProvider>
+    );
+  }
+
+  // Route bypass: /meeting/{slug} = page guest externe (pas d'auth)
   const meetingMatch = path.match(/^\/meeting\/([a-z0-9]+)$/);
   if (meetingMatch) {
     return <MeetingGuestPage slug={meetingMatch[1]} />;

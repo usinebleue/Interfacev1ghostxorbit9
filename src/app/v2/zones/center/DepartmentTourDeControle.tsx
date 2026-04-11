@@ -28,7 +28,7 @@ import { SanteGlobaleView } from "./SanteGlobaleView";
 import { TabSommaire, TabObjectifs, HierarchieTab } from "./BlueprintView";
 import { AgendaPage } from "./MonBureauView";
 import { DocumentsUnifie } from "./shared/DocumentsUnifie";
-import { BlueprintDepartement, BlueprintDataRoom, BlueprintPlaybooks, BlueprintConferenceAI, DeptDashboardView } from "./blueprint/BlueprintDepartement";
+import { BlueprintDepartement, BlueprintDataRoom, BlueprintPlaybooks, BlueprintConferenceAI, CockpitStoreView } from "./blueprint/BlueprintDepartement";
 
 /* ============ BLOCK HEADER — meme style que DashboardView ============ */
 function BlockHeader({ icon: Icon, title, count, gradient }: {
@@ -1844,7 +1844,7 @@ export function DepartmentTourDeControle() {
         {/* TAB 1 — COCKPIT (KPIs + blocs essentiels)  */}
         {/* ══════════════════════════════════════════ */}
         {deptTab === "cockpit" && (
-          <DeptDashboardView botCode={activeBotCode} />
+          <CockpitStoreView embedded initialDept={activeBotCode} />
         )}
 
         {/* ══════════════════════════════════════════ */}

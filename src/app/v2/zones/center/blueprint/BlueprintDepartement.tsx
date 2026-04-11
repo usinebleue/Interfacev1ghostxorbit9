@@ -23,6 +23,7 @@ import {
   Receipt, Wallet, PieChart, GraduationCap, HardHat, ClipboardCheck, Truck, Award,
   Newspaper, Network, Phone, Gavel, FileLock, Cog, Atom,
   Stethoscope, Repeat, Video, MapPin, CheckSquare,
+  Landmark, ClipboardList, Bell, ShieldAlert, Route, Trophy,
 } from "lucide-react";
 import { Card } from "../../../../components/ui/card";
 import { cn } from "../../../../components/ui/utils";
@@ -49,6 +50,129 @@ import {
   SIZE_TIERS,
   PHASES,
 } from "./blueprint-config";
+
+// ═══ LIVING HEROES V20 — CSS Animations (injected once) ═══
+const LIVING_HEROES_STYLES = `
+.bg-pattern-grid { background-image: radial-gradient(rgba(0,0,0,0.05) 1px, transparent 1px); background-size: 24px 24px; }
+.glass-base { background: rgba(255,255,255,0.65); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.8); box-shadow: 0 10px 40px rgba(0,0,0,0.06); border-radius: 16px; }
+.glass-intense { background: rgba(255,255,255,0.2); backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.6); box-shadow: inset 0 0 20px rgba(255,255,255,0.5); }
+/* COCKPIT */
+@keyframes radar-scan { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+@keyframes bar-grow { 0%, 100% { height: var(--min-h); opacity: 0.8; } 50% { height: var(--max-h); opacity: 1; } }
+@keyframes draw-curve { 0%, 100% { stroke-dashoffset: 150; } 50% { stroke-dashoffset: 0; } }
+.anim-radar { animation: radar-scan 12s linear infinite; transform-origin: center; }
+.anim-bar-1 { animation: bar-grow 8s ease-in-out infinite; --min-h: 30%; --max-h: 50%; }
+.anim-bar-2 { animation: bar-grow 10s ease-in-out infinite 2s; --min-h: 40%; --max-h: 75%; }
+.anim-bar-3 { animation: bar-grow 9s ease-in-out infinite 1s; --min-h: 60%; --max-h: 100%; }
+.anim-curve { stroke-dasharray: 150; animation: draw-curve 10s ease-in-out infinite; }
+/* CONFERENCE AI */
+@keyframes packet-travel { 0% { offset-distance: 0%; opacity: 0; transform: scale(0.8); } 20% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 15px currentColor; } 80% { opacity: 1; transform: scale(1.2); } 100% { offset-distance: 100%; opacity: 0; transform: scale(0.8); } }
+.anim-packet-1 { offset-path: path('M 60 75 L 140 25'); animation: packet-travel 7s ease-in-out infinite; }
+.anim-packet-2 { offset-path: path('M 140 25 L 220 75'); animation: packet-travel 8s ease-in-out infinite 3s; }
+.anim-packet-3 { offset-path: path('M 220 75 L 140 125'); animation: packet-travel 6.5s ease-in-out infinite 1.5s; }
+.anim-packet-4 { offset-path: path('M 140 125 L 60 75'); animation: packet-travel 7.5s ease-in-out infinite 4s; }
+@keyframes wave-pulse { 0%, 100% { transform: scaleY(0.7); opacity: 0.6; } 50% { transform: scaleY(1.3); opacity: 1; } }
+/* BLUEPRINT */
+.org-node { background: rgba(255,255,255,0.8); border: 2px solid rgba(255,255,255,0); border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); transition: all 0.5s ease; }
+@keyframes org-pulse-root { 0%, 100% { border-color: rgba(99,102,241,0.2); box-shadow: none; } 10%, 30% { border-color: rgba(99,102,241,1); box-shadow: 0 0 15px rgba(99,102,241,0.5); } }
+@keyframes org-pulse-child { 0%, 100% { border-color: rgba(56,189,248,0.2); box-shadow: none; } 10%, 30% { border-color: rgba(56,189,248,1); box-shadow: 0 0 15px rgba(56,189,248,0.5); } }
+@keyframes flow-down { 0% { height: 0%; opacity: 0; } 10% { height: 0%; opacity: 1; } 40% { height: 100%; opacity: 1; } 50%, 100% { height: 100%; opacity: 0; } }
+@keyframes flow-across { 0% { width: 0%; opacity: 0; } 10% { width: 0%; opacity: 1; } 40% { width: 100%; opacity: 1; } 50%, 100% { width: 100%; opacity: 0; } }
+.anim-org-root { animation: org-pulse-root 6s infinite 0s; }
+.anim-org-line-vert { animation: flow-down 6s infinite 1.5s; }
+.anim-org-line-hor { animation: flow-across 6s infinite 2.5s; }
+.anim-org-child-1 { animation: org-pulse-child 6s infinite 3.5s; }
+.anim-org-child-2 { animation: org-pulse-child 6s infinite 3.8s; }
+.anim-org-child-3 { animation: org-pulse-child 6s infinite 4.1s; }
+/* DATA ROOM */
+@keyframes laser-scan { 0%, 100% { top: 5%; opacity: 0; } 10%, 90% { opacity: 1; } 50% { top: 95%; } }
+.anim-laser { animation: laser-scan 8s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+@keyframes binary-fade { 0%, 100% { opacity: 0.1; } 50% { opacity: 0.7; } }
+.anim-binary { animation: binary-fade 3s ease-in-out infinite; }
+@keyframes vault-lock-outer { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+@keyframes vault-lock-inner { 0% { transform: rotate(0deg); } 100% { transform: rotate(-360deg); } }
+.anim-vault-out { animation: vault-lock-outer 40s linear infinite; }
+.anim-vault-in { animation: vault-lock-inner 30s linear infinite; }
+/* PLAYBOOK STORE */
+.pb-node { background: rgba(255,255,255,0.8); border: 2px solid rgba(34,211,238,0.2); border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); transition: all 0.5s ease; }
+@keyframes trigger-node { 0%, 100% { border-color: rgba(34,211,238,0.2); box-shadow: none; filter: brightness(1); } 10%, 20% { border-color: rgba(34,211,238,1); box-shadow: 0 0 15px rgba(34,211,238,0.5); filter: brightness(1.1); } }
+@keyframes trigger-pulse { 0%, 5%, 35%, 100% { opacity: 0; transform: scale(0.5); } 10%, 25% { opacity: 1; transform: scale(1.5); } }
+@keyframes flow-line { 0% { width: 0%; opacity: 0; } 10% { width: 0%; opacity: 1; } 40% { width: 100%; opacity: 1; } 50%, 100% { width: 100%; opacity: 0; } }
+.anim-p-node-1 { animation: trigger-node 8s infinite 0s; }
+.anim-p-line-1 { animation: flow-line 8s infinite 1s; }
+.anim-p-pulse-1 { animation: trigger-pulse 8s infinite 0.8s; }
+.anim-p-node-2 { animation: trigger-node 8s infinite 3s; }
+.anim-p-line-2 { animation: flow-line 8s infinite 4s; }
+.anim-p-pulse-2 { animation: trigger-pulse 8s infinite 3.8s; }
+.anim-p-node-3 { border-color: rgba(59,130,246,0.3); }
+.anim-p-node-3-activate { animation: trigger-node 8s infinite 6s; }
+`;
+let heroStylesInjected = false;
+function injectHeroStyles() {
+  if (heroStylesInjected) return;
+  heroStylesInjected = true;
+  const s = document.createElement("style");
+  s.textContent = LIVING_HEROES_STYLES;
+  document.head.appendChild(s);
+}
+
+// ═══ LIVING HERO WRAPPER — V20 Carl's exact layout ═══
+function LivingHero({ blur1, blur2, subtitleColor, subtitle, title, description, children }: {
+  blur1: string;
+  blur2: string;
+  subtitleColor: string;
+  subtitle: string;
+  title: string;
+  description: string;
+  children?: React.ReactNode;
+}) {
+  useEffect(() => { injectHeroStyles(); }, []);
+  return (
+    <div className="relative w-full rounded-xl bg-white border border-slate-100 shadow-[0_4px_30px_rgba(0,0,0,0.03)] py-5 px-8 overflow-hidden min-h-[110px] flex items-center">
+      <div className={cn("absolute rounded-full blur-[100px] opacity-60", blur1)} style={{ top: '-50%', left: '-10%', width: '50%', height: '200%' }} />
+      <div className={cn("absolute rounded-full blur-[120px] opacity-50", blur2)} style={{ bottom: '-50%', right: '10%', width: '60%', height: '200%' }} />
+      <div className="absolute inset-0 bg-pattern-grid opacity-[0.35]" />
+      {/* Illustration */}
+      <div className="absolute right-[1rem] top-0 bottom-0 flex items-center transform scale-[0.70] origin-right pointer-events-none">
+        {children}
+      </div>
+      {/* Text */}
+      <div className="relative z-20 w-full pr-[250px]">
+        <p className={cn("uppercase tracking-widest text-[9px] font-bold mb-1", subtitleColor)}>{subtitle}</p>
+        <h2 className="text-xl font-extrabold text-gray-900 mb-1">{title}</h2>
+        <p className="text-slate-500 text-[12.5px] font-medium leading-snug">{description}</p>
+      </div>
+    </div>
+  );
+}
+
+// ═══ SECTION FRAME STANDARDS ═══
+const SF = {
+  sidebarW: "w-[180px] shrink-0 space-y-0.5",
+  btnBase: "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer flex items-center gap-2",
+  btnActive: "bg-blue-50 border border-blue-200 shadow-sm",
+  btnInactive: "hover:bg-gray-50 border border-transparent",
+  iconActive: "h-3.5 w-3.5 shrink-0 text-blue-500",
+  iconInactive: "h-3.5 w-3.5 shrink-0 text-gray-400",
+  labelActive: "text-[10px] font-bold flex-1 leading-tight text-blue-700",
+  labelInactive: "text-[10px] font-bold flex-1 leading-tight text-gray-700",
+  count: "text-[9px] text-gray-400",
+  separator: "h-px bg-gray-100 mx-2 my-1.5",
+  sectionLabel: "text-[9px] font-bold text-gray-400 uppercase tracking-wider px-2.5 py-1",
+  subBase: "w-full pl-6 pr-2.5 py-1 rounded-lg text-left text-[9px] cursor-pointer",
+  subActive: "bg-blue-50 text-blue-700 font-bold",
+  subInactive: "text-gray-500 hover:bg-gray-50 hover:text-gray-700 font-medium",
+  subIcon: "h-3.5 w-3.5 shrink-0",
+  chevron: "h-3.5 w-3.5 text-gray-400 shrink-0 transition-transform",
+  toolbarWrap: "flex items-center gap-2 flex-wrap",
+  searchWrap: "flex-1 min-w-[180px] relative",
+  searchIcon: "h-3.5 w-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none",
+  searchInput: "w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-400 bg-white",
+  select: "text-[9px] border border-gray-200 rounded-lg px-2 py-1.5 bg-white",
+  itemCount: "text-[9px] font-bold text-gray-500 whitespace-nowrap",
+  content: "flex-1 min-w-0 space-y-3",
+  gridContent: "grid grid-cols-2 gap-3",
+} as const;
 
 // ── Icon resolver ──
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -261,12 +385,16 @@ const DEPT_COLORS: Record<string, { gradient: string; text: string }> = {
   ORBIT9: { gradient: "from-cyan-600 to-blue-500", text: "text-cyan-600" },
 };
 
-const DEPT_LABELS: Record<string, string> = {
-  CEOB: "Direction", CTOB: "Technologie", CFOB: "Finance", CMOB: "Marketing",
-  CSOB: "Stratégie", COOB: "Opérations", CPOB: "Production", CHROB: "RH",
-  CINOB: "Innovation", CROB: "Ventes", CLOB: "Juridique", CISOB: "Sécurité",
+// ── LABELS DÉPARTEMENTS (source unique) ──
+export const DEPT_SHORT_LABEL: Record<string, string> = {
+  CEOB: "Direction", CROB: "Ventes", CFOB: "Finance",
+  CMOB: "Marketing", CTOB: "Technologie", COOB: "Opérations",
+  CPOB: "Production", CHROB: "RH", CINOB: "Innovation",
+  CSOB: "Stratégie", CLOB: "Juridique", CISOB: "Sécurité",
   ORBIT9: "Collaboration Orbit⁹",
 };
+// Alias pour compatibilité interne
+const DEPT_LABELS = DEPT_SHORT_LABEL;
 
 interface LinkedFieldValue {
   ref: CrossRef;
@@ -497,7 +625,7 @@ const PERSONAL_SECTIONS: { id: string; label: string; icon: React.ComponentType<
     ],
   },
   {
-    id: "personnel_vision", label: "Vision & Leadership", icon: Compass,
+    id: "personnel_vision", label: "Vision & Leadership", icon: Eye,
     fields: [
       { id: "mission_personnelle", label: "Ma mission en tant que dirigeant", type: "textarea", tier: "T1" as SizeTier, required: true, placeholder: "Pourquoi je fais ce que je fais. Ce qui me drive." },
       { id: "vision_personnelle", label: "Ma vision pour l'entreprise (5-10 ans)", type: "textarea", tier: "T1" as SizeTier, placeholder: "Ou je veux amener l'entreprise" },
@@ -1076,7 +1204,7 @@ function BlueprintPersonnel({ botCode, headerGradient, data, onFieldChange, onSa
                     {[
                       { key: "taches_a_deleguer", label: "A deleguer", icon: Share2, color: "text-amber-600" },
                       { key: "temps_non_negociable", label: "Temps non-negociable", icon: Lock, color: "text-emerald-600" },
-                      { key: "indicateurs_stress", label: "Indicateurs de stress", icon: AlertTriangle, color: "text-red-500" },
+                      { key: "indicateurs_stress", label: "Indicateurs de stress", icon: Bell, color: "text-red-500" },
                     ].map(cat => {
                       const items = lines(`personnel_equilibre.${cat.key}`);
                       if (items.length === 0) return null;
@@ -1529,7 +1657,7 @@ const DECISION_MODES: { id: string; label: string; icon: React.ComponentType<{ c
   { id: "tactique", label: "Tactique", icon: Zap, color: "text-amber-600", bgColor: "bg-amber-50 border-amber-300", gradient: "from-amber-600 to-amber-500", description: "Action concrete dans les 48h", comportement: "Compresse l'analyse, pousse vers des actions immediates.", exemple: "Quelle est l'action precise pour demain matin?" },
   { id: "analytique", label: "Analytique", icon: BarChart3, color: "text-emerald-600", bgColor: "bg-emerald-50 border-emerald-300", gradient: "from-emerald-600 to-emerald-500", description: "Data-driven, hypotheses testables", comportement: "Demande les donnees avant de conclure. Structure en comparatifs.", exemple: "Quelles donnees me manquent pour valider?" },
   { id: "creatif", label: "Creatif", icon: Sparkles, color: "text-purple-600", bgColor: "bg-purple-50 border-purple-300", gradient: "from-purple-600 to-fuchsia-500", description: "Angles inattendus, rapprochements", comportement: "Sort des sentiers battus. Propose 3 options non-conventionnelles.", exemple: "Et si on faisait l'exact oppose?" },
-  { id: "crise", label: "Crise", icon: AlertTriangle, color: "text-red-600", bgColor: "bg-red-50 border-red-300", gradient: "from-red-600 to-red-500", description: "Triage immediat, zero superflu", comportement: "Repond direct. Structure en: 24h / 7j / ignorer.", exemple: "L'unique chose a regler aujourd'hui?" },
+  { id: "crise", label: "Crise", icon: ShieldAlert, color: "text-red-600", bgColor: "bg-red-50 border-red-300", gradient: "from-red-600 to-red-500", description: "Triage immediat, zero superflu", comportement: "Repond direct. Structure en: 24h / 7j / ignorer.", exemple: "L'unique chose a regler aujourd'hui?" },
 ];
 
 // ── Catégories d'archétypes pour le catalogue ──
@@ -3523,7 +3651,7 @@ const OPERATIONAL_SECTIONS: Record<string, { id: string; label: string; descript
     { id: "op_soumissions_cpq", label: "Soumissions & Contrats (CPQ)", description: "Devis, escomptes, statuts (Draft/Sent/Signed)", patternVisuel: "Liste documents + statuts", icon: FileText, pertinence: { T1: "O", T2: "C", T3: "C", T4: "C", T5: "C" } },
     { id: "op_activites_relances", label: "Activites & Relances", description: "Taches quotidiennes, appels, courriels, activites en retard", patternVisuel: "To-Do list", icon: ListChecks, pertinence: { T1: "C", T2: "C", T3: "C", T4: "C", T5: "C" } },
     { id: "op_previsions", label: "Previsions (Forecasting)", description: "Projection ventes, Commit vs Best Case", patternVisuel: "Graphique barres empilees", icon: BarChart3, pertinence: { T1: "O", T2: "O", T3: "C", T4: "C", T5: "C" } },
-    { id: "op_territoires_quotas", label: "Territoires & Quotas", description: "Assignation geo/sectorielle, objectifs financiers, carte chaleur", patternVisuel: "Carte + matrice", icon: Compass, pertinence: { T1: "X", T2: "X", T3: "O", T4: "C", T5: "C" } },
+    { id: "op_territoires_quotas", label: "Territoires & Quotas", description: "Assignation geo/sectorielle, objectifs financiers, carte chaleur", patternVisuel: "Carte + matrice", icon: MapPin, pertinence: { T1: "X", T2: "X", T3: "O", T4: "C", T5: "C" } },
     { id: "op_performance_equipe", label: "Performance equipe", description: "Leaderboard representants, volume activites, coaching", patternVisuel: "Leaderboard dashboard", icon: Activity, pertinence: { T1: "X", T2: "O", T3: "C", T4: "C", T5: "C" } },
     { id: "op_remuneration_comm", label: "Remuneration & Commissions", description: "Calcul primes/commissions sur ventes cloturees", patternVisuel: "Tableau financier", icon: DollarSign, pertinence: { T1: "X", T2: "X", T3: "C", T4: "C", T5: "C" } },
     { id: "op_partenaires_prm", label: "Partenaires & Canaux (PRM)", description: "Ventes indirectes, distributeurs, affilies", patternVisuel: "Dashboard reseau", icon: Users, pertinence: { T1: "X", T2: "X", T3: "O", T4: "C", T5: "C" } },
@@ -3549,7 +3677,7 @@ const OPERATIONAL_SECTIONS: Record<string, { id: string; label: string; descript
   ],
   CSOB: [
     { id: "op_radar_concurrentiel", label: "Radar concurrentiel", description: "Veille, annonces concurrence, nouveaux entrants", patternVisuel: "Flux actualites + cartes profil", icon: Search, pertinence: { T1: "X", T2: "C", T3: "C", T4: "C", T5: "C" } },
-    { id: "op_bureau_gestion_strat", label: "Bureau gestion strategique", description: "Plans 3-5 ans vers initiatives trimestrielles mesurables", patternVisuel: "Gantt strategique + arbres", icon: Compass, pertinence: { T1: "X", T2: "X", T3: "C", T4: "C", T5: "C" } },
+    { id: "op_bureau_gestion_strat", label: "Bureau gestion strategique", description: "Plans 3-5 ans vers initiatives trimestrielles mesurables", patternVisuel: "Gantt strategique + arbres", icon: Star, pertinence: { T1: "X", T2: "X", T3: "C", T4: "C", T5: "C" } },
     { id: "op_pipeline_ma", label: "Pipeline M&A", description: "Cibles acquisition, integration post-fusion", patternVisuel: "Kanban specialise M&A", icon: Briefcase, pertinence: { T1: "X", T2: "X", T3: "X", T4: "O", T5: "C" } },
   ],
   COOB: [
@@ -3557,14 +3685,14 @@ const OPERATIONAL_SECTIONS: Record<string, { id: string; label: string; descript
     { id: "op_achats_po", label: "Achats & Bons de commande (PO)", description: "Approvisionnement, PO, receptions, perf fournisseur", patternVisuel: "Liste docs + statuts livraison", icon: Briefcase, pertinence: { T1: "O", T2: "C", T3: "C", T4: "C", T5: "C" } },
     { id: "op_commandes_clients", label: "Gestion commandes clients", description: "Reception/traitement commandes avant expedition", patternVisuel: "Triage Queue", icon: ListChecks, pertinence: { T1: "C", T2: "C", T3: "C", T4: "C", T5: "C" } },
     { id: "op_logistique_expedition", label: "Logistique & Expedition", description: "Transport, etiquettes, suivi transporteurs, couts fret", patternVisuel: "Carte suivi logistique", icon: Package, pertinence: { T1: "O", T2: "C", T3: "C", T4: "C", T5: "C" } },
-    { id: "op_qualite_nc", label: "Qualite & Non-conformites", description: "Incidents, defauts, retours clients (RMA)", patternVisuel: "Registre tickets Helpdesk", icon: AlertTriangle, pertinence: { T1: "X", T2: "X", T3: "C", T4: "C", T5: "C" } },
+    { id: "op_qualite_nc", label: "Qualite & Non-conformites", description: "Incidents, defauts, retours clients (RMA)", patternVisuel: "Registre tickets Helpdesk", icon: Bug, pertinence: { T1: "X", T2: "X", T3: "C", T4: "C", T5: "C" } },
     { id: "op_suivi_bpm", label: "Suivi processus (BPM)", description: "Cartographie workflows, amelioration continue, Kaizen", patternVisuel: "Diagramme flux interactif", icon: GitBranch, pertinence: { T1: "X", T2: "X", T3: "O", T4: "C", T5: "C" } },
-    { id: "op_flotte", label: "Gestion de la flotte", description: "Vehicules, maintenance, essence, telemetrie", patternVisuel: "Carte telemetrie temps reel", icon: Compass, pertinence: { T1: "X", T2: "X", T3: "O", T4: "C", T5: "C" } },
+    { id: "op_flotte", label: "Gestion de la flotte", description: "Vehicules, maintenance, essence, telemetrie", patternVisuel: "Carte telemetrie temps reel", icon: Truck, pertinence: { T1: "X", T2: "X", T3: "O", T4: "C", T5: "C" } },
   ],
   CTOB: [
     { id: "op_sprints_backlog", label: "Sprints & Backlog", description: "Gestion sprints, CI/CD pipeline, velocite equipe", patternVisuel: "Kanban complexe", icon: ListChecks, pertinence: { T1: "X", T2: "C", T3: "C", T4: "C", T5: "C" } },
     { id: "op_uptime_infra", label: "Uptime & Infrastructure", description: "Sante serveurs temps reel, disponibilite services", patternVisuel: "Jauges monitoring temps reel", icon: Activity, pertinence: { T1: "X", T2: "C", T3: "C", T4: "C", T5: "C" } },
-    { id: "op_dette_technique", label: "Registre dette technique", description: "Documentation compromis code, matrice impact vs effort", patternVisuel: "Matrice risque + registre", icon: AlertTriangle, pertinence: { T1: "X", T2: "X", T3: "C", T4: "C", T5: "C" } },
+    { id: "op_dette_technique", label: "Registre dette technique", description: "Documentation compromis code, matrice impact vs effort", patternVisuel: "Matrice risque + registre", icon: Bug, pertinence: { T1: "X", T2: "X", T3: "C", T4: "C", T5: "C" } },
     { id: "op_itsm_incidents", label: "Gestion incidents (ITSM)", description: "Helpdesk interne, pannes, bugs majeurs, tickets", patternVisuel: "Console tickets", icon: Bug, pertinence: { T1: "X", T2: "O", T3: "C", T4: "C", T5: "C" } },
     { id: "op_licences_saas", label: "Gestion licences & SaaS", description: "Inventaire abonnements, Shadow IT, optimisation couts", patternVisuel: "Registre financier tabulaire", icon: DollarSign, pertinence: { T1: "C", T2: "C", T3: "C", T4: "C", T5: "C" } },
   ],
@@ -3671,15 +3799,13 @@ const TRANSVERSAL_SECTIONS = [
   { id: "clients",       label: "Dossiers Clients",       icon: Users },
   { id: "employes",      label: "Dossiers Employés",      icon: User },
   { id: "fournisseurs",  label: "Dossiers Fournisseurs",  icon: Package },
-  { id: "chantiers",     label: "Chantiers (REAI)",       icon: FolderOpen },
-  { id: "bibliotheque",  label: "Bibliothèque Centrale",  icon: BookOpen },
 ] as const;
 
 // Nomenclature REAI — Structure par chantier
 const REAI_FOLDERS = [
   { id: "admin",        num: "0",  label: "Admin",              icon: Briefcase, desc: "Ententes, NDA, comptes-rendus, horodateur" },
   { id: "intrants",     num: "10", label: "Intrants",           icon: Upload,    desc: "Photos, vidéos, mesures, docs reçus" },
-  { id: "design",       num: "20", label: "Design/Calculs/Simul", icon: Compass, desc: "Dessins 2D/3D, cahier des charges, VSM" },
+  { id: "design",       num: "20", label: "Design/Calculs/Simul", icon: PenLine, desc: "Dessins 2D/3D, cahier des charges, VSM" },
   { id: "fournisseurs", num: "30", label: "Fournisseurs",       icon: ShoppingBag, desc: "Vidéos fournisseurs, soumissions" },
   { id: "livrables",    num: "40", label: "Livrables",          icon: FileText,  desc: "Rapports finaux, documentation livrée" },
 ] as const;
@@ -3845,7 +3971,7 @@ const DATA_ROOM_SECTIONS: Record<string, DataRoomCategory[]> = {
     ]},
   ],
   CSOB: [
-    { id: "analyses_scenarios", label: "Analyses et scenarios", icon: Compass, volume: "~10 docs/an", documents: [
+    { id: "analyses_scenarios", label: "Analyses et scenarios", icon: Eye, volume: "~10 docs/an", documents: [
       { titre: "Business Model Canvas (BMC)", type: "Document", sections: 9, frequence: "Semestriel", createur: "Simone", statut: "actif", critique: true },
       { titre: "Plans d'expansion geographique", type: "Document", sections: 6, frequence: "Annuel", createur: "Simone", statut: "brouillon", critique: true },
       { titre: "Scenarios de crise macroeconomique", type: "Document", sections: 8, frequence: "Annuel", createur: "Simone", statut: "a_creer", critique: true },
@@ -4013,7 +4139,7 @@ const DATA_ROOM_SECTIONS: Record<string, DataRoomCategory[]> = {
       { titre: "Avis juridiques courts", type: "Document", sections: 2, frequence: "Ad hoc", createur: "Loulou", statut: "actif", critique: false },
       { titre: "Mises a jour de conformite reglementaire", type: "Document", sections: 4, frequence: "Trimestriel", createur: "Loulou", statut: "actif", critique: false },
     ]},
-    { id: "litiges_contentieux", label: "Litiges & contentieux", icon: AlertTriangle, volume: "~10 docs/an", documents: [
+    { id: "litiges_contentieux", label: "Litiges & contentieux", icon: Gavel, volume: "~10 docs/an", documents: [
       { titre: "Dossiers de litige actifs", type: "Dataset", sections: 1, frequence: "Continu", createur: "Loulou", statut: "actif", critique: true },
       { titre: "Mises en demeure envoyees/recues", type: "Document", sections: 4, frequence: "Ad hoc", createur: "Loulou", statut: "actif", critique: true },
       { titre: "Suivi judiciaire (echancier, decisions)", type: "Document", sections: 3, frequence: "Ad hoc", createur: "Loulou", statut: "a_creer", critique: false },
@@ -4032,7 +4158,7 @@ const DATA_ROOM_SECTIONS: Record<string, DataRoomCategory[]> = {
       { titre: "DRP (Disaster Recovery Plan)", type: "Document", sections: 10, frequence: "Annuel", createur: "Sebastien", statut: "brouillon", critique: true },
       { titre: "Procedures de sauvegarde et restauration", type: "Procedure", sections: 5, frequence: "Annuel", createur: "Sebastien", statut: "actif", critique: false },
     ]},
-    { id: "audits_risques", label: "Audits et evaluation des risques", icon: AlertTriangle, volume: "~40 docs/an", documents: [
+    { id: "audits_risques", label: "Audits et evaluation des risques", icon: ClipboardCheck, volume: "~40 docs/an", documents: [
       { titre: "Audits de penetration externes (pentests)", type: "Document", sections: 8, frequence: "Annuel", createur: "Sebastien", statut: "a_creer", critique: true },
       { titre: "Evaluations de risques cyber", type: "Document", sections: 6, frequence: "Trimestriel", createur: "Sebastien", statut: "actif", critique: true },
       { titre: "Rapports de scans de vulnerabilite", type: "Document", sections: 4, frequence: "Mensuel", createur: "Sebastien", statut: "actif", critique: false },
@@ -4063,7 +4189,7 @@ const DATA_ROOM_SECTIONS: Record<string, DataRoomCategory[]> = {
       { titre: "Roadmap technique trimestrielle", type: "Document", sections: 6, frequence: "Trimestriel", createur: "Tim", statut: "actif", critique: false },
       { titre: "Notes de version (changelogs)", type: "Document", sections: 2, frequence: "Hebdomadaire", createur: "Tim", statut: "actif", critique: false },
     ]},
-    { id: "audits_dette", label: "Audits et dette technique", icon: AlertTriangle, volume: "~150 docs/an", documents: [
+    { id: "audits_dette", label: "Audits et dette technique", icon: Bug, volume: "~150 docs/an", documents: [
       { titre: "Audits de securite du code", type: "Document", sections: 8, frequence: "Semestriel", createur: "Tim", statut: "brouillon", critique: true },
       { titre: "Inventaire dette technique", type: "Dataset", sections: 1, frequence: "Trimestriel", createur: "Tim", statut: "actif", critique: false },
       { titre: "Rapports d'incidents (post-mortems)", type: "Document", sections: 6, frequence: "Ad hoc", createur: "Tim", statut: "actif", critique: false },
@@ -4408,98 +4534,189 @@ function DataRoomAssetList({ documents, viewMode, sortField, sortDir, onSort }: 
   );
 }
 
-function DataRoomTemplatesList({ botCode, viewMode }: { botCode: string; viewMode: DataRoomViewMode }) {
-  const templates = botCode === "CEOB" ? BLUEPRINT_TEMPLATES : getTemplatesForBot(botCode);
+function DataRoomTemplatesList({ botCode, viewMode: _viewMode }: { botCode: string; viewMode: DataRoomViewMode }) {
+  const allTemplates = BLUEPRINT_TEMPLATES;
+  const deptTemplates = botCode === "CEOB" ? allTemplates : getTemplatesForBot(botCode);
   const [filterCat, setFilterCat] = useState<string>("all");
+  const [filterDept, setFilterDept] = useState<string | null>(botCode !== "CEOB" ? botCode : null);
   const [searchTpl, setSearchTpl] = useState("");
+  const [selectedTemplate, setSelectedTemplate] = useState<BlueprintTemplate | null>(null);
 
   const CATEGORY_LABELS: Record<string, string> = { strategique: "Strategique", operationnel: "Operationnel", conformite: "Conformite", diagnostic: "Diagnostic" };
+  const CATEGORY_ICONS: Record<string, React.ElementType> = { strategique: Target, operationnel: Activity, conformite: Shield, diagnostic: Search };
   const catBadgeStyle = (cat: string) => cat === "strategique" ? "bg-blue-50 text-blue-700" : cat === "conformite" ? "bg-purple-50 text-purple-700" : cat === "diagnostic" ? "bg-amber-50 text-amber-700" : "bg-gray-50 text-gray-700";
+  const PHASE_LABELS: Record<string, string> = { startup: "Startup", scaleup: "Scale-up", exitup: "Exit" };
 
-  let filtered = filterCat === "all" ? templates : templates.filter(t => t.category === filterCat);
+  const baseTemplates = filterDept ? allTemplates.filter(t => t.botCode === filterDept) : deptTemplates;
+  let filtered = filterCat === "all" ? baseTemplates : baseTemplates.filter(t => t.category === filterCat);
   if (searchTpl.trim()) {
     const q = searchTpl.toLowerCase();
     filtered = filtered.filter(t => t.name.toLowerCase().includes(q) || t.description.toLowerCase().includes(q));
   }
 
-  // Category counts for filter pills
   const catCounts: Record<string, number> = {};
-  templates.forEach(t => { catCounts[t.category] = (catCounts[t.category] || 0) + 1; });
+  baseTemplates.forEach(t => { catCounts[t.category] = (catCounts[t.category] || 0) + 1; });
+  const docForgeCount = baseTemplates.filter(t => t.docForgeReady).length;
+
+  const deptCounts: { code: string; label: string; count: number }[] = Object.entries(DEPT_SHORT_LABEL)
+    .map(([code, label]) => ({ code, label, count: allTemplates.filter(t => t.botCode === code).length }))
+    .filter(d => d.count > 0);
+
+  if (selectedTemplate) {
+    const t = selectedTemplate;
+    const CatIcon = CATEGORY_ICONS[t.category] || Layers;
+    const similarTemplates = allTemplates.filter(s => s.botCode === t.botCode && s.id !== t.id).slice(0, 4);
+    return (
+      <div className="space-y-3">
+        <button onClick={() => setSelectedTemplate(null)} className="text-[10px] text-gray-500 hover:text-gray-700 flex items-center gap-1.5 cursor-pointer"><ChevronLeft className="h-3.5 w-3.5" /> Retour aux templates</button>
+        <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+          <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 bg-[#00B4D8]/10">
+            <CatIcon className="h-5 w-5 text-gray-900 stroke-[2.5]" />
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-bold text-gray-900">{t.name}</h3>
+              <p className="text-[10px] text-gray-500 mt-0.5">{DEPT_SHORT_LABEL[t.botCode] || t.botCode}</p>
+            </div>
+            <span className={cn("text-[9px] font-bold px-2 py-0.5 rounded", catBadgeStyle(t.category))}>{CATEGORY_LABELS[t.category]}</span>
+            {t.docForgeReady && <span className="text-[8px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700">DocForge</span>}
+          </div>
+          <div className="px-5 py-4 space-y-4">
+            <p className="text-xs text-gray-600 leading-relaxed">{t.description}</p>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="rounded-lg bg-gray-50 px-3 py-2">
+                <span className="text-[9px] text-gray-400 block mb-0.5">Categorie</span>
+                <span className="text-xs font-bold text-gray-800">{CATEGORY_LABELS[t.category]}</span>
+              </div>
+              <div className="rounded-lg bg-gray-50 px-3 py-2">
+                <span className="text-[9px] text-gray-400 block mb-0.5">Phases</span>
+                <span className="text-xs font-bold text-gray-800">{t.phases.map(p => PHASE_LABELS[p] || p).join(", ")}</span>
+              </div>
+              <div className="rounded-lg bg-gray-50 px-3 py-2">
+                <span className="text-[9px] text-gray-400 block mb-0.5">Source</span>
+                <span className="text-xs font-bold text-gray-800">{t.source === "existant" ? "Existant" : "Nouveau"}</span>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button className="flex-1 px-3 py-2 text-[10px] font-bold bg-gray-900 text-white rounded-lg hover:bg-gray-800 cursor-pointer transition-colors flex items-center justify-center gap-1.5">
+                <FileText className="h-3.5 w-3.5" /> Ouvrir dans DocForge
+              </button>
+              <button className="px-3 py-2 text-[10px] font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg cursor-pointer transition-colors flex items-center justify-center gap-1.5">
+                <Download className="h-3.5 w-3.5" /> Telecharger
+              </button>
+            </div>
+          </div>
+        </div>
+        {similarTemplates.length > 0 && (
+          <div>
+            <h4 className="text-xs font-bold text-gray-800 flex items-center gap-1.5 mb-2"><Layers className="h-3.5 w-3.5 text-gray-500" /> Templates similaires</h4>
+            <div className="grid grid-cols-2 gap-3">
+              {similarTemplates.map(s => {
+                const SIcon = CATEGORY_ICONS[s.category] || Layers;
+                return (
+                  <div key={s.id} className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all cursor-pointer" onClick={() => setSelectedTemplate(s)}>
+                    <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-100 bg-[#00B4D8]/10">
+                      <SIcon className="h-3.5 w-3.5 text-gray-900 stroke-[2.5]" />
+                      <span className="text-[10px] font-bold text-gray-900 flex-1 truncate">{s.name}</span>
+                    </div>
+                    <div className="px-3 py-2">
+                      <p className="text-[9px] text-gray-500 line-clamp-2">{s.description}</p>
+                      <span className={cn("text-[8px] font-bold px-1.5 py-0.5 rounded mt-1 inline-block", catBadgeStyle(s.category))}>{CATEGORY_LABELS[s.category]}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-2">
-      {/* Filter pills */}
+    <div className="space-y-3">
+      <div className="grid grid-cols-4 gap-3">
+        <div className="rounded-lg border border-gray-200 bg-white px-3 py-2">
+          <span className="text-[9px] text-gray-400 block">Total</span>
+          <span className="text-lg font-bold text-gray-900">{baseTemplates.length}</span>
+        </div>
+        <div className="rounded-lg border border-gray-200 bg-white px-3 py-2">
+          <span className="text-[9px] text-gray-400 block">DocForge</span>
+          <span className="text-lg font-bold text-emerald-600">{docForgeCount}</span>
+        </div>
+        <div className="rounded-lg border border-gray-200 bg-white px-3 py-2">
+          <span className="text-[9px] text-gray-400 block">Categories</span>
+          <span className="text-lg font-bold text-gray-900">{Object.keys(catCounts).length}</span>
+        </div>
+        <div className="rounded-lg border border-gray-200 bg-white px-3 py-2">
+          <span className="text-[9px] text-gray-400 block">Nouveaux</span>
+          <span className="text-lg font-bold text-blue-600">{baseTemplates.filter(t => t.source === "nouveau").length}</span>
+        </div>
+      </div>
+
       <div className="flex items-center gap-1.5 flex-wrap">
-        <div className="relative flex-1 min-w-[120px] max-w-[220px]">
+        <div className="relative flex-1 max-w-[220px]">
           <Search className="h-3.5 w-3.5 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" />
           <input type="text" value={searchTpl} onChange={e => setSearchTpl(e.target.value)} placeholder="Rechercher templates..." className="w-full pl-7 pr-2 py-1 text-[9px] border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white" />
         </div>
-        {Object.entries(CATEGORY_LABELS).filter(([k]) => catCounts[k]).map(([k, v]) => (
-          <button key={k} onClick={() => setFilterCat(filterCat === k ? "all" : k)} className={cn("flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-medium transition-all cursor-pointer border", filterCat === k ? `${catBadgeStyle(k)} border-current shadow-sm` : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50")}>
-            {v} <span className="opacity-60">{catCounts[k]}</span>
-          </button>
-        ))}
+        {Object.entries(CATEGORY_LABELS).filter(([k]) => catCounts[k]).map(([k, v]) => {
+          const CIcon = CATEGORY_ICONS[k] || Layers;
+          return (
+            <button key={k} onClick={() => setFilterCat(filterCat === k ? "all" : k)} className={cn("flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-medium transition-all cursor-pointer border", filterCat === k ? `${catBadgeStyle(k)} border-current shadow-sm` : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50")}>
+              <CIcon className="h-3.5 w-3.5" /> {v} <span className="opacity-60">{catCounts[k]}</span>
+            </button>
+          );
+        })}
         <span className="text-[9px] text-gray-400 ml-auto">{filtered.length} templates</span>
       </div>
 
-      {viewMode === "table" ? (
-        <table className="w-full text-xs border rounded-xl overflow-hidden">
-          <thead>
-            <tr className="bg-gray-50 border-b border-gray-100">
-              <th className="text-left px-3 py-2 text-[9px] font-bold text-gray-500 uppercase">Template</th>
-              <th className="text-left px-2 py-2 text-[9px] font-bold text-gray-500 uppercase">Categorie</th>
-              <th className="text-left px-2 py-2 text-[9px] font-bold text-gray-500 uppercase">Phases</th>
-              <th className="text-left px-2 py-2 text-[9px] font-bold text-gray-500 uppercase">DocForge</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50">
-            {filtered.map(t => (
-              <tr key={t.id} className="hover:bg-gray-50 group">
-                <td className="px-3 py-2">
-                  <div className="text-xs text-gray-800">{t.name}</div>
-                  <div className="text-[9px] text-gray-400 truncate max-w-[250px]">{t.description}</div>
-                </td>
-                <td className="px-2 py-2"><span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded", catBadgeStyle(t.category))}>{CATEGORY_LABELS[t.category]}</span></td>
-                <td className="px-2 py-2 text-[9px] text-gray-500">{t.phases.join(", ")}</td>
-                <td className="px-2 py-2">{t.docForgeReady ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> : <span className="text-[9px] text-gray-400">—</span>}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : viewMode === "cards" ? (
-        <div className="grid grid-cols-2 gap-2">
-          {filtered.map(t => (
-            <button key={t.id} className="text-left p-0 overflow-hidden rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-200 transition-all cursor-pointer group">
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-slate-50 to-gray-50">
-                <Layers className="h-3.5 w-3.5 text-gray-400" />
-                <span className="text-[9px] font-bold text-gray-700 flex-1 truncate">{t.name}</span>
-                {t.docForgeReady && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />}
-              </div>
-              <div className="px-3 py-2 space-y-1">
-                <p className="text-[9px] text-gray-500 line-clamp-2">{t.description}</p>
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded", catBadgeStyle(t.category))}>{CATEGORY_LABELS[t.category]}</span>
-                  <span className="text-[9px] text-gray-400">{t.source === "existant" ? "Existant" : "Nouveau"}</span>
-                </div>
-              </div>
+      {botCode === "CEOB" && (
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <button onClick={() => setFilterDept(null)} className={cn("px-2 py-0.5 rounded-full text-[9px] font-medium transition-all cursor-pointer border", !filterDept ? "bg-gray-900 text-white border-gray-900 shadow-sm" : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50")}>
+            Tous
+          </button>
+          {deptCounts.map(d => (
+            <button key={d.code} onClick={() => setFilterDept(filterDept === d.code ? null : d.code)} className={cn("px-2 py-0.5 rounded-full text-[9px] font-medium transition-all cursor-pointer border", filterDept === d.code ? "bg-gray-900 text-white border-gray-900 shadow-sm" : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50")}>
+              {d.label} <span className="opacity-60">{d.count}</span>
             </button>
           ))}
         </div>
-      ) : (
-        <div className="space-y-1">
-          {filtered.map(t => (
-            <div key={t.id} className="px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-3 border border-transparent hover:border-gray-100">
-              <Layers className="h-4 w-4 text-gray-400 shrink-0" />
-              <div className="flex-1 min-w-0">
-                <div className="text-xs font-medium text-gray-800">{t.name}</div>
-                <div className="text-[9px] text-gray-400 truncate">{t.description}</div>
+      )}
+
+      <div className="grid grid-cols-2 gap-3">
+        {filtered.map(t => {
+          const CatIcon = CATEGORY_ICONS[t.category] || Layers;
+          return (
+            <div key={t.id} className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all cursor-pointer" onClick={() => setSelectedTemplate(t)}>
+              <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+                <CatIcon className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+                <span className="text-[10px] font-bold text-gray-900 flex-1 truncate">{t.name}</span>
+                {t.docForgeReady && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />}
               </div>
-              <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0", catBadgeStyle(t.category))}>{CATEGORY_LABELS[t.category]}</span>
-              {t.docForgeReady && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />}
+              <div className="px-4 py-3 space-y-2">
+                <p className="text-[9px] text-gray-500 leading-relaxed line-clamp-2">{t.description}</p>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className={cn("text-[8px] font-bold px-1.5 py-0.5 rounded", catBadgeStyle(t.category))}>{CATEGORY_LABELS[t.category]}</span>
+                  {t.phases.map(p => (
+                    <span key={p} className="text-[8px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 font-medium">{PHASE_LABELS[p] || p}</span>
+                  ))}
+                  {botCode === "CEOB" && <span className="text-[8px] text-gray-400 ml-auto">{DEPT_SHORT_LABEL[t.botCode] || t.botCode}</span>}
+                </div>
+              </div>
             </div>
-          ))}
+          );
+        })}
+      </div>
+
+      {filtered.length === 0 && (
+        <div className="border border-dashed border-gray-300 rounded-lg p-8 text-center">
+          <Layers className="h-5 w-5 text-gray-300 mx-auto mb-2" />
+          <p className="text-[10px] text-gray-400">Aucun template trouve</p>
         </div>
       )}
+
+      <div className="bg-blue-50/50 border border-blue-100 rounded-lg px-3 py-2 flex items-center gap-3">
+        <Info className="h-3.5 w-3.5 text-blue-500" />
+        <span className="text-[9px] text-blue-700">Templates · {baseTemplates.length} disponibles · {docForgeCount} prets pour DocForge · {Object.keys(catCounts).length} categories</span>
+      </div>
     </div>
   );
 }
@@ -4555,6 +4772,15 @@ export function BlueprintDataRoom({ botCode, headerGradient, showHeader = false 
   const [formatFilter, setFormatFilter] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
   const [showSort, setShowSort] = useState(false);
+
+  // Synchroniser quand botCode change (navigation département dans ControlTowerPanel)
+  useEffect(() => {
+    setActiveDept(botCode);
+    setExpandedDepts(new Set([botCode]));
+    const deptSections = DATA_ROOM_SECTIONS[botCode] || [];
+    setActiveFolder(botCode === "CEOB" ? "_consolidee" : (deptSections.length > 0 ? deptSections[0].id : ""));
+    setSearchQuery(""); setTypeFilter(null); setStatusFilter(null); setFormatFilter(null);
+  }, [botCode]);
 
   const toggleDept = (code: string) => {
     setExpandedDepts(prev => {
@@ -4616,103 +4842,132 @@ export function BlueprintDataRoom({ botCode, headerGradient, showHeader = false 
 
   return (
     <div className="space-y-3">
-      {/* Header gradient hero (style Blueprint) */}
+      {/* Hero — Living Heroes V20 Data Room */}
       {showHeader && (
-        <div className={cn("relative bg-gradient-to-r rounded-xl overflow-hidden", headerGradient)}>
-          <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="relative flex items-center gap-4 p-4">
-            <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
-              <Database className="h-6 w-6 text-white" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="text-lg font-bold text-white">Data Room</h3>
-                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white">{sections.length} dossiers</span>
-                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white">{sections.reduce((s, c) => s + c.documents.length, 0)} documents</span>
+        <LivingHero
+          blur1="bg-emerald-100/60" blur2="bg-teal-100/50"
+          subtitleColor="text-emerald-600" subtitle="Sécurité & Intelligence"
+          title="Le coffre-fort de votre mémoire."
+          description="Centralisez vos fichiers statiques sous scellés étanches en un réseau invincible."
+        >
+          <div className="relative w-[340px] h-[150px] flex items-center justify-center">
+            <div className="absolute right-[100px] top-[15px] w-[140px] h-[120px] bg-white border border-emerald-100 rounded-xl shadow-xl transform rotate-3 overflow-hidden p-4 text-[7px] text-slate-300 leading-tight" style={{fontFamily:'ui-monospace,monospace'}}>
+              <div className="font-bold text-emerald-600 mb-2 border-b border-emerald-100 pb-1">CLASSIFIED_DATA</div>
+              <div className="anim-binary">01001000 01101111<br/>01101100 01100100<br/><span className="text-emerald-400">█████ ENCRYPT</span></div>
+              <div className="absolute w-[140%] h-[1.5px] bg-[#10b981] -left-4 anim-laser flex items-center justify-center z-50">
+                <div className="absolute w-full h-[30px] bg-gradient-to-b from-[#10b981]/[0.15] to-transparent -top-[1px]" />
+                <div className="w-[80%] h-full bg-[#34d399] shadow-[0_0_20px_#10b981]" />
               </div>
-              <p className="text-xs text-white/80">Documents stratégiques, rapports, politiques et ressources classés par département.</p>
+            </div>
+            <div className="glass-intense absolute right-[30px] bottom-[20px] w-24 h-24 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(52,211,153,0.3)]">
+              <svg className="absolute w-20 h-20 text-emerald-400 anim-vault-out" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="20 10 5 10"/></svg>
+              <svg className="absolute w-14 h-14 text-teal-500 anim-vault-in" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="4" strokeDasharray="40 20"/></svg>
+              <div className="w-6 h-8 bg-white border-[3px] border-emerald-500 rounded-md relative flex items-center justify-center"><div className="w-1.5 h-3 bg-emerald-500 rounded-full" /></div>
             </div>
           </div>
-        </div>
+        </LivingHero>
       )}
     <div className="flex gap-3">
       {/* Sidebar — Navigation 12 départements (accordion) */}
-      <div className="w-[180px] shrink-0 overflow-y-auto max-h-[calc(100vh-200px)] space-y-0.5">
-        {/* Vue d'ensemble (CEOB only) */}
-        {botCode === "CEOB" && (
-          <button
-            onClick={() => { setActiveDept("CEOB"); setActiveFolder("_consolidee"); setSearchQuery(""); setTypeFilter(null); setStatusFilter(null); setFormatFilter(null); }}
-            className={cn(
-              "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
-              activeFolder === "_consolidee" ? "bg-blue-50 border border-blue-200 shadow-sm" : "bg-gradient-to-r from-slate-50 to-blue-50/50 border border-blue-100/50 hover:bg-blue-50"
-            )}
-          >
-            <div className="flex items-center gap-1.5">
-              <Building2 className={cn("h-3.5 w-3.5 shrink-0", activeFolder === "_consolidee" ? "text-blue-500" : "text-gray-400")} />
-              <span className={cn("text-[10px] font-bold flex-1", activeFolder === "_consolidee" ? "text-blue-700" : "text-gray-700")}>Vue d'ensemble</span>
-              <span className="text-[9px] text-gray-400">12</span>
-            </div>
-          </button>
-        )}
+      <div className="w-[180px] shrink-0 space-y-0.5">
+        {/* Vue d'ensemble — disponible pour tous les départements */}
+        <button
+          onClick={() => { setActiveDept(botCode); setActiveFolder("_consolidee"); setSearchQuery(""); setTypeFilter(null); setStatusFilter(null); setFormatFilter(null); }}
+          className={cn(
+            "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
+            activeFolder === "_consolidee" ? SF.btnActive : SF.btnInactive
+          )}
+        >
+          <div className="flex items-center gap-1.5">
+            <Building2 className={cn("h-3.5 w-3.5 shrink-0", activeFolder === "_consolidee" ? "text-blue-500" : "text-gray-400")} />
+            <span className={cn("text-[10px] font-bold flex-1", activeFolder === "_consolidee" ? "text-blue-700" : "text-gray-700")}>Vue d'ensemble</span>
+            <span className="text-[9px] text-gray-400">{botCode === "CEOB" ? Object.keys(DATA_ROOM_SECTIONS).length : (DATA_ROOM_SECTIONS[botCode] || []).length}</span>
+          </div>
+        </button>
 
-        {botCode === "CEOB" && <div className="h-px bg-gray-100 mx-2 my-1" />}
+        <div className={SF.separator} />
 
-        {/* 12 départements — accordion collapsible */}
-        {Object.keys(DATA_ROOM_SECTIONS).map(deptCode => {
-          const deptSections = DATA_ROOM_SECTIONS[deptCode] || [];
-          const isExpanded = expandedDepts.has(deptCode);
-          const isDeptActive = activeDept === deptCode;
-          const totalDocs = deptSections.reduce((sum, s) => sum + s.documents.length, 0);
-          return (
-            <div key={deptCode}>
-              {/* Department header — click to expand/collapse */}
+        {/* Départements — CEOB: accordion 12 depts | Autre: dossiers du dept actif seulement */}
+        {botCode === "CEOB" ? (
+          /* CEOB = Direction: accordion 12 départements (poupée russe: voit tout) */
+          Object.keys(DATA_ROOM_SECTIONS).map(deptCode => {
+            const deptSections = DATA_ROOM_SECTIONS[deptCode] || [];
+            const isExpanded = expandedDepts.has(deptCode);
+            const isDeptActive = activeDept === deptCode;
+            const totalDocs = deptSections.reduce((sum, s) => sum + s.documents.length, 0);
+            return (
+              <div key={deptCode}>
+                <button
+                  onClick={() => toggleDept(deptCode)}
+                  className={cn(
+                    "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
+                    isDeptActive && !isExpanded ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent"
+                  )}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <ChevronDown className={cn("h-3.5 w-3.5 shrink-0 transition-transform", isExpanded ? "" : "-rotate-90", isDeptActive ? "text-blue-500" : "text-gray-300")} />
+                    {(() => { const DIcon = DEPT_DASH_ICON[deptCode] || Zap; return <DIcon className={cn("h-3.5 w-3.5 shrink-0", isDeptActive ? "text-blue-500" : "text-gray-400")} />; })()}
+                    <span className={cn("text-[10px] font-bold flex-1 leading-tight", isDeptActive ? "text-blue-700" : "text-gray-700")}>
+                      {DEPT_LABELS[deptCode] || deptCode}
+                    </span>
+                    <span className="text-[9px] text-gray-400">{totalDocs}</span>
+                  </div>
+                </button>
+                {isExpanded && deptSections.map(s => {
+                  const isActive = activeDept === deptCode && activeFolder === s.id;
+                  return (
+                    <button
+                      key={s.id}
+                      onClick={() => selectDeptFolder(deptCode, s.id)}
+                      className={cn(
+                        "w-full pl-6 pr-2.5 py-1 rounded-lg text-left transition-all cursor-pointer",
+                        isActive ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent"
+                      )}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <FolderOpen className={cn("h-3.5 w-3.5 shrink-0", isActive ? "text-blue-500" : "text-gray-400")} />
+                        <span className={cn("text-[10px] font-medium flex-1 leading-tight", isActive ? "text-blue-700" : "text-gray-600")}>
+                          {s.label}
+                        </span>
+                        <span className="text-[9px] text-gray-400">{s.documents.length}</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })
+        ) : (
+          /* Autre département = dossiers du département actif seulement (scopé) */
+          (DATA_ROOM_SECTIONS[botCode] || []).map(s => {
+            const isActive = activeFolder === s.id;
+            return (
               <button
-                onClick={() => toggleDept(deptCode)}
+                key={s.id}
+                onClick={() => selectDeptFolder(botCode, s.id)}
                 className={cn(
                   "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
-                  isDeptActive && !isExpanded ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent"
+                  isActive ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent"
                 )}
               >
                 <div className="flex items-center gap-1.5">
-                  <ChevronDown className={cn("h-3.5 w-3.5 shrink-0 transition-transform", isExpanded ? "" : "-rotate-90", isDeptActive ? "text-blue-500" : "text-gray-400")} />
-                  <span className={cn("text-[10px] font-bold flex-1 leading-tight", isDeptActive ? "text-blue-700" : "text-gray-700")}>
-                    {DEPT_LABELS[deptCode] || deptCode}
+                  <FolderOpen className={cn("h-3.5 w-3.5 shrink-0", isActive ? "text-blue-500" : "text-gray-400")} />
+                  <span className={cn("text-[10px] font-medium flex-1 leading-tight", isActive ? "text-blue-700" : "text-gray-600")}>
+                    {s.label}
                   </span>
-                  <span className="text-[9px] text-gray-400">{totalDocs}</span>
+                  <span className="text-[9px] text-gray-400">{s.documents.length}</span>
                 </div>
               </button>
-              {/* Categories sous le département — visibles si expanded */}
-              {isExpanded && deptSections.map(s => {
-                const isActive = activeDept === deptCode && activeFolder === s.id;
-                return (
-                  <button
-                    key={s.id}
-                    onClick={() => selectDeptFolder(deptCode, s.id)}
-                    className={cn(
-                      "w-full pl-6 pr-2.5 py-1 rounded-lg text-left transition-all cursor-pointer",
-                      isActive ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent"
-                    )}
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <FolderOpen className={cn("h-3.5 w-3.5 shrink-0", isActive ? "text-blue-500" : "text-gray-400")} />
-                      <span className={cn("text-[10px] font-medium flex-1 leading-tight", isActive ? "text-blue-700" : "text-gray-600")}>
-                        {s.label}
-                      </span>
-                      <span className="text-[9px] text-gray-400">{s.documents.length}</span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          );
-        })}
+            );
+          })
+        )}
 
         {/* Separator */}
-        <div className="h-px bg-gray-100 mx-2 my-1" />
+        <div className={SF.separator} />
 
-        {/* Sections transversales */}
+        {/* Sections dossiers */}
         <div className="px-2.5 py-1">
-          <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Transversal</span>
+          <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Dossiers</span>
         </div>
         {TRANSVERSAL_SECTIONS.map(ts => {
           const isActive = activeFolder === ts.id;
@@ -4735,7 +4990,7 @@ export function BlueprintDataRoom({ botCode, headerGradient, showHeader = false 
         })}
 
         {/* Separator */}
-        <div className="h-px bg-gray-100 mx-2 my-1" />
+        <div className={SF.separator} />
 
         {/* Templates */}
         <button
@@ -4756,24 +5011,24 @@ export function BlueprintDataRoom({ botCode, headerGradient, showHeader = false 
       {/* Contenu — full height */}
       <div className="flex-1 min-w-0 space-y-2">
         {/* ── Rectangle bleu pastel — titre sous-section active ── */}
-        {(isFolderView || activeFolder === "_templates" || activeFolder === "chantiers" || TRANSVERSAL_SECTIONS.some(ts => ts.id === activeFolder)) && (
+        {(isFolderView || activeFolder === "_templates" || TRANSVERSAL_SECTIONS.some(ts => ts.id === activeFolder)) && (
           <div className={cn("bg-gradient-to-r rounded-lg px-4 py-2.5 flex items-center gap-3", headerGradient)}>
             <Database className="h-5 w-5 text-white" />
             <h2 className="text-sm font-bold text-white">
-              {activeFolder === "_templates" ? "Templates" : activeFolder === "chantiers" ? "Chantiers (REAI)" : TRANSVERSAL_SECTIONS.find(ts => ts.id === activeFolder)?.label || activeSection?.label || ""}
+              {activeFolder === "_templates" ? "Templates" : TRANSVERSAL_SECTIONS.find(ts => ts.id === activeFolder)?.label || activeSection?.label || ""}
             </h2>
           </div>
         )}
 
-        {/* ── Toolbar (copie pattern DocumentsUnifie — SharePoint style) ── */}
+        {/* ── Toolbar — SF standard ── */}
         {(isFolderView || activeFolder === "_templates") && (
-          <div className="flex items-center gap-2">
-            <div className="flex-1 relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+          <div className={SF.toolbarWrap}>
+            <div className={SF.searchWrap}>
+              <Search className={SF.searchIcon} />
               <input type="text" placeholder="Rechercher..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 bg-white" />
+                className={SF.searchInput} />
             </div>
-            <span className="text-[9px] font-bold text-gray-500 whitespace-nowrap">{isFolderView ? `${filteredDocs.length} items` : ""}</span>
+            <span className={SF.itemCount}>{isFolderView ? `${filteredDocs.length} items` : ""}</span>
             {/* Sort dropdown (pattern DocumentsUnifie) */}
             <div className="relative">
               <button onClick={() => setShowSort(!showSort)} className="flex items-center gap-1 px-2 py-1.5 text-[9px] font-bold text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">
@@ -4860,42 +5115,49 @@ export function BlueprintDataRoom({ botCode, headerGradient, showHeader = false 
             const deptSections = DATA_ROOM_SECTIONS[code];
             if (deptSections && deptSections.length > 0) selectDeptFolder(code, deptSections[0].id);
           }} />
+        ) : activeFolder === "_consolidee" ? (
+          /* Vue d'ensemble département (non-CEOB) — grille des catégories avec compteurs */
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 mb-1">
+              {(() => { const DIcon = DEPT_DASH_ICON[botCode] || Database; return <DIcon className="h-4 w-4 text-blue-600" />; })()}
+              <span className="text-xs font-bold text-gray-800">Data Room — {DEPT_SHORT_LABEL[botCode] || botCode}</span>
+              <span className="text-[9px] text-gray-400">{sections.length} dossiers · {sections.reduce((s, c) => s + c.documents.length, 0)} documents</span>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {(DATA_ROOM_SECTIONS[botCode] || []).map(cat => {
+                const CatIcon = cat.icon;
+                const critiques = cat.documents.filter(d => d.critique).length;
+                const actifs = cat.documents.filter(d => d.statut === "actif").length;
+                return (
+                  <div key={cat.id}
+                    onClick={() => selectDeptFolder(botCode, cat.id)}
+                    className="rounded-xl border border-gray-200 shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
+                      <CatIcon className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+                      <span className="text-sm font-bold text-gray-900 flex-1 truncate">{cat.label}</span>
+                      <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600">{cat.documents.length}</span>
+                    </div>
+                    <div className="px-4 py-3 space-y-1.5">
+                      <p className="text-[9px] text-gray-500">Volume estimé : {cat.volume}</p>
+                      <div className="flex items-center gap-3">
+                        <span className="text-[9px] text-emerald-600 font-medium">{actifs} actifs</span>
+                        {critiques > 0 && <span className="text-[9px] text-red-500 font-medium">{critiques} critiques</span>}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         ) : activeFolder === "_templates" ? (
           <DataRoomTemplatesList botCode={botCode} viewMode={viewMode} />
-        ) : activeFolder === "chantiers" ? (
-          /* DR-07: Vue Dossier Chantier REAI — 5 sections accordion */
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 mb-3">
-              <FolderOpen className="h-4 w-4 text-amber-600" />
-              <span className="text-xs font-bold text-gray-800">Dossiers Chantiers — Nomenclature REAI</span>
-            </div>
-            <p className="text-[9px] text-gray-500 mb-3">Structure standardisée pour chaque chantier d'intégration de robotique et automatisation industrielle.</p>
-            {REAI_FOLDERS.map(folder => {
-              const FIcon = folder.icon;
-              return (
-                <div key={folder.id} className="border border-gray-200 rounded-lg overflow-hidden">
-                  <div className="flex items-center gap-2 px-3 py-2 bg-gray-50">
-                    <span className="text-[9px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">{folder.num}</span>
-                    <FIcon className="h-3.5 w-3.5 text-gray-500" />
-                    <span className="text-[9px] font-bold text-gray-700 flex-1">{folder.label}</span>
-                  </div>
-                  <div className="px-3 py-2">
-                    <p className="text-[9px] text-gray-500">{folder.desc}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
         ) : TRANSVERSAL_SECTIONS.some(ts => ts.id === activeFolder) ? (
-          /* Transversal sections placeholder */
+          /* Dossiers sections */
           <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Database className="h-4 w-4 text-blue-600" />
-              <span className="text-xs font-bold text-gray-800">{TRANSVERSAL_SECTIONS.find(ts => ts.id === activeFolder)?.label}</span>
-            </div>
-            <p className="text-[9px] text-gray-500">Section transversale — regroupe les dossiers de tous les départements liés à cette catégorie.</p>
+            <p className="text-[10px] text-gray-500">Regroupe les dossiers de tous les départements liés à cette catégorie.</p>
             <div className="border border-dashed border-gray-300 rounded-lg p-6 text-center">
-              <p className="text-[9px] text-gray-400">Contenu à venir — cette section agrégera les documents transversaux.</p>
+              <p className="text-[10px] text-gray-400">Contenu à venir — cette section agrégera les documents transversaux.</p>
             </div>
           </div>
         ) : isFolderView ? (
@@ -5422,12 +5684,12 @@ const STORE_COLLECTIONS_V2: { id: string; label: string; description: string; ic
   { id: "croissance", label: "Accelerateurs de Croissance", description: "Boostez vos ventes, marketing et expansion avec des workflows automatises", icon: Rocket, gradient: "from-orange-500 to-red-500", playbookIds: ["pb-010", "pb-012", "pb-038", "pb-037", "pb-045", "pb-028"] },
   { id: "nouveau-ceo", label: "Kit Nouveau CEO", description: "Les 10 premiers playbooks qu'un nouveau dirigeant devrait activer", icon: Crown, gradient: "from-purple-500 to-pink-500", playbookIds: ["pb-001", "pb-028", "pb-100", "pb-071", "pb-050", "pb-091", "pb-003", "pb-008", "pb-025", "pb-030"] },
   { id: "diagnostic", label: "Diagnostic Complet", description: "Passez votre entreprise au scanner — finance, tech, RH, securite, operations", icon: Search, gradient: "from-cyan-500 to-blue-500", playbookIds: ["pb-028", "pb-100", "pb-047", "pb-050", "pb-071", "pb-037"] },
-  { id: "crise", label: "Kit Urgence & Crise", description: "Playbooks d'urgence pour les situations critiques — cash flow, incident, rappel produit", icon: AlertTriangle, gradient: "from-red-500 to-rose-500", playbookIds: ["pb-028", "pb-100", "pb-085", "pb-104", "pb-090"] },
+  { id: "crise", label: "Kit Urgence & Crise", description: "Playbooks d'urgence pour les situations critiques — cash flow, incident, rappel produit", icon: ShieldAlert, gradient: "from-red-500 to-rose-500", playbookIds: ["pb-028", "pb-100", "pb-085", "pb-104", "pb-090"] },
   { id: "operations", label: "Automatisation Operations", description: "Production, inventaire, qualite, maintenance — automatisez le plancher", icon: Settings, gradient: "from-gray-500 to-slate-500", playbookIds: ["pb-050", "pb-058", "pb-060", "pb-062", "pb-064"] },
   { id: "scale-up", label: "Scale-Up Pack", description: "Pour les entreprises T3-T5 (50+ employes) pretes a passer au niveau superieur", icon: TrendingUp, gradient: "from-violet-500 to-purple-500", playbookIds: ["pb-010", "pb-012", "pb-037", "pb-045", "pb-003"] },
-  { id: "manufacturier", label: "Kit Manufacturier", description: "Specifiquement concu pour les PME manufacturieres quebecoises", icon: Factory, gradient: "from-amber-500 to-yellow-500", playbookIds: ["pb-050", "pb-058", "pb-060", "pb-062", "pb-090", "pb-075"] },
+  { id: "manufacturier", label: "Kit Manufacturier", description: "Specifiquement concu pour les PME manufacturieres quebecoises", icon: HardHat, gradient: "from-amber-500 to-yellow-500", playbookIds: ["pb-050", "pb-058", "pb-060", "pb-062", "pb-090", "pb-075"] },
   { id: "intelligence", label: "Intelligence Concurrentielle", description: "SWOT, veille concurrentielle, positionnement, analyse de marche", icon: Eye, gradient: "from-indigo-500 to-blue-500", playbookIds: ["pb-047", "pb-045", "pb-037", "pb-010"] },
-  { id: "rh-complet", label: "Kit RH Complet", description: "Recrutement, onboarding, evaluation de performance, plan de formation", icon: Users, gradient: "from-pink-500 to-rose-500", playbookIds: ["pb-071", "pb-074", "pb-077", "pb-082"] },
+  { id: "rh-complet", label: "Kit RH Complet", description: "Recrutement, onboarding, evaluation de performance, plan de formation", icon: Heart, gradient: "from-pink-500 to-rose-500", playbookIds: ["pb-071", "pb-074", "pb-077", "pb-082"] },
   { id: "planification", label: "Planification Strategique Annuelle", description: "Budget, OKR, plan d'action annuel, revue de performance — tout le cycle", icon: Calendar, gradient: "from-teal-500 to-emerald-500", playbookIds: ["pb-001", "pb-003", "pb-008", "pb-010", "pb-028"] },
 ];
 
@@ -5492,22 +5754,24 @@ const PLAYBOOK_LIVRABLES: Record<string, { nom: string; type: string; icon: Reac
   ],
   "pb-100": [
     { nom: "Rapport d'audit securite", type: "PDF", icon: Shield },
-    { nom: "Matrice de risques", type: "Excel", icon: AlertTriangle },
+    { nom: "Matrice de risques", type: "Excel", icon: ClipboardCheck },
     { nom: "Plan de correction (12 actions)", type: "PDF", icon: Wrench },
   ],
 };
 
 // ── Dept icons mapping for category grid ──
-const DEPT_ICONS: Record<string, React.ElementType> = {
-  CEOB: Building2, CTOB: Cpu, CFOB: DollarSign, CMOB: Palette,
-  CSOB: Compass, COOB: Settings, CPOB: Factory, CHROB: Users,
-  CINOB: Sparkles, CROB: TrendingUp, CLOB: Shield, CISOB: Lock,
-  ORBIT9: Atom,
+// ── ICÔNES OFFICIELLES DÉPARTEMENTS (source unique — catalogue Section B) ──
+export const DEPT_DASH_ICON: Record<string, React.ElementType> = {
+  CEOB: Crown, CFOB: DollarSign, CTOB: Cpu, CPOB: Factory, COOB: Settings,
+  CROB: TrendingUp, CMOB: Megaphone, CSOB: Compass, CHROB: Users,
+  CISOB: ShieldCheck, CLOB: Scale, CINOB: Lightbulb,
 };
+// Alias pour compatibilité interne (Playbooks, ConferenceAI, etc.)
+const DEPT_ICONS = DEPT_DASH_ICON;
 
 // ── PLAYBOOK_TYPES — 12 types de livrables ──
 const PLAYBOOK_TYPES: Record<string, { label: string; icon: React.ElementType; description: string; bg: string; text: string; gradient: string }> = {
-  chantier:    { label: "Chantier",    icon: Layers,         description: "Transformations completes (2-12 mois)",    bg: "bg-blue-50",    text: "text-blue-700",    gradient: "from-blue-600 to-blue-500" },
+  chantier:    { label: "Chantier",    icon: Flame,          description: "Transformations completes (2-12 mois)",    bg: "bg-blue-50",    text: "text-blue-700",    gradient: "from-blue-600 to-blue-500" },
   projet:      { label: "Projet",      icon: Briefcase,      description: "Livrables structures (1-3 mois)",          bg: "bg-indigo-50",  text: "text-indigo-700",  gradient: "from-indigo-600 to-indigo-500" },
   mission:     { label: "Mission",     icon: Target,         description: "Actions recurrentes (1-4 sem)",             bg: "bg-amber-50",   text: "text-amber-700",   gradient: "from-amber-600 to-amber-500" },
   tache:       { label: "Tache",       icon: CheckSquare,    description: "Checklists/actions atomiques",              bg: "bg-emerald-50", text: "text-emerald-700", gradient: "from-emerald-600 to-emerald-500" },
@@ -5517,7 +5781,7 @@ const PLAYBOOK_TYPES: Record<string, { label: string; icon: React.ElementType; d
   diagnostic:  { label: "Diagnostic",  icon: Stethoscope,    description: "Evaluations/scoring",                      bg: "bg-red-50",     text: "text-red-700",     gradient: "from-red-600 to-red-500" },
   formation:   { label: "Formation",   icon: GraduationCap,  description: "Parcours apprentissage/coaching",           bg: "bg-teal-50",    text: "text-teal-700",    gradient: "from-teal-600 to-teal-500" },
   blueprint:   { label: "Blueprint",   icon: MapPin,         description: "Documents strategiques",                    bg: "bg-purple-50",  text: "text-purple-700",  gradient: "from-purple-600 to-purple-500" },
-  cognitif:    { label: "Cognitif",    icon: Brain,          description: "Cerveaux experts uploades",                 bg: "bg-orange-50",  text: "text-orange-700",  gradient: "from-orange-600 to-orange-500" },
+  cognitif:    { label: "Cognitif",    icon: Cog,            description: "Cerveaux experts uploades",                 bg: "bg-orange-50",  text: "text-orange-700",  gradient: "from-orange-600 to-orange-500" },
   reseau:      { label: "Reseau",      icon: Network,        description: "Collaborations Orbit9",                    bg: "bg-cyan-50",    text: "text-cyan-700",    gradient: "from-cyan-600 to-cyan-500" },
 };
 
@@ -5528,18 +5792,45 @@ const PLAYBOOK_LONG_DESC: Record<string, string> = {
   "pb-100": "Sebastien et Tim auditent vos actifs informatiques, configurations de securite et politiques d'acces. Le rapport inclut une matrice de risques et un plan de correction en 12 actions concretes.",
 };
 
+// Precomputed thresholds for card badges
+const _sortedByDownloads = [...PLAYBOOK_STORE_DATA].sort((a, b) => b.downloads - a.downloads);
+const _bestsellersTop20 = new Set(_sortedByDownloads.slice(0, 20).map(p => p.id));
+const _sortedByRating = [...PLAYBOOK_STORE_DATA].sort((a, b) => b.rating - a.rating);
+const _trendingTop10 = new Set(_sortedByRating.slice(0, 10).map(p => p.id));
+const _newestIds = new Set(PLAYBOOK_STORE_DATA.slice(-Math.ceil(PLAYBOOK_STORE_DATA.length * 0.1)).map(p => p.id));
+
 function PlaybookCardV2({ pb, installed, recommended, badge, onOpenDetail }: { pb: typeof PLAYBOOK_STORE_DATA[0]; installed?: boolean; recommended?: boolean; badge?: "nouveau" | "populaire" | "trending"; onOpenDetail?: (pb: typeof PLAYBOOK_STORE_DATA[0]) => void }) {
   const niveauStyle = NIVEAU_BADGE[pb.niveau] || NIVEAU_BADGE.Standard;
   const DeptIcon = DEPT_ICONS[pb.departement] || Building2;
   const isInstalled = installed || INSTALLED_PLAYBOOKS.includes(pb.id);
+
+  // Compute auto-badges from data
+  const isBestseller = _bestsellersTop20.has(pb.id);
+  const isTrending = _trendingTop10.has(pb.id);
+  const isNew = _newestIds.has(pb.id);
+
   const badgeEl = badge === "nouveau" ? <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 shrink-0">Nouveau</span>
     : badge === "populaire" ? <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 shrink-0">Populaire</span>
     : badge === "trending" ? <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-orange-50 text-orange-700 shrink-0">Trending</span>
     : recommended ? <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-green-50 text-green-700 shrink-0">IA Recommande</span>
     : isInstalled ? <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 shrink-0 flex items-center gap-0.5"><CheckCircle2 className="h-3.5 w-3.5" />Installe</span>
     : null;
+
+  // 5-star visual rating
+  const fullStars = Math.floor(pb.rating);
+  const hasHalf = pb.rating - fullStars >= 0.5;
+  const emptyStars = 5 - fullStars - (hasHalf ? 1 : 0);
+
   return (
-    <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all cursor-pointer" onClick={() => onOpenDetail?.(pb)}>
+    <div className="relative rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all cursor-pointer" onClick={() => onOpenDetail?.(pb)}>
+      {/* Absolute corner badges */}
+      {!badge && (isBestseller || isTrending || isNew) && (
+        <div className="absolute top-0 right-0 z-10 flex flex-col gap-0.5 p-1">
+          {isBestseller && <span className="text-[7px] font-bold px-1.5 py-0.5 rounded-bl rounded-tr-xl bg-amber-100 text-amber-700 border border-amber-200 flex items-center gap-0.5"><Trophy className="h-3.5 w-3.5" />Best</span>}
+          {isTrending && !isBestseller && <span className="text-[7px] font-bold px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 flex items-center gap-0.5"><Flame className="h-3.5 w-3.5" />Trend</span>}
+          {isNew && !isBestseller && !isTrending && <span className="text-[7px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 flex items-center gap-0.5"><Sparkles className="h-3.5 w-3.5" />New</span>}
+        </div>
+      )}
       <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
         <DeptIcon className="h-4 w-4 text-gray-900 stroke-[2.5]" />
         <span className="text-sm font-bold text-gray-900 flex-1 truncate">{pb.nom}</span>
@@ -5554,10 +5845,11 @@ function PlaybookCardV2({ pb, installed, recommended, badge, onOpenDetail }: { p
             ))}
             {pb.bots.length > 3 && <span className="text-[10px] text-gray-400">+{pb.bots.length - 3}</span>}
           </div>
-          <div className="flex items-center gap-1">
-            <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
-            <span className="text-xs font-bold text-gray-800">{pb.rating}</span>
-            <span className="text-[10px] text-gray-400">({pb.downloads})</span>
+          <div className="flex items-center gap-0.5">
+            {Array.from({ length: fullStars }).map((_, i) => <Star key={`f${i}`} className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />)}
+            {hasHalf && <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-200" />}
+            {Array.from({ length: emptyStars }).map((_, i) => <Star key={`e${i}`} className="h-3.5 w-3.5 text-gray-200" />)}
+            <span className="text-[10px] font-bold text-gray-700 ml-1">{pb.rating}</span>
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -5888,264 +6180,219 @@ type PlaybookStoreView = "decouvrir" | "categorie" | "types" | "conferenceai" | 
 
 // ── Vue DECOUVRIR (homepage du Store) ──
 function PlaybookDecouvrir({ botCode, onOpenDetail, onNavigate }: { botCode: string; onOpenDetail: (pb: typeof PLAYBOOK_STORE_DATA[0]) => void; onNavigate: (view: PlaybookStoreView, extra?: { dept?: string; collection?: string }) => void }) {
-  const featuredItems = FEATURED_PLAYBOOKS.map(f => ({ ...f, pb: PLAYBOOK_STORE_DATA.find(p => p.id === f.playbookId) })).filter(f => f.pb);
-  const recommended = RECOMMENDED_PLAYBOOKS.map(r => ({ ...r, pb: PLAYBOOK_STORE_DATA.find(p => p.id === r.playbookId) })).filter(r => r.pb && (botCode === "CEOB" || r.pb!.departement === botCode));
-  const popular = [...PLAYBOOK_STORE_DATA].sort((a, b) => b.downloads - a.downloads).slice(0, 6);
-  const recent = [...PLAYBOOK_STORE_DATA].slice(-6).reverse();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterDept, setFilterDept] = useState<string>("all");
+  const [filterType, setFilterType] = useState<string>("all");
+  const [filterNiveau, setFilterNiveau] = useState<string>("all");
+  const [filterPrix, setFilterPrix] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("populaires");
+  const [viewMode, setViewMode] = useState<"cards" | "list" | "table">("cards");
+
+  const hasFilters = searchTerm.trim() || filterDept !== "all" || filterType !== "all" || filterNiveau !== "all" || filterPrix !== "all";
+
+  // Base pool: CEOB = tout, autre = priorise son département
+  const basePool = botCode === "CEOB" ? PLAYBOOK_STORE_DATA : [...PLAYBOOK_STORE_DATA.filter(p => p.departement === botCode), ...PLAYBOOK_STORE_DATA.filter(p => p.departement !== botCode)];
+
+  // Filtered pool
+  let filteredPool = basePool.filter(pb => {
+    if (searchTerm.trim() && !pb.nom.toLowerCase().includes(searchTerm.toLowerCase()) && !pb.categorie.toLowerCase().includes(searchTerm.toLowerCase()) && !pb.description.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+    if (filterDept !== "all" && pb.departement !== filterDept) return false;
+    if (filterType !== "all" && pb.type !== filterType) return false;
+    if (filterNiveau !== "all" && pb.niveau !== filterNiveau) return false;
+    if (filterPrix === "gratuit" && pb.prix !== "Gratuit") return false;
+    if (filterPrix === "premium" && pb.prix === "Gratuit") return false;
+    return true;
+  });
+
+  if (sortBy === "populaires") filteredPool.sort((a, b) => b.downloads - a.downloads);
+  else if (sortBy === "rating") filteredPool.sort((a, b) => b.rating - a.rating);
+  else if (sortBy === "alpha") filteredPool.sort((a, b) => a.nom.localeCompare(b.nom));
+
+  // Curated sections (from unfiltered base when no filters active)
+  const bestsellers = [...basePool].sort((a, b) => b.downloads - a.downloads).slice(0, 8);
+  const recent = botCode === "CEOB" ? [...PLAYBOOK_STORE_DATA].slice(-8).reverse() : PLAYBOOK_STORE_DATA.filter(p => p.departement === botCode).slice(-8).reverse();
+  const forYourDept = botCode !== "CEOB" ? basePool.filter(p => p.departement === botCode).slice(0, 8) : [];
+  const gratuits = [...basePool].filter(p => p.prix === "Gratuit").sort((a, b) => b.downloads - a.downloads).slice(0, 8);
+
+  // Section row helper — grid 2 cols, 4 cards max, NO horizontal scroll
+  const SectionRow = ({ title, icon: Icon, iconColor, items, badge, seeAllAction }: { title: string; icon: React.ElementType; iconColor: string; items: typeof PLAYBOOK_STORE_DATA; badge?: "nouveau" | "populaire" | "trending"; seeAllAction?: () => void }) => {
+    if (items.length === 0) return null;
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5"><Icon className={cn("h-3.5 w-3.5", iconColor)} /> {title}</h3>
+          {seeAllAction && <button onClick={seeAllAction} className="text-[9px] text-blue-500 hover:text-blue-700 cursor-pointer font-bold">Voir tout →</button>}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {items.slice(0, 4).map(pb => <PlaybookCardV2 key={pb.id} pb={pb} badge={badge} onOpenDetail={onOpenDetail} />)}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-4">
-      {/* Section 2 — Recommandes pour vous */}
-      {recommended.length > 0 && (
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5"><Target className="h-3.5 w-3.5 text-green-500" /> Recommandes pour vous</h3>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            {recommended.slice(0, 6).map((r) => {
-              if (!r.pb) return null;
-              const DeptIcon = DEPT_ICONS[r.pb.departement] || Target;
-              return (
-                <div key={r.playbookId} className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all cursor-pointer" onClick={() => onOpenDetail(r.pb!)}>
-                  <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
-                    <DeptIcon className="h-4 w-4 text-gray-900 stroke-[2.5]" />
-                    <span className="text-sm font-bold text-gray-900 flex-1 truncate">{r.pb.nom}</span>
-                    <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-green-50 text-green-700 shrink-0">IA Recommande</span>
-                  </div>
-                  <div className="px-4 py-3 space-y-2.5">
-                    <p className="text-xs text-gray-600 leading-relaxed line-clamp-2">{r.pb.description}</p>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        {r.pb.bots.slice(0, 3).map((bot, i) => (
-                          <span key={i} className="text-[10px] bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full font-medium">{bot}</span>
-                        ))}
-                        {r.pb.bots.length > 3 && <span className="text-[10px] text-gray-400">+{r.pb.bots.length - 3}</span>}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
-                        <span className="text-xs font-bold text-gray-700">{r.pb.rating}</span>
-                        <span className="text-[10px] text-gray-400">({r.pb.downloads})</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded", r.pb.prix === "Gratuit" ? "bg-emerald-50 text-emerald-700" : "bg-purple-50 text-purple-700")}>{r.pb.prix === "Gratuit" ? "Inclus" : r.pb.prix}</span>
-                      <span className="text-[10px] text-gray-500">{r.pb.duree}</span>
-                      <span className="text-[10px] text-gray-500">{r.pb.etapes} etapes</span>
-                    </div>
-                    {r.raison && <p className="text-[11px] text-blue-600 italic leading-snug">{r.raison}</p>}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+      {/* ═══ TOOLBAR — Standard (search + selects + view toggle) ═══ */}
+      <div className={SF.toolbarWrap}>
+        <div className={SF.searchWrap}>
+          <Search className={SF.searchIcon} />
+          <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Rechercher un playbook..." className={SF.searchInput} />
         </div>
+        {botCode === "CEOB" && (
+          <select value={filterDept} onChange={e => setFilterDept(e.target.value)} className={SF.select}>
+            <option value="all">Departement</option>
+            {Object.entries(DEPT_SHORT_LABEL).filter(([code]) => code !== "ORBIT9").map(([code, label]) => (
+              <option key={code} value={code}>{label}</option>
+            ))}
+          </select>
+        )}
+        <select value={filterType} onChange={e => setFilterType(e.target.value)} className={SF.select}>
+          <option value="all">Type</option>
+          {Object.entries(PLAYBOOK_TYPES).map(([key, t]) => <option key={key} value={key}>{t.label}</option>)}
+        </select>
+        <select value={filterNiveau} onChange={e => setFilterNiveau(e.target.value)} className={SF.select}>
+          <option value="all">Difficulte</option>
+          <option value="Quick Win">Quick Win</option>
+          <option value="Standard">Standard</option>
+          <option value="Avance">Avance</option>
+          <option value="Enterprise">Enterprise</option>
+        </select>
+        <select value={filterPrix} onChange={e => setFilterPrix(e.target.value)} className={SF.select}>
+          <option value="all">Prix</option>
+          <option value="gratuit">Inclus</option>
+          <option value="premium">Premium</option>
+        </select>
+        <select value={sortBy} onChange={e => setSortBy(e.target.value)} className={SF.select}>
+          <option value="populaires">Populaires</option>
+          <option value="rating">Mieux notes</option>
+          <option value="alpha">Alphabetique</option>
+        </select>
+        <PlaybookViewToggle viewMode={viewMode} setViewMode={setViewMode} />
+        <span className={SF.itemCount}>{hasFilters ? `${filteredPool.length} trouves` : `${basePool.length} playbooks`}</span>
+      </div>
+
+      {/* ═══ FILTERED RESULTS (when filters active) ═══ */}
+      {hasFilters ? (
+        filteredPool.length > 0 ? (
+          <PlaybookMultiView playbooks={filteredPool} viewMode={viewMode} onOpenDetail={onOpenDetail} />
+        ) : (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <Search className="h-8 w-8 text-gray-200 mb-3" />
+            <p className="text-xs text-gray-400 mb-2">Aucun playbook ne correspond a vos criteres</p>
+            <button onClick={() => { setSearchTerm(""); setFilterDept("all"); setFilterType("all"); setFilterNiveau("all"); setFilterPrix("all"); }} className="text-[9px] text-blue-600 font-bold cursor-pointer">Reinitialiser les filtres</button>
+          </div>
+        )
+      ) : (
+        <>
+          {/* ═══ CURATED SECTIONS (no filters) ═══ */}
+
+          {/* Section 1 — Bestsellers */}
+          <SectionRow title="Bestsellers" icon={Trophy} iconColor="text-amber-500" items={bestsellers} badge="populaire" />
+
+          {/* Section 2 — Nouveautes */}
+          <SectionRow title={botCode !== "CEOB" ? `Nouveautes ${DEPT_SHORT_LABEL[botCode] || botCode}` : "Nouveautes"} icon={Sparkles} iconColor="text-blue-500" items={recent} badge="nouveau" />
+
+          {/* Section 3 — Pour votre departement (non-CEOB only) */}
+          {botCode !== "CEOB" && forYourDept.length > 0 && (
+            <SectionRow title={`Pour ${DEPT_SHORT_LABEL[botCode] || "votre departement"}`} icon={Target} iconColor="text-green-500" items={forYourDept} />
+          )}
+
+          {/* Section 4 — Gratuits populaires */}
+          <SectionRow title="Gratuits populaires" icon={Award} iconColor="text-emerald-500" items={gratuits} />
+
+          {/* Section 5 — Collections vedettes */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5"><Bookmark className="h-3.5 w-3.5 text-purple-500" /> Collections vedettes</h3>
+              <button onClick={() => onNavigate("collections")} className="text-[9px] text-blue-500 hover:text-blue-700 cursor-pointer font-bold">Voir tout →</button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {STORE_COLLECTIONS_V2.slice(0, 4).map(col => {
+                const ColIcon = col.icon;
+                return (
+                  <Card key={col.id} className="p-0 gap-0 overflow-hidden rounded-xl cursor-pointer hover:shadow-md transition-all" onClick={() => onNavigate("collections", { collection: col.id })}>
+                    <div className={cn("bg-gradient-to-r px-3 py-3", col.gradient)}>
+                      <ColIcon className="h-4 w-4 text-white mb-1" />
+                      <div className="text-[10px] font-bold text-white">{col.label}</div>
+                      <div className="text-[8px] text-white/70 mt-0.5 line-clamp-1">{col.description}</div>
+                      <div className="text-[8px] text-white/60 mt-1">{col.playbookIds.length} playbooks</div>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Section 6 — Explorer par departement (CEOB only) */}
+          {botCode === "CEOB" && (
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5"><LayoutGrid className="h-3.5 w-3.5 text-gray-500" /> Explorer par departement</h3>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                {Object.entries(DEPT_LABELS).filter(([code]) => code !== "ORBIT9").map(([code, label]) => {
+                  const DIcon = DEPT_ICONS[code] || Building2;
+                  const deptPlaybooks = PLAYBOOK_STORE_DATA.filter(p => p.departement === code);
+                  const count = deptPlaybooks.length;
+                  const avgRating = count > 0 ? (deptPlaybooks.reduce((s, p) => s + p.rating, 0) / count).toFixed(1) : "0";
+                  const avatarSrc = BOT_AVATAR[code];
+                  const botName = BOT_NAME[code] || code;
+                  return (
+                    <div key={code} className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all cursor-pointer" onClick={() => onNavigate("categorie", { dept: code })}>
+                      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+                        {avatarSrc ? (
+                          <img src={avatarSrc} alt={botName} className="h-6 w-6 rounded-full ring-1 ring-white/80 object-cover shrink-0" />
+                        ) : (
+                          <DIcon className="h-4 w-4 text-gray-900 stroke-[2.5] shrink-0" />
+                        )}
+                        <span className="text-xs font-bold text-gray-900 flex-1 truncate">{label}</span>
+                      </div>
+                      <div className="px-3 py-2 flex items-center gap-3 text-[10px] text-gray-500">
+                        <span className="font-bold text-gray-700">{count}</span>
+                        <span className="flex items-center gap-0.5"><Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />{avgRating}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Section 7 — Explorer par type */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5"><Layers className="h-3.5 w-3.5 text-indigo-500" /> {botCode !== "CEOB" ? `Types ${DEPT_SHORT_LABEL[botCode] || botCode}` : "Explorer par type"}</h3>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {Object.entries(PLAYBOOK_TYPES).map(([key, t]) => {
+                const TIcon = t.icon;
+                const typePlaybooks = botCode !== "CEOB"
+                  ? PLAYBOOK_STORE_DATA.filter(p => p.type === key && p.departement === botCode)
+                  : PLAYBOOK_STORE_DATA.filter(p => p.type === key);
+                const count = typePlaybooks.length;
+                if (count === 0) return null;
+                return (
+                  <div key={key} className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all cursor-pointer" onClick={() => onNavigate("types", { dept: key })}>
+                    <div className={cn("flex items-center gap-2 px-3 py-2 border-b border-gray-100 bg-gradient-to-r text-white", t.gradient)}>
+                      <TIcon className="h-3.5 w-3.5 text-white shrink-0" />
+                      <span className="text-[10px] font-bold text-white">{t.label}</span>
+                    </div>
+                    <div className="px-3 py-2 text-[10px] text-gray-500">
+                      <span className="font-bold text-gray-700">{count}</span> playbooks
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </>
       )}
 
-      {/* Section 3 — Populaires cette semaine */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5"><TrendingUp className="h-3.5 w-3.5 text-amber-500" /> Populaires cette semaine</h3>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          {popular.map(pb => {
-            const DeptIcon = DEPT_ICONS[pb.departement] || Target;
-            return (
-              <div key={pb.id} className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all cursor-pointer" onClick={() => onOpenDetail(pb)}>
-                <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
-                  <DeptIcon className="h-4 w-4 text-gray-900 stroke-[2.5]" />
-                  <span className="text-sm font-bold text-gray-900 flex-1 truncate">{pb.nom}</span>
-                  {pb.downloads > 500 && <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 shrink-0">Populaire</span>}
-                </div>
-                <div className="px-4 py-3 space-y-2.5">
-                  <p className="text-xs text-gray-600 leading-relaxed line-clamp-2">{pb.description}</p>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      {pb.bots.slice(0, 3).map((bot, i) => (
-                        <span key={i} className="text-[10px] bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full font-medium">{bot}</span>
-                      ))}
-                      {pb.bots.length > 3 && <span className="text-[10px] text-gray-400">+{pb.bots.length - 3}</span>}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
-                      <span className="text-xs font-bold text-gray-700">{pb.rating}</span>
-                      <span className="text-[10px] text-gray-400">({pb.downloads})</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded", pb.prix === "Gratuit" ? "bg-emerald-50 text-emerald-700" : "bg-purple-50 text-purple-700")}>{pb.prix === "Gratuit" ? "Inclus" : pb.prix}</span>
-                    <span className="text-[10px] text-gray-500">{pb.duree}</span>
-                    <span className="text-[10px] text-gray-500">{pb.etapes} etapes</span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Section 4 — Nouveautes */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5"><Sparkles className="h-3.5 w-3.5 text-blue-500" /> Recemment ajoutes</h3>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          {recent.map(pb => {
-            const DeptIcon = DEPT_ICONS[pb.departement] || Target;
-            return (
-              <div key={pb.id} className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all cursor-pointer" onClick={() => onOpenDetail(pb)}>
-                <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
-                  <DeptIcon className="h-4 w-4 text-gray-900 stroke-[2.5]" />
-                  <span className="text-sm font-bold text-gray-900 flex-1 truncate">{pb.nom}</span>
-                  <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 shrink-0">Nouveau</span>
-                </div>
-                <div className="px-4 py-3 space-y-2.5">
-                  <p className="text-xs text-gray-600 leading-relaxed line-clamp-2">{pb.description}</p>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      {pb.bots.slice(0, 3).map((bot, i) => (
-                        <span key={i} className="text-[10px] bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full font-medium">{bot}</span>
-                      ))}
-                      {pb.bots.length > 3 && <span className="text-[10px] text-gray-400">+{pb.bots.length - 3}</span>}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
-                      <span className="text-xs font-bold text-gray-700">{pb.rating}</span>
-                      <span className="text-[10px] text-gray-400">({pb.downloads})</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded", pb.prix === "Gratuit" ? "bg-emerald-50 text-emerald-700" : "bg-purple-50 text-purple-700")}>{pb.prix === "Gratuit" ? "Inclus" : pb.prix}</span>
-                    <span className="text-[10px] text-gray-500">{pb.duree}</span>
-                    <span className="text-[10px] text-gray-500">{pb.etapes} etapes</span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Section 5 — Navigation par departement */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5"><LayoutGrid className="h-3.5 w-3.5 text-gray-500" /> Explorer par departement</h3>
-        </div>
-        <div className="grid grid-cols-3 gap-3">
-          {Object.entries(DEPT_LABELS).filter(([code]) => code !== "ORBIT9").map(([code, label]) => {
-            const DIcon = DEPT_ICONS[code] || Building2;
-            const deptPlaybooks = PLAYBOOK_STORE_DATA.filter(p => p.departement === code);
-            const count = deptPlaybooks.length;
-            const topCategories = [...new Set(deptPlaybooks.map(p => p.categorie))].slice(0, 3);
-            const gratuitCount = deptPlaybooks.filter(p => p.prix === "Gratuit").length;
-            const niveaux = [...new Set(deptPlaybooks.map(p => p.niveau))];
-            const avgRating = count > 0 ? (deptPlaybooks.reduce((s, p) => s + p.rating, 0) / count).toFixed(1) : "0";
-            const avatarSrc = BOT_AVATAR[code];
-            const botName = BOT_NAME[code] || code;
-            return (
-              <div key={code} className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all cursor-pointer" onClick={() => onNavigate("categorie", { dept: code })}>
-                <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
-                  {avatarSrc ? (
-                    <img src={avatarSrc} alt={botName} className="h-7 w-7 rounded-full ring-2 ring-white/80 object-cover shrink-0" />
-                  ) : (
-                    <DIcon className="h-5 w-5 text-gray-900 stroke-[2.5] shrink-0" />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <span className="text-sm font-bold text-gray-900">{label}</span>
-                  </div>
-                </div>
-                <div className="px-4 py-3 space-y-2.5">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700">{count} playbooks</span>
-                    <span className="text-[10px] text-gray-500">pour <span className="font-medium text-gray-700">{botName}</span></span>
-                  </div>
-                  <div className="flex items-center gap-3 text-[10px] text-gray-500">
-                    <span className="flex items-center gap-1"><Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" /> <span className="text-xs font-bold text-gray-800">{avgRating}</span></span>
-                    <span>{gratuitCount} gratuits</span>
-                    <span>{niveaux.length} niveaux</span>
-                  </div>
-                  {topCategories.length > 0 && (
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      {topCategories.map(cat => (
-                        <span key={cat} className="text-[9px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">{cat}</span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Section 5b — Explorer par type */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5"><Layers className="h-3.5 w-3.5 text-indigo-500" /> Explorer par type</h3>
-        </div>
-        <div className="grid grid-cols-3 gap-3">
-          {Object.entries(PLAYBOOK_TYPES).map(([key, t]) => {
-            const TIcon = t.icon;
-            const typePlaybooks = PLAYBOOK_STORE_DATA.filter(p => p.type === key);
-            const count = typePlaybooks.length;
-            if (count === 0) return null;
-            const avgRating = (typePlaybooks.reduce((s, p) => s + p.rating, 0) / count).toFixed(1);
-            const deptTags = [...new Set(typePlaybooks.map(p => DEPT_LABELS[p.departement] || p.departement))].slice(0, 3);
-            return (
-              <div key={key} className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all cursor-pointer" onClick={() => onNavigate("types", { dept: key })}>
-                <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
-                  <TIcon className="h-4 w-4 text-gray-900 stroke-[2.5] shrink-0" />
-                  <span className="text-sm font-bold text-gray-900">{t.label}</span>
-                </div>
-                <div className="px-4 py-3 space-y-2.5">
-                  <p className="text-[10px] text-gray-500 leading-snug">{t.description}</p>
-                  <div className="flex items-center gap-1.5">
-                    <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded", t.bg, t.text)}>{count} playbooks</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-[10px] text-gray-500">
-                    <span className="flex items-center gap-1"><Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" /> <span className="text-xs font-bold text-gray-800">{avgRating}</span></span>
-                  </div>
-                  {deptTags.length > 0 && (
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      {deptTags.map(d => (
-                        <span key={d} className="text-[9px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">{d}</span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Section 6 — Collections */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5"><Bookmark className="h-3.5 w-3.5 text-purple-500" /> Collections</h3>
-          <button onClick={() => onNavigate("collections")} className="text-[9px] text-blue-500 hover:text-blue-700 cursor-pointer font-bold">Voir tout</button>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          {STORE_COLLECTIONS_V2.slice(0, 4).map(col => {
-            const ColIcon = col.icon;
-            return (
-              <Card key={col.id} className="p-0 gap-0 overflow-hidden rounded-xl cursor-pointer hover:shadow-md transition-all" onClick={() => onNavigate("collections", { collection: col.id })}>
-                <div className={cn("bg-gradient-to-r px-3 py-3", col.gradient)}>
-                  <ColIcon className="h-4 w-4 text-white mb-1" />
-                  <div className="text-[10px] font-bold text-white">{col.label}</div>
-                  <div className="text-[8px] text-white/70 mt-0.5 line-clamp-1">{col.description}</div>
-                  <div className="text-[8px] text-white/60 mt-1">{col.playbookIds.length} playbooks</div>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Section 7 — Bandeau Marketplace */}
+      {/* Bandeau Marketplace */}
       <div className="bg-blue-50/50 border border-blue-100 rounded-lg px-3 py-2 flex items-center gap-2">
         <Info className="h-3.5 w-3.5 text-blue-500 shrink-0" />
-        <span className="text-[9px] text-blue-700">Playbook Store · {PLAYBOOK_STORE_DATA.length} playbooks disponibles · 85% createur / 15% plateforme</span>
-        <button onClick={() => onNavigate("builder")} className="text-[9px] text-blue-600 hover:text-blue-800 font-bold cursor-pointer ml-auto shrink-0">Publiez le votre</button>
+        <span className="text-[9px] text-blue-700">Playbook Store · {botCode !== "CEOB" ? `${PLAYBOOK_STORE_DATA.filter(p => p.departement === botCode).length} playbooks ${DEPT_SHORT_LABEL[botCode] || botCode}` : `${PLAYBOOK_STORE_DATA.length} playbooks disponibles`} · 85% createur / 15% plateforme</span>
+        <button onClick={() => onNavigate("builder")} className="text-[9px] text-blue-600 hover:text-blue-800 font-bold cursor-pointer ml-auto shrink-0">Publiez le votre →</button>
       </div>
     </div>
   );
@@ -6159,19 +6406,19 @@ const CONFERENCE_FAMILIES: Record<string, { label: string; icon: React.ElementTy
   VENT: { label: "Vente & Revenus", icon: Banknote, description: "Pitch decks, closing assiste, prospection, negociation", gradient: "from-emerald-600 to-emerald-500", bg: "bg-emerald-50", text: "text-emerald-700" },
   POD: { label: "Podcast & Audio", icon: Headphones, description: "Studio podcast, distribution, guest matching, SEO audio", gradient: "from-violet-600 to-violet-500", bg: "bg-violet-50", text: "text-violet-700" },
   CONT: { label: "Contenu & Redaction", icon: FileText, description: "Articles, copywriting, whitepapers, documentation", gradient: "from-blue-600 to-blue-500", bg: "bg-blue-50", text: "text-blue-700" },
-  PRE: { label: "Pre-Entrevue & RH", icon: Users, description: "Entrevues candidats, grilles evaluation, rapports", gradient: "from-pink-600 to-pink-500", bg: "bg-pink-50", text: "text-pink-700" },
+  PRE: { label: "Pre-Entrevue & RH", icon: User, description: "Entrevues candidats, grilles evaluation, rapports", gradient: "from-pink-600 to-pink-500", bg: "bg-pink-50", text: "text-pink-700" },
   RH: { label: "Ressources Humaines", icon: Heart, description: "Evaluations, plans individuels, entrevues de depart", gradient: "from-rose-600 to-rose-500", bg: "bg-rose-50", text: "text-rose-700" },
-  CREA: { label: "Creativite & Innovation", icon: Lightbulb, description: "Design Thinking, SCAMPER, brainstorming, Kaizen", gradient: "from-amber-600 to-amber-500", bg: "bg-amber-50", text: "text-amber-700" },
-  MED: { label: "Mediation", icon: Scale, description: "Mediation commerciale, syndicale, succession familiale", gradient: "from-teal-600 to-teal-500", bg: "bg-teal-50", text: "text-teal-700" },
-  CRISE: { label: "Gestion de Crise", icon: AlertTriangle, description: "Cybersecurite, restructuration, rappels produits", gradient: "from-red-600 to-red-500", bg: "bg-red-50", text: "text-red-700" },
+  CREA: { label: "Creativite & Innovation", icon: Sparkles, description: "Design Thinking, SCAMPER, brainstorming, Kaizen", gradient: "from-amber-600 to-amber-500", bg: "bg-amber-50", text: "text-amber-700" },
+  MED: { label: "Mediation", icon: Handshake, description: "Mediation commerciale, syndicale, succession familiale", gradient: "from-teal-600 to-teal-500", bg: "bg-teal-50", text: "text-teal-700" },
+  CRISE: { label: "Gestion de Crise", icon: ShieldAlert, description: "Cybersecurite, restructuration, rappels produits", gradient: "from-red-600 to-red-500", bg: "bg-red-50", text: "text-red-700" },
   EXP: { label: "Express (<15min)", icon: Zap, description: "Daily standups, triage urgent, reviews rapides", gradient: "from-orange-600 to-orange-500", bg: "bg-orange-50", text: "text-orange-700" },
   REC: { label: "Recurrents", icon: Repeat, description: "Bilans hebdo, digests financiers, revues strategiques", gradient: "from-cyan-600 to-cyan-500", bg: "bg-cyan-50", text: "text-cyan-700" },
   REU: { label: "Reunions Structurees", icon: Video, description: "Board meetings, comites techniques, retrospectives", gradient: "from-indigo-600 to-indigo-500", bg: "bg-indigo-50", text: "text-indigo-700" },
-  VERT: { label: "Verticaux Industrie", icon: Factory, description: "HACCP, CCQ, SOC 2, Loi 25, aerospatiale, cosmetiques", gradient: "from-gray-700 to-gray-600", bg: "bg-gray-100", text: "text-gray-700" },
+  VERT: { label: "Verticaux Industrie", icon: HardHat, description: "HACCP, CCQ, SOC 2, Loi 25, aerospatiale, cosmetiques", gradient: "from-gray-700 to-gray-600", bg: "bg-gray-100", text: "text-gray-700" },
   ORB: { label: "Orbit9 Cross-Entreprise", icon: Globe, description: "Matching, achats groupes, export, mentorat croise", gradient: "from-purple-600 to-purple-500", bg: "bg-purple-50", text: "text-purple-700" },
   FORM: { label: "Formation & Coaching", icon: GraduationCap, description: "Onboarding, certifications, bootcamps, simulations", gradient: "from-sky-600 to-sky-500", bg: "bg-sky-50", text: "text-sky-700" },
   SAIS: { label: "Saisonniers", icon: Calendar, description: "Fiscalite, REER, CNESST, fermetures CCQ, budgets", gradient: "from-lime-600 to-lime-500", bg: "bg-lime-50", text: "text-lime-700" },
-  PERS: { label: "Personnel & Destiny", icon: Compass, description: "Coaching couple, retraite, stress, deuil entrepreneurial", gradient: "from-fuchsia-600 to-fuchsia-500", bg: "bg-fuchsia-50", text: "text-fuchsia-700" },
+  PERS: { label: "Personnel & Destiny", icon: Route, description: "Coaching couple, retraite, stress, deuil entrepreneurial", gradient: "from-fuchsia-600 to-fuchsia-500", bg: "bg-fuchsia-50", text: "text-fuchsia-700" },
 };
 
 function getPlaybookFamily(pb: typeof PLAYBOOK_STORE_DATA[0]): string {
@@ -6247,38 +6494,10 @@ function ConferenceAIView({ onOpenDetail, onSelectFamily, selectedFamily }: {
             <option value="prix">Prix</option>
           </select>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          {sortedPlaybooks.map(pb => {
-            const DeptIcon = DEPT_ICONS[pb.departement] || Target;
-            const typeInfo = PLAYBOOK_TYPES[pb.type];
-            return (
-              <div key={pb.id} className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all cursor-pointer" onClick={() => onOpenDetail(pb)}>
-                <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
-                  <DeptIcon className="h-4 w-4 text-gray-900 stroke-[2.5]" />
-                  <span className="text-sm font-bold text-gray-900 flex-1 truncate">{pb.nom}</span>
-                </div>
-                <div className="px-4 py-3 space-y-2.5">
-                  <p className="text-xs text-gray-600 leading-relaxed line-clamp-2">{pb.description}</p>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      {pb.bots.slice(0, 3).map((bot, i) => (
-                        <span key={i} className="text-[10px] bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full font-medium">{bot}</span>
-                      ))}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
-                      <span className="text-xs font-bold text-gray-700">{pb.rating}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded", pb.prix === "Gratuit" ? "bg-emerald-50 text-emerald-700" : "bg-purple-50 text-purple-700")}>{pb.prix === "Gratuit" ? "Inclus" : pb.prix}</span>
-                    <span className="text-[10px] text-gray-500">{pb.duree}</span>
-                    {typeInfo && <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded", typeInfo.bg, typeInfo.text)}>{typeInfo.label}</span>}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+        <div className="grid grid-cols-3 gap-3">
+          {sortedPlaybooks.map(pb => (
+            <PlaybookCardV2 key={pb.id} pb={pb} onOpenDetail={onOpenDetail} />
+          ))}
         </div>
         {sortedPlaybooks.length === 0 && <p className="text-xs text-gray-400 text-center py-6">Aucun playbook ne correspond a vos filtres</p>}
       </div>
@@ -6323,39 +6542,10 @@ function ConferenceAIView({ onOpenDetail, onSelectFamily, selectedFamily }: {
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5"><Star className="h-3.5 w-3.5 text-amber-500" /> Vedettes Conference AI</h3>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          {featuredPlaybooks.map(pb => {
-            const DeptIcon = DEPT_ICONS[pb.departement] || Target;
-            return (
-              <div key={pb.id} className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all cursor-pointer" onClick={() => onOpenDetail(pb)}>
-                <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
-                  <DeptIcon className="h-4 w-4 text-gray-900 stroke-[2.5]" />
-                  <span className="text-sm font-bold text-gray-900 flex-1 truncate">{pb.nom}</span>
-                  <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 shrink-0">Vedette</span>
-                </div>
-                <div className="px-4 py-3 space-y-2.5">
-                  <p className="text-xs text-gray-600 leading-relaxed line-clamp-2">{pb.description}</p>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      {pb.bots.slice(0, 3).map((bot, i) => (
-                        <span key={i} className="text-[10px] bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full font-medium">{bot}</span>
-                      ))}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
-                      <span className="text-xs font-bold text-gray-700">{pb.rating}</span>
-                      <span className="text-[10px] text-gray-400">({pb.downloads})</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded", pb.prix === "Gratuit" ? "bg-emerald-50 text-emerald-700" : "bg-purple-50 text-purple-700")}>{pb.prix === "Gratuit" ? "Inclus" : pb.prix}</span>
-                    <span className="text-[10px] text-gray-500">{pb.duree}</span>
-                    <span className="text-[10px] text-gray-500">{pb.etapes} etapes</span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+        <div className="grid grid-cols-3 gap-3">
+          {featuredPlaybooks.map(pb => (
+            <PlaybookCardV2 key={pb.id} pb={pb} badge="populaire" onOpenDetail={onOpenDetail} />
+          ))}
         </div>
       </div>
 
@@ -6395,22 +6585,9 @@ function ConferenceAIView({ onOpenDetail, onSelectFamily, selectedFamily }: {
             <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5"><Brain className="h-3.5 w-3.5 text-orange-500" /> Ghost Cognitifs</h3>
             <span className="text-[9px] text-gray-400">{ghostPlaybooks.length} playbooks</span>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             {ghostPlaybooks.map(pb => (
-              <div key={pb.id} className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white hover:shadow-md hover:border-orange-200 transition-all cursor-pointer" onClick={() => onOpenDetail(pb)}>
-                <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
-                  <Brain className="h-4 w-4 text-orange-600 stroke-[2.5]" />
-                  <span className="text-sm font-bold text-gray-900 flex-1 truncate">{pb.nom}</span>
-                </div>
-                <div className="px-4 py-3 space-y-2.5">
-                  <p className="text-xs text-gray-600 leading-relaxed line-clamp-2">{pb.description}</p>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-orange-50 text-orange-700">Cognitif</span>
-                    <span className="text-[10px] text-gray-500">{pb.duree}</span>
-                    <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded", pb.prix === "Gratuit" ? "bg-emerald-50 text-emerald-700" : "bg-purple-50 text-purple-700")}>{pb.prix === "Gratuit" ? "Inclus" : pb.prix}</span>
-                  </div>
-                </div>
-              </div>
+              <PlaybookCardV2 key={pb.id} pb={pb} onOpenDetail={onOpenDetail} />
             ))}
           </div>
         </div>
@@ -6491,44 +6668,36 @@ function PlaybookCategorie({ botCode, selectedDept, onOpenDetail, onBack }: { bo
         <div className="text-[9px] text-white/70 mt-1">{filtered.length} playbooks · {installedCount} installes · {runningCount} en cours</div>
       </div>
 
-      {/* Barre filtres + view toggle */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <div className="flex-1 min-w-[180px] relative">
-          <Search className="h-3.5 w-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-          <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Rechercher..." className="w-full text-xs border border-gray-200 rounded-lg pl-8 pr-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-300" />
+      {/* Barre filtres + view toggle — SF standard */}
+      <div className={SF.toolbarWrap}>
+        <div className={SF.searchWrap}>
+          <Search className={SF.searchIcon} />
+          <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Rechercher..." className={SF.searchInput} />
         </div>
-        <select value={filterNiveau} onChange={e => setFilterNiveau(e.target.value)} className="text-[9px] border border-gray-200 rounded-lg px-2 py-1.5">
+        <select value={filterNiveau} onChange={e => setFilterNiveau(e.target.value)} className={SF.select}>
           <option value="all">Difficulte</option>
           <option value="Quick Win">Quick Win</option>
           <option value="Standard">Standard</option>
           <option value="Avance">Avance</option>
           <option value="Enterprise">Enterprise</option>
         </select>
-        <select value={filterPrix} onChange={e => setFilterPrix(e.target.value)} className="text-[9px] border border-gray-200 rounded-lg px-2 py-1.5">
+        <select value={filterPrix} onChange={e => setFilterPrix(e.target.value)} className={SF.select}>
           <option value="all">Prix</option>
           <option value="gratuit">Inclus</option>
           <option value="premium">Premium</option>
         </select>
-        <select value={filterType} onChange={e => setFilterType(e.target.value)} className="text-[9px] border border-gray-200 rounded-lg px-2 py-1.5">
+        <select value={filterType} onChange={e => setFilterType(e.target.value)} className={SF.select}>
           <option value="all">Type</option>
           {Object.entries(PLAYBOOK_TYPES).map(([key, t]) => <option key={key} value={key}>{t.label}</option>)}
         </select>
-        <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="text-[9px] border border-gray-200 rounded-lg px-2 py-1.5">
+        <select value={sortBy} onChange={e => setSortBy(e.target.value)} className={SF.select}>
           <option value="populaires">Populaires</option>
           <option value="rating">Mieux notes</option>
           <option value="alpha">Alphabetique</option>
         </select>
-        <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden shrink-0">
-          {([["list", LayoutList], ["cards", LayoutGrid], ["table", Table2]] as ["list" | "cards" | "table", React.ElementType][]).map(([mode, Icon]) => (
-            <button key={mode} onClick={() => setViewMode(mode)} className={cn("p-1.5 transition-colors cursor-pointer", viewMode === mode ? "bg-blue-600 text-white" : "bg-white text-gray-400 hover:text-gray-600")}>
-              <Icon className="h-3.5 w-3.5" />
-            </button>
-          ))}
-        </div>
+        <PlaybookViewToggle viewMode={viewMode} setViewMode={setViewMode} />
+        <span className={SF.itemCount}>{filtered.length} trouves</span>
       </div>
-
-      {/* Compteur */}
-      <span className="text-[9px] text-gray-400">{filtered.length} playbooks trouves</span>
 
       {/* Contenu selon viewMode */}
       {filtered.length > 0 ? (
@@ -6586,44 +6755,36 @@ function PlaybookParType({ selectedType, onOpenDetail, onBack }: { selectedType:
         <div className="text-[9px] text-white/70 mt-1">{typeInfo.description} · {filtered.length} playbooks · {installedCount} installes</div>
       </div>
 
-      {/* Barre filtres + view toggle */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <div className="flex-1 min-w-[180px] relative">
-          <Search className="h-3.5 w-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-          <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Rechercher..." className="w-full text-xs border border-gray-200 rounded-lg pl-8 pr-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-300" />
+      {/* Barre filtres + view toggle — SF standard */}
+      <div className={SF.toolbarWrap}>
+        <div className={SF.searchWrap}>
+          <Search className={SF.searchIcon} />
+          <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Rechercher..." className={SF.searchInput} />
         </div>
-        <select value={filterDept} onChange={e => setFilterDept(e.target.value)} className="text-[9px] border border-gray-200 rounded-lg px-2 py-1.5">
+        <select value={filterDept} onChange={e => setFilterDept(e.target.value)} className={SF.select}>
           <option value="all">Departement</option>
           {Object.entries(DEPT_LABELS).map(([code, label]) => <option key={code} value={code}>{label}</option>)}
         </select>
-        <select value={filterNiveau} onChange={e => setFilterNiveau(e.target.value)} className="text-[9px] border border-gray-200 rounded-lg px-2 py-1.5">
+        <select value={filterNiveau} onChange={e => setFilterNiveau(e.target.value)} className={SF.select}>
           <option value="all">Difficulte</option>
           <option value="Quick Win">Quick Win</option>
           <option value="Standard">Standard</option>
           <option value="Avance">Avance</option>
           <option value="Enterprise">Enterprise</option>
         </select>
-        <select value={filterPrix} onChange={e => setFilterPrix(e.target.value)} className="text-[9px] border border-gray-200 rounded-lg px-2 py-1.5">
+        <select value={filterPrix} onChange={e => setFilterPrix(e.target.value)} className={SF.select}>
           <option value="all">Prix</option>
           <option value="gratuit">Inclus</option>
           <option value="premium">Premium</option>
         </select>
-        <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="text-[9px] border border-gray-200 rounded-lg px-2 py-1.5">
+        <select value={sortBy} onChange={e => setSortBy(e.target.value)} className={SF.select}>
           <option value="populaires">Populaires</option>
           <option value="rating">Mieux notes</option>
           <option value="alpha">Alphabetique</option>
         </select>
-        <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden shrink-0">
-          {([["list", LayoutList], ["cards", LayoutGrid], ["table", Table2]] as ["list" | "cards" | "table", React.ElementType][]).map(([mode, Icon]) => (
-            <button key={mode} onClick={() => setViewMode(mode)} className={cn("p-1.5 transition-colors cursor-pointer", viewMode === mode ? "bg-blue-600 text-white" : "bg-white text-gray-400 hover:text-gray-600")}>
-              <Icon className="h-3.5 w-3.5" />
-            </button>
-          ))}
-        </div>
+        <PlaybookViewToggle viewMode={viewMode} setViewMode={setViewMode} />
+        <span className={SF.itemCount}>{filtered.length} trouves</span>
       </div>
-
-      {/* Compteur */}
-      <span className="text-[9px] text-gray-400">{filtered.length} playbooks trouves</span>
 
       {/* Contenu selon viewMode */}
       {filtered.length > 0 ? (
@@ -6828,29 +6989,27 @@ function PlaybookMesInstalledView({ botCode, onOpenDetail }: { botCode: string; 
         <div className="text-[9px] text-white/70 mt-1">{installed.length} playbooks installes · {[...new Set(installed.map(p => p.departement))].length} departements</div>
       </div>
 
-      {/* Barre filtres + view toggle */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <div className="flex-1 min-w-[180px] relative">
-          <Search className="h-3.5 w-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-          <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Rechercher..." className="w-full text-xs border border-gray-200 rounded-lg pl-8 pr-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-300" />
+      {/* Barre filtres + view toggle — SF standard */}
+      <div className={SF.toolbarWrap}>
+        <div className={SF.searchWrap}>
+          <Search className={SF.searchIcon} />
+          <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Rechercher..." className={SF.searchInput} />
         </div>
-        <select value={filterNiveau} onChange={e => setFilterNiveau(e.target.value)} className="text-[9px] border border-gray-200 rounded-lg px-2 py-1.5">
+        <select value={filterNiveau} onChange={e => setFilterNiveau(e.target.value)} className={SF.select}>
           <option value="all">Difficulte</option>
           <option value="Quick Win">Quick Win</option>
           <option value="Standard">Standard</option>
           <option value="Avance">Avance</option>
           <option value="Enterprise">Enterprise</option>
         </select>
-        <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="text-[9px] border border-gray-200 rounded-lg px-2 py-1.5">
+        <select value={sortBy} onChange={e => setSortBy(e.target.value)} className={SF.select}>
           <option value="populaires">Populaires</option>
           <option value="rating">Mieux notes</option>
           <option value="alpha">Alphabetique</option>
         </select>
         <PlaybookViewToggle viewMode={viewMode} setViewMode={setViewMode} />
+        <span className={SF.itemCount}>{filtered.length} trouves</span>
       </div>
-
-      {/* Compteur */}
-      <span className="text-[9px] text-gray-400">{filtered.length} playbooks trouves</span>
 
       {/* Contenu */}
       {filtered.length > 0 ? (
@@ -6886,17 +7045,15 @@ function PlaybookEnCours({ onOpenDetail }: { onOpenDetail: (pb: typeof PLAYBOOK_
         <div className="text-[9px] text-white/70 mt-1">{RUNNING_PLAYBOOKS.length} en cours · {activeCount} actifs · {pauseCount} en pause</div>
       </div>
 
-      {/* Barre filtres + view toggle */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <div className="flex-1 min-w-[180px] relative">
-          <Search className="h-3.5 w-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-          <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Rechercher..." className="w-full text-xs border border-gray-200 rounded-lg pl-8 pr-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-300" />
+      {/* Barre filtres + view toggle — SF standard */}
+      <div className={SF.toolbarWrap}>
+        <div className={SF.searchWrap}>
+          <Search className={SF.searchIcon} />
+          <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Rechercher..." className={SF.searchInput} />
         </div>
         <PlaybookViewToggle viewMode={viewMode} setViewMode={setViewMode} />
+        <span className={SF.itemCount}>{filtered.length} trouves</span>
       </div>
-
-      {/* Compteur */}
-      <span className="text-[9px] text-gray-400">{filtered.length} playbooks trouves</span>
 
       {/* Contenu */}
       {filtered.length === 0 ? (
@@ -6989,17 +7146,15 @@ function PlaybookHistorique({ onOpenDetail }: { onOpenDetail: (pb: typeof PLAYBO
         <div className="text-[9px] text-white/70 mt-1">{COMPLETED_PLAYBOOKS.length} completes · {totalLivrables} livrables generes</div>
       </div>
 
-      {/* Barre filtres + view toggle */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <div className="flex-1 min-w-[180px] relative">
-          <Search className="h-3.5 w-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-          <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Rechercher..." className="w-full text-xs border border-gray-200 rounded-lg pl-8 pr-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-300" />
+      {/* Barre filtres + view toggle — SF standard */}
+      <div className={SF.toolbarWrap}>
+        <div className={SF.searchWrap}>
+          <Search className={SF.searchIcon} />
+          <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Rechercher..." className={SF.searchInput} />
         </div>
         <PlaybookViewToggle viewMode={viewMode} setViewMode={setViewMode} />
+        <span className={SF.itemCount}>{filtered.length} trouves</span>
       </div>
-
-      {/* Compteur */}
-      <span className="text-[9px] text-gray-400">{filtered.length} playbooks trouves</span>
 
       {/* Contenu */}
       {filtered.length === 0 ? (
@@ -7126,10 +7281,13 @@ function PlaybookBuilder() {
         </div>
       </Card>
 
-      {/* Motivation */}
-      <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-100 rounded-xl px-4 py-3 text-center">
-        <p className="text-[9px] text-purple-700 font-bold">Les meilleurs createurs gagnent 2000-5000$/mois avec leurs playbooks.</p>
-        <p className="text-[8px] text-purple-500 mt-1">Bientot disponible</p>
+      {/* Marketplace CTA */}
+      <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-100 rounded-xl px-4 py-4 text-center space-y-2">
+        <Sparkles className="h-5 w-5 text-purple-500 mx-auto" />
+        <p className="text-xs font-bold text-gray-800">Creez votre propre playbook et vendez-le sur le Store</p>
+        <p className="text-[10px] text-purple-700 font-semibold">85% createur / 15% plateforme</p>
+        <p className="text-[9px] text-gray-500">Les meilleurs createurs gagnent 2000-5000$/mois avec leurs playbooks.</p>
+        <p className="text-[8px] text-purple-400">Bientot disponible</p>
       </div>
     </div>
   );
@@ -7149,6 +7307,14 @@ export function BlueprintPlaybooks({ botCode, headerGradient, showHeader = false
   const [selectedConferenceFamily, setSelectedConferenceFamily] = useState<string | null>(null);
   const [selectedCollection, setSelectedCollection] = useState<string | null>(null);
 
+  // Synchroniser quand botCode change — revenir à l'accueil (le contenu s'adapte via PlaybookDecouvrir)
+  useEffect(() => {
+    setSelectedPlaybook(null);
+    setActiveView("decouvrir");
+    setSelectedCategorie(null);
+    setSelectedType(null);
+  }, [botCode]);
+
   const handleNavigate = (view: PlaybookStoreView, extra?: { dept?: string; collection?: string }) => {
     setSelectedPlaybook(null);
     if (view === "types" && extra?.dept) { setSelectedType(extra.dept); setActiveView("types"); }
@@ -7160,11 +7326,14 @@ export function BlueprintPlaybooks({ botCode, headerGradient, showHeader = false
   const handleOpenDetail = (pb: typeof PLAYBOOK_STORE_DATA[0]) => setSelectedPlaybook(pb);
   const handleBack = () => setSelectedPlaybook(null);
 
+  const pbIsNonCEOB = botCode !== "CEOB";
+  const pbDeptCount = pbIsNonCEOB ? PLAYBOOK_STORE_DATA.filter(p => p.departement === botCode).length : PLAYBOOK_STORE_DATA.length;
   const SIDEBAR_ITEMS: { id: PlaybookStoreView; label: string; icon: React.ElementType; count?: number; dot?: boolean; separator?: boolean }[] = [
-    { id: "decouvrir", label: "Decouvrir", icon: Sparkles, count: PLAYBOOK_STORE_DATA.length },
-    { id: "categorie", label: "Departements", icon: LayoutGrid },
-    { id: "types", label: "Types", icon: Layers },
-    { id: "conferenceai", label: "Conference AI", icon: Video, count: PLAYBOOK_STORE_DATA.filter(p => p.type === "conference" || p.type === "formation" || p.type === "cognitif" || p.id.startsWith("pb-GHO-") || p.id.match(/^pb-[A-Z]+-[A-Z]+-/)).length },
+    { id: "decouvrir", label: "Decouvrir", icon: Sparkles, count: pbDeptCount },
+    // Poupée russe: non-CEOB = pas d'explorateur départements (on est déjà DANS un département)
+    ...(pbIsNonCEOB ? [] : [{ id: "categorie" as PlaybookStoreView, label: "Departements", icon: LayoutGrid }]),
+    { id: "types", label: "Types", icon: FolderOpen },
+    { id: "conferenceai", label: "Conference AI", icon: Video, count: (pbIsNonCEOB ? PLAYBOOK_STORE_DATA.filter(p => p.departement === botCode && (p.type === "conference" || p.type === "formation" || p.type === "cognitif" || p.id.startsWith("pb-GHO-") || p.id.match(/^pb-[A-Z]+-[A-Z]+-/))) : PLAYBOOK_STORE_DATA.filter(p => p.type === "conference" || p.type === "formation" || p.type === "cognitif" || p.id.startsWith("pb-GHO-") || p.id.match(/^pb-[A-Z]+-[A-Z]+-/))).length },
     { id: "collections", label: "Collections", icon: Bookmark, count: STORE_COLLECTIONS_V2.length },
     { id: "installed", label: "Mes Playbooks", icon: BookOpen, count: INSTALLED_PLAYBOOKS.length, separator: true },
     { id: "encours", label: "En cours", icon: Activity, count: RUNNING_PLAYBOOKS.length, dot: RUNNING_PLAYBOOKS.length > 0 },
@@ -7179,23 +7348,40 @@ export function BlueprintPlaybooks({ botCode, headerGradient, showHeader = false
 
   return (
     <div className="space-y-3">
-      {/* Header gradient hero (style Blueprint) */}
+      {/* Hero — Living Heroes V20 Playbook Store */}
       {showHeader && (
-        <div className={cn("relative bg-gradient-to-r rounded-xl overflow-hidden", headerGradient)}>
-          <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="relative flex items-center gap-4 p-4">
-            <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
-              <BookOpen className="h-6 w-6 text-white" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="text-lg font-bold text-white">Bienvenue dans le Playbook Store</h3>
-                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white">{PLAYBOOK_STORE_DATA.length} playbooks</span>
+        <LivingHero
+          blur1="bg-cyan-100/60" blur2="bg-blue-100/40"
+          subtitleColor="text-cyan-600" subtitle="Exécution Automatisée"
+          title="L'armée silencieuse, toujours prête."
+          description="Parcourez le catalogue. Le système connecte visuellement les modules et exécute en séquence."
+        >
+          <div className="relative w-[380px] h-[160px] flex items-center">
+            <div className="absolute right-[20px] flex flex-row items-center gap-0 w-[340px]">
+              {/* Step 1 */}
+              <div className="pb-node w-24 h-24 flex flex-col items-center justify-center anim-p-node-1 relative z-10">
+                <div className="w-8 h-8 rounded bg-cyan-50 text-cyan-500 flex items-center justify-center mb-2"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></div>
+                <div className="w-12 h-1 bg-slate-200 rounded-full" />
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-cyan-400 rounded-full anim-p-pulse-1" />
               </div>
-              <p className="text-xs text-white/80">Votre equipe IA est prete a travailler pour vous. Un playbook, c'est un processus d'affaires complet, execute automatiquement par vos bots — de la collecte de donnees jusqu'a la livraison du resultat final.</p>
+              {/* Connection Line 1 */}
+              <div className="w-16 h-1 bg-slate-200 relative -ml-1 -mr-1 z-0"><div className="absolute left-0 top-0 bottom-0 bg-cyan-400 shadow-[0_0_8px_#22d3ee] anim-p-line-1" /></div>
+              {/* Step 2 */}
+              <div className="pb-node w-24 h-24 flex flex-col items-center justify-center anim-p-node-2 relative z-10">
+                <div className="w-8 h-8 rounded bg-blue-50 text-blue-500 flex items-center justify-center mb-2"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg></div>
+                <div className="w-12 h-1 bg-slate-200 rounded-full" />
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-400 rounded-full anim-p-pulse-2" />
+              </div>
+              {/* Connection Line 2 */}
+              <div className="w-16 h-1 bg-slate-200 relative -ml-1 -mr-1 z-0"><div className="absolute left-0 top-0 bottom-0 bg-blue-400 shadow-[0_0_8px_#3b82f6] anim-p-line-2" /></div>
+              {/* Step 3 */}
+              <div className="pb-node anim-p-node-3 anim-p-node-3-activate w-24 h-24 flex flex-col items-center justify-center bg-blue-500 text-white shadow-lg relative z-10">
+                <div className="w-8 h-8 flex items-center justify-center mb-1 drop-shadow-md"><svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/></svg></div>
+                <div className="w-12 h-1.5 bg-white/50 rounded-full" />
+              </div>
             </div>
           </div>
-        </div>
+        </LivingHero>
       )}
 
       {/* Blocs pleine largeur — Comment ca fonctionne + Top 3 (au-dessus du sidebar) */}
@@ -7233,15 +7419,28 @@ export function BlueprintPlaybooks({ botCode, headerGradient, showHeader = false
             </div>
           </div>
 
-          {/* Top 3 Playbooks de la semaine */}
+          {/* Top 3 Playbooks de la semaine — adaptatif au département */}
           {(() => {
-            const featuredItems = FEATURED_PLAYBOOKS.map(f => ({ ...f, pb: PLAYBOOK_STORE_DATA.find(p => p.id === f.playbookId) })).filter(f => f.pb);
+            // Poupée russe: non-CEOB = top 3 du département par rating, CEOB = featured hardcodés
+            const featuredItems = botCode !== "CEOB"
+              ? [...PLAYBOOK_STORE_DATA]
+                  .filter(p => p.departement === botCode)
+                  .sort((a, b) => b.rating - a.rating || b.downloads - a.downloads)
+                  .slice(0, 3)
+                  .map((pb, i) => ({
+                    playbookId: pb.id,
+                    editorial: pb.description,
+                    rank: i + 1,
+                    gradient: DEPT_GRADIENT[botCode] || DEPT_GRADIENT.CEOB,
+                    pb,
+                  }))
+              : FEATURED_PLAYBOOKS.map(f => ({ ...f, pb: PLAYBOOK_STORE_DATA.find(p => p.id === f.playbookId) })).filter(f => f.pb);
             if (featuredItems.length === 0) return null;
             return (
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
-                  <h3 className="text-xs font-bold text-gray-800">Top 3 — Playbooks de la semaine</h3>
+                  <h3 className="text-xs font-bold text-gray-800">{botCode !== "CEOB" ? `Top 3 — ${DEPT_SHORT_LABEL[botCode] || botCode}` : "Top 3 — Playbooks de la semaine"}</h3>
                 </div>
                 <div className="grid grid-cols-3 gap-3">
                   {featuredItems.map(f => {
@@ -7302,12 +7501,12 @@ export function BlueprintPlaybooks({ botCode, headerGradient, showHeader = false
 
     <div className="flex gap-3">
       {/* Sidebar TOC */}
-      <div className="w-[180px] shrink-0 space-y-0.5 pt-6">
+      <div className={SF.sidebarW}>
         {SIDEBAR_ITEMS.map((item, idx) => {
           const isActive = activeView === item.id;
           return (
             <div key={item.id}>
-              {item.separator && idx > 0 && <div className="h-px bg-gray-100 mx-2 my-2" />}
+              {item.separator && idx > 0 && <div className={SF.separator} />}
               <button
                 onClick={() => {
                   if (item.id === "categorie") { setExpandCategories(!expandCategories); }
@@ -7328,8 +7527,8 @@ export function BlueprintPlaybooks({ botCode, headerGradient, showHeader = false
                   {item.id === "types" && <ChevronDown className={cn("h-3.5 w-3.5 text-gray-400 transition-transform", expandTypes && "rotate-180")} />}
                 </div>
               </button>
-              {/* Expandable categories (departements) */}
-              {item.id === "categorie" && expandCategories && (
+              {/* Expandable categories (departements) — CEOB seulement */}
+              {!pbIsNonCEOB && item.id === "categorie" && expandCategories && (
                 <div className="ml-3 mt-0.5 space-y-0.5">
                   {Object.entries(DEPT_LABELS).map(([code, label]) => {
                     const isActiveDept = activeView === "categorie" && selectedCategorie === code;
@@ -7440,10 +7639,11 @@ const MOCK_PLANNED_SESSIONS: { id: string; pbId: string; date: string; heure: st
 
 type ConfAIView = "accueil" | "recentes" | "planifiees" | "famille" | "departement" | "tous";
 
-export function BlueprintConferenceAI({ headerGradient, onNavigateToStore, onLaunch }: {
+export function BlueprintConferenceAI({ headerGradient, onNavigateToStore, onLaunch, botCode }: {
   headerGradient: string;
   onNavigateToStore?: () => void;
   onLaunch?: (type: string, title: string) => void;
+  botCode?: string;
 }) {
   const [activeView, setActiveView] = useState<ConfAIView>("accueil");
   const [selectedPlaybook, setSelectedPlaybook] = useState<typeof PLAYBOOK_STORE_DATA[0] | null>(null);
@@ -7452,11 +7652,23 @@ export function BlueprintConferenceAI({ headerGradient, onNavigateToStore, onLau
   const [selectedFamily, setSelectedFamily] = useState<string | null>(null);
   const [selectedDept, setSelectedDept] = useState<string | null>(null);
 
+  // Synchroniser quand botCode change — revenir à l'accueil (le contenu s'adapte au département)
+  useEffect(() => {
+    setSelectedPlaybook(null);
+    setActiveView("accueil");
+    setSelectedFamily(null);
+    setSelectedDept(botCode && botCode !== "CEOB" ? botCode : null);
+  }, [botCode]);
+
   // Filtre les playbooks conference depuis le MEME PLAYBOOK_STORE_DATA
-  const allConf = PLAYBOOK_STORE_DATA.filter(pb => {
+  // Poupée russe: non-CEOB = priorise les conférences du département
+  const allConfRaw = PLAYBOOK_STORE_DATA.filter(pb => {
     const family = getPlaybookFamily(pb);
     return (family !== "" && CONFERENCE_FAMILIES[family] !== undefined) || pb.id.startsWith("pb-GHO-") || pb.type === "conference" || pb.type === "formation" || pb.type === "cognitif";
   });
+  const allConf = botCode && botCode !== "CEOB"
+    ? [...allConfRaw.filter(pb => pb.departement === botCode), ...allConfRaw.filter(pb => pb.departement !== botCode)]
+    : allConfRaw;
 
   const familyEntries = Object.entries(CONFERENCE_FAMILIES).map(([key, info]) => {
     const count = allConf.filter(pb => getPlaybookFamily(pb) === key).length;
@@ -7478,34 +7690,49 @@ export function BlueprintConferenceAI({ headerGradient, onNavigateToStore, onLau
     else setActiveView(view);
   };
 
+  const isNonCEOB = botCode && botCode !== "CEOB";
+  const deptConfCount = isNonCEOB ? allConfRaw.filter(pb => pb.departement === botCode).length : allConf.length;
   type SidebarItem = { id: ConfAIView | "store"; label: string; icon: React.ElementType; count?: number; separator?: boolean; expandable?: "families" | "depts"; external?: boolean };
   const SIDEBAR_ITEMS: SidebarItem[] = [
-    { id: "accueil", label: "Accueil", icon: Sparkles, count: allConf.length },
+    { id: "accueil", label: "Accueil", icon: Sparkles, count: deptConfCount },
     { id: "recentes", label: "Recentes", icon: Clock },
     { id: "planifiees", label: "Planifiees", icon: Calendar },
-    { id: "famille", label: "Categories", icon: Layers, separator: true, expandable: "families" },
-    { id: "departement", label: "Departements", icon: Building2, expandable: "depts" },
+    { id: "famille", label: "Categories", icon: FolderOpen, separator: true, expandable: "families" },
+    // Poupée russe: non-CEOB = pas d'explorateur départements (on est déjà DANS un département)
+    ...(isNonCEOB ? [] : [{ id: "departement" as ConfAIView | "store", label: "Departements", icon: Building2, expandable: "depts" as const }]),
     { id: "store", label: "Playbook Store", icon: ShoppingBag, separator: true, external: true },
   ];
 
   return (
     <div className="space-y-3">
-      {/* Header hero — Centre d'utilisation */}
-      <div className={cn("relative bg-gradient-to-r rounded-xl overflow-hidden", headerGradient)}>
-        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-        <div className="relative flex items-center gap-4 p-4">
-          <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
-            <Video className="h-6 w-6 text-white" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="text-lg font-bold text-white">Conference AI</h3>
-              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white">{allConf.length} conferences</span>
-            </div>
-            <p className="text-xs text-white/80">Lancez vos sessions en un clic. Vos 12 bots animent la conference, gerent la discussion et produisent les livrables automatiquement.</p>
+      {/* Hero — Living Heroes V20 Conference AI */}
+      <LivingHero
+        blur1="bg-fuchsia-100/60" blur2="bg-violet-100/50"
+        subtitleColor="text-fuchsia-600" subtitle="Débat & Consensus"
+        title="L'intelligence collective à l'état pur."
+        description="Regardez vos esprits synthétiques argumenter avec une fluidité majestueuse."
+      >
+        <div className="relative w-[360px] h-[140px] flex items-center justify-center">
+          <svg className="absolute inset-0 w-full h-full opacity-[0.15] text-violet-800" viewBox="0 0 360 140"><path d="M 20 70 L 60 40 L 180 40 L 220 70 L 180 100 L 60 100 Z" fill="none" stroke="currentColor" strokeWidth="1"/><path d="M 60 40 L 60 100 M 180 40 L 180 100 M 20 70 L 220 70" fill="none" stroke="currentColor" strokeWidth="0.5" strokeDasharray="2 2"/><circle cx="120" cy="70" r="50" fill="none" stroke="currentColor" strokeWidth="0.5"/></svg>
+          {/* Nodes */}
+          <div className="absolute left-[40px] top-[50px] w-12 h-12 bg-white/80 border-2 border-fuchsia-200 rounded-full flex items-center justify-center z-10"><div className="w-2 h-2 bg-fuchsia-500 rounded-full" /></div>
+          <div className="absolute right-[100px] top-[50px] w-12 h-12 bg-white/80 border-2 border-violet-200 rounded-full flex items-center justify-center z-10"><div className="w-2 h-2 bg-violet-500 rounded-full" /></div>
+          <div className="absolute left-[120px] top-[10px] w-10 h-10 bg-indigo-50 rounded-full flex items-center justify-center z-10"><div className="w-1.5 h-1.5 bg-indigo-400 rounded-full" /></div>
+          <div className="absolute left-[120px] bottom-[10px] w-10 h-10 bg-pink-50 rounded-full flex items-center justify-center z-10"><div className="w-1.5 h-1.5 bg-pink-400 rounded-full" /></div>
+          {/* Packets */}
+          <div className="absolute top-[55px] left-[55px] w-2.5 h-2.5 bg-fuchsia-500 rounded-full text-fuchsia-500 anim-packet-1" />
+          <div className="absolute top-[55px] left-[55px] w-2.5 h-2.5 bg-violet-500 rounded-full text-violet-500 anim-packet-2" />
+          <div className="absolute top-[55px] left-[55px] w-2.5 h-2.5 bg-indigo-500 rounded-full text-indigo-500 anim-packet-3" />
+          {/* Hub */}
+          <div className="glass-intense absolute top-[40px] left-[100px] w-[80px] h-16 rounded-2xl flex items-center justify-center gap-1 z-0 shadow-lg">
+            <div className="w-1.5 bg-fuchsia-400 rounded-full" style={{height:'30%', animation:'wave-pulse 2s ease-in-out infinite 0.1s'}} />
+            <div className="w-1.5 bg-violet-500 rounded-full" style={{height:'60%', animation:'wave-pulse 2.5s ease-in-out infinite 0.5s'}} />
+            <div className="w-1.5 bg-indigo-400 rounded-full" style={{height:'90%', animation:'wave-pulse 1.8s ease-in-out infinite 0.2s'}} />
+            <div className="w-1.5 bg-fuchsia-500 rounded-full" style={{height:'50%', animation:'wave-pulse 2.2s ease-in-out infinite 0.7s'}} />
+            <div className="w-1.5 bg-pink-400 rounded-full" style={{height:'40%', animation:'wave-pulse 2.8s ease-in-out infinite 0.4s'}} />
           </div>
         </div>
-      </div>
+      </LivingHero>
 
       {/* Comment ca fonctionne */}
       {activeView === "accueil" && !selectedPlaybook && (
@@ -7543,12 +7770,12 @@ export function BlueprintConferenceAI({ headerGradient, onNavigateToStore, onLau
 
     <div className="flex gap-3">
       {/* Sidebar TOC */}
-      <div className="w-[180px] shrink-0 space-y-0.5 pt-6">
+      <div className={SF.sidebarW}>
         {SIDEBAR_ITEMS.map((item, idx) => {
           const isActive = activeView === item.id && !item.expandable && !item.external;
           return (
             <div key={item.id}>
-              {item.separator && idx > 0 && <div className="h-px bg-gray-100 mx-2 my-2" />}
+              {item.separator && idx > 0 && <div className={SF.separator} />}
               <button
                 onClick={() => {
                   if (item.external && onNavigateToStore) { onNavigateToStore(); return; }
@@ -7617,13 +7844,13 @@ export function BlueprintConferenceAI({ headerGradient, onNavigateToStore, onLau
           <ConfAIFicheDetail pb={selectedPlaybook} onBack={handleBack} onLaunch={onLaunch} allConf={allConf} />
         ) : (
           <>
-            {activeView === "accueil" && <ConfAIAccueil playbooks={allConf} onOpenDetail={handleOpenDetail} onNavigate={handleNavigate} onLaunch={onLaunch} familyEntries={familyEntries} deptEntries={deptEntries} />}
+            {activeView === "accueil" && <ConfAIAccueil playbooks={allConf} onOpenDetail={handleOpenDetail} onNavigate={handleNavigate} onLaunch={onLaunch} familyEntries={familyEntries} deptEntries={deptEntries} botCode={botCode} />}
             {activeView === "recentes" && <ConfAIRecentes allConf={allConf} onOpenDetail={handleOpenDetail} onLaunch={onLaunch} onBack={() => setActiveView("accueil")} />}
             {activeView === "planifiees" && <ConfAIPlanifiees onBack={() => setActiveView("accueil")} />}
             {activeView === "famille" && selectedFamily && <ConfAIFiltered playbooks={allConf.filter(pb => getPlaybookFamily(pb) === selectedFamily)} title={CONFERENCE_FAMILIES[selectedFamily]?.label || selectedFamily} icon={CONFERENCE_FAMILIES[selectedFamily]?.icon || Video} onOpenDetail={handleOpenDetail} onLaunch={onLaunch} onBack={() => setActiveView("accueil")} />}
-            {activeView === "famille" && !selectedFamily && <ConfAIAccueil playbooks={allConf} onOpenDetail={handleOpenDetail} onNavigate={handleNavigate} onLaunch={onLaunch} familyEntries={familyEntries} deptEntries={deptEntries} />}
+            {activeView === "famille" && !selectedFamily && <ConfAIAccueil playbooks={allConf} onOpenDetail={handleOpenDetail} onNavigate={handleNavigate} onLaunch={onLaunch} familyEntries={familyEntries} deptEntries={deptEntries} botCode={botCode} />}
             {activeView === "departement" && selectedDept && <ConfAIFiltered playbooks={allConf.filter(pb => pb.departement === selectedDept)} title={DEPT_LABELS[selectedDept] || selectedDept} icon={DEPT_ICONS[selectedDept] || Building2} onOpenDetail={handleOpenDetail} onLaunch={onLaunch} onBack={() => setActiveView("accueil")} />}
-            {activeView === "departement" && !selectedDept && <ConfAIAccueil playbooks={allConf} onOpenDetail={handleOpenDetail} onNavigate={handleNavigate} onLaunch={onLaunch} familyEntries={familyEntries} deptEntries={deptEntries} />}
+            {activeView === "departement" && !selectedDept && <ConfAIAccueil playbooks={allConf} onOpenDetail={handleOpenDetail} onNavigate={handleNavigate} onLaunch={onLaunch} familyEntries={familyEntries} deptEntries={deptEntries} botCode={botCode} />}
             {activeView === "tous" && <ConfAIFiltered playbooks={allConf} title="Toutes les conferences" icon={Video} onOpenDetail={handleOpenDetail} onLaunch={onLaunch} onBack={() => setActiveView("accueil")} />}
           </>
         )}
@@ -7634,26 +7861,34 @@ export function BlueprintConferenceAI({ headerGradient, onNavigateToStore, onLau
 }
 
 /* ConfAIAccueil — Centre d'utilisation (pas un store) */
-function ConfAIAccueil({ playbooks, onOpenDetail, onNavigate, onLaunch, familyEntries, deptEntries }: {
+function ConfAIAccueil({ playbooks, onOpenDetail, onNavigate, onLaunch, familyEntries, deptEntries, botCode }: {
   playbooks: typeof PLAYBOOK_STORE_DATA;
   onOpenDetail: (pb: typeof PLAYBOOK_STORE_DATA[0]) => void;
   onNavigate: (view: ConfAIView, extra?: { family?: string; dept?: string }) => void;
   onLaunch?: (type: string, title: string) => void;
   familyEntries: { key: string; label: string; icon: React.ElementType; description: string; gradient: string; bg: string; text: string; count: number }[];
   deptEntries: { code: string; label: string; count: number }[];
+  botCode?: string;
 }) {
-  const topUsed = [...playbooks].sort((a, b) => b.downloads - a.downloads).slice(0, 6);
-  const express = playbooks.filter(pb => {
+  const isNonCEOB = botCode && botCode !== "CEOB";
+  // Poupée russe: non-CEOB = priorise les conférences du département
+  const deptPlaybooks = isNonCEOB ? playbooks.filter(pb => pb.departement === botCode) : playbooks;
+  const topUsed = [...deptPlaybooks].sort((a, b) => b.downloads - a.downloads).slice(0, 6);
+  const express = deptPlaybooks.filter(pb => {
     const family = getPlaybookFamily(pb);
     return family === "EXP" || pb.duree.includes("5") || pb.duree.includes("10") || pb.duree.includes("15");
   }).slice(0, 6);
+  // Familles filtrées par département pour non-CEOB
+  const deptFamilyEntries = isNonCEOB
+    ? familyEntries.map(f => ({ ...f, count: deptPlaybooks.filter(pb => getPlaybookFamily(pb) === f.key).length })).filter(f => f.count > 0)
+    : familyEntries;
 
   return (
     <div className="space-y-4">
       {/* Section 1 — Les plus utilisees */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5"><Star className="h-3.5 w-3.5 text-amber-500" /> Les plus utilisees</h3>
+          <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5"><Star className="h-3.5 w-3.5 text-amber-500" /> {isNonCEOB ? `Conferences ${DEPT_SHORT_LABEL[botCode!] || botCode}` : "Les plus utilisees"}</h3>
         </div>
         <div className="grid grid-cols-2 gap-3">
           {topUsed.map(pb => {
@@ -7721,10 +7956,10 @@ function ConfAIAccueil({ playbooks, onOpenDetail, onNavigate, onLaunch, familyEn
       {/* Section 3 — Explorer par categorie */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5"><LayoutGrid className="h-3.5 w-3.5 text-gray-500" /> Explorer par categorie</h3>
+          <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5"><LayoutGrid className="h-3.5 w-3.5 text-gray-500" /> {isNonCEOB ? `Categories ${DEPT_SHORT_LABEL[botCode!] || botCode}` : "Explorer par categorie"}</h3>
         </div>
         <div className="grid grid-cols-3 gap-3">
-          {familyEntries.map(f => {
+          {deptFamilyEntries.map(f => {
             const FIcon = f.icon;
             return (
               <div key={f.key} className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all cursor-pointer" onClick={() => onNavigate("famille", { family: f.key })}>
@@ -7742,40 +7977,42 @@ function ConfAIAccueil({ playbooks, onOpenDetail, onNavigate, onLaunch, familyEn
         </div>
       </div>
 
-      {/* Section 4 — Explorer par departement */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5"><Building2 className="h-3.5 w-3.5 text-gray-500" /> Explorer par departement</h3>
-        </div>
-        <div className="grid grid-cols-3 gap-3">
-          {deptEntries.map(d => {
-            const DIcon = DEPT_ICONS[d.code] || Building2;
-            const avatarSrc = BOT_AVATAR[d.code];
-            const botName = BOT_NAME[d.code] || d.code;
-            return (
-              <div key={d.code} className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all cursor-pointer" onClick={() => onNavigate("departement", { dept: d.code })}>
-                <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
-                  {avatarSrc ? (
-                    <img src={avatarSrc} alt={botName} className="h-7 w-7 rounded-full ring-2 ring-white/80 object-cover shrink-0" />
-                  ) : (
-                    <DIcon className="h-5 w-5 text-gray-900 stroke-[2.5] shrink-0" />
-                  )}
-                  <span className="text-sm font-bold text-gray-900">{d.label}</span>
+      {/* Section 4 — Explorer par departement (CEOB seulement — poupée russe) */}
+      {!isNonCEOB && (
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5"><Building2 className="h-3.5 w-3.5 text-gray-500" /> Explorer par departement</h3>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            {deptEntries.map(d => {
+              const DIcon = DEPT_ICONS[d.code] || Building2;
+              const avatarSrc = BOT_AVATAR[d.code];
+              const botName = BOT_NAME[d.code] || d.code;
+              return (
+                <div key={d.code} className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all cursor-pointer" onClick={() => onNavigate("departement", { dept: d.code })}>
+                  <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+                    {avatarSrc ? (
+                      <img src={avatarSrc} alt={botName} className="h-7 w-7 rounded-full ring-2 ring-white/80 object-cover shrink-0" />
+                    ) : (
+                      <DIcon className="h-5 w-5 text-gray-900 stroke-[2.5] shrink-0" />
+                    )}
+                    <span className="text-sm font-bold text-gray-900">{d.label}</span>
+                  </div>
+                  <div className="px-4 py-3 space-y-2.5">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700">{d.count} conferences</span>
+                    <span className="text-[10px] text-gray-500 ml-1.5">pour {botName}</span>
+                  </div>
                 </div>
-                <div className="px-4 py-3 space-y-2.5">
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700">{d.count} conferences</span>
-                  <span className="text-[10px] text-gray-500 ml-1.5">pour {botName}</span>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Bandeau bottom */}
       <div className="bg-blue-50/50 border border-blue-100 rounded-lg px-3 py-2 flex items-center gap-2">
         <Info className="h-3.5 w-3.5 text-blue-500 shrink-0" />
-        <span className="text-[9px] text-blue-700">Conference AI · {playbooks.length} conferences incluses · {familyEntries.length} categories · 10 outils interactifs</span>
+        <span className="text-[9px] text-blue-700">Conference AI · {isNonCEOB ? `${deptPlaybooks.length} conferences ${DEPT_SHORT_LABEL[botCode!] || botCode}` : `${playbooks.length} conferences incluses`} · {deptFamilyEntries.length} categories · 10 outils interactifs</span>
       </div>
     </div>
   );
@@ -8286,11 +8523,7 @@ const DEPT_GRADIENT: Record<string, string> = {
   CINOB: "from-rose-600 to-rose-500",
 };
 
-export const DEPT_DASH_ICON: Record<string, React.ElementType> = {
-  CEOB: Zap, CFOB: DollarSign, CTOB: Cpu, CPOB: Factory, COOB: Settings,
-  CROB: TrendingUp, CMOB: Megaphone, CSOB: Target, CHROB: Users,
-  CISOB: ShieldCheck, CLOB: Scale, CINOB: Lightbulb,
-};
+// DEPT_DASH_ICON déplacé en haut du fichier (avant DEPT_ICONS alias)
 
 export const DEPT_FULL_LABEL: Record<string, string> = {
   CEOB: "de la direction", CROB: "des ventes", CFOB: "des finances",
@@ -8300,12 +8533,7 @@ export const DEPT_FULL_LABEL: Record<string, string> = {
   CLOB: "juridique", CISOB: "de la sécurité",
 };
 
-export const DEPT_SHORT_LABEL: Record<string, string> = {
-  CEOB: "Direction", CROB: "Ventes", CFOB: "Finance",
-  CMOB: "Marketing", CTOB: "Technologie", COOB: "Opérations",
-  CPOB: "Production", CHROB: "RH", CINOB: "Innovation",
-  CSOB: "Stratégie", CLOB: "Juridique", CISOB: "Sécurité",
-};
+// DEPT_SHORT_LABEL déplacé en haut du fichier (source unique pour labels départements)
 
 const DEPT_DASHBOARD_SECTIONS: Record<string, DeptDashboardConfig> = {
   CEOB: {
@@ -8314,13 +8542,13 @@ const DEPT_DASHBOARD_SECTIONS: Record<string, DeptDashboardConfig> = {
     summary: "Vue consolidée de l'entreprise — pilotage stratégique et gouvernance",
     vitaa: [
       { label: "Ventes", value: "890K$", delta: "+12%", up: true, icon: TrendingUp },
-      { label: "Idées", value: "47", delta: "+8 ce mois", up: true, icon: Lightbulb },
+      { label: "Idées", value: "47", delta: "+8 ce mois", up: true, icon: Sparkles },
       { label: "Temps", value: "186h", delta: "92% alloué", up: true, icon: Clock },
       { label: "Argent", value: "2.4M$", delta: "+18%", up: true, icon: DollarSign },
       { label: "Actifs", value: "63", delta: "+5 ce mois", up: true, icon: Activity },
     ],
     row1: [
-      { icon: AlertTriangle, title: "Signaux", items: [
+      { icon: Bell, title: "Signaux", items: [
         { primary: "Subvention MESI", value: "Nouveau", valueColor: "text-green-600", secondary: "50K$ — manufacturiers innovants" },
         { primary: "Tarifs douaniers US", value: "Alerte", valueColor: "text-red-600", urgent: true, secondary: "Impact potentiel 8% revenus", phase: "attention" },
         { primary: "Tendance IA manuf.", secondary: "Article CEFRIO — adoption +40%" },
@@ -8330,14 +8558,14 @@ const DEPT_DASHBOARD_SECTIONS: Record<string, DeptDashboardConfig> = {
         { primary: "Nouveau CRM", value: "Approuvé", valueColor: "text-green-600", secondary: "D-101 — budget 45K$", phase: "retroaction" },
         { primary: "Restructuration prod.", value: "En attente", valueColor: "text-amber-600", secondary: "D-103 — analyse ROI", phase: "reflexion" },
       ]},
-      { icon: Target, title: "OKR", count: 4, items: [
+      { icon: Award, title: "OKR", count: 4, items: [
         { primary: "Croissance 15%", pct: 72, pctColor: "bg-green-500", secondary: "Objectif annuel", phase: "execution" },
         { primary: "Satisfaction client >90", pct: 88, pctColor: "bg-green-500", secondary: "NPS actuel: 88", phase: "retroaction" },
         { primary: "Marge brute 35%", pct: 91, pctColor: "bg-green-500", secondary: "En avance sur cible", phase: "retroaction" },
       ]},
     ],
     row2: [
-      { icon: Users, title: "Comité", count: 3, items: [
+      { icon: User, title: "Comité", count: 3, items: [
         { primary: "CA mensuel", value: "12 avr.", secondary: "5 points à l'ordre du jour" },
         { primary: "Comité stratégique", value: "18 avr.", secondary: "Revue portefeuille", phase: "reflexion" },
         { primary: "1:1 avec Frank (CFO)", value: "8 avr.", secondary: "Budget Q2" },
@@ -8378,18 +8606,18 @@ const DEPT_DASHBOARD_SECTIONS: Record<string, DeptDashboardConfig> = {
     summary: "Pipeline commercial, contacts et performance des revenus",
     vitaa: [
       { label: "Ventes", value: "3.2M$", delta: "pipeline actif", up: true, icon: TrendingUp },
-      { label: "Idées", value: "18", delta: "+6 leads", up: true, icon: Lightbulb },
+      { label: "Idées", value: "18", delta: "+6 leads", up: true, icon: Sparkles },
       { label: "Temps", value: "210h", delta: "88% alloué", up: true, icon: Clock },
       { label: "Argent", value: "1.8M$", delta: "Q1 réalisé", up: true, icon: DollarSign },
       { label: "Actifs", value: "247", delta: "contacts", up: true, icon: Activity },
     ],
     row1: [
-      { icon: AlertTriangle, title: "Signaux", items: [
+      { icon: Bell, title: "Signaux", items: [
         { primary: "Appel d'offres HQ", value: "Nouveau", valueColor: "text-green-600", secondary: "Automation industrielle — 500K$" },
         { primary: "Concurrent Acme", value: "Alerte", valueColor: "text-red-600", urgent: true, secondary: "Nouveau produit lancé", phase: "attention" },
         { primary: "Tendance secteur", secondary: "Demande +15% automatisation" },
       ]},
-      { icon: Users, title: "Contacts", count: 247, items: [
+      { icon: User, title: "Contacts", count: 247, items: [
         { primary: "Leads qualifiés", value: "18", valueColor: "text-green-600", secondary: "Nouveaux ce mois" },
         { primary: "Relances en retard", value: "7", valueColor: "text-red-600", secondary: ">5 jours sans suivi", phase: "attention" },
         { primary: "Score moyen lead", pct: 62, pctColor: "bg-blue-500", secondary: "Scoring automatique" },
@@ -8442,13 +8670,13 @@ const DEPT_DASHBOARD_SECTIONS: Record<string, DeptDashboardConfig> = {
     summary: "Santé financière, trésorerie et conformité comptable",
     vitaa: [
       { label: "Ventes", value: "287K$", delta: "A/R ouvert", up: false, icon: TrendingUp },
-      { label: "Idées", value: "6", delta: "projets actifs", up: true, icon: Lightbulb },
+      { label: "Idées", value: "6", delta: "projets actifs", up: true, icon: Sparkles },
       { label: "Temps", value: "160h", delta: "95% alloué", up: true, icon: Clock },
       { label: "Argent", value: "1.2M$", delta: "cash dispo", up: true, icon: DollarSign },
       { label: "Actifs", value: "1.8M$", delta: "nets", up: true, icon: Activity },
     ],
     row1: [
-      { icon: AlertTriangle, title: "Signaux", items: [
+      { icon: Bell, title: "Signaux", items: [
         { primary: "Taux directeur BoC", value: "Info", valueColor: "text-blue-600", secondary: "Prochaine annonce: 16 avril" },
         { primary: "RS&DE fédéral", value: "Nouveau", valueColor: "text-green-600", secondary: "Crédit estimé: 68K$" },
         { primary: "Réforme fiscale QC", secondary: "Impact PME manufacturières" },
@@ -8506,13 +8734,13 @@ const DEPT_DASHBOARD_SECTIONS: Record<string, DeptDashboardConfig> = {
     summary: "Campagnes, contenu et génération de leads qualifiés",
     vitaa: [
       { label: "Ventes", value: "18", delta: "+40% leads", up: true, icon: TrendingUp },
-      { label: "Idées", value: "12", delta: "contenus", up: true, icon: Lightbulb },
+      { label: "Idées", value: "12", delta: "contenus", up: true, icon: Sparkles },
       { label: "Temps", value: "140h", delta: "85% alloué", up: true, icon: Clock },
       { label: "Argent", value: "14.5K$", delta: "/mois budget", up: true, icon: DollarSign },
       { label: "Actifs", value: "2,340", delta: "followers", up: true, icon: Activity },
     ],
     row1: [
-      { icon: AlertTriangle, title: "Signaux", items: [
+      { icon: Bell, title: "Signaux", items: [
         { primary: "IA marketing B2B", value: "Tendance", valueColor: "text-blue-600", secondary: "Adoption +35% en 2026" },
         { primary: "LinkedIn algorithme", value: "Info", valueColor: "text-blue-600", secondary: "Changements Q2 2026" },
         { primary: "Marketing manufacturier", secondary: "Étude CEFRIO — budget moyen" },
@@ -8522,7 +8750,7 @@ const DEPT_DASHBOARD_SECTIONS: Record<string, DeptDashboardConfig> = {
         { primary: "Vidéos témoignages", value: "3", secondary: "Clients Boréal, MetalPro, TechFab", phase: "retroaction" },
         { primary: "En production", value: "4", valueColor: "text-blue-600", secondary: "2 articles + 2 études de cas", phase: "execution" },
       ]},
-      { icon: Users, title: "Leads", count: 18, items: [
+      { icon: User, title: "Leads", count: 18, items: [
         { primary: "Leads ce mois", value: "18", valueColor: "text-green-600", secondary: "Qualifiés par scoring" },
         { primary: "Coût par lead", value: "420$", secondary: "Cible: <500$" },
         { primary: "Conversion lead→client", pct: 12, pctColor: "bg-amber-500", secondary: "Cible: 15%", phase: "reflexion" },
@@ -8556,7 +8784,7 @@ const DEPT_DASHBOARD_SECTIONS: Record<string, DeptDashboardConfig> = {
         { primary: "Webinaire mensuel", value: "22 avr.", secondary: "Thème: diagnostic VITAA" },
         { primary: "Salon manufacturier", value: "8-9 mai", secondary: "Kiosque réservé — Mtl" },
       ]},
-      { icon: Megaphone, title: "Campagnes", count: 4, items: [
+      { icon: Newspaper, title: "Campagnes", count: 4, items: [
         { primary: "Campagne LinkedIn Q2", pct: 45, pctColor: "bg-pink-500", secondary: "Lancement: 15 avril", phase: "execution" },
         { primary: "Email nurturing", value: "Actif", valueColor: "text-green-600", secondary: "Taux ouverture: 34%", phase: "execution" },
         { primary: "Webinaire VITAA", value: "Planifié", valueColor: "text-blue-600", secondary: "22 avril — 40 inscrits", phase: "creation" },
@@ -8570,13 +8798,13 @@ const DEPT_DASHBOARD_SECTIONS: Record<string, DeptDashboardConfig> = {
     summary: "Infrastructure technique, sprints et sécurité informatique",
     vitaa: [
       { label: "Ventes", value: "12K", delta: "req/jour", up: true, icon: TrendingUp },
-      { label: "Idées", value: "8", delta: "features", up: true, icon: Lightbulb },
+      { label: "Idées", value: "8", delta: "features", up: true, icon: Sparkles },
       { label: "Temps", value: "200h", delta: "90% alloué", up: true, icon: Clock },
       { label: "Argent", value: "45K$", delta: "infra/mois", up: true, icon: DollarSign },
       { label: "Actifs", value: "52", delta: "repos", up: true, icon: Activity },
     ],
     row1: [
-      { icon: AlertTriangle, title: "Signaux", items: [
+      { icon: Bell, title: "Signaux", items: [
         { primary: "Claude 4.5 Opus", value: "Nouveau", valueColor: "text-green-600", secondary: "Évaluer pour T4 routing" },
         { primary: "LiveKit 2.0", value: "Stable", valueColor: "text-blue-600", secondary: "Migration planifiée Q2" },
         { primary: "React 19", secondary: "RC — tester compatibilité" },
@@ -8634,13 +8862,13 @@ const DEPT_DASHBOARD_SECTIONS: Record<string, DeptDashboardConfig> = {
     summary: "Processus, logistique, fournisseurs et contrôle qualité",
     vitaa: [
       { label: "Ventes", value: "91%", delta: "on-time", up: true, icon: TrendingUp },
-      { label: "Idées", value: "5", delta: "kaizen", up: true, icon: Lightbulb },
+      { label: "Idées", value: "5", delta: "kaizen", up: true, icon: Sparkles },
       { label: "Temps", value: "180h", delta: "88% alloué", up: true, icon: Clock },
       { label: "Argent", value: "18K$", delta: "/mois transport", up: true, icon: DollarSign },
       { label: "Actifs", value: "24", delta: "fournisseurs", up: true, icon: Activity },
     ],
     row1: [
-      { icon: AlertTriangle, title: "Signaux", items: [
+      { icon: Bell, title: "Signaux", items: [
         { primary: "Norme ISO 9001:2025", value: "Info", valueColor: "text-blue-600", secondary: "Transition requise d'ici 2027" },
         { primary: "Tarifs douaniers US", value: "Alerte", valueColor: "text-red-600", urgent: true, secondary: "Impact fournisseurs", phase: "attention" },
         { primary: "Lean 4.0 Québec", secondary: "Programme MESI — subvention dispo" },
@@ -8698,13 +8926,13 @@ const DEPT_DASHBOARD_SECTIONS: Record<string, DeptDashboardConfig> = {
     summary: "Lignes de production, maintenance, inventaire et commandes",
     vitaa: [
       { label: "Ventes", value: "8", delta: "commandes", up: true, icon: TrendingUp },
-      { label: "Idées", value: "3", delta: "améliorations", up: true, icon: Lightbulb },
+      { label: "Idées", value: "3", delta: "améliorations", up: true, icon: Sparkles },
       { label: "Temps", value: "720h", delta: "production", up: true, icon: Clock },
       { label: "Argent", value: "340K$", delta: "inventaire", up: true, icon: DollarSign },
       { label: "Actifs", value: "3", delta: "lignes", up: true, icon: Activity },
     ],
     row1: [
-      { icon: AlertTriangle, title: "Signaux", items: [
+      { icon: Bell, title: "Signaux", items: [
         { primary: "Robot collaboratif", value: "Étude", valueColor: "text-blue-600", secondary: "Universal Robots UR10e", phase: "reflexion" },
         { primary: "Industrie 4.0", secondary: "Programme MESI — capteurs IoT" },
         { primary: "Formation CNESST", value: "Requis", valueColor: "text-amber-600", secondary: "Renouvellement annuel", phase: "attention" },
@@ -8748,7 +8976,7 @@ const DEPT_DASHBOARD_SECTIONS: Record<string, DeptDashboardConfig> = {
         { primary: "Audit qualité client", value: "14 avr.", secondary: "MetalPro — ligne A" },
         { primary: "Réunion production", value: "Lun. 7h30", secondary: "Revue hebdomadaire" },
       ]},
-      { icon: Factory, title: "Lignes", count: 3, items: [
+      { icon: Package, title: "Lignes", count: 3, items: [
         { primary: "Ligne A — Assemblage", pct: 92, pctColor: "bg-green-500", secondary: "Plein régime", phase: "execution" },
         { primary: "Ligne B — Usinage", pct: 78, pctColor: "bg-blue-500", secondary: "Capacité disponible" },
         { primary: "Ligne C — Finition", pct: 65, pctColor: "bg-amber-500", secondary: "Maintenance préventive 10 avr.", phase: "reflexion" },
@@ -8762,13 +8990,13 @@ const DEPT_DASHBOARD_SECTIONS: Record<string, DeptDashboardConfig> = {
     summary: "Effectifs, recrutement, formation et climat organisationnel",
     vitaa: [
       { label: "Ventes", value: "47", delta: "employés", up: true, icon: TrendingUp },
-      { label: "Idées", value: "3", delta: "postes ouverts", up: false, icon: Lightbulb },
+      { label: "Idées", value: "3", delta: "postes ouverts", up: false, icon: Sparkles },
       { label: "Temps", value: "240h", delta: "formation Q1", up: true, icon: Clock },
       { label: "Argent", value: "189K$", delta: "/mois paie", up: true, icon: DollarSign },
       { label: "Actifs", value: "12", delta: "certifications", up: true, icon: Activity },
     ],
     row1: [
-      { icon: AlertTriangle, title: "Signaux", items: [
+      { icon: Bell, title: "Signaux", items: [
         { primary: "Pénurie main-d'œuvre QC", value: "Alerte", valueColor: "text-red-600", urgent: true, secondary: "Secteur manufacturier -8%", phase: "attention" },
         { primary: "Loi 96 francisation", value: "Info", valueColor: "text-blue-600", secondary: "Nouvelles obligations 2026" },
         { primary: "Tendance télétravail", secondary: "Hybride 3j/sem. — norme PME" },
@@ -8812,7 +9040,7 @@ const DEPT_DASHBOARD_SECTIONS: Record<string, DeptDashboardConfig> = {
         { primary: "Formation sécurité", value: "15 avr.", secondary: "Production — obligatoire" },
         { primary: "5 à 7 équipe", value: "25 avr.", secondary: "Team building mensuel" },
       ]},
-      { icon: Users, title: "Effectifs", items: [
+      { icon: User, title: "Effectifs", items: [
         { primary: "Total employés", value: "47", secondary: "44 temps plein + 3 temps partiel" },
         { primary: "Roulement annuel", value: "8%", valueColor: "text-green-600", secondary: "Industrie: 12%", phase: "retroaction" },
         { primary: "Ancienneté moyenne", value: "4.2 ans", secondary: "En hausse (+0.5 an)", phase: "retroaction" },
@@ -8826,13 +9054,13 @@ const DEPT_DASHBOARD_SECTIONS: Record<string, DeptDashboardConfig> = {
     summary: "Projets de recherche, brevets, veille technologique et crédits RS&DE",
     vitaa: [
       { label: "Ventes", value: "3", delta: "projets R&D", up: true, icon: TrendingUp },
-      { label: "Idées", value: "8", delta: "idées soumises", up: true, icon: Lightbulb },
+      { label: "Idées", value: "8", delta: "idées soumises", up: true, icon: Sparkles },
       { label: "Temps", value: "160h", delta: "R&D", up: true, icon: Clock },
       { label: "Argent", value: "200K$", delta: "budget annuel", up: true, icon: DollarSign },
       { label: "Actifs", value: "2", delta: "brevets", up: true, icon: Activity },
     ],
     row1: [
-      { icon: AlertTriangle, title: "Signaux", items: [
+      { icon: Bell, title: "Signaux", items: [
         { primary: "IA manufacturière", value: "Tendance", valueColor: "text-blue-600", secondary: "Adoption +40% en 2026" },
         { primary: "Crédits RS&DE", value: "Info", valueColor: "text-green-600", secondary: "Total estimé: 92K$" },
         { primary: "Industrie 4.0 Québec", secondary: "Programme MESI — capteurs IoT" },
@@ -8859,7 +9087,7 @@ const DEPT_DASHBOARD_SECTIONS: Record<string, DeptDashboardConfig> = {
         { primary: "CRIQ", value: "Actif", valueColor: "text-green-600", secondary: "Essais matériaux", phase: "execution" },
         { primary: "NRC-IRAP", value: "En discussion", valueColor: "text-blue-600", secondary: "Financement R&D fédéral", phase: "reflexion" },
       ]},
-      { icon: Lightbulb, title: "Pipeline idées", count: 8, items: [
+      { icon: Sparkles, title: "Pipeline idées", count: 8, items: [
         { primary: "Idées soumises", value: "8", secondary: "Ce trimestre — employés", phase: "creation" },
         { primary: "En évaluation", value: "3", secondary: "Comité innovation", phase: "reflexion" },
         { primary: "Implémentées", value: "2", valueColor: "text-green-600", secondary: "Kaizen + outil interne", phase: "retroaction" },
@@ -8890,13 +9118,13 @@ const DEPT_DASHBOARD_SECTIONS: Record<string, DeptDashboardConfig> = {
     summary: "Positionnement concurrentiel, alliances stratégiques et expansion",
     vitaa: [
       { label: "Ventes", value: "4.2%", delta: "part marché", up: true, icon: TrendingUp },
-      { label: "Idées", value: "3", delta: "alliances", up: true, icon: Lightbulb },
+      { label: "Idées", value: "3", delta: "alliances", up: true, icon: Sparkles },
       { label: "Temps", value: "120h", delta: "stratégie", up: true, icon: Clock },
       { label: "Argent", value: "0$", delta: "pas de budget propre", up: true, icon: DollarSign },
       { label: "Actifs", value: "14", delta: "risques suivis", up: false, icon: Activity },
     ],
     row1: [
-      { icon: AlertTriangle, title: "Signaux", items: [
+      { icon: Bell, title: "Signaux", items: [
         { primary: "Budget fédéral 2026", value: "Info", valueColor: "text-blue-600", secondary: "Programmes PME manufacturing" },
         { primary: "IA générative B2B", secondary: "McKinsey: +23% productivité" },
         { primary: "Nearshoring trend", secondary: "Opportunité: US → QC" },
@@ -8918,7 +9146,7 @@ const DEPT_DASHBOARD_SECTIONS: Record<string, DeptDashboardConfig> = {
         { primary: "Ontario", value: "Étude", valueColor: "text-amber-600", secondary: "Marché: 2,400 PME cibles", phase: "reflexion" },
         { primary: "Export US", value: "Phase 0", secondary: "Veille réglementaire" },
       ]},
-      { icon: AlertTriangle, title: "Risques", count: 14, items: [
+      { icon: Bell, title: "Risques", count: 14, items: [
         { primary: "Tarifs US", value: "Élevé", valueColor: "text-red-600", secondary: "Impact: 8% revenus", phase: "attention" },
         { primary: "Pénurie main-d'œuvre", value: "Moyen", valueColor: "text-amber-600", secondary: "3 postes ouverts", phase: "attention" },
         { primary: "Concentration clients", value: "Moyen", valueColor: "text-amber-600", secondary: "Top 3 = 35% revenus", phase: "reflexion" },
@@ -8940,7 +9168,7 @@ const DEPT_DASHBOARD_SECTIONS: Record<string, DeptDashboardConfig> = {
         { primary: "Board meeting", value: "12 avr.", secondary: "Présentation expansion" },
         { primary: "Veille concurrentielle", value: "Hebdo lun.", secondary: "Rapport automatisé" },
       ]},
-      { icon: Compass, title: "Positionnement", items: [
+      { icon: Eye, title: "Positionnement", items: [
         { primary: "Part de marché QC", value: "4.2%", secondary: "Manufacturiers automatisés" },
         { primary: "Avantage concurrentiel", value: "IA+Humain", secondary: "Positionnement unique", phase: "retroaction" },
         { primary: "NPS marché", pct: 72, pctColor: "bg-green-500", secondary: "Enquête Q1 2026", phase: "retroaction" },
@@ -8954,13 +9182,13 @@ const DEPT_DASHBOARD_SECTIONS: Record<string, DeptDashboardConfig> = {
     summary: "Contrats, conformité réglementaire, propriété intellectuelle et litiges",
     vitaa: [
       { label: "Ventes", value: "34", delta: "contrats actifs", up: true, icon: TrendingUp },
-      { label: "Idées", value: "1", delta: "litige", up: false, icon: Lightbulb },
+      { label: "Idées", value: "1", delta: "litige", up: false, icon: Sparkles },
       { label: "Temps", value: "80h", delta: "juridique", up: true, icon: Clock },
       { label: "Argent", value: "34K$", delta: "frais YTD", up: true, icon: DollarSign },
       { label: "Actifs", value: "287", delta: "documents", up: true, icon: Activity },
     ],
     row1: [
-      { icon: AlertTriangle, title: "Signaux", items: [
+      { icon: Bell, title: "Signaux", items: [
         { primary: "Loi C-27 fédérale", value: "Suivi", valueColor: "text-blue-600", secondary: "Impact données IA" },
         { primary: "Tarifs douaniers US", value: "Alerte", valueColor: "text-red-600", urgent: true, secondary: "Révision contrats export", phase: "attention" },
         { primary: "Réforme droit travail QC", secondary: "Projet de loi en cours" },
@@ -9018,13 +9246,13 @@ const DEPT_DASHBOARD_SECTIONS: Record<string, DeptDashboardConfig> = {
     summary: "Cybersécurité, contrôle d'accès, gestion des incidents et conformité",
     vitaa: [
       { label: "Ventes", value: "87", delta: "/100 score", up: true, icon: TrendingUp },
-      { label: "Idées", value: "0", delta: "incidents", up: true, icon: Lightbulb },
+      { label: "Idées", value: "0", delta: "incidents", up: true, icon: Sparkles },
       { label: "Temps", value: "100h", delta: "sécu/mois", up: true, icon: Clock },
       { label: "Argent", value: "420$", delta: "/employé", up: true, icon: DollarSign },
       { label: "Actifs", value: "52", delta: "comptes", up: true, icon: Activity },
     ],
     row1: [
-      { icon: AlertTriangle, title: "Signaux", items: [
+      { icon: Bell, title: "Signaux", items: [
         { primary: "Ransomware PME", value: "Alerte", valueColor: "text-red-600", urgent: true, secondary: "Hausse +60% au Canada", phase: "attention" },
         { primary: "Zero Trust architecture", value: "Tendance", valueColor: "text-blue-600", secondary: "Adoption croissante PME" },
         { primary: "Loi 25 échéances", secondary: "Prochaine phase: septembre 2026" },
@@ -9034,7 +9262,7 @@ const DEPT_DASHBOARD_SECTIONS: Record<string, DeptDashboardConfig> = {
         { primary: "MFA activé", pct: 94, pctColor: "bg-green-500", secondary: "49/52 comptes", phase: "retroaction" },
         { primary: "Revue accès", value: "Planifiée", valueColor: "text-blue-600", secondary: "Prochaine: 15 avril", phase: "reflexion" },
       ]},
-      { icon: AlertTriangle, title: "Incidents", count: 0, items: [
+      { icon: Bug, title: "Incidents", count: 0, items: [
         { primary: "Incidents ce mois", value: "0", valueColor: "text-green-600", secondary: "Aucun incident", phase: "retroaction" },
         { primary: "Tentatives bloquées", value: "127", secondary: "Firewall + rate limiting" },
         { primary: "Phishing détecté", value: "3", secondary: "Emails bloqués cette semaine" },
@@ -9092,7 +9320,7 @@ const DEPT_DASHBOARD_SECTIONS: Record<string, DeptDashboardConfig> = {
       { label: "ROI Réseau", value: "59K$", delta: "+22% Q1", up: true, icon: TrendingUp },
     ],
     row1: [
-      { icon: AlertTriangle, title: "Signaux & Alertes", count: 5, items: [
+      { icon: Bell, title: "Signaux & Alertes", count: 5, items: [
         { primary: "Score confiance MetalPro", value: "-8%", valueColor: "text-red-600", urgent: true, secondary: "Trust Engine — baisse détectée ce mois", phase: "attention" },
         { primary: "Contrat Cellule Ops", value: "Expire 30 avr.", valueColor: "text-amber-600", secondary: "Renouvellement requis — LogiTrans", phase: "attention" },
         { primary: "Ghost Delegate", value: "2 requêtes", valueColor: "text-blue-600", secondary: "Négociations en attente d'approbation", phase: "reflexion" },
@@ -9114,7 +9342,7 @@ const DEPT_DASHBOARD_SECTIONS: Record<string, DeptDashboardConfig> = {
         { primary: "Contrat Éco+ signé", value: "Humain", valueColor: "text-emerald-600", secondary: "Cellule Les Titans — 45K$", phase: "retroaction" },
         { primary: "Match Orbit9 trouvé", value: "B2B", valueColor: "text-violet-600", secondary: "Simone → Rich — score 87%", phase: "reflexion" },
       ]},
-      { icon: Factory, title: "Intelligence industrie", count: 5, items: [
+      { icon: HardHat, title: "Intelligence industrie", count: 5, items: [
         { primary: "Adoption IA manufacturing", value: "43%", valueColor: "text-green-600", secondary: "+39 pts depuis 2019 — STIQ/MEIE", phase: "retroaction" },
         { primary: "Programme Grand V (IQ)", value: "1 G$", valueColor: "text-blue-600", secondary: "225 projets financés en 5 mois", phase: "execution" },
         { primary: "Productivité QC", value: "65.90$/h", valueColor: "text-amber-600", secondary: "-10.5% vs Ontario — écart persistant", phase: "attention" },
@@ -9306,121 +9534,7 @@ function CockpitSectionHeader({ icon: Icon, title, count, color = "text-amber-50
   );
 }
 
-// ── DashboardBloc legacy — utilisé par DeptDashboardView (PAS le Cockpit) ──
-function DashboardBloc({ config, onAction, onHeaderClick }: { config: DashboardBlocConfig; onAction?: (phase: PhaseKey, context: string) => void; onHeaderClick?: () => void }) {
-  const Icon = config.icon;
-  return (
-    <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
-      <div
-        className={cn("flex items-center gap-2 px-4 py-2.5 border-b border-gray-100", UB_PASTEL_DEPT, onHeaderClick && "cursor-pointer hover:bg-[#00B4D8]/20 transition-colors")}
-        onClick={onHeaderClick}
-      >
-        <Icon className="h-4 w-4 text-gray-900 stroke-[2.5]" />
-        <span className="text-sm font-bold text-gray-900">{config.title}</span>
-        {config.count !== undefined && (
-          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600 ml-auto">{config.count}</span>
-        )}
-        {onHeaderClick && <ChevronRight className="h-3.5 w-3.5 text-gray-400 ml-auto" />}
-      </div>
-      <ul className="p-3 space-y-1">
-        {config.items.map((item, i) => {
-          const ps = item.phase ? PHASE_COLORS[item.phase] : null;
-          return (
-            <li key={i} className="group relative">
-              <div className="flex items-center gap-2.5 cursor-pointer hover:bg-gray-50 rounded-lg p-1.5 -m-1.5 transition-colors text-xs text-gray-800">
-                {item.urgent && <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" title="Urgent" />}
-                <div className="flex-1 min-w-0">
-                  {item.pct !== undefined ? (
-                    <>
-                      <div className="flex justify-between mb-0.5">
-                        <span className="font-medium">{item.primary}</span>
-                        <span className="font-bold">{item.pct}%</span>
-                      </div>
-                      <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                        <div className={cn("h-full rounded-full", item.pctColor || "bg-blue-500")} style={{ width: `${item.pct}%` }} />
-                      </div>
-                      {item.secondary && <p className="text-[11px] text-gray-400 mt-0.5">{item.secondary}</p>}
-                    </>
-                  ) : item.value ? (
-                    <>
-                      <div className="flex justify-between">
-                        <span className="font-medium">{item.primary}</span>
-                        <span className={cn("font-bold", item.valueColor || "text-gray-700")}>{item.value}</span>
-                      </div>
-                      <p className="text-[11px] text-gray-400">{item.secondary}</p>
-                    </>
-                  ) : (
-                    <>
-                      <span className="font-medium">{item.primary}</span>
-                      {item.secondary && <p className="text-[11px] text-gray-400">{item.secondary}</p>}
-                    </>
-                  )}
-                </div>
-                {ps && (
-                  <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-bold flex items-center gap-1 shrink-0", ps.badge)}>
-                    <span className={cn("w-2 h-2 rounded-full", ps.dot)} />
-                    {ps.label}
-                  </span>
-                )}
-              </div>
-              {onAction && <WorkActionsOverlay context={item.primary} onAction={onAction} />}
-            </li>
-          );
-        })}
-      </ul>
-    </div>
-  );
-}
-
-export function DeptDashboardView({ botCode, onAction }: { botCode: string; onAction?: (phase: string, context: string) => void }) {
-  const config = DEPT_DASHBOARD_SECTIONS[botCode] || DEPT_DASHBOARD_SECTIONS.CEOB;
-
-  const handleAction = onAction as ((phase: PhaseKey, context: string) => void) | undefined;
-
-  return (
-    <div className="space-y-4">
-      {/* VITAA — 5 piliers */}
-      <div className="grid grid-cols-5 gap-3">
-        {config.vitaa.map(kpi => (
-          <div key={kpi.label} className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
-            <div className={cn("flex items-center gap-2 px-4 py-2.5 border-b border-gray-100", UB_PASTEL_DEPT)}>
-              <kpi.icon className="h-4 w-4 text-gray-900 stroke-[2.5]" />
-              <span className="text-sm font-bold text-gray-900">{kpi.label}</span>
-            </div>
-            <div className="px-4 py-3">
-              <div className="text-2xl font-bold text-gray-800">{kpi.value}</div>
-              <div className={cn("text-xs flex items-center gap-1 mt-0.5", kpi.up ? "text-emerald-600" : "text-red-500")}>
-                {kpi.up ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
-                {kpi.delta}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Row 1 — blocs principaux */}
-      <div className="grid grid-cols-3 gap-3">
-        {config.row1.map((bloc, i) => (
-          <DashboardBloc key={i} config={bloc} onAction={handleAction} />
-        ))}
-      </div>
-
-      {/* Row 2 — blocs secondaires */}
-      <div className="grid grid-cols-3 gap-3">
-        {config.row2.map((bloc, i) => (
-          <DashboardBloc key={i} config={bloc} onAction={handleAction} />
-        ))}
-      </div>
-
-      {/* Row 3 — blocs transversaux */}
-      <div className="grid grid-cols-3 gap-3">
-        {config.row3.map((bloc, i) => (
-          <DashboardBloc key={i} config={bloc} onAction={handleAction} />
-        ))}
-      </div>
-    </div>
-  );
-}
+// DashboardBloc legacy + DeptDashboardView — RETIRÉS (remplacés par CockpitStoreView)
 
 // ══════════════════════════════════════════
 // COCKPIT STORE VIEW — Template Playbook Store appliquée au Dashboard
@@ -9446,7 +9560,7 @@ const COCKPIT_EXTRA_BLOCS: Record<string, DashboardBlocConfig[]> = {
     ]},
   ],
   CTOB: [
-    { icon: Layers, title: "Architecture", items: [
+    { icon: Cpu, title: "Architecture", items: [
       { primary: "Migration microservices", pct: 35, pctColor: "bg-violet-500", secondary: "Phase 1 — API Gateway", phase: "execution" },
       { primary: "Cache Redis", value: "Actif", valueColor: "text-green-600", secondary: "Hit rate: 89%", phase: "retroaction" },
       { primary: "WebSocket pipeline", pct: 90, pctColor: "bg-green-500", secondary: "Real-time events", phase: "retroaction" },
@@ -9482,7 +9596,7 @@ const COCKPIT_EXTRA_BLOCS: Record<string, DashboardBlocConfig[]> = {
     ]},
   ],
   CSOB: [
-    { icon: Compass, title: "SWOT", items: [
+    { icon: Eye, title: "SWOT", items: [
       { primary: "Forces", value: "8", valueColor: "text-green-600", secondary: "IA+Humain, réseau REAI, Brain Team" },
       { primary: "Faiblesses", value: "4", valueColor: "text-amber-600", secondary: "Scale, dépendance Carl, cash" },
       { primary: "Opportunités", value: "6", valueColor: "text-blue-600", secondary: "Nearshoring, IA manuf, Orbit9" },
@@ -9692,23 +9806,32 @@ export function CockpitStoreView({ embedded = false, onAction, initialDept = "CE
 
   return (
     <Wrapper {...wrapperProps as any}>
-      {/* Hero header gradient — dynamique selon département */}
-      <div className={cn("relative bg-gradient-to-r rounded-xl overflow-hidden", gradient)}>
-        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-20 h-20 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
-        <div className="relative flex items-center gap-4 p-4">
-          <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
-            <DeptIcon className="h-6 w-6 text-white" />
+      {/* Hero — Living Heroes V20 Cockpit */}
+      <LivingHero
+        blur1="bg-blue-100" blur2="bg-cyan-100/50"
+        subtitleColor="text-blue-600" subtitle="Direction & Gouvernance"
+        title="Prenez le contrôle de la trajectoire."
+        description="Visualisez l'état global et propulsez vos indicateurs clés avec une clarté executive."
+      >
+        <div className="relative w-[360px] h-[140px]">
+          <div className="absolute right-[10px] bottom-[-20px] w-40 h-40 opacity-40">
+            <svg viewBox="0 0 100 100" className="w-full h-full text-blue-400"><circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="0.5" strokeDasharray="2 4"/><circle cx="50" cy="50" r="30" fill="none" stroke="currentColor" strokeWidth="0.5"/><circle cx="50" cy="50" r="15" fill="none" stroke="currentColor" strokeWidth="0.5" strokeDasharray="1 2"/><line x1="50" y1="5" x2="50" y2="95" stroke="currentColor" strokeWidth="0.5" opacity="0.5"/><line x1="5" y1="50" x2="95" y2="50" stroke="currentColor" strokeWidth="0.5" opacity="0.5"/><g className="anim-radar"><path d="M50 50 L50 5 A45 45 0 0 1 95 50 Z" fill="url(#radar-grad-ck)"/></g><defs><radialGradient id="radar-grad-ck" cx="50%" cy="50%" r="50%"><stop offset="0%" stopColor="currentColor" stopOpacity="0.8"/><stop offset="100%" stopColor="currentColor" stopOpacity="0"/></radialGradient></defs></svg>
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="text-lg font-bold text-white">Cockpit — {deptLabel}</h3>
-              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white">{gridBlocs.reduce((acc, b) => acc + b.items.length, 0)} items</span>
+          <div className="glass-base absolute right-[60px] top-[10px] w-64 h-40 p-5 border-blue-100">
+            <div className="flex justify-between items-center mb-3">
+              <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest" style={{fontFamily:'ui-monospace,monospace'}}>Vitesse de croissance</h4>
+              <div className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" /><span className="text-[9px] font-bold text-blue-500 tracking-wider">EN DIRECT</span></div>
             </div>
-            <p className="text-xs text-white/80">{config.summary}</p>
+            <div className="absolute inset-x-5 top-12 bottom-6 flex flex-col justify-between opacity-20"><div className="w-full h-px bg-blue-300" /><div className="w-full h-px bg-blue-300" /><div className="w-full h-px bg-blue-300" /></div>
+            <div className="relative flex items-end justify-between gap-3 h-[60px] w-full mt-2">
+              <div className="w-8 bg-gradient-to-t from-blue-100 to-blue-300 rounded-sm anim-bar-1" style={{height:'30%'}} />
+              <div className="w-8 bg-gradient-to-t from-blue-100 to-blue-400 rounded-sm anim-bar-2" style={{height:'50%'}} />
+              <div className="w-8 bg-gradient-to-t from-cyan-200 to-cyan-400 rounded-t-sm shadow-[0_0_15px_rgba(34,211,238,0.4)] anim-bar-3 relative" style={{height:'80%'}}><div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-4 h-1 bg-white rounded-full" /></div>
+              <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100"><path d="M 10 70 Q 50 60 90 20" fill="none" stroke="url(#line-grad-ck)" strokeWidth="3" strokeLinecap="round" className="anim-curve"/><defs><linearGradient id="line-grad-ck" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#3b82f6"/><stop offset="100%" stopColor="#2dd4bf"/></linearGradient></defs></svg>
+            </div>
           </div>
         </div>
-      </div>
+      </LivingHero>
 
       {/* VITAA 5 piliers */}
       <div className="grid grid-cols-5 gap-3">
@@ -9743,7 +9866,8 @@ export function CockpitStoreView({ embedded = false, onAction, initialDept = "CE
 
       {/* Sidebar départements + Contenu */}
       <div className="flex gap-3">
-        {/* Sidebar — pt-8 en mode détail pour aligner avec le hero header (skip bouton Retour) */}
+        {/* Sidebar départements — CEOB seulement (poupée russe: Direction voit tout, autres = scopé) */}
+        {initialDept === "CEOB" && (
         <div className={cn("w-[180px] shrink-0 space-y-0.5 transition-all", selectedBloc && "pt-8")}>
           {DEPT_ORDER.map(code => {
             const isActive = selectedDept === code;
@@ -9770,6 +9894,7 @@ export function CockpitStoreView({ embedded = false, onAction, initialDept = "CE
             );
           })}
         </div>
+        )}
 
         {/* Contenu — CockpitCard grid 2 cols OU drill-down CockpitBlocDetail */}
         <div className="flex-1 min-w-0 space-y-3">
@@ -9806,6 +9931,10 @@ interface BlueprintDepartementProps {
   onStats?: (stats: { tier: string; tierLabel: string; score: number }) => void;
   /** Quand true, applique le style V2 (pattern Cockpit/Playbook Store) */
   useV2Style?: boolean;
+  /** Quand true, rend SEULEMENT le contenu (grille sections + drill-down), sans sidebar/hero/KPIs */
+  contentOnly?: boolean;
+  /** Section active forcée depuis le parent (utilisé avec contentOnly pour synchroniser sidebar parent) */
+  activeSectionId?: string;
 }
 
 export type HeaderView = "blueprint" | "ca" | "comites" | "personnel" | "bot";
@@ -9818,7 +9947,7 @@ export const BLUEPRINT_HEADER_TABS: { key: HeaderView; label: string; icon: Reac
   { key: "bot", label: "Brain Team", icon: Bot },
 ];
 
-export function BlueprintDepartement({ botCode, headerGradient, sizeTier: propTier, hideHeader, activeHeaderView, onHeaderViewChange, onStats, useV2Style }: BlueprintDepartementProps) {
+export function BlueprintDepartement({ botCode, headerGradient, sizeTier: propTier, hideHeader, activeHeaderView, onHeaderViewChange, onStats, useV2Style, contentOnly, activeSectionId }: BlueprintDepartementProps) {
   const config = getBlueprintConfig(botCode);
   const { dispatch } = useCanvasActions();
   const [tier, setTier] = useState<SizeTier>(propTier || "T2");
@@ -9832,6 +9961,20 @@ export function BlueprintDepartement({ botCode, headerGradient, sizeTier: propTi
   const [dirty, setDirty] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sectionGridView, setSectionGridView] = useState(true);
+  // Département sélectionné dans la section "Départements" (sidebar) — null = pas de drill-down dept
+  const [selectedDeptCode, setSelectedDeptCode] = useState<string | null>(null);
+  // Sous-section active du département sélectionné (indépendant de activeSub qui est pour Direction)
+  const [selectedDeptSub, setSelectedDeptSub] = useState<string | undefined>(undefined);
+  // Départements expandés dans la sidebar (accordion, même pattern que Data Room)
+  const [expandedBpDepts, setExpandedBpDepts] = useState<Set<string>>(new Set());
+
+  // Synchroniser activeSub avec activeSectionId (prop parent → contentOnly mode)
+  useEffect(() => {
+    if (activeSectionId) {
+      setActiveSub(activeSectionId);
+      setSectionGridView(false);
+    }
+  }, [activeSectionId]);
 
   useEffect(() => {
     if (!config) return;
@@ -9921,6 +10064,78 @@ export function BlueprintDepartement({ botCode, headerGradient, sizeTier: propTi
     return total > 0 ? Math.round((filled / total) * 100) : (section.kpis.length > 0 ? 0 : 100);
   };
 
+  // ═══ MODE CONTENT ONLY — Rend SEULEMENT le contenu (grille sections + drill-down), pas de sidebar/hero/KPIs ═══
+  if (contentOnly) {
+    const coActiveSection = visibleSections.find(s => s.id === activeSub) || visibleSections[0];
+    const coSectionGridView = !activeSectionId; // Grille si pas de section forcée
+
+    return (
+      <div className="space-y-3">
+        {coSectionGridView ? (
+          /* Grille de sections avec % complétion — même pattern que le mode normal */
+          <div className="grid grid-cols-2 gap-3">
+            {visibleSections.filter(s => s.id !== "vue_consolidee").map(section => {
+              const SIcon = resolveIcon(section.icon);
+              const pct = sectionProgress(section);
+              const fields = getFieldsForTier(section.fields, tier);
+              const filled = fields.filter(f => { const v = data[`${section.id}.${f.id}`]; return v !== undefined && v !== "" && v !== "[]"; }).length;
+              return (
+                <div key={section.id} className="rounded-xl border border-gray-200 shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all">
+                  <div
+                    className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl cursor-pointer hover:bg-[#00B4D8]/20 transition-colors"
+                    onClick={() => { setActiveSub(section.id); }}
+                  >
+                    <SIcon className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+                    <span className="text-sm font-bold text-gray-900 flex-1 truncate">{section.label}</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600">{pct}%</span>
+                    <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
+                  </div>
+                  <div className="px-4 py-3 space-y-2">
+                    <p className="text-xs text-gray-500 leading-relaxed line-clamp-2">{section.description}</p>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div className={cn("h-full rounded-full", pct >= 70 ? "bg-emerald-500" : pct >= 40 ? "bg-amber-400" : "bg-red-400")} style={{ width: `${pct}%` }} />
+                      </div>
+                      <span className="text-[9px] text-gray-400">{filled}/{fields.length}</span>
+                    </div>
+                    <PertinenceBadge p={section.pertinence[tier]} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : coActiveSection && (
+          /* Drill-down section — même pattern que le mode normal */
+          <div className="rounded-xl border border-gray-200 shadow-sm bg-white">
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
+              {(() => { const Icon = resolveIcon(coActiveSection.icon); return <Icon className="h-4 w-4 text-gray-900 stroke-[2.5]" />; })()}
+              <span className="text-sm font-bold text-gray-900 flex-1 truncate">{coActiveSection.label}</span>
+              <button onClick={(e) => { e.stopPropagation(); openInAtelier(coActiveSection); }}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-bold transition-all cursor-pointer bg-[#00B4D8]/15 text-[#00B4D8] hover:bg-[#00B4D8]/25"
+                title="Ouvrir dans l'Atelier">
+                <PenLine className="h-3.5 w-3.5" /> Atelier
+              </button>
+              <PertinenceBadge p={coActiveSection.pertinence[tier]} />
+            </div>
+            <div className="px-4 py-3">
+              <p className="text-xs text-gray-600 font-medium leading-relaxed">{coActiveSection.description}</p>
+              {coActiveSection.intro && (
+                <div className="mt-2 flex items-start gap-2 bg-white/60 rounded-lg px-3 py-2 border border-blue-100/50">
+                  <Sparkles className="h-3.5 w-3.5 text-blue-400 mt-0.5 shrink-0" />
+                  <p className="text-[9px] text-gray-500 leading-relaxed">{coActiveSection.intro}</p>
+                </div>
+              )}
+            </div>
+            <div className="p-4 border-t border-gray-100">
+              <SubSectionContent section={coActiveSection} tier={tier} data={data} onFieldChange={handleFieldChange} onSave={handleSave} saving={saving} dirty={dirty} />
+              <CrossReferencePanel botCode={botCode} sectionId={coActiveSection.id} />
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
       {/* HEADER — caché quand hideHeader (intégré dans top barre parent) */}
@@ -10006,30 +10221,42 @@ export function BlueprintDepartement({ botCode, headerGradient, sizeTier: propTi
       {/* LAYOUT DOCFORGE — Sidebar TOC + Contenu (pattern Cockpit = même structure que CockpitStoreView) */}
       {headerView === "blueprint" && (
         <div className="space-y-3">
-          {/* Hero header gradient — identique au Cockpit */}
-          <div className={cn("relative bg-gradient-to-r rounded-xl overflow-hidden", headerGradient)}>
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-            <div className="absolute bottom-0 left-0 w-20 h-20 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
-            <div className="relative flex items-center gap-4 p-4">
-              <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
-                <Layers className="h-6 w-6 text-white" />
+          {/* Hero — Living Heroes V20 Blueprint */}
+          <LivingHero
+            blur1="bg-indigo-100/60" blur2="bg-sky-100/50"
+            subtitleColor="text-indigo-600" subtitle="Architecture Fondamentale"
+            title="L'ADN de votre création, encodé en dur."
+            description="Gravez l'organigramme et imposez les lois vectorielles de votre structure en direct."
+          >
+            <div className="relative w-[340px] h-[160px] flex flex-col items-center justify-center mt-2 px-6">
+              {/* ROOT NODE */}
+              <div className="org-node anim-org-root bg-gradient-to-br from-indigo-500 to-sky-500 shadow-md w-32 h-10 flex items-center justify-center text-white relative z-10 scale-90">
+                <span className="text-[10px] font-bold uppercase tracking-widest opacity-90 relative pt-1">Architecture</span>
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="text-lg font-bold text-white">Blueprint — {config.deptLabel}</h3>
-                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white">{visibleSections.length} sections</span>
-                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white">{SIZE_TIERS.find(t => t.id === tier)?.label}</span>
+              {/* VERTICAL LINE DOWN FROM ROOT */}
+              <div className="relative w-full h-8 z-0">
+                <div className="absolute w-px bg-slate-200 left-1/2 top-0 bottom-0 -ml-[0.5px]" />
+                <div className="absolute w-px bg-indigo-400 left-1/2 top-0 -ml-[0.5px] shadow-[0_0_10px_#6366f1] anim-org-line-vert" />
+              </div>
+              {/* HORIZONTAL BRANCHING LINE */}
+              <div className="relative w-[220px] h-px bg-slate-200 z-0">
+                <div className="absolute left-1/2 top-0 h-full bg-sky-400 shadow-[0_0_8px_#38bdf8] anim-org-line-hor" style={{transform:'translateX(-50%)'}} />
+                <div className="absolute w-px h-6 bg-slate-200 left-0 top-0" /><div className="absolute w-px h-6 bg-slate-200 left-1/2 top-0" /><div className="absolute w-px h-6 bg-slate-200 right-0 top-0" />
+              </div>
+              {/* CHILD NODES */}
+              <div className="flex justify-between w-[260px] mt-6 relative z-10">
+                <div className="org-node anim-org-child-1 w-20 h-8 flex flex-col items-center justify-center px-1">
+                  <div className="w-8 h-1 bg-slate-200 rounded-full mb-1" /><div className="w-12 h-1 bg-slate-100 rounded-full" />
                 </div>
-                <p className="text-xs text-white/80">{config.intro || "Aperçu stratégique de votre Blueprint d'entreprise. Complétez les sections pour structurer votre vision, vos objectifs et votre plan d'action."}</p>
-                <div className="flex items-center gap-3 mt-2">
-                  <div className="flex-1 h-1.5 bg-white/20 rounded-full overflow-hidden">
-                    <div className="h-full rounded-full bg-white transition-all duration-700" style={{ width: `${completionScore}%` }} />
-                  </div>
-                  <span className="text-[10px] font-bold text-white">{completionScore}%</span>
+                <div className="org-node anim-org-child-2 w-20 h-8 flex flex-col items-center justify-center px-1">
+                  <div className="w-8 h-1 bg-slate-200 rounded-full mb-1" /><div className="w-12 h-1 bg-slate-100 rounded-full" />
+                </div>
+                <div className="org-node anim-org-child-3 w-20 h-8 flex flex-col items-center justify-center px-1">
+                  <div className="w-8 h-1 bg-slate-200 rounded-full mb-1" /><div className="w-12 h-1 bg-slate-100 rounded-full" />
                 </div>
               </div>
             </div>
-          </div>
+          </LivingHero>
 
           {/* KPI Cards — Pattern Cockpit VITAA (grid-cols-5, bg-[#00B4D8]/10 rounded-t-xl) */}
           {(() => {
@@ -10040,10 +10267,10 @@ export function BlueprintDepartement({ botCode, headerGradient, sizeTier: propTi
             const completedSections = visibleSections.filter(s => sectionProgress(s) >= 100).length;
             const prioritySections = visibleSections.filter(s => s.fields.length > 0 && sectionProgress(s) < 50).length;
             const kpis = [
-              { icon: Target, label: "Score", value: `${completionScore}%`, delta: completionScore >= 50 ? "En bonne voie" : "À compléter", up: completionScore >= 50 },
-              { icon: Layers, label: "Sections", value: `${completedSections}/${visibleSections.length}`, delta: `${completedSections} complétées`, up: completedSections > 0 },
+              { icon: Award, label: "Score", value: `${completionScore}%`, delta: completionScore >= 50 ? "En bonne voie" : "À compléter", up: completionScore >= 50 },
+              { icon: FolderOpen, label: "Sections", value: `${completedSections}/${visibleSections.length}`, delta: `${completedSections} complétées`, up: completedSections > 0 },
               { icon: FileText, label: "Champs", value: `${filledFields}/${totalFields}`, delta: `${totalFields - filledFields} restants`, up: filledFields > totalFields / 2 },
-              { icon: AlertTriangle, label: "Priorités", value: `${prioritySections}`, delta: prioritySections === 0 ? "Aucune urgence" : "À compléter", up: prioritySections === 0 },
+              { icon: Bell, label: "Priorités", value: `${prioritySections}`, delta: prioritySections === 0 ? "Aucune urgence" : "À compléter", up: prioritySections === 0 },
               { icon: Zap, label: "Phase", value: PHASES.find(p => p.id === phase)?.emoji || "🚀", delta: PHASES.find(p => p.id === phase)?.label || "Démarrage", up: true },
             ];
             return (
@@ -10120,18 +10347,18 @@ export function BlueprintDepartement({ botCode, headerGradient, sizeTier: propTi
           <div className="w-[180px] shrink-0 space-y-0.5">
             {visibleSections.map(section => {
               const pct = sectionProgress(section);
-              const isActive = activeSub === section.id;
+              const isActive = activeSub === section.id && !selectedDeptCode;
               const isConsolidee = section.id === "vue_consolidee";
               const SectionIcon = resolveIcon(section.icon);
 
               return (
                 <button
                   key={section.id}
-                  onClick={() => { setActiveSub(section.id); setSectionGridView(false); }}
+                  onClick={() => { setActiveSub(section.id); setSectionGridView(isConsolidee); setSelectedDeptCode(null); setSelectedDeptSub(undefined); }}
                   className={cn(
                     "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
-                    isActive && !sectionGridView ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent",
-                    isConsolidee && (sectionGridView || !isActive) && "bg-gradient-to-r from-slate-50 to-blue-50/50 border-blue-100/50"
+                    isConsolidee && sectionGridView && !selectedDeptCode ? "bg-blue-50 border border-blue-200 shadow-sm" : isActive && !sectionGridView ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent",
+                    isConsolidee && !sectionGridView && !selectedDeptCode && "bg-gradient-to-r from-slate-50 to-blue-50/50 border-blue-100/50"
                   )}
                 >
                   <div className="flex items-center gap-1.5">
@@ -10142,13 +10369,169 @@ export function BlueprintDepartement({ botCode, headerGradient, sizeTier: propTi
                 </button>
               );
             })}
+
+            {/* ── SECTION DÉPARTEMENTS — Accordion (même pattern que Data Room sidebar) ── */}
+            {botCode === "CEOB" && (
+              <>
+                <div className={SF.separator} />
+                <div className={SF.sectionLabel}>
+                  Départements
+                </div>
+                {OTHER_BOTS.map(dept => {
+                  const DIcon = DEPT_DASH_ICON[dept.code] || Zap;
+                  const isActiveDept = selectedDeptCode === dept.code;
+                  const isExpanded = expandedBpDepts.has(dept.code);
+                  const deptConfig = getBlueprintConfig(dept.code);
+                  const deptSections = deptConfig ? getVisibleSubSections(deptConfig, tier).filter(s => s.id !== "vue_consolidee" && !s.id.startsWith("playbooks_")) : [];
+                  return (
+                    <div key={dept.code}>
+                      <button
+                        onClick={() => {
+                          setExpandedBpDepts(prev => {
+                            const next = new Set(prev);
+                            if (next.has(dept.code)) next.delete(dept.code); else next.add(dept.code);
+                            return next;
+                          });
+                          setSelectedDeptCode(dept.code);
+                          setSelectedDeptSub(undefined);
+                          setSectionGridView(false);
+                        }}
+                        className={cn(
+                          "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
+                          isActiveDept && !isExpanded ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent"
+                        )}
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <ChevronDown className={cn("h-3.5 w-3.5 shrink-0 transition-transform", isExpanded ? "" : "-rotate-90", isActiveDept ? "text-blue-500" : "text-gray-300")} />
+                          <DIcon className={cn("h-3.5 w-3.5 shrink-0", isActiveDept ? "text-blue-500" : "text-gray-400")} />
+                          <span className={cn("text-[10px] font-bold flex-1 leading-tight", isActiveDept ? "text-blue-700" : "text-gray-700")}>{dept.label}</span>
+                          <span className="text-[9px] text-gray-400">{deptSections.length}</span>
+                        </div>
+                      </button>
+                      {isExpanded && deptSections.map(s => {
+                        const SIcon = resolveIcon(s.icon);
+                        const isSubActive = selectedDeptCode === dept.code && selectedDeptSub === s.id;
+                        return (
+                          <button
+                            key={s.id}
+                            onClick={() => { setSelectedDeptCode(dept.code); setSelectedDeptSub(s.id); setSectionGridView(false); }}
+                            className={cn(
+                              "w-full pl-6 pr-2.5 py-1 rounded-lg text-left transition-all cursor-pointer",
+                              isSubActive ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent"
+                            )}
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <SIcon className={cn("h-3.5 w-3.5 shrink-0", isSubActive ? "text-blue-500" : "text-gray-400")} />
+                              <span className={cn("text-[10px] font-medium flex-1 leading-tight", isSubActive ? "text-blue-700" : "text-gray-600")}>{s.label}</span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </>
+            )}
           </div>
 
-          {/* CONTENU — Pattern Store exact: grid-cols-2 CockpitCards OU drill-down CockpitBlocDetail */}
+          {/* CONTENU — Pattern Store exact: grid-cols-2 CockpitCards OU drill-down CockpitBlocDetail OU Blueprint département */}
           <div className="flex-1 min-w-0 space-y-3">
-            {sectionGridView ? (
-              /* GRILLE — Chaque section = CockpitCard clickable (pattern Store grid-cols-2 gap-3) */
-              <div className="grid grid-cols-2 gap-3">
+            {selectedDeptCode ? (
+              /* DRILL-DOWN DÉPARTEMENT — Contenu seulement (pas de double sidebar) */
+              <BlueprintDepartement
+                botCode={selectedDeptCode}
+                headerGradient={OTHER_BOTS.find(b => b.code === selectedDeptCode)?.gradient || "from-blue-600 to-blue-500"}
+                sizeTier={tier}
+                contentOnly
+                activeSectionId={selectedDeptSub}
+                hideHeader
+              />
+            ) : sectionGridView ? (
+              /* VUE D'ENSEMBLE — VITAA/FAAS + grille sections */
+              <div className="space-y-3">
+                {/* VITAA + FAAS — boxes côte à côte */}
+                <div className="grid grid-cols-2 gap-3">
+                  {/* VITAA — 5 piliers d'affaires */}
+                  <div className="rounded-xl border border-gray-200 shadow-sm bg-white">
+                    <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
+                      <Heart className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+                      <span className="text-sm font-bold text-gray-900 flex-1">VITAA — Piliers d'affaires</span>
+                    </div>
+                    <div className="p-2.5 space-y-1.5">
+                      {[
+                        { letter: "V", label: "Vente", score: 38, color: "bg-blue-500" },
+                        { letter: "I", label: "Idée", score: 42, color: "bg-purple-500" },
+                        { letter: "T", label: "Temps", score: 61, color: "bg-emerald-500" },
+                        { letter: "A", label: "Argent", score: 55, color: "bg-amber-500" },
+                        { letter: "A", label: "Actif", score: 29, color: "bg-red-500" },
+                      ].map((p) => (
+                        <div key={p.letter + p.label}>
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <div className={cn("w-5 h-5 rounded flex items-center justify-center text-white text-[9px] font-bold shrink-0", p.color)}>{p.letter}</div>
+                            <span className="text-[9px] font-medium text-gray-800 flex-1">{p.label}</span>
+                            <span className={cn("text-xs font-bold", p.score >= 50 ? "text-green-600" : p.score >= 35 ? "text-amber-600" : "text-red-600")}>{p.score}</span>
+                            <span className={cn("text-[9px] px-1 py-0.5 rounded border font-medium",
+                              p.score < 35 ? "text-red-600 bg-red-50 border-red-200" :
+                              p.score < 50 ? "text-amber-600 bg-amber-50 border-amber-200" :
+                              "text-green-600 bg-green-50 border-green-200"
+                            )}>{p.score < 35 ? "critique" : p.score < 50 ? "risque" : "sain"}</span>
+                          </div>
+                          <div className="relative h-2 bg-gray-100 rounded-full overflow-hidden ml-7">
+                            <div className={cn("h-full rounded-full absolute", p.color)} style={{ width: `${p.score}%` }} />
+                          </div>
+                        </div>
+                      ))}
+                      <div className="pt-1.5 border-t border-gray-100 mt-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[9px] font-bold text-gray-500 uppercase">Score VITAA</span>
+                          <span className="text-sm font-bold text-gray-800">45/100</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {/* FAAS — 4 piliers relationnels */}
+                  <div className="rounded-xl border border-gray-200 shadow-sm bg-white">
+                    <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
+                      <Users className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+                      <span className="text-sm font-bold text-gray-900 flex-1">FAAS — Capital social</span>
+                    </div>
+                    <div className="p-2.5 space-y-1.5">
+                      {[
+                        { letter: "F", label: "Fraternité", score: 52, color: "bg-rose-500", desc: "Cohésion équipe, rétention, culture" },
+                        { letter: "A", label: "Alliance", score: 35, color: "bg-pink-500", desc: "Partenaires B2B, co-création, REAI" },
+                        { letter: "A", label: "Associés", score: 28, color: "bg-fuchsia-500", desc: "CA, mentors, conseillers, pairs" },
+                        { letter: "S", label: "Social", score: 44, color: "bg-violet-500", desc: "Réputation, thought leadership" },
+                      ].map((p) => (
+                        <div key={p.letter + p.label}>
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <div className={cn("w-5 h-5 rounded flex items-center justify-center text-white text-[9px] font-bold shrink-0", p.color)}>{p.letter}</div>
+                            <div className="flex-1 min-w-0">
+                              <span className="text-[9px] font-medium text-gray-800">{p.label}</span>
+                              <p className="text-[9px] text-gray-400 leading-tight truncate">{p.desc}</p>
+                            </div>
+                            <span className={cn("text-xs font-bold", p.score >= 50 ? "text-green-600" : p.score >= 35 ? "text-amber-600" : "text-red-600")}>{p.score}</span>
+                            <span className={cn("text-[9px] px-1 py-0.5 rounded border font-medium",
+                              p.score < 35 ? "text-red-600 bg-red-50 border-red-200" :
+                              p.score < 50 ? "text-amber-600 bg-amber-50 border-amber-200" :
+                              "text-green-600 bg-green-50 border-green-200"
+                            )}>{p.score < 35 ? "critique" : p.score < 50 ? "risque" : "sain"}</span>
+                          </div>
+                          <div className="relative h-2 bg-gray-100 rounded-full overflow-hidden ml-7">
+                            <div className={cn("h-full rounded-full absolute", p.color)} style={{ width: `${p.score}%` }} />
+                          </div>
+                        </div>
+                      ))}
+                      <div className="pt-1.5 border-t border-gray-100 mt-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[9px] font-bold text-gray-500 uppercase">Score FAAS</span>
+                          <span className="text-sm font-bold text-gray-800">40/100</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {/* Sections du Blueprint — grille avec % complétion */}
+                <div className="grid grid-cols-2 gap-3">
                 {visibleSections.filter(s => s.id !== "vue_consolidee").map(section => {
                   const SIcon = resolveIcon(section.icon);
                   const pct = sectionProgress(section);
@@ -10178,21 +10561,16 @@ export function BlueprintDepartement({ botCode, headerGradient, sizeTier: propTi
                     </div>
                   );
                 })}
+                </div>
               </div>
             ) : activeSection && activeSection.id === "vue_consolidee" && botCode === "CEOB" ? (
               /* VUE CONSOLIDÉE (CEOB seulement) */
               <div className="space-y-3">
-                <button onClick={() => setSectionGridView(true)} className="text-xs text-blue-600 hover:text-blue-800 font-bold cursor-pointer flex items-center gap-1">
-                  <ChevronRight className="h-3.5 w-3.5 rotate-180" /> Retour à la vue d&apos;ensemble
-                </button>
                 <VueConsolidee tier={tier} />
               </div>
             ) : activeSection && (
               /* DRILL-DOWN — Pattern CockpitBlocDetail exact */
               <div className="space-y-3">
-                <button onClick={() => setSectionGridView(true)} className="text-xs text-blue-600 hover:text-blue-800 font-bold cursor-pointer flex items-center gap-1">
-                  <ChevronRight className="h-3.5 w-3.5 rotate-180" /> Retour à la vue d&apos;ensemble
-                </button>
                 <div className="rounded-xl border border-gray-200 shadow-sm bg-white">
                   <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
                     {(() => { const Icon = resolveIcon(activeSection.icon); return <Icon className="h-4 w-4 text-gray-900 stroke-[2.5]" />; })()}
