@@ -30,7 +30,7 @@ import { useCanvasActions } from "../../context/CanvasActionContext";
 import type { ActiveView } from "../../context/FrameMasterContext";
 import { BOT_AVATAR } from "../../api/types";
 import { DashboardView } from "./DashboardView";
-import { CockpitStoreView } from "./blueprint/BlueprintDepartement";
+import { CockpitView } from "./blueprint/BlueprintDepartement";
 import { SanteGlobaleView } from "./SanteGlobaleView";
 import { DepartmentTourDeControle } from "./DepartmentTourDeControle";
 import { DiscussionView } from "./DiscussionView";
@@ -330,7 +330,7 @@ export function CenterZone() {
   const renderMainView = () => (
     <>
       {activeView === "dashboard" && <DashboardView />}
-      {activeView === "cockpit" && <CockpitStoreView />}
+      {activeView === "cockpit" && <CockpitView />}
       {activeView === "health" && <SanteGlobaleView />}
       {activeView === "department" && <DepartmentTourDeControle />}
       {activeView === "discussion" && <DiscussionView />}

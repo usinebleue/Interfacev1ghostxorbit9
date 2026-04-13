@@ -28,7 +28,7 @@ import { SanteGlobaleView } from "./SanteGlobaleView";
 import { TabSommaire, TabObjectifs, HierarchieTab } from "./BlueprintView";
 import { AgendaPage } from "./MonBureauView";
 import { DocumentsUnifie } from "./shared/DocumentsUnifie";
-import { BlueprintDepartement, BlueprintDataRoom, BlueprintPlaybooks, BlueprintConferenceAI, CockpitStoreView } from "./blueprint/BlueprintDepartement";
+import { BlueprintView, DataRoomView, PlaybookStoreView, ConferenceAIView, CockpitView } from "./blueprint/BlueprintDepartement";
 
 /* ============ BLOCK HEADER — meme style que DashboardView ============ */
 function BlockHeader({ icon: Icon, title, count, gradient }: {
@@ -1844,7 +1844,7 @@ export function DepartmentTourDeControle() {
         {/* TAB 1 — COCKPIT (KPIs + blocs essentiels)  */}
         {/* ══════════════════════════════════════════ */}
         {deptTab === "cockpit" && (
-          <CockpitStoreView embedded initialDept={activeBotCode} />
+          <CockpitView embedded initialDept={activeBotCode} />
         )}
 
         {/* ══════════════════════════════════════════ */}
@@ -1852,28 +1852,28 @@ export function DepartmentTourDeControle() {
         {/* Blueprint Vivant — MEME composant pour TOUS les bots (CEOB = 11 sections, le plus complet) */}
         {/* ══════════════════════════════════════════ */}
         {deptTab === "blueprint" && (
-          <BlueprintDepartement botCode={activeBotCode} headerGradient={headerGradient} />
+          <BlueprintView botCode={activeBotCode} headerGradient={headerGradient} />
         )}
 
-        {/* ══════════════════════════════════════════ */}
+        {/* ═════════════════════════════��════════════ */}
         {/* TAB — DATA ROOM */}
-        {/* ══════════════════════════════════════════ */}
+        {/* ══════════════════════════════���═══════════ */}
         {deptTab === "dataroom" && (
-          <BlueprintDataRoom botCode={activeBotCode} headerGradient={headerGradient} />
+          <DataRoomView botCode={activeBotCode} headerGradient={headerGradient} />
         )}
 
         {/* ══════════════════════════════════════════ */}
         {/* TAB — PLAYBOOK STORE */}
         {/* ══════════════════════════════════════════ */}
         {deptTab === "playbooks" && (
-          <BlueprintPlaybooks botCode={activeBotCode} headerGradient={headerGradient} />
+          <PlaybookStoreView botCode={activeBotCode} headerGradient={headerGradient} />
         )}
 
         {/* ══════════════════════════════════════════ */}
         {/* TAB — CONFERENCE AI (vue focalisee sur les playbooks conference depuis le Store) */}
         {/* ══════════════════════════════════════════ */}
         {deptTab === "conferenceai" && (
-          <BlueprintConferenceAI headerGradient={headerGradient} onNavigateToStore={() => setDeptTab("playbooks" as DeptTabId)} />
+          <ConferenceAIView headerGradient={headerGradient} onNavigateToStore={() => setDeptTab("playbooks" as DeptTabId)} />
         )}
 
         {/* ══════════════════════════════════════════ */}

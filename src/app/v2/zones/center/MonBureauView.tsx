@@ -73,6 +73,7 @@ import { DiscussionView } from "./DiscussionView";
 import { CatalogueUnifie } from "./shared/CatalogueUnifie";
 import { DocumentsUnifie } from "./shared/DocumentsUnifie";
 import { HierarchieGHML } from "./shared/HierarchieGHML";
+import { LivingHero } from "./blueprint/BlueprintDepartement";
 import type { TabDef } from "./shared/section-types";
 import type { DocForgeTemplateV2, DocForgeLibrary, DriveBrowseItem, UnifiedTemplate } from "../../api/types";
 
@@ -1682,16 +1683,30 @@ export function AgendaPage() {
 
   return (
     <div className="space-y-3">
-      {/* HEADER GRADIENT */}
-      <div className="bg-gradient-to-r from-cyan-600 to-cyan-500 px-4 py-3 rounded-xl flex items-center gap-3">
-        <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-white/20">
-          <CalendarDays className="h-5 w-5 text-white" />
+      {/* ═══ HERO V20 — Agenda Clock + Timeline ═══ */}
+      <LivingHero blur1="bg-rose-100/70" blur2="bg-red-100/40" subtitleColor="text-rose-600" subtitle="Synchronisation Totale" title="La maîtrise absolue de votre temps." description="Synchronisez vos équipes et vos bots sur une frise temporelle parfaite.">
+        <div className="relative flex items-center justify-end" style={{ width: 360, height: 140 }}>
+          <div className="absolute right-[20px] opacity-[0.15] text-rose-600">
+            <svg viewBox="0 0 100 100" className="w-36 h-36">
+              <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="1.5" strokeDasharray="2 4" className="anim-clock-outer"/>
+              <circle cx="50" cy="50" r="35" fill="none" stroke="currentColor" strokeWidth="0.5"/>
+              <line x1="50" y1="50" x2="50" y2="10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="anim-clock-inner" style={{ transformOrigin: '50px 50px' }}/>
+              <circle cx="50" cy="50" r="3" fill="currentColor"/>
+            </svg>
+          </div>
+          <div className="glass-base absolute right-[80px] top-[20px] w-56 h-24 p-4 border-rose-100 overflow-hidden">
+            <div className="absolute top-[35px] left-4 w-12 h-6 bg-rose-100/50 rounded border border-rose-200" />
+            <div className="absolute top-[50px] left-[80px] w-16 h-6 bg-red-50/50 rounded border border-red-200" />
+            <div className="absolute top-0 bottom-0 w-px bg-rose-500 shadow-[0_0_15px_#f43f5e] anim-ticker flex justify-center z-10">
+              <div className="w-2 h-2 rounded-full bg-rose-500 -mt-1" />
+            </div>
+            <div className="absolute inset-x-0 top-1/2 h-px bg-slate-200" />
+            <div className="absolute inset-x-0 bottom-2 flex justify-between px-4 opacity-30 text-[6px] font-mono font-bold text-slate-800">
+              <span>08:00</span><span>12:00</span><span>16:00</span>
+            </div>
+          </div>
         </div>
-        <div className="flex-1">
-          <h2 className="text-sm font-bold text-white">Agenda</h2>
-          <p className="text-xs text-white/70">{allEvents.length} evenement{allEvents.length > 1 ? "s" : ""}</p>
-        </div>
-      </div>
+      </LivingHero>
 
       {/* TOOLBAR — navigation date + vue toggle */}
       <div className="flex items-center gap-2 flex-wrap">

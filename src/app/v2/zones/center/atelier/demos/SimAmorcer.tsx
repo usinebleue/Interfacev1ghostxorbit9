@@ -151,7 +151,7 @@ import {
   ResizableHandle,
 } from "../../../../../components/ui/resizable";
 import { TypewriterText, BotAvatar } from "../../shared/simulation-components";
-import { BlueprintDepartement, BlueprintDataRoom, BlueprintPlaybooks, BlueprintConferenceAI, CockpitStoreView, DEPT_DASH_ICON, DEPT_FULL_LABEL, DEPT_SHORT_LABEL, BLUEPRINT_HEADER_TABS, type HeaderView } from "../../blueprint/BlueprintDepartement";
+import { BlueprintView, DataRoomView, PlaybookStoreView, ConferenceAIView, CockpitView, LivingHero, DEPT_DASH_ICON, DEPT_FULL_LABEL, DEPT_SHORT_LABEL, BLUEPRINT_HEADER_TABS, type HeaderView } from "../../blueprint/BlueprintDepartement";
 import { HierarchieTab } from "../../BlueprintView";
 import { SanteGlobaleView } from "../../SanteGlobaleView";
 import { DocumentsUnifie } from "../../shared/DocumentsUnifie";
@@ -546,6 +546,8 @@ export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departe
   const [rightSection, setRightSection] = useState<string | null>(rightSectionProp);
   const [blueprintHeaderView, setBlueprintHeaderView] = useState<HeaderView>("blueprint");
   const [blueprintStats, setBlueprintStats] = useState<{ tier: string; tierLabel: string; score: number } | null>(null);
+  const [conceptionStage, setConceptionStage] = useState(0);
+  const [conceptionTyped, setConceptionTyped] = useState(false);
 
   const showBlueprint = !!rightSection;
 
@@ -555,13 +557,24 @@ export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departe
 
   const pc = PC[activePhase];
 
-  useEffect(() => { setChatStage(0); setTyped(false); }, [activePhase]);
+  const prevPhaseRef = useRef(activePhase);
+  useEffect(() => {
+    // Don't reset chatStage when switching between reflexion<->creation (preserves reflexion progress)
+    const isReflexionCreationSwitch =
+      (prevPhaseRef.current === "reflexion" && activePhase === "creation") ||
+      (prevPhaseRef.current === "creation" && activePhase === "reflexion");
+    if (!isReflexionCreationSwitch) { setChatStage(0); }
+    setTyped(false);
+    prevPhaseRef.current = activePhase;
+  }, [activePhase]);
   useEffect(() => { if (attentionTrigger > 0) { setActivePhase("attention"); } }, [attentionTrigger]);
   useEffect(() => { chatRef.current && (chatRef.current.scrollTop = chatRef.current.scrollHeight); }, [chatStage, typed]);
   useEffect(() => { rightRef.current && (rightRef.current.scrollTop = 0); }, [chatStage]);
 
   const advance = () => { setTyped(false); setChatStage(s => s + 1); };
+  const advanceConception = () => { setConceptionTyped(false); setConceptionStage(s => s + 1); };
   const startReflexion = (chantier: string) => { setReflexionContext(chantier); setActivePhase("reflexion"); };
+  const startConception = () => { setActivePhase("creation"); setConceptionStage(0); setConceptionTyped(false); };
   const isDash = activePhase === "observation" || activePhase === "attention" || activePhase === "moderation";
 
   return (
@@ -577,7 +590,7 @@ export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departe
               {isOrbit9 ? (
                 <>
                   <Atom className="h-4 w-4 text-white" />
-                  <span className="text-[11px] text-white font-medium">Orbit<sup className="text-[8px]">9</sup></span>
+                  <span className="text-[11px] text-white font-medium">Orbit<sup className="text-[9px]">9</sup></span>
                   <div className="flex-1" />
                   {/* Bande noms humains + bots (Carl vocal 14h24) */}
                   {ORBIT9_CELLULES[0].membres.slice(0, 3).map((m, i) => (
@@ -619,6 +632,9 @@ export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departe
                   {activePhase === "reflexion" && (
                     <ReflexionChat stage={chatStage} typed={typed} setTyped={setTyped} advance={advance} pc={pc} context={reflexionContext} />
                   )}
+                  {activePhase === "creation" && (
+                    <ConceptionChat stage={conceptionStage} typed={conceptionTyped} setTyped={setConceptionTyped} advance={advanceConception} onBackToReflexion={() => setActivePhase("reflexion")} />
+                  )}
                   {activePhase === "observation" && (
                     <ObservationChat typed={typed} setTyped={setTyped} />
                   )}
@@ -628,7 +644,7 @@ export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departe
                   {activePhase === "moderation" && (
                     <ModerationChat stage={chatStage} typed={typed} setTyped={setTyped} advance={advance} pc={pc} />
                   )}
-                  {!isDash && (
+                  {!isDash && activePhase !== "creation" && (
                     <PlaceholderChat phase={activePhase} />
                   )}
                 </div>
@@ -732,7 +748,7 @@ export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departe
               const O9_LABEL: Record<string, string> = { dashboard: "Dashboard", blueprint: "Blueprint", chantiers: "Chantiers", projets: "Projets", missions: "Missions", taches: "Tâches", discussions: "Discussions", documents: "Documents", agenda: "Agenda", "sante-reseau": "Santé réseau", cellules: "Cellules", jumelage: "Jumelage", gouvernance: "Gouvernance", pionniers: "Pionniers", vitaa: "VITAA", perso: "Mon profil", feed: "Nouvelles", evenements: "Événements", "creer-cellule": "Créer une cellule" };
               const sectionLabel = isOrbit9
                 ? (O9_LABEL[o9Section] || "Orbit⁹")
-                : rightSection === "cockpit" ? "Cockpit" : rightSection === "blueprint" ? "Blueprint" : rightSection === "dataroom" ? "Data Room" : rightSection === "playbooks" ? "Playbook Store" : rightSection === "conferenceai" ? "Conference AI" : activePhase === "reflexion" ? "Réflexion" : "Cockpit";
+                : rightSection === "cockpit" ? "Cockpit" : rightSection === "blueprint" ? "Blueprint" : rightSection === "dataroom" ? "Data Room" : rightSection === "playbooks" ? "Playbook Store" : rightSection === "conferenceai" ? "Conference AI" : activePhase === "reflexion" ? "Réflexion" : activePhase === "creation" ? "Conception" : "Cockpit";
               const titleText = isOrbit9
                 ? `Orbit⁹ — ${sectionLabel}`
                 : `Département ${deptLabel} — ${sectionLabel}`;
@@ -769,7 +785,14 @@ export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departe
                       <span className="text-[11px] font-medium text-orange-600">{reflexionContext}</span>
                     </>
                   )}
-                  {!isOrbit9 && activePhase !== "observation" && activePhase !== "reflexion" && !rightSection && (
+                  {!isOrbit9 && activePhase === "creation" && !rightSection && (
+                    <>
+                      <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
+                      <Hammer className="h-3.5 w-3.5 text-yellow-600" />
+                      <span className="text-[11px] font-medium text-yellow-600">Conception du chantier</span>
+                    </>
+                  )}
+                  {!isOrbit9 && activePhase !== "observation" && activePhase !== "reflexion" && activePhase !== "creation" && !rightSection && (
                     <>
                       <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
                       <span className={cn("text-[11px] font-medium", pc.text)}>{pc.label}</span>
@@ -805,11 +828,11 @@ export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departe
                     }
                   `}</style>
                   <CanvasActionProvider>
-                    {rightSection === "cockpit" && <CockpitStoreView embedded initialDept={activeBotCode} onAction={(phase, context) => { setActivePhase(phase as PhaseKey); setReflexionContext(context); setRightSection(null); }} />}
-                    {rightSection === "blueprint" && <BlueprintDepartement botCode={activeBotCode} headerGradient="from-blue-600 to-blue-500" hideHeader activeHeaderView={blueprintHeaderView} onHeaderViewChange={setBlueprintHeaderView} onStats={setBlueprintStats} />}
-                    {rightSection === "dataroom" && <BlueprintDataRoom botCode={activeBotCode} headerGradient="from-blue-600 to-blue-500" showHeader />}
-                    {rightSection === "playbooks" && <BlueprintPlaybooks botCode={activeBotCode} headerGradient="from-blue-600 to-blue-500" showHeader />}
-                    {rightSection === "conferenceai" && <BlueprintConferenceAI headerGradient="from-blue-600 to-blue-500" onNavigateToStore={() => setRightSection("playbooks")} />}
+                    {rightSection === "cockpit" && <CockpitView embedded initialDept={activeBotCode} onAction={(phase, context) => { setActivePhase(phase as PhaseKey); setReflexionContext(context); setRightSection(null); }} />}
+                    {rightSection === "blueprint" && <BlueprintView botCode={activeBotCode} headerGradient="from-blue-600 to-blue-500" hideHeader activeHeaderView={blueprintHeaderView} onHeaderViewChange={setBlueprintHeaderView} onStats={setBlueprintStats} />}
+                    {rightSection === "dataroom" && <DataRoomView botCode={activeBotCode} headerGradient="from-blue-600 to-blue-500" showHeader />}
+                    {rightSection === "playbooks" && <PlaybookStoreView botCode={activeBotCode} headerGradient="from-blue-600 to-blue-500" showHeader />}
+                    {rightSection === "conferenceai" && <ConferenceAIView headerGradient="from-blue-600 to-blue-500" onNavigateToStore={() => setRightSection("playbooks")} />}
                   </CanvasActionProvider>
                 </div>
               ) : isOrbit9 ? (
@@ -831,7 +854,9 @@ export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departe
               ) : isDash ? (
                 <VueEnsemble phase={activePhase} chatStage={chatStage} onStartReflexion={startReflexion} />
               ) : activePhase === "reflexion" ? (
-                <ReflexionMagazine stage={chatStage} context={reflexionContext} />
+                <ReflexionMagazine stage={chatStage} context={reflexionContext} onStartConception={startConception} />
+              ) : activePhase === "creation" ? (
+                <ConceptionWizard stage={conceptionStage} context={reflexionContext} />
               ) : (
                 <ChantierDrillDown phase={activePhase} />
               )}
@@ -1331,10 +1356,10 @@ export function ReflexionChat({ stage, typed, setTyped, advance, pc, context }: 
                         <BotAvatar code={bot.code} size="sm" />
                         <div className="flex-1">
                           <span className="text-[9px] font-bold text-gray-700">{bot.name}</span>
-                          <span className="text-[8px] text-gray-500 ml-1.5">{bot.role}</span>
+                          <span className="text-[9px] text-gray-500 ml-1.5">{bot.role}</span>
                         </div>
                         <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                        <span className="text-[8px] text-emerald-600 font-medium">Rejoint</span>
+                        <span className="text-[9px] text-emerald-600 font-medium">Rejoint</span>
                       </div>
                     ))}
                   </div>
@@ -1627,7 +1652,7 @@ export function ReflexionChat({ stage, typed, setTyped, advance, pc, context }: 
                       <opt.icon className={cn("h-3.5 w-3.5 shrink-0", pc.text)} />
                       <div className="flex-1">
                         <p className="text-[9px] font-semibold text-gray-800">{opt.label}</p>
-                        <p className="text-[8px] text-gray-500">{opt.desc}</p>
+                        <p className="text-[9px] text-gray-500">{opt.desc}</p>
                       </div>
                     </button>
                   ))}
@@ -1713,28 +1738,28 @@ function MagDiagnostic() {
                 <span className="text-[9px] text-gray-700 font-medium">{d.label}</span>
                 <span className={cn("text-[9px] font-bold", d.score >= 70 ? "text-emerald-600" : d.score >= 50 ? "text-amber-600" : "text-red-600")}>{d.score}%</span>
               </div>
-              <p className="text-[8px] text-gray-400 mb-1">{d.what}</p>
+              <p className="text-[9px] text-gray-400 mb-1">{d.what}</p>
               <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
                 <div className={cn("h-full rounded-full", d.score >= 70 ? "bg-emerald-500" : d.score >= 50 ? "bg-amber-500" : "bg-red-500")} style={{ width: `${d.score}%` }} />
               </div>
-              <p className="text-[8px] text-gray-500 mt-1 font-medium">{d.detail}</p>
+              <p className="text-[9px] text-gray-500 mt-1 font-medium">{d.detail}</p>
               <div className="mt-1.5 flex items-center gap-1.5">
                 <BotAvatar code={d.bot} size="sm" />
-                <span className="text-[8px] text-gray-500">{BOT_COLORS[d.bot]?.name}</span>
-                <button className="text-[8px] bg-red-50 border border-red-200 text-red-700 px-2 py-0.5 rounded-full font-medium hover:bg-red-100 cursor-pointer ml-auto">{d.action}</button>
+                <span className="text-[9px] text-gray-500">{BOT_COLORS[d.bot]?.name}</span>
+                <button className="text-[9px] bg-red-50 border border-red-200 text-red-700 px-2 py-0.5 rounded-full font-medium hover:bg-red-100 cursor-pointer ml-auto">{d.action}</button>
               </div>
 
               {expandedDiag === d.label && (
                 <div className="mt-2 pt-2 border-t border-red-200 space-y-1.5">
                   <div className="flex items-center gap-2">
-                    <span className={cn("text-[8px] font-bold px-2 py-0.5 rounded-full",
+                    <span className={cn("text-[9px] font-bold px-2 py-0.5 rounded-full",
                       d.score < 40 ? "bg-red-100 text-red-700" : d.score < 60 ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"
                     )}>{d.expanded.gap}</span>
-                    <span className="text-[8px] text-gray-400">Effort: {d.expanded.effort}</span>
+                    <span className="text-[9px] text-gray-400">Effort: {d.expanded.effort}</span>
                   </div>
                   <div className="space-y-0.5">
                     {d.expanded.actions.map((a: string, j: number) => (
-                      <div key={j} className="flex items-center gap-1.5 text-[8px] text-gray-600">
+                      <div key={j} className="flex items-center gap-1.5 text-[9px] text-gray-600">
                         <div className="w-1 h-1 rounded-full bg-red-400 shrink-0" />
                         <span>{a}</span>
                       </div>
@@ -1742,11 +1767,11 @@ function MagDiagnostic() {
                   </div>
                   <div className="bg-emerald-50 border border-emerald-200 rounded px-2 py-1 flex items-center gap-1.5">
                     <TrendingUp className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                    <span className="text-[8px] text-emerald-700 font-medium">Impact: {d.expanded.impact}</span>
+                    <span className="text-[9px] text-emerald-700 font-medium">Impact: {d.expanded.impact}</span>
                   </div>
                   <div className="flex gap-1">
-                    <button className="text-[7px] bg-red-600 text-white px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-red-700">Lancer un chantier</button>
-                    <button className="text-[7px] bg-white border border-red-200 text-red-700 px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-red-50">Epingler</button>
+                    <button className="text-[9px] bg-red-600 text-white px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-red-700">Lancer un chantier</button>
+                    <button className="text-[9px] bg-white border border-red-200 text-red-700 px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-red-50">Epingler</button>
                   </div>
                 </div>
               )}
@@ -1798,7 +1823,7 @@ function MagBrainstorm() {
             {i > 0 && <div className={cn("w-4 h-0.5", i <= activeStep ? "bg-red-400" : "bg-gray-200")} />}
             <button
               onClick={() => setActiveStep(i)}
-              className={cn("flex items-center gap-1 px-2 py-1 rounded-full text-[8px] font-medium cursor-pointer transition-all",
+              className={cn("flex items-center gap-1 px-2 py-1 rounded-full text-[9px] font-medium cursor-pointer transition-all",
                 i < activeStep ? "bg-red-100 text-red-700" : i === activeStep ? "bg-red-500 text-white shadow-sm" : "bg-gray-100 text-gray-400 hover:bg-gray-200"
               )}
             >
@@ -1813,7 +1838,7 @@ function MagBrainstorm() {
       {/* Step description */}
       <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 flex items-center gap-2">
         <BookOpen className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-        <p className="text-[8px] text-gray-500">{STEPS[activeStep].desc}</p>
+        <p className="text-[9px] text-gray-500">{STEPS[activeStep].desc}</p>
       </div>
 
       {/* STEP 0-1: Cadrage + Vague 1 */}
@@ -1844,7 +1869,7 @@ function MagBrainstorm() {
                   <div className="flex items-center gap-1.5 mb-1.5">
                     <BotAvatar code={idea.bot} size="sm" />
                     <span className="text-[9px] font-medium text-gray-700">{BOT_COLORS[idea.bot]?.name}</span>
-                    <span className="text-[8px] bg-white/60 text-gray-600 px-1.5 py-0.5 rounded ml-auto">{idea.tag}</span>
+                    <span className="text-[9px] bg-white/60 text-gray-600 px-1.5 py-0.5 rounded ml-auto">{idea.tag}</span>
                   </div>
                   <p className="text-[9px] text-gray-800 mb-2">{idea.text}</p>
                   <div className="flex items-center gap-2">
@@ -1870,11 +1895,11 @@ function MagBrainstorm() {
                   </div>
                   {expandedIdea === idea.id && (
                     <div className="mt-2 pt-2 border-t border-gray-200 space-y-1">
-                      <p className="text-[8px] text-gray-600">Impact estime: eleve | Effort: moyen | Delai: 2-4 semaines</p>
+                      <p className="text-[9px] text-gray-600">Impact estime: eleve | Effort: moyen | Delai: 2-4 semaines</p>
                       <div className="flex gap-1">
-                        <button className="text-[7px] bg-white border border-gray-200 text-gray-600 px-1.5 py-0.5 rounded font-medium cursor-pointer hover:bg-gray-50">Developper</button>
-                        <button className="text-[7px] bg-white border border-gray-200 text-gray-600 px-1.5 py-0.5 rounded font-medium cursor-pointer hover:bg-gray-50">Combiner</button>
-                        <button className="text-[7px] bg-white border border-gray-200 text-gray-600 px-1.5 py-0.5 rounded font-medium cursor-pointer hover:bg-gray-50">Challenger</button>
+                        <button className="text-[9px] bg-white border border-gray-200 text-gray-600 px-1.5 py-0.5 rounded font-medium cursor-pointer hover:bg-gray-50">Developper</button>
+                        <button className="text-[9px] bg-white border border-gray-200 text-gray-600 px-1.5 py-0.5 rounded font-medium cursor-pointer hover:bg-gray-50">Combiner</button>
+                        <button className="text-[9px] bg-white border border-gray-200 text-gray-600 px-1.5 py-0.5 rounded font-medium cursor-pointer hover:bg-gray-50">Challenger</button>
                       </div>
                     </div>
                   )}
@@ -1891,7 +1916,7 @@ function MagBrainstorm() {
           <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-2 flex items-center gap-1">
             <Zap className="h-3.5 w-3.5 text-red-500" /> SCAMPER Challenge — COMBINER + ADAPTER + SUBSTITUER
           </p>
-          <p className="text-[8px] text-gray-500 mb-2">Les bots appliquent les 7 leviers SCAMPER aux idees de la Vague 1 pour creer des combinaisons innovantes.</p>
+          <p className="text-[9px] text-gray-500 mb-2">Les bots appliquent les 7 leviers SCAMPER aux idees de la Vague 1 pour creer des combinaisons innovantes.</p>
           <div className="space-y-1.5">
             {[
               { letter: "C", method: "Combiner", text: "Referral + LinkedIn: programme ambassadeur avec contenu co-cree par les clients satisfaits", bot: "CMOB", votes: 4, color: "bg-pink-50 border-pink-200" },
@@ -1902,10 +1927,10 @@ function MagBrainstorm() {
             ].map((note, i) => (
               <div key={i} className={cn("rounded-lg p-2.5 border cursor-pointer hover:shadow-sm transition-all", note.color)}>
                 <div className="flex items-center gap-1.5 mb-1">
-                  <span className="w-5 h-5 rounded bg-red-500 text-white flex items-center justify-center text-[8px] font-bold shrink-0">{note.letter}</span>
-                  <span className="text-[8px] font-bold text-red-700">{note.method}</span>
+                  <span className="w-5 h-5 rounded bg-red-500 text-white flex items-center justify-center text-[9px] font-bold shrink-0">{note.letter}</span>
+                  <span className="text-[9px] font-bold text-red-700">{note.method}</span>
                   <BotAvatar code={note.bot} size="sm" />
-                  <span className="text-[8px] font-medium text-gray-500">{BOT_COLORS[note.bot]?.name}</span>
+                  <span className="text-[9px] font-medium text-gray-500">{BOT_COLORS[note.bot]?.name}</span>
                   <span className="flex items-center gap-0.5 text-[9px] text-amber-600 ml-auto">
                     <Star className="h-3.5 w-3.5" /> {note.votes}
                   </span>
@@ -1923,7 +1948,7 @@ function MagBrainstorm() {
           <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-2 flex items-center gap-1">
             <Layers className="h-3.5 w-3.5 text-blue-500" /> Clusters — 3 themes identifies
           </p>
-          <p className="text-[8px] text-gray-500 mb-2">Les idees convergent autour de 3 axes strategiques. Chaque cluster regroupe les propositions complementaires.</p>
+          <p className="text-[9px] text-gray-500 mb-2">Les idees convergent autour de 3 axes strategiques. Chaque cluster regroupe les propositions complementaires.</p>
           <div className="space-y-2">
             {CLUSTERS.map((cluster, i) => (
               <div key={i} className={cn("rounded-xl p-3 border", cluster.color)}>
@@ -1935,12 +1960,12 @@ function MagBrainstorm() {
                     <div className="w-12 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                       <div className="h-full bg-red-500 rounded-full" style={{ width: `${cluster.score}%` }} />
                     </div>
-                    <span className="text-[8px] font-bold text-gray-600">{cluster.score}%</span>
+                    <span className="text-[9px] font-bold text-gray-600">{cluster.score}%</span>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-1">
                   {cluster.idees.map((idee, j) => (
-                    <span key={j} className="text-[8px] bg-white border border-gray-200 text-gray-700 px-2 py-0.5 rounded-full">{idee}</span>
+                    <span key={j} className="text-[9px] bg-white border border-gray-200 text-gray-700 px-2 py-0.5 rounded-full">{idee}</span>
                   ))}
                 </div>
               </div>
@@ -1955,25 +1980,25 @@ function MagBrainstorm() {
           <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-2 flex items-center gap-1">
             <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Synthese — 3 axes actionnables
           </p>
-          <p className="text-[8px] text-gray-500 mb-2">Les clusters sont consolides en axes strategiques budgetes et planifies. Pret a passer en phase Creer.</p>
+          <p className="text-[9px] text-gray-500 mb-2">Les clusters sont consolides en axes strategiques budgetes et planifies. Pret a passer en phase Creer.</p>
           <div className="space-y-2">
             {SYNTHESIS.map((axe, i) => (
               <div key={i} className={cn("rounded-xl border p-3", axe.color)}>
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-xs font-bold text-gray-800">{axe.title}</span>
-                  <span className="text-[7px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full font-bold ml-auto">{axe.priority}</span>
+                  <span className="text-[9px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full font-bold ml-auto">{axe.priority}</span>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   <div className="text-center">
-                    <p className="text-[8px] text-gray-400">Budget</p>
+                    <p className="text-[9px] text-gray-400">Budget</p>
                     <p className="text-[9px] font-bold text-gray-800">{axe.budget}</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-[8px] text-gray-400">ROI</p>
+                    <p className="text-[9px] text-gray-400">ROI</p>
                     <p className="text-[9px] font-bold text-emerald-700">{axe.roi}</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-[8px] text-gray-400">Timeline</p>
+                    <p className="text-[9px] text-gray-400">Timeline</p>
                     <p className="text-[9px] font-bold text-gray-800">{axe.timeline}</p>
                   </div>
                 </div>
@@ -2023,7 +2048,7 @@ function MagSyntheseBrainstorm() {
             <div key={i} className={cn("border rounded-lg p-3", item.color)}>
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-xs font-bold text-gray-800">{item.title}</span>
-                <span className="text-[8px] bg-white/70 text-gray-600 px-1.5 py-0.5 rounded ml-auto">{item.source}</span>
+                <span className="text-[9px] bg-white/70 text-gray-600 px-1.5 py-0.5 rounded ml-auto">{item.source}</span>
               </div>
               <p className="text-[9px] text-gray-700">{item.detail}</p>
             </div>
@@ -2035,12 +2060,12 @@ function MagSyntheseBrainstorm() {
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
           <p className="text-[9px] text-gray-400 mb-1">AVANT bonification</p>
           <p className="text-lg font-extrabold text-gray-400">6 idees</p>
-          <p className="text-[8px] text-gray-400">separees, non priorisees</p>
+          <p className="text-[9px] text-gray-400">separees, non priorisees</p>
         </div>
         <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
           <p className="text-[9px] text-red-600 mb-1">APRES bonification</p>
           <p className="text-lg font-extrabold text-red-700">3 axes</p>
-          <p className="text-[8px] text-red-600">integres, budgetes, planifies</p>
+          <p className="text-[9px] text-red-600">integres, budgetes, planifies</p>
         </div>
       </div>
 
@@ -2134,14 +2159,14 @@ function MagCinqPourquoi() {
         {[1, 2, 3, 4, 5].map(n => (
           <div key={n} className="flex items-center gap-1">
             {n > 1 && <div className={cn("w-6 h-0.5 transition-all duration-500", n <= revealedLevel ? "bg-red-400" : "bg-gray-200")} />}
-            <div className={cn("w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold transition-all duration-500",
+            <div className={cn("w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold transition-all duration-500",
               n <= revealedLevel ? (n === 5 ? "bg-red-500 text-white scale-110" : "bg-red-100 text-red-700") : "bg-gray-100 text-gray-300"
             )}>
               {n <= revealedLevel && n < 5 ? <CheckCircle2 className="h-3.5 w-3.5 text-red-500" /> : n}
             </div>
           </div>
         ))}
-        <span className="text-[8px] text-gray-400 ml-2">{Math.min(revealedLevel, 5)}/5 niveaux explores</span>
+        <span className="text-[9px] text-gray-400 ml-2">{Math.min(revealedLevel, 5)}/5 niveaux explores</span>
       </div>
 
       <div className="bg-white border rounded-xl px-4 py-3 space-y-1">
@@ -2162,19 +2187,19 @@ function MagCinqPourquoi() {
               <div className="flex items-start gap-2 bg-gray-50 rounded-lg px-3 py-1.5 border-l-2 border-gray-300">
                 <BotAvatar code={item.bot} size="sm" />
                 <div className="flex-1">
-                  <p className="text-[8px] text-gray-500 italic">{item.reflexion}</p>
+                  <p className="text-[9px] text-gray-500 italic">{item.reflexion}</p>
                 </div>
                 <div className="flex gap-1 shrink-0">
                   <button
                     onClick={() => setShowDebate(showDebate === i ? null : i)}
-                    className={cn("text-[7px] px-1.5 py-0.5 rounded font-medium cursor-pointer transition-colors",
+                    className={cn("text-[9px] px-1.5 py-0.5 rounded font-medium cursor-pointer transition-colors",
                       showDebate === i ? "bg-red-100 border border-red-200 text-red-700" : "bg-white border border-gray-200 text-gray-500 hover:bg-gray-100"
                     )}
                   >
                     {showDebate === i ? "Fermer" : "Voir le debat"}
                   </button>
-                  <button className="text-[7px] bg-white border border-gray-200 text-gray-500 px-1.5 py-0.5 rounded font-medium cursor-pointer hover:bg-gray-100">Creuser</button>
-                  <button className="text-[7px] bg-white border border-gray-200 text-gray-500 px-1.5 py-0.5 rounded font-medium cursor-pointer hover:bg-gray-100">Pivoter</button>
+                  <button className="text-[9px] bg-white border border-gray-200 text-gray-500 px-1.5 py-0.5 rounded font-medium cursor-pointer hover:bg-gray-100">Creuser</button>
+                  <button className="text-[9px] bg-white border border-gray-200 text-gray-500 px-1.5 py-0.5 rounded font-medium cursor-pointer hover:bg-gray-100">Pivoter</button>
                 </div>
               </div>
 
@@ -2184,25 +2209,25 @@ function MagCinqPourquoi() {
                     <BotAvatar code={item.debate.challenger} size="sm" />
                     <div className="bg-amber-50 border border-amber-200 rounded-lg rounded-tl-none px-2.5 py-1.5 flex-1">
                       <div className="flex items-center gap-1.5 mb-0.5">
-                        <span className="text-[8px] font-bold text-amber-700">{BOT_COLORS[item.debate.challenger]?.name}</span>
-                        <span className="text-[7px] bg-amber-200 text-amber-800 px-1 py-0.5 rounded">Challenge</span>
+                        <span className="text-[9px] font-bold text-amber-700">{BOT_COLORS[item.debate.challenger]?.name}</span>
+                        <span className="text-[9px] bg-amber-200 text-amber-800 px-1 py-0.5 rounded">Challenge</span>
                       </div>
-                      <p className="text-[8px] text-gray-700">{item.debate.challengeText}</p>
+                      <p className="text-[9px] text-gray-700">{item.debate.challengeText}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-2">
                     <BotAvatar code={item.debate.defense} size="sm" />
                     <div className="bg-emerald-50 border border-emerald-200 rounded-lg rounded-tl-none px-2.5 py-1.5 flex-1">
                       <div className="flex items-center gap-1.5 mb-0.5">
-                        <span className="text-[8px] font-bold text-emerald-700">{BOT_COLORS[item.debate.defense]?.name}</span>
-                        <span className="text-[7px] bg-emerald-200 text-emerald-800 px-1 py-0.5 rounded">Defense</span>
+                        <span className="text-[9px] font-bold text-emerald-700">{BOT_COLORS[item.debate.defense]?.name}</span>
+                        <span className="text-[9px] bg-emerald-200 text-emerald-800 px-1 py-0.5 rounded">Defense</span>
                       </div>
-                      <p className="text-[8px] text-gray-700">{item.debate.defenseText}</p>
+                      <p className="text-[9px] text-gray-700">{item.debate.defenseText}</p>
                     </div>
                   </div>
                   <div className="bg-blue-50 border border-blue-200 rounded-lg px-2.5 py-1.5 flex items-center gap-2">
                     <CheckCircle2 className="h-3.5 w-3.5 text-blue-500 shrink-0" />
-                    <p className="text-[8px] text-blue-700 font-medium">{item.debate.verdict}</p>
+                    <p className="text-[9px] text-blue-700 font-medium">{item.debate.verdict}</p>
                   </div>
                 </div>
               )}
@@ -2225,15 +2250,15 @@ function MagCinqPourquoi() {
             <p className="text-[9px] font-bold text-red-700 mb-1">Bonification \u2014 Synthese des 4 debats:</p>
             <div className="space-y-1">
               {questions.map((item, i) => (
-                <div key={i} className="flex items-center gap-1.5 text-[8px] text-red-600">
-                  <span className="w-3 h-3 rounded-full bg-red-200 flex items-center justify-center text-[7px] font-bold text-red-700 shrink-0">{i + 1}</span>
+                <div key={i} className="flex items-center gap-1.5 text-[9px] text-red-600">
+                  <span className="w-3 h-3 rounded-full bg-red-200 flex items-center justify-center text-[9px] font-bold text-red-700 shrink-0">{i + 1}</span>
                   <span>{item.debate.verdict}</span>
                 </div>
               ))}
             </div>
             <div className="flex gap-1.5 mt-2">
-              <button className="text-[8px] bg-red-200 text-red-800 px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-red-300">Epingler cette synthese</button>
-              <button className="text-[8px] bg-white text-red-700 px-2 py-0.5 rounded-full font-medium border border-red-200 cursor-pointer hover:bg-red-50">Relancer un 5 Pourquoi</button>
+              <button className="text-[9px] bg-red-200 text-red-800 px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-red-300">Epingler cette synthese</button>
+              <button className="text-[9px] bg-white text-red-700 px-2 py-0.5 rounded-full font-medium border border-red-200 cursor-pointer hover:bg-red-50">Relancer un 5 Pourquoi</button>
             </div>
           </div>
         </div>
@@ -2329,7 +2354,7 @@ function MagSyntheseRecherche() {
           <div key={i} className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center gap-3">
             <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
             <p className="text-[9px] text-gray-700 flex-1">{h.text}</p>
-            <button className="text-[8px] bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-amber-300 shrink-0">{h.action}</button>
+            <button className="text-[9px] bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-amber-300 shrink-0">{h.action}</button>
           </div>
         ))}
       </div>
@@ -2340,7 +2365,7 @@ function MagSyntheseRecherche() {
           <p className="text-[9px] font-bold text-red-800">Risque identifie</p>
           <p className="text-[9px] text-red-700">Timeline Q2 agressive pour tout deployer \u2014 Tim recommande Q2+Q3</p>
         </div>
-        <button className="text-[8px] bg-red-200 text-red-800 px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-red-300 shrink-0">Mitiger</button>
+        <button className="text-[9px] bg-red-200 text-red-800 px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-red-300 shrink-0">Mitiger</button>
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -2484,7 +2509,7 @@ function MagPreRapport() {
               { label: "Fusionner 2 sections", icon: Zap },
               { label: "Ajouter une section", icon: Lightbulb },
             ].map(a => (
-              <button key={a.label} className="w-full flex items-center gap-1.5 text-[8px] text-gray-500 hover:text-red-600 hover:bg-red-50 px-2 py-1 rounded cursor-pointer transition-colors text-left">
+              <button key={a.label} className="w-full flex items-center gap-1.5 text-[9px] text-gray-500 hover:text-red-600 hover:bg-red-50 px-2 py-1 rounded cursor-pointer transition-colors text-left">
                 <a.icon className="h-3.5 w-3.5 shrink-0" /> {a.label}
               </button>
             ))}
@@ -2499,7 +2524,7 @@ function MagPreRapport() {
             )}>
               <div className="flex items-center gap-2 mb-1">
                 <h4 className="text-[9px] font-bold text-red-700">{s.id}. {s.title}</h4>
-                <span className="text-[7px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded ml-auto">
+                <span className="text-[9px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded ml-auto">
                   {s.id <= 2 ? "CarlOS" : s.id === 3 ? "Multi-bot" : s.id === 4 ? "Brainstorm" : s.id === 5 ? "5 Pourquoi" : s.id === 6 ? "Deep Search" : s.id === 7 ? "Frank" : "CarlOS"}
                 </span>
               </div>
@@ -2507,27 +2532,27 @@ function MagPreRapport() {
 
               <div className="flex flex-wrap gap-1.5 mt-2 opacity-70 group-hover:opacity-100 transition-opacity">
                 <button onClick={() => handlePin(s.id)}
-                  className={cn("text-[8px] font-medium cursor-pointer flex items-center gap-1 rounded-full px-2 py-0.5 transition-colors",
+                  className={cn("text-[9px] font-medium cursor-pointer flex items-center gap-1 rounded-full px-2 py-0.5 transition-colors",
                     pinnedSection === s.id ? "text-blue-700 bg-blue-100 border border-blue-300" : "text-red-600 hover:text-red-700 bg-white border border-red-200 hover:bg-red-50"
                   )}>
                   <Pin className="h-3.5 w-3.5" /> {pinnedSection === s.id ? "Epingle!" : "Epingler"}
                 </button>
                 <button onClick={() => handleAction(s.id, "approfondir")}
-                  className={cn("text-[8px] font-medium cursor-pointer flex items-center gap-1 rounded-full px-2 py-0.5 transition-colors",
+                  className={cn("text-[9px] font-medium cursor-pointer flex items-center gap-1 rounded-full px-2 py-0.5 transition-colors",
                     activeAction?.sectionId === s.id && activeAction?.action === "approfondir" ? "text-violet-700 bg-violet-100 border border-violet-300" : "text-gray-500 hover:text-gray-700 bg-white border border-gray-200 hover:bg-gray-50"
                   )}>
                   <BookOpen className="h-3.5 w-3.5" /> Approfondir
                 </button>
                 <button onClick={() => handleAction(s.id, "reformuler")}
-                  className={cn("text-[8px] font-medium cursor-pointer flex items-center gap-1 rounded-full px-2 py-0.5 transition-colors",
+                  className={cn("text-[9px] font-medium cursor-pointer flex items-center gap-1 rounded-full px-2 py-0.5 transition-colors",
                     activeAction?.sectionId === s.id && activeAction?.action === "reformuler" ? "text-amber-700 bg-amber-100 border border-amber-300" : "text-gray-500 hover:text-gray-700 bg-white border border-gray-200 hover:bg-gray-50"
                   )}>
                   <RefreshCw className="h-3.5 w-3.5" /> Reformuler
                 </button>
-                <button className="text-[8px] text-gray-500 hover:text-gray-700 font-medium cursor-pointer flex items-center gap-1 bg-white border border-gray-200 rounded-full px-2 py-0.5 hover:bg-gray-50">
+                <button className="text-[9px] text-gray-500 hover:text-gray-700 font-medium cursor-pointer flex items-center gap-1 bg-white border border-gray-200 rounded-full px-2 py-0.5 hover:bg-gray-50">
                   <AlertTriangle className="h-3.5 w-3.5" /> Challenger
                 </button>
-                <button className="text-[8px] text-gray-500 hover:text-gray-700 font-medium cursor-pointer flex items-center gap-1 bg-white border border-gray-200 rounded-full px-2 py-0.5 hover:bg-gray-50">
+                <button className="text-[9px] text-gray-500 hover:text-gray-700 font-medium cursor-pointer flex items-center gap-1 bg-white border border-gray-200 rounded-full px-2 py-0.5 hover:bg-gray-50">
                   <Layers className="h-3.5 w-3.5" /> Fusionner
                 </button>
               </div>
@@ -2539,7 +2564,7 @@ function MagPreRapport() {
                     <>
                       <div className="flex items-center gap-2 mb-1">
                         <BotAvatar code={APPROFONDIR_RESULTS[s.id].bot} size="sm" />
-                        <span className="text-[8px] font-bold text-violet-700">Analyse approfondie par {BOT_COLORS[APPROFONDIR_RESULTS[s.id].bot]?.name}</span>
+                        <span className="text-[9px] font-bold text-violet-700">Analyse approfondie par {BOT_COLORS[APPROFONDIR_RESULTS[s.id].bot]?.name}</span>
                         <div className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse ml-auto" />
                       </div>
                       <p className="text-[9px] text-gray-700 leading-relaxed bg-violet-50 rounded-lg px-3 py-2 border border-violet-200">
@@ -2547,22 +2572,22 @@ function MagPreRapport() {
                       </p>
                       <div className="space-y-1">
                         {APPROFONDIR_RESULTS[s.id].data.map((d, j) => (
-                          <div key={j} className="flex items-center gap-2 text-[8px] text-violet-700 bg-white rounded px-2.5 py-1 border border-violet-100">
+                          <div key={j} className="flex items-center gap-2 text-[9px] text-violet-700 bg-white rounded px-2.5 py-1 border border-violet-100">
                             <BarChart3 className="h-3.5 w-3.5 text-violet-400 shrink-0" />
                             <span>{d}</span>
                           </div>
                         ))}
                       </div>
                       <div className="flex gap-1.5">
-                        <button className="text-[8px] bg-violet-600 text-white px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-violet-700">Integrer au rapport</button>
-                        <button className="text-[8px] bg-white text-violet-700 px-2 py-0.5 rounded-full font-medium border border-violet-200 cursor-pointer hover:bg-violet-50">Encore plus profond</button>
+                        <button className="text-[9px] bg-violet-600 text-white px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-violet-700">Integrer au rapport</button>
+                        <button className="text-[9px] bg-white text-violet-700 px-2 py-0.5 rounded-full font-medium border border-violet-200 cursor-pointer hover:bg-violet-50">Encore plus profond</button>
                       </div>
                     </>
                   ) : (
                     <div className="flex items-center gap-2 bg-violet-50 rounded-lg px-3 py-2 border border-violet-200">
                       <BotAvatar code="CEOB" size="sm" />
                       <div className="flex-1">
-                        <p className="text-[8px] text-violet-700 font-medium">CarlOS analyse cette section en profondeur...</p>
+                        <p className="text-[9px] text-violet-700 font-medium">CarlOS analyse cette section en profondeur...</p>
                         <div className="flex gap-1 mt-1">
                           <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: "0ms" }} />
                           <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: "150ms" }} />
@@ -2581,29 +2606,29 @@ function MagPreRapport() {
                     <>
                       <div className="flex items-center gap-2 mb-1">
                         <BotAvatar code={REFORMULER_RESULTS[s.id].bot} size="sm" />
-                        <span className="text-[8px] font-bold text-amber-700">Reformulation par {BOT_COLORS[REFORMULER_RESULTS[s.id].bot]?.name}</span>
+                        <span className="text-[9px] font-bold text-amber-700">Reformulation par {BOT_COLORS[REFORMULER_RESULTS[s.id].bot]?.name}</span>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <div className="bg-gray-50 border border-gray-200 rounded-lg p-2.5">
-                          <p className="text-[7px] text-gray-400 font-bold uppercase mb-1">Avant</p>
-                          <p className="text-[8px] text-gray-500 line-through leading-relaxed">{REFORMULER_RESULTS[s.id].before}</p>
+                          <p className="text-[9px] text-gray-400 font-bold uppercase mb-1">Avant</p>
+                          <p className="text-[9px] text-gray-500 line-through leading-relaxed">{REFORMULER_RESULTS[s.id].before}</p>
                         </div>
                         <div className="bg-amber-50 border border-amber-200 rounded-lg p-2.5">
-                          <p className="text-[7px] text-amber-600 font-bold uppercase mb-1">Apres</p>
-                          <p className="text-[8px] text-amber-800 leading-relaxed">{REFORMULER_RESULTS[s.id].after}</p>
+                          <p className="text-[9px] text-amber-600 font-bold uppercase mb-1">Apres</p>
+                          <p className="text-[9px] text-amber-800 leading-relaxed">{REFORMULER_RESULTS[s.id].after}</p>
                         </div>
                       </div>
                       <div className="flex gap-1.5">
-                        <button className="text-[8px] bg-amber-600 text-white px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-amber-700">Appliquer la reformulation</button>
-                        <button className="text-[8px] bg-white text-amber-700 px-2 py-0.5 rounded-full font-medium border border-amber-200 cursor-pointer hover:bg-amber-50">Autre version</button>
-                        <button onClick={() => setActiveAction(null)} className="text-[8px] bg-white text-gray-500 px-2 py-0.5 rounded-full font-medium border border-gray-200 cursor-pointer hover:bg-gray-50">Garder l'original</button>
+                        <button className="text-[9px] bg-amber-600 text-white px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-amber-700">Appliquer la reformulation</button>
+                        <button className="text-[9px] bg-white text-amber-700 px-2 py-0.5 rounded-full font-medium border border-amber-200 cursor-pointer hover:bg-amber-50">Autre version</button>
+                        <button onClick={() => setActiveAction(null)} className="text-[9px] bg-white text-gray-500 px-2 py-0.5 rounded-full font-medium border border-gray-200 cursor-pointer hover:bg-gray-50">Garder l'original</button>
                       </div>
                     </>
                   ) : (
                     <div className="flex items-center gap-2 bg-amber-50 rounded-lg px-3 py-2 border border-amber-200">
                       <BotAvatar code="CEOB" size="sm" />
                       <div className="flex-1">
-                        <p className="text-[8px] text-amber-700 font-medium">CarlOS reformule cette section...</p>
+                        <p className="text-[9px] text-amber-700 font-medium">CarlOS reformule cette section...</p>
                         <div className="flex gap-1 mt-1">
                           <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: "0ms" }} />
                           <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: "150ms" }} />
@@ -2621,6 +2646,435 @@ function MagPreRapport() {
     </div>
   );
 }
+
+// ========== CONCEPTION WIZARD — setup chantier en theme jaune (panel droit) ==========
+
+const CONCEPTION_SECTIONS = [
+  { id: 1, title: "Vue d'ensemble du chantier", icon: Flame },
+  { id: 2, title: "Objectifs & Crit\u00e8res de succ\u00e8s", icon: Target },
+  { id: 3, title: "Projets identifi\u00e9s", icon: FolderOpen },
+  { id: 4, title: "Missions par projet", icon: Target },
+  { id: 5, title: "T\u00e2ches par mission", icon: ListChecks },
+  { id: 6, title: "\u00c9quipe & Attribution", icon: Users },
+  { id: 7, title: "Budget & Ressources", icon: DollarSign },
+  { id: 8, title: "Timeline & Jalons", icon: Calendar },
+];
+
+const CONCEPTION_DATA: Record<number, { content: React.ReactNode }> = {
+  1: { content: (
+    <div className="space-y-2">
+      <div className="grid grid-cols-2 gap-2">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2">
+          <p className="text-[9px] text-yellow-600 font-bold uppercase">Titre</p>
+          <p className="text-xs font-bold text-gray-800">Strat\u00e9gie Marketing Q2-Q3</p>
+        </div>
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2">
+          <p className="text-[9px] text-yellow-600 font-bold uppercase">Chaleur</p>
+          <p className="text-xs font-bold text-gray-800">\ud83d\udd25 Critique \u2014 Pipeline stagne</p>
+        </div>
+      </div>
+      <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+        <p className="text-[9px] text-gray-500 font-bold uppercase mb-1">Description</p>
+        <p className="text-[10px] text-gray-700 leading-relaxed">Refonte compl\u00e8te de la strat\u00e9gie d'acquisition marketing. Pivot du messaging technologique vers le ROI concret. Programme referral + content LinkedIn + webinaires VITAA.</p>
+      </div>
+    </div>
+  )},
+  2: { content: (
+    <div className="space-y-2">
+      {[
+        { obj: "R\u00e9duire le CAC de 780$ \u00e0 340$", kpi: "CAC mensuel", cible: "340$", actuel: "780$" },
+        { obj: "Augmenter la conversion de 1.2% \u00e0 3.5%", kpi: "Taux conversion", cible: "3.5%", actuel: "1.2%" },
+        { obj: "G\u00e9n\u00e9rer 15 leads qualifi\u00e9s/mois", kpi: "Leads/mois", cible: "15", actuel: "4" },
+      ].map((o, i) => (
+        <div key={i} className="bg-yellow-50/50 border border-yellow-200 rounded-lg px-3 py-2">
+          <p className="text-[9px] font-bold text-gray-800">{o.obj}</p>
+          <div className="flex items-center gap-3 mt-1 text-[9px]">
+            <span className="text-gray-500">KPI: {o.kpi}</span>
+            <span className="text-red-600">Actuel: {o.actuel}</span>
+            <span className="text-emerald-600 font-bold">Cible: {o.cible}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  )},
+  3: { content: (
+    <div className="space-y-2">
+      {[
+        { name: "Programme R\u00e9f\u00e9rencement Clients", priority: "Haute", bot: "CFOB", botName: "Frank" },
+        { name: "Content Marketing LinkedIn", priority: "Haute", bot: "CMOB", botName: "Mathilde" },
+        { name: "D\u00e9monstration AI Mensuelle", priority: "Moyenne", bot: "CTOB", botName: "Tim" },
+      ].map((p, i) => (
+        <div key={i} className="bg-yellow-50/50 border border-yellow-200 rounded-lg px-3 py-2.5">
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-[9px] font-bold bg-yellow-600 text-white w-5 h-5 rounded-full flex items-center justify-center">{i+1}</span>
+            <span className="text-xs font-bold text-gray-800">{p.name}</span>
+            <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium ml-auto", p.priority === "Haute" ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-600")}>{p.priority}</span>
+          </div>
+          <div className="flex items-center gap-2 ml-7">
+            <BotAvatar code={p.bot} size="sm" />
+            <span className="text-[9px] text-gray-500">Pilot\u00e9 par {p.botName}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  )},
+  4: { content: (
+    <div className="space-y-3">
+      {[
+        { project: "Programme R\u00e9f\u00e9rencement", missions: ["Cr\u00e9er landing pages t\u00e9moignages", "Mettre en place programme fid\u00e9lit\u00e9", "Automatiser demandes de recommandation"] },
+        { project: "Content Marketing LinkedIn", missions: ["Calendrier \u00e9ditorial Q2", "Automatiser publication", "Analyse performance hebdo"] },
+        { project: "D\u00e9monstration AI", missions: ["Organiser premier webinar", "Pr\u00e9parer d\u00e9mos live", "Suivi post-webinar"] },
+      ].map((p, i) => (
+        <div key={i}>
+          <p className="text-[9px] font-bold text-yellow-700 mb-1">{p.project}</p>
+          <div className="space-y-1 ml-3">
+            {p.missions.map((m, j) => (
+              <div key={j} className="flex items-center gap-2 text-[9px] text-gray-700 bg-white border border-gray-100 rounded px-2.5 py-1">
+                <Target className="h-3.5 w-3.5 text-yellow-500 shrink-0" />
+                <span>Mission {i+1}.{j+1}: {m}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  )},
+  5: { content: (
+    <div className="space-y-2">
+      <p className="text-[9px] text-gray-500 italic">T\u00e2ches d\u00e9riv\u00e9es des missions \u2014 27 t\u00e2ches atomiques</p>
+      {[
+        { mission: "Landing pages t\u00e9moignages", tasks: ["R\u00e9diger 5 cas clients", "Design template t\u00e9moignage", "Int\u00e9grer au site web", "A/B test des CTAs"] },
+        { mission: "Calendrier \u00e9ditorial Q2", tasks: ["D\u00e9finir 12 th\u00e8mes", "R\u00e9diger 4 posts/semaine", "Planifier dans l'outil"] },
+      ].map((m, i) => (
+        <div key={i} className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+          <p className="text-[9px] font-bold text-gray-600 mb-1">{m.mission}</p>
+          <div className="space-y-0.5">
+            {m.tasks.map((t, j) => (
+              <div key={j} className="flex items-center gap-1.5 text-[9px] text-gray-600">
+                <ListChecks className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                <span>{t}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  )},
+  6: { content: (
+    <div className="space-y-2">
+      <div className="grid grid-cols-3 gap-2">
+        {[
+          { code: "CEOB", name: "CarlOS", role: "Coordination" },
+          { code: "CMOB", name: "Mathilde", role: "Marketing" },
+          { code: "CFOB", name: "Frank", role: "Budget" },
+          { code: "CTOB", name: "Tim", role: "Tech" },
+        ].map(b => (
+          <div key={b.code} className="flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-lg px-2.5 py-2">
+            <BotAvatar code={b.code} size="sm" />
+            <div>
+              <p className="text-[9px] font-bold text-gray-800">{b.name}</p>
+              <p className="text-[9px] text-gray-500">{b.role}</p>
+            </div>
+          </div>
+        ))}
+        <div className="flex items-center gap-2 bg-gray-50 border border-dashed border-gray-300 rounded-lg px-2.5 py-2">
+          <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center">
+            <Plus className="h-3.5 w-3.5 text-gray-400" />
+          </div>
+          <p className="text-[9px] text-gray-400">Humain</p>
+        </div>
+      </div>
+    </div>
+  )},
+  7: { content: (
+    <div className="space-y-2">
+      <div className="grid grid-cols-2 gap-2">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2">
+          <p className="text-[9px] text-yellow-600 font-bold uppercase">Budget mensuel</p>
+          <p className="text-xs font-bold text-gray-800">3,800$/mois</p>
+        </div>
+        <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
+          <p className="text-[9px] text-emerald-600 font-bold uppercase">ROI projet\u00e9</p>
+          <p className="text-xs font-bold text-emerald-700">3.6x</p>
+        </div>
+      </div>
+      <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+        <p className="text-[9px] text-gray-500 font-bold uppercase mb-1">R\u00e9partition</p>
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-[9px]">
+            <span className="text-gray-600">Referral Program</span>
+            <span className="font-bold text-gray-800">1,200$/mois</span>
+          </div>
+          <div className="flex items-center justify-between text-[9px]">
+            <span className="text-gray-600">Content LinkedIn</span>
+            <span className="font-bold text-gray-800">2,600$/mois</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )},
+  8: { content: (
+    <div className="space-y-2">
+      {[
+        { phase: "Q2 \u2014 Avril-Juin", items: ["Lancement programme referral", "Premiers posts LinkedIn", "Setup automatisations email"], color: "bg-amber-100 text-amber-700" },
+        { phase: "Q3 \u2014 Juillet-Sept", items: ["Premier webinar VITAA", "Scale content LinkedIn", "Analyse ROI et ajustements"], color: "bg-emerald-100 text-emerald-700" },
+      ].map((p, i) => (
+        <div key={i} className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5">
+          <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-bold", p.color)}>{p.phase}</span>
+          <div className="mt-2 space-y-1">
+            {p.items.map((item, j) => (
+              <div key={j} className="flex items-center gap-1.5 text-[9px] text-gray-700">
+                <Calendar className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                <span>{item}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  )},
+};
+
+function ConceptionBlock({ section, validated, onValidate }: {
+  section: typeof CONCEPTION_SECTIONS[0]; validated: boolean; onValidate: () => void;
+}) {
+  const [appeared, setAppeared] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setAppeared(true), 100); return () => clearTimeout(t); }, []);
+
+  return (
+    <div className={cn("border-l-[3px] rounded-r-lg transition-all duration-500",
+      validated ? "border-emerald-400" : "border-yellow-400",
+      appeared ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
+    )}>
+      <div className="flex items-center gap-2 px-3 py-2">
+        <Hammer className="h-3.5 w-3.5 text-yellow-600 shrink-0" />
+        <span className="text-xs font-bold text-gray-800">{section.id}. {section.title}</span>
+        {validated ? (
+          <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium ml-auto bg-emerald-100 text-emerald-600">Valid\u00e9 \u2713</span>
+        ) : (
+          <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium ml-auto bg-yellow-100 text-yellow-600">En cours</span>
+        )}
+      </div>
+      <div className="px-3 pb-2">
+        {CONCEPTION_DATA[section.id]?.content}
+        <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-gray-100">
+          <button className="text-[9px] text-gray-500 hover:text-orange-700 font-medium cursor-pointer flex items-center gap-1 bg-white border border-gray-200 rounded-full px-2 py-0.5 hover:bg-orange-50">
+            <AlertTriangle className="h-3.5 w-3.5" /> Rechallenger
+          </button>
+          <button className="text-[9px] text-gray-500 hover:text-amber-700 font-medium cursor-pointer flex items-center gap-1 bg-white border border-gray-200 rounded-full px-2 py-0.5 hover:bg-amber-50">
+            <RefreshCw className="h-3.5 w-3.5" /> Ajuster
+          </button>
+          {!validated && (
+            <button onClick={onValidate} className="text-[9px] text-emerald-700 font-medium cursor-pointer flex items-center gap-1 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 hover:bg-emerald-100">
+              <CheckCircle2 className="h-3.5 w-3.5" /> Valider \u2713
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function ConceptionWizard({ stage, context }: { stage: number; context: string | null }) {
+  const [validatedSections, setValidatedSections] = useState<Set<number>>(new Set());
+  const validatedCount = validatedSections.size;
+  const allValidated = validatedCount === CONCEPTION_SECTIONS.length;
+
+  const handleValidate = (id: number) => {
+    setValidatedSections(prev => { const next = new Set(prev); next.add(id); return next; });
+  };
+
+  // Sections appear progressively with conception stage
+  const visibleSections = CONCEPTION_SECTIONS.filter((_, i) => stage >= i);
+
+  return (
+    <div className="max-w-4xl mx-auto px-6 py-4 pb-12">
+      <div className="flex gap-4">
+        {/* TOC sidebar */}
+        <div className="w-48 shrink-0 space-y-1">
+          <div className="flex items-center gap-1.5 mb-3">
+            <Hammer className="h-4 w-4 text-yellow-500" />
+            <span className="text-xs font-bold text-gray-800">Conception du Chantier</span>
+          </div>
+          {CONCEPTION_SECTIONS.map(s => {
+            const visible = visibleSections.includes(s);
+            const validated = validatedSections.has(s.id);
+            return (
+              <div key={s.id} className={cn("flex items-center gap-1.5 text-[10px] px-2 py-1.5 rounded transition-all",
+                validated ? "bg-emerald-50 text-emerald-700 font-medium" :
+                visible ? "bg-yellow-50 text-yellow-700 font-medium" : "text-gray-400"
+              )}>
+                {validated ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" /> :
+                 visible ? <div className="w-3.5 h-3.5 rounded-full bg-yellow-400 shrink-0" /> :
+                 <div className="w-3.5 h-3.5 rounded-full border border-gray-300 shrink-0" />}
+                <span className="truncate">{s.id}. {s.title}</span>
+              </div>
+            );
+          })}
+          <div className="mt-3 text-[10px] text-gray-500 px-2">
+            <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+              <div className="h-full bg-yellow-500 rounded-full transition-all" style={{ width: `${(validatedCount / CONCEPTION_SECTIONS.length) * 100}%` }} />
+            </div>
+            <span className="mt-1 block">{validatedCount} / {CONCEPTION_SECTIONS.length} valid\u00e9es</span>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 space-y-3">
+          {visibleSections.map(s => (
+            <ConceptionBlock
+              key={s.id}
+              section={s}
+              validated={validatedSections.has(s.id)}
+              onValidate={() => handleValidate(s.id)}
+            />
+          ))}
+
+          {/* Ceremonie finale */}
+          {allValidated && (
+            <div className="py-4">
+              <div className="bg-gradient-to-r from-yellow-100 to-emerald-100 border-2 border-emerald-300 rounded-xl px-6 py-6 text-center">
+                <div className="flex items-center justify-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-full bg-yellow-500 flex items-center justify-center">
+                    <Hammer className="h-5 w-5 text-white" />
+                  </div>
+                  <ArrowRight className="h-5 w-5 text-emerald-600" />
+                  <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center animate-pulse">
+                    <Rocket className="h-5 w-5 text-white" />
+                  </div>
+                </div>
+                <p className="text-sm font-bold text-emerald-800">Chantier structur\u00e9!</p>
+                <p className="text-xs text-emerald-600 mt-1">3 projets \u2022 9 missions \u2022 27 t\u00e2ches</p>
+                <div className="mt-4">
+                  <button className="text-xs bg-emerald-600 text-white px-5 py-2.5 rounded-full font-bold cursor-pointer hover:bg-emerald-700">
+                    Lancer le Chantier
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ========== CONCEPTION CHAT — panel gauche quand activePhase === "creation" ==========
+
+function ConceptionChat({ stage, typed, setTyped, advance, onBackToReflexion }: {
+  stage: number; typed: boolean; setTyped: (v: boolean) => void; advance: () => void; onBackToReflexion: () => void;
+}) {
+  const pc = PC["creation"];
+  return (
+    <>
+      {/* Bouton retour */}
+      <button onClick={onBackToReflexion} className="flex items-center gap-1 text-xs text-orange-600 hover:text-orange-700 font-medium cursor-pointer mb-2">
+        <ArrowLeft className="h-3.5 w-3.5" /> Retour au rapport
+      </button>
+
+      {/* Stage 0: intro */}
+      {stage >= 0 && (
+        <SBubble code="CEOB" collapsed={stage > 0}>
+          {stage === 0 ? (
+            <>
+              <TypewriterText text="Le rapport de r\u00e9flexion est pr\u00eat. Passons \u00e0 la conception du chantier. Je vais structurer les recommandations en projets, missions et t\u00e2ches concr\u00e8tes." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && <SBtn onClick={advance} icon={Flame} label="Vue d'ensemble" pc={pc} />}
+            </>
+          ) : <p className="text-[9px] text-gray-400 italic">Passage en mode Conception</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 1: vue d'ensemble */}
+      {stage >= 1 && (
+        <SBubble code="CEOB" collapsed={stage > 1}>
+          {stage === 1 ? (
+            <>
+              <TypewriterText text="Vue d'ensemble du chantier \u00ab Strat\u00e9gie Marketing Q2-Q3 \u00bb. Les donn\u00e9es du rapport sont pr\u00e9-remplies \u00e0 droite. V\u00e9rifie le titre, la description et le niveau de chaleur. Valide quand c'est bon." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && <SBtn onClick={advance} icon={Target} label="D\u00e9finir les objectifs" pc={pc} />}
+            </>
+          ) : <p className="text-[9px] text-gray-400 italic">Vue d'ensemble valid\u00e9e</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 2: projets */}
+      {stage >= 2 && (
+        <SBubble code="CEOB" collapsed={stage > 2}>
+          {stage === 2 ? (
+            <>
+              <TypewriterText text="3 projets identifi\u00e9s \u00e0 partir de l'analyse. Chaque projet est assign\u00e9 \u00e0 un bot sp\u00e9cialiste. V\u00e9rifie les priorit\u00e9s et les attributions \u00e0 droite." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && (
+                <div className="mt-2 space-y-1">
+                  {[
+                    { code: "CFOB", name: "Frank", role: "Pilote le Programme Referral" },
+                    { code: "CMOB", name: "Mathilde", role: "Pilote le Content LinkedIn" },
+                    { code: "CTOB", name: "Tim", role: "Pilote les D\u00e9mos AI" },
+                  ].map(b => (
+                    <div key={b.code} className="flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-1.5">
+                      <BotAvatar code={b.code} size="sm" />
+                      <span className="text-[9px] font-bold text-gray-700">{b.name}</span>
+                      <span className="text-[9px] text-gray-500">\u2014 {b.role}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {typed && <SBtn onClick={advance} icon={ListChecks} label="D\u00e9tailler missions et t\u00e2ches" pc={pc} />}
+            </>
+          ) : <p className="text-[9px] text-gray-400 italic">3 projets, 3 bots assign\u00e9s</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 3: missions et taches */}
+      {stage >= 3 && (
+        <SBubble code="CEOB" collapsed={stage > 3}>
+          {stage === 3 ? (
+            <>
+              <TypewriterText text="Missions et t\u00e2ches d\u00e9compos\u00e9es. 9 missions, 27 t\u00e2ches atomiques d\u00e9riv\u00e9es de l'analyse. Chaque t\u00e2che est assign\u00e9e et estim\u00e9e. V\u00e9rifie la granularit\u00e9 \u00e0 droite." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && <SBtn onClick={advance} icon={DollarSign} label="Budget et timeline" pc={pc} />}
+            </>
+          ) : <p className="text-[9px] text-gray-400 italic">9 missions, 27 t\u00e2ches</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 4: budget + timeline */}
+      {stage >= 4 && (
+        <SBubble code="CEOB" collapsed={stage > 4}>
+          {stage === 4 ? (
+            <>
+              <TypewriterText text="Budget 3,800$/mois, ROI projet\u00e9 3.6x. Timeline: Q2 pour les quick wins (referral + LinkedIn), Q3 pour le scale (webinaires + optimisation). V\u00e9rifie les chiffres \u00e0 droite et valide pour finaliser." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && (
+                <div className="mt-2 bg-emerald-50 rounded-lg px-3 py-2 text-[9px]">
+                  <div className="flex items-center gap-4">
+                    <div><span className="font-bold text-emerald-700">Budget:</span> 3,800$/mois</div>
+                    <div><span className="font-bold text-emerald-700">ROI:</span> 3.6x</div>
+                    <div><span className="font-bold text-emerald-700">Dur\u00e9e:</span> Q2-Q3</div>
+                  </div>
+                </div>
+              )}
+              {typed && <SBtn onClick={advance} icon={Rocket} label="Finaliser le chantier" pc={pc} />}
+            </>
+          ) : <p className="text-[9px] text-gray-400 italic">Budget 3,800$/mois, ROI 3.6x</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 5: validation finale */}
+      {stage >= 5 && (
+        <div className="bg-gradient-to-r from-yellow-50 to-emerald-50 border border-emerald-300 rounded-xl px-4 py-3">
+          <TypewriterText text="Chantier structur\u00e9! Valide les 8 sections \u00e0 droite pour lancer le chantier. Chaque section peut \u00eatre rechalleng\u00e9e ou ajust\u00e9e avant le lancement." speed={10} className="text-sm text-emerald-800 font-medium" onComplete={() => setTyped(true)} />
+          {typed && (
+            <div className="mt-2 flex items-center gap-2">
+              <div className="w-3.5 h-3.5 rounded-full bg-yellow-500" />
+              <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+              <div className="w-3.5 h-3.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[9px] text-emerald-700 font-semibold ml-1">Conception \u2192 Lancement</span>
+            </div>
+          )}
+        </div>
+      )}
+    </>
+  );
+}
+
+// ========== MAG TRANSITION (legacy, kept for reference) ==========
 
 function MagTransition() {
   return (
@@ -2648,39 +3102,243 @@ function MagTransition() {
 
 // ========== REFLEXION MAGAZINE PAGE (right panel \u2014 stacked sections from SimPhaseReflexion) ==========
 
-export function ReflexionMagazine({ stage, context }: { stage: number; context: string | null }) {
+// ========== DOCFORGE BLOCK — wrapper generique pour chaque section du rapport ==========
+
+type DocForgeStatus = "empty" | "en-cours" | "complete";
+
+function DocForgeBlock({ index, title, icon: Icon, status, children, themeColor = "orange" }: {
+  index: number; title: string; icon: React.ElementType; status: DocForgeStatus;
+  children: React.ReactNode; themeColor?: "orange" | "yellow";
+}) {
+  const [collapsed, setCollapsed] = useState(false);
+  const [appeared, setAppeared] = useState(false);
+  const [feedback, setFeedback] = useState<string | null>(null);
+
+  useEffect(() => { const t = setTimeout(() => setAppeared(true), 100); return () => clearTimeout(t); }, []);
+
+  const borderColor = themeColor === "yellow" ? "border-yellow-400" : "border-orange-400";
+  const bgHover = themeColor === "yellow" ? "hover:bg-yellow-50" : "hover:bg-orange-50";
+  const badgeStyles: Record<DocForgeStatus, string> = {
+    empty: "bg-gray-100 text-gray-400",
+    "en-cours": "bg-orange-100 text-orange-600",
+    complete: "bg-emerald-100 text-emerald-600",
+  };
+  const badgeLabel: Record<DocForgeStatus, string> = { empty: "\u2014", "en-cours": "En cours", complete: "Compl\u00e9t\u00e9" };
+
+  const showFeedback = (msg: string) => { setFeedback(msg); setTimeout(() => setFeedback(null), 1500); };
+
   return (
-    <div className="max-w-4xl mx-auto px-6 py-4 space-y-8 pb-12">
-      {/* Empty state */}
-      {stage < 1 && (
+    <div className={cn("border-l-[3px] rounded-r-lg transition-all duration-500", borderColor,
+      appeared ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
+    )}>
+      <button onClick={() => setCollapsed(!collapsed)}
+        className={cn("w-full flex items-center gap-2 px-3 py-2 text-left cursor-pointer transition-colors", bgHover)}
+      >
+        <Icon className={cn("h-4 w-4 shrink-0", themeColor === "yellow" ? "text-yellow-600" : "text-orange-600")} />
+        <span className="text-xs font-bold text-gray-800">{index}. {title}</span>
+        <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium ml-auto", badgeStyles[status])}>{badgeLabel[status]}</span>
+        <ChevronDown className={cn("h-3.5 w-3.5 text-gray-400 transition-transform", collapsed && "-rotate-90")} />
+      </button>
+      {!collapsed && (
+        <div className="px-3 pb-2">
+          {children}
+          {feedback && (
+            <div className="mt-2 text-[9px] bg-emerald-50 text-emerald-700 border border-emerald-200 rounded px-2 py-1 font-medium animate-in fade-in">
+              {feedback}
+            </div>
+          )}
+          <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-gray-100">
+            <button onClick={() => showFeedback("Rechallenge lanc\u00e9...")} className="text-[9px] text-gray-500 hover:text-orange-700 font-medium cursor-pointer flex items-center gap-1.5 bg-white border border-gray-200 rounded-full px-2.5 py-1 hover:bg-orange-50">
+              <AlertTriangle className="h-3.5 w-3.5" /> Rechallenger
+            </button>
+            <button onClick={() => showFeedback("Analyse approfondie...")} className="text-[9px] text-gray-500 hover:text-violet-700 font-medium cursor-pointer flex items-center gap-1.5 bg-white border border-gray-200 rounded-full px-2.5 py-1 hover:bg-violet-50">
+              <BookOpen className="h-3.5 w-3.5" /> Approfondir
+            </button>
+            <button onClick={() => showFeedback("Reformulation...")} className="text-[9px] text-gray-500 hover:text-amber-700 font-medium cursor-pointer flex items-center gap-1.5 bg-white border border-gray-200 rounded-full px-2.5 py-1 hover:bg-amber-50">
+              <RefreshCw className="h-3.5 w-3.5" /> Reformuler
+            </button>
+            <button onClick={() => showFeedback("Section cristallis\u00e9e!")} className="text-[9px] text-gray-500 hover:text-emerald-700 font-medium cursor-pointer flex items-center gap-1.5 bg-white border border-gray-200 rounded-full px-2.5 py-1 hover:bg-emerald-50">
+              <CheckCircle2 className="h-3.5 w-3.5" /> Cristalliser
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ========== REFLEXION DOCFORGE SECTIONS CONFIG ==========
+
+const REFLEXION_DOCFORGE_SECTIONS: { id: number; title: string; icon: React.ElementType; minStage: number }[] = [
+  { id: 1, title: "Diagnostic initial", icon: Stethoscope, minStage: 1 },
+  { id: 2, title: "Brainstorm SCAMPER", icon: Lightbulb, minStage: 7 },
+  { id: 3, title: "Synth\u00e8se brainstorm", icon: Layers, minStage: 8 },
+  { id: 4, title: "Analyse 5 Pourquoi", icon: Search, minStage: 9 },
+  { id: 5, title: "Deep Search", icon: Globe, minStage: 10 },
+  { id: 6, title: "Synth\u00e8se recherche", icon: FileBarChart, minStage: 11 },
+  { id: 7, title: "Challenge / D\u00e9fense", icon: Swords, minStage: 12 },
+  { id: 8, title: "Pr\u00e9-rapport", icon: FileText, minStage: 13 },
+  { id: 9, title: "Conclusions", icon: Trophy, minStage: 14 },
+];
+
+function MagConclusions() {
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 pb-2 border-b border-orange-200">
+        <Trophy className="h-4 w-4 text-orange-600" />
+        <h3 className="text-sm font-bold text-gray-800">Conclusions et recommandations</h3>
+      </div>
+      {[
+        { rank: 1, title: "Programme Referral Clients", desc: "Quick win \u2014 ROI 4.2x, budget 1,200$/mois. Levier le bouche-\u00e0-oreille existant avec des incitatifs structur\u00e9s.", bot: "CFOB" },
+        { rank: 2, title: "Content Marketing LinkedIn", desc: "Moyen terme \u2014 repositionner le messaging vers le ROI concret. Calendrier \u00e9ditorial Q2-Q3.", bot: "CMOB" },
+        { rank: 3, title: "Webinaires VITAA Mensuels", desc: "Long terme \u2014 d\u00e9montrer l'IA en action. Premier webinar Q2, r\u00e9currence mensuelle Q3.", bot: "CEOB" },
+      ].map(r => (
+        <div key={r.rank} className="bg-orange-50/50 border border-orange-200 rounded-lg px-3 py-2.5">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[9px] font-bold bg-orange-600 text-white w-5 h-5 rounded-full flex items-center justify-center">{r.rank}</span>
+            <span className="text-xs font-bold text-gray-800">{r.title}</span>
+            <BotAvatar code={r.bot} size="sm" />
+          </div>
+          <p className="text-[10px] text-gray-600 leading-relaxed ml-7">{r.desc}</p>
+        </div>
+      ))}
+      <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 text-center">
+        <p className="text-[9px] font-bold text-emerald-700">Budget total recommand\u00e9: 3,800$/mois \u2014 ROI projet\u00e9: 3.6x</p>
+      </div>
+    </div>
+  );
+}
+
+export function ReflexionMagazine({ stage, context, onStartConception }: { stage: number; context: string | null; onStartConception?: () => void }) {
+  const visibleCount = REFLEXION_DOCFORGE_SECTIONS.filter(s => stage >= s.minStage).length;
+
+  return (
+    <div className="max-w-4xl mx-auto px-6 py-4 pb-12">
+      {stage < 1 ? (
         <div className="text-center py-12">
           <Brain className="h-8 w-8 text-orange-300 mx-auto mb-3" />
           <p className="text-sm text-gray-400">Le diagnostic commence...</p>
           <p className="text-[9px] text-gray-300">Les sections apparaitront au fur et a mesure de l'analyse</p>
         </div>
+      ) : (
+        <div className="flex gap-4">
+          {/* TOC sidebar */}
+          <div className="w-48 shrink-0 space-y-1">
+            <div className="flex items-center gap-1.5 mb-3">
+              <Brain className="h-4 w-4 text-orange-500" />
+              <span className="text-xs font-bold text-gray-800">Rapport de R\u00e9flexion</span>
+            </div>
+            {REFLEXION_DOCFORGE_SECTIONS.map(s => {
+              const visible = stage >= s.minStage;
+              return (
+                <div key={s.id} className={cn("flex items-center gap-1.5 text-[10px] px-2 py-1.5 rounded transition-all",
+                  visible ? "bg-orange-50 text-orange-700 font-medium" : "text-gray-400"
+                )}>
+                  {visible ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" /> : <div className="w-3.5 h-3.5 rounded-full border border-gray-300 shrink-0" />}
+                  <span className="truncate">{s.id}. {s.title}</span>
+                </div>
+              );
+            })}
+            <div className="mt-3 text-[10px] text-gray-500 px-2">
+              <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                <div className="h-full bg-orange-500 rounded-full transition-all" style={{ width: `${(visibleCount / REFLEXION_DOCFORGE_SECTIONS.length) * 100}%` }} />
+              </div>
+              <span className="mt-1 block">{visibleCount} / {REFLEXION_DOCFORGE_SECTIONS.length} sections</span>
+            </div>
+            <div className="mt-3 pt-2 border-t border-gray-200 space-y-1">
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Actions</p>
+              {[
+                { label: "Re-synth\u00e9tiser", icon: RefreshCw },
+                { label: "R\u00e9organiser", icon: Layers },
+                { label: "Exporter PDF", icon: FileText },
+              ].map(a => (
+                <button key={a.label} className="w-full flex items-center gap-1.5 text-[9px] text-gray-500 hover:text-orange-600 hover:bg-orange-50 px-2 py-1.5 rounded cursor-pointer transition-colors text-left">
+                  <a.icon className="h-3.5 w-3.5 shrink-0" /> {a.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Content \u2014 DocForge blocks */}
+          <div className="flex-1 space-y-3">
+            {stage >= 1 && (
+              <DocForgeBlock index={1} title="Diagnostic initial" icon={Stethoscope} status={stage >= 7 ? "complete" : "en-cours"}>
+                <MagDiagnostic />
+              </DocForgeBlock>
+            )}
+            {stage >= 7 && (
+              <DocForgeBlock index={2} title="Brainstorm SCAMPER" icon={Lightbulb} status={stage >= 8 ? "complete" : "en-cours"}>
+                <MagBrainstorm />
+              </DocForgeBlock>
+            )}
+            {stage >= 8 && (
+              <DocForgeBlock index={3} title="Synth\u00e8se brainstorm" icon={Layers} status={stage >= 9 ? "complete" : "en-cours"}>
+                <MagSyntheseBrainstorm />
+              </DocForgeBlock>
+            )}
+            {stage >= 9 && (
+              <DocForgeBlock index={4} title="Analyse 5 Pourquoi" icon={Search} status={stage >= 10 ? "complete" : "en-cours"}>
+                <MagCinqPourquoi />
+              </DocForgeBlock>
+            )}
+            {stage >= 10 && (
+              <DocForgeBlock index={5} title="Deep Search" icon={Globe} status={stage >= 11 ? "complete" : "en-cours"}>
+                <MagDeepSearch />
+              </DocForgeBlock>
+            )}
+            {stage >= 11 && (
+              <DocForgeBlock index={6} title="Synth\u00e8se recherche" icon={FileBarChart} status={stage >= 12 ? "complete" : "en-cours"}>
+                <MagSyntheseRecherche />
+              </DocForgeBlock>
+            )}
+            {stage >= 12 && (
+              <DocForgeBlock index={7} title="Challenge / D\u00e9fense" icon={Swords} status={stage >= 13 ? "complete" : "en-cours"}>
+                <MagChallenge />
+              </DocForgeBlock>
+            )}
+            {stage >= 13 && (
+              <DocForgeBlock index={8} title="Pr\u00e9-rapport" icon={FileText} status={stage >= 14 ? "complete" : "en-cours"}>
+                <MagPreRapport />
+              </DocForgeBlock>
+            )}
+            {stage >= 14 && (
+              <DocForgeBlock index={9} title="Conclusions" icon={Trophy} status="complete">
+                <MagConclusions />
+              </DocForgeBlock>
+            )}
+
+            {/* Transition vers Conception */}
+            {stage >= 15 && onStartConception && (
+              <div className="py-4">
+                <div className="bg-gradient-to-r from-amber-100 to-yellow-100 border-2 border-amber-300 rounded-xl px-6 py-6 text-center">
+                  <div className="flex items-center justify-center gap-4 mb-4">
+                    <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center">
+                      <Brain className="h-5 w-5 text-white" />
+                    </div>
+                    <ArrowRight className="h-5 w-5 text-amber-600" />
+                    <div className="w-10 h-10 rounded-full bg-yellow-500 flex items-center justify-center animate-pulse">
+                      <Hammer className="h-5 w-5 text-white" />
+                    </div>
+                  </div>
+                  <p className="text-sm font-bold text-amber-800">Rapport complet \u2014 Pr\u00eat pour la Conception</p>
+                  <p className="text-xs text-amber-600 mt-1">9 sections d'analyse sauvegard\u00e9es</p>
+                  <div className="mt-4 flex gap-2 justify-center">
+                    <button onClick={onStartConception} className="text-xs bg-amber-600 text-white px-4 py-2 rounded-full font-bold cursor-pointer hover:bg-amber-700">
+                      Passer en mode Conception
+                    </button>
+                    <button className="text-xs bg-white text-amber-700 px-4 py-2 rounded-full font-bold border border-amber-300 cursor-pointer hover:bg-amber-50">
+                      Cristalliser d'abord
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       )}
-      {/* Diagnostic \u2014 appears at stage 1 */}
-      {stage >= 1 && <MagDiagnostic />}
-      {/* Brainstorm \u2014 appears at stage 7 */}
-      {stage >= 7 && <MagBrainstorm />}
-      {/* Synthese brainstorm \u2014 appears at stage 8 */}
-      {stage >= 8 && <MagSyntheseBrainstorm />}
-      {/* 5 Pourquoi \u2014 appears at stage 9 */}
-      {stage >= 9 && <MagCinqPourquoi />}
-      {/* Deep Search \u2014 appears at stage 10 */}
-      {stage >= 10 && <MagDeepSearch />}
-      {/* Synthese recherche \u2014 appears at stage 11 */}
-      {stage >= 11 && <MagSyntheseRecherche />}
-      {/* Challenge \u2014 appears at stage 12 */}
-      {stage >= 12 && <MagChallenge />}
-      {/* Pre-rapport \u2014 appears at stage 13 */}
-      {stage >= 13 && <MagPreRapport />}
-      {/* Transition \u2014 appears at stage 15 */}
-      {stage >= 15 && <MagTransition />}
     </div>
   );
 }
-
 
 // ========== CHANTIER DRILL-DOWN DATA ==========
 
@@ -3163,7 +3821,7 @@ function Orbit9SectionMenu({ activeSection, onSection }: { activeSection: Orbit9
     <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
       <div className="px-3 py-2 flex items-center gap-2 border-b border-gray-100 bg-[#00B4D8]/10">
         <Atom className="h-3.5 w-3.5 text-gray-900 stroke-[2.5]" />
-        <span className="text-[11px] font-bold text-gray-900">Réseau Orbit<sup className="text-[8px]">9</sup></span>
+        <span className="text-[11px] font-bold text-gray-900">Réseau Orbit<sup className="text-[9px]">9</sup></span>
       </div>
       <div className="p-2 grid grid-cols-3 gap-1.5">
         {O9_TABS.map(tab => (
@@ -3298,14 +3956,14 @@ function Orbit9Chat({ typed, setTyped, selectedCellule }: { typed: boolean; setT
                   {item.type === "bot" ? (BOT_COLORS[item.code!]?.name || item.code) :
                    item.type === "humain" ? (item as { name: string }).name : "Bot-to-Bot"}
                 </span>
-                <span className={cn("text-[8px] px-1.5 py-0.5 rounded-full font-medium",
+                <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium",
                   item.type === "bot" ? "bg-blue-50 text-blue-500" :
                   item.type === "humain" ? "bg-emerald-50 text-emerald-500" :
                   "bg-violet-50 text-violet-500"
                 )}>
                   {item.type === "bot" ? "🤖 Bot" : item.type === "humain" ? "👤 Humain" : "🔗 B2B"}
                 </span>
-                <span className="text-[8px] text-gray-400 ml-auto">{item.time}</span>
+                <span className="text-[9px] text-gray-400 ml-auto">{item.time}</span>
               </div>
               <p className="text-xs text-gray-700 leading-relaxed">{item.text}</p>
               {/* Engagement buttons */}
@@ -3763,7 +4421,7 @@ function CelluleDrillDown({ cellule, onBack }: { cellule: Cellule; onBack: () =>
                       { label: "A", val: m.vitaa.a2, color: "bg-violet-400" },
                     ].map((p, pi) => (
                       <div key={pi} className="flex items-center gap-0.5">
-                        <span className="text-[8px] text-gray-400">{p.label}</span>
+                        <span className="text-[9px] text-gray-400">{p.label}</span>
                         <div className="w-10 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                           <div className={cn("h-full rounded-full", p.color)} style={{ width: `${p.val * 100}%` }} />
                         </div>
@@ -5482,23 +6140,22 @@ export function Orbit9SocialHome() {
 
   return (
     <div className="space-y-4">
-      {/* ═══ HEADER ═══ */}
-      <div className="bg-gradient-to-r from-cyan-600 to-blue-600 rounded-xl p-5">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-            <Atom className="h-5 w-5 text-white" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-white">Orbit⁹ — Réseau</h1>
-            <p className="text-sm text-white/70">7 cellules · 34 membres · 12 matches actifs</p>
-          </div>
-          <div className="ml-auto flex items-center gap-2">
-            <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-400/20 text-emerald-100 text-xs font-medium">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />Ghost Delegate actif
-            </span>
-          </div>
+      {/* ═══ HERO V20 — Stellar Orbit ═══ */}
+      <LivingHero blur1="bg-violet-100/70" blur2="bg-indigo-100/60" subtitleColor="text-violet-600" subtitle="Écosystème & Synergie" title="Votre galaxie d'opportunités, interconnectée." description="Les cellules gravitent autour du cœur. C'est l'essence du réseau global, le mouvement perpétuel." scaleClass="scale-[0.80]">
+        <div className="relative flex items-center justify-center overflow-visible" style={{ width: 340, height: 160 }}>
+          <svg viewBox="0 0 200 200" className="overflow-visible" style={{ width: 300, height: 300 }}>
+            <circle cx="100" cy="100" r="16" fill="url(#o9-core-grad)" filter="drop-shadow(0 0 15px #a78bfa)"/>
+            <circle cx="100" cy="100" r="18" fill="none" stroke="#c084fc" strokeWidth="1" strokeDasharray="2 2" className="anim-orb-1"/>
+            <g className="anim-orb-1"><circle cx="100" cy="100" r="35" fill="none" stroke="#c084fc" strokeWidth="0.75" strokeDasharray="4 8" opacity="0.6"/><circle cx="135" cy="100" r="4.5" fill="#d8b4fe" className="anim-dot" style={{ color: '#d8b4fe' }} /></g>
+            <g className="anim-orb-2"><circle cx="100" cy="100" r="60" fill="none" stroke="#818cf8" strokeWidth="1.5" opacity="0.4"/><circle cx="100" cy="40" r="5" fill="#6366f1" className="anim-dot" style={{ color: '#6366f1' }}/><circle cx="100" cy="160" r="3.5" fill="#818cf8" className="anim-dot" style={{ color: '#818cf8' }}/></g>
+            <g className="anim-orb-3"><circle cx="100" cy="100" r="90" fill="none" stroke="#a78bfa" strokeWidth="1" strokeDasharray="2 6" opacity="0.8"/><circle cx="190" cy="100" r="18" fill="rgba(167, 139, 250, 0.15)"/><circle cx="190" cy="100" r="13" fill="none" stroke="#c084fc" strokeWidth="0.5"/><circle cx="190" cy="100" r="7" fill="#8b5cf6" className="anim-dot" style={{ color: '#8b5cf6' }}/><path d="M 116 100 L 183 100" fill="none" stroke="url(#o9-link-grad)" strokeWidth="1" opacity="0.5" /></g>
+            <defs>
+              <radialGradient id="o9-core-grad" cx="50%" cy="50%" r="50%"><stop offset="0%" stopColor="#ffffff"/><stop offset="40%" stopColor="#d8b4fe"/><stop offset="100%" stopColor="#7c3aed"/></radialGradient>
+              <linearGradient id="o9-link-grad" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#c084fc" stopOpacity="0"/><stop offset="50%" stopColor="#8b5cf6" stopOpacity="0.8"/><stop offset="100%" stopColor="#c084fc" stopOpacity="0"/></linearGradient>
+            </defs>
+          </svg>
         </div>
-      </div>
+      </LivingHero>
 
       {/* ═══ ROW 0 — KPIs ═══ */}
       <div className="grid grid-cols-5 gap-3">
@@ -5550,12 +6207,12 @@ export function Orbit9SocialHome() {
           <div className="px-4 py-3">
             <div className="flex items-center gap-2">
               <h4 className="text-sm font-bold text-gray-900">{vedette.name}</h4>
-              <span className={cn("text-[8px] px-2 py-0.5 rounded-full text-white font-bold", badgeColor[vedette.badge])}>{vedette.badge}</span>
+              <span className={cn("text-[9px] px-2 py-0.5 rounded-full text-white font-bold", badgeColor[vedette.badge])}>{vedette.badge}</span>
               <span className="text-[9px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">{vedette.type}</span>
             </div>
             <div className="flex items-center gap-1 mt-2">
               {vedette.avatars.map(a => (
-                <div key={a} className="w-7 h-7 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white text-[8px] font-bold -ml-1 first:ml-0 border-2 border-white">{a}</div>
+                <div key={a} className="w-7 h-7 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white text-[9px] font-bold -ml-1 first:ml-0 border-2 border-white">{a}</div>
               ))}
             </div>
             <div className="mt-2 flex items-center justify-between">
@@ -5587,7 +6244,7 @@ export function Orbit9SocialHome() {
                     <span className="text-[9px] font-bold text-cyan-600">{m.score}%</span>
                   </div>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className={cn("text-[8px] px-1.5 py-0.5 rounded-full font-medium", m.stageColor)}>{m.stage}</span>
+                    <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium", m.stageColor)}>{m.stage}</span>
                     <span className="text-[9px] text-gray-400">via {m.agent}</span>
                   </div>
                 </div>
@@ -5634,7 +6291,7 @@ export function Orbit9SocialHome() {
             <div className="divide-y divide-gray-50">
               {intel.map((item, i) => (
                 <div key={i} className="px-4 py-2.5">
-                  <span className={cn("text-[8px] px-1.5 py-0.5 rounded-full font-medium",
+                  <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium",
                     item.tag === "Opportunité" ? "bg-emerald-100 text-emerald-700" : item.tag === "Risque" ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"
                   )}>{item.tag}</span>
                   <p className="text-[10px] font-medium text-gray-900 mt-1">{item.title}</p>
@@ -5654,11 +6311,11 @@ export function Orbit9SocialHome() {
                 <div key={i} className="px-4 py-2.5 flex items-center gap-2">
                   <div className="text-center shrink-0 w-10">
                     <div className="text-[9px] font-bold text-cyan-600">{ev.date}</div>
-                    <div className="text-[8px] text-gray-400">{ev.time}</div>
+                    <div className="text-[9px] text-gray-400">{ev.time}</div>
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[10px] font-medium text-gray-900 truncate">{ev.title}</p>
-                    <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">{ev.type}</span>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">{ev.type}</span>
                   </div>
                 </div>
               ))}
@@ -5685,12 +6342,12 @@ export function Orbit9SocialHome() {
                   p.status === "nouveau" ? "bg-emerald-50 border-emerald-200" :
                   "bg-gray-50 border-dashed border-gray-200"
                 )}>
-                  <div className={cn("w-7 h-7 rounded-full mx-auto flex items-center justify-center text-[8px] font-bold",
+                  <div className={cn("w-7 h-7 rounded-full mx-auto flex items-center justify-center text-[9px] font-bold",
                     p.status === "vide" ? "bg-gray-100 text-gray-300" : "bg-gradient-to-br from-cyan-500 to-blue-600 text-white"
                   )}>{p.status === "vide" ? "?" : p.name.split(" ").map(w => w[0]).join("")}</div>
-                  <div className="text-[8px] text-gray-600 mt-1 truncate">{p.name}</div>
+                  <div className="text-[9px] text-gray-600 mt-1 truncate">{p.name}</div>
                   {p.status !== "vide" && (
-                    <span className={cn("text-[7px] px-1 rounded-full",
+                    <span className={cn("text-[9px] px-1 rounded-full",
                       p.status === "fondateur" ? "bg-yellow-200 text-yellow-800" :
                       p.status === "nouveau" ? "bg-emerald-200 text-emerald-800" :
                       "bg-cyan-200 text-cyan-800"
@@ -6256,7 +6913,7 @@ function O9DiscussionsTab() {
               <div key={i} className={cn("p-3 rounded-lg", msg.isBot ? "bg-[#00B4D8]/10" : "bg-gray-50")}>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs font-bold text-gray-900">{msg.author}</span>
-                  {msg.isBot && <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-cyan-100 text-cyan-700 font-medium">AI</span>}
+                  {msg.isBot && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-cyan-100 text-cyan-700 font-medium">AI</span>}
                   <span className="text-[9px] text-gray-400 ml-auto">{msg.time}</span>
                 </div>
                 <p className="text-[10px] text-gray-600">{msg.text}</p>
