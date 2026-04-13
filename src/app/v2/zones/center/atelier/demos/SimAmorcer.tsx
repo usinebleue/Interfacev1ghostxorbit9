@@ -738,7 +738,7 @@ export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departe
         <ResizableHandle className="w-1 bg-gray-200 hover:bg-blue-400 transition-colors cursor-col-resize" />
 
         {/* ═══ RIGHT — AMORCER tabs TOUJOURS en haut (Carl vocal 13h25) + contenu Orbit⁹ en dessous ═══ */}
-        <ResizablePanel defaultSize={60} minSize={30}>
+        <ResizablePanel defaultSize={60} minSize={40} maxSize={80}>
           <div className="h-full flex flex-col overflow-hidden">
 
             {/* Header département pastel h-12 — intègre les sous-tabs de la section active */}
@@ -1684,97 +1684,76 @@ export function ReflexionChat({ stage, typed, setTyped, advance, pc, context }: 
 // ========== REFLEXION MAGAZINE SUB-COMPONENTS (EXACT copy from SimPhaseReflexion — stacked) ==========
 
 function MagDiagnostic() {
-  const [expandedDiag, setExpandedDiag] = useState<string | null>(null);
-
   return (
     <div className="space-y-4">
       {/* Zone titre */}
       <div className="flex items-center gap-2 pb-2 border-b border-red-200">
         <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
         <h3 className="text-sm font-bold text-gray-800">Zone d'analyse — Integration front-end</h3>
-        <span className="text-[9px] text-red-600 ml-auto font-medium">Mode Analyse actif</span>
+        <span className="text-[10px] text-red-600 ml-auto font-medium">Mode Analyse actif</span>
       </div>
 
       {/* Boutons d'action dans le panel droit */}
       <div className="flex flex-wrap gap-1.5">
         {["Brainstorm", "Analyser", "Rechercher", "Challenger", "Deep Search", "5 Pourquoi"].map((b, i) => (
-          <span key={b} className={cn("text-[9px] px-2.5 py-1 rounded-full font-medium cursor-pointer transition-colors",
+          <span key={b} className={cn("text-[10px] px-2.5 py-1 rounded-full font-medium cursor-pointer transition-colors",
             i === 0 ? "bg-red-600 text-white" : "bg-red-100 text-red-700 hover:bg-red-200"
           )}>{b}</span>
         ))}
       </div>
 
-      {/* CarlOS GPS */}
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-3">
-        <Compass className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-        <div>
-          <p className="text-xs font-bold text-amber-800 flex items-center gap-1.5">
-            <Navigation className="h-3.5 w-3.5" /> CarlOS GPS — Lacune detectee
-          </p>
-          <p className="text-[9px] text-amber-700 mt-1">Ton Blueprint manque l'analyse SWOT web et les personas utilisateurs. Je te recommande de completer ces sections.</p>
-          <div className="flex gap-1.5 mt-2">
-            <span className="text-[9px] bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-amber-300">Completer le SWOT</span>
-            <span className="text-[9px] bg-white text-amber-700 px-2 py-0.5 rounded-full font-medium border border-amber-200 cursor-pointer hover:bg-amber-50">Plus tard</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Diagnostic integre */}
+      {/* Diagnostic integre — toutes les boxes ouvertes par defaut */}
       <div className="space-y-2">
         <div className="flex items-center gap-2">
           <Brain className="h-4 w-4 text-red-600" />
           <p className="text-xs font-bold text-gray-800">Diagnostic integre — Pre-analyse systeme</p>
         </div>
-        <p className="text-[9px] text-gray-500 leading-relaxed">Les bots analysent en temps reel l'etat de votre mission. Cliquez sur un indicateur pour voir le detail et les actions recommandees.</p>
+        <p className="text-[10px] text-gray-500 leading-relaxed">Les bots analysent en temps reel l'etat de votre mission.</p>
         <div className="grid grid-cols-2 gap-2">
           {SPR_DIAG_ITEMS.map(d => (
             <div key={d.label}
-              onClick={() => setExpandedDiag(expandedDiag === d.label ? null : d.label)}
-              className={cn("bg-white border rounded-lg p-2 cursor-pointer transition-all",
-                expandedDiag === d.label ? "border-red-300 bg-red-50/30 ring-1 ring-red-200" : "border-gray-200 hover:border-red-300 hover:bg-red-50/20"
-              )}
+              className="bg-white border border-red-200 rounded-lg p-3 transition-all bg-red-50/20"
             >
-              <div className="flex items-center justify-between mb-0.5">
-                <span className="text-[9px] text-gray-700 font-medium">{d.label}</span>
-                <span className={cn("text-[9px] font-bold", d.score >= 70 ? "text-emerald-600" : d.score >= 50 ? "text-amber-600" : "text-red-600")}>{d.score}%</span>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs text-gray-700 font-semibold">{d.label}</span>
+                <span className={cn("text-xs font-bold", d.score >= 70 ? "text-emerald-600" : d.score >= 50 ? "text-amber-600" : "text-red-600")}>{d.score}%</span>
               </div>
-              <p className="text-[9px] text-gray-400 mb-1">{d.what}</p>
-              <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
+              <p className="text-[10px] text-gray-500 mb-1">{d.what}</p>
+              <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                 <div className={cn("h-full rounded-full", d.score >= 70 ? "bg-emerald-500" : d.score >= 50 ? "bg-amber-500" : "bg-red-500")} style={{ width: `${d.score}%` }} />
               </div>
-              <p className="text-[9px] text-gray-500 mt-1 font-medium">{d.detail}</p>
-              <div className="mt-1.5 flex items-center gap-1.5">
+              <p className="text-[10px] text-gray-600 mt-1.5 font-medium">{d.detail}</p>
+              <div className="mt-2 flex items-center gap-1.5">
                 <BotAvatar code={d.bot} size="sm" />
-                <span className="text-[9px] text-gray-500">{BOT_COLORS[d.bot]?.name}</span>
-                <button className="text-[9px] bg-red-50 border border-red-200 text-red-700 px-2 py-0.5 rounded-full font-medium hover:bg-red-100 cursor-pointer ml-auto">{d.action}</button>
+                <span className="text-[10px] text-gray-500">{BOT_COLORS[d.bot]?.name}</span>
+                <button className="text-[10px] bg-red-50 border border-red-200 text-red-700 px-2.5 py-1 rounded-full font-medium hover:bg-red-100 cursor-pointer ml-auto">{d.action}</button>
               </div>
 
-              {expandedDiag === d.label && (
-                <div className="mt-2 pt-2 border-t border-red-200 space-y-1.5">
-                  <div className="flex items-center gap-2">
-                    <span className={cn("text-[9px] font-bold px-2 py-0.5 rounded-full",
-                      d.score < 40 ? "bg-red-100 text-red-700" : d.score < 60 ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"
-                    )}>{d.expanded.gap}</span>
-                    <span className="text-[9px] text-gray-400">Effort: {d.expanded.effort}</span>
-                  </div>
-                  <div className="space-y-0.5">
-                    {d.expanded.actions.map((a: string, j: number) => (
-                      <div key={j} className="flex items-center gap-1.5 text-[9px] text-gray-600">
-                        <div className="w-1 h-1 rounded-full bg-red-400 shrink-0" />
-                        <span>{a}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="bg-emerald-50 border border-emerald-200 rounded px-2 py-1 flex items-center gap-1.5">
-                    <TrendingUp className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                    <span className="text-[9px] text-emerald-700 font-medium">Impact: {d.expanded.impact}</span>
-                  </div>
-                  <div className="flex gap-1">
-                    <button className="text-[9px] bg-red-600 text-white px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-red-700">Lancer un chantier</button>
-                    <button className="text-[9px] bg-white border border-red-200 text-red-700 px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-red-50">Epingler</button>
-                  </div>
+              {/* Details toujours visibles */}
+              <div className="mt-2.5 pt-2 border-t border-red-200 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full",
+                    d.score < 40 ? "bg-red-100 text-red-700" : d.score < 60 ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"
+                  )}>{d.expanded.gap}</span>
+                  <span className="text-[10px] text-gray-400">Effort: {d.expanded.effort}</span>
                 </div>
-              )}
+                <div className="space-y-1">
+                  {d.expanded.actions.map((a: string, j: number) => (
+                    <div key={j} className="flex items-center gap-1.5 text-[10px] text-gray-600">
+                      <div className="w-1 h-1 rounded-full bg-red-400 shrink-0" />
+                      <span>{a}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="bg-emerald-50 border border-emerald-200 rounded px-2.5 py-1.5 flex items-center gap-1.5">
+                  <TrendingUp className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                  <span className="text-[10px] text-emerald-700 font-medium">Impact: {d.expanded.impact}</span>
+                </div>
+                <div className="flex gap-1.5">
+                  <button className="text-[10px] bg-red-600 text-white px-2.5 py-1 rounded-full font-medium cursor-pointer hover:bg-red-700">Lancer un chantier</button>
+                  <button className="text-[10px] bg-white border border-red-200 text-red-700 px-2.5 py-1 rounded-full font-medium cursor-pointer hover:bg-red-50">Epingler</button>
+                </div>
+              </div>
             </div>
           ))}
         </div>
