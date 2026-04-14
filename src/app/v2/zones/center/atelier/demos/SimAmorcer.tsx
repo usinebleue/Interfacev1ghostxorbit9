@@ -1686,76 +1686,114 @@ export function ReflexionChat({ stage, typed, setTyped, advance, pc, context }: 
 function MagDiagnostic() {
   return (
     <div className="space-y-4">
-      {/* Zone titre */}
-      <div className="flex items-center gap-2 pb-2 border-b border-red-200">
-        <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-        <h3 className="text-sm font-bold text-gray-800">Zone d'analyse — Integration front-end</h3>
-        <span className="text-[10px] text-red-600 ml-auto font-medium">Mode Analyse actif</span>
+      {/* Indicateur mode actif */}
+      <div className="flex items-center gap-2 pb-2 border-b border-orange-200">
+        <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
+        <span className="text-[10px] text-orange-600 font-medium">Mode Analyse actif</span>
+        <span className="text-[9px] text-gray-400 ml-auto">6 axes analysés par 4 bots</span>
       </div>
 
-      {/* Boutons d'action dans le panel droit */}
-      <div className="flex flex-wrap gap-1.5">
-        {["Brainstorm", "Analyser", "Rechercher", "Challenger", "Deep Search", "5 Pourquoi"].map((b, i) => (
-          <span key={b} className={cn("text-[10px] px-2.5 py-1 rounded-full font-medium cursor-pointer transition-colors",
-            i === 0 ? "bg-red-600 text-white" : "bg-red-100 text-red-700 hover:bg-red-200"
-          )}>{b}</span>
-        ))}
-      </div>
-
-      {/* Diagnostic integre — toutes les boxes ouvertes par defaut */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <Brain className="h-4 w-4 text-red-600" />
-          <p className="text-xs font-bold text-gray-800">Diagnostic integre — Pre-analyse systeme</p>
+      {/* Diagnostic intégré — ACCENT VISUEL FORT */}
+      <div className="space-y-3">
+        <div className="bg-gradient-to-r from-orange-600 to-amber-500 rounded-xl px-4 py-3 shadow-sm">
+          <div className="flex items-center gap-2">
+            <Brain className="h-4 w-4 text-white" />
+            <p className="text-sm font-bold text-white">Diagnostic des axes de travail</p>
+          </div>
+          <p className="text-[11px] text-white/80 mt-1">Les bots analysent en temps réel votre mission et identifient les opportunités. Cliquez sur un axe pour amorcer la réflexion.</p>
         </div>
-        <p className="text-[10px] text-gray-500 leading-relaxed">Les bots analysent en temps reel l'etat de votre mission.</p>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-3">
           {SPR_DIAG_ITEMS.map(d => (
             <div key={d.label}
-              className="bg-white border border-red-200 rounded-lg p-3 transition-all bg-red-50/20"
+              className={cn(
+                "rounded-xl overflow-hidden border-2 shadow-sm transition-all hover:shadow-md",
+                d.score < 40 ? "border-orange-400 bg-gradient-to-b from-orange-50 to-white" : d.score < 60 ? "border-amber-300 bg-gradient-to-b from-amber-50 to-white" : "border-emerald-300 bg-gradient-to-b from-emerald-50 to-white"
+              )}
             >
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs text-gray-700 font-semibold">{d.label}</span>
-                <span className={cn("text-xs font-bold", d.score >= 70 ? "text-emerald-600" : d.score >= 50 ? "text-amber-600" : "text-red-600")}>{d.score}%</span>
+              {/* Header avec score proéminent */}
+              <div className={cn("px-3 py-2 flex items-center justify-between",
+                d.score < 40 ? "bg-orange-100/60" : d.score < 60 ? "bg-amber-100/60" : "bg-emerald-100/60"
+              )}>
+                <span className="text-xs text-gray-900 font-bold">{d.label}</span>
+                <div className={cn("flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold",
+                  d.score < 40 ? "bg-orange-600 text-white" : d.score < 60 ? "bg-amber-500 text-white" : "bg-emerald-500 text-white"
+                )}>
+                  {d.score}%
+                </div>
               </div>
-              <p className="text-[10px] text-gray-500 mb-1">{d.what}</p>
-              <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                <div className={cn("h-full rounded-full", d.score >= 70 ? "bg-emerald-500" : d.score >= 50 ? "bg-amber-500" : "bg-red-500")} style={{ width: `${d.score}%` }} />
-              </div>
-              <p className="text-[10px] text-gray-600 mt-1.5 font-medium">{d.detail}</p>
-              <div className="mt-2 flex items-center gap-1.5">
-                <BotAvatar code={d.bot} size="sm" />
-                <span className="text-[10px] text-gray-500">{BOT_COLORS[d.bot]?.name}</span>
-                <button className="text-[10px] bg-red-50 border border-red-200 text-red-700 px-2.5 py-1 rounded-full font-medium hover:bg-red-100 cursor-pointer ml-auto">{d.action}</button>
-              </div>
+              <div className="px-3 py-2.5 space-y-2">
+                <p className="text-[11px] text-gray-700 font-medium">{d.what}</p>
+                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className={cn("h-full rounded-full transition-all", d.score >= 70 ? "bg-emerald-500" : d.score >= 50 ? "bg-amber-500" : "bg-orange-500")} style={{ width: `${d.score}%` }} />
+                </div>
+                <p className="text-[10px] text-gray-600 font-medium">{d.detail}</p>
+                <div className="flex items-center gap-1.5">
+                  <BotAvatar code={d.bot} size="sm" />
+                  <span className="text-[10px] text-gray-500 font-medium">{BOT_COLORS[d.bot]?.name}</span>
+                  <button className={cn("text-[10px] px-3 py-1.5 rounded-full font-bold cursor-pointer ml-auto shadow-sm transition-all",
+                    d.score < 40 ? "bg-orange-600 text-white hover:bg-orange-700" : d.score < 60 ? "bg-amber-500 text-white hover:bg-amber-600" : "bg-emerald-500 text-white hover:bg-emerald-600"
+                  )}>{d.action}</button>
+                </div>
 
-              {/* Details toujours visibles */}
-              <div className="mt-2.5 pt-2 border-t border-red-200 space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full",
-                    d.score < 40 ? "bg-red-100 text-red-700" : d.score < 60 ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"
-                  )}>{d.expanded.gap}</span>
-                  <span className="text-[10px] text-gray-400">Effort: {d.expanded.effort}</span>
-                </div>
-                <div className="space-y-1">
-                  {d.expanded.actions.map((a: string, j: number) => (
-                    <div key={j} className="flex items-center gap-1.5 text-[10px] text-gray-600">
-                      <div className="w-1 h-1 rounded-full bg-red-400 shrink-0" />
-                      <span>{a}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="bg-emerald-50 border border-emerald-200 rounded px-2.5 py-1.5 flex items-center gap-1.5">
-                  <TrendingUp className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                  <span className="text-[10px] text-emerald-700 font-medium">Impact: {d.expanded.impact}</span>
-                </div>
-                <div className="flex gap-1.5">
-                  <button className="text-[10px] bg-red-600 text-white px-2.5 py-1 rounded-full font-medium cursor-pointer hover:bg-red-700">Lancer un chantier</button>
-                  <button className="text-[10px] bg-white border border-red-200 text-red-700 px-2.5 py-1 rounded-full font-medium cursor-pointer hover:bg-red-50">Epingler</button>
+                {/* Détails avec actions */}
+                <div className="mt-1 pt-2 border-t border-gray-200 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full",
+                      d.score < 40 ? "bg-orange-100 text-orange-700" : d.score < 60 ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"
+                    )}>{d.expanded.gap}</span>
+                    <span className="text-[10px] text-gray-400">Effort: {d.expanded.effort}</span>
+                  </div>
+                  <div className="space-y-1">
+                    {d.expanded.actions.map((a: string, j: number) => (
+                      <div key={j} className="flex items-center gap-1.5 text-[10px] text-gray-600">
+                        <div className="w-1.5 h-1.5 rounded-full bg-orange-400 shrink-0" />
+                        <span>{a}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-2 flex items-center gap-1.5">
+                    <TrendingUp className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                    <span className="text-[10px] text-emerald-700 font-bold">Impact: {d.expanded.impact}</span>
+                  </div>
+                  <div className="flex gap-1.5 flex-wrap">
+                    <button className="text-[10px] bg-orange-600 text-white px-2.5 py-1 rounded-full font-medium cursor-pointer hover:bg-orange-700">Lancer un chantier</button>
+                    <button className="text-[10px] bg-white border border-orange-200 text-orange-700 px-2.5 py-1 rounded-full font-medium cursor-pointer hover:bg-orange-50">Épingler</button>
+                    <button className="text-[10px] bg-white border border-gray-200 text-gray-600 px-2.5 py-1 rounded-full font-medium cursor-pointer hover:bg-gray-50">Consulter un bot</button>
+                  </div>
                 </div>
               </div>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Scoring global et consensus */}
+      <div className="bg-orange-50 border border-orange-200 rounded-xl p-3">
+        <div className="flex items-center gap-2 mb-2">
+          <Gauge className="h-4 w-4 text-orange-600" />
+          <span className="text-xs font-bold text-gray-800">Score de maturite global</span>
+          <span className="text-[9px] font-bold bg-orange-600 text-white px-2 py-0.5 rounded-full ml-auto">42%</span>
+        </div>
+        <div className="h-2 bg-gray-200 rounded-full overflow-hidden mb-2">
+          <div className="h-full bg-gradient-to-r from-orange-500 to-amber-400 rounded-full" style={{ width: "42%" }} />
+        </div>
+        <div className="grid grid-cols-3 gap-2 text-center">
+          <div>
+            <p className="text-[9px] text-gray-400">Axes critiques</p>
+            <p className="text-xs font-bold text-orange-600">3</p>
+          </div>
+          <div>
+            <p className="text-[9px] text-gray-400">Bots mobilises</p>
+            <p className="text-xs font-bold text-blue-600">4</p>
+          </div>
+          <div>
+            <p className="text-[9px] text-gray-400">Actions identifiees</p>
+            <p className="text-xs font-bold text-emerald-600">18</p>
+          </div>
+        </div>
+        <div className="mt-2 pt-2 border-t border-orange-200 flex items-center gap-2">
+          <span className="text-[9px] text-gray-500">Recommandation Paco:</span>
+          <span className="text-[9px] text-orange-700 font-medium">Prioriser Palettisation (score 15%) puis IoT (8%)</span>
         </div>
       </div>
     </div>
@@ -1792,18 +1830,18 @@ function MagBrainstorm() {
       <div className="flex items-center gap-2">
         <Lightbulb className="h-4 w-4 text-amber-500" />
         <h3 className="text-sm font-bold text-gray-800">Brainstorm — Methode SCAMPER</h3>
-        <span className="text-[9px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-medium animate-pulse ml-auto">Live</span>
+        <span className="text-[9px] bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-medium animate-pulse ml-auto">Live</span>
       </div>
 
       {/* Pipeline etapes SCAMPER */}
       <div className="flex items-center gap-1 overflow-x-auto pb-1">
         {STEPS.map((step, i) => (
           <div key={i} className="flex items-center gap-1 shrink-0">
-            {i > 0 && <div className={cn("w-4 h-0.5", i <= activeStep ? "bg-red-400" : "bg-gray-200")} />}
+            {i > 0 && <div className={cn("w-4 h-0.5", i <= activeStep ? "bg-orange-400" : "bg-gray-200")} />}
             <button
               onClick={() => setActiveStep(i)}
               className={cn("flex items-center gap-1 px-2 py-1 rounded-full text-[9px] font-medium cursor-pointer transition-all",
-                i < activeStep ? "bg-red-100 text-red-700" : i === activeStep ? "bg-red-500 text-white shadow-sm" : "bg-gray-100 text-gray-400 hover:bg-gray-200"
+                i < activeStep ? "bg-orange-100 text-orange-700" : i === activeStep ? "bg-orange-500 text-white shadow-sm" : "bg-gray-100 text-gray-400 hover:bg-gray-200"
               )}
             >
               {i < activeStep && <CheckCircle2 className="h-3.5 w-3.5" />}
@@ -1827,14 +1865,14 @@ function MagBrainstorm() {
             <Lightbulb className="h-3.5 w-3.5 text-amber-500" /> {activeStep === 0 ? "Cadrage — Probleme a resoudre" : "Vague 1 — 6 idees brutes (zero filtre)"}
           </p>
           {activeStep === 0 ? (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-              <p className="text-xs font-bold text-red-800 mb-2">Probleme: Comment augmenter les leads qualifies de 40% en Q2?</p>
+            <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
+              <p className="text-xs font-bold text-orange-800 mb-2">Probleme: Comment augmenter les leads qualifies de 40% en Q2?</p>
               <div className="space-y-1 text-[9px] text-gray-600">
                 <p>Contrainte budget: max 8K$/mois</p>
                 <p>Contrainte temps: resultats mesurables avant fin Q2</p>
                 <p>Equipe: 3 bots mobilises (Mathilde, Frank, Tim)</p>
               </div>
-              <button onClick={() => setActiveStep(1)} className="mt-3 text-[9px] bg-red-600 text-white px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-red-700">Lancer la generation d'idees</button>
+              <button onClick={() => setActiveStep(1)} className="mt-3 text-[9px] bg-orange-600 text-white px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-700">Lancer la generation d'idees</button>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-2">
@@ -1842,7 +1880,7 @@ function MagBrainstorm() {
                 <div key={idea.id}
                   onClick={() => setExpandedIdea(expandedIdea === idea.id ? null : idea.id)}
                   className={cn("border rounded-lg px-3 py-2.5 cursor-pointer transition-all", idea.color,
-                    expandedIdea === idea.id ? "ring-1 ring-red-300 shadow-sm" : "hover:shadow-sm"
+                    expandedIdea === idea.id ? "ring-1 ring-orange-300 shadow-sm" : "hover:shadow-sm"
                   )}
                 >
                   <div className="flex items-center gap-1.5 mb-1.5">
@@ -1893,7 +1931,7 @@ function MagBrainstorm() {
       {activeStep === 2 && (
         <div>
           <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-2 flex items-center gap-1">
-            <Zap className="h-3.5 w-3.5 text-red-500" /> SCAMPER Challenge — COMBINER + ADAPTER + SUBSTITUER
+            <Zap className="h-3.5 w-3.5 text-orange-500" /> SCAMPER Challenge — COMBINER + ADAPTER + SUBSTITUER
           </p>
           <p className="text-[9px] text-gray-500 mb-2">Les bots appliquent les 7 leviers SCAMPER aux idees de la Vague 1 pour creer des combinaisons innovantes.</p>
           <div className="space-y-1.5">
@@ -1906,8 +1944,8 @@ function MagBrainstorm() {
             ].map((note, i) => (
               <div key={i} className={cn("rounded-lg p-2.5 border cursor-pointer hover:shadow-sm transition-all", note.color)}>
                 <div className="flex items-center gap-1.5 mb-1">
-                  <span className="w-5 h-5 rounded bg-red-500 text-white flex items-center justify-center text-[9px] font-bold shrink-0">{note.letter}</span>
-                  <span className="text-[9px] font-bold text-red-700">{note.method}</span>
+                  <span className="w-5 h-5 rounded bg-orange-500 text-white flex items-center justify-center text-[9px] font-bold shrink-0">{note.letter}</span>
+                  <span className="text-[9px] font-bold text-orange-700">{note.method}</span>
                   <BotAvatar code={note.bot} size="sm" />
                   <span className="text-[9px] font-medium text-gray-500">{BOT_COLORS[note.bot]?.name}</span>
                   <span className="flex items-center gap-0.5 text-[9px] text-amber-600 ml-auto">
@@ -1937,7 +1975,7 @@ function MagBrainstorm() {
                   <BotAvatar code={cluster.bot} size="sm" />
                   <div className="ml-auto flex items-center gap-1">
                     <div className="w-12 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                      <div className="h-full bg-red-500 rounded-full" style={{ width: `${cluster.score}%` }} />
+                      <div className="h-full bg-orange-500 rounded-full" style={{ width: `${cluster.score}%` }} />
                     </div>
                     <span className="text-[9px] font-bold text-gray-600">{cluster.score}%</span>
                   </div>
@@ -1965,7 +2003,7 @@ function MagBrainstorm() {
               <div key={i} className={cn("rounded-xl border p-3", axe.color)}>
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-xs font-bold text-gray-800">{axe.title}</span>
-                  <span className="text-[9px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full font-bold ml-auto">{axe.priority}</span>
+                  <span className="text-[9px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-full font-bold ml-auto">{axe.priority}</span>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   <div className="text-center">
@@ -1993,11 +2031,11 @@ function MagBrainstorm() {
 
       {/* Action buttons */}
       <div className="flex flex-wrap gap-2">
-        <button className="text-[9px] bg-red-600 text-white px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-red-700">Ajouter une idee</button>
-        <button className="text-[9px] bg-red-50 border border-red-200 text-red-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-red-100">Combiner 2 idees</button>
-        <button className="text-[9px] bg-red-50 border border-red-200 text-red-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-red-100">Prioriser par votes</button>
-        <button className="text-[9px] bg-red-50 border border-red-200 text-red-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-red-100">Challenger une idee</button>
-        <button className="text-[9px] bg-red-50 border border-red-200 text-red-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-red-100">Epingler au rapport</button>
+        <button className="text-[9px] bg-orange-600 text-white px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-700">Ajouter une idee</button>
+        <button className="text-[9px] bg-orange-50 border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-100">Combiner 2 idees</button>
+        <button className="text-[9px] bg-orange-50 border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-100">Prioriser par votes</button>
+        <button className="text-[9px] bg-orange-50 border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-100">Challenger une idee</button>
+        <button className="text-[9px] bg-orange-50 border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-100">Epingler au rapport</button>
       </div>
     </div>
   );
@@ -2007,16 +2045,16 @@ function MagSyntheseBrainstorm() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <Layers className="h-4 w-4 text-red-600" />
+        <Layers className="h-4 w-4 text-orange-600" />
         <h3 className="text-sm font-bold text-gray-800">Synthese + Bonification — Idees consolidees</h3>
         <span className="text-[9px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium ml-auto">Iteration 1</span>
       </div>
       <p className="text-[9px] text-gray-500">Les idees du brainstorm ont ete combinees avec les perspectives des 3 bots pour creer un plan integre.</p>
 
-      <div className="bg-white border-2 border-red-200 rounded-xl overflow-hidden">
-        <div className="bg-red-50 px-4 py-2 border-b border-red-200 flex items-center gap-2">
-          <Lightbulb className="h-3.5 w-3.5 text-red-600" />
-          <span className="text-xs font-bold text-red-800">Plan integre — Referral + Content LinkedIn</span>
+      <div className="bg-white border-2 border-orange-200 rounded-xl overflow-hidden">
+        <div className="bg-orange-50 px-4 py-2 border-b border-orange-200 flex items-center gap-2">
+          <Lightbulb className="h-3.5 w-3.5 text-orange-600" />
+          <span className="text-xs font-bold text-orange-800">Plan integre — Referral + Content LinkedIn</span>
         </div>
         <div className="p-4 space-y-3">
           {[
@@ -2041,18 +2079,55 @@ function MagSyntheseBrainstorm() {
           <p className="text-lg font-extrabold text-gray-400">6 idees</p>
           <p className="text-[9px] text-gray-400">separees, non priorisees</p>
         </div>
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
-          <p className="text-[9px] text-red-600 mb-1">APRES bonification</p>
-          <p className="text-lg font-extrabold text-red-700">3 axes</p>
-          <p className="text-[9px] text-red-600">integres, budgetes, planifies</p>
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-center">
+          <p className="text-[9px] text-orange-600 mb-1">APRES bonification</p>
+          <p className="text-lg font-extrabold text-orange-700">3 axes</p>
+          <p className="text-[9px] text-orange-600">integres, budgetes, planifies</p>
+        </div>
+      </div>
+
+      {/* Timeline mini et risques */}
+      <div className="bg-white border border-gray-200 rounded-lg p-3">
+        <p className="text-[9px] font-bold text-gray-700 uppercase tracking-wider mb-2">Timeline de deploiement</p>
+        <div className="flex items-center gap-1">
+          {[
+            { label: "Sem 1-2", axe: "Referral", color: "bg-emerald-500" },
+            { label: "Sem 3-4", axe: "Chatbot", color: "bg-violet-500" },
+            { label: "Sem 5-8", axe: "LinkedIn", color: "bg-pink-500" },
+            { label: "Sem 9-12", axe: "Mesure", color: "bg-blue-500" },
+          ].map((t, i) => (
+            <div key={i} className="flex-1">
+              <div className={cn("h-2 rounded-full", t.color)} />
+              <p className="text-[8px] text-gray-500 mt-0.5">{t.label}</p>
+              <p className="text-[8px] text-gray-700 font-medium">{t.axe}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Risques identifies */}
+      <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+        <p className="text-[9px] font-bold text-amber-700 mb-1">Risques identifies (2)</p>
+        <div className="space-y-1">
+          <div className="flex items-center gap-1.5 text-[9px]">
+            <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+            <span className="text-gray-600">Timeline agressive si equipe surchargee</span>
+            <span className="text-[8px] bg-amber-200 text-amber-800 px-1 py-0.5 rounded ml-auto">Moyen</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-[9px]">
+            <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+            <span className="text-gray-600">Chatbot AI: conversion non validee en niche manufacturing</span>
+            <span className="text-[8px] bg-amber-200 text-amber-800 px-1 py-0.5 rounded ml-auto">Faible</span>
+          </div>
         </div>
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <button className="text-[9px] bg-red-600 text-white px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-red-700">Rechallenger le plan</button>
-        <button className="text-[9px] bg-white border border-red-200 text-red-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-red-50">Re-synthetiser</button>
-        <button className="text-[9px] bg-white border border-red-200 text-red-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-red-50">Ajouter un axe</button>
-        <button className="text-[9px] bg-white border border-red-200 text-red-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-red-50">Affiner les budgets</button>
+        <button className="text-[9px] bg-orange-600 text-white px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-700">Rechallenger le plan</button>
+        <button className="text-[9px] bg-white border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-50">Re-synthetiser</button>
+        <button className="text-[9px] bg-white border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-50">Ajouter un axe</button>
+        <button className="text-[9px] bg-white border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-50">Affiner les budgets</button>
+        <button className="text-[9px] bg-white border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-50">Evaluer les risques</button>
       </div>
     </div>
   );
@@ -2128,7 +2203,7 @@ function MagCinqPourquoi() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <Search className="h-4 w-4 text-red-500" />
+        <Search className="h-4 w-4 text-orange-500" />
         <h3 className="text-sm font-bold text-gray-800">Analyse 5 Pourquoi \u2014 Cause racine</h3>
         <span className="text-[9px] text-gray-400 ml-auto">Methode Ishikawa + Bonification</span>
       </div>
@@ -2137,11 +2212,11 @@ function MagCinqPourquoi() {
       <div className="flex items-center gap-1">
         {[1, 2, 3, 4, 5].map(n => (
           <div key={n} className="flex items-center gap-1">
-            {n > 1 && <div className={cn("w-6 h-0.5 transition-all duration-500", n <= revealedLevel ? "bg-red-400" : "bg-gray-200")} />}
+            {n > 1 && <div className={cn("w-6 h-0.5 transition-all duration-500", n <= revealedLevel ? "bg-orange-400" : "bg-gray-200")} />}
             <div className={cn("w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold transition-all duration-500",
-              n <= revealedLevel ? (n === 5 ? "bg-red-500 text-white scale-110" : "bg-red-100 text-red-700") : "bg-gray-100 text-gray-300"
+              n <= revealedLevel ? (n === 5 ? "bg-orange-500 text-white scale-110" : "bg-orange-100 text-orange-700") : "bg-gray-100 text-gray-300"
             )}>
-              {n <= revealedLevel && n < 5 ? <CheckCircle2 className="h-3.5 w-3.5 text-red-500" /> : n}
+              {n <= revealedLevel && n < 5 ? <CheckCircle2 className="h-3.5 w-3.5 text-orange-500" /> : n}
             </div>
           </div>
         ))}
@@ -2153,10 +2228,10 @@ function MagCinqPourquoi() {
           <div key={i} className={cn("transition-all duration-700", i < revealedLevel ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 h-0 overflow-hidden")}>
             <div className="flex items-start gap-3 py-1.5">
               <span className={cn("shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold transition-all",
-                i < revealedLevel - 1 ? "bg-red-100 text-red-700" : "bg-red-500 text-white animate-pulse"
+                i < revealedLevel - 1 ? "bg-orange-100 text-orange-700" : "bg-orange-500 text-white animate-pulse"
               )}>{i + 1}</span>
               <div className="flex-1">
-                <p className="text-xs"><span className="font-semibold text-red-700">Pourquoi</span> {item.q}?</p>
+                <p className="text-xs"><span className="font-semibold text-orange-700">Pourquoi</span> {item.q}?</p>
                 <p className="text-[9px] text-gray-600 mt-0.5">{"\u2192"} {item.a}</p>
               </div>
               {i < questions.length - 1 && <ArrowRight className="h-3.5 w-3.5 text-gray-300 shrink-0 mt-1" />}
@@ -2172,7 +2247,7 @@ function MagCinqPourquoi() {
                   <button
                     onClick={() => setShowDebate(showDebate === i ? null : i)}
                     className={cn("text-[9px] px-1.5 py-0.5 rounded font-medium cursor-pointer transition-colors",
-                      showDebate === i ? "bg-red-100 border border-red-200 text-red-700" : "bg-white border border-gray-200 text-gray-500 hover:bg-gray-100"
+                      showDebate === i ? "bg-orange-100 border border-orange-200 text-orange-700" : "bg-white border border-gray-200 text-gray-500 hover:bg-gray-100"
                     )}
                   >
                     {showDebate === i ? "Fermer" : "Voir le debat"}
@@ -2183,7 +2258,7 @@ function MagCinqPourquoi() {
               </div>
 
               {showDebate === i && (
-                <div className="mt-1.5 ml-2 space-y-1.5 border-l-2 border-red-200 pl-3 animate-in fade-in duration-300">
+                <div className="mt-1.5 ml-2 space-y-1.5 border-l-2 border-orange-200 pl-3 animate-in fade-in duration-300">
                   <div className="flex items-start gap-2">
                     <BotAvatar code={item.debate.challenger} size="sm" />
                     <div className="bg-amber-50 border border-amber-200 rounded-lg rounded-tl-none px-2.5 py-1.5 flex-1">
@@ -2215,45 +2290,65 @@ function MagCinqPourquoi() {
         ))}
 
         {/* Cause racine */}
-        <div className={cn("pt-2 border-t border-red-200 transition-all duration-700",
+        <div className={cn("pt-2 border-t border-orange-200 transition-all duration-700",
           revealedLevel >= 5 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
         )}>
           <div className="flex items-start gap-3">
-            <span className="shrink-0 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center text-[9px] font-bold">5</span>
+            <span className="shrink-0 w-6 h-6 rounded-full bg-orange-500 text-white flex items-center justify-center text-[9px] font-bold">5</span>
             <div className="flex-1">
-              <p className="text-xs font-bold text-red-800">CAUSE RACINE</p>
-              <p className="text-[9px] text-red-700 mt-0.5">L'absence de strategie de contenu structuree fait que le messaging reste technique au lieu d'etre oriente resultats business.</p>
+              <p className="text-xs font-bold text-orange-800">CAUSE RACINE</p>
+              <p className="text-[9px] text-orange-700 mt-0.5">L'absence de strategie de contenu structuree fait que le messaging reste technique au lieu d'etre oriente resultats business.</p>
             </div>
           </div>
-          <div className="ml-9 mt-2 bg-red-50 rounded-lg px-3 py-2 border border-red-200">
-            <p className="text-[9px] font-bold text-red-700 mb-1">Bonification \u2014 Synthese des 4 debats:</p>
+          <div className="ml-9 mt-2 bg-orange-50 rounded-lg px-3 py-2 border border-orange-200">
+            <p className="text-[9px] font-bold text-orange-700 mb-1">Bonification \u2014 Synthese des 4 debats:</p>
             <div className="space-y-1">
               {questions.map((item, i) => (
-                <div key={i} className="flex items-center gap-1.5 text-[9px] text-red-600">
-                  <span className="w-3 h-3 rounded-full bg-red-200 flex items-center justify-center text-[9px] font-bold text-red-700 shrink-0">{i + 1}</span>
+                <div key={i} className="flex items-center gap-1.5 text-[9px] text-orange-600">
+                  <span className="w-3 h-3 rounded-full bg-orange-200 flex items-center justify-center text-[9px] font-bold text-orange-700 shrink-0">{i + 1}</span>
                   <span>{item.debate.verdict}</span>
                 </div>
               ))}
             </div>
             <div className="flex gap-1.5 mt-2">
-              <button className="text-[9px] bg-red-200 text-red-800 px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-red-300">Epingler cette synthese</button>
-              <button className="text-[9px] bg-white text-red-700 px-2 py-0.5 rounded-full font-medium border border-red-200 cursor-pointer hover:bg-red-50">Relancer un 5 Pourquoi</button>
+              <button className="text-[9px] bg-orange-200 text-orange-800 px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-orange-300">Epingler cette synthese</button>
+              <button className="text-[9px] bg-white text-orange-700 px-2 py-0.5 rounded-full font-medium border border-orange-200 cursor-pointer hover:bg-orange-50">Relancer un 5 Pourquoi</button>
             </div>
           </div>
         </div>
       </div>
       <div className="flex flex-wrap gap-2">
-        <button className="text-[9px] bg-red-600 text-white px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-red-700">Creuser cette cause</button>
-        <button className="text-[9px] bg-white border border-red-200 text-red-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-red-50">Pivoter l'analyse</button>
-        <button className="text-[9px] bg-white border border-red-200 text-red-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-red-50">Synthese des causes</button>
-        <button className="text-[9px] bg-white border border-red-200 text-red-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-red-50">Challenger la conclusion</button>
-        <button className="text-[9px] bg-white border border-red-200 text-red-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-red-50">Combiner avec le brainstorm</button>
+        <button className="text-[9px] bg-orange-600 text-white px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-700">Creuser cette cause</button>
+        <button className="text-[9px] bg-white border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-50">Pivoter l'analyse</button>
+        <button className="text-[9px] bg-white border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-50">Synthese des causes</button>
+        <button className="text-[9px] bg-white border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-50">Challenger la conclusion</button>
+        <button className="text-[9px] bg-white border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-50">Combiner avec le brainstorm</button>
       </div>
     </div>
   );
 }
 
 function MagDeepSearch() {
+  const [expandedSource, setExpandedSource] = useState<number | null>(null);
+
+  const DEEP_CITATIONS: Record<number, { type: string; date: string; author: string; citations: { text: string; page: string }[]; crossRef: string }> = {
+    0: { type: "Rapport gouvernemental", date: "2025-Q4", author: "MESI Quebec", citations: [
+      { text: "72% des PME manufacturieres sous-investissent en marketing digital par rapport aux benchmarks sectoriels.", page: "p.34" },
+      { text: "Le programme PCAN offre jusqu'a 50,000$ en accompagnement numerique pour les PME.", page: "p.67" },
+    ], crossRef: "Valide le constat #1 du diagnostic" },
+    1: { type: "Etude sectorielle", date: "2025-11", author: "CEFRIO / BDC", citations: [
+      { text: "Le cout d'acquisition moyen en B2B SaaS au Quebec est de 340$/lead.", page: "p.12" },
+      { text: "Les programmes referral generent un ROI 3.5-5x superieur aux canaux traditionnels.", page: "p.28" },
+    ], crossRef: "Confirme l'axe Referral du brainstorm" },
+    2: { type: "Benchmark industrie", date: "2026-01", author: "HubSpot State of Marketing", citations: [
+      { text: "Taux de conversion moyen B2B SaaS: 2.8%. Top performers: 5.2%.", page: "p.44" },
+      { text: "Le contenu educatif convertit 3.2x mieux que le contenu produit.", page: "p.51" },
+    ], crossRef: "Valide la cause racine des 5 Pourquoi" },
+    3: { type: "Article scientifique", date: "2025-09", author: "MIT Sloan Review", citations: [
+      { text: "Les chatbots AI bien implementes augmentent la conversion de 2.1-3.8x dans les 90 premiers jours.", page: "Vol.67 No.1" },
+    ], crossRef: "Appuie la proposition CTO (chatbot)" },
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
@@ -2262,28 +2357,84 @@ function MagDeepSearch() {
         <span className="text-[9px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium ml-auto">Recherche terminee</span>
       </div>
       <p className="text-[9px] text-gray-500">Sources externes trouvees pour valider les hypotheses du diagnostic. Chaque source a un score de pertinence.</p>
+      {/* Barre de progression recherche */}
+      <div className="grid grid-cols-4 gap-1.5">
+        {["Gouvernement", "Sectoriel", "Benchmark", "Academique"].map((cat, i) => (
+          <div key={i} className="text-center">
+            <div className="h-1 bg-blue-500 rounded-full mb-0.5" />
+            <span className="text-[8px] text-gray-400">{cat}</span>
+          </div>
+        ))}
+      </div>
+
       <div className="space-y-2">
         {SPR_DEEP_SEARCH_SOURCES.map((src, i) => {
           const Icon = src.icon;
+          const meta = DEEP_CITATIONS[i];
+          const isExpanded = expandedSource === i;
           return (
-            <div key={i} className="bg-white border border-blue-200 rounded-xl p-3 flex items-start gap-3 hover:shadow-sm transition-shadow cursor-pointer">
-              <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
-                <Icon className="h-4 w-4 text-blue-600" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-gray-800">{src.title}</p>
-                <p className="text-[9px] text-gray-600 mt-0.5">{src.detail}</p>
-              </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
-                  <span className="text-[9px] font-bold text-blue-600">{src.score}%</span>
+            <div key={i} className="bg-white border border-blue-200 rounded-xl overflow-hidden hover:shadow-sm transition-shadow">
+              <div className="p-3 flex items-start gap-3 cursor-pointer" onClick={() => setExpandedSource(isExpanded ? null : i)}>
+                <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+                  <Icon className="h-4 w-4 text-blue-600" />
                 </div>
-                <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-gray-800">{src.title}</p>
+                  <p className="text-[9px] text-gray-600 mt-0.5">{src.detail}</p>
+                  {meta && (
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-[8px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">{meta.type}</span>
+                      <span className="text-[8px] text-gray-400">{meta.author}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
+                    <span className="text-[9px] font-bold text-blue-600">{src.score}%</span>
+                  </div>
+                  <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                </div>
               </div>
+              {isExpanded && meta && (
+                <div className="px-3 pb-3 border-t border-blue-100 pt-2 space-y-2">
+                  <p className="text-[9px] text-blue-600 font-bold uppercase tracking-wider">Citations cles</p>
+                  {meta.citations.map((c, j) => (
+                    <div key={j} className="bg-blue-50/50 border-l-2 border-blue-300 rounded-r-lg px-3 py-1.5">
+                      <p className="text-[9px] text-gray-700 italic">"{c.text}"</p>
+                      <p className="text-[8px] text-gray-400 mt-0.5">{c.page}</p>
+                    </div>
+                  ))}
+                  <span className="text-[8px] bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded-full border border-emerald-200">{meta.crossRef}</span>
+                  <div className="flex gap-1.5">
+                    <button className="text-[9px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-blue-700">Cristalliser</button>
+                    <button className="text-[9px] bg-white border border-blue-200 text-blue-700 px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-blue-50">Verifier</button>
+                    <button className="text-[9px] bg-white border border-blue-200 text-blue-700 px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-blue-50">Chercher plus</button>
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}
       </div>
+
+      {/* Croisement automatique des sources */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+        <p className="text-[9px] font-bold text-blue-700 mb-1">Croisement automatique des sources</p>
+        <div className="grid grid-cols-2 gap-1.5">
+          {[
+            { ok: true, text: "4/4 sources confirment le ROI referral" },
+            { ok: true, text: "3/4 sources confirment la cause racine" },
+            { ok: false, text: "Chatbot AI: donnees limitees au Quebec" },
+            { ok: true, text: "Budget 3,800$ aligne avec benchmarks" },
+          ].map((item, i) => (
+            <div key={i} className="flex items-center gap-1.5 text-[9px] text-gray-600">
+              {item.ok ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" /> : <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />}
+              <span>{item.text}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div className="flex flex-wrap gap-2">
         <button className="text-[9px] bg-blue-600 text-white px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-blue-700">Approfondir une source</button>
         <button className="text-[9px] bg-white border border-blue-200 text-blue-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-blue-50">Relancer la recherche</button>
@@ -2358,46 +2509,136 @@ function MagSyntheseRecherche() {
 }
 
 function MagChallenge() {
+  const [activeRound, setActiveRound] = useState(0);
+
+  const CHALLENGE_ROUNDS = [
+    {
+      title: "Budget trop agressif (8K$/mois)",
+      challenger: "CFOB", challengerName: "Frank (CFO)",
+      challengeText: "Le plan initial a 8K$/mois represente 96K$/an \u2014 8% du CA. C'est au-dessus du benchmark manufacturier (5-6%). Risque de tresorerie en Q3.",
+      defender: "CMOB", defenderName: "Mathilde (CMO)",
+      defenseText: "Le programme referral seul coute 1,200$/mois avec un ROI de 4.2x. Plan revise a 3,800$/mois pour un ROI de 3.6x. Conservateur et validable en Q2.",
+      verdict: "Plan revise a 3,800$/mois accepte \u2014 ROI 3.6x valide",
+      confidence: 91,
+      metrics: [
+        { label: "ROI projete", value: "3.6x", color: "text-emerald-600" },
+        { label: "/mois revise", value: "3,800$", color: "text-blue-600" },
+        { label: "vs initial", value: "-53%", color: "text-amber-600" },
+      ],
+    },
+    {
+      title: "Timeline Q2 trop serree",
+      challenger: "COOB", challengerName: "Olivier (COO)",
+      challengeText: "Deployer 3 axes en parallele en Q2 = surcharge equipe. Le projet CRM est deja en cours. Risque d'execution eleve.",
+      defender: "CTOB", defenderName: "Tim (CTO)",
+      defenseText: "Le chatbot est deployable en 3 semaines (stack validee). Le referral est un processus RH. Seul LinkedIn demande du contenu regulier \u2014 externalisable.",
+      verdict: "Deploiement sequentiel: referral S1 \u2192 chatbot S3 \u2192 LinkedIn S5",
+      confidence: 84,
+      metrics: [
+        { label: "Referral", value: "Sem 1", color: "text-emerald-600" },
+        { label: "Chatbot", value: "Sem 3", color: "text-blue-600" },
+        { label: "LinkedIn", value: "Sem 5", color: "text-violet-600" },
+      ],
+    },
+    {
+      title: "Messaging ROI pas prouve",
+      challenger: "CTOB", challengerName: "Tim (CTO)",
+      challengeText: "On assume que pivoter vers le messaging ROI va augmenter les leads. Mais on n'a aucune donnee interne. Les benchmarks externes ne s'appliquent peut-etre pas.",
+      defender: "CEOB", defenderName: "CarlOS (CEO)",
+      defenseText: "Le Deep Search montre que 72% des PME sous-investissent en digital. Les 5 clients actuels mentionnent tous le ROI comme facteur #1. L'A/B test LinkedIn validera en 4 semaines.",
+      verdict: "A/B test LinkedIn (messaging tech vs ROI) en semaine 1 \u2014 decision basee sur donnees",
+      confidence: 78,
+      metrics: [
+        { label: "Confiance", value: "78%", color: "text-amber-600" },
+        { label: "Validation", value: "4 sem", color: "text-blue-600" },
+        { label: "Methode", value: "A/B test", color: "text-violet-600" },
+      ],
+    },
+  ];
+
+  const round = CHALLENGE_ROUNDS[activeRound];
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <AlertTriangle className="h-4 w-4 text-amber-600" />
-        <h3 className="text-sm font-bold text-gray-800">Challenge / Defense</h3>
+        <h3 className="text-sm font-bold text-gray-800">Challenge / Defense \u2014 Multi-bot</h3>
+        <span className="text-[9px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium ml-auto">{CHALLENGE_ROUNDS.length} rounds</span>
       </div>
+
+      {/* Rounds navigation */}
+      <div className="flex items-center gap-1">
+        {CHALLENGE_ROUNDS.map((r, i) => (
+          <button key={i} onClick={() => setActiveRound(i)}
+            className={cn("flex-1 text-[9px] py-1.5 px-2 rounded-lg font-medium cursor-pointer transition-all truncate",
+              i === activeRound ? "bg-amber-500 text-white shadow-sm" : i < activeRound ? "bg-emerald-50 text-emerald-600" : "bg-gray-50 text-gray-400 hover:bg-gray-100"
+            )}>
+            {i < activeRound && <CheckCircle2 className="h-3.5 w-3.5 inline mr-1" />}
+            Round {i + 1}
+          </button>
+        ))}
+      </div>
+
       <div className="bg-white border-2 border-amber-300 rounded-xl overflow-hidden">
         <div className="bg-amber-50 px-4 py-2 border-b border-amber-200 flex items-center gap-2">
           <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
-          <span className="text-xs font-bold text-amber-800">Challenge: Budget trop agressif (8K$/mois)</span>
+          <span className="text-xs font-bold text-amber-800">Challenge: {round.title}</span>
         </div>
         <div className="p-4 space-y-3">
+          {/* Challenge */}
           <div className="flex items-start gap-3">
-            <BotAvatar code="CFOB" size="sm" />
-            <div className="flex-1 bg-emerald-50 border border-emerald-200 rounded-lg p-3">
-              <p className="text-xs text-gray-700">Defense par <span className="font-bold text-emerald-700">Frank (CFO)</span>:</p>
-              <p className="text-[9px] text-gray-600 mt-1">Le programme referral seul coute 1,200$/mois avec un ROI de 4.2x. Plan revise a 3,800$/mois pour un ROI de 3.6x. Conservateur et validable en Q2.</p>
+            <BotAvatar code={round.challenger} size="sm" />
+            <div className="flex-1 bg-amber-50 border border-amber-200 rounded-lg p-3">
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="text-[9px] font-bold text-amber-700">{round.challengerName}</span>
+                <span className="text-[8px] bg-amber-200 text-amber-800 px-1 py-0.5 rounded">Challenge</span>
+              </div>
+              <p className="text-[9px] text-gray-600">{round.challengeText}</p>
             </div>
           </div>
+          {/* Defense */}
+          <div className="flex items-start gap-3">
+            <BotAvatar code={round.defender} size="sm" />
+            <div className="flex-1 bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="text-[9px] font-bold text-emerald-700">{round.defenderName}</span>
+                <span className="text-[8px] bg-emerald-200 text-emerald-800 px-1 py-0.5 rounded">Defense</span>
+              </div>
+              <p className="text-[9px] text-gray-600">{round.defenseText}</p>
+            </div>
+          </div>
+          {/* Verdict */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 flex items-start gap-2">
+            <CheckCircle2 className="h-3.5 w-3.5 text-blue-500 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-[9px] text-blue-700 font-medium">{round.verdict}</p>
+              <div className="flex items-center gap-1.5 mt-1">
+                <span className="text-[8px] text-gray-400">Confiance equipe:</span>
+                <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                  <div className={cn("h-full rounded-full", round.confidence >= 85 ? "bg-emerald-500" : round.confidence >= 70 ? "bg-amber-500" : "bg-orange-500")} style={{ width: `${round.confidence}%` }} />
+                </div>
+                <span className={cn("text-[9px] font-bold", round.confidence >= 85 ? "text-emerald-600" : round.confidence >= 70 ? "text-amber-600" : "text-orange-600")}>{round.confidence}%</span>
+              </div>
+            </div>
+          </div>
+          {/* Metrics */}
           <div className="grid grid-cols-3 gap-2">
-            <div className="text-center bg-white border border-gray-200 rounded-lg p-2">
-              <p className="text-lg font-extrabold text-emerald-600">3.6x</p>
-              <p className="text-[9px] text-gray-500">ROI projete</p>
-            </div>
-            <div className="text-center bg-white border border-gray-200 rounded-lg p-2">
-              <p className="text-lg font-extrabold text-blue-600">3,800$</p>
-              <p className="text-[9px] text-gray-500">/mois revise</p>
-            </div>
-            <div className="text-center bg-white border border-gray-200 rounded-lg p-2">
-              <p className="text-lg font-extrabold text-amber-600">-53%</p>
-              <p className="text-[9px] text-gray-500">vs plan initial</p>
-            </div>
+            {round.metrics.map((m, i) => (
+              <div key={i} className="text-center bg-white border border-gray-200 rounded-lg p-2">
+                <p className={cn("text-lg font-extrabold", m.color)}>{m.value}</p>
+                <p className="text-[9px] text-gray-500">{m.label}</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>
+
       <div className="flex flex-wrap gap-2">
-        <button className="text-[9px] bg-emerald-600 text-white px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-emerald-700">Accepter le plan revise</button>
+        <button className="text-[9px] bg-emerald-600 text-white px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-emerald-700">Accepter le verdict</button>
         <button className="text-[9px] bg-white border border-amber-200 text-amber-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-amber-50">Re-challenger</button>
         <button className="text-[9px] bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-gray-50">Demander un 2e avis</button>
-        <button className="text-[9px] bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-gray-50">Synthese des arguments</button>
+        <button className="text-[9px] bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-gray-50">Voir l'alternative</button>
+        <button className="text-[9px] bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-gray-50">Synthese des 3 rounds</button>
       </div>
     </div>
   );
@@ -2450,7 +2691,7 @@ function MagPreRapport() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <FileText className="h-4 w-4 text-red-600" />
+        <FileText className="h-4 w-4 text-orange-600" />
         <h3 className="text-sm font-bold text-gray-800">Pre-rapport \u2014 Analyse Marketing Q2</h3>
         <span className="text-[9px] text-gray-500 ml-auto">{sectionsFilled.length} / {SPR_REPORT_SECTIONS.length} sections</span>
       </div>
@@ -2464,7 +2705,7 @@ function MagPreRapport() {
             const isActive = activeAction?.sectionId === s.id;
             return (
               <div key={s.id} className={cn("flex items-center gap-1.5 text-[9px] px-2 py-1 rounded cursor-pointer transition-all",
-                isActive ? "bg-red-100 text-red-700 font-medium ring-1 ring-red-300" :
+                isActive ? "bg-orange-100 text-orange-700 font-medium ring-1 ring-orange-300" :
                 filled ? "bg-green-50 text-green-700 font-medium" : "text-gray-400 hover:bg-gray-50",
                 pinnedSection === s.id ? "animate-pulse ring-2 ring-blue-400" : ""
               )}>
@@ -2475,7 +2716,7 @@ function MagPreRapport() {
           })}
           <div className="mt-3 text-[9px] text-gray-500 px-2">
             <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-              <div className="h-full bg-red-500 rounded-full transition-all" style={{ width: `${(sectionsFilled.length / SPR_REPORT_SECTIONS.length) * 100}%` }} />
+              <div className="h-full bg-orange-500 rounded-full transition-all" style={{ width: `${(sectionsFilled.length / SPR_REPORT_SECTIONS.length) * 100}%` }} />
             </div>
             <span className="mt-1 block">{Math.round((sectionsFilled.length / SPR_REPORT_SECTIONS.length) * 100)}% complet</span>
           </div>
@@ -2488,7 +2729,7 @@ function MagPreRapport() {
               { label: "Fusionner 2 sections", icon: Zap },
               { label: "Ajouter une section", icon: Lightbulb },
             ].map(a => (
-              <button key={a.label} className="w-full flex items-center gap-1.5 text-[9px] text-gray-500 hover:text-red-600 hover:bg-red-50 px-2 py-1 rounded cursor-pointer transition-colors text-left">
+              <button key={a.label} className="w-full flex items-center gap-1.5 text-[9px] text-gray-500 hover:text-orange-600 hover:bg-orange-50 px-2 py-1 rounded cursor-pointer transition-colors text-left">
                 <a.icon className="h-3.5 w-3.5 shrink-0" /> {a.label}
               </button>
             ))}
@@ -2498,11 +2739,11 @@ function MagPreRapport() {
         <div className="flex-1 space-y-3">
           {SPR_REPORT_SECTIONS.filter(s => sectionsFilled.includes(s.id)).map(s => (
             <div key={s.id} className={cn("border-l-[3px] rounded-r-lg px-3 py-2.5 group transition-all",
-              activeAction?.sectionId === s.id ? "border-red-500 bg-red-50 ring-1 ring-red-200" : "border-red-400 bg-red-50/50",
+              activeAction?.sectionId === s.id ? "border-orange-500 bg-orange-50 ring-1 ring-orange-200" : "border-orange-400 bg-orange-50/50",
               pinnedSection === s.id ? "ring-2 ring-blue-400 animate-pulse" : ""
             )}>
               <div className="flex items-center gap-2 mb-1">
-                <h4 className="text-[9px] font-bold text-red-700">{s.id}. {s.title}</h4>
+                <h4 className="text-[9px] font-bold text-orange-700">{s.id}. {s.title}</h4>
                 <span className="text-[9px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded ml-auto">
                   {s.id <= 2 ? "CarlOS" : s.id === 3 ? "Multi-bot" : s.id === 4 ? "Brainstorm" : s.id === 5 ? "5 Pourquoi" : s.id === 6 ? "Deep Search" : s.id === 7 ? "Frank" : "CarlOS"}
                 </span>
@@ -2512,7 +2753,7 @@ function MagPreRapport() {
               <div className="flex flex-wrap gap-1.5 mt-2 opacity-70 group-hover:opacity-100 transition-opacity">
                 <button onClick={() => handlePin(s.id)}
                   className={cn("text-[9px] font-medium cursor-pointer flex items-center gap-1 rounded-full px-2 py-0.5 transition-colors",
-                    pinnedSection === s.id ? "text-blue-700 bg-blue-100 border border-blue-300" : "text-red-600 hover:text-red-700 bg-white border border-red-200 hover:bg-red-50"
+                    pinnedSection === s.id ? "text-blue-700 bg-blue-100 border border-blue-300" : "text-orange-600 hover:text-orange-700 bg-white border border-orange-200 hover:bg-orange-50"
                   )}>
                   <Pin className="h-3.5 w-3.5" /> {pinnedSection === s.id ? "Epingle!" : "Epingler"}
                 </button>
@@ -2538,7 +2779,7 @@ function MagPreRapport() {
 
               {/* APPROFONDIR result */}
               {activeAction?.sectionId === s.id && activeAction?.action === "approfondir" && (
-                <div className="mt-3 border-t border-red-200 pt-3 space-y-2">
+                <div className="mt-3 border-t border-orange-200 pt-3 space-y-2">
                   {APPROFONDIR_RESULTS[s.id] ? (
                     <>
                       <div className="flex items-center gap-2 mb-1">
@@ -2580,7 +2821,7 @@ function MagPreRapport() {
 
               {/* REFORMULER result */}
               {activeAction?.sectionId === s.id && activeAction?.action === "reformuler" && (
-                <div className="mt-3 border-t border-red-200 pt-3 space-y-2">
+                <div className="mt-3 border-t border-orange-200 pt-3 space-y-2">
                   {REFORMULER_RESULTS[s.id] ? (
                     <>
                       <div className="flex items-center gap-2 mb-1">
@@ -3166,6 +3407,7 @@ function MagConclusions() {
       <div className="flex items-center gap-2 pb-2 border-b border-orange-200">
         <Trophy className="h-4 w-4 text-orange-600" />
         <h3 className="text-sm font-bold text-gray-800">Conclusions et recommandations</h3>
+        <span className="text-[9px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium ml-auto">4/4 GO</span>
       </div>
       {[
         { rank: 1, title: "Programme Referral Clients", desc: "Quick win \u2014 ROI 4.2x, budget 1,200$/mois. Levier le bouche-\u00e0-oreille existant avec des incitatifs structur\u00e9s.", bot: "CFOB" },
@@ -3181,8 +3423,74 @@ function MagConclusions() {
           <p className="text-[10px] text-gray-600 leading-relaxed ml-7">{r.desc}</p>
         </div>
       ))}
-      <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 text-center">
-        <p className="text-[9px] font-bold text-emerald-700">Budget total recommand\u00e9: 3,800$/mois \u2014 ROI projet\u00e9: 3.6x</p>
+      {/* Vote des bots */}
+      <div className="border border-gray-200 rounded-lg overflow-hidden">
+        <div className="bg-gray-50 px-3 py-1.5 border-b border-gray-200 flex items-center gap-2">
+          <Users className="h-3.5 w-3.5 text-gray-500" />
+          <span className="text-[9px] font-bold text-gray-700 uppercase tracking-wider">Vote equipe \u2014 Passage en Conception</span>
+        </div>
+        <div className="grid grid-cols-2 gap-px bg-gray-200">
+          {[
+            { bot: "CFOB", name: "Frank (CFO)", vote: "GO", reason: "Budget aligne, ROI valide par Deep Search" },
+            { bot: "CMOB", name: "Mathilde (CMO)", vote: "GO", reason: "Messaging pivot necessaire, timing Q2 ideal" },
+            { bot: "CTOB", name: "Tim (CTO)", vote: "GO", reason: "Chatbot deployable en 3 semaines, stack validee" },
+            { bot: "COOB", name: "Olivier (COO)", vote: "GO", reason: "Ressources disponibles, pas d'impact operations" },
+          ].map(v => (
+            <div key={v.bot} className="bg-white px-2.5 py-2 flex items-start gap-2">
+              <BotAvatar code={v.bot} size="sm" />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[9px] font-bold text-gray-700">{v.name}</span>
+                  <span className="text-[8px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-bold">{v.vote}</span>
+                </div>
+                <p className="text-[8px] text-gray-500 mt-0.5">{v.reason}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Budget et KPIs */}
+      <div className="grid grid-cols-3 gap-2">
+        <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 text-center">
+          <p className="text-lg font-extrabold text-emerald-700">3,800$</p>
+          <p className="text-[8px] text-emerald-600">/mois budget total</p>
+        </div>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-center">
+          <p className="text-lg font-extrabold text-blue-700">3.6x</p>
+          <p className="text-[8px] text-blue-600">ROI projete</p>
+        </div>
+        <div className="bg-orange-50 border border-orange-200 rounded-lg px-3 py-2 text-center">
+          <p className="text-lg font-extrabold text-orange-700">12 sem</p>
+          <p className="text-[8px] text-orange-600">deploiement complet</p>
+        </div>
+      </div>
+
+      {/* Prochaines etapes */}
+      <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+        <p className="text-[9px] font-bold text-gray-700 mb-1.5">Prochaines etapes</p>
+        <div className="space-y-1">
+          {[
+            { step: "Cristalliser le rapport de reflexion", bot: "CEOB", done: true },
+            { step: "Creer le chantier Marketing Q2-Q3", bot: "CEOB", done: false },
+            { step: "Definir les 3 projets et missions", bot: "COOB", done: false },
+            { step: "Assigner les bots responsables", bot: "CEOB", done: false },
+          ].map((s, i) => (
+            <div key={i} className="flex items-center gap-2 text-[9px]">
+              {s.done ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" /> : <div className="w-3.5 h-3.5 rounded-full border border-gray-300 shrink-0" />}
+              <span className={s.done ? "text-gray-800 font-medium" : "text-gray-500"}>{s.step}</span>
+              <BotAvatar code={s.bot} size="sm" />
+              <span className={cn("text-[8px] px-1 py-0.5 rounded ml-auto", s.done ? "bg-emerald-100 text-emerald-600" : "bg-gray-100 text-gray-400")}>{s.done ? "Pret" : "En attente"}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <button className="text-[9px] bg-orange-600 text-white px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-700">Cristalliser le rapport</button>
+        <button className="text-[9px] bg-white border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-50">Exporter en PDF</button>
+        <button className="text-[9px] bg-white border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-50">Partager avec l'equipe</button>
+        <button className="text-[9px] bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-gray-50">Relancer l'analyse</button>
       </div>
     </div>
   );
@@ -3190,6 +3498,10 @@ function MagConclusions() {
 
 export function ReflexionMagazine({ stage, context, onStartConception }: { stage: number; context: string | null; onStartConception?: () => void }) {
   const visibleCount = REFLEXION_DOCFORGE_SECTIONS.filter(s => stage >= s.minStage).length;
+
+  const scrollTo = (id: number) => {
+    document.getElementById(`reflexion-section-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-4 pb-12">
@@ -3200,120 +3512,146 @@ export function ReflexionMagazine({ stage, context, onStartConception }: { stage
           <p className="text-[9px] text-gray-300">Les sections apparaitront au fur et a mesure de l'analyse</p>
         </div>
       ) : (
-        <div className="flex gap-4">
-          {/* TOC sidebar */}
-          <div className="w-48 shrink-0 space-y-1">
-            <div className="flex items-center gap-1.5 mb-3">
-              <Brain className="h-4 w-4 text-orange-500" />
-              <span className="text-xs font-bold text-gray-800">Rapport de R\u00e9flexion</span>
+        <>
+          {/* TITRE UNIQUE — session de réflexion */}
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center shrink-0">
+              <Brain className="h-4 w-4 text-white" />
             </div>
-            {REFLEXION_DOCFORGE_SECTIONS.map(s => {
-              const visible = stage >= s.minStage;
-              return (
-                <div key={s.id} className={cn("flex items-center gap-1.5 text-[10px] px-2 py-1.5 rounded transition-all",
-                  visible ? "bg-orange-50 text-orange-700 font-medium" : "text-gray-400"
-                )}>
-                  {visible ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" /> : <div className="w-3.5 h-3.5 rounded-full border border-gray-300 shrink-0" />}
-                  <span className="truncate">{s.id}. {s.title}</span>
-                </div>
-              );
-            })}
-            <div className="mt-3 text-[10px] text-gray-500 px-2">
-              <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                <div className="h-full bg-orange-500 rounded-full transition-all" style={{ width: `${(visibleCount / REFLEXION_DOCFORGE_SECTIONS.length) * 100}%` }} />
-              </div>
-              <span className="mt-1 block">{visibleCount} / {REFLEXION_DOCFORGE_SECTIONS.length} sections</span>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-sm font-bold text-gray-900">{context || "Session de réflexion"}</h2>
+              <p className="text-[10px] text-gray-500">{visibleCount}/{REFLEXION_DOCFORGE_SECTIONS.length} sections complétées</p>
             </div>
-            <div className="mt-3 pt-2 border-t border-gray-200 space-y-1">
-              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Actions</p>
-              {[
-                { label: "Re-synth\u00e9tiser", icon: RefreshCw },
-                { label: "R\u00e9organiser", icon: Layers },
-                { label: "Exporter PDF", icon: FileText },
-              ].map(a => (
-                <button key={a.label} className="w-full flex items-center gap-1.5 text-[9px] text-gray-500 hover:text-orange-600 hover:bg-orange-50 px-2 py-1.5 rounded cursor-pointer transition-colors text-left">
-                  <a.icon className="h-3.5 w-3.5 shrink-0" /> {a.label}
-                </button>
-              ))}
+            <div className="h-1.5 w-24 bg-gray-200 rounded-full overflow-hidden shrink-0">
+              <div className="h-full bg-orange-500 rounded-full transition-all" style={{ width: `${(visibleCount / REFLEXION_DOCFORGE_SECTIONS.length) * 100}%` }} />
             </div>
           </div>
 
-          {/* Content \u2014 DocForge blocks */}
-          <div className="flex-1 space-y-3">
-            {stage >= 1 && (
-              <DocForgeBlock index={1} title="Diagnostic initial" icon={Stethoscope} status={stage >= 7 ? "complete" : "en-cours"}>
-                <MagDiagnostic />
-              </DocForgeBlock>
-            )}
-            {stage >= 7 && (
-              <DocForgeBlock index={2} title="Brainstorm SCAMPER" icon={Lightbulb} status={stage >= 8 ? "complete" : "en-cours"}>
-                <MagBrainstorm />
-              </DocForgeBlock>
-            )}
-            {stage >= 8 && (
-              <DocForgeBlock index={3} title="Synth\u00e8se brainstorm" icon={Layers} status={stage >= 9 ? "complete" : "en-cours"}>
-                <MagSyntheseBrainstorm />
-              </DocForgeBlock>
-            )}
-            {stage >= 9 && (
-              <DocForgeBlock index={4} title="Analyse 5 Pourquoi" icon={Search} status={stage >= 10 ? "complete" : "en-cours"}>
-                <MagCinqPourquoi />
-              </DocForgeBlock>
-            )}
-            {stage >= 10 && (
-              <DocForgeBlock index={5} title="Deep Search" icon={Globe} status={stage >= 11 ? "complete" : "en-cours"}>
-                <MagDeepSearch />
-              </DocForgeBlock>
-            )}
-            {stage >= 11 && (
-              <DocForgeBlock index={6} title="Synth\u00e8se recherche" icon={FileBarChart} status={stage >= 12 ? "complete" : "en-cours"}>
-                <MagSyntheseRecherche />
-              </DocForgeBlock>
-            )}
-            {stage >= 12 && (
-              <DocForgeBlock index={7} title="Challenge / D\u00e9fense" icon={Swords} status={stage >= 13 ? "complete" : "en-cours"}>
-                <MagChallenge />
-              </DocForgeBlock>
-            )}
-            {stage >= 13 && (
-              <DocForgeBlock index={8} title="Pr\u00e9-rapport" icon={FileText} status={stage >= 14 ? "complete" : "en-cours"}>
-                <MagPreRapport />
-              </DocForgeBlock>
-            )}
-            {stage >= 14 && (
-              <DocForgeBlock index={9} title="Conclusions" icon={Trophy} status="complete">
-                <MagConclusions />
-              </DocForgeBlock>
-            )}
+          {/* CONTENU — sidebar TOC + DocForge blocks */}
+          <div className="flex gap-4">
+            {/* TOC sidebar (sans titre doublon) */}
+            <div className="w-48 shrink-0 space-y-1">
+              {REFLEXION_DOCFORGE_SECTIONS.map(s => {
+                const visible = stage >= s.minStage;
+                return (
+                  <button key={s.id} onClick={() => visible && scrollTo(s.id)}
+                    className={cn("w-full flex items-center gap-1.5 text-[10px] px-2 py-1.5 rounded transition-all text-left cursor-pointer",
+                      visible ? "bg-orange-50 text-orange-700 font-medium hover:bg-orange-100" : "text-gray-400"
+                    )}>
+                    {visible ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" /> : <div className="w-3.5 h-3.5 rounded-full border border-gray-300 shrink-0" />}
+                    <span className="truncate">{s.id}. {s.title}</span>
+                  </button>
+                );
+              })}
+              <div className="mt-3 pt-2 border-t border-gray-200 space-y-1">
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Actions</p>
+                {[
+                  { label: "Re-synthétiser", icon: RefreshCw },
+                  { label: "Réorganiser", icon: Layers },
+                  { label: "Exporter PDF", icon: FileText },
+                ].map(a => (
+                  <button key={a.label} className="w-full flex items-center gap-1.5 text-[9px] text-gray-500 hover:text-orange-600 hover:bg-orange-50 px-2 py-1.5 rounded cursor-pointer transition-colors text-left">
+                    <a.icon className="h-3.5 w-3.5 shrink-0" /> {a.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-            {/* Transition vers Conception */}
-            {stage >= 15 && onStartConception && (
-              <div className="py-4">
-                <div className="bg-gradient-to-r from-amber-100 to-yellow-100 border-2 border-amber-300 rounded-xl px-6 py-6 text-center">
-                  <div className="flex items-center justify-center gap-4 mb-4">
-                    <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center">
-                      <Brain className="h-5 w-5 text-white" />
+            {/* Content — DocForge blocks avec ancres */}
+            <div className="flex-1 space-y-3">
+              {stage >= 1 && (
+                <div id="reflexion-section-1">
+                  <DocForgeBlock index={1} title="Diagnostic initial" icon={Stethoscope} status={stage >= 7 ? "complete" : "en-cours"}>
+                    <MagDiagnostic />
+                  </DocForgeBlock>
+                </div>
+              )}
+              {stage >= 7 && (
+                <div id="reflexion-section-2">
+                  <DocForgeBlock index={2} title="Brainstorm SCAMPER" icon={Lightbulb} status={stage >= 8 ? "complete" : "en-cours"}>
+                    <MagBrainstorm />
+                  </DocForgeBlock>
+                </div>
+              )}
+              {stage >= 8 && (
+                <div id="reflexion-section-3">
+                  <DocForgeBlock index={3} title="Synthèse brainstorm" icon={Layers} status={stage >= 9 ? "complete" : "en-cours"}>
+                    <MagSyntheseBrainstorm />
+                  </DocForgeBlock>
+                </div>
+              )}
+              {stage >= 9 && (
+                <div id="reflexion-section-4">
+                  <DocForgeBlock index={4} title="Analyse 5 Pourquoi" icon={Search} status={stage >= 10 ? "complete" : "en-cours"}>
+                    <MagCinqPourquoi />
+                  </DocForgeBlock>
+                </div>
+              )}
+              {stage >= 10 && (
+                <div id="reflexion-section-5">
+                  <DocForgeBlock index={5} title="Deep Search" icon={Globe} status={stage >= 11 ? "complete" : "en-cours"}>
+                    <MagDeepSearch />
+                  </DocForgeBlock>
+                </div>
+              )}
+              {stage >= 11 && (
+                <div id="reflexion-section-6">
+                  <DocForgeBlock index={6} title="Synthèse recherche" icon={FileBarChart} status={stage >= 12 ? "complete" : "en-cours"}>
+                    <MagSyntheseRecherche />
+                  </DocForgeBlock>
+                </div>
+              )}
+              {stage >= 12 && (
+                <div id="reflexion-section-7">
+                  <DocForgeBlock index={7} title="Challenge / Défense" icon={Swords} status={stage >= 13 ? "complete" : "en-cours"}>
+                    <MagChallenge />
+                  </DocForgeBlock>
+                </div>
+              )}
+              {stage >= 13 && (
+                <div id="reflexion-section-8">
+                  <DocForgeBlock index={8} title="Pré-rapport" icon={FileText} status={stage >= 14 ? "complete" : "en-cours"}>
+                    <MagPreRapport />
+                  </DocForgeBlock>
+                </div>
+              )}
+              {stage >= 14 && (
+                <div id="reflexion-section-9">
+                  <DocForgeBlock index={9} title="Conclusions" icon={Trophy} status="complete">
+                    <MagConclusions />
+                  </DocForgeBlock>
+                </div>
+              )}
+
+              {/* Transition vers Conception */}
+              {stage >= 15 && onStartConception && (
+                <div className="py-4">
+                  <div className="bg-gradient-to-r from-amber-100 to-yellow-100 border-2 border-amber-300 rounded-xl px-6 py-6 text-center">
+                    <div className="flex items-center justify-center gap-4 mb-4">
+                      <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center">
+                        <Brain className="h-5 w-5 text-white" />
+                      </div>
+                      <ArrowRight className="h-5 w-5 text-amber-600" />
+                      <div className="w-10 h-10 rounded-full bg-yellow-500 flex items-center justify-center animate-pulse">
+                        <Hammer className="h-5 w-5 text-white" />
+                      </div>
                     </div>
-                    <ArrowRight className="h-5 w-5 text-amber-600" />
-                    <div className="w-10 h-10 rounded-full bg-yellow-500 flex items-center justify-center animate-pulse">
-                      <Hammer className="h-5 w-5 text-white" />
+                    <p className="text-sm font-bold text-amber-800">Rapport complet — Prêt pour la Conception</p>
+                    <p className="text-xs text-amber-600 mt-1">9 sections d'analyse sauvegardées</p>
+                    <div className="mt-4 flex gap-2 justify-center">
+                      <button onClick={onStartConception} className="text-xs bg-amber-600 text-white px-4 py-2 rounded-full font-bold cursor-pointer hover:bg-amber-700">
+                        Passer en mode Conception
+                      </button>
+                      <button className="text-xs bg-white text-amber-700 px-4 py-2 rounded-full font-bold border border-amber-300 cursor-pointer hover:bg-amber-50">
+                        Cristalliser d'abord
+                      </button>
                     </div>
-                  </div>
-                  <p className="text-sm font-bold text-amber-800">Rapport complet \u2014 Pr\u00eat pour la Conception</p>
-                  <p className="text-xs text-amber-600 mt-1">9 sections d'analyse sauvegard\u00e9es</p>
-                  <div className="mt-4 flex gap-2 justify-center">
-                    <button onClick={onStartConception} className="text-xs bg-amber-600 text-white px-4 py-2 rounded-full font-bold cursor-pointer hover:bg-amber-700">
-                      Passer en mode Conception
-                    </button>
-                    <button className="text-xs bg-white text-amber-700 px-4 py-2 rounded-full font-bold border border-amber-300 cursor-pointer hover:bg-amber-50">
-                      Cristalliser d'abord
-                    </button>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
