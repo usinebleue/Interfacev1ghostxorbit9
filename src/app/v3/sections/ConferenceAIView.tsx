@@ -15,12 +15,12 @@ import {
 } from "lucide-react";
 import { Card } from "../../components/ui/card";
 import { cn } from "../../components/ui/utils";
-import { BOT_AVATAR } from "../../v2/api/types";
+import { BOT_AVATAR, BOT_NAME } from "../../v2/api/types";
 import { LivingHero } from "./shared/LivingHero";
-import { DEPT_SHORT_LABEL, DEPT_DASH_ICON, DEPT_LABELS } from "./shared/dept-data";
+import { DEPT_SHORT_LABEL, DEPT_DASH_ICON, DEPT_LABELS, DEPT_ICONS, DEPT_GRADIENT, DEPT_COLORS, BOT_DISPLAY, BOT_AVATAR_MAP } from "./shared/dept-data";
 import { SF } from "../core/styles";
 // Shared data from PlaybookStoreView
-import { PLAYBOOK_STORE_DATA, PlaybookCardV2, CONFERENCE_FAMILIES, getPlaybookFamily } from "./PlaybookStoreView";
+import { PLAYBOOK_STORE_DATA, PlaybookCardV2, CONFERENCE_FAMILIES, getPlaybookFamily, PLAYBOOK_WORKFLOWS, PLAYBOOK_LIVRABLES, PLAYBOOK_LONG_DESC } from "./PlaybookStoreView";
 
 // ══════════════════════════════════════════
 // CONFERENCE AI — Section DEDIEE (tab departement)

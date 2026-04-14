@@ -84,6 +84,39 @@ export const PHASE_COLORS: Record<PhaseKey, { label: string; badge: string; dot:
 
 // ═══ Alias backward-compat ═══
 export const DEPT_LABELS = DEPT_SHORT_LABEL;
+export const DEPT_ICONS = DEPT_DASH_ICON;
+
+// ═══ BOT_AVATAR_MAP — Avatars profil par bot (source: BlueprintDepartement L1947-1960) ═══
+export const BOT_AVATAR_MAP: Record<string, string> = {
+  CEOB: "/agents/generated/ceo-carlos-profil-v3.png",
+  CTOB: "/agents/generated/cto-thierry-profil-v3.png",
+  CFOB: "/agents/generated/cfo-francois-profil-v3.png",
+  CMOB: "/agents/generated/cmo-martine-profil-v3.png",
+  CSOB: "/agents/generated/cso-sophie-profil-v3.png",
+  COOB: "/agents/generated/coo-olivier-profil-v3.png",
+  CPOB: "/agents/generated/factory-bot-profil-v3.png",
+  CHROB: "/agents/generated/chro-helene-profil-v3.png",
+  CINOB: "/agents/generated/cino-ines-profil-v3.png",
+  CROB: "/agents/generated/cro-raphael-profil-v3.png",
+  CLOB: "/agents/generated/clo-louise-profil-v3.png",
+  CISOB: "/agents/generated/ciso-secbot-profil-v3.png",
+};
+
+// ═══ BOT_DISPLAY — Nom, rôle, département par bot (source: BlueprintDepartement L1962-1975) ═══
+export const BOT_DISPLAY: Record<string, { name: string; role: string; dept: string }> = {
+  CEOB: { name: "CarlOS", role: "CEO", dept: "Direction" },
+  CTOB: { name: "Tim", role: "CTO", dept: "Technologie & Innovation" },
+  CFOB: { name: "Frank", role: "CFO", dept: "Finance & Tresorerie" },
+  CMOB: { name: "Mathilde", role: "CMO", dept: "Marketing & Croissance" },
+  CSOB: { name: "Simone", role: "CSO", dept: "Strategie & Ventes" },
+  COOB: { name: "Olivier", role: "COO", dept: "Operations & Production" },
+  CPOB: { name: "Paco", role: "CPO", dept: "Automatisation & Usine" },
+  CHROB: { name: "Helene", role: "CHRO", dept: "Ressources Humaines" },
+  CINOB: { name: "Ines", role: "CINO", dept: "Innovation & R&D" },
+  CROB: { name: "Rich", role: "CRO", dept: "Revenus & Croissance" },
+  CLOB: { name: "Loulou", role: "CLO", dept: "Juridique & Conformite" },
+  CISOB: { name: "Sebastien", role: "CISO", dept: "Securite & Cyber" },
+};
 
 // ═══ OTHER_BOTS — 11 bots (sans CEOB) pour les vues consolidées Direction ═══
 export const OTHER_BOTS: { code: string; label: string; bot: string; short: string; gradient: string }[] = [

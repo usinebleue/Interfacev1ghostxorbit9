@@ -14,7 +14,20 @@ import {
 import { Card } from "../../components/ui/card";
 import { cn } from "../../components/ui/utils";
 import { useCanvasActions } from "../../v2/context/CanvasActionContext";
+import { api } from "../../v2/api/client";
+import {
+  resolveIcon,
+  PertinenceBadge,
+  SubSectionContent,
+  CrossReferencePanel,
+  ConseilAdminManager,
+  ComitesManager,
+  BlueprintPersonnel,
+  BlueprintBot,
+  VueConsolidee,
+} from "../../v2/zones/center/blueprint/BlueprintDepartement";
 import { LivingHero } from "./shared/LivingHero";
+import { DEPT_DASH_ICON, OTHER_BOTS } from "./shared/dept-data";
 import { SF } from "../core/styles";
 import {
   getBlueprintConfig,

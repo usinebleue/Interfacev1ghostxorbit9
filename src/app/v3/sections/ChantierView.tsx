@@ -5,7 +5,7 @@
  * Structure: LivingHero → Vedettes grid-cols-3 → Sidebar w-[180px] + Contenu cascade
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Home, Target, Layers, Rocket, DollarSign, Shield, TrendingUp,
   TrendingDown, ListChecks, Settings, Flame, CheckCircle2,
@@ -21,8 +21,9 @@ import { cn } from "../../components/ui/utils";
 import { BOT_AVATAR } from "../../v2/api/types";
 import { useChantiers } from "../../v2/api/hooks";
 import { LivingHero } from "./shared/LivingHero";
-import { DEPT_SHORT_LABEL, DEPT_DASH_ICON, PHASE_COLORS, type PhaseKey } from "./shared/dept-data";
+import { DEPT_SHORT_LABEL, DEPT_DASH_ICON, PHASE_COLORS, BOT_DISPLAY, BOT_AVATAR_MAP, type PhaseKey } from "./shared/dept-data";
 import { SF } from "../core/styles";
+import { CockpitSectionHeader, WorkActionsOverlay, DEPT_ORDER, WORK_ACTIONS } from "./CockpitView";
 
 type ChantierLevel = "chantiers" | "projets" | "missions" | "taches" | "tache-detail";
 type ChantierSortKey = "recent" | "progression" | "phase" | "alpha";

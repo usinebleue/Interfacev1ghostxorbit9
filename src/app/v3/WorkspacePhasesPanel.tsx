@@ -81,21 +81,12 @@ export function WorkspacePhasesPanel() {
   const isOrbit9 = cockpitTab === "orbit9";
   const isDash = activePhase === "observation" || activePhase === "attention" || activePhase === "moderation";
 
-  // Scroll to top on phase/section change
+  // Scroll to top on phase change only (pas sur section nav — Carl veut pas d'ancre auto)
   useEffect(() => {
     rightRef.current && (rightRef.current.scrollTop = 0);
-  }, [activePhase, rightSection]);
+  }, [activePhase]);
 
-  // Auto-scroll right panel to follow chat progression (200ms delay for DOM render)
-  useEffect(() => {
-    if (rightRef.current) {
-      setTimeout(() => {
-        if (rightRef.current) {
-          rightRef.current.scrollTo({ top: rightRef.current.scrollHeight, behavior: "smooth" });
-        }
-      }, 200);
-    }
-  }, [chatStage]);
+  // Auto-scroll désactivé — chatStage simulation pas branchée sur le vrai chat
 
   return (
     <div className="h-full flex flex-col overflow-hidden bg-gray-50">

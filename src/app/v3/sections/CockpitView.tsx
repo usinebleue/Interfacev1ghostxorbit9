@@ -5,7 +5,8 @@
  * Structure: LivingHero → Grid VITAA → Vedettes grid-cols-3 → Sidebar w-[180px] + Contenu grid-cols-2
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { PageLayout } from "../../v2/zones/center/layouts";
 import {
   Activity, AlertTriangle, Atom, Award, Banknote, BarChart3, Bell,
   BookOpen, Bot, Brain, Bug, Building2, Calendar, ChevronRight,
@@ -900,7 +901,7 @@ const DEPT_DASHBOARD_SECTIONS: Record<string, DeptDashboardConfig> = {
 };
 
 // 5 états de travail — boutons d'action sur chaque item
-const WORK_ACTIONS: { key: PhaseKey; icon: React.ElementType; label: string; hover: string }[] = [
+export const WORK_ACTIONS: { key: PhaseKey; icon: React.ElementType; label: string; hover: string }[] = [
   { key: "discussion",  icon: MessageCircle, label: "Discussion",   hover: "hover:bg-blue-50 hover:text-blue-700" },
   { key: "reflexion",   icon: Brain,         label: "Réflexion",    hover: "hover:bg-orange-50 hover:text-orange-700" },
   { key: "creation",    icon: Hammer,        label: "Conception",   hover: "hover:bg-yellow-50 hover:text-yellow-700" },
@@ -911,7 +912,7 @@ const WORK_ACTIONS: { key: PhaseKey; icon: React.ElementType; label: string; hov
 /** Rollover unique — 5 boutons d'action. UN composant, ZÉRO silo.
  *  position="center" (défaut) = centré vertical (pour lignes de liste)
  *  position="top"            = coin haut-droit (pour cards hautes) */
-function WorkActionsOverlay({ context, onAction, position = "center" }: { context: string; onAction: (phase: PhaseKey, ctx: string) => void; position?: "center" | "top" }) {
+export function WorkActionsOverlay({ context, onAction, position = "center" }: { context: string; onAction: (phase: PhaseKey, ctx: string) => void; position?: "center" | "top" }) {
   return (
     <div className={cn(
       "hidden group-hover:flex items-center gap-1 absolute right-1.5 bg-white/95 backdrop-blur-sm rounded-lg shadow-sm border border-gray-200 px-1 py-0.5 z-20",
@@ -1044,7 +1045,7 @@ function CockpitSignalCard({ item, onAction }: {
 }
 
 // ── CockpitSectionHeader — Header de section (exact Playbook Store) ──
-function CockpitSectionHeader({ icon: Icon, title, count, color = "text-amber-500" }: {
+export function CockpitSectionHeader({ icon: Icon, title, count, color = "text-amber-500" }: {
   icon: React.ElementType;
   title: string;
   count?: number;
@@ -1068,7 +1069,7 @@ function CockpitSectionHeader({ icon: Icon, title, count, color = "text-amber-50
 //                   garder WORK_ACTIONS hover, pas de header compact dupliqué
 // ══════════════════════════════════════════
 
-const DEPT_ORDER = ["CEOB", "CTOB", "CFOB", "CMOB", "CSOB", "COOB", "CPOB", "CHROB", "CINOB", "CROB", "CLOB", "CISOB"];
+export const DEPT_ORDER = ["CEOB", "CTOB", "CFOB", "CMOB", "CSOB", "COOB", "CPOB", "CHROB", "CINOB", "CROB", "CLOB", "CISOB"];
 
 // 2 boxes supplémentaires par département pour le Cockpit (10 boxes total)
 // Carl: "je veux toujours 10 box sur les vues d'ensemble de chaque département"

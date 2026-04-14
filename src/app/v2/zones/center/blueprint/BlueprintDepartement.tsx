@@ -212,7 +212,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Building2, Target, Layers, Rocket, DollarSign, Shield, Compass,
   TrendingUp, ListChecks, Settings, Flame, FileText, BookOpen, Sparkles,
 };
-function resolveIcon(name: string): React.ElementType {
+export function resolveIcon(name: string): React.ElementType {
   return ICON_MAP[name] || Layers;
 }
 
@@ -225,7 +225,7 @@ const PERTINENCE_STYLE: Record<Pertinence, { label: string; bg: string; text: st
   R: { label: "Reglementaire", bg: "bg-purple-50", text: "text-purple-700" },
 };
 
-function PertinenceBadge({ p }: { p: Pertinence }) {
+export function PertinenceBadge({ p }: { p: Pertinence }) {
   const s = PERTINENCE_STYLE[p];
   return <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded", s.bg, s.text)}>{s.label}</span>;
 }
@@ -310,7 +310,7 @@ function KPIDisplay({ kpi, value }: { kpi: KPIDef; value?: number }) {
 }
 
 // ── Sub-section content — champs + KPIs ──
-function SubSectionContent({ section, tier, data, onFieldChange, onSave, saving, dirty }: {
+export function SubSectionContent({ section, tier, data, onFieldChange, onSave, saving, dirty }: {
   section: SubSectionDef;
   tier: SizeTier;
   data: Record<string, string>;
@@ -435,7 +435,7 @@ interface LinkedFieldValue {
   loaded: boolean;
 }
 
-function CrossReferencePanel({ botCode, sectionId }: { botCode: string; sectionId: string }) {
+export function CrossReferencePanel({ botCode, sectionId }: { botCode: string; sectionId: string }) {
   const [linkedData, setLinkedData] = useState<LinkedFieldValue[]>([]);
   const [loading, setLoading] = useState(true);
   const crossRefs = getCrossReferences(botCode, sectionId);
@@ -816,7 +816,7 @@ function VitaaTable({ data, title }: { data: { letter: string; label: string; sc
   );
 }
 
-function BlueprintPersonnel({ botCode, headerGradient, data, onFieldChange, onSave, saving, dirty, tier }: {
+export function BlueprintPersonnel({ botCode, headerGradient, data, onFieldChange, onSave, saving, dirty, tier }: {
   botCode: string; headerGradient: string;
   data: Record<string, string>;
   onFieldChange: (fieldId: string, value: string) => void;
@@ -2170,7 +2170,7 @@ function BotConfigSection({ botCode }: { botCode: string }) {
   );
 }
 
-function BlueprintBot({ botCode, headerGradient }: { botCode: string; headerGradient: string }) {
+export function BlueprintBot({ botCode, headerGradient }: { botCode: string; headerGradient: string }) {
   const [activeAnchor, setActiveAnchor] = useState(BOT_SECTION_META[0].id);
   const vitaa = VITAA_BOT[botCode] || VITAA_BOT.CEOB;
   const profile = BOT_PROFILES_BP[botCode] || BOT_PROFILES_BP.CEOB;
@@ -2354,7 +2354,7 @@ function BlueprintBot({ botCode, headerGradient }: { botCode: string; headerGrad
 }
 
 
-function VueConsolidee({ tier }: { tier: SizeTier }) {
+export function VueConsolidee({ tier }: { tier: SizeTier }) {
   const [scores, setScores] = useState<DeptScore[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedDept, setExpandedDept] = useState<string | null>(null);
@@ -2668,7 +2668,7 @@ const COMITE_MOCK_DOCUMENTS = [
   { titre: "Feuille de route 2026", statut: "En révision", maj: "2026-02-28", type: "Planification" },
 ];
 
-function ConseilAdminManager({ headerGradient, data, onFieldChange, onSave, saving, dirty }: {
+export function ConseilAdminManager({ headerGradient, data, onFieldChange, onSave, saving, dirty }: {
   headerGradient: string;
   data: Record<string, string>;
   onFieldChange: (fieldId: string, value: string) => void;
@@ -3199,7 +3199,7 @@ function parseComites(raw: string): Comite[] {
   return parseJSON<Comite[]>(raw, []);
 }
 
-function ComitesManager({ botCode, deptLabel, headerGradient, data, onFieldChange, onSave, saving, dirty }: {
+export function ComitesManager({ botCode, deptLabel, headerGradient, data, onFieldChange, onSave, saving, dirty }: {
   botCode: string;
   deptLabel: string;
   headerGradient: string;

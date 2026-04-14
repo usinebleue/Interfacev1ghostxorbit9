@@ -18,9 +18,9 @@ import {
 } from "lucide-react";
 import { Card } from "../../components/ui/card";
 import { cn } from "../../components/ui/utils";
-import { BOT_AVATAR } from "../../v2/api/types";
+import { BOT_AVATAR, BOT_NAME } from "../../v2/api/types";
 import { LivingHero } from "./shared/LivingHero";
-import { DEPT_COLORS, DEPT_SHORT_LABEL, DEPT_DASH_ICON, DEPT_LABELS } from "./shared/dept-data";
+import { DEPT_COLORS, DEPT_SHORT_LABEL, DEPT_DASH_ICON, DEPT_LABELS, DEPT_ICONS, DEPT_GRADIENT, BOT_DISPLAY, BOT_AVATAR_MAP } from "./shared/dept-data";
 import { SF } from "../core/styles";
 
 // ══════════════════════════════════════════
@@ -554,7 +554,7 @@ const FEATURED_PLAYBOOKS: { playbookId: string; editorial: string; rank: number;
 ];
 
 // ── Workflows reels par playbook ──
-const PLAYBOOK_WORKFLOWS: Record<string, { num: number; label: string; bot: string; duree: string; input?: string; validation?: boolean; livrable?: string }[]> = {
+export const PLAYBOOK_WORKFLOWS: Record<string, { num: number; label: string; bot: string; duree: string; input?: string; validation?: boolean; livrable?: string }[]> = {
   "pb-028": [
     { num: 1, label: "Collecte des parametres et perimetre d'analyse", bot: "CarlOS", duree: "~1 min", input: "Confirmez le perimetre" },
     { num: 2, label: "Import des donnees financieres", bot: "Frank", duree: "~2 min" },
@@ -598,7 +598,7 @@ const PLAYBOOK_REVIEWS: Record<string, { auteur: string; role: string; industrie
 };
 
 // ── Livrables mock ──
-const PLAYBOOK_LIVRABLES: Record<string, { nom: string; type: string; icon: React.ElementType }[]> = {
+export const PLAYBOOK_LIVRABLES: Record<string, { nom: string; type: string; icon: React.ElementType }[]> = {
   "pb-028": [
     { nom: "Rapport de diagnostic financier", type: "PDF", icon: FileText },
     { nom: "Tableau comparatif industrie", type: "Excel", icon: Table2 },
@@ -618,8 +618,7 @@ export const DEPT_DASH_ICON: Record<string, React.ElementType> = {
   CROB: TrendingUp, CMOB: Megaphone, CSOB: Compass, CHROB: Users,
   CISOB: ShieldCheck, CLOB: Scale, CINOB: Lightbulb,
 };
-// Alias pour compatibilité interne (Playbooks, ConferenceAI, etc.)
-const DEPT_ICONS = DEPT_DASH_ICON;
+// DEPT_ICONS importé depuis dept-data (alias de DEPT_DASH_ICON)
 
 // ── PLAYBOOK_TYPES — 12 types de livrables ──
 const PLAYBOOK_TYPES: Record<string, { label: string; icon: React.ElementType; description: string; bg: string; text: string; gradient: string }> = {
@@ -638,7 +637,7 @@ const PLAYBOOK_TYPES: Record<string, { label: string; icon: React.ElementType; d
 };
 
 // ── Descriptions longues pour la fiche detail ──
-const PLAYBOOK_LONG_DESC: Record<string, string> = {
+export const PLAYBOOK_LONG_DESC: Record<string, string> = {
   "pb-012": "Rich et Simone analysent vos objections recurrentes et generent des scripts de closing personnalises pour votre industrie. Augmentez votre taux de closing de 15 a 25% avec un processus structure et repeatable.",
   "pb-028": "Frank calcule 25+ ratios financiers et compare vos resultats aux moyennes de votre secteur au Quebec. Vous recevez un rapport executif PDF avec des recommandations priorisees par impact.",
   "pb-100": "Sebastien et Tim auditent vos actifs informatiques, configurations de securite et politiques d'acces. Le rapport inclut une matrice de risques et un plan de correction en 12 actions concretes.",
