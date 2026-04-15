@@ -1108,35 +1108,54 @@ export function CerveauBTMLView({ showHeader }: SectionProps) {
     <div className="space-y-4">
       {/* Hero animé */}
       {showHeader && (
-        <LivingHero blur1="bg-purple-100/70" blur2="bg-violet-100/60" subtitleColor="text-purple-600" subtitle="God Mode" title="Le cerveau qui apprend en dormant." description="Bible technique, bots, API, backend, infrastructure — le moteur BTML sous le capot.">
-          <div className="relative w-[360px] h-[140px]">
-            {/* Neural network SVG */}
-            <svg className="absolute right-[30px] top-[5px] opacity-30" viewBox="0 0 200 150" width="280" height="130">
-              {/* Synapses */}
-              <line x1="100" y1="75" x2="40" y2="25" stroke="#a855f7" strokeWidth="1.5" className="anim-btml-syn-1" />
-              <line x1="100" y1="75" x2="160" y2="20" stroke="#8b5cf6" strokeWidth="1.5" className="anim-btml-syn-2" />
-              <line x1="100" y1="75" x2="35" y2="120" stroke="#a855f7" strokeWidth="1.5" className="anim-btml-syn-3" />
-              <line x1="100" y1="75" x2="170" y2="115" stroke="#7c3aed" strokeWidth="1.5" className="anim-btml-syn-4" />
-              <line x1="100" y1="75" x2="180" y2="65" stroke="#a855f7" strokeWidth="1.5" className="anim-btml-syn-5" />
-              {/* Neurons */}
-              <circle cx="40" cy="25" r="6" fill="#a855f7" className="anim-btml-neuron-1 text-purple-500" />
-              <circle cx="160" cy="20" r="5" fill="#8b5cf6" className="anim-btml-neuron-2 text-violet-500" />
-              <circle cx="35" cy="120" r="5" fill="#a855f7" className="anim-btml-neuron-3 text-purple-500" />
-              <circle cx="170" cy="115" r="6" fill="#7c3aed" className="anim-btml-neuron-4 text-violet-600" />
-              {/* Core */}
-              <circle cx="100" cy="75" r="12" fill="#9333ea" className="anim-btml-core" />
-              <circle cx="100" cy="75" r="6" fill="#c084fc" />
+        <LivingHero blur1="bg-purple-100/70" blur2="bg-violet-100/60" subtitleColor="text-purple-600" subtitle="Intelligence d'Affaires" title="Le cerveau qui pense business." description="12 bots C-Level, 6 primitives BTML, CREDO, VITAA — l'intelligence d'affaires modélisée comme la chimie.">
+          <div className="relative w-[380px] h-[150px]">
+            {/* Brain outline + business network */}
+            <svg className="absolute right-[10px] top-[0px]" viewBox="0 0 240 150" width="340" height="150">
+              {/* Outer orbit ring */}
+              <ellipse cx="120" cy="75" rx="95" ry="60" fill="none" stroke="#c4b5fd" strokeWidth="0.5" strokeDasharray="3 6" className="anim-btml-orbit" />
+              {/* Synapses — brain center to 6 business nodes */}
+              <line x1="120" y1="75" x2="38" y2="30" stroke="#a855f7" strokeWidth="1.5" className="anim-btml-syn-1" />
+              <line x1="120" y1="75" x2="200" y2="25" stroke="#8b5cf6" strokeWidth="1.5" className="anim-btml-syn-2" />
+              <line x1="120" y1="75" x2="30" y2="105" stroke="#7c3aed" strokeWidth="1.5" className="anim-btml-syn-3" />
+              <line x1="120" y1="75" x2="210" y2="110" stroke="#a855f7" strokeWidth="1.5" className="anim-btml-syn-4" />
+              <line x1="120" y1="75" x2="75" y2="140" stroke="#8b5cf6" strokeWidth="1.5" className="anim-btml-syn-5" />
+              <line x1="120" y1="75" x2="170" y2="140" stroke="#7c3aed" strokeWidth="1.5" className="anim-btml-syn-6" />
+              {/* Brain SVG — stylized cerebrum */}
+              <g className="anim-btml-brain">
+                <path d="M120 45 C105 45 92 50 88 60 C82 55 75 58 73 65 C68 65 65 72 68 78 C65 82 67 90 73 92 C72 98 78 105 86 105 C90 110 98 112 105 110 C110 115 118 116 120 112 C122 116 130 115 135 110 C142 112 150 110 154 105 C162 105 168 98 167 92 C173 90 175 82 172 78 C175 72 172 65 167 65 C165 58 158 55 152 60 C148 50 135 45 120 45Z" fill="none" stroke="#9333ea" strokeWidth="2" />
+                <path d="M105 55 C108 65 115 70 120 68 C125 70 132 65 135 55" fill="none" stroke="#a855f7" strokeWidth="1" opacity="0.5" />
+                <path d="M88 72 C95 68 105 72 110 78" fill="none" stroke="#a855f7" strokeWidth="1" opacity="0.5" />
+                <path d="M130 78 C135 72 145 68 152 72" fill="none" stroke="#a855f7" strokeWidth="1" opacity="0.5" />
+                <path d="M95 90 C105 85 115 88 120 95 C125 88 135 85 145 90" fill="none" stroke="#a855f7" strokeWidth="1" opacity="0.5" />
+              </g>
+              {/* 6 Business nodes — les 6 primitives */}
+              <g className="anim-btml-node-1"><circle cx="38" cy="30" r="10" fill="#f3e8ff" stroke="#a855f7" strokeWidth="1.5" /><text x="38" y="34" textAnchor="middle" fill="#7c3aed" fontSize="11" fontWeight="bold">$</text></g>
+              <g className="anim-btml-node-2"><circle cx="200" cy="25" r="10" fill="#f3e8ff" stroke="#8b5cf6" strokeWidth="1.5" /><text x="200" y="29" textAnchor="middle" fill="#7c3aed" fontSize="10">⚡</text></g>
+              <g className="anim-btml-node-3"><circle cx="30" cy="105" r="10" fill="#f3e8ff" stroke="#7c3aed" strokeWidth="1.5" /><text x="30" y="109" textAnchor="middle" fill="#7c3aed" fontSize="10">🎯</text></g>
+              <g className="anim-btml-node-4"><circle cx="210" cy="110" r="10" fill="#f3e8ff" stroke="#a855f7" strokeWidth="1.5" /><text x="210" y="114" textAnchor="middle" fill="#7c3aed" fontSize="9">📊</text></g>
+              <g className="anim-btml-node-5"><circle cx="75" cy="140" r="10" fill="#f3e8ff" stroke="#8b5cf6" strokeWidth="1.5" /><text x="75" y="144" textAnchor="middle" fill="#7c3aed" fontSize="9">👥</text></g>
+              <g className="anim-btml-node-6"><circle cx="170" cy="140" r="10" fill="#f3e8ff" stroke="#7c3aed" strokeWidth="1.5" /><text x="170" y="144" textAnchor="middle" fill="#7c3aed" fontSize="9">⚛</text></g>
             </svg>
-            {/* Glass panel */}
-            <div className="glass-base absolute right-[70px] top-[15px] w-56 h-28 p-4 border-purple-100">
-              <div className="flex justify-between items-center mb-3">
-                <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest" style={{fontFamily:'ui-monospace,monospace'}}>Neural Engine</h4>
-                <div className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" /><span className="text-[9px] font-bold text-purple-500 tracking-wider">ACTIF</span></div>
+            {/* Glass panel — Intelligence d'affaires */}
+            <div className="glass-base absolute right-[55px] top-[20px] w-52 h-[100px] p-3 border-purple-100">
+              <div className="flex justify-between items-center mb-2">
+                <h4 className="text-[9px] font-bold text-slate-500 uppercase tracking-widest" style={{fontFamily:'ui-monospace,monospace'}}>Cerveau BTML</h4>
+                <div className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" /><span className="text-[8px] font-bold text-purple-500">ACTIF</span></div>
               </div>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-[8px] font-mono text-slate-500"><span className="text-purple-400">▸</span> DeepSeek-R1 14B — QLoRA</div>
-                <div className="flex items-center gap-2 text-[8px] font-mono text-slate-500"><span className="text-violet-400">▸</span> 80,991 paires — Trial-Brain</div>
-                <div className="flex items-center gap-2 text-[8px] font-mono text-slate-500"><span className="text-purple-400">▸</span> 6 primitives BTML</div>
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[7px] font-mono text-slate-400">CREDO</span>
+                  <div className="flex gap-1">{["C","R","E","D","O"].map((l) => <span key={l} className="text-[6px] font-bold px-1 py-0.5 rounded bg-purple-100 text-purple-600">{l}</span>)}</div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[7px] font-mono text-slate-400">VITAA</span>
+                  <div className="flex gap-1">{["V","I","T","A","A"].map((l,i) => <span key={`${l}${i}`} className="text-[6px] font-bold px-1 py-0.5 rounded bg-violet-100 text-violet-600">{l}</span>)}</div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[7px] font-mono text-slate-400">BOTS</span>
+                  <span className="text-[8px] font-bold text-purple-600">12 C-Level</span>
+                </div>
               </div>
             </div>
           </div>

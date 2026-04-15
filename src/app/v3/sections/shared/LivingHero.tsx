@@ -86,20 +86,29 @@ const LIVING_HEROES_STYLES = `
 .anim-admin-node-2 { animation: admin-node-blink 4s ease-in-out infinite 1s; }
 .anim-admin-node-3 { animation: admin-node-blink 3.5s ease-in-out infinite 2s; }
 .anim-admin-node-4 { animation: admin-node-blink 4.5s ease-in-out infinite 0.5s; }
-/* BTML BRAIN */
-@keyframes btml-synapse { 0%, 100% { stroke-dashoffset: 40; opacity: 0.2; } 40%, 60% { stroke-dashoffset: 0; opacity: 1; } }
-@keyframes btml-neuron-fire { 0%, 100% { filter: drop-shadow(0 0 3px currentColor); transform: scale(1); } 50% { filter: drop-shadow(0 0 14px currentColor); transform: scale(1.3); } }
-@keyframes btml-core-breathe { 0%, 100% { transform: scale(1); filter: drop-shadow(0 0 8px rgba(147,51,234,0.3)); } 50% { transform: scale(1.08); filter: drop-shadow(0 0 25px rgba(147,51,234,0.6)); } }
-.anim-btml-syn-1 { stroke-dasharray: 40; animation: btml-synapse 5s ease-in-out infinite; }
-.anim-btml-syn-2 { stroke-dasharray: 40; animation: btml-synapse 6s ease-in-out infinite 1.5s; }
-.anim-btml-syn-3 { stroke-dasharray: 40; animation: btml-synapse 5.5s ease-in-out infinite 3s; }
-.anim-btml-syn-4 { stroke-dasharray: 40; animation: btml-synapse 7s ease-in-out infinite 2s; }
-.anim-btml-syn-5 { stroke-dasharray: 40; animation: btml-synapse 4.5s ease-in-out infinite 4s; }
-.anim-btml-neuron-1 { animation: btml-neuron-fire 4s ease-in-out infinite 0.5s; }
-.anim-btml-neuron-2 { animation: btml-neuron-fire 5s ease-in-out infinite 2s; }
-.anim-btml-neuron-3 { animation: btml-neuron-fire 4.5s ease-in-out infinite 3.5s; }
-.anim-btml-neuron-4 { animation: btml-neuron-fire 3.5s ease-in-out infinite 1s; }
-.anim-btml-core { animation: btml-core-breathe 6s ease-in-out infinite; }
+/* BTML BRAIN — Intelligence d'affaires */
+@keyframes btml-brain-glow { 0%, 100% { filter: drop-shadow(0 0 4px rgba(147,51,234,0.2)); stroke-opacity: 0.4; } 50% { filter: drop-shadow(0 0 20px rgba(147,51,234,0.6)); stroke-opacity: 0.9; } }
+@keyframes btml-synapse { 0%, 100% { stroke-dashoffset: 50; opacity: 0.15; } 35%, 65% { stroke-dashoffset: 0; opacity: 0.9; } }
+@keyframes btml-neuron-fire { 0%, 100% { filter: drop-shadow(0 0 2px currentColor); opacity: 0.4; } 50% { filter: drop-shadow(0 0 12px currentColor); opacity: 1; } }
+@keyframes btml-icon-pop { 0%, 100% { transform: scale(1); opacity: 0.5; } 50% { transform: scale(1.15); opacity: 1; } }
+@keyframes btml-orbit { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+.anim-btml-brain { animation: btml-brain-glow 7s ease-in-out infinite; }
+.anim-btml-syn-1 { stroke-dasharray: 50; animation: btml-synapse 5s ease-in-out infinite; }
+.anim-btml-syn-2 { stroke-dasharray: 50; animation: btml-synapse 6s ease-in-out infinite 1.2s; }
+.anim-btml-syn-3 { stroke-dasharray: 50; animation: btml-synapse 5.5s ease-in-out infinite 2.4s; }
+.anim-btml-syn-4 { stroke-dasharray: 50; animation: btml-synapse 7s ease-in-out infinite 3.6s; }
+.anim-btml-syn-5 { stroke-dasharray: 50; animation: btml-synapse 4.5s ease-in-out infinite 4.8s; }
+.anim-btml-syn-6 { stroke-dasharray: 50; animation: btml-synapse 6.5s ease-in-out infinite 0.6s; }
+.anim-btml-node-1 { animation: btml-neuron-fire 4s ease-in-out infinite 0.3s; }
+.anim-btml-node-2 { animation: btml-neuron-fire 5s ease-in-out infinite 1.5s; }
+.anim-btml-node-3 { animation: btml-neuron-fire 4.5s ease-in-out infinite 2.7s; }
+.anim-btml-node-4 { animation: btml-neuron-fire 3.5s ease-in-out infinite 3.9s; }
+.anim-btml-node-5 { animation: btml-neuron-fire 5.5s ease-in-out infinite 5.1s; }
+.anim-btml-node-6 { animation: btml-neuron-fire 4s ease-in-out infinite 0.9s; }
+.anim-btml-orbit { animation: btml-orbit 60s linear infinite; transform-origin: center; }
+.anim-btml-icon-1 { animation: btml-icon-pop 4s ease-in-out infinite 0.5s; }
+.anim-btml-icon-2 { animation: btml-icon-pop 5s ease-in-out infinite 2s; }
+.anim-btml-icon-3 { animation: btml-icon-pop 4.5s ease-in-out infinite 3.5s; }
 /* ORBIT9 STELLAR */
 @keyframes celestial-spin { 100% { transform: rotate(360deg); } }
 @keyframes celestial-spin-rev { 100% { transform: rotate(-360deg); } }
