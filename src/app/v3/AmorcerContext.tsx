@@ -9,6 +9,7 @@
 
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 import type { PhaseKey } from "./core/types";
+import type { WorkspacePhaseKey } from "./workspace/types";
 
 export interface SimV3CristalliseItem {
   id: string;
@@ -56,6 +57,10 @@ interface AmorcerState {
   simV3Cristallises: SimV3CristalliseItem[];
   addSimV3Cristallise: (text: string, source: string, sectionId: string) => void;
 
+  // Workspace dynamique (5 phases + opérations)
+  workspacePhase: WorkspacePhaseKey | null;
+  setWorkspacePhase: (p: WorkspacePhaseKey | null) => void;
+
   // Helpers
   startReflexion: (chantier: string) => void;
   advance: () => void;
@@ -72,6 +77,9 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
   const [activeBotCode, setActiveBotCode] = useState("CEOB");
   const [cockpitTab, setCockpitTab] = useState("bureau");
   const [o9Section, setO9Section] = useState("cellules");
+
+  // Workspace dynamique
+  const [workspacePhase, setWorkspacePhase] = useState<WorkspacePhaseKey | null>(null);
 
   // SimV3 state
   const [simV3Active, setSimV3Active] = useState(false);
@@ -102,6 +110,7 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
         activeBotCode, setActiveBotCode,
         cockpitTab, setCockpitTab,
         o9Section, setO9Section,
+        workspacePhase, setWorkspacePhase,
         simV3Active, setSimV3Active,
         simV3Stage, setSimV3Stage,
         simV3Cristallises, addSimV3Cristallise,

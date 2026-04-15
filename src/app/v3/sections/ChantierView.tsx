@@ -1380,30 +1380,27 @@ export function ChantierView({ botCode, showHeader = true, onAction }: { botCode
           {/* LEVEL: chantiers — Toolbar + grid-cols-2 cards */}
           {level === "chantiers" && (
             <>
-              {/* Toolbar — Pattern SectionView */}
-              <div className="space-y-2">
+              {/* Toolbar — SF.toolbarWrap = UNE SEULE LIGNE */}
+              <div className={SF.toolbarWrap}>
                 <div className={SF.searchWrap}>
                   <Search className={SF.searchIcon} />
                   <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Rechercher un chantier..." className={SF.searchInput} />
                 </div>
-                <div className="flex items-center gap-2">
-                  <select value={filterPhase} onChange={e => setFilterPhase(e.target.value)} className={SF.select}>
-                    <option value="all">Toutes les phases</option>
-                    <option value="discussion">Discussion</option>
-                    <option value="reflexion">Réflexion</option>
-                    <option value="creation">Conception</option>
-                    <option value="execution">Exécution</option>
-                    <option value="retroaction">Rétroaction</option>
-                  </select>
-                  <select value={sortKey} onChange={e => setSortKey(e.target.value as ChantierSortKey)} className={SF.select}>
-                    <option value="phase">Phase</option>
-                    <option value="progression">Progression</option>
-                    <option value="recent">Récent</option>
-                    <option value="alpha">A → Z</option>
-                  </select>
-                  <div className="flex-1" />
-                  <span className={SF.itemCount}>{filtered.length} chantier{filtered.length > 1 ? "s" : ""}</span>
-                </div>
+                <select value={filterPhase} onChange={e => setFilterPhase(e.target.value)} className={SF.select}>
+                  <option value="all">Toutes les phases</option>
+                  <option value="discussion">Discussion</option>
+                  <option value="reflexion">Réflexion</option>
+                  <option value="creation">Conception</option>
+                  <option value="execution">Exécution</option>
+                  <option value="retroaction">Rétroaction</option>
+                </select>
+                <select value={sortKey} onChange={e => setSortKey(e.target.value as ChantierSortKey)} className={SF.select}>
+                  <option value="phase">Phase</option>
+                  <option value="progression">Progression</option>
+                  <option value="recent">Récent</option>
+                  <option value="alpha">A → Z</option>
+                </select>
+                <span className={SF.itemCount}>{filtered.length} chantier{filtered.length > 1 ? "s" : ""}</span>
               </div>
 
               {/* Section header + grid-cols-2 cards */}

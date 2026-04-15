@@ -96,6 +96,15 @@ export const SECTIONS: SectionDef[] = [
   { id: "cellules",       label: "Créer Cellule",    group: "flows", order: 4, gpsView: "orbit9",    gpsSub: "cellules",    flowType: "action", botPrimaire: "CEOB", botSecondaires: ["COOB", "CHROB"], steps: 4 },
   { id: "pipeline",       label: "Pipeline",         group: "flows", order: 5, gpsView: "cockpit",   gpsSub: "pipeline",    flowType: "action", botPrimaire: "COOB", botSecondaires: ["CEOB", "CROB"], steps: 5 },
   { id: "onboarding",     label: "Onboarding",       group: "flows", order: 6, gpsView: "cockpit",   gpsSub: "onboarding",  flowType: "action", botPrimaire: "CEOB", steps: 8 },
+
+  // ── Admin (God Mode — sections DATA) ──────────────────────────
+  { id: "admin-dashboard",  label: "Dashboard",              group: "admin", order: 1, gpsView: "cockpit", gpsSub: "admin-dashboard",  flowType: "data", botPrimaire: "CEOB" },
+  { id: "admin-instances",  label: "Instances",              group: "admin", order: 2, gpsView: "cockpit", gpsSub: "admin-instances",  flowType: "data", botPrimaire: "CEOB" },
+  { id: "admin-users",      label: "Utilisateurs",           group: "admin", order: 3, gpsView: "cockpit", gpsSub: "admin-users",      flowType: "data", botPrimaire: "CEOB" },
+  { id: "admin-packages",   label: "Packages & Pricing",     group: "admin", order: 4, gpsView: "cockpit", gpsSub: "admin-packages",   flowType: "data", botPrimaire: "CEOB" },
+  { id: "admin-monitoring", label: "Monitoring",             group: "admin", order: 5, gpsView: "cockpit", gpsSub: "admin-monitoring", flowType: "data", botPrimaire: "CEOB" },
+  { id: "admin-knowledge",  label: "Centre de connaissances", group: "admin", order: 6, gpsView: "cockpit", gpsSub: "admin-knowledge", flowType: "data", botPrimaire: "CEOB" },
+  { id: "cerveau-btml",     label: "Cerveau BTML",           group: "admin", order: 7, gpsView: "cockpit", gpsSub: "cerveau-btml",    flowType: "data", botPrimaire: "CTOB" },
 ];
 
 // ═══ HELPERS ═══

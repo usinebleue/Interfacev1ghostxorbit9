@@ -14,7 +14,8 @@ export type PhaseKey =
   | "creation"
   | "execution"
   | "retroaction"
-  | "discussion";
+  | "discussion"
+  | "operations";
 
 // ═══ Phase Style (structure PC — source: SimAmorcer L172-181) ═══
 export interface PhaseStyle {
@@ -77,7 +78,10 @@ export type RightSection =
   | "dataroom"
   | "playbooks"
   | "conferenceai"
+  | "operations"
   | "icons"
+  | "admin"
+  | "cerveau-btml"
   | null;
 
 // ═══ Orbit9 sections ═══

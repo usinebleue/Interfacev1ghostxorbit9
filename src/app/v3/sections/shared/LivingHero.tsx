@@ -76,6 +76,30 @@ const LIVING_HEROES_STYLES = `
 .anim-clock-inner { animation: clock-spin 25s linear infinite reverse; }
 @keyframes ticker-slide { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(180px); } }
 .anim-ticker { animation: ticker-slide 15s ease-in-out infinite; }
+/* ADMIN */
+@keyframes admin-shield-pulse { 0%, 100% { filter: drop-shadow(0 0 4px rgba(100,116,139,0.3)); } 50% { filter: drop-shadow(0 0 18px rgba(100,116,139,0.7)); } }
+@keyframes admin-scan-line { 0%, 100% { top: 10%; opacity: 0; } 10%, 90% { opacity: 0.8; } 50% { top: 85%; } }
+@keyframes admin-node-blink { 0%, 100% { opacity: 0.3; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } }
+.anim-admin-shield { animation: admin-shield-pulse 5s ease-in-out infinite; }
+.anim-admin-scan { animation: admin-scan-line 6s cubic-bezier(0.4,0,0.2,1) infinite; }
+.anim-admin-node-1 { animation: admin-node-blink 3s ease-in-out infinite; }
+.anim-admin-node-2 { animation: admin-node-blink 4s ease-in-out infinite 1s; }
+.anim-admin-node-3 { animation: admin-node-blink 3.5s ease-in-out infinite 2s; }
+.anim-admin-node-4 { animation: admin-node-blink 4.5s ease-in-out infinite 0.5s; }
+/* BTML BRAIN */
+@keyframes btml-synapse { 0%, 100% { stroke-dashoffset: 40; opacity: 0.2; } 40%, 60% { stroke-dashoffset: 0; opacity: 1; } }
+@keyframes btml-neuron-fire { 0%, 100% { filter: drop-shadow(0 0 3px currentColor); transform: scale(1); } 50% { filter: drop-shadow(0 0 14px currentColor); transform: scale(1.3); } }
+@keyframes btml-core-breathe { 0%, 100% { transform: scale(1); filter: drop-shadow(0 0 8px rgba(147,51,234,0.3)); } 50% { transform: scale(1.08); filter: drop-shadow(0 0 25px rgba(147,51,234,0.6)); } }
+.anim-btml-syn-1 { stroke-dasharray: 40; animation: btml-synapse 5s ease-in-out infinite; }
+.anim-btml-syn-2 { stroke-dasharray: 40; animation: btml-synapse 6s ease-in-out infinite 1.5s; }
+.anim-btml-syn-3 { stroke-dasharray: 40; animation: btml-synapse 5.5s ease-in-out infinite 3s; }
+.anim-btml-syn-4 { stroke-dasharray: 40; animation: btml-synapse 7s ease-in-out infinite 2s; }
+.anim-btml-syn-5 { stroke-dasharray: 40; animation: btml-synapse 4.5s ease-in-out infinite 4s; }
+.anim-btml-neuron-1 { animation: btml-neuron-fire 4s ease-in-out infinite 0.5s; }
+.anim-btml-neuron-2 { animation: btml-neuron-fire 5s ease-in-out infinite 2s; }
+.anim-btml-neuron-3 { animation: btml-neuron-fire 4.5s ease-in-out infinite 3.5s; }
+.anim-btml-neuron-4 { animation: btml-neuron-fire 3.5s ease-in-out infinite 1s; }
+.anim-btml-core { animation: btml-core-breathe 6s ease-in-out infinite; }
 /* ORBIT9 STELLAR */
 @keyframes celestial-spin { 100% { transform: rotate(360deg); } }
 @keyframes celestial-spin-rev { 100% { transform: rotate(-360deg); } }

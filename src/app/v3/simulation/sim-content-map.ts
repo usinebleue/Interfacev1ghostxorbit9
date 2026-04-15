@@ -21,6 +21,9 @@ export {
   // Catalogue d'icônes
   IconCatalog,
 
+  // Opérations drill-down (même pattern chantiers — CAPEX→OPEX)
+  OperationsDrillDown,
+
   // ═══ Orbit9 simulation components ═══
   Orbit9SocialHome,
   Orbit9BlueprintCollaboration,

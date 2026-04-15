@@ -14,6 +14,7 @@ import {
   Hammer,
   Rocket,
   BarChart3,
+  Repeat,
 } from "lucide-react";
 import type { PhaseKey, PhaseStyle } from "./types";
 
@@ -31,4 +32,5 @@ export const PHASE_CONFIG: Record<PhaseKey, PhaseStyle> = {
   creation:    { label: "Conception",    letter: "C", Icon: Hammer,         dot: "bg-yellow-500",  badge: "bg-yellow-100 text-yellow-700",   bg: "bg-yellow-50",  border: "border-yellow-200",  text: "text-yellow-700",  btnBg: "bg-yellow-50",  btnText: "text-yellow-700",  btnBorder: "border-yellow-200",  btnHover: "hover:bg-yellow-100",  line: "bg-yellow-500" },
   execution:   { label: "Exécution",     letter: "E", Icon: Rocket,         dot: "bg-green-500",   badge: "bg-green-100 text-green-700",     bg: "bg-green-50",   border: "border-green-200",   text: "text-green-700",   btnBg: "bg-green-50",   btnText: "text-green-700",   btnBorder: "border-green-200",   btnHover: "hover:bg-green-100",   line: "bg-green-500" },
   retroaction: { label: "Rétroaction",   letter: "R", Icon: BarChart3,      dot: "bg-emerald-500", badge: "bg-emerald-100 text-emerald-700", bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700", btnBg: "bg-emerald-50", btnText: "text-emerald-700", btnBorder: "border-emerald-200", btnHover: "hover:bg-emerald-100", line: "bg-emerald-500" },
+  operations:  { label: "Opérations",    letter: "P", Icon: Repeat,         dot: "bg-cyan-500",    badge: "bg-cyan-100 text-cyan-700",       bg: "bg-cyan-50",    border: "border-cyan-200",    text: "text-cyan-700",    btnBg: "bg-cyan-50",    btnText: "text-cyan-700",    btnBorder: "border-cyan-200",    btnHover: "hover:bg-cyan-100",    line: "bg-cyan-500" },
 };

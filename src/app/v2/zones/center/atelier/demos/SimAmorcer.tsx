@@ -143,6 +143,8 @@ import {
   ThumbsUp,
   ThumbsDown,
   Database,
+  Repeat,
+  Timer,
 } from "lucide-react";
 import { cn } from "../../../../../components/ui/utils";
 import {
@@ -162,7 +164,7 @@ export const UB_BLUE = "#073E5A";
 
 // ========== PHASE CONFIG (couleurs confirmees Carl) ==========
 
-export type PhaseKey = "attention" | "moderation" | "observation" | "reflexion" | "creation" | "execution" | "retroaction" | "discussion";
+export type PhaseKey = "attention" | "moderation" | "observation" | "reflexion" | "creation" | "execution" | "retroaction" | "discussion" | "operations";
 
 export interface PhaseStyle {
   label: string;
@@ -189,9 +191,10 @@ export const PC: Record<PhaseKey, PhaseStyle> = {
   creation:    { label: "Conception",    letter: "C", Icon: Hammer,        dot: "bg-yellow-500",  badge: "bg-yellow-100 text-yellow-700",   bg: "bg-yellow-50",  border: "border-yellow-200",  text: "text-yellow-700",  btnBg: "bg-yellow-50",  btnText: "text-yellow-700",  btnBorder: "border-yellow-200",  btnHover: "hover:bg-yellow-100",  line: "bg-yellow-500" },
   execution:   { label: "Exécution",   letter: "E", Icon: Rocket,        dot: "bg-green-500",   badge: "bg-green-100 text-green-700",     bg: "bg-green-50",   border: "border-green-200",   text: "text-green-700",   btnBg: "bg-green-50",   btnText: "text-green-700",   btnBorder: "border-green-200",   btnHover: "hover:bg-green-100",   line: "bg-green-500" },
   retroaction: { label: "Rétroaction", letter: "R", Icon: BarChart3,     dot: "bg-emerald-500", badge: "bg-emerald-100 text-emerald-700", bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700", btnBg: "bg-emerald-50", btnText: "text-emerald-700", btnBorder: "border-emerald-200", btnHover: "hover:bg-emerald-100", line: "bg-emerald-500" },
+  operations:  { label: "Opérations",  letter: "P", Icon: Repeat,        dot: "bg-cyan-500",    badge: "bg-cyan-100 text-cyan-700",       bg: "bg-cyan-50",    border: "border-cyan-200",    text: "text-cyan-700",    btnBg: "bg-cyan-50",    btnText: "text-cyan-700",    btnBorder: "border-cyan-200",    btnHover: "hover:bg-cyan-100",    line: "bg-cyan-500" },
 };
 
-export const PHASES: PhaseKey[] = ["attention", "moderation", "observation", "reflexion", "creation", "execution", "retroaction"];
+export const PHASES: PhaseKey[] = ["attention", "moderation", "observation", "reflexion", "creation", "execution", "retroaction", "operations"];
 
 // ========== DASHBOARD DATA ==========
 
@@ -857,6 +860,8 @@ export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departe
                 <ReflexionMagazine stage={chatStage} context={reflexionContext} onStartConception={startConception} />
               ) : activePhase === "creation" ? (
                 <ConceptionWizard stage={conceptionStage} context={reflexionContext} />
+              ) : activePhase === "operations" ? (
+                <OperationsDrillDown />
               ) : (
                 <ChantierDrillDown phase={activePhase} />
               )}
@@ -3761,6 +3766,192 @@ export function ChantierDrillDown({ phase }: { phase: PhaseKey }) {
           )}
         </div>
       ))}
+    </div>
+  );
+}
+
+// ========== OPERATIONS DRILL-DOWN (même pattern que ChantierDrillDown — CAPEX→OPEX) ==========
+
+export const OPERATIONS_DRILLDOWN = [
+  {
+    name: "Gestion financière mensuelle", bot: "CFOB", botName: "Frank", regularity: 83, bar: "bg-emerald-500",
+    cadence: "Mensuel", sla: "48h", chaleur: "couve" as const,
+    processus: [
+      {
+        name: "Clôture comptable", regularity: 95, cadence: "Mensuel", sla: "24h",
+        routines: [
+          { name: "Rapprochement bancaire", status: "complete" as const, cadence: "Mensuel" },
+          { name: "Écritures de régularisation", status: "en_cours" as const, cadence: "Mensuel" },
+          { name: "Balance de vérification", status: "a-faire" as const, cadence: "Mensuel" },
+        ],
+      },
+      {
+        name: "Remises gouvernementales", regularity: 70, cadence: "Trimestriel", sla: "72h",
+        routines: [
+          { name: "Remise TPS/TVQ", status: "complete" as const, cadence: "Trimestriel" },
+          { name: "Acomptes provisionnels", status: "a-faire" as const, cadence: "Trimestriel" },
+        ],
+      },
+      {
+        name: "Paie et avantages", regularity: 98, cadence: "Bi-mensuel", sla: "12h",
+        routines: [
+          { name: "Traitement paie", status: "complete" as const, cadence: "Bi-mensuel" },
+          { name: "Remise déductions source", status: "complete" as const, cadence: "Mensuel" },
+          { name: "Rapports CNESST", status: "a-faire" as const, cadence: "Trimestriel" },
+        ],
+      },
+    ],
+  },
+  {
+    name: "Maintenance préventive usine", bot: "CPOB", botName: "Paco", regularity: 91, bar: "bg-blue-500",
+    cadence: "Hebdo", sla: "24h", chaleur: "stable" as const,
+    processus: [
+      {
+        name: "Inspection équipements ligne A", regularity: 95, cadence: "Hebdo", sla: "8h",
+        routines: [
+          { name: "Vérification pression hydraulique", status: "complete" as const, cadence: "Hebdo" },
+          { name: "Calibration capteurs température", status: "complete" as const, cadence: "Hebdo" },
+          { name: "Lubrification points critiques", status: "en_cours" as const, cadence: "Hebdo" },
+        ],
+      },
+      {
+        name: "Audit qualité produits", regularity: 88, cadence: "Mensuel", sla: "48h",
+        routines: [
+          { name: "Échantillonnage lot", status: "complete" as const, cadence: "Mensuel" },
+          { name: "Tests conformité", status: "a-faire" as const, cadence: "Mensuel" },
+        ],
+      },
+    ],
+  },
+  {
+    name: "Cycle de vente et pipeline", bot: "CROB", botName: "Rich", regularity: 72, bar: "bg-amber-500",
+    cadence: "Hebdo", sla: "4h", chaleur: "brule" as const,
+    processus: [
+      {
+        name: "Revue pipeline hebdo", regularity: 65, cadence: "Hebdo", sla: "2h",
+        routines: [
+          { name: "Mise à jour CRM", status: "en_cours" as const, cadence: "Hebdo" },
+          { name: "Forecast ajustement", status: "a-faire" as const, cadence: "Hebdo" },
+          { name: "Relances prioritaires", status: "a-faire" as const, cadence: "Hebdo" },
+        ],
+      },
+      {
+        name: "Rapport commissions", regularity: 80, cadence: "Mensuel", sla: "24h",
+        routines: [
+          { name: "Calcul commissions", status: "complete" as const, cadence: "Mensuel" },
+          { name: "Validation manager", status: "a-faire" as const, cadence: "Mensuel" },
+        ],
+      },
+    ],
+  },
+];
+
+const CHALEUR_STYLE = {
+  brule: { badge: "bg-red-100 text-red-700", label: "Brûle" },
+  couve: { badge: "bg-amber-100 text-amber-700", label: "Couve" },
+  stable: { badge: "bg-emerald-100 text-emerald-700", label: "Stable" },
+};
+
+const ROUTINE_STATUS = {
+  complete: { Icon: CheckCircle2, color: "text-green-500" },
+  en_cours: { Icon: Loader2, color: "text-amber-500" },
+  "a-faire": { Icon: Target, color: "text-gray-400" },
+};
+
+export function OperationsDrillDown() {
+  const [openOp, setOpenOp] = useState(0);
+  const [openProc, setOpenProc] = useState(0);
+
+  return (
+    <div className="max-w-4xl mx-auto px-6 py-4 space-y-3">
+      {/* En-tête — même pattern que ChantierDrillDown */}
+      <div className="rounded-xl border overflow-hidden shadow-sm border-cyan-200">
+        <div className="flex items-center gap-3 px-4 py-3 bg-cyan-50">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-cyan-500">
+            <Repeat className="h-4 w-4 text-white" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-bold text-cyan-700">Opérations</p>
+            <p className="text-[9px] text-gray-500">Processus récurrents — CAPEX transformé en OPEX</p>
+          </div>
+          <div className="flex items-center gap-1.5 text-[9px] text-gray-500">
+            <span className="px-1.5 py-0.5 rounded bg-cyan-100 text-cyan-700 font-medium">{OPERATIONS_DRILLDOWN.length} opérations</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Opérations — même cards que chantiers */}
+      {OPERATIONS_DRILLDOWN.map((op, oi) => {
+        const ch = CHALEUR_STYLE[op.chaleur];
+        return (
+          <div key={oi} className={cn("rounded-xl border overflow-hidden shadow-sm bg-white", openOp === oi ? "border-cyan-200" : "border-gray-200")}>
+            <button
+              onClick={() => setOpenOp(oi)}
+              className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors"
+            >
+              <BotAvatar code={op.bot} size="sm" />
+              <div className="flex-1 min-w-0 text-left">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-gray-800 truncate">{op.name}</span>
+                  <span className="text-[9px] text-gray-400">{op.botName}</span>
+                  <span className={cn("text-[8px] px-1.5 py-0.5 rounded-full font-medium", ch.badge)}>{ch.label}</span>
+                </div>
+                <div className="flex items-center gap-3 mt-1">
+                  <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden max-w-[160px] flex-1">
+                    <div className={cn("h-full rounded-full", op.bar)} style={{ width: `${op.regularity}%` }} />
+                  </div>
+                  <div className="flex items-center gap-1 text-[9px] text-gray-400">
+                    <Repeat className="h-3.5 w-3.5" />
+                    <span>{op.cadence}</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-[9px] text-gray-400">
+                    <Timer className="h-3.5 w-3.5" />
+                    <span>SLA {op.sla}</span>
+                  </div>
+                </div>
+              </div>
+              <span className="text-xs font-bold text-gray-500">{op.regularity}%</span>
+              <ChevronRight className={cn("h-4 w-4 text-gray-400 transition-transform", openOp === oi && "rotate-90")} />
+            </button>
+
+            {/* Processus (≡ Projets) — même drill-down */}
+            {openOp === oi && (
+              <div className="border-t border-gray-200">
+                {op.processus.map((proc, pi) => (
+                  <div key={pi} className="border-b border-gray-100 last:border-0">
+                    <button
+                      onClick={() => setOpenProc(pi)}
+                      className="flex items-center gap-2 w-full px-4 py-2.5 pl-8 text-left cursor-pointer hover:bg-gray-50 transition-colors"
+                    >
+                      <FolderOpen className="h-3.5 w-3.5 text-indigo-400 shrink-0" />
+                      <span className="text-[11px] text-gray-700 font-medium truncate flex-1">{proc.name}</span>
+                      <span className="text-[8px] text-gray-400 px-1 py-0.5 rounded bg-gray-100">{proc.cadence}</span>
+                      <span className="text-[9px] text-gray-400">{proc.regularity}%</span>
+                      <ChevronRight className={cn("h-3.5 w-3.5 text-gray-300 transition-transform", openOp === oi && openProc === pi && "rotate-90")} />
+                    </button>
+
+                    {/* Routines (≡ Missions) avec statut */}
+                    {openProc === pi && (
+                      <div className="bg-gray-50/50">
+                        {proc.routines.map((r, ri) => {
+                          const st = ROUTINE_STATUS[r.status];
+                          return (
+                            <div key={ri} className="flex items-center gap-2 px-4 py-2 pl-14 hover:bg-gray-100 transition-colors">
+                              <st.Icon className={cn("h-3.5 w-3.5 shrink-0", st.color)} />
+                              <span className={cn("text-[11px] flex-1", r.status === "complete" ? "text-gray-400 line-through" : "text-gray-600")}>{r.name}</span>
+                              <span className="text-[8px] text-gray-400 px-1 py-0.5 rounded bg-gray-100">{r.cadence}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

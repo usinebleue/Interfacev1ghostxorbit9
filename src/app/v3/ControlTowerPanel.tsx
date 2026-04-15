@@ -13,10 +13,11 @@ import {
   Bot, Network, ArrowRight, ArrowLeft, Zap, TowerControl,
   Home, ChevronRight, Users, MessageSquare,
   Handshake, Shield, Rocket, Activity, UserCircle,
-  Settings,
+  Settings, Brain,
 } from "lucide-react";
 import { cn } from "../components/ui/utils";
 import { useAmorcer } from "./AmorcerContext";
+import { useTenant } from "../v2/context/TenantContext";
 import type { WorkspacePhaseKey } from "./workspace/types";
 import {
   BOT_CODES, BOT_NAME, BOT_ROLE, BOT_AVATAR, BOT_STANDBY,
@@ -396,6 +397,7 @@ interface TabBureauProps {
 }
 
 function TabBureau({ activeBotCode, setActiveBotCode, activeDeptItem, setActiveDeptItem, cockpitSubTab, setCockpitSubTab, DeptIconComp, deptName, setCockpitTab, setRightSection, setWorkspacePhase }: TabBureauProps) {
+  const { isDieu } = useTenant();
   return (
     <div className="overflow-y-auto h-full text-[11px] flex flex-col">
       {/* Département dynamique */}
@@ -431,6 +433,35 @@ function TabBureau({ activeBotCode, setActiveBotCode, activeDeptItem, setActiveD
             )}
           </button>
         ))}
+        {/* God Mode — Admin + Cerveau BTML */}
+        {isDieu && (
+          <>
+            <button
+              onClick={() => { setActiveDeptItem("Admin"); setWorkspacePhase(null); setRightSection("admin"); }}
+              className={cn(
+                "relative flex items-center gap-1.5 px-2 py-1.5 rounded-lg border transition-all cursor-pointer",
+                activeDeptItem === "Admin"
+                  ? "bg-red-50 border-red-300 text-red-700"
+                  : "bg-gray-50 hover:bg-gray-100 border-gray-200 text-gray-600"
+              )}
+            >
+              <Shield className={cn("h-3.5 w-3.5 shrink-0", activeDeptItem === "Admin" ? "text-red-600" : "text-gray-600")} />
+              <span className="text-[9px] font-medium leading-tight">Admin</span>
+            </button>
+            <button
+              onClick={() => { setActiveDeptItem("BTML"); setWorkspacePhase(null); setRightSection("cerveau-btml"); }}
+              className={cn(
+                "relative flex items-center gap-1.5 px-2 py-1.5 rounded-lg border transition-all cursor-pointer",
+                activeDeptItem === "BTML"
+                  ? "bg-purple-50 border-purple-300 text-purple-700"
+                  : "bg-gray-50 hover:bg-gray-100 border-gray-200 text-gray-600"
+              )}
+            >
+              <Brain className={cn("h-3.5 w-3.5 shrink-0", activeDeptItem === "BTML" ? "text-purple-600" : "text-gray-600")} />
+              <span className="text-[9px] font-medium leading-tight">BTML</span>
+            </button>
+          </>
+        )}
       </div>
 
       {/* Tabs Brain Team + Mes Cellules */}
