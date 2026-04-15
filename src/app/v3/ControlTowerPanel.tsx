@@ -13,9 +13,11 @@ import {
   Bot, Network, ArrowRight, ArrowLeft, Zap, TowerControl,
   Home, ChevronRight, Users, MessageSquare,
   Handshake, Shield, Rocket, Activity, UserCircle,
+  Settings,
 } from "lucide-react";
 import { cn } from "../components/ui/utils";
 import { useAmorcer } from "./AmorcerContext";
+import type { WorkspacePhaseKey } from "./workspace/types";
 import {
   BOT_CODES, BOT_NAME, BOT_ROLE, BOT_AVATAR, BOT_STANDBY,
   BOT_ACTIONS, STATE_DOT, STATE_LABEL, STATE_TAG, DEPT_ICON_COLOR,
@@ -38,6 +40,7 @@ const DEPT_NAV_ITEMS: DeptNavItem[] = [
   { label: "Blueprint", icon: Layers, state: null },
   { label: "Data Room", icon: Database, state: null },
   { label: "Playbook Store", icon: BookOpen, state: null },
+  { label: "Opérations", icon: Settings, state: null },
   { label: "Orbit9", icon: Atom, state: null },
 ];
 
@@ -48,6 +51,8 @@ const DEPT_SECTION_MAP: Record<string, string> = {
   "Data Room": "dataroom",
   "Playbook Store": "playbooks",
   "Conférence AI": "conferenceai",
+  "Opérations": "operations",
+  "Agenda": "bureau-agenda",
 };
 
 const O9_MENU = [
@@ -217,6 +222,7 @@ export function ControlTowerPanel() {
     cockpitTab, setCockpitTab,
     o9Section, setO9Section,
     rightSection, setRightSection,
+    setWorkspacePhase,
   } = useAmorcer();
   const [activeDeptItem, setActiveDeptItem] = useState<string | null>("Cockpit");
   const [cockpitSubTab, setCockpitSubTab] = useState<"brainteam" | "cellules">("brainteam");
@@ -290,7 +296,7 @@ export function ControlTowerPanel() {
 
             <div className="flex-1 overflow-hidden">
               {cockpitTab === "orbit9" && <TabOrbit9 o9Section={o9Section} setO9Section={setO9Section} o9SelectedCellule={o9SelectedCellule} setO9SelectedCellule={setO9SelectedCellule} />}
-              {cockpitTab === "bureau" && <TabBureau activeBotCode={activeBotCode} setActiveBotCode={setActiveBotCode} activeDeptItem={activeDeptItem} setActiveDeptItem={setActiveDeptItem} cockpitSubTab={cockpitSubTab} setCockpitSubTab={setCockpitSubTab} DeptIconComp={DeptIconComp} deptName={deptName} setCockpitTab={setCockpitTab} setRightSection={setRightSection} />}
+              {cockpitTab === "bureau" && <TabBureau activeBotCode={activeBotCode} setActiveBotCode={setActiveBotCode} activeDeptItem={activeDeptItem} setActiveDeptItem={setActiveDeptItem} cockpitSubTab={cockpitSubTab} setCockpitSubTab={setCockpitSubTab} DeptIconComp={DeptIconComp} deptName={deptName} setCockpitTab={setCockpitTab} setRightSection={setRightSection} setWorkspacePhase={setWorkspacePhase} />}
             </div>
           </div>
         </div>
@@ -386,9 +392,10 @@ interface TabBureauProps {
   deptName: string;
   setCockpitTab: (tab: "bureau" | "orbit9") => void;
   setRightSection: (s: string) => void;
+  setWorkspacePhase: (p: WorkspacePhaseKey | null) => void;
 }
 
-function TabBureau({ activeBotCode, setActiveBotCode, activeDeptItem, setActiveDeptItem, cockpitSubTab, setCockpitSubTab, DeptIconComp, deptName, setCockpitTab, setRightSection }: TabBureauProps) {
+function TabBureau({ activeBotCode, setActiveBotCode, activeDeptItem, setActiveDeptItem, cockpitSubTab, setCockpitSubTab, DeptIconComp, deptName, setCockpitTab, setRightSection, setWorkspacePhase }: TabBureauProps) {
   return (
     <div className="overflow-y-auto h-full text-[11px] flex flex-col">
       {/* Département dynamique */}
@@ -404,7 +411,9 @@ function TabBureau({ activeBotCode, setActiveBotCode, activeDeptItem, setActiveD
               setActiveDeptItem(item.label);
               if (item.label === "Orbit9") {
                 setCockpitTab("orbit9");
+                setWorkspacePhase(null);
               } else if (DEPT_SECTION_MAP[item.label]) {
+                setWorkspacePhase(null);
                 setRightSection(DEPT_SECTION_MAP[item.label]);
               }
             }}

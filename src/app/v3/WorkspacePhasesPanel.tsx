@@ -21,7 +21,9 @@ import {
   Database,
   BookOpen,
   Video,
+  Calendar,
   Flame,
+  Settings,
 } from "lucide-react";
 import { cn } from "../components/ui/utils";
 import { useAmorcer } from "./AmorcerContext";
@@ -32,6 +34,10 @@ import type { PhaseKey, HeaderView } from "./core/types";
 import { PHASE_CONFIG } from "./core/phases";
 import { DEPT_DASH_ICON, DEPT_SHORT_LABEL } from "./sections/shared/dept-data";
 
+// ═══ Workspace Dynamique ═══
+import { WorkspaceFrame } from "./workspace/WorkspaceFrame";
+import type { WorkspacePhaseKey } from "./workspace/types";
+
 // ═══ V3 Sections — composants cristallisés ═══
 import { CockpitView } from "./sections/CockpitView";
 import { BlueprintView, BLUEPRINT_HEADER_TABS } from "./sections/BlueprintView";
@@ -39,6 +45,8 @@ import { DataRoomView } from "./sections/DataRoomView";
 import { PlaybookStoreView } from "./sections/PlaybookStoreView";
 import { ConferenceAIView } from "./sections/ConferenceAIView";
 import { ChantierView } from "./sections/ChantierView";
+import { OperationsView } from "./sections/OperationsView";
+import { AgendaView } from "./sections/AgendaView";
 
 // ═══ Simulation — composants demos (séparés du code cristallisé) ═══
 import {
@@ -71,6 +79,8 @@ export function WorkspacePhasesPanel() {
     cockpitTab,
     o9Section,
     startReflexion,
+    workspacePhase,
+    setWorkspacePhase,
   } = useAmorcer();
 
   const rightRef = useRef<HTMLDivElement>(null);
@@ -88,18 +98,37 @@ export function WorkspacePhasesPanel() {
 
   // Auto-scroll désactivé — chatStage simulation pas branchée sur le vrai chat
 
+  // ═══ WORKSPACE DYNAMIQUE — Quand une phase workspace est active, le frame prend tout le panel ═══
+  if (workspacePhase) {
+    return (
+      <div className="h-full flex flex-col overflow-hidden bg-gray-50">
+        <WorkspaceFrame
+          phase={workspacePhase}
+          botCode={activeBotCode}
+          onPhaseComplete={(nextPhase: WorkspacePhaseKey) => {
+            if (nextPhase === "operations") {
+              setWorkspacePhase("operations");
+            } else {
+              setWorkspacePhase(nextPhase);
+            }
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="h-full flex flex-col overflow-hidden bg-gray-50">
 
       {/* ═══ HEADER DÉPARTEMENT PASTEL h-12 ═══ */}
       {(() => {
-        const SECTION_ICON: Record<string, React.ElementType> = { cockpit: Gauge, chantiers: Flame, blueprint: Layers, dataroom: Database, playbooks: BookOpen, conferenceai: Video };
+        const SECTION_ICON: Record<string, React.ElementType> = { cockpit: Gauge, chantiers: Flame, blueprint: Layers, dataroom: Database, playbooks: BookOpen, conferenceai: Video, operations: Settings, "bureau-agenda": Calendar };
         const DeptIcon = isOrbit9 ? Atom : (rightSection && SECTION_ICON[rightSection]) ? SECTION_ICON[rightSection] : (DEPT_DASH_ICON[activeBotCode] || Home);
         const deptLabel = isOrbit9 ? "" : (DEPT_SHORT_LABEL[activeBotCode] || "");
         const O9_LABEL: Record<string, string> = { dashboard: "Dashboard", blueprint: "Blueprint", cellules: "Cellules", jumelage: "Jumelage", gouvernance: "Gouvernance", pionniers: "Pionniers", vitaa: "VITAA", perso: "Mon profil", feed: "Nouvelles", evenements: "Événements", "creer-cellule": "Créer une cellule" };
         const sectionLabel = isOrbit9
           ? (O9_LABEL[o9Section] || "Orbit⁹")
-          : rightSection === "cockpit" ? "Cockpit" : rightSection === "chantiers" ? "Chantiers" : rightSection === "blueprint" ? "Blueprint" : rightSection === "dataroom" ? "Data Room" : rightSection === "playbooks" ? "Playbook Store" : rightSection === "conferenceai" ? "Conference AI" : activePhase === "reflexion" ? "Réflexion" : "Cockpit";
+          : rightSection === "cockpit" ? "Cockpit" : rightSection === "chantiers" ? "Chantiers" : rightSection === "blueprint" ? "Blueprint" : rightSection === "dataroom" ? "Data Room" : rightSection === "playbooks" ? "Playbook Store" : rightSection === "conferenceai" ? "Conference AI" : rightSection === "operations" ? "Opérations" : rightSection === "bureau-agenda" ? "Agenda" : activePhase === "reflexion" ? "Réflexion" : "Cockpit";
         const titleText = isOrbit9
           ? `Orbit⁹ — ${sectionLabel}`
           : `Département ${deptLabel} — ${sectionLabel}`;
@@ -183,6 +212,8 @@ export function WorkspacePhasesPanel() {
               {rightSection === "playbooks" && <PlaybookStoreView botCode={activeBotCode} headerGradient="from-blue-600 to-blue-500" showHeader />}
               {rightSection === "conferenceai" && <ConferenceAIView headerGradient="from-blue-600 to-blue-500" onNavigateToStore={() => setRightSection("playbooks")} botCode={activeBotCode} />}
               {rightSection === "chantiers" && <ChantierView botCode={activeBotCode} showHeader onAction={(phase, context) => { setActivePhase(phase as PhaseKey); setReflexionContext(context); setRightSection(null); }} />}
+              {rightSection === "operations" && <OperationsView botCode={activeBotCode} showHeader onAction={(phase, context) => { setActivePhase(phase as PhaseKey); setReflexionContext(context); setRightSection(null); }} />}
+              {rightSection === "bureau-agenda" && <AgendaView botCode={activeBotCode} showHeader onAction={(phase, context) => { setActivePhase(phase as PhaseKey); setReflexionContext(context); setRightSection(null); }} />}
             </CanvasActionProvider>
           </div>
         ) : isOrbit9 ? (
