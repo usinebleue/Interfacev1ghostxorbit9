@@ -15,17 +15,14 @@ import { Card } from "../../components/ui/card";
 import { cn } from "../../components/ui/utils";
 import { useCanvasActions } from "../../v2/context/CanvasActionContext";
 import { api } from "../../v2/api/client";
-import {
-  resolveIcon,
-  PertinenceBadge,
-  SubSectionContent,
-  CrossReferencePanel,
-  ConseilAdminManager,
-  ComitesManager,
-  BlueprintPersonnel,
-  BlueprintBot,
-  VueConsolidee,
-} from "../../v2/zones/center/blueprint/BlueprintDepartement";
+import { resolveIcon, PertinenceBadge } from "./blueprint/blueprint-helpers";
+import { SubSectionContent } from "./blueprint/SubSectionContent";
+import { CrossReferencePanel } from "./blueprint/CrossReferencePanel";
+import { ConseilAdminManager } from "./blueprint/ConseilAdminManager";
+import { ComitesManager } from "./blueprint/ComitesManager";
+import { BlueprintPersonnel } from "./blueprint/BlueprintPersonnel";
+import { BlueprintBot } from "./blueprint/BlueprintBot";
+import { VueConsolidee } from "./blueprint/VueConsolidee";
 import { LivingHero } from "./shared/LivingHero";
 import { DEPT_DASH_ICON, OTHER_BOTS } from "./shared/dept-data";
 import { SF } from "../core/styles";

@@ -597,7 +597,7 @@ export function AdminView({ showHeader }: SectionProps) {
             {/* Glass panel */}
             <div className="glass-base absolute right-[70px] top-[10px] w-64 h-32 p-4 border-slate-100">
               <div className="flex justify-between items-center mb-3">
-                <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest" style={{fontFamily:'ui-monospace,monospace'}}>System Status</h4>
+                <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest font-mono">System Status</h4>
                 <div className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /><span className="text-[9px] font-bold text-emerald-500 tracking-wider">LIVE</span></div>
               </div>
               {/* Scan line */}

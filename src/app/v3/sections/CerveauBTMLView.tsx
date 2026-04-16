@@ -1144,7 +1144,7 @@ export function CerveauBTMLView({ showHeader }: SectionProps) {
             {/* Glass panel — Intelligence d'affaires */}
             <div className="glass-base absolute right-[55px] top-[20px] w-52 h-[100px] p-3 border-purple-100">
               <div className="flex justify-between items-center mb-2">
-                <h4 className="text-[9px] font-bold text-slate-500 uppercase tracking-widest" style={{fontFamily:'ui-monospace,monospace'}}>Cerveau BTML</h4>
+                <h4 className="text-[9px] font-bold text-slate-500 uppercase tracking-widest font-mono">Cerveau BTML</h4>
                 <div className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" /><span className="text-[8px] font-bold text-purple-500">ACTIF</span></div>
               </div>
               <div className="space-y-1.5">

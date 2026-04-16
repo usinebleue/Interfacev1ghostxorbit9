@@ -29,7 +29,7 @@ import { useAmorcer } from "./AmorcerContext";
 import { BotAvatar } from "../v2/zones/center/shared/simulation-components";
 
 // ═══ V3 Core — source unique constantes ═══
-import { PHASE_CONFIG, UB_BLUE } from "./core/phases";
+import { PHASE_CONFIG } from "./core/phases";
 
 // ═══ Simulation — chats demos (séparés du code cristallisé) ═══
 import {
@@ -69,7 +69,7 @@ export function DiscussionWindow() {
     <div className="h-full flex flex-col bg-white">
 
       {/* Header UB_BLUE h-12 — COPIE EXACTE SimAmorcer L572-606 */}
-      <div className="h-12 px-3 shrink-0 flex items-center gap-2" style={{ backgroundColor: UB_BLUE }}>
+      <div className="h-12 px-3 shrink-0 flex items-center gap-2 bg-[#073E5A]">
         {isOrbit9 ? (
           <>
             <Atom className="h-4 w-4 text-white" />

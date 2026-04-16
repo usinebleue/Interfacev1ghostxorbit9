@@ -2224,7 +2224,7 @@ export function PlaybookStoreView({ botCode, headerGradient, showHeader = false 
               {/* Connection Line 2 */}
               <div className="w-16 h-1 bg-slate-200 relative -ml-1 -mr-1 z-0"><div className="absolute left-0 top-0 bottom-0 bg-blue-400 shadow-[0_0_8px_#3b82f6] anim-p-line-2" /></div>
               {/* Step 3 */}
-              <div className="pb-node anim-p-node-3 anim-p-node-3-activate w-24 h-24 flex flex-col items-center justify-center text-white shadow-lg relative z-10" style={{ background: '#3b82f6' }}>
+              <div className="pb-node anim-p-node-3 anim-p-node-3-activate w-24 h-24 flex flex-col items-center justify-center text-white shadow-lg relative z-10 bg-blue-500">
                 <div className="w-8 h-8 flex items-center justify-center mb-1 drop-shadow-md"><svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/></svg></div>
                 <div className="w-12 h-1.5 bg-white/50 rounded-full" />
               </div>

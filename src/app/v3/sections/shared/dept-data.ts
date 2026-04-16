@@ -69,7 +69,9 @@ export const DEPT_DASH_ICON: Record<string, React.ElementType> = {
 };
 
 // ═══ Phase colors (source: BlueprintDepartement L8495-8504) ═══
-export type PhaseKey = "attention" | "moderation" | "observation" | "reflexion" | "creation" | "execution" | "retroaction" | "discussion";
+// PhaseKey importé depuis core/types.ts (source unique)
+import type { PhaseKey } from "../../core/types";
+export type { PhaseKey };
 
 export const PHASE_COLORS: Record<PhaseKey, { label: string; badge: string; dot: string }> = {
   discussion:   { label: "Discussion",   badge: "bg-blue-100 text-blue-700",     dot: "bg-blue-500" },
