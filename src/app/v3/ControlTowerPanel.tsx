@@ -13,7 +13,7 @@ import {
   Bot, Network, ArrowRight, ArrowLeft, Zap, TowerControl,
   Home, ChevronRight, Users, MessageSquare,
   Handshake, Shield, Rocket, Activity, UserCircle,
-  Settings, Brain,
+  Settings,
 } from "lucide-react";
 import { cn } from "../components/ui/utils";
 import { useAmorcer } from "./AmorcerContext";
@@ -281,7 +281,7 @@ export function ControlTowerPanel() {
               ]).map(tab => (
                 <button
                   key={tab.id}
-                  onClick={() => setCockpitTab(tab.id)}
+                  onClick={() => { setCockpitTab(tab.id); if (tab.id === "orbit9") setRightSection(null); }}
                   className={cn(
                     "flex-1 flex items-center justify-center gap-1 py-2 text-[11px] font-medium transition-colors cursor-pointer",
                     cockpitTab === tab.id
@@ -414,6 +414,7 @@ function TabBureau({ activeBotCode, setActiveBotCode, activeDeptItem, setActiveD
               if (item.label === "Orbit9") {
                 setCockpitTab("orbit9");
                 setWorkspacePhase(null);
+                setRightSection(null);
               } else if (DEPT_SECTION_MAP[item.label]) {
                 setWorkspacePhase(null);
                 setRightSection(DEPT_SECTION_MAP[item.label]);
@@ -448,18 +449,7 @@ function TabBureau({ activeBotCode, setActiveBotCode, activeDeptItem, setActiveD
               <Shield className={cn("h-3.5 w-3.5 shrink-0", activeDeptItem === "Admin" ? "text-red-600" : "text-gray-600")} />
               <span className="text-[9px] font-medium leading-tight">Admin</span>
             </button>
-            <button
-              onClick={() => { setActiveDeptItem("BTML"); setWorkspacePhase(null); setRightSection("cerveau-btml"); }}
-              className={cn(
-                "relative flex items-center gap-1.5 px-2 py-1.5 rounded-lg border transition-all cursor-pointer",
-                activeDeptItem === "BTML"
-                  ? "bg-purple-50 border-purple-300 text-purple-700"
-                  : "bg-gray-50 hover:bg-gray-100 border-gray-200 text-gray-600"
-              )}
-            >
-              <Brain className={cn("h-3.5 w-3.5 shrink-0", activeDeptItem === "BTML" ? "text-purple-600" : "text-gray-600")} />
-              <span className="text-[9px] font-medium leading-tight">BTML</span>
-            </button>
+            {/* BTML retiré — fusionné dans Admin > Stack Technique */}
           </>
         )}
       </div>

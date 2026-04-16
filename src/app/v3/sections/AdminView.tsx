@@ -11,16 +11,23 @@ import { useState, useEffect, useCallback } from "react";
 import {
   LayoutDashboard, Server, Users, Package, Activity, BookOpen, Shield,
   Plus, Trash2, CheckCircle2, XCircle, Mail,
-  Globe, CreditCard, Zap, ChevronDown, ChevronRight,
+  Globe, CreditCard, Zap, ChevronDown, ChevronRight, Loader2,
 } from "lucide-react";
 import { cn } from "../../components/ui/utils";
 import type { SectionProps } from "../core/types";
 import { api } from "../../v2/api/client";
 import { LivingHero } from "./shared/LivingHero";
+import {
+  SectionBots, SectionAPI, SectionBackend, SectionDatabase,
+  SectionInfra, SectionIntegrations, SectionSecurite, SectionCerveauBTML,
+  BTML_SIDEBAR,
+} from "./CerveauBTMLView";
+import type { BibleData } from "./CerveauBTMLView";
 
 // ═══ Types ═══
 
-type AdminSection = "dashboard" | "instances" | "users" | "packages" | "monitoring" | "knowledge";
+type AdminSection = "dashboard" | "instances" | "users" | "packages" | "monitoring" | "knowledge"
+  | "bots-skills" | "api-endpoints" | "backend" | "database" | "infra" | "integrations" | "securite" | "cerveau-btml";
 
 interface SidebarItem {
   id: AdminSection;
@@ -556,8 +563,27 @@ const ADMIN_SIDEBAR: SidebarItem[] = [
 
 // ═══ COMPOSANT PRINCIPAL ═══
 
+// ═══ BTML section IDs (pour vérifier si on est dans Stack Technique) ═══
+const BTML_SECTION_IDS = new Set(BTML_SIDEBAR.map(s => s.id));
+
 export function AdminView({ showHeader }: SectionProps) {
   const [activeSection, setActiveSection] = useState<AdminSection>("dashboard");
+  const [bibleData, setBibleData] = useState<BibleData | null>(null);
+  const [bibleLoading, setBibleLoading] = useState(false);
+
+  // Fetch bible technique quand on navigue dans Stack Technique
+  useEffect(() => {
+    if (BTML_SECTION_IDS.has(activeSection as any) && !bibleData) {
+      (async () => {
+        setBibleLoading(true);
+        try {
+          const result = await api.getBibleTechnique(false);
+          setBibleData(result);
+        } catch { /* silent */ }
+        setBibleLoading(false);
+      })();
+    }
+  }, [activeSection, bibleData]);
 
   return (
     <div className="space-y-4">
@@ -602,7 +628,25 @@ export function AdminView({ showHeader }: SectionProps) {
 
       <div className="flex gap-3">
         <div className="w-[180px] shrink-0 space-y-0.5 pt-1">
+          {/* ═══ Groupe 1 — Administration ═══ */}
           {ADMIN_SIDEBAR.map((item) => {
+            const isActive = activeSection === item.id;
+            return (
+              <button key={item.id} onClick={() => setActiveSection(item.id)}
+                className={cn("w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
+                  isActive ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent")}>
+                <div className="flex items-center gap-1.5">
+                  <item.icon className={cn("h-3.5 w-3.5", isActive ? "text-blue-500" : "text-gray-400")} />
+                  <span className={cn("text-[10px] font-bold flex-1 leading-tight", isActive ? "text-blue-700" : "text-gray-700")}>{item.label}</span>
+                </div>
+              </button>
+            );
+          })}
+
+          {/* ═══ Séparateur + Groupe 2 — Stack Technique ═══ */}
+          <div className="h-px bg-gray-100 mx-2 my-2" />
+          <div className="px-2.5 py-1 text-[9px] font-bold text-gray-400 uppercase tracking-wider">Stack Technique</div>
+          {BTML_SIDEBAR.map((item) => {
             const isActive = activeSection === item.id;
             return (
               <button key={item.id} onClick={() => setActiveSection(item.id)}
@@ -617,12 +661,35 @@ export function AdminView({ showHeader }: SectionProps) {
           })}
         </div>
         <div className="flex-1 min-w-0">
+          {/* ═══ Admin sections ═══ */}
           {activeSection === "dashboard" && <AdminDashboard onNav={setActiveSection} />}
           {activeSection === "instances" && <AdminInstances />}
           {activeSection === "users" && <AdminUsers />}
           {activeSection === "packages" && <AdminPackages />}
           {activeSection === "monitoring" && <AdminMonitoring />}
           {activeSection === "knowledge" && <AdminKnowledge onNav={setActiveSection} />}
+
+          {/* ═══ Stack Technique sections (bible data) ═══ */}
+          {BTML_SECTION_IDS.has(activeSection as any) && (
+            bibleLoading ? (
+              <div className="flex items-center gap-2 p-4 text-xs text-gray-400">
+                <Loader2 className="h-4 w-4 animate-spin" /> Chargement de la bible technique...
+              </div>
+            ) : bibleData ? (
+              <>
+                {activeSection === "bots-skills" && <SectionBots data={bibleData.bots || []} />}
+                {activeSection === "api-endpoints" && <SectionAPI data={bibleData.endpoints || {}} />}
+                {activeSection === "backend" && <SectionBackend data={bibleData.backend || {}} />}
+                {activeSection === "database" && <SectionDatabase data={bibleData.database || {}} />}
+                {activeSection === "infra" && <SectionInfra data={bibleData.infrastructure || {}} />}
+                {activeSection === "integrations" && <SectionIntegrations data={bibleData.integrations || []} />}
+                {activeSection === "securite" && <SectionSecurite data={bibleData.security || {}} />}
+                {activeSection === "cerveau-btml" && <SectionCerveauBTML data={bibleData.cerveau_btml || {}} />}
+              </>
+            ) : (
+              <div className="text-xs text-gray-400 p-4">Aucune donnée technique disponible.</div>
+            )
+          )}
         </div>
       </div>
     </div>

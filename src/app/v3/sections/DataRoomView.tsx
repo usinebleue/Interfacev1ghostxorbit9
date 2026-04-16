@@ -1130,7 +1130,7 @@ export function DataRoomView({ botCode, headerGradient, showHeader = false }: { 
         <LivingHero
           blur1="bg-emerald-100/60" blur2="bg-teal-100/50"
           subtitleColor="text-emerald-600" subtitle="Documents & Fichiers"
-          title="Vos documents importants, tous au même endroit."
+          title="Vos documents importants, sécurisé, ici !"
           description="Rapports, contrats, analyses — classés, protégés, toujours accessibles en 2 clics."
         >
           <div className="relative w-[340px] h-[150px] flex items-center justify-center">

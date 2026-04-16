@@ -25,7 +25,6 @@ import {
   Flame,
   Settings,
   Shield,
-  Brain,
 } from "lucide-react";
 import { cn } from "../components/ui/utils";
 import { useAmorcer } from "./AmorcerContext";
@@ -50,7 +49,7 @@ import { ChantierView } from "./sections/ChantierView";
 import { OperationsView } from "./sections/OperationsView";
 import { AgendaView } from "./sections/AgendaView";
 import { AdminView } from "./sections/AdminView";
-import { CerveauBTMLView } from "./sections/CerveauBTMLView";
+// CerveauBTMLView retiré — fusionné dans AdminView > Stack Technique
 
 // ═══ Simulation — composants demos (séparés du code cristallisé) ═══
 import {
@@ -126,13 +125,13 @@ export function WorkspacePhasesPanel() {
 
       {/* ═══ HEADER DÉPARTEMENT PASTEL h-12 ═══ */}
       {(() => {
-        const SECTION_ICON: Record<string, React.ElementType> = { cockpit: Gauge, chantiers: Flame, blueprint: Layers, dataroom: Database, playbooks: BookOpen, conferenceai: Video, operations: Settings, "bureau-agenda": Calendar, admin: Shield, "cerveau-btml": Brain };
+        const SECTION_ICON: Record<string, React.ElementType> = { cockpit: Gauge, chantiers: Flame, blueprint: Layers, dataroom: Database, playbooks: BookOpen, conferenceai: Video, operations: Settings, "bureau-agenda": Calendar, admin: Shield };
         const DeptIcon = isOrbit9 ? Atom : (rightSection && SECTION_ICON[rightSection]) ? SECTION_ICON[rightSection] : (DEPT_DASH_ICON[activeBotCode] || Home);
         const deptLabel = isOrbit9 ? "" : (DEPT_SHORT_LABEL[activeBotCode] || "");
         const O9_LABEL: Record<string, string> = { dashboard: "Dashboard", blueprint: "Blueprint", cellules: "Cellules", jumelage: "Jumelage", gouvernance: "Gouvernance", pionniers: "Pionniers", vitaa: "VITAA", perso: "Mon profil", feed: "Nouvelles", evenements: "Événements", "creer-cellule": "Créer une cellule" };
         const sectionLabel = isOrbit9
           ? (O9_LABEL[o9Section] || "Orbit⁹")
-          : rightSection === "cockpit" ? "Cockpit" : rightSection === "chantiers" ? "Chantiers" : rightSection === "blueprint" ? "Blueprint" : rightSection === "dataroom" ? "Data Room" : rightSection === "playbooks" ? "Playbook Store" : rightSection === "conferenceai" ? "Conference AI" : rightSection === "operations" ? "Opérations" : rightSection === "bureau-agenda" ? "Agenda" : rightSection === "admin" ? "Administration" : rightSection === "cerveau-btml" ? "Cerveau BTML" : activePhase === "reflexion" ? "Réflexion" : "Cockpit";
+          : rightSection === "cockpit" ? "Cockpit" : rightSection === "chantiers" ? "Chantiers" : rightSection === "blueprint" ? "Blueprint" : rightSection === "dataroom" ? "Data Room" : rightSection === "playbooks" ? "Playbook Store" : rightSection === "conferenceai" ? "Conference AI" : rightSection === "operations" ? "Opérations" : rightSection === "bureau-agenda" ? "Agenda" : rightSection === "admin" ? "Administration" : activePhase === "reflexion" ? "Réflexion" : "Cockpit";
         const titleText = isOrbit9
           ? `Orbit⁹ — ${sectionLabel}`
           : `Département ${deptLabel} — ${sectionLabel}`;
@@ -219,7 +218,7 @@ export function WorkspacePhasesPanel() {
               {rightSection === "operations" && <OperationsView botCode={activeBotCode} showHeader onAction={(phase, context) => { setActivePhase(phase as PhaseKey); setReflexionContext(context); setRightSection(null); }} />}
               {rightSection === "bureau-agenda" && <AgendaView botCode={activeBotCode} showHeader onAction={(phase, context) => { setActivePhase(phase as PhaseKey); setReflexionContext(context); setRightSection(null); }} />}
               {rightSection === "admin" && <AdminView botCode={activeBotCode} showHeader onAction={(phase, context) => { setActivePhase(phase as PhaseKey); setReflexionContext(context); setRightSection(null); }} />}
-              {rightSection === "cerveau-btml" && <CerveauBTMLView botCode={activeBotCode} showHeader onAction={(phase, context) => { setActivePhase(phase as PhaseKey); setReflexionContext(context); setRightSection(null); }} />}
+              {/* cerveau-btml fusionné dans AdminView > Stack Technique */}
             </CanvasActionProvider>
           </div>
         ) : isOrbit9 ? (

@@ -1078,6 +1078,10 @@ function SectionCerveauBTML({ data }: { data: any }) {
   );
 }
 
+// ═══ Re-exports pour AdminView (Stack Technique) ═══
+export { SectionBots, SectionAPI, SectionBackend, SectionDatabase, SectionInfra, SectionIntegrations, SectionSecurite, SectionCerveauBTML, BTML_SIDEBAR };
+export type { BtmlSection, BibleData };
+
 // ═══ COMPOSANT PRINCIPAL ═══
 
 export function CerveauBTMLView({ showHeader }: SectionProps) {
