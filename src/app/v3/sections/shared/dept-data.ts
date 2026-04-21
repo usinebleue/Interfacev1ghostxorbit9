@@ -59,6 +59,7 @@ export const DEPT_GRADIENT: Record<string, string> = {
   CISOB: "from-zinc-700 to-zinc-600",
   CLOB: "from-indigo-600 to-indigo-500",
   CINOB: "from-rose-600 to-rose-500",
+  ORBIT9: "from-cyan-600 to-blue-500",
 };
 
 // ═══ Icônes département dashboard (source: BlueprintDepartement L5797-5801) ═══

@@ -82,7 +82,8 @@ export const SECTIONS: SectionDef[] = [
   { id: "orbit9-gouvernance",  label: "Gouvernance",       group: "orbit9", order: 5, gpsView: "orbit9", gpsSub: "gouvernance",  flowType: "data", botPrimaire: "CEOB" },
   { id: "orbit9-pionniers",    label: "Pionniers",         group: "orbit9", order: 6, gpsView: "orbit9", gpsSub: "pionniers",    flowType: "data", botPrimaire: "CEOB" },
   { id: "orbit9-vitaa",        label: "VITAA",             group: "orbit9", order: 7, gpsView: "orbit9", gpsSub: "vitaa",        flowType: "data", botPrimaire: "CEOB" },
-  { id: "orbit9-profil",       label: "Mon Profil",        group: "orbit9", order: 8, gpsView: "orbit9", gpsSub: "perso",        flowType: "data", botPrimaire: "CEOB" },
+  { id: "orbit9-profil",       label: "Mon Profil",        group: "orbit9", order: 8,  gpsView: "orbit9", gpsSub: "perso",        flowType: "data", botPrimaire: "CEOB" },
+  { id: "orbit9-opportunites", label: "Opportunités",      group: "orbit9", order: 9,  gpsView: "orbit9", gpsSub: "opportunites", flowType: "data", botPrimaire: "CEOB", botSecondaires: ["CROB", "CSOB"] },
 
   // ── Rooms (ACTION flows — Mon Entreprise) ───────────────────────
   { id: "board-room", label: "Board Room", group: "rooms", order: 1, gpsView: "board-room", flowType: "action", botPrimaire: "CEOB", botSecondaires: ["CSOB", "CFOB"], steps: 5 },

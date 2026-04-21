@@ -32,7 +32,7 @@ interface VitaaItem {
   icon: React.ElementType;
 }
 
-interface DashboardBlocItem {
+export interface DashboardBlocItem {
   primary: string;
   value?: string;
   valueColor?: string;
@@ -44,7 +44,7 @@ interface DashboardBlocItem {
   urgent?: boolean;
 }
 
-interface DashboardBlocConfig {
+export interface DashboardBlocConfig {
   icon: React.ElementType;
   title: string;
   count?: number;
@@ -934,7 +934,7 @@ export function WorkActionsOverlay({ context, onAction, position = "center" }: {
 
 // ── CockpitItemRow — Ligne d'item réutilisable (box grid + drill-down detail) ──
 // Structure plate : <li group relative> → contenu + WorkActionsOverlay sibling direct
-function CockpitItemRow({ item, index, onAction, showNumber }: {
+export function CockpitItemRow({ item, index, onAction, showNumber }: {
   item: DashboardBlocItem;
   index: number;
   onAction?: (phase: PhaseKey, context: string) => void;
@@ -989,7 +989,7 @@ function CockpitItemRow({ item, index, onAction, showNumber }: {
 
 // ── CockpitCard — Pattern Playbook Store card (box dans la grid 2 cols) ──
 // Pas de overflow-hidden sur le wrapper → WorkActionsOverlay visible
-function CockpitCard({ config, onAction, onHeaderClick }: {
+export function CockpitCard({ config, onAction, onHeaderClick }: {
   config: DashboardBlocConfig;
   onAction?: (phase: PhaseKey, context: string) => void;
   onHeaderClick?: () => void;
@@ -1019,7 +1019,7 @@ function CockpitCard({ config, onAction, onHeaderClick }: {
 
 // ── CockpitSignalCard — Card vedette gradient "À porter attention" ──
 // group relative sur le div principal, WorkActionsOverlay sibling direct, PAS de overflow-hidden
-function CockpitSignalCard({ item, onAction }: {
+export function CockpitSignalCard({ item, onAction }: {
   item: DashboardBlocItem;
   onAction?: (phase: PhaseKey, context: string) => void;
 }) {
@@ -1220,7 +1220,7 @@ const COCKPIT_EXTRA_BLOCS: Record<string, DashboardBlocConfig[]> = {
   ],
 };
 
-function CockpitBlocDetail({ config, deptLabel, deptGradient, onBack, onAction }: {
+export function CockpitBlocDetail({ config, deptLabel, deptGradient, onBack, onAction }: {
   config: DashboardBlocConfig;
   deptLabel: string;
   deptGradient: string;
@@ -1289,7 +1289,7 @@ function CockpitBlocDetail({ config, deptLabel, deptGradient, onBack, onAction }
 }
 
 // Gradient colors for signal vedette cards based on urgency/type
-function getSignalGradient(item: DashboardBlocItem): string {
+export function getSignalGradient(item: DashboardBlocItem): string {
   if (item.urgent || item.value === "Alerte") return "from-red-600 to-red-500";
   if (item.value === "Nouveau") return "from-emerald-600 to-emerald-500";
   if (item.value === "Tendance" || item.value === "Info" || item.value === "Stable" || item.value === "Suivi") return "from-blue-600 to-blue-500";
@@ -1298,7 +1298,7 @@ function getSignalGradient(item: DashboardBlocItem): string {
 }
 
 // Tag label + style for signal vedette cards — consistent across all departments
-function getSignalTag(item: DashboardBlocItem): { label: string; classes: string } {
+export function getSignalTag(item: DashboardBlocItem): { label: string; classes: string } {
   if (item.urgent || item.value === "Alerte") return { label: "Alerte", classes: "bg-red-400/30 text-white" };
   if (item.value === "Nouveau") return { label: "Opportunité", classes: "bg-emerald-400/30 text-white" };
   if (item.value === "Tendance") return { label: "Tendance", classes: "bg-sky-400/30 text-white" };

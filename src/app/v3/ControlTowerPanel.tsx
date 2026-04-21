@@ -65,6 +65,7 @@ const O9_MENU = [
   { key: "pionniers", label: "Pionniers", icon: Rocket },
   { key: "vitaa", label: "VITAA", icon: Activity },
   { key: "perso", label: "Mon profil", icon: UserCircle },
+  { key: "opportunites", label: "Opportunités", icon: Handshake },
 ];
 
 // ═══ ORBIT9 MOCK DATA ═══
@@ -272,32 +273,10 @@ export function ControlTowerPanel() {
             </div>
           </div>
 
-          {/* Tabs Bureau + Orbit9 */}
+          {/* Contenu Bureau — toujours visible (Orbit9 = section du panneau droit, pas un tab gauche) */}
           <div className="flex-1 overflow-hidden flex flex-col mt-2">
-            <div className="flex border-b shrink-0 bg-gray-50/50">
-              {([
-                { id: "bureau" as const, label: "Bureau", icon: Home },
-                { id: "orbit9" as const, label: "Orbit⁹", icon: Atom },
-              ]).map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => { setCockpitTab(tab.id); if (tab.id === "orbit9") setRightSection(null); }}
-                  className={cn(
-                    "flex-1 flex items-center justify-center gap-1 py-2 text-[11px] font-medium transition-colors cursor-pointer",
-                    cockpitTab === tab.id
-                      ? "text-blue-600 border-b-2 border-blue-500 bg-white"
-                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-50",
-                  )}
-                >
-                  <tab.icon className="h-3.5 w-3.5" />
-                  <span className="hidden xl:inline">{tab.label}</span>
-                </button>
-              ))}
-            </div>
-
             <div className="flex-1 overflow-hidden">
-              {cockpitTab === "orbit9" && <TabOrbit9 o9Section={o9Section} setO9Section={setO9Section} o9SelectedCellule={o9SelectedCellule} setO9SelectedCellule={setO9SelectedCellule} />}
-              {cockpitTab === "bureau" && <TabBureau activeBotCode={activeBotCode} setActiveBotCode={setActiveBotCode} activeDeptItem={activeDeptItem} setActiveDeptItem={setActiveDeptItem} cockpitSubTab={cockpitSubTab} setCockpitSubTab={setCockpitSubTab} DeptIconComp={DeptIconComp} deptName={deptName} setCockpitTab={setCockpitTab} setRightSection={setRightSection} setWorkspacePhase={setWorkspacePhase} />}
+              <TabBureau activeBotCode={activeBotCode} setActiveBotCode={setActiveBotCode} activeDeptItem={activeDeptItem} setActiveDeptItem={setActiveDeptItem} cockpitSubTab={cockpitSubTab} setCockpitSubTab={setCockpitSubTab} DeptIconComp={DeptIconComp} deptName={deptName} setCockpitTab={setCockpitTab} setRightSection={setRightSection} setWorkspacePhase={setWorkspacePhase} />
             </div>
           </div>
         </div>

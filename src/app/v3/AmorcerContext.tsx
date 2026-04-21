@@ -76,7 +76,7 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
   const [rightSection, setRightSection] = useState<string | null>("cockpit");
   const [activeBotCode, setActiveBotCode] = useState("CEOB");
   const [cockpitTab, setCockpitTab] = useState("bureau");
-  const [o9Section, setO9Section] = useState("cellules");
+  const [o9Section, setO9Section] = useState("dashboard");
 
   // Workspace dynamique
   const [workspacePhase, setWorkspacePhase] = useState<WorkspacePhaseKey | null>(null);

@@ -84,7 +84,7 @@ export type RightSection =
   | "cerveau-btml"
   | null;
 
-// ═══ Orbit9 sections ═══
+// ═══ Orbit9 sections (UNIQUEMENT ce qui est propre à Orbit9 — pas de dédoublement) ═══
 export type Orbit9Section =
   | "dashboard"
   | "blueprint"
@@ -96,7 +96,8 @@ export type Orbit9Section =
   | "perso"
   | "feed"
   | "evenements"
-  | "creer-cellule";
+  | "creer-cellule"
+  | "opportunites";
 
 // ═══ Context mode ═══
 export type ContextMode = "brainteam" | "orbit9";

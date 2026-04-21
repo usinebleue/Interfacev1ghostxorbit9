@@ -51,22 +51,16 @@ import { AgendaView } from "./sections/AgendaView";
 import { AdminView } from "./sections/AdminView";
 // CerveauBTMLView retiré — fusionné dans AdminView > Stack Technique
 
+// ═══ Orbit9 V3 — composant cristallisé ═══
+import { Orbit9View } from "./sections/orbit9/Orbit9View";
+import { O9_HEADER_TABS } from "./sections/orbit9/orbit9-data";
+
 // ═══ Simulation — composants demos (séparés du code cristallisé) ═══
 import {
   VueEnsemble,
   ReflexionMagazine,
   ChantierDrillDown,
   IconCatalog,
-  Orbit9SocialHome,
-  Orbit9BlueprintCollaboration,
-  MesCellules,
-  VITAADashboard,
-  MonProfilOrbit9,
-  Orbit9Gouvernance,
-  JumelageOrbit9,
-  PionniersOrbit9,
-  CreerCellulePage,
-  ORBIT9_CELLULES,
 } from "./simulation/sim-content-map";
 
 export function WorkspacePhasesPanel() {
@@ -81,6 +75,7 @@ export function WorkspacePhasesPanel() {
     activeBotCode,
     cockpitTab,
     o9Section,
+    setO9Section,
     startReflexion,
     workspacePhase,
     setWorkspacePhase,
@@ -125,17 +120,18 @@ export function WorkspacePhasesPanel() {
 
       {/* ═══ HEADER DÉPARTEMENT PASTEL h-12 ═══ */}
       {(() => {
-        const SECTION_ICON: Record<string, React.ElementType> = { cockpit: Gauge, chantiers: Flame, blueprint: Layers, dataroom: Database, playbooks: BookOpen, conferenceai: Video, operations: Settings, "bureau-agenda": Calendar, admin: Shield };
-        const DeptIcon = isOrbit9 ? Atom : (rightSection && SECTION_ICON[rightSection]) ? SECTION_ICON[rightSection] : (DEPT_DASH_ICON[activeBotCode] || Home);
-        const deptLabel = isOrbit9 ? "" : (DEPT_SHORT_LABEL[activeBotCode] || "");
-        const O9_LABEL: Record<string, string> = { dashboard: "Dashboard", blueprint: "Blueprint", cellules: "Cellules", jumelage: "Jumelage", gouvernance: "Gouvernance", pionniers: "Pionniers", vitaa: "VITAA", perso: "Mon profil", feed: "Nouvelles", evenements: "Événements", "creer-cellule": "Créer une cellule" };
-        const sectionLabel = isOrbit9
-          ? (O9_LABEL[o9Section] || "Orbit⁹")
-          : rightSection === "cockpit" ? "Cockpit" : rightSection === "chantiers" ? "Chantiers" : rightSection === "blueprint" ? "Blueprint" : rightSection === "dataroom" ? "Data Room" : rightSection === "playbooks" ? "Playbook Store" : rightSection === "conferenceai" ? "Conference AI" : rightSection === "operations" ? "Opérations" : rightSection === "bureau-agenda" ? "Agenda" : rightSection === "admin" ? "Administration" : activePhase === "reflexion" ? "Réflexion" : "Cockpit";
-        const titleText = isOrbit9
-          ? `Orbit⁹ — ${sectionLabel}`
+        const SECTION_ICON: Record<string, React.ElementType> = { cockpit: Gauge, chantiers: Flame, blueprint: Layers, dataroom: Database, playbooks: BookOpen, conferenceai: Video, operations: Settings, "bureau-agenda": Calendar, admin: Shield, orbit9: Atom };
+        const SECTION_LABEL: Record<string, string> = { cockpit: "Cockpit", chantiers: "Chantiers", blueprint: "Blueprint", dataroom: "Data Room", playbooks: "Playbook Store", conferenceai: "Conference AI", operations: "Opérations", "bureau-agenda": "Agenda", admin: "Administration", orbit9: "Orbit⁹" };
+        // activeSection = source unique pour icon, label, tabs (orbit9 traité comme une section)
+        const activeSection = (isOrbit9 && !rightSection) ? "orbit9" : rightSection;
+        const DeptIcon = (activeSection && SECTION_ICON[activeSection]) ? SECTION_ICON[activeSection] : (DEPT_DASH_ICON[activeBotCode] || Home);
+        const deptLabel = activeSection === "orbit9" ? "" : (DEPT_SHORT_LABEL[activeBotCode] || "");
+        const sectionLabel = (activeSection && SECTION_LABEL[activeSection]) ? SECTION_LABEL[activeSection] : activePhase === "reflexion" ? "Réflexion" : "Cockpit";
+        const titleText = activeSection === "orbit9"
+          ? "Orbit⁹"
           : `Département ${deptLabel} — ${sectionLabel}`;
-        const showBlueprintTabs = !isOrbit9 && rightSection === "blueprint";
+        const showBlueprintTabs = activeSection === "blueprint";
+        const showOrbit9Tabs = activeSection === "orbit9";
         return (
           <div className="h-12 px-3 shrink-0 flex items-center gap-2 border-b border-gray-200 bg-[#00B4D8]/[0.12]">
             <DeptIcon className="h-4 w-4 text-gray-900 stroke-[2.5]" />
@@ -164,13 +160,37 @@ export function WorkspacePhasesPanel() {
                 </div>
               </>
             )}
-            {!isOrbit9 && activePhase === "reflexion" && reflexionContext && !rightSection && (
+            {/* Sous-tabs Orbit9 — même pattern que Blueprint */}
+            {showOrbit9Tabs && (
+              <>
+                <div className="w-px h-5 bg-gray-300 mx-1.5" />
+                <div className="flex items-center gap-1">
+                  {O9_HEADER_TABS.map(tab => (
+                    <button
+                      key={tab.key}
+                      type="button"
+                      onClick={() => setO9Section(tab.key)}
+                      className={cn(
+                        "px-2 py-1 rounded-md text-[10px] font-medium flex items-center gap-1 transition-all cursor-pointer",
+                        o9Section === tab.key
+                          ? "bg-[#073E5A] text-white shadow-sm"
+                          : "text-gray-600 hover:bg-gray-100"
+                      )}
+                    >
+                      <tab.icon className="h-3.5 w-3.5" />
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+            {activeSection !== "orbit9" && activePhase === "reflexion" && reflexionContext && !rightSection && (
               <>
                 <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
                 <span className="text-[11px] font-medium text-orange-600">{reflexionContext}</span>
               </>
             )}
-            {!isOrbit9 && activePhase !== "observation" && activePhase !== "reflexion" && !rightSection && (
+            {activeSection !== "orbit9" && activePhase !== "observation" && activePhase !== "reflexion" && !rightSection && (
               <>
                 <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
                 <span className={cn("text-[11px] font-medium", pc.text)}>{pc.label}</span>
@@ -222,19 +242,9 @@ export function WorkspacePhasesPanel() {
             </CanvasActionProvider>
           </div>
         ) : isOrbit9 ? (
-          /* Orbit9 sections — COPIE EXACTE SimAmorcer L813-826 */
+          /* Orbit9 V3 — shell unique avec routing interne */
           <div className="max-w-4xl mx-auto px-6 py-4 pb-12">
-            <CanvasActionProvider>
-              {o9Section === "dashboard" && <Orbit9SocialHome />}
-              {o9Section === "blueprint" && <Orbit9BlueprintCollaboration />}
-              {o9Section === "cellules" && <MesCellules onSelect={() => {}} activePhase={activePhase} />}
-              {o9Section === "vitaa" && <VITAADashboard selectedCellule={ORBIT9_CELLULES[0]} />}
-              {o9Section === "perso" && <MonProfilOrbit9 />}
-              {o9Section === "gouvernance" && <Orbit9Gouvernance />}
-              {o9Section === "jumelage" && <JumelageOrbit9 />}
-              {o9Section === "pionniers" && <PionniersOrbit9 />}
-              {o9Section === "creer-cellule" && <CreerCellulePage />}
-            </CanvasActionProvider>
+            <Orbit9View />
           </div>
         ) : isDash ? (
           /* Dashboard views (Observation, Attention, Moderation) */
