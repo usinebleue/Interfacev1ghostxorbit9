@@ -100,6 +100,15 @@ export function WorkspacePhasesPanel() {
   if (workspacePhase) {
     return (
       <div className="h-full flex flex-col overflow-hidden bg-gray-50">
+        {/* DEV — Bouton retour (à retirer après validation) */}
+        <div className="h-8 px-3 shrink-0 flex items-center border-b border-gray-200 bg-white">
+          <button
+            onClick={() => setWorkspacePhase(null)}
+            className="text-[9px] font-bold text-blue-600 hover:text-blue-800 cursor-pointer flex items-center gap-1"
+          >
+            ← Retour vue normale
+          </button>
+        </div>
         <WorkspaceFrame
           phase={workspacePhase}
           botCode={activeBotCode}
@@ -197,6 +206,15 @@ export function WorkspacePhasesPanel() {
               </>
             )}
             <div className="flex-1" />
+            {/* DEV — Bouton test WorkspaceFrame (à retirer après validation) */}
+            {!workspacePhase && (
+              <button
+                onClick={() => setWorkspacePhase("reflexion")}
+                className="text-[9px] font-bold px-2 py-1 rounded-md bg-orange-100 text-orange-700 border border-orange-200 hover:bg-orange-200 cursor-pointer transition-all"
+              >
+                Test WorkspaceFrame
+              </button>
+            )}
             {showBlueprintTabs && blueprintStats && (
               <div className="flex items-center gap-2 shrink-0">
                 <span className="text-[10px] text-gray-500">{blueprintStats.tierLabel}</span>
