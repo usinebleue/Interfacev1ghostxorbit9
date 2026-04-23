@@ -18,7 +18,7 @@ import {
 import { cn } from "../components/ui/utils";
 import { useAmorcer } from "./AmorcerContext";
 import { useTenant } from "../v2/context/TenantContext";
-import type { WorkspacePhaseKey } from "./workspace/types";
+
 import {
   BOT_CODES, BOT_NAME, BOT_ROLE, BOT_AVATAR, BOT_STANDBY,
   BOT_ACTIONS, STATE_DOT, STATE_LABEL, STATE_TAG, DEPT_ICON_COLOR,
@@ -224,7 +224,6 @@ export function ControlTowerPanel() {
     cockpitTab, setCockpitTab,
     o9Section, setO9Section,
     rightSection, setRightSection,
-    setWorkspacePhase,
   } = useAmorcer();
   const [activeDeptItem, setActiveDeptItem] = useState<string | null>("Cockpit");
   const [cockpitSubTab, setCockpitSubTab] = useState<"brainteam" | "cellules">("brainteam");
@@ -276,7 +275,7 @@ export function ControlTowerPanel() {
           {/* Contenu Bureau — toujours visible (Orbit9 = section du panneau droit, pas un tab gauche) */}
           <div className="flex-1 overflow-hidden flex flex-col mt-2">
             <div className="flex-1 overflow-hidden">
-              <TabBureau activeBotCode={activeBotCode} setActiveBotCode={setActiveBotCode} activeDeptItem={activeDeptItem} setActiveDeptItem={setActiveDeptItem} cockpitSubTab={cockpitSubTab} setCockpitSubTab={setCockpitSubTab} DeptIconComp={DeptIconComp} deptName={deptName} setCockpitTab={setCockpitTab} setRightSection={setRightSection} setWorkspacePhase={setWorkspacePhase} />
+              <TabBureau activeBotCode={activeBotCode} setActiveBotCode={setActiveBotCode} activeDeptItem={activeDeptItem} setActiveDeptItem={setActiveDeptItem} cockpitSubTab={cockpitSubTab} setCockpitSubTab={setCockpitSubTab} DeptIconComp={DeptIconComp} deptName={deptName} setCockpitTab={setCockpitTab} setRightSection={setRightSection} />
             </div>
           </div>
         </div>
@@ -372,10 +371,9 @@ interface TabBureauProps {
   deptName: string;
   setCockpitTab: (tab: "bureau" | "orbit9") => void;
   setRightSection: (s: string) => void;
-  setWorkspacePhase: (p: WorkspacePhaseKey | null) => void;
 }
 
-function TabBureau({ activeBotCode, setActiveBotCode, activeDeptItem, setActiveDeptItem, cockpitSubTab, setCockpitSubTab, DeptIconComp, deptName, setCockpitTab, setRightSection, setWorkspacePhase }: TabBureauProps) {
+function TabBureau({ activeBotCode, setActiveBotCode, activeDeptItem, setActiveDeptItem, cockpitSubTab, setCockpitSubTab, DeptIconComp, deptName, setCockpitTab, setRightSection }: TabBureauProps) {
   const { isDieu } = useTenant();
   return (
     <div className="overflow-y-auto h-full text-[11px] flex flex-col">
@@ -392,10 +390,10 @@ function TabBureau({ activeBotCode, setActiveBotCode, activeDeptItem, setActiveD
               setActiveDeptItem(item.label);
               if (item.label === "Orbit9") {
                 setCockpitTab("orbit9");
-                setWorkspacePhase(null);
+
                 setRightSection(null);
               } else if (DEPT_SECTION_MAP[item.label]) {
-                setWorkspacePhase(null);
+
                 setRightSection(DEPT_SECTION_MAP[item.label]);
               }
             }}
@@ -417,7 +415,7 @@ function TabBureau({ activeBotCode, setActiveBotCode, activeDeptItem, setActiveD
         {isDieu && (
           <>
             <button
-              onClick={() => { setActiveDeptItem("Admin"); setWorkspacePhase(null); setRightSection("admin"); }}
+              onClick={() => { setActiveDeptItem("Admin"); setRightSection("admin"); }}
               className={cn(
                 "relative flex items-center gap-1.5 px-2 py-1.5 rounded-lg border transition-all cursor-pointer",
                 activeDeptItem === "Admin"

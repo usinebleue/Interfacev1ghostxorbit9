@@ -159,6 +159,7 @@ import { SanteGlobaleView } from "../../SanteGlobaleView";
 import { DocumentsUnifie } from "../../shared/DocumentsUnifie";
 import { CanvasActionProvider } from "../../../../context/CanvasActionContext";
 import { BOT_COLORS } from "../../shared/simulation-data";
+import { SF } from "../../../../../v3/core/styles";
 
 export const UB_BLUE = "#073E5A";
 
@@ -597,9 +598,9 @@ export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departe
                   <div className="flex-1" />
                   {/* Bande noms humains + bots (Carl vocal 14h24) */}
                   {ORBIT9_CELLULES[0].membres.slice(0, 3).map((m, i) => (
-                    <span key={i} className="text-[9px] text-white/70 ml-1">{m.name}</span>
+                    <span key={i} className="text-xs text-white/70 ml-1">{m.name}</span>
                   ))}
-                  <span className="text-[9px] text-white/40 ml-0.5">+{ORBIT9_CELLULES[0].membres.length - 3}</span>
+                  <span className="text-xs text-white/40 ml-0.5">+{ORBIT9_CELLULES[0].membres.length - 3}</span>
                   {ORBIT9_BOTS.map(code => (
                     <div key={code} className="w-5 h-5 rounded-full overflow-hidden ring-1 ring-white/30 ml-0.5">
                       <BotAvatar code={code} size="sm" />
@@ -611,13 +612,13 @@ export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departe
                   <Bot className="h-4 w-4 text-white" />
                   <span className="text-[11px] text-white font-medium">Brain Team</span>
                   <div className="flex-1" />
-                  <span className="text-[9px] text-white/50 font-medium mr-1">Cellules de travail</span>
+                  <span className="text-xs text-white/50 font-medium mr-1">Cellules de travail</span>
                   {TEAM.map(b => (
                     <div key={b.code} className="flex items-center gap-1 ml-0.5">
                       <div className="w-5 h-5 rounded-full overflow-hidden ring-1 ring-white/30">
                         <BotAvatar code={b.code} size="sm" />
                       </div>
-                      <span className="text-[9px] text-white/70 hidden xl:inline">{b.name}</span>
+                      <span className="text-xs text-white/70 hidden xl:inline">{b.name}</span>
                     </div>
                   ))}
                 </>
@@ -695,7 +696,7 @@ export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departe
                           <Activity className="h-4 w-4 text-indigo-500" />
                           <div>
                             <span className="text-xs text-gray-700">Connecteurs API</span>
-                            <span className="block text-[9px] text-gray-400">Intégrez vos logiciels SaaS</span>
+                            <span className="block text-xs text-gray-400">Intégrez vos logiciels SaaS</span>
                           </div>
                         </button>
                       </div>
@@ -731,7 +732,7 @@ export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departe
                 </div>
               </div>
               {/* Disclaimer */}
-              <p className="text-center text-[9px] text-gray-400 mt-1.5">
+              <p className="text-center text-xs text-gray-400 mt-1.5">
                 Brain Team est une équipe d&apos;agents IA et peut faire des erreurs. Veuillez vérifier les réponses.
               </p>
             </div>
@@ -857,7 +858,7 @@ export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departe
               ) : isDash ? (
                 <VueEnsemble phase={activePhase} chatStage={chatStage} onStartReflexion={startReflexion} />
               ) : activePhase === "reflexion" ? (
-                <ReflexionMagazine stage={chatStage} context={reflexionContext} onStartConception={startConception} />
+                <PhaseReflexion stage={chatStage} context={reflexionContext} onStartConception={startConception} />
               ) : activePhase === "creation" ? (
                 <ConceptionWizard stage={conceptionStage} context={reflexionContext} />
               ) : activePhase === "operations" ? (
@@ -887,7 +888,7 @@ export function SBubble({ code, children, collapsed }: { code: string; children:
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 mb-1">
           <span className="text-[11px] font-semibold text-blue-700">{name}</span>
-          <span className="text-[9px] text-gray-400">{role}</span>
+          <span className="text-xs text-gray-400">{role}</span>
         </div>
         <div className="border rounded-lg px-3 py-2.5 border-l-[3px] border-l-blue-400 bg-blue-50/30">
           {children}
@@ -922,13 +923,13 @@ export function ObservationChat({ typed, setTyped }: { typed: boolean; setTyped:
       {typed && (
         <>
           <SBubble code="CFOB" collapsed>
-            <p className="text-[9px] text-gray-500 italic">Frank — Rapport Q4 terminé, marges sous surveillance</p>
+            <p className="text-xs text-gray-500 italic">Frank — Rapport Q4 terminé, marges sous surveillance</p>
           </SBubble>
           <SBubble code="CTOB" collapsed>
-            <p className="text-[9px] text-gray-500 italic">Tim — Migration DB phase 2 en cours, ETA 3 jours</p>
+            <p className="text-xs text-gray-500 italic">Tim — Migration DB phase 2 en cours, ETA 3 jours</p>
           </SBubble>
           <SBubble code="CSOB" collapsed>
-            <p className="text-[9px] text-gray-500 italic">Simone — Appel d'offres HQ identifié, soumission à préparer</p>
+            <p className="text-xs text-gray-500 italic">Simone — Appel d'offres HQ identifié, soumission à préparer</p>
           </SBubble>
         </>
       )}
@@ -950,7 +951,7 @@ export function AttentionChat({ stage, typed, setTyped, advance, pc }: {
               <TypewriterText text="Mode Attention activé. Je scanne ton environnement d'affaires pour détecter les signaux qui méritent ton focus immédiat." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
               {typed && <SBtn onClick={advance} icon={Zap} label="Lancer le scan" pc={pc} />}
             </>
-          ) : <p className="text-[9px] text-gray-400 italic">Démarrage scan — mode Attention</p>}
+          ) : <p className="text-xs text-gray-400 italic">Démarrage scan — mode Attention</p>}
         </SBubble>
       )}
 
@@ -961,7 +962,7 @@ export function AttentionChat({ stage, typed, setTyped, advance, pc }: {
               <TypewriterText text="Scan terminé. 5 signaux détectés: 2 alertes critiques, 2 tensions à surveiller, 1 opportunité à saisir. Les bots concernés sont en ligne." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
               {typed && <SBtn onClick={advance} icon={AlertTriangle} label="Voir les alertes" pc={pc} />}
             </>
-          ) : <p className="text-[9px] text-gray-400 italic">5 signaux — 2 critiques, 2 attention, 1 opportunité</p>}
+          ) : <p className="text-xs text-gray-400 italic">5 signaux — 2 critiques, 2 attention, 1 opportunité</p>}
         </SBubble>
       )}
 
@@ -972,7 +973,7 @@ export function AttentionChat({ stage, typed, setTyped, advance, pc }: {
               <TypewriterText text="Alerte urgente: ta marge brute baisse de 4.2%. Frank a les détails. Le pipeline ventes stagne aussi — Rich a sonné l'alarme." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
               {typed && <SBtn onClick={advance} icon={DollarSign} label="Analyse de Frank" pc={pc} />}
             </>
-          ) : <p className="text-[9px] text-gray-400 italic">Priorisation — marge + pipeline</p>}
+          ) : <p className="text-xs text-gray-400 italic">Priorisation — marge + pipeline</p>}
         </SBubble>
       )}
 
@@ -983,7 +984,7 @@ export function AttentionChat({ stage, typed, setTyped, advance, pc }: {
               <TypewriterText text="Carl, la marge brute est passée de 42.3% à 38.1%. Cause: coûts matières +12% sans ajustement prix. Impact: 38K$/mois. Je recommande un ajustement de 5-7% sur les produits les plus touchés." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
               {typed && <SBtn onClick={advance} icon={Activity} label="Risque tech de Tim" pc={pc} />}
             </>
-          ) : <p className="text-[9px] text-gray-400 italic">Frank — marge en baisse, ajustement prix recommandé</p>}
+          ) : <p className="text-xs text-gray-400 italic">Frank — marge en baisse, ajustement prix recommandé</p>}
         </SBubble>
       )}
 
@@ -994,7 +995,7 @@ export function AttentionChat({ stage, typed, setTyped, advance, pc }: {
               <TypewriterText text="Le projet Infrastructure a 2 semaines de retard. 3 tables critiques sans backup automatisé. J'ai besoin de 2 jours de dev supplémentaires sinon le déploiement Q1 est compromis." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
               {typed && <SBtn onClick={advance} icon={Lightbulb} label="Opportunité de Simone" pc={pc} />}
             </>
-          ) : <p className="text-[9px] text-gray-400 italic">Tim — retard infra, 2 jours dev nécessaires</p>}
+          ) : <p className="text-xs text-gray-400 italic">Tim — retard infra, 2 jours dev nécessaires</p>}
         </SBubble>
       )}
 
@@ -1005,7 +1006,7 @@ export function AttentionChat({ stage, typed, setTyped, advance, pc }: {
               <TypewriterText text="Opportunité: Hydro-Québec — appel d'offres 2.1M$ en automatisation. Match Orbit9: 87%. Deadline 12 jours. On a les compétences mais pas de soumission. Je recommande le mode Conception rapidement." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
               {typed && <SBtn onClick={advance} icon={BarChart3} label="Voir la synthèse" pc={pc} />}
             </>
-          ) : <p className="text-[9px] text-gray-400 italic">Simone — HQ 2.1M$, 12 jours</p>}
+          ) : <p className="text-xs text-gray-400 italic">Simone — HQ 2.1M$, 12 jours</p>}
         </SBubble>
       )}
 
@@ -1016,7 +1017,7 @@ export function AttentionChat({ stage, typed, setTyped, advance, pc }: {
               <TypewriterText text="Synthèse: 3 actions prioritaires. (1) Ajustement prix — 38K$/mois. (2) Débloquer infra — 2 jours. (3) Soumission HQ — 12 jours. Je recommande de passer en Modération pour prioriser." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
               {typed && <SBtn onClick={advance} icon={Target} label="Trier par priorité" pc={pc} />}
             </>
-          ) : <p className="text-[9px] text-gray-400 italic">Synthèse — 3 actions prioritaires</p>}
+          ) : <p className="text-xs text-gray-400 italic">Synthèse — 3 actions prioritaires</p>}
         </SBubble>
       )}
 
@@ -1028,7 +1029,7 @@ export function AttentionChat({ stage, typed, setTyped, advance, pc }: {
               <div className="w-3.5 h-3.5 rounded-full bg-red-500" />
               <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
               <div className="w-3.5 h-3.5 rounded-full bg-pink-500 animate-pulse" />
-              <span className="text-[9px] text-pink-700 font-semibold ml-1">Attention → Modération</span>
+              <span className="text-xs text-pink-700 font-semibold ml-1">Attention → Modération</span>
             </div>
           )}
         </div>
@@ -1050,7 +1051,7 @@ export function ModerationChat({ stage, typed, setTyped, advance, pc }: {
             <TypewriterText text="Mode Modération. On filtre et priorise les 5 signaux détectés. Je recommande: (1) Marge brute — impact financier immédiat. (2) Infra tech — bloquant. (3) Soumission HQ — deadline courte. Les 2 autres sont à surveiller." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
             {typed && <SBtn onClick={advance} icon={Filter} label="Appliquer le tri" pc={pc} />}
           </>
-        ) : <p className="text-[9px] text-gray-400 italic">Tri appliqué — 3 prioritaires, 2 en surveillance</p>}
+        ) : <p className="text-xs text-gray-400 italic">Tri appliqué — 3 prioritaires, 2 en surveillance</p>}
       </SBubble>
       {stage >= 1 && (
         <SBubble code="CEOB">
@@ -1124,7 +1125,7 @@ export function VueEnsemble({ phase, chatStage, onStartReflexion }: { phase: Pha
                       <div className={cn("h-full rounded-full transition-all duration-1000", ps.line)} style={{ width: `${ch.progress}%` }} />
                     </div>
                   </div>
-                  <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-medium shrink-0", ps.badge)}>{ps.label}</span>
+                  <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium shrink-0", ps.badge)}>{ps.label}</span>
                 </div>
               );
             })}
@@ -1147,9 +1148,9 @@ export function VueEnsemble({ phase, chatStage, onStartReflexion }: { phase: Pha
                   <BotAvatar code={p.bot} size="sm" />
                   <div className="flex-1 min-w-0">
                     <span className="text-xs font-medium text-gray-800 truncate block">{p.name}</span>
-                    <span className="text-[9px] text-gray-400">{p.chantier}</span>
+                    <span className="text-xs text-gray-400">{p.chantier}</span>
                   </div>
-                  <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-medium shrink-0", ps.badge)}>{ps.label}</span>
+                  <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium shrink-0", ps.badge)}>{ps.label}</span>
                 </div>
               );
             })}
@@ -1169,7 +1170,7 @@ export function VueEnsemble({ phase, chatStage, onStartReflexion }: { phase: Pha
                 <alert.icon className={cn("h-3.5 w-3.5 shrink-0 mt-0.5", alert.tc)} />
                 <div className="flex-1 min-w-0">
                   <span className={cn("text-xs font-medium block truncate", alert.tc)}>{alert.title}</span>
-                  <span className="text-[9px] text-gray-500">{alert.source}</span>
+                  <span className="text-xs text-gray-500">{alert.source}</span>
                 </div>
               </div>
             ))}
@@ -1194,7 +1195,7 @@ export function VueEnsemble({ phase, chatStage, onStartReflexion }: { phase: Pha
                   <BotAvatar code={m.bot} size="sm" />
                   <span className="text-xs text-gray-700 flex-1 truncate">{m.name}</span>
                   {m.urgent && <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" title="Urgent" />}
-                  <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-medium shrink-0", ps.badge)}>{ps.label}</span>
+                  <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium shrink-0", ps.badge)}>{ps.label}</span>
                 </div>
               );
             })}
@@ -1213,7 +1214,7 @@ export function VueEnsemble({ phase, chatStage, onStartReflexion }: { phase: Pha
                 {n.hot ? <Flame className="h-3.5 w-3.5 text-orange-400 shrink-0 mt-0.5" /> : <Newspaper className="h-3.5 w-3.5 text-gray-400 shrink-0 mt-0.5" />}
                 <div className="flex-1 min-w-0">
                   <span className="text-xs text-gray-700 leading-snug block">{n.title}</span>
-                  <span className="text-[9px] text-gray-400">{n.source}</span>
+                  <span className="text-xs text-gray-400">{n.source}</span>
                 </div>
               </div>
             ))}
@@ -1229,9 +1230,9 @@ export function VueEnsemble({ phase, chatStage, onStartReflexion }: { phase: Pha
           <div className="divide-y divide-gray-50">
             {DECISIONS_DATA.map(d => (
               <div key={d.id} className="px-4 py-2.5 flex items-center gap-2.5">
-                <span className="text-[9px] font-mono text-gray-400 shrink-0">{d.id}</span>
+                <span className="text-xs font-mono text-gray-400 shrink-0">{d.id}</span>
                 <span className="text-xs text-gray-700 flex-1 truncate">{d.title}</span>
-                <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-medium", d.sc)}>{d.status}</span>
+                <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", d.sc)}>{d.status}</span>
               </div>
             ))}
           </div>
@@ -1251,7 +1252,7 @@ export function VueEnsemble({ phase, chatStage, onStartReflexion }: { phase: Pha
               <div key={i} className="px-4 py-2.5 flex items-center gap-2.5">
                 <BotAvatar code={act.bot} size="sm" />
                 <span className="text-xs text-gray-700 flex-1 leading-snug">{act.action}</span>
-                <span className="text-[9px] text-gray-400 shrink-0">{act.time}</span>
+                <span className="text-xs text-gray-400 shrink-0">{act.time}</span>
               </div>
             ))}
           </div>
@@ -1343,7 +1344,7 @@ export function ReflexionChat({ stage, typed, setTyped, advance, pc, context }: 
           {stage === 0 && (
             <div className="flex items-center gap-1.5 ml-10 bg-orange-50 border border-orange-200 rounded-lg px-2 py-1">
               <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
-              <span className="text-[9px] text-orange-600 font-medium">Mode Réflexion actif</span>
+              <span className="text-xs text-orange-600 font-medium">Mode Réflexion actif</span>
             </div>
           )}
           <SBubble code="CEOB" collapsed={stage > 0}>
@@ -1360,11 +1361,11 @@ export function ReflexionChat({ stage, typed, setTyped, advance, pc, context }: 
                       <div key={bot.code} className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-lg px-3 py-1.5 animate-in fade-in slide-in-from-left-2" style={{ animationDelay: bot.delay, animationFillMode: "both", animationDuration: "500ms" }}>
                         <BotAvatar code={bot.code} size="sm" />
                         <div className="flex-1">
-                          <span className="text-[9px] font-bold text-gray-700">{bot.name}</span>
-                          <span className="text-[9px] text-gray-500 ml-1.5">{bot.role}</span>
+                          <span className="text-xs font-bold text-gray-700">{bot.name}</span>
+                          <span className="text-xs text-gray-500 ml-1.5">{bot.role}</span>
                         </div>
                         <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                        <span className="text-[9px] text-emerald-600 font-medium">Rejoint</span>
+                        <span className="text-xs text-emerald-600 font-medium">Rejoint</span>
                       </div>
                     ))}
                   </div>
@@ -1372,13 +1373,13 @@ export function ReflexionChat({ stage, typed, setTyped, advance, pc, context }: 
                 {typed && (
                   <div className="mt-2 flex flex-wrap gap-1">
                     {["Brainstorm", "Analyser", "Rechercher", "Challenger", "Deep Search", "5 Pourquoi"].map(b => (
-                      <span key={b} className="text-[9px] bg-orange-50 border border-orange-200 text-orange-700 px-2.5 py-1 rounded-full font-medium">{b}</span>
+                      <span key={b} className="text-xs bg-orange-50 border border-orange-200 text-orange-700 px-2.5 py-1 rounded-full font-medium">{b}</span>
                     ))}
                   </div>
                 )}
                 {typed && <SBtn onClick={advance} icon={Search} label="Commencer l'analyse" pc={pc} />}
               </>
-            ) : <p className="text-[9px] text-gray-400 italic">Analyse démarrée — 3 bots mobilisés</p>}
+            ) : <p className="text-xs text-gray-400 italic">Analyse démarrée — 3 bots mobilisés</p>}
           </SBubble>
         </>
       )}
@@ -1404,7 +1405,7 @@ export function ReflexionChat({ stage, typed, setTyped, advance, pc, context }: 
                   </div>
                 )}
               </>
-            ) : <p className="text-[9px] text-gray-400 italic">Diagnostic — 3 questions de cadrage</p>}
+            ) : <p className="text-xs text-gray-400 italic">Diagnostic — 3 questions de cadrage</p>}
           </SBubble>
           {stage === 1 && typed && (
             <>
@@ -1430,7 +1431,7 @@ export function ReflexionChat({ stage, typed, setTyped, advance, pc, context }: 
                   <div className="w-1.5 h-1.5 rounded-full bg-red-400 animate-bounce" style={{ animationDelay: "150ms" }} />
                   <div className="w-1.5 h-1.5 rounded-full bg-red-400 animate-bounce" style={{ animationDelay: "300ms" }} />
                 </div>
-                <span className="text-[9px] text-red-600 font-medium">3 bots analysent en parallèle...</span>
+                <span className="text-xs text-red-600 font-medium">3 bots analysent en parallèle...</span>
               </div>
               <div className="space-y-1">
                 {[
@@ -1438,7 +1439,7 @@ export function ReflexionChat({ stage, typed, setTyped, advance, pc, context }: 
                   { code: "CFOB", text: "Frank modèle le budget et le ROI..." },
                   { code: "CTOB", text: "Tim évalue la faisabilité technique..." },
                 ].map(b => (
-                  <div key={b.code} className="flex items-center gap-2 text-[9px] text-gray-600">
+                  <div key={b.code} className="flex items-center gap-2 text-xs text-gray-600">
                     <BotAvatar code={b.code} size="sm" />
                     <span>{b.text}</span>
                     <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse ml-auto" />
@@ -1450,7 +1451,7 @@ export function ReflexionChat({ stage, typed, setTyped, advance, pc, context }: 
           )}
           {stage > 2 && (
             <div className="opacity-60">
-              <p className="text-[9px] text-gray-400 italic ml-9">Consultation multi-bot — 3 analyses parallèles</p>
+              <p className="text-xs text-gray-400 italic ml-9">Consultation multi-bot — 3 analyses parallèles</p>
             </div>
           )}
         </>
@@ -1464,7 +1465,7 @@ export function ReflexionChat({ stage, typed, setTyped, advance, pc, context }: 
               <TypewriterText text="3 insights marché: (1) Le message actuel parle de technologie, pas de ROI — les PME décrochent. (2) Le canal LinkedIn est sous-exploité — 0 contenu organique depuis 3 mois. (3) Les concurrents investissent 3x plus en content marketing. Recommandation: pivoter le messaging vers les résultats business concrets." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
               {typed && <SBtn onClick={advance} icon={DollarSign} label="Perspective CFO" pc={pc} />}
             </>
-          ) : <p className="text-[9px] text-gray-400 italic">Mathilde — messaging ROI, LinkedIn, concurrence</p>}
+          ) : <p className="text-xs text-gray-400 italic">Mathilde — messaging ROI, LinkedIn, concurrence</p>}
         </SBubble>
       )}
 
@@ -1475,7 +1476,7 @@ export function ReflexionChat({ stage, typed, setTyped, advance, pc, context }: 
             <>
               <TypewriterText text="Analyse financière: Le CAC de 780$ est 2.3x au-dessus du benchmark SaaS B2B (340$). Le ROI marketing est de 1.8x — sous le seuil de 3x recommandé. Proposition: réallouer 40% du budget salons vers digital. Économie projetée: 2,880$/mois. ROI projeté: 3.2x en 6 mois." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
               {typed && (
-                <div className="mt-2 bg-emerald-50 rounded-lg px-3 py-2 text-[9px]">
+                <div className="mt-2 bg-emerald-50 rounded-lg px-3 py-2 text-xs">
                   <div className="flex items-center gap-4">
                     <div><span className="font-bold text-emerald-700">CAC actuel:</span> 780$</div>
                     <div><span className="font-bold text-emerald-700">Cible:</span> 340$</div>
@@ -1485,7 +1486,7 @@ export function ReflexionChat({ stage, typed, setTyped, advance, pc, context }: 
               )}
               {typed && <SBtn onClick={advance} icon={Brain} label="Perspective CTO" pc={pc} />}
             </>
-          ) : <p className="text-[9px] text-gray-400 italic">Frank — CAC 780$ vs 340$, ROI 3.2x</p>}
+          ) : <p className="text-xs text-gray-400 italic">Frank — CAC 780$ vs 340$, ROI 3.2x</p>}
         </SBubble>
       )}
 
@@ -1497,13 +1498,13 @@ export function ReflexionChat({ stage, typed, setTyped, advance, pc, context }: 
               <TypewriterText text="Faisabilité technique: (1) Le site web convertit à 1.2% — déployer un chatbot AI augmenterait à 3-4%. (2) Email nurturing inexistant — on peut automatiser 80% avec les outils déjà bâtis. (3) Risque: timeline agressive pour Q2, je recommande Q2+Q3 pour les automatisations lourdes." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
               {typed && (
                 <div className="mt-2 flex items-center gap-2">
-                  <span className="text-[9px] bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full font-medium">Conversion: 1.2% → 3-4%</span>
-                  <span className="text-[9px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">Risque: timeline Q2</span>
+                  <span className="text-xs bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full font-medium">Conversion: 1.2% → 3-4%</span>
+                  <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">Risque: timeline Q2</span>
                 </div>
               )}
               {typed && <SBtn onClick={advance} icon={Layers} label="Voir la synthèse" pc={pc} />}
             </>
-          ) : <p className="text-[9px] text-gray-400 italic">Tim — conversion 1.2%→3-4%, nurturing auto</p>}
+          ) : <p className="text-xs text-gray-400 italic">Tim — conversion 1.2%→3-4%, nurturing auto</p>}
         </SBubble>
       )}
 
@@ -1515,135 +1516,206 @@ export function ReflexionChat({ stage, typed, setTyped, advance, pc, context }: 
               <TypewriterText text="Synthèse des 3 perspectives: Consensus sur le pivot messaging (ROI > tech). Divergence sur la timeline — Mathilde veut Q2 agressif, Tim recommande Q2+Q3. Frank confirme le budget est là si on réalloue les salons. Je recommande le brainstorm pour générer des idées concrètes." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
               {typed && <SBtn onClick={advance} icon={Lightbulb} label="Lancer le Brainstorm" pc={pc} />}
             </>
-          ) : <p className="text-[9px] text-gray-400 italic">Consensus messaging, divergence timeline</p>}
+          ) : <p className="text-xs text-gray-400 italic">Consensus messaging, divergence timeline</p>}
         </SBubble>
       )}
 
-      {/* Stage 7: brainstorm */}
+      {/* Stage 7: brainstorm — CEOB intro (auto-advance) */}
       {stage >= 7 && (
         <SBubble code="CEOB" collapsed={stage > 7}>
           {stage === 7 ? (
-            <>
-              <TypewriterText text="Mode Brainstorm activé. 6 idées générées par l'équipe. Votez à droite pour prioriser — les idées plébiscitées seront intégrées au plan d'action. Chaque bot a contribué selon sa spécialité." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
-              {typed && <SBtn onClick={advance} icon={Layers} label="Synthétiser les idées" pc={pc} />}
-            </>
-          ) : <p className="text-[9px] text-gray-400 italic">6 idées, votes en cours</p>}
+            <TypewriterText text="Mode Brainstorm activé. J'ai généré 6 idées SCAMPER avec l'équipe — chaque bot a contribué selon sa spécialité. Les idées sont affichées à droite, votez pour prioriser." speed={8} className="text-sm text-gray-700" onComplete={() => setTimeout(() => advance(), 1500)} />
+          ) : <p className="text-xs text-gray-400 italic">6 idées SCAMPER générées</p>}
         </SBubble>
       )}
 
-      {/* Stage 8: synthese-brainstorm — bonification itérative */}
+      {/* Stage 8: brainstorm — CMOB perspective créative (auto-advance) */}
       {stage >= 8 && (
-        <SBubble code="CEOB" collapsed={stage > 8}>
+        <SBubble code="CMOB" collapsed={stage > 8}>
           {stage === 8 ? (
-            <>
-              <TypewriterText text="Synthèse des 6 idées + perspectives des 3 bots. Je combine les idées les plus votées avec les insights du diagnostic. Voici une proposition bonifiée à droite — on fusionne le referral program de Frank avec le contenu LinkedIn de Mathilde pour un plan intégré. Tu veux qu'on rechallenge ou qu'on creuse?" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
-              {typed && (
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  <span className="text-[9px] bg-orange-600 text-white px-2.5 py-1 rounded-full font-medium cursor-pointer">Rechallenger</span>
-                  <span className="text-[9px] bg-orange-100 text-orange-700 px-2.5 py-1 rounded-full font-medium cursor-pointer">Approfondir une idée</span>
-                  <span className="text-[9px] bg-orange-100 text-orange-700 px-2.5 py-1 rounded-full font-medium cursor-pointer">Ajouter mes idées</span>
-                  <span className="text-[9px] bg-orange-100 text-orange-700 px-2.5 py-1 rounded-full font-medium cursor-pointer">Valider et continuer</span>
-                </div>
-              )}
-              {typed && <SBtn onClick={advance} icon={Search} label="Creuser avec les 5 Pourquoi" pc={pc} />}
-            </>
-          ) : <p className="text-[9px] text-gray-400 italic">Synthèse brainstorm — plan intégré referral + LinkedIn</p>}
+            <TypewriterText text="Perspective créative — 3 angles disruptifs identifiés. Le programme de referral peut être gamifié pour doubler l'engagement. Le contenu LinkedIn devrait cibler les décideurs C-Level avec des études de cas ROI. Et l'idée de webinaire VITAA est une mine d'or pour le pipeline." speed={8} className="text-sm text-gray-700" onComplete={() => setTimeout(() => advance(), 1500)} />
+          ) : <p className="text-xs text-gray-400 italic">3 angles créatifs — gamification, C-Level, webinaires</p>}
         </SBubble>
       )}
 
-      {/* Stage 9: cinq-pourquoi */}
+      {/* Stage 9: brainstorm — CTOB faisabilité (manual) */}
       {stage >= 9 && (
-        <SBubble code="CEOB" collapsed={stage > 9}>
+        <SBubble code="CTOB" collapsed={stage > 9}>
           {stage === 9 ? (
             <>
-              <TypewriterText text="Méthode 5 Pourquoi — on creuse la cause racine du problème de performance marketing. Le résultat est à droite dans l'arbre de causes." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
-              {typed && <SBtn onClick={advance} icon={Globe} label="Lancer le Deep Search" pc={pc} />}
+              <TypewriterText text="Faisabilité technique — 3 idées réalisables en 30 jours. Le referral gamifié nécessite juste un module de scoring (2 jours dev). Le ciblage LinkedIn utilise notre CRM existant. Les webinaires VITAA s'appuient sur LiveKit qu'on a déjà. Tout est scalable." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && <SBtn onClick={advance} icon={Layers} label="Synthétiser les idées" pc={pc} />}
             </>
-          ) : <p className="text-[9px] text-gray-400 italic">Cause racine: messaging technique vs résultats</p>}
+          ) : <p className="text-xs text-gray-400 italic">3 idées réalisables en 30 jours — infra existante</p>}
         </SBubble>
       )}
 
-      {/* Stage 10: deep-search */}
+      {/* Stage 10: synthese-brainstorm — CEOB consolidation (auto-advance) */}
       {stage >= 10 && (
         <SBubble code="CEOB" collapsed={stage > 10}>
           {stage === 10 ? (
-            <>
-              <TypewriterText text="Deep Search lancé. Je cherche des données externes pour valider nos hypothèses. 4 sources trouvées avec des scores de pertinence. Les résultats s'affichent à droite." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
-              {typed && <SBtn onClick={advance} icon={Layers} label="Synthétiser les recherches" pc={pc} />}
-            </>
-          ) : <p className="text-[9px] text-gray-400 italic">4 sources externes validées</p>}
+            <TypewriterText text="Consolidation des 6 idées en 3 axes stratégiques. J'ai fusionné le referral gamifié de Mathilde avec l'analyse ROI de Frank, et le ciblage C-Level avec la data CRM de Tim. Le résultat est un plan intégré à droite." speed={8} className="text-sm text-gray-700" onComplete={() => setTimeout(() => advance(), 1500)} />
+          ) : <p className="text-xs text-gray-400 italic">6 idées consolidées en 3 axes</p>}
         </SBubble>
       )}
 
-      {/* Stage 11: synthese-recherche */}
+      {/* Stage 11: synthese-brainstorm — CFOB validation budget (manual) */}
       {stage >= 11 && (
-        <SBubble code="CEOB" collapsed={stage > 11}>
+        <SBubble code="CFOB" collapsed={stage > 11}>
           {stage === 11 ? (
             <>
-              <TypewriterText text="Synthèse complète — je combine les 4 sources du Deep Search avec la cause racine des 5 Pourquoi et les idées du brainstorm. Résultats consolidés à droite: 3 constats validés, 2 hypothèses à vérifier, 1 risque identifié. On est prêt pour challenger les conclusions?" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
-              {typed && (
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  <span className="text-[9px] bg-orange-600 text-white px-2.5 py-1 rounded-full font-medium cursor-pointer">Challenger les conclusions</span>
-                  <span className="text-[9px] bg-orange-100 text-orange-700 px-2.5 py-1 rounded-full font-medium cursor-pointer">Relancer le Deep Search</span>
-                  <span className="text-[9px] bg-orange-100 text-orange-700 px-2.5 py-1 rounded-full font-medium cursor-pointer">Demander un 2e avis</span>
-                  <span className="text-[9px] bg-orange-100 text-orange-700 px-2.5 py-1 rounded-full font-medium cursor-pointer">Ajouter mes observations</span>
-                </div>
-              )}
-              {typed && <SBtn onClick={advance} icon={AlertTriangle} label="Challenger les conclusions" pc={pc} />}
+              <TypewriterText text="Validation financière — l'axe 1 (Referral) a le meilleur ROI à 4.2x pour un budget de 1,200$/mois. L'axe 2 (Content LinkedIn) est à 2.8x mais crée un actif long terme. L'axe 3 (Webinaires) est le plus risqué avec le plus haut potentiel. Je recommande de prioriser axes 1+2." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && <SBtn onClick={advance} icon={Search} label="Creuser avec les 5 Pourquoi" pc={pc} />}
             </>
-          ) : <p className="text-[9px] text-gray-400 italic">Synthèse recherche — 3 constats, 2 hypothèses, 1 risque</p>}
+          ) : <p className="text-xs text-gray-400 italic">Validation budget — axes 1+2 prioritaires, ROI 4.2x</p>}
         </SBubble>
       )}
 
-      {/* Stage 12: challenge */}
+      {/* Stage 12: cinq-pourquoi — CEOB activation (auto-advance) */}
       {stage >= 12 && (
+        <SBubble code="CEOB" collapsed={stage > 12}>
+          {stage === 12 ? (
+            <TypewriterText text="Méthode 5 Pourquoi activée — on creuse la cause racine de la sous-performance marketing. Pourquoi le taux de conversion stagne à 2.1%? L'arbre de causes se construit à droite." speed={8} className="text-sm text-gray-700" onComplete={() => setTimeout(() => advance(), 1500)} />
+          ) : <p className="text-xs text-gray-400 italic">5 Pourquoi — analyse cause racine lancée</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 13: cinq-pourquoi — CTOB blocage technique (auto-advance) */}
+      {stage >= 13 && (
+        <SBubble code="CTOB" collapsed={stage > 13}>
+          {stage === 13 ? (
+            <TypewriterText text="Pourquoi 3 révèle le vrai blocage : l'infrastructure legacy du site. Temps de chargement à 4.2s (vs 1.5s industrie), mobile score 38/100, et le SEO technique bloque 60% du trafic organique. C'est un problème de fondation, pas de messaging." speed={8} className="text-sm text-gray-700" onComplete={() => setTimeout(() => advance(), 1500)} />
+          ) : <p className="text-xs text-gray-400 italic">Pourquoi 3 — blocage infra legacy, mobile 38/100</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 14: cinq-pourquoi — CEOB cause racine (manual) */}
+      {stage >= 14 && (
+        <SBubble code="CEOB" collapsed={stage > 14}>
+          {stage === 14 ? (
+            <>
+              <TypewriterText text="Cause racine identifiée : le messaging parle technologie au lieu de résultats, ET l'infra web ne convertit pas le trafic existant. 2 leviers d'action : refonte messaging ROI + optimisation technique rapide. On lance le Deep Search pour valider avec des données externes." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && <SBtn onClick={advance} icon={Globe} label="Lancer le Deep Search" pc={pc} />}
+            </>
+          ) : <p className="text-xs text-gray-400 italic">Cause racine — messaging + infra, 2 leviers</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 15: deep-search — CEOB lancement (auto-advance) */}
+      {stage >= 15 && (
+        <SBubble code="CEOB" collapsed={stage > 15}>
+          {stage === 15 ? (
+            <TypewriterText text="Deep Search lancé sur 4 sources : benchmarks industrie, études de cas similaires, données marché et tendances sectorielles. Les résultats s'affichent à droite avec des scores de pertinence." speed={8} className="text-sm text-gray-700" onComplete={() => setTimeout(() => advance(), 1500)} />
+          ) : <p className="text-xs text-gray-400 italic">Deep Search — 4 sources analysées</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 16: deep-search — CMOB benchmarks (manual) */}
+      {stage >= 16 && (
+        <SBubble code="CMOB" collapsed={stage > 16}>
+          {stage === 16 ? (
+            <>
+              <TypewriterText text="Les benchmarks montrent un écart de 3x vs industrie sur le taux de conversion. Les entreprises B2B qui utilisent des études de cas ROI convertissent à 6.4% vs notre 2.1%. La source McKinsey confirme que 73% des décideurs préfèrent du contenu basé sur les résultats." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && <SBtn onClick={advance} icon={Layers} label="Synthétiser les recherches" pc={pc} />}
+            </>
+          ) : <p className="text-xs text-gray-400 italic">Benchmarks — écart 3x conversion, 73% veulent du ROI</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 17: synthese-recherche — CEOB synthèse (auto-advance) */}
+      {stage >= 17 && (
+        <SBubble code="CEOB" collapsed={stage > 17}>
+          {stage === 17 ? (
+            <TypewriterText text="Synthèse croisée des 4 sources avec la cause racine des 5 Pourquoi et les axes du brainstorm. 3 constats validés par les données, 2 hypothèses à vérifier terrain, 1 risque de cannibalisation identifié." speed={8} className="text-sm text-gray-700" onComplete={() => setTimeout(() => advance(), 1500)} />
+          ) : <p className="text-xs text-gray-400 italic">Synthèse — 3 constats, 2 hypothèses, 1 risque</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 18: synthese-recherche — CFOB risques (manual) */}
+      {stage >= 18 && (
+        <SBubble code="CFOB" collapsed={stage > 18}>
+          {stage === 18 ? (
+            <>
+              <TypewriterText text="3 risques identifiés, 2 mitigables. Le risque de cannibalisation entre referral et contenu LinkedIn est gérable avec un calendrier décalé. Le budget total reste dans l'enveloppe si on phase les investissements. Seul le risque de capacité interne nécessite une décision." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && <SBtn onClick={advance} icon={AlertTriangle} label="Challenger les conclusions" pc={pc} />}
+            </>
+          ) : <p className="text-xs text-gray-400 italic">3 risques — 2 mitigables, 1 décision requise</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 19: challenge — CFOB attaque (auto-advance) */}
+      {stage >= 19 && (
         <>
-          {stage === 12 && (
+          {stage === 19 && (
             <div className="flex justify-end">
               <div className="bg-blue-50 rounded-xl rounded-tr-none px-3 py-2 max-w-[80%]">
                 <p className="text-sm text-blue-900">Je challenge le budget: 8K$/mois ça semble trop agressif vu notre taille.</p>
               </div>
             </div>
           )}
-          <SBubble code="CFOB" collapsed={stage > 12}>
-            {stage === 12 ? (
-              <>
-                <TypewriterText text="Challenge accepté. Le programme referral seul coûte 1,200$/mois et génère un ROI de 4.2x. Si on priorise referral + contenu LinkedIn (budget combiné: 3,800$/mois), le ROI projeté est de 3.6x. C'est plus conservateur que le plan complet à 8K$, et on peut scaler après validation Q2." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
-                {typed && (
-                  <div className="mt-2 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 text-[9px]">
-                    <div className="font-semibold text-emerald-700 mb-1">Plan révisé (conservateur):</div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>Referral: 1,200$/mois → ROI 4.2x</div>
-                      <div>LinkedIn: 2,600$/mois → ROI 2.8x</div>
-                      <div className="font-bold text-emerald-800 col-span-2">Total: 3,800$/mois → ROI combiné 3.6x</div>
-                    </div>
-                  </div>
-                )}
-                {typed && <SBtn onClick={advance} icon={FileText} label="Générer le pré-rapport" pc={pc} />}
-              </>
-            ) : <p className="text-[9px] text-gray-400 italic">Challenge budget — plan révisé 3,800$/mois</p>}
+          <SBubble code="CFOB" collapsed={stage > 19}>
+            {stage === 19 ? (
+              <TypewriterText text="Challenge accepté. Le programme referral seul coûte 1,200$/mois avec un ROI de 4.2x. Le plan complet à 8K$ inclut des postes non essentiels. Si on coupe le paid ads et qu'on priorise referral + contenu organique, on tombe à 3,800$/mois avec un ROI de 3.6x." speed={8} className="text-sm text-gray-700" onComplete={() => setTimeout(() => advance(), 1500)} />
+            ) : <p className="text-xs text-gray-400 italic">Challenge budget — plan complet trop agressif</p>}
           </SBubble>
         </>
       )}
 
-      {/* Stage 13: pre-rapport */}
-      {stage >= 13 && (
-        <SBubble code="CEOB" collapsed={stage > 13}>
-          {stage === 13 ? (
-            <>
-              <TypewriterText text="Le pré-rapport se construit à droite avec les 8 sections remplies durant cette Réflexion. Table des matières sur le côté, contenu à droite. Tu peux revoir chaque section. Quand tu es prêt, on cristallise en document ou on passe en Atelier." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
-              {typed && <SBtn onClick={advance} icon={Paperclip} label="Extraire et finaliser" pc={pc} />}
-            </>
-          ) : <p className="text-[9px] text-gray-400 italic">Pré-rapport 8 sections</p>}
+      {/* Stage 20: challenge — CTOB défense (auto-advance) */}
+      {stage >= 20 && (
+        <SBubble code="CTOB" collapsed={stage > 20}>
+          {stage === 20 ? (
+            <TypewriterText text="Je défends : l'infra est scalable, le coût marginal est de 0.12$/user après le setup initial. Le referral gamifié utilise notre stack existante — pas de nouveau SaaS. Et le module de scoring prend 2 jours de dev, pas 2 semaines. Le ROI technique est immédiat." speed={8} className="text-sm text-gray-700" onComplete={() => setTimeout(() => advance(), 1500)} />
+          ) : <p className="text-xs text-gray-400 italic">Défense — infra scalable, coût marginal 0.12$/user</p>}
         </SBubble>
       )}
 
-      {/* Stage 14: extraction — 3 options finales */}
-      {stage >= 14 && (
-        <SBubble code="CEOB" collapsed={stage > 14}>
-          {stage === 14 ? (
+      {/* Stage 21: challenge — CEOB verdict (manual) */}
+      {stage >= 21 && (
+        <SBubble code="CEOB" collapsed={stage > 21}>
+          {stage === 21 ? (
             <>
-              <TypewriterText text="Rapport complet. 3 options: cristalliser en document formel, passer en Atelier pour créer le plan d'action, ou continuer l'analyse avec d'autres outils." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              <TypewriterText text="Verdict : 2 propositions validées (referral + LinkedIn), 1 à retravailler (webinaires — budget à réduire de 40%). Plan révisé : 3,800$/mois au lieu de 8K$, ROI combiné 3.6x. Le challenge de Frank a permis d'économiser 4,200$/mois." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && (
+                <div className="mt-2 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 text-xs">
+                  <div className="font-semibold text-emerald-700 mb-1">Plan révisé (conservateur):</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>Referral: 1,200$/mois → ROI 4.2x</div>
+                    <div>LinkedIn: 2,600$/mois → ROI 2.8x</div>
+                    <div className="font-bold text-emerald-800 col-span-2">Total: 3,800$/mois → ROI combiné 3.6x</div>
+                  </div>
+                </div>
+              )}
+              {typed && <SBtn onClick={advance} icon={FileText} label="Générer le pré-rapport" pc={pc} />}
+            </>
+          ) : <p className="text-xs text-gray-400 italic">Verdict — plan 3,800$/mois, ROI 3.6x</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 22: pre-rapport — CEOB compilation (auto-advance) */}
+      {stage >= 22 && (
+        <SBubble code="CEOB" collapsed={stage > 22}>
+          {stage === 22 ? (
+            <TypewriterText text="Le pré-rapport compile les 7 sections précédentes. Table des matières sur le côté à droite, contenu détaillé pour chaque section. Diagnostic, brainstorm, analyses, challenge — tout est documenté et traçable." speed={8} className="text-sm text-gray-700" onComplete={() => setTimeout(() => advance(), 1500)} />
+          ) : <p className="text-xs text-gray-400 italic">Pré-rapport — compilation 7 sections</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 23: pre-rapport — CEOB livrables (auto-advance) */}
+      {stage >= 23 && (
+        <SBubble code="CEOB" collapsed={stage > 23}>
+          {stage === 23 ? (
+            <TypewriterText text="3 livrables identifiés pour la phase Conception : 1) Plan marketing intégré referral + LinkedIn avec calendrier Q2, 2) Cahier des charges technique pour l'optimisation web, 3) Budget prévisionnel 6 mois avec jalons de validation ROI." speed={8} className="text-sm text-gray-700" onComplete={() => setTimeout(() => advance(), 1500)} />
+          ) : <p className="text-xs text-gray-400 italic">3 livrables — plan marketing, cahier technique, budget</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 24: pre-rapport — CEOB phase complete + options (manual) */}
+      {stage >= 24 && (
+        <SBubble code="CEOB" collapsed={stage > 24}>
+          {stage === 24 ? (
+            <>
+              <TypewriterText text="Phase Réflexion complète. Les 8 sections sont sauvegardées. 3 options : cristalliser en document formel, passer en Atelier pour créer le plan d'action concret, ou continuer l'analyse." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
               {typed && (
                 <div className="mt-2 space-y-1.5">
                   {[
@@ -1656,20 +1728,20 @@ export function ReflexionChat({ stage, typed, setTyped, advance, pc, context }: 
                     >
                       <opt.icon className={cn("h-3.5 w-3.5 shrink-0", pc.text)} />
                       <div className="flex-1">
-                        <p className="text-[9px] font-semibold text-gray-800">{opt.label}</p>
-                        <p className="text-[9px] text-gray-500">{opt.desc}</p>
+                        <p className="text-xs font-semibold text-gray-800">{opt.label}</p>
+                        <p className="text-xs text-gray-500">{opt.desc}</p>
                       </div>
                     </button>
                   ))}
                 </div>
               )}
             </>
-          ) : <p className="text-[9px] text-gray-400 italic">3 options finales</p>}
+          ) : <p className="text-xs text-gray-400 italic">Phase complète — 3 options finales</p>}
         </SBubble>
       )}
 
-      {/* Stage 15: transition — passage vers Conception */}
-      {stage >= 15 && (
+      {/* Stage 25: transition — passage vers Conception */}
+      {stage >= 25 && (
         <div className="bg-gradient-to-r from-orange-50 to-yellow-50 border border-orange-300 rounded-xl px-4 py-3">
           <TypewriterText text="Prêt pour Créer! Les 8 sections sont sauvegardées. On va maintenant cristalliser le plan d'action concret à partir de tout ce qu'on a analysé." speed={10} className="text-sm text-orange-800 font-medium" onComplete={() => setTyped(true)} />
           {typed && (
@@ -1677,7 +1749,7 @@ export function ReflexionChat({ stage, typed, setTyped, advance, pc, context }: 
               <div className="w-3.5 h-3.5 rounded-full bg-orange-500" />
               <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
               <div className="w-3.5 h-3.5 rounded-full bg-yellow-500 animate-pulse" />
-              <span className="text-[9px] text-orange-700 font-semibold ml-1">Réflexion → Conception</span>
+              <span className="text-xs text-orange-700 font-semibold ml-1">Réflexion → Conception</span>
             </div>
           )}
         </div>
@@ -1688,27 +1760,74 @@ export function ReflexionChat({ stage, typed, setTyped, advance, pc, context }: 
 
 // ========== REFLEXION MAGAZINE SUB-COMPONENTS (EXACT copy from SimPhaseReflexion — stacked) ==========
 
-function MagDiagnostic() {
+function MagDiagnostic({ stage = 99 }: { stage?: number }) {
+  /* Pattern progressif: chaque Mag* peut recevoir `stage` en prop pour rendre son contenu progressif.
+     Ce pattern sera répliqué pour PhaseConception, PhaseExecution, PhaseRetroaction. */
+  const REVEAL_STAGE: Record<string, number> = { "Présence web": 3, "Conversion": 3, "SEO technique": 5, "Mobile": 5, "Vitesse": 5, "Accessibilité": 6 };
+  const [chantierLoading, setChantierLoading] = useState<string | null>(null);
+  const [chantierDone, setChantierDone] = useState<string | null>(null);
   return (
     <div className="space-y-4">
-      {/* Indicateur mode actif */}
-      <div className="flex items-center gap-2 pb-2 border-b border-orange-200">
-        <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
-        <span className="text-[10px] text-orange-600 font-medium">Mode Analyse actif</span>
-        <span className="text-[9px] text-gray-400 ml-auto">6 axes analysés par 4 bots</span>
+      {/* Score de maturité global — EN PREMIER, pattern V3 card */}
+      <div className="rounded-xl border border-gray-200 shadow-sm bg-white overflow-hidden hover:shadow-md hover:border-blue-200 transition-all">
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+          <Gauge className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+          <span className="text-sm font-bold text-gray-900">Score de maturite global</span>
+          <span className="text-xs font-bold bg-gray-900 text-white px-2.5 py-0.5 rounded-full ml-auto">{stage >= 6 ? "42%" : "..."}</span>
+        </div>
+        <div className="px-4 py-3 space-y-3">
+          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div className="h-full bg-orange-400 rounded-full transition-all" style={{ width: stage >= 6 ? "42%" : "0%" }} />
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div>
+              <p className="text-xs text-gray-400">Axes critiques</p>
+              <p className="text-xs font-bold text-orange-600">{stage >= 6 ? "3" : "—"}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400">Bots mobilises</p>
+              <p className="text-xs font-bold text-blue-600">{stage >= 3 ? "4" : "—"}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400">Actions identifiees</p>
+              <p className="text-xs font-bold text-emerald-600">{stage >= 6 ? "18" : "—"}</p>
+            </div>
+          </div>
+          {stage >= 6 && (
+          <div className="pt-2 border-t border-gray-100 flex items-center gap-2">
+            <span className="text-xs text-gray-500">Recommandation Paco:</span>
+            <span className="text-xs text-orange-700 font-medium">Prioriser Palettisation (score 15%) puis IoT (8%)</span>
+          </div>
+          )}
+        </div>
       </div>
 
-      {/* Diagnostic intégré — ACCENT VISUEL FORT */}
+      {/* Diagnostic — grille axes */}
       <div className="space-y-3">
-        <div className="bg-gradient-to-r from-orange-600 to-amber-500 rounded-xl px-4 py-3 shadow-sm">
-          <div className="flex items-center gap-2">
-            <Brain className="h-4 w-4 text-white" />
-            <p className="text-sm font-bold text-white">Diagnostic des axes de travail</p>
-          </div>
-          <p className="text-[11px] text-white/80 mt-1">Les bots analysent en temps réel votre mission et identifient les opportunités. Cliquez sur un axe pour amorcer la réflexion.</p>
-        </div>
         <div className="grid grid-cols-2 gap-3">
-          {SPR_DIAG_ITEMS.map(d => (
+          {SPR_DIAG_ITEMS.map(d => {
+            const revealAt = REVEAL_STAGE[d.label] ?? 6;
+            const revealed = stage >= revealAt;
+            if (stage < 2) return (
+              <div key={d.label} className="rounded-xl border-2 border-gray-200 bg-gray-50 p-4 space-y-2 animate-pulse">
+                <div className="h-3 w-24 bg-gray-200 rounded" />
+                <div className="h-2 w-full bg-gray-200 rounded" />
+                <div className="h-2 w-3/4 bg-gray-200 rounded" />
+              </div>
+            );
+            if (!revealed) return (
+              <div key={d.label} className="rounded-xl border-2 border-gray-200 bg-gray-50/80 overflow-hidden">
+                <div className="px-3 py-2 bg-gray-100/60 flex items-center justify-between">
+                  <span className="text-xs font-bold text-gray-400">{d.label}</span>
+                  <span className="text-xs bg-gray-200 text-gray-400 px-2 py-0.5 rounded-full">—</span>
+                </div>
+                <div className="px-3 py-3 flex items-center gap-2">
+                  <div className="h-3 w-3 border-2 border-orange-400 border-t-transparent rounded-full animate-spin" />
+                  <span className="text-[10px] text-gray-400">Analyse en cours...</span>
+                </div>
+              </div>
+            );
+            return (
             <div key={d.label}
               className={cn(
                 "rounded-xl overflow-hidden border-2 shadow-sm transition-all hover:shadow-md",
@@ -1761,54 +1880,37 @@ function MagDiagnostic() {
                     <span className="text-[10px] text-emerald-700 font-bold">Impact: {d.expanded.impact}</span>
                   </div>
                   <div className="flex gap-1.5 flex-wrap">
-                    <button className="text-[10px] bg-orange-600 text-white px-2.5 py-1 rounded-full font-medium cursor-pointer hover:bg-orange-700">Lancer un chantier</button>
+                    <button onClick={() => { if (!chantierDone) { setChantierLoading(d.label); setTimeout(() => { setChantierLoading(null); setChantierDone(d.label); }, 1500); } }}
+                      className={cn("text-[10px] px-2.5 py-1 rounded-full font-medium cursor-pointer flex items-center gap-1 transition-colors", chantierDone === d.label ? "bg-emerald-600 text-white" : "bg-orange-600 text-white hover:bg-orange-700")}
+                    >{chantierLoading === d.label ? <><Loader2 className="h-3 w-3 animate-spin" /> Création...</> : chantierDone === d.label ? <><CheckCircle2 className="h-3 w-3" /> Chantier créé</> : <>Lancer un chantier</>}</button>
                     <button className="text-[10px] bg-white border border-orange-200 text-orange-700 px-2.5 py-1 rounded-full font-medium cursor-pointer hover:bg-orange-50">Épingler</button>
                     <button className="text-[10px] bg-white border border-gray-200 text-gray-600 px-2.5 py-1 rounded-full font-medium cursor-pointer hover:bg-gray-50">Consulter un bot</button>
                   </div>
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
-      {/* Scoring global et consensus */}
-      <div className="bg-orange-50 border border-orange-200 rounded-xl p-3">
-        <div className="flex items-center gap-2 mb-2">
-          <Gauge className="h-4 w-4 text-orange-600" />
-          <span className="text-xs font-bold text-gray-800">Score de maturite global</span>
-          <span className="text-[9px] font-bold bg-orange-600 text-white px-2 py-0.5 rounded-full ml-auto">42%</span>
-        </div>
-        <div className="h-2 bg-gray-200 rounded-full overflow-hidden mb-2">
-          <div className="h-full bg-gradient-to-r from-orange-500 to-amber-400 rounded-full" style={{ width: "42%" }} />
-        </div>
-        <div className="grid grid-cols-3 gap-2 text-center">
-          <div>
-            <p className="text-[9px] text-gray-400">Axes critiques</p>
-            <p className="text-xs font-bold text-orange-600">3</p>
-          </div>
-          <div>
-            <p className="text-[9px] text-gray-400">Bots mobilises</p>
-            <p className="text-xs font-bold text-blue-600">4</p>
-          </div>
-          <div>
-            <p className="text-[9px] text-gray-400">Actions identifiees</p>
-            <p className="text-xs font-bold text-emerald-600">18</p>
-          </div>
-        </div>
-        <div className="mt-2 pt-2 border-t border-orange-200 flex items-center gap-2">
-          <span className="text-[9px] text-gray-500">Recommandation Paco:</span>
-          <span className="text-[9px] text-orange-700 font-medium">Prioriser Palettisation (score 15%) puis IoT (8%)</span>
-        </div>
-      </div>
     </div>
   );
 }
 
 function MagBrainstorm() {
-  const [activeStep, setActiveStep] = useState(2);
+  const [activeStep, setActiveStep] = useState(0);
   const [expandedIdea, setExpandedIdea] = useState<number | null>(null);
   const [brainstormVotes, setBrainstormVotes] = useState<Record<number, "up" | "down" | null>>({});
+  const [developedIdea, setDevelopedIdea] = useState<number | null>(null);
+
+  // Auto-avance progressive — les bots travaillent en live
+  useEffect(() => {
+    if (activeStep < 4) {
+      const timer = setTimeout(() => setActiveStep(prev => prev + 1), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [activeStep]);
 
   const STEPS = [
     { label: "Cadrage", desc: "Definir le probleme et les contraintes avant de generer des idees." },
@@ -1825,9 +1927,9 @@ function MagBrainstorm() {
   ];
 
   const SYNTHESIS = [
-    { title: "Axe 1: Referral + Ambassadeurs", budget: "1,200$/mois", roi: "4.2x", timeline: "Semaine 1-2", priority: "QUICK WIN", color: "bg-emerald-50 border-emerald-200" },
-    { title: "Axe 2: Content LinkedIn + YouTube", budget: "2,600$/mois", roi: "2.8x", timeline: "Mois 1-3", priority: "MOYEN TERME", color: "bg-pink-50 border-pink-200" },
-    { title: "Axe 3: Demo AI live mensuelle", budget: "800$/mois", roi: "3.1x", timeline: "Mois 2", priority: "DIFFERENCIANT", color: "bg-violet-50 border-violet-200" },
+    { title: "Axe 1: Referral + Ambassadeurs", desc: "Mobiliser les clients satisfaits comme canal #1 d'acquisition", budget: "1,200$/mois", roi: "4.2x", timeline: "Semaine 1-2", priority: "QUICK WIN", color: "bg-emerald-50 border-emerald-200", champion: "CFOB" },
+    { title: "Axe 2: Content LinkedIn + YouTube", desc: "Positionner l'expertise sectorielle pour attirer les decideurs", budget: "2,600$/mois", roi: "2.8x", timeline: "Mois 1-3", priority: "MOYEN TERME", color: "bg-pink-50 border-pink-200", champion: "CMOB" },
+    { title: "Axe 3: Demo AI live mensuelle", desc: "Differencier par la preuve tangible avec demos interactives", budget: "800$/mois", roi: "3.1x", timeline: "Mois 2", priority: "DIFFERENCIANT", color: "bg-violet-50 border-violet-200", champion: "CTOB" },
   ];
 
   return (
@@ -1835,7 +1937,7 @@ function MagBrainstorm() {
       <div className="flex items-center gap-2">
         <Lightbulb className="h-4 w-4 text-amber-500" />
         <h3 className="text-sm font-bold text-gray-800">Brainstorm — Methode SCAMPER</h3>
-        <span className="text-[9px] bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-medium animate-pulse ml-auto">Live</span>
+        <span className="text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-medium animate-pulse ml-auto">Live</span>
       </div>
 
       {/* Pipeline etapes SCAMPER */}
@@ -1845,7 +1947,7 @@ function MagBrainstorm() {
             {i > 0 && <div className={cn("w-4 h-0.5", i <= activeStep ? "bg-orange-400" : "bg-gray-200")} />}
             <button
               onClick={() => setActiveStep(i)}
-              className={cn("flex items-center gap-1 px-2 py-1 rounded-full text-[9px] font-medium cursor-pointer transition-all",
+              className={cn("flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium cursor-pointer transition-all",
                 i < activeStep ? "bg-orange-100 text-orange-700" : i === activeStep ? "bg-orange-500 text-white shadow-sm" : "bg-gray-100 text-gray-400 hover:bg-gray-200"
               )}
             >
@@ -1860,24 +1962,24 @@ function MagBrainstorm() {
       {/* Step description */}
       <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 flex items-center gap-2">
         <BookOpen className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-        <p className="text-[9px] text-gray-500">{STEPS[activeStep].desc}</p>
+        <p className="text-xs text-gray-500">{STEPS[activeStep].desc}</p>
       </div>
 
       {/* STEP 0-1: Cadrage + Vague 1 */}
       {activeStep <= 1 && (
         <div>
-          <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-2 flex items-center gap-1">
+          <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2 flex items-center gap-1">
             <Lightbulb className="h-3.5 w-3.5 text-amber-500" /> {activeStep === 0 ? "Cadrage — Probleme a resoudre" : "Vague 1 — 6 idees brutes (zero filtre)"}
           </p>
           {activeStep === 0 ? (
             <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
               <p className="text-xs font-bold text-orange-800 mb-2">Probleme: Comment augmenter les leads qualifies de 40% en Q2?</p>
-              <div className="space-y-1 text-[9px] text-gray-600">
+              <div className="space-y-1 text-xs text-gray-600">
                 <p>Contrainte budget: max 8K$/mois</p>
                 <p>Contrainte temps: resultats mesurables avant fin Q2</p>
                 <p>Equipe: 3 bots mobilises (Mathilde, Frank, Tim)</p>
               </div>
-              <button onClick={() => setActiveStep(1)} className="mt-3 text-[9px] bg-orange-600 text-white px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-700">Lancer la generation d'idees</button>
+              <button onClick={() => setActiveStep(1)} className="mt-3 text-xs bg-orange-600 text-white px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-700">Lancer la generation d'idees</button>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-2">
@@ -1890,10 +1992,10 @@ function MagBrainstorm() {
                 >
                   <div className="flex items-center gap-1.5 mb-1.5">
                     <BotAvatar code={idea.bot} size="sm" />
-                    <span className="text-[9px] font-medium text-gray-700">{BOT_COLORS[idea.bot]?.name}</span>
-                    <span className="text-[9px] bg-white/60 text-gray-600 px-1.5 py-0.5 rounded ml-auto">{idea.tag}</span>
+                    <span className="text-xs font-medium text-gray-700">{BOT_COLORS[idea.bot]?.name}</span>
+                    <span className="text-xs bg-white/60 text-gray-600 px-1.5 py-0.5 rounded ml-auto">{idea.tag}</span>
                   </div>
-                  <p className="text-[9px] text-gray-800 mb-2">{idea.text}</p>
+                  <p className="text-xs text-gray-800 mb-2">{idea.text}</p>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={(e) => { e.stopPropagation(); setBrainstormVotes(prev => ({ ...prev, [idea.id]: prev[idea.id] === "up" ? null : "up" })); }}
@@ -1911,18 +2013,27 @@ function MagBrainstorm() {
                     >
                       <ThumbsDown className="h-3.5 w-3.5" />
                     </button>
-                    <span className="text-[9px] text-gray-400 ml-auto">
+                    <span className="text-xs text-gray-400 ml-auto">
                       {brainstormVotes[idea.id] === "up" ? "+1" : brainstormVotes[idea.id] === "down" ? "-1" : ""}
                     </span>
                   </div>
                   {expandedIdea === idea.id && (
                     <div className="mt-2 pt-2 border-t border-gray-200 space-y-1">
-                      <p className="text-[9px] text-gray-600">Impact estime: eleve | Effort: moyen | Delai: 2-4 semaines</p>
+                      <p className="text-xs text-gray-600">Impact estime: eleve | Effort: moyen | Delai: 2-4 semaines</p>
                       <div className="flex gap-1">
-                        <button className="text-[9px] bg-white border border-gray-200 text-gray-600 px-1.5 py-0.5 rounded font-medium cursor-pointer hover:bg-gray-50">Developper</button>
-                        <button className="text-[9px] bg-white border border-gray-200 text-gray-600 px-1.5 py-0.5 rounded font-medium cursor-pointer hover:bg-gray-50">Combiner</button>
-                        <button className="text-[9px] bg-white border border-gray-200 text-gray-600 px-1.5 py-0.5 rounded font-medium cursor-pointer hover:bg-gray-50">Challenger</button>
+                        <button onClick={() => setDevelopedIdea(developedIdea === idea.id ? null : idea.id)}
+                          className={cn("text-xs px-1.5 py-0.5 rounded font-medium cursor-pointer flex items-center gap-1 transition-colors", developedIdea === idea.id ? "bg-emerald-100 text-emerald-700 border border-emerald-200" : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50")}
+                        >{developedIdea === idea.id ? <><CheckCircle2 className="h-3 w-3" /> Développé</> : <>Developper</>}</button>
+                        <button className="text-xs bg-white border border-gray-200 text-gray-600 px-1.5 py-0.5 rounded font-medium cursor-pointer hover:bg-gray-50">Combiner</button>
+                        <button className="text-xs bg-white border border-gray-200 text-gray-600 px-1.5 py-0.5 rounded font-medium cursor-pointer hover:bg-gray-50">Challenger</button>
                       </div>
+                      {developedIdea === idea.id && (
+                        <div className="mt-1.5 space-y-1 pl-2 border-l-2 border-orange-200 animate-in fade-in slide-in-from-top-1" style={{ animationDuration: "300ms" }}>
+                          <p className="text-xs text-gray-600">1. Définir les personas cibles et leurs pain points spécifiques</p>
+                          <p className="text-xs text-gray-600">2. Créer un prototype testable en 2 semaines (MVP lean)</p>
+                          <p className="text-xs text-gray-600">3. Mesurer le taux de conversion sur un échantillon de 100 leads</p>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1935,10 +2046,10 @@ function MagBrainstorm() {
       {/* STEP 2: SCAMPER Challenge */}
       {activeStep === 2 && (
         <div>
-          <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-2 flex items-center gap-1">
+          <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2 flex items-center gap-1">
             <Zap className="h-3.5 w-3.5 text-orange-500" /> SCAMPER Challenge — COMBINER + ADAPTER + SUBSTITUER
           </p>
-          <p className="text-[9px] text-gray-500 mb-2">Les bots appliquent les 7 leviers SCAMPER aux idees de la Vague 1 pour creer des combinaisons innovantes.</p>
+          <p className="text-xs text-gray-500 mb-2">Les bots appliquent les 7 leviers SCAMPER aux idees de la Vague 1 pour creer des combinaisons innovantes.</p>
           <div className="space-y-1.5">
             {[
               { letter: "C", method: "Combiner", text: "Referral + LinkedIn: programme ambassadeur avec contenu co-cree par les clients satisfaits", bot: "CMOB", votes: 4, color: "bg-pink-50 border-pink-200" },
@@ -1949,15 +2060,15 @@ function MagBrainstorm() {
             ].map((note, i) => (
               <div key={i} className={cn("rounded-lg p-2.5 border cursor-pointer hover:shadow-sm transition-all", note.color)}>
                 <div className="flex items-center gap-1.5 mb-1">
-                  <span className="w-5 h-5 rounded bg-orange-500 text-white flex items-center justify-center text-[9px] font-bold shrink-0">{note.letter}</span>
-                  <span className="text-[9px] font-bold text-orange-700">{note.method}</span>
+                  <span className="w-5 h-5 rounded bg-orange-500 text-white flex items-center justify-center text-xs font-bold shrink-0">{note.letter}</span>
+                  <span className="text-xs font-bold text-orange-700">{note.method}</span>
                   <BotAvatar code={note.bot} size="sm" />
-                  <span className="text-[9px] font-medium text-gray-500">{BOT_COLORS[note.bot]?.name}</span>
-                  <span className="flex items-center gap-0.5 text-[9px] text-amber-600 ml-auto">
+                  <span className="text-xs font-medium text-gray-500">{BOT_COLORS[note.bot]?.name}</span>
+                  <span className="flex items-center gap-0.5 text-xs text-amber-600 ml-auto">
                     <Star className="h-3.5 w-3.5" /> {note.votes}
                   </span>
                 </div>
-                <p className="text-[9px] text-gray-800">{note.text}</p>
+                <p className="text-xs text-gray-800">{note.text}</p>
               </div>
             ))}
           </div>
@@ -1967,31 +2078,35 @@ function MagBrainstorm() {
       {/* STEP 3: Clusters */}
       {activeStep === 3 && (
         <div>
-          <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-2 flex items-center gap-1">
+          <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2 flex items-center gap-1">
             <Layers className="h-3.5 w-3.5 text-blue-500" /> Clusters — 3 themes identifies
           </p>
-          <p className="text-[9px] text-gray-500 mb-2">Les idees convergent autour de 3 axes strategiques. Chaque cluster regroupe les propositions complementaires.</p>
+          <p className="text-xs text-gray-500 mb-2">Les idees convergent autour de 3 axes strategiques. Chaque cluster regroupe les propositions complementaires.</p>
           <div className="space-y-2">
             {CLUSTERS.map((cluster, i) => (
               <div key={i} className={cn("rounded-xl p-3 border", cluster.color)}>
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="w-6 h-6 rounded-full bg-white border border-gray-200 flex items-center justify-center text-[9px] font-bold text-gray-700">{i + 1}</span>
+                  <span className="w-6 h-6 rounded-full bg-white border border-gray-200 flex items-center justify-center text-xs font-bold text-gray-700">{i + 1}</span>
                   <span className="text-xs font-bold text-gray-800">{cluster.theme}</span>
                   <BotAvatar code={cluster.bot} size="sm" />
                   <div className="ml-auto flex items-center gap-1">
                     <div className="w-12 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                       <div className="h-full bg-orange-500 rounded-full" style={{ width: `${cluster.score}%` }} />
                     </div>
-                    <span className="text-[9px] font-bold text-gray-600">{cluster.score}%</span>
+                    <span className="text-xs font-bold text-gray-600">{cluster.score}%</span>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-1">
                   {cluster.idees.map((idee, j) => (
-                    <span key={j} className="text-[9px] bg-white border border-gray-200 text-gray-700 px-2 py-0.5 rounded-full">{idee}</span>
+                    <span key={j} className="text-xs bg-white border border-gray-200 text-gray-700 px-2 py-0.5 rounded-full">{idee}</span>
                   ))}
                 </div>
               </div>
             ))}
+          </div>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-2.5 flex items-center gap-2 mt-2">
+            <Users className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+            <span className="text-xs font-bold text-blue-700">3 bots convergent sur l'acquisition digitale — consensus fort</span>
           </div>
         </div>
       )}
@@ -1999,64 +2114,79 @@ function MagBrainstorm() {
       {/* STEP 4: Synthese */}
       {activeStep === 4 && (
         <div>
-          <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-2 flex items-center gap-1">
+          <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2 flex items-center gap-1">
             <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Synthese — 3 axes actionnables
           </p>
-          <p className="text-[9px] text-gray-500 mb-2">Les clusters sont consolides en axes strategiques budgetes et planifies. Pret a passer en phase Creer.</p>
+          <p className="text-xs text-gray-500 mb-2">Les clusters sont consolides en axes strategiques budgetes et planifies. Pret a passer en phase Creer.</p>
           <div className="space-y-2">
             {SYNTHESIS.map((axe, i) => (
               <div key={i} className={cn("rounded-xl border p-3", axe.color)}>
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs font-bold text-gray-800">{axe.title}</span>
-                  <span className="text-[9px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-full font-bold ml-auto">{axe.priority}</span>
+                  <span className="text-xs bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-full font-bold ml-auto">{axe.priority}</span>
                 </div>
+                <p className="text-xs text-gray-500 mb-2">{axe.desc}</p>
                 <div className="grid grid-cols-3 gap-2">
                   <div className="text-center">
-                    <p className="text-[9px] text-gray-400">Budget</p>
-                    <p className="text-[9px] font-bold text-gray-800">{axe.budget}</p>
+                    <p className="text-xs text-gray-400">Budget</p>
+                    <p className="text-xs font-bold text-gray-800">{axe.budget}</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-[9px] text-gray-400">ROI</p>
-                    <p className="text-[9px] font-bold text-emerald-700">{axe.roi}</p>
+                    <p className="text-xs text-gray-400">ROI</p>
+                    <p className="text-xs font-bold text-emerald-700">{axe.roi}</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-[9px] text-gray-400">Timeline</p>
-                    <p className="text-[9px] font-bold text-gray-800">{axe.timeline}</p>
+                    <p className="text-xs text-gray-400">Timeline</p>
+                    <p className="text-xs font-bold text-gray-800">{axe.timeline}</p>
                   </div>
+                </div>
+                <div className="flex items-center gap-1.5 mt-1.5">
+                  <BotAvatar code={axe.champion} size="sm" />
+                  <span className="text-xs text-gray-500">Champion: {BOT_COLORS[axe.champion]?.name}</span>
                 </div>
               </div>
             ))}
           </div>
           <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 flex items-center gap-2 mt-2">
             <DollarSign className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-            <span className="text-[9px] font-bold text-emerald-700">Budget total: 4,600$/mois — ROI combine: 3.4x</span>
+            <span className="text-xs font-bold text-emerald-700">Budget total: 4,600$/mois — ROI combine: 3.4x</span>
+          </div>
+          <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 flex items-center gap-2 mt-1">
+            <div className="flex items-center gap-1">
+              {["CEOB", "CMOB", "CFOB", "CTOB"].map(code => (
+                <BotAvatar key={code} code={code} size="sm" />
+              ))}
+            </div>
+            <span className="text-xs font-bold text-emerald-700">Consensus: 4 bots GO / 0 NO-GO</span>
           </div>
         </div>
       )}
 
       {/* Action buttons */}
       <div className="flex flex-wrap gap-2">
-        <button className="text-[9px] bg-orange-600 text-white px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-700">Ajouter une idee</button>
-        <button className="text-[9px] bg-orange-50 border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-100">Combiner 2 idees</button>
-        <button className="text-[9px] bg-orange-50 border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-100">Prioriser par votes</button>
-        <button className="text-[9px] bg-orange-50 border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-100">Challenger une idee</button>
-        <button className="text-[9px] bg-orange-50 border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-100">Epingler au rapport</button>
+        <button className="text-xs bg-orange-600 text-white px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-700">Ajouter une idee</button>
+        <button className="text-xs bg-orange-50 border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-100">Combiner 2 idees</button>
+        <button className="text-xs bg-orange-50 border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-100">Prioriser par votes</button>
+        <button className="text-xs bg-orange-50 border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-100">Challenger une idee</button>
+        <button className="text-xs bg-orange-50 border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-100">Epingler au rapport</button>
       </div>
     </div>
   );
 }
 
 function MagSyntheseBrainstorm() {
+  const [revealCount, setRevealCount] = useState(0);
+  useEffect(() => {
+    if (revealCount < 5) {
+      const timer = setTimeout(() => setRevealCount(prev => prev + 1), 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [revealCount]);
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Layers className="h-4 w-4 text-orange-600" />
-        <h3 className="text-sm font-bold text-gray-800">Synthese + Bonification — Idees consolidees</h3>
-        <span className="text-[9px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium ml-auto">Iteration 1</span>
-      </div>
-      <p className="text-[9px] text-gray-500">Les idees du brainstorm ont ete combinees avec les perspectives des 3 bots pour creer un plan integre.</p>
+      <p className="text-xs text-gray-500">Les idees du brainstorm ont ete combinees avec les perspectives des 3 bots pour creer un plan integre.</p>
 
-      <div className="bg-white border-2 border-orange-200 rounded-xl overflow-hidden">
+      <div className={cn("bg-white border-2 border-orange-200 rounded-xl overflow-hidden transition-all duration-700", revealCount >= 1 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3")}>
         <div className="bg-orange-50 px-4 py-2 border-b border-orange-200 flex items-center gap-2">
           <Lightbulb className="h-3.5 w-3.5 text-orange-600" />
           <span className="text-xs font-bold text-orange-800">Plan integre — Referral + Content LinkedIn</span>
@@ -2070,30 +2200,30 @@ function MagSyntheseBrainstorm() {
             <div key={i} className={cn("border rounded-lg p-3", item.color)}>
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-xs font-bold text-gray-800">{item.title}</span>
-                <span className="text-[9px] bg-white/70 text-gray-600 px-1.5 py-0.5 rounded ml-auto">{item.source}</span>
+                <span className="text-xs bg-white/70 text-gray-600 px-1.5 py-0.5 rounded ml-auto">{item.source}</span>
               </div>
-              <p className="text-[9px] text-gray-700">{item.detail}</p>
+              <p className="text-xs text-gray-700">{item.detail}</p>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className={cn("grid grid-cols-2 gap-3 transition-all duration-700", revealCount >= 2 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3")}>
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
-          <p className="text-[9px] text-gray-400 mb-1">AVANT bonification</p>
+          <p className="text-xs text-gray-400 mb-1">AVANT bonification</p>
           <p className="text-lg font-extrabold text-gray-400">6 idees</p>
-          <p className="text-[9px] text-gray-400">separees, non priorisees</p>
+          <p className="text-xs text-gray-400">separees, non priorisees</p>
         </div>
         <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-center">
-          <p className="text-[9px] text-orange-600 mb-1">APRES bonification</p>
+          <p className="text-xs text-orange-600 mb-1">APRES bonification</p>
           <p className="text-lg font-extrabold text-orange-700">3 axes</p>
-          <p className="text-[9px] text-orange-600">integres, budgetes, planifies</p>
+          <p className="text-xs text-orange-600">integres, budgetes, planifies</p>
         </div>
       </div>
 
       {/* Timeline mini et risques */}
-      <div className="bg-white border border-gray-200 rounded-lg p-3">
-        <p className="text-[9px] font-bold text-gray-700 uppercase tracking-wider mb-2">Timeline de deploiement</p>
+      <div className={cn("bg-white border border-gray-200 rounded-lg p-3 transition-all duration-700", revealCount >= 3 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3")}>
+        <p className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Timeline de deploiement</p>
         <div className="flex items-center gap-1">
           {[
             { label: "Sem 1-2", axe: "Referral", color: "bg-emerald-500" },
@@ -2103,36 +2233,36 @@ function MagSyntheseBrainstorm() {
           ].map((t, i) => (
             <div key={i} className="flex-1">
               <div className={cn("h-2 rounded-full", t.color)} />
-              <p className="text-[8px] text-gray-500 mt-0.5">{t.label}</p>
-              <p className="text-[8px] text-gray-700 font-medium">{t.axe}</p>
+              <p className="text-[10px] text-gray-500 mt-0.5">{t.label}</p>
+              <p className="text-[10px] text-gray-700 font-medium">{t.axe}</p>
             </div>
           ))}
         </div>
       </div>
 
       {/* Risques identifies */}
-      <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-        <p className="text-[9px] font-bold text-amber-700 mb-1">Risques identifies (2)</p>
+      <div className={cn("bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 transition-all duration-700", revealCount >= 4 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3")}>
+        <p className="text-xs font-bold text-amber-700 mb-1">Risques identifies (2)</p>
         <div className="space-y-1">
-          <div className="flex items-center gap-1.5 text-[9px]">
+          <div className="flex items-center gap-1.5 text-xs">
             <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
             <span className="text-gray-600">Timeline agressive si equipe surchargee</span>
-            <span className="text-[8px] bg-amber-200 text-amber-800 px-1 py-0.5 rounded ml-auto">Moyen</span>
+            <span className="text-[10px] bg-amber-200 text-amber-800 px-1 py-0.5 rounded ml-auto">Moyen</span>
           </div>
-          <div className="flex items-center gap-1.5 text-[9px]">
+          <div className="flex items-center gap-1.5 text-xs">
             <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
             <span className="text-gray-600">Chatbot AI: conversion non validee en niche manufacturing</span>
-            <span className="text-[8px] bg-amber-200 text-amber-800 px-1 py-0.5 rounded ml-auto">Faible</span>
+            <span className="text-[10px] bg-amber-200 text-amber-800 px-1 py-0.5 rounded ml-auto">Faible</span>
           </div>
         </div>
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <button className="text-[9px] bg-orange-600 text-white px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-700">Rechallenger le plan</button>
-        <button className="text-[9px] bg-white border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-50">Re-synthetiser</button>
-        <button className="text-[9px] bg-white border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-50">Ajouter un axe</button>
-        <button className="text-[9px] bg-white border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-50">Affiner les budgets</button>
-        <button className="text-[9px] bg-white border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-50">Evaluer les risques</button>
+        <button className="text-xs bg-orange-600 text-white px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-700">Rechallenger le plan</button>
+        <button className="text-xs bg-white border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-50">Re-synthetiser</button>
+        <button className="text-xs bg-white border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-50">Ajouter un axe</button>
+        <button className="text-xs bg-white border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-50">Affiner les budgets</button>
+        <button className="text-xs bg-white border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-50">Evaluer les risques</button>
       </div>
     </div>
   );
@@ -2210,7 +2340,7 @@ function MagCinqPourquoi() {
       <div className="flex items-center gap-2">
         <Search className="h-4 w-4 text-orange-500" />
         <h3 className="text-sm font-bold text-gray-800">Analyse 5 Pourquoi \u2014 Cause racine</h3>
-        <span className="text-[9px] text-gray-400 ml-auto">Methode Ishikawa + Bonification</span>
+        <span className="text-xs text-gray-400 ml-auto">Methode Ishikawa + Bonification</span>
       </div>
 
       {/* Progress indicator */}
@@ -2218,26 +2348,26 @@ function MagCinqPourquoi() {
         {[1, 2, 3, 4, 5].map(n => (
           <div key={n} className="flex items-center gap-1">
             {n > 1 && <div className={cn("w-6 h-0.5 transition-all duration-500", n <= revealedLevel ? "bg-orange-400" : "bg-gray-200")} />}
-            <div className={cn("w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold transition-all duration-500",
+            <div className={cn("w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-500",
               n <= revealedLevel ? (n === 5 ? "bg-orange-500 text-white scale-110" : "bg-orange-100 text-orange-700") : "bg-gray-100 text-gray-300"
             )}>
               {n <= revealedLevel && n < 5 ? <CheckCircle2 className="h-3.5 w-3.5 text-orange-500" /> : n}
             </div>
           </div>
         ))}
-        <span className="text-[9px] text-gray-400 ml-2">{Math.min(revealedLevel, 5)}/5 niveaux explores</span>
+        <span className="text-xs text-gray-400 ml-2">{Math.min(revealedLevel, 5)}/5 niveaux explores</span>
       </div>
 
-      <div className="bg-white border rounded-xl px-4 py-3 space-y-1">
+      <div className="space-y-2">
         {questions.map((item, i) => (
           <div key={i} className={cn("transition-all duration-700", i < revealedLevel ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 h-0 overflow-hidden")}>
             <div className="flex items-start gap-3 py-1.5">
-              <span className={cn("shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold transition-all",
+              <span className={cn("shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all",
                 i < revealedLevel - 1 ? "bg-orange-100 text-orange-700" : "bg-orange-500 text-white animate-pulse"
               )}>{i + 1}</span>
               <div className="flex-1">
                 <p className="text-xs"><span className="font-semibold text-orange-700">Pourquoi</span> {item.q}?</p>
-                <p className="text-[9px] text-gray-600 mt-0.5">{"\u2192"} {item.a}</p>
+                <p className="text-xs text-gray-600 mt-0.5">{"\u2192"} {item.a}</p>
               </div>
               {i < questions.length - 1 && <ArrowRight className="h-3.5 w-3.5 text-gray-300 shrink-0 mt-1" />}
             </div>
@@ -2246,19 +2376,19 @@ function MagCinqPourquoi() {
               <div className="flex items-start gap-2 bg-gray-50 rounded-lg px-3 py-1.5 border-l-2 border-gray-300">
                 <BotAvatar code={item.bot} size="sm" />
                 <div className="flex-1">
-                  <p className="text-[9px] text-gray-500 italic">{item.reflexion}</p>
+                  <p className="text-xs text-gray-500 italic">{item.reflexion}</p>
                 </div>
                 <div className="flex gap-1 shrink-0">
                   <button
                     onClick={() => setShowDebate(showDebate === i ? null : i)}
-                    className={cn("text-[9px] px-1.5 py-0.5 rounded font-medium cursor-pointer transition-colors",
+                    className={cn("text-xs px-1.5 py-0.5 rounded font-medium cursor-pointer transition-colors",
                       showDebate === i ? "bg-orange-100 border border-orange-200 text-orange-700" : "bg-white border border-gray-200 text-gray-500 hover:bg-gray-100"
                     )}
                   >
                     {showDebate === i ? "Fermer" : "Voir le debat"}
                   </button>
-                  <button className="text-[9px] bg-white border border-gray-200 text-gray-500 px-1.5 py-0.5 rounded font-medium cursor-pointer hover:bg-gray-100">Creuser</button>
-                  <button className="text-[9px] bg-white border border-gray-200 text-gray-500 px-1.5 py-0.5 rounded font-medium cursor-pointer hover:bg-gray-100">Pivoter</button>
+                  <button className="text-xs bg-white border border-gray-200 text-gray-500 px-1.5 py-0.5 rounded font-medium cursor-pointer hover:bg-gray-100">Creuser</button>
+                  <button className="text-xs bg-white border border-gray-200 text-gray-500 px-1.5 py-0.5 rounded font-medium cursor-pointer hover:bg-gray-100">Pivoter</button>
                 </div>
               </div>
 
@@ -2268,25 +2398,25 @@ function MagCinqPourquoi() {
                     <BotAvatar code={item.debate.challenger} size="sm" />
                     <div className="bg-amber-50 border border-amber-200 rounded-lg rounded-tl-none px-2.5 py-1.5 flex-1">
                       <div className="flex items-center gap-1.5 mb-0.5">
-                        <span className="text-[9px] font-bold text-amber-700">{BOT_COLORS[item.debate.challenger]?.name}</span>
-                        <span className="text-[9px] bg-amber-200 text-amber-800 px-1 py-0.5 rounded">Challenge</span>
+                        <span className="text-xs font-bold text-amber-700">{BOT_COLORS[item.debate.challenger]?.name}</span>
+                        <span className="text-xs bg-amber-200 text-amber-800 px-1 py-0.5 rounded">Challenge</span>
                       </div>
-                      <p className="text-[9px] text-gray-700">{item.debate.challengeText}</p>
+                      <p className="text-xs text-gray-700">{item.debate.challengeText}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-2">
                     <BotAvatar code={item.debate.defense} size="sm" />
                     <div className="bg-emerald-50 border border-emerald-200 rounded-lg rounded-tl-none px-2.5 py-1.5 flex-1">
                       <div className="flex items-center gap-1.5 mb-0.5">
-                        <span className="text-[9px] font-bold text-emerald-700">{BOT_COLORS[item.debate.defense]?.name}</span>
-                        <span className="text-[9px] bg-emerald-200 text-emerald-800 px-1 py-0.5 rounded">Defense</span>
+                        <span className="text-xs font-bold text-emerald-700">{BOT_COLORS[item.debate.defense]?.name}</span>
+                        <span className="text-xs bg-emerald-200 text-emerald-800 px-1 py-0.5 rounded">Defense</span>
                       </div>
-                      <p className="text-[9px] text-gray-700">{item.debate.defenseText}</p>
+                      <p className="text-xs text-gray-700">{item.debate.defenseText}</p>
                     </div>
                   </div>
                   <div className="bg-blue-50 border border-blue-200 rounded-lg px-2.5 py-1.5 flex items-center gap-2">
                     <CheckCircle2 className="h-3.5 w-3.5 text-blue-500 shrink-0" />
-                    <p className="text-[9px] text-blue-700 font-medium">{item.debate.verdict}</p>
+                    <p className="text-xs text-blue-700 font-medium">{item.debate.verdict}</p>
                   </div>
                 </div>
               )}
@@ -2299,35 +2429,35 @@ function MagCinqPourquoi() {
           revealedLevel >= 5 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
         )}>
           <div className="flex items-start gap-3">
-            <span className="shrink-0 w-6 h-6 rounded-full bg-orange-500 text-white flex items-center justify-center text-[9px] font-bold">5</span>
+            <span className="shrink-0 w-6 h-6 rounded-full bg-orange-500 text-white flex items-center justify-center text-xs font-bold">5</span>
             <div className="flex-1">
               <p className="text-xs font-bold text-orange-800">CAUSE RACINE</p>
-              <p className="text-[9px] text-orange-700 mt-0.5">L'absence de strategie de contenu structuree fait que le messaging reste technique au lieu d'etre oriente resultats business.</p>
+              <p className="text-xs text-orange-700 mt-0.5">L'absence de strategie de contenu structuree fait que le messaging reste technique au lieu d'etre oriente resultats business.</p>
             </div>
           </div>
           <div className="ml-9 mt-2 bg-orange-50 rounded-lg px-3 py-2 border border-orange-200">
-            <p className="text-[9px] font-bold text-orange-700 mb-1">Bonification \u2014 Synthese des 4 debats:</p>
+            <p className="text-xs font-bold text-orange-700 mb-1">Bonification \u2014 Synthese des 4 debats:</p>
             <div className="space-y-1">
               {questions.map((item, i) => (
-                <div key={i} className="flex items-center gap-1.5 text-[9px] text-orange-600">
-                  <span className="w-3 h-3 rounded-full bg-orange-200 flex items-center justify-center text-[9px] font-bold text-orange-700 shrink-0">{i + 1}</span>
+                <div key={i} className="flex items-center gap-1.5 text-xs text-orange-600">
+                  <span className="w-3 h-3 rounded-full bg-orange-200 flex items-center justify-center text-xs font-bold text-orange-700 shrink-0">{i + 1}</span>
                   <span>{item.debate.verdict}</span>
                 </div>
               ))}
             </div>
             <div className="flex gap-1.5 mt-2">
-              <button className="text-[9px] bg-orange-200 text-orange-800 px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-orange-300">Epingler cette synthese</button>
-              <button className="text-[9px] bg-white text-orange-700 px-2 py-0.5 rounded-full font-medium border border-orange-200 cursor-pointer hover:bg-orange-50">Relancer un 5 Pourquoi</button>
+              <button className="text-xs bg-orange-200 text-orange-800 px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-orange-300">Epingler cette synthese</button>
+              <button className="text-xs bg-white text-orange-700 px-2 py-0.5 rounded-full font-medium border border-orange-200 cursor-pointer hover:bg-orange-50">Relancer un 5 Pourquoi</button>
             </div>
           </div>
         </div>
       </div>
       <div className="flex flex-wrap gap-2">
-        <button className="text-[9px] bg-orange-600 text-white px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-700">Creuser cette cause</button>
-        <button className="text-[9px] bg-white border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-50">Pivoter l'analyse</button>
-        <button className="text-[9px] bg-white border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-50">Synthese des causes</button>
-        <button className="text-[9px] bg-white border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-50">Challenger la conclusion</button>
-        <button className="text-[9px] bg-white border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-50">Combiner avec le brainstorm</button>
+        <button className="text-xs bg-orange-600 text-white px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-700">Creuser cette cause</button>
+        <button className="text-xs bg-white border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-50">Pivoter l'analyse</button>
+        <button className="text-xs bg-white border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-50">Synthese des causes</button>
+        <button className="text-xs bg-white border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-50">Challenger la conclusion</button>
+        <button className="text-xs bg-white border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-50">Combiner avec le brainstorm</button>
       </div>
     </div>
   );
@@ -2335,6 +2465,17 @@ function MagCinqPourquoi() {
 
 function MagDeepSearch() {
   const [expandedSource, setExpandedSource] = useState<number | null>(null);
+  const [deepening, setDeepening] = useState(false);
+  const [deepened, setDeepened] = useState(false);
+  const [revealedSources, setRevealedSources] = useState(0);
+
+  // Sources apparaissent une par une — simulation de recherche en direct
+  useEffect(() => {
+    if (revealedSources < 4) {
+      const timer = setTimeout(() => setRevealedSources(prev => prev + 1), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [revealedSources]);
 
   const DEEP_CITATIONS: Record<number, { type: string; date: string; author: string; citations: { text: string; page: string }[]; crossRef: string }> = {
     0: { type: "Rapport gouvernemental", date: "2025-Q4", author: "MESI Quebec", citations: [
@@ -2356,64 +2497,88 @@ function MagDeepSearch() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Globe className="h-4 w-4 text-blue-600" />
-        <h3 className="text-sm font-bold text-gray-800">Deep Search \u2014 4 sources validees</h3>
-        <span className="text-[9px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium ml-auto">Recherche terminee</span>
-      </div>
-      <p className="text-[9px] text-gray-500">Sources externes trouvees pour valider les hypotheses du diagnostic. Chaque source a un score de pertinence.</p>
+      <p className="text-xs text-gray-500">Sources externes trouvees pour valider les hypotheses du diagnostic. Chaque source a un score de pertinence.</p>
       {/* Barre de progression recherche */}
       <div className="grid grid-cols-4 gap-1.5">
         {["Gouvernement", "Sectoriel", "Benchmark", "Academique"].map((cat, i) => (
           <div key={i} className="text-center">
             <div className="h-1 bg-blue-500 rounded-full mb-0.5" />
-            <span className="text-[8px] text-gray-400">{cat}</span>
+            <span className="text-[10px] text-gray-400">{cat}</span>
           </div>
         ))}
       </div>
+
+      {/* Barre de progression recherche live */}
+      {revealedSources < 4 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-2.5 flex items-center gap-3">
+          <Loader2 className="h-4 w-4 text-blue-500 animate-spin shrink-0" />
+          <div className="flex-1">
+            <p className="text-xs text-blue-600 font-medium">Recherche en cours... {revealedSources}/4 sources trouvées</p>
+            <div className="h-1.5 bg-blue-100 rounded-full mt-1.5 overflow-hidden">
+              <div className="h-full bg-blue-500 rounded-full transition-all duration-700" style={{ width: `${(revealedSources / 4) * 100}%` }} />
+            </div>
+          </div>
+        </div>
+      )}
+      {revealedSources >= 4 && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+          <p className="text-xs text-emerald-700 font-medium">4/4 sources validées — analyse croisée complète</p>
+        </div>
+      )}
 
       <div className="space-y-2">
         {SPR_DEEP_SEARCH_SOURCES.map((src, i) => {
           const Icon = src.icon;
           const meta = DEEP_CITATIONS[i];
           const isExpanded = expandedSource === i;
+          if (i >= revealedSources) return (
+            <div key={i} className="bg-gray-50 border border-gray-200 rounded-xl p-3 flex items-center gap-3 animate-pulse">
+              <div className="w-8 h-8 rounded-lg bg-gray-200" />
+              <div className="flex-1 space-y-1.5">
+                <div className="h-3 w-32 bg-gray-200 rounded" />
+                <div className="h-2 w-48 bg-gray-200 rounded" />
+              </div>
+              <div className="w-8 h-8 rounded-full bg-gray-200" />
+            </div>
+          );
           return (
-            <div key={i} className="bg-white border border-blue-200 rounded-xl overflow-hidden hover:shadow-sm transition-shadow">
+            <div key={i} className="bg-white border border-blue-200 rounded-xl overflow-hidden hover:shadow-sm transition-shadow animate-in fade-in slide-in-from-bottom-2" style={{ animationDuration: "500ms" }}>
               <div className="p-3 flex items-start gap-3 cursor-pointer" onClick={() => setExpandedSource(isExpanded ? null : i)}>
                 <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
                   <Icon className="h-4 w-4 text-blue-600" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-bold text-gray-800">{src.title}</p>
-                  <p className="text-[9px] text-gray-600 mt-0.5">{src.detail}</p>
+                  <p className="text-xs text-gray-600 mt-0.5">{src.detail}</p>
                   {meta && (
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-[8px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">{meta.type}</span>
-                      <span className="text-[8px] text-gray-400">{meta.author}</span>
+                      <span className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">{meta.type}</span>
+                      <span className="text-[10px] text-gray-400">{meta.author}</span>
                     </div>
                   )}
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
                   <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
-                    <span className="text-[9px] font-bold text-blue-600">{src.score}%</span>
+                    <span className="text-xs font-bold text-blue-600">{src.score}%</span>
                   </div>
                   <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
                 </div>
               </div>
               {isExpanded && meta && (
                 <div className="px-3 pb-3 border-t border-blue-100 pt-2 space-y-2">
-                  <p className="text-[9px] text-blue-600 font-bold uppercase tracking-wider">Citations cles</p>
+                  <p className="text-xs text-blue-600 font-bold uppercase tracking-wider">Citations cles</p>
                   {meta.citations.map((c, j) => (
                     <div key={j} className="bg-blue-50/50 border-l-2 border-blue-300 rounded-r-lg px-3 py-1.5">
-                      <p className="text-[9px] text-gray-700 italic">"{c.text}"</p>
-                      <p className="text-[8px] text-gray-400 mt-0.5">{c.page}</p>
+                      <p className="text-xs text-gray-700 italic">"{c.text}"</p>
+                      <p className="text-[10px] text-gray-400 mt-0.5">{c.page}</p>
                     </div>
                   ))}
-                  <span className="text-[8px] bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded-full border border-emerald-200">{meta.crossRef}</span>
+                  <span className="text-[10px] bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded-full border border-emerald-200">{meta.crossRef}</span>
                   <div className="flex gap-1.5">
-                    <button className="text-[9px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-blue-700">Cristalliser</button>
-                    <button className="text-[9px] bg-white border border-blue-200 text-blue-700 px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-blue-50">Verifier</button>
-                    <button className="text-[9px] bg-white border border-blue-200 text-blue-700 px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-blue-50">Chercher plus</button>
+                    <button className="text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-blue-700">Cristalliser</button>
+                    <button className="text-xs bg-white border border-blue-200 text-blue-700 px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-blue-50">Verifier</button>
+                    <button className="text-xs bg-white border border-blue-200 text-blue-700 px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-blue-50">Chercher plus</button>
                   </div>
                 </div>
               )}
@@ -2424,7 +2589,7 @@ function MagDeepSearch() {
 
       {/* Croisement automatique des sources */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
-        <p className="text-[9px] font-bold text-blue-700 mb-1">Croisement automatique des sources</p>
+        <p className="text-xs font-bold text-blue-700 mb-1">Croisement automatique des sources</p>
         <div className="grid grid-cols-2 gap-1.5">
           {[
             { ok: true, text: "4/4 sources confirment le ROI referral" },
@@ -2432,7 +2597,7 @@ function MagDeepSearch() {
             { ok: false, text: "Chatbot AI: donnees limitees au Quebec" },
             { ok: true, text: "Budget 3,800$ aligne avec benchmarks" },
           ].map((item, i) => (
-            <div key={i} className="flex items-center gap-1.5 text-[9px] text-gray-600">
+            <div key={i} className="flex items-center gap-1.5 text-xs text-gray-600">
               {item.ok ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" /> : <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />}
               <span>{item.text}</span>
             </div>
@@ -2441,28 +2606,31 @@ function MagDeepSearch() {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <button className="text-[9px] bg-blue-600 text-white px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-blue-700">Approfondir une source</button>
-        <button className="text-[9px] bg-white border border-blue-200 text-blue-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-blue-50">Relancer la recherche</button>
-        <button className="text-[9px] bg-white border border-blue-200 text-blue-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-blue-50">Combiner les sources</button>
-        <button className="text-[9px] bg-white border border-blue-200 text-blue-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-blue-50">Synthese des donnees</button>
-        <button className="text-[9px] bg-white border border-blue-200 text-blue-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-blue-50">Extraire les chiffres cles</button>
+        <button onClick={() => { if (!deepened) { setDeepening(true); setTimeout(() => { setDeepening(false); setDeepened(true); }, 2000); } }}
+          className={cn("text-xs px-3 py-1.5 rounded-full font-medium cursor-pointer flex items-center gap-1.5 transition-colors", deepened ? "bg-emerald-600 text-white" : "bg-blue-600 text-white hover:bg-blue-700")}
+        >{deepening ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Analyse approfondie...</> : deepened ? <><CheckCircle2 className="h-3.5 w-3.5" /> Source approfondie</> : <>Approfondir une source</>}</button>
+        <button className="text-xs bg-white border border-blue-200 text-blue-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-blue-50">Relancer la recherche</button>
+        <button className="text-xs bg-white border border-blue-200 text-blue-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-blue-50">Combiner les sources</button>
+        <button className="text-xs bg-white border border-blue-200 text-blue-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-blue-50">Synthese des donnees</button>
+        <button className="text-xs bg-white border border-blue-200 text-blue-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-blue-50">Extraire les chiffres cles</button>
       </div>
     </div>
   );
 }
 
 function MagSyntheseRecherche() {
+  const [revealCount, setRevealCount] = useState(0);
+  useEffect(() => {
+    if (revealCount < 4) {
+      const timer = setTimeout(() => setRevealCount(prev => prev + 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [revealCount]);
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Layers className="h-4 w-4 text-blue-600" />
-        <h3 className="text-sm font-bold text-gray-800">Synthese des recherches \u2014 Consolidation</h3>
-        <span className="text-[9px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium ml-auto">Tous les resultats</span>
-      </div>
-      <p className="text-[9px] text-gray-500">Consolidation du Deep Search, des 5 Pourquoi et du brainstorm bonifie en 3 constats actionnables.</p>
 
-      <div className="space-y-2">
-        <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider flex items-center gap-1">
+      <div className={cn("space-y-2 transition-all duration-700", revealCount >= 1 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3")}>
+        <p className="text-xs text-gray-400 font-bold uppercase tracking-wider flex items-center gap-1">
           <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Constats valides (3)
         </p>
         {[
@@ -2471,15 +2639,15 @@ function MagSyntheseRecherche() {
           { id: 3, text: "Le programme referral est le quick win le plus rentable (ROI 4.2x confirme par benchmark)", score: 87 },
         ].map(c => (
           <div key={c.id} className="bg-white border border-emerald-200 rounded-lg p-3 flex items-start gap-3">
-            <span className="shrink-0 w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[9px] font-bold">{c.id}</span>
-            <p className="text-[9px] text-gray-700 flex-1">{c.text}</p>
-            <span className="text-[9px] font-bold text-emerald-600 shrink-0">{c.score}%</span>
+            <span className="shrink-0 w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-bold">{c.id}</span>
+            <p className="text-xs text-gray-700 flex-1">{c.text}</p>
+            <span className="text-xs font-bold text-emerald-600 shrink-0">{c.score}%</span>
           </div>
         ))}
       </div>
 
-      <div className="space-y-2">
-        <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider flex items-center gap-1">
+      <div className={cn("space-y-2 transition-all duration-700", revealCount >= 2 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3")}>
+        <p className="text-xs text-gray-400 font-bold uppercase tracking-wider flex items-center gap-1">
           <Search className="h-3.5 w-3.5 text-amber-500" /> Hypotheses a verifier (2)
         </p>
         {[
@@ -2488,26 +2656,26 @@ function MagSyntheseRecherche() {
         ].map((h, i) => (
           <div key={i} className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center gap-3">
             <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-            <p className="text-[9px] text-gray-700 flex-1">{h.text}</p>
-            <button className="text-[9px] bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-amber-300 shrink-0">{h.action}</button>
+            <p className="text-xs text-gray-700 flex-1">{h.text}</p>
+            <button className="text-xs bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-amber-300 shrink-0">{h.action}</button>
           </div>
         ))}
       </div>
 
-      <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-center gap-3">
+      <div className={cn("bg-red-50 border border-red-200 rounded-lg p-3 flex items-center gap-3 transition-all duration-700", revealCount >= 3 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3")}>
         <AlertTriangle className="h-4 w-4 text-red-500 shrink-0" />
         <div className="flex-1">
-          <p className="text-[9px] font-bold text-red-800">Risque identifie</p>
-          <p className="text-[9px] text-red-700">Timeline Q2 agressive pour tout deployer \u2014 Tim recommande Q2+Q3</p>
+          <p className="text-xs font-bold text-red-800">Risque identifie</p>
+          <p className="text-xs text-red-700">Timeline Q2 agressive pour tout deployer \u2014 Tim recommande Q2+Q3</p>
         </div>
-        <button className="text-[9px] bg-red-200 text-red-800 px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-red-300 shrink-0">Mitiger</button>
+        <button className="text-xs bg-red-200 text-red-800 px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-red-300 shrink-0">Mitiger</button>
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <button className="text-[9px] bg-blue-600 text-white px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-blue-700">Challenger ces conclusions</button>
-        <button className="text-[9px] bg-white border border-blue-200 text-blue-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-blue-50">Relancer le Deep Search</button>
-        <button className="text-[9px] bg-white border border-blue-200 text-blue-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-blue-50">Combiner avec d'autres donnees</button>
-        <button className="text-[9px] bg-white border border-blue-200 text-blue-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-blue-50">Exporter la synthese</button>
+        <button className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-blue-700">Challenger ces conclusions</button>
+        <button className="text-xs bg-white border border-blue-200 text-blue-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-blue-50">Relancer le Deep Search</button>
+        <button className="text-xs bg-white border border-blue-200 text-blue-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-blue-50">Combiner avec d'autres donnees</button>
+        <button className="text-xs bg-white border border-blue-200 text-blue-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-blue-50">Exporter la synthese</button>
       </div>
     </div>
   );
@@ -2515,6 +2683,22 @@ function MagSyntheseRecherche() {
 
 function MagChallenge() {
   const [activeRound, setActiveRound] = useState(0);
+  const [verdictLoading, setVerdictLoading] = useState(false);
+  const [verdictAccepted, setVerdictAccepted] = useState(false);
+  const [roundStep, setRoundStep] = useState(0);
+
+  // Reset animation on round change
+  useEffect(() => {
+    setRoundStep(0);
+  }, [activeRound]);
+
+  // Progressive reveal: challenge(1) → defense(2) → verdict+metrics(3) → buttons(4)
+  useEffect(() => {
+    if (roundStep < 4) {
+      const timer = setTimeout(() => setRoundStep(prev => prev + 1), 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [roundStep]);
 
   const CHALLENGE_ROUNDS = [
     {
@@ -2568,14 +2752,14 @@ function MagChallenge() {
       <div className="flex items-center gap-2">
         <AlertTriangle className="h-4 w-4 text-amber-600" />
         <h3 className="text-sm font-bold text-gray-800">Challenge / Defense \u2014 Multi-bot</h3>
-        <span className="text-[9px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium ml-auto">{CHALLENGE_ROUNDS.length} rounds</span>
+        <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium ml-auto">{CHALLENGE_ROUNDS.length} rounds</span>
       </div>
 
       {/* Rounds navigation */}
       <div className="flex items-center gap-1">
         {CHALLENGE_ROUNDS.map((r, i) => (
           <button key={i} onClick={() => setActiveRound(i)}
-            className={cn("flex-1 text-[9px] py-1.5 px-2 rounded-lg font-medium cursor-pointer transition-all truncate",
+            className={cn("flex-1 text-xs py-1.5 px-2 rounded-lg font-medium cursor-pointer transition-all truncate",
               i === activeRound ? "bg-amber-500 text-white shadow-sm" : i < activeRound ? "bg-emerald-50 text-emerald-600" : "bg-gray-50 text-gray-400 hover:bg-gray-100"
             )}>
             {i < activeRound && <CheckCircle2 className="h-3.5 w-3.5 inline mr-1" />}
@@ -2591,60 +2775,70 @@ function MagChallenge() {
         </div>
         <div className="p-4 space-y-3">
           {/* Challenge */}
-          <div className="flex items-start gap-3">
+          <div className={cn("flex items-start gap-3 transition-all duration-700", roundStep >= 1 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3")}>
             <BotAvatar code={round.challenger} size="sm" />
             <div className="flex-1 bg-amber-50 border border-amber-200 rounded-lg p-3">
               <div className="flex items-center gap-1.5 mb-1">
-                <span className="text-[9px] font-bold text-amber-700">{round.challengerName}</span>
-                <span className="text-[8px] bg-amber-200 text-amber-800 px-1 py-0.5 rounded">Challenge</span>
+                <span className="text-xs font-bold text-amber-700">{round.challengerName}</span>
+                <span className="text-[10px] bg-amber-200 text-amber-800 px-1 py-0.5 rounded">Challenge</span>
               </div>
-              <p className="text-[9px] text-gray-600">{round.challengeText}</p>
+              <p className="text-xs text-gray-600">{round.challengeText}</p>
             </div>
           </div>
           {/* Defense */}
-          <div className="flex items-start gap-3">
+          <div className={cn("flex items-start gap-3 transition-all duration-700", roundStep >= 2 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3")}>
             <BotAvatar code={round.defender} size="sm" />
             <div className="flex-1 bg-emerald-50 border border-emerald-200 rounded-lg p-3">
               <div className="flex items-center gap-1.5 mb-1">
-                <span className="text-[9px] font-bold text-emerald-700">{round.defenderName}</span>
-                <span className="text-[8px] bg-emerald-200 text-emerald-800 px-1 py-0.5 rounded">Defense</span>
+                <span className="text-xs font-bold text-emerald-700">{round.defenderName}</span>
+                <span className="text-[10px] bg-emerald-200 text-emerald-800 px-1 py-0.5 rounded">Defense</span>
               </div>
-              <p className="text-[9px] text-gray-600">{round.defenseText}</p>
+              <p className="text-xs text-gray-600">{round.defenseText}</p>
             </div>
           </div>
           {/* Verdict */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 flex items-start gap-2">
+          <div className={cn("bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 flex items-start gap-2 transition-all duration-700", roundStep >= 3 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3")}>
             <CheckCircle2 className="h-3.5 w-3.5 text-blue-500 shrink-0 mt-0.5" />
             <div className="flex-1">
-              <p className="text-[9px] text-blue-700 font-medium">{round.verdict}</p>
+              <p className="text-xs text-blue-700 font-medium">{round.verdict}</p>
               <div className="flex items-center gap-1.5 mt-1">
-                <span className="text-[8px] text-gray-400">Confiance equipe:</span>
+                <span className="text-[10px] text-gray-400">Confiance equipe:</span>
                 <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                  <div className={cn("h-full rounded-full", round.confidence >= 85 ? "bg-emerald-500" : round.confidence >= 70 ? "bg-amber-500" : "bg-orange-500")} style={{ width: `${round.confidence}%` }} />
+                  <div className={cn("h-full rounded-full transition-all duration-1000", round.confidence >= 85 ? "bg-emerald-500" : round.confidence >= 70 ? "bg-amber-500" : "bg-orange-500")} style={{ width: roundStep >= 3 ? `${round.confidence}%` : '0%' }} />
                 </div>
-                <span className={cn("text-[9px] font-bold", round.confidence >= 85 ? "text-emerald-600" : round.confidence >= 70 ? "text-amber-600" : "text-orange-600")}>{round.confidence}%</span>
+                <span className={cn("text-xs font-bold", round.confidence >= 85 ? "text-emerald-600" : round.confidence >= 70 ? "text-amber-600" : "text-orange-600")}>{roundStep >= 3 ? round.confidence : 0}%</span>
               </div>
             </div>
           </div>
           {/* Metrics */}
-          <div className="grid grid-cols-3 gap-2">
+          <div className={cn("grid grid-cols-3 gap-2 transition-all duration-700", roundStep >= 3 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3")}>
             {round.metrics.map((m, i) => (
               <div key={i} className="text-center bg-white border border-gray-200 rounded-lg p-2">
                 <p className={cn("text-lg font-extrabold", m.color)}>{m.value}</p>
-                <p className="text-[9px] text-gray-500">{m.label}</p>
+                <p className="text-xs text-gray-500">{m.label}</p>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <button className="text-[9px] bg-emerald-600 text-white px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-emerald-700">Accepter le verdict</button>
-        <button className="text-[9px] bg-white border border-amber-200 text-amber-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-amber-50">Re-challenger</button>
-        <button className="text-[9px] bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-gray-50">Demander un 2e avis</button>
-        <button className="text-[9px] bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-gray-50">Voir l'alternative</button>
-        <button className="text-[9px] bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-gray-50">Synthese des 3 rounds</button>
+      <div className={cn("flex flex-wrap gap-2 transition-all duration-700", roundStep >= 4 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3")}>
+        <button onClick={() => { if (!verdictAccepted) { setVerdictLoading(true); setTimeout(() => { setVerdictLoading(false); setVerdictAccepted(true); }, 1500); } }}
+          className={cn("text-xs px-3 py-1.5 rounded-full font-medium cursor-pointer flex items-center gap-1.5 transition-colors", verdictAccepted ? "bg-emerald-700 text-white" : "bg-emerald-600 text-white hover:bg-emerald-700")}
+        >{verdictLoading ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Validation...</> : verdictAccepted ? <><CheckCircle2 className="h-3.5 w-3.5" /> Verdict accepté</> : <>Accepter le verdict</>}</button>
+        {!verdictAccepted && <>
+        <button className="text-xs bg-white border border-amber-200 text-amber-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-amber-50">Re-challenger</button>
+        <button className="text-xs bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-gray-50">Demander un 2e avis</button>
+        <button className="text-xs bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-gray-50">Voir l'alternative</button>
+        <button className="text-xs bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-gray-50">Synthese des 3 rounds</button>
+        </>}
       </div>
+      {verdictAccepted && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-2.5 flex items-center gap-2 animate-in fade-in slide-in-from-top-1" style={{ animationDuration: "300ms" }}>
+          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+          <p className="text-xs text-emerald-700 font-medium">Verdict accepté — 2 propositions validées, plan révisé à 3,800$/mois (ROI 3.6x)</p>
+        </div>
+      )}
     </div>
   );
 }
@@ -2652,7 +2846,19 @@ function MagChallenge() {
 function MagPreRapport() {
   const [activeAction, setActiveAction] = useState<{ sectionId: number; action: string } | null>(null);
   const [pinnedSection, setPinnedSection] = useState<number | null>(null);
+  const [crystallizing, setCrystallizing] = useState(false);
+  const [crystallized, setCrystallized] = useState(false);
+  const [crystalProgress, setCrystalProgress] = useState(0);
+  const [revealedSections, setRevealedSections] = useState(0);
   const sectionsFilled = SPR_REPORT_SECTIONS.map(s => s.id);
+
+  // Sections du rapport apparaissent une par une — compilation en direct
+  useEffect(() => {
+    if (revealedSections < sectionsFilled.length) {
+      const timer = setTimeout(() => setRevealedSections(prev => prev + 1), 800);
+      return () => clearTimeout(timer);
+    }
+  }, [revealedSections, sectionsFilled.length]);
 
   const APPROFONDIR_RESULTS: Record<number, { bot: string; expanded: string; data: string[] }> = {
     2: {
@@ -2695,89 +2901,43 @@ function MagPreRapport() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <FileText className="h-4 w-4 text-orange-600" />
-        <h3 className="text-sm font-bold text-gray-800">Pre-rapport \u2014 Analyse Marketing Q2</h3>
-        <span className="text-[9px] text-gray-500 ml-auto">{sectionsFilled.length} / {SPR_REPORT_SECTIONS.length} sections</span>
-      </div>
-
-      <div className="flex gap-4">
-        {/* TOC sidebar */}
-        <div className="w-44 shrink-0 space-y-1">
-          <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-2">Table des matieres</p>
-          {SPR_REPORT_SECTIONS.map(s => {
-            const filled = sectionsFilled.includes(s.id);
-            const isActive = activeAction?.sectionId === s.id;
-            return (
-              <div key={s.id} className={cn("flex items-center gap-1.5 text-[9px] px-2 py-1 rounded cursor-pointer transition-all",
-                isActive ? "bg-orange-100 text-orange-700 font-medium ring-1 ring-orange-300" :
-                filled ? "bg-green-50 text-green-700 font-medium" : "text-gray-400 hover:bg-gray-50",
-                pinnedSection === s.id ? "animate-pulse ring-2 ring-blue-400" : ""
-              )}>
-                {filled ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" /> : <div className="w-3.5 h-3.5 rounded-full border border-gray-300 shrink-0" />}
-                <span className="truncate">{s.id}. {s.title}</span>
-              </div>
-            );
-          })}
-          <div className="mt-3 text-[9px] text-gray-500 px-2">
-            <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-              <div className="h-full bg-orange-500 rounded-full transition-all" style={{ width: `${(sectionsFilled.length / SPR_REPORT_SECTIONS.length) * 100}%` }} />
-            </div>
-            <span className="mt-1 block">{Math.round((sectionsFilled.length / SPR_REPORT_SECTIONS.length) * 100)}% complet</span>
-          </div>
-
-          <div className="mt-3 pt-2 border-t border-gray-200 space-y-1">
-            <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-1">Actions</p>
-            {[
-              { label: "Re-synthetiser tout", icon: RefreshCw },
-              { label: "Reorganiser les sections", icon: Layers },
-              { label: "Fusionner 2 sections", icon: Zap },
-              { label: "Ajouter une section", icon: Lightbulb },
-            ].map(a => (
-              <button key={a.label} className="w-full flex items-center gap-1.5 text-[9px] text-gray-500 hover:text-orange-600 hover:bg-orange-50 px-2 py-1 rounded cursor-pointer transition-colors text-left">
-                <a.icon className="h-3.5 w-3.5 shrink-0" /> {a.label}
-              </button>
-            ))}
-          </div>
-        </div>
-        {/* Content */}
-        <div className="flex-1 space-y-3">
-          {SPR_REPORT_SECTIONS.filter(s => sectionsFilled.includes(s.id)).map(s => (
-            <div key={s.id} className={cn("border-l-[3px] rounded-r-lg px-3 py-2.5 group transition-all",
+      <div className="space-y-3">
+          {SPR_REPORT_SECTIONS.filter(s => sectionsFilled.includes(s.id)).filter((_, i) => i < revealedSections).map((s, idx) => (
+            <div key={s.id} className={cn("border-l-[3px] rounded-r-lg px-3 py-2.5 group transition-all animate-in fade-in slide-in-from-bottom-2",
               activeAction?.sectionId === s.id ? "border-orange-500 bg-orange-50 ring-1 ring-orange-200" : "border-orange-400 bg-orange-50/50",
               pinnedSection === s.id ? "ring-2 ring-blue-400 animate-pulse" : ""
             )}>
               <div className="flex items-center gap-2 mb-1">
-                <h4 className="text-[9px] font-bold text-orange-700">{s.id}. {s.title}</h4>
-                <span className="text-[9px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded ml-auto">
+                <h4 className="text-xs font-bold text-orange-700">{s.id}. {s.title}</h4>
+                <span className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded ml-auto">
                   {s.id <= 2 ? "CarlOS" : s.id === 3 ? "Multi-bot" : s.id === 4 ? "Brainstorm" : s.id === 5 ? "5 Pourquoi" : s.id === 6 ? "Deep Search" : s.id === 7 ? "Frank" : "CarlOS"}
                 </span>
               </div>
-              <p className="text-[9px] text-gray-700 leading-relaxed">{s.content}</p>
+              <p className="text-xs text-gray-700 leading-relaxed">{s.content}</p>
 
               <div className="flex flex-wrap gap-1.5 mt-2 opacity-70 group-hover:opacity-100 transition-opacity">
                 <button onClick={() => handlePin(s.id)}
-                  className={cn("text-[9px] font-medium cursor-pointer flex items-center gap-1 rounded-full px-2 py-0.5 transition-colors",
+                  className={cn("text-xs font-medium cursor-pointer flex items-center gap-1 rounded-full px-2 py-0.5 transition-colors",
                     pinnedSection === s.id ? "text-blue-700 bg-blue-100 border border-blue-300" : "text-orange-600 hover:text-orange-700 bg-white border border-orange-200 hover:bg-orange-50"
                   )}>
                   <Pin className="h-3.5 w-3.5" /> {pinnedSection === s.id ? "Epingle!" : "Epingler"}
                 </button>
                 <button onClick={() => handleAction(s.id, "approfondir")}
-                  className={cn("text-[9px] font-medium cursor-pointer flex items-center gap-1 rounded-full px-2 py-0.5 transition-colors",
+                  className={cn("text-xs font-medium cursor-pointer flex items-center gap-1 rounded-full px-2 py-0.5 transition-colors",
                     activeAction?.sectionId === s.id && activeAction?.action === "approfondir" ? "text-violet-700 bg-violet-100 border border-violet-300" : "text-gray-500 hover:text-gray-700 bg-white border border-gray-200 hover:bg-gray-50"
                   )}>
                   <BookOpen className="h-3.5 w-3.5" /> Approfondir
                 </button>
                 <button onClick={() => handleAction(s.id, "reformuler")}
-                  className={cn("text-[9px] font-medium cursor-pointer flex items-center gap-1 rounded-full px-2 py-0.5 transition-colors",
+                  className={cn("text-xs font-medium cursor-pointer flex items-center gap-1 rounded-full px-2 py-0.5 transition-colors",
                     activeAction?.sectionId === s.id && activeAction?.action === "reformuler" ? "text-amber-700 bg-amber-100 border border-amber-300" : "text-gray-500 hover:text-gray-700 bg-white border border-gray-200 hover:bg-gray-50"
                   )}>
                   <RefreshCw className="h-3.5 w-3.5" /> Reformuler
                 </button>
-                <button className="text-[9px] text-gray-500 hover:text-gray-700 font-medium cursor-pointer flex items-center gap-1 bg-white border border-gray-200 rounded-full px-2 py-0.5 hover:bg-gray-50">
+                <button className="text-xs text-gray-500 hover:text-gray-700 font-medium cursor-pointer flex items-center gap-1 bg-white border border-gray-200 rounded-full px-2 py-0.5 hover:bg-gray-50">
                   <AlertTriangle className="h-3.5 w-3.5" /> Challenger
                 </button>
-                <button className="text-[9px] text-gray-500 hover:text-gray-700 font-medium cursor-pointer flex items-center gap-1 bg-white border border-gray-200 rounded-full px-2 py-0.5 hover:bg-gray-50">
+                <button className="text-xs text-gray-500 hover:text-gray-700 font-medium cursor-pointer flex items-center gap-1 bg-white border border-gray-200 rounded-full px-2 py-0.5 hover:bg-gray-50">
                   <Layers className="h-3.5 w-3.5" /> Fusionner
                 </button>
               </div>
@@ -2789,30 +2949,30 @@ function MagPreRapport() {
                     <>
                       <div className="flex items-center gap-2 mb-1">
                         <BotAvatar code={APPROFONDIR_RESULTS[s.id].bot} size="sm" />
-                        <span className="text-[9px] font-bold text-violet-700">Analyse approfondie par {BOT_COLORS[APPROFONDIR_RESULTS[s.id].bot]?.name}</span>
+                        <span className="text-xs font-bold text-violet-700">Analyse approfondie par {BOT_COLORS[APPROFONDIR_RESULTS[s.id].bot]?.name}</span>
                         <div className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse ml-auto" />
                       </div>
-                      <p className="text-[9px] text-gray-700 leading-relaxed bg-violet-50 rounded-lg px-3 py-2 border border-violet-200">
+                      <p className="text-xs text-gray-700 leading-relaxed bg-violet-50 rounded-lg px-3 py-2 border border-violet-200">
                         {APPROFONDIR_RESULTS[s.id].expanded}
                       </p>
                       <div className="space-y-1">
                         {APPROFONDIR_RESULTS[s.id].data.map((d, j) => (
-                          <div key={j} className="flex items-center gap-2 text-[9px] text-violet-700 bg-white rounded px-2.5 py-1 border border-violet-100">
+                          <div key={j} className="flex items-center gap-2 text-xs text-violet-700 bg-white rounded px-2.5 py-1 border border-violet-100">
                             <BarChart3 className="h-3.5 w-3.5 text-violet-400 shrink-0" />
                             <span>{d}</span>
                           </div>
                         ))}
                       </div>
                       <div className="flex gap-1.5">
-                        <button className="text-[9px] bg-violet-600 text-white px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-violet-700">Integrer au rapport</button>
-                        <button className="text-[9px] bg-white text-violet-700 px-2 py-0.5 rounded-full font-medium border border-violet-200 cursor-pointer hover:bg-violet-50">Encore plus profond</button>
+                        <button className="text-xs bg-violet-600 text-white px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-violet-700">Integrer au rapport</button>
+                        <button className="text-xs bg-white text-violet-700 px-2 py-0.5 rounded-full font-medium border border-violet-200 cursor-pointer hover:bg-violet-50">Encore plus profond</button>
                       </div>
                     </>
                   ) : (
                     <div className="flex items-center gap-2 bg-violet-50 rounded-lg px-3 py-2 border border-violet-200">
                       <BotAvatar code="CEOB" size="sm" />
                       <div className="flex-1">
-                        <p className="text-[9px] text-violet-700 font-medium">CarlOS analyse cette section en profondeur...</p>
+                        <p className="text-xs text-violet-700 font-medium">CarlOS analyse cette section en profondeur...</p>
                         <div className="flex gap-1 mt-1">
                           <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: "0ms" }} />
                           <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: "150ms" }} />
@@ -2831,29 +2991,29 @@ function MagPreRapport() {
                     <>
                       <div className="flex items-center gap-2 mb-1">
                         <BotAvatar code={REFORMULER_RESULTS[s.id].bot} size="sm" />
-                        <span className="text-[9px] font-bold text-amber-700">Reformulation par {BOT_COLORS[REFORMULER_RESULTS[s.id].bot]?.name}</span>
+                        <span className="text-xs font-bold text-amber-700">Reformulation par {BOT_COLORS[REFORMULER_RESULTS[s.id].bot]?.name}</span>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <div className="bg-gray-50 border border-gray-200 rounded-lg p-2.5">
-                          <p className="text-[9px] text-gray-400 font-bold uppercase mb-1">Avant</p>
-                          <p className="text-[9px] text-gray-500 line-through leading-relaxed">{REFORMULER_RESULTS[s.id].before}</p>
+                          <p className="text-xs text-gray-400 font-bold uppercase mb-1">Avant</p>
+                          <p className="text-xs text-gray-500 line-through leading-relaxed">{REFORMULER_RESULTS[s.id].before}</p>
                         </div>
                         <div className="bg-amber-50 border border-amber-200 rounded-lg p-2.5">
-                          <p className="text-[9px] text-amber-600 font-bold uppercase mb-1">Apres</p>
-                          <p className="text-[9px] text-amber-800 leading-relaxed">{REFORMULER_RESULTS[s.id].after}</p>
+                          <p className="text-xs text-amber-600 font-bold uppercase mb-1">Apres</p>
+                          <p className="text-xs text-amber-800 leading-relaxed">{REFORMULER_RESULTS[s.id].after}</p>
                         </div>
                       </div>
                       <div className="flex gap-1.5">
-                        <button className="text-[9px] bg-amber-600 text-white px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-amber-700">Appliquer la reformulation</button>
-                        <button className="text-[9px] bg-white text-amber-700 px-2 py-0.5 rounded-full font-medium border border-amber-200 cursor-pointer hover:bg-amber-50">Autre version</button>
-                        <button onClick={() => setActiveAction(null)} className="text-[9px] bg-white text-gray-500 px-2 py-0.5 rounded-full font-medium border border-gray-200 cursor-pointer hover:bg-gray-50">Garder l'original</button>
+                        <button className="text-xs bg-amber-600 text-white px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-amber-700">Appliquer la reformulation</button>
+                        <button className="text-xs bg-white text-amber-700 px-2 py-0.5 rounded-full font-medium border border-amber-200 cursor-pointer hover:bg-amber-50">Autre version</button>
+                        <button onClick={() => setActiveAction(null)} className="text-xs bg-white text-gray-500 px-2 py-0.5 rounded-full font-medium border border-gray-200 cursor-pointer hover:bg-gray-50">Garder l'original</button>
                       </div>
                     </>
                   ) : (
                     <div className="flex items-center gap-2 bg-amber-50 rounded-lg px-3 py-2 border border-amber-200">
                       <BotAvatar code="CEOB" size="sm" />
                       <div className="flex-1">
-                        <p className="text-[9px] text-amber-700 font-medium">CarlOS reformule cette section...</p>
+                        <p className="text-xs text-amber-700 font-medium">CarlOS reformule cette section...</p>
                         <div className="flex gap-1 mt-1">
                           <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: "0ms" }} />
                           <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: "150ms" }} />
@@ -2866,8 +3026,62 @@ function MagPreRapport() {
               )}
             </div>
           ))}
+
+          {/* Indicateur de compilation */}
+          {revealedSections < sectionsFilled.length && (
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-2.5 flex items-center gap-3">
+              <Loader2 className="h-4 w-4 text-orange-500 animate-spin shrink-0" />
+              <div className="flex-1">
+                <p className="text-xs text-orange-600 font-medium">Compilation du rapport... {revealedSections}/{sectionsFilled.length} sections</p>
+                <div className="h-1.5 bg-orange-100 rounded-full mt-1.5 overflow-hidden">
+                  <div className="h-full bg-orange-500 rounded-full transition-all duration-500" style={{ width: `${(revealedSections / sectionsFilled.length) * 100}%` }} />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Passage en Conception — vote et budget */}
+          <div className={cn("border border-gray-200 rounded-lg overflow-hidden mt-3 transition-all duration-700", revealedSections >= sectionsFilled.length ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3")}>
+            <div className="bg-gray-50 px-3 py-1.5 border-b border-gray-200 flex items-center gap-2">
+              <Users className="h-3.5 w-3.5 text-gray-500" />
+              <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">Vote equipe — Passage en Conception</span>
+            </div>
+            <div className="grid grid-cols-2 gap-px bg-gray-200">
+              {[
+                { bot: "CFOB", name: "Frank (CFO)", vote: "GO", reason: "Budget aligne, ROI valide par Deep Search" },
+                { bot: "CMOB", name: "Mathilde (CMO)", vote: "GO", reason: "Messaging pivot necessaire, timing Q2 ideal" },
+                { bot: "CTOB", name: "Tim (CTO)", vote: "GO", reason: "Chatbot deployable en 3 semaines, stack validee" },
+                { bot: "COOB", name: "Olivier (COO)", vote: "GO", reason: "Ressources disponibles, pas d'impact operations" },
+              ].map(v => (
+                <div key={v.bot} className="bg-white px-2.5 py-2 flex items-start gap-2">
+                  <BotAvatar code={v.bot} size="sm" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-bold text-gray-700">{v.name}</span>
+                      <span className="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-bold">{v.vote}</span>
+                    </div>
+                    <p className="text-[10px] text-gray-500 mt-0.5">{v.reason}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 text-center">
+              <p className="text-lg font-extrabold text-emerald-700">3,800$</p>
+              <p className="text-[10px] text-emerald-600">/mois budget total</p>
+            </div>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-center">
+              <p className="text-lg font-extrabold text-blue-700">3.6x</p>
+              <p className="text-[10px] text-blue-600">ROI projete</p>
+            </div>
+            <div className="bg-orange-50 border border-orange-200 rounded-lg px-3 py-2 text-center">
+              <p className="text-lg font-extrabold text-orange-700">12 sem</p>
+              <p className="text-[10px] text-orange-600">deploiement complet</p>
+            </div>
+          </div>
         </div>
-      </div>
     </div>
   );
 }
@@ -2890,16 +3104,16 @@ const CONCEPTION_DATA: Record<number, { content: React.ReactNode }> = {
     <div className="space-y-2">
       <div className="grid grid-cols-2 gap-2">
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2">
-          <p className="text-[9px] text-yellow-600 font-bold uppercase">Titre</p>
+          <p className="text-xs text-yellow-600 font-bold uppercase">Titre</p>
           <p className="text-xs font-bold text-gray-800">Strat\u00e9gie Marketing Q2-Q3</p>
         </div>
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2">
-          <p className="text-[9px] text-yellow-600 font-bold uppercase">Chaleur</p>
+          <p className="text-xs text-yellow-600 font-bold uppercase">Chaleur</p>
           <p className="text-xs font-bold text-gray-800">\ud83d\udd25 Critique \u2014 Pipeline stagne</p>
         </div>
       </div>
       <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
-        <p className="text-[9px] text-gray-500 font-bold uppercase mb-1">Description</p>
+        <p className="text-xs text-gray-500 font-bold uppercase mb-1">Description</p>
         <p className="text-[10px] text-gray-700 leading-relaxed">Refonte compl\u00e8te de la strat\u00e9gie d'acquisition marketing. Pivot du messaging technologique vers le ROI concret. Programme referral + content LinkedIn + webinaires VITAA.</p>
       </div>
     </div>
@@ -2912,8 +3126,8 @@ const CONCEPTION_DATA: Record<number, { content: React.ReactNode }> = {
         { obj: "G\u00e9n\u00e9rer 15 leads qualifi\u00e9s/mois", kpi: "Leads/mois", cible: "15", actuel: "4" },
       ].map((o, i) => (
         <div key={i} className="bg-yellow-50/50 border border-yellow-200 rounded-lg px-3 py-2">
-          <p className="text-[9px] font-bold text-gray-800">{o.obj}</p>
-          <div className="flex items-center gap-3 mt-1 text-[9px]">
+          <p className="text-xs font-bold text-gray-800">{o.obj}</p>
+          <div className="flex items-center gap-3 mt-1 text-xs">
             <span className="text-gray-500">KPI: {o.kpi}</span>
             <span className="text-red-600">Actuel: {o.actuel}</span>
             <span className="text-emerald-600 font-bold">Cible: {o.cible}</span>
@@ -2931,13 +3145,13 @@ const CONCEPTION_DATA: Record<number, { content: React.ReactNode }> = {
       ].map((p, i) => (
         <div key={i} className="bg-yellow-50/50 border border-yellow-200 rounded-lg px-3 py-2.5">
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="text-[9px] font-bold bg-yellow-600 text-white w-5 h-5 rounded-full flex items-center justify-center">{i+1}</span>
+            <span className="text-xs font-bold bg-yellow-600 text-white w-5 h-5 rounded-full flex items-center justify-center">{i+1}</span>
             <span className="text-xs font-bold text-gray-800">{p.name}</span>
-            <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium ml-auto", p.priority === "Haute" ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-600")}>{p.priority}</span>
+            <span className={cn("text-xs px-1.5 py-0.5 rounded-full font-medium ml-auto", p.priority === "Haute" ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-600")}>{p.priority}</span>
           </div>
           <div className="flex items-center gap-2 ml-7">
             <BotAvatar code={p.bot} size="sm" />
-            <span className="text-[9px] text-gray-500">Pilot\u00e9 par {p.botName}</span>
+            <span className="text-xs text-gray-500">Pilot\u00e9 par {p.botName}</span>
           </div>
         </div>
       ))}
@@ -2951,10 +3165,10 @@ const CONCEPTION_DATA: Record<number, { content: React.ReactNode }> = {
         { project: "D\u00e9monstration AI", missions: ["Organiser premier webinar", "Pr\u00e9parer d\u00e9mos live", "Suivi post-webinar"] },
       ].map((p, i) => (
         <div key={i}>
-          <p className="text-[9px] font-bold text-yellow-700 mb-1">{p.project}</p>
+          <p className="text-xs font-bold text-yellow-700 mb-1">{p.project}</p>
           <div className="space-y-1 ml-3">
             {p.missions.map((m, j) => (
-              <div key={j} className="flex items-center gap-2 text-[9px] text-gray-700 bg-white border border-gray-100 rounded px-2.5 py-1">
+              <div key={j} className="flex items-center gap-2 text-xs text-gray-700 bg-white border border-gray-100 rounded px-2.5 py-1">
                 <Target className="h-3.5 w-3.5 text-yellow-500 shrink-0" />
                 <span>Mission {i+1}.{j+1}: {m}</span>
               </div>
@@ -2966,16 +3180,16 @@ const CONCEPTION_DATA: Record<number, { content: React.ReactNode }> = {
   )},
   5: { content: (
     <div className="space-y-2">
-      <p className="text-[9px] text-gray-500 italic">T\u00e2ches d\u00e9riv\u00e9es des missions \u2014 27 t\u00e2ches atomiques</p>
+      <p className="text-xs text-gray-500 italic">T\u00e2ches d\u00e9riv\u00e9es des missions \u2014 27 t\u00e2ches atomiques</p>
       {[
         { mission: "Landing pages t\u00e9moignages", tasks: ["R\u00e9diger 5 cas clients", "Design template t\u00e9moignage", "Int\u00e9grer au site web", "A/B test des CTAs"] },
         { mission: "Calendrier \u00e9ditorial Q2", tasks: ["D\u00e9finir 12 th\u00e8mes", "R\u00e9diger 4 posts/semaine", "Planifier dans l'outil"] },
       ].map((m, i) => (
         <div key={i} className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
-          <p className="text-[9px] font-bold text-gray-600 mb-1">{m.mission}</p>
+          <p className="text-xs font-bold text-gray-600 mb-1">{m.mission}</p>
           <div className="space-y-0.5">
             {m.tasks.map((t, j) => (
-              <div key={j} className="flex items-center gap-1.5 text-[9px] text-gray-600">
+              <div key={j} className="flex items-center gap-1.5 text-xs text-gray-600">
                 <ListChecks className="h-3.5 w-3.5 text-gray-400 shrink-0" />
                 <span>{t}</span>
               </div>
@@ -2997,8 +3211,8 @@ const CONCEPTION_DATA: Record<number, { content: React.ReactNode }> = {
           <div key={b.code} className="flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-lg px-2.5 py-2">
             <BotAvatar code={b.code} size="sm" />
             <div>
-              <p className="text-[9px] font-bold text-gray-800">{b.name}</p>
-              <p className="text-[9px] text-gray-500">{b.role}</p>
+              <p className="text-xs font-bold text-gray-800">{b.name}</p>
+              <p className="text-xs text-gray-500">{b.role}</p>
             </div>
           </div>
         ))}
@@ -3006,7 +3220,7 @@ const CONCEPTION_DATA: Record<number, { content: React.ReactNode }> = {
           <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center">
             <Plus className="h-3.5 w-3.5 text-gray-400" />
           </div>
-          <p className="text-[9px] text-gray-400">Humain</p>
+          <p className="text-xs text-gray-400">Humain</p>
         </div>
       </div>
     </div>
@@ -3015,22 +3229,22 @@ const CONCEPTION_DATA: Record<number, { content: React.ReactNode }> = {
     <div className="space-y-2">
       <div className="grid grid-cols-2 gap-2">
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2">
-          <p className="text-[9px] text-yellow-600 font-bold uppercase">Budget mensuel</p>
+          <p className="text-xs text-yellow-600 font-bold uppercase">Budget mensuel</p>
           <p className="text-xs font-bold text-gray-800">3,800$/mois</p>
         </div>
         <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
-          <p className="text-[9px] text-emerald-600 font-bold uppercase">ROI projet\u00e9</p>
+          <p className="text-xs text-emerald-600 font-bold uppercase">ROI projet\u00e9</p>
           <p className="text-xs font-bold text-emerald-700">3.6x</p>
         </div>
       </div>
       <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
-        <p className="text-[9px] text-gray-500 font-bold uppercase mb-1">R\u00e9partition</p>
+        <p className="text-xs text-gray-500 font-bold uppercase mb-1">R\u00e9partition</p>
         <div className="space-y-1">
-          <div className="flex items-center justify-between text-[9px]">
+          <div className="flex items-center justify-between text-xs">
             <span className="text-gray-600">Referral Program</span>
             <span className="font-bold text-gray-800">1,200$/mois</span>
           </div>
-          <div className="flex items-center justify-between text-[9px]">
+          <div className="flex items-center justify-between text-xs">
             <span className="text-gray-600">Content LinkedIn</span>
             <span className="font-bold text-gray-800">2,600$/mois</span>
           </div>
@@ -3045,10 +3259,10 @@ const CONCEPTION_DATA: Record<number, { content: React.ReactNode }> = {
         { phase: "Q3 \u2014 Juillet-Sept", items: ["Premier webinar VITAA", "Scale content LinkedIn", "Analyse ROI et ajustements"], color: "bg-emerald-100 text-emerald-700" },
       ].map((p, i) => (
         <div key={i} className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5">
-          <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-bold", p.color)}>{p.phase}</span>
+          <span className={cn("text-xs px-2 py-0.5 rounded-full font-bold", p.color)}>{p.phase}</span>
           <div className="mt-2 space-y-1">
             {p.items.map((item, j) => (
-              <div key={j} className="flex items-center gap-1.5 text-[9px] text-gray-700">
+              <div key={j} className="flex items-center gap-1.5 text-xs text-gray-700">
                 <Calendar className="h-3.5 w-3.5 text-gray-400 shrink-0" />
                 <span>{item}</span>
               </div>
@@ -3075,22 +3289,22 @@ function ConceptionBlock({ section, validated, onValidate }: {
         <Hammer className="h-3.5 w-3.5 text-yellow-600 shrink-0" />
         <span className="text-xs font-bold text-gray-800">{section.id}. {section.title}</span>
         {validated ? (
-          <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium ml-auto bg-emerald-100 text-emerald-600">Valid\u00e9 \u2713</span>
+          <span className="text-xs px-1.5 py-0.5 rounded-full font-medium ml-auto bg-emerald-100 text-emerald-600">Valid\u00e9 \u2713</span>
         ) : (
-          <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium ml-auto bg-yellow-100 text-yellow-600">En cours</span>
+          <span className="text-xs px-1.5 py-0.5 rounded-full font-medium ml-auto bg-yellow-100 text-yellow-600">En cours</span>
         )}
       </div>
       <div className="px-3 pb-2">
         {CONCEPTION_DATA[section.id]?.content}
         <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-gray-100">
-          <button className="text-[9px] text-gray-500 hover:text-orange-700 font-medium cursor-pointer flex items-center gap-1 bg-white border border-gray-200 rounded-full px-2 py-0.5 hover:bg-orange-50">
+          <button className="text-xs text-gray-500 hover:text-orange-700 font-medium cursor-pointer flex items-center gap-1 bg-white border border-gray-200 rounded-full px-2 py-0.5 hover:bg-orange-50">
             <AlertTriangle className="h-3.5 w-3.5" /> Rechallenger
           </button>
-          <button className="text-[9px] text-gray-500 hover:text-amber-700 font-medium cursor-pointer flex items-center gap-1 bg-white border border-gray-200 rounded-full px-2 py-0.5 hover:bg-amber-50">
+          <button className="text-xs text-gray-500 hover:text-amber-700 font-medium cursor-pointer flex items-center gap-1 bg-white border border-gray-200 rounded-full px-2 py-0.5 hover:bg-amber-50">
             <RefreshCw className="h-3.5 w-3.5" /> Ajuster
           </button>
           {!validated && (
-            <button onClick={onValidate} className="text-[9px] text-emerald-700 font-medium cursor-pointer flex items-center gap-1 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 hover:bg-emerald-100">
+            <button onClick={onValidate} className="text-xs text-emerald-700 font-medium cursor-pointer flex items-center gap-1 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 hover:bg-emerald-100">
               <CheckCircle2 className="h-3.5 w-3.5" /> Valider \u2713
             </button>
           )}
@@ -3205,7 +3419,7 @@ function ConceptionChat({ stage, typed, setTyped, advance, onBackToReflexion }: 
               <TypewriterText text="Le rapport de r\u00e9flexion est pr\u00eat. Passons \u00e0 la conception du chantier. Je vais structurer les recommandations en projets, missions et t\u00e2ches concr\u00e8tes." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
               {typed && <SBtn onClick={advance} icon={Flame} label="Vue d'ensemble" pc={pc} />}
             </>
-          ) : <p className="text-[9px] text-gray-400 italic">Passage en mode Conception</p>}
+          ) : <p className="text-xs text-gray-400 italic">Passage en mode Conception</p>}
         </SBubble>
       )}
 
@@ -3217,7 +3431,7 @@ function ConceptionChat({ stage, typed, setTyped, advance, onBackToReflexion }: 
               <TypewriterText text="Vue d'ensemble du chantier \u00ab Strat\u00e9gie Marketing Q2-Q3 \u00bb. Les donn\u00e9es du rapport sont pr\u00e9-remplies \u00e0 droite. V\u00e9rifie le titre, la description et le niveau de chaleur. Valide quand c'est bon." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
               {typed && <SBtn onClick={advance} icon={Target} label="D\u00e9finir les objectifs" pc={pc} />}
             </>
-          ) : <p className="text-[9px] text-gray-400 italic">Vue d'ensemble valid\u00e9e</p>}
+          ) : <p className="text-xs text-gray-400 italic">Vue d'ensemble valid\u00e9e</p>}
         </SBubble>
       )}
 
@@ -3236,15 +3450,15 @@ function ConceptionChat({ stage, typed, setTyped, advance, onBackToReflexion }: 
                   ].map(b => (
                     <div key={b.code} className="flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-1.5">
                       <BotAvatar code={b.code} size="sm" />
-                      <span className="text-[9px] font-bold text-gray-700">{b.name}</span>
-                      <span className="text-[9px] text-gray-500">\u2014 {b.role}</span>
+                      <span className="text-xs font-bold text-gray-700">{b.name}</span>
+                      <span className="text-xs text-gray-500">\u2014 {b.role}</span>
                     </div>
                   ))}
                 </div>
               )}
               {typed && <SBtn onClick={advance} icon={ListChecks} label="D\u00e9tailler missions et t\u00e2ches" pc={pc} />}
             </>
-          ) : <p className="text-[9px] text-gray-400 italic">3 projets, 3 bots assign\u00e9s</p>}
+          ) : <p className="text-xs text-gray-400 italic">3 projets, 3 bots assign\u00e9s</p>}
         </SBubble>
       )}
 
@@ -3256,7 +3470,7 @@ function ConceptionChat({ stage, typed, setTyped, advance, onBackToReflexion }: 
               <TypewriterText text="Missions et t\u00e2ches d\u00e9compos\u00e9es. 9 missions, 27 t\u00e2ches atomiques d\u00e9riv\u00e9es de l'analyse. Chaque t\u00e2che est assign\u00e9e et estim\u00e9e. V\u00e9rifie la granularit\u00e9 \u00e0 droite." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
               {typed && <SBtn onClick={advance} icon={DollarSign} label="Budget et timeline" pc={pc} />}
             </>
-          ) : <p className="text-[9px] text-gray-400 italic">9 missions, 27 t\u00e2ches</p>}
+          ) : <p className="text-xs text-gray-400 italic">9 missions, 27 t\u00e2ches</p>}
         </SBubble>
       )}
 
@@ -3267,7 +3481,7 @@ function ConceptionChat({ stage, typed, setTyped, advance, onBackToReflexion }: 
             <>
               <TypewriterText text="Budget 3,800$/mois, ROI projet\u00e9 3.6x. Timeline: Q2 pour les quick wins (referral + LinkedIn), Q3 pour le scale (webinaires + optimisation). V\u00e9rifie les chiffres \u00e0 droite et valide pour finaliser." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
               {typed && (
-                <div className="mt-2 bg-emerald-50 rounded-lg px-3 py-2 text-[9px]">
+                <div className="mt-2 bg-emerald-50 rounded-lg px-3 py-2 text-xs">
                   <div className="flex items-center gap-4">
                     <div><span className="font-bold text-emerald-700">Budget:</span> 3,800$/mois</div>
                     <div><span className="font-bold text-emerald-700">ROI:</span> 3.6x</div>
@@ -3277,7 +3491,7 @@ function ConceptionChat({ stage, typed, setTyped, advance, onBackToReflexion }: 
               )}
               {typed && <SBtn onClick={advance} icon={Rocket} label="Finaliser le chantier" pc={pc} />}
             </>
-          ) : <p className="text-[9px] text-gray-400 italic">Budget 3,800$/mois, ROI 3.6x</p>}
+          ) : <p className="text-xs text-gray-400 italic">Budget 3,800$/mois, ROI 3.6x</p>}
         </SBubble>
       )}
 
@@ -3290,7 +3504,7 @@ function ConceptionChat({ stage, typed, setTyped, advance, onBackToReflexion }: 
               <div className="w-3.5 h-3.5 rounded-full bg-yellow-500" />
               <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
               <div className="w-3.5 h-3.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[9px] text-emerald-700 font-semibold ml-1">Conception \u2192 Lancement</span>
+              <span className="text-xs text-emerald-700 font-semibold ml-1">Conception \u2192 Lancement</span>
             </div>
           )}
         </div>
@@ -3331,63 +3545,18 @@ function MagTransition() {
 
 type DocForgeStatus = "empty" | "en-cours" | "complete";
 
-function DocForgeBlock({ index, title, icon: Icon, status, children, themeColor = "orange" }: {
-  index: number; title: string; icon: React.ElementType; status: DocForgeStatus;
+function DocForgeBlock({ children }: {
+  index?: number; title?: string; icon?: React.ElementType; status?: DocForgeStatus;
   children: React.ReactNode; themeColor?: "orange" | "yellow";
 }) {
-  const [collapsed, setCollapsed] = useState(false);
   const [appeared, setAppeared] = useState(false);
-  const [feedback, setFeedback] = useState<string | null>(null);
-
   useEffect(() => { const t = setTimeout(() => setAppeared(true), 100); return () => clearTimeout(t); }, []);
 
-  const borderColor = themeColor === "yellow" ? "border-yellow-400" : "border-orange-400";
-  const bgHover = themeColor === "yellow" ? "hover:bg-yellow-50" : "hover:bg-orange-50";
-  const badgeStyles: Record<DocForgeStatus, string> = {
-    empty: "bg-gray-100 text-gray-400",
-    "en-cours": "bg-orange-100 text-orange-600",
-    complete: "bg-emerald-100 text-emerald-600",
-  };
-  const badgeLabel: Record<DocForgeStatus, string> = { empty: "\u2014", "en-cours": "En cours", complete: "Compl\u00e9t\u00e9" };
-
-  const showFeedback = (msg: string) => { setFeedback(msg); setTimeout(() => setFeedback(null), 1500); };
-
   return (
-    <div className={cn("border-l-[3px] rounded-r-lg transition-all duration-500", borderColor,
+    <div className={cn("transition-all duration-500",
       appeared ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
     )}>
-      <button onClick={() => setCollapsed(!collapsed)}
-        className={cn("w-full flex items-center gap-2 px-3 py-2 text-left cursor-pointer transition-colors", bgHover)}
-      >
-        <Icon className={cn("h-4 w-4 shrink-0", themeColor === "yellow" ? "text-yellow-600" : "text-orange-600")} />
-        <span className="text-xs font-bold text-gray-800">{index}. {title}</span>
-        <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium ml-auto", badgeStyles[status])}>{badgeLabel[status]}</span>
-        <ChevronDown className={cn("h-3.5 w-3.5 text-gray-400 transition-transform", collapsed && "-rotate-90")} />
-      </button>
-      {!collapsed && (
-        <div className="px-3 pb-2">
-          {children}
-          {feedback && (
-            <div className="mt-2 text-[9px] bg-emerald-50 text-emerald-700 border border-emerald-200 rounded px-2 py-1 font-medium animate-in fade-in">
-              {feedback}
-            </div>
-          )}
-          <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-gray-100">
-            <button onClick={() => showFeedback("Rechallenge lanc\u00e9...")} className="text-[9px] text-gray-500 hover:text-orange-700 font-medium cursor-pointer flex items-center gap-1.5 bg-white border border-gray-200 rounded-full px-2.5 py-1 hover:bg-orange-50">
-              <AlertTriangle className="h-3.5 w-3.5" /> Rechallenger
-            </button>
-            <button onClick={() => showFeedback("Analyse approfondie...")} className="text-[9px] text-gray-500 hover:text-violet-700 font-medium cursor-pointer flex items-center gap-1.5 bg-white border border-gray-200 rounded-full px-2.5 py-1 hover:bg-violet-50">
-              <BookOpen className="h-3.5 w-3.5" /> Approfondir
-            </button>
-            <button onClick={() => showFeedback("Reformulation...")} className="text-[9px] text-gray-500 hover:text-amber-700 font-medium cursor-pointer flex items-center gap-1.5 bg-white border border-gray-200 rounded-full px-2.5 py-1 hover:bg-amber-50">
-              <RefreshCw className="h-3.5 w-3.5" /> Reformuler
-            </button>
-            <button onClick={() => showFeedback("Section cristallis\u00e9e!")} className="text-[9px] text-gray-500 hover:text-emerald-700 font-medium cursor-pointer flex items-center gap-1.5 bg-white border border-gray-200 rounded-full px-2.5 py-1 hover:bg-emerald-50">
-              <CheckCircle2 className="h-3.5 w-3.5" /> Cristalliser
-            </button>
-          </div>
-        </div>
-      )}
+      {children}
     </div>
   );
 }
@@ -3397,23 +3566,17 @@ function DocForgeBlock({ index, title, icon: Icon, status, children, themeColor 
 const REFLEXION_DOCFORGE_SECTIONS: { id: number; title: string; icon: React.ElementType; minStage: number }[] = [
   { id: 1, title: "Diagnostic initial", icon: Stethoscope, minStage: 1 },
   { id: 2, title: "Brainstorm SCAMPER", icon: Lightbulb, minStage: 7 },
-  { id: 3, title: "Synth\u00e8se brainstorm", icon: Layers, minStage: 8 },
-  { id: 4, title: "Analyse 5 Pourquoi", icon: Search, minStage: 9 },
-  { id: 5, title: "Deep Search", icon: Globe, minStage: 10 },
-  { id: 6, title: "Synth\u00e8se recherche", icon: FileBarChart, minStage: 11 },
-  { id: 7, title: "Challenge / D\u00e9fense", icon: Swords, minStage: 12 },
-  { id: 8, title: "Pr\u00e9-rapport", icon: FileText, minStage: 13 },
-  { id: 9, title: "Conclusions", icon: Trophy, minStage: 14 },
+  { id: 3, title: "Synth\u00e8se brainstorm", icon: Layers, minStage: 10 },
+  { id: 4, title: "Analyse 5 Pourquoi", icon: Search, minStage: 12 },
+  { id: 5, title: "Deep Search", icon: Globe, minStage: 15 },
+  { id: 6, title: "Synth\u00e8se recherche", icon: FileBarChart, minStage: 17 },
+  { id: 7, title: "Challenge / D\u00e9fense", icon: Swords, minStage: 19 },
+  { id: 8, title: "Pr\u00e9-rapport", icon: FileText, minStage: 22 },
 ];
 
 function MagConclusions() {
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2 pb-2 border-b border-orange-200">
-        <Trophy className="h-4 w-4 text-orange-600" />
-        <h3 className="text-sm font-bold text-gray-800">Conclusions et recommandations</h3>
-        <span className="text-[9px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium ml-auto">4/4 GO</span>
-      </div>
       {[
         { rank: 1, title: "Programme Referral Clients", desc: "Quick win \u2014 ROI 4.2x, budget 1,200$/mois. Levier le bouche-\u00e0-oreille existant avec des incitatifs structur\u00e9s.", bot: "CFOB" },
         { rank: 2, title: "Content Marketing LinkedIn", desc: "Moyen terme \u2014 repositionner le messaging vers le ROI concret. Calendrier \u00e9ditorial Q2-Q3.", bot: "CMOB" },
@@ -3421,7 +3584,7 @@ function MagConclusions() {
       ].map(r => (
         <div key={r.rank} className="bg-orange-50/50 border border-orange-200 rounded-lg px-3 py-2.5">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-[9px] font-bold bg-orange-600 text-white w-5 h-5 rounded-full flex items-center justify-center">{r.rank}</span>
+            <span className="text-xs font-bold bg-orange-600 text-white w-5 h-5 rounded-full flex items-center justify-center">{r.rank}</span>
             <span className="text-xs font-bold text-gray-800">{r.title}</span>
             <BotAvatar code={r.bot} size="sm" />
           </div>
@@ -3432,7 +3595,7 @@ function MagConclusions() {
       <div className="border border-gray-200 rounded-lg overflow-hidden">
         <div className="bg-gray-50 px-3 py-1.5 border-b border-gray-200 flex items-center gap-2">
           <Users className="h-3.5 w-3.5 text-gray-500" />
-          <span className="text-[9px] font-bold text-gray-700 uppercase tracking-wider">Vote equipe \u2014 Passage en Conception</span>
+          <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">Vote equipe \u2014 Passage en Conception</span>
         </div>
         <div className="grid grid-cols-2 gap-px bg-gray-200">
           {[
@@ -3445,10 +3608,10 @@ function MagConclusions() {
               <BotAvatar code={v.bot} size="sm" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[9px] font-bold text-gray-700">{v.name}</span>
-                  <span className="text-[8px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-bold">{v.vote}</span>
+                  <span className="text-xs font-bold text-gray-700">{v.name}</span>
+                  <span className="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-bold">{v.vote}</span>
                 </div>
-                <p className="text-[8px] text-gray-500 mt-0.5">{v.reason}</p>
+                <p className="text-[10px] text-gray-500 mt-0.5">{v.reason}</p>
               </div>
             </div>
           ))}
@@ -3459,21 +3622,21 @@ function MagConclusions() {
       <div className="grid grid-cols-3 gap-2">
         <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 text-center">
           <p className="text-lg font-extrabold text-emerald-700">3,800$</p>
-          <p className="text-[8px] text-emerald-600">/mois budget total</p>
+          <p className="text-[10px] text-emerald-600">/mois budget total</p>
         </div>
         <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-center">
           <p className="text-lg font-extrabold text-blue-700">3.6x</p>
-          <p className="text-[8px] text-blue-600">ROI projete</p>
+          <p className="text-[10px] text-blue-600">ROI projete</p>
         </div>
         <div className="bg-orange-50 border border-orange-200 rounded-lg px-3 py-2 text-center">
           <p className="text-lg font-extrabold text-orange-700">12 sem</p>
-          <p className="text-[8px] text-orange-600">deploiement complet</p>
+          <p className="text-[10px] text-orange-600">deploiement complet</p>
         </div>
       </div>
 
       {/* Prochaines etapes */}
       <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
-        <p className="text-[9px] font-bold text-gray-700 mb-1.5">Prochaines etapes</p>
+        <p className="text-xs font-bold text-gray-700 mb-1.5">Prochaines etapes</p>
         <div className="space-y-1">
           {[
             { step: "Cristalliser le rapport de reflexion", bot: "CEOB", done: true },
@@ -3481,173 +3644,192 @@ function MagConclusions() {
             { step: "Definir les 3 projets et missions", bot: "COOB", done: false },
             { step: "Assigner les bots responsables", bot: "CEOB", done: false },
           ].map((s, i) => (
-            <div key={i} className="flex items-center gap-2 text-[9px]">
+            <div key={i} className="flex items-center gap-2 text-xs">
               {s.done ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" /> : <div className="w-3.5 h-3.5 rounded-full border border-gray-300 shrink-0" />}
               <span className={s.done ? "text-gray-800 font-medium" : "text-gray-500"}>{s.step}</span>
               <BotAvatar code={s.bot} size="sm" />
-              <span className={cn("text-[8px] px-1 py-0.5 rounded ml-auto", s.done ? "bg-emerald-100 text-emerald-600" : "bg-gray-100 text-gray-400")}>{s.done ? "Pret" : "En attente"}</span>
+              <span className={cn("text-[10px] px-1 py-0.5 rounded ml-auto", s.done ? "bg-emerald-100 text-emerald-600" : "bg-gray-100 text-gray-400")}>{s.done ? "Pret" : "En attente"}</span>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <button className="text-[9px] bg-orange-600 text-white px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-700">Cristalliser le rapport</button>
-        <button className="text-[9px] bg-white border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-50">Exporter en PDF</button>
-        <button className="text-[9px] bg-white border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-50">Partager avec l'equipe</button>
-        <button className="text-[9px] bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-gray-50">Relancer l'analyse</button>
-      </div>
+      {crystallized ? (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3 animate-in fade-in slide-in-from-top-1" style={{ animationDuration: "300ms" }}>
+          <div className="flex items-center gap-2 mb-1">
+            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+            <p className="text-xs font-bold text-emerald-700">Document cristallisé — Phase Conception débloquée</p>
+          </div>
+          <p className="text-xs text-emerald-600">Rapport de réflexion sauvegardé avec les 8 sections complètes</p>
+        </div>
+      ) : crystallizing ? (
+        <div className="bg-orange-50 border border-orange-200 rounded-lg px-4 py-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Loader2 className="h-4 w-4 text-orange-600 animate-spin" />
+            <p className="text-xs font-bold text-orange-700">Compilation en cours...</p>
+          </div>
+          <div className="h-2 bg-orange-100 rounded-full overflow-hidden">
+            <div className="h-full bg-orange-500 rounded-full transition-all duration-300" style={{ width: `${crystalProgress}%` }} />
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          <button onClick={() => {
+            setCrystallizing(true);
+            let p = 0;
+            const iv = setInterval(() => { p += 5; setCrystalProgress(p); if (p >= 100) { clearInterval(iv); setCrystallizing(false); setCrystallized(true); } }, 100);
+          }}
+            className="text-xs bg-orange-600 text-white px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-700 flex items-center gap-1.5"
+          >Cristalliser le rapport</button>
+          <button className="text-xs bg-white border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-50">Exporter en PDF</button>
+          <button className="text-xs bg-white border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-orange-50">Partager avec l'equipe</button>
+          <button className="text-xs bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full font-medium cursor-pointer hover:bg-gray-50">Relancer l'analyse</button>
+        </div>
+      )}
     </div>
   );
 }
 
-export function ReflexionMagazine({ stage, context, onStartConception }: { stage: number; context: string | null; onStartConception?: () => void }) {
-  const visibleCount = REFLEXION_DOCFORGE_SECTIONS.filter(s => stage >= s.minStage).length;
+export function PhaseReflexion({ stage, context, onStartConception }: { stage: number; context: string | null; onStartConception?: () => void }) {
+  const visibleSections = REFLEXION_DOCFORGE_SECTIONS.filter(s => stage >= s.minStage);
+  const visibleCount = visibleSections.length;
+  const [activeSection, setActiveSection] = useState(1);
 
-  const scrollTo = (id: number) => {
-    document.getElementById(`reflexion-section-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  // Auto-avance vers la dernière section débloquée
+  useEffect(() => {
+    if (visibleSections.length > 0) {
+      setActiveSection(visibleSections[visibleSections.length - 1].id);
+    }
+  }, [visibleCount]);
+
+  const activeDef = REFLEXION_DOCFORGE_SECTIONS.find(s => s.id === activeSection);
+  const ActiveIcon = activeDef?.icon || Brain;
+
+  // Map section id → contenu (Mag* composants existants)
+  const SECTION_CONTENT: Record<number, React.ReactNode> = {
+    1: <MagDiagnostic stage={stage} />,
+    2: <MagBrainstorm />,
+    3: <MagSyntheseBrainstorm />,
+    4: <MagCinqPourquoi />,
+    5: <MagDeepSearch />,
+    6: <MagSyntheseRecherche />,
+    7: <MagChallenge />,
+    8: <MagPreRapport />,
+  };
+
+  // Status de la section
+  const getSectionStatus = (id: number): DocForgeStatus => {
+    const nextSection = REFLEXION_DOCFORGE_SECTIONS.find(s => s.id === id + 1);
+    if (!nextSection) return stage >= 25 ? "complete" : "en-cours";
+    return stage >= nextSection.minStage ? "complete" : "en-cours";
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-4 pb-12">
+    <div className="max-w-4xl mx-auto px-6 py-4 pb-12 space-y-4">
       {stage < 1 ? (
         <div className="text-center py-12">
           <Brain className="h-8 w-8 text-orange-300 mx-auto mb-3" />
           <p className="text-sm text-gray-400">Le diagnostic commence...</p>
-          <p className="text-[9px] text-gray-300">Les sections apparaitront au fur et a mesure de l'analyse</p>
+          <p className="text-xs text-gray-300">Les sections apparaitront au fur et a mesure de l'analyse</p>
         </div>
       ) : (
         <>
-          {/* TITRE UNIQUE — session de réflexion */}
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center shrink-0">
-              <Brain className="h-4 w-4 text-white" />
+          {/* 1. LIVING HERO — Phase + section active */}
+          <LivingHero
+            blur1="bg-orange-100/70"
+            blur2="bg-amber-100/40"
+            subtitleColor="text-orange-600"
+            subtitle={`Phase Réflexion — Étape ${activeSection} de ${REFLEXION_DOCFORGE_SECTIONS.length}`}
+            title={activeDef ? `${activeDef.id}. ${activeDef.title}` : "Session de réflexion"}
+            description=""
+            slim
+          >
+            {activeDef && (() => { const Icon = activeDef.icon; return <Icon className="w-[80px] h-[80px] text-orange-300 opacity-40 stroke-[1]" />; })()}
+          </LivingHero>
+
+          {/* 2. PROGRESSION — barre sous le hero */}
+          <div className="flex items-center gap-3 px-1">
+            <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-full bg-orange-400 rounded-full transition-all" style={{ width: `${(visibleCount / REFLEXION_DOCFORGE_SECTIONS.length) * 100}%` }} />
             </div>
-            <div className="flex-1 min-w-0">
-              <h2 className="text-sm font-bold text-gray-900">{context || "Session de réflexion"}</h2>
-              <p className="text-[10px] text-gray-500">{visibleCount}/{REFLEXION_DOCFORGE_SECTIONS.length} sections complétées</p>
-            </div>
-            <div className="h-1.5 w-24 bg-gray-200 rounded-full overflow-hidden shrink-0">
-              <div className="h-full bg-orange-500 rounded-full transition-all" style={{ width: `${(visibleCount / REFLEXION_DOCFORGE_SECTIONS.length) * 100}%` }} />
-            </div>
+            <span className="text-xs font-bold text-gray-500 shrink-0">{visibleCount}/{REFLEXION_DOCFORGE_SECTIONS.length}</span>
           </div>
 
-          {/* CONTENU — sidebar TOC + DocForge blocks */}
+          {/* 3. SIDEBAR SF + CONTENU — UNE section à la fois (pattern DocForge/Cockpit) */}
           <div className="flex gap-4">
-            {/* TOC sidebar (sans titre doublon) */}
-            <div className="w-48 shrink-0 space-y-1">
+            {/* TOC sidebar — SF.sidebarW, click = navigation */}
+            <div className={SF.sidebarW}>
               {REFLEXION_DOCFORGE_SECTIONS.map(s => {
-                const visible = stage >= s.minStage;
+                const unlocked = stage >= s.minStage;
+                const isActive = activeSection === s.id;
                 return (
-                  <button key={s.id} onClick={() => visible && scrollTo(s.id)}
-                    className={cn("w-full flex items-center gap-1.5 text-[10px] px-2 py-1.5 rounded transition-all text-left cursor-pointer",
-                      visible ? "bg-orange-50 text-orange-700 font-medium hover:bg-orange-100" : "text-gray-400"
+                  <button key={s.id} onClick={() => unlocked && setActiveSection(s.id)}
+                    className={cn(SF.btnBase,
+                      isActive && unlocked ? SF.btnActive : SF.btnInactive,
+                      !unlocked && "opacity-40 cursor-default"
                     )}>
-                    {visible ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" /> : <div className="w-3.5 h-3.5 rounded-full border border-gray-300 shrink-0" />}
-                    <span className="truncate">{s.id}. {s.title}</span>
+                    {unlocked
+                      ? <s.icon className={isActive ? SF.iconActive : SF.iconInactive} />
+                      : <div className="w-3.5 h-3.5 rounded-full border border-gray-300 shrink-0" />
+                    }
+                    <span className={isActive && unlocked ? SF.labelActive : SF.labelInactive}>{s.id}. {s.title}</span>
+                    {unlocked && (
+                      <span className={cn("text-[10px] px-1 py-0.5 rounded-full font-medium", getSectionStatus(s.id) === "complete" ? "bg-emerald-100 text-emerald-600" : "bg-amber-50 text-amber-600")}>
+                        {getSectionStatus(s.id) === "complete" ? "✓" : "…"}
+                      </span>
+                    )}
                   </button>
                 );
               })}
-              <div className="mt-3 pt-2 border-t border-gray-200 space-y-1">
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Actions</p>
-                {[
-                  { label: "Re-synthétiser", icon: RefreshCw },
-                  { label: "Réorganiser", icon: Layers },
-                  { label: "Exporter PDF", icon: FileText },
-                ].map(a => (
-                  <button key={a.label} className="w-full flex items-center gap-1.5 text-[9px] text-gray-500 hover:text-orange-600 hover:bg-orange-50 px-2 py-1.5 rounded cursor-pointer transition-colors text-left">
-                    <a.icon className="h-3.5 w-3.5 shrink-0" /> {a.label}
-                  </button>
-                ))}
-              </div>
+              <div className={SF.separator} />
+              <div className={SF.sectionLabel}>Actions</div>
+              {[
+                { label: "Re-synthétiser", icon: RefreshCw },
+                { label: "Réorganiser", icon: Layers },
+                { label: "Exporter PDF", icon: FileText },
+              ].map(a => (
+                <button key={a.label} className={cn(SF.btnBase, SF.btnInactive)}>
+                  <a.icon className={SF.iconInactive} />
+                  <span className={SF.labelInactive}>{a.label}</span>
+                </button>
+              ))}
             </div>
 
-            {/* Content — DocForge blocks avec ancres */}
-            <div className="flex-1 space-y-3">
-              {stage >= 1 && (
-                <div id="reflexion-section-1">
-                  <DocForgeBlock index={1} title="Diagnostic initial" icon={Stethoscope} status={stage >= 7 ? "complete" : "en-cours"}>
-                    <MagDiagnostic />
-                  </DocForgeBlock>
-                </div>
-              )}
-              {stage >= 7 && (
-                <div id="reflexion-section-2">
-                  <DocForgeBlock index={2} title="Brainstorm SCAMPER" icon={Lightbulb} status={stage >= 8 ? "complete" : "en-cours"}>
-                    <MagBrainstorm />
-                  </DocForgeBlock>
-                </div>
-              )}
-              {stage >= 8 && (
-                <div id="reflexion-section-3">
-                  <DocForgeBlock index={3} title="Synthèse brainstorm" icon={Layers} status={stage >= 9 ? "complete" : "en-cours"}>
-                    <MagSyntheseBrainstorm />
-                  </DocForgeBlock>
-                </div>
-              )}
-              {stage >= 9 && (
-                <div id="reflexion-section-4">
-                  <DocForgeBlock index={4} title="Analyse 5 Pourquoi" icon={Search} status={stage >= 10 ? "complete" : "en-cours"}>
-                    <MagCinqPourquoi />
-                  </DocForgeBlock>
-                </div>
-              )}
-              {stage >= 10 && (
-                <div id="reflexion-section-5">
-                  <DocForgeBlock index={5} title="Deep Search" icon={Globe} status={stage >= 11 ? "complete" : "en-cours"}>
-                    <MagDeepSearch />
-                  </DocForgeBlock>
-                </div>
-              )}
-              {stage >= 11 && (
-                <div id="reflexion-section-6">
-                  <DocForgeBlock index={6} title="Synthèse recherche" icon={FileBarChart} status={stage >= 12 ? "complete" : "en-cours"}>
-                    <MagSyntheseRecherche />
-                  </DocForgeBlock>
-                </div>
-              )}
-              {stage >= 12 && (
-                <div id="reflexion-section-7">
-                  <DocForgeBlock index={7} title="Challenge / Défense" icon={Swords} status={stage >= 13 ? "complete" : "en-cours"}>
-                    <MagChallenge />
-                  </DocForgeBlock>
-                </div>
-              )}
-              {stage >= 13 && (
-                <div id="reflexion-section-8">
-                  <DocForgeBlock index={8} title="Pré-rapport" icon={FileText} status={stage >= 14 ? "complete" : "en-cours"}>
-                    <MagPreRapport />
-                  </DocForgeBlock>
-                </div>
-              )}
-              {stage >= 14 && (
-                <div id="reflexion-section-9">
-                  <DocForgeBlock index={9} title="Conclusions" icon={Trophy} status="complete">
-                    <MagConclusions />
-                  </DocForgeBlock>
-                </div>
+            {/* Content — UNE SEULE section affichée (celle sélectionnée dans la sidebar) */}
+            <div className={SF.content}>
+              {stage >= (REFLEXION_DOCFORGE_SECTIONS.find(s => s.id === activeSection)?.minStage ?? 999) && (
+                <DocForgeBlock
+                  index={activeSection}
+                  title={activeDef?.title || ""}
+                  icon={ActiveIcon}
+                  status={getSectionStatus(activeSection)}
+                >
+                  {SECTION_CONTENT[activeSection]}
+                </DocForgeBlock>
               )}
 
-              {/* Transition vers Conception */}
-              {stage >= 15 && onStartConception && (
-                <div className="py-4">
-                  <div className="bg-gradient-to-r from-amber-100 to-yellow-100 border-2 border-amber-300 rounded-xl px-6 py-6 text-center">
-                    <div className="flex items-center justify-center gap-4 mb-4">
-                      <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center">
-                        <Brain className="h-5 w-5 text-white" />
+              {/* Transition vers Conception — visible quand toutes les sections sont complétées */}
+              {visibleCount === REFLEXION_DOCFORGE_SECTIONS.length && stage >= 25 && onStartConception && (
+                <div className="mt-4">
+                  <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                    <div className="bg-[#00B4D8]/10 px-6 py-4">
+                      <div className="flex items-center justify-center gap-4 mb-3">
+                        <div className="w-9 h-9 rounded-lg bg-orange-100 flex items-center justify-center">
+                          <Brain className="h-4 w-4 text-orange-600 stroke-[2.5]" />
+                        </div>
+                        <ArrowRight className="h-4 w-4 text-gray-400 stroke-[2.5]" />
+                        <div className="w-9 h-9 rounded-lg bg-yellow-100 flex items-center justify-center">
+                          <Hammer className="h-4 w-4 text-yellow-600 stroke-[2.5]" />
+                        </div>
                       </div>
-                      <ArrowRight className="h-5 w-5 text-amber-600" />
-                      <div className="w-10 h-10 rounded-full bg-yellow-500 flex items-center justify-center animate-pulse">
-                        <Hammer className="h-5 w-5 text-white" />
-                      </div>
+                      <p className="text-sm font-bold text-gray-900 text-center">Rapport complet — Prêt pour la Conception</p>
+                      <p className="text-[10px] text-gray-500 mt-1 text-center">8 sections d'analyse sauvegardées</p>
                     </div>
-                    <p className="text-sm font-bold text-amber-800">Rapport complet — Prêt pour la Conception</p>
-                    <p className="text-xs text-amber-600 mt-1">9 sections d'analyse sauvegardées</p>
-                    <div className="mt-4 flex gap-2 justify-center">
-                      <button onClick={onStartConception} className="text-xs bg-amber-600 text-white px-4 py-2 rounded-full font-bold cursor-pointer hover:bg-amber-700">
+                    <div className="px-6 py-3 flex gap-2 justify-center border-t border-gray-100">
+                      <button onClick={onStartConception} className="text-xs bg-gray-900 text-white px-4 py-2 rounded-lg font-bold cursor-pointer hover:bg-gray-800">
                         Passer en mode Conception
                       </button>
-                      <button className="text-xs bg-white text-amber-700 px-4 py-2 rounded-full font-bold border border-amber-300 cursor-pointer hover:bg-amber-50">
+                      <button className="text-xs bg-white text-gray-700 px-4 py-2 rounded-lg font-bold border border-gray-200 cursor-pointer hover:bg-gray-50">
                         Cristalliser d'abord
                       </button>
                     </div>
@@ -3704,7 +3886,7 @@ export function ChantierDrillDown({ phase }: { phase: PhaseKey }) {
           </div>
           <div className="flex-1">
             <p className={cn("text-sm font-bold", pc.text)}>{pc.label}</p>
-            <p className="text-[9px] text-gray-500">
+            <p className="text-xs text-gray-500">
               {phase === "reflexion" ? "Chantiers en phase d'analyse — Brain Team actif" :
                phase === "creation" ? "Chantiers en conception — Plans et documents" :
                phase === "execution" ? "Chantiers en exécution — Protocole COMMAND actif" :
@@ -3725,7 +3907,7 @@ export function ChantierDrillDown({ phase }: { phase: PhaseKey }) {
             <div className="flex-1 min-w-0 text-left">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold text-gray-800 truncate">{ch.name}</span>
-                <span className="text-[9px] text-gray-400">{ch.botName}</span>
+                <span className="text-xs text-gray-400">{ch.botName}</span>
               </div>
               <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mt-1 max-w-[200px]">
                 <div className={cn("h-full rounded-full", ch.bar)} style={{ width: `${ch.progress}%` }} />
@@ -3745,7 +3927,7 @@ export function ChantierDrillDown({ phase }: { phase: PhaseKey }) {
                   >
                     <Target className="h-3.5 w-3.5 text-indigo-400 shrink-0" />
                     <span className="text-[11px] text-gray-700 font-medium truncate flex-1">{proj.name}</span>
-                    <span className="text-[9px] text-gray-400">{proj.progress}%</span>
+                    <span className="text-xs text-gray-400">{proj.progress}%</span>
                     <ChevronRight className={cn("h-3.5 w-3.5 text-gray-300 transition-transform", openChantier === ci && openProjet === pi && "rotate-90")} />
                   </button>
 
@@ -3872,9 +4054,9 @@ export function OperationsDrillDown() {
           </div>
           <div className="flex-1">
             <p className="text-sm font-bold text-cyan-700">Opérations</p>
-            <p className="text-[9px] text-gray-500">Processus récurrents — CAPEX transformé en OPEX</p>
+            <p className="text-xs text-gray-500">Processus récurrents — CAPEX transformé en OPEX</p>
           </div>
-          <div className="flex items-center gap-1.5 text-[9px] text-gray-500">
+          <div className="flex items-center gap-1.5 text-xs text-gray-500">
             <span className="px-1.5 py-0.5 rounded bg-cyan-100 text-cyan-700 font-medium">{OPERATIONS_DRILLDOWN.length} opérations</span>
           </div>
         </div>
@@ -3893,18 +4075,18 @@ export function OperationsDrillDown() {
               <div className="flex-1 min-w-0 text-left">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-gray-800 truncate">{op.name}</span>
-                  <span className="text-[9px] text-gray-400">{op.botName}</span>
-                  <span className={cn("text-[8px] px-1.5 py-0.5 rounded-full font-medium", ch.badge)}>{ch.label}</span>
+                  <span className="text-xs text-gray-400">{op.botName}</span>
+                  <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-medium", ch.badge)}>{ch.label}</span>
                 </div>
                 <div className="flex items-center gap-3 mt-1">
                   <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden max-w-[160px] flex-1">
                     <div className={cn("h-full rounded-full", op.bar)} style={{ width: `${op.regularity}%` }} />
                   </div>
-                  <div className="flex items-center gap-1 text-[9px] text-gray-400">
+                  <div className="flex items-center gap-1 text-xs text-gray-400">
                     <Repeat className="h-3.5 w-3.5" />
                     <span>{op.cadence}</span>
                   </div>
-                  <div className="flex items-center gap-1 text-[9px] text-gray-400">
+                  <div className="flex items-center gap-1 text-xs text-gray-400">
                     <Timer className="h-3.5 w-3.5" />
                     <span>SLA {op.sla}</span>
                   </div>
@@ -3925,8 +4107,8 @@ export function OperationsDrillDown() {
                     >
                       <FolderOpen className="h-3.5 w-3.5 text-indigo-400 shrink-0" />
                       <span className="text-[11px] text-gray-700 font-medium truncate flex-1">{proc.name}</span>
-                      <span className="text-[8px] text-gray-400 px-1 py-0.5 rounded bg-gray-100">{proc.cadence}</span>
-                      <span className="text-[9px] text-gray-400">{proc.regularity}%</span>
+                      <span className="text-[10px] text-gray-400 px-1 py-0.5 rounded bg-gray-100">{proc.cadence}</span>
+                      <span className="text-xs text-gray-400">{proc.regularity}%</span>
                       <ChevronRight className={cn("h-3.5 w-3.5 text-gray-300 transition-transform", openOp === oi && openProc === pi && "rotate-90")} />
                     </button>
 
@@ -3939,7 +4121,7 @@ export function OperationsDrillDown() {
                             <div key={ri} className="flex items-center gap-2 px-4 py-2 pl-14 hover:bg-gray-100 transition-colors">
                               <st.Icon className={cn("h-3.5 w-3.5 shrink-0", st.color)} />
                               <span className={cn("text-[11px] flex-1", r.status === "complete" ? "text-gray-400 line-through" : "text-gray-600")}>{r.name}</span>
-                              <span className="text-[8px] text-gray-400 px-1 py-0.5 rounded bg-gray-100">{r.cadence}</span>
+                              <span className="text-[10px] text-gray-400 px-1 py-0.5 rounded bg-gray-100">{r.cadence}</span>
                             </div>
                           );
                         })}
@@ -4272,7 +4454,7 @@ export function IconCatalog() {
       {/* Header */}
       <div className="rounded-xl bg-gradient-to-r from-gray-800 to-gray-700 px-4 py-3 shadow-sm">
         <p className="text-sm font-bold text-white">Catalogue d'icônes — Brain Team</p>
-        <p className="text-[9px] text-white/70 mt-0.5">
+        <p className="text-xs text-white/70 mt-0.5">
           {totalIcons} icônes · {ICON_TIERS.length} niveaux · Frame Amorcer V3
         </p>
       </div>
@@ -4282,11 +4464,11 @@ export function IconCatalog() {
           {/* Tier header */}
           <div className={cn("rounded-lg border px-4 py-2.5", tier.tierBg)}>
             <div className="flex items-center gap-2">
-              <span className={cn("text-[9px] font-black tracking-wider uppercase", tier.tierColor)}>{tier.tier}</span>
-              <span className="text-[9px] text-gray-500">·</span>
-              <span className="text-[9px] text-gray-500">{tier.sections.reduce((s, sec) => s + sec.icons.length, 0)} icônes</span>
+              <span className={cn("text-xs font-black tracking-wider uppercase", tier.tierColor)}>{tier.tier}</span>
+              <span className="text-xs text-gray-500">·</span>
+              <span className="text-xs text-gray-500">{tier.sections.reduce((s, sec) => s + sec.icons.length, 0)} icônes</span>
             </div>
-            <p className="text-[9px] text-gray-600 mt-0.5">{tier.tierDesc}</p>
+            <p className="text-xs text-gray-600 mt-0.5">{tier.tierDesc}</p>
           </div>
 
           {/* Sections within tier */}
@@ -4306,9 +4488,9 @@ export function IconCatalog() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <span className="text-[11px] font-bold text-gray-800 block">{item.label}</span>
-                      <span className="text-[9px] text-gray-500 block truncate">{item.usage}</span>
+                      <span className="text-xs text-gray-500 block truncate">{item.usage}</span>
                       {item.color && (
-                        <span className="text-[9px] text-gray-400 font-mono block">{item.color.replace("text-", "")}</span>
+                        <span className="text-xs text-gray-400 font-mono block">{item.color.replace("text-", "")}</span>
                       )}
                     </div>
                   </div>
@@ -4360,7 +4542,7 @@ function Orbit9CellulesCompact({ onSelect, selectedCellule }: { onSelect: (i: nu
       <div className="flex items-center gap-1.5 px-1">
         <Atom className="h-3.5 w-3.5 text-gray-900" />
         <span className="text-[11px] font-bold text-gray-700">Cellules</span>
-        <span className="text-[9px] text-gray-400 ml-auto">{ORBIT9_CELLULES.length}</span>
+        <span className="text-xs text-gray-400 ml-auto">{ORBIT9_CELLULES.length}</span>
       </div>
       {ORBIT9_CELLULES.map((cell, i) => {
         const ph = PC[cell.status as PhaseKey];
@@ -4379,7 +4561,7 @@ function Orbit9CellulesCompact({ onSelect, selectedCellule }: { onSelect: (i: nu
               <div className={cn("w-2 h-2 rounded-full shrink-0", ph?.dot || "bg-gray-400")} />
               <span className="text-xs font-medium text-gray-800 flex-1 truncate">{cell.name}</span>
               <span className={cn(
-                "text-[9px] px-1.5 py-0.5 rounded-full font-medium shrink-0",
+                "text-xs px-1.5 py-0.5 rounded-full font-medium shrink-0",
                 cell.type === "interne" ? "bg-gray-100 text-gray-600" : "bg-cyan-50 text-cyan-600"
               )}>
                 {cell.type === "interne" ? "Int" : "Ext"}
@@ -4388,11 +4570,11 @@ function Orbit9CellulesCompact({ onSelect, selectedCellule }: { onSelect: (i: nu
             <div className="flex items-center gap-3 mt-1.5">
               <div className="flex items-center gap-1">
                 <Users className="h-3.5 w-3.5 text-gray-400" />
-                <span className="text-[9px] text-gray-500">{cell.members}/{cell.maxMembers}</span>
+                <span className="text-xs text-gray-500">{cell.members}/{cell.maxMembers}</span>
               </div>
               <div className="flex items-center gap-1">
                 <Layers className="h-3.5 w-3.5 text-gray-400" />
-                <span className="text-[9px] text-gray-500">{cell.sousCellules.length}</span>
+                <span className="text-xs text-gray-500">{cell.sousCellules.length}</span>
               </div>
               <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                 <div
@@ -4464,25 +4646,25 @@ function Orbit9Chat({ typed, setTyped, selectedCellule }: { typed: boolean; setT
                   {item.type === "bot" ? (BOT_COLORS[item.code!]?.name || item.code) :
                    item.type === "humain" ? (item as { name: string }).name : "Bot-to-Bot"}
                 </span>
-                <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium",
+                <span className={cn("text-xs px-1.5 py-0.5 rounded-full font-medium",
                   item.type === "bot" ? "bg-blue-50 text-blue-500" :
                   item.type === "humain" ? "bg-emerald-50 text-emerald-500" :
                   "bg-violet-50 text-violet-500"
                 )}>
                   {item.type === "bot" ? "🤖 Bot" : item.type === "humain" ? "👤 Humain" : "🔗 B2B"}
                 </span>
-                <span className="text-[9px] text-gray-400 ml-auto">{item.time}</span>
+                <span className="text-xs text-gray-400 ml-auto">{item.time}</span>
               </div>
               <p className="text-xs text-gray-700 leading-relaxed">{item.text}</p>
               {/* Engagement buttons */}
               <div className="flex items-center gap-3 mt-1.5">
-                <button className="flex items-center gap-1 text-[9px] text-gray-400 hover:text-blue-500 cursor-pointer transition-colors">
+                <button className="flex items-center gap-1 text-xs text-gray-400 hover:text-blue-500 cursor-pointer transition-colors">
                   <MessageSquare className="h-3.5 w-3.5" /> Répondre
                 </button>
-                <button className="flex items-center gap-1 text-[9px] text-gray-400 hover:text-emerald-500 cursor-pointer transition-colors">
+                <button className="flex items-center gap-1 text-xs text-gray-400 hover:text-emerald-500 cursor-pointer transition-colors">
                   <Heart className="h-3.5 w-3.5" /> {i + 2}
                 </button>
-                <button className="flex items-center gap-1 text-[9px] text-gray-400 hover:text-amber-500 cursor-pointer transition-colors">
+                <button className="flex items-center gap-1 text-xs text-gray-400 hover:text-amber-500 cursor-pointer transition-colors">
                   <Bookmark className="h-3.5 w-3.5" />
                 </button>
               </div>
@@ -4506,7 +4688,7 @@ function Orbit9Chat({ typed, setTyped, selectedCellule }: { typed: boolean; setT
       {typed && feedIndex < ORBIT9_FEED.length && (
         <div className="flex items-center gap-2 px-3 py-2">
           <Loader2 className="h-3.5 w-3.5 text-blue-400 animate-spin" />
-          <span className="text-[9px] text-gray-400">Chargement du fil...</span>
+          <span className="text-xs text-gray-400">Chargement du fil...</span>
         </div>
       )}
     </>
@@ -4532,8 +4714,8 @@ export function MesCellules({ onSelect, activePhase }: { onSelect: (i: number) =
       {phCfg && (
         <div className="flex items-center gap-2">
           <phCfg.Icon className="h-3.5 w-3.5 text-blue-500" />
-          <span className={cn("text-[9px] font-medium px-2 py-0.5 rounded-full", phCfg.badge)}>{phCfg.label}</span>
-          <span className="text-[9px] text-gray-400">Vue d'ensemble du réseau et des cellules</span>
+          <span className={cn("text-xs font-medium px-2 py-0.5 rounded-full", phCfg.badge)}>{phCfg.label}</span>
+          <span className="text-xs text-gray-400">Vue d'ensemble du réseau et des cellules</span>
         </div>
       )}
 
@@ -4542,7 +4724,7 @@ export function MesCellules({ onSelect, activePhase }: { onSelect: (i: number) =
         <Atom className="h-5 w-5 text-gray-900 stroke-[2.5]" />
         <div className="flex-1">
           <p className="text-sm font-bold text-gray-900">Mes Cellules</p>
-          <p className="text-[9px] text-gray-500">{ORBIT9_CELLULES.length} cellules · {totalMembres}/{maxTotal} membres · {ORBIT9_CELLULES.filter(c => c.type === "interne").length} internes · {ORBIT9_CELLULES.filter(c => c.type === "externe").length} externe</p>
+          <p className="text-xs text-gray-500">{ORBIT9_CELLULES.length} cellules · {totalMembres}/{maxTotal} membres · {ORBIT9_CELLULES.filter(c => c.type === "interne").length} internes · {ORBIT9_CELLULES.filter(c => c.type === "externe").length} externe</p>
         </div>
       </div>
 
@@ -4561,7 +4743,7 @@ export function MesCellules({ onSelect, activePhase }: { onSelect: (i: number) =
             </div>
             <div className="px-4 py-3">
               <div className="text-2xl font-bold text-gray-800">{kpi.value}</div>
-              <div className="text-[9px] text-gray-500">{kpi.sub}</div>
+              <div className="text-xs text-gray-500">{kpi.sub}</div>
             </div>
           </div>
         ))}
@@ -4574,18 +4756,18 @@ export function MesCellules({ onSelect, activePhase }: { onSelect: (i: number) =
           <span className="text-sm font-bold text-gray-900">Progression du rabais de groupe</span>
         </div>
         <div className="p-4">
-          <p className="text-[9px] text-gray-500 mb-3">Plus vous avez de membres par cellule, plus le rabais collectif augmente. Le palier atteint ne redescend JAMAIS, même si des membres quittent.</p>
+          <p className="text-xs text-gray-500 mb-3">Plus vous avez de membres par cellule, plus le rabais collectif augmente. Le palier atteint ne redescend JAMAIS, même si des membres quittent.</p>
           <div className="flex items-center gap-1 mb-2">
             {[1,2,3,4,5,6,7,8,9].map(n => (
               <div key={n} className="flex-1 flex flex-col items-center">
                 <div className={cn("w-full h-3.5 rounded-sm transition-all",
                   n <= avgPerCell ? "bg-emerald-500" : n <= avgPerCell + 1 ? "bg-emerald-200" : "bg-gray-100"
                 )} />
-                <span className="text-[9px] text-gray-400 mt-0.5">{n}</span>
+                <span className="text-xs text-gray-400 mt-0.5">{n}</span>
               </div>
             ))}
           </div>
-          <div className="flex items-center justify-between text-[9px] text-gray-500">
+          <div className="flex items-center justify-between text-xs text-gray-500">
             <span>0% (solo)</span>
             <span className="font-semibold text-emerald-600">← Moyenne: {avgPerCell} membres → -{discount}%</span>
             <span>-25% (9 max)</span>
@@ -4597,7 +4779,7 @@ export function MesCellules({ onSelect, activePhase }: { onSelect: (i: number) =
               { seuil: "7+", pct: "20%", active: avgPerCell >= 7 },
               { seuil: "9", pct: "25%", active: avgPerCell >= 9 },
             ].map(tier => (
-              <div key={tier.seuil} className={cn("text-center py-1.5 rounded-lg text-[9px] font-medium border",
+              <div key={tier.seuil} className={cn("text-center py-1.5 rounded-lg text-xs font-medium border",
                 tier.active ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-gray-50 border-gray-200 text-gray-400"
               )}>
                 {tier.seuil} = -{tier.pct}
@@ -4619,10 +4801,10 @@ export function MesCellules({ onSelect, activePhase }: { onSelect: (i: number) =
             <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
               <Atom className="h-4 w-4 text-gray-900 stroke-[2.5]" />
               <span className="text-sm font-bold text-gray-900 flex-1">{cell.name}</span>
-              <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-medium",
+              <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium",
                 cell.type === "interne" ? "bg-gray-100 text-gray-600" : "bg-cyan-100 text-cyan-700"
               )}>{cell.type === "interne" ? "Interne" : "Externe"}</span>
-              <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1", stBadge)}>
+              <span className={cn("text-xs px-2 py-0.5 rounded-full font-bold flex items-center gap-1", stBadge)}>
                 <span className={cn("w-2 h-2 rounded-full", stDot)} />
                 {stLabel}
               </span>
@@ -4648,12 +4830,12 @@ export function MesCellules({ onSelect, activePhase }: { onSelect: (i: number) =
               </div>
               <div className="flex items-center gap-1">
                 {cell.membres.slice(0, 6).map((m, mi) => (
-                  <div key={mi} className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-[9px] font-bold text-gray-700 ring-1 ring-white">{m.avatar}</div>
+                  <div key={mi} className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-700 ring-1 ring-white">{m.avatar}</div>
                 ))}
-                {cell.membres.length > 6 && <span className="text-[9px] text-gray-400 ml-1">+{cell.membres.length - 6}</span>}
+                {cell.membres.length > 6 && <span className="text-xs text-gray-400 ml-1">+{cell.membres.length - 6}</span>}
                 <div className="flex-1" />
                 {cell.sousCellules.map(sc => (
-                  <span key={sc} className="text-[9px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">{sc}</span>
+                  <span key={sc} className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">{sc}</span>
                 ))}
               </div>
             </div>
@@ -4668,7 +4850,7 @@ export function MesCellules({ onSelect, activePhase }: { onSelect: (i: number) =
           <span className="text-sm font-bold text-gray-900">Performance des Cellules</span>
         </div>
         <div className="p-4 space-y-3">
-          <p className="text-[9px] text-gray-500">Métriques de productivité et de collaboration par cellule. En mode Observation, ces données sont en lecture seule.</p>
+          <p className="text-xs text-gray-500">Métriques de productivité et de collaboration par cellule. En mode Observation, ces données sont en lecture seule.</p>
           {[
             { cellule: "Les Titans", heuresSauvees: 42, livrables: "87%", roi: "2.4x", confiance: 92 },
             { cellule: "Escouade Ventes", heuresSauvees: 18, livrables: "94%", roi: "1.6x", confiance: 85 },
@@ -4676,12 +4858,12 @@ export function MesCellules({ onSelect, activePhase }: { onSelect: (i: number) =
             { cellule: "Collab MetalPro", heuresSauvees: 28, livrables: "91%", roi: "1.8x", confiance: 88 },
           ].map(cell => (
             <div key={cell.cellule} className="p-3 bg-gray-50 rounded-lg border border-gray-100">
-              <div className="text-[9px] font-bold text-gray-800 mb-2">{cell.cellule}</div>
+              <div className="text-xs font-bold text-gray-800 mb-2">{cell.cellule}</div>
               <div className="grid grid-cols-4 gap-2">
-                <div className="text-center"><div className="text-sm font-bold text-sky-600">{cell.heuresSauvees}h</div><div className="text-[9px] text-gray-500">Heures sauvées</div></div>
-                <div className="text-center"><div className="text-sm font-bold text-emerald-600">{cell.livrables}</div><div className="text-[9px] text-gray-500">Livrables à temps</div></div>
-                <div className="text-center"><div className="text-sm font-bold text-violet-600">{cell.roi}</div><div className="text-[9px] text-gray-500">ROI chantiers</div></div>
-                <div className="text-center"><div className="text-sm font-bold text-orange-600">{cell.confiance}/100</div><div className="text-[9px] text-gray-500">Confiance</div></div>
+                <div className="text-center"><div className="text-sm font-bold text-sky-600">{cell.heuresSauvees}h</div><div className="text-xs text-gray-500">Heures sauvées</div></div>
+                <div className="text-center"><div className="text-sm font-bold text-emerald-600">{cell.livrables}</div><div className="text-xs text-gray-500">Livrables à temps</div></div>
+                <div className="text-center"><div className="text-sm font-bold text-violet-600">{cell.roi}</div><div className="text-xs text-gray-500">ROI chantiers</div></div>
+                <div className="text-center"><div className="text-sm font-bold text-orange-600">{cell.confiance}/100</div><div className="text-xs text-gray-500">Confiance</div></div>
               </div>
             </div>
           ))}
@@ -4693,10 +4875,10 @@ export function MesCellules({ onSelect, activePhase }: { onSelect: (i: number) =
         <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
           <Video className="h-4 w-4 text-gray-900 stroke-[2.5]" />
           <span className="text-sm font-bold text-gray-900">Meetings Cellule</span>
-          <span className="text-[9px] px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600">LiveKit</span>
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600">LiveKit</span>
         </div>
         <div className="p-4 space-y-2">
-          <p className="text-[9px] text-gray-500 mb-2">Meetings SUR la plateforme. CarlOS transcrit, détecte les tensions et génère les action items en temps réel.</p>
+          <p className="text-xs text-gray-500 mb-2">Meetings SUR la plateforme. CarlOS transcrit, détecte les tensions et génère les action items en temps réel.</p>
           {[
             { cellule: "Les Titans", date: "12 avril 14:00", participants: ["Carl F.", "Marie D.", "Jean-P. L."], sujet: "Revue Q1 + pipeline ventes", status: "planifie" as const },
             { cellule: "Collab MetalPro", date: "14 avril 10:00", participants: ["Carl F.", "Pierre G.", "François D."], sujet: "Kick-off projet robotique — specs & échéancier", status: "planifie" as const },
@@ -4711,17 +4893,17 @@ export function MesCellules({ onSelect, activePhase }: { onSelect: (i: number) =
                 <Video className={cn("h-3.5 w-3.5", m.status === "termine" ? "text-gray-400" : "text-gray-700")} />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-[9px] font-bold text-gray-800">{m.cellule}</div>
-                <div className="text-[9px] text-gray-600 truncate">{m.sujet}</div>
+                <div className="text-xs font-bold text-gray-800">{m.cellule}</div>
+                <div className="text-xs text-gray-600 truncate">{m.sujet}</div>
                 <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                   {m.participants.map(p => (
-                    <span key={p} className="text-[9px] bg-white text-gray-500 px-1.5 py-0.5 rounded border border-gray-200">{p}</span>
+                    <span key={p} className="text-xs bg-white text-gray-500 px-1.5 py-0.5 rounded border border-gray-200">{p}</span>
                   ))}
                 </div>
               </div>
               <div className="text-right shrink-0">
-                <div className="text-[9px] font-bold text-gray-700">{m.date}</div>
-                <span className={cn("text-[9px] font-medium px-1.5 py-0.5 rounded-full",
+                <div className="text-xs font-bold text-gray-700">{m.date}</div>
+                <span className={cn("text-xs font-medium px-1.5 py-0.5 rounded-full",
                   m.status === "termine" ? "bg-gray-100 text-gray-500" : "bg-gray-100 text-gray-600"
                 )}>{m.status === "termine" ? "Terminé" : "Planifié"}</span>
               </div>
@@ -4735,10 +4917,10 @@ export function MesCellules({ onSelect, activePhase }: { onSelect: (i: number) =
         <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
           <Bot className="h-4 w-4 text-gray-900 stroke-[2.5]" />
           <span className="text-sm font-bold text-gray-900">CarlOS — Médiateur Proactif</span>
-          <span className="text-[9px] px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600">Futur</span>
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600">Futur</span>
         </div>
         <div className="p-4 space-y-3">
-          <p className="text-[9px] text-gray-500">CarlOS écoute les meetings entre membres d'une cellule, détecte les tensions en temps réel, intervient pour corriger les interactions et génère automatiquement les action items.</p>
+          <p className="text-xs text-gray-500">CarlOS écoute les meetings entre membres d'une cellule, détecte les tensions en temps réel, intervient pour corriger les interactions et génère automatiquement les action items.</p>
           {[
             { text: "Détection: SoudurePlus a dit « on va essayer » — langage flou avec historique 2 retards/3. Intervention envoyée.", time: "Il y a 2h", Icon: AlertTriangle, color: "text-amber-500" },
             { text: "Action items générés du meeting du 8 avril: 4 tâches assignées automatiquement.", time: "Hier", Icon: CheckCircle2, color: "text-emerald-500" },
@@ -4747,8 +4929,8 @@ export function MesCellules({ onSelect, activePhase }: { onSelect: (i: number) =
             <div key={i} className="flex items-start gap-2 p-2.5 bg-violet-50/50 rounded-lg border border-violet-100">
               <log.Icon className={cn("h-3.5 w-3.5 shrink-0 mt-0.5", log.color)} />
               <div className="flex-1">
-                <p className="text-[9px] text-gray-700">{log.text}</p>
-                <span className="text-[9px] text-gray-400">{log.time}</span>
+                <p className="text-xs text-gray-700">{log.text}</p>
+                <span className="text-xs text-gray-400">{log.time}</span>
               </div>
             </div>
           ))}
@@ -4761,9 +4943,9 @@ export function MesCellules({ onSelect, activePhase }: { onSelect: (i: number) =
               <div key={feat.label} className="p-2 bg-white rounded-lg border border-violet-100">
                 <div className="flex items-center gap-1.5 mb-1">
                   <feat.Icon className="h-3.5 w-3.5 text-violet-600" />
-                  <span className="text-[9px] font-bold text-violet-800">{feat.label}</span>
+                  <span className="text-xs font-bold text-violet-800">{feat.label}</span>
                 </div>
-                <p className="text-[9px] text-gray-600">{feat.desc}</p>
+                <p className="text-xs text-gray-600">{feat.desc}</p>
               </div>
             ))}
           </div>
@@ -4775,10 +4957,10 @@ export function MesCellules({ onSelect, activePhase }: { onSelect: (i: number) =
         <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
           <Handshake className="h-4 w-4 text-gray-900 stroke-[2.5]" />
           <span className="text-sm font-bold text-gray-900">Opportunités actives</span>
-          <span className="text-[9px] px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600">Système Main Levée</span>
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600">Système Main Levée</span>
         </div>
         <div className="p-4 space-y-3">
-          <p className="text-[9px] text-gray-500">Les opportunités sont attribuées au premier partenaire qualifié qui lève la main. En Observation, vous voyez les matchings en cours.</p>
+          <p className="text-xs text-gray-500">Les opportunités sont attribuées au premier partenaire qualifié qui lève la main. En Observation, vous voyez les matchings en cours.</p>
           {[
             { besoin: "Robot soudage MIG/TIG automatisé", client: "MetalPro", score: 87, status: "active" as const, candidats: 3 },
             { besoin: "Cellule injection automatisée + vision qualité", client: "QC Plasturgie", score: 72, status: "scout" as const, candidats: 1 },
@@ -4787,12 +4969,12 @@ export function MesCellules({ onSelect, activePhase }: { onSelect: (i: number) =
             <div key={i} className="p-3 rounded-lg border border-gray-100 bg-gray-50">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs font-bold text-gray-800">{match.besoin}</span>
-                <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-medium",
+                <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium",
                   match.status === "complete" ? "bg-emerald-100 text-emerald-700" :
                   match.status === "scout" ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"
                 )}>{match.status === "complete" ? "Complété" : match.status === "scout" ? "Scout requis" : "Actif"}</span>
               </div>
-              <div className="flex items-center gap-3 text-[9px] text-gray-500">
+              <div className="flex items-center gap-3 text-xs text-gray-500">
                 <span>Client: {match.client}</span>
                 <span>Score: <strong className="text-blue-600">{match.score}%</strong></span>
                 <span>{match.candidats} candidat(s)</span>
@@ -4820,7 +5002,7 @@ export function MesCellules({ onSelect, activePhase }: { onSelect: (i: number) =
                 <act.Icon className={cn("h-3.5 w-3.5", act.color)} />
               </div>
               <p className="text-xs text-gray-600 flex-1">{act.text}</p>
-              <span className="text-[9px] text-gray-400 shrink-0">{act.time}</span>
+              <span className="text-xs text-gray-400 shrink-0">{act.time}</span>
             </div>
           ))}
         </div>
@@ -4829,10 +5011,10 @@ export function MesCellules({ onSelect, activePhase }: { onSelect: (i: number) =
       {/* CarlOS Proactif */}
       <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-[#00B4D8]/10">
         <div className="p-4 flex items-start gap-3">
-          <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-white text-[9px] font-bold shrink-0">C</div>
+          <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-white text-xs font-bold shrink-0">C</div>
           <div className="flex-1">
             <h3 className="text-xs font-bold text-gray-900">CarlOS — Facilitateur de Cellule Proactif</h3>
-            <p className="text-[9px] text-gray-600 mt-1 italic">"Carl, j'ai remarqué quelque chose. Tu travailles régulièrement avec Automation Plus, Acier Québec et PrécisionCNC. Si vous formiez une Cellule Orbit⁹, vos bots se coordonneraient et vous économiseriez TOUS 15%. Tu veux que je prépare les invitations?"</p>
+            <p className="text-xs text-gray-600 mt-1 italic">"Carl, j'ai remarqué quelque chose. Tu travailles régulièrement avec Automation Plus, Acier Québec et PrécisionCNC. Si vous formiez une Cellule Orbit⁹, vos bots se coordonneraient et vous économiseriez TOUS 15%. Tu veux que je prépare les invitations?"</p>
           </div>
         </div>
       </div>
@@ -4864,9 +5046,9 @@ function CelluleDrillDown({ cellule, onBack }: { cellule: Cellule; onBack: () =>
         <Atom className="h-5 w-5 text-gray-900 stroke-[2.5]" />
         <div className="flex-1">
           <p className="text-sm font-bold text-gray-900">{cellule.name}</p>
-          <p className="text-[9px] text-gray-500">{cellule.members} membres · {cellule.type}</p>
+          <p className="text-xs text-gray-500">{cellule.members} membres · {cellule.type}</p>
         </div>
-        <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1",
+        <span className={cn("text-xs px-2 py-0.5 rounded-full font-bold flex items-center gap-1",
           PC[cellule.status as PhaseKey]?.badge || "bg-gray-100 text-gray-700"
         )}>
           <span className={cn("w-2 h-2 rounded-full", PC[cellule.status as PhaseKey]?.dot || "bg-gray-400")} />
@@ -4918,7 +5100,7 @@ function CelluleDrillDown({ cellule, onBack }: { cellule: Cellule; onBack: () =>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-medium text-gray-800">{m.name}</span>
-                    <span className="text-[9px] text-gray-400">{m.role}</span>
+                    <span className="text-xs text-gray-400">{m.role}</span>
                   </div>
                   <div className="flex gap-1.5 mt-1">
                     {[
@@ -4929,7 +5111,7 @@ function CelluleDrillDown({ cellule, onBack }: { cellule: Cellule; onBack: () =>
                       { label: "A", val: m.vitaa.a2, color: "bg-violet-400" },
                     ].map((p, pi) => (
                       <div key={pi} className="flex items-center gap-0.5">
-                        <span className="text-[9px] text-gray-400">{p.label}</span>
+                        <span className="text-xs text-gray-400">{p.label}</span>
                         <div className="w-10 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                           <div className={cn("h-full rounded-full", p.color)} style={{ width: `${p.val * 100}%` }} />
                         </div>
@@ -4937,7 +5119,7 @@ function CelluleDrillDown({ cellule, onBack }: { cellule: Cellule; onBack: () =>
                     ))}
                   </div>
                 </div>
-                <span className="text-[9px] font-mono text-gray-400">V×I×T={mvit.toFixed(2)}</span>
+                <span className="text-xs font-mono text-gray-400">V×I×T={mvit.toFixed(2)}</span>
               </div>
             );
           })}
@@ -4998,7 +5180,7 @@ export function VITAADashboard({ selectedCellule }: { selectedCellule: Cellule }
         <Activity className="h-5 w-5 text-gray-900 stroke-[2.5]" />
         <div className="flex-1">
           <p className="text-sm font-bold text-gray-900">VITAA × Orbit⁹ — {selectedCellule.name}</p>
-          <p className="text-[9px] text-gray-500">Scoring des 5 piliers · Triangle du Feu · Formule exponentielle</p>
+          <p className="text-xs text-gray-500">Scoring des 5 piliers · Triangle du Feu · Formule exponentielle</p>
         </div>
       </div>
 
@@ -5012,7 +5194,7 @@ export function VITAADashboard({ selectedCellule }: { selectedCellule: Cellule }
           </div>
           <div className="p-4 text-center">
             <div className="text-4xl font-bold text-indigo-600">{formulaResult.toFixed(2)}</div>
-            <p className="text-[9px] text-gray-400 mt-1 font-mono">e^({avg.v.toFixed(2)} × {avg.i.toFixed(2)} × {avg.t.toFixed(2)}) = e^({vit.toFixed(3)})</p>
+            <p className="text-xs text-gray-400 mt-1 font-mono">e^({avg.v.toFixed(2)} × {avg.i.toFixed(2)} × {avg.t.toFixed(2)}) = e^({vit.toFixed(3)})</p>
             <p className="text-[11px] text-gray-500 mt-2">Score collectif de la cellule</p>
           </div>
         </div>
@@ -5049,19 +5231,19 @@ export function VITAADashboard({ selectedCellule }: { selectedCellule: Cellule }
             <div key={p.short} className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="text-[11px] text-gray-600 w-12 shrink-0">{p.label}</span>
-                <span className="text-[9px] text-gray-400 w-8">Solo</span>
+                <span className="text-xs text-gray-400 w-8">Solo</span>
                 <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
                   <div className={cn("h-full rounded-full transition-all duration-1000", p.soloColor)} style={{ width: `${p.solo * 100}%` }} />
                 </div>
-                <span className="text-[9px] font-bold text-gray-500 w-8 text-right">{(p.solo * 100).toFixed(0)}%</span>
+                <span className="text-xs font-bold text-gray-500 w-8 text-right">{(p.solo * 100).toFixed(0)}%</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-[11px] text-gray-600 w-12 shrink-0" />
-                <span className="text-[9px] text-blue-500 w-8">Cell.</span>
+                <span className="text-xs text-blue-500 w-8">Cell.</span>
                 <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
                   <div className={cn("h-full rounded-full transition-all duration-1000", p.color)} style={{ width: `${p.avg * 100}%` }} />
                 </div>
-                <span className="text-[9px] font-bold text-gray-700 w-8 text-right">{(p.avg * 100).toFixed(0)}%</span>
+                <span className="text-xs font-bold text-gray-700 w-8 text-right">{(p.avg * 100).toFixed(0)}%</span>
               </div>
             </div>
           ))}
@@ -5111,9 +5293,9 @@ function FeedSocial({ activePhase }: { activePhase?: PhaseKey }) {
         <Newspaper className="h-5 w-5 text-gray-900 stroke-[2.5]" />
         <div className="flex-1">
           <p className="text-sm font-bold text-gray-900">Nouvelles & Intelligence Industrie</p>
-          <p className="text-[9px] text-gray-500">Fil Orbit⁹ + données manufacturières Québec 2024-2026</p>
+          <p className="text-xs text-gray-500">Fil Orbit⁹ + données manufacturières Québec 2024-2026</p>
         </div>
-        <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-medium", ph.badge)}>
+        <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", ph.badge)}>
           {ph.label}
         </span>
       </div>
@@ -5164,7 +5346,7 @@ function FeedSocial({ activePhase }: { activePhase?: PhaseKey }) {
           {/* Activity summary */}
           <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-50 border border-gray-200">
             <Activity className="h-3.5 w-3.5 text-gray-900 stroke-[2.5]" />
-            <span className="text-[9px] text-gray-500">
+            <span className="text-xs text-gray-500">
               <strong className="text-gray-700">{ORBIT9_FEED.length} activités Orbit⁹</strong> + <strong className="text-gray-700">{INDUSTRIE_NEWS.length} nouvelles industrie</strong> — dernières 72h
             </span>
           </div>
@@ -5218,7 +5400,7 @@ function FeedSocial({ activePhase }: { activePhase?: PhaseKey }) {
                         <span className="text-[11px] font-semibold text-indigo-700">Intelligence Industrie</span>
                       )}
                       <span className={cn(
-                        "text-[9px] px-1.5 py-0.5 rounded-full font-medium",
+                        "text-xs px-1.5 py-0.5 rounded-full font-medium",
                         item.type === "bot" ? "bg-blue-50 text-blue-600" :
                         item.type === "humain" ? "bg-emerald-50 text-emerald-600" :
                         item.type === "bot-to-bot" ? "bg-violet-50 text-violet-600" :
@@ -5229,10 +5411,10 @@ function FeedSocial({ activePhase }: { activePhase?: PhaseKey }) {
                     </div>
                     <p className="text-xs text-gray-700">{item.text}</p>
                     {"source" in item && (
-                      <p className="text-[9px] text-gray-400 italic mt-0.5">{(item as { source: string }).source}</p>
+                      <p className="text-xs text-gray-400 italic mt-0.5">{(item as { source: string }).source}</p>
                     )}
                   </div>
-                  <span className="text-[9px] text-gray-400 shrink-0">{item.time}</span>
+                  <span className="text-xs text-gray-400 shrink-0">{item.time}</span>
                 </div>
               </div>
             ))}
@@ -5274,10 +5456,10 @@ function FeedSocial({ activePhase }: { activePhase?: PhaseKey }) {
                   { label: "Maturité Numérique Haute", value: "19%", detail: "24% font 4+ types d'innovation", source: "MEIE/STIQ 2025" },
                 ].map(s => (
                   <div key={s.label} className="p-3 rounded-lg bg-gray-50 border border-gray-200">
-                    <p className="text-[9px] text-gray-400 uppercase font-bold mb-1">{s.label}</p>
+                    <p className="text-xs text-gray-400 uppercase font-bold mb-1">{s.label}</p>
                     <p className="text-lg font-bold text-gray-800">{s.value}</p>
-                    <p className="text-[9px] text-gray-500">{s.detail}</p>
-                    <p className="text-[9px] text-gray-400 italic mt-1">{s.source}</p>
+                    <p className="text-xs text-gray-500">{s.detail}</p>
+                    <p className="text-xs text-gray-400 italic mt-1">{s.source}</p>
                   </div>
                 ))}
               </div>
@@ -5294,15 +5476,15 @@ function FeedSocial({ activePhase }: { activePhase?: PhaseKey }) {
                   { tech: "Impression 3D", rate: 16 },
                 ].map(t => (
                   <div key={t.tech} className="flex items-center gap-2">
-                    <span className="text-[9px] text-gray-600 min-w-[120px]">{t.tech}</span>
+                    <span className="text-xs text-gray-600 min-w-[120px]">{t.tech}</span>
                     <div className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
                       <div className={cn("h-full rounded-full", t.rate >= 50 ? "bg-emerald-500" : t.rate >= 30 ? "bg-blue-500" : "bg-amber-500")} style={{ width: `${t.rate}%` }} />
                     </div>
-                    <span className="text-[9px] font-bold text-gray-700 min-w-[28px] text-right">{t.rate}%</span>
+                    <span className="text-xs font-bold text-gray-700 min-w-[28px] text-right">{t.rate}%</span>
                   </div>
                 ))}
               </div>
-              <p className="text-[9px] text-gray-400 mt-2 italic">Sources: MEIE 2025, STIQ, StatCan</p>
+              <p className="text-xs text-gray-400 mt-2 italic">Sources: MEIE 2025, STIQ, StatCan</p>
             </div>
           </div>
 
@@ -5326,11 +5508,11 @@ function FeedSocial({ activePhase }: { activePhase?: PhaseKey }) {
                 ].map(s => (
                   <div key={s.secteur} className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200">
                     <p className="text-xs font-bold text-emerald-800">{s.secteur}</p>
-                    <p className="text-[9px] text-emerald-600 font-bold">{s.poids} du PIB</p>
+                    <p className="text-xs text-emerald-600 font-bold">{s.poids} du PIB</p>
                   </div>
                 ))}
               </div>
-              <p className="text-[9px] text-gray-400 mt-2 italic">Source: STIQ Baromètre 16e édition 2025</p>
+              <p className="text-xs text-gray-400 mt-2 italic">Source: STIQ Baromètre 16e édition 2025</p>
             </div>
           </div>
 
@@ -5345,14 +5527,14 @@ function FeedSocial({ activePhase }: { activePhase?: PhaseKey }) {
             <div className="p-4">
               <div className="grid grid-cols-2 gap-3 mb-3">
                 <div className="p-3 rounded-lg bg-gray-50 border border-gray-200 text-center">
-                  <p className="text-[9px] text-gray-400 uppercase font-bold mb-1">Retour moyen</p>
+                  <p className="text-xs text-gray-400 uppercase font-bold mb-1">Retour moyen</p>
                   <p className="text-2xl font-bold text-emerald-600">1.60$</p>
-                  <p className="text-[9px] text-gray-500">par dollar investi en techno</p>
+                  <p className="text-xs text-gray-500">par dollar investi en techno</p>
                 </div>
                 <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-center">
-                  <p className="text-[9px] text-emerald-600 uppercase font-bold mb-1">Leaders numériques</p>
+                  <p className="text-xs text-emerald-600 uppercase font-bold mb-1">Leaders numériques</p>
                   <p className="text-2xl font-bold text-emerald-700">2.40$</p>
-                  <p className="text-[9px] text-emerald-600">par dollar investi</p>
+                  <p className="text-xs text-emerald-600">par dollar investi</p>
                 </div>
               </div>
               <div className="space-y-1.5">
@@ -5371,9 +5553,9 @@ function FeedSocial({ activePhase }: { activePhase?: PhaseKey }) {
               </div>
               <div className="flex items-center gap-2 mt-3 p-2 rounded-lg bg-blue-50 border border-blue-200">
                 <Zap className="h-3.5 w-3.5 text-blue-600 shrink-0" />
-                <span className="text-[9px] text-blue-700">L'IA générative permet d'économiser 2.05h pour chaque 0.97h investie (FCEI 2025)</span>
+                <span className="text-xs text-blue-700">L'IA générative permet d'économiser 2.05h pour chaque 0.97h investie (FCEI 2025)</span>
               </div>
-              <p className="text-[9px] text-gray-400 mt-2 italic">Sources: STIQ 16e éd. 2025 / FCEI 2025</p>
+              <p className="text-xs text-gray-400 mt-2 italic">Sources: STIQ 16e éd. 2025 / FCEI 2025</p>
             </div>
           </div>
 
@@ -5406,7 +5588,7 @@ function FeedSocial({ activePhase }: { activePhase?: PhaseKey }) {
                   </div>
                 ))}
               </div>
-              <p className="text-[9px] text-gray-400 mt-2 italic">Source: STIQ 2025 / FCEI 2025</p>
+              <p className="text-xs text-gray-400 mt-2 italic">Source: STIQ 2025 / FCEI 2025</p>
             </div>
           </div>
 
@@ -5433,7 +5615,7 @@ function FeedSocial({ activePhase }: { activePhase?: PhaseKey }) {
                 ].map(s => (
                   <div key={s.source} className="p-2 rounded-lg bg-gray-50 border border-gray-200">
                     <p className="text-xs font-bold text-gray-800">{s.source}</p>
-                    <p className="text-[9px] text-gray-600">{s.type}</p>
+                    <p className="text-xs text-gray-600">{s.type}</p>
                   </div>
                 ))}
               </div>
@@ -5466,7 +5648,7 @@ function FeedSocial({ activePhase }: { activePhase?: PhaseKey }) {
                   <div className="flex items-center gap-2 mb-1">
                     <Lightbulb className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
                     <span className="text-sm font-semibold text-gray-800 flex-1">{o.sector}</span>
-                    <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium",
+                    <span className={cn("text-xs px-1.5 py-0.5 rounded-full font-medium",
                       o.impact === "Critique" ? "bg-red-50 text-red-600" :
                       o.impact === "Très élevé" ? "bg-orange-50 text-orange-600" :
                       "bg-indigo-50 text-indigo-600"
@@ -5474,8 +5656,8 @@ function FeedSocial({ activePhase }: { activePhase?: PhaseKey }) {
                   </div>
                   <p className="text-xs text-gray-600 mb-1">{o.opportunity}</p>
                   <div className="flex items-center gap-2">
-                    <span className="text-[9px] font-bold text-blue-600">{o.data}</span>
-                    <span className="text-[9px] text-gray-400 italic">{o.source}</span>
+                    <span className="text-xs font-bold text-blue-600">{o.data}</span>
+                    <span className="text-xs text-gray-400 italic">{o.source}</span>
                   </div>
                 </div>
               ))}
@@ -5503,11 +5685,11 @@ function FeedSocial({ activePhase }: { activePhase?: PhaseKey }) {
                       <span className="text-xs font-bold text-gray-800">{p.pays}</span>
                       <span className="text-xs font-bold text-blue-600">{p.densite}/10K</span>
                     </div>
-                    <p className="text-[9px] text-gray-500">{p.note}</p>
+                    <p className="text-xs text-gray-500">{p.note}</p>
                   </div>
                 ))}
               </div>
-              <p className="text-[9px] text-gray-400 mt-2 italic">Densité = robots pour 10,000 employés. Moyenne mondiale record: 162 (2023). Source: IFR 2025</p>
+              <p className="text-xs text-gray-400 mt-2 italic">Densité = robots pour 10,000 employés. Moyenne mondiale record: 162 (2023). Source: IFR 2025</p>
             </div>
           </div>
 
@@ -5529,17 +5711,17 @@ function FeedSocial({ activePhase }: { activePhase?: PhaseKey }) {
                 <div key={r.type} className="flex items-center justify-between p-2.5 rounded-lg border border-gray-200">
                   <div>
                     <p className="text-xs font-semibold text-gray-800">{r.type}</p>
-                    <p className="text-[9px] text-gray-500">Matériel: {r.materiel}</p>
+                    <p className="text-xs text-gray-500">Matériel: {r.materiel}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-bold text-blue-700">{r.total}</p>
-                    <p className="text-[9px] text-gray-400">1ère année</p>
+                    <p className="text-xs text-gray-400">1ère année</p>
                   </div>
                 </div>
               ))}
               <div className="flex items-center gap-2 mt-2 p-2 rounded-lg bg-amber-50 border border-amber-200">
                 <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-                <span className="text-[9px] text-amber-700">Estimations — IFR 2024, REAI, fournisseurs QC. Varient selon intégrateur.</span>
+                <span className="text-xs text-amber-700">Estimations — IFR 2024, REAI, fournisseurs QC. Varient selon intégrateur.</span>
               </div>
             </div>
           </div>
@@ -5567,7 +5749,7 @@ function FeedSocial({ activePhase }: { activePhase?: PhaseKey }) {
                   <FileText className="h-3.5 w-3.5 text-blue-600 shrink-0" />
                   <div className="flex-1">
                     <p className="text-xs text-gray-800">{doc.title}</p>
-                    <p className="text-[9px] text-gray-400">{doc.source} · {doc.year}</p>
+                    <p className="text-xs text-gray-400">{doc.source} · {doc.year}</p>
                   </div>
                 </div>
               ))}
@@ -5592,7 +5774,7 @@ export function MonProfilOrbit9() {
         <UserCircle className="h-5 w-5 text-gray-900 stroke-[2.5]" />
         <div className="flex-1">
           <p className="text-sm font-bold text-gray-900">Mon Profil Orbit⁹</p>
-          <p className="text-[9px] text-gray-500">Fiche entreprise, scores VITAA, personnalisation</p>
+          <p className="text-xs text-gray-500">Fiche entreprise, scores VITAA, personnalisation</p>
         </div>
       </div>
 
@@ -5625,7 +5807,7 @@ export function MonProfilOrbit9() {
           {/* Certifications */}
           <div className="flex flex-wrap gap-1.5 mt-2">
             {["ISO 9001", "Membre REAI", "Pionnier V1"].map(cert => (
-              <span key={cert} className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 font-medium border border-emerald-200">
+              <span key={cert} className="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 font-medium border border-emerald-200">
                 {cert}
               </span>
             ))}
@@ -5677,11 +5859,11 @@ export function MonProfilOrbit9() {
                 { label: "Activité réseau", val: 78 },
               ].map(m => (
                 <div key={m.label} className="flex items-center gap-2">
-                  <span className="text-[9px] text-gray-500 w-28 shrink-0">{m.label}</span>
+                  <span className="text-xs text-gray-500 w-28 shrink-0">{m.label}</span>
                   <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                     <div className="h-full rounded-full bg-blue-400" style={{ width: `${m.val}%` }} />
                   </div>
-                  <span className="text-[9px] font-bold text-gray-600 w-8 text-right">{m.val}%</span>
+                  <span className="text-xs font-bold text-gray-600 w-8 text-right">{m.val}%</span>
                 </div>
               ))}
             </div>
@@ -5768,7 +5950,7 @@ export function Orbit9Gouvernance({ fixedTab }: { fixedTab?: "principes" | "role
           <Shield className="h-5 w-5 text-gray-900 stroke-[2.5]" />
           <div className="flex-1">
             <p className="text-sm font-bold text-gray-900">Gouvernance Augmentée par IA</p>
-            <p className="text-[9px] text-gray-500">Inspiré Holacracy — adapté pour la collaboration IA + Humain</p>
+            <p className="text-xs text-gray-500">Inspiré Holacracy — adapté pour la collaboration IA + Humain</p>
           </div>
         </div>
         <p className="text-xs text-gray-700 leading-relaxed">
@@ -5826,8 +6008,8 @@ export function Orbit9Gouvernance({ fixedTab }: { fixedTab?: "principes" | "role
                 <div className="space-y-1">
                   {p.examples.map((ex, ei) => (
                     <div key={ei} className="flex items-start gap-1.5">
-                      <span className="text-[9px] text-gray-400 mt-0.5">→</span>
-                      <span className="text-[9px] text-gray-500 italic">{ex}</span>
+                      <span className="text-xs text-gray-400 mt-0.5">→</span>
+                      <span className="text-xs text-gray-500 italic">{ex}</span>
                     </div>
                   ))}
                 </div>
@@ -5853,8 +6035,8 @@ export function Orbit9Gouvernance({ fixedTab }: { fixedTab?: "principes" | "role
                 { label: "Intégration", color: "bg-emerald-500" },
               ].map((st, si) => (
                 <div key={si} className="flex-1 flex flex-col items-center relative">
-                  <div className={cn("w-7 h-7 rounded-full flex items-center justify-center text-white text-[9px] font-bold", st.color)}>{si + 1}</div>
-                  <span className="text-[9px] font-medium text-gray-600 mt-1 text-center leading-tight">{st.label}</span>
+                  <div className={cn("w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold", st.color)}>{si + 1}</div>
+                  <span className="text-xs font-medium text-gray-600 mt-1 text-center leading-tight">{st.label}</span>
                   {si < 4 && <div className="absolute top-3.5 left-[60%] w-[80%] h-0.5 bg-gray-200" />}
                 </div>
               ))}
@@ -5879,7 +6061,7 @@ export function Orbit9Gouvernance({ fixedTab }: { fixedTab?: "principes" | "role
               <div key={i} className={cn("flex items-center gap-3 px-3 py-2 rounded-lg border", r.active ? "border-gray-200 bg-white" : "border-gray-100 bg-gray-50 opacity-50")}>
                 <r.icon className={cn("h-3.5 w-3.5 shrink-0", r.active ? "text-blue-500" : "text-gray-400")} />
                 <span className="text-xs text-gray-700 flex-1">{r.rule}</span>
-                <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-medium", r.active ? "bg-emerald-50 text-emerald-600" : "bg-gray-100 text-gray-400")}>{r.active ? "Actif" : "Bientôt"}</span>
+                <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", r.active ? "bg-emerald-50 text-emerald-600" : "bg-gray-100 text-gray-400")}>{r.active ? "Actif" : "Bientôt"}</span>
               </div>
             ))}
           </div>
@@ -5915,8 +6097,8 @@ export function Orbit9Gouvernance({ fixedTab }: { fixedTab?: "principes" | "role
                 <div className="flex-1 min-w-0">
                   <span className="text-xs font-bold text-gray-800">{r.role}</span>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="text-[9px] text-gray-500">{r.occupant}</span>
-                    <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium", r.typeColor)}>{r.type}</span>
+                    <span className="text-xs text-gray-500">{r.occupant}</span>
+                    <span className={cn("text-xs px-1.5 py-0.5 rounded-full font-medium", r.typeColor)}>{r.type}</span>
                   </div>
                 </div>
               </div>
@@ -5950,7 +6132,7 @@ export function Orbit9Gouvernance({ fixedTab }: { fixedTab?: "principes" | "role
               </div>
               <div className="px-4 py-3">
                 <div className="text-2xl font-bold text-gray-800">{kpi.value}</div>
-                <div className="text-[9px] text-gray-500">{kpi.sub}</div>
+                <div className="text-xs text-gray-500">{kpi.sub}</div>
               </div>
             </div>
           ))}
@@ -5966,15 +6148,15 @@ export function Orbit9Gouvernance({ fixedTab }: { fixedTab?: "principes" | "role
             <p className="text-[11px] text-gray-500 mb-3">Dans une DAO traditionnelle, les humains auto-déclarent leurs contributions. Avec CarlOS, les bots mesurent automatiquement — zéro manipulation possible.</p>
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-lg border border-red-200 bg-red-50/50 p-3 space-y-1.5">
-                <span className="text-[9px] font-bold text-red-600 uppercase">DAO Traditionnelle</span>
+                <span className="text-xs font-bold text-red-600 uppercase">DAO Traditionnelle</span>
                 {["Humains auto-déclarent leurs contributions", "\"J'ai travaillé 40h\" — vraiment?", "Gaming du système, conflits, bureaucratie"].map((t, i) => (
-                  <div key={i} className="flex items-start gap-1.5"><X className="h-3.5 w-3.5 text-red-400 shrink-0 mt-0.5" /><span className="text-[9px] text-gray-600">{t}</span></div>
+                  <div key={i} className="flex items-start gap-1.5"><X className="h-3.5 w-3.5 text-red-400 shrink-0 mt-0.5" /><span className="text-xs text-gray-600">{t}</span></div>
                 ))}
               </div>
               <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-3 space-y-1.5">
-                <span className="text-[9px] font-bold text-emerald-600 uppercase">Solution CarlOS</span>
+                <span className="text-xs font-bold text-emerald-600 uppercase">Solution CarlOS</span>
                 {["Bots trackent automatiquement chaque action", "CTO Bot mesure les heures de dev réelles", "Zéro self-reporting, zéro gaming"].map((t, i) => (
-                  <div key={i} className="flex items-start gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" /><span className="text-[9px] text-gray-600">{t}</span></div>
+                  <div key={i} className="flex items-start gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" /><span className="text-xs text-gray-600">{t}</span></div>
                 ))}
               </div>
             </div>
@@ -5995,11 +6177,11 @@ export function Orbit9Gouvernance({ fixedTab }: { fixedTab?: "principes" | "role
             ].map((ph, pi) => (
               <div key={pi} className={cn("flex-1 rounded-xl border p-3", ph.border)}>
                 <div className="flex items-center gap-2 mb-2">
-                  <span className={cn("text-[9px] font-bold", ph.color)}>{ph.phase}</span>
-                  <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium ml-auto", ph.statusColor)}>{ph.status}</span>
+                  <span className={cn("text-xs font-bold", ph.color)}>{ph.phase}</span>
+                  <span className={cn("text-xs px-1.5 py-0.5 rounded-full font-medium ml-auto", ph.statusColor)}>{ph.status}</span>
                 </div>
                 <p className="text-xs font-bold text-gray-800 mb-1">{ph.label}</p>
-                <p className="text-[9px] text-gray-500 leading-relaxed">{ph.desc}</p>
+                <p className="text-xs text-gray-500 leading-relaxed">{ph.desc}</p>
               </div>
             ))}
           </div>
@@ -6052,7 +6234,7 @@ export function Orbit9Gouvernance({ fixedTab }: { fixedTab?: "principes" | "role
           </p>
           <div className="flex flex-wrap gap-2">
             {["Revenus distribués", "Équité dans les co-créations", "Commission sur nouveaux membres"].map((b, i) => (
-              <span key={i} className="text-[9px] px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 font-medium">{b}</span>
+              <span key={i} className="text-xs px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 font-medium">{b}</span>
             ))}
           </div>
         </div>
@@ -6065,7 +6247,7 @@ export function Orbit9Gouvernance({ fixedTab }: { fixedTab?: "principes" | "role
           <span className="text-sm font-bold text-gray-900">Standards Qualité — Seuils Minimaux</span>
         </div>
         <div className="p-3">
-          <p className="text-[9px] text-gray-400 mb-2">Réévaluation annuelle de chaque membre. Le réseau élite maintient ses standards.</p>
+          <p className="text-xs text-gray-400 mb-2">Réévaluation annuelle de chaque membre. Le réseau élite maintient ses standards.</p>
           <div className="grid grid-cols-2 gap-1.5">
             {[
               { label: "Certifications à jour", seuil: "Min. 1 active", ok: true },
@@ -6080,8 +6262,8 @@ export function Orbit9Gouvernance({ fixedTab }: { fixedTab?: "principes" | "role
               <div key={qi} className={cn("flex items-center gap-2 px-2.5 py-1.5 rounded-lg", sq.ok ? "bg-emerald-50" : "bg-amber-50")}>
                 {sq.ok ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" /> : <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />}
                 <div className="flex-1 min-w-0">
-                  <span className="text-[9px] font-medium text-gray-700 block truncate">{sq.label}</span>
-                  <span className="text-[9px] text-gray-400 block truncate">{sq.seuil}</span>
+                  <span className="text-xs font-medium text-gray-700 block truncate">{sq.label}</span>
+                  <span className="text-xs text-gray-400 block truncate">{sq.seuil}</span>
                 </div>
               </div>
             ))}
@@ -6107,7 +6289,7 @@ export function JumelageOrbit9() {
         <Handshake className="h-5 w-5 text-gray-900 stroke-[2.5]" />
         <div className="flex-1">
           <p className="text-sm font-bold text-gray-900">Jumelage Orbit⁹</p>
-          <p className="text-[9px] text-gray-500">Pipeline de jumelage inter-entreprises · 5 étapes</p>
+          <p className="text-xs text-gray-500">Pipeline de jumelage inter-entreprises · 5 étapes</p>
         </div>
       </div>
       {/* Pipeline visuel */}
@@ -6129,7 +6311,7 @@ export function JumelageOrbit9() {
                 <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-white", st.active ? st.color : "bg-gray-300")}>
                   <st.icon className="h-3.5 w-3.5" />
                 </div>
-                <span className={cn("text-[9px] font-medium mt-1 text-center", st.active ? "text-gray-700" : "text-gray-400")}>{st.label}</span>
+                <span className={cn("text-xs font-medium mt-1 text-center", st.active ? "text-gray-700" : "text-gray-400")}>{st.label}</span>
                 {si < 4 && <div className={cn("absolute top-4 left-[60%] w-[80%] h-0.5", st.active ? "bg-blue-300" : "bg-gray-200")} />}
               </div>
             ))}
@@ -6149,12 +6331,12 @@ export function JumelageOrbit9() {
               <div className="w-7 h-7 rounded-full overflow-hidden shrink-0"><BotAvatar code={m.bot} size="sm" /></div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-gray-800">{m.a} ↔ {m.b}</p>
-                <p className="text-[9px] text-gray-400">Étape: {m.status}</p>
+                <p className="text-xs text-gray-400">Étape: {m.status}</p>
               </div>
               <div className="w-16 h-2 bg-gray-100 rounded-full overflow-hidden">
                 <div className="h-full bg-blue-500 rounded-full" style={{ width: `${m.score}%` }} />
               </div>
-              <span className="text-[9px] font-bold text-blue-600">{m.score}%</span>
+              <span className="text-xs font-bold text-blue-600">{m.score}%</span>
             </div>
           ))}
         </div>
@@ -6185,8 +6367,8 @@ export function PionniersOrbit9() {
       {/* Phase indicator */}
       <div className="flex items-center gap-2">
         <Eye className="h-3.5 w-3.5 text-blue-500" />
-        <span className="text-[9px] font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">Observation</span>
-        <span className="text-[9px] text-gray-400">État du cercle des pionniers et stratégie de recrutement</span>
+        <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">Observation</span>
+        <span className="text-xs text-gray-400">État du cercle des pionniers et stratégie de recrutement</span>
       </div>
 
       {/* Header pastel */}
@@ -6194,7 +6376,7 @@ export function PionniersOrbit9() {
         <Rocket className="h-5 w-5 text-gray-900 stroke-[2.5]" />
         <div className="flex-1">
           <p className="text-sm font-bold text-gray-900">Cercle des Pionniers Orbit⁹</p>
-          <p className="text-[9px] text-gray-500">9 places · 9 leaders · 1 par secteur stratégique · Les portes ferment</p>
+          <p className="text-xs text-gray-500">9 places · 9 leaders · 1 par secteur stratégique · Les portes ferment</p>
         </div>
         <span className="text-xs font-bold text-gray-600 bg-gray-100 px-2.5 py-0.5 rounded-full">{pris}/9</span>
       </div>
@@ -6214,7 +6396,7 @@ export function PionniersOrbit9() {
             </div>
             <div className="px-4 py-3">
               <div className="text-2xl font-bold text-gray-800">{kpi.value}</div>
-              <div className="text-[9px] text-gray-500">{kpi.sub}</div>
+              <div className="text-xs text-gray-500">{kpi.sub}</div>
             </div>
           </div>
         ))}
@@ -6227,7 +6409,7 @@ export function PionniersOrbit9() {
           <span className="text-sm font-bold text-gray-900">Modèle de Croissance — 9 × 9 = 81</span>
         </div>
         <div className="p-4">
-          <p className="text-[9px] text-gray-600 mb-3">Chaque pionnier anime sa propre Cellule Orbit⁹. Effet réseau: les bots de toutes les cellules communiquent entre eux.</p>
+          <p className="text-xs text-gray-600 mb-3">Chaque pionnier anime sa propre Cellule Orbit⁹. Effet réseau: les bots de toutes les cellules communiquent entre eux.</p>
           <div className="flex items-center justify-between gap-3">
             {[
               { value: "9", label: "Pionniers", desc: "1 leader / secteur", color: "indigo", Icon: Rocket },
@@ -6239,7 +6421,7 @@ export function PionniersOrbit9() {
                   <step.Icon className={cn("h-5 w-5 mx-auto mb-1", `text-${step.color}-600`)} />
                   <p className={cn("text-2xl font-bold", `text-${step.color}-700`)}>{step.value}</p>
                   <p className="text-xs font-semibold text-gray-700">{step.label}</p>
-                  <p className="text-[9px] text-gray-500">{step.desc}</p>
+                  <p className="text-xs text-gray-500">{step.desc}</p>
                 </div>
                 {i < 2 && <ArrowRight className="h-5 w-5 text-gray-300 shrink-0" />}
               </div>
@@ -6271,8 +6453,8 @@ export function PionniersOrbit9() {
                    s.status === "prospect" ? <Clock className="h-3.5 w-3.5 text-amber-600" /> :
                    <Plus className="h-3.5 w-3.5 text-gray-400" />}
                 </div>
-                <p className="text-[9px] text-gray-500">{s.company || "Disponible"}</p>
-                {s.contact && s.contact !== "—" && <p className="text-[9px] text-gray-400 mt-0.5">Contact: {s.contact}</p>}
+                <p className="text-xs text-gray-500">{s.company || "Disponible"}</p>
+                {s.contact && s.contact !== "—" && <p className="text-xs text-gray-400 mt-0.5">Contact: {s.contact}</p>}
               </div>
             ))}
           </div>
@@ -6286,7 +6468,7 @@ export function PionniersOrbit9() {
           <span className="text-sm font-bold text-gray-900">Package Pionnier — Conditions à Vie</span>
         </div>
         <div className="p-4">
-          <p className="text-[9px] text-gray-500 mb-3">En devenant pionnier, vous verrouillez ces avantages de façon permanente, même quand le prix augmente pour les vagues suivantes.</p>
+          <p className="text-xs text-gray-500 mb-3">En devenant pionnier, vous verrouillez ces avantages de façon permanente, même quand le prix augmente pour les vagues suivantes.</p>
           <div className="grid grid-cols-2 gap-3">
             {[
               { Icon: Users, label: "C-Suite complet (6 bots)", detail: "1,350$/mois vs 2,500$ vague 2 = -46% garanti à vie" },
@@ -6300,7 +6482,7 @@ export function PionniersOrbit9() {
                 <perk.Icon className="h-4 w-4 text-indigo-600 mt-0.5 shrink-0" />
                 <div>
                   <p className="text-xs font-semibold text-indigo-800">{perk.label}</p>
-                  <p className="text-[9px] text-indigo-600">{perk.detail}</p>
+                  <p className="text-xs text-indigo-600">{perk.detail}</p>
                 </div>
               </div>
             ))}
@@ -6315,7 +6497,7 @@ export function PionniersOrbit9() {
           <span className="text-sm font-bold text-gray-900">Script de Rencontre — 45 min, 5 actes</span>
         </div>
         <div className="p-4">
-          <p className="text-[9px] text-gray-500 mb-3">En personne (JAMAIS Zoom). Café ou bureau du prospect. iPad avec CarlOS prêt à rouler. Pas de PowerPoint.</p>
+          <p className="text-xs text-gray-500 mb-3">En personne (JAMAIS Zoom). Café ou bureau du prospect. iPad avec CarlOS prêt à rouler. Pas de PowerPoint.</p>
           <div className="space-y-2">
             {[
               { act: "1", title: "L'Accroche", dur: "5 min", desc: "Tu portes 8 chapeaux. Pas de CFO, CTO, CMO. Tu gères les urgences lundi au vendredi. Je me trompe?", color: "blue" },
@@ -6329,9 +6511,9 @@ export function PionniersOrbit9() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-bold text-gray-800">{act.title}</span>
-                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">{act.dur}</span>
+                    <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">{act.dur}</span>
                   </div>
-                  <p className="text-[9px] text-gray-500 mt-0.5">{act.desc}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{act.desc}</p>
                 </div>
               </div>
             ))}
@@ -6346,7 +6528,7 @@ export function PionniersOrbit9() {
           <span className="text-sm font-bold text-gray-900">Calendrier Sprint 30 Jours</span>
         </div>
         <div className="p-4">
-          <p className="text-[9px] text-gray-500 mb-3">Plan de recrutement des 9 pionniers en 4 semaines. Pression progressive, urgence croissante.</p>
+          <p className="text-xs text-gray-500 mb-3">Plan de recrutement des 9 pionniers en 4 semaines. Pression progressive, urgence croissante.</p>
           <div className="grid grid-cols-4 gap-2">
             {[
               { week: "Sem 1", title: "Les 3 premiers", desc: "3 rencontres. Post LinkedIn « 3/9 prises »", status: "done" as const },
@@ -6358,12 +6540,12 @@ export function PionniersOrbit9() {
                 w.status === "done" ? "bg-emerald-50 border-emerald-200" :
                 w.status === "active" ? "bg-blue-50 border-blue-300" : "bg-gray-50 border-gray-200"
               )}>
-                <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-full inline-block mb-1",
+                <span className={cn("text-xs font-bold px-1.5 py-0.5 rounded-full inline-block mb-1",
                   w.status === "done" ? "bg-emerald-100 text-emerald-600" :
                   w.status === "active" ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-500"
                 )}>{w.week}</span>
                 <p className="text-xs font-bold text-gray-800">{w.title}</p>
-                <p className="text-[9px] text-gray-500 mt-1">{w.desc}</p>
+                <p className="text-xs text-gray-500 mt-1">{w.desc}</p>
               </div>
             ))}
           </div>
@@ -6377,7 +6559,7 @@ export function PionniersOrbit9() {
           <span className="text-sm font-bold text-gray-900">Processus de Sélection Rigoureux</span>
         </div>
         <div className="p-4">
-          <p className="text-[9px] text-gray-500 mb-3">Réseau élite augmenté AI — on ne prend pas n'importe qui. Même les fournisseurs invités gratuitement passent par le processus complet.</p>
+          <p className="text-xs text-gray-500 mb-3">Réseau élite augmenté AI — on ne prend pas n'importe qui. Même les fournisseurs invités gratuitement passent par le processus complet.</p>
           <div className="grid grid-cols-4 gap-2">
             {[
               { step: "1", title: "Invitation", desc: "Client UB a besoin d'un fournisseur → CarlOS invite le prospect gratuitement", Icon: Bell },
@@ -6387,16 +6569,16 @@ export function PionniersOrbit9() {
             ].map(s => (
               <div key={s.step} className="p-2.5 bg-gray-50 rounded-lg border border-gray-100">
                 <div className="flex items-center gap-1.5 mb-1">
-                  <span className="text-[9px] font-black bg-blue-200 text-blue-800 w-4 h-4 rounded-full flex items-center justify-center">{s.step}</span>
+                  <span className="text-xs font-black bg-blue-200 text-blue-800 w-4 h-4 rounded-full flex items-center justify-center">{s.step}</span>
                   <s.Icon className="h-3.5 w-3.5 text-blue-600" />
-                  <span className="text-[9px] font-bold text-gray-800">{s.title}</span>
+                  <span className="text-xs font-bold text-gray-800">{s.title}</span>
                 </div>
-                <p className="text-[9px] text-gray-600 leading-relaxed">{s.desc}</p>
+                <p className="text-xs text-gray-600 leading-relaxed">{s.desc}</p>
               </div>
             ))}
           </div>
           <div className="mt-3 p-2 bg-[#00B4D8]/10 rounded-lg">
-            <p className="text-[9px] text-gray-800 font-semibold text-center">
+            <p className="text-xs text-gray-800 font-semibold text-center">
               FLYWHEEL: Fournisseur invité gratuitement → découvre CarlOS → devient client → invite SES fournisseurs → réseau grossit
             </p>
           </div>
@@ -6421,7 +6603,7 @@ function EvenementsOrbit9() {
         <Calendar className="h-5 w-5 text-gray-900 stroke-[2.5]" />
         <div className="flex-1">
           <p className="text-sm font-bold text-gray-900">Événements Orbit⁹</p>
-          <p className="text-[9px] text-gray-500">{events.length} événements à venir</p>
+          <p className="text-xs text-gray-500">{events.length} événements à venir</p>
         </div>
       </div>
       <div className="space-y-3">
@@ -6432,16 +6614,16 @@ function EvenementsOrbit9() {
               <div className="flex-1 px-4 py-3">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs font-bold text-gray-800">{evt.title}</span>
-                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">{evt.type}</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">{evt.type}</span>
                 </div>
-                <div className="flex items-center gap-4 text-[9px] text-gray-500">
+                <div className="flex items-center gap-4 text-xs text-gray-500">
                   <span className="flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" /> {evt.date}</span>
                   <span className="flex items-center gap-1"><Map className="h-3.5 w-3.5" /> {evt.lieu}</span>
                   <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {evt.attendees}</span>
                 </div>
               </div>
               <div className="flex items-center px-3">
-                <button className="text-[9px] bg-[#00B4D8]/10 text-gray-700 border border-gray-200 px-3 py-1.5 rounded-full hover:bg-gray-100 font-medium cursor-pointer">S'inscrire</button>
+                <button className="text-xs bg-[#00B4D8]/10 text-gray-700 border border-gray-200 px-3 py-1.5 rounded-full hover:bg-gray-100 font-medium cursor-pointer">S'inscrire</button>
               </div>
             </div>
           </div>
@@ -6463,15 +6645,15 @@ export function CreerCellulePage() {
         <Plus className="h-5 w-5 text-gray-900 stroke-[2.5]" />
         <div className="flex-1">
           <p className="text-sm font-bold text-gray-900">Créer une cellule</p>
-          <p className="text-[9px] text-gray-500">Étape {step}/3 — {step === 1 ? "Informations" : step === 2 ? "Membres" : "Confirmation"}</p>
+          <p className="text-xs text-gray-500">Étape {step}/3 — {step === 1 ? "Informations" : step === 2 ? "Membres" : "Confirmation"}</p>
         </div>
       </div>
       {/* Progress */}
       <div className="flex items-center gap-2">
         {[1, 2, 3].map(s => (
           <div key={s} className="flex-1 flex items-center gap-2">
-            <div className={cn("w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold", s <= step ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-400")}>{s}</div>
-            <span className={cn("text-[9px] font-medium", s <= step ? "text-blue-700" : "text-gray-400")}>{s === 1 ? "Infos" : s === 2 ? "Membres" : "Confirmer"}</span>
+            <div className={cn("w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold", s <= step ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-400")}>{s}</div>
+            <span className={cn("text-xs font-medium", s <= step ? "text-blue-700" : "text-gray-400")}>{s === 1 ? "Infos" : s === 2 ? "Membres" : "Confirmer"}</span>
             {s < 3 && <div className={cn("flex-1 h-0.5 rounded", s < step ? "bg-blue-400" : "bg-gray-200")} />}
           </div>
         ))}
@@ -6495,7 +6677,7 @@ export function CreerCellulePage() {
                   <button key={t.val} onClick={() => setCellType(t.val)} className={cn("flex-1 rounded-xl border p-3 text-left cursor-pointer transition-all", cellType === t.val ? "border-blue-300 bg-blue-50" : "border-gray-200 hover:border-blue-200")}>
                     <t.icon className={cn("h-4 w-4 mb-1", cellType === t.val ? "text-blue-600" : "text-gray-400")} />
                     <p className="text-xs font-medium text-gray-800">{t.label}</p>
-                    <p className="text-[9px] text-gray-400">{t.desc}</p>
+                    <p className="text-xs text-gray-400">{t.desc}</p>
                   </button>
                 ))}
               </div>
@@ -6518,7 +6700,7 @@ export function CreerCellulePage() {
           <div className="p-4 space-y-3">
             <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-blue-200 bg-blue-50/50">
               <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-[11px] font-bold text-gray-700">CF</div>
-              <div className="flex-1"><span className="text-xs font-medium text-gray-800">Carl F.</span><span className="text-[9px] text-gray-400 ml-2">Fondateur</span></div>
+              <div className="flex-1"><span className="text-xs font-medium text-gray-800">Carl F.</span><span className="text-xs text-gray-400 ml-2">Fondateur</span></div>
               <Crown className="h-3.5 w-3.5 text-amber-500" />
             </div>
             {[2, 3, 4, 5, 6, 7, 8, 9].map(slot => (
@@ -6542,7 +6724,7 @@ export function CreerCellulePage() {
               <Atom className="h-5 w-5 text-blue-500" />
               <div>
                 <p className="text-sm font-bold text-gray-800">{nom || "Ma nouvelle cellule"}</p>
-                <p className="text-[9px] text-gray-400">{cellType === "interne" ? "Cellule interne" : "Cellule externe"} · 1 membre</p>
+                <p className="text-xs text-gray-400">{cellType === "interne" ? "Cellule interne" : "Cellule externe"} · 1 membre</p>
               </div>
             </div>
             <div className="bg-[#00B4D8]/10 rounded-lg p-3 text-[11px] text-gray-700">CarlOS va configurer votre cellule et activer les bots.</div>
@@ -6677,7 +6859,7 @@ export function Orbit9SocialHome() {
               <div className="text-2xl font-bold text-gray-900">{k.value}</div>
               <div className="flex items-center gap-1 mt-0.5">
                 {k.up ? <TrendingUp className="h-3.5 w-3.5 text-emerald-500" /> : <TrendingDown className="h-3.5 w-3.5 text-red-500" />}
-                <span className={cn("text-[9px] font-medium", k.up ? "text-emerald-600" : "text-red-600")}>{k.delta}</span>
+                <span className={cn("text-xs font-medium", k.up ? "text-emerald-600" : "text-red-600")}>{k.delta}</span>
               </div>
             </div>
           </div>
@@ -6691,7 +6873,7 @@ export function Orbit9SocialHome() {
           <div className={cn("flex items-center gap-2 px-4 py-2.5 border-b border-gray-100", UB_P)}>
             <AlertTriangle className="h-3.5 w-3.5 text-gray-900 stroke-[2.5]" />
             <span className="text-xs font-bold text-gray-900">Signaux & Alertes</span>
-            <span className="ml-auto text-[9px] px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-medium">{alertes.length}</span>
+            <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-medium">{alertes.length}</span>
           </div>
           <div className="divide-y divide-gray-50">
             {alertes.map((a, i) => (
@@ -6699,7 +6881,7 @@ export function Orbit9SocialHome() {
                 <div className={cn("w-2 h-2 rounded-full mt-1.5 shrink-0", a.type === "urgent" ? "bg-red-500" : a.type === "warning" ? "bg-amber-500" : "bg-blue-500")} />
                 <div className="flex-1 min-w-0">
                   <p className="text-[10px] text-gray-700 leading-snug">{a.text}</p>
-                  <span className="text-[9px] text-gray-400">{a.time}</span>
+                  <span className="text-xs text-gray-400">{a.time}</span>
                 </div>
               </div>
             ))}
@@ -6715,20 +6897,20 @@ export function Orbit9SocialHome() {
           <div className="px-4 py-3">
             <div className="flex items-center gap-2">
               <h4 className="text-sm font-bold text-gray-900">{vedette.name}</h4>
-              <span className={cn("text-[9px] px-2 py-0.5 rounded-full text-white font-bold", badgeColor[vedette.badge])}>{vedette.badge}</span>
-              <span className="text-[9px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">{vedette.type}</span>
+              <span className={cn("text-xs px-2 py-0.5 rounded-full text-white font-bold", badgeColor[vedette.badge])}>{vedette.badge}</span>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">{vedette.type}</span>
             </div>
             <div className="flex items-center gap-1 mt-2">
               {vedette.avatars.map(a => (
-                <div key={a} className="w-7 h-7 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white text-[9px] font-bold -ml-1 first:ml-0 border-2 border-white">{a}</div>
+                <div key={a} className="w-7 h-7 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white text-xs font-bold -ml-1 first:ml-0 border-2 border-white">{a}</div>
               ))}
             </div>
             <div className="mt-2 flex items-center justify-between">
               <div className="flex items-center gap-1">
                 <span className="text-lg font-bold text-gray-900">{vedette.score}</span>
-                <span className="text-[9px] text-gray-500">/100</span>
+                <span className="text-xs text-gray-500">/100</span>
               </div>
-              <span className="text-[9px] text-emerald-600 font-medium flex items-center gap-1"><TrendingUp className="h-3.5 w-3.5" />{vedette.trend}</span>
+              <span className="text-xs text-emerald-600 font-medium flex items-center gap-1"><TrendingUp className="h-3.5 w-3.5" />{vedette.trend}</span>
             </div>
             <div className="mt-1.5 w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
               <div className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full" style={{ width: `${vedette.score}%` }} />
@@ -6741,7 +6923,7 @@ export function Orbit9SocialHome() {
           <div className={cn("flex items-center gap-2 px-4 py-2.5 border-b border-gray-100", UB_P)}>
             <Handshake className="h-3.5 w-3.5 text-gray-900 stroke-[2.5]" />
             <span className="text-xs font-bold text-gray-900">Matches en cours</span>
-            <span className="ml-auto text-[9px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">{matches.length}</span>
+            <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">{matches.length}</span>
           </div>
           <div className="divide-y divide-gray-50">
             {matches.map((m, i) => (
@@ -6749,11 +6931,11 @@ export function Orbit9SocialHome() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-semibold text-gray-900 truncate">{m.company}</span>
-                    <span className="text-[9px] font-bold text-cyan-600">{m.score}%</span>
+                    <span className="text-xs font-bold text-cyan-600">{m.score}%</span>
                   </div>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium", m.stageColor)}>{m.stage}</span>
-                    <span className="text-[9px] text-gray-400">via {m.agent}</span>
+                    <span className={cn("text-xs px-1.5 py-0.5 rounded-full font-medium", m.stageColor)}>{m.stage}</span>
+                    <span className="text-xs text-gray-400">via {m.agent}</span>
                   </div>
                 </div>
                 <ChevronRight className="h-3.5 w-3.5 text-gray-300 shrink-0" />
@@ -6775,12 +6957,12 @@ export function Orbit9SocialHome() {
               const FIcon = f.icon;
               return (
                 <div key={i} className={cn("px-4 py-3 flex items-start gap-3", typeIcon[f.type])}>
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-white text-[9px] font-bold shrink-0">{f.avatar}</div>
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-white text-xs font-bold shrink-0">{f.avatar}</div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] font-bold text-gray-900">{f.name}</span>
                       <FIcon className="h-3.5 w-3.5 text-gray-400" />
-                      <span className="text-[9px] text-gray-400 ml-auto shrink-0">{f.time}</span>
+                      <span className="text-xs text-gray-400 ml-auto shrink-0">{f.time}</span>
                     </div>
                     <p className="text-[10px] text-gray-600 mt-0.5 leading-relaxed">{f.text}</p>
                   </div>
@@ -6799,11 +6981,11 @@ export function Orbit9SocialHome() {
             <div className="divide-y divide-gray-50">
               {intel.map((item, i) => (
                 <div key={i} className="px-4 py-2.5">
-                  <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium",
+                  <span className={cn("text-xs px-1.5 py-0.5 rounded-full font-medium",
                     item.tag === "Opportunité" ? "bg-emerald-100 text-emerald-700" : item.tag === "Risque" ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"
                   )}>{item.tag}</span>
                   <p className="text-[10px] font-medium text-gray-900 mt-1">{item.title}</p>
-                  <span className="text-[9px] text-gray-400">{item.source}</span>
+                  <span className="text-xs text-gray-400">{item.source}</span>
                 </div>
               ))}
             </div>
@@ -6818,12 +7000,12 @@ export function Orbit9SocialHome() {
               {events.map((ev, i) => (
                 <div key={i} className="px-4 py-2.5 flex items-center gap-2">
                   <div className="text-center shrink-0 w-10">
-                    <div className="text-[9px] font-bold text-cyan-600">{ev.date}</div>
-                    <div className="text-[9px] text-gray-400">{ev.time}</div>
+                    <div className="text-xs font-bold text-cyan-600">{ev.date}</div>
+                    <div className="text-xs text-gray-400">{ev.time}</div>
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[10px] font-medium text-gray-900 truncate">{ev.title}</p>
-                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">{ev.type}</span>
+                    <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">{ev.type}</span>
                   </div>
                 </div>
               ))}
@@ -6839,7 +7021,7 @@ export function Orbit9SocialHome() {
           <div className={cn("flex items-center gap-2 px-4 py-2.5 border-b border-gray-100", UB_P)}>
             <Rocket className="h-3.5 w-3.5 text-gray-900 stroke-[2.5]" />
             <span className="text-xs font-bold text-gray-900">Pionniers</span>
-            <span className="ml-auto text-[9px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">6/9</span>
+            <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">6/9</span>
           </div>
           <div className="px-4 py-3">
             <div className="grid grid-cols-3 gap-2">
@@ -6850,12 +7032,12 @@ export function Orbit9SocialHome() {
                   p.status === "nouveau" ? "bg-emerald-50 border-emerald-200" :
                   "bg-gray-50 border-dashed border-gray-200"
                 )}>
-                  <div className={cn("w-7 h-7 rounded-full mx-auto flex items-center justify-center text-[9px] font-bold",
+                  <div className={cn("w-7 h-7 rounded-full mx-auto flex items-center justify-center text-xs font-bold",
                     p.status === "vide" ? "bg-gray-100 text-gray-300" : "bg-gradient-to-br from-cyan-500 to-blue-600 text-white"
                   )}>{p.status === "vide" ? "?" : p.name.split(" ").map(w => w[0]).join("")}</div>
-                  <div className="text-[9px] text-gray-600 mt-1 truncate">{p.name}</div>
+                  <div className="text-xs text-gray-600 mt-1 truncate">{p.name}</div>
                   {p.status !== "vide" && (
-                    <span className={cn("text-[9px] px-1 rounded-full",
+                    <span className={cn("text-xs px-1 rounded-full",
                       p.status === "fondateur" ? "bg-yellow-200 text-yellow-800" :
                       p.status === "nouveau" ? "bg-emerald-200 text-emerald-800" :
                       "bg-cyan-200 text-cyan-800"
@@ -6864,7 +7046,7 @@ export function Orbit9SocialHome() {
                 </div>
               ))}
             </div>
-            <p className="text-[9px] text-gray-400 mt-2 text-center">3 places restantes pour compléter le cercle fondateur</p>
+            <p className="text-xs text-gray-400 mt-2 text-center">3 places restantes pour compléter le cercle fondateur</p>
           </div>
         </div>
 
@@ -6878,9 +7060,9 @@ export function Orbit9SocialHome() {
             <div>
               <div className="flex items-baseline gap-1">
                 <span className="text-2xl font-bold text-gray-900">42K$</span>
-                <span className="text-[9px] text-emerald-600 font-medium">+18% Q1</span>
+                <span className="text-xs text-emerald-600 font-medium">+18% Q1</span>
               </div>
-              <span className="text-[9px] text-gray-500">Valeur totale générée par le réseau</span>
+              <span className="text-xs text-gray-500">Valeur totale générée par le réseau</span>
             </div>
             <div className="space-y-2">
               {[
@@ -6890,8 +7072,8 @@ export function Orbit9SocialHome() {
               ].map(r => (
                 <div key={r.label}>
                   <div className="flex items-center justify-between">
-                    <span className="text-[9px] text-gray-600">{r.label}</span>
-                    <span className="text-[9px] font-bold text-gray-900">{r.val}</span>
+                    <span className="text-xs text-gray-600">{r.label}</span>
+                    <span className="text-xs font-bold text-gray-900">{r.val}</span>
                   </div>
                   <div className="w-full h-1.5 bg-gray-100 rounded-full mt-0.5">
                     <div className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full" style={{ width: `${r.pct}%` }} />
@@ -6901,7 +7083,7 @@ export function Orbit9SocialHome() {
             </div>
             <div className="flex items-center gap-1.5 pt-1">
               <Coins className="h-3.5 w-3.5 text-amber-500" />
-              <span className="text-[9px] text-gray-600">TimeTokens en circulation: <strong>1,240 TT</strong></span>
+              <span className="text-xs text-gray-600">TimeTokens en circulation: <strong>1,240 TT</strong></span>
             </div>
           </div>
         </div>
@@ -6911,26 +7093,26 @@ export function Orbit9SocialHome() {
           <div className={cn("flex items-center gap-2 px-4 py-2.5 border-b border-gray-100", UB_P)}>
             <Bot className="h-3.5 w-3.5 text-gray-900 stroke-[2.5]" />
             <span className="text-xs font-bold text-gray-900">Ghost Delegate</span>
-            <span className="ml-auto flex items-center gap-1.5 text-[9px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium">
+            <span className="ml-auto flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />Actif
             </span>
           </div>
           <div className="px-4 py-3 space-y-3">
             <div>
-              <span className="text-[9px] text-gray-500">Dernière action</span>
+              <span className="text-xs text-gray-500">Dernière action</span>
               <p className="text-[10px] font-medium text-gray-900 mt-0.5">{delegate.lastAction}</p>
             </div>
             <div>
-              <span className="text-[9px] text-gray-500">Négociations actives</span>
+              <span className="text-xs text-gray-500">Négociations actives</span>
               <div className="text-lg font-bold text-gray-900">{delegate.negotiations}</div>
             </div>
             <div>
-              <span className="text-[9px] text-gray-500 flex items-center gap-1.5"><Shield className="h-3.5 w-3.5" />Pre-flight Check (garde-fous)</span>
+              <span className="text-xs text-gray-500 flex items-center gap-1.5"><Shield className="h-3.5 w-3.5" />Pre-flight Check (garde-fous)</span>
               <div className="mt-1 space-y-1">
                 {delegate.preflight.map((rule, i) => (
                   <div key={i} className="flex items-center gap-1.5">
                     <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                    <span className="text-[9px] text-gray-600">{rule}</span>
+                    <span className="text-xs text-gray-600">{rule}</span>
                   </div>
                 ))}
               </div>
@@ -7049,10 +7231,10 @@ function O9BpConsolidee({ onNav }: { onNav: (id: O9BpSection) => void }) {
               >
                 <div className="flex items-center gap-1.5 mb-1">
                   <s.Icon className="h-3.5 w-3.5 text-gray-500" />
-                  <span className="text-[9px] font-bold text-gray-700">{s.title}</span>
+                  <span className="text-xs font-bold text-gray-700">{s.title}</span>
                 </div>
                 <div className="text-lg font-bold text-gray-800">{s.value}</div>
-                <div className="text-[9px] text-gray-400">{s.detail}</div>
+                <div className="text-xs text-gray-400">{s.detail}</div>
               </button>
             ))}
           </div>
@@ -7084,7 +7266,7 @@ function O9BpCapacites() {
         <Package className="h-5 w-5 text-gray-900 stroke-[2.5]" />
         <div className="flex-1">
           <p className="text-sm font-bold text-gray-900">Capacités & Offres</p>
-          <p className="text-[9px] text-gray-500">Ce que vous offrez au réseau et ce que vous cherchez</p>
+          <p className="text-xs text-gray-500">Ce que vous offrez au réseau et ce que vous cherchez</p>
         </div>
       </div>
 
@@ -7100,7 +7282,7 @@ function O9BpCapacites() {
             <div key={i} className="flex items-center gap-3 px-3 py-2 rounded-lg border border-gray-100 bg-gray-50">
               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
               <span className="text-xs text-gray-800 flex-1">{o.label}</span>
-              <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-medium border", o.color)}>{o.level}</span>
+              <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium border", o.color)}>{o.level}</span>
             </div>
           ))}
         </div>
@@ -7118,7 +7300,7 @@ function O9BpCapacites() {
             <div key={i} className="flex items-center gap-3 px-3 py-2 rounded-lg border border-gray-100 bg-gray-50">
               <Target className="h-3.5 w-3.5 text-blue-500 shrink-0" />
               <span className="text-xs text-gray-800 flex-1">{b.label}</span>
-              <span className={cn("text-[9px] font-medium", b.color)}>Urgence: {b.urgence}</span>
+              <span className={cn("text-xs font-medium", b.color)}>Urgence: {b.urgence}</span>
             </div>
           ))}
         </div>
@@ -7127,10 +7309,10 @@ function O9BpCapacites() {
       {/* CarlOS suggestion */}
       <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-[#00B4D8]/10">
         <div className="p-4 flex items-start gap-3">
-          <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-white text-[9px] font-bold shrink-0">C</div>
+          <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-white text-xs font-bold shrink-0">C</div>
           <div className="flex-1">
             <h3 className="text-xs font-bold text-gray-900">CarlOS — Suggestion</h3>
-            <p className="text-[9px] text-gray-600 mt-1 italic">{`"D'après vos besoins en soudure TIG/MIG, MetalPro Inc. dans le cercle des Pionniers est un match à 87%. Je peux organiser une introduction?"`}</p>
+            <p className="text-xs text-gray-600 mt-1 italic">{`"D'après vos besoins en soudure TIG/MIG, MetalPro Inc. dans le cercle des Pionniers est un match à 87%. Je peux organiser une introduction?"`}</p>
           </div>
         </div>
       </div>
@@ -7187,7 +7369,7 @@ function O9SectionHeader({ icon: Icon, title, subtitle, tabs, activeTab, onTabCh
                 {TabIcon && <TabIcon className="h-3.5 w-3.5" />}
                 {tab.label}
                 {tab.count !== undefined && tab.count > 0 && (
-                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/20">{tab.count}</span>
+                  <span className="text-xs px-1.5 py-0.5 rounded-full bg-white/20">{tab.count}</span>
                 )}
               </button>
             );
@@ -7325,7 +7507,7 @@ function O9MissionMarketplace() {
             <div className={cn("flex items-center gap-2 px-4 py-2.5 border-b border-gray-100", "bg-purple-50")}>
               <Bot className="h-3.5 w-3.5 text-purple-600 stroke-[2.5]" />
               <span className="text-xs font-bold text-gray-900">{m.botName} demande</span>
-              <span className={cn("ml-auto text-[9px] px-2 py-0.5 rounded-full font-medium",
+              <span className={cn("ml-auto text-xs px-2 py-0.5 rounded-full font-medium",
                 m.urgency === "haute" ? "bg-red-100 text-red-700" : m.urgency === "moyenne" ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-600"
               )}>{m.urgency}</span>
             </div>
@@ -7334,7 +7516,7 @@ function O9MissionMarketplace() {
               <p className="text-[10px] text-gray-500 mt-1">{m.desc}</p>
               <div className="flex items-center gap-2 mt-2 flex-wrap">
                 {m.skills.map(s => (
-                  <span key={s} className="text-[9px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">{s}</span>
+                  <span key={s} className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">{s}</span>
                 ))}
                 <span className="ml-auto text-xs font-bold text-emerald-600 flex items-center gap-1">
                   <Coins className="h-3.5 w-3.5" />{m.reward}
@@ -7421,8 +7603,8 @@ function O9DiscussionsTab() {
               <div key={i} className={cn("p-3 rounded-lg", msg.isBot ? "bg-[#00B4D8]/10" : "bg-gray-50")}>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs font-bold text-gray-900">{msg.author}</span>
-                  {msg.isBot && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-cyan-100 text-cyan-700 font-medium">AI</span>}
-                  <span className="text-[9px] text-gray-400 ml-auto">{msg.time}</span>
+                  {msg.isBot && <span className="text-xs px-1.5 py-0.5 rounded-full bg-cyan-100 text-cyan-700 font-medium">AI</span>}
+                  <span className="text-xs text-gray-400 ml-auto">{msg.time}</span>
                 </div>
                 <p className="text-[10px] text-gray-600">{msg.text}</p>
               </div>
@@ -7510,7 +7692,7 @@ function O9AgendaTab() {
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="text-[10px] text-gray-500">{ev.date}</span>
                     <span className="text-[10px] font-medium text-gray-700">{ev.time}</span>
-                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">{ev.type}</span>
+                    <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">{ev.type}</span>
                   </div>
                 </div>
                 <ChevronRight className="h-3.5 w-3.5 text-gray-400 shrink-0" />

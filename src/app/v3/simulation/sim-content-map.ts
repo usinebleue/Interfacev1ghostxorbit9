@@ -12,8 +12,8 @@ export {
   // Dashboard phases (Observation, Attention, Modération)
   VueEnsemble,
 
-  // Réflexion magazine
-  ReflexionMagazine,
+  // Phase Réflexion
+  PhaseReflexion,
 
   // Création / Exécution / Rétroaction drill-down
   ChantierDrillDown,

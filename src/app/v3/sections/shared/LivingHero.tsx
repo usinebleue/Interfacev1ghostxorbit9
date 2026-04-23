@@ -129,7 +129,7 @@ export function injectHeroStyles() {
 }
 
 // ═══ LIVING HERO WRAPPER — V20 Carl's exact layout ═══
-export function LivingHero({ blur1, blur2, subtitleColor, subtitle, title, description, scaleClass, children }: {
+export function LivingHero({ blur1, blur2, subtitleColor, subtitle, title, description, scaleClass, slim, children }: {
   blur1: string;
   blur2: string;
   subtitleColor: string;
@@ -137,23 +137,24 @@ export function LivingHero({ blur1, blur2, subtitleColor, subtitle, title, descr
   title: string;
   description: string;
   scaleClass?: string;
+  slim?: boolean;
   children?: React.ReactNode;
 }) {
   useEffect(() => { injectHeroStyles(); }, []);
   return (
-    <div className="relative w-full rounded-xl bg-white border border-gray-200 shadow-sm py-5 px-8 overflow-hidden min-h-[110px] flex items-center">
+    <div className={cn("relative w-full rounded-xl bg-white border border-gray-200 shadow-sm overflow-hidden flex items-center", slim ? "min-h-[64px] py-2.5 px-6" : "min-h-[110px] py-5 px-8")}>
       <div className={cn("absolute rounded-full blur-[100px] opacity-60", blur1)} style={{ top: '-50%', left: '-10%', width: '50%', height: '200%' }} />
       <div className={cn("absolute rounded-full blur-[120px] opacity-50", blur2)} style={{ bottom: '-50%', right: '10%', width: '60%', height: '200%' }} />
       <div className="absolute inset-0 bg-pattern-grid opacity-[0.35]" />
       {/* Illustration */}
-      <div className={cn("absolute top-0 bottom-0 flex items-center transform origin-right pointer-events-none", scaleClass === "scale-[0.80]" ? "right-0 scale-[0.80]" : "right-[1rem] scale-[0.70]")}>
+      <div className={cn("absolute top-0 bottom-0 flex items-center transform origin-right pointer-events-none", slim ? "right-0 scale-[0.50]" : scaleClass === "scale-[0.80]" ? "right-0 scale-[0.80]" : "right-[1rem] scale-[0.70]")}>
         {children}
       </div>
       {/* Text */}
-      <div className="relative z-20 w-full pr-[250px]">
+      <div className={cn("relative z-20 w-full", slim ? "pr-[120px]" : "pr-[250px]")}>
         <p className={cn("uppercase tracking-widest text-[9px] font-bold mb-1", subtitleColor)}>{subtitle}</p>
-        <h2 className="text-xl font-extrabold text-gray-900 mb-1">{title}</h2>
-        <p className="text-slate-500 text-[12.5px] font-medium leading-snug">{description}</p>
+        <h2 className={cn("font-extrabold text-gray-900 mb-1", slim ? "text-base" : "text-xl")}>{title}</h2>
+        {!slim && <p className="text-slate-500 text-[12.5px] font-medium leading-snug">{description}</p>}
       </div>
     </div>
   );

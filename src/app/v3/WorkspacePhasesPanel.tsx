@@ -6,7 +6,7 @@
  * Greffe chirurgicale du ResizablePanel droit de SimAmorcer (L722-840)
  * - Header département pastel h-12
  * - Tabs AMORCER (7 phases) avec chevrons
- * - Switch: VueEnsemble (observation/attention/moderation) | ReflexionMagazine | ChantierDrillDown
+ * - Switch: VueEnsemble (observation/attention/moderation) | PhaseReflexion | ChantierDrillDown
  * - SectionViews: CockpitView, BlueprintView, DataRoomView, PlaybookStoreView, ConferenceAIView
  */
 
@@ -35,10 +35,6 @@ import type { PhaseKey, HeaderView } from "./core/types";
 import { PHASE_CONFIG } from "./core/phases";
 import { DEPT_DASH_ICON, DEPT_SHORT_LABEL } from "./sections/shared/dept-data";
 
-// ═══ Workspace Dynamique ═══
-import { WorkspaceFrame } from "./workspace/WorkspaceFrame";
-import type { WorkspacePhaseKey } from "./workspace/types";
-
 // ═══ V3 Sections — composants cristallisés ═══
 import { CockpitView } from "./sections/CockpitView";
 import { BlueprintView, BLUEPRINT_HEADER_TABS } from "./sections/BlueprintView";
@@ -58,7 +54,7 @@ import { O9_HEADER_TABS } from "./sections/orbit9/orbit9-data";
 // ═══ Simulation — composants demos (séparés du code cristallisé) ═══
 import {
   VueEnsemble,
-  ReflexionMagazine,
+  PhaseReflexion,
   ChantierDrillDown,
   IconCatalog,
 } from "./simulation/sim-content-map";
@@ -77,8 +73,6 @@ export function WorkspacePhasesPanel() {
     o9Section,
     setO9Section,
     startReflexion,
-    workspacePhase,
-    setWorkspacePhase,
   } = useAmorcer();
 
   const rightRef = useRef<HTMLDivElement>(null);
@@ -95,34 +89,6 @@ export function WorkspacePhasesPanel() {
   }, [activePhase]);
 
   // Auto-scroll désactivé — chatStage simulation pas branchée sur le vrai chat
-
-  // ═══ WORKSPACE DYNAMIQUE — Quand une phase workspace est active, le frame prend tout le panel ═══
-  if (workspacePhase) {
-    return (
-      <div className="h-full flex flex-col overflow-hidden bg-gray-50">
-        {/* DEV — Bouton retour (à retirer après validation) */}
-        <div className="h-8 px-3 shrink-0 flex items-center border-b border-gray-200 bg-white">
-          <button
-            onClick={() => setWorkspacePhase(null)}
-            className="text-[9px] font-bold text-blue-600 hover:text-blue-800 cursor-pointer flex items-center gap-1"
-          >
-            ← Retour vue normale
-          </button>
-        </div>
-        <WorkspaceFrame
-          phase={workspacePhase}
-          botCode={activeBotCode}
-          onPhaseComplete={(nextPhase: WorkspacePhaseKey) => {
-            if (nextPhase === "operations") {
-              setWorkspacePhase("operations");
-            } else {
-              setWorkspacePhase(nextPhase);
-            }
-          }}
-        />
-      </div>
-    );
-  }
 
   return (
     <div className="h-full flex flex-col overflow-hidden bg-gray-50">
@@ -206,15 +172,6 @@ export function WorkspacePhasesPanel() {
               </>
             )}
             <div className="flex-1" />
-            {/* DEV — Bouton test WorkspaceFrame (à retirer après validation) */}
-            {!workspacePhase && (
-              <button
-                onClick={() => setWorkspacePhase("reflexion")}
-                className="text-[9px] font-bold px-2 py-1 rounded-md bg-orange-100 text-orange-700 border border-orange-200 hover:bg-orange-200 cursor-pointer transition-all"
-              >
-                Test WorkspaceFrame
-              </button>
-            )}
             {showBlueprintTabs && blueprintStats && (
               <div className="flex items-center gap-2 shrink-0">
                 <span className="text-[10px] text-gray-500">{blueprintStats.tierLabel}</span>
@@ -271,7 +228,7 @@ export function WorkspacePhasesPanel() {
           </div>
         ) : activePhase === "reflexion" ? (
           /* Réflexion magazine */
-          <ReflexionMagazine stage={chatStage} context={reflexionContext} />
+          <PhaseReflexion stage={chatStage} context={reflexionContext} />
         ) : (
           /* Création, Exécution, Rétroaction — drill-down */
           <ChantierDrillDown phase={activePhase} />
