@@ -36,20 +36,29 @@ import {
   TEAM,
   ObservationChat,
   ReflexionChat,
+  ConceptionChat,
   AttentionChat,
   ModerationChat,
   PlaceholderChat,
+  DeliverableConceptionChat,
 } from "./simulation/sim-chat-map";
 
 export function DiscussionWindow() {
   const {
     activePhase,
+    setActivePhase,
     chatStage,
     typed,
     setTyped,
     reflexionContext,
     cockpitTab,
     advance,
+    conceptionStage,
+    advanceConception,
+    activeDeliverable,
+    setActiveDeliverable,
+    deliverableStage,
+    advanceDeliverable,
   } = useAmorcer();
 
   const chatRef = useRef<HTMLDivElement>(null);
@@ -109,7 +118,13 @@ export function DiscussionWindow() {
           {activePhase === "reflexion" && (
             <ReflexionChat stage={chatStage} typed={typed} setTyped={setTyped} advance={advance} pc={pc} context={reflexionContext} />
           )}
-          {!isDash && activePhase !== "reflexion" && (
+          {activePhase === "creation" && activeDeliverable && (
+            <DeliverableConceptionChat deliverable={activeDeliverable} stage={deliverableStage} typed={typed} setTyped={setTyped} advance={advanceDeliverable} onBack={() => setActiveDeliverable(null)} />
+          )}
+          {activePhase === "creation" && !activeDeliverable && (
+            <ConceptionChat stage={conceptionStage} typed={typed} setTyped={setTyped} advance={advanceConception} onBackToReflexion={() => setActivePhase("reflexion")} />
+          )}
+          {!isDash && activePhase !== "reflexion" && activePhase !== "creation" && (
             <PlaceholderChat phase={activePhase} />
           )}
         </div>

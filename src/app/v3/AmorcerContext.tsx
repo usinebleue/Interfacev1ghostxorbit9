@@ -48,6 +48,20 @@ interface AmorcerState {
   o9Section: string;
   setO9Section: (s: string) => void;
 
+  // Conception phase state (chat ↔ workspace sync)
+  conceptionStage: number;
+  setConceptionStage: React.Dispatch<React.SetStateAction<number>>;
+  advanceConception: () => void;
+  startConception: () => void;
+
+  // Deliverable conception (Level 2 — document/tableur/presentation/code)
+  activeDeliverable: string | null;
+  setActiveDeliverable: (d: string | null) => void;
+  deliverableStage: number;
+  setDeliverableStage: React.Dispatch<React.SetStateAction<number>>;
+  advanceDeliverable: () => void;
+  startDeliverable: (deliverable: string) => void;
+
   // SimV3 shared state (chat ↔ right panel)
   simV3Active: boolean;
   setSimV3Active: (v: boolean) => void;
@@ -73,6 +87,13 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
   const [cockpitTab, setCockpitTab] = useState("bureau");
   const [o9Section, setO9Section] = useState("dashboard");
 
+  // Conception state
+  const [conceptionStage, setConceptionStage] = useState(0);
+
+  // Deliverable conception state (Level 2)
+  const [activeDeliverable, setActiveDeliverable] = useState<string | null>(null);
+  const [deliverableStage, setDeliverableStage] = useState(0);
+
   // SimV3 state
   const [simV3Active, setSimV3Active] = useState(false);
   const [simV3Stage, setSimV3Stage] = useState(-1);
@@ -92,6 +113,30 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     setChatStage((s) => s + 1);
   }, []);
 
+  const advanceConception = useCallback(() => {
+    setTyped(false);
+    setConceptionStage((s) => s + 1);
+  }, []);
+
+  const startConception = useCallback(() => {
+    setActivePhase("creation");
+    setRightSection(null);
+    setConceptionStage(0);
+    setActiveDeliverable(null);
+    setTyped(false);
+  }, []);
+
+  const advanceDeliverable = useCallback(() => {
+    setTyped(false);
+    setDeliverableStage((s) => s + 1);
+  }, []);
+
+  const startDeliverable = useCallback((deliverable: string) => {
+    setActiveDeliverable(deliverable);
+    setDeliverableStage(0);
+    setTyped(false);
+  }, []);
+
   return (
     <AmorcerCtx.Provider
       value={{
@@ -103,6 +148,11 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
         activeBotCode, setActiveBotCode,
         cockpitTab, setCockpitTab,
         o9Section, setO9Section,
+        conceptionStage, setConceptionStage,
+        advanceConception, startConception,
+        activeDeliverable, setActiveDeliverable,
+        deliverableStage, setDeliverableStage,
+        advanceDeliverable, startDeliverable,
         simV3Active, setSimV3Active,
         simV3Stage, setSimV3Stage,
         simV3Cristallises, addSimV3Cristallise,

@@ -55,6 +55,11 @@ import { O9_HEADER_TABS } from "./sections/orbit9/orbit9-data";
 import {
   VueEnsemble,
   PhaseReflexion,
+  PhaseConception,
+  PhaseConceptionDocument,
+  PhaseConceptionTableur,
+  PhaseConceptionPresentation,
+  PhaseConceptionCode,
   ChantierDrillDown,
   IconCatalog,
 } from "./simulation/sim-content-map";
@@ -73,6 +78,12 @@ export function WorkspacePhasesPanel() {
     o9Section,
     setO9Section,
     startReflexion,
+    conceptionStage,
+    startConception,
+    activeDeliverable,
+    setActiveDeliverable,
+    deliverableStage,
+    startDeliverable,
   } = useAmorcer();
 
   const rightRef = useRef<HTMLDivElement>(null);
@@ -228,9 +239,20 @@ export function WorkspacePhasesPanel() {
           </div>
         ) : activePhase === "reflexion" ? (
           /* Réflexion magazine */
-          <PhaseReflexion stage={chatStage} context={reflexionContext} />
+          <PhaseReflexion stage={chatStage} context={reflexionContext} onStartConception={startConception} />
+        ) : activePhase === "creation" && activeDeliverable === "document" ? (
+          <PhaseConceptionDocument stage={deliverableStage} onBack={() => setActiveDeliverable(null)} />
+        ) : activePhase === "creation" && activeDeliverable === "spreadsheet" ? (
+          <PhaseConceptionTableur stage={deliverableStage} onBack={() => setActiveDeliverable(null)} />
+        ) : activePhase === "creation" && activeDeliverable === "presentation" ? (
+          <PhaseConceptionPresentation stage={deliverableStage} onBack={() => setActiveDeliverable(null)} />
+        ) : activePhase === "creation" && activeDeliverable === "code" ? (
+          <PhaseConceptionCode stage={deliverableStage} onBack={() => setActiveDeliverable(null)} />
+        ) : activePhase === "creation" ? (
+          /* Conception Level 1 — chantier (hero + sidebar + validation + livrables grid) */
+          <PhaseConception stage={conceptionStage} context={reflexionContext} onStartExecution={() => { setActivePhase("execution"); setRightSection(null); }} onSelectDeliverable={(id) => startDeliverable(id)} />
         ) : (
-          /* Création, Exécution, Rétroaction — drill-down */
+          /* Exécution, Rétroaction — drill-down */
           <ChantierDrillDown phase={activePhase} />
         )}
       </div>

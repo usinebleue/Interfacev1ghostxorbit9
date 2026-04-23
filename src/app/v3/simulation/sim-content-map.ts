@@ -21,8 +21,17 @@ export {
   // Catalogue d'icônes
   IconCatalog,
 
+  // Phase Conception (right panel — même pattern que PhaseReflexion)
+  PhaseConception,
+
   // Opérations drill-down (même pattern chantiers — CAPEX→OPEX)
   OperationsDrillDown,
+
+  // Phase Conception Level 2 — livrables individuels
+  PhaseConceptionDocument,
+  PhaseConceptionTableur,
+  PhaseConceptionPresentation,
+  PhaseConceptionCode,
 
   // ═══ Orbit9 simulation components ═══
   Orbit9SocialHome,

@@ -15,7 +15,11 @@ export {
   // Chat components par phase
   ObservationChat,
   ReflexionChat,
+  ConceptionChat,
   AttentionChat,
   ModerationChat,
   PlaceholderChat,
+
+  // Level 2 — Deliverable conception chat
+  DeliverableConceptionChat,
 } from "../../v2/zones/center/atelier/demos/SimAmorcer";

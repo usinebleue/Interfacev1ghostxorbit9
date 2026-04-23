@@ -145,6 +145,10 @@ import {
   Database,
   Repeat,
   Timer,
+  Code2,
+  Presentation,
+  Terminal,
+  FlaskConical,
 } from "lucide-react";
 import { cn } from "../../../../../components/ui/utils";
 import {
@@ -1934,11 +1938,7 @@ function MagBrainstorm() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Lightbulb className="h-4 w-4 text-amber-500" />
-        <h3 className="text-sm font-bold text-gray-800">Brainstorm — Methode SCAMPER</h3>
-        <span className="text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-medium animate-pulse ml-auto">Live</span>
-      </div>
+      {/* Titre retiré — déjà affiché dans le hero compact */}
 
       {/* Pipeline etapes SCAMPER */}
       <div className="flex items-center gap-1 overflow-x-auto pb-1">
@@ -2184,7 +2184,10 @@ function MagSyntheseBrainstorm() {
   }, [revealCount]);
   return (
     <div className="space-y-4">
-      <p className="text-xs text-gray-500">Les idees du brainstorm ont ete combinees avec les perspectives des 3 bots pour creer un plan integre.</p>
+      <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-lg px-4 py-3">
+        <p className="text-sm font-semibold text-gray-800">3 bots, 1 vision convergente</p>
+        <p className="text-xs text-gray-600 mt-0.5">Les meilleures idees du brainstorm fusionnees en un plan d'action unifie.</p>
+      </div>
 
       <div className={cn("bg-white border-2 border-orange-200 rounded-xl overflow-hidden transition-all duration-700", revealCount >= 1 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3")}>
         <div className="bg-orange-50 px-4 py-2 border-b border-orange-200 flex items-center gap-2">
@@ -2337,25 +2340,21 @@ function MagCinqPourquoi() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Search className="h-4 w-4 text-orange-500" />
-        <h3 className="text-sm font-bold text-gray-800">Analyse 5 Pourquoi \u2014 Cause racine</h3>
-        <span className="text-xs text-gray-400 ml-auto">Methode Ishikawa + Bonification</span>
-      </div>
+      {/* Titre retiré — déjà affiché dans le hero compact */}
 
-      {/* Progress indicator */}
-      <div className="flex items-center gap-1">
+      {/* Progress indicator — pleine largeur */}
+      <div className="flex items-center gap-0">
         {[1, 2, 3, 4, 5].map(n => (
-          <div key={n} className="flex items-center gap-1">
-            {n > 1 && <div className={cn("w-6 h-0.5 transition-all duration-500", n <= revealedLevel ? "bg-orange-400" : "bg-gray-200")} />}
-            <div className={cn("w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-500",
+          <div key={n} className={cn("flex items-center", n > 1 ? "flex-1" : "")}>
+            {n > 1 && <div className={cn("flex-1 h-0.5 transition-all duration-500", n <= revealedLevel ? "bg-orange-400" : "bg-gray-200")} />}
+            <div className={cn("w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-500 shrink-0",
               n <= revealedLevel ? (n === 5 ? "bg-orange-500 text-white scale-110" : "bg-orange-100 text-orange-700") : "bg-gray-100 text-gray-300"
             )}>
-              {n <= revealedLevel && n < 5 ? <CheckCircle2 className="h-3.5 w-3.5 text-orange-500" /> : n}
+              {n <= revealedLevel && n < 5 ? <CheckCircle2 className="h-4 w-4 text-orange-500" /> : n}
             </div>
           </div>
         ))}
-        <span className="text-xs text-gray-400 ml-2">{Math.min(revealedLevel, 5)}/5 niveaux explores</span>
+        <span className="text-xs font-bold text-gray-500 ml-3 shrink-0">{Math.min(revealedLevel, 5)}/5</span>
       </div>
 
       <div className="space-y-2">
@@ -2749,11 +2748,7 @@ function MagChallenge() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <AlertTriangle className="h-4 w-4 text-amber-600" />
-        <h3 className="text-sm font-bold text-gray-800">Challenge / Defense \u2014 Multi-bot</h3>
-        <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium ml-auto">{CHALLENGE_ROUNDS.length} rounds</span>
-      </div>
+      {/* Titre retiré — déjà affiché dans le hero compact */}
 
       {/* Rounds navigation */}
       <div className="flex items-center gap-1">
@@ -3099,6 +3094,18 @@ const CONCEPTION_SECTIONS = [
   { id: 8, title: "Timeline & Jalons", icon: Calendar },
 ];
 
+// ========== CONCEPTION DOCFORGE — sections progressives (même pattern que REFLEXION_DOCFORGE_SECTIONS) ==========
+const CONCEPTION_DOCFORGE_SECTIONS: { id: number; title: string; icon: React.ElementType; minStage: number }[] = [
+  { id: 1, title: "Vue d'ensemble du chantier", icon: Flame, minStage: 0 },
+  { id: 2, title: "Objectifs & Critères de succès", icon: Target, minStage: 1 },
+  { id: 3, title: "Projets identifiés", icon: FolderOpen, minStage: 2 },
+  { id: 4, title: "Missions par projet", icon: Target, minStage: 2 },
+  { id: 5, title: "Tâches par mission", icon: ListChecks, minStage: 3 },
+  { id: 6, title: "Équipe & Attribution", icon: Users, minStage: 3 },
+  { id: 7, title: "Budget & Ressources", icon: DollarSign, minStage: 4 },
+  { id: 8, title: "Timeline & Jalons", icon: Calendar, minStage: 4 },
+];
+
 const CONCEPTION_DATA: Record<number, { content: React.ReactNode }> = {
   1: { content: (
     <div className="space-y-2">
@@ -3400,7 +3407,7 @@ export function ConceptionWizard({ stage, context }: { stage: number; context: s
 
 // ========== CONCEPTION CHAT — panel gauche quand activePhase === "creation" ==========
 
-function ConceptionChat({ stage, typed, setTyped, advance, onBackToReflexion }: {
+export function ConceptionChat({ stage, typed, setTyped, advance, onBackToReflexion }: {
   stage: number; typed: boolean; setTyped: (v: boolean) => void; advance: () => void; onBackToReflexion: () => void;
 }) {
   const pc = PC["creation"];
@@ -3416,7 +3423,7 @@ function ConceptionChat({ stage, typed, setTyped, advance, onBackToReflexion }: 
         <SBubble code="CEOB" collapsed={stage > 0}>
           {stage === 0 ? (
             <>
-              <TypewriterText text="Le rapport de r\u00e9flexion est pr\u00eat. Passons \u00e0 la conception du chantier. Je vais structurer les recommandations en projets, missions et t\u00e2ches concr\u00e8tes." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              <TypewriterText text="Le rapport de réflexion est prêt. Passons à la conception du chantier. Je vais structurer les recommandations en projets, missions et tâches concrètes." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
               {typed && <SBtn onClick={advance} icon={Flame} label="Vue d'ensemble" pc={pc} />}
             </>
           ) : <p className="text-xs text-gray-400 italic">Passage en mode Conception</p>}
@@ -3428,10 +3435,10 @@ function ConceptionChat({ stage, typed, setTyped, advance, onBackToReflexion }: 
         <SBubble code="CEOB" collapsed={stage > 1}>
           {stage === 1 ? (
             <>
-              <TypewriterText text="Vue d'ensemble du chantier \u00ab Strat\u00e9gie Marketing Q2-Q3 \u00bb. Les donn\u00e9es du rapport sont pr\u00e9-remplies \u00e0 droite. V\u00e9rifie le titre, la description et le niveau de chaleur. Valide quand c'est bon." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
-              {typed && <SBtn onClick={advance} icon={Target} label="D\u00e9finir les objectifs" pc={pc} />}
+              <TypewriterText text="Vue d'ensemble du chantier « Stratégie Marketing Q2-Q3 ». Les données du rapport sont pré-remplies à droite. Vérifie le titre, la description et le niveau de chaleur. Valide quand c'est bon." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && <SBtn onClick={advance} icon={Target} label="Définir les objectifs" pc={pc} />}
             </>
-          ) : <p className="text-xs text-gray-400 italic">Vue d'ensemble valid\u00e9e</p>}
+          ) : <p className="text-xs text-gray-400 italic">Vue d'ensemble validée</p>}
         </SBubble>
       )}
 
@@ -3440,25 +3447,25 @@ function ConceptionChat({ stage, typed, setTyped, advance, onBackToReflexion }: 
         <SBubble code="CEOB" collapsed={stage > 2}>
           {stage === 2 ? (
             <>
-              <TypewriterText text="3 projets identifi\u00e9s \u00e0 partir de l'analyse. Chaque projet est assign\u00e9 \u00e0 un bot sp\u00e9cialiste. V\u00e9rifie les priorit\u00e9s et les attributions \u00e0 droite." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              <TypewriterText text="3 projets identifiés à partir de l'analyse. Chaque projet est assigné à un bot spécialiste. Vérifie les priorités et les attributions à droite." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
               {typed && (
                 <div className="mt-2 space-y-1">
                   {[
                     { code: "CFOB", name: "Frank", role: "Pilote le Programme Referral" },
                     { code: "CMOB", name: "Mathilde", role: "Pilote le Content LinkedIn" },
-                    { code: "CTOB", name: "Tim", role: "Pilote les D\u00e9mos AI" },
+                    { code: "CTOB", name: "Tim", role: "Pilote les Démos AI" },
                   ].map(b => (
                     <div key={b.code} className="flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-1.5">
                       <BotAvatar code={b.code} size="sm" />
                       <span className="text-xs font-bold text-gray-700">{b.name}</span>
-                      <span className="text-xs text-gray-500">\u2014 {b.role}</span>
+                      <span className="text-xs text-gray-500">— {b.role}</span>
                     </div>
                   ))}
                 </div>
               )}
-              {typed && <SBtn onClick={advance} icon={ListChecks} label="D\u00e9tailler missions et t\u00e2ches" pc={pc} />}
+              {typed && <SBtn onClick={advance} icon={ListChecks} label="Détailler missions et tâches" pc={pc} />}
             </>
-          ) : <p className="text-xs text-gray-400 italic">3 projets, 3 bots assign\u00e9s</p>}
+          ) : <p className="text-xs text-gray-400 italic">3 projets, 3 bots assignés</p>}
         </SBubble>
       )}
 
@@ -3467,10 +3474,10 @@ function ConceptionChat({ stage, typed, setTyped, advance, onBackToReflexion }: 
         <SBubble code="CEOB" collapsed={stage > 3}>
           {stage === 3 ? (
             <>
-              <TypewriterText text="Missions et t\u00e2ches d\u00e9compos\u00e9es. 9 missions, 27 t\u00e2ches atomiques d\u00e9riv\u00e9es de l'analyse. Chaque t\u00e2che est assign\u00e9e et estim\u00e9e. V\u00e9rifie la granularit\u00e9 \u00e0 droite." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              <TypewriterText text="Missions et tâches décomposées. 9 missions, 27 tâches atomiques dérivées de l'analyse. Chaque tâche est assignée et estimée. Vérifie la granularité à droite." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
               {typed && <SBtn onClick={advance} icon={DollarSign} label="Budget et timeline" pc={pc} />}
             </>
-          ) : <p className="text-xs text-gray-400 italic">9 missions, 27 t\u00e2ches</p>}
+          ) : <p className="text-xs text-gray-400 italic">9 missions, 27 tâches</p>}
         </SBubble>
       )}
 
@@ -3479,13 +3486,13 @@ function ConceptionChat({ stage, typed, setTyped, advance, onBackToReflexion }: 
         <SBubble code="CEOB" collapsed={stage > 4}>
           {stage === 4 ? (
             <>
-              <TypewriterText text="Budget 3,800$/mois, ROI projet\u00e9 3.6x. Timeline: Q2 pour les quick wins (referral + LinkedIn), Q3 pour le scale (webinaires + optimisation). V\u00e9rifie les chiffres \u00e0 droite et valide pour finaliser." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              <TypewriterText text="Budget 3,800$/mois, ROI projeté 3.6x. Timeline: Q2 pour les quick wins (referral + LinkedIn), Q3 pour le scale (webinaires + optimisation). Vérifie les chiffres à droite et valide pour finaliser." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
               {typed && (
                 <div className="mt-2 bg-emerald-50 rounded-lg px-3 py-2 text-xs">
                   <div className="flex items-center gap-4">
                     <div><span className="font-bold text-emerald-700">Budget:</span> 3,800$/mois</div>
                     <div><span className="font-bold text-emerald-700">ROI:</span> 3.6x</div>
-                    <div><span className="font-bold text-emerald-700">Dur\u00e9e:</span> Q2-Q3</div>
+                    <div><span className="font-bold text-emerald-700">Durée:</span> Q2-Q3</div>
                   </div>
                 </div>
               )}
@@ -3498,18 +3505,1636 @@ function ConceptionChat({ stage, typed, setTyped, advance, onBackToReflexion }: 
       {/* Stage 5: validation finale */}
       {stage >= 5 && (
         <div className="bg-gradient-to-r from-yellow-50 to-emerald-50 border border-emerald-300 rounded-xl px-4 py-3">
-          <TypewriterText text="Chantier structur\u00e9! Valide les 8 sections \u00e0 droite pour lancer le chantier. Chaque section peut \u00eatre rechalleng\u00e9e ou ajust\u00e9e avant le lancement." speed={10} className="text-sm text-emerald-800 font-medium" onComplete={() => setTyped(true)} />
+          <TypewriterText text="Chantier structuré! Valide les 8 sections à droite pour lancer le chantier. Chaque section peut être rechallengée ou ajustée avant le lancement." speed={10} className="text-sm text-emerald-800 font-medium" onComplete={() => setTyped(true)} />
           {typed && (
             <div className="mt-2 flex items-center gap-2">
               <div className="w-3.5 h-3.5 rounded-full bg-yellow-500" />
               <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
               <div className="w-3.5 h-3.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-xs text-emerald-700 font-semibold ml-1">Conception \u2192 Lancement</span>
+              <span className="text-xs text-emerald-700 font-semibold ml-1">Conception → Lancement</span>
             </div>
           )}
         </div>
       )}
     </>
+  );
+}
+
+// ========== MAG CONCEPTION — 8 composants animés (même pattern que MagDiagnostic, MagBrainstorm, etc.) ==========
+
+function MagConceptionVueEnsemble() {
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    const t = [setTimeout(() => setStep(1), 300), setTimeout(() => setStep(2), 600), setTimeout(() => setStep(3), 900)];
+    return () => t.forEach(clearTimeout);
+  }, []);
+  return (
+    <div className="space-y-3">
+      <div className={cn("grid grid-cols-2 gap-2 transition-all duration-500", step >= 1 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2")}>
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2.5">
+          <p className="text-[10px] text-yellow-600 font-bold uppercase tracking-wider">Chantier</p>
+          <p className="text-sm font-bold text-gray-900 mt-0.5">Stratégie Marketing Q2-Q3</p>
+        </div>
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2.5">
+          <p className="text-[10px] text-yellow-600 font-bold uppercase tracking-wider">Chaleur</p>
+          <p className="text-sm font-bold text-gray-900 mt-0.5">🔥 Critique — Pipeline stagne</p>
+        </div>
+      </div>
+      <div className={cn("transition-all duration-500", step >= 2 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2")}>
+        <div className="bg-white border border-gray-200 rounded-lg px-3 py-2.5">
+          <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Description</p>
+          <p className="text-xs text-gray-700 leading-relaxed">Refonte complète de la stratégie d'acquisition marketing. Pivot du messaging technologique vers le ROI concret. Programme referral + content LinkedIn + webinaires VITAA.</p>
+        </div>
+      </div>
+      <div className={cn("transition-all duration-500", step >= 3 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2")}>
+        <div className="bg-orange-50/50 border border-orange-100 rounded-lg px-3 py-2 flex items-center gap-2">
+          <Brain className="h-3.5 w-3.5 text-orange-500 shrink-0" />
+          <p className="text-[10px] text-orange-600">Issu de la Phase Réflexion — Diagnostic + Brainstorm SCAMPER + Deep Search + Pré-rapport</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MagConceptionObjectifs() {
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    const t = [setTimeout(() => setStep(1), 300), setTimeout(() => setStep(2), 700), setTimeout(() => setStep(3), 1100)];
+    return () => t.forEach(clearTimeout);
+  }, []);
+  const objectives = [
+    { obj: "Réduire le CAC de 780$ à 340$", kpi: "CAC mensuel", cible: "340$", actuel: "780$", progress: 44 },
+    { obj: "Augmenter la conversion de 1.2% à 3.5%", kpi: "Taux conversion", cible: "3.5%", actuel: "1.2%", progress: 34 },
+    { obj: "Générer 15 leads qualifiés/mois", kpi: "Leads/mois", cible: "15", actuel: "4", progress: 27 },
+  ];
+  return (
+    <div className="space-y-2">
+      {objectives.map((o, i) => (
+        <div key={i} className={cn("bg-yellow-50/50 border border-yellow-200 rounded-lg px-3 py-2.5 transition-all duration-500", step >= i + 1 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2")}>
+          <p className="text-xs font-bold text-gray-800">{o.obj}</p>
+          <div className="flex items-center gap-3 mt-1.5 text-xs">
+            <span className="text-gray-500">KPI: {o.kpi}</span>
+            <span className="text-red-600 font-medium">Actuel: {o.actuel}</span>
+            <ArrowRight className="h-3 w-3 text-gray-300" />
+            <span className="text-emerald-600 font-bold">Cible: {o.cible}</span>
+          </div>
+          <div className="mt-2 h-1.5 bg-yellow-100 rounded-full overflow-hidden">
+            <div className={cn("h-full bg-yellow-500 rounded-full transition-all duration-1000", step >= i + 1 ? "" : "!w-0")} style={{ width: `${o.progress}%` }} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function MagConceptionProjets() {
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    const t = [setTimeout(() => setStep(1), 300), setTimeout(() => setStep(2), 600), setTimeout(() => setStep(3), 900)];
+    return () => t.forEach(clearTimeout);
+  }, []);
+  const projets = [
+    { name: "Programme Référencement Clients", priority: "Haute", bot: "CFOB", botName: "Frank" },
+    { name: "Content Marketing LinkedIn", priority: "Haute", bot: "CMOB", botName: "Mathilde" },
+    { name: "Démonstration AI Mensuelle", priority: "Moyenne", bot: "CTOB", botName: "Tim" },
+  ];
+  return (
+    <div className="space-y-2">
+      {projets.map((p, i) => (
+        <div key={i} className={cn("bg-yellow-50/50 border border-yellow-200 rounded-lg px-3 py-2.5 transition-all duration-500", step >= i + 1 ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-3")}>
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-xs font-bold bg-yellow-600 text-white w-5 h-5 rounded-full flex items-center justify-center shrink-0">{i + 1}</span>
+            <span className="text-xs font-bold text-gray-800 flex-1">{p.name}</span>
+            <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-medium", p.priority === "Haute" ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-600")}>{p.priority}</span>
+          </div>
+          <div className="flex items-center gap-2 ml-7">
+            <BotAvatar code={p.bot} size="sm" />
+            <span className="text-xs text-gray-500">Piloté par {p.botName}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function MagConceptionMissions() {
+  const [openProject, setOpenProject] = useState(0);
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    const t = [setTimeout(() => setStep(1), 200), setTimeout(() => setStep(2), 500), setTimeout(() => setStep(3), 800)];
+    return () => t.forEach(clearTimeout);
+  }, []);
+  const projects = [
+    { project: "Programme Référencement", missions: ["Créer landing pages témoignages", "Mettre en place programme fidélité", "Automatiser demandes de recommandation"] },
+    { project: "Content Marketing LinkedIn", missions: ["Calendrier éditorial Q2", "Automatiser publication", "Analyse performance hebdo"] },
+    { project: "Démonstration AI", missions: ["Organiser premier webinar", "Préparer démos live", "Suivi post-webinar"] },
+  ];
+  return (
+    <div className="space-y-3">
+      {projects.map((p, i) => (
+        <div key={i} className={cn("transition-all duration-500", step >= i + 1 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2")}>
+          <button type="button" onClick={() => setOpenProject(openProject === i ? -1 : i)}
+            className="flex items-center gap-2 w-full text-left mb-1 cursor-pointer">
+            <ChevronRight className={cn("h-3.5 w-3.5 text-yellow-600 transition-transform", openProject === i && "rotate-90")} />
+            <span className="text-xs font-bold text-yellow-700">{p.project}</span>
+            <span className="text-[10px] text-gray-400 ml-auto">{p.missions.length} missions</span>
+          </button>
+          {openProject === i && (
+            <div className="space-y-1 ml-5 animate-in fade-in slide-in-from-top-1" style={{ animationDuration: "200ms" }}>
+              {p.missions.map((m, j) => (
+                <div key={j} className="flex items-center gap-2 text-xs text-gray-700 bg-white border border-gray-100 rounded px-2.5 py-1.5">
+                  <Target className="h-3.5 w-3.5 text-yellow-500 shrink-0" />
+                  <span>Mission {i + 1}.{j + 1}: {m}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function MagConceptionTaches() {
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    const t = [setTimeout(() => setStep(1), 300), setTimeout(() => setStep(2), 700)];
+    return () => t.forEach(clearTimeout);
+  }, []);
+  const taskGroups = [
+    { mission: "Landing pages témoignages", tasks: ["Rédiger 5 cas clients", "Design template témoignage", "Intégrer au site web", "A/B test des CTAs"] },
+    { mission: "Calendrier éditorial Q2", tasks: ["Définir 12 thèmes", "Rédiger 4 posts/semaine", "Planifier dans l'outil"] },
+  ];
+  return (
+    <div className="space-y-3">
+      <div className={cn("flex items-center gap-2 transition-all duration-500", step >= 1 ? "opacity-100" : "opacity-0")}>
+        <div className="bg-yellow-100 rounded-full px-2.5 py-0.5">
+          <span className="text-[10px] font-bold text-yellow-700">27 tâches atomiques</span>
+        </div>
+        <span className="text-[10px] text-gray-400">dérivées de 9 missions</span>
+      </div>
+      {taskGroups.map((m, i) => (
+        <div key={i} className={cn("bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 transition-all duration-500", step >= i + 1 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2")}>
+          <p className="text-xs font-bold text-gray-600 mb-1.5">{m.mission}</p>
+          <div className="space-y-1">
+            {m.tasks.map((t, j) => (
+              <div key={j} className="flex items-center gap-1.5 text-xs text-gray-600">
+                <ListChecks className="h-3.5 w-3.5 text-yellow-500 shrink-0" />
+                <span>{t}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function MagConceptionEquipe() {
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    const t = [setTimeout(() => setStep(1), 200), setTimeout(() => setStep(2), 500), setTimeout(() => setStep(3), 800), setTimeout(() => setStep(4), 1100)];
+    return () => t.forEach(clearTimeout);
+  }, []);
+  const bots = [
+    { code: "CEOB", name: "CarlOS", role: "Coordination", color: "bg-blue-50 border-blue-200" },
+    { code: "CMOB", name: "Mathilde", role: "Marketing", color: "bg-pink-50 border-pink-200" },
+    { code: "CFOB", name: "Frank", role: "Budget", color: "bg-emerald-50 border-emerald-200" },
+    { code: "CTOB", name: "Tim", role: "Tech", color: "bg-cyan-50 border-cyan-200" },
+  ];
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-2">
+        {bots.map((b, i) => (
+          <div key={b.code} className={cn("flex items-center gap-2 rounded-lg px-2.5 py-2.5 border transition-all duration-500", b.color, step >= i + 1 ? "opacity-100 scale-100" : "opacity-0 scale-95")}>
+            <BotAvatar code={b.code} size="sm" />
+            <div>
+              <p className="text-xs font-bold text-gray-800">{b.name}</p>
+              <p className="text-[10px] text-gray-500">{b.role}</p>
+            </div>
+            {step >= i + 1 && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 ml-auto" />}
+          </div>
+        ))}
+      </div>
+      <div className={cn("transition-all duration-500", step >= 4 ? "opacity-100" : "opacity-0")}>
+        <div className="flex items-center gap-2 bg-gray-50 border border-dashed border-gray-300 rounded-lg px-2.5 py-2">
+          <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center">
+            <Plus className="h-3.5 w-3.5 text-gray-400" />
+          </div>
+          <p className="text-xs text-gray-400">Ajouter un membre humain</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MagConceptionBudget() {
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    const t = [setTimeout(() => setStep(1), 300), setTimeout(() => setStep(2), 700), setTimeout(() => setStep(3), 1000)];
+    return () => t.forEach(clearTimeout);
+  }, []);
+  return (
+    <div className="space-y-3">
+      <div className={cn("grid grid-cols-2 gap-2 transition-all duration-500", step >= 1 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2")}>
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-3 text-center">
+          <p className="text-xl font-extrabold text-yellow-700">3,800$</p>
+          <p className="text-[10px] text-yellow-600">/mois budget total</p>
+        </div>
+        <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-3 text-center">
+          <p className="text-xl font-extrabold text-emerald-700">3.6x</p>
+          <p className="text-[10px] text-emerald-600">ROI projeté</p>
+        </div>
+      </div>
+      <div className={cn("transition-all duration-500", step >= 2 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2")}>
+        <div className="bg-white border border-gray-200 rounded-lg px-3 py-2.5">
+          <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-2">Répartition par projet</p>
+          {[
+            { label: "Referral Program", amount: "1,200$/mois", pct: 32 },
+            { label: "Content LinkedIn", amount: "2,600$/mois", pct: 68 },
+          ].map((r, i) => (
+            <div key={i} className="mb-2 last:mb-0">
+              <div className="flex items-center justify-between text-xs mb-0.5">
+                <span className="text-gray-600">{r.label}</span>
+                <span className="font-bold text-gray-800">{r.amount}</span>
+              </div>
+              <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div className={cn("h-full bg-yellow-400 rounded-full transition-all duration-1000", step >= 2 ? "" : "!w-0")} style={{ width: `${r.pct}%` }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className={cn("transition-all duration-500", step >= 3 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2")}>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 flex items-center gap-3 text-xs">
+          <BarChart3 className="h-4 w-4 text-blue-500 shrink-0" />
+          <div>
+            <span className="font-bold text-blue-700">Payback: 4.2 mois</span>
+            <span className="text-blue-500 ml-2">— investissement récupéré avant fin Q2</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MagConceptionTimeline() {
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    const t = [setTimeout(() => setStep(1), 300), setTimeout(() => setStep(2), 700), setTimeout(() => setStep(3), 1100)];
+    return () => t.forEach(clearTimeout);
+  }, []);
+  const phases = [
+    { phase: "Q2 — Avril-Juin", label: "Quick Wins", color: "bg-amber-100 text-amber-700 border-amber-200", items: ["Lancement programme referral", "Premiers posts LinkedIn", "Setup automatisations email"] },
+    { phase: "Q3 — Juillet-Sept", label: "Scale", color: "bg-emerald-100 text-emerald-700 border-emerald-200", items: ["Premier webinar VITAA", "Scale content LinkedIn", "Analyse ROI et ajustements"] },
+  ];
+  return (
+    <div className="space-y-3">
+      {/* Timeline visual */}
+      <div className={cn("flex items-center gap-2 transition-all duration-500", step >= 1 ? "opacity-100" : "opacity-0")}>
+        <div className="flex-1 h-px bg-yellow-300" />
+        {phases.map((p, i) => (
+          <div key={i} className="flex items-center gap-1">
+            <div className={cn("w-3 h-3 rounded-full", i === 0 ? "bg-amber-500" : "bg-emerald-500")} />
+            <span className="text-[10px] font-bold text-gray-600">{p.label}</span>
+            {i < phases.length - 1 && <div className="w-12 h-px bg-gray-300" />}
+          </div>
+        ))}
+        <div className="flex-1 h-px bg-emerald-300" />
+      </div>
+      {/* Phase cards */}
+      {phases.map((p, i) => (
+        <div key={i} className={cn("bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 transition-all duration-500", step >= i + 2 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2")}>
+          <span className={cn("text-xs px-2 py-0.5 rounded-full font-bold border", p.color)}>{p.phase}</span>
+          <div className="mt-2 space-y-1">
+            {p.items.map((item, j) => (
+              <div key={j} className="flex items-center gap-1.5 text-xs text-gray-700">
+                <Calendar className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                <span>{item}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ========== PHASE CONCEPTION V3 — right panel (même pattern que PhaseReflexion) ==========
+
+export function PhaseConception({ stage, context, onStartExecution, onSelectDeliverable }: { stage: number; context: string | null; onStartExecution?: () => void; onSelectDeliverable?: (id: string) => void }) {
+  const visibleSections = CONCEPTION_DOCFORGE_SECTIONS.filter(s => stage >= s.minStage);
+  const visibleCount = visibleSections.length;
+  const [activeSection, setActiveSection] = useState(1);
+  const [validatedSections, setValidatedSections] = useState<Set<number>>(new Set());
+
+  // Auto-avance vers la dernière section débloquée
+  useEffect(() => {
+    if (visibleSections.length > 0) {
+      setActiveSection(visibleSections[visibleSections.length - 1].id);
+    }
+  }, [visibleCount]);
+
+  const activeDef = CONCEPTION_DOCFORGE_SECTIONS.find(s => s.id === activeSection);
+  const ActiveIcon = activeDef?.icon || Hammer;
+
+  const handleValidate = (id: number) => {
+    setValidatedSections(prev => { const next = new Set(prev); next.add(id); return next; });
+  };
+
+  // Map section id → contenu (MagConception* composants animés)
+  const SECTION_CONTENT: Record<number, React.ReactNode> = {
+    1: <MagConceptionVueEnsemble />,
+    2: <MagConceptionObjectifs />,
+    3: <MagConceptionProjets />,
+    4: <MagConceptionMissions />,
+    5: <MagConceptionTaches />,
+    6: <MagConceptionEquipe />,
+    7: <MagConceptionBudget />,
+    8: <MagConceptionTimeline />,
+  };
+
+  // Status de la section
+  const getSectionStatus = (id: number): DocForgeStatus => {
+    if (validatedSections.has(id)) return "complete";
+    const nextSection = CONCEPTION_DOCFORGE_SECTIONS.find(s => s.id === id + 1);
+    if (!nextSection) return stage >= 5 ? "en-cours" : "en-cours";
+    return stage >= nextSection.minStage ? "en-cours" : "en-cours";
+  };
+
+  const allValidated = validatedSections.size === CONCEPTION_DOCFORGE_SECTIONS.length;
+
+  return (
+    <div className="max-w-4xl mx-auto px-6 py-4 pb-12 space-y-4">
+      {stage < 0 ? (
+        <div className="text-center py-12">
+          <Hammer className="h-8 w-8 text-yellow-300 mx-auto mb-3" />
+          <p className="text-sm text-gray-400">La conception commence...</p>
+          <p className="text-xs text-gray-300">Les sections apparaîtront au fur et à mesure de la structuration</p>
+        </div>
+      ) : (
+        <>
+          {/* 1. HERO COMPACT — icône + titre + progression (COPIE EXACTE pattern PhaseReflexion) */}
+          <div className="relative w-full rounded-xl bg-white border border-gray-200 shadow-sm overflow-hidden flex items-center px-6 py-4">
+            <div className="absolute rounded-full blur-[100px] opacity-60 bg-yellow-100/70" style={{ top: '-50%', left: '-10%', width: '50%', height: '200%' }} />
+            <div className="absolute rounded-full blur-[120px] opacity-50 bg-amber-100/40" style={{ bottom: '-50%', right: '10%', width: '60%', height: '200%' }} />
+            <div className="absolute inset-0 bg-pattern-grid opacity-[0.35]" />
+            <div className="relative z-20 flex items-center gap-4 w-full">
+              {activeDef && (() => { const Icon = activeDef.icon; return <Icon className="h-7 w-7 text-yellow-500 shrink-0 stroke-[2]" />; })()}
+              <h2 className="text-lg font-extrabold text-gray-900 shrink-0">{activeDef ? `${activeDef.id}. ${activeDef.title}` : "Conception du chantier"}</h2>
+              <div className="flex-1" />
+              <span className="text-xs font-bold text-gray-900 shrink-0">Étape {visibleCount} de {CONCEPTION_DOCFORGE_SECTIONS.length}</span>
+              <div className="w-28 h-2 bg-yellow-100 rounded-full overflow-hidden shrink-0">
+                <div className="h-full bg-yellow-400 rounded-full transition-all duration-500" style={{ width: `${(visibleCount / CONCEPTION_DOCFORGE_SECTIONS.length) * 100}%` }} />
+              </div>
+            </div>
+          </div>
+
+          {/* 2. SIDEBAR SF + CONTENU — UNE section à la fois (pattern DocForge) */}
+          <div className="flex gap-4">
+            {/* TOC sidebar — SF.sidebarW */}
+            <div className={SF.sidebarW}>
+              {CONCEPTION_DOCFORGE_SECTIONS.map(s => {
+                const unlocked = stage >= s.minStage;
+                const isActive = activeSection === s.id;
+                const validated = validatedSections.has(s.id);
+                return (
+                  <button key={s.id} onClick={() => unlocked && setActiveSection(s.id)}
+                    className={cn(SF.btnBase,
+                      isActive && unlocked ? SF.btnActive : SF.btnInactive,
+                      !unlocked && "opacity-40 cursor-default"
+                    )}>
+                    {unlocked
+                      ? <s.icon className={isActive ? SF.iconActive : SF.iconInactive} />
+                      : <div className="w-3.5 h-3.5 rounded-full border border-gray-300 shrink-0" />
+                    }
+                    <span className={isActive && unlocked ? SF.labelActive : SF.labelInactive}>{s.id}. {s.title}</span>
+                    {unlocked && (
+                      <span className={cn("text-[10px] px-1 py-0.5 rounded-full font-medium",
+                        validated ? "bg-emerald-100 text-emerald-600" : "bg-amber-50 text-amber-600"
+                      )}>
+                        {validated ? "✓" : "…"}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Content — UNE SEULE section + validation buttons */}
+            <div className={SF.content}>
+              {stage >= (CONCEPTION_DOCFORGE_SECTIONS.find(s => s.id === activeSection)?.minStage ?? 999) && (
+                <DocForgeBlock index={activeSection} title={activeDef?.title || ""} icon={ActiveIcon} status={getSectionStatus(activeSection)}>
+                  {SECTION_CONTENT[activeSection]}
+                  {/* Validation buttons — Rechallenger / Ajuster / Valider */}
+                  <div className="mt-3 flex items-center gap-2 pt-2 border-t border-gray-100">
+                    <button type="button" className="text-xs text-gray-500 hover:text-orange-700 font-medium cursor-pointer flex items-center gap-1 bg-white border border-gray-200 rounded-full px-2.5 py-1 hover:bg-orange-50">
+                      <AlertTriangle className="h-3.5 w-3.5" /> Rechallenger
+                    </button>
+                    <button type="button" className="text-xs text-gray-500 hover:text-amber-700 font-medium cursor-pointer flex items-center gap-1 bg-white border border-gray-200 rounded-full px-2.5 py-1 hover:bg-amber-50">
+                      <RefreshCw className="h-3.5 w-3.5" /> Ajuster
+                    </button>
+                    {!validatedSections.has(activeSection) && (
+                      <button type="button" onClick={() => handleValidate(activeSection)}
+                        className="text-xs text-emerald-700 font-medium cursor-pointer flex items-center gap-1 bg-emerald-50 border border-emerald-200 rounded-full px-2.5 py-1 hover:bg-emerald-100">
+                        <CheckCircle2 className="h-3.5 w-3.5" /> Valider ✓
+                      </button>
+                    )}
+                    {validatedSections.has(activeSection) && (
+                      <span className="text-xs text-emerald-600 font-bold flex items-center gap-1 ml-auto">
+                        <CheckCircle2 className="h-3.5 w-3.5" /> Section validée
+                      </span>
+                    )}
+                  </div>
+                </DocForgeBlock>
+              )}
+
+              {/* Validation counter */}
+              {visibleCount === CONCEPTION_DOCFORGE_SECTIONS.length && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2 flex items-center gap-3">
+                  <div className="flex items-center gap-1">
+                    {CONCEPTION_DOCFORGE_SECTIONS.map(s => (
+                      <div key={s.id} className={cn("w-2.5 h-2.5 rounded-full transition-all", validatedSections.has(s.id) ? "bg-emerald-500" : "bg-gray-200")} />
+                    ))}
+                  </div>
+                  <span className="text-xs font-bold text-gray-700">{validatedSections.size}/{CONCEPTION_DOCFORGE_SECTIONS.length} sections validées</span>
+                </div>
+              )}
+
+              {/* Conception des livrables (Level 2) — grille de types quand toutes les sections sont visibles */}
+              {visibleCount === CONCEPTION_DOCFORGE_SECTIONS.length && (
+                <div className="mt-4 space-y-3">
+                  <div className="rounded-xl border border-yellow-200 bg-yellow-50/50 overflow-hidden">
+                    <div className="px-4 py-3 border-b border-yellow-200 flex items-center gap-2">
+                      <Layers className="h-4 w-4 text-yellow-600" />
+                      <span className="text-xs font-bold text-gray-800">Concevoir les livrables du chantier</span>
+                      <span className="text-[10px] text-gray-400 ml-auto">Niveau 2 — Éléments individuels</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 p-3">
+                      {[
+                        { id: "document", icon: FileText, label: "Rapport stratégique", desc: "Cahier de projet, plan marketing", color: "border-amber-200 bg-amber-50 hover:bg-amber-100", text: "text-amber-700", iconColor: "text-amber-600" },
+                        { id: "spreadsheet", icon: Table2, label: "Tableur & Données", desc: "Analyse, tableaux, dashboards", color: "border-teal-200 bg-teal-50 hover:bg-teal-100", text: "text-teal-700", iconColor: "text-teal-600" },
+                        { id: "presentation", icon: Presentation, label: "Présentation", desc: "Pitch deck, slides CA, rapport au board", color: "border-blue-200 bg-blue-50 hover:bg-blue-100", text: "text-blue-700", iconColor: "text-blue-600" },
+                        { id: "code", icon: Code2, label: "Code avec Tim", desc: "Scripts, automatisations, intégrations", color: "border-violet-200 bg-violet-50 hover:bg-violet-100", text: "text-violet-700", iconColor: "text-violet-600" },
+                      ].map(type => (
+                        <button key={type.id} type="button"
+                          onClick={() => onSelectDeliverable?.(type.id)}
+                          className={cn("border rounded-xl p-3 flex items-start gap-2.5 text-left transition-all cursor-pointer", type.color)}>
+                          <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-white/60")}>
+                            <type.icon className={cn("h-4 w-4", type.iconColor)} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className={cn("text-xs font-bold", type.text)}>{type.label}</p>
+                            <p className="text-[10px] text-gray-500 mt-0.5">{type.desc}</p>
+                          </div>
+                          <ArrowRight className="h-3.5 w-3.5 text-gray-300 shrink-0 mt-0.5" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Transition vers Exécution — quand TOUTES les sections sont validées */}
+              {allValidated && (
+                <div className="mt-4">
+                  <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                    <div className="bg-[#00B4D8]/10 px-6 py-4">
+                      <div className="flex items-center justify-center gap-4 mb-3">
+                        <div className="w-9 h-9 rounded-lg bg-yellow-100 flex items-center justify-center">
+                          <Hammer className="h-4 w-4 text-yellow-600 stroke-[2.5]" />
+                        </div>
+                        <ArrowRight className="h-4 w-4 text-gray-400 stroke-[2.5]" />
+                        <div className="w-9 h-9 rounded-lg bg-green-100 flex items-center justify-center">
+                          <Rocket className="h-4 w-4 text-green-600 stroke-[2.5]" />
+                        </div>
+                      </div>
+                      <p className="text-sm font-bold text-gray-900 text-center">Chantier structuré — Prêt pour l'Exécution</p>
+                      <p className="text-[10px] text-gray-500 mt-1 text-center">8 sections validées — 3 projets, 9 missions, 27 tâches</p>
+                    </div>
+                    <div className="px-6 py-3 flex gap-2 justify-center border-t border-gray-100">
+                      <button type="button" onClick={onStartExecution} className="text-xs bg-gray-900 text-white px-4 py-2 rounded-lg font-bold cursor-pointer hover:bg-gray-800">
+                        Lancer l'Exécution
+                      </button>
+                      <button type="button" className="text-xs bg-white text-gray-700 px-4 py-2 rounded-lg font-bold border border-gray-200 cursor-pointer hover:bg-gray-50">
+                        Exporter le plan
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ========== LEVEL 2 — CONCEPTION DES LIVRABLES (Document, Tableur, Présentation, Code) ==========
+
+// --- AnimBlock: progressive reveal wrapper ---
+function AnimBlock({ delay = 0, children }: { delay?: number; children: React.ReactNode }) {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setVisible(true), delay); return () => clearTimeout(t); }, [delay]);
+  return (
+    <div className={cn("transition-all duration-500", visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3")}>
+      {children}
+    </div>
+  );
+}
+
+// --- LiveTerminalV3: character-by-character code typing ---
+function LiveTerminalV3({ content, speed = 12 }: { content: string; speed?: number }) {
+  const [chars, setChars] = useState(0);
+  useEffect(() => { setChars(0); }, [content]);
+  useEffect(() => {
+    if (chars < content.length) {
+      const nextChar = content[chars];
+      const delay = nextChar === "\n" ? speed * 4 : speed;
+      const timer = setTimeout(() => setChars(prev => prev + 1), delay);
+      return () => clearTimeout(timer);
+    }
+  }, [chars, content.length, speed, content]);
+  const done = chars >= content.length;
+  return (
+    <div className="bg-gray-950 rounded-lg overflow-hidden">
+      <div className="px-3 py-1.5 flex items-center gap-2 border-b border-gray-800">
+        <Terminal className="h-3.5 w-3.5 text-green-400" />
+        <span className="text-[9px] font-bold text-green-300">Tim — Terminal</span>
+        {!done && <div className="flex items-center gap-1.5 ml-auto"><div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" /><span className="text-[8px] text-green-400/70">En cours...</span></div>}
+        {done && <CheckCircle2 className="h-3.5 w-3.5 text-green-400 ml-auto" />}
+        <div className="flex items-center gap-1">
+          <div className="w-2 h-2 rounded-full bg-red-500" />
+          <div className="w-2 h-2 rounded-full bg-yellow-500" />
+          <div className="w-2 h-2 rounded-full bg-green-500" />
+        </div>
+      </div>
+      <pre className="p-3 text-[9px] leading-relaxed font-mono max-h-[280px] overflow-y-auto">
+        <code className="text-green-400">{content.slice(0, chars)}</code>
+        {!done && <span className="text-green-300 animate-pulse">{"\u2588"}</span>}
+      </pre>
+    </div>
+  );
+}
+
+// --- L2 Theme configs ---
+const L2_THEMES = {
+  amber: { bgLight: "bg-amber-50", border: "border-amber-200", text: "text-amber-700", dot: "bg-amber-500", progressBg: "bg-amber-100", progressFill: "bg-amber-400", heroBlur1: "bg-amber-100/70", heroBlur2: "bg-yellow-100/40", iconColor: "text-amber-500", validBg: "bg-amber-50", validText: "text-amber-600", borderLeft: "border-amber-400", sectionBg: "bg-amber-50/50" },
+  teal: { bgLight: "bg-teal-50", border: "border-teal-200", text: "text-teal-700", dot: "bg-teal-500", progressBg: "bg-teal-100", progressFill: "bg-teal-400", heroBlur1: "bg-teal-100/70", heroBlur2: "bg-cyan-100/40", iconColor: "text-teal-500", validBg: "bg-teal-50", validText: "text-teal-600", borderLeft: "border-teal-400", sectionBg: "bg-teal-50/50" },
+  blue: { bgLight: "bg-blue-50", border: "border-blue-200", text: "text-blue-700", dot: "bg-blue-500", progressBg: "bg-blue-100", progressFill: "bg-blue-400", heroBlur1: "bg-blue-100/70", heroBlur2: "bg-indigo-100/40", iconColor: "text-blue-500", validBg: "bg-blue-50", validText: "text-blue-600", borderLeft: "border-blue-400", sectionBg: "bg-blue-50/50" },
+  violet: { bgLight: "bg-violet-50", border: "border-violet-200", text: "text-violet-700", dot: "bg-violet-500", progressBg: "bg-violet-100", progressFill: "bg-violet-400", heroBlur1: "bg-violet-100/70", heroBlur2: "bg-purple-100/40", iconColor: "text-violet-500", validBg: "bg-violet-50", validText: "text-violet-600", borderLeft: "border-violet-400", sectionBg: "bg-violet-50/50" },
+};
+
+// --- L2 Section configs ---
+const DOCUMENT_DOCFORGE_SECTIONS = [
+  { id: 1, title: "Contexte", icon: FileText, minStage: 0 },
+  { id: 2, title: "Objectifs SMART", icon: Target, minStage: 0 },
+  { id: 3, title: "Strategie SWOT", icon: Shield, minStage: 1 },
+  { id: 4, title: "Plan d'action", icon: Wrench, minStage: 1 },
+  { id: 5, title: "Budget", icon: DollarSign, minStage: 2 },
+  { id: 6, title: "Timeline", icon: Clock, minStage: 2 },
+  { id: 7, title: "Indicateurs KPI", icon: BarChart3, minStage: 3 },
+];
+const TABLEUR_DOCFORGE_SECTIONS = [
+  { id: 1, title: "Structure du tableur", icon: Table2, minStage: 0 },
+  { id: 2, title: "Donnees de reference", icon: Database, minStage: 0 },
+  { id: 3, title: "Projections mensuelles", icon: TrendingUp, minStage: 1 },
+  { id: 4, title: "Formules & Calculs", icon: ListChecks, minStage: 1 },
+  { id: 5, title: "Graphiques & Tendances", icon: LineChart, minStage: 2 },
+  { id: 6, title: "Export & Partage", icon: ArrowRight, minStage: 2 },
+];
+const PRESENTATION_DOCFORGE_SECTIONS = [
+  { id: 1, title: "Slide \u2014 Enjeu", icon: AlertTriangle, minStage: 0 },
+  { id: 2, title: "Slide \u2014 Strategie", icon: Compass, minStage: 0 },
+  { id: 3, title: "Slide \u2014 Budget & ROI", icon: DollarSign, minStage: 1 },
+  { id: 4, title: "Slide \u2014 Timeline", icon: Calendar, minStage: 1 },
+  { id: 5, title: "Design & Visuels", icon: Palette, minStage: 2 },
+  { id: 6, title: "Notes presentateur", icon: FileText, minStage: 2 },
+];
+const CODE_DOCFORGE_SECTIONS = [
+  { id: 1, title: "Plan & Architecture", icon: FileText, minStage: 0 },
+  { id: 2, title: "Code", icon: Code2, minStage: 1 },
+  { id: 3, title: "Debug", icon: Bug, minStage: 2 },
+  { id: 4, title: "Tests", icon: FlaskConical, minStage: 3 },
+  { id: 5, title: "Deploiement", icon: Rocket, minStage: 4 },
+];
+
+// --- Tim code strings (V3 enhanced) ---
+const TIM_CODE_V3 = [
+  "$ tim create ChatWidget.tsx",
+  "[Tim] Analyzing requirements...",
+  "[Tim] Creating component structure...",
+  "",
+  "import { useState, useEffect, useRef } from 'react';",
+  "import DOMPurify from 'dompurify';",
+  "",
+  "interface ChatWidgetProps {",
+  "  apiEndpoint: string;",
+  "  botCode?: string;",
+  "}",
+  "",
+  "export function ChatWidget({ apiEndpoint, botCode = 'CEOB' }: ChatWidgetProps) {",
+  "  const [messages, setMessages] = useState<Message[]>([]);",
+  "  const [sessionId, setSessionId] = useState<string | null>(null);",
+  "  const [input, setInput] = useState('');",
+  "  const [isStreaming, setIsStreaming] = useState(false);",
+  "  const abortRef = useRef<AbortController | null>(null);",
+  "",
+  "  useEffect(() => {",
+  "    const initSession = async () => {",
+  "      const res = await fetch(`${apiEndpoint}/chat/init`, {",
+  "        method: 'POST',",
+  "        headers: { 'Content-Type': 'application/json' },",
+  "        body: JSON.stringify({ botCode }),",
+  "      });",
+  "      const data = await res.json();",
+  "      setSessionId(data.sessionId);",
+  "    };",
+  "    initSession();",
+  "    return () => { abortRef.current?.abort(); };",
+  "  }, [apiEndpoint, botCode]);",
+  "",
+  "  const sendMessage = async (text: string) => {",
+  "    if (!sessionId || isStreaming) return;",
+  "    setIsStreaming(true);",
+  "    abortRef.current = new AbortController();",
+  "    const sanitized = DOMPurify.sanitize(text);",
+  "    // ... streaming + DOMPurify sanitization",
+  "    setIsStreaming(false);",
+  "  };",
+  "",
+  "  return <div className=\"chat-widget\">{ /* UI */ }</div>;",
+  "}",
+  "",
+  "[Tim] Component created \u2014 42 lines",
+  "[Tim] Integrating DOMPurify sanitizer...",
+  "[Tim] Security patch applied",
+  "[Tim] Adding rate limiter (5 init/min per fingerprint)...",
+  "[Tim] Rate limiter added",
+].join("\n");
+
+const TIM_DEBUG_V3 = [
+  "$ tim debug ChatWidget.tsx",
+  "[Tim] Running static analysis...",
+  "[Tim] Scanning 42 lines for issues...",
+  "",
+  "[WARN] Line 28: Timeout at 30s with no fallback message",
+  "  \u2192 Fix: Adding fallback after 15s",
+  "  \u2192 Applied: setTimeout(() => setFallback(true), 15000)",
+  "",
+  "[WARN] Line 35: useEffect cleanup missing on unmount",
+  "  \u2192 Fix: Adding AbortController cleanup",
+  "  \u2192 Applied: return () => abortRef.current?.abort()",
+  "",
+  "[Tim] Re-scanning...",
+  "[Tim] 0 issues remaining",
+  "[Tim] 2 bugs fixed \u2014 code is clean",
+].join("\n");
+
+const TIM_TEST_V3 = [
+  "$ tim test ChatWidget.test.tsx",
+  "Running 4 tests...",
+  "",
+  "  \u2713 test_init_session         25%   (12ms)",
+  "  \u2713 test_send_message         50%   (8ms)",
+  "  \u2713 test_stream_response      75%   (15ms)",
+  "  \u2713 test_timeout_fallback     100%  (6ms)",
+  "",
+  "=================== 4 passed in 0.041s ===================",
+  "All tests green!",
+].join("\n");
+
+// ========== MAG CONTENT — Document strategique (amber) ==========
+
+function MagDocContexte() {
+  return (
+    <AnimBlock>
+      <div className="border-l-[3px] border-amber-400 bg-amber-50/50 rounded-r-lg px-3 py-2">
+        <h4 className="text-[9px] font-bold text-amber-700 mb-1 flex items-center gap-1.5">
+          1. Contexte
+          <span className="text-[8px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full">depuis Analyse</span>
+        </h4>
+        <p className="text-[9px] text-gray-700 leading-relaxed">Chantier Marketing Q2 \u2014 Augmenter la visibilite d'Usine Bleue. Budget: 12K$/mois. CAC actuel: 780$. Sources: 65% bouche-a-oreille, 20% web, 15% salons.</p>
+        <div className="mt-1 flex items-center gap-1.5 text-[9px] text-gray-400">
+          <BotAvatar code="CEOB" size="sm" />
+          <span>Pre-rempli depuis l'Analyse</span>
+        </div>
+      </div>
+    </AnimBlock>
+  );
+}
+
+function MagDocObjectifs() {
+  return (
+    <AnimBlock delay={100}>
+      <div className="border-l-[3px] border-amber-400 bg-amber-50/50 rounded-r-lg px-3 py-2">
+        <h4 className="text-[9px] font-bold text-amber-700 mb-1">2. Objectifs SMART</h4>
+        <div className="space-y-1">
+          {["Reduire le CAC de 780$ a 400$ d'ici fin Q3", "Augmenter la conversion web de 1.2% a 3% d'ici fin Q2", "Diversifier les sources: bouche-a-oreille < 40% d'ici Q4"].map((obj, i) => (
+            <div key={i} className="flex items-center gap-2 text-[9px] text-gray-700">
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+              <span>{obj}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </AnimBlock>
+  );
+}
+
+function MagDocSwot() {
+  const [expandedSwot, setExpandedSwot] = useState<string | null>(null);
+  return (
+    <AnimBlock delay={150}>
+      <div className="border-l-[3px] border-amber-400 bg-amber-50/50 rounded-r-lg px-3 py-2">
+        <h4 className="text-[9px] font-bold text-amber-700 mb-2">3. Matrice SWOT</h4>
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { key: "forces", label: "Forces", bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700", content: "text-emerald-800" },
+            { key: "faiblesses", label: "Faiblesses", bg: "bg-red-50", border: "border-red-200", text: "text-red-700", content: "text-red-800" },
+            { key: "opportunites", label: "Opportunites", bg: "bg-blue-50", border: "border-blue-200", text: "text-blue-700", content: "text-blue-800" },
+            { key: "menaces", label: "Menaces", bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-700", content: "text-orange-800" },
+          ].map(quad => (
+            <div key={quad.key} className={cn("border rounded-lg px-2 py-1.5 cursor-pointer transition-all", quad.bg, quad.border, expandedSwot === quad.key ? "ring-2 ring-amber-300 shadow-md" : "hover:shadow-sm")} onClick={() => setExpandedSwot(expandedSwot === quad.key ? null : quad.key)}>
+              <div className={cn("text-[9px] font-bold mb-1", quad.text)}>{quad.label}</div>
+              {(SWOT_DATA as Record<string, string[]>)[quad.key].map((f: string, i: number) => (
+                <div key={i} className={cn("text-[9px]", quad.content, expandedSwot === quad.key ? "" : i > 0 ? "hidden" : "")}>
+                  {"\u2022"} {f}
+                </div>
+              ))}
+              {expandedSwot !== quad.key && (SWOT_DATA as Record<string, string[]>)[quad.key].length > 1 && (
+                <p className="text-[8px] text-gray-400 mt-0.5">+{(SWOT_DATA as Record<string, string[]>)[quad.key].length - 1} autres...</p>
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="mt-2 flex items-center gap-1.5 text-[9px] text-gray-400">
+          <BotAvatar code="CSOB" size="sm" />
+          <span>Simone (CSO) \u2014 analyse strategique</span>
+        </div>
+      </div>
+    </AnimBlock>
+  );
+}
+
+function MagDocPlanAction() {
+  return (
+    <AnimBlock delay={200}>
+      <div className="border-l-[3px] border-amber-400 bg-amber-50/50 rounded-r-lg px-3 py-2">
+        <h4 className="text-[9px] font-bold text-amber-700 mb-2">4. Plan d'action</h4>
+        <div className="space-y-2">
+          {GANTT_MILESTONES.map(m => (
+            <div key={m.id} className="flex items-center gap-2">
+              <BotAvatar code={m.bot} size="sm" />
+              <div className="flex-1">
+                <div className="text-[9px] font-medium text-gray-800">{m.label}</div>
+                <div className="text-[9px] text-gray-500">{m.start} \u2192 {m.end}</div>
+              </div>
+              <div className="w-20 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                <div className="h-full bg-amber-500 rounded-full" style={{ width: "0%" }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </AnimBlock>
+  );
+}
+
+function MagDocBudget() {
+  return (
+    <AnimBlock delay={100}>
+      <div className="border-l-[3px] border-amber-400 bg-amber-50/50 rounded-r-lg px-3 py-2">
+        <h4 className="text-[9px] font-bold text-amber-700 mb-2">5. Budget</h4>
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-amber-50 border-b border-amber-200">
+                {["Poste", "Mensuel", "Annuel", "%"].map(h => (
+                  <th key={h} className="text-[9px] font-bold text-amber-800 px-2.5 py-1.5 text-left">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {BUDGET_ROWS.map((row, i) => (
+                <tr key={i} className="border-b border-gray-100">
+                  <td className="text-[9px] text-gray-700 px-2.5 py-1.5 font-medium">{row.poste}</td>
+                  <td className="text-[9px] text-gray-700 px-2.5 py-1.5">{row.mensuel}</td>
+                  <td className="text-[9px] text-gray-700 px-2.5 py-1.5">{row.annuel}</td>
+                  <td className="text-[9px] px-2.5 py-1.5">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-10 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                        <div className="h-full bg-amber-400 rounded-full" style={{ width: `${row.pct}%` }} />
+                      </div>
+                      <span className="text-gray-500">{row.pct}%</span>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="mt-2 flex items-center gap-1.5 text-[9px] text-gray-400">
+          <BotAvatar code="CFOB" size="sm" />
+          <span>Frank (CFO) \u2014 Total: 3,800$/mois, ROI projete: 3.6x</span>
+        </div>
+      </div>
+    </AnimBlock>
+  );
+}
+
+function MagDocTimeline() {
+  return (
+    <AnimBlock delay={150}>
+      <div className="border-l-[3px] border-amber-400 bg-amber-50/50 rounded-r-lg px-3 py-2">
+        <h4 className="text-[9px] font-bold text-amber-700 mb-2">6. Timeline</h4>
+        <div className="space-y-1.5">
+          {[
+            { phase: "Phase 1", range: "S1\u2013S4", label: "Referral + LinkedIn", color: "bg-amber-100 border-amber-300" },
+            { phase: "Phase 2", range: "S5\u2013S10", label: "Chatbot + Nurturing", color: "bg-amber-50 border-amber-200" },
+            { phase: "Phase 3", range: "S11\u2013S14", label: "Optimisation", color: "bg-yellow-50 border-yellow-200" },
+          ].map(p => (
+            <div key={p.phase} className={cn("border rounded-lg px-2.5 py-1.5 flex items-center gap-2", p.color)}>
+              <span className="text-[9px] font-bold text-gray-700 w-14 shrink-0">{p.phase}</span>
+              <span className="text-[9px] text-gray-500 w-14 shrink-0">{p.range}</span>
+              <span className="text-[9px] text-gray-700">{p.label}</span>
+            </div>
+          ))}
+        </div>
+        <p className="text-[9px] text-gray-500 mt-1.5">Checkpoint S7 \u2014 revue mi-parcours avec l'equipe</p>
+      </div>
+    </AnimBlock>
+  );
+}
+
+function MagDocIndicateurs() {
+  return (
+    <AnimBlock delay={200}>
+      <div className="border-l-[3px] border-amber-400 bg-amber-50/50 rounded-r-lg px-3 py-2">
+        <h4 className="text-[9px] font-bold text-amber-700 mb-2">7. Indicateurs KPI</h4>
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { kpi: "CAC", cible: "400$", actuel: "780$", trend: "-49%", good: true },
+            { kpi: "Conversion web", cible: "3%", actuel: "1.2%", trend: "+150%", good: true },
+            { kpi: "Part bouche-a-oreille", cible: "<40%", actuel: "65%", trend: "-38%", good: true },
+            { kpi: "ROI marketing", cible: "3x+", actuel: "1.2x", trend: "+150%", good: true },
+          ].map(k => (
+            <div key={k.kpi} className="bg-white border border-gray-200 rounded-lg p-2">
+              <p className="text-[9px] font-bold text-gray-800">{k.kpi}</p>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-[9px] text-gray-500">Actuel: {k.actuel}</span>
+                <ArrowRight className="h-3 w-3 text-gray-400" />
+                <span className="text-[9px] font-bold text-emerald-600">Cible: {k.cible}</span>
+              </div>
+              <div className="flex items-center gap-1 mt-0.5">
+                <TrendingUp className="h-3 w-3 text-emerald-500" />
+                <span className="text-[9px] font-bold text-emerald-600">{k.trend}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </AnimBlock>
+  );
+}
+
+// ========== MAG CONTENT — Tableur & Donnees (teal) ==========
+
+function MagTableurStructure() {
+  return (
+    <AnimBlock>
+      <div className="border-l-[3px] border-teal-400 bg-teal-50/50 rounded-r-lg px-3 py-2">
+        <h4 className="text-[9px] font-bold text-teal-700 mb-2">1. Structure du tableur</h4>
+        <div className="space-y-1.5">
+          {[
+            { col: "Mois", type: "Texte", desc: "Avril \u2192 Juillet (Q2)" },
+            { col: "Leads", type: "Nombre", desc: "Leads generes par canal" },
+            { col: "CAC", type: "Devise", desc: "Cout d'acquisition client" },
+            { col: "Conversion", type: "%", desc: "Taux de conversion web" },
+            { col: "Revenue", type: "Devise", desc: "Revenu genere par cohorte" },
+          ].map(c => (
+            <div key={c.col} className="flex items-center gap-2 text-[9px]">
+              <span className="font-bold text-teal-700 w-20 shrink-0">{c.col}</span>
+              <span className="bg-teal-100 text-teal-600 px-1.5 py-0.5 rounded text-[8px] font-medium w-12 text-center shrink-0">{c.type}</span>
+              <span className="text-gray-600">{c.desc}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </AnimBlock>
+  );
+}
+
+function MagTableurDonnees() {
+  return (
+    <AnimBlock delay={100}>
+      <div className="border-l-[3px] border-teal-400 bg-teal-50/50 rounded-r-lg px-3 py-2">
+        <h4 className="text-[9px] font-bold text-teal-700 mb-2">2. Donnees de reference</h4>
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-teal-50 border-b border-teal-200">
+                {["Mois", "Leads", "CAC", "Conv.", "Revenue"].map(h => (
+                  <th key={h} className="text-[9px] font-bold text-teal-800 px-2.5 py-1.5 text-left">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {TABLEUR_DATA.map((row, i) => (
+                <tr key={i} className="border-b border-gray-100 hover:bg-teal-50/30 transition-colors">
+                  <td className="text-[9px] text-gray-700 px-2.5 py-1.5 font-medium">{row.mois}</td>
+                  <td className="text-[9px] px-2.5 py-1.5">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-gray-700">{row.leads}</span>
+                      <div className="w-8 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                        <div className="h-full bg-teal-500 rounded-full" style={{ width: `${(row.leads / 95) * 100}%` }} />
+                      </div>
+                    </div>
+                  </td>
+                  <td className="text-[9px] text-gray-700 px-2.5 py-1.5">{row.cac}</td>
+                  <td className="text-[9px] text-gray-700 px-2.5 py-1.5">{row.conv}</td>
+                  <td className="text-[9px] text-gray-700 px-2.5 py-1.5 font-medium">{row.rev}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="mt-1.5 flex items-center gap-1.5 text-[9px] text-gray-400">
+          <BotAvatar code="CFOB" size="sm" />
+          <span>Frank (CFO) \u2014 donnees historiques + projections</span>
+        </div>
+      </div>
+    </AnimBlock>
+  );
+}
+
+function MagTableurProjections() {
+  return (
+    <AnimBlock delay={150}>
+      <div className="border-l-[3px] border-teal-400 bg-teal-50/50 rounded-r-lg px-3 py-2">
+        <h4 className="text-[9px] font-bold text-teal-700 mb-2">3. Projections mensuelles</h4>
+        <div className="grid grid-cols-3 gap-2">
+          {[
+            { label: "Leads Q2", value: "280", delta: "+111%", color: "text-emerald-700 bg-emerald-50 border-emerald-200" },
+            { label: "CAC moyen", value: "485$", delta: "-38%", color: "text-emerald-700 bg-emerald-50 border-emerald-200" },
+            { label: "Revenue Q2", value: "182K$", delta: "+67%", color: "text-emerald-700 bg-emerald-50 border-emerald-200" },
+          ].map(t => (
+            <div key={t.label} className={cn("border rounded-xl p-2.5 text-center", t.color)}>
+              <p className="text-[9px] font-bold">{t.label}</p>
+              <p className="text-sm font-extrabold">{t.value}</p>
+              <div className="flex items-center justify-center gap-1 mt-0.5">
+                <TrendingUp className="h-3 w-3" />
+                <span className="text-[9px] font-bold">{t.delta}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </AnimBlock>
+  );
+}
+
+function MagTableurFormules() {
+  return (
+    <AnimBlock delay={200}>
+      <div className="border-l-[3px] border-teal-400 bg-teal-50/50 rounded-r-lg px-3 py-2">
+        <h4 className="text-[9px] font-bold text-teal-700 mb-2">4. Formules & Calculs</h4>
+        <div className="space-y-1.5">
+          {[
+            { formula: "CAC = Budget / Leads", result: "12,000 / 45 = 267$" },
+            { formula: "ROI = (Revenue - Budget) / Budget", result: "(182K - 45K) / 45K = 3.04x" },
+            { formula: "Conv. = Clients / Leads \u00d7 100", result: "7 / 280 \u00d7 100 = 2.5%" },
+            { formula: "LTV/CAC = LTV moyen / CAC", result: "2,400 / 485 = 4.95x" },
+          ].map((f, i) => (
+            <div key={i} className="bg-gray-900 rounded-lg px-3 py-1.5">
+              <code className="text-[9px] text-teal-300 font-mono">{f.formula}</code>
+              <code className="text-[9px] text-gray-400 font-mono ml-2">{"\u2192"} {f.result}</code>
+            </div>
+          ))}
+        </div>
+      </div>
+    </AnimBlock>
+  );
+}
+
+function MagTableurGraphiques() {
+  return (
+    <AnimBlock delay={100}>
+      <div className="border-l-[3px] border-teal-400 bg-teal-50/50 rounded-r-lg px-3 py-2">
+        <h4 className="text-[9px] font-bold text-teal-700 mb-2">5. Graphiques & Tendances</h4>
+        <div className="grid grid-cols-3 gap-2">
+          {[
+            { label: "Leads", trend: "+111%", dir: "up", color: "text-emerald-700 bg-emerald-50 border-emerald-200" },
+            { label: "CAC", trend: "-46%", dir: "down", color: "text-emerald-700 bg-emerald-50 border-emerald-200" },
+            { label: "Revenue", trend: "+111%", dir: "up", color: "text-emerald-700 bg-emerald-50 border-emerald-200" },
+          ].map(t => (
+            <div key={t.label} className={cn("border rounded-xl p-2.5 text-center", t.color)}>
+              <p className="text-[9px] font-bold">{t.label}</p>
+              <p className="text-sm font-extrabold">{t.trend}</p>
+              <TrendingUp className={cn("h-3.5 w-3.5 mx-auto mt-0.5", t.dir === "down" ? "rotate-180" : "")} />
+            </div>
+          ))}
+        </div>
+        <p className="text-[9px] text-gray-500 mt-1.5">Graphiques auto-generes depuis les donnees de reference</p>
+      </div>
+    </AnimBlock>
+  );
+}
+
+function MagTableurExport() {
+  return (
+    <AnimBlock delay={150}>
+      <div className="border-l-[3px] border-teal-400 bg-teal-50/50 rounded-r-lg px-3 py-2">
+        <h4 className="text-[9px] font-bold text-teal-700 mb-2">6. Export & Partage</h4>
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { format: "CSV", desc: "Donnees brutes pour Excel/Sheets", icon: Table2 },
+            { format: "PDF", desc: "Rapport avec graphiques integres", icon: FileText },
+            { format: "Google Sheets", desc: "Partage live avec l'equipe", icon: Globe },
+            { format: "Dashboard", desc: "Vue temps reel dans Brain Team", icon: BarChart3 },
+          ].map(e => (
+            <div key={e.format} className="bg-white border border-gray-200 rounded-lg p-2 flex items-center gap-2 cursor-pointer hover:border-teal-300 transition-colors">
+              <e.icon className="h-4 w-4 text-teal-500 shrink-0" />
+              <div>
+                <p className="text-[9px] font-bold text-gray-800">{e.format}</p>
+                <p className="text-[8px] text-gray-500">{e.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </AnimBlock>
+  );
+}
+
+// ========== MAG CONTENT — Presentation (blue) ==========
+
+function MagPresEnjeu() {
+  return (
+    <AnimBlock>
+      <div className="border-l-[3px] border-blue-400 bg-blue-50/50 rounded-r-lg px-3 py-2">
+        <h4 className="text-[9px] font-bold text-blue-700 mb-2">1. Slide \u2014 Enjeu</h4>
+        <div className={cn("border-2 rounded-xl p-4", PRESENTATION_SLIDES[0].color)}>
+          <span className="text-[9px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">Slide 1/4</span>
+          <h4 className="text-sm font-bold text-gray-900 mt-2 mb-2">{PRESENTATION_SLIDES[0].title}</h4>
+          <div className="space-y-1.5">
+            {PRESENTATION_SLIDES[0].bullets.map((b, i) => (
+              <div key={i} className="flex items-center gap-2 text-[9px] text-gray-700">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
+                <span>{b}</span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 bg-white/50 border border-dashed border-gray-300 rounded-lg p-3 text-center">
+            <Image className="h-5 w-5 text-gray-300 mx-auto mb-1" />
+            <p className="text-[8px] text-gray-400">Zone visuelle \u2014 graphique ou image</p>
+          </div>
+        </div>
+      </div>
+    </AnimBlock>
+  );
+}
+
+function MagPresStrategie() {
+  return (
+    <AnimBlock delay={100}>
+      <div className="border-l-[3px] border-blue-400 bg-blue-50/50 rounded-r-lg px-3 py-2">
+        <h4 className="text-[9px] font-bold text-blue-700 mb-2">2. Slide \u2014 Strategie</h4>
+        <div className={cn("border-2 rounded-xl p-4", PRESENTATION_SLIDES[1].color)}>
+          <span className="text-[9px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">Slide 2/4</span>
+          <h4 className="text-sm font-bold text-gray-900 mt-2 mb-2">{PRESENTATION_SLIDES[1].title}</h4>
+          <div className="space-y-1.5">
+            {PRESENTATION_SLIDES[1].bullets.map((b, i) => (
+              <div key={i} className="flex items-center gap-2 text-[9px] text-gray-700">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
+                <span>{b}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="mt-1.5 flex items-center gap-1.5 text-[9px] text-gray-400">
+          <BotAvatar code="CMOB" size="sm" />
+          <span>Mathilde (CMO) \u2014 strategie marketing</span>
+        </div>
+      </div>
+    </AnimBlock>
+  );
+}
+
+function MagPresBudget() {
+  return (
+    <AnimBlock delay={150}>
+      <div className="border-l-[3px] border-blue-400 bg-blue-50/50 rounded-r-lg px-3 py-2">
+        <h4 className="text-[9px] font-bold text-blue-700 mb-2">3. Slide \u2014 Budget & ROI</h4>
+        <div className={cn("border-2 rounded-xl p-4", PRESENTATION_SLIDES[2].color)}>
+          <span className="text-[9px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">Slide 3/4</span>
+          <h4 className="text-sm font-bold text-gray-900 mt-2 mb-2">{PRESENTATION_SLIDES[2].title}</h4>
+          <div className="space-y-1.5">
+            {PRESENTATION_SLIDES[2].bullets.map((b, i) => (
+              <div key={i} className="flex items-center gap-2 text-[9px] text-gray-700">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
+                <span>{b}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="mt-1.5 flex items-center gap-1.5 text-[9px] text-gray-400">
+          <BotAvatar code="CFOB" size="sm" />
+          <span>Frank (CFO) \u2014 validation financiere</span>
+        </div>
+      </div>
+    </AnimBlock>
+  );
+}
+
+function MagPresTimeline() {
+  return (
+    <AnimBlock delay={200}>
+      <div className="border-l-[3px] border-blue-400 bg-blue-50/50 rounded-r-lg px-3 py-2">
+        <h4 className="text-[9px] font-bold text-blue-700 mb-2">4. Slide \u2014 Timeline</h4>
+        <div className={cn("border-2 rounded-xl p-4", PRESENTATION_SLIDES[3].color)}>
+          <span className="text-[9px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">Slide 4/4</span>
+          <h4 className="text-sm font-bold text-gray-900 mt-2 mb-2">{PRESENTATION_SLIDES[3].title}</h4>
+          <div className="space-y-1.5">
+            {PRESENTATION_SLIDES[3].bullets.map((b, i) => (
+              <div key={i} className="flex items-center gap-2 text-[9px] text-gray-700">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
+                <span>{b}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </AnimBlock>
+  );
+}
+
+function MagPresDesign() {
+  return (
+    <AnimBlock delay={100}>
+      <div className="border-l-[3px] border-blue-400 bg-blue-50/50 rounded-r-lg px-3 py-2">
+        <h4 className="text-[9px] font-bold text-blue-700 mb-2">5. Design & Visuels</h4>
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { label: "Palette", desc: "Bleu Brain Team + accents amber", icon: Palette },
+            { label: "Typographie", desc: "Inter / SF Pro \u2014 titres bold", icon: FileText },
+            { label: "Graphiques", desc: "Bar charts + donuts + trends", icon: BarChart3 },
+            { label: "Images", desc: "Photos equipe + produit live", icon: Image },
+          ].map(d => (
+            <div key={d.label} className="bg-white border border-gray-200 rounded-lg p-2 flex items-center gap-2">
+              <d.icon className="h-4 w-4 text-blue-500 shrink-0" />
+              <div>
+                <p className="text-[9px] font-bold text-gray-800">{d.label}</p>
+                <p className="text-[8px] text-gray-500">{d.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </AnimBlock>
+  );
+}
+
+function MagPresNotes() {
+  return (
+    <AnimBlock delay={150}>
+      <div className="border-l-[3px] border-blue-400 bg-blue-50/50 rounded-r-lg px-3 py-2">
+        <h4 className="text-[9px] font-bold text-blue-700 mb-2">6. Notes presentateur</h4>
+        <div className="space-y-1.5">
+          {[
+            { slide: 1, note: "Ouvrir avec le chiffre choc: 780$ par lead. Laisser le silence s'installer." },
+            { slide: 2, note: "Montrer le benchmark concurrence. Insister sur le programme referral comme quick win." },
+            { slide: 3, note: "Utiliser la phrase: ROI 3.6x = chaque dollar investi rapporte 3.60$. Point mort mois 4." },
+            { slide: 4, note: "Terminer avec la question: Qui dans l'equipe prend ownership du referral?" },
+          ].map(n => (
+            <div key={n.slide} className="bg-blue-50 border border-blue-200 rounded-lg px-2.5 py-1.5">
+              <span className="text-[8px] font-bold text-blue-600">Slide {n.slide}</span>
+              <p className="text-[9px] text-gray-700 mt-0.5">{n.note}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-1.5 flex items-center gap-1.5 text-[9px] text-gray-400">
+          <BotAvatar code="CMOB" size="sm" />
+          <span>Mathilde (CMO) \u2014 coaching presentation</span>
+        </div>
+      </div>
+    </AnimBlock>
+  );
+}
+
+// ========== MAG CONTENT — Code avec Tim (violet) ==========
+
+function MagCodePlan() {
+  return (
+    <AnimBlock>
+      <div className="border-l-[3px] border-violet-400 bg-violet-50/50 rounded-r-lg px-3 py-2">
+        <h4 className="text-[9px] font-bold text-violet-700 mb-2">1. Plan & Architecture</h4>
+        <div className="space-y-1.5">
+          {[
+            { step: "Composant React", desc: "ChatWidget.tsx \u2014 widget embeddable avec streaming" },
+            { step: "Securite", desc: "DOMPurify + rate limiter + AbortController" },
+            { step: "API", desc: "POST /chat/init + POST /chat/message (streaming SSE)" },
+            { step: "Tests", desc: "4 tests unitaires: init, send, stream, timeout" },
+          ].map((s, i) => (
+            <div key={i} className="flex items-center gap-2 text-[9px]">
+              <span className="font-bold text-violet-600 bg-violet-100 w-5 h-5 rounded-full flex items-center justify-center text-[8px] shrink-0">{i + 1}</span>
+              <div>
+                <span className="font-medium text-gray-800">{s.step}</span>
+                <span className="text-gray-500 ml-1">\u2014 {s.desc}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-2 flex items-center gap-1.5 text-[9px] text-gray-400">
+          <BotAvatar code="CTOB" size="sm" />
+          <span>Tim (CTO) \u2014 architecture validee</span>
+        </div>
+      </div>
+    </AnimBlock>
+  );
+}
+
+function MagCodeTerminal() {
+  return (
+    <AnimBlock delay={100}>
+      <div className="border-l-[3px] border-violet-400 bg-violet-50/50 rounded-r-lg px-3 py-2">
+        <h4 className="text-[9px] font-bold text-violet-700 mb-2">2. Code</h4>
+        <LiveTerminalV3 content={TIM_CODE_V3} speed={8} />
+      </div>
+    </AnimBlock>
+  );
+}
+
+function MagCodeDebug() {
+  return (
+    <AnimBlock delay={150}>
+      <div className="border-l-[3px] border-violet-400 bg-violet-50/50 rounded-r-lg px-3 py-2">
+        <h4 className="text-[9px] font-bold text-violet-700 mb-2">3. Debug</h4>
+        <LiveTerminalV3 content={TIM_DEBUG_V3} speed={15} />
+      </div>
+    </AnimBlock>
+  );
+}
+
+function MagCodeTests() {
+  return (
+    <AnimBlock delay={200}>
+      <div className="border-l-[3px] border-violet-400 bg-violet-50/50 rounded-r-lg px-3 py-2">
+        <h4 className="text-[9px] font-bold text-violet-700 mb-2">4. Tests</h4>
+        <LiveTerminalV3 content={TIM_TEST_V3} speed={15} />
+        <div className="mt-2 grid grid-cols-4 gap-2">
+          {["Init", "Message", "Stream", "Timeout"].map(t => (
+            <div key={t} className="bg-emerald-50 border border-emerald-200 rounded-lg p-1.5 text-center">
+              <p className="text-[9px] text-emerald-600 font-bold">{t}</p>
+              <p className="text-[9px] font-bold text-emerald-800">PASSED</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </AnimBlock>
+  );
+}
+
+function MagCodeDeploy() {
+  return (
+    <AnimBlock delay={100}>
+      <div className="border-l-[3px] border-violet-400 bg-violet-50/50 rounded-r-lg px-3 py-2">
+        <h4 className="text-[9px] font-bold text-violet-700 mb-2">5. Deploiement</h4>
+        <div className="space-y-1.5">
+          {[
+            { step: "Build", status: "done", detail: "vite build \u2014 0 erreurs, 42 lignes" },
+            { step: "Securite", status: "done", detail: "DOMPurify + rate limit valides" },
+            { step: "Staging", status: "done", detail: "dev.usinebleue.ai \u2014 test OK" },
+            { step: "Production", status: "ready", detail: "app.usinebleue.ai \u2014 pret au deploy" },
+          ].map((s, i) => (
+            <div key={i} className="flex items-center gap-2 text-[9px]">
+              {s.status === "done" ? (
+                <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+              ) : (
+                <Rocket className="h-4 w-4 text-violet-500 shrink-0 animate-pulse" />
+              )}
+              <span className="font-medium text-gray-800 w-16 shrink-0">{s.step}</span>
+              <span className="text-gray-500">{s.detail}</span>
+            </div>
+          ))}
+        </div>
+        <button type="button" className="mt-2 w-full bg-violet-600 text-white text-[10px] font-bold py-2 rounded-lg hover:bg-violet-700 transition-colors cursor-pointer flex items-center justify-center gap-1.5">
+          <Rocket className="h-3.5 w-3.5" /> Deployer en production
+        </button>
+      </div>
+    </AnimBlock>
+  );
+}
+
+// ========== GENERIC LIVRABLE LAYOUT — PhaseConceptionLivrable ==========
+
+type L2Theme = typeof L2_THEMES.amber;
+type L2Section = { id: number; title: string; icon: React.ElementType; minStage: number };
+
+function PhaseConceptionLivrable({
+  stage, onBack, theme, sections, icon: MainIcon, title, sectionContent,
+}: {
+  stage: number;
+  onBack?: () => void;
+  theme: L2Theme;
+  sections: L2Section[];
+  icon: React.ElementType;
+  title: string;
+  sectionContent: Record<number, React.ReactNode>;
+}) {
+  const [activeSection, setActiveSection] = useState(1);
+  const [validatedSections, setValidatedSections] = useState<number[]>([]);
+
+  const visibleSections = sections.filter(s => s.minStage <= stage);
+  const allValidated = validatedSections.length === sections.length;
+
+  // Auto-advance to last unlocked section
+  useEffect(() => {
+    const last = visibleSections[visibleSections.length - 1];
+    if (last) setActiveSection(last.id);
+  }, [visibleSections.length]);
+
+  return (
+    <div className="max-w-4xl mx-auto px-6 py-4 pb-12 space-y-4">
+      {/* Retour */}
+      {onBack && (
+        <button type="button" onClick={onBack} className="flex items-center gap-1.5 text-[10px] text-gray-500 hover:text-gray-700 transition-colors cursor-pointer mb-1">
+          <ArrowLeft className="h-3.5 w-3.5" /> Retour au chantier
+        </button>
+      )}
+
+      {/* Hero compact */}
+      <div className="relative overflow-hidden rounded-xl border border-gray-200 bg-white px-5 py-4">
+        <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl opacity-50" style={{ background: "currentColor" }} />
+        <div className={cn("absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl opacity-30", theme.heroBlur1)} />
+        <div className={cn("absolute -bottom-4 -left-4 w-16 h-16 rounded-full blur-xl opacity-20", theme.heroBlur2)} />
+        <div className="relative flex items-center gap-3">
+          <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", theme.bgLight, theme.border, "border")}>
+            <MainIcon className={cn("h-5 w-5", theme.iconColor)} />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold text-gray-900">{title}</h2>
+            <p className="text-[10px] text-gray-500 mt-0.5">{visibleSections.length} / {sections.length} sections disponibles</p>
+          </div>
+          <div className="ml-auto flex items-center gap-2">
+            {sections.map(s => (
+              <div key={s.id} className={cn("w-2 h-2 rounded-full transition-all",
+                validatedSections.includes(s.id) ? "bg-emerald-500" :
+                visibleSections.some(v => v.id === s.id) ? theme.dot :
+                "bg-gray-200"
+              )} />
+            ))}
+          </div>
+        </div>
+        {/* Progress bar */}
+        <div className="mt-3 flex items-center gap-2">
+          <div className={cn("flex-1 h-1.5 rounded-full", theme.progressBg)}>
+            <div className={cn("h-full rounded-full transition-all duration-500", theme.progressFill)} style={{ width: `${(validatedSections.length / sections.length) * 100}%` }} />
+          </div>
+          <span className="text-[9px] font-bold text-gray-500">{Math.round((validatedSections.length / sections.length) * 100)}%</span>
+        </div>
+      </div>
+
+      {/* DocForge: sidebar + content */}
+      <div className="flex gap-4">
+        {/* Sidebar */}
+        <div className={cn("shrink-0 space-y-1", SF.sidebarW)}>
+          {sections.map(s => {
+            const isVisible = visibleSections.some(v => v.id === s.id);
+            const isActive = s.id === activeSection;
+            const isValidated = validatedSections.includes(s.id);
+            const Icon = s.icon;
+            return (
+              <button key={s.id} type="button" disabled={!isVisible}
+                onClick={() => isVisible && setActiveSection(s.id)}
+                className={cn(SF.btnBase,
+                  isActive ? SF.btnActive :
+                  isValidated ? "bg-emerald-50 text-emerald-700 font-medium" :
+                  isVisible ? SF.btnInactive :
+                  "text-gray-300 cursor-not-allowed"
+                )}>
+                {isValidated ? <CheckCircle2 className={cn(SF.iconSize, "text-emerald-500 shrink-0")} /> :
+                 isActive ? <Icon className={cn(SF.iconSize, theme.iconColor, "shrink-0")} /> :
+                 <div className={cn(SF.iconSize, "rounded-full border border-gray-300 shrink-0")} />}
+                <span className="truncate">{s.id}. {s.title}</span>
+              </button>
+            );
+          })}
+          {/* Progress indicator */}
+          <div className="mt-2 px-2">
+            <div className={cn("h-1.5 rounded-full", theme.progressBg)}>
+              <div className={cn("h-full rounded-full transition-all", theme.progressFill)} style={{ width: `${(validatedSections.length / sections.length) * 100}%` }} />
+            </div>
+            <span className="text-[9px] text-gray-500 mt-1 block">{validatedSections.length}/{sections.length} valides</span>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 space-y-3">
+          {visibleSections.map(s => (
+            <div key={s.id} className={cn(s.id !== activeSection && "hidden")}>
+              <DocForgeBlock>
+                {sectionContent[s.id] || (
+                  <div className={cn("border-l-[3px] rounded-r-lg px-3 py-4 text-center", theme.borderLeft, theme.sectionBg)}>
+                    <s.icon className={cn("h-5 w-5 mx-auto mb-1", theme.iconColor)} />
+                    <p className={cn("text-[10px] font-medium", theme.text)}>Section en cours de generation...</p>
+                  </div>
+                )}
+              </DocForgeBlock>
+
+              {/* Validate button */}
+              {!validatedSections.includes(s.id) && (
+                <button type="button" onClick={() => setValidatedSections(prev => [...prev, s.id])}
+                  className={cn("mt-2 w-full border-2 border-dashed rounded-lg px-4 py-2 text-[10px] font-medium transition-colors cursor-pointer flex items-center justify-center gap-1.5", theme.border, theme.text, "hover:bg-opacity-50", theme.bgLight)}>
+                  <CheckCircle2 className="h-3.5 w-3.5" /> Valider cette section
+                </button>
+              )}
+            </div>
+          ))}
+
+          {/* Empty state */}
+          {visibleSections.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-12 text-gray-400 gap-2">
+              <MainIcon className="h-8 w-8" />
+              <p className="text-xs font-medium">En attente des instructions...</p>
+              <p className="text-[9px]">Parle a CarlOS dans le chat pour commencer</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Completion card */}
+      {allValidated && (
+        <AnimBlock delay={300}>
+          <div className={cn("border rounded-xl p-4 text-center", theme.bgLight, theme.border)}>
+            <CheckCircle2 className="h-6 w-6 text-emerald-500 mx-auto mb-2" />
+            <p className="text-sm font-bold text-gray-900">Livrable complet</p>
+            <p className={cn("text-[10px] mt-1", theme.text)}>{sections.length} sections validees \u2014 pret pour export</p>
+            <div className="mt-3 flex gap-2 justify-center">
+              <button type="button" className="text-[10px] bg-gray-900 text-white px-4 py-2 rounded-lg font-bold cursor-pointer hover:bg-gray-800 flex items-center gap-1.5">
+                <FileText className="h-3.5 w-3.5" /> Exporter PDF
+              </button>
+              {onBack && (
+                <button type="button" onClick={onBack} className="text-[10px] bg-white text-gray-700 px-4 py-2 rounded-lg font-bold border border-gray-300 cursor-pointer hover:bg-gray-50 flex items-center gap-1.5">
+                  <ArrowLeft className="h-3.5 w-3.5" /> Retour au chantier
+                </button>
+              )}
+            </div>
+          </div>
+        </AnimBlock>
+      )}
+    </div>
+  );
+}
+
+// ========== 4 EXPORTED WRAPPERS ==========
+
+export function PhaseConceptionDocument({ stage, onBack }: { stage: number; onBack?: () => void }) {
+  return (
+    <PhaseConceptionLivrable stage={stage} onBack={onBack} theme={L2_THEMES.amber}
+      sections={DOCUMENT_DOCFORGE_SECTIONS} icon={FileText} title="Rapport strategique \u2014 Marketing Q2"
+      sectionContent={{
+        1: <MagDocContexte />, 2: <MagDocObjectifs />, 3: <MagDocSwot />,
+        4: <MagDocPlanAction />, 5: <MagDocBudget />, 6: <MagDocTimeline />,
+        7: <MagDocIndicateurs />,
+      }} />
+  );
+}
+
+export function PhaseConceptionTableur({ stage, onBack }: { stage: number; onBack?: () => void }) {
+  return (
+    <PhaseConceptionLivrable stage={stage} onBack={onBack} theme={L2_THEMES.teal}
+      sections={TABLEUR_DOCFORGE_SECTIONS} icon={Table2} title="Tableur de suivi \u2014 Projections Q2"
+      sectionContent={{
+        1: <MagTableurStructure />, 2: <MagTableurDonnees />, 3: <MagTableurProjections />,
+        4: <MagTableurFormules />, 5: <MagTableurGraphiques />, 6: <MagTableurExport />,
+      }} />
+  );
+}
+
+export function PhaseConceptionPresentation({ stage, onBack }: { stage: number; onBack?: () => void }) {
+  return (
+    <PhaseConceptionLivrable stage={stage} onBack={onBack} theme={L2_THEMES.blue}
+      sections={PRESENTATION_DOCFORGE_SECTIONS} icon={Presentation} title="Pitch Deck \u2014 Marketing Q2"
+      sectionContent={{
+        1: <MagPresEnjeu />, 2: <MagPresStrategie />, 3: <MagPresBudget />,
+        4: <MagPresTimeline />, 5: <MagPresDesign />, 6: <MagPresNotes />,
+      }} />
+  );
+}
+
+export function PhaseConceptionCode({ stage, onBack }: { stage: number; onBack?: () => void }) {
+  return (
+    <PhaseConceptionLivrable stage={stage} onBack={onBack} theme={L2_THEMES.violet}
+      sections={CODE_DOCFORGE_SECTIONS} icon={Code2} title="Tim Code \u2014 Chatbot AI Site Web"
+      sectionContent={{
+        1: <MagCodePlan />, 2: <MagCodeTerminal />, 3: <MagCodeDebug />,
+        4: <MagCodeTests />, 5: <MagCodeDeploy />,
+      }} />
+  );
+}
+
+// ========== DELIVERABLE CONCEPTION CHAT ==========
+
+const L2_CHAT_CONFIGS: Record<string, { bot: string; botName: string; messages: { from: string; text: string }[][] }> = {
+  document: {
+    bot: "CSOB", botName: "Simone (CSO)",
+    messages: [
+      [{ from: "bot", text: "On commence le rapport strategique. Je vais pre-remplir le contexte depuis ton analyse." }],
+      [{ from: "bot", text: "Contexte et objectifs SMART integres. Je lance la matrice SWOT avec les donnees du chantier." }],
+      [{ from: "bot", text: "SWOT et plan d'action valides. Frank va maintenant chiffrer le budget et la timeline." }],
+      [{ from: "bot", text: "Budget et timeline integres. Derniere etape: les indicateurs KPI pour le suivi." }],
+    ],
+  },
+  spreadsheet: {
+    bot: "CFOB", botName: "Frank (CFO)",
+    messages: [
+      [{ from: "bot", text: "Je prepare le tableur de projections Q2. Structure et colonnes d'abord." }],
+      [{ from: "bot", text: "Donnees de reference importees. Je calcule les projections mensuelles maintenant." }],
+      [{ from: "bot", text: "Projections OK. J'ajoute les formules de calcul et les graphiques de tendances." }],
+    ],
+  },
+  presentation: {
+    bot: "CMOB", botName: "Mathilde (CMO)",
+    messages: [
+      [{ from: "bot", text: "On monte le pitch deck. Slide 1: l'enjeu marketing avec les chiffres chocs." }],
+      [{ from: "bot", text: "Les 2 premieres slides sont pretes. On passe au budget et a la timeline." }],
+      [{ from: "bot", text: "Slides completes! J'ajoute les recommandations design et les notes presentateur." }],
+    ],
+  },
+  code: {
+    bot: "CTOB", botName: "Tim (CTO)",
+    messages: [
+      [{ from: "bot", text: "Plan d'architecture valide. Je lance la creation du composant ChatWidget.tsx." }],
+      [{ from: "bot", text: "Code genere. Je lance le debug automatique pour trouver les issues." }],
+      [{ from: "bot", text: "2 bugs fixes. Je lance la suite de tests maintenant." }],
+      [{ from: "bot", text: "4/4 tests green! Le composant est pret pour le deploiement." }],
+      [{ from: "bot", text: "Deploiement pret. Build OK, securite validee, staging teste." }],
+    ],
+  },
+};
+
+export function DeliverableConceptionChat({ deliverable, stage, typed, setTyped, advance, onBack }: {
+  deliverable: string;
+  stage: number;
+  typed: boolean;
+  setTyped: (v: boolean) => void;
+  advance: () => void;
+  onBack?: () => void;
+}) {
+  const config = L2_CHAT_CONFIGS[deliverable];
+  if (!config) return null;
+
+  const visibleMessages = config.messages.slice(0, stage + 1);
+  const allDone = stage >= config.messages.length;
+
+  return (
+    <div className="space-y-3">
+      {/* Header */}
+      <div className="flex items-center gap-2 px-1">
+        {onBack && (
+          <button type="button" onClick={onBack} className="text-[9px] text-gray-500 hover:text-gray-700 cursor-pointer flex items-center gap-1">
+            <ArrowLeft className="h-3 w-3" /> Retour
+          </button>
+        )}
+        <div className="flex items-center gap-1.5 ml-auto">
+          <BotAvatar code={config.bot} size="sm" />
+          <span className="text-[9px] text-gray-500 font-medium">{config.botName}</span>
+        </div>
+      </div>
+
+      {/* Messages */}
+      {visibleMessages.map((group, gi) => (
+        <div key={gi}>
+          {group.map((msg, mi) => (
+            <div key={mi} className="flex items-start gap-2 mb-2">
+              <BotAvatar code={config.bot} size="sm" />
+              <div className="bg-gray-100 rounded-xl px-3 py-2 max-w-[85%]">
+                <p className="text-xs text-gray-700">{msg.text}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      ))}
+
+      {/* Continue button */}
+      {!allDone && !typed && (
+        <button type="button" onClick={() => { setTyped(true); advance(); }}
+          className="w-full text-[10px] bg-gray-900 text-white py-2 rounded-lg font-medium cursor-pointer hover:bg-gray-800 transition-colors flex items-center justify-center gap-1.5">
+          <ChevronRight className="h-3.5 w-3.5" /> Continuer
+        </button>
+      )}
+
+      {/* Completion */}
+      {allDone && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2.5 text-center">
+          <CheckCircle2 className="h-4 w-4 text-emerald-500 mx-auto mb-1" />
+          <p className="text-[10px] font-bold text-emerald-700">Livrable genere avec succes</p>
+          <p className="text-[9px] text-emerald-600 mt-0.5">Toutes les sections sont disponibles dans le workspace</p>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -3734,25 +5359,20 @@ export function PhaseReflexion({ stage, context, onStartConception }: { stage: n
         </div>
       ) : (
         <>
-          {/* 1. LIVING HERO — Phase + section active */}
-          <LivingHero
-            blur1="bg-orange-100/70"
-            blur2="bg-amber-100/40"
-            subtitleColor="text-orange-600"
-            subtitle={`Phase Réflexion — Étape ${activeSection} de ${REFLEXION_DOCFORGE_SECTIONS.length}`}
-            title={activeDef ? `${activeDef.id}. ${activeDef.title}` : "Session de réflexion"}
-            description=""
-            slim
-          >
-            {activeDef && (() => { const Icon = activeDef.icon; return <Icon className="w-[80px] h-[80px] text-orange-300 opacity-40 stroke-[1]" />; })()}
-          </LivingHero>
-
-          {/* 2. PROGRESSION — barre sous le hero */}
-          <div className="flex items-center gap-3 px-1">
-            <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-              <div className="h-full bg-orange-400 rounded-full transition-all" style={{ width: `${(visibleCount / REFLEXION_DOCFORGE_SECTIONS.length) * 100}%` }} />
+          {/* 1. HERO COMPACT — icône + titre + progression sur UNE ligne */}
+          <div className="relative w-full rounded-xl bg-white border border-gray-200 shadow-sm overflow-hidden flex items-center px-6 py-4">
+            <div className="absolute rounded-full blur-[100px] opacity-60 bg-orange-100/70" style={{ top: '-50%', left: '-10%', width: '50%', height: '200%' }} />
+            <div className="absolute rounded-full blur-[120px] opacity-50 bg-amber-100/40" style={{ bottom: '-50%', right: '10%', width: '60%', height: '200%' }} />
+            <div className="absolute inset-0 bg-pattern-grid opacity-[0.35]" />
+            <div className="relative z-20 flex items-center gap-4 w-full">
+              {activeDef && (() => { const Icon = activeDef.icon; return <Icon className="h-7 w-7 text-orange-500 shrink-0 stroke-[2]" />; })()}
+              <h2 className="text-lg font-extrabold text-gray-900 shrink-0">{activeDef ? `${activeDef.id}. ${activeDef.title}` : "Session de réflexion"}</h2>
+              <div className="flex-1" />
+              <span className="text-xs font-bold text-gray-900 shrink-0">Étape {visibleCount} de {REFLEXION_DOCFORGE_SECTIONS.length}</span>
+              <div className="w-28 h-2 bg-orange-100 rounded-full overflow-hidden shrink-0">
+                <div className="h-full bg-orange-400 rounded-full transition-all duration-500" style={{ width: `${(visibleCount / REFLEXION_DOCFORGE_SECTIONS.length) * 100}%` }} />
+              </div>
             </div>
-            <span className="text-xs font-bold text-gray-500 shrink-0">{visibleCount}/{REFLEXION_DOCFORGE_SECTIONS.length}</span>
           </div>
 
           {/* 3. SIDEBAR SF + CONTENU — UNE section à la fois (pattern DocForge/Cockpit) */}
@@ -3781,18 +5401,7 @@ export function PhaseReflexion({ stage, context, onStartConception }: { stage: n
                   </button>
                 );
               })}
-              <div className={SF.separator} />
-              <div className={SF.sectionLabel}>Actions</div>
-              {[
-                { label: "Re-synthétiser", icon: RefreshCw },
-                { label: "Réorganiser", icon: Layers },
-                { label: "Exporter PDF", icon: FileText },
-              ].map(a => (
-                <button key={a.label} className={cn(SF.btnBase, SF.btnInactive)}>
-                  <a.icon className={SF.iconInactive} />
-                  <span className={SF.labelInactive}>{a.label}</span>
-                </button>
-              ))}
+              {/* Actions retirées du sidebar — les vrais boutons d'action sont sous le contenu cristallisé dans le workspace */}
             </div>
 
             {/* Content — UNE SEULE section affichée (celle sélectionnée dans la sidebar) */}
