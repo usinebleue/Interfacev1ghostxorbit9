@@ -4031,6 +4031,43 @@ export function PhaseConception({ stage, context, onStartExecution, onSelectDeli
   );
 }
 
+// ========== DATA CONSTANTS — shared by Level 2 livrables ==========
+
+const SWOT_DATA = {
+  forces: ["Reseau REAI 130+ membres", "AI CEO unique sur le marche", "Pipeline vocal+video operationnel"],
+  faiblesses: ["Equipe marketing 1 personne", "Brand awareness faible hors REAI", "Dependance bouche-a-oreille 65%"],
+  opportunites: ["72% PME sous-investissent en digital", "0 concurrent avec AI CEO integree", "Subventions MESI numerisation"],
+  menaces: ["Concurrents SaaS bien finances", "Resistance au changement PME", "Budget marketing limite 12K$/mois"],
+};
+
+const GANTT_MILESTONES = [
+  { id: 1, label: "Programme referral", bot: "CMOB", start: "S1", end: "S4", progress: 0 },
+  { id: 2, label: "Content LinkedIn", bot: "CMOB", start: "S2", end: "S8", progress: 0 },
+  { id: 3, label: "Chatbot site web", bot: "CTOB", start: "S3", end: "S6", progress: 0 },
+  { id: 4, label: "Email nurturing", bot: "CTOB", start: "S5", end: "S10", progress: 0 },
+];
+
+const BUDGET_ROWS = [
+  { poste: "Programme referral", mensuel: "1,200$", annuel: "14,400$", pct: 31 },
+  { poste: "Content LinkedIn", mensuel: "1,400$", annuel: "16,800$", pct: 37 },
+  { poste: "Chatbot AI (maintenance)", mensuel: "400$", annuel: "4,800$", pct: 11 },
+  { poste: "Email nurturing", mensuel: "800$", annuel: "9,600$", pct: 21 },
+];
+
+const PRESENTATION_SLIDES = [
+  { id: 1, title: "Enjeu Marketing Q2", bullets: ["CAC actuel: 780$/lead", "65% bouche-a-oreille", "Objectif: +40% leads"], color: "bg-red-50 border-red-200" },
+  { id: 2, title: "Strategie proposee", bullets: ["Programme referral REAI", "Content LinkedIn + SEO", "Chatbot AI site web"], color: "bg-amber-50 border-amber-200" },
+  { id: 3, title: "Budget & ROI", bullets: ["3,800$/mois total", "ROI projete: 3.6x", "Point mort: mois 4"], color: "bg-emerald-50 border-emerald-200" },
+  { id: 4, title: "Timeline & Equipe", bullets: ["S1-S14, checkpoint S7", "Mathilde + Tim + Frank", "4 jalons majeurs"], color: "bg-blue-50 border-blue-200" },
+];
+
+const TABLEUR_DATA = [
+  { mois: "Avril", leads: 45, cac: "650$", conv: "1.8%", rev: "29,250$" },
+  { mois: "Mai", leads: 62, cac: "520$", conv: "2.1%", rev: "40,300$" },
+  { mois: "Juin", leads: 78, cac: "420$", conv: "2.6%", rev: "50,700$" },
+  { mois: "Juillet", leads: 95, cac: "350$", conv: "3.0%", rev: "61,750$" },
+];
+
 // ========== LEVEL 2 — CONCEPTION DES LIVRABLES (Document, Tableur, Présentation, Code) ==========
 
 // --- AnimBlock: progressive reveal wrapper ---
