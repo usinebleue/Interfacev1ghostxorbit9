@@ -4865,6 +4865,7 @@ function MagCodeDeploy() {
 }
 
 // ========== GENERIC LIVRABLE LAYOUT — PhaseConceptionLivrable ==========
+// COPIE EXACTE du pattern PhaseReflexion (hero + sidebar SF + content SF)
 
 type L2Theme = typeof L2_THEMES.amber;
 type L2Section = { id: number; title: string; icon: React.ElementType; minStage: number };
@@ -4880,17 +4881,26 @@ function PhaseConceptionLivrable({
   title: string;
   sectionContent: Record<number, React.ReactNode>;
 }) {
-  const [activeSection, setActiveSection] = useState(1);
-  const [validatedSections, setValidatedSections] = useState<number[]>([]);
-
   const visibleSections = sections.filter(s => s.minStage <= stage);
-  const allValidated = validatedSections.length === sections.length;
+  const visibleCount = visibleSections.length;
+  const [activeSection, setActiveSection] = useState(1);
 
-  // Auto-advance to last unlocked section
+  // Auto-avance vers la derniere section debloquee (COPIE PhaseReflexion)
   useEffect(() => {
-    const last = visibleSections[visibleSections.length - 1];
-    if (last) setActiveSection(last.id);
-  }, [visibleSections.length]);
+    if (visibleSections.length > 0) {
+      setActiveSection(visibleSections[visibleSections.length - 1].id);
+    }
+  }, [visibleCount]);
+
+  const activeDef = sections.find(s => s.id === activeSection);
+  const ActiveIcon = activeDef?.icon || MainIcon;
+
+  // Status section (COPIE PhaseReflexion)
+  const getSectionStatus = (id: number): DocForgeStatus => {
+    const nextSection = sections.find(s => s.id === id + 1);
+    if (!nextSection) return visibleCount === sections.length ? "complete" : "en-cours";
+    return stage >= nextSection.minStage ? "complete" : "en-cours";
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-4 pb-12 space-y-4">
@@ -4901,125 +4911,111 @@ function PhaseConceptionLivrable({
         </button>
       )}
 
-      {/* Hero compact */}
-      <div className="relative overflow-hidden rounded-xl border border-gray-200 bg-white px-5 py-4">
-        <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl opacity-50" style={{ background: "currentColor" }} />
-        <div className={cn("absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl opacity-30", theme.heroBlur1)} />
-        <div className={cn("absolute -bottom-4 -left-4 w-16 h-16 rounded-full blur-xl opacity-20", theme.heroBlur2)} />
-        <div className="relative flex items-center gap-3">
-          <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", theme.bgLight, theme.border, "border")}>
-            <MainIcon className={cn("h-5 w-5", theme.iconColor)} />
-          </div>
-          <div>
-            <h2 className="text-sm font-bold text-gray-900">{title}</h2>
-            <p className="text-[10px] text-gray-500 mt-0.5">{visibleSections.length} / {sections.length} sections disponibles</p>
-          </div>
-          <div className="ml-auto flex items-center gap-2">
-            {sections.map(s => (
-              <div key={s.id} className={cn("w-2 h-2 rounded-full transition-all",
-                validatedSections.includes(s.id) ? "bg-emerald-500" :
-                visibleSections.some(v => v.id === s.id) ? theme.dot :
-                "bg-gray-200"
-              )} />
-            ))}
-          </div>
+      {stage < 1 ? (
+        <div className="text-center py-12">
+          <MainIcon className="h-8 w-8 text-gray-300 mx-auto mb-3" />
+          <p className="text-sm text-gray-400">La conception commence...</p>
+          <p className="text-xs text-gray-300">Les sections apparaitront au fur et a mesure</p>
         </div>
-        {/* Progress bar */}
-        <div className="mt-3 flex items-center gap-2">
-          <div className={cn("flex-1 h-1.5 rounded-full", theme.progressBg)}>
-            <div className={cn("h-full rounded-full transition-all duration-500", theme.progressFill)} style={{ width: `${(validatedSections.length / sections.length) * 100}%` }} />
-          </div>
-          <span className="text-[9px] font-bold text-gray-500">{Math.round((validatedSections.length / sections.length) * 100)}%</span>
-        </div>
-      </div>
-
-      {/* DocForge: sidebar + content */}
-      <div className="flex gap-4">
-        {/* Sidebar */}
-        <div className={cn("shrink-0 space-y-1", SF.sidebarW)}>
-          {sections.map(s => {
-            const isVisible = visibleSections.some(v => v.id === s.id);
-            const isActive = s.id === activeSection;
-            const isValidated = validatedSections.includes(s.id);
-            const Icon = s.icon;
-            return (
-              <button key={s.id} type="button" disabled={!isVisible}
-                onClick={() => isVisible && setActiveSection(s.id)}
-                className={cn(SF.btnBase,
-                  isActive ? SF.btnActive :
-                  isValidated ? "bg-emerald-50 text-emerald-700 font-medium" :
-                  isVisible ? SF.btnInactive :
-                  "text-gray-300 cursor-not-allowed"
-                )}>
-                {isValidated ? <CheckCircle2 className={cn(SF.iconSize, "text-emerald-500 shrink-0")} /> :
-                 isActive ? <Icon className={cn(SF.iconSize, theme.iconColor, "shrink-0")} /> :
-                 <div className={cn(SF.iconSize, "rounded-full border border-gray-300 shrink-0")} />}
-                <span className="truncate">{s.id}. {s.title}</span>
-              </button>
-            );
-          })}
-          {/* Progress indicator */}
-          <div className="mt-2 px-2">
-            <div className={cn("h-1.5 rounded-full", theme.progressBg)}>
-              <div className={cn("h-full rounded-full transition-all", theme.progressFill)} style={{ width: `${(validatedSections.length / sections.length) * 100}%` }} />
+      ) : (
+        <>
+          {/* 1. HERO COMPACT — COPIE EXACTE PhaseReflexion (icone + titre + progression sur UNE ligne) */}
+          <div className="relative w-full rounded-xl bg-white border border-gray-200 shadow-sm overflow-hidden flex items-center px-6 py-4">
+            <div className={cn("absolute rounded-full blur-[100px] opacity-60", theme.heroBlur1)} style={{ top: '-50%', left: '-10%', width: '50%', height: '200%' }} />
+            <div className={cn("absolute rounded-full blur-[120px] opacity-50", theme.heroBlur2)} style={{ bottom: '-50%', right: '10%', width: '60%', height: '200%' }} />
+            <div className="absolute inset-0 bg-pattern-grid opacity-[0.35]" />
+            <div className="relative z-20 flex items-center gap-4 w-full">
+              <ActiveIcon className={cn("h-7 w-7 shrink-0 stroke-[2]", theme.iconColor)} />
+              <h2 className="text-lg font-extrabold text-gray-900 shrink-0">{activeDef ? `${activeDef.id}. ${activeDef.title}` : title}</h2>
+              <div className="flex-1" />
+              <span className="text-xs font-bold text-gray-900 shrink-0">{"\u00c9"}tape {visibleCount} de {sections.length}</span>
+              <div className={cn("w-28 h-2 rounded-full overflow-hidden shrink-0", theme.progressBg)}>
+                <div className={cn("h-full rounded-full transition-all duration-500", theme.progressFill)} style={{ width: `${(visibleCount / sections.length) * 100}%` }} />
+              </div>
             </div>
-            <span className="text-[9px] text-gray-500 mt-1 block">{validatedSections.length}/{sections.length} valides</span>
           </div>
-        </div>
 
-        {/* Content */}
-        <div className="flex-1 space-y-3">
-          {visibleSections.map(s => (
-            <div key={s.id} className={cn(s.id !== activeSection && "hidden")}>
-              <DocForgeBlock>
-                {sectionContent[s.id] || (
-                  <div className={cn("border-l-[3px] rounded-r-lg px-3 py-4 text-center", theme.borderLeft, theme.sectionBg)}>
-                    <s.icon className={cn("h-5 w-5 mx-auto mb-1", theme.iconColor)} />
-                    <p className={cn("text-[10px] font-medium", theme.text)}>Section en cours de generation...</p>
+          {/* 2. SIDEBAR SF + CONTENU — COPIE EXACTE PhaseReflexion */}
+          <div className="flex gap-4">
+            {/* TOC sidebar — SF.sidebarW, click = navigation */}
+            <div className={SF.sidebarW}>
+              {sections.map(s => {
+                const unlocked = stage >= s.minStage;
+                const isActive = activeSection === s.id;
+                return (
+                  <button key={s.id} type="button" onClick={() => unlocked && setActiveSection(s.id)}
+                    className={cn(SF.btnBase,
+                      isActive && unlocked ? SF.btnActive : SF.btnInactive,
+                      !unlocked && "opacity-40 cursor-default"
+                    )}>
+                    {unlocked
+                      ? <s.icon className={isActive ? SF.iconActive : SF.iconInactive} />
+                      : <div className="w-3.5 h-3.5 rounded-full border border-gray-300 shrink-0" />
+                    }
+                    <span className={isActive && unlocked ? SF.labelActive : SF.labelInactive}>{s.id}. {s.title}</span>
+                    {unlocked && (
+                      <span className={cn("text-[10px] px-1 py-0.5 rounded-full font-medium",
+                        getSectionStatus(s.id) === "complete" ? "bg-emerald-100 text-emerald-600" : "bg-amber-50 text-amber-600"
+                      )}>
+                        {getSectionStatus(s.id) === "complete" ? "\u2713" : "\u2026"}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Content — UNE SEULE section affichee (COPIE PhaseReflexion) */}
+            <div className={SF.content}>
+              {stage >= (sections.find(s => s.id === activeSection)?.minStage ?? 999) && (
+                <DocForgeBlock
+                  index={activeSection}
+                  title={activeDef?.title || ""}
+                  icon={ActiveIcon}
+                  status={getSectionStatus(activeSection)}
+                >
+                  {sectionContent[activeSection] || (
+                    <div className={cn("border-l-[3px] rounded-r-lg px-3 py-4 text-center", theme.borderLeft, theme.sectionBg)}>
+                      <MainIcon className={cn("h-5 w-5 mx-auto mb-1", theme.iconColor)} />
+                      <p className={cn("text-[10px] font-medium", theme.text)}>Section en cours de generation...</p>
+                    </div>
+                  )}
+                </DocForgeBlock>
+              )}
+
+              {/* Transition vers completion — visible quand toutes les sections sont debloquees */}
+              {visibleCount === sections.length && (
+                <div className="mt-4">
+                  <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                    <div className="bg-[#00B4D8]/10 px-6 py-4">
+                      <div className="flex items-center justify-center gap-4 mb-3">
+                        <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center", theme.bgLight)}>
+                          <MainIcon className={cn("h-4 w-4 stroke-[2.5]", theme.iconColor)} />
+                        </div>
+                        <ArrowRight className="h-4 w-4 text-gray-400" />
+                        <div className="w-9 h-9 rounded-lg bg-emerald-100 flex items-center justify-center">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-600 stroke-[2.5]" />
+                        </div>
+                      </div>
+                      <p className="text-sm font-bold text-gray-900 text-center">Livrable complet</p>
+                      <p className="text-xs text-gray-500 text-center mt-1">{sections.length} sections generees {"\u2014"} pret pour export</p>
+                    </div>
+                    <div className="px-6 py-3 flex gap-2 justify-center">
+                      <button type="button" className="text-xs bg-gray-900 text-white px-4 py-2 rounded-full font-bold cursor-pointer hover:bg-gray-800 flex items-center gap-1.5">
+                        <FileText className="h-3.5 w-3.5" /> Exporter PDF
+                      </button>
+                      {onBack && (
+                        <button type="button" onClick={onBack} className="text-xs bg-white text-gray-700 px-4 py-2 rounded-full font-bold border border-gray-300 cursor-pointer hover:bg-gray-50 flex items-center gap-1.5">
+                          <ArrowLeft className="h-3.5 w-3.5" /> Retour au chantier
+                        </button>
+                      )}
+                    </div>
                   </div>
-                )}
-              </DocForgeBlock>
-
-              {/* Validate button */}
-              {!validatedSections.includes(s.id) && (
-                <button type="button" onClick={() => setValidatedSections(prev => [...prev, s.id])}
-                  className={cn("mt-2 w-full border-2 border-dashed rounded-lg px-4 py-2 text-[10px] font-medium transition-colors cursor-pointer flex items-center justify-center gap-1.5", theme.border, theme.text, "hover:bg-opacity-50", theme.bgLight)}>
-                  <CheckCircle2 className="h-3.5 w-3.5" /> Valider cette section
-                </button>
-              )}
-            </div>
-          ))}
-
-          {/* Empty state */}
-          {visibleSections.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-12 text-gray-400 gap-2">
-              <MainIcon className="h-8 w-8" />
-              <p className="text-xs font-medium">En attente des instructions...</p>
-              <p className="text-[9px]">Parle a CarlOS dans le chat pour commencer</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Completion card */}
-      {allValidated && (
-        <AnimBlock delay={300}>
-          <div className={cn("border rounded-xl p-4 text-center", theme.bgLight, theme.border)}>
-            <CheckCircle2 className="h-6 w-6 text-emerald-500 mx-auto mb-2" />
-            <p className="text-sm font-bold text-gray-900">Livrable complet</p>
-            <p className={cn("text-[10px] mt-1", theme.text)}>{sections.length} sections validees \u2014 pret pour export</p>
-            <div className="mt-3 flex gap-2 justify-center">
-              <button type="button" className="text-[10px] bg-gray-900 text-white px-4 py-2 rounded-lg font-bold cursor-pointer hover:bg-gray-800 flex items-center gap-1.5">
-                <FileText className="h-3.5 w-3.5" /> Exporter PDF
-              </button>
-              {onBack && (
-                <button type="button" onClick={onBack} className="text-[10px] bg-white text-gray-700 px-4 py-2 rounded-lg font-bold border border-gray-300 cursor-pointer hover:bg-gray-50 flex items-center gap-1.5">
-                  <ArrowLeft className="h-3.5 w-3.5" /> Retour au chantier
-                </button>
+                </div>
               )}
             </div>
           </div>
-        </AnimBlock>
+        </>
       )}
     </div>
   );
