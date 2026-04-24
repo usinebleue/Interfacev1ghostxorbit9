@@ -149,6 +149,7 @@ import {
   Presentation,
   Terminal,
   FlaskConical,
+  Download,
 } from "lucide-react";
 import { cn } from "../../../../../components/ui/utils";
 import {
@@ -156,7 +157,7 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from "../../../../../components/ui/resizable";
-import { TypewriterText, BotAvatar } from "../../shared/simulation-components";
+import { TypewriterText, BotAvatar, ThinkingAnimation } from "../../shared/simulation-components";
 import { BlueprintView, DataRoomView, PlaybookStoreView, ConferenceAIView, CockpitView, LivingHero, DEPT_DASH_ICON, DEPT_FULL_LABEL, DEPT_SHORT_LABEL, BLUEPRINT_HEADER_TABS, type HeaderView } from "../../blueprint/BlueprintDepartement";
 import { HierarchieTab } from "../../BlueprintView";
 import { SanteGlobaleView } from "../../SanteGlobaleView";
@@ -557,6 +558,9 @@ export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departe
   const [blueprintStats, setBlueprintStats] = useState<{ tier: string; tierLabel: string; score: number } | null>(null);
   const [conceptionStage, setConceptionStage] = useState(0);
   const [conceptionTyped, setConceptionTyped] = useState(false);
+  const [selectedDeliverable, setSelectedDeliverable] = useState<string | null>(null);
+  const [deliverableStage, setDeliverableStage] = useState(0);
+  const [deliverableTyped, setDeliverableTyped] = useState(false);
 
   const showBlueprint = !!rightSection;
 
@@ -583,7 +587,9 @@ export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departe
   const advance = () => { setTyped(false); setChatStage(s => s + 1); };
   const advanceConception = () => { setConceptionTyped(false); setConceptionStage(s => s + 1); };
   const startReflexion = (chantier: string) => { setReflexionContext(chantier); setActivePhase("reflexion"); };
-  const startConception = () => { setActivePhase("creation"); setConceptionStage(0); setConceptionTyped(false); };
+  const startConception = () => { setActivePhase("creation"); setConceptionStage(0); setConceptionTyped(false); setSelectedDeliverable(null); };
+  const startSimulation = (type: string) => { setSelectedDeliverable(type); setDeliverableStage(0); setDeliverableTyped(false); setActivePhase("creation"); };
+  const advanceDeliverable = () => { setDeliverableTyped(false); setDeliverableStage(s => s + 1); };
   const isDash = activePhase === "observation" || activePhase === "attention" || activePhase === "moderation";
 
   return (
@@ -641,8 +647,11 @@ export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departe
                   {activePhase === "reflexion" && (
                     <ReflexionChat stage={chatStage} typed={typed} setTyped={setTyped} advance={advance} pc={pc} context={reflexionContext} />
                   )}
-                  {activePhase === "creation" && (
+                  {activePhase === "creation" && !selectedDeliverable && (
                     <ConceptionChat stage={conceptionStage} typed={conceptionTyped} setTyped={setConceptionTyped} advance={advanceConception} onBackToReflexion={() => setActivePhase("reflexion")} />
+                  )}
+                  {activePhase === "creation" && selectedDeliverable && (
+                    <DeliverableConceptionChat deliverable={selectedDeliverable} stage={deliverableStage} typed={deliverableTyped} setTyped={setDeliverableTyped} advance={advanceDeliverable} onBack={() => { setSelectedDeliverable(null); setActivePhase("observation"); }} />
                   )}
                   {activePhase === "observation" && (
                     <ObservationChat typed={typed} setTyped={setTyped} />
@@ -861,9 +870,16 @@ export function SimAmorcer({ onBack, attentionTrigger = 0, cockpitTab = "departe
               ) : showIconCatalog ? (
                 <IconCatalog />
               ) : isDash ? (
-                <VueEnsemble phase={activePhase} chatStage={chatStage} onStartReflexion={startReflexion} />
+                <VueEnsemble phase={activePhase} chatStage={chatStage} onStartReflexion={startReflexion} onStartSimulation={startSimulation} />
               ) : activePhase === "reflexion" ? (
                 <PhaseReflexion stage={chatStage} context={reflexionContext} onStartConception={startConception} />
+              ) : activePhase === "creation" && selectedDeliverable ? (
+                selectedDeliverable === "document" ? <PhaseConceptionDocument stage={deliverableStage} onBack={() => { setSelectedDeliverable(null); setActivePhase("observation"); }} onStartJumelage={() => startSimulation("jumelage")} /> :
+                selectedDeliverable === "spreadsheet" ? <PhaseConceptionTableur stage={deliverableStage} onBack={() => { setSelectedDeliverable(null); setActivePhase("observation"); }} /> :
+                selectedDeliverable === "presentation" ? <PhaseConceptionPresentation stage={deliverableStage} onBack={() => { setSelectedDeliverable(null); setActivePhase("observation"); }} /> :
+                selectedDeliverable === "code" ? <PhaseConceptionCode stage={deliverableStage} onBack={() => { setSelectedDeliverable(null); setActivePhase("observation"); }} /> :
+                selectedDeliverable === "jumelage" ? <PhaseConceptionJumelage stage={deliverableStage} onBack={() => { setSelectedDeliverable(null); setActivePhase("observation"); }} /> :
+                <ConceptionWizard stage={conceptionStage} context={reflexionContext} />
               ) : activePhase === "creation" ? (
                 <ConceptionWizard stage={conceptionStage} context={reflexionContext} />
               ) : activePhase === "operations" ? (
@@ -1079,7 +1095,7 @@ export function ModerationChat({ stage, typed, setTyped, advance, pc }: {
 
 // ========== VUE D'ENSEMBLE (partagee observation/attention/moderation) ==========
 
-export function VueEnsemble({ phase, chatStage, onStartReflexion }: { phase: PhaseKey; chatStage: number; onStartReflexion: (chantier: string) => void }) {
+export function VueEnsemble({ phase, chatStage, onStartReflexion, onStartSimulation }: { phase: PhaseKey; chatStage: number; onStartReflexion: (chantier: string) => void; onStartSimulation?: (type: string) => void }) {
   return (
     <div className="space-y-4">
 
@@ -1246,19 +1262,32 @@ export function VueEnsemble({ phase, chatStage, onStartReflexion }: { phase: Pha
 
       {/* ═══ ROW 4 — Activité bots + Réseau + Finances ═══ */}
       <div className="grid grid-cols-3 gap-3">
-        {/* Activité récente */}
+        {/* Suite de création — accès direct aux simulations */}
         <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
           <div className={cn("flex items-center gap-2 px-4 py-2.5 border-b border-gray-100", UB_PASTEL)}>
-            <Activity className="h-4 w-4 text-gray-900 stroke-[2.5]" />
-            <span className="text-sm font-bold text-gray-900">Activité bots</span>
+            <Layers className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+            <span className="text-sm font-bold text-gray-900">Suite de création</span>
           </div>
-          <div className="divide-y divide-gray-50">
-            {BOT_FEED.map((act, i) => (
-              <div key={i} className="px-4 py-2.5 flex items-center gap-2.5">
-                <BotAvatar code={act.bot} size="sm" />
-                <span className="text-xs text-gray-700 flex-1 leading-snug">{act.action}</span>
-                <span className="text-xs text-gray-400 shrink-0">{act.time}</span>
-              </div>
+          <div className="p-2 space-y-0.5">
+            {[
+              { id: "document", icon: FileText, label: "Document stratégique", desc: "Cahier de projet, rapport", color: "text-amber-600", bg: "hover:bg-amber-50" },
+              { id: "spreadsheet", icon: Table2, label: "Tableur & Données", desc: "Analyse, projections", color: "text-teal-600", bg: "hover:bg-teal-50" },
+              { id: "presentation", icon: Presentation, label: "Présentation", desc: "Pitch deck, slides CA", color: "text-blue-600", bg: "hover:bg-blue-50" },
+              { id: "code", icon: Code2, label: "Code avec Tim", desc: "Scripts, intégrations", color: "text-violet-600", bg: "hover:bg-violet-50" },
+              { id: "jumelage", icon: Users, label: "Jumelage SMART", desc: "Match entreprises", color: "text-cyan-600", bg: "hover:bg-cyan-50" },
+            ].map(sim => (
+              <button key={sim.id} type="button"
+                onClick={() => onStartSimulation?.(sim.id)}
+                className={cn("w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-left transition-colors cursor-pointer", sim.bg)}>
+                <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-gray-50 border border-gray-100")}>
+                  <sim.icon className={cn("h-3.5 w-3.5", sim.color)} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs font-medium text-gray-800 block">{sim.label}</span>
+                  <span className="text-[10px] text-gray-400">{sim.desc}</span>
+                </div>
+                <ArrowRight className="h-3 w-3 text-gray-300 shrink-0" />
+              </button>
             ))}
           </div>
         </div>
@@ -1315,6 +1344,36 @@ export function VueEnsemble({ phase, chatStage, onStartReflexion }: { phase: Pha
           </div>
         </div>
       </div>
+
+      {/* ═══ ROW 5 — Accès direct aux simulations ═══ */}
+      {onStartSimulation && (
+        <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+          <div className={cn("flex items-center gap-2 px-4 py-2.5 border-b border-gray-100", UB_PASTEL)}>
+            <Layers className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+            <span className="text-sm font-bold text-gray-900">Simulations — Accès direct</span>
+            <span className="text-xs text-gray-400 ml-auto">Conception de livrables</span>
+          </div>
+          <div className="grid grid-cols-5 gap-2 p-3">
+            {[
+              { id: "document", icon: FileText, label: "Rapport", desc: "Cahier de projet", color: "border-amber-200 bg-amber-50 hover:bg-amber-100", text: "text-amber-700", iconColor: "text-amber-600" },
+              { id: "spreadsheet", icon: Table2, label: "Tableur", desc: "Suivi financier", color: "border-teal-200 bg-teal-50 hover:bg-teal-100", text: "text-teal-700", iconColor: "text-teal-600" },
+              { id: "presentation", icon: Presentation, label: "Présentation", desc: "Pitch deck CA", color: "border-blue-200 bg-blue-50 hover:bg-blue-100", text: "text-blue-700", iconColor: "text-blue-600" },
+              { id: "code", icon: Code2, label: "Code", desc: "Dashboard IoT", color: "border-violet-200 bg-violet-50 hover:bg-violet-100", text: "text-violet-700", iconColor: "text-violet-600" },
+              { id: "jumelage", icon: Handshake, label: "Jumelage", desc: "Matching Orbit⁹", color: "border-blue-200 bg-blue-50 hover:bg-blue-100", text: "text-blue-700", iconColor: "text-blue-600" },
+            ].map(type => (
+              <button key={type.id} type="button"
+                onClick={() => onStartSimulation(type.id)}
+                className={cn("border rounded-xl p-3 flex flex-col items-center gap-1.5 text-center transition-all cursor-pointer", type.color)}>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/60">
+                  <type.icon className={cn("h-4 w-4", type.iconColor)} />
+                </div>
+                <p className={cn("text-xs font-bold", type.text)}>{type.label}</p>
+                <p className="text-xs text-gray-500 leading-tight">{type.desc}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -3911,7 +3970,7 @@ export function PhaseConception({ stage, context, onStartExecution, onSelectDeli
                     }
                     <span className={isActive && unlocked ? SF.labelActive : SF.labelInactive}>{s.id}. {s.title}</span>
                     {unlocked && (
-                      <span className={cn("text-[10px] px-1 py-0.5 rounded-full font-medium",
+                      <span className={cn("text-xs px-1 py-0.5 rounded-full font-medium",
                         validated ? "bg-emerald-100 text-emerald-600" : "bg-amber-50 text-amber-600"
                       )}>
                         {validated ? "✓" : "…"}
@@ -3969,7 +4028,7 @@ export function PhaseConception({ stage, context, onStartExecution, onSelectDeli
                     <div className="px-4 py-3 border-b border-yellow-200 flex items-center gap-2">
                       <Layers className="h-4 w-4 text-yellow-600" />
                       <span className="text-xs font-bold text-gray-800">Concevoir les livrables du chantier</span>
-                      <span className="text-[10px] text-gray-400 ml-auto">Niveau 2 — Éléments individuels</span>
+                      <span className="text-xs text-gray-400 ml-auto">Niveau 2 — Éléments individuels</span>
                     </div>
                     <div className="grid grid-cols-2 gap-2 p-3">
                       {[
@@ -3986,7 +4045,7 @@ export function PhaseConception({ stage, context, onStartExecution, onSelectDeli
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className={cn("text-xs font-bold", type.text)}>{type.label}</p>
-                            <p className="text-[10px] text-gray-500 mt-0.5">{type.desc}</p>
+                            <p className="text-xs text-gray-500 mt-0.5">{type.desc}</p>
                           </div>
                           <ArrowRight className="h-3.5 w-3.5 text-gray-300 shrink-0 mt-0.5" />
                         </button>
@@ -4011,7 +4070,7 @@ export function PhaseConception({ stage, context, onStartExecution, onSelectDeli
                         </div>
                       </div>
                       <p className="text-sm font-bold text-gray-900 text-center">Chantier structuré — Prêt pour l'Exécution</p>
-                      <p className="text-[10px] text-gray-500 mt-1 text-center">8 sections validées — 3 projets, 9 missions, 27 tâches</p>
+                      <p className="text-xs text-gray-500 mt-1 text-center">8 sections validées — 3 projets, 9 missions, 27 tâches</p>
                     </div>
                     <div className="px-6 py-3 flex gap-2 justify-center border-t border-gray-100">
                       <button type="button" onClick={onStartExecution} className="text-xs bg-gray-900 text-white px-4 py-2 rounded-lg font-bold cursor-pointer hover:bg-gray-800">
@@ -4099,7 +4158,7 @@ function LiveTerminalV3({ content, speed = 12 }: { content: string; speed?: numb
     <div className="bg-gray-950 rounded-lg overflow-hidden">
       <div className="px-3 py-1.5 flex items-center gap-2 border-b border-gray-800">
         <Terminal className="h-3.5 w-3.5 text-green-400" />
-        <span className="text-[9px] font-bold text-green-300">Tim — Terminal</span>
+        <span className="text-xs font-bold text-green-300">Tim — Terminal</span>
         {!done && <div className="flex items-center gap-1.5 ml-auto"><div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" /><span className="text-[8px] text-green-400/70">En cours...</span></div>}
         {done && <CheckCircle2 className="h-3.5 w-3.5 text-green-400 ml-auto" />}
         <div className="flex items-center gap-1">
@@ -4139,27 +4198,27 @@ const DOCUMENT_DOCFORGE_SECTIONS = [
   { id: 11, title: "Validation", icon: Shield, minStage: 9 },
 ];
 const TABLEUR_DOCFORGE_SECTIONS = [
-  { id: 1, title: "Structure du tableur", icon: Table2, minStage: 0 },
-  { id: 2, title: "Donnees de reference", icon: Database, minStage: 0 },
-  { id: 3, title: "Projections mensuelles", icon: TrendingUp, minStage: 1 },
-  { id: 4, title: "Formules & Calculs", icon: ListChecks, minStage: 1 },
-  { id: 5, title: "Graphiques & Tendances", icon: LineChart, minStage: 2 },
-  { id: 6, title: "Export & Partage", icon: ArrowRight, minStage: 2 },
+  { id: 1, title: "Structure du tableur", icon: Table2, minStage: 1 },
+  { id: 2, title: "Donnees de reference", icon: Database, minStage: 2 },
+  { id: 3, title: "Projections mensuelles", icon: TrendingUp, minStage: 3 },
+  { id: 4, title: "Formules & Calculs", icon: ListChecks, minStage: 3 },
+  { id: 5, title: "Graphiques & Tendances", icon: LineChart, minStage: 4 },
+  { id: 6, title: "Export & Partage", icon: ArrowRight, minStage: 5 },
 ];
 const PRESENTATION_DOCFORGE_SECTIONS = [
-  { id: 1, title: "Slide \u2014 Enjeu", icon: AlertTriangle, minStage: 0 },
-  { id: 2, title: "Slide \u2014 Strategie", icon: Compass, minStage: 0 },
-  { id: 3, title: "Slide \u2014 Budget & ROI", icon: DollarSign, minStage: 1 },
-  { id: 4, title: "Slide \u2014 Timeline", icon: Calendar, minStage: 1 },
-  { id: 5, title: "Design & Visuels", icon: Palette, minStage: 2 },
-  { id: 6, title: "Notes presentateur", icon: FileText, minStage: 2 },
+  { id: 1, title: "Slide \u2014 Enjeu", icon: AlertTriangle, minStage: 1 },
+  { id: 2, title: "Slide \u2014 Strategie", icon: Compass, minStage: 2 },
+  { id: 3, title: "Slide \u2014 Budget & ROI", icon: DollarSign, minStage: 3 },
+  { id: 4, title: "Slide \u2014 Timeline", icon: Calendar, minStage: 3 },
+  { id: 5, title: "Design & Visuels", icon: Palette, minStage: 4 },
+  { id: 6, title: "Notes presentateur", icon: FileText, minStage: 5 },
 ];
 const CODE_DOCFORGE_SECTIONS = [
-  { id: 1, title: "Plan & Architecture", icon: FileText, minStage: 0 },
-  { id: 2, title: "Code", icon: Code2, minStage: 1 },
-  { id: 3, title: "Debug", icon: Bug, minStage: 2 },
-  { id: 4, title: "Tests", icon: FlaskConical, minStage: 3 },
-  { id: 5, title: "Deploiement", icon: Rocket, minStage: 4 },
+  { id: 1, title: "Plan & Architecture", icon: FileText, minStage: 1 },
+  { id: 2, title: "Code", icon: Code2, minStage: 2 },
+  { id: 3, title: "Debug", icon: Bug, minStage: 3 },
+  { id: 4, title: "Tests", icon: FlaskConical, minStage: 4 },
+  { id: 5, title: "Deploiement", icon: Rocket, minStage: 5 },
 ];
 const JUMELAGE_DOCFORGE_SECTIONS = [
   { id: 1, title: "Critères de Matching", icon: Filter, minStage: 1 },
@@ -4862,7 +4921,7 @@ function MagTableurStructure() {
   return (
     <AnimBlock>
       <div className="border-l-[3px] border-teal-400 bg-teal-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-teal-700 mb-2 flex items-center gap-1.5">
+        <h4 className="text-xs font-bold text-teal-700 mb-2 flex items-center gap-1.5">
           1. Structure du tableau de bord
           <span className="text-[8px] bg-teal-100 text-teal-600 px-1.5 py-0.5 rounded-full">6 onglets</span>
         </h4>
@@ -4875,14 +4934,14 @@ function MagTableurStructure() {
             { col: "KPIs operationnels", type: "Metriques", desc: "Energie kWh/jour, palettes/h, incidents/mois, cout maintenance" },
             { col: "Scenarios", type: "Analyse", desc: "3 scenarios: conservateur, realiste, optimiste + sensibilite" },
           ].map(c => (
-            <div key={c.col} className="flex items-center gap-2 text-[9px]">
+            <div key={c.col} className="flex items-center gap-2 text-xs">
               <span className="font-bold text-teal-700 w-28 shrink-0">{c.col}</span>
               <span className="bg-teal-100 text-teal-600 px-1.5 py-0.5 rounded text-[8px] font-medium w-16 text-center shrink-0">{c.type}</span>
               <span className="text-gray-600">{c.desc}</span>
             </div>
           ))}
         </div>
-        <div className="mt-1.5 flex items-center gap-1.5 text-[9px] text-gray-400">
+        <div className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-400">
           <BotAvatar code="CFOB" size="sm" />
           <span>Frank (CFO) — architecture financiere</span>
         </div>
@@ -4895,13 +4954,13 @@ function MagTableurDonnees() {
   return (
     <AnimBlock delay={100}>
       <div className="border-l-[3px] border-teal-400 bg-teal-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-teal-700 mb-2">2. Donnees baseline — Aliments Boreal</h4>
+        <h4 className="text-xs font-bold text-teal-700 mb-2">2. Donnees baseline — Aliments Boreal</h4>
         <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
           <table className="w-full">
             <thead>
               <tr className="bg-teal-50 border-b border-teal-200">
                 {["Categorie", "Poste", "Cout actuel", "Benchmark", "Ecart"].map(h => (
-                  <th key={h} className="text-[9px] font-bold text-teal-800 px-2 py-1.5 text-left">{h}</th>
+                  <th key={h} className="text-xs font-bold text-teal-800 px-2 py-1.5 text-left">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -4915,20 +4974,20 @@ function MagTableurDonnees() {
                 { cat: "Logistique", poste: "Cadence palettisation", actuel: "14 pal/h", bench: "22 pal/h", ecart: "-36%", color: "text-amber-600" },
               ].map((row, i) => (
                 <tr key={i} className="border-b border-gray-100 hover:bg-teal-50/30 transition-colors">
-                  <td className="text-[9px] text-gray-500 px-2 py-1.5">{row.cat}</td>
-                  <td className="text-[9px] text-gray-700 px-2 py-1.5 font-medium">{row.poste}</td>
-                  <td className="text-[9px] text-gray-700 px-2 py-1.5">{row.actuel}</td>
-                  <td className="text-[9px] text-gray-700 px-2 py-1.5">{row.bench}</td>
-                  <td className={cn("text-[9px] font-bold px-2 py-1.5", row.color)}>{row.ecart}</td>
+                  <td className="text-xs text-gray-500 px-2 py-1.5">{row.cat}</td>
+                  <td className="text-xs text-gray-700 px-2 py-1.5 font-medium">{row.poste}</td>
+                  <td className="text-xs text-gray-700 px-2 py-1.5">{row.actuel}</td>
+                  <td className="text-xs text-gray-700 px-2 py-1.5">{row.bench}</td>
+                  <td className={cn("text-xs font-bold px-2 py-1.5", row.color)}>{row.ecart}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
         <div className="mt-2 bg-red-50 border border-red-200 rounded-lg px-2.5 py-1.5">
-          <span className="text-[9px] font-bold text-red-700">Total pertes identifiees: 278,000$/an — 3 axes prioritaires</span>
+          <span className="text-xs font-bold text-red-700">Total pertes identifiees: 278,000$/an — 3 axes prioritaires</span>
         </div>
-        <div className="mt-1.5 flex items-center gap-1.5 text-[9px] text-gray-400">
+        <div className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-400">
           <BotAvatar code="CFOB" size="sm" />
           <span>Frank (CFO) + Tim (CTO) — donnees capteurs IoT + comptabilite</span>
         </div>
@@ -4941,7 +5000,7 @@ function MagTableurProjections() {
   return (
     <AnimBlock delay={150}>
       <div className="border-l-[3px] border-teal-400 bg-teal-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-teal-700 mb-2">3. Projections 36 mois — Cash-flow</h4>
+        <h4 className="text-xs font-bold text-teal-700 mb-2">3. Projections 36 mois — Cash-flow</h4>
         <div className="space-y-1.5 mb-2">
           {[
             { mois: "Mois 0-3", label: "Investissement Phase 1", flux: "-485,000$", cumul: "-485,000$", color: "bg-red-400" },
@@ -4952,12 +5011,12 @@ function MagTableurProjections() {
             { mois: "Mois 19-36", label: "Profits nets cumules", flux: "+278,000$/an", cumul: "+278,000$", color: "bg-emerald-500" },
           ].map((row, i) => (
             <div key={i} className="flex items-center gap-2">
-              <span className="text-[9px] text-gray-700 w-16 shrink-0 font-medium">{row.mois}</span>
+              <span className="text-xs text-gray-700 w-16 shrink-0 font-medium">{row.mois}</span>
               <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
                 <div className={cn("h-full rounded-full transition-all duration-1000", row.color)} style={{ width: `${Math.min(100, (i + 1) * 17)}%` }} />
               </div>
-              <span className="text-[9px] text-gray-600 w-28 shrink-0">{row.label}</span>
-              <span className={cn("text-[9px] font-bold w-20 text-right", row.cumul.startsWith("-") ? "text-red-600" : "text-emerald-600")}>{row.cumul}</span>
+              <span className="text-xs text-gray-600 w-28 shrink-0">{row.label}</span>
+              <span className={cn("text-xs font-bold w-20 text-right", row.cumul.startsWith("-") ? "text-red-600" : "text-emerald-600")}>{row.cumul}</span>
             </div>
           ))}
         </div>
@@ -4980,7 +5039,7 @@ function MagTableurFormules() {
   return (
     <AnimBlock delay={200}>
       <div className="border-l-[3px] border-teal-400 bg-teal-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-teal-700 mb-2 flex items-center gap-1.5">
+        <h4 className="text-xs font-bold text-teal-700 mb-2 flex items-center gap-1.5">
           4. Formules IoT + Finance
           <span className="text-[8px] bg-violet-100 text-violet-600 px-1.5 py-0.5 rounded-full">Tim + Frank</span>
         </h4>
@@ -4994,8 +5053,8 @@ function MagTableurFormules() {
             { formula: "TRI = taux ou VAN = 0", result: "TRI = 34.2% (> seuil 15%)" },
           ].map((f, i) => (
             <div key={i} className="bg-gray-900 rounded-lg px-3 py-1.5">
-              <code className="text-[9px] text-teal-300 font-mono">{f.formula}</code>
-              <code className="text-[9px] text-gray-400 font-mono block mt-0.5">{"→"} {f.result}</code>
+              <code className="text-xs text-teal-300 font-mono">{f.formula}</code>
+              <code className="text-xs text-gray-400 font-mono block mt-0.5">{"→"} {f.result}</code>
             </div>
           ))}
         </div>
@@ -5008,7 +5067,7 @@ function MagTableurGraphiques() {
   return (
     <AnimBlock delay={100}>
       <div className="border-l-[3px] border-teal-400 bg-teal-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-teal-700 mb-2">5. Scenarios et analyse de sensibilite</h4>
+        <h4 className="text-xs font-bold text-teal-700 mb-2">5. Scenarios et analyse de sensibilite</h4>
         <div className="space-y-2">
           {[
             { scenario: "Conservateur", economies: "222,000$/an", roi: "27 mois", van: "+285,000$", desc: "Economies -20%, delais +3 mois", color: "bg-amber-50 border-amber-200 text-amber-700" },
@@ -5017,10 +5076,10 @@ function MagTableurGraphiques() {
           ].map(s => (
             <div key={s.scenario} className={cn("border rounded-lg px-2.5 py-2", s.color)}>
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-[9px] font-bold">{s.scenario}</span>
+                <span className="text-xs font-bold">{s.scenario}</span>
                 <span className="text-[8px] ml-auto font-bold">{s.economies}</span>
               </div>
-              <div className="flex items-center gap-3 text-[9px]">
+              <div className="flex items-center gap-3 text-xs">
                 <span>ROI: {s.roi}</span>
                 <span>VAN: {s.van}</span>
               </div>
@@ -5029,7 +5088,7 @@ function MagTableurGraphiques() {
           ))}
         </div>
         <div className="mt-2 bg-teal-50 border border-teal-200 rounded-lg px-2.5 py-1.5">
-          <p className="text-[9px] text-teal-700"><span className="font-bold">Variable critique:</span> Prix electricite (+23% prevu 2027) — meme le scenario conservateur reste rentable a +35% sur l'electricite.</p>
+          <p className="text-xs text-teal-700"><span className="font-bold">Variable critique:</span> Prix electricite (+23% prevu 2027) — meme le scenario conservateur reste rentable a +35% sur l'electricite.</p>
         </div>
       </div>
     </AnimBlock>
@@ -5040,7 +5099,7 @@ function MagTableurExport() {
   return (
     <AnimBlock delay={150}>
       <div className="border-l-[3px] border-teal-400 bg-teal-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-teal-700 mb-2">6. Export & Integration</h4>
+        <h4 className="text-xs font-bold text-teal-700 mb-2">6. Export & Integration</h4>
         <div className="grid grid-cols-2 gap-2">
           {[
             { format: "Excel XLSX", desc: "Classeur complet 6 onglets — pret pour le CA", icon: Table2 },
@@ -5051,7 +5110,7 @@ function MagTableurExport() {
             <div key={e.format} className="bg-white border border-gray-200 rounded-lg p-2 flex items-center gap-2 cursor-pointer hover:border-teal-300 transition-colors">
               <e.icon className="h-4 w-4 text-teal-500 shrink-0" />
               <div>
-                <p className="text-[9px] font-bold text-gray-800">{e.format}</p>
+                <p className="text-xs font-bold text-gray-800">{e.format}</p>
                 <p className="text-[8px] text-gray-500">{e.desc}</p>
               </div>
             </div>
@@ -5059,7 +5118,7 @@ function MagTableurExport() {
         </div>
         <div className="mt-2 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5 flex items-center gap-2">
           <Shield className="h-3.5 w-3.5 text-amber-600 shrink-0" />
-          <p className="text-[9px] text-amber-700"><span className="font-bold">Validation requise:</span> Les projections financieres doivent etre validees par le CFO d'Aliments Boreal avant soumission aux programmes de subventions.</p>
+          <p className="text-xs text-amber-700"><span className="font-bold">Validation requise:</span> Les projections financieres doivent etre validees par le CFO d'Aliments Boreal avant soumission aux programmes de subventions.</p>
         </div>
       </div>
     </AnimBlock>
@@ -5072,7 +5131,7 @@ function MagPresEnjeu() {
   return (
     <AnimBlock>
       <div className="border-l-[3px] border-blue-400 bg-blue-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-blue-700 mb-2">1. Slide — L'enjeu Boreal</h4>
+        <h4 className="text-xs font-bold text-blue-700 mb-2">1. Slide — L'enjeu Boreal</h4>
         <div className="bg-gray-900 rounded-xl p-4">
           <span className="text-[9px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">Slide 1/6</span>
           <h4 className="text-sm font-bold text-white mt-2 mb-2">278,000$/an de pertes identifiees</h4>
@@ -5091,14 +5150,14 @@ function MagPresEnjeu() {
           </div>
           <div className="space-y-1.5">
             {["Systeme R-404A a 67% d'efficacite — surconsommation de 960 kWh/jour", "12 employes en palettisation manuelle — 3 blessures/an", "4 incidents temperature non detectes en 2025 — pertes de lots MAPAQ", "Penurie main-d'oeuvre chronique en region Saguenay"].map((b, i) => (
-              <div key={i} className="flex items-center gap-2 text-[9px] text-gray-300">
+              <div key={i} className="flex items-center gap-2 text-xs text-gray-300">
                 <div className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />
                 <span>{b}</span>
               </div>
             ))}
           </div>
         </div>
-        <div className="mt-1.5 flex items-center gap-1.5 text-[9px] text-gray-400">
+        <div className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-400">
           <BotAvatar code="CMOB" size="sm" />
           <span>Mathilde (CMO) — narration visuelle impact</span>
         </div>
@@ -5111,7 +5170,7 @@ function MagPresStrategie() {
   return (
     <AnimBlock delay={100}>
       <div className="border-l-[3px] border-blue-400 bg-blue-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-blue-700 mb-2">2. Slide — Diagnostic & SWOT</h4>
+        <h4 className="text-xs font-bold text-blue-700 mb-2">2. Slide — Diagnostic & SWOT</h4>
         <div className="bg-gray-900 rounded-xl p-4">
           <span className="text-[9px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">Slide 2/6</span>
           <h4 className="text-sm font-bold text-white mt-2 mb-3">Diagnostic multi-axe — Aliments Boreal</h4>
@@ -5123,7 +5182,7 @@ function MagPresStrategie() {
               { quadrant: "Menaces", items: ["Electricite +23% prevu 2027", "Penurie main-d'oeuvre region", "Reglementation MAPAQ renforcee"], color: "bg-amber-900/50 border-amber-700" },
             ].map(q => (
               <div key={q.quadrant} className={cn("border rounded-lg p-2.5", q.color)}>
-                <p className="text-[9px] font-bold text-white mb-1.5">{q.quadrant}</p>
+                <p className="text-xs font-bold text-white mb-1.5">{q.quadrant}</p>
                 {q.items.map((item, i) => (
                   <p key={i} className="text-[8px] text-gray-300 leading-relaxed">{"•"} {item}</p>
                 ))}
@@ -5131,7 +5190,7 @@ function MagPresStrategie() {
             ))}
           </div>
         </div>
-        <div className="mt-1.5 flex items-center gap-1.5 text-[9px] text-gray-400">
+        <div className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-400">
           <BotAvatar code="CEOB" size="sm" />
           <span>CarlOS — analyse strategique SWOT</span>
         </div>
@@ -5144,7 +5203,7 @@ function MagPresBudget() {
   return (
     <AnimBlock delay={150}>
       <div className="border-l-[3px] border-blue-400 bg-blue-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-blue-700 mb-2">3. Slide — Budget & Subventions</h4>
+        <h4 className="text-xs font-bold text-blue-700 mb-2">3. Slide — Budget & Subventions</h4>
         <div className="bg-gray-900 rounded-xl p-4">
           <span className="text-[9px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">Slide 3/6</span>
           <h4 className="text-sm font-bold text-white mt-2 mb-3">De 1.1M$ brut a 508K$ net — 54% de subventions</h4>
@@ -5158,16 +5217,16 @@ function MagPresBudget() {
               { label: "Cout net", value: "508,000$", bar: 46, color: "bg-blue-500" },
             ].map((row, i) => (
               <div key={i} className="flex items-center gap-2">
-                <span className="text-[9px] text-gray-300 w-24 shrink-0">{row.label}</span>
+                <span className="text-xs text-gray-300 w-24 shrink-0">{row.label}</span>
                 <div className="flex-1 h-2.5 bg-gray-700 rounded-full overflow-hidden">
                   <div className={cn("h-full rounded-full", row.color)} style={{ width: `${row.bar}%` }} />
                 </div>
-                <span className="text-[9px] font-bold text-white w-20 text-right">{row.value}</span>
+                <span className="text-xs font-bold text-white w-20 text-right">{row.value}</span>
               </div>
             ))}
           </div>
         </div>
-        <div className="mt-1.5 flex items-center gap-1.5 text-[9px] text-gray-400">
+        <div className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-400">
           <BotAvatar code="CFOB" size="sm" />
           <span>Frank (CFO) — montage financier et subventions</span>
         </div>
@@ -5180,7 +5239,7 @@ function MagPresTimeline() {
   return (
     <AnimBlock delay={200}>
       <div className="border-l-[3px] border-blue-400 bg-blue-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-blue-700 mb-2">4. Slide — Solutions & ROI</h4>
+        <h4 className="text-xs font-bold text-blue-700 mb-2">4. Slide — Solutions & ROI</h4>
         <div className="bg-gray-900 rounded-xl p-4">
           <span className="text-[9px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">Slide 4/6</span>
           <h4 className="text-sm font-bold text-white mt-2 mb-3">4 solutions — ROI 22 mois</h4>
@@ -5192,8 +5251,8 @@ function MagPresTimeline() {
               { id: "S4", title: "Plateforme IoT", cout: "215K$", eco: "33K$/an", roi: "36 mois", color: "border-emerald-700 bg-emerald-900/30" },
             ].map(s => (
               <div key={s.id} className={cn("border rounded-lg px-2.5 py-1.5 flex items-center gap-3", s.color)}>
-                <span className="text-[9px] font-bold text-white">{s.id}</span>
-                <span className="text-[9px] text-gray-300 flex-1">{s.title}</span>
+                <span className="text-xs font-bold text-white">{s.id}</span>
+                <span className="text-xs text-gray-300 flex-1">{s.title}</span>
                 <span className="text-[8px] text-gray-400">{s.cout}</span>
                 <span className="text-[8px] text-emerald-400 font-bold">{s.eco}</span>
                 <span className="text-[8px] text-blue-400">ROI {s.roi}</span>
@@ -5214,7 +5273,7 @@ function MagPresDesign() {
   return (
     <AnimBlock delay={100}>
       <div className="border-l-[3px] border-blue-400 bg-blue-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-blue-700 mb-2">5. Slide — Timeline 20 semaines</h4>
+        <h4 className="text-xs font-bold text-blue-700 mb-2">5. Slide — Timeline 20 semaines</h4>
         <div className="bg-gray-900 rounded-xl p-4">
           <span className="text-[9px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">Slide 5/6</span>
           <h4 className="text-sm font-bold text-white mt-2 mb-3">Plan d'implantation en 4 phases</h4>
@@ -5226,7 +5285,7 @@ function MagPresDesign() {
               { phase: "Phase 4", title: "IoT + Dashboard", duree: "S14-S20", color: "bg-emerald-600" },
             ].map((p, i) => (
               <div key={p.phase} className="flex items-center gap-2">
-                <span className="text-[9px] font-bold text-white w-16 shrink-0">{p.phase}</span>
+                <span className="text-xs font-bold text-white w-16 shrink-0">{p.phase}</span>
                 <div className="flex-1 h-4 bg-gray-700 rounded-full overflow-hidden relative">
                   <div className={cn("h-full rounded-full", p.color)} style={{ width: `${60 + i * 5}%`, marginLeft: `${i * 10}%` }} />
                 </div>
@@ -5248,7 +5307,7 @@ function MagPresNotes() {
   return (
     <AnimBlock delay={150}>
       <div className="border-l-[3px] border-blue-400 bg-blue-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-blue-700 mb-2">6. Slide — KPIs & Prochaines etapes</h4>
+        <h4 className="text-xs font-bold text-blue-700 mb-2">6. Slide — KPIs & Prochaines etapes</h4>
         <div className="bg-gray-900 rounded-xl p-4">
           <span className="text-[9px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">Slide 6/6</span>
           <h4 className="text-sm font-bold text-white mt-2 mb-3">Indicateurs de succes mesurables</h4>
@@ -5262,21 +5321,21 @@ function MagPresNotes() {
               <div key={k.kpi} className="border border-gray-700 rounded-lg p-2">
                 <p className="text-[8px] text-gray-400">{k.kpi}</p>
                 <div className="flex items-center gap-1 mt-0.5">
-                  <span className="text-[9px] text-gray-500">{k.baseline}</span>
+                  <span className="text-xs text-gray-500">{k.baseline}</span>
                   <ArrowRight className="h-2.5 w-2.5 text-gray-600" />
-                  <span className={cn("text-[9px] font-bold", k.color)}>{k.cible}</span>
+                  <span className={cn("text-xs font-bold", k.color)}>{k.cible}</span>
                 </div>
               </div>
             ))}
           </div>
           <div className="border-t border-gray-700 pt-2">
-            <p className="text-[9px] font-bold text-white mb-1">Prochaines etapes</p>
+            <p className="text-xs font-bold text-white mb-1">Prochaines etapes</p>
             {["Approbation du CA — vote resolution", "Signature mandat avec integrateur selectionne", "Demarrage Phase 1 — commande equipements"].map((step, i) => (
               <p key={i} className="text-[8px] text-gray-400">{i + 1}. {step}</p>
             ))}
           </div>
         </div>
-        <div className="mt-1.5 flex items-center gap-1.5 text-[9px] text-gray-400">
+        <div className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-400">
           <BotAvatar code="CMOB" size="sm" />
           <span>Mathilde (CMO) — mise en scene pour le conseil d'administration</span>
         </div>
@@ -5291,32 +5350,32 @@ function MagCodePlan() {
   return (
     <AnimBlock>
       <div className="border-l-[3px] border-violet-400 bg-violet-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-violet-700 mb-2 flex items-center gap-1.5">
+        <h4 className="text-xs font-bold text-violet-700 mb-2 flex items-center gap-1.5">
           1. Architecture technique — Dashboard IoT Boreal
           <span className="text-[8px] bg-violet-100 text-violet-600 px-1.5 py-0.5 rounded-full">Phase 4</span>
         </h4>
         <div className="bg-gray-900 rounded-xl px-4 py-3 font-mono text-xs text-gray-300 mb-2">
           <p className="text-violet-400 mb-1">// Architecture — Dashboard IoT Boreal</p>
           <p className="text-emerald-400 mb-1">Frontend (React 18 + TypeScript)</p>
-          <p className="pl-4 text-[9px]">CapteurGrid — grille 32 capteurs temps reel</p>
-          <p className="pl-4 text-[9px]">ZoneThermique — 3 zones (prod, stock, exped.)</p>
-          <p className="pl-4 text-[9px]">AlertPanel — alertes predictives ML</p>
-          <p className="pl-4 text-[9px]">KPIDashboard — metriques consolidees</p>
+          <p className="pl-4 text-xs">CapteurGrid — grille 32 capteurs temps reel</p>
+          <p className="pl-4 text-xs">ZoneThermique — 3 zones (prod, stock, exped.)</p>
+          <p className="pl-4 text-xs">AlertPanel — alertes predictives ML</p>
+          <p className="pl-4 text-xs">KPIDashboard — metriques consolidees</p>
           <p className="text-emerald-400 mt-1 mb-1">Backend (FastAPI + PostgreSQL)</p>
-          <p className="pl-4 text-[9px]">/api/capteurs — CRUD + historique 90 jours</p>
-          <p className="pl-4 text-[9px]">/api/alertes — seuils + predictions 48h</p>
-          <p className="pl-4 text-[9px]">/api/zones — configuration 3 zones HVAC</p>
-          <p className="pl-4 text-[9px]">/ws/stream — WebSocket temps reel 1s refresh</p>
+          <p className="pl-4 text-xs">/api/capteurs — CRUD + historique 90 jours</p>
+          <p className="pl-4 text-xs">/api/alertes — seuils + predictions 48h</p>
+          <p className="pl-4 text-xs">/api/zones — configuration 3 zones HVAC</p>
+          <p className="pl-4 text-xs">/ws/stream — WebSocket temps reel 1s refresh</p>
           <p className="text-emerald-400 mt-1 mb-1">ML Pipeline (TensorFlow Lite)</p>
-          <p className="pl-4 text-[9px]">Modele vibrations — prediction panne 48h</p>
-          <p className="pl-4 text-[9px]">Modele temperature — derive MAPAQ</p>
+          <p className="pl-4 text-xs">Modele vibrations — prediction panne 48h</p>
+          <p className="pl-4 text-xs">Modele temperature — derive MAPAQ</p>
         </div>
         <div className="flex flex-wrap gap-1.5">
           {["React 18", "TypeScript", "FastAPI", "WebSocket", "PostgreSQL", "TF Lite"].map(t => (
             <span key={t} className="text-[8px] bg-violet-100 border border-violet-200 text-violet-700 px-2 py-0.5 rounded-full font-medium">{t}</span>
           ))}
         </div>
-        <div className="mt-1.5 flex items-center gap-1.5 text-[9px] text-gray-400">
+        <div className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-400">
           <BotAvatar code="CTOB" size="sm" />
           <span>Tim (CTO) — architecture full-stack validee</span>
         </div>
@@ -5329,8 +5388,8 @@ function MagCodeTerminal() {
   return (
     <AnimBlock delay={100}>
       <div className="border-l-[3px] border-violet-400 bg-violet-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-violet-700 mb-2">2. Composant CapteurCard — 32 capteurs</h4>
-        <div className="bg-gray-900 rounded-xl px-4 py-3 font-mono text-[9px] text-gray-300 mb-2">
+        <h4 className="text-xs font-bold text-violet-700 mb-2">2. Composant CapteurCard — 32 capteurs</h4>
+        <div className="bg-gray-900 rounded-xl px-4 py-3 font-mono text-xs text-gray-300 mb-2">
           <p className="text-violet-400">{"// CapteurCard.tsx — composant capteur unitaire"}</p>
           <p className="text-blue-400">{"interface CapteurData {"}</p>
           <p className="pl-4">{"id: string; zone: 'production' | 'stockage' | 'expedition';"}</p>
@@ -5345,7 +5404,7 @@ function MagCodeTerminal() {
             { zone: "Expedition", capteurs: 6, temp: "4.7°C", status: "warning", color: "border-amber-300 bg-amber-50" },
           ].map(z => (
             <div key={z.zone} className={cn("border rounded-lg p-2", z.color)}>
-              <p className="text-[9px] font-bold text-gray-800">{z.zone}</p>
+              <p className="text-xs font-bold text-gray-800">{z.zone}</p>
               <p className="text-[8px] text-gray-500">{z.capteurs} capteurs</p>
               <p className="text-xs font-extrabold text-gray-800 mt-1">{z.temp}</p>
             </div>
@@ -5360,7 +5419,7 @@ function MagCodeDebug() {
   return (
     <AnimBlock delay={150}>
       <div className="border-l-[3px] border-violet-400 bg-violet-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-violet-700 mb-2">3. Backend API — 5 endpoints</h4>
+        <h4 className="text-xs font-bold text-violet-700 mb-2">3. Backend API — 5 endpoints</h4>
         <div className="space-y-1.5">
           {[
             { method: "GET", path: "/api/capteurs", desc: "Liste 32 capteurs + derniere lecture", status: "200" },
@@ -5371,13 +5430,13 @@ function MagCodeDebug() {
           ].map((ep, i) => (
             <div key={i} className="flex items-center gap-2 bg-gray-900 rounded-lg px-3 py-1.5">
               <span className={cn("text-[8px] font-bold px-1.5 py-0.5 rounded", ep.method === "POST" ? "bg-emerald-800 text-emerald-300" : ep.method === "WS" ? "bg-violet-800 text-violet-300" : "bg-blue-800 text-blue-300")}>{ep.method}</span>
-              <code className="text-[9px] text-gray-300 font-mono flex-1">{ep.path}</code>
+              <code className="text-xs text-gray-300 font-mono flex-1">{ep.path}</code>
               <span className="text-[8px] text-gray-500">{ep.desc}</span>
             </div>
           ))}
         </div>
         <div className="mt-2 bg-violet-50 border border-violet-200 rounded-lg px-2.5 py-1.5">
-          <p className="text-[9px] text-violet-700"><span className="font-bold">ML Pipeline:</span> Modele TF Lite vibrations — precision 94.2%, prediction pannes 48h a l'avance. Entraine sur 6 mois de donnees capteurs industriels.</p>
+          <p className="text-xs text-violet-700"><span className="font-bold">ML Pipeline:</span> Modele TF Lite vibrations — precision 94.2%, prediction pannes 48h a l'avance. Entraine sur 6 mois de donnees capteurs industriels.</p>
         </div>
       </div>
     </AnimBlock>
@@ -5388,7 +5447,7 @@ function MagCodeTests() {
   return (
     <AnimBlock delay={200}>
       <div className="border-l-[3px] border-violet-400 bg-violet-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-violet-700 mb-2">4. Tests — 30/30 PASS</h4>
+        <h4 className="text-xs font-bold text-violet-700 mb-2">4. Tests — 30/30 PASS</h4>
         <div className="grid grid-cols-2 gap-2 mb-2">
           {[
             { suite: "Capteurs API", tests: 8, pass: 8, items: ["CRUD capteurs", "Historique 90j", "Filtrage zone", "Pagination"] },
@@ -5399,7 +5458,7 @@ function MagCodeTests() {
             <div key={s.suite} className="bg-white border border-gray-200 rounded-lg p-2">
               <div className="flex items-center gap-1.5 mb-1">
                 <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                <span className="text-[9px] font-bold text-gray-800">{s.suite}</span>
+                <span className="text-xs font-bold text-gray-800">{s.suite}</span>
                 <span className="text-[8px] text-emerald-600 font-bold ml-auto">{s.pass}/{s.tests}</span>
               </div>
               {s.items.map((item, i) => (
@@ -5409,7 +5468,7 @@ function MagCodeTests() {
           ))}
         </div>
         <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-1.5 text-center">
-          <span className="text-[9px] font-bold text-emerald-700">30/30 tests — Couverture 96% — Pret pour staging</span>
+          <span className="text-xs font-bold text-emerald-700">30/30 tests — Couverture 96% — Pret pour staging</span>
         </div>
       </div>
     </AnimBlock>
@@ -5420,7 +5479,7 @@ function MagCodeDeploy() {
   return (
     <AnimBlock delay={100}>
       <div className="border-l-[3px] border-violet-400 bg-violet-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-violet-700 mb-2">5. Deploiement — Dashboard IoT Boreal</h4>
+        <h4 className="text-xs font-bold text-violet-700 mb-2">5. Deploiement — Dashboard IoT Boreal</h4>
         <div className="space-y-1.5">
           {[
             { step: "Build", status: "done", detail: "vite build — 0 erreurs, bundle 128 kB gzip" },
@@ -5430,7 +5489,7 @@ function MagCodeDeploy() {
             { step: "Staging", status: "done", detail: "Tests E2E passes sur environnement Boreal" },
             { step: "Production", status: "ready", detail: "Pret au deploiement usine Saguenay" },
           ].map((s, i) => (
-            <div key={i} className="flex items-center gap-2 text-[9px]">
+            <div key={i} className="flex items-center gap-2 text-xs">
               {s.status === "done" ? (
                 <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
               ) : (
@@ -5444,7 +5503,7 @@ function MagCodeDeploy() {
         <div className="mt-2 bg-amber-50 border-2 border-amber-300 rounded-lg px-3 py-2 flex items-start gap-2">
           <Shield className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
           <div>
-            <p className="text-[9px] font-bold text-amber-800">Validation requise avant mise en production</p>
+            <p className="text-xs font-bold text-amber-800">Validation requise avant mise en production</p>
             <p className="text-[8px] text-amber-700 mt-0.5">Le dashboard IoT doit etre valide par l'ingenieur en automatisation selectionne via le jumelage Orbit9 avant deploiement en usine.</p>
           </div>
         </div>
@@ -5456,18 +5515,45 @@ function MagCodeDeploy() {
 // ========== MAG CONTENT — Jumelage SMART (copie exacte AtelierJumelage DocSectionCard) ==========
 
 function MagJumelageCriteres() {
+  const [processing, setProcessing] = useState(true);
+  useEffect(() => { const t = setTimeout(() => setProcessing(false), 2400); return () => clearTimeout(t); }, []);
+
+  if (processing) {
+    return (
+      <div className="space-y-1.5">
+        {SIM_ACTE2.criteresThinking.map((step: { icon: React.ElementType; text: string }, i: number) => {
+          const Icon = step.icon;
+          return (
+            <div key={i} className="flex items-center gap-2 text-xs text-blue-700">
+              <Icon className="h-3.5 w-3.5 animate-pulse" />
+              <span>{step.text}</span>
+            </div>
+          );
+        })}
+        <div className="flex items-center gap-1 mt-1">
+          <div className="flex gap-1">
+            <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+            <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+            <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+          </div>
+          <span className="text-xs text-gray-400 ml-1">Analyse en cours</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <AnimBlock>
       <div className="space-y-1.5">
         {SIM_ACTE2.criteres.map((c: string, i: number) => (
-          <div key={i} className="flex items-start gap-2 rounded-lg px-2.5 py-2 bg-gray-50">
-            <CheckCircle2 className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-            <span className="text-xs text-gray-700">{c}</span>
+          <div key={i} className="flex items-start gap-2 rounded-lg px-2.5 py-1.5 bg-gray-50">
+            <CheckCircle2 className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
+            <span className="text-[9px] text-gray-700">{c}</span>
           </div>
         ))}
-        <div className="flex items-start gap-2 rounded-lg px-2.5 py-2 bg-amber-50 border border-amber-200">
-          <CheckCircle2 className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-          <span className="text-xs text-amber-800 font-medium">Experience en milieu alimentaire (HACCP, zones temp.) — Ajoute par Carl</span>
+        <div className="flex items-start gap-2 rounded-lg px-2.5 py-1.5 bg-amber-50 border border-amber-200">
+          <CheckCircle2 className="h-3.5 w-3.5 text-amber-600 shrink-0 mt-0.5" />
+          <span className="text-[9px] text-amber-800 font-medium">Experience en milieu alimentaire (HACCP, zones temp.) — Ajoute par Carl</span>
         </div>
       </div>
     </AnimBlock>
@@ -5475,25 +5561,117 @@ function MagJumelageCriteres() {
 }
 
 function MagJumelageScan() {
+  const [processing, setProcessing] = useState(true);
+  const [expandedCard, setExpandedCard] = useState<number | null>(null);
+  useEffect(() => { const t = setTimeout(() => setProcessing(false), 3000); return () => clearTimeout(t); }, []);
+
+  if (processing) {
+    return (
+      <div className="space-y-1.5">
+        {[
+          { icon: Search, text: `Scan de ${SIM_ACTE2.scanSteps[0].count} membres du reseau...` },
+          { icon: Building2, text: `Filtre secteur agroalimentaire → ${SIM_ACTE2.scanSteps[1].count} candidats` },
+          { icon: Zap, text: `Expertise energie + robotique → ${SIM_ACTE2.scanSteps[2].count}` },
+          { icon: CheckCircle2, text: `Certifications requises → ${SIM_ACTE2.scanSteps[3].count}` },
+          { icon: Target, text: `Score compatibilite → ${SIM_ACTE2.scanSteps[4].count} finalistes` },
+        ].map((step, i) => {
+          const SIcon = step.icon;
+          return (
+            <div key={i} className="flex items-center gap-2 text-xs text-blue-700">
+              <SIcon className="h-3.5 w-3.5 animate-pulse" />
+              <span>{step.text}</span>
+            </div>
+          );
+        })}
+        <div className="flex items-center gap-1 mt-1">
+          <div className="flex gap-1">
+            <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+            <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+            <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+          </div>
+          <span className="text-xs text-gray-400 ml-1">Scan en cours</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <AnimBlock delay={100}>
-      <div className="space-y-2.5">
-        {SIM_ACTE2.scanSteps.map((step: { label: string; count: number }, i: number) => (
-          <div key={i} className="flex items-center gap-2">
-            <div className="flex-1">
-              <div className="flex items-center justify-between mb-0.5">
-                <span className="text-xs text-gray-700">{step.label}</span>
-                <span className="text-xs font-bold text-gray-800">{step.count}</span>
+      <div className="space-y-4">
+        {/* Funnel de filtrage */}
+        <div className="space-y-2">
+          {SIM_ACTE2.scanSteps.map((step: { label: string; count: number }, i: number) => (
+            <div key={i} className="flex items-center gap-2">
+              <div className="flex-1">
+                <div className="flex items-center justify-between mb-0.5">
+                  <span className="text-xs text-gray-700">{step.label}</span>
+                  <span className="text-xs font-bold text-gray-800">{step.count}</span>
+                </div>
+                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-amber-500 rounded-full" style={{ width: `${Math.max(5, (step.count / 130) * 100)}%` }} />
+                </div>
               </div>
-              <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full bg-amber-500 rounded-full" style={{ width: `${Math.max(5, (step.count / 130) * 100)}%` }} />
-              </div>
+              {i < SIM_ACTE2.scanSteps.length - 1 && <ArrowRight className="h-3.5 w-3.5 text-gray-300 shrink-0" />}
             </div>
-            {i < SIM_ACTE2.scanSteps.length - 1 && <ArrowRight className="h-3.5 w-3.5 text-gray-300 shrink-0" />}
-          </div>
-        ))}
-        <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 mt-2">
+          ))}
+        </div>
+
+        <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2">
           <p className="text-xs text-green-700 font-medium">3 integrateurs identifies sur 130 membres scannes</p>
+        </div>
+
+        {/* TOP 3 Integrateurs — cartes riches */}
+        <div className="grid grid-cols-3 gap-2">
+          {INTEGRATORS.map((integ, i) => {
+            const isExpanded = expandedCard === integ.id;
+            const rankColors = ["bg-amber-500", "bg-gray-400", "bg-orange-400"];
+            return (
+              <div key={integ.id} className="border rounded-lg overflow-hidden bg-white animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: `${i * 300}ms`, animationFillMode: "both", animationDuration: "500ms" }}>
+                <div className={cn("px-2.5 py-2 flex items-center gap-2", i === 0 ? "bg-amber-50" : "bg-gray-50")}>
+                  <div className={cn("w-5 h-5 rounded-full flex items-center justify-center text-[10px] text-white font-bold shrink-0", rankColors[i])}>{i + 1}</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-gray-800 truncate">{integ.nom}</p>
+                    <p className="text-[10px] text-gray-500">{integ.ville}</p>
+                  </div>
+                  <span className={cn("text-xs font-bold", integ.score >= 90 ? "text-green-600" : integ.score >= 85 ? "text-amber-600" : "text-gray-600")}>{integ.score}%</span>
+                </div>
+                <div className="px-2.5 py-2 space-y-1.5">
+                  <div className="flex flex-wrap gap-1">
+                    {integ.specialites.slice(0, 2).map(s => (
+                      <span key={s} className="text-[9px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">{s}</span>
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-between text-[10px] text-gray-500">
+                    <span>{integ.tailleEquipe} pers.</span>
+                    <span>{integ.experience}</span>
+                  </div>
+                  <button type="button" onClick={() => setExpandedCard(isExpanded ? null : integ.id)} className="text-[10px] text-amber-600 hover:text-amber-700 font-medium cursor-pointer">
+                    {isExpanded ? "Masquer" : "Voir le detail"}
+                  </button>
+                </div>
+                {isExpanded && (
+                  <div className="border-t px-2.5 py-2 bg-gray-50 space-y-1.5 animate-in fade-in duration-300">
+                    <p className="text-[10px] text-gray-600 leading-relaxed">{integ.intro}</p>
+                    <div className="flex flex-wrap gap-1">
+                      {integ.certifications.map(c => (
+                        <span key={c} className="text-[9px] bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded flex items-center gap-0.5"><Star className="h-2.5 w-2.5" />{c}</span>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <div className="bg-white rounded px-2 py-1 text-center border">
+                        <p className="text-xs font-bold text-gray-800">{integ.projetsSimil}</p>
+                        <p className="text-[9px] text-gray-500">Projets simil.</p>
+                      </div>
+                      <div className="bg-white rounded px-2 py-1 text-center border">
+                        <p className="text-xs font-bold text-gray-800">{integ.tailleEquipe}</p>
+                        <p className="text-[9px] text-gray-500">Employes</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     </AnimBlock>
@@ -5501,50 +5679,97 @@ function MagJumelageScan() {
 }
 
 function MagJumelageConferences() {
+  const [processing, setProcessing] = useState(true);
+  useEffect(() => { const t = setTimeout(() => setProcessing(false), 2800); return () => clearTimeout(t); }, []);
+
+  if (processing) {
+    return (
+      <div className="space-y-3">
+        {/* Cockpit — COPIE EXACTE AtelierJumelage L1077-1109 */}
+        <div className="border border-gray-800 rounded-xl overflow-hidden bg-gray-900">
+          <div className="px-3 py-2 flex items-center gap-2 border-b border-gray-800">
+            <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+            <span className="text-[9px] text-gray-400 font-medium">COCKPIT — Conference en cours</span>
+          </div>
+          <div className="p-2 grid grid-cols-3 gap-1.5">
+            <div className="bg-gray-800 rounded-lg p-2 text-center">
+              <BotAvatar code="CPOB" size="sm" />
+              <p className="text-[9px] text-gray-300 mt-1">Paco</p>
+              <p className="text-[9px] text-gray-500">Animateur</p>
+            </div>
+            <div className="bg-gray-800 rounded-lg p-2 text-center">
+              <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-[9px] text-white font-bold mx-auto">C</div>
+              <p className="text-[9px] text-gray-300 mt-1">Carl</p>
+              <p className="text-[9px] text-gray-500">Client</p>
+            </div>
+            <div className="bg-gray-800 rounded-lg p-2 text-center">
+              <div className="w-6 h-6 rounded-full bg-amber-500 flex items-center justify-center text-[9px] text-white font-bold mx-auto">E</div>
+              <p className="text-[9px] text-gray-300 mt-1">Marc-Andre</p>
+              <p className="text-[9px] text-gray-500">Fournisseur</p>
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 text-[9px] text-amber-600">
+          <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+          Conferences en cours — 1/3
+        </div>
+      </div>
+    );
+  }
+
   return (
     <AnimBlock delay={100}>
       <div className="space-y-3">
-        {/* Conference 1 — Energia */}
-        <div className="border rounded-lg p-3 bg-amber-50/50">
+        {/* Conference 1 notes — COPIE EXACTE AtelierJumelage L1113-1125 */}
+        <div className="border rounded-lg p-2.5 bg-amber-50/50">
           <div className="flex items-center gap-2 mb-1.5">
-            <div className="w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center text-[10px] text-white font-bold shrink-0">1</div>
-            <span className="text-xs font-bold text-gray-800">Energia Solutions</span>
-            <span className="text-xs text-green-600 ml-auto font-medium">Terminee</span>
+            <div className="w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center text-[9px] text-white font-bold shrink-0">1</div>
+            <span className="text-[9px] font-bold text-gray-800">Energia Solutions</span>
+            <span className="text-[9px] text-green-600 ml-auto font-medium">Terminee</span>
           </div>
           {J_CONF_ENERGIA_INSIGHTS.map((ins: string, i: number) => (
-            <div key={i} className="flex items-start gap-1.5 mb-1">
-              <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
-              <span className="text-xs text-gray-700">{ins}</span>
+            <div key={i} className="flex items-start gap-1.5 mb-0.5">
+              <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0 mt-0.5" />
+              <span className="text-[9px] text-gray-700">{ins}</span>
             </div>
           ))}
         </div>
-        {/* Conference 2 — Techno-Froid */}
-        <div className="border rounded-lg p-3 bg-gray-50">
+
+        {/* Conference 2 notes — COPIE EXACTE AtelierJumelage L1130-1142 */}
+        <div className="border rounded-lg p-2.5 bg-gray-50">
           <div className="flex items-center gap-2 mb-1.5">
-            <div className="w-5 h-5 rounded-full bg-gray-400 flex items-center justify-center text-[10px] text-white font-bold shrink-0">2</div>
-            <span className="text-xs font-bold text-gray-800">Techno-Froid Saguenay</span>
-            <span className="text-xs text-green-600 ml-auto font-medium">Terminee</span>
+            <div className="w-5 h-5 rounded-full bg-gray-400 flex items-center justify-center text-[9px] text-white font-bold shrink-0">2</div>
+            <span className="text-[9px] font-bold text-gray-800">Techno-Froid Saguenay</span>
+            <span className="text-[9px] text-green-600 ml-auto font-medium">Terminee</span>
           </div>
           {J_CONF_TECHNO_INSIGHTS.map((ins: string, i: number) => (
-            <div key={i} className="flex items-start gap-1.5 mb-1">
-              <CheckCircle2 className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-              <span className="text-xs text-gray-700">{ins}</span>
+            <div key={i} className="flex items-start gap-1.5 mb-0.5">
+              <CheckCircle2 className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
+              <span className="text-[9px] text-gray-700">{ins}</span>
             </div>
           ))}
         </div>
-        {/* Conference 3 — GreenTech */}
-        <div className="border rounded-lg p-3 bg-orange-50/50">
+
+        {/* Conference 3 notes — COPIE EXACTE AtelierJumelage L1147-1159 */}
+        <div className="border rounded-lg p-2.5 bg-orange-50/50">
           <div className="flex items-center gap-2 mb-1.5">
-            <div className="w-5 h-5 rounded-full bg-orange-400 flex items-center justify-center text-[10px] text-white font-bold shrink-0">3</div>
-            <span className="text-xs font-bold text-gray-800">GreenTech Industries</span>
-            <span className="text-xs text-green-600 ml-auto font-medium">Terminee</span>
+            <div className="w-5 h-5 rounded-full bg-orange-400 flex items-center justify-center text-[9px] text-white font-bold shrink-0">3</div>
+            <span className="text-[9px] font-bold text-gray-800">GreenTech Industries</span>
+            <span className="text-[9px] text-green-600 ml-auto font-medium">Terminee</span>
           </div>
           {J_CONF_GREEN_INSIGHTS.map((ins: string, i: number) => (
-            <div key={i} className="flex items-start gap-1.5 mb-1">
-              <CheckCircle2 className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-              <span className="text-xs text-gray-700">{ins}</span>
+            <div key={i} className="flex items-start gap-1.5 mb-0.5">
+              <CheckCircle2 className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
+              <span className="text-[9px] text-gray-700">{ins}</span>
             </div>
           ))}
+        </div>
+
+        {/* Points cles extraits — COPIE AtelierJumelage L1172-1178 */}
+        <div className="bg-green-50 border border-green-200 rounded-lg p-2.5">
+          <p className="text-[9px] font-bold text-green-800 mb-1 flex items-center gap-1">
+            <Pin className="h-3.5 w-3.5" /> Points cles extraits (3/3)
+          </p>
         </div>
       </div>
     </AnimBlock>
@@ -5552,17 +5777,41 @@ function MagJumelageConferences() {
 }
 
 function MagJumelageScoring() {
+  const [processing, setProcessing] = useState(true);
+  useEffect(() => { const t = setTimeout(() => setProcessing(false), 2500); return () => clearTimeout(t); }, []);
+
+  if (processing) {
+    return (
+      <div className="space-y-1.5">
+        {SIM_ACTE2.scoringCategories.map((cat: { label: string; weight: string }, i: number) => (
+          <div key={i} className="flex items-center gap-2 text-xs text-amber-700">
+            <BarChart3 className="h-3.5 w-3.5 animate-pulse" />
+            <span>{cat.label} ({cat.weight})</span>
+          </div>
+        ))}
+        <div className="flex items-center gap-1 mt-1">
+          <div className="flex gap-1">
+            <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+            <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+            <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+          </div>
+          <span className="text-xs text-gray-400 ml-1">Scoring en cours</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <AnimBlock delay={100}>
       <div className="overflow-hidden">
-        <table className="w-full text-xs">
+        <table className="w-full text-[9px]">
           <thead>
             <tr className="bg-gray-50 border-b">
-              <th className="text-left px-2 py-2 text-gray-500 font-medium">Critere</th>
-              <th className="text-center px-1 py-2 text-gray-500 font-medium">Poids</th>
+              <th className="text-left px-2 py-1.5 text-gray-500 font-medium">Critere</th>
+              <th className="text-center px-1 py-1.5 text-gray-500 font-medium">Poids</th>
               {SIM_ACTE2.scoringResults.map((r: { nom: string }, i: number) => (
-                <th key={i} className="text-center px-1 py-2 text-gray-700 font-bold">
-                  <span className="truncate block max-w-[70px]">{r.nom.split(" ")[0]}</span>
+                <th key={i} className="text-center px-1 py-1.5 text-gray-700 font-bold">
+                  <span className="truncate block max-w-[60px]">{r.nom.split(" ")[0]}</span>
                 </th>
               ))}
             </tr>
@@ -5570,21 +5819,29 @@ function MagJumelageScoring() {
           <tbody>
             {SIM_ACTE2.scoringCategories.map((cat: { label: string; weight: string }, ci: number) => (
               <tr key={ci} className="border-b border-gray-100">
-                <td className="px-2 py-1.5 text-gray-700">{cat.label}</td>
-                <td className="text-center px-1 py-1.5 text-gray-400">{cat.weight}</td>
+                <td className="px-2 py-1 text-gray-700">{cat.label}</td>
+                <td className="text-center px-1 py-1 text-gray-400">{cat.weight}</td>
                 {SIM_ACTE2.scoringResults.map((r: { scores: number[] }, ri: number) => {
                   const score = r.scores[ci];
                   const color = score >= 90 ? "text-green-600 font-bold" : score >= 70 ? "text-amber-600" : "text-red-500";
-                  return <td key={ri} className={cn("text-center px-1 py-1.5", color)}>{score}</td>;
+                  return (
+                    <td key={ri} className={cn("text-center px-1 py-1", color)}>
+                      {score}
+                    </td>
+                  );
                 })}
               </tr>
             ))}
             <tr className="bg-gray-50 font-bold">
-              <td className="px-2 py-2 text-gray-800">Total</td>
-              <td className="text-center px-1 py-2 text-gray-400">100%</td>
+              <td className="px-2 py-1.5 text-gray-800">Total</td>
+              <td className="text-center px-1 py-1.5 text-gray-400">100%</td>
               {SIM_ACTE2.scoringResults.map((r: { total: number }, ri: number) => {
                 const color = r.total >= 90 ? "text-green-700" : r.total >= 70 ? "text-amber-700" : "text-gray-600";
-                return <td key={ri} className={cn("text-center px-1 py-2", color)}>{r.total}%</td>;
+                return (
+                  <td key={ri} className={cn("text-center px-1 py-1.5", color)}>
+                    {r.total}%
+                  </td>
+                );
               })}
             </tr>
           </tbody>
@@ -5595,6 +5852,37 @@ function MagJumelageScoring() {
 }
 
 function MagJumelageRecommandation() {
+  const [processing, setProcessing] = useState(true);
+  useEffect(() => { const t = setTimeout(() => setProcessing(false), 2200); return () => clearTimeout(t); }, []);
+
+  if (processing) {
+    return (
+      <div className="space-y-2">
+        {[
+          { icon: Trophy, text: "Compilation des scores finaux...", delay: 0 },
+          { icon: Award, text: "Analyse des certifications et references...", delay: 500 },
+          { icon: Target, text: "Calcul de compatibilite globale...", delay: 1000 },
+        ].map((step, i) => {
+          const SIcon = step.icon;
+          return (
+            <div key={i} className="flex items-center gap-2 text-xs text-green-700 animate-in fade-in slide-in-from-left-2" style={{ animationDelay: `${step.delay}ms`, animationFillMode: "both", animationDuration: "400ms" }}>
+              <SIcon className="h-3.5 w-3.5 animate-pulse" />
+              <span>{step.text}</span>
+            </div>
+          );
+        })}
+        <div className="flex items-center gap-2 mt-1 bg-green-50 rounded-lg px-3 py-2">
+          <div className="flex gap-1">
+            <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+            <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+            <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+          </div>
+          <span className="text-xs text-green-600 font-medium">Recommandation en cours</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <AnimBlock delay={100}>
       <div className="space-y-3">
@@ -5603,35 +5891,44 @@ function MagJumelageRecommandation() {
             <Award className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h4 className="text-xs font-bold text-gray-800">{INTEGRATORS[0].nom}</h4>
-            <p className="text-xs text-gray-500">{INTEGRATORS[0].ville} — {INTEGRATORS[0].tailleEquipe} personnes — {INTEGRATORS[0].experience}</p>
+            <h4 className="text-[9px] font-bold text-gray-800">{INTEGRATORS[0].nom}</h4>
+            <p className="text-[9px] text-gray-500">{INTEGRATORS[0].ville} — {INTEGRATORS[0].tailleEquipe} personnes — {INTEGRATORS[0].experience}</p>
           </div>
           <div className="ml-auto text-lg font-bold text-green-600">{INTEGRATORS[0].score}%</div>
         </div>
-        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-          <p className="text-xs font-bold text-green-800 mb-1">Pourquoi ce choix</p>
-          <p className="text-xs text-green-700">{INTEGRATORS[0].force}</p>
+
+        <div className="bg-green-50 border border-green-200 rounded-lg p-2.5">
+          <p className="text-[9px] font-bold text-green-800 mb-1">Pourquoi ce choix</p>
+          <p className="text-[9px] text-green-700">{INTEGRATORS[0].force}</p>
         </div>
-        <div className="flex flex-wrap gap-1.5">
+
+        <div className="flex flex-wrap gap-1">
           {INTEGRATORS[0].certifications.map((c: string, i: number) => (
-            <span key={i} className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium flex items-center gap-0.5">
-              <Star className="h-3 w-3" /> {c}
+            <span key={i} className="text-[9px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium flex items-center gap-0.5">
+              <Star className="h-2.5 w-2.5" /> {c}
             </span>
           ))}
         </div>
+
         <div className="grid grid-cols-3 gap-2">
-          <div className="bg-gray-50 rounded-lg px-2 py-2 text-center">
-            <div className="text-sm font-bold text-gray-800">{INTEGRATORS[0].projetsSimil}</div>
-            <div className="text-xs text-gray-500">Projets similaires</div>
+          <div className="bg-gray-50 rounded-lg px-2 py-1.5 text-center">
+            <div className="text-[9px] font-bold text-gray-800">{INTEGRATORS[0].projetsSimil}</div>
+            <div className="text-[9px] text-gray-500">Projets similaires</div>
           </div>
-          <div className="bg-gray-50 rounded-lg px-2 py-2 text-center">
-            <div className="text-sm font-bold text-green-600">98%</div>
-            <div className="text-xs text-gray-500">Approbation HQ</div>
+          <div className="bg-gray-50 rounded-lg px-2 py-1.5 text-center">
+            <div className="text-[9px] font-bold text-green-600">98%</div>
+            <div className="text-[9px] text-gray-500">Approbation HQ</div>
           </div>
-          <div className="bg-gray-50 rounded-lg px-2 py-2 text-center">
-            <div className="text-sm font-bold text-amber-600">20 sem.</div>
-            <div className="text-xs text-gray-500">Delai livraison</div>
+          <div className="bg-gray-50 rounded-lg px-2 py-1.5 text-center">
+            <div className="text-[9px] font-bold text-amber-600">20 sem.</div>
+            <div className="text-[9px] text-gray-500">Delai livraison</div>
           </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button type="button" className="text-[9px] bg-white text-gray-600 border border-gray-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-gray-50 font-medium cursor-pointer">
+            <Download className="h-3.5 w-3.5" /> Exporter le matching
+          </button>
         </div>
       </div>
     </AnimBlock>
@@ -6023,7 +6320,7 @@ export function PhaseConceptionCode({ stage, onBack }: { stage: number; onBack?:
 
 export function PhaseConceptionJumelage({ stage, onBack }: { stage: number; onBack?: () => void }) {
   return (
-    <PhaseConceptionLivrable stage={stage} onBack={onBack} theme={L2_THEMES.blue}
+    <PhaseConceptionLivrable stage={stage} onBack={onBack} theme={L2_THEMES.amber}
       sections={JUMELAGE_DOCFORGE_SECTIONS} icon={Handshake} title="Jumelage SMART — Recherche intégrateur Orbit⁹"
       sectionContent={{
         1: <MagJumelageCriteres />, 2: <MagJumelageScan />,
@@ -6041,6 +6338,8 @@ export function PhaseConceptionJumelage({ stage, onBack }: { stage: number; onBa
 function SpreadsheetConceptionChat({ stage, typed, setTyped, advance, onBack }: {
   stage: number; typed: boolean; setTyped: (v: boolean) => void; advance: () => void; onBack?: () => void;
 }) {
+  const [sStage, setSStage] = useState<"intro" | "structure-thinking" | "structure" | "donnees-thinking" | "donnees" | "projections-thinking" | "projections" | "user-formule" | "graphiques-thinking" | "graphiques" | "export" | "transition">("intro");
+
   return (
     <div className="space-y-3">
       {onBack && (
@@ -6049,51 +6348,66 @@ function SpreadsheetConceptionChat({ stage, typed, setTyped, advance, onBack }: 
         </button>
       )}
 
-      {/* Stage 0: Frank intro + mobilise Tim */}
-      {stage >= 0 && (
+      {/* Intro: Frank intro + mobilise Tim */}
+      {sStage === "intro" && (
         <>
-          {stage === 0 && (
-            <div className="flex items-center gap-1.5 ml-10 bg-teal-50 border border-teal-200 rounded-lg px-2.5 py-1.5">
-              <div className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
-              <span className="text-xs text-teal-600 font-medium">Tableur de suivi — Mode conception</span>
-            </div>
-          )}
-          <SBubble code="CFOB" collapsed={stage > 0}>
-            {stage === 0 ? (
-              <>
-                <TypewriterText text="On va créer le tableau de bord financier pour suivre le projet d'automatisation Boreal. Ce tableur va consolider les données du cahier de projet — budget 1.1M$, 4 phases, subventions, et projections sur 36 mois. Je mobilise Tim pour les données techniques IoT." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
-                {typed && (
-                  <div className="mt-3 space-y-1.5">
-                    {[
-                      { code: "CFOB", name: "Frank", role: "CFO — Structure financière, formules, scénarios", delay: "0ms" },
-                      { code: "CTOB", name: "Tim", role: "CTO — Données capteurs IoT, métriques techniques", delay: "400ms" },
-                    ].map(bot => (
-                      <div key={bot.code} className="flex items-center gap-2 bg-teal-50 border border-teal-200 rounded-lg px-3 py-2 animate-in fade-in slide-in-from-left-2" style={{ animationDelay: bot.delay, animationFillMode: "both", animationDuration: "500ms" }}>
-                        <BotAvatar code={bot.code} size="sm" />
-                        <div className="flex-1">
-                          <span className="text-xs font-bold text-gray-700">{bot.name}</span>
-                          <span className="text-xs text-gray-500 ml-1.5">{bot.role}</span>
-                        </div>
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                      </div>
-                    ))}
+          <div className="flex items-center gap-1.5 ml-10 bg-teal-50 border border-teal-200 rounded-lg px-2.5 py-1.5">
+            <div className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
+            <span className="text-xs text-teal-600 font-medium">Tableur de suivi — Mode conception</span>
+          </div>
+          <SBubble code="CFOB">
+            <TypewriterText text="On va créer le tableau de bord financier pour suivre le projet d'automatisation Boreal. Ce tableur va consolider les données du cahier de projet — budget 1.1M$, 4 phases, subventions, et projections sur 36 mois. Je mobilise Tim pour les données techniques IoT." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+            {typed && (
+              <div className="mt-3 space-y-1.5">
+                {[
+                  { code: "CFOB", name: "Frank", role: "CFO — Structure financière, formules, scénarios", delay: "0ms" },
+                  { code: "CTOB", name: "Tim", role: "CTO — Données capteurs IoT, métriques techniques", delay: "400ms" },
+                ].map(bot => (
+                  <div key={bot.code} className="flex items-center gap-2 bg-teal-50 border border-teal-200 rounded-lg px-3 py-2 animate-in fade-in slide-in-from-left-2" style={{ animationDelay: bot.delay, animationFillMode: "both", animationDuration: "500ms" }}>
+                    <BotAvatar code={bot.code} size="sm" />
+                    <div className="flex-1">
+                      <span className="text-xs font-bold text-gray-700">{bot.name}</span>
+                      <span className="text-xs text-gray-500 ml-1.5">{bot.role}</span>
+                    </div>
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
                   </div>
-                )}
-                {typed && (
-                  <button type="button" onClick={advance} className="mt-3 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-teal-500 text-white hover:bg-teal-600 shadow-sm">
-                    <Table2 className="h-3.5 w-3.5" /> Structurer le tableur
-                  </button>
-                )}
-              </>
-            ) : <p className="text-xs text-gray-400 italic">Équipe mobilisée — Frank + Tim</p>}
+                ))}
+              </div>
+            )}
+            {typed && (
+              <button type="button" onClick={() => setSStage("structure-thinking")} className="mt-3 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-teal-500 text-white hover:bg-teal-600 shadow-sm">
+                <Table2 className="h-3.5 w-3.5" /> Structurer le tableur
+              </button>
+            )}
           </SBubble>
         </>
       )}
 
-      {/* Stage 1: Structure du tableur — onglets et colonnes */}
-      {stage >= 1 && (
-        <SBubble code="CFOB" collapsed={stage > 1}>
-          {stage === 1 ? (
+      {/* After intro — collapsed intro */}
+      {sStage !== "intro" && (
+        <SBubble code="CFOB" collapsed>
+          <p className="text-xs text-gray-400 italic">Équipe mobilisée — Frank + Tim</p>
+        </SBubble>
+      )}
+
+      {/* Structure-thinking: animation processing */}
+      {sStage === "structure-thinking" && (
+        <ThinkingAnimation
+          botCode="CFOB" botEmoji="📊" botName="Frank"
+          steps={[
+            { icon: Search, text: "Analyser les sections du cahier de projet..." },
+            { icon: Table2, text: "Identifier colonnes et onglets nécessaires..." },
+            { icon: ListChecks, text: "Structurer 6 onglets avec métriques clés..." },
+          ]}
+          onComplete={() => setSStage("structure")}
+          speed={700}
+        />
+      )}
+
+      {/* Structure: onglets et colonnes */}
+      {(sStage === "structure" || (sStage !== "intro" && sStage !== "structure-thinking" && sStage !== "structure")) && sStage !== "intro" && sStage !== "structure-thinking" && (
+        <SBubble code="CFOB" collapsed={sStage !== "structure"}>
+          {sStage === "structure" ? (
             <>
               <TypewriterText text="Structure du tableur définie. 6 onglets alignés sur les sections du cahier de projet Boreal :" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
               {typed && (
@@ -6120,7 +6434,7 @@ function SpreadsheetConceptionChat({ stage, typed, setTyped, advance, onBack }: 
                 </div>
               )}
               {typed && (
-                <button type="button" onClick={advance} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-teal-500 text-white hover:bg-teal-600 shadow-sm">
+                <button type="button" onClick={() => { advance(); setSStage("donnees-thinking"); }} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-teal-500 text-white hover:bg-teal-600 shadow-sm">
                   <ChevronRight className="h-3.5 w-3.5" /> Importer les données
                 </button>
               )}
@@ -6129,10 +6443,24 @@ function SpreadsheetConceptionChat({ stage, typed, setTyped, advance, onBack }: 
         </SBubble>
       )}
 
-      {/* Stage 2: Données baseline importées */}
-      {stage >= 2 && (
-        <SBubble code="CFOB" collapsed={stage > 2}>
-          {stage === 2 ? (
+      {/* Donnees-thinking: animation processing */}
+      {sStage === "donnees-thinking" && (
+        <ThinkingAnimation
+          botCode="CFOB" botEmoji="📊" botName="Frank"
+          steps={[
+            { icon: Database, text: "Extraire données historiques et factures..." },
+            { icon: TrendingUp, text: "Calculer baselines et benchmarks industrie..." },
+            { icon: AlertTriangle, text: "Identifier écarts prévisionnel vs réel..." },
+          ]}
+          onComplete={() => setSStage("donnees")}
+          speed={700}
+        />
+      )}
+
+      {/* Donnees: baseline importées */}
+      {["donnees", "projections-thinking", "projections", "user-formule", "graphiques-thinking", "graphiques", "export", "transition"].includes(sStage) && (
+        <SBubble code="CFOB" collapsed={sStage !== "donnees"}>
+          {sStage === "donnees" ? (
             <>
               <TypewriterText text="Données de référence importées depuis le cahier de projet. J'ai croisé les factures historiques avec les estimations du diagnostic SMART :" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
               {typed && (
@@ -6156,7 +6484,7 @@ function SpreadsheetConceptionChat({ stage, typed, setTyped, advance, onBack }: 
                 </div>
               )}
               {typed && (
-                <button type="button" onClick={advance} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-teal-500 text-white hover:bg-teal-600 shadow-sm">
+                <button type="button" onClick={() => { advance(); setSStage("projections-thinking"); }} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-teal-500 text-white hover:bg-teal-600 shadow-sm">
                   <ChevronRight className="h-3.5 w-3.5" /> Calculer les projections
                 </button>
               )}
@@ -6165,10 +6493,24 @@ function SpreadsheetConceptionChat({ stage, typed, setTyped, advance, onBack }: 
         </SBubble>
       )}
 
-      {/* Stage 3: Projections 36 mois */}
-      {stage >= 3 && (
-        <SBubble code="CFOB" collapsed={stage > 3}>
-          {stage === 3 ? (
+      {/* Projections-thinking: animation processing */}
+      {sStage === "projections-thinking" && (
+        <ThinkingAnimation
+          botCode="CFOB" botEmoji="📊" botName="Frank"
+          steps={[
+            { icon: DollarSign, text: "Modéliser cash-flow sur 36 mois..." },
+            { icon: TrendingUp, text: "Calculer VAN, TRI et seuil de rentabilité..." },
+            { icon: BarChart3, text: "Générer 3 scénarios (optimiste/réaliste/pessimiste)..." },
+          ]}
+          onComplete={() => setSStage("projections")}
+          speed={900}
+        />
+      )}
+
+      {/* Projections: 36 mois */}
+      {["projections", "user-formule", "graphiques-thinking", "graphiques", "export", "transition"].includes(sStage) && (
+        <SBubble code="CFOB" collapsed={sStage !== "projections"}>
+          {sStage === "projections" ? (
             <>
               <TypewriterText text="Projections calculées sur 36 mois. Le seuil de rentabilité net est atteint au mois 18. Voici les jalons financiers clés :" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
               {typed && (
@@ -6195,7 +6537,7 @@ function SpreadsheetConceptionChat({ stage, typed, setTyped, advance, onBack }: 
                 </div>
               )}
               {typed && (
-                <button type="button" onClick={advance} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-teal-500 text-white hover:bg-teal-600 shadow-sm">
+                <button type="button" onClick={() => { advance(); setTyped(false); setSStage("user-formule"); }} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-teal-500 text-white hover:bg-teal-600 shadow-sm">
                   <ChevronRight className="h-3.5 w-3.5" /> Formules et scénarios
                 </button>
               )}
@@ -6204,76 +6546,134 @@ function SpreadsheetConceptionChat({ stage, typed, setTyped, advance, onBack }: 
         </SBubble>
       )}
 
-      {/* Stage 4: Tim — Données IoT + formules */}
-      {stage >= 4 && (
-        <SBubble code="CTOB" collapsed={stage > 4}>
-          {stage === 4 ? (
+      {/* User-formule: bonification utilisateur + Tim IoT */}
+      {["user-formule", "graphiques-thinking", "graphiques", "export", "transition"].includes(sStage) && (
+        <>
+          {sStage === "user-formule" ? (
             <>
-              <TypewriterText text="J'ai ajouté les formules de calcul IoT et les métriques techniques dans l'onglet KPIs opérationnels. Les capteurs alimenteront ces colonnes en temps réel une fois la Phase 4 déployée :" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {/* User bubble */}
+              <div className="flex justify-end">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 max-w-[85%]">
+                  <p className="text-xs text-blue-700 font-medium">Ajouter aussi le coût par palette dans les KPIs. C'est la métrique que le CA suit le plus.</p>
+                </div>
+              </div>
+              {/* Tim bonification */}
+              <SBubble code="CTOB">
+                <TypewriterText text="J'ai ajouté les formules de calcul IoT et le coût par palette dans l'onglet KPIs opérationnels. Les capteurs alimenteront ces colonnes en temps réel une fois la Phase 4 déployée :" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+                {typed && (
+                  <div className="mt-3 space-y-1.5">
+                    {[
+                      { formule: "Coût énergie / palette", calcul: "= (Hydro_mensuel + Gaz_mensuel) / Palettes_produites", cible: "< 2.80$/palette (actuel: 4.10$)" },
+                      { formule: "Taux conformité température", calcul: "= Mesures_conformes / Mesures_totales × 100", cible: "≥ 99.5% (actuel: 94%)" },
+                      { formule: "MTBF maintenance", calcul: "= Heures_production / Nombre_pannes", cible: "> 2 000h (actuel: 487h)" },
+                      { formule: "ROI mensuel glissant", calcul: "= Économies_cumulées / Investissement_net × 100", cible: "100% au mois 18" },
+                    ].map(f => (
+                      <div key={f.formule} className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+                        <p className="text-xs font-bold text-gray-800">{f.formule}</p>
+                        <p className="text-xs text-teal-600 font-mono mt-0.5">{f.calcul}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">Cible : {f.cible}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {typed && (
+                  <button type="button" onClick={() => { advance(); setSStage("graphiques-thinking"); }} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-teal-500 text-white hover:bg-teal-600 shadow-sm">
+                    <ChevronRight className="h-3.5 w-3.5" /> Graphiques et conclusion
+                  </button>
+                )}
+              </SBubble>
+            </>
+          ) : (
+            <>
+              <div className="flex justify-end">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 max-w-[85%]">
+                  <p className="text-xs text-blue-400 italic">Ajout coût par palette demandé</p>
+                </div>
+              </div>
+              <SBubble code="CTOB" collapsed>
+                <p className="text-xs text-gray-400 italic">Formules IoT + KPIs techniques intégrés (coût/palette ajouté)</p>
+              </SBubble>
+            </>
+          )}
+        </>
+      )}
+
+      {/* Graphiques-thinking: animation processing */}
+      {sStage === "graphiques-thinking" && (
+        <ThinkingAnimation
+          botCode="CFOB" botEmoji="📊" botName="Frank"
+          steps={[
+            { icon: LineChart, text: "Compiler analyse de sensibilité et graphiques..." },
+            { icon: ArrowRight, text: "Préparer exports PDF et partage CA..." },
+          ]}
+          onComplete={() => setSStage("graphiques")}
+          speed={800}
+        />
+      )}
+
+      {/* Graphiques: charts et visualisations */}
+      {["graphiques", "export", "transition"].includes(sStage) && (
+        <SBubble code="CFOB" collapsed={sStage !== "graphiques"}>
+          {sStage === "graphiques" ? (
+            <>
+              <TypewriterText text="Graphiques et visualisations intégrés au tableur. J'ai ajouté les courbes de suivi essentielles pour la direction et le CA :" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
               {typed && (
                 <div className="mt-3 space-y-1.5">
                   {[
-                    { formule: "Coût énergie / palette", calcul: "= (Hydro_mensuel + Gaz_mensuel) / Palettes_produites", cible: "< 2.80$/palette (actuel: 4.10$)" },
-                    { formule: "Taux conformité température", calcul: "= Mesures_conformes / Mesures_totales × 100", cible: "≥ 99.5% (actuel: 94%)" },
-                    { formule: "MTBF maintenance", calcul: "= Heures_production / Nombre_pannes", cible: "> 2 000h (actuel: 487h)" },
-                    { formule: "ROI mensuel glissant", calcul: "= Économies_cumulées / Investissement_net × 100", cible: "100% au mois 18" },
-                  ].map(f => (
-                    <div key={f.formule} className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
-                      <p className="text-xs font-bold text-gray-800">{f.formule}</p>
-                      <p className="text-xs text-teal-600 font-mono mt-0.5">{f.calcul}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">Cible : {f.cible}</p>
+                    { graph: "Courbe cash-flow 36 mois", desc: "Visualise le point de rentabilité au mois 18, format waterfall mensuel" },
+                    { graph: "Comparaison 3 scénarios", desc: "Optimiste/réaliste/pessimiste — sensibilité subventions et énergie" },
+                    { graph: "Répartition budget par poste", desc: "CO₂ (44%), chaudières (18%), cobot (19%), IoT (19%)" },
+                    { graph: "Tendance KPIs opérationnels", desc: "Avant/après sur 4 métriques clés (énergie, cadence, température, arrêts)" },
+                  ].map(g => (
+                    <div key={g.graph} className="flex items-start gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+                      <LineChart className="h-3.5 w-3.5 text-teal-500 shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-xs font-bold text-gray-800">{g.graph}</p>
+                        <p className="text-xs text-gray-500">{g.desc}</p>
+                      </div>
                     </div>
                   ))}
                 </div>
               )}
               {typed && (
-                <>
-                  <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 ml-auto max-w-[85%]">
-                    <p className="text-xs text-blue-700 font-medium">Les formules sont solides. Frank, finalise avec les graphiques.</p>
-                  </div>
-                  <button type="button" onClick={advance} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-teal-500 text-white hover:bg-teal-600 shadow-sm">
-                    <ChevronRight className="h-3.5 w-3.5" /> Graphiques et conclusion
-                  </button>
-                </>
+                <button type="button" onClick={() => { setTyped(false); setSStage("export"); advance(); }} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-teal-500 text-white hover:bg-teal-600 shadow-sm">
+                  <ChevronRight className="h-3.5 w-3.5" /> Finaliser le tableur
+                </button>
               )}
             </>
-          ) : <p className="text-xs text-gray-400 italic">Formules IoT + KPIs techniques intégrés</p>}
+          ) : <p className="text-xs text-gray-400 italic">Graphiques — 4 visualisations (cash-flow, scénarios, budget, KPIs)</p>}
         </SBubble>
       )}
 
-      {/* Stage 5: Conclusion + validation */}
-      {stage >= 5 && (
+      {/* Export/Conclusion */}
+      {["export", "transition"].includes(sStage) && (
         <SBubble code="CFOB">
-          {stage === 5 ? (
-            <>
-              <TypewriterText text="Tableur de bord financier terminé. 6 onglets, 103 colonnes, projections 36 mois, 3 scénarios et les formules IoT de Tim. Le tableur est prêt pour révision." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
-              {typed && (
-                <div className="mt-3 space-y-3">
-                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                      <p className="text-sm font-bold text-emerald-700">Tableur de suivi financier — Terminé</p>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      {[
-                        { label: "Onglets", value: "6" },
-                        { label: "Formules", value: "47" },
-                        { label: "Scénarios", value: "3" },
-                      ].map(s => (
-                        <div key={s.label} className="bg-white/70 rounded-lg px-2 py-1.5 text-center">
-                          <p className="text-xs text-emerald-600">{s.label}</p>
-                          <p className="text-xs font-bold text-emerald-800">{s.value}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="bg-teal-50 border border-teal-200 rounded-lg px-3 py-2">
-                    <p className="text-xs text-teal-800"><span className="font-bold">Note :</span> Ce tableur sera alimenté automatiquement par les capteurs IoT (Phase 4) et les données ERP une fois le projet déployé.</p>
-                  </div>
+          <TypewriterText text="Tableur de bord financier terminé. 6 onglets, 103 colonnes, projections 36 mois, 3 scénarios et les formules IoT de Tim. Le tableur est prêt pour révision." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+          {typed && (
+            <div className="mt-3 space-y-3">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                  <p className="text-sm font-bold text-emerald-700">Tableur de suivi financier — Terminé</p>
                 </div>
-              )}
-            </>
-          ) : <p className="text-xs text-gray-400 italic">Tableur terminé — 6 onglets, 47 formules, 3 scénarios</p>}
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { label: "Onglets", value: "6" },
+                    { label: "Formules", value: "47" },
+                    { label: "Scénarios", value: "3" },
+                  ].map(s => (
+                    <div key={s.label} className="bg-white/70 rounded-lg px-2 py-1.5 text-center">
+                      <p className="text-xs text-emerald-600">{s.label}</p>
+                      <p className="text-xs font-bold text-emerald-800">{s.value}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="bg-teal-50 border border-teal-200 rounded-lg px-3 py-2">
+                <p className="text-xs text-teal-800"><span className="font-bold">Note :</span> Ce tableur sera alimenté automatiquement par les capteurs IoT (Phase 4) et les données ERP une fois le projet déployé.</p>
+              </div>
+            </div>
+          )}
         </SBubble>
       )}
     </div>
@@ -6287,6 +6687,8 @@ function SpreadsheetConceptionChat({ stage, typed, setTyped, advance, onBack }: 
 function PresentationConceptionChat({ stage, typed, setTyped, advance, onBack }: {
   stage: number; typed: boolean; setTyped: (v: boolean) => void; advance: () => void; onBack?: () => void;
 }) {
+  const [pStage, setPStage] = useState<"intro" | "enjeu-thinking" | "enjeu" | "diagnostic-thinking" | "diagnostic" | "budget-thinking" | "budget" | "timeline-thinking" | "timeline" | "design" | "conclusion">("intro");
+
   return (
     <div className="space-y-3">
       {onBack && (
@@ -6295,51 +6697,66 @@ function PresentationConceptionChat({ stage, typed, setTyped, advance, onBack }:
         </button>
       )}
 
-      {/* Stage 0: Mathilde intro */}
-      {stage >= 0 && (
+      {/* Intro: Mathilde intro */}
+      {pStage === "intro" && (
         <>
-          {stage === 0 && (
-            <div className="flex items-center gap-1.5 ml-10 bg-blue-50 border border-blue-200 rounded-lg px-2.5 py-1.5">
-              <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-              <span className="text-xs text-blue-600 font-medium">Pitch Deck — Mode conception</span>
-            </div>
-          )}
-          <SBubble code="CMOB" collapsed={stage > 0}>
-            {stage === 0 ? (
-              <>
-                <TypewriterText text="On va créer le pitch deck pour présenter le projet d'automatisation au conseil d'administration d'Aliments Boreal. L'objectif : convaincre le CA d'approuver l'investissement de 508K$ net (1.1M$ brut). Je mobilise CarlOS pour la vision stratégique." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
-                {typed && (
-                  <div className="mt-3 space-y-1.5">
-                    {[
-                      { code: "CMOB", name: "Mathilde", role: "CMO — Design, storytelling, impact visuel", delay: "0ms" },
-                      { code: "CEOB", name: "CarlOS", role: "CEO — Vision stratégique, arguments décisionnels", delay: "400ms" },
-                    ].map(bot => (
-                      <div key={bot.code} className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 animate-in fade-in slide-in-from-left-2" style={{ animationDelay: bot.delay, animationFillMode: "both", animationDuration: "500ms" }}>
-                        <BotAvatar code={bot.code} size="sm" />
-                        <div className="flex-1">
-                          <span className="text-xs font-bold text-gray-700">{bot.name}</span>
-                          <span className="text-xs text-gray-500 ml-1.5">{bot.role}</span>
-                        </div>
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                      </div>
-                    ))}
+          <div className="flex items-center gap-1.5 ml-10 bg-blue-50 border border-blue-200 rounded-lg px-2.5 py-1.5">
+            <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+            <span className="text-xs text-blue-600 font-medium">Pitch Deck — Mode conception</span>
+          </div>
+          <SBubble code="CMOB">
+            <TypewriterText text="On va créer le pitch deck pour présenter le projet d'automatisation au conseil d'administration d'Aliments Boreal. L'objectif : convaincre le CA d'approuver l'investissement de 508K$ net (1.1M$ brut). Je mobilise CarlOS pour la vision stratégique." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+            {typed && (
+              <div className="mt-3 space-y-1.5">
+                {[
+                  { code: "CMOB", name: "Mathilde", role: "CMO — Design, storytelling, impact visuel", delay: "0ms" },
+                  { code: "CEOB", name: "CarlOS", role: "CEO — Vision stratégique, arguments décisionnels", delay: "400ms" },
+                ].map(bot => (
+                  <div key={bot.code} className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 animate-in fade-in slide-in-from-left-2" style={{ animationDelay: bot.delay, animationFillMode: "both", animationDuration: "500ms" }}>
+                    <BotAvatar code={bot.code} size="sm" />
+                    <div className="flex-1">
+                      <span className="text-xs font-bold text-gray-700">{bot.name}</span>
+                      <span className="text-xs text-gray-500 ml-1.5">{bot.role}</span>
+                    </div>
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
                   </div>
-                )}
-                {typed && (
-                  <button type="button" onClick={advance} className="mt-3 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-blue-500 text-white hover:bg-blue-600 shadow-sm">
-                    <Presentation className="h-3.5 w-3.5" /> Créer le pitch deck
-                  </button>
-                )}
-              </>
-            ) : <p className="text-xs text-gray-400 italic">Équipe mobilisée — Mathilde + CarlOS</p>}
+                ))}
+              </div>
+            )}
+            {typed && (
+              <button type="button" onClick={() => setPStage("enjeu-thinking")} className="mt-3 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-blue-500 text-white hover:bg-blue-600 shadow-sm">
+                <Presentation className="h-3.5 w-3.5" /> Créer le pitch deck
+              </button>
+            )}
           </SBubble>
         </>
       )}
 
-      {/* Stage 1: Slide enjeu — chiffres choc */}
-      {stage >= 1 && (
-        <SBubble code="CEOB" collapsed={stage > 1}>
-          {stage === 1 ? (
+      {/* After intro — collapsed */}
+      {pStage !== "intro" && (
+        <SBubble code="CMOB" collapsed>
+          <p className="text-xs text-gray-400 italic">Équipe mobilisée — Mathilde + CarlOS</p>
+        </SBubble>
+      )}
+
+      {/* Enjeu-thinking */}
+      {pStage === "enjeu-thinking" && (
+        <ThinkingAnimation
+          botCode="CEOB" botEmoji="🧠" botName="CarlOS"
+          steps={[
+            { icon: AlertTriangle, text: "Synthétiser les pertes annuelles du diagnostic..." },
+            { icon: BarChart3, text: "Créer infographies d'impact pour le CA..." },
+            { icon: Target, text: "Mettre en scène l'urgence d'agir..." },
+          ]}
+          onComplete={() => setPStage("enjeu")}
+          speed={700}
+        />
+      )}
+
+      {/* Enjeu: slide chiffres choc */}
+      {!["intro", "enjeu-thinking"].includes(pStage) && (
+        <SBubble code="CEOB" collapsed={pStage !== "enjeu"}>
+          {pStage === "enjeu" ? (
             <>
               <TypewriterText text="Slide d'ouverture : l'enjeu stratégique. On frappe fort avec les chiffres du diagnostic pour créer l'urgence d'agir :" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
               {typed && (
@@ -6364,7 +6781,7 @@ function PresentationConceptionChat({ stage, typed, setTyped, advance, onBack }:
                 </div>
               )}
               {typed && (
-                <button type="button" onClick={advance} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-blue-500 text-white hover:bg-blue-600 shadow-sm">
+                <button type="button" onClick={() => { advance(); setPStage("diagnostic-thinking"); }} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-blue-500 text-white hover:bg-blue-600 shadow-sm">
                   <ChevronRight className="h-3.5 w-3.5" /> Slides diagnostic
                 </button>
               )}
@@ -6373,10 +6790,24 @@ function PresentationConceptionChat({ stage, typed, setTyped, advance, onBack }:
         </SBubble>
       )}
 
-      {/* Stage 2: Slides diagnostic + SWOT */}
-      {stage >= 2 && (
-        <SBubble code="CMOB" collapsed={stage > 2}>
-          {stage === 2 ? (
+      {/* Diagnostic-thinking */}
+      {pStage === "diagnostic-thinking" && (
+        <ThinkingAnimation
+          botCode="CMOB" botEmoji="🎨" botName="Mathilde"
+          steps={[
+            { icon: Activity, text: "Analyser SWOT depuis le cahier de projet..." },
+            { icon: Compass, text: "Mapper les 4 quadrants stratégiques..." },
+            { icon: Target, text: "Aligner recommandations avec le diagnostic..." },
+          ]}
+          onComplete={() => setPStage("diagnostic")}
+          speed={700}
+        />
+      )}
+
+      {/* Diagnostic: SWOT slides */}
+      {["diagnostic", "budget-thinking", "budget", "timeline-thinking", "timeline", "design", "conclusion"].includes(pStage) && (
+        <SBubble code="CMOB" collapsed={pStage !== "diagnostic"}>
+          {pStage === "diagnostic" ? (
             <>
               <TypewriterText text="Slides 2-3 : diagnostic visuel et SWOT. J'ai transformé les données du cahier en infographies percutantes pour le CA :" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
               {typed && (
@@ -6419,7 +6850,7 @@ function PresentationConceptionChat({ stage, typed, setTyped, advance, onBack }:
                 </div>
               )}
               {typed && (
-                <button type="button" onClick={advance} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-blue-500 text-white hover:bg-blue-600 shadow-sm">
+                <button type="button" onClick={() => { advance(); setPStage("budget-thinking"); }} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-blue-500 text-white hover:bg-blue-600 shadow-sm">
                   <ChevronRight className="h-3.5 w-3.5" /> Slides solutions
                 </button>
               )}
@@ -6428,10 +6859,24 @@ function PresentationConceptionChat({ stage, typed, setTyped, advance, onBack }:
         </SBubble>
       )}
 
-      {/* Stage 3: Slides solutions — 4 axes */}
-      {stage >= 3 && (
-        <SBubble code="CMOB" collapsed={stage > 3}>
-          {stage === 3 ? (
+      {/* Budget-thinking */}
+      {pStage === "budget-thinking" && (
+        <ThinkingAnimation
+          botCode="CMOB" botEmoji="🎨" botName="Mathilde"
+          steps={[
+            { icon: DollarSign, text: "Consolider le montage financier 1.1M$..." },
+            { icon: TrendingUp, text: "Calculer subventions MESI + BDC + RS&DE..." },
+            { icon: BarChart3, text: "Préparer le waterfall budget pour le CA..." },
+          ]}
+          onComplete={() => setPStage("budget")}
+          speed={900}
+        />
+      )}
+
+      {/* Budget: solutions + waterfall */}
+      {["budget", "timeline-thinking", "timeline", "design", "conclusion"].includes(pStage) && (
+        <SBubble code="CMOB" collapsed={pStage !== "budget"}>
+          {pStage === "budget" ? (
             <>
               <TypewriterText text="Slides 4-5 : les 4 solutions et le montage financier. Chaque solution est présentée avec son impact visuel pour le CA :" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
               {typed && (
@@ -6475,7 +6920,7 @@ function PresentationConceptionChat({ stage, typed, setTyped, advance, onBack }:
                 </div>
               )}
               {typed && (
-                <button type="button" onClick={advance} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-blue-500 text-white hover:bg-blue-600 shadow-sm">
+                <button type="button" onClick={() => { advance(); setPStage("timeline-thinking"); }} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-blue-500 text-white hover:bg-blue-600 shadow-sm">
                   <ChevronRight className="h-3.5 w-3.5" /> Timeline et KPIs
                 </button>
               )}
@@ -6484,10 +6929,23 @@ function PresentationConceptionChat({ stage, typed, setTyped, advance, onBack }:
         </SBubble>
       )}
 
-      {/* Stage 4: Slides timeline + KPIs */}
-      {stage >= 4 && (
-        <SBubble code="CMOB" collapsed={stage > 4}>
-          {stage === 4 ? (
+      {/* Timeline-thinking */}
+      {pStage === "timeline-thinking" && (
+        <ThinkingAnimation
+          botCode="CMOB" botEmoji="🎨" botName="Mathilde"
+          steps={[
+            { icon: Calendar, text: "Planifier les 4 phases sur 20 semaines..." },
+            { icon: Target, text: "Attribuer KPIs mesurables par phase..." },
+          ]}
+          onComplete={() => setPStage("timeline")}
+          speed={800}
+        />
+      )}
+
+      {/* Timeline: slides 6-7 */}
+      {["timeline", "design", "conclusion"].includes(pStage) && (
+        <SBubble code="CMOB" collapsed={pStage !== "timeline"}>
+          {pStage === "timeline" ? (
             <>
               <TypewriterText text="Slides 6-7 : timeline 20 semaines et KPIs de suivi. Les slides de clôture pour donner confiance au CA sur l'exécution :" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
               {typed && (
@@ -6528,7 +6986,7 @@ function PresentationConceptionChat({ stage, typed, setTyped, advance, onBack }:
                 </div>
               )}
               {typed && (
-                <button type="button" onClick={advance} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-blue-500 text-white hover:bg-blue-600 shadow-sm">
+                <button type="button" onClick={() => { setTyped(false); setPStage("design"); advance(); }} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-blue-500 text-white hover:bg-blue-600 shadow-sm">
                   <ChevronRight className="h-3.5 w-3.5" /> Design et conclusion
                 </button>
               )}
@@ -6537,39 +6995,35 @@ function PresentationConceptionChat({ stage, typed, setTyped, advance, onBack }:
         </SBubble>
       )}
 
-      {/* Stage 5: Conclusion */}
-      {stage >= 5 && (
+      {/* Design/Conclusion */}
+      {["design", "conclusion"].includes(pStage) && (
         <SBubble code="CMOB">
-          {stage === 5 ? (
-            <>
-              <TypewriterText text="Pitch deck terminé — 8 slides prêtes. Design professionnel aux couleurs Boreal, notes présentateur incluses pour chaque slide. Le deck est optimisé pour une présentation de 15 minutes au CA." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
-              {typed && (
-                <div className="mt-3 space-y-3">
-                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                      <p className="text-sm font-bold text-emerald-700">Pitch Deck — Terminé</p>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      {[
-                        { label: "Slides", value: "8" },
-                        { label: "Durée", value: "15 min" },
-                        { label: "Notes", value: "Incluses" },
-                      ].map(s => (
-                        <div key={s.label} className="bg-white/70 rounded-lg px-2 py-1.5 text-center">
-                          <p className="text-xs text-emerald-600">{s.label}</p>
-                          <p className="text-xs font-bold text-emerald-800">{s.value}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
-                    <p className="text-xs text-blue-800"><span className="font-bold">Conseil :</span> Présentez le slide enjeu (278K$/an) en premier pour créer l'urgence, puis enchaînez avec les solutions et le ROI 1.5 ans pour rassurer le CA sur le retour sur investissement.</p>
-                  </div>
+          <TypewriterText text="Pitch deck terminé — 8 slides prêtes. Design professionnel aux couleurs Boreal, notes présentateur incluses pour chaque slide. Le deck est optimisé pour une présentation de 15 minutes au CA." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+          {typed && (
+            <div className="mt-3 space-y-3">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                  <p className="text-sm font-bold text-emerald-700">Pitch Deck — Terminé</p>
                 </div>
-              )}
-            </>
-          ) : <p className="text-xs text-gray-400 italic">Pitch deck terminé — 8 slides, 15 minutes</p>}
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { label: "Slides", value: "8" },
+                    { label: "Durée", value: "15 min" },
+                    { label: "Notes", value: "Incluses" },
+                  ].map(s => (
+                    <div key={s.label} className="bg-white/70 rounded-lg px-2 py-1.5 text-center">
+                      <p className="text-xs text-emerald-600">{s.label}</p>
+                      <p className="text-xs font-bold text-emerald-800">{s.value}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+                <p className="text-xs text-blue-800"><span className="font-bold">Conseil :</span> Présentez le slide enjeu (278K$/an) en premier pour créer l'urgence, puis enchaînez avec les solutions et le ROI 1.5 ans pour rassurer le CA sur le retour sur investissement.</p>
+              </div>
+            </div>
+          )}
         </SBubble>
       )}
     </div>
@@ -6583,6 +7037,9 @@ function PresentationConceptionChat({ stage, typed, setTyped, advance, onBack }:
 function CodeConceptionChat({ stage, typed, setTyped, advance, onBack }: {
   stage: number; typed: boolean; setTyped: (v: boolean) => void; advance: () => void; onBack?: () => void;
 }) {
+  const [cStage, setCStage] = useState<"intro" | "archi-thinking" | "architecture" | "composant-thinking" | "composant" | "api-thinking" | "api" | "tests-thinking" | "tests-running" | "tests" | "deploy-thinking" | "deploy">("intro");
+  const [testsRevealed, setTestsRevealed] = useState(0);
+
   return (
     <div className="space-y-3">
       {onBack && (
@@ -6591,53 +7048,68 @@ function CodeConceptionChat({ stage, typed, setTyped, advance, onBack }: {
         </button>
       )}
 
-      {/* Stage 0: Tim intro */}
-      {stage >= 0 && (
+      {/* Intro: Tim intro */}
+      {cStage === "intro" && (
         <>
-          {stage === 0 && (
-            <div className="flex items-center gap-1.5 ml-10 bg-violet-50 border border-violet-200 rounded-lg px-2.5 py-1.5">
-              <div className="w-2 h-2 rounded-full bg-violet-500 animate-pulse" />
-              <span className="text-xs text-violet-600 font-medium">Tim Code — Mode développement</span>
-            </div>
-          )}
-          <SBubble code="CTOB" collapsed={stage > 0}>
-            {stage === 0 ? (
-              <>
-                <TypewriterText text="On va coder le dashboard IoT monitoring pour l'usine Boreal. C'est la Phase 4 du cahier de projet — 32 capteurs, HVAC zones indépendantes, alertes prédictives ML. Je gère le full-stack seul sur ce livrable." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
-                {typed && (
-                  <div className="mt-3">
-                    <div className="flex items-center gap-2 bg-violet-50 border border-violet-200 rounded-lg px-3 py-2">
-                      <BotAvatar code="CTOB" size="sm" />
-                      <div className="flex-1">
-                        <span className="text-xs font-bold text-gray-700">Tim</span>
-                        <span className="text-xs text-gray-500 ml-1.5">CTO — Full-stack, React + FastAPI + WebSocket</span>
-                      </div>
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                    </div>
+          <div className="flex items-center gap-1.5 ml-10 bg-violet-50 border border-violet-200 rounded-lg px-2.5 py-1.5">
+            <div className="w-2 h-2 rounded-full bg-violet-500 animate-pulse" />
+            <span className="text-xs text-violet-600 font-medium">Tim Code — Mode développement</span>
+          </div>
+          <SBubble code="CTOB">
+            <TypewriterText text="On va coder le dashboard IoT monitoring pour l'usine Boreal. C'est la Phase 4 du cahier de projet — 32 capteurs, HVAC zones indépendantes, alertes prédictives ML. Je gère le full-stack seul sur ce livrable." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+            {typed && (
+              <div className="mt-3">
+                <div className="flex items-center gap-2 bg-violet-50 border border-violet-200 rounded-lg px-3 py-2">
+                  <BotAvatar code="CTOB" size="sm" />
+                  <div className="flex-1">
+                    <span className="text-xs font-bold text-gray-700">Tim</span>
+                    <span className="text-xs text-gray-500 ml-1.5">CTO — Full-stack, React + FastAPI + WebSocket</span>
                   </div>
-                )}
-                {typed && (
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {["React 18", "TypeScript", "FastAPI", "WebSocket", "PostgreSQL", "TensorFlow Lite"].map(t => (
-                      <span key={t} className="text-xs bg-violet-50 border border-violet-200 text-violet-700 px-2 py-0.5 rounded-full font-medium">{t}</span>
-                    ))}
-                  </div>
-                )}
-                {typed && (
-                  <button type="button" onClick={advance} className="mt-3 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-violet-500 text-white hover:bg-violet-600 shadow-sm">
-                    <Code2 className="h-3.5 w-3.5" /> Démarrer l'architecture
-                  </button>
-                )}
-              </>
-            ) : <p className="text-xs text-gray-400 italic">Tim mobilisé — Full-stack IoT dashboard</p>}
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                </div>
+              </div>
+            )}
+            {typed && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {["React 18", "TypeScript", "FastAPI", "WebSocket", "PostgreSQL", "TensorFlow Lite"].map(t => (
+                  <span key={t} className="text-xs bg-violet-50 border border-violet-200 text-violet-700 px-2 py-0.5 rounded-full font-medium">{t}</span>
+                ))}
+              </div>
+            )}
+            {typed && (
+              <button type="button" onClick={() => setCStage("archi-thinking")} className="mt-3 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-violet-500 text-white hover:bg-violet-600 shadow-sm">
+                <Code2 className="h-3.5 w-3.5" /> Démarrer l'architecture
+              </button>
+            )}
           </SBubble>
         </>
       )}
 
-      {/* Stage 1: Architecture technique */}
-      {stage >= 1 && (
-        <SBubble code="CTOB" collapsed={stage > 1}>
-          {stage === 1 ? (
+      {/* After intro — collapsed */}
+      {cStage !== "intro" && (
+        <SBubble code="CTOB" collapsed>
+          <p className="text-xs text-gray-400 italic">Tim mobilisé — Full-stack IoT dashboard</p>
+        </SBubble>
+      )}
+
+      {/* Archi-thinking */}
+      {cStage === "archi-thinking" && (
+        <ThinkingAnimation
+          botCode="CTOB" botEmoji="💻" botName="Tim"
+          steps={[
+            { icon: Search, text: "Analyser besoins IoT du cahier de projet..." },
+            { icon: Code2, text: "Choisir stack technique (React + FastAPI + TF Lite)..." },
+            { icon: Target, text: "Mapper endpoints et composants frontend..." },
+          ]}
+          onComplete={() => setCStage("architecture")}
+          speed={700}
+        />
+      )}
+
+      {/* Architecture */}
+      {!["intro", "archi-thinking"].includes(cStage) && (
+        <SBubble code="CTOB" collapsed={cStage !== "architecture"}>
+          {cStage === "architecture" ? (
             <>
               <TypewriterText text="Architecture validée. Stack technique aligné sur les spécifications du cahier de projet — 32 capteurs, 3 zones thermiques, alertes prédictives :" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
               {typed && (
@@ -6661,7 +7133,7 @@ function CodeConceptionChat({ stage, typed, setTyped, advance, onBack }: {
                 </div>
               )}
               {typed && (
-                <button type="button" onClick={advance} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-violet-500 text-white hover:bg-violet-600 shadow-sm">
+                <button type="button" onClick={() => { advance(); setCStage("composant-thinking"); }} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-violet-500 text-white hover:bg-violet-600 shadow-sm">
                   <ChevronRight className="h-3.5 w-3.5" /> Coder les composants
                 </button>
               )}
@@ -6670,10 +7142,24 @@ function CodeConceptionChat({ stage, typed, setTyped, advance, onBack }: {
         </SBubble>
       )}
 
-      {/* Stage 2: Composant CapteurCard */}
-      {stage >= 2 && (
-        <SBubble code="CTOB" collapsed={stage > 2}>
-          {stage === 2 ? (
+      {/* Composant-thinking */}
+      {cStage === "composant-thinking" && (
+        <ThinkingAnimation
+          botCode="CTOB" botEmoji="💻" botName="Tim"
+          steps={[
+            { icon: Code2, text: "Générer interface TypeScript CapteurProps..." },
+            { icon: Palette, text: "Créer composant React CapteurCard..." },
+            { icon: Target, text: "Mapper les 3 zones thermiques (prod/stock/expéd.)..." },
+          ]}
+          onComplete={() => setCStage("composant")}
+          speed={700}
+        />
+      )}
+
+      {/* Composant: CapteurCard */}
+      {["composant", "api-thinking", "api", "tests-thinking", "tests-running", "tests", "deploy-thinking", "deploy"].includes(cStage) && (
+        <SBubble code="CTOB" collapsed={cStage !== "composant"}>
+          {cStage === "composant" ? (
             <>
               <TypewriterText text="Composant CapteurCard créé. Chaque capteur affiche sa valeur en temps réel, son statut, et change de couleur selon les seuils MAPAQ :" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
               {typed && (
@@ -6707,7 +7193,7 @@ function CodeConceptionChat({ stage, typed, setTyped, advance, onBack }: {
                 </div>
               )}
               {typed && (
-                <button type="button" onClick={advance} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-violet-500 text-white hover:bg-violet-600 shadow-sm">
+                <button type="button" onClick={() => { advance(); setCStage("api-thinking"); }} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-violet-500 text-white hover:bg-violet-600 shadow-sm">
                   <ChevronRight className="h-3.5 w-3.5" /> Backend API + WebSocket
                 </button>
               )}
@@ -6716,10 +7202,24 @@ function CodeConceptionChat({ stage, typed, setTyped, advance, onBack }: {
         </SBubble>
       )}
 
-      {/* Stage 3: Backend API + alertes prédictives */}
-      {stage >= 3 && (
-        <SBubble code="CTOB" collapsed={stage > 3}>
-          {stage === 3 ? (
+      {/* API-thinking */}
+      {cStage === "api-thinking" && (
+        <ThinkingAnimation
+          botCode="CTOB" botEmoji="💻" botName="Tim"
+          steps={[
+            { icon: Code2, text: "Coder 4 endpoints REST FastAPI..." },
+            { icon: Activity, text: "Configurer WebSocket streaming temps réel..." },
+            { icon: FlaskConical, text: "Entraîner modèle ML prédiction pannes..." },
+          ]}
+          onComplete={() => setCStage("api")}
+          speed={900}
+        />
+      )}
+
+      {/* API: Backend */}
+      {["api", "tests-thinking", "tests-running", "tests", "deploy-thinking", "deploy"].includes(cStage) && (
+        <SBubble code="CTOB" collapsed={cStage !== "api"}>
+          {cStage === "api" ? (
             <>
               <TypewriterText text="Backend API déployé. 4 endpoints REST + WebSocket streaming. Le modèle ML de prédiction de pannes est entraîné sur les données historiques de maintenance Boreal :" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
               {typed && (
@@ -6743,7 +7243,7 @@ function CodeConceptionChat({ stage, typed, setTyped, advance, onBack }: {
                 </div>
               )}
               {typed && (
-                <button type="button" onClick={advance} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-violet-500 text-white hover:bg-violet-600 shadow-sm">
+                <button type="button" onClick={() => { advance(); setCStage("tests-thinking"); }} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-violet-500 text-white hover:bg-violet-600 shadow-sm">
                   <ChevronRight className="h-3.5 w-3.5" /> Lancer les tests
                 </button>
               )}
@@ -6752,82 +7252,137 @@ function CodeConceptionChat({ stage, typed, setTyped, advance, onBack }: {
         </SBubble>
       )}
 
-      {/* Stage 4: Tests */}
-      {stage >= 4 && (
-        <SBubble code="CTOB" collapsed={stage > 4}>
-          {stage === 4 ? (
-            <>
-              <TypewriterText text="Suite de tests complète. 4 catégories, tous les tests passent :" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
-              {typed && (
-                <div className="mt-3 space-y-1.5">
-                  {[
-                    { suite: "Tests unitaires — CapteurCard", count: "12/12", status: "PASS", detail: "Rendu, seuils, couleurs, responsive" },
-                    { suite: "Tests API — Endpoints REST", count: "8/8", status: "PASS", detail: "CRUD, filtres, pagination, auth" },
-                    { suite: "Tests WebSocket — Streaming", count: "4/4", status: "PASS", detail: "Connexion, déconnexion, latence <100ms, reconnexion auto" },
-                    { suite: "Tests ML — Prédictions", count: "6/6", status: "PASS", detail: "Précision 94.2%, faux positifs 2.1%, temps inférence <50ms" },
-                  ].map(t => (
-                    <div key={t.suite} className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <p className="text-xs font-bold text-gray-800">{t.suite}</p>
-                          <span className="text-xs font-bold text-emerald-600">{t.count} {t.status}</span>
-                        </div>
-                        <p className="text-xs text-gray-500">{t.detail}</p>
-                      </div>
-                    </div>
-                  ))}
-                  <div className="bg-emerald-100 border border-emerald-300 rounded-lg px-3 py-2 text-center">
-                    <p className="text-sm font-bold text-emerald-700">30/30 tests — ALL PASS ✓</p>
+      {/* Tests-thinking */}
+      {cStage === "tests-thinking" && (
+        <ThinkingAnimation
+          botCode="CTOB" botEmoji="💻" botName="Tim"
+          steps={[
+            { icon: FlaskConical, text: "Préparer 4 suites de tests (unitaires, API, WS, ML)..." },
+            { icon: Rocket, text: "Configurer CI/CD pipeline..." },
+          ]}
+          onComplete={() => { setCStage("tests-running"); setTestsRevealed(0); }}
+          speed={700}
+        />
+      )}
+
+      {/* Tests-running: progressive reveal */}
+      {cStage === "tests-running" && (
+        <SBubble code="CTOB">
+          <p className="text-xs text-gray-500 mb-2">Exécution des tests en cours...</p>
+          <div className="space-y-1.5">
+            {[
+              { suite: "Tests unitaires — CapteurCard", count: "12/12", detail: "Rendu, seuils, couleurs, responsive" },
+              { suite: "Tests API — Endpoints REST", count: "8/8", detail: "CRUD, filtres, pagination, auth" },
+              { suite: "Tests WebSocket — Streaming", count: "4/4", detail: "Connexion, déconnexion, latence <100ms, reconnexion auto" },
+              { suite: "Tests ML — Prédictions", count: "6/6", detail: "Précision 94.2%, faux positifs 2.1%, temps inférence <50ms" },
+            ].map((t, i) => (
+              <div key={t.suite} className={`flex items-center gap-2 rounded-lg px-3 py-2 transition-all duration-500 ${i <= testsRevealed ? "bg-emerald-50 border border-emerald-200" : "bg-gray-50 border border-gray-200"}`}>
+                {i <= testsRevealed ? (
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                ) : (
+                  <div className="w-3.5 h-3.5 rounded-full border-2 border-gray-300 shrink-0 animate-pulse" />
+                )}
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <p className={`text-xs font-bold ${i <= testsRevealed ? "text-gray-800" : "text-gray-400"}`}>{t.suite}</p>
+                    {i <= testsRevealed && <span className="text-xs font-bold text-emerald-600">{t.count} PASS</span>}
                   </div>
+                  {i <= testsRevealed && <p className="text-xs text-gray-500">{t.detail}</p>}
                 </div>
-              )}
-              {typed && (
-                <button type="button" onClick={advance} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-violet-500 text-white hover:bg-violet-600 shadow-sm">
-                  <ChevronRight className="h-3.5 w-3.5" /> Déployer et conclure
-                </button>
-              )}
+              </div>
+            ))}
+          </div>
+          <JAutoAdvance key={`test-${testsRevealed}`} onComplete={() => {
+            if (testsRevealed < 3) {
+              setTestsRevealed(prev => prev + 1);
+            } else {
+              setCStage("tests"); advance();
+            }
+          }} delay={testsRevealed < 3 ? 800 : 1000} />
+        </SBubble>
+      )}
+
+      {/* Tests: all pass */}
+      {["tests", "deploy-thinking", "deploy"].includes(cStage) && (
+        <SBubble code="CTOB" collapsed={cStage !== "tests"}>
+          {cStage === "tests" ? (
+            <>
+              <div className="space-y-1.5">
+                {[
+                  { suite: "Tests unitaires — CapteurCard", count: "12/12", detail: "Rendu, seuils, couleurs, responsive" },
+                  { suite: "Tests API — Endpoints REST", count: "8/8", detail: "CRUD, filtres, pagination, auth" },
+                  { suite: "Tests WebSocket — Streaming", count: "4/4", detail: "Connexion, déconnexion, latence <100ms, reconnexion auto" },
+                  { suite: "Tests ML — Prédictions", count: "6/6", detail: "Précision 94.2%, faux positifs 2.1%, temps inférence <50ms" },
+                ].map(t => (
+                  <div key={t.suite} className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-bold text-gray-800">{t.suite}</p>
+                        <span className="text-xs font-bold text-emerald-600">{t.count} PASS</span>
+                      </div>
+                      <p className="text-xs text-gray-500">{t.detail}</p>
+                    </div>
+                  </div>
+                ))}
+                <div className="bg-emerald-100 border border-emerald-300 rounded-lg px-3 py-2 text-center">
+                  <p className="text-sm font-bold text-emerald-700">30/30 tests — ALL PASS</p>
+                </div>
+              </div>
+              <button type="button" onClick={() => { advance(); setCStage("deploy-thinking"); }} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-violet-500 text-white hover:bg-violet-600 shadow-sm">
+                <ChevronRight className="h-3.5 w-3.5" /> Déployer et conclure
+              </button>
             </>
           ) : <p className="text-xs text-gray-400 italic">Tests — 30/30 PASS (unitaires, API, WebSocket, ML)</p>}
         </SBubble>
       )}
 
-      {/* Stage 5: Déploiement + conclusion */}
-      {stage >= 5 && (
+      {/* Deploy-thinking */}
+      {cStage === "deploy-thinking" && (
+        <ThinkingAnimation
+          botCode="CTOB" botEmoji="💻" botName="Tim"
+          steps={[
+            { icon: Rocket, text: "Build production optimisé..." },
+            { icon: Shield, text: "Vérifier sécurité et permissions..." },
+            { icon: CheckCircle2, text: "Déployer sur staging..." },
+          ]}
+          onComplete={() => setCStage("deploy")}
+          speed={700}
+        />
+      )}
+
+      {/* Deploy: conclusion */}
+      {cStage === "deploy" && (
         <SBubble code="CTOB">
-          {stage === 5 ? (
-            <>
-              <TypewriterText text="Dashboard IoT déployé en staging. Le code est prêt pour la Phase 4 du projet d'automatisation Boreal. Les 32 capteurs seront connectés physiquement lors de l'installation HVAC (semaines 12-20)." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
-              {typed && (
-                <div className="mt-3 space-y-3">
-                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                      <p className="text-sm font-bold text-emerald-700">Dashboard IoT — Déployé en staging</p>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      {[
-                        { label: "Composants", value: "4" },
-                        { label: "Endpoints", value: "5" },
-                        { label: "Tests", value: "30/30" },
-                        { label: "Capteurs", value: "32" },
-                        { label: "Zones", value: "3" },
-                        { label: "ML précision", value: "94.2%" },
-                      ].map(s => (
-                        <div key={s.label} className="bg-white/70 rounded-lg px-2 py-1.5 text-center">
-                          <p className="text-xs text-emerald-600">{s.label}</p>
-                          <p className="text-xs font-bold text-emerald-800">{s.value}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="bg-violet-50 border border-violet-200 rounded-lg px-3 py-2">
-                    <p className="text-xs text-violet-800"><span className="font-bold">Activation :</span> Le dashboard sera activé en production lors de la Phase 4 (S12-S20) du plan d'implantation. Les capteurs physiques seront installés et calibrés par l'intégrateur sélectionné via le jumelage SMART.</p>
-                  </div>
+          <TypewriterText text="Dashboard IoT déployé en staging. Le code est prêt pour la Phase 4 du projet d'automatisation Boreal. Les 32 capteurs seront connectés physiquement lors de l'installation HVAC (semaines 12-20)." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+          {typed && (
+            <div className="mt-3 space-y-3">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                  <p className="text-sm font-bold text-emerald-700">Dashboard IoT — Déployé en staging</p>
                 </div>
-              )}
-            </>
-          ) : <p className="text-xs text-gray-400 italic">Dashboard IoT déployé — 32 capteurs, 3 zones, ML prédictif</p>}
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { label: "Composants", value: "4" },
+                    { label: "Endpoints", value: "5" },
+                    { label: "Tests", value: "30/30" },
+                    { label: "Capteurs", value: "32" },
+                    { label: "Zones", value: "3" },
+                    { label: "ML précision", value: "94.2%" },
+                  ].map(s => (
+                    <div key={s.label} className="bg-white/70 rounded-lg px-2 py-1.5 text-center">
+                      <p className="text-xs text-emerald-600">{s.label}</p>
+                      <p className="text-xs font-bold text-emerald-800">{s.value}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="bg-violet-50 border border-violet-200 rounded-lg px-3 py-2">
+                <p className="text-xs text-violet-800"><span className="font-bold">Activation :</span> Le dashboard sera activé en production lors de la Phase 4 (S12-S20) du plan d'implantation. Les capteurs physiques seront installés et calibrés par l'intégrateur sélectionné via le jumelage SMART.</p>
+              </div>
+            </div>
+          )}
         </SBubble>
       )}
     </div>
@@ -7436,85 +7991,49 @@ function JConferenceSession({
         <div className="h-5 w-5 rounded-full bg-green-100 flex items-center justify-center shrink-0">
           <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
         </div>
-        <span className="text-[9px] text-green-700 font-medium">Session {sessionNum} — {supplierInfo.company} terminee ({insights.length} points cles)</span>
+        <span className="text-xs text-green-700 font-medium">Session {sessionNum} — {supplierInfo.company} terminee ({insights.length} points cles)</span>
       </div>
     );
   }
   return (
-    <div className="space-y-3">
-      {/* Conference bar */}
-      <div className="bg-gray-900 rounded-xl px-4 py-2.5 flex items-center gap-3 mx-2">
+    <div className="space-y-2 mx-1">
+      {/* Compact conference bar — échanges détaillés visibles dans le workspace */}
+      <div className="bg-gray-900 rounded-xl px-3 py-2 flex items-center gap-2">
         <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-        <span className="text-[9px] text-gray-300 font-medium">Conference AI — Session {sessionNum}/{totalSessions}</span>
-        <div className="flex items-center gap-3 ml-auto">
-          <div className="flex items-center gap-1">
-            <BotAvatar code="CPOB" size="sm" />
-            <span className="text-[9px] text-gray-400">Paco</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center text-[9px] text-white font-bold">C</div>
-            <span className="text-[9px] text-gray-400">Carl</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className={cn("w-5 h-5 rounded-full flex items-center justify-center text-[9px] text-white font-bold", supplierInfo.color)}>
-              {supplierInfo.initial}
-            </div>
-            <span className="text-[9px] text-gray-400">{supplierInfo.company.split(" ")[0]}</span>
-          </div>
+        <span className="text-[10px] text-gray-300 font-medium">Session {sessionNum}/{totalSessions}</span>
+        <div className="flex items-center -space-x-1 ml-auto">
+          <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center text-[9px] text-white font-bold ring-1 ring-gray-900">P</div>
+          <div className="w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center text-[9px] text-white font-bold ring-1 ring-gray-900">C</div>
+          <div className={cn("w-5 h-5 rounded-full flex items-center justify-center text-[9px] text-white font-bold ring-1 ring-gray-900", supplierInfo.color)}>{supplierInfo.initial}</div>
         </div>
       </div>
-      {/* Exchange bubbles */}
-      {exchanges.map((ex, i) => {
-        if (ex.from === "CPOB") {
-          return (
-            <SBubble key={i} code="CPOB" collapsed={false}>
-              <span className="text-sm text-gray-700 leading-relaxed">{ex.text}</span>
-            </SBubble>
-          );
-        }
-        if (ex.from === "user") {
-          return (
-            <div key={i} className="flex justify-end">
-              <div className="bg-blue-600 text-white rounded-xl rounded-tr-none px-3 py-2 max-w-[85%] shadow-sm">
-                <p className="text-[9px]">{ex.text}</p>
-              </div>
-            </div>
-          );
-        }
-        return (
-          <div key={i} className="flex gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-1">
-              <Building2 className="h-3.5 w-3.5 text-emerald-600" />
-            </div>
-            <div className="bg-emerald-50 border border-emerald-200 rounded-xl rounded-tl-none px-3 py-2.5 shadow-sm flex-1 border-l-2 border-l-emerald-400">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-[11px] font-semibold text-emerald-800">{supplierInfo.name}</span>
-                <span className="text-[9px] text-emerald-600">{supplierInfo.company}</span>
-              </div>
-              <p className="text-sm text-gray-700 leading-relaxed">{ex.text}</p>
-            </div>
-          </div>
-        );
-      })}
-      {/* Key insights card */}
-      <div className="ml-2 space-y-2">
-        <div className="border border-amber-200 rounded-xl p-3 bg-amber-50/50">
-          <p className="text-[9px] font-bold text-amber-800 mb-1.5 flex items-center gap-1">
-            <Sparkles className="h-3.5 w-3.5" /> Points cles — Session {sessionNum}
-          </p>
+
+      {/* Conference status compact — workspace has full exchanges */}
+      <div className="flex items-center gap-2 px-2.5 py-2 bg-gray-50 rounded-lg border border-gray-100">
+        <Video className="h-4 w-4 text-indigo-500 animate-pulse" />
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-medium text-gray-700">Conference avec {supplierInfo.company}</p>
+          <p className="text-[10px] text-gray-400">{exchanges.length} echanges — voir le detail dans le workspace →</p>
+        </div>
+      </div>
+
+      {/* Compact insights + actions */}
+      <div className="space-y-1.5 px-1">
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-2">
+          <p className="text-[10px] font-bold text-amber-800 mb-1 flex items-center gap-1"><Sparkles className="h-3 w-3" /> Points cles</p>
           {insights.map((insight, i) => (
-            <div key={i} className="flex items-start gap-1.5 mb-1">
-              <CheckCircle2 className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
-              <span className="text-[9px] text-amber-900">{insight}</span>
+            <div key={i} className="flex items-start gap-1 mb-0.5">
+              <CheckCircle2 className="h-3 w-3 text-amber-500 shrink-0 mt-0.5" />
+              <span className="text-[10px] text-amber-900">{insight}</span>
             </div>
           ))}
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <button type="button" onClick={onExtract} disabled={isExtracted} className={cn("text-[9px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all", isExtracted ? "bg-green-100 text-green-700 border border-green-300" : "bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100")}>
-            <Pin className="h-3.5 w-3.5" /> {isExtracted ? "Extrait" : "Extraire les points cles"}
+        <div className="flex items-center gap-2">
+          <button type="button" onClick={onExtract} disabled={isExtracted} className={cn("text-[10px] px-2.5 py-1 rounded-full flex items-center gap-1 font-medium cursor-pointer transition-all", isExtracted ? "bg-green-100 text-green-700 border border-green-300" : "bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100")}>
+            <Pin className="h-3 w-3" /> {isExtracted ? "Extrait" : "Extraire"}
           </button>
-          <button type="button" onClick={onNext} className="text-[9px] bg-amber-600 text-white px-4 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-amber-700 font-medium cursor-pointer">
-            <ArrowRight className="h-3.5 w-3.5" /> {nextLabel}
+          <button type="button" onClick={onNext} className="text-[10px] bg-amber-600 text-white px-3 py-1 rounded-full flex items-center gap-1 hover:bg-amber-700 font-medium cursor-pointer">
+            <ArrowRight className="h-3 w-3" /> {nextLabel}
           </button>
         </div>
       </div>
@@ -7565,32 +8084,18 @@ function JumelageConceptionChat({ stage: _deliverableStage, typed, setTyped, adv
       )}
       {jStage !== "intro" && (
         <SBubble code="CEOB" collapsed={true}>
-          <span className="text-[9px] text-gray-500">Pre-rapport genere. Jumelage SMART active.</span>
+          <span className="text-xs text-gray-500">Pre-rapport genere. Jumelage SMART active.</span>
         </SBubble>
       )}
 
       {/* === CRITERES THINKING — Processing animation === */}
       {jStage === "criteres-thinking" && (
-        <>
-          <SBubble code="CEOB" collapsed={false}>
-            <div className="space-y-1.5">
-              {SIM_ACTE2.criteresThinking.map((step: { icon: React.ElementType; text: string }, i: number) => {
-                const Icon = step.icon;
-                return (
-                  <div key={i} className="flex items-center gap-2 text-[9px] text-blue-700">
-                    <Icon className="h-3.5 w-3.5 animate-pulse" />
-                    <span>{step.text}</span>
-                  </div>
-                );
-              })}
-              <div className="flex items-center gap-1 mt-1">
-                <span className="text-[9px] text-gray-400">Analyse en cours</span>
-                <span className="animate-pulse text-gray-400">...</span>
-              </div>
-            </div>
-          </SBubble>
-          <JAutoAdvance onComplete={() => { setJStage("criteres"); advance(); /* milestone 1: unlock Critères */ }} delay={2400} />
-        </>
+        <ThinkingAnimation
+          botCode="CEOB" botEmoji="🧠" botName="CarlOS"
+          steps={SIM_ACTE2.criteresThinking}
+          onComplete={() => { setJStage("criteres"); advance(); }}
+          speed={700}
+        />
       )}
 
       {/* === CRITERES === */}
@@ -7602,18 +8107,18 @@ function JumelageConceptionChat({ stage: _deliverableStage, typed, setTyped, adv
               {criteresTyped && (
                 <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-2 flex-wrap">
                   {!criteresModified && (
-                    <button type="button" onClick={() => { setCriteresModified(true); setJStage("user-critere"); }} className="text-[9px] bg-gray-100 text-gray-600 border border-gray-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-gray-200 font-medium cursor-pointer">
+                    <button type="button" onClick={() => { setCriteresModified(true); setJStage("user-critere"); }} className="text-xs bg-gray-100 text-gray-600 border border-gray-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-gray-200 font-medium cursor-pointer">
                       <Cog className="h-3.5 w-3.5" /> Ajouter un critere
                     </button>
                   )}
-                  <button type="button" onClick={() => setJStage("scan")} className="text-[9px] bg-amber-600 text-white px-4 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-amber-700 font-medium cursor-pointer">
+                  <button type="button" onClick={() => setJStage("scan")} className="text-xs bg-amber-600 text-white px-4 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-amber-700 font-medium cursor-pointer">
                     <Search className="h-3.5 w-3.5" /> Scanner le reseau
                   </button>
                 </div>
               )}
             </>
           ) : (
-            <span className="text-[9px] text-gray-500">8 criteres de matching generes.{criteresModified ? " + 1 critere ajoute." : ""}</span>
+            <span className="text-xs text-gray-500">8 criteres de matching generes.{criteresModified ? " + 1 critere ajoute." : ""}</span>
           )}
         </SBubble>
       )}
@@ -7623,7 +8128,7 @@ function JumelageConceptionChat({ stage: _deliverableStage, typed, setTyped, adv
         <>
           <div className="flex justify-end">
             <div className="bg-blue-600 text-white rounded-xl rounded-tr-none px-3 py-2 max-w-[85%] shadow-sm">
-              <p className="text-[9px]">{SIM_ACTE2.userCritereAjout}</p>
+              <p className="text-xs">{SIM_ACTE2.userCritereAjout}</p>
             </div>
           </div>
           <SBubble code="CEOB" collapsed={si > J_STAGE_ORDER.indexOf("user-critere")}>
@@ -7631,7 +8136,7 @@ function JumelageConceptionChat({ stage: _deliverableStage, typed, setTyped, adv
           </SBubble>
           {jStage === "user-critere" && (
             <div className="flex justify-center">
-              <button type="button" onClick={() => setJStage("scan")} className="text-[9px] bg-amber-600 text-white px-4 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-amber-700 font-medium cursor-pointer">
+              <button type="button" onClick={() => setJStage("scan")} className="text-xs bg-amber-600 text-white px-4 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-amber-700 font-medium cursor-pointer">
                 <Search className="h-3.5 w-3.5" /> Lancer le scan
               </button>
             </div>
@@ -7641,32 +8146,18 @@ function JumelageConceptionChat({ stage: _deliverableStage, typed, setTyped, adv
 
       {/* === SCAN — Processing animation === */}
       {jStage === "scan" && (
-        <>
-          <SBubble code="CEOB" collapsed={false}>
-            <div className="space-y-1.5">
-              {[
-                { icon: Search, text: `Scan de ${SIM_ACTE2.scanSteps[0].count} membres du reseau...` },
-                { icon: Building2, text: `Filtre secteur agroalimentaire → ${SIM_ACTE2.scanSteps[1].count} candidats` },
-                { icon: Zap, text: `Expertise energie + robotique → ${SIM_ACTE2.scanSteps[2].count}` },
-                { icon: CheckCircle2, text: `Certifications requises → ${SIM_ACTE2.scanSteps[3].count}` },
-                { icon: Target, text: `Score compatibilite → ${SIM_ACTE2.scanSteps[4].count} finalistes` },
-              ].map((step, i) => {
-                const SIcon = step.icon;
-                return (
-                  <div key={i} className="flex items-center gap-2 text-[9px] text-blue-700">
-                    <SIcon className="h-3.5 w-3.5 animate-pulse" />
-                    <span>{step.text}</span>
-                  </div>
-                );
-              })}
-              <div className="flex items-center gap-1 mt-1">
-                <span className="text-[9px] text-gray-400">Scan en cours</span>
-                <span className="animate-pulse text-gray-400">...</span>
-              </div>
-            </div>
-          </SBubble>
-          <JAutoAdvance onComplete={() => { setJStage("top3"); advance(); /* milestone 2: unlock Scan */ }} delay={3000} />
-        </>
+        <ThinkingAnimation
+          botCode="CEOB" botEmoji="🧠" botName="CarlOS"
+          steps={[
+            { icon: Search, text: `Scan de ${SIM_ACTE2.scanSteps[0].count} membres du reseau...` },
+            { icon: Building2, text: `Filtre secteur agroalimentaire → ${SIM_ACTE2.scanSteps[1].count} candidats` },
+            { icon: Zap, text: `Expertise energie + robotique → ${SIM_ACTE2.scanSteps[2].count}` },
+            { icon: CheckCircle2, text: `Certifications requises → ${SIM_ACTE2.scanSteps[3].count}` },
+            { icon: Target, text: `Score compatibilite → ${SIM_ACTE2.scanSteps[4].count} finalistes` },
+          ]}
+          onComplete={() => { setJStage("top3"); advance(); }}
+          speed={600}
+        />
       )}
 
       {/* Scan completed marker */}
@@ -7675,7 +8166,7 @@ function JumelageConceptionChat({ stage: _deliverableStage, typed, setTyped, adv
           <div className="h-5 w-5 rounded-full bg-green-100 flex items-center justify-center shrink-0">
             <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
           </div>
-          <span className="text-[9px] text-green-700 font-medium">Scan reseau : 130 membres → 3 finalistes identifies</span>
+          <span className="text-xs text-green-700 font-medium">Scan reseau : 130 membres → 3 finalistes identifies</span>
         </div>
       )}
 
@@ -7692,12 +8183,12 @@ function JumelageConceptionChat({ stage: _deliverableStage, typed, setTyped, adv
                   <div className="flex items-center gap-2 mb-1">
                     <div className={cn("w-6 h-6 rounded-full flex items-center justify-center text-white text-[9px] font-bold", i === 0 ? "bg-amber-500" : i === 1 ? "bg-gray-400" : "bg-orange-400")}>#{i + 1}</div>
                     <span className="text-xs font-bold text-gray-800">{integ.nom}</span>
-                    <span className="text-[9px] text-gray-500 ml-auto">{integ.ville}</span>
+                    <span className="text-xs text-gray-500 ml-auto">{integ.ville}</span>
                   </div>
-                  <p className="text-[9px] text-gray-600 leading-relaxed line-clamp-2">{integ.intro}</p>
+                  <p className="text-xs text-gray-600 leading-relaxed line-clamp-2">{integ.intro}</p>
                   <div className="flex flex-wrap gap-1 mt-1.5">
                     {integ.specialites.slice(0, 3).map((s: string, si2: number) => (
-                      <span key={si2} className="text-[9px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded-full">{s}</span>
+                      <span key={si2} className="text-xs bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded-full">{s}</span>
                     ))}
                   </div>
                 </div>
@@ -7715,8 +8206,8 @@ function JumelageConceptionChat({ stage: _deliverableStage, typed, setTyped, adv
               {INTEGRATORS.map((integ, i) => (
                 <div key={integ.id} className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-1.5">
                   <div className={cn("w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold shrink-0", i === 0 ? "bg-amber-500" : i === 1 ? "bg-gray-400" : "bg-orange-400")}>#{i + 1}</div>
-                  <span className="text-[9px] font-medium text-gray-700">{integ.nom}</span>
-                  <span className="text-[9px] text-gray-500 ml-auto">{integ.score}%</span>
+                  <span className="text-xs font-medium text-gray-700">{integ.nom}</span>
+                  <span className="text-xs text-gray-500 ml-auto">{integ.score}%</span>
                 </div>
               ))}
             </div>
@@ -7735,7 +8226,7 @@ function JumelageConceptionChat({ stage: _deliverableStage, typed, setTyped, adv
                   <div className="mt-3 border rounded-xl overflow-hidden">
                     <div className="bg-gray-900 px-3 py-2 flex items-center gap-2">
                       <Video className="h-3.5 w-3.5 text-gray-400" />
-                      <span className="text-[9px] text-gray-300 font-medium">3 sessions planifiees</span>
+                      <span className="text-xs text-gray-300 font-medium">3 sessions planifiees</span>
                     </div>
                     {[
                       { name: "Energia Solutions", rep: "Marc-Andre Dubois, VP Projets", color: "bg-amber-500" },
@@ -7745,10 +8236,10 @@ function JumelageConceptionChat({ stage: _deliverableStage, typed, setTyped, adv
                       <div key={i} className="flex items-center gap-3 px-3 py-2 border-t border-gray-800 bg-gray-900">
                         <div className={cn("w-6 h-6 rounded-full flex items-center justify-center text-white text-[9px] font-bold", s.color)}>{i + 1}</div>
                         <div className="flex-1">
-                          <span className="text-[9px] font-medium text-gray-200">{s.name}</span>
-                          <span className="text-[9px] text-gray-500 ml-2">{s.rep}</span>
+                          <span className="text-xs font-medium text-gray-200">{s.name}</span>
+                          <span className="text-xs text-gray-500 ml-2">{s.rep}</span>
                         </div>
-                        <span className="text-[9px] text-green-400 font-medium">Confirme</span>
+                        <span className="text-xs text-green-400 font-medium">Confirme</span>
                       </div>
                     ))}
                   </div>
@@ -7761,7 +8252,7 @@ function JumelageConceptionChat({ stage: _deliverableStage, typed, setTyped, adv
               )}
             </>
           ) : (
-            <span className="text-[9px] text-gray-500">Paco a organise 3 sessions de conference AI.</span>
+            <span className="text-xs text-gray-500">Paco a organise 3 sessions de conference AI.</span>
           )}
         </SBubble>
       )}
@@ -7790,10 +8281,10 @@ function JumelageConceptionChat({ stage: _deliverableStage, typed, setTyped, adv
           {jStage === "scoring" && (
             <div className="space-y-3 ml-2">
               <div className="flex items-center gap-2 flex-wrap">
-                <button type="button" onClick={() => { setShowJumelageDetail(true); handleExtract("sessions"); }} disabled={showJumelageDetail} className={cn("text-[9px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all", showJumelageDetail ? "bg-indigo-100 text-indigo-700 border border-indigo-300" : "bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100")}>
+                <button type="button" onClick={() => { setShowJumelageDetail(true); handleExtract("sessions"); }} disabled={showJumelageDetail} className={cn("text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all", showJumelageDetail ? "bg-indigo-100 text-indigo-700 border border-indigo-300" : "bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100")}>
                   <Eye className="h-3.5 w-3.5" /> Voir les reponses detaillees
                 </button>
-                <button type="button" onClick={() => { setJStage("winner-intro"); advance(); /* milestone 4: unlock Scoring */ }} className="text-[9px] bg-amber-600 text-white px-4 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-amber-700 font-medium cursor-pointer">
+                <button type="button" onClick={() => { setJStage("winner-intro"); advance(); /* milestone 4: unlock Scoring */ }} className="text-xs bg-amber-600 text-white px-4 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-amber-700 font-medium cursor-pointer">
                   <Trophy className="h-3.5 w-3.5" /> Voir le gagnant
                 </button>
               </div>
@@ -7810,10 +8301,10 @@ function JumelageConceptionChat({ stage: _deliverableStage, typed, setTyped, adv
                         const scoreColor = r.score >= 80 ? "text-green-600" : r.score >= 60 ? "text-amber-600" : "text-red-600";
                         return (
                           <div key={i} className="flex items-start gap-2">
-                            <span className={cn("text-[9px] font-bold shrink-0 w-8 text-center", scoreColor)}>{r.score}%</span>
+                            <span className={cn("text-xs font-bold shrink-0 w-8 text-center", scoreColor)}>{r.score}%</span>
                             <div className="flex-1">
-                              <span className="text-[9px] font-bold text-gray-500">{r.integrateur}</span>
-                              <p className="text-[9px] text-gray-600 line-clamp-2">{r.reponse}</p>
+                              <span className="text-xs font-bold text-gray-500">{r.integrateur}</span>
+                              <p className="text-xs text-gray-600 line-clamp-2">{r.reponse}</p>
                             </div>
                           </div>
                         );
@@ -7830,10 +8321,10 @@ function JumelageConceptionChat({ stage: _deliverableStage, typed, setTyped, adv
                         const scoreColor = r.score >= 80 ? "text-green-600" : r.score >= 60 ? "text-amber-600" : "text-red-600";
                         return (
                           <div key={i} className="flex items-start gap-2">
-                            <span className={cn("text-[9px] font-bold shrink-0 w-8 text-center", scoreColor)}>{r.score}%</span>
+                            <span className={cn("text-xs font-bold shrink-0 w-8 text-center", scoreColor)}>{r.score}%</span>
                             <div className="flex-1">
-                              <span className="text-[9px] font-bold text-gray-500">{r.integrateur}</span>
-                              <p className="text-[9px] text-gray-600 line-clamp-2">{r.reponse}</p>
+                              <span className="text-xs font-bold text-gray-500">{r.integrateur}</span>
+                              <p className="text-xs text-gray-600 line-clamp-2">{r.reponse}</p>
                             </div>
                           </div>
                         );
@@ -7841,10 +8332,10 @@ function JumelageConceptionChat({ stage: _deliverableStage, typed, setTyped, adv
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <button type="button" onClick={() => handleExtract("q1")} className={cn("text-[9px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all", extractedNotes.includes("q1") ? "bg-green-100 text-green-700 border border-green-300" : "bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100")}>
+                    <button type="button" onClick={() => handleExtract("q1")} className={cn("text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all", extractedNotes.includes("q1") ? "bg-green-100 text-green-700 border border-green-300" : "bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100")}>
                       <Pin className="h-3.5 w-3.5" /> {extractedNotes.includes("q1") ? "Extrait" : "Extraire les reponses"}
                     </button>
-                    <button type="button" onClick={() => { setJStage("winner-intro"); advance(); }} className="text-[9px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer bg-amber-600 text-white hover:bg-amber-700 transition-all">
+                    <button type="button" onClick={() => { setJStage("winner-intro"); advance(); }} className="text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer bg-amber-600 text-white hover:bg-amber-700 transition-all">
                       <Trophy className="h-3.5 w-3.5" /> Voir le gagnant
                     </button>
                   </div>
@@ -7858,7 +8349,7 @@ function JumelageConceptionChat({ stage: _deliverableStage, typed, setTyped, adv
               <div className="h-5 w-5 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
                 <BarChart3 className="h-3.5 w-3.5 text-amber-600" />
               </div>
-              <span className="text-[9px] text-amber-700 font-medium">Scoring : {INTEGRATORS.map((integ) => `${integ.nom.split(" ")[0]} ${integ.score}%`).join(" / ")}</span>
+              <span className="text-xs text-amber-700 font-medium">Scoring : {INTEGRATORS.map((integ) => `${integ.nom.split(" ")[0]} ${integ.score}%`).join(" / ")}</span>
             </div>
           )}
         </>
@@ -7870,7 +8361,7 @@ function JumelageConceptionChat({ stage: _deliverableStage, typed, setTyped, adv
           {jStage === "winner-intro" ? (
             <TypewriterText text={SIM_ACTE2.ceoWinnerIntro} speed={8} className="text-sm text-gray-700 leading-relaxed" onComplete={() => { setJStage("winner"); advance(); /* milestone 5: unlock Recommandation */ }} />
           ) : (
-            <span className="text-[9px] text-gray-500">{SIM_ACTE2.ceoWinnerIntro.slice(0, 80)}...</span>
+            <span className="text-xs text-gray-500">{SIM_ACTE2.ceoWinnerIntro.slice(0, 80)}...</span>
           )}
         </SBubble>
       )}
@@ -7884,13 +8375,13 @@ function JumelageConceptionChat({ stage: _deliverableStage, typed, setTyped, adv
           {jStage === "winner" && (
             <div className="space-y-3 ml-2">
               <div className="flex items-center gap-2 flex-wrap">
-                <button type="button" onClick={() => setShowChallengeDefense(true)} disabled={showChallengeDefense} className={cn("text-[9px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all", showChallengeDefense ? "bg-red-100 text-red-700 border border-red-300" : "bg-red-50 text-red-700 border border-red-200 hover:bg-red-100")}>
+                <button type="button" onClick={() => setShowChallengeDefense(true)} disabled={showChallengeDefense} className={cn("text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all", showChallengeDefense ? "bg-red-100 text-red-700 border border-red-300" : "bg-red-50 text-red-700 border border-red-200 hover:bg-red-100")}>
                   <Target className="h-3.5 w-3.5" /> Challenger le choix
                 </button>
-                <button type="button" onClick={() => setShowAlternatives(true)} disabled={showAlternatives} className={cn("text-[9px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all", showAlternatives ? "bg-gray-200 text-gray-700 border border-gray-300" : "bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100")}>
+                <button type="button" onClick={() => setShowAlternatives(true)} disabled={showAlternatives} className={cn("text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all", showAlternatives ? "bg-gray-200 text-gray-700 border border-gray-300" : "bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100")}>
                   <Eye className="h-3.5 w-3.5" /> Pourquoi pas les 2 autres?
                 </button>
-                <button type="button" onClick={() => setJStage("transition")} className="text-[9px] bg-amber-600 text-white px-4 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-amber-700 font-medium cursor-pointer">
+                <button type="button" onClick={() => setJStage("transition")} className="text-xs bg-amber-600 text-white px-4 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-amber-700 font-medium cursor-pointer">
                   <ArrowRight className="h-3.5 w-3.5" /> Accepter et continuer
                 </button>
               </div>
@@ -7898,14 +8389,14 @@ function JumelageConceptionChat({ stage: _deliverableStage, typed, setTyped, adv
               {showChallengeDefense && (
                 <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-2">
                   <SBubble code="CEOB" collapsed={false}>
-                    <div className="text-[9px] text-blue-600 mb-1 font-medium">Defense de la selection</div>
+                    <div className="text-xs text-blue-600 mb-1 font-medium">Defense de la selection</div>
                     <TypewriterText text={J_CHALLENGE_DEFENSE} speed={5} className="text-sm text-gray-700 leading-relaxed" />
                   </SBubble>
                   <div className="flex items-center gap-2 flex-wrap ml-11">
-                    <button type="button" onClick={() => handleExtract("defense")} className={cn("text-[9px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all", extractedNotes.includes("defense") ? "bg-green-100 text-green-700 border border-green-300" : "bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100")}>
+                    <button type="button" onClick={() => handleExtract("defense")} className={cn("text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all", extractedNotes.includes("defense") ? "bg-green-100 text-green-700 border border-green-300" : "bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100")}>
                       <Pin className="h-3.5 w-3.5" /> {extractedNotes.includes("defense") ? "Extrait" : "Extraire l'argumentaire"}
                     </button>
-                    <button type="button" onClick={() => setJStage("transition")} className="text-[9px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer bg-amber-600 text-white hover:bg-amber-700 transition-all">
+                    <button type="button" onClick={() => setJStage("transition")} className="text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer bg-amber-600 text-white hover:bg-amber-700 transition-all">
                       <CheckCircle2 className="h-3.5 w-3.5" /> Accepter la recommandation
                     </button>
                   </div>
@@ -7915,7 +8406,7 @@ function JumelageConceptionChat({ stage: _deliverableStage, typed, setTyped, adv
               {showAlternatives && (
                 <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-2">
                   <SBubble code="CEOB" collapsed={false}>
-                    <div className="text-[9px] text-gray-600 mb-1 font-medium">Analyse comparative</div>
+                    <div className="text-xs text-gray-600 mb-1 font-medium">Analyse comparative</div>
                     <TypewriterText text={J_ALTERNATIVE_ANALYSIS} speed={5} className="text-sm text-gray-700 leading-relaxed" />
                   </SBubble>
                   {/* 3-way comparison mini table */}
@@ -7926,7 +8417,7 @@ function JumelageConceptionChat({ stage: _deliverableStage, typed, setTyped, adv
                         return (
                           <div key={integ.id} className={cn("p-2.5 text-center", isWinner && "bg-amber-50/50")}>
                             <div className={cn("text-lg font-bold mb-1", integ.score >= 90 ? "text-green-600" : integ.score >= 80 ? "text-amber-600" : "text-gray-500")}>{integ.score}%</div>
-                            <div className="text-[9px] font-bold text-gray-800 truncate">{integ.nom.split(" ")[0]}</div>
+                            <div className="text-xs font-bold text-gray-800 truncate">{integ.nom.split(" ")[0]}</div>
                             {isWinner && (
                               <div className="mt-1 bg-amber-100 text-amber-800 text-[9px] font-bold rounded px-2 py-0.5 inline-flex items-center gap-1">
                                 <Trophy className="h-2.5 w-2.5" /> Selectionne
@@ -7938,10 +8429,10 @@ function JumelageConceptionChat({ stage: _deliverableStage, typed, setTyped, adv
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap ml-11">
-                    <button type="button" onClick={() => handleExtract("comparaison")} className={cn("text-[9px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all", extractedNotes.includes("comparaison") ? "bg-green-100 text-green-700 border border-green-300" : "bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100")}>
+                    <button type="button" onClick={() => handleExtract("comparaison")} className={cn("text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all", extractedNotes.includes("comparaison") ? "bg-green-100 text-green-700 border border-green-300" : "bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100")}>
                       <Pin className="h-3.5 w-3.5" /> {extractedNotes.includes("comparaison") ? "Comparaison notee" : "Noter la comparaison"}
                     </button>
-                    <button type="button" onClick={() => setJStage("transition")} className="text-[9px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer bg-amber-600 text-white hover:bg-amber-700 transition-all">
+                    <button type="button" onClick={() => setJStage("transition")} className="text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer bg-amber-600 text-white hover:bg-amber-700 transition-all">
                       <ArrowRight className="h-3.5 w-3.5" /> Confirmer Energia
                     </button>
                   </div>
@@ -8244,7 +8735,7 @@ export function PhaseReflexion({ stage, context, onStartConception }: { stage: n
                     }
                     <span className={isActive && unlocked ? SF.labelActive : SF.labelInactive}>{s.id}. {s.title}</span>
                     {unlocked && (
-                      <span className={cn("text-[10px] px-1 py-0.5 rounded-full font-medium", getSectionStatus(s.id) === "complete" ? "bg-emerald-100 text-emerald-600" : "bg-amber-50 text-amber-600")}>
+                      <span className={cn("text-xs px-1 py-0.5 rounded-full font-medium", getSectionStatus(s.id) === "complete" ? "bg-emerald-100 text-emerald-600" : "bg-amber-50 text-amber-600")}>
                         {getSectionStatus(s.id) === "complete" ? "✓" : "…"}
                       </span>
                     )}
@@ -8282,7 +8773,7 @@ export function PhaseReflexion({ stage, context, onStartConception }: { stage: n
                         </div>
                       </div>
                       <p className="text-sm font-bold text-gray-900 text-center">Rapport complet — Prêt pour la Conception</p>
-                      <p className="text-[10px] text-gray-500 mt-1 text-center">8 sections d'analyse sauvegardées</p>
+                      <p className="text-xs text-gray-500 mt-1 text-center">8 sections d'analyse sauvegardées</p>
                     </div>
                     <div className="px-6 py-3 flex gap-2 justify-center border-t border-gray-100">
                       <button onClick={onStartConception} className="text-xs bg-gray-900 text-white px-4 py-2 rounded-lg font-bold cursor-pointer hover:bg-gray-800">
@@ -8385,7 +8876,7 @@ export function ChantierDrillDown({ phase }: { phase: PhaseKey }) {
                     className="flex items-center gap-2 w-full px-4 py-2.5 pl-8 text-left cursor-pointer hover:bg-gray-50 transition-colors"
                   >
                     <Target className="h-3.5 w-3.5 text-indigo-400 shrink-0" />
-                    <span className="text-[11px] text-gray-700 font-medium truncate flex-1">{proj.name}</span>
+                    <span className="text-xs text-gray-700 font-medium truncate flex-1">{proj.name}</span>
                     <span className="text-xs text-gray-400">{proj.progress}%</span>
                     <ChevronRight className={cn("h-3.5 w-3.5 text-gray-300 transition-transform", openChantier === ci && openProjet === pi && "rotate-90")} />
                   </button>
@@ -8395,7 +8886,7 @@ export function ChantierDrillDown({ phase }: { phase: PhaseKey }) {
                       {proj.missions.map((m, mi) => (
                         <div key={mi} className="flex items-center gap-2 px-4 py-2 pl-14 hover:bg-gray-100 transition-colors">
                           <FileText className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-                          <span className="text-[11px] text-gray-600 flex-1">{m}</span>
+                          <span className="text-xs text-gray-600 flex-1">{m}</span>
                           {mi === 0 && <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />}
                         </div>
                       ))}
