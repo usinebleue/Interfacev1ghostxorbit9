@@ -164,6 +164,7 @@ import { DocumentsUnifie } from "../../shared/DocumentsUnifie";
 import { CanvasActionProvider } from "../../../../context/CanvasActionContext";
 import { BOT_COLORS } from "../../shared/simulation-data";
 import { SF } from "../../../../../v3/core/styles";
+import { SIM_ACTE2, INTEGRATORS } from "../../cahier-smart-data";
 
 export const UB_BLUE = "#073E5A";
 
@@ -4034,24 +4035,24 @@ export function PhaseConception({ stage, context, onStartExecution, onSelectDeli
 // ========== DATA CONSTANTS — shared by Level 2 livrables ==========
 
 const SWOT_DATA = {
-  forces: ["Reseau REAI 130+ membres", "AI CEO unique sur le marche", "Pipeline vocal+video operationnel"],
-  faiblesses: ["Equipe marketing 1 personne", "Brand awareness faible hors REAI", "Dependance bouche-a-oreille 65%"],
-  opportunites: ["72% PME sous-investissent en digital", "0 concurrent avec AI CEO integree", "Subventions MESI numerisation"],
-  menaces: ["Concurrents SaaS bien finances", "Resistance au changement PME", "Budget marketing limite 12K$/mois"],
+  forces: ["Production alimentaire certifiee HACCP", "85 employes experimentes et fideles", "18M$/an CA stable en croissance"],
+  faiblesses: ["Refrigeration energivore (systeme R-404A vieillissant)", "Palettisation 100% manuelle — 12 employes", "Zero monitoring IoT — angles morts production"],
+  opportunites: ["Subventions MESI/BDC couvrent 54% du projet", "CO2 transcritique = -40% couts energie", "Industrie 4.0 — monitoring predictif"],
+  menaces: ["Hausse de 23% des couts d'energie prevue 2027", "Penurie de main-d'oeuvre region Saguenay", "Concurrents deja automatises (Exceldor, Olymel)"],
 };
 
 const GANTT_MILESTONES = [
-  { id: 1, label: "Programme referral", bot: "CMOB", start: "S1", end: "S4", progress: 0 },
-  { id: 2, label: "Content LinkedIn", bot: "CMOB", start: "S2", end: "S8", progress: 0 },
-  { id: 3, label: "Chatbot site web", bot: "CTOB", start: "S3", end: "S6", progress: 0 },
-  { id: 4, label: "Email nurturing", bot: "CTOB", start: "S5", end: "S10", progress: 0 },
+  { id: 1, label: "Phase 1 — Refrigeration CO2", bot: "CTOB", start: "S1", end: "S8", progress: 0 },
+  { id: 2, label: "Phase 2 — Chaudieres condensation", bot: "CTOB", start: "S4", end: "S10", progress: 0 },
+  { id: 3, label: "Phase 3 — Cobot palettisation", bot: "COOB", start: "S8", end: "S16", progress: 0 },
+  { id: 4, label: "Phase 4 — HVAC + IoT monitoring", bot: "CTOB", start: "S12", end: "S20", progress: 0 },
 ];
 
 const BUDGET_ROWS = [
-  { poste: "Programme referral", mensuel: "1,200$", annuel: "14,400$", pct: 31 },
-  { poste: "Content LinkedIn", mensuel: "1,400$", annuel: "16,800$", pct: 37 },
-  { poste: "Chatbot AI (maintenance)", mensuel: "400$", annuel: "4,800$", pct: 11 },
-  { poste: "Email nurturing", mensuel: "800$", annuel: "9,600$", pct: 21 },
+  { poste: "Systeme CO2 transcritique", mensuel: "", annuel: "485,000$", pct: 44 },
+  { poste: "Chaudieres condensation", mensuel: "", annuel: "195,000$", pct: 18 },
+  { poste: "Cobot UR10e + integration", mensuel: "", annuel: "205,000$", pct: 19 },
+  { poste: "HVAC + plateforme IoT", mensuel: "", annuel: "215,000$", pct: 19 },
 ];
 
 const PRESENTATION_SLIDES = [
@@ -4125,13 +4126,17 @@ const L2_THEMES = {
 
 // --- L2 Section configs ---
 const DOCUMENT_DOCFORGE_SECTIONS = [
-  { id: 1, title: "Contexte", icon: FileText, minStage: 0 },
-  { id: 2, title: "Objectifs SMART", icon: Target, minStage: 0 },
-  { id: 3, title: "Strategie SWOT", icon: Shield, minStage: 1 },
-  { id: 4, title: "Plan d'action", icon: Wrench, minStage: 1 },
-  { id: 5, title: "Budget", icon: DollarSign, minStage: 2 },
-  { id: 6, title: "Timeline", icon: Clock, minStage: 2 },
-  { id: 7, title: "Indicateurs KPI", icon: BarChart3, minStage: 3 },
+  { id: 1, title: "Introduction et mandat", icon: FileText, minStage: 1 },
+  { id: 2, title: "Sommaire executif", icon: BarChart3, minStage: 1 },
+  { id: 3, title: "Profil entreprise", icon: Activity, minStage: 2 },
+  { id: 4, title: "Cahier des charges", icon: Target, minStage: 3 },
+  { id: 5, title: "Diagnostic multi-axe", icon: Stethoscope, minStage: 4 },
+  { id: 6, title: "Solutions recommandees", icon: Wrench, minStage: 5 },
+  { id: 7, title: "Budget et financement", icon: DollarSign, minStage: 6 },
+  { id: 8, title: "Plan d'implantation", icon: Calendar, minStage: 7 },
+  { id: 9, title: "KPIs et suivi", icon: TrendingUp, minStage: 8 },
+  { id: 10, title: "Conclusions", icon: CheckCircle2, minStage: 9 },
+  { id: 11, title: "Validation", icon: Shield, minStage: 9 },
 ];
 const TABLEUR_DOCFORGE_SECTIONS = [
   { id: 1, title: "Structure du tableur", icon: Table2, minStage: 0 },
@@ -4156,6 +4161,51 @@ const CODE_DOCFORGE_SECTIONS = [
   { id: 4, title: "Tests", icon: FlaskConical, minStage: 3 },
   { id: 5, title: "Deploiement", icon: Rocket, minStage: 4 },
 ];
+const JUMELAGE_DOCFORGE_SECTIONS = [
+  { id: 1, title: "Critères de Matching", icon: Filter, minStage: 1 },
+  { id: 2, title: "Scan Réseau", icon: Search, minStage: 2 },
+  { id: 3, title: "Conférences AI", icon: Video, minStage: 3 },
+  { id: 4, title: "Scoring Comparatif", icon: BarChart3, minStage: 4 },
+  { id: 5, title: "Recommandation Finale", icon: Trophy, minStage: 5 },
+];
+
+// ═══ Jumelage SMART — Data constantes (copie exacte AtelierJumelage) ═══
+const J_CHALLENGE_DEFENSE = "Je comprends le reflexe de vouloir challenger. Voici pourquoi Energia Solutions est objectivement le meilleur choix pour Aliments Boreal : 1) Seul integrateur a couvrir les 3 axes — Techno-Froid n'a pas de capacite robotique (score 35%) et GreenTech n'a pas d'expertise energie pure (score 50%). Energia couvre tout avec des equipes internes. 2) Subventions = le facteur decisif — Avec 98% de taux d'approbation sur 40+ dossiers, Energia maximise les 592K$ de subventions. Un dossier mal monte = perte de 300K$+. 3) Delai et risque — 20 semaines integrees vs 24-28 semaines avec sous-traitants.";
+const J_ALTERNATIVE_ANALYSIS = "Si on compare les 2 alternatives : Techno-Froid Saguenay (65%) est excellent en energie (72%) et bien place geographiquement (98%) mais zero capacite robotique. Ca force un sous-traitant pour la palettisation = coordination, delais, risque. GreenTech Industries (68%) est fort en IoT (95%) et robotique (85%) mais faible en energie (50%) et subventions (50%). Ils devraient aussi sous-traiter le coeur du projet. En resume : aucun des 2 ne peut livrer un projet integre — seulement Energia.";
+const J_HIGHLIGHT_Q1 = { question: SIM_ACTE2.jumelageQuestions[0].question, energia: SIM_ACTE2.jumelageQuestions[0].reponses[0], techno: SIM_ACTE2.jumelageQuestions[0].reponses[1], green: SIM_ACTE2.jumelageQuestions[0].reponses[2] };
+const J_HIGHLIGHT_Q3 = { question: SIM_ACTE2.jumelageQuestions[2].question, energia: SIM_ACTE2.jumelageQuestions[2].reponses[0], techno: SIM_ACTE2.jumelageQuestions[2].reponses[1], green: SIM_ACTE2.jumelageQuestions[2].reponses[2] };
+const J_CONF_SUPPLIERS = {
+  energia: { name: "Marc-Andre Dubois", company: "Energia Solutions", initial: "E", color: "bg-amber-500" },
+  techno: { name: "Jean-Francois Tremblay", company: "Techno-Froid Saguenay", initial: "T", color: "bg-gray-400" },
+  green: { name: "Sophie Lavoie", company: "GreenTech Industries", initial: "G", color: "bg-orange-400" },
+} as const;
+const J_CONF_ENERGIA_EXCHANGES: readonly { from: "CPOB" | "supplier" | "user"; text: string }[] = [
+  { from: "CPOB", text: "Bienvenue Marc-Andre. On commence par la refrigeration CO2 — c'est le coeur du projet Boreal. Expliquez-nous votre approche pour une usine de transformation de cette taille." },
+  { from: "supplier", text: "Merci Paco. On a livre 12 systemes CO2 transcritiques en 3 ans, dont 4 en agroalimentaire. Design modulaire, monitoring IoT, et recuperation de chaleur integree — 35% d'economie sur le gaz naturel en hiver." },
+  { from: "user", text: "Vos systemes sont compatibles HACCP zone 3 pour nos produits surgeles?" },
+  { from: "supplier", text: "4 de nos installations sont certifiees HACCP, dont 2 en zone 3 surgele. Echangeurs inox 316L, detection de fuites CO2, backup ammoniaque automatique. On peut fournir les rapports d'audit Qualtech." },
+  { from: "CPOB", text: "Parfait. Cote robotique — 8 installations de cobots dans votre dossier. Quelle configuration pour la palettisation Boreal?" },
+  { from: "supplier", text: "2 cobots Universal Robots UR10e sur rails lineaires, 12 cycles/minute, gripper adaptatif pour 6 formats de caisse. Projet identique chez Aliments Fontaine — meme volume, memes contraintes. Installation 3 semaines, formation incluse." },
+];
+const J_CONF_ENERGIA_INSIGHTS = ["12 systemes CO2 livres (4 agroalimentaire, 2 HACCP zone 3)", "Recuperation chaleur = -35% gaz naturel", "Cobots UR10e — projet identique chez Aliments Fontaine", "Delai complet : 20 semaines integrees"];
+const J_CONF_TECHNO_EXCHANGES: readonly { from: "CPOB" | "supplier" | "user"; text: string }[] = [
+  { from: "CPOB", text: "Jean-Francois, la robotique n'est pas votre specialite principale — comment vous gerez ce volet pour un projet integre comme Boreal?" },
+  { from: "supplier", text: "On est des experts en froid, pas en robotique. On travaille avec RoboPack Quebec depuis 2 ans — ils gerent les cobots, nous la refrigeration. Deux equipes sur le plancher en parallele." },
+  { from: "CPOB", text: "Ca pose un risque de coordination. Et les subventions — votre track record sur les dossiers HQ et STIQ?" },
+  { from: "supplier", text: "3 dossiers HQ en 2025, taux 100% — mais juste la portion energie. Un dossier integre energie + robotique, on n'a jamais monte ca. Il faudrait un consultant externe." },
+  { from: "user", text: "Si vous devez sous-traiter la robotique ET les subventions integrees, qui coordonne le projet au final?" },
+  { from: "supplier", text: "Honnetement, ca serait nous le maitre d'oeuvre, mais avec 2 sous-traitants a coordonner... je comprends que ca peut inquieter. On l'a fait une fois, ca a pris 28 semaines au lieu de 20." },
+];
+const J_CONF_TECHNO_INSIGHTS = ["Zero capacite robotique interne — sous-traitance RoboPack", "Risque coordination 2 equipes simultanees sur plancher", "Subventions : seulement portion energie (jamais integre)", "Delai realiste : 28 semaines (vs 20 pour Energia)"];
+const J_CONF_GREEN_EXCHANGES: readonly { from: "CPOB" | "supplier" | "user"; text: string }[] = [
+  { from: "CPOB", text: "Sophie, score IoT impressionnant — 95%. Mais parlons refrigeration CO2 : votre derniere installation date de quand exactement?" },
+  { from: "supplier", text: "Mai 2023 chez Produits Marins Cote-Nord. Depuis, on s'est concentres sur l'IoT et l'automatisation. On peut le faire, mais c'est pas notre plus grande force en ce moment." },
+  { from: "user", text: "Et les subventions? On vise 592K$ en subventions combinees HQ et STIQ. Votre track record?" },
+  { from: "supplier", text: "2 dossiers HQ l'an dernier — un approuve, un refuse pour documentation technique insuffisante. Taux de 50%. Je prefere etre transparente plutot que de vous promettre des chiffres irrealistes." },
+  { from: "CPOB", text: "La transparence, c'est apprecie. Derniere question — delai de livraison pour un projet de cette envergure?" },
+  { from: "supplier", text: "24 semaines minimum. On est plus lents que d'autres parce qu'on integre beaucoup de capteurs IoT, mais le suivi post-installation est compris pour 2 ans." },
+];
+const J_CONF_GREEN_INSIGHTS = ["Derniere installation CO2 : mai 2023 (quasi 3 ans)", "Force : IoT (95%) + robotique (85%) + suivi 2 ans inclus", "Subventions : taux 50% (1 approuve, 1 refuse)", "Delai : 24 semaines + transparence appreciee"];
 
 // --- Tim code strings (V3 enhanced) ---
 const TIM_CODE_V3 = [
@@ -4242,194 +4292,564 @@ const TIM_TEST_V3 = [
   "All tests green!",
 ].join("\n");
 
-// ========== MAG CONTENT — Document strategique (amber) ==========
+// ========== MAG CONTENT — Cahier de Projet SMART — Aliments Boreal inc. (amber) ==========
 
-function MagDocContexte() {
+function MagBorealIntro() {
   return (
     <AnimBlock>
-      <div className="border-l-[3px] border-amber-400 bg-amber-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-amber-700 mb-1 flex items-center gap-1.5">
-          1. Contexte
-          <span className="text-[8px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full">depuis Analyse</span>
+      <div className="border-l-[3px] border-amber-400 bg-amber-50/50 rounded-r-lg px-4 py-3">
+        <h4 className="text-xs font-bold text-amber-700 mb-2 flex items-center gap-1.5">
+          1. Introduction et mandat
+          <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full">Usine Bleue AI</span>
         </h4>
-        <p className="text-[9px] text-gray-700 leading-relaxed">Chantier Marketing Q2 \u2014 Augmenter la visibilite d'Usine Bleue. Budget: 12K$/mois. CAC actuel: 780$. Sources: 65% bouche-a-oreille, 20% web, 15% salons.</p>
-        <div className="mt-1 flex items-center gap-1.5 text-[9px] text-gray-400">
+        <div className="space-y-2">
+          <p className="text-xs text-gray-700 leading-relaxed"><span className="font-bold">Contexte:</span> Aliments Boreal inc. a mandate Usine Bleue AI pour realiser un diagnostic complet de ses installations et identifier les opportunites d'automatisation et d'efficacite energetique. L'entreprise fait face a une surconsommation energetique de 960 kWh/jour, une palettisation 100% manuelle mobilisant 12 employes, et zero monitoring en temps reel de ses equipements critiques.</p>
+          <p className="text-xs text-gray-700 leading-relaxed"><span className="font-bold">Mandat:</span> Produire un Cahier de Projet SMART couvrant le diagnostic multi-axe (energie, automatisation, IoT), les solutions recommandees avec specifications techniques, le budget detaille incluant 4 programmes de subventions, le plan d'implantation en 4 phases sur 20 semaines, et le jumelage avec des integrateurs qualifies du reseau Orbit9.</p>
+          <p className="text-xs text-gray-700 leading-relaxed"><span className="font-bold">Methodologie:</span> Processus en 3 actes {"—"} (1) Diagnostic AI assiste par CarlOS et l'equipe Brain Team (Olivier, Frank, Tim), (2) Jumelage SMART avec le reseau de 130+ membres industriels, (3) Cahier de projet valide par un ingenieur en automatisation certifie.</p>
+          <p className="text-xs text-gray-700 leading-relaxed"><span className="font-bold">Equipe mobilisee:</span> CarlOS (orchestration), Olivier (operations, cahier des charges), Frank (budget, subventions), Tim (solutions techniques, IoT).</p>
+        </div>
+        <div className="mt-2 flex items-center gap-1.5 text-xs text-gray-400">
           <BotAvatar code="CEOB" size="sm" />
-          <span>Pre-rempli depuis l'Analyse</span>
+          <span>CarlOS {"—"} orchestration du mandat</span>
         </div>
       </div>
     </AnimBlock>
   );
 }
 
-function MagDocObjectifs() {
+function MagBorealSommaire() {
   return (
     <AnimBlock delay={100}>
-      <div className="border-l-[3px] border-amber-400 bg-amber-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-amber-700 mb-1">2. Objectifs SMART</h4>
-        <div className="space-y-1">
-          {["Reduire le CAC de 780$ a 400$ d'ici fin Q3", "Augmenter la conversion web de 1.2% a 3% d'ici fin Q2", "Diversifier les sources: bouche-a-oreille < 40% d'ici Q4"].map((obj, i) => (
-            <div key={i} className="flex items-center gap-2 text-[9px] text-gray-700">
-              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-              <span>{obj}</span>
+      <div className="border-l-[3px] border-amber-400 bg-amber-50/50 rounded-r-lg px-4 py-3">
+        <h4 className="text-xs font-bold text-amber-700 mb-2">2. Sommaire executif</h4>
+        <div className="grid grid-cols-2 gap-2 mb-2">
+          {[
+            { label: "Investissement brut", value: "1,100,000$", color: "text-gray-800" },
+            { label: "Subventions (54%)", value: "592,000$", color: "text-emerald-700" },
+            { label: "Cout net entreprise", value: "508,000$", color: "text-blue-700" },
+            { label: "Economies annuelles", value: "278,000$/an", color: "text-amber-700" },
+          ].map(k => (
+            <div key={k.label} className="bg-white border border-gray-200 rounded-lg p-2.5 text-center">
+              <p className="text-[10px] text-gray-500 uppercase tracking-wider">{k.label}</p>
+              <p className={cn("text-sm font-extrabold", k.color)}>{k.value}</p>
             </div>
           ))}
         </div>
+        <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 flex items-center gap-2">
+          <TrendingUp className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+          <span className="text-xs font-bold text-emerald-700">ROI: 22 mois {"—"} retour complet sur investissement net</span>
+        </div>
+        <p className="text-xs text-gray-600 mt-2 leading-relaxed">Le projet d'automatisation couvre 3 axes prioritaires: efficacite energetique (refrigeration CO2 transcritique + chaudieres), palettisation robotisee (cobot UR10e), et monitoring IoT industriel (32 capteurs, alertes predictives ML). Retour sur investissement net en 22 mois avec VAN 5 ans de +412,000$.</p>
       </div>
     </AnimBlock>
   );
 }
 
-function MagDocSwot() {
-  const [expandedSwot, setExpandedSwot] = useState<string | null>(null);
+function MagBorealProfil() {
   return (
-    <AnimBlock delay={150}>
-      <div className="border-l-[3px] border-amber-400 bg-amber-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-amber-700 mb-2">3. Matrice SWOT</h4>
-        <div className="grid grid-cols-2 gap-2">
+    <AnimBlock delay={100}>
+      <div className="border-l-[3px] border-amber-400 bg-amber-50/50 rounded-r-lg px-4 py-3">
+        <h4 className="text-xs font-bold text-amber-700 mb-2">3. Profil entreprise</h4>
+        <div className="space-y-1.5">
           {[
-            { key: "forces", label: "Forces", bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700", content: "text-emerald-800" },
-            { key: "faiblesses", label: "Faiblesses", bg: "bg-red-50", border: "border-red-200", text: "text-red-700", content: "text-red-800" },
-            { key: "opportunites", label: "Opportunites", bg: "bg-blue-50", border: "border-blue-200", text: "text-blue-700", content: "text-blue-800" },
-            { key: "menaces", label: "Menaces", bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-700", content: "text-orange-800" },
-          ].map(quad => (
-            <div key={quad.key} className={cn("border rounded-lg px-2 py-1.5 cursor-pointer transition-all", quad.bg, quad.border, expandedSwot === quad.key ? "ring-2 ring-amber-300 shadow-md" : "hover:shadow-sm")} onClick={() => setExpandedSwot(expandedSwot === quad.key ? null : quad.key)}>
-              <div className={cn("text-[9px] font-bold mb-1", quad.text)}>{quad.label}</div>
-              {(SWOT_DATA as Record<string, string[]>)[quad.key].map((f: string, i: number) => (
-                <div key={i} className={cn("text-[9px]", quad.content, expandedSwot === quad.key ? "" : i > 0 ? "hidden" : "")}>
-                  {"\u2022"} {f}
+            { label: "Raison sociale", value: "Aliments Boreal inc." },
+            { label: "Secteur", value: "Transformation alimentaire — produits congeles" },
+            { label: "Localisation", value: "Saguenay, Quebec" },
+            { label: "Employes", value: "85 (production: 62, admin: 23)" },
+            { label: "Chiffre d'affaires", value: "18M$/an" },
+            { label: "Superficie", value: "42,000 pi² (usine + entreposage froid)" },
+          ].map(item => (
+            <div key={item.label} className="flex items-center gap-2 text-xs">
+              <span className="font-bold text-gray-700 w-32 shrink-0">{item.label}</span>
+              <span className="text-gray-600">{item.value}</span>
+            </div>
+          ))}
+        </div>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {["HACCP", "SQF", "MAPAQ", "ISO 22000"].map(cert => (
+            <span key={cert} className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">{cert}</span>
+          ))}
+        </div>
+        <div className="mt-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+          <p className="text-xs text-blue-700"><span className="font-bold">Contexte marche:</span> Croissance de 8% du secteur congele au Quebec. Pression sur les couts energetiques (+23% prevu 2027). Penurie de main-d'oeuvre chronique en region. Reglementation MAPAQ renforcee sur la tracabilite temperature.</p>
+        </div>
+      </div>
+    </AnimBlock>
+  );
+}
+
+function MagBorealCahierCharges() {
+  return (
+    <AnimBlock delay={100}>
+      <div className="border-l-[3px] border-amber-400 bg-amber-50/50 rounded-r-lg px-4 py-3">
+        <h4 className="text-xs font-bold text-amber-700 mb-2">4. Cahier des charges {"—"} 4 axes strategiques</h4>
+        <div className="space-y-2.5">
+          {[
+            { axe: "Axe 1", title: "Efficacite energetique", color: "bg-orange-50 border-orange-200", specs: [
+              "Remplacement systeme refrigeration R-404A par CO2 transcritique (GWP 1 vs 3922)",
+              "Chaudieres a condensation haute efficacite (96% rendement)",
+              "Recuperation chaleur residuelle compresseurs pour prechauffage eau process",
+              "Cible: reduction 40% consommation energetique (2,400 kWh/jour economises)",
+            ]},
+            { axe: "Axe 2", title: "Palettisation robotisee", color: "bg-violet-50 border-violet-200", specs: [
+              "Cobot Universal Robots UR10e — charge utile 10kg, portee 1300mm",
+              "Integration vision artificielle pour detection palette et positionnement",
+              "Cadence cible: 22 palettes/heure (vs 14 actuellement, +57%)",
+              "12 employes reassignes a des postes a valeur ajoutee (controle qualite, maintenance)",
+            ]},
+            { axe: "Axe 3", title: "Monitoring IoT industriel", color: "bg-cyan-50 border-cyan-200", specs: [
+              "Capteurs temperature/humidite LoRaWAN dans 3 zones (production, stockage, expedition)",
+              "Dashboard temps reel avec alertes SMS/email sous 30 secondes",
+              "Historique 12 mois pour conformite MAPAQ et audits SQF",
+              "Integration SCADA existant via protocole Modbus TCP/IP",
+            ]},
+            { axe: "Axe 4", title: "HVAC et qualite de l'air", color: "bg-emerald-50 border-emerald-200", specs: [
+              "Systeme de ventilation a recuperation de chaleur (VRC) zones production",
+              "Filtration HEPA pour salles blanches conditionnement",
+              "Controle hygrometrique automatise (humidite relative 40-60%)",
+              "Conformite normes ASHRAE 62.1 et reglementation CNESST",
+            ]},
+          ].map(a => (
+            <div key={a.axe} className={cn("border rounded-lg px-3 py-2.5", a.color)}>
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className="text-xs font-bold text-gray-800">{a.axe} {"—"} {a.title}</span>
+              </div>
+              <ul className="space-y-1">
+                {a.specs.map((spec, i) => (
+                  <li key={i} className="flex items-start gap-1.5 text-xs text-gray-600 leading-relaxed">
+                    <span className="text-amber-500 mt-0.5 shrink-0">{"•"}</span>
+                    <span>{spec}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+        <div className="mt-2.5 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+          <p className="text-xs text-gray-600"><span className="font-bold">Contraintes operationnelles:</span> Production ne peut pas arreter plus de 48h consecutives. Installation par phases obligatoire. Maintien de la chaine de froid a tout moment (normes ACIA).</p>
+        </div>
+      </div>
+    </AnimBlock>
+  );
+}
+
+function MagBorealDiagnostic() {
+  return (
+    <AnimBlock delay={100}>
+      <div className="border-l-[3px] border-amber-400 bg-amber-50/50 rounded-r-lg px-4 py-3">
+        <h4 className="text-xs font-bold text-amber-700 mb-2">5. Diagnostic multi-axe {"—"} Triangle du Feu</h4>
+        <div className="space-y-2.5">
+          {[
+            { title: "Refrigeration", pertes: "156,000$/an", severity: "Critique", color: "text-red-600 bg-red-50", items: [
+              "Systeme R-404A a 67% d'efficacite (benchmark: 85%+)",
+              "Surconsommation de 2,400 kWh/jour vs industrie comparable",
+              "Refrigerant R-404A sera interdit d'ici 2028 (reglement federal GES)",
+              "Fuites detectees: 15% de perte annuelle de charge refrigerante",
+            ]},
+            { title: "Palettisation manuelle", pertes: "89,000$/an", severity: "Eleve", color: "text-orange-600 bg-orange-50", items: [
+              "12 employes temps plein — cout salarial charges incluses 720K$/an",
+              "Cadence limitee a 14 palettes/heure (benchmark robotise: 22+)",
+              "3 blessures musculosquelettiques/an — couts CNESST 45K$/incident",
+              "Taux d'absenteisme 12% vs 4% moyenne usine (postes penibles)",
+            ]},
+            { title: "Monitoring IoT", pertes: "33,000$/an", severity: "Modere", color: "text-amber-600 bg-amber-50", items: [
+              "Zero visibilite temps reel — releves manuels aux 4 heures seulement",
+              "4 incidents temperature non detectes en 2025 — 3 lots detruits",
+              "Non-conformite partielle MAPAQ: tracabilite temperature insuffisante",
+              "Temps de reaction moyen: 2h+ (cible <30 min avec IoT)",
+            ]},
+          ].map(d => (
+            <div key={d.title} className="bg-white border border-gray-200 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className="text-xs font-bold text-gray-800">{d.title}</span>
+                <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-full", d.color)}>{d.severity}</span>
+                <span className="text-xs font-bold text-red-600 ml-auto">{d.pertes}</span>
+              </div>
+              <ul className="space-y-1">
+                {d.items.map((item, i) => (
+                  <li key={i} className="flex items-start gap-1.5 text-xs text-gray-600 leading-relaxed">
+                    <span className="text-red-400 mt-0.5 shrink-0">{"•"}</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+        <div className="mt-2.5 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+          <span className="text-xs font-bold text-red-700">Total pertes annuelles identifiees: 278,000$/an</span>
+          <p className="text-[10px] text-red-600 mt-0.5">Impact supplementaire non quantifie: risque reputationnel MAPAQ, perte de certification SQF, penalites GES</p>
+        </div>
+        <div className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-400">
+          <BotAvatar code="CEOB" size="sm" />
+          <span>CarlOS {"—"} diagnostic AI assiste par Tim (CTO) et Frank (CFO)</span>
+        </div>
+      </div>
+    </AnimBlock>
+  );
+}
+
+function MagBorealSolutions() {
+  return (
+    <AnimBlock delay={100}>
+      <div className="border-l-[3px] border-amber-400 bg-amber-50/50 rounded-r-lg px-4 py-3">
+        <h4 className="text-xs font-bold text-amber-700 mb-2">6. Solutions recommandees {"—"} 4 interventions</h4>
+        <div className="space-y-2">
+          {[
+            { id: "S1", title: "Systeme CO2 transcritique", cout: "485,000$", economies: "156,000$/an", roi: "18 mois", bot: "CTOB", fournisseur: "Carnot Refrigeration (Quebec)", details: "Remplacement complet du groupe froid R-404A. GWP reduit de 3922 a 1. Recuperation chaleur 45kW pour prechauffage." },
+            { id: "S2", title: "Chaudieres a condensation", cout: "195,000$", economies: "52,000$/an", roi: "24 mois", bot: "CTOB", fournisseur: "Viessmann / IBC Technologies", details: "2 chaudieres Vitodens 200 en cascade, rendement 96%. Integration avec chaleur residuelle S1." },
+            { id: "S3", title: "Cobot UR10e palettisation", cout: "205,000$", economies: "89,000$/an", roi: "16 mois", bot: "COOB", fournisseur: "Robotiq (Levis, QC)", details: "Cobot UR10e + pince adaptative Robotiq. Vision 2D pour detection palette. Formation operateurs 3 jours." },
+            { id: "S4", title: "HVAC + plateforme IoT", cout: "215,000$", economies: "33,000$/an", roi: "36 mois", bot: "CTOB", fournisseur: "Honeywell / Samsara IoT", details: "32 capteurs LoRaWAN, gateway industriel, dashboard cloud. Alertes temps reel <30s. VRC zones production." },
+          ].map(s => (
+            <div key={s.id} className="bg-white border border-gray-200 rounded-lg px-3 py-2.5">
+              <div className="flex items-center gap-2 mb-1">
+                <BotAvatar code={s.bot} size="sm" />
+                <span className="text-xs font-bold text-gray-800">{s.id}. {s.title}</span>
+                <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-medium ml-auto">{s.cout}</span>
+              </div>
+              <p className="text-xs text-gray-600 leading-relaxed mb-1.5">{s.details}</p>
+              <div className="flex items-center gap-3 text-xs">
+                <span className="text-emerald-600 font-medium">Economies: {s.economies}</span>
+                <span className="text-blue-600 font-medium">ROI: {s.roi}</span>
+                <span className="text-gray-400 ml-auto text-[10px]">{s.fournisseur}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-2.5 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+          <p className="text-xs text-amber-800"><span className="font-bold">Synergies identifiees:</span> Le systeme CO2 transcritique (S1) produit de la chaleur residuelle utilisable par les chaudieres (S2) {"—"} economie additionnelle de 18,000$/an. Les capteurs IoT (S4) monitorent aussi le cobot (S3) pour maintenance predictive.</p>
+        </div>
+        <div className="mt-1.5 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+          <p className="text-xs text-blue-700"><span className="font-bold">Reseau Orbit{"⁹"}:</span> 3 fournisseurs identifies dans le reseau REAI. Session de jumelage SMART disponible pour qualification approfondie.</p>
+        </div>
+      </div>
+    </AnimBlock>
+  );
+}
+
+function MagBorealBudget() {
+  return (
+    <AnimBlock delay={100}>
+      <div className="border-l-[3px] border-amber-400 bg-amber-50/50 rounded-r-lg px-4 py-3">
+        <h4 className="text-xs font-bold text-amber-700 mb-2">7. Budget et financement {"—"} Montage financier</h4>
+        <div className="space-y-1.5 mb-2.5">
+          {[
+            { label: "Investissement brut", value: "1,100,000$", bar: 100, color: "bg-gray-500" },
+            { label: "Subvention MESI", value: "-280,000$", bar: 75, color: "bg-emerald-400", detail: "Programme Productivite Innovation — volet automatisation" },
+            { label: "Programme CanExport", value: "-162,000$", bar: 60, color: "bg-emerald-400", detail: "Diversification marches — amelioration competitivite" },
+            { label: "Credit d'impot RS&DE", value: "-95,000$", bar: 51, color: "bg-emerald-400", detail: "Recherche scientifique et developpement experimental (federal)" },
+            { label: "BDC Pret vert", value: "-55,000$", bar: 46, color: "bg-emerald-400", detail: "Banque de developpement du Canada — taux preferentiel 4.5%" },
+            { label: "Cout net entreprise", value: "508,000$", bar: 46, color: "bg-blue-500", detail: "Financement interne + marge de credit existante" },
+          ].map((row, i) => (
+            <div key={i}>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-700 w-32 shrink-0 font-medium">{row.label}</span>
+                <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
+                  <div className={cn("h-full rounded-full transition-all duration-1000", row.color)} style={{ width: `${row.bar}%` }} />
                 </div>
-              ))}
-              {expandedSwot !== quad.key && (SWOT_DATA as Record<string, string[]>)[quad.key].length > 1 && (
-                <p className="text-[8px] text-gray-400 mt-0.5">+{(SWOT_DATA as Record<string, string[]>)[quad.key].length - 1} autres...</p>
+                <span className="text-xs font-bold text-gray-800 w-24 text-right">{row.value}</span>
+              </div>
+              {"detail" in row && row.detail && (
+                <p className="text-[10px] text-gray-400 ml-34 mt-0.5 pl-1">{row.detail}</p>
               )}
             </div>
           ))}
         </div>
-        <div className="mt-2 flex items-center gap-1.5 text-[9px] text-gray-400">
-          <BotAvatar code="CSOB" size="sm" />
-          <span>Simone (CSO) \u2014 analyse strategique</span>
+        <div className="grid grid-cols-3 gap-2 mt-2.5">
+          <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2 text-center">
+            <p className="text-[10px] text-emerald-600 uppercase font-medium">Economies annuelles</p>
+            <p className="text-sm font-extrabold text-emerald-700">278,000$/an</p>
+          </div>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 text-center">
+            <p className="text-[10px] text-blue-600 uppercase font-medium">Retour investissement</p>
+            <p className="text-sm font-extrabold text-blue-700">22 mois</p>
+          </div>
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 text-center">
+            <p className="text-[10px] text-amber-600 uppercase font-medium">Subventions totales</p>
+            <p className="text-sm font-extrabold text-amber-700">592,000$</p>
+            <p className="text-[10px] text-amber-500">54% du projet</p>
+          </div>
+        </div>
+        <div className="mt-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+          <p className="text-xs text-gray-600"><span className="font-bold">Echeancier paiements:</span> 30% a la commande (152K$), 40% mi-projet (203K$), 30% a la livraison (153K$). Subventions versees sur presentation des factures acquittees.</p>
+        </div>
+        <div className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-400">
+          <BotAvatar code="CFOB" size="sm" />
+          <span>Frank (CFO) {"—"} analyse financiere, subventions et montage</span>
         </div>
       </div>
     </AnimBlock>
   );
 }
 
-function MagDocPlanAction() {
-  return (
-    <AnimBlock delay={200}>
-      <div className="border-l-[3px] border-amber-400 bg-amber-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-amber-700 mb-2">4. Plan d'action</h4>
-        <div className="space-y-2">
-          {GANTT_MILESTONES.map(m => (
-            <div key={m.id} className="flex items-center gap-2">
-              <BotAvatar code={m.bot} size="sm" />
-              <div className="flex-1">
-                <div className="text-[9px] font-medium text-gray-800">{m.label}</div>
-                <div className="text-[9px] text-gray-500">{m.start} \u2192 {m.end}</div>
-              </div>
-              <div className="w-20 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                <div className="h-full bg-amber-500 rounded-full" style={{ width: "0%" }} />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </AnimBlock>
-  );
-}
-
-function MagDocBudget() {
+function MagBorealImplantation() {
   return (
     <AnimBlock delay={100}>
-      <div className="border-l-[3px] border-amber-400 bg-amber-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-amber-700 mb-2">5. Budget</h4>
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-amber-50 border-b border-amber-200">
-                {["Poste", "Mensuel", "Annuel", "%"].map(h => (
-                  <th key={h} className="text-[9px] font-bold text-amber-800 px-2.5 py-1.5 text-left">{h}</th>
+      <div className="border-l-[3px] border-amber-400 bg-amber-50/50 rounded-r-lg px-4 py-3">
+        <h4 className="text-xs font-bold text-amber-700 mb-2">8. Plan d'implantation {"—"} 20 semaines, 4 phases</h4>
+        <div className="space-y-2">
+          {GANTT_MILESTONES.map(m => (
+            <div key={m.id} className="bg-white border border-gray-200 rounded-lg px-3 py-2">
+              <div className="flex items-center gap-2 mb-1">
+                <BotAvatar code={m.bot} size="sm" />
+                <div className="flex-1">
+                  <div className="text-xs font-medium text-gray-800">{m.label}</div>
+                  <div className="text-[10px] text-gray-500">{m.start} {"→"} {m.end}</div>
+                </div>
+                <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div className="h-full bg-amber-500 rounded-full" style={{ width: "0%" }} />
+                </div>
+              </div>
+              <ul className="space-y-0.5 ml-7">
+                {(m.id === "P1" ? [
+                  "Audit energetique detaille + ingenierie preliminaire",
+                  "Commande equipements longue livraison (compresseur CO2)",
+                  "Formation equipe maintenance sur nouveaux systemes",
+                ] : m.id === "P2" ? [
+                  "Installation systeme CO2 transcritique (arret partiel zone B)",
+                  "Mise en service chaudieres a condensation",
+                  "Tests de performance et calibration",
+                ] : m.id === "P3" ? [
+                  "Installation cellule robotique UR10e + convoyeurs",
+                  "Programmation trajectoires et vision artificielle",
+                  "Formation operateurs et periode de rodage 2 semaines",
+                ] : [
+                  "Deploiement 32 capteurs IoT + gateway LoRaWAN",
+                  "Installation VRC et filtration HEPA",
+                  "Configuration dashboard + alertes + integration SCADA",
+                ]).map((step, i) => (
+                  <li key={i} className="flex items-start gap-1.5 text-[10px] text-gray-500 leading-relaxed">
+                    <span className="text-amber-400 mt-0.5 shrink-0">{"›"}</span>
+                    <span>{step}</span>
+                  </li>
                 ))}
-              </tr>
-            </thead>
-            <tbody>
-              {BUDGET_ROWS.map((row, i) => (
-                <tr key={i} className="border-b border-gray-100">
-                  <td className="text-[9px] text-gray-700 px-2.5 py-1.5 font-medium">{row.poste}</td>
-                  <td className="text-[9px] text-gray-700 px-2.5 py-1.5">{row.mensuel}</td>
-                  <td className="text-[9px] text-gray-700 px-2.5 py-1.5">{row.annuel}</td>
-                  <td className="text-[9px] px-2.5 py-1.5">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-10 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                        <div className="h-full bg-amber-400 rounded-full" style={{ width: `${row.pct}%` }} />
-                      </div>
-                      <span className="text-gray-500">{row.pct}%</span>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="mt-2 flex items-center gap-1.5 text-[9px] text-gray-400">
-          <BotAvatar code="CFOB" size="sm" />
-          <span>Frank (CFO) \u2014 Total: 3,800$/mois, ROI projete: 3.6x</span>
-        </div>
-      </div>
-    </AnimBlock>
-  );
-}
-
-function MagDocTimeline() {
-  return (
-    <AnimBlock delay={150}>
-      <div className="border-l-[3px] border-amber-400 bg-amber-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-amber-700 mb-2">6. Timeline</h4>
-        <div className="space-y-1.5">
-          {[
-            { phase: "Phase 1", range: "S1\u2013S4", label: "Referral + LinkedIn", color: "bg-amber-100 border-amber-300" },
-            { phase: "Phase 2", range: "S5\u2013S10", label: "Chatbot + Nurturing", color: "bg-amber-50 border-amber-200" },
-            { phase: "Phase 3", range: "S11\u2013S14", label: "Optimisation", color: "bg-yellow-50 border-yellow-200" },
-          ].map(p => (
-            <div key={p.phase} className={cn("border rounded-lg px-2.5 py-1.5 flex items-center gap-2", p.color)}>
-              <span className="text-[9px] font-bold text-gray-700 w-14 shrink-0">{p.phase}</span>
-              <span className="text-[9px] text-gray-500 w-14 shrink-0">{p.range}</span>
-              <span className="text-[9px] text-gray-700">{p.label}</span>
+              </ul>
             </div>
           ))}
         </div>
-        <p className="text-[9px] text-gray-500 mt-1.5">Checkpoint S7 \u2014 revue mi-parcours avec l'equipe</p>
+        <div className="mt-2.5 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+          <p className="text-xs text-amber-800"><span className="font-bold">Gouvernance:</span> Comite de pilotage mensuel (DG + Usine Bleue + integrateur). Rapports d'avancement bi-hebdomadaires. Point de controle qualite a chaque fin de phase.</p>
+        </div>
+        <div className="mt-1.5 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+          <p className="text-xs text-blue-700"><span className="font-bold">Gestion des risques:</span> Plan de contingence si retard fournisseur {">"} 2 semaines. Stock tampon refrigerant R-404A pour transition. Ligne de production B maintenue en backup phase 2.</p>
+        </div>
       </div>
     </AnimBlock>
   );
 }
 
-function MagDocIndicateurs() {
+function MagBorealKPIs() {
   return (
-    <AnimBlock delay={200}>
-      <div className="border-l-[3px] border-amber-400 bg-amber-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-amber-700 mb-2">7. Indicateurs KPI</h4>
-        <div className="grid grid-cols-2 gap-2">
+    <AnimBlock delay={100}>
+      <div className="border-l-[3px] border-amber-400 bg-amber-50/50 rounded-r-lg px-4 py-3">
+        <h4 className="text-xs font-bold text-amber-700 mb-2">9. KPIs et tableau de bord {"—"} Suivi continu</h4>
+        <div className="grid grid-cols-2 gap-2.5">
           {[
-            { kpi: "CAC", cible: "400$", actuel: "780$", trend: "-49%", good: true },
-            { kpi: "Conversion web", cible: "3%", actuel: "1.2%", trend: "+150%", good: true },
-            { kpi: "Part bouche-a-oreille", cible: "<40%", actuel: "65%", trend: "-38%", good: true },
-            { kpi: "ROI marketing", cible: "3x+", actuel: "1.2x", trend: "+150%", good: true },
+            { kpi: "Consommation energetique", cible: "-40%", actuel: "4,800 kWh/jour", methode: "Compteurs intelligents temps reel", responsable: "Tim (CTO)" },
+            { kpi: "Cadence palettisation", cible: "22 pal/h", actuel: "14 pal/h", methode: "Compteur automatique cobot", responsable: "Olivier (COO)" },
+            { kpi: "Incidents temperature", cible: "0/mois", actuel: "1.3/mois", methode: "Alertes IoT <30s + log MAPAQ", responsable: "Tim (CTO)" },
+            { kpi: "Cout maintenance", cible: "-25%", actuel: "12,500$/mois", methode: "GMAO + maintenance predictive IoT", responsable: "Olivier (COO)" },
+            { kpi: "Taux de conformite", cible: "100%", actuel: "92%", methode: "Audits SQF trimestriels + tracabilite auto", responsable: "Helene (CHRO)" },
+            { kpi: "ROI cumule", cible: "100% a M22", actuel: "0%", methode: "Tableau de bord financier mensuel", responsable: "Frank (CFO)" },
           ].map(k => (
-            <div key={k.kpi} className="bg-white border border-gray-200 rounded-lg p-2">
-              <p className="text-[9px] font-bold text-gray-800">{k.kpi}</p>
+            <div key={k.kpi} className="bg-white border border-gray-200 rounded-lg p-2.5">
+              <p className="text-xs font-bold text-gray-800">{k.kpi}</p>
               <div className="flex items-center gap-2 mt-1">
-                <span className="text-[9px] text-gray-500">Actuel: {k.actuel}</span>
+                <span className="text-xs text-gray-500">Actuel: {k.actuel}</span>
                 <ArrowRight className="h-3 w-3 text-gray-400" />
-                <span className="text-[9px] font-bold text-emerald-600">Cible: {k.cible}</span>
+                <span className="text-xs font-bold text-emerald-600">Cible: {k.cible}</span>
               </div>
-              <div className="flex items-center gap-1 mt-0.5">
-                <TrendingUp className="h-3 w-3 text-emerald-500" />
-                <span className="text-[9px] font-bold text-emerald-600">{k.trend}</span>
+              <p className="text-[10px] text-gray-400 mt-1">Methode: {k.methode}</p>
+              <p className="text-[10px] text-blue-500 font-medium">Responsable: {k.responsable}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-2.5 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+          <p className="text-xs text-gray-600"><span className="font-bold">Protocole de suivi:</span> Dashboard IoT temps reel (24/7) + rapports mensuels automatises + revue trimestrielle comite pilotage. Seuils d'alerte configures pour chaque KPI.</p>
+        </div>
+      </div>
+    </AnimBlock>
+  );
+}
+
+function MagBorealJumelage() {
+  const [showScoring, setShowScoring] = useState(false);
+  return (
+    <AnimBlock delay={100}>
+      <div className="border-l-[3px] border-amber-400 bg-amber-50/50 rounded-r-lg px-4 py-3">
+        <h4 className="text-xs font-bold text-amber-700 mb-2 flex items-center gap-1.5">
+          10. Jumelage SMART {"—"} Intelligence Reseau
+          <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full">Orbit{"⁹"}</span>
+        </h4>
+        <div className="flex items-center gap-1 mb-2.5 flex-wrap">
+          {[
+            { label: "Reseau REAI", count: "130", color: "bg-gray-200 text-gray-700" },
+            { label: "Secteur alim.", count: "23", color: "bg-amber-100 text-amber-700" },
+            { label: "Scoring AI", count: "8", color: "bg-blue-100 text-blue-700" },
+            { label: "Finalistes", count: "3", color: "bg-emerald-100 text-emerald-700" },
+          ].map((step, i) => (
+            <div key={step.label} className="flex items-center gap-1">
+              {i > 0 && <ChevronRight className="h-3 w-3 text-gray-300 shrink-0" />}
+              <div className={cn("flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold", step.color)}>
+                <span>{step.count}</span>
+                <span>{step.label}</span>
               </div>
             </div>
           ))}
+        </div>
+        <div className="space-y-2">
+          {[
+            { rank: 1, name: "Energia Solutions", score: 94, ville: "Quebec", specialite: "Refrigeration industrielle + IoT", detail: "15 ans experience agroalimentaire. Certifie ASHRAE. 12 projets CO2 transcritique livres au Quebec." },
+            { rank: 2, name: "Techno-Froid inc.", score: 87, ville: "Montreal", specialite: "Systemes CO2 transcritique", detail: "Specialiste froid industriel depuis 2008. Partenaire Bitzer et Carnot. Equipe de 45 techniciens." },
+            { rank: 3, name: "AutomatPro", score: 82, ville: "Sherbrooke", specialite: "Robotique collaborative + vision", detail: "Integrateur certifie Universal Robots. 8 installations cobots en alimentaire. Support 24/7." },
+          ].map(f => (
+            <div key={f.rank} className={cn("border rounded-lg px-3 py-2.5 cursor-pointer transition-all hover:shadow-sm", f.rank === 1 ? "border-emerald-300 bg-emerald-50/50 ring-1 ring-emerald-200" : "border-gray-200 bg-white")} onClick={() => setShowScoring(!showScoring)}>
+              <div className="flex items-center gap-2">
+                <span className={cn("text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center text-white", f.rank === 1 ? "bg-emerald-600" : f.rank === 2 ? "bg-blue-500" : "bg-gray-400")}>{f.rank}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-gray-800">{f.name}</span>
+                    <span className="text-[10px] text-gray-500">{f.ville}</span>
+                  </div>
+                  <p className="text-[10px] text-gray-500">{f.specialite}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">{f.detail}</p>
+                </div>
+                <div className="text-right shrink-0">
+                  <span className={cn("text-sm font-extrabold", f.rank === 1 ? "text-emerald-700" : "text-gray-700")}>{f.score}%</span>
+                  <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden mt-0.5">
+                    <div className={cn("h-full rounded-full", f.rank === 1 ? "bg-emerald-500" : "bg-blue-400")} style={{ width: `${f.score}%` }} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        {showScoring && (
+          <div className="mt-2.5 bg-white border border-gray-200 rounded-lg overflow-hidden">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-amber-50 border-b border-amber-200">
+                  {["Critere", "Energia", "T-Froid", "AutomatPro"].map(h => (
+                    <th key={h} className="text-[10px] font-bold text-amber-800 px-2 py-1.5 text-left">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  { critere: "Expertise sectorielle", s1: 10, s2: 8, s3: 6 },
+                  { critere: "Proximite geographique", s1: 9, s2: 7, s3: 8 },
+                  { critere: "Capacite technique", s1: 9, s2: 9, s3: 7 },
+                  { critere: "References similaires", s1: 10, s2: 8, s3: 7 },
+                  { critere: "Rapport qualite-prix", s1: 8, s2: 9, s3: 9 },
+                  { critere: "Delai disponibilite", s1: 9, s2: 7, s3: 8 },
+                  { critere: "Service apres-vente", s1: 10, s2: 8, s3: 7 },
+                  { critere: "Innovation techno", s1: 9, s2: 9, s3: 8 },
+                ].map(r => (
+                  <tr key={r.critere} className="border-b border-gray-100">
+                    <td className="text-[10px] text-gray-700 px-2 py-1">{r.critere}</td>
+                    <td className="text-[10px] font-bold text-emerald-700 px-2 py-1">{r.s1}/10</td>
+                    <td className="text-[10px] text-gray-700 px-2 py-1">{r.s2}/10</td>
+                    <td className="text-[10px] text-gray-700 px-2 py-1">{r.s3}/10</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <div className="mt-2 flex items-center gap-1.5 text-xs text-gray-400">
+          <BotAvatar code="CEOB" size="sm" />
+          <span>CarlOS {"—"} sessions de jumelage AI (5 questions par candidat, scoring VITAA)</span>
+        </div>
+      </div>
+    </AnimBlock>
+  );
+}
+
+function MagBorealConclusions() {
+  return (
+    <AnimBlock delay={100}>
+      <div className="border-l-[3px] border-amber-400 bg-amber-50/50 rounded-r-lg px-4 py-3">
+        <h4 className="text-xs font-bold text-amber-700 mb-2">11. Conclusions et recommandations</h4>
+        <div className="space-y-2.5">
+          <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2.5">
+            <p className="text-xs font-bold text-emerald-700 mb-1">Recommandation finale</p>
+            <p className="text-xs text-gray-700 leading-relaxed">Nous recommandons de proceder avec le projet complet en 4 phases sur 20 semaines, avec Energia Solutions comme integrateur principal (score 94%). L'investissement net de 508,000$ sera rembourse en 22 mois grace aux economies de 278,000$/an. Le montage financier couvre 54% du projet via subventions gouvernementales.</p>
+          </div>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2.5">
+            <p className="text-xs font-bold text-blue-700 mb-1">Impact strategique projete</p>
+            <div className="grid grid-cols-2 gap-2 mt-1.5">
+              {[
+                { label: "Reduction empreinte carbone", value: "-62 tonnes CO2/an" },
+                { label: "Gain productivite", value: "+57% palettisation" },
+                { label: "Conformite reglementaire", value: "100% MAPAQ/SQF" },
+                { label: "Competitivite", value: "Top 10% industrie QC" },
+              ].map(imp => (
+                <div key={imp.label} className="flex items-center gap-1.5">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                  <div>
+                    <p className="text-[10px] text-gray-500">{imp.label}</p>
+                    <p className="text-xs font-bold text-blue-700">{imp.value}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <p className="text-xs font-bold text-gray-700">Facteurs critiques de succes:</p>
+            {[
+              "Engagement de la direction — comite de pilotage mensuel avec indicateurs",
+              "Formation du personnel — 3 jours par phase, accompagnement changement",
+              "Respect du sequencement des phases — Phase 1 conditionne Phase 2",
+              "Suivi KPIs — tableaux de bord IoT des la Phase 1, revue trimestrielle",
+              "Gestion du changement — communication transparente, implication syndicale",
+            ].map((f, i) => (
+              <div key={i} className="flex items-center gap-2 text-xs text-gray-700">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                <span>{f}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </AnimBlock>
+  );
+}
+
+function MagBorealValidation() {
+  return (
+    <AnimBlock delay={100}>
+      <div className="border-l-[3px] border-amber-400 bg-amber-50/50 rounded-r-lg px-4 py-3">
+        <h4 className="text-xs font-bold text-amber-700 mb-2">12. Validation et signatures</h4>
+        <div className="space-y-2">
+          {[
+            { role: "Direction generale", name: "Marc-Andre Tremblay, President", status: "En attente", color: "text-amber-600 bg-amber-50", date: "" },
+            { role: "Responsable projet", name: "Julie Fortin, Dir. Operations", status: "En attente", color: "text-amber-600 bg-amber-50", date: "" },
+            { role: "Conseiller Usine Bleue", name: "Carl Fugere, CEO Usine Bleue AI", status: "Valide", color: "text-emerald-600 bg-emerald-50", date: "15 mars 2026" },
+            { role: "Integrateur principal", name: "Energia Solutions — Pierre Lavoie, VP Projets", status: "Propose", color: "text-blue-600 bg-blue-50", date: "" },
+          ].map(s => (
+            <div key={s.role} className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2">
+              <div className="flex-1">
+                <p className="text-xs font-bold text-gray-800">{s.role}</p>
+                <p className="text-[10px] text-gray-500">{s.name}</p>
+              </div>
+              <div className="text-right shrink-0">
+                <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", s.color)}>{s.status}</span>
+                {s.date && <p className="text-[10px] text-gray-400 mt-0.5">{s.date}</p>}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-2.5 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+          <div className="flex items-center gap-1.5 mb-1">
+            <Shield className="h-3.5 w-3.5 text-amber-600" />
+            <p className="text-xs font-bold text-amber-700">Avis important</p>
+          </div>
+          <p className="text-xs text-amber-700 leading-relaxed">Ce cahier de projet a ete genere par Brain Team AI et doit etre valide par un ingenieur professionnel (OIQ) avant execution des travaux. Les donnees financieres sont basees sur des estimations et doivent etre confirmees par soumissions formelles des fournisseurs.</p>
+        </div>
+        <div className="mt-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-center">
+          <p className="text-xs text-gray-500">Document genere le 15 mars 2026 {"—"} Version 1.0</p>
+          <p className="text-[10px] text-gray-400 mt-0.5">Cahier de Projet SMART {"—"} Propulse par Brain Team AI {"×"} Usine Bleue</p>
+          <p className="text-[10px] text-gray-400">Confidentiel {"—"} Ne pas distribuer sans autorisation</p>
         </div>
       </div>
     </AnimBlock>
@@ -4442,21 +4862,29 @@ function MagTableurStructure() {
   return (
     <AnimBlock>
       <div className="border-l-[3px] border-teal-400 bg-teal-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-teal-700 mb-2">1. Structure du tableur</h4>
+        <h4 className="text-[9px] font-bold text-teal-700 mb-2 flex items-center gap-1.5">
+          1. Structure du tableau de bord
+          <span className="text-[8px] bg-teal-100 text-teal-600 px-1.5 py-0.5 rounded-full">6 onglets</span>
+        </h4>
         <div className="space-y-1.5">
           {[
-            { col: "Mois", type: "Texte", desc: "Avril \u2192 Juillet (Q2)" },
-            { col: "Leads", type: "Nombre", desc: "Leads generes par canal" },
-            { col: "CAC", type: "Devise", desc: "Cout d'acquisition client" },
-            { col: "Conversion", type: "%", desc: "Taux de conversion web" },
-            { col: "Revenue", type: "Devise", desc: "Revenu genere par cohorte" },
+            { col: "Synthese", type: "Dashboard", desc: "Vue consolidee — 4 KPIs, ROI global, statut phases" },
+            { col: "Budget detaille", type: "Finance", desc: "Ventilation poste par poste — 1,100,000$ brut, 508,000$ net" },
+            { col: "Subventions", type: "Programmes", desc: "MESI 280K + CanExport 162K + RS&DE 95K + BDC 55K = 592K" },
+            { col: "Projections 36 mois", type: "Forecast", desc: "Cash-flow mensuel, seuil de rentabilite mois 18" },
+            { col: "KPIs operationnels", type: "Metriques", desc: "Energie kWh/jour, palettes/h, incidents/mois, cout maintenance" },
+            { col: "Scenarios", type: "Analyse", desc: "3 scenarios: conservateur, realiste, optimiste + sensibilite" },
           ].map(c => (
             <div key={c.col} className="flex items-center gap-2 text-[9px]">
-              <span className="font-bold text-teal-700 w-20 shrink-0">{c.col}</span>
-              <span className="bg-teal-100 text-teal-600 px-1.5 py-0.5 rounded text-[8px] font-medium w-12 text-center shrink-0">{c.type}</span>
+              <span className="font-bold text-teal-700 w-28 shrink-0">{c.col}</span>
+              <span className="bg-teal-100 text-teal-600 px-1.5 py-0.5 rounded text-[8px] font-medium w-16 text-center shrink-0">{c.type}</span>
               <span className="text-gray-600">{c.desc}</span>
             </div>
           ))}
+        </div>
+        <div className="mt-1.5 flex items-center gap-1.5 text-[9px] text-gray-400">
+          <BotAvatar code="CFOB" size="sm" />
+          <span>Frank (CFO) — architecture financiere</span>
         </div>
       </div>
     </AnimBlock>
@@ -4467,39 +4895,42 @@ function MagTableurDonnees() {
   return (
     <AnimBlock delay={100}>
       <div className="border-l-[3px] border-teal-400 bg-teal-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-teal-700 mb-2">2. Donnees de reference</h4>
+        <h4 className="text-[9px] font-bold text-teal-700 mb-2">2. Donnees baseline — Aliments Boreal</h4>
         <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
           <table className="w-full">
             <thead>
               <tr className="bg-teal-50 border-b border-teal-200">
-                {["Mois", "Leads", "CAC", "Conv.", "Revenue"].map(h => (
-                  <th key={h} className="text-[9px] font-bold text-teal-800 px-2.5 py-1.5 text-left">{h}</th>
+                {["Categorie", "Poste", "Cout actuel", "Benchmark", "Ecart"].map(h => (
+                  <th key={h} className="text-[9px] font-bold text-teal-800 px-2 py-1.5 text-left">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {TABLEUR_DATA.map((row, i) => (
+              {[
+                { cat: "Energie", poste: "Refrigeration R-404A", actuel: "2,400 kWh/j", bench: "1,440 kWh/j", ecart: "+67%", color: "text-red-600" },
+                { cat: "Energie", poste: "Chauffage usine", actuel: "890 kWh/j", bench: "620 kWh/j", ecart: "+44%", color: "text-orange-600" },
+                { cat: "Main-d'oeuvre", poste: "Palettisation (12 ETP)", actuel: "624,000$/an", bench: "Cobot UR10e", ecart: "89K$ pertes", color: "text-orange-600" },
+                { cat: "Maintenance", poste: "Preventive non-planifiee", actuel: "4.2 arrets/mois", bench: "1.5 arrets/mois", ecart: "+180%", color: "text-red-600" },
+                { cat: "Qualite", poste: "Incidents temperature", actuel: "1.3/mois", bench: "0/mois", ecart: "33K$/an", color: "text-amber-600" },
+                { cat: "Logistique", poste: "Cadence palettisation", actuel: "14 pal/h", bench: "22 pal/h", ecart: "-36%", color: "text-amber-600" },
+              ].map((row, i) => (
                 <tr key={i} className="border-b border-gray-100 hover:bg-teal-50/30 transition-colors">
-                  <td className="text-[9px] text-gray-700 px-2.5 py-1.5 font-medium">{row.mois}</td>
-                  <td className="text-[9px] px-2.5 py-1.5">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-gray-700">{row.leads}</span>
-                      <div className="w-8 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                        <div className="h-full bg-teal-500 rounded-full" style={{ width: `${(row.leads / 95) * 100}%` }} />
-                      </div>
-                    </div>
-                  </td>
-                  <td className="text-[9px] text-gray-700 px-2.5 py-1.5">{row.cac}</td>
-                  <td className="text-[9px] text-gray-700 px-2.5 py-1.5">{row.conv}</td>
-                  <td className="text-[9px] text-gray-700 px-2.5 py-1.5 font-medium">{row.rev}</td>
+                  <td className="text-[9px] text-gray-500 px-2 py-1.5">{row.cat}</td>
+                  <td className="text-[9px] text-gray-700 px-2 py-1.5 font-medium">{row.poste}</td>
+                  <td className="text-[9px] text-gray-700 px-2 py-1.5">{row.actuel}</td>
+                  <td className="text-[9px] text-gray-700 px-2 py-1.5">{row.bench}</td>
+                  <td className={cn("text-[9px] font-bold px-2 py-1.5", row.color)}>{row.ecart}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+        <div className="mt-2 bg-red-50 border border-red-200 rounded-lg px-2.5 py-1.5">
+          <span className="text-[9px] font-bold text-red-700">Total pertes identifiees: 278,000$/an — 3 axes prioritaires</span>
+        </div>
         <div className="mt-1.5 flex items-center gap-1.5 text-[9px] text-gray-400">
           <BotAvatar code="CFOB" size="sm" />
-          <span>Frank (CFO) \u2014 donnees historiques + projections</span>
+          <span>Frank (CFO) + Tim (CTO) — donnees capteurs IoT + comptabilite</span>
         </div>
       </div>
     </AnimBlock>
@@ -4510,22 +4941,35 @@ function MagTableurProjections() {
   return (
     <AnimBlock delay={150}>
       <div className="border-l-[3px] border-teal-400 bg-teal-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-teal-700 mb-2">3. Projections mensuelles</h4>
-        <div className="grid grid-cols-3 gap-2">
+        <h4 className="text-[9px] font-bold text-teal-700 mb-2">3. Projections 36 mois — Cash-flow</h4>
+        <div className="space-y-1.5 mb-2">
           {[
-            { label: "Leads Q2", value: "280", delta: "+111%", color: "text-emerald-700 bg-emerald-50 border-emerald-200" },
-            { label: "CAC moyen", value: "485$", delta: "-38%", color: "text-emerald-700 bg-emerald-50 border-emerald-200" },
-            { label: "Revenue Q2", value: "182K$", delta: "+67%", color: "text-emerald-700 bg-emerald-50 border-emerald-200" },
-          ].map(t => (
-            <div key={t.label} className={cn("border rounded-xl p-2.5 text-center", t.color)}>
-              <p className="text-[9px] font-bold">{t.label}</p>
-              <p className="text-sm font-extrabold">{t.value}</p>
-              <div className="flex items-center justify-center gap-1 mt-0.5">
-                <TrendingUp className="h-3 w-3" />
-                <span className="text-[9px] font-bold">{t.delta}</span>
+            { mois: "Mois 0-3", label: "Investissement Phase 1", flux: "-485,000$", cumul: "-485,000$", color: "bg-red-400" },
+            { mois: "Mois 4-6", label: "Phase 2 + premieres economies", flux: "-120,000$", cumul: "-605,000$", color: "bg-red-400" },
+            { mois: "Mois 7-12", label: "Economies progressives", flux: "+139,000$", cumul: "-466,000$", color: "bg-orange-400" },
+            { mois: "Mois 13-18", label: "Plein regime operations", flux: "+139,000$", cumul: "-327,000$", color: "bg-amber-400" },
+            { mois: "Mois 18", label: "Seuil de rentabilite (net)", flux: "—", cumul: "0$", color: "bg-emerald-400" },
+            { mois: "Mois 19-36", label: "Profits nets cumules", flux: "+278,000$/an", cumul: "+278,000$", color: "bg-emerald-500" },
+          ].map((row, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <span className="text-[9px] text-gray-700 w-16 shrink-0 font-medium">{row.mois}</span>
+              <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
+                <div className={cn("h-full rounded-full transition-all duration-1000", row.color)} style={{ width: `${Math.min(100, (i + 1) * 17)}%` }} />
               </div>
+              <span className="text-[9px] text-gray-600 w-28 shrink-0">{row.label}</span>
+              <span className={cn("text-[9px] font-bold w-20 text-right", row.cumul.startsWith("-") ? "text-red-600" : "text-emerald-600")}>{row.cumul}</span>
             </div>
           ))}
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2 text-center">
+            <p className="text-[8px] text-emerald-600 uppercase">Seuil de rentabilite</p>
+            <p className="text-sm font-extrabold text-emerald-700">Mois 18</p>
+          </div>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 text-center">
+            <p className="text-[8px] text-blue-600 uppercase">VAN 5 ans (8%)</p>
+            <p className="text-sm font-extrabold text-blue-700">+412,000$</p>
+          </div>
         </div>
       </div>
     </AnimBlock>
@@ -4536,17 +4980,22 @@ function MagTableurFormules() {
   return (
     <AnimBlock delay={200}>
       <div className="border-l-[3px] border-teal-400 bg-teal-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-teal-700 mb-2">4. Formules & Calculs</h4>
+        <h4 className="text-[9px] font-bold text-teal-700 mb-2 flex items-center gap-1.5">
+          4. Formules IoT + Finance
+          <span className="text-[8px] bg-violet-100 text-violet-600 px-1.5 py-0.5 rounded-full">Tim + Frank</span>
+        </h4>
         <div className="space-y-1.5">
           {[
-            { formula: "CAC = Budget / Leads", result: "12,000 / 45 = 267$" },
-            { formula: "ROI = (Revenue - Budget) / Budget", result: "(182K - 45K) / 45K = 3.04x" },
-            { formula: "Conv. = Clients / Leads \u00d7 100", result: "7 / 280 \u00d7 100 = 2.5%" },
-            { formula: "LTV/CAC = LTV moyen / CAC", result: "2,400 / 485 = 4.95x" },
+            { formula: "Cout/palette = (main_oeuvre + energie + maintenance) / nb_palettes", result: "8.42$/palette → 3.15$ avec cobot" },
+            { formula: "Conformite_temp = temps_dans_plage / temps_total × 100", result: "94.2% → cible 99.5% (MAPAQ)" },
+            { formula: "MTBF = heures_operation / nb_pannes", result: "142h → cible 340h avec predictif" },
+            { formula: "ROI_glissant = economies_cumulees / investissement_net × 100", result: "Mois 18: 508K / 508K = 100% (seuil)" },
+            { formula: "VAN = Σ (flux / (1+r)^t) - I₀", result: "VAN(8%, 5 ans) = +412,000$" },
+            { formula: "TRI = taux ou VAN = 0", result: "TRI = 34.2% (> seuil 15%)" },
           ].map((f, i) => (
             <div key={i} className="bg-gray-900 rounded-lg px-3 py-1.5">
               <code className="text-[9px] text-teal-300 font-mono">{f.formula}</code>
-              <code className="text-[9px] text-gray-400 font-mono ml-2">{"\u2192"} {f.result}</code>
+              <code className="text-[9px] text-gray-400 font-mono block mt-0.5">{"→"} {f.result}</code>
             </div>
           ))}
         </div>
@@ -4559,21 +5008,29 @@ function MagTableurGraphiques() {
   return (
     <AnimBlock delay={100}>
       <div className="border-l-[3px] border-teal-400 bg-teal-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-teal-700 mb-2">5. Graphiques & Tendances</h4>
-        <div className="grid grid-cols-3 gap-2">
+        <h4 className="text-[9px] font-bold text-teal-700 mb-2">5. Scenarios et analyse de sensibilite</h4>
+        <div className="space-y-2">
           {[
-            { label: "Leads", trend: "+111%", dir: "up", color: "text-emerald-700 bg-emerald-50 border-emerald-200" },
-            { label: "CAC", trend: "-46%", dir: "down", color: "text-emerald-700 bg-emerald-50 border-emerald-200" },
-            { label: "Revenue", trend: "+111%", dir: "up", color: "text-emerald-700 bg-emerald-50 border-emerald-200" },
-          ].map(t => (
-            <div key={t.label} className={cn("border rounded-xl p-2.5 text-center", t.color)}>
-              <p className="text-[9px] font-bold">{t.label}</p>
-              <p className="text-sm font-extrabold">{t.trend}</p>
-              <TrendingUp className={cn("h-3.5 w-3.5 mx-auto mt-0.5", t.dir === "down" ? "rotate-180" : "")} />
+            { scenario: "Conservateur", economies: "222,000$/an", roi: "27 mois", van: "+285,000$", desc: "Economies -20%, delais +3 mois", color: "bg-amber-50 border-amber-200 text-amber-700" },
+            { scenario: "Realiste", economies: "278,000$/an", roi: "22 mois", van: "+412,000$", desc: "Projections de base — cahier de projet", color: "bg-emerald-50 border-emerald-200 text-emerald-700" },
+            { scenario: "Optimiste", economies: "334,000$/an", roi: "18 mois", van: "+548,000$", desc: "Economies +20%, synergies chaleur residuelle", color: "bg-blue-50 border-blue-200 text-blue-700" },
+          ].map(s => (
+            <div key={s.scenario} className={cn("border rounded-lg px-2.5 py-2", s.color)}>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[9px] font-bold">{s.scenario}</span>
+                <span className="text-[8px] ml-auto font-bold">{s.economies}</span>
+              </div>
+              <div className="flex items-center gap-3 text-[9px]">
+                <span>ROI: {s.roi}</span>
+                <span>VAN: {s.van}</span>
+              </div>
+              <p className="text-[8px] text-gray-500 mt-0.5">{s.desc}</p>
             </div>
           ))}
         </div>
-        <p className="text-[9px] text-gray-500 mt-1.5">Graphiques auto-generes depuis les donnees de reference</p>
+        <div className="mt-2 bg-teal-50 border border-teal-200 rounded-lg px-2.5 py-1.5">
+          <p className="text-[9px] text-teal-700"><span className="font-bold">Variable critique:</span> Prix electricite (+23% prevu 2027) — meme le scenario conservateur reste rentable a +35% sur l'electricite.</p>
+        </div>
       </div>
     </AnimBlock>
   );
@@ -4583,13 +5040,13 @@ function MagTableurExport() {
   return (
     <AnimBlock delay={150}>
       <div className="border-l-[3px] border-teal-400 bg-teal-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-teal-700 mb-2">6. Export & Partage</h4>
+        <h4 className="text-[9px] font-bold text-teal-700 mb-2">6. Export & Integration</h4>
         <div className="grid grid-cols-2 gap-2">
           {[
-            { format: "CSV", desc: "Donnees brutes pour Excel/Sheets", icon: Table2 },
-            { format: "PDF", desc: "Rapport avec graphiques integres", icon: FileText },
-            { format: "Google Sheets", desc: "Partage live avec l'equipe", icon: Globe },
-            { format: "Dashboard", desc: "Vue temps reel dans Brain Team", icon: BarChart3 },
+            { format: "Excel XLSX", desc: "Classeur complet 6 onglets — pret pour le CA", icon: Table2 },
+            { format: "PDF Resume", desc: "Synthese 2 pages pour la direction", icon: FileText },
+            { format: "Google Sheets", desc: "Partage live avec equipe projet + integrateur", icon: Globe },
+            { format: "Dashboard IoT", desc: "Connexion temps reel aux capteurs Boreal", icon: BarChart3 },
           ].map(e => (
             <div key={e.format} className="bg-white border border-gray-200 rounded-lg p-2 flex items-center gap-2 cursor-pointer hover:border-teal-300 transition-colors">
               <e.icon className="h-4 w-4 text-teal-500 shrink-0" />
@@ -4599,6 +5056,10 @@ function MagTableurExport() {
               </div>
             </div>
           ))}
+        </div>
+        <div className="mt-2 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5 flex items-center gap-2">
+          <Shield className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+          <p className="text-[9px] text-amber-700"><span className="font-bold">Validation requise:</span> Les projections financieres doivent etre validees par le CFO d'Aliments Boreal avant soumission aux programmes de subventions.</p>
         </div>
       </div>
     </AnimBlock>
@@ -4611,22 +5072,35 @@ function MagPresEnjeu() {
   return (
     <AnimBlock>
       <div className="border-l-[3px] border-blue-400 bg-blue-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-blue-700 mb-2">1. Slide \u2014 Enjeu</h4>
-        <div className={cn("border-2 rounded-xl p-4", PRESENTATION_SLIDES[0].color)}>
-          <span className="text-[9px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">Slide 1/4</span>
-          <h4 className="text-sm font-bold text-gray-900 mt-2 mb-2">{PRESENTATION_SLIDES[0].title}</h4>
+        <h4 className="text-[9px] font-bold text-blue-700 mb-2">1. Slide — L'enjeu Boreal</h4>
+        <div className="bg-gray-900 rounded-xl p-4">
+          <span className="text-[9px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">Slide 1/6</span>
+          <h4 className="text-sm font-bold text-white mt-2 mb-2">278,000$/an de pertes identifiees</h4>
+          <p className="text-xs text-gray-400 mb-3">Aliments Boreal inc. — Diagnostic AI Brain Team</p>
+          <div className="grid grid-cols-3 gap-2 mb-3">
+            {[
+              { value: "156K$", label: "Refrigeration", color: "text-red-400" },
+              { value: "89K$", label: "Palettisation", color: "text-orange-400" },
+              { value: "33K$", label: "Monitoring", color: "text-amber-400" },
+            ].map(k => (
+              <div key={k.label} className="text-center">
+                <p className={cn("text-sm font-extrabold", k.color)}>{k.value}</p>
+                <p className="text-[8px] text-gray-500">{k.label}</p>
+              </div>
+            ))}
+          </div>
           <div className="space-y-1.5">
-            {PRESENTATION_SLIDES[0].bullets.map((b, i) => (
-              <div key={i} className="flex items-center gap-2 text-[9px] text-gray-700">
-                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
+            {["Systeme R-404A a 67% d'efficacite — surconsommation de 960 kWh/jour", "12 employes en palettisation manuelle — 3 blessures/an", "4 incidents temperature non detectes en 2025 — pertes de lots MAPAQ", "Penurie main-d'oeuvre chronique en region Saguenay"].map((b, i) => (
+              <div key={i} className="flex items-center gap-2 text-[9px] text-gray-300">
+                <div className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />
                 <span>{b}</span>
               </div>
             ))}
           </div>
-          <div className="mt-3 bg-white/50 border border-dashed border-gray-300 rounded-lg p-3 text-center">
-            <Image className="h-5 w-5 text-gray-300 mx-auto mb-1" />
-            <p className="text-[8px] text-gray-400">Zone visuelle \u2014 graphique ou image</p>
-          </div>
+        </div>
+        <div className="mt-1.5 flex items-center gap-1.5 text-[9px] text-gray-400">
+          <BotAvatar code="CMOB" size="sm" />
+          <span>Mathilde (CMO) — narration visuelle impact</span>
         </div>
       </div>
     </AnimBlock>
@@ -4637,22 +5111,29 @@ function MagPresStrategie() {
   return (
     <AnimBlock delay={100}>
       <div className="border-l-[3px] border-blue-400 bg-blue-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-blue-700 mb-2">2. Slide \u2014 Strategie</h4>
-        <div className={cn("border-2 rounded-xl p-4", PRESENTATION_SLIDES[1].color)}>
-          <span className="text-[9px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">Slide 2/4</span>
-          <h4 className="text-sm font-bold text-gray-900 mt-2 mb-2">{PRESENTATION_SLIDES[1].title}</h4>
-          <div className="space-y-1.5">
-            {PRESENTATION_SLIDES[1].bullets.map((b, i) => (
-              <div key={i} className="flex items-center gap-2 text-[9px] text-gray-700">
-                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
-                <span>{b}</span>
+        <h4 className="text-[9px] font-bold text-blue-700 mb-2">2. Slide — Diagnostic & SWOT</h4>
+        <div className="bg-gray-900 rounded-xl p-4">
+          <span className="text-[9px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">Slide 2/6</span>
+          <h4 className="text-sm font-bold text-white mt-2 mb-3">Diagnostic multi-axe — Aliments Boreal</h4>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { quadrant: "Forces", items: ["Equipe stable 85 employes", "Certifications HACCP/SQF/MAPAQ", "CA 18M$/an en croissance"], color: "bg-emerald-900/50 border-emerald-700" },
+              { quadrant: "Faiblesses", items: ["Refrigeration obsolete R-404A", "Zero monitoring temps reel", "Palettisation 100% manuelle"], color: "bg-red-900/50 border-red-700" },
+              { quadrant: "Opportunites", items: ["Subventions 592K$ disponibles", "Croissance secteur congele +8%", "Reseau 130+ integrateurs"], color: "bg-blue-900/50 border-blue-700" },
+              { quadrant: "Menaces", items: ["Electricite +23% prevu 2027", "Penurie main-d'oeuvre region", "Reglementation MAPAQ renforcee"], color: "bg-amber-900/50 border-amber-700" },
+            ].map(q => (
+              <div key={q.quadrant} className={cn("border rounded-lg p-2.5", q.color)}>
+                <p className="text-[9px] font-bold text-white mb-1.5">{q.quadrant}</p>
+                {q.items.map((item, i) => (
+                  <p key={i} className="text-[8px] text-gray-300 leading-relaxed">{"•"} {item}</p>
+                ))}
               </div>
             ))}
           </div>
         </div>
         <div className="mt-1.5 flex items-center gap-1.5 text-[9px] text-gray-400">
-          <BotAvatar code="CMOB" size="sm" />
-          <span>Mathilde (CMO) \u2014 strategie marketing</span>
+          <BotAvatar code="CEOB" size="sm" />
+          <span>CarlOS — analyse strategique SWOT</span>
         </div>
       </div>
     </AnimBlock>
@@ -4663,22 +5144,32 @@ function MagPresBudget() {
   return (
     <AnimBlock delay={150}>
       <div className="border-l-[3px] border-blue-400 bg-blue-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-blue-700 mb-2">3. Slide \u2014 Budget & ROI</h4>
-        <div className={cn("border-2 rounded-xl p-4", PRESENTATION_SLIDES[2].color)}>
-          <span className="text-[9px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">Slide 3/4</span>
-          <h4 className="text-sm font-bold text-gray-900 mt-2 mb-2">{PRESENTATION_SLIDES[2].title}</h4>
+        <h4 className="text-[9px] font-bold text-blue-700 mb-2">3. Slide — Budget & Subventions</h4>
+        <div className="bg-gray-900 rounded-xl p-4">
+          <span className="text-[9px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">Slide 3/6</span>
+          <h4 className="text-sm font-bold text-white mt-2 mb-3">De 1.1M$ brut a 508K$ net — 54% de subventions</h4>
           <div className="space-y-1.5">
-            {PRESENTATION_SLIDES[2].bullets.map((b, i) => (
-              <div key={i} className="flex items-center gap-2 text-[9px] text-gray-700">
-                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
-                <span>{b}</span>
+            {[
+              { label: "Investissement brut", value: "1,100,000$", bar: 100, color: "bg-gray-500" },
+              { label: "MESI", value: "-280,000$", bar: 75, color: "bg-emerald-500" },
+              { label: "CanExport", value: "-162,000$", bar: 60, color: "bg-emerald-500" },
+              { label: "RS&DE", value: "-95,000$", bar: 51, color: "bg-emerald-500" },
+              { label: "BDC Pret vert", value: "-55,000$", bar: 46, color: "bg-emerald-500" },
+              { label: "Cout net", value: "508,000$", bar: 46, color: "bg-blue-500" },
+            ].map((row, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <span className="text-[9px] text-gray-300 w-24 shrink-0">{row.label}</span>
+                <div className="flex-1 h-2.5 bg-gray-700 rounded-full overflow-hidden">
+                  <div className={cn("h-full rounded-full", row.color)} style={{ width: `${row.bar}%` }} />
+                </div>
+                <span className="text-[9px] font-bold text-white w-20 text-right">{row.value}</span>
               </div>
             ))}
           </div>
         </div>
         <div className="mt-1.5 flex items-center gap-1.5 text-[9px] text-gray-400">
           <BotAvatar code="CFOB" size="sm" />
-          <span>Frank (CFO) \u2014 validation financiere</span>
+          <span>Frank (CFO) — montage financier et subventions</span>
         </div>
       </div>
     </AnimBlock>
@@ -4689,17 +5180,29 @@ function MagPresTimeline() {
   return (
     <AnimBlock delay={200}>
       <div className="border-l-[3px] border-blue-400 bg-blue-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-blue-700 mb-2">4. Slide \u2014 Timeline</h4>
-        <div className={cn("border-2 rounded-xl p-4", PRESENTATION_SLIDES[3].color)}>
-          <span className="text-[9px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">Slide 4/4</span>
-          <h4 className="text-sm font-bold text-gray-900 mt-2 mb-2">{PRESENTATION_SLIDES[3].title}</h4>
+        <h4 className="text-[9px] font-bold text-blue-700 mb-2">4. Slide — Solutions & ROI</h4>
+        <div className="bg-gray-900 rounded-xl p-4">
+          <span className="text-[9px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">Slide 4/6</span>
+          <h4 className="text-sm font-bold text-white mt-2 mb-3">4 solutions — ROI 22 mois</h4>
           <div className="space-y-1.5">
-            {PRESENTATION_SLIDES[3].bullets.map((b, i) => (
-              <div key={i} className="flex items-center gap-2 text-[9px] text-gray-700">
-                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
-                <span>{b}</span>
+            {[
+              { id: "S1", title: "CO2 transcritique", cout: "485K$", eco: "156K$/an", roi: "18 mois", color: "border-cyan-700 bg-cyan-900/30" },
+              { id: "S2", title: "Chaudieres condensation", cout: "195K$", eco: "52K$/an", roi: "24 mois", color: "border-orange-700 bg-orange-900/30" },
+              { id: "S3", title: "Cobot UR10e", cout: "205K$", eco: "89K$/an", roi: "16 mois", color: "border-violet-700 bg-violet-900/30" },
+              { id: "S4", title: "Plateforme IoT", cout: "215K$", eco: "33K$/an", roi: "36 mois", color: "border-emerald-700 bg-emerald-900/30" },
+            ].map(s => (
+              <div key={s.id} className={cn("border rounded-lg px-2.5 py-1.5 flex items-center gap-3", s.color)}>
+                <span className="text-[9px] font-bold text-white">{s.id}</span>
+                <span className="text-[9px] text-gray-300 flex-1">{s.title}</span>
+                <span className="text-[8px] text-gray-400">{s.cout}</span>
+                <span className="text-[8px] text-emerald-400 font-bold">{s.eco}</span>
+                <span className="text-[8px] text-blue-400">ROI {s.roi}</span>
               </div>
             ))}
+          </div>
+          <div className="mt-2 text-center">
+            <p className="text-sm font-extrabold text-emerald-400">278,000$/an d'economies totales</p>
+            <p className="text-[8px] text-gray-500">Retour complet sur investissement net en 22 mois</p>
           </div>
         </div>
       </div>
@@ -4711,22 +5214,30 @@ function MagPresDesign() {
   return (
     <AnimBlock delay={100}>
       <div className="border-l-[3px] border-blue-400 bg-blue-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-blue-700 mb-2">5. Design & Visuels</h4>
-        <div className="grid grid-cols-2 gap-2">
-          {[
-            { label: "Palette", desc: "Bleu Brain Team + accents amber", icon: Palette },
-            { label: "Typographie", desc: "Inter / SF Pro \u2014 titres bold", icon: FileText },
-            { label: "Graphiques", desc: "Bar charts + donuts + trends", icon: BarChart3 },
-            { label: "Images", desc: "Photos equipe + produit live", icon: Image },
-          ].map(d => (
-            <div key={d.label} className="bg-white border border-gray-200 rounded-lg p-2 flex items-center gap-2">
-              <d.icon className="h-4 w-4 text-blue-500 shrink-0" />
-              <div>
-                <p className="text-[9px] font-bold text-gray-800">{d.label}</p>
-                <p className="text-[8px] text-gray-500">{d.desc}</p>
+        <h4 className="text-[9px] font-bold text-blue-700 mb-2">5. Slide — Timeline 20 semaines</h4>
+        <div className="bg-gray-900 rounded-xl p-4">
+          <span className="text-[9px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">Slide 5/6</span>
+          <h4 className="text-sm font-bold text-white mt-2 mb-3">Plan d'implantation en 4 phases</h4>
+          <div className="space-y-1.5">
+            {[
+              { phase: "Phase 1", title: "Refrigeration CO2", duree: "S1-S8", color: "bg-cyan-600" },
+              { phase: "Phase 2", title: "Chaudieres condensation", duree: "S5-S12", color: "bg-orange-600" },
+              { phase: "Phase 3", title: "Cobot palettisation", duree: "S10-S16", color: "bg-violet-600" },
+              { phase: "Phase 4", title: "IoT + Dashboard", duree: "S14-S20", color: "bg-emerald-600" },
+            ].map((p, i) => (
+              <div key={p.phase} className="flex items-center gap-2">
+                <span className="text-[9px] font-bold text-white w-16 shrink-0">{p.phase}</span>
+                <div className="flex-1 h-4 bg-gray-700 rounded-full overflow-hidden relative">
+                  <div className={cn("h-full rounded-full", p.color)} style={{ width: `${60 + i * 5}%`, marginLeft: `${i * 10}%` }} />
+                </div>
+                <span className="text-[8px] text-gray-400 w-14 shrink-0">{p.duree}</span>
+                <span className="text-[8px] text-gray-300 w-32 shrink-0">{p.title}</span>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+          <div className="mt-2 text-[8px] text-gray-500 text-center">
+            Gouvernance: comite de pilotage mensuel (DG + Usine Bleue + integrateur)
+          </div>
         </div>
       </div>
     </AnimBlock>
@@ -4737,23 +5248,37 @@ function MagPresNotes() {
   return (
     <AnimBlock delay={150}>
       <div className="border-l-[3px] border-blue-400 bg-blue-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-blue-700 mb-2">6. Notes presentateur</h4>
-        <div className="space-y-1.5">
-          {[
-            { slide: 1, note: "Ouvrir avec le chiffre choc: 780$ par lead. Laisser le silence s'installer." },
-            { slide: 2, note: "Montrer le benchmark concurrence. Insister sur le programme referral comme quick win." },
-            { slide: 3, note: "Utiliser la phrase: ROI 3.6x = chaque dollar investi rapporte 3.60$. Point mort mois 4." },
-            { slide: 4, note: "Terminer avec la question: Qui dans l'equipe prend ownership du referral?" },
-          ].map(n => (
-            <div key={n.slide} className="bg-blue-50 border border-blue-200 rounded-lg px-2.5 py-1.5">
-              <span className="text-[8px] font-bold text-blue-600">Slide {n.slide}</span>
-              <p className="text-[9px] text-gray-700 mt-0.5">{n.note}</p>
-            </div>
-          ))}
+        <h4 className="text-[9px] font-bold text-blue-700 mb-2">6. Slide — KPIs & Prochaines etapes</h4>
+        <div className="bg-gray-900 rounded-xl p-4">
+          <span className="text-[9px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">Slide 6/6</span>
+          <h4 className="text-sm font-bold text-white mt-2 mb-3">Indicateurs de succes mesurables</h4>
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            {[
+              { kpi: "Consommation energetique", baseline: "2,400 kWh/j", cible: "1,440 kWh/j", delta: "-40%", color: "text-emerald-400" },
+              { kpi: "Cadence palettisation", baseline: "14 pal/h", cible: "22 pal/h", delta: "+57%", color: "text-emerald-400" },
+              { kpi: "Incidents temperature", baseline: "1.3/mois", cible: "0/mois", delta: "-100%", color: "text-emerald-400" },
+              { kpi: "Cout maintenance", baseline: "Baseline", cible: "-25%", delta: "Predictif", color: "text-blue-400" },
+            ].map(k => (
+              <div key={k.kpi} className="border border-gray-700 rounded-lg p-2">
+                <p className="text-[8px] text-gray-400">{k.kpi}</p>
+                <div className="flex items-center gap-1 mt-0.5">
+                  <span className="text-[9px] text-gray-500">{k.baseline}</span>
+                  <ArrowRight className="h-2.5 w-2.5 text-gray-600" />
+                  <span className={cn("text-[9px] font-bold", k.color)}>{k.cible}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="border-t border-gray-700 pt-2">
+            <p className="text-[9px] font-bold text-white mb-1">Prochaines etapes</p>
+            {["Approbation du CA — vote resolution", "Signature mandat avec integrateur selectionne", "Demarrage Phase 1 — commande equipements"].map((step, i) => (
+              <p key={i} className="text-[8px] text-gray-400">{i + 1}. {step}</p>
+            ))}
+          </div>
         </div>
         <div className="mt-1.5 flex items-center gap-1.5 text-[9px] text-gray-400">
           <BotAvatar code="CMOB" size="sm" />
-          <span>Mathilde (CMO) \u2014 coaching presentation</span>
+          <span>Mathilde (CMO) — mise en scene pour le conseil d'administration</span>
         </div>
       </div>
     </AnimBlock>
@@ -4766,26 +5291,34 @@ function MagCodePlan() {
   return (
     <AnimBlock>
       <div className="border-l-[3px] border-violet-400 bg-violet-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-violet-700 mb-2">1. Plan & Architecture</h4>
-        <div className="space-y-1.5">
-          {[
-            { step: "Composant React", desc: "ChatWidget.tsx \u2014 widget embeddable avec streaming" },
-            { step: "Securite", desc: "DOMPurify + rate limiter + AbortController" },
-            { step: "API", desc: "POST /chat/init + POST /chat/message (streaming SSE)" },
-            { step: "Tests", desc: "4 tests unitaires: init, send, stream, timeout" },
-          ].map((s, i) => (
-            <div key={i} className="flex items-center gap-2 text-[9px]">
-              <span className="font-bold text-violet-600 bg-violet-100 w-5 h-5 rounded-full flex items-center justify-center text-[8px] shrink-0">{i + 1}</span>
-              <div>
-                <span className="font-medium text-gray-800">{s.step}</span>
-                <span className="text-gray-500 ml-1">\u2014 {s.desc}</span>
-              </div>
-            </div>
+        <h4 className="text-[9px] font-bold text-violet-700 mb-2 flex items-center gap-1.5">
+          1. Architecture technique — Dashboard IoT Boreal
+          <span className="text-[8px] bg-violet-100 text-violet-600 px-1.5 py-0.5 rounded-full">Phase 4</span>
+        </h4>
+        <div className="bg-gray-900 rounded-xl px-4 py-3 font-mono text-xs text-gray-300 mb-2">
+          <p className="text-violet-400 mb-1">// Architecture — Dashboard IoT Boreal</p>
+          <p className="text-emerald-400 mb-1">Frontend (React 18 + TypeScript)</p>
+          <p className="pl-4 text-[9px]">CapteurGrid — grille 32 capteurs temps reel</p>
+          <p className="pl-4 text-[9px]">ZoneThermique — 3 zones (prod, stock, exped.)</p>
+          <p className="pl-4 text-[9px]">AlertPanel — alertes predictives ML</p>
+          <p className="pl-4 text-[9px]">KPIDashboard — metriques consolidees</p>
+          <p className="text-emerald-400 mt-1 mb-1">Backend (FastAPI + PostgreSQL)</p>
+          <p className="pl-4 text-[9px]">/api/capteurs — CRUD + historique 90 jours</p>
+          <p className="pl-4 text-[9px]">/api/alertes — seuils + predictions 48h</p>
+          <p className="pl-4 text-[9px]">/api/zones — configuration 3 zones HVAC</p>
+          <p className="pl-4 text-[9px]">/ws/stream — WebSocket temps reel 1s refresh</p>
+          <p className="text-emerald-400 mt-1 mb-1">ML Pipeline (TensorFlow Lite)</p>
+          <p className="pl-4 text-[9px]">Modele vibrations — prediction panne 48h</p>
+          <p className="pl-4 text-[9px]">Modele temperature — derive MAPAQ</p>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {["React 18", "TypeScript", "FastAPI", "WebSocket", "PostgreSQL", "TF Lite"].map(t => (
+            <span key={t} className="text-[8px] bg-violet-100 border border-violet-200 text-violet-700 px-2 py-0.5 rounded-full font-medium">{t}</span>
           ))}
         </div>
-        <div className="mt-2 flex items-center gap-1.5 text-[9px] text-gray-400">
+        <div className="mt-1.5 flex items-center gap-1.5 text-[9px] text-gray-400">
           <BotAvatar code="CTOB" size="sm" />
-          <span>Tim (CTO) \u2014 architecture validee</span>
+          <span>Tim (CTO) — architecture full-stack validee</span>
         </div>
       </div>
     </AnimBlock>
@@ -4796,8 +5329,28 @@ function MagCodeTerminal() {
   return (
     <AnimBlock delay={100}>
       <div className="border-l-[3px] border-violet-400 bg-violet-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-violet-700 mb-2">2. Code</h4>
-        <LiveTerminalV3 content={TIM_CODE_V3} speed={8} />
+        <h4 className="text-[9px] font-bold text-violet-700 mb-2">2. Composant CapteurCard — 32 capteurs</h4>
+        <div className="bg-gray-900 rounded-xl px-4 py-3 font-mono text-[9px] text-gray-300 mb-2">
+          <p className="text-violet-400">{"// CapteurCard.tsx — composant capteur unitaire"}</p>
+          <p className="text-blue-400">{"interface CapteurData {"}</p>
+          <p className="pl-4">{"id: string; zone: 'production' | 'stockage' | 'expedition';"}</p>
+          <p className="pl-4">{"temperature: number; humidite: number; vibration: number;"}</p>
+          <p className="pl-4">{"status: 'normal' | 'warning' | 'critical';"}</p>
+          <p className="text-blue-400">{"}"}</p>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {[
+            { zone: "Production", capteurs: 14, temp: "2.1°C", status: "normal", color: "border-emerald-300 bg-emerald-50" },
+            { zone: "Stockage", capteurs: 12, temp: "-18.3°C", status: "normal", color: "border-blue-300 bg-blue-50" },
+            { zone: "Expedition", capteurs: 6, temp: "4.7°C", status: "warning", color: "border-amber-300 bg-amber-50" },
+          ].map(z => (
+            <div key={z.zone} className={cn("border rounded-lg p-2", z.color)}>
+              <p className="text-[9px] font-bold text-gray-800">{z.zone}</p>
+              <p className="text-[8px] text-gray-500">{z.capteurs} capteurs</p>
+              <p className="text-xs font-extrabold text-gray-800 mt-1">{z.temp}</p>
+            </div>
+          ))}
+        </div>
       </div>
     </AnimBlock>
   );
@@ -4807,8 +5360,25 @@ function MagCodeDebug() {
   return (
     <AnimBlock delay={150}>
       <div className="border-l-[3px] border-violet-400 bg-violet-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-violet-700 mb-2">3. Debug</h4>
-        <LiveTerminalV3 content={TIM_DEBUG_V3} speed={15} />
+        <h4 className="text-[9px] font-bold text-violet-700 mb-2">3. Backend API — 5 endpoints</h4>
+        <div className="space-y-1.5">
+          {[
+            { method: "GET", path: "/api/capteurs", desc: "Liste 32 capteurs + derniere lecture", status: "200" },
+            { method: "GET", path: "/api/capteurs/{id}/history", desc: "Historique 90 jours par capteur", status: "200" },
+            { method: "POST", path: "/api/alertes/config", desc: "Configuration seuils par zone", status: "201" },
+            { method: "GET", path: "/api/zones/status", desc: "Statut consolide 3 zones HVAC", status: "200" },
+            { method: "WS", path: "/ws/stream", desc: "WebSocket temps reel — refresh 1s", status: "101" },
+          ].map((ep, i) => (
+            <div key={i} className="flex items-center gap-2 bg-gray-900 rounded-lg px-3 py-1.5">
+              <span className={cn("text-[8px] font-bold px-1.5 py-0.5 rounded", ep.method === "POST" ? "bg-emerald-800 text-emerald-300" : ep.method === "WS" ? "bg-violet-800 text-violet-300" : "bg-blue-800 text-blue-300")}>{ep.method}</span>
+              <code className="text-[9px] text-gray-300 font-mono flex-1">{ep.path}</code>
+              <span className="text-[8px] text-gray-500">{ep.desc}</span>
+            </div>
+          ))}
+        </div>
+        <div className="mt-2 bg-violet-50 border border-violet-200 rounded-lg px-2.5 py-1.5">
+          <p className="text-[9px] text-violet-700"><span className="font-bold">ML Pipeline:</span> Modele TF Lite vibrations — precision 94.2%, prediction pannes 48h a l'avance. Entraine sur 6 mois de donnees capteurs industriels.</p>
+        </div>
       </div>
     </AnimBlock>
   );
@@ -4818,15 +5388,28 @@ function MagCodeTests() {
   return (
     <AnimBlock delay={200}>
       <div className="border-l-[3px] border-violet-400 bg-violet-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-violet-700 mb-2">4. Tests</h4>
-        <LiveTerminalV3 content={TIM_TEST_V3} speed={15} />
-        <div className="mt-2 grid grid-cols-4 gap-2">
-          {["Init", "Message", "Stream", "Timeout"].map(t => (
-            <div key={t} className="bg-emerald-50 border border-emerald-200 rounded-lg p-1.5 text-center">
-              <p className="text-[9px] text-emerald-600 font-bold">{t}</p>
-              <p className="text-[9px] font-bold text-emerald-800">PASSED</p>
+        <h4 className="text-[9px] font-bold text-violet-700 mb-2">4. Tests — 30/30 PASS</h4>
+        <div className="grid grid-cols-2 gap-2 mb-2">
+          {[
+            { suite: "Capteurs API", tests: 8, pass: 8, items: ["CRUD capteurs", "Historique 90j", "Filtrage zone", "Pagination"] },
+            { suite: "Alertes", tests: 6, pass: 6, items: ["Seuils config", "Detection anomalie", "Notification push", "Escalation"] },
+            { suite: "Zones HVAC", tests: 8, pass: 8, items: ["Statut consolide", "Moyenne zone", "Depassement MAPAQ", "Historique"] },
+            { suite: "ML Pipeline", tests: 8, pass: 8, items: ["Prediction panne", "Precision 94.2%", "Latence < 50ms", "Fallback regle"] },
+          ].map(s => (
+            <div key={s.suite} className="bg-white border border-gray-200 rounded-lg p-2">
+              <div className="flex items-center gap-1.5 mb-1">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                <span className="text-[9px] font-bold text-gray-800">{s.suite}</span>
+                <span className="text-[8px] text-emerald-600 font-bold ml-auto">{s.pass}/{s.tests}</span>
+              </div>
+              {s.items.map((item, i) => (
+                <p key={i} className="text-[8px] text-gray-500 pl-5">{"✓"} {item}</p>
+              ))}
             </div>
           ))}
+        </div>
+        <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-1.5 text-center">
+          <span className="text-[9px] font-bold text-emerald-700">30/30 tests — Couverture 96% — Pret pour staging</span>
         </div>
       </div>
     </AnimBlock>
@@ -4837,13 +5420,15 @@ function MagCodeDeploy() {
   return (
     <AnimBlock delay={100}>
       <div className="border-l-[3px] border-violet-400 bg-violet-50/50 rounded-r-lg px-3 py-2">
-        <h4 className="text-[9px] font-bold text-violet-700 mb-2">5. Deploiement</h4>
+        <h4 className="text-[9px] font-bold text-violet-700 mb-2">5. Deploiement — Dashboard IoT Boreal</h4>
         <div className="space-y-1.5">
           {[
-            { step: "Build", status: "done", detail: "vite build \u2014 0 erreurs, 42 lignes" },
-            { step: "Securite", status: "done", detail: "DOMPurify + rate limit valides" },
-            { step: "Staging", status: "done", detail: "dev.usinebleue.ai \u2014 test OK" },
-            { step: "Production", status: "ready", detail: "app.usinebleue.ai \u2014 pret au deploy" },
+            { step: "Build", status: "done", detail: "vite build — 0 erreurs, bundle 128 kB gzip" },
+            { step: "Securite", status: "done", detail: "Auth JWT + rate limit + CORS restrictif" },
+            { step: "WebSocket", status: "done", detail: "32 capteurs connectes, latence < 200ms" },
+            { step: "ML Model", status: "done", detail: "TF Lite charge, inference 12ms/prediction" },
+            { step: "Staging", status: "done", detail: "Tests E2E passes sur environnement Boreal" },
+            { step: "Production", status: "ready", detail: "Pret au deploiement usine Saguenay" },
           ].map((s, i) => (
             <div key={i} className="flex items-center gap-2 text-[9px]">
               {s.status === "done" ? (
@@ -4856,9 +5441,198 @@ function MagCodeDeploy() {
             </div>
           ))}
         </div>
-        <button type="button" className="mt-2 w-full bg-violet-600 text-white text-[10px] font-bold py-2 rounded-lg hover:bg-violet-700 transition-colors cursor-pointer flex items-center justify-center gap-1.5">
-          <Rocket className="h-3.5 w-3.5" /> Deployer en production
-        </button>
+        <div className="mt-2 bg-amber-50 border-2 border-amber-300 rounded-lg px-3 py-2 flex items-start gap-2">
+          <Shield className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-[9px] font-bold text-amber-800">Validation requise avant mise en production</p>
+            <p className="text-[8px] text-amber-700 mt-0.5">Le dashboard IoT doit etre valide par l'ingenieur en automatisation selectionne via le jumelage Orbit9 avant deploiement en usine.</p>
+          </div>
+        </div>
+      </div>
+    </AnimBlock>
+  );
+}
+
+// ========== MAG CONTENT — Jumelage SMART (copie exacte AtelierJumelage DocSectionCard) ==========
+
+function MagJumelageCriteres() {
+  return (
+    <AnimBlock>
+      <div className="space-y-1.5">
+        {SIM_ACTE2.criteres.map((c: string, i: number) => (
+          <div key={i} className="flex items-start gap-2 rounded-lg px-2.5 py-2 bg-gray-50">
+            <CheckCircle2 className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+            <span className="text-xs text-gray-700">{c}</span>
+          </div>
+        ))}
+        <div className="flex items-start gap-2 rounded-lg px-2.5 py-2 bg-amber-50 border border-amber-200">
+          <CheckCircle2 className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+          <span className="text-xs text-amber-800 font-medium">Experience en milieu alimentaire (HACCP, zones temp.) — Ajoute par Carl</span>
+        </div>
+      </div>
+    </AnimBlock>
+  );
+}
+
+function MagJumelageScan() {
+  return (
+    <AnimBlock delay={100}>
+      <div className="space-y-2.5">
+        {SIM_ACTE2.scanSteps.map((step: { label: string; count: number }, i: number) => (
+          <div key={i} className="flex items-center gap-2">
+            <div className="flex-1">
+              <div className="flex items-center justify-between mb-0.5">
+                <span className="text-xs text-gray-700">{step.label}</span>
+                <span className="text-xs font-bold text-gray-800">{step.count}</span>
+              </div>
+              <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-full bg-amber-500 rounded-full" style={{ width: `${Math.max(5, (step.count / 130) * 100)}%` }} />
+              </div>
+            </div>
+            {i < SIM_ACTE2.scanSteps.length - 1 && <ArrowRight className="h-3.5 w-3.5 text-gray-300 shrink-0" />}
+          </div>
+        ))}
+        <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 mt-2">
+          <p className="text-xs text-green-700 font-medium">3 integrateurs identifies sur 130 membres scannes</p>
+        </div>
+      </div>
+    </AnimBlock>
+  );
+}
+
+function MagJumelageConferences() {
+  return (
+    <AnimBlock delay={100}>
+      <div className="space-y-3">
+        {/* Conference 1 — Energia */}
+        <div className="border rounded-lg p-3 bg-amber-50/50">
+          <div className="flex items-center gap-2 mb-1.5">
+            <div className="w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center text-[10px] text-white font-bold shrink-0">1</div>
+            <span className="text-xs font-bold text-gray-800">Energia Solutions</span>
+            <span className="text-xs text-green-600 ml-auto font-medium">Terminee</span>
+          </div>
+          {J_CONF_ENERGIA_INSIGHTS.map((ins: string, i: number) => (
+            <div key={i} className="flex items-start gap-1.5 mb-1">
+              <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
+              <span className="text-xs text-gray-700">{ins}</span>
+            </div>
+          ))}
+        </div>
+        {/* Conference 2 — Techno-Froid */}
+        <div className="border rounded-lg p-3 bg-gray-50">
+          <div className="flex items-center gap-2 mb-1.5">
+            <div className="w-5 h-5 rounded-full bg-gray-400 flex items-center justify-center text-[10px] text-white font-bold shrink-0">2</div>
+            <span className="text-xs font-bold text-gray-800">Techno-Froid Saguenay</span>
+            <span className="text-xs text-green-600 ml-auto font-medium">Terminee</span>
+          </div>
+          {J_CONF_TECHNO_INSIGHTS.map((ins: string, i: number) => (
+            <div key={i} className="flex items-start gap-1.5 mb-1">
+              <CheckCircle2 className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+              <span className="text-xs text-gray-700">{ins}</span>
+            </div>
+          ))}
+        </div>
+        {/* Conference 3 — GreenTech */}
+        <div className="border rounded-lg p-3 bg-orange-50/50">
+          <div className="flex items-center gap-2 mb-1.5">
+            <div className="w-5 h-5 rounded-full bg-orange-400 flex items-center justify-center text-[10px] text-white font-bold shrink-0">3</div>
+            <span className="text-xs font-bold text-gray-800">GreenTech Industries</span>
+            <span className="text-xs text-green-600 ml-auto font-medium">Terminee</span>
+          </div>
+          {J_CONF_GREEN_INSIGHTS.map((ins: string, i: number) => (
+            <div key={i} className="flex items-start gap-1.5 mb-1">
+              <CheckCircle2 className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+              <span className="text-xs text-gray-700">{ins}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </AnimBlock>
+  );
+}
+
+function MagJumelageScoring() {
+  return (
+    <AnimBlock delay={100}>
+      <div className="overflow-hidden">
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="bg-gray-50 border-b">
+              <th className="text-left px-2 py-2 text-gray-500 font-medium">Critere</th>
+              <th className="text-center px-1 py-2 text-gray-500 font-medium">Poids</th>
+              {SIM_ACTE2.scoringResults.map((r: { nom: string }, i: number) => (
+                <th key={i} className="text-center px-1 py-2 text-gray-700 font-bold">
+                  <span className="truncate block max-w-[70px]">{r.nom.split(" ")[0]}</span>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {SIM_ACTE2.scoringCategories.map((cat: { label: string; weight: string }, ci: number) => (
+              <tr key={ci} className="border-b border-gray-100">
+                <td className="px-2 py-1.5 text-gray-700">{cat.label}</td>
+                <td className="text-center px-1 py-1.5 text-gray-400">{cat.weight}</td>
+                {SIM_ACTE2.scoringResults.map((r: { scores: number[] }, ri: number) => {
+                  const score = r.scores[ci];
+                  const color = score >= 90 ? "text-green-600 font-bold" : score >= 70 ? "text-amber-600" : "text-red-500";
+                  return <td key={ri} className={cn("text-center px-1 py-1.5", color)}>{score}</td>;
+                })}
+              </tr>
+            ))}
+            <tr className="bg-gray-50 font-bold">
+              <td className="px-2 py-2 text-gray-800">Total</td>
+              <td className="text-center px-1 py-2 text-gray-400">100%</td>
+              {SIM_ACTE2.scoringResults.map((r: { total: number }, ri: number) => {
+                const color = r.total >= 90 ? "text-green-700" : r.total >= 70 ? "text-amber-700" : "text-gray-600";
+                return <td key={ri} className={cn("text-center px-1 py-2", color)}>{r.total}%</td>;
+              })}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </AnimBlock>
+  );
+}
+
+function MagJumelageRecommandation() {
+  return (
+    <AnimBlock delay={100}>
+      <div className="space-y-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+            <Award className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h4 className="text-xs font-bold text-gray-800">{INTEGRATORS[0].nom}</h4>
+            <p className="text-xs text-gray-500">{INTEGRATORS[0].ville} — {INTEGRATORS[0].tailleEquipe} personnes — {INTEGRATORS[0].experience}</p>
+          </div>
+          <div className="ml-auto text-lg font-bold text-green-600">{INTEGRATORS[0].score}%</div>
+        </div>
+        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+          <p className="text-xs font-bold text-green-800 mb-1">Pourquoi ce choix</p>
+          <p className="text-xs text-green-700">{INTEGRATORS[0].force}</p>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {INTEGRATORS[0].certifications.map((c: string, i: number) => (
+            <span key={i} className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium flex items-center gap-0.5">
+              <Star className="h-3 w-3" /> {c}
+            </span>
+          ))}
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          <div className="bg-gray-50 rounded-lg px-2 py-2 text-center">
+            <div className="text-sm font-bold text-gray-800">{INTEGRATORS[0].projetsSimil}</div>
+            <div className="text-xs text-gray-500">Projets similaires</div>
+          </div>
+          <div className="bg-gray-50 rounded-lg px-2 py-2 text-center">
+            <div className="text-sm font-bold text-green-600">98%</div>
+            <div className="text-xs text-gray-500">Approbation HQ</div>
+          </div>
+          <div className="bg-gray-50 rounded-lg px-2 py-2 text-center">
+            <div className="text-sm font-bold text-amber-600">20 sem.</div>
+            <div className="text-xs text-gray-500">Delai livraison</div>
+          </div>
+        </div>
       </div>
     </AnimBlock>
   );
@@ -4870,8 +5644,45 @@ function MagCodeDeploy() {
 type L2Theme = typeof L2_THEMES.amber;
 type L2Section = { id: number; title: string; icon: React.ElementType; minStage: number };
 
+// ═══ MOCK DATA — Approfondir/Reformuler results for Conception sections ═══
+const L2_APPROFONDIR: Record<number, { bot: string; expanded: string; data: string[] }> = {
+  1: {
+    bot: "CEOB",
+    expanded: "Le mandat couvre 3 axes strategiques: efficacite energetique (reduction 35% GES), automatisation (4 lignes sur 6), et conformite ACIA 2026. Budget cadre 1.2M$ avec 54% subventionne.",
+    data: ["Axe 1: Efficacite energetique — 35% reduction GES ciblee", "Axe 2: Automatisation — 4/6 lignes a moderniser", "Axe 3: Conformite ACIA — echeance reglementaire Q3 2026"],
+  },
+  4: {
+    bot: "CTOB",
+    expanded: "Le cahier des charges revele 4 contraintes critiques: temperature controlee -18°C a +4°C sur toute la chaine, cadence 200 unites/h minimum, integration ERP SAP existant, et normes ACIA/HACCP simultanees.",
+    data: ["Contrainte thermique: -18°C a +4°C chaine complete", "Cadence cible: 200 unites/h (actuel: 140)", "Integration: SAP ERP + MES existant", "Normes: ACIA + HACCP simultanees"],
+  },
+  5: {
+    bot: "CINOB",
+    expanded: "Le diagnostic multi-axe revele un Triangle du Feu en zone COUVE: 2 piliers actifs (Vente + Actif) mais Temps critique. Le vieillissement des equipements (+12 ans moyenne) genere 340h d'arrets non planifies/an.",
+    data: ["Triangle du Feu: COUVE (2/3 piliers)", "Age equipements: 12.4 ans moyenne", "Arrets non planifies: 340h/an (cout: 680K$)", "Score VITAA global: 58/100"],
+  },
+  7: {
+    bot: "CFOB",
+    expanded: "L'analyse financiere montre un investissement net de 508K$ apres subventions (1.1M$ brut — 54% couvert). Le ROI projete est de 22 mois avec un TRI de 31%. Les economies annuelles recurrentes atteignent 285K$.",
+    data: ["Investissement net: 508K$ (54% subventionne)", "ROI: 22 mois / TRI: 31%", "Economies recurrentes: 285K$/an", "VAN sur 5 ans: 1.42M$"],
+  },
+};
+
+const L2_REFORMULER: Record<number, { before: string; after: string; bot: string }> = {
+  2: {
+    before: "Sommaire executif: projet de modernisation industrielle pour Aliments Boreal, budget 1.1M$, objectifs efficacite et conformite.",
+    after: "Aliments Boreal engage une transformation industrielle structurante: 1.1M$ d'investissement (508K$ net apres subventions) pour moderniser 4 lignes de production, reduire les GES de 35%, et atteindre la conformite ACIA avant Q3 2026. ROI projete: 22 mois.",
+    bot: "CEOB",
+  },
+  6: {
+    before: "Solutions recommandees: systemes de recuperation thermique, robots collaboratifs, capteurs IoT et plateforme de monitoring.",
+    after: "4 solutions integrees formant un ecosysteme coherent: (1) Recuperation thermique Carnot RT-4000 (economies 95K$/an), (2) Cobots Robotiq CR-10 sur lignes 2-3 (cadence +43%), (3) Reseau 200 capteurs Samsara IoT (maintenance predictive -60% arrets), (4) Chaudieres Viessmann Vitocrossal (conformite GES immediate).",
+    bot: "CTOB",
+  },
+};
+
 function PhaseConceptionLivrable({
-  stage, onBack, theme, sections, icon: MainIcon, title, sectionContent,
+  stage, onBack, theme, sections, icon: MainIcon, title, sectionContent, onStartJumelage,
 }: {
   stage: number;
   onBack?: () => void;
@@ -4880,16 +5691,33 @@ function PhaseConceptionLivrable({
   icon: React.ElementType;
   title: string;
   sectionContent: Record<number, React.ReactNode>;
+  onStartJumelage?: () => void;
 }) {
   const visibleSections = sections.filter(s => s.minStage <= stage);
   const visibleCount = visibleSections.length;
   const [activeSection, setActiveSection] = useState(1);
+  const prevVisibleCountRef = useRef(0);
+  const [activeAction, setActiveAction] = useState<{ sectionId: number; action: string } | null>(null);
+  const [pinnedSection, setPinnedSection] = useState<number | null>(null);
 
-  // Auto-avance vers la derniere section debloquee (COPIE PhaseReflexion)
-  useEffect(() => {
-    if (visibleSections.length > 0) {
-      setActiveSection(visibleSections[visibleSections.length - 1].id);
+  const handleAction = (sectionId: number, action: string) => {
+    if (activeAction?.sectionId === sectionId && activeAction?.action === action) {
+      setActiveAction(null);
+    } else {
+      setActiveAction({ sectionId, action });
     }
+  };
+  const handlePin = (sectionId: number) => {
+    setPinnedSection(sectionId);
+    setTimeout(() => setPinnedSection(null), 2000);
+  };
+
+  // Auto-avance vers la PREMIERE section nouvellement debloquee
+  useEffect(() => {
+    if (visibleSections.length > 0 && visibleCount > prevVisibleCountRef.current) {
+      setActiveSection(visibleSections[prevVisibleCountRef.current].id);
+    }
+    prevVisibleCountRef.current = visibleCount;
   }, [visibleCount]);
 
   const activeDef = sections.find(s => s.id === activeSection);
@@ -4911,7 +5739,7 @@ function PhaseConceptionLivrable({
         </button>
       )}
 
-      {stage < 1 ? (
+      {visibleSections.length === 0 ? (
         <div className="text-center py-12">
           <MainIcon className="h-8 w-8 text-gray-300 mx-auto mb-3" />
           <p className="text-sm text-gray-400">La conception commence...</p>
@@ -4928,7 +5756,7 @@ function PhaseConceptionLivrable({
               <ActiveIcon className={cn("h-7 w-7 shrink-0 stroke-[2]", theme.iconColor)} />
               <h2 className="text-lg font-extrabold text-gray-900 shrink-0">{activeDef ? `${activeDef.id}. ${activeDef.title}` : title}</h2>
               <div className="flex-1" />
-              <span className="text-xs font-bold text-gray-900 shrink-0">{"\u00c9"}tape {visibleCount} de {sections.length}</span>
+              <span className="text-xs font-bold text-gray-900 shrink-0">{"É"}tape {visibleCount} de {sections.length}</span>
               <div className={cn("w-28 h-2 rounded-full overflow-hidden shrink-0", theme.progressBg)}>
                 <div className={cn("h-full rounded-full transition-all duration-500", theme.progressFill)} style={{ width: `${(visibleCount / sections.length) * 100}%` }} />
               </div>
@@ -4957,7 +5785,7 @@ function PhaseConceptionLivrable({
                       <span className={cn("text-[10px] px-1 py-0.5 rounded-full font-medium",
                         getSectionStatus(s.id) === "complete" ? "bg-emerald-100 text-emerald-600" : "bg-amber-50 text-amber-600"
                       )}>
-                        {getSectionStatus(s.id) === "complete" ? "\u2713" : "\u2026"}
+                        {getSectionStatus(s.id) === "complete" ? "✓" : "…"}
                       </span>
                     )}
                   </button>
@@ -4974,10 +5802,126 @@ function PhaseConceptionLivrable({
                   icon={ActiveIcon}
                   status={getSectionStatus(activeSection)}
                 >
-                  {sectionContent[activeSection] || (
-                    <div className={cn("border-l-[3px] rounded-r-lg px-3 py-4 text-center", theme.borderLeft, theme.sectionBg)}>
-                      <MainIcon className={cn("h-5 w-5 mx-auto mb-1", theme.iconColor)} />
-                      <p className={cn("text-[10px] font-medium", theme.text)}>Section en cours de generation...</p>
+                  <div className="relative group/edit">
+                    <div className="absolute top-1.5 right-2 opacity-0 group-hover/edit:opacity-100 transition-opacity z-10 flex items-center gap-1 bg-white/90 border border-blue-200 rounded px-1.5 py-0.5 shadow-sm pointer-events-none">
+                      <Pencil className="h-3 w-3 text-blue-400" />
+                      <span className="text-[9px] text-blue-400 font-medium">Modifier</span>
+                    </div>
+                    <div className="group-hover/edit:ring-1 group-hover/edit:ring-blue-200 group-hover/edit:shadow-sm rounded-lg transition-all cursor-text">
+                      {sectionContent[activeSection] || (
+                        <div className={cn("border-l-[3px] rounded-r-lg px-3 py-4 text-center", theme.borderLeft, theme.sectionBg)}>
+                          <MainIcon className={cn("h-5 w-5 mx-auto mb-1", theme.iconColor)} />
+                          <p className={cn("text-[10px] font-medium", theme.text)}>Section en cours de generation...</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* ═══ ACTION BUTTONS — pattern MagPreRapport ═══ */}
+                  <div className="flex flex-wrap gap-1.5 mt-3 opacity-70 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => handlePin(activeSection)}
+                      className={cn("text-xs font-medium cursor-pointer flex items-center gap-1 rounded-full px-2 py-0.5 transition-colors",
+                        pinnedSection === activeSection ? "text-blue-700 bg-blue-100 border border-blue-300" : cn(theme.text, "bg-white border border-gray-200 hover:bg-gray-50")
+                      )}>
+                      <Pin className="h-3.5 w-3.5" /> {pinnedSection === activeSection ? "Epingle!" : "Epingler"}
+                    </button>
+                    <button onClick={() => handleAction(activeSection, "approfondir")}
+                      className={cn("text-xs font-medium cursor-pointer flex items-center gap-1 rounded-full px-2 py-0.5 transition-colors",
+                        activeAction?.sectionId === activeSection && activeAction?.action === "approfondir" ? "text-violet-700 bg-violet-100 border border-violet-300" : "text-gray-500 hover:text-gray-700 bg-white border border-gray-200 hover:bg-gray-50"
+                      )}>
+                      <BookOpen className="h-3.5 w-3.5" /> Approfondir
+                    </button>
+                    <button onClick={() => handleAction(activeSection, "reformuler")}
+                      className={cn("text-xs font-medium cursor-pointer flex items-center gap-1 rounded-full px-2 py-0.5 transition-colors",
+                        activeAction?.sectionId === activeSection && activeAction?.action === "reformuler" ? "text-amber-700 bg-amber-100 border border-amber-300" : "text-gray-500 hover:text-gray-700 bg-white border border-gray-200 hover:bg-gray-50"
+                      )}>
+                      <RefreshCw className="h-3.5 w-3.5" /> Reformuler
+                    </button>
+                    <button className="text-xs text-gray-500 hover:text-gray-700 font-medium cursor-pointer flex items-center gap-1 bg-white border border-gray-200 rounded-full px-2 py-0.5 hover:bg-gray-50">
+                      <AlertTriangle className="h-3.5 w-3.5" /> Challenger
+                    </button>
+                    <button className="text-xs text-gray-500 hover:text-gray-700 font-medium cursor-pointer flex items-center gap-1 bg-white border border-gray-200 rounded-full px-2 py-0.5 hover:bg-gray-50">
+                      <Layers className="h-3.5 w-3.5" /> Fusionner
+                    </button>
+                  </div>
+
+                  {/* APPROFONDIR result */}
+                  {activeAction?.sectionId === activeSection && activeAction?.action === "approfondir" && (
+                    <div className={cn("mt-3 border-t pt-3 space-y-2", theme.borderLeft.replace("border-l-", "border-"))}>
+                      {L2_APPROFONDIR[activeSection] ? (
+                        <>
+                          <div className="flex items-center gap-2 mb-1">
+                            <BotAvatar code={L2_APPROFONDIR[activeSection].bot} size="sm" />
+                            <span className="text-xs font-bold text-violet-700">Analyse approfondie par {BOT_COLORS[L2_APPROFONDIR[activeSection].bot]?.name}</span>
+                            <div className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse ml-auto" />
+                          </div>
+                          <p className="text-xs text-gray-700 leading-relaxed bg-violet-50 rounded-lg px-3 py-2 border border-violet-200">
+                            {L2_APPROFONDIR[activeSection].expanded}
+                          </p>
+                          <div className="space-y-1">
+                            {L2_APPROFONDIR[activeSection].data.map((d, j) => (
+                              <div key={j} className="flex items-center gap-2 text-xs text-violet-700 bg-white rounded px-2.5 py-1 border border-violet-100">
+                                <BarChart3 className="h-3.5 w-3.5 text-violet-400 shrink-0" />
+                                <span>{d}</span>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="flex gap-1.5">
+                            <button className="text-xs bg-violet-600 text-white px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-violet-700">Integrer au livrable</button>
+                            <button className="text-xs bg-white text-violet-700 px-2 py-0.5 rounded-full font-medium border border-violet-200 cursor-pointer hover:bg-violet-50">Encore plus profond</button>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex items-center gap-2 bg-violet-50 rounded-lg px-3 py-2 border border-violet-200">
+                          <BotAvatar code="CEOB" size="sm" />
+                          <div className="flex-1">
+                            <p className="text-xs text-violet-700 font-medium">CarlOS analyse cette section en profondeur...</p>
+                            <div className="flex gap-1 mt-1">
+                              <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                              <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                              <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* REFORMULER result */}
+                  {activeAction?.sectionId === activeSection && activeAction?.action === "reformuler" && (
+                    <div className={cn("mt-3 border-t pt-3 space-y-2", theme.borderLeft.replace("border-l-", "border-"))}>
+                      {L2_REFORMULER[activeSection] ? (
+                        <>
+                          <div className="flex items-center gap-2 mb-1">
+                            <BotAvatar code={L2_REFORMULER[activeSection].bot} size="sm" />
+                            <span className="text-xs font-bold text-amber-700">Reformulation par {BOT_COLORS[L2_REFORMULER[activeSection].bot]?.name}</span>
+                          </div>
+                          <div className="bg-red-50 rounded-lg px-3 py-2 border border-red-200">
+                            <p className="text-[10px] font-semibold text-red-500 mb-1">AVANT</p>
+                            <p className="text-xs text-gray-600 line-through">{L2_REFORMULER[activeSection].before}</p>
+                          </div>
+                          <div className="bg-emerald-50 rounded-lg px-3 py-2 border border-emerald-200">
+                            <p className="text-[10px] font-semibold text-emerald-500 mb-1">APRES</p>
+                            <p className="text-xs text-gray-700 font-medium">{L2_REFORMULER[activeSection].after}</p>
+                          </div>
+                          <div className="flex gap-1.5">
+                            <button className="text-xs bg-amber-600 text-white px-2 py-0.5 rounded-full font-medium cursor-pointer hover:bg-amber-700">Accepter cette version</button>
+                            <button className="text-xs bg-white text-amber-700 px-2 py-0.5 rounded-full font-medium border border-amber-200 cursor-pointer hover:bg-amber-50">Reformuler encore</button>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex items-center gap-2 bg-amber-50 rounded-lg px-3 py-2 border border-amber-200">
+                          <BotAvatar code="CEOB" size="sm" />
+                          <div className="flex-1">
+                            <p className="text-xs text-amber-700 font-medium">CarlOS reformule cette section...</p>
+                            <div className="flex gap-1 mt-1">
+                              <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                              <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                              <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </DocForgeBlock>
@@ -4998,12 +5942,17 @@ function PhaseConceptionLivrable({
                         </div>
                       </div>
                       <p className="text-sm font-bold text-gray-900 text-center">Livrable complet</p>
-                      <p className="text-xs text-gray-500 text-center mt-1">{sections.length} sections generees {"\u2014"} pret pour export</p>
+                      <p className="text-xs text-gray-500 text-center mt-1">{sections.length} sections generees {"—"} pret pour export</p>
                     </div>
-                    <div className="px-6 py-3 flex gap-2 justify-center">
+                    <div className="px-6 py-3 flex gap-2 justify-center flex-wrap">
                       <button type="button" className="text-xs bg-gray-900 text-white px-4 py-2 rounded-full font-bold cursor-pointer hover:bg-gray-800 flex items-center gap-1.5">
                         <FileText className="h-3.5 w-3.5" /> Exporter PDF
                       </button>
+                      {onStartJumelage && (
+                        <button type="button" onClick={onStartJumelage} className="text-xs bg-blue-600 text-white px-4 py-2 rounded-full font-bold cursor-pointer hover:bg-blue-700 flex items-center gap-1.5">
+                          <Handshake className="h-3.5 w-3.5" /> Lancer le jumelage SMART
+                        </button>
+                      )}
                       {onBack && (
                         <button type="button" onClick={onBack} className="text-xs bg-white text-gray-700 px-4 py-2 rounded-full font-bold border border-gray-300 cursor-pointer hover:bg-gray-50 flex items-center gap-1.5">
                           <ArrowLeft className="h-3.5 w-3.5" /> Retour au chantier
@@ -5011,6 +5960,8 @@ function PhaseConceptionLivrable({
                       )}
                     </div>
                   </div>
+
+                  {/* Jumelage SMART = livrable séparé via startDeliverable("jumelage") */}
                 </div>
               )}
             </div>
@@ -5023,14 +5974,16 @@ function PhaseConceptionLivrable({
 
 // ========== 4 EXPORTED WRAPPERS ==========
 
-export function PhaseConceptionDocument({ stage, onBack }: { stage: number; onBack?: () => void }) {
+export function PhaseConceptionDocument({ stage, onBack, onStartJumelage }: { stage: number; onBack?: () => void; onStartJumelage?: () => void }) {
   return (
     <PhaseConceptionLivrable stage={stage} onBack={onBack} theme={L2_THEMES.amber}
-      sections={DOCUMENT_DOCFORGE_SECTIONS} icon={FileText} title="Rapport strategique \u2014 Marketing Q2"
+      sections={DOCUMENT_DOCFORGE_SECTIONS} icon={FileText} title="Cahier de Projet SMART — Aliments Boreal inc."
+      onStartJumelage={onStartJumelage}
       sectionContent={{
-        1: <MagDocContexte />, 2: <MagDocObjectifs />, 3: <MagDocSwot />,
-        4: <MagDocPlanAction />, 5: <MagDocBudget />, 6: <MagDocTimeline />,
-        7: <MagDocIndicateurs />,
+        1: <MagBorealIntro />, 2: <MagBorealSommaire />, 3: <MagBorealProfil />,
+        4: <MagBorealCahierCharges />, 5: <MagBorealDiagnostic />, 6: <MagBorealSolutions />,
+        7: <MagBorealBudget />, 8: <MagBorealImplantation />, 9: <MagBorealKPIs />,
+        10: <MagBorealConclusions />, 11: <MagBorealValidation />,
       }} />
   );
 }
@@ -5038,7 +5991,7 @@ export function PhaseConceptionDocument({ stage, onBack }: { stage: number; onBa
 export function PhaseConceptionTableur({ stage, onBack }: { stage: number; onBack?: () => void }) {
   return (
     <PhaseConceptionLivrable stage={stage} onBack={onBack} theme={L2_THEMES.teal}
-      sections={TABLEUR_DOCFORGE_SECTIONS} icon={Table2} title="Tableur de suivi \u2014 Projections Q2"
+      sections={TABLEUR_DOCFORGE_SECTIONS} icon={Table2} title="Tableau de bord financier — Projet automatisation Boreal"
       sectionContent={{
         1: <MagTableurStructure />, 2: <MagTableurDonnees />, 3: <MagTableurProjections />,
         4: <MagTableurFormules />, 5: <MagTableurGraphiques />, 6: <MagTableurExport />,
@@ -5049,7 +6002,7 @@ export function PhaseConceptionTableur({ stage, onBack }: { stage: number; onBac
 export function PhaseConceptionPresentation({ stage, onBack }: { stage: number; onBack?: () => void }) {
   return (
     <PhaseConceptionLivrable stage={stage} onBack={onBack} theme={L2_THEMES.blue}
-      sections={PRESENTATION_DOCFORGE_SECTIONS} icon={Presentation} title="Pitch Deck \u2014 Marketing Q2"
+      sections={PRESENTATION_DOCFORGE_SECTIONS} icon={Presentation} title="Pitch Deck CA — Projet automatisation Boreal"
       sectionContent={{
         1: <MagPresEnjeu />, 2: <MagPresStrategie />, 3: <MagPresBudget />,
         4: <MagPresTimeline />, 5: <MagPresDesign />, 6: <MagPresNotes />,
@@ -5060,7 +6013,7 @@ export function PhaseConceptionPresentation({ stage, onBack }: { stage: number; 
 export function PhaseConceptionCode({ stage, onBack }: { stage: number; onBack?: () => void }) {
   return (
     <PhaseConceptionLivrable stage={stage} onBack={onBack} theme={L2_THEMES.violet}
-      sections={CODE_DOCFORGE_SECTIONS} icon={Code2} title="Tim Code \u2014 Chatbot AI Site Web"
+      sections={CODE_DOCFORGE_SECTIONS} icon={Code2} title="Dashboard IoT — Monitoring usine Boreal"
       sectionContent={{
         1: <MagCodePlan />, 2: <MagCodeTerminal />, 3: <MagCodeDebug />,
         4: <MagCodeTests />, 5: <MagCodeDeploy />,
@@ -5068,45 +6021,1946 @@ export function PhaseConceptionCode({ stage, onBack }: { stage: number; onBack?:
   );
 }
 
+export function PhaseConceptionJumelage({ stage, onBack }: { stage: number; onBack?: () => void }) {
+  return (
+    <PhaseConceptionLivrable stage={stage} onBack={onBack} theme={L2_THEMES.blue}
+      sections={JUMELAGE_DOCFORGE_SECTIONS} icon={Handshake} title="Jumelage SMART — Recherche intégrateur Orbit⁹"
+      sectionContent={{
+        1: <MagJumelageCriteres />, 2: <MagJumelageScan />,
+        3: <MagJumelageConferences />, 4: <MagJumelageScoring />, 5: <MagJumelageRecommandation />,
+      }} />
+  );
+}
+
 // ========== DELIVERABLE CONCEPTION CHAT ==========
 
-const L2_CHAT_CONFIGS: Record<string, { bot: string; botName: string; messages: { from: string; text: string }[][] }> = {
-  document: {
-    bot: "CSOB", botName: "Simone (CSO)",
-    messages: [
-      [{ from: "bot", text: "On commence le rapport strategique. Je vais pre-remplir le contexte depuis ton analyse." }],
-      [{ from: "bot", text: "Contexte et objectifs SMART integres. Je lance la matrice SWOT avec les donnees du chantier." }],
-      [{ from: "bot", text: "SWOT et plan d'action valides. Frank va maintenant chiffrer le budget et la timeline." }],
-      [{ from: "bot", text: "Budget et timeline integres. Derniere etape: les indicateurs KPI pour le suivi." }],
-    ],
-  },
-  spreadsheet: {
-    bot: "CFOB", botName: "Frank (CFO)",
-    messages: [
-      [{ from: "bot", text: "Je prepare le tableur de projections Q2. Structure et colonnes d'abord." }],
-      [{ from: "bot", text: "Donnees de reference importees. Je calcule les projections mensuelles maintenant." }],
-      [{ from: "bot", text: "Projections OK. J'ajoute les formules de calcul et les graphiques de tendances." }],
-    ],
-  },
-  presentation: {
-    bot: "CMOB", botName: "Mathilde (CMO)",
-    messages: [
-      [{ from: "bot", text: "On monte le pitch deck. Slide 1: l'enjeu marketing avec les chiffres chocs." }],
-      [{ from: "bot", text: "Les 2 premieres slides sont pretes. On passe au budget et a la timeline." }],
-      [{ from: "bot", text: "Slides completes! J'ajoute les recommandations design et les notes presentateur." }],
-    ],
-  },
-  code: {
-    bot: "CTOB", botName: "Tim (CTO)",
-    messages: [
-      [{ from: "bot", text: "Plan d'architecture valide. Je lance la creation du composant ChatWidget.tsx." }],
-      [{ from: "bot", text: "Code genere. Je lance le debug automatique pour trouver les issues." }],
-      [{ from: "bot", text: "2 bugs fixes. Je lance la suite de tests maintenant." }],
-      [{ from: "bot", text: "4/4 tests green! Le composant est pret pour le deploiement." }],
-      [{ from: "bot", text: "Deploiement pret. Build OK, securite validee, staging teste." }],
-    ],
-  },
-};
+/* ══════════════════════════════════════════════════════════════
+   TABLEUR — Tableau de bord financier (Frank + Tim)
+   Lié au cahier Boreal : suivi budget, ROI, projections 36 mois
+   ══════════════════════════════════════════════════════════════ */
+function SpreadsheetConceptionChat({ stage, typed, setTyped, advance, onBack }: {
+  stage: number; typed: boolean; setTyped: (v: boolean) => void; advance: () => void; onBack?: () => void;
+}) {
+  return (
+    <div className="space-y-3">
+      {onBack && (
+        <button type="button" onClick={onBack} className="text-xs text-gray-500 hover:text-gray-700 cursor-pointer flex items-center gap-1">
+          <ArrowLeft className="h-3 w-3" /> Retour aux livrables
+        </button>
+      )}
+
+      {/* Stage 0: Frank intro + mobilise Tim */}
+      {stage >= 0 && (
+        <>
+          {stage === 0 && (
+            <div className="flex items-center gap-1.5 ml-10 bg-teal-50 border border-teal-200 rounded-lg px-2.5 py-1.5">
+              <div className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
+              <span className="text-xs text-teal-600 font-medium">Tableur de suivi — Mode conception</span>
+            </div>
+          )}
+          <SBubble code="CFOB" collapsed={stage > 0}>
+            {stage === 0 ? (
+              <>
+                <TypewriterText text="On va créer le tableau de bord financier pour suivre le projet d'automatisation Boreal. Ce tableur va consolider les données du cahier de projet — budget 1.1M$, 4 phases, subventions, et projections sur 36 mois. Je mobilise Tim pour les données techniques IoT." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+                {typed && (
+                  <div className="mt-3 space-y-1.5">
+                    {[
+                      { code: "CFOB", name: "Frank", role: "CFO — Structure financière, formules, scénarios", delay: "0ms" },
+                      { code: "CTOB", name: "Tim", role: "CTO — Données capteurs IoT, métriques techniques", delay: "400ms" },
+                    ].map(bot => (
+                      <div key={bot.code} className="flex items-center gap-2 bg-teal-50 border border-teal-200 rounded-lg px-3 py-2 animate-in fade-in slide-in-from-left-2" style={{ animationDelay: bot.delay, animationFillMode: "both", animationDuration: "500ms" }}>
+                        <BotAvatar code={bot.code} size="sm" />
+                        <div className="flex-1">
+                          <span className="text-xs font-bold text-gray-700">{bot.name}</span>
+                          <span className="text-xs text-gray-500 ml-1.5">{bot.role}</span>
+                        </div>
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {typed && (
+                  <button type="button" onClick={advance} className="mt-3 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-teal-500 text-white hover:bg-teal-600 shadow-sm">
+                    <Table2 className="h-3.5 w-3.5" /> Structurer le tableur
+                  </button>
+                )}
+              </>
+            ) : <p className="text-xs text-gray-400 italic">Équipe mobilisée — Frank + Tim</p>}
+          </SBubble>
+        </>
+      )}
+
+      {/* Stage 1: Structure du tableur — onglets et colonnes */}
+      {stage >= 1 && (
+        <SBubble code="CFOB" collapsed={stage > 1}>
+          {stage === 1 ? (
+            <>
+              <TypewriterText text="Structure du tableur définie. 6 onglets alignés sur les sections du cahier de projet Boreal :" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && (
+                <div className="mt-3 space-y-1.5">
+                  {[
+                    { onglet: "Synthèse", desc: "KPIs consolidés, tableau de bord direction, alertes automatiques", cols: "12 colonnes" },
+                    { onglet: "Budget détaillé", desc: "Ventilation par poste (CO₂, chaudières, cobot, IoT), réel vs prévisionnel", cols: "18 colonnes" },
+                    { onglet: "Subventions", desc: "Suivi MESI, BDC, RS&DE — montants, dates, statuts de demande", cols: "10 colonnes" },
+                    { onglet: "Projections 36 mois", desc: "Cash flow mensuel, courbe économies cumulées, seuil de rentabilité", cols: "40 colonnes" },
+                    { onglet: "KPIs opérationnels", desc: "Énergie, palettisation, température, maintenance — actuel vs cible", cols: "8 colonnes" },
+                    { onglet: "Scénarios", desc: "Optimiste / réaliste / pessimiste — sensibilité aux variables clés", cols: "15 colonnes" },
+                  ].map(o => (
+                    <div key={o.onglet} className="flex items-start gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+                      <Table2 className="h-3.5 w-3.5 text-teal-500 shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-bold text-gray-800">{o.onglet}</p>
+                          <span className="text-xs text-teal-600 font-medium">{o.cols}</span>
+                        </div>
+                        <p className="text-xs text-gray-500">{o.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {typed && (
+                <button type="button" onClick={advance} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-teal-500 text-white hover:bg-teal-600 shadow-sm">
+                  <ChevronRight className="h-3.5 w-3.5" /> Importer les données
+                </button>
+              )}
+            </>
+          ) : <p className="text-xs text-gray-400 italic">Structure — 6 onglets, 103 colonnes</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 2: Données baseline importées */}
+      {stage >= 2 && (
+        <SBubble code="CFOB" collapsed={stage > 2}>
+          {stage === 2 ? (
+            <>
+              <TypewriterText text="Données de référence importées depuis le cahier de projet. J'ai croisé les factures historiques avec les estimations du diagnostic SMART :" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && (
+                <div className="mt-3 space-y-2">
+                  <p className="text-xs font-bold text-gray-700">Données intégrées au tableur :</p>
+                  {[
+                    { cat: "Coûts énergie", items: ["Factures Hydro-Québec 12 derniers mois (1.2M$)", "Consommation R-404A par trimestre", "Benchmark industrie agroalimentaire -25°C"] },
+                    { cat: "Main-d'œuvre", items: ["Masse salariale palettisation (12 postes × 52K$)", "Taux de roulement 28% et coûts associés", "Grille salariale contrôle qualité (postes réassignés)"] },
+                    { cat: "Investissements", items: ["4 postes budgétaires du cahier (485K + 195K + 205K + 215K)", "Calendrier de décaissement par phase", "3 programmes subventions (MESI 385K, BDC 125K, RS&DE 82K)"] },
+                    { cat: "Maintenance", items: ["Historique 18 arrêts non planifiés (durée, coût)", "Contrats maintenance actuels", "Estimations post-IoT (maintenance prédictive)"] },
+                  ].map(c => (
+                    <div key={c.cat} className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+                      <p className="text-xs font-bold text-teal-700 mb-1">{c.cat}</p>
+                      {c.items.map((item, i) => (
+                        <p key={i} className="text-xs text-gray-600 flex items-start gap-1.5">
+                          <span className="text-teal-400 mt-0.5">•</span> {item}
+                        </p>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {typed && (
+                <button type="button" onClick={advance} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-teal-500 text-white hover:bg-teal-600 shadow-sm">
+                  <ChevronRight className="h-3.5 w-3.5" /> Calculer les projections
+                </button>
+              )}
+            </>
+          ) : <p className="text-xs text-gray-400 italic">Données baseline — 4 catégories, 12 sources importées</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 3: Projections 36 mois */}
+      {stage >= 3 && (
+        <SBubble code="CFOB" collapsed={stage > 3}>
+          {stage === 3 ? (
+            <>
+              <TypewriterText text="Projections calculées sur 36 mois. Le seuil de rentabilité net est atteint au mois 18. Voici les jalons financiers clés :" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && (
+                <div className="mt-3 space-y-2">
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { label: "Mois 6", value: "-412K$", sub: "Phase 1 terminée", color: "text-red-600" },
+                      { label: "Mois 12", value: "-196K$", sub: "Économies démarrent", color: "text-orange-600" },
+                      { label: "Mois 18", value: "+0$", sub: "Seuil de rentabilité", color: "text-emerald-600" },
+                      { label: "Mois 24", value: "+164K$", sub: "Profit net cumulé", color: "text-emerald-600" },
+                      { label: "Mois 30", value: "+332K$", sub: "ROI complet", color: "text-emerald-700" },
+                      { label: "Mois 36", value: "+500K$", sub: "Économies nettes", color: "text-emerald-700" },
+                    ].map(m => (
+                      <div key={m.label} className="bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-2 text-center">
+                        <p className="text-xs text-gray-500">{m.label}</p>
+                        <p className={`text-sm font-bold ${m.color}`}>{m.value}</p>
+                        <p className="text-xs text-gray-400">{m.sub}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="bg-teal-50 border border-teal-200 rounded-lg px-3 py-2">
+                    <p className="text-xs text-teal-800"><span className="font-bold">Sensibilité :</span> Si les subventions MESI sont réduites de 10%, le seuil de rentabilité passe au mois 21 (+3 mois). Le scénario pessimiste est intégré dans l'onglet Scénarios.</p>
+                  </div>
+                </div>
+              )}
+              {typed && (
+                <button type="button" onClick={advance} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-teal-500 text-white hover:bg-teal-600 shadow-sm">
+                  <ChevronRight className="h-3.5 w-3.5" /> Formules et scénarios
+                </button>
+              )}
+            </>
+          ) : <p className="text-xs text-gray-400 italic">Projections — seuil rentabilité mois 18, +500K$ à 36 mois</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 4: Tim — Données IoT + formules */}
+      {stage >= 4 && (
+        <SBubble code="CTOB" collapsed={stage > 4}>
+          {stage === 4 ? (
+            <>
+              <TypewriterText text="J'ai ajouté les formules de calcul IoT et les métriques techniques dans l'onglet KPIs opérationnels. Les capteurs alimenteront ces colonnes en temps réel une fois la Phase 4 déployée :" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && (
+                <div className="mt-3 space-y-1.5">
+                  {[
+                    { formule: "Coût énergie / palette", calcul: "= (Hydro_mensuel + Gaz_mensuel) / Palettes_produites", cible: "< 2.80$/palette (actuel: 4.10$)" },
+                    { formule: "Taux conformité température", calcul: "= Mesures_conformes / Mesures_totales × 100", cible: "≥ 99.5% (actuel: 94%)" },
+                    { formule: "MTBF maintenance", calcul: "= Heures_production / Nombre_pannes", cible: "> 2 000h (actuel: 487h)" },
+                    { formule: "ROI mensuel glissant", calcul: "= Économies_cumulées / Investissement_net × 100", cible: "100% au mois 18" },
+                  ].map(f => (
+                    <div key={f.formule} className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+                      <p className="text-xs font-bold text-gray-800">{f.formule}</p>
+                      <p className="text-xs text-teal-600 font-mono mt-0.5">{f.calcul}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">Cible : {f.cible}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {typed && (
+                <>
+                  <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 ml-auto max-w-[85%]">
+                    <p className="text-xs text-blue-700 font-medium">Les formules sont solides. Frank, finalise avec les graphiques.</p>
+                  </div>
+                  <button type="button" onClick={advance} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-teal-500 text-white hover:bg-teal-600 shadow-sm">
+                    <ChevronRight className="h-3.5 w-3.5" /> Graphiques et conclusion
+                  </button>
+                </>
+              )}
+            </>
+          ) : <p className="text-xs text-gray-400 italic">Formules IoT + KPIs techniques intégrés</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 5: Conclusion + validation */}
+      {stage >= 5 && (
+        <SBubble code="CFOB">
+          {stage === 5 ? (
+            <>
+              <TypewriterText text="Tableur de bord financier terminé. 6 onglets, 103 colonnes, projections 36 mois, 3 scénarios et les formules IoT de Tim. Le tableur est prêt pour révision." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && (
+                <div className="mt-3 space-y-3">
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                      <p className="text-sm font-bold text-emerald-700">Tableur de suivi financier — Terminé</p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { label: "Onglets", value: "6" },
+                        { label: "Formules", value: "47" },
+                        { label: "Scénarios", value: "3" },
+                      ].map(s => (
+                        <div key={s.label} className="bg-white/70 rounded-lg px-2 py-1.5 text-center">
+                          <p className="text-xs text-emerald-600">{s.label}</p>
+                          <p className="text-xs font-bold text-emerald-800">{s.value}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="bg-teal-50 border border-teal-200 rounded-lg px-3 py-2">
+                    <p className="text-xs text-teal-800"><span className="font-bold">Note :</span> Ce tableur sera alimenté automatiquement par les capteurs IoT (Phase 4) et les données ERP une fois le projet déployé.</p>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : <p className="text-xs text-gray-400 italic">Tableur terminé — 6 onglets, 47 formules, 3 scénarios</p>}
+        </SBubble>
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PRÉSENTATION — Pitch Deck (Mathilde + CarlOS)
+   Lié au cahier Boreal : présentation CA projet automatisation
+   ══════════════════════════════════════════════════════════════ */
+function PresentationConceptionChat({ stage, typed, setTyped, advance, onBack }: {
+  stage: number; typed: boolean; setTyped: (v: boolean) => void; advance: () => void; onBack?: () => void;
+}) {
+  return (
+    <div className="space-y-3">
+      {onBack && (
+        <button type="button" onClick={onBack} className="text-xs text-gray-500 hover:text-gray-700 cursor-pointer flex items-center gap-1">
+          <ArrowLeft className="h-3 w-3" /> Retour aux livrables
+        </button>
+      )}
+
+      {/* Stage 0: Mathilde intro */}
+      {stage >= 0 && (
+        <>
+          {stage === 0 && (
+            <div className="flex items-center gap-1.5 ml-10 bg-blue-50 border border-blue-200 rounded-lg px-2.5 py-1.5">
+              <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+              <span className="text-xs text-blue-600 font-medium">Pitch Deck — Mode conception</span>
+            </div>
+          )}
+          <SBubble code="CMOB" collapsed={stage > 0}>
+            {stage === 0 ? (
+              <>
+                <TypewriterText text="On va créer le pitch deck pour présenter le projet d'automatisation au conseil d'administration d'Aliments Boreal. L'objectif : convaincre le CA d'approuver l'investissement de 508K$ net (1.1M$ brut). Je mobilise CarlOS pour la vision stratégique." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+                {typed && (
+                  <div className="mt-3 space-y-1.5">
+                    {[
+                      { code: "CMOB", name: "Mathilde", role: "CMO — Design, storytelling, impact visuel", delay: "0ms" },
+                      { code: "CEOB", name: "CarlOS", role: "CEO — Vision stratégique, arguments décisionnels", delay: "400ms" },
+                    ].map(bot => (
+                      <div key={bot.code} className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 animate-in fade-in slide-in-from-left-2" style={{ animationDelay: bot.delay, animationFillMode: "both", animationDuration: "500ms" }}>
+                        <BotAvatar code={bot.code} size="sm" />
+                        <div className="flex-1">
+                          <span className="text-xs font-bold text-gray-700">{bot.name}</span>
+                          <span className="text-xs text-gray-500 ml-1.5">{bot.role}</span>
+                        </div>
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {typed && (
+                  <button type="button" onClick={advance} className="mt-3 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-blue-500 text-white hover:bg-blue-600 shadow-sm">
+                    <Presentation className="h-3.5 w-3.5" /> Créer le pitch deck
+                  </button>
+                )}
+              </>
+            ) : <p className="text-xs text-gray-400 italic">Équipe mobilisée — Mathilde + CarlOS</p>}
+          </SBubble>
+        </>
+      )}
+
+      {/* Stage 1: Slide enjeu — chiffres choc */}
+      {stage >= 1 && (
+        <SBubble code="CEOB" collapsed={stage > 1}>
+          {stage === 1 ? (
+            <>
+              <TypewriterText text="Slide d'ouverture : l'enjeu stratégique. On frappe fort avec les chiffres du diagnostic pour créer l'urgence d'agir :" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && (
+                <div className="mt-3 bg-gray-900 rounded-xl px-4 py-4 text-white">
+                  <p className="text-xs text-blue-300 font-medium mb-1">SLIDE 1 — L'ENJEU</p>
+                  <p className="text-lg font-bold mb-3">Chaque année, Boreal perd 278 000$ en inefficacités évitables</p>
+                  <div className="grid grid-cols-3 gap-2 mb-3">
+                    {[
+                      { chiffre: "142K$", label: "Surconsommation énergie" },
+                      { chiffre: "98K$", label: "Palettisation manuelle" },
+                      { chiffre: "38K$", label: "Arrêts non planifiés" },
+                    ].map(c => (
+                      <div key={c.label} className="bg-white/10 rounded-lg px-2 py-2 text-center">
+                        <p className="text-sm font-bold text-red-400">{c.chiffre}/an</p>
+                        <p className="text-xs text-gray-300">{c.label}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-2 bg-red-500/20 rounded-lg px-3 py-1.5">
+                    <span className="text-xs text-red-300">Concurrents (Exceldor, Olymel) déjà automatisés — chaque mois d'inaction creuse l'écart</span>
+                  </div>
+                </div>
+              )}
+              {typed && (
+                <button type="button" onClick={advance} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-blue-500 text-white hover:bg-blue-600 shadow-sm">
+                  <ChevronRight className="h-3.5 w-3.5" /> Slides diagnostic
+                </button>
+              )}
+            </>
+          ) : <p className="text-xs text-gray-400 italic">Slide 1 — Enjeu : 278K$/an en pertes</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 2: Slides diagnostic + SWOT */}
+      {stage >= 2 && (
+        <SBubble code="CMOB" collapsed={stage > 2}>
+          {stage === 2 ? (
+            <>
+              <TypewriterText text="Slides 2-3 : diagnostic visuel et SWOT. J'ai transformé les données du cahier en infographies percutantes pour le CA :" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && (
+                <div className="mt-3 space-y-2">
+                  <div className="bg-gray-900 rounded-xl px-4 py-3 text-white">
+                    <p className="text-xs text-blue-300 font-medium mb-2">SLIDE 2 — DIAGNOSTIC</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { label: "Réfrigération", status: "Critique", detail: "R-404A interdit 2028", color: "bg-red-500" },
+                        { label: "Chaudières", status: "Vieillissant", detail: "Rendement 78%", color: "bg-orange-500" },
+                        { label: "Palettisation", status: "Manuel", detail: "12 postes, TMS", color: "bg-amber-500" },
+                        { label: "Monitoring", status: "Inexistant", detail: "Zéro capteur", color: "bg-red-500" },
+                      ].map(d => (
+                        <div key={d.label} className="bg-white/10 rounded-lg px-2.5 py-2">
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <div className={`w-2 h-2 rounded-full ${d.color}`} />
+                            <span className="text-xs font-bold text-white">{d.label}</span>
+                          </div>
+                          <p className="text-xs text-gray-300">{d.status} — {d.detail}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="bg-gray-900 rounded-xl px-4 py-3 text-white">
+                    <p className="text-xs text-blue-300 font-medium mb-2">SLIDE 3 — SWOT BOREAL</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { quad: "Forces", items: ["HACCP certifié", "85 employés fidèles", "18M$ CA stable"], color: "text-emerald-400" },
+                        { quad: "Faiblesses", items: ["R-404A vieillissant", "Zéro IoT", "Palettisation manuelle"], color: "text-red-400" },
+                        { quad: "Opportunités", items: ["Subventions 54%", "CO₂ transcritique", "Industrie 4.0"], color: "text-blue-400" },
+                        { quad: "Menaces", items: ["Énergie +23% 2027", "Pénurie régionale", "Concurrents automatisés"], color: "text-orange-400" },
+                      ].map(q => (
+                        <div key={q.quad} className="bg-white/5 rounded-lg px-2.5 py-2">
+                          <p className={`text-xs font-bold ${q.color} mb-1`}>{q.quad}</p>
+                          {q.items.map((item, i) => <p key={i} className="text-xs text-gray-300">• {item}</p>)}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {typed && (
+                <button type="button" onClick={advance} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-blue-500 text-white hover:bg-blue-600 shadow-sm">
+                  <ChevronRight className="h-3.5 w-3.5" /> Slides solutions
+                </button>
+              )}
+            </>
+          ) : <p className="text-xs text-gray-400 italic">Slides 2-3 — Diagnostic + SWOT infographies</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 3: Slides solutions — 4 axes */}
+      {stage >= 3 && (
+        <SBubble code="CMOB" collapsed={stage > 3}>
+          {stage === 3 ? (
+            <>
+              <TypewriterText text="Slides 4-5 : les 4 solutions et le montage financier. Chaque solution est présentée avec son impact visuel pour le CA :" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && (
+                <div className="mt-3 space-y-2">
+                  <div className="bg-gray-900 rounded-xl px-4 py-3 text-white">
+                    <p className="text-xs text-blue-300 font-medium mb-2">SLIDE 4 — LES 4 SOLUTIONS</p>
+                    {[
+                      { sol: "CO₂ transcritique", impact: "Énergie -30%, GES -95%", invest: "485K$", roi: "3.4 ans" },
+                      { sol: "Chaudières condensation", impact: "Rendement 78%→95%", invest: "195K$", roi: "3.4 ans" },
+                      { sol: "Cobot UR10e", impact: "Cadence ×2.5, 12 postes", invest: "205K$", roi: "2.1 ans" },
+                      { sol: "HVAC + IoT", impact: "Arrêts -78%, alerte 48h", invest: "215K$", roi: "5.7 ans" },
+                    ].map(s => (
+                      <div key={s.sol} className="flex items-center justify-between bg-white/10 rounded-lg px-3 py-1.5 mb-1">
+                        <span className="text-xs font-bold text-white">{s.sol}</span>
+                        <span className="text-xs text-emerald-400">{s.impact}</span>
+                        <span className="text-xs text-amber-300">{s.invest}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="bg-gray-900 rounded-xl px-4 py-3 text-white">
+                    <p className="text-xs text-blue-300 font-medium mb-2">SLIDE 5 — BUDGET WATERFALL</p>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs text-gray-300">Investissement brut</span>
+                      <span className="text-sm font-bold text-white">1 100 000$</span>
+                    </div>
+                    {[
+                      { label: "MESI -385K$", width: "35%" },
+                      { label: "BDC -125K$", width: "11%" },
+                      { label: "RS&DE -82K$", width: "7%" },
+                    ].map(b => (
+                      <div key={b.label} className="flex items-center gap-2 mb-1">
+                        <div className="h-3 bg-emerald-500/50 rounded" style={{ width: b.width }} />
+                        <span className="text-xs text-emerald-400">{b.label}</span>
+                      </div>
+                    ))}
+                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/20">
+                      <span className="text-xs font-bold text-amber-300">Coût net entreprise</span>
+                      <span className="text-lg font-bold text-amber-300">508 000$</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {typed && (
+                <button type="button" onClick={advance} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-blue-500 text-white hover:bg-blue-600 shadow-sm">
+                  <ChevronRight className="h-3.5 w-3.5" /> Timeline et KPIs
+                </button>
+              )}
+            </>
+          ) : <p className="text-xs text-gray-400 italic">Slides 4-5 — Solutions + Budget waterfall</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 4: Slides timeline + KPIs */}
+      {stage >= 4 && (
+        <SBubble code="CMOB" collapsed={stage > 4}>
+          {stage === 4 ? (
+            <>
+              <TypewriterText text="Slides 6-7 : timeline 20 semaines et KPIs de suivi. Les slides de clôture pour donner confiance au CA sur l'exécution :" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && (
+                <div className="mt-3 space-y-2">
+                  <div className="bg-gray-900 rounded-xl px-4 py-3 text-white">
+                    <p className="text-xs text-blue-300 font-medium mb-2">SLIDE 6 — TIMELINE 20 SEMAINES</p>
+                    {GANTT_MILESTONES.map(m => (
+                      <div key={m.id} className="flex items-center gap-2 mb-1.5">
+                        <span className="text-xs text-gray-400 w-12 shrink-0">{m.start}→{m.end}</span>
+                        <div className="flex-1 h-4 bg-blue-500/30 rounded-full overflow-hidden relative">
+                          <div className="absolute inset-y-0 left-0 bg-blue-500 rounded-full" style={{ width: "0%" }} />
+                          <span className="absolute inset-0 flex items-center justify-center text-xs text-white font-medium">{m.label.replace("Phase ", "P").replace(" — ", ": ")}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="bg-gray-900 rounded-xl px-4 py-3 text-white">
+                    <p className="text-xs text-blue-300 font-medium mb-2">SLIDE 7 — KPIs DE SUIVI</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { kpi: "Énergie", avant: "1.2M$", apres: "840K$", gain: "-30%" },
+                        { kpi: "Cadence", avant: "24/h", apres: "60/h", gain: "+150%" },
+                        { kpi: "Température", avant: "94%", apres: "99.5%", gain: "+5.5pt" },
+                        { kpi: "Arrêts", avant: "18/an", apres: "4/an", gain: "-78%" },
+                      ].map(k => (
+                        <div key={k.kpi} className="bg-white/10 rounded-lg px-2.5 py-2">
+                          <p className="text-xs text-gray-300">{k.kpi}</p>
+                          <div className="flex items-baseline gap-1.5">
+                            <span className="text-xs text-red-400 line-through">{k.avant}</span>
+                            <span className="text-xs text-gray-500">→</span>
+                            <span className="text-xs font-bold text-emerald-400">{k.apres}</span>
+                          </div>
+                          <span className="text-xs font-bold text-emerald-300">{k.gain}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {typed && (
+                <button type="button" onClick={advance} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-blue-500 text-white hover:bg-blue-600 shadow-sm">
+                  <ChevronRight className="h-3.5 w-3.5" /> Design et conclusion
+                </button>
+              )}
+            </>
+          ) : <p className="text-xs text-gray-400 italic">Slides 6-7 — Timeline + KPIs</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 5: Conclusion */}
+      {stage >= 5 && (
+        <SBubble code="CMOB">
+          {stage === 5 ? (
+            <>
+              <TypewriterText text="Pitch deck terminé — 8 slides prêtes. Design professionnel aux couleurs Boreal, notes présentateur incluses pour chaque slide. Le deck est optimisé pour une présentation de 15 minutes au CA." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && (
+                <div className="mt-3 space-y-3">
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                      <p className="text-sm font-bold text-emerald-700">Pitch Deck — Terminé</p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { label: "Slides", value: "8" },
+                        { label: "Durée", value: "15 min" },
+                        { label: "Notes", value: "Incluses" },
+                      ].map(s => (
+                        <div key={s.label} className="bg-white/70 rounded-lg px-2 py-1.5 text-center">
+                          <p className="text-xs text-emerald-600">{s.label}</p>
+                          <p className="text-xs font-bold text-emerald-800">{s.value}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+                    <p className="text-xs text-blue-800"><span className="font-bold">Conseil :</span> Présentez le slide enjeu (278K$/an) en premier pour créer l'urgence, puis enchaînez avec les solutions et le ROI 1.5 ans pour rassurer le CA sur le retour sur investissement.</p>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : <p className="text-xs text-gray-400 italic">Pitch deck terminé — 8 slides, 15 minutes</p>}
+        </SBubble>
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CODE — Dashboard IoT Monitoring (Tim solo)
+   Lié au cahier Boreal : Phase 4 HVAC + IoT monitoring
+   ══════════════════════════════════════════════════════════════ */
+function CodeConceptionChat({ stage, typed, setTyped, advance, onBack }: {
+  stage: number; typed: boolean; setTyped: (v: boolean) => void; advance: () => void; onBack?: () => void;
+}) {
+  return (
+    <div className="space-y-3">
+      {onBack && (
+        <button type="button" onClick={onBack} className="text-xs text-gray-500 hover:text-gray-700 cursor-pointer flex items-center gap-1">
+          <ArrowLeft className="h-3 w-3" /> Retour aux livrables
+        </button>
+      )}
+
+      {/* Stage 0: Tim intro */}
+      {stage >= 0 && (
+        <>
+          {stage === 0 && (
+            <div className="flex items-center gap-1.5 ml-10 bg-violet-50 border border-violet-200 rounded-lg px-2.5 py-1.5">
+              <div className="w-2 h-2 rounded-full bg-violet-500 animate-pulse" />
+              <span className="text-xs text-violet-600 font-medium">Tim Code — Mode développement</span>
+            </div>
+          )}
+          <SBubble code="CTOB" collapsed={stage > 0}>
+            {stage === 0 ? (
+              <>
+                <TypewriterText text="On va coder le dashboard IoT monitoring pour l'usine Boreal. C'est la Phase 4 du cahier de projet — 32 capteurs, HVAC zones indépendantes, alertes prédictives ML. Je gère le full-stack seul sur ce livrable." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+                {typed && (
+                  <div className="mt-3">
+                    <div className="flex items-center gap-2 bg-violet-50 border border-violet-200 rounded-lg px-3 py-2">
+                      <BotAvatar code="CTOB" size="sm" />
+                      <div className="flex-1">
+                        <span className="text-xs font-bold text-gray-700">Tim</span>
+                        <span className="text-xs text-gray-500 ml-1.5">CTO — Full-stack, React + FastAPI + WebSocket</span>
+                      </div>
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                    </div>
+                  </div>
+                )}
+                {typed && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {["React 18", "TypeScript", "FastAPI", "WebSocket", "PostgreSQL", "TensorFlow Lite"].map(t => (
+                      <span key={t} className="text-xs bg-violet-50 border border-violet-200 text-violet-700 px-2 py-0.5 rounded-full font-medium">{t}</span>
+                    ))}
+                  </div>
+                )}
+                {typed && (
+                  <button type="button" onClick={advance} className="mt-3 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-violet-500 text-white hover:bg-violet-600 shadow-sm">
+                    <Code2 className="h-3.5 w-3.5" /> Démarrer l'architecture
+                  </button>
+                )}
+              </>
+            ) : <p className="text-xs text-gray-400 italic">Tim mobilisé — Full-stack IoT dashboard</p>}
+          </SBubble>
+        </>
+      )}
+
+      {/* Stage 1: Architecture technique */}
+      {stage >= 1 && (
+        <SBubble code="CTOB" collapsed={stage > 1}>
+          {stage === 1 ? (
+            <>
+              <TypewriterText text="Architecture validée. Stack technique aligné sur les spécifications du cahier de projet — 32 capteurs, 3 zones thermiques, alertes prédictives :" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && (
+                <div className="mt-3">
+                  <div className="bg-gray-900 rounded-xl px-4 py-3 font-mono text-xs text-gray-300">
+                    <p className="text-violet-400 mb-1">// Architecture — Dashboard IoT Boreal</p>
+                    <p className="text-emerald-400 mb-2">├── Frontend (React 18 + TypeScript)</p>
+                    <p className="pl-4">├── CapteurGrid — grille 32 capteurs temps réel</p>
+                    <p className="pl-4">├── ZoneThermique — 3 zones (prod, stock, expéd.)</p>
+                    <p className="pl-4">├── AlertPanel — alertes prédictives ML</p>
+                    <p className="pl-4">└── KPIDashboard — métriques consolidées</p>
+                    <p className="text-emerald-400 mt-2 mb-2">├── Backend (FastAPI + PostgreSQL)</p>
+                    <p className="pl-4">├── /api/capteurs — CRUD + historique</p>
+                    <p className="pl-4">├── /api/alertes — seuils + prédictions</p>
+                    <p className="pl-4">├── /api/zones — configuration HVAC</p>
+                    <p className="pl-4">└── /ws/stream — WebSocket temps réel</p>
+                    <p className="text-emerald-400 mt-2 mb-2">└── ML Pipeline (TensorFlow Lite)</p>
+                    <p className="pl-4">├── Modèle vibrations — prédiction panne 48h</p>
+                    <p className="pl-4">└── Modèle température — dérive MAPAQ</p>
+                  </div>
+                </div>
+              )}
+              {typed && (
+                <button type="button" onClick={advance} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-violet-500 text-white hover:bg-violet-600 shadow-sm">
+                  <ChevronRight className="h-3.5 w-3.5" /> Coder les composants
+                </button>
+              )}
+            </>
+          ) : <p className="text-xs text-gray-400 italic">Architecture — React + FastAPI + WebSocket + TF Lite</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 2: Composant CapteurCard */}
+      {stage >= 2 && (
+        <SBubble code="CTOB" collapsed={stage > 2}>
+          {stage === 2 ? (
+            <>
+              <TypewriterText text="Composant CapteurCard créé. Chaque capteur affiche sa valeur en temps réel, son statut, et change de couleur selon les seuils MAPAQ :" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && (
+                <div className="mt-3">
+                  <div className="bg-gray-900 rounded-xl px-4 py-3 font-mono text-xs overflow-hidden">
+                    <p className="text-violet-400">// CapteurCard.tsx — Composant capteur IoT</p>
+                    <p className="text-blue-400">interface CapteurProps {"{"}</p>
+                    <p className="text-gray-300 pl-2">id: string;         <span className="text-gray-500">// "TEMP-01" à "TEMP-32"</span></p>
+                    <p className="text-gray-300 pl-2">type: <span className="text-emerald-400">"temperature"</span> | <span className="text-emerald-400">"humidite"</span> | <span className="text-emerald-400">"vibration"</span>;</p>
+                    <p className="text-gray-300 pl-2">zone: <span className="text-emerald-400">"production"</span> | <span className="text-emerald-400">"stockage"</span> | <span className="text-emerald-400">"expedition"</span>;</p>
+                    <p className="text-gray-300 pl-2">valeur: number;</p>
+                    <p className="text-gray-300 pl-2">seuil_min: number;  <span className="text-gray-500">// MAPAQ: -25°C ± 2°C</span></p>
+                    <p className="text-gray-300 pl-2">seuil_max: number;</p>
+                    <p className="text-gray-300 pl-2">prediction_panne?: number; <span className="text-gray-500">// heures avant panne</span></p>
+                    <p className="text-blue-400">{"}"}</p>
+                    <p className="mt-2 text-gray-500">// Statuts: vert (normal), jaune (attention), rouge (critique)</p>
+                    <p className="text-gray-500">// Seuils MAPAQ: congélation -25°C ±2°C, réfrigéré -18°C ±2°C</p>
+                  </div>
+                  <div className="mt-2 grid grid-cols-3 gap-1.5">
+                    {[
+                      { zone: "Production", capteurs: "14", status: "OK", color: "bg-emerald-50 border-emerald-200 text-emerald-700" },
+                      { zone: "Stockage", capteurs: "12", status: "OK", color: "bg-emerald-50 border-emerald-200 text-emerald-700" },
+                      { zone: "Expédition", capteurs: "6", status: "OK", color: "bg-emerald-50 border-emerald-200 text-emerald-700" },
+                    ].map(z => (
+                      <div key={z.zone} className={`border rounded-lg px-2 py-1.5 text-center ${z.color}`}>
+                        <p className="text-xs font-bold">{z.zone}</p>
+                        <p className="text-xs">{z.capteurs} capteurs — {z.status}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {typed && (
+                <button type="button" onClick={advance} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-violet-500 text-white hover:bg-violet-600 shadow-sm">
+                  <ChevronRight className="h-3.5 w-3.5" /> Backend API + WebSocket
+                </button>
+              )}
+            </>
+          ) : <p className="text-xs text-gray-400 italic">CapteurCard — 32 capteurs, 3 zones, seuils MAPAQ</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 3: Backend API + alertes prédictives */}
+      {stage >= 3 && (
+        <SBubble code="CTOB" collapsed={stage > 3}>
+          {stage === 3 ? (
+            <>
+              <TypewriterText text="Backend API déployé. 4 endpoints REST + WebSocket streaming. Le modèle ML de prédiction de pannes est entraîné sur les données historiques de maintenance Boreal :" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && (
+                <div className="mt-3 space-y-2">
+                  <div className="bg-gray-900 rounded-xl px-4 py-3 font-mono text-xs text-gray-300">
+                    <p className="text-violet-400 mb-1">// API Endpoints — FastAPI</p>
+                    <p><span className="text-emerald-400">GET</span>  /api/capteurs          <span className="text-gray-500">→ 32 capteurs, filtre par zone</span></p>
+                    <p><span className="text-amber-400">POST</span> /api/alertes/config     <span className="text-gray-500">→ Seuils MAPAQ personnalisables</span></p>
+                    <p><span className="text-emerald-400">GET</span>  /api/predictions        <span className="text-gray-500">→ Prédictions ML 48h glissant</span></p>
+                    <p><span className="text-emerald-400">GET</span>  /api/kpis/dashboard    <span className="text-gray-500">→ Métriques consolidées</span></p>
+                    <p className="mt-2"><span className="text-blue-400">WS</span>   /ws/stream             <span className="text-gray-500">→ Temps réel, 1 msg/sec</span></p>
+                  </div>
+                  <div className="bg-gray-900 rounded-xl px-4 py-3 font-mono text-xs text-gray-300">
+                    <p className="text-violet-400 mb-1">// Modèle ML — Prédiction maintenance</p>
+                    <p className="text-gray-500">// Entraîné sur 18 arrêts historiques Boreal</p>
+                    <p>modele = TFLite(<span className="text-emerald-400">"vibration_anomaly_v1"</span>)</p>
+                    <p>precision = <span className="text-amber-400">94.2%</span>  <span className="text-gray-500">// sur données test</span></p>
+                    <p>anticipation = <span className="text-amber-400">48h</span>  <span className="text-gray-500">// avant panne</span></p>
+                    <p>faux_positifs = <span className="text-emerald-400">2.1%</span> <span className="text-gray-500">// acceptable</span></p>
+                  </div>
+                </div>
+              )}
+              {typed && (
+                <button type="button" onClick={advance} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-violet-500 text-white hover:bg-violet-600 shadow-sm">
+                  <ChevronRight className="h-3.5 w-3.5" /> Lancer les tests
+                </button>
+              )}
+            </>
+          ) : <p className="text-xs text-gray-400 italic">API — 4 endpoints + WebSocket + ML prédictif 94.2%</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 4: Tests */}
+      {stage >= 4 && (
+        <SBubble code="CTOB" collapsed={stage > 4}>
+          {stage === 4 ? (
+            <>
+              <TypewriterText text="Suite de tests complète. 4 catégories, tous les tests passent :" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && (
+                <div className="mt-3 space-y-1.5">
+                  {[
+                    { suite: "Tests unitaires — CapteurCard", count: "12/12", status: "PASS", detail: "Rendu, seuils, couleurs, responsive" },
+                    { suite: "Tests API — Endpoints REST", count: "8/8", status: "PASS", detail: "CRUD, filtres, pagination, auth" },
+                    { suite: "Tests WebSocket — Streaming", count: "4/4", status: "PASS", detail: "Connexion, déconnexion, latence <100ms, reconnexion auto" },
+                    { suite: "Tests ML — Prédictions", count: "6/6", status: "PASS", detail: "Précision 94.2%, faux positifs 2.1%, temps inférence <50ms" },
+                  ].map(t => (
+                    <div key={t.suite} className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-bold text-gray-800">{t.suite}</p>
+                          <span className="text-xs font-bold text-emerald-600">{t.count} {t.status}</span>
+                        </div>
+                        <p className="text-xs text-gray-500">{t.detail}</p>
+                      </div>
+                    </div>
+                  ))}
+                  <div className="bg-emerald-100 border border-emerald-300 rounded-lg px-3 py-2 text-center">
+                    <p className="text-sm font-bold text-emerald-700">30/30 tests — ALL PASS ✓</p>
+                  </div>
+                </div>
+              )}
+              {typed && (
+                <button type="button" onClick={advance} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-violet-500 text-white hover:bg-violet-600 shadow-sm">
+                  <ChevronRight className="h-3.5 w-3.5" /> Déployer et conclure
+                </button>
+              )}
+            </>
+          ) : <p className="text-xs text-gray-400 italic">Tests — 30/30 PASS (unitaires, API, WebSocket, ML)</p>}
+        </SBubble>
+      )}
+
+      {/* Stage 5: Déploiement + conclusion */}
+      {stage >= 5 && (
+        <SBubble code="CTOB">
+          {stage === 5 ? (
+            <>
+              <TypewriterText text="Dashboard IoT déployé en staging. Le code est prêt pour la Phase 4 du projet d'automatisation Boreal. Les 32 capteurs seront connectés physiquement lors de l'installation HVAC (semaines 12-20)." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && (
+                <div className="mt-3 space-y-3">
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                      <p className="text-sm font-bold text-emerald-700">Dashboard IoT — Déployé en staging</p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { label: "Composants", value: "4" },
+                        { label: "Endpoints", value: "5" },
+                        { label: "Tests", value: "30/30" },
+                        { label: "Capteurs", value: "32" },
+                        { label: "Zones", value: "3" },
+                        { label: "ML précision", value: "94.2%" },
+                      ].map(s => (
+                        <div key={s.label} className="bg-white/70 rounded-lg px-2 py-1.5 text-center">
+                          <p className="text-xs text-emerald-600">{s.label}</p>
+                          <p className="text-xs font-bold text-emerald-800">{s.value}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="bg-violet-50 border border-violet-200 rounded-lg px-3 py-2">
+                    <p className="text-xs text-violet-800"><span className="font-bold">Activation :</span> Le dashboard sera activé en production lors de la Phase 4 (S12-S20) du plan d'implantation. Les capteurs physiques seront installés et calibrés par l'intégrateur sélectionné via le jumelage SMART.</p>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : <p className="text-xs text-gray-400 italic">Dashboard IoT déployé — 32 capteurs, 3 zones, ML prédictif</p>}
+        </SBubble>
+      )}
+    </div>
+  );
+}
+
+/* ── Document Rich Chat (SBubble/TypewriterText — pattern ReflexionChat) ── */
+function DocumentConceptionChat({ stage, typed, setTyped, advance, onBack }: {
+  stage: number; typed: boolean; setTyped: (v: boolean) => void; advance: () => void; onBack?: () => void;
+}) {
+  return (
+    <div className="space-y-3">
+      {onBack && (
+        <button type="button" onClick={onBack} className="text-xs text-gray-500 hover:text-gray-700 cursor-pointer flex items-center gap-1">
+          <ArrowLeft className="h-3 w-3" /> Retour aux livrables
+        </button>
+      )}
+
+      {/* ── Stage 0: CarlOS intro + mobilise 3 spécialistes ── */}
+      {stage >= 0 && (
+        <>
+          {stage === 0 && (
+            <div className="flex items-center gap-1.5 ml-10 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">
+              <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+              <span className="text-xs text-amber-600 font-medium">Cahier de Projet SMART — Mode conception</span>
+            </div>
+          )}
+          <SBubble code="CEOB" collapsed={stage > 0}>
+            {stage === 0 ? (
+              <>
+                <TypewriterText text="Lancement du Cahier de Projet SMART pour Aliments Boreal inc. Ce document est le livrable central — il structure tout le processus de transformation industrielle, du diagnostic jusqu'à la sélection des intégrateurs. Méthodologie en 3 actes : diagnostic AI assisté, conception technique avec l'équipe, puis validation par des professionnels du réseau Usine Bleue." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+                {typed && (
+                  <div className="mt-3 space-y-1.5">
+                    {[
+                      { code: "COOB", name: "Olivier", role: "COO — Cahier des charges, processus & implantation", delay: "0ms" },
+                      { code: "CFOB", name: "Frank", role: "CFO — Budget, subventions, financement & ROI", delay: "400ms" },
+                      { code: "CTOB", name: "Tim", role: "CTO — Solutions techniques, IoT & robotique", delay: "800ms" },
+                    ].map(bot => (
+                      <div key={bot.code} className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 animate-in fade-in slide-in-from-left-2" style={{ animationDelay: bot.delay, animationFillMode: "both", animationDuration: "500ms" }}>
+                        <BotAvatar code={bot.code} size="sm" />
+                        <div className="flex-1">
+                          <span className="text-xs font-bold text-gray-700">{bot.name}</span>
+                          <span className="text-xs text-gray-500 ml-1.5">{bot.role}</span>
+                        </div>
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                        <span className="text-xs text-emerald-600 font-medium">Rejoint</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {typed && (
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {["Diagnostic terrain", "SWOT automatisé", "Scoring fournisseurs", "Budget & subventions", "Plan 20 semaines"].map(b => (
+                      <span key={b} className="text-xs bg-amber-50 border border-amber-200 text-amber-700 px-2.5 py-1 rounded-full font-medium">{b}</span>
+                    ))}
+                  </div>
+                )}
+                {typed && (
+                  <button type="button" onClick={advance} className="mt-3 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-amber-500 text-white hover:bg-amber-600 shadow-sm">
+                    <FileText className="h-3.5 w-3.5" /> Démarrer le cahier
+                  </button>
+                )}
+              </>
+            ) : <p className="text-xs text-gray-400 italic">Équipe mobilisée — Olivier, Frank, Tim — Cahier SMART lancé</p>}
+          </SBubble>
+        </>
+      )}
+
+      {/* ── Stage 1: Profil entreprise — CarlOS présente ── */}
+      {stage >= 1 && (
+        <SBubble code="CEOB" collapsed={stage > 1}>
+          {stage === 1 ? (
+            <>
+              <TypewriterText text="J'ai importé le profil complet depuis notre base. Aliments Boreal inc. — transformation alimentaire au Saguenay–Lac-Saint-Jean. Voici les données clés pour le cahier :" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && (
+                <>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    {[
+                      { label: "Raison sociale", value: "Aliments Boreal inc." },
+                      { label: "Secteur", value: "Transformation alimentaire" },
+                      { label: "Localisation", value: "Saguenay, Québec" },
+                      { label: "Employés", value: "85 (prod: 62, admin: 23)" },
+                      { label: "CA annuel", value: "18M$" },
+                      { label: "Superficie", value: "42 000 pi² (usine + froid)" },
+                    ].map(k => (
+                      <div key={k.label} className="bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-2">
+                        <p className="text-xs text-gray-500">{k.label}</p>
+                        <p className="text-sm font-bold text-gray-900">{k.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-2 space-y-1">
+                    <p className="text-xs font-medium text-gray-700">Certifications et équipements :</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {["HACCP", "SQF Niveau 2", "MAPAQ conforme", "2 lignes de production", "Entreposage -18°C / -25°C", "Flotte 8 camions réfrigérés"].map(c => (
+                        <span key={c} className="text-xs bg-gray-100 border border-gray-200 text-gray-700 px-2 py-0.5 rounded-full">{c}</span>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+              {typed && (
+                <>
+                  <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 ml-auto max-w-[85%]">
+                    <p className="text-xs text-blue-700 font-medium">Profil confirmé. Les données sont à jour. On passe au cahier des charges.</p>
+                  </div>
+                  <button type="button" onClick={advance} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-amber-500 text-white hover:bg-amber-600 shadow-sm">
+                    <ChevronRight className="h-3.5 w-3.5" /> Cahier des charges
+                  </button>
+                </>
+              )}
+            </>
+          ) : <p className="text-xs text-gray-400 italic">Profil Boreal validé — 85 employés, 18M$/an, HACCP, 42 000 pi²</p>}
+        </SBubble>
+      )}
+
+      {/* ── Stage 2: Olivier — Cahier des charges détaillé ── */}
+      {stage >= 2 && (
+        <SBubble code="COOB" collapsed={stage > 2}>
+          {stage === 2 ? (
+            <>
+              <TypewriterText text="Cahier des charges rédigé à partir de l'audit terrain. J'ai identifié 4 axes d'intervention prioritaires avec les spécifications techniques pour chacun :" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && (
+                <div className="mt-3 space-y-2">
+                  {[
+                    { num: "1", title: "Efficacité énergétique — Réfrigération CO₂", specs: ["Remplacer le système R-404A (GWP 3922) par CO₂ transcritique (GWP 1)", "Capacité requise : 350 kW froid à -25°C et -18°C", "Récupération chaleur résiduelle pour préchauffage eau sanitaire", "Conformité protocole de Montréal 2028"], color: "bg-orange-50 border-orange-200" },
+                    { num: "2", title: "Récupération thermique — Chaudières condensation", specs: ["Remplacement des 2 chaudières atmosphériques (1985) par condensation", "Couplage avec la chaleur résiduelle du système CO₂", "Réduction GES estimée : 35% des émissions Scope 1", "Rendement cible : 95% vs 78% actuel"], color: "bg-red-50 border-red-200" },
+                    { num: "3", title: "Robotisation — Cobot palettisation UR10e", specs: ["Automatiser la palettisation en fin de ligne (100% manuelle)", "12 employés réassignés vers contrôle qualité et supervision", "Cadence cible : 60 palettes/h vs 24 actuellement", "Intégration ERP pour traçabilité automatique des lots"], color: "bg-violet-50 border-violet-200" },
+                    { num: "4", title: "Industrie 4.0 — HVAC + IoT monitoring", specs: ["Plateforme IoT temps réel : température, humidité, vibrations", "HVAC intelligent avec zones thermiques indépendantes", "Alertes prédictives maintenance (ML sur données capteurs)", "Dashboard opérationnel accessible direction + terrain"], color: "bg-cyan-50 border-cyan-200" },
+                  ].map(a => (
+                    <div key={a.num} className={`border rounded-xl px-3 py-2.5 ${a.color}`}>
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="text-xs font-bold text-amber-600 bg-amber-100 rounded-full w-5 h-5 flex items-center justify-center shrink-0">{a.num}</span>
+                        <p className="text-xs font-bold text-gray-800">{a.title}</p>
+                      </div>
+                      <div className="space-y-0.5 ml-7">
+                        {a.specs.map((s, i) => (
+                          <p key={i} className="text-xs text-gray-600 flex items-start gap-1.5">
+                            <span className="text-amber-500 mt-0.5">•</span> {s}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {typed && (
+                <>
+                  <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 ml-auto max-w-[85%]">
+                    <p className="text-xs text-blue-700 font-medium">Les 4 axes sont clairs. Lance le diagnostic pour chiffrer les pertes actuelles.</p>
+                  </div>
+                  <button type="button" onClick={advance} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-amber-500 text-white hover:bg-amber-600 shadow-sm">
+                    <ChevronRight className="h-3.5 w-3.5" /> Lancer le diagnostic
+                  </button>
+                </>
+              )}
+            </>
+          ) : <p className="text-xs text-gray-400 italic">Cahier des charges — 4 axes, 16 spécifications validées</p>}
+        </SBubble>
+      )}
+
+      {/* ── Stage 3: CarlOS — Diagnostic multi-axe détaillé ── */}
+      {stage >= 3 && (
+        <SBubble code="CEOB" collapsed={stage > 3}>
+          {stage === 3 ? (
+            <>
+              <TypewriterText text="Diagnostic multi-axe terminé. J'ai croisé les données terrain, les factures énergétiques et les rapports de maintenance. Résultat : 278 000$/an en pertes évitables sur 3 axes critiques." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && (
+                <div className="mt-3 space-y-2">
+                  {[
+                    { axe: "Énergie", perte: "142 000$", pct: 51, color: "bg-red-500", items: [
+                      "Réfrigérant R-404A : surconsommation de 23% vs benchmark industrie",
+                      "Chaudières atmosphériques : rendement 78% (norme 2026 : 95%)",
+                      "Aucune récupération de chaleur résiduelle (perte sèche : 45 000$/an)",
+                      "Hausse tarifaire Hydro-Québec prévue +8% en 2027",
+                    ]},
+                    { axe: "Main-d'œuvre", perte: "98 000$", pct: 35, color: "bg-amber-500", items: [
+                      "12 postes palettisation manuelle — tâche répétitive, risque TMS",
+                      "Taux de roulement 28% sur ces postes (vs 12% moyenne usine)",
+                      "Coût formation et remplacement : 4 200$/employé/an",
+                      "Pénurie régionale Saguenay — délai moyen recrutement : 14 semaines",
+                    ]},
+                    { axe: "Maintenance", perte: "38 000$", pct: 14, color: "bg-orange-500", items: [
+                      "Zéro capteur IoT — maintenance 100% réactive",
+                      "18 arrêts non planifiés l'an dernier (moy. 4.2h chacun)",
+                      "Perte de production estimée : 2 100$/arrêt",
+                      "Risque conformité MAPAQ : 3 écarts température non détectés en 2025",
+                    ]},
+                  ].map(d => (
+                    <div key={d.axe} className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-xs font-bold text-gray-800">{d.axe}</span>
+                        <span className="text-xs font-bold text-red-600">{d.perte}/an ({d.pct}%)</span>
+                      </div>
+                      <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden mb-2">
+                        <div className={`h-full ${d.color} rounded-full`} style={{ width: `${d.pct}%` }} />
+                      </div>
+                      <div className="space-y-0.5">
+                        {d.items.map((item, i) => (
+                          <p key={i} className="text-xs text-gray-600 flex items-start gap-1.5">
+                            <span className="text-red-400 mt-0.5">•</span> {item}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                  <div className="bg-red-50 border border-red-200 rounded-xl px-3 py-2.5 text-center">
+                    <p className="text-sm font-bold text-red-700">Total pertes évitables : 278 000$/an</p>
+                    <p className="text-xs text-red-500 mt-0.5">Diagnostic SMART — données croisées avec les benchmarks industrie agroalimentaire</p>
+                  </div>
+                </div>
+              )}
+              {typed && (
+                <button type="button" onClick={advance} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-amber-500 text-white hover:bg-amber-600 shadow-sm">
+                  <ChevronRight className="h-3.5 w-3.5" /> Solutions recommandées
+                </button>
+              )}
+            </>
+          ) : <p className="text-xs text-gray-400 italic">Diagnostic — 278 000$/an en pertes (énergie 51%, main-d'œuvre 35%, maintenance 14%)</p>}
+        </SBubble>
+      )}
+
+      {/* ── Stage 4: Tim — Solutions techniques détaillées ── */}
+      {stage >= 4 && (
+        <SBubble code="CTOB" collapsed={stage > 4}>
+          {stage === 4 ? (
+            <>
+              <TypewriterText text="4 solutions recommandées, validées techniquement. J'ai consulté les fiches fournisseurs du réseau Usine Bleue et croisé avec les spécifications du cahier des charges. Voici le détail par solution :" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && (
+                <div className="mt-3 space-y-2">
+                  {[
+                    { sol: "Système CO₂ transcritique", cout: "485 000$", eco: "142 000$/an", roi: "3.4 ans", icon: "\u2744\ufe0f", details: [
+                      "Technologie : CO₂ transcritique (R-744), GWP = 1",
+                      "Capacité : 350 kW, double température (-18°C / -25°C)",
+                      "Récupération chaleur : 80 kW réutilisable pour eau chaude",
+                      "Fournisseur réseau : Carnot Réfrigération (Québec)",
+                    ]},
+                    { sol: "Chaudières à condensation", cout: "195 000$", eco: "58 000$/an", roi: "3.4 ans", icon: "\ud83d\udd25", details: [
+                      "2 unités 500 MBH, rendement 95% (vs 78% actuel)",
+                      "Couplage thermique avec chaleur résiduelle CO₂",
+                      "Réduction GES Scope 1 : -35% (conformité carbone 2028)",
+                      "Installation sans arrêt de production (basculement séquentiel)",
+                    ]},
+                    { sol: "Cobot UR10e — palettisation", cout: "205 000$", eco: "98 000$/an", roi: "2.1 ans", icon: "\ud83e\udd16", details: [
+                      "Universal Robots UR10e, charge utile 12.5 kg",
+                      "Cadence : 60 palettes/h (vs 24 manuellement)",
+                      "12 employés réassignés vers contrôle qualité",
+                      "Intégration ERP : traçabilité lot automatique",
+                    ]},
+                    { sol: "HVAC + plateforme IoT", cout: "215 000$", eco: "38 000$/an", roi: "5.7 ans", icon: "\ud83d\udcf6", details: [
+                      "32 capteurs (température, humidité, vibrations, énergie)",
+                      "HVAC zones indépendantes (production, entreposage, expédition)",
+                      "Alertes prédictives ML — anticipation pannes 48h à l'avance",
+                      "Dashboard temps réel (direction + terrain + MAPAQ)",
+                    ]},
+                  ].map(s => (
+                    <div key={s.sol} className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-lg">{s.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-gray-800">{s.sol}</p>
+                          <div className="flex items-center gap-3 mt-0.5">
+                            <span className="text-xs text-amber-700 font-bold">{s.cout}</span>
+                            <span className="text-xs text-emerald-600">Économie : {s.eco}</span>
+                            <span className="text-xs text-blue-600">ROI : {s.roi}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-0.5 ml-8">
+                        {s.details.map((d, i) => (
+                          <p key={i} className="text-xs text-gray-600 flex items-start gap-1.5">
+                            <span className="text-cyan-500 mt-0.5">•</span> {d}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {typed && (
+                <>
+                  <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 ml-auto max-w-[85%]">
+                    <p className="text-xs text-blue-700 font-medium">Excellent. Les solutions sont solides. Frank, montre-nous le montage financier.</p>
+                  </div>
+                  <button type="button" onClick={advance} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-amber-500 text-white hover:bg-amber-600 shadow-sm">
+                    <ChevronRight className="h-3.5 w-3.5" /> Budget et financement
+                  </button>
+                </>
+              )}
+            </>
+          ) : <p className="text-xs text-gray-400 italic">4 solutions validées — 1.1M$ invest., 336K$/an économies, ROI moyen 2.8 ans</p>}
+        </SBubble>
+      )}
+
+      {/* ── Stage 5: Frank — Budget et montage financier ── */}
+      {stage >= 5 && (
+        <SBubble code="CFOB" collapsed={stage > 5}>
+          {stage === 5 ? (
+            <>
+              <TypewriterText text="Montage financier consolidé. L'investissement brut de 1,1M$ descend à 508 000$ net grâce à 3 programmes de financement. J'ai validé l'admissibilité de Boreal à chaque programme." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && (
+                <div className="mt-3 space-y-1.5">
+                  {/* Investissement brut détaillé */}
+                  <p className="text-xs font-bold text-gray-700 mb-1">Ventilation de l'investissement :</p>
+                  {[
+                    { poste: "Système CO₂ transcritique", montant: "485 000$", pct: "44%" },
+                    { poste: "Chaudières condensation", montant: "195 000$", pct: "18%" },
+                    { poste: "Cobot UR10e + intégration", montant: "205 000$", pct: "19%" },
+                    { poste: "HVAC + plateforme IoT", montant: "215 000$", pct: "19%" },
+                  ].map(p => (
+                    <div key={p.poste} className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5">
+                      <span className="text-xs text-gray-700">{p.poste}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-400">{p.pct}</span>
+                        <span className="text-xs font-bold text-gray-900">{p.montant}</span>
+                      </div>
+                    </div>
+                  ))}
+                  <div className="flex items-center justify-between bg-gray-100 border border-gray-300 rounded-lg px-3 py-2 font-bold">
+                    <span className="text-xs text-gray-800">Total investissement brut</span>
+                    <span className="text-sm text-gray-900">1 100 000$</span>
+                  </div>
+
+                  {/* Subventions et déductions */}
+                  <p className="text-xs font-bold text-gray-700 mt-3 mb-1">Programmes de financement :</p>
+                  {[
+                    { label: "Subvention MESI — Productivité innovation", montant: "-385 000$", detail: "40% des coûts admissibles (équipements + installation)", color: "text-emerald-600" },
+                    { label: "Programme BDC Industrie 4.0", montant: "-125 000$", detail: "Prêt pardonnable — robotisation + IoT manufacturier", color: "text-emerald-600" },
+                    { label: "Crédit d'impôt RS&DE", montant: "-82 000$", detail: "15% fédéral + 14% Québec sur composante R&D (IoT, ML)", color: "text-emerald-600" },
+                  ].map(r => (
+                    <div key={r.label} className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-700 font-medium">{r.label}</span>
+                        <span className={`text-xs font-bold ${r.color}`}>{r.montant}</span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-0.5">{r.detail}</p>
+                    </div>
+                  ))}
+
+                  {/* Résultat net */}
+                  <div className="flex items-center justify-between bg-amber-50 border border-amber-300 rounded-xl px-3 py-2.5 mt-1">
+                    <span className="text-xs font-bold text-amber-800">Coût net pour Aliments Boreal</span>
+                    <span className="text-sm font-bold text-amber-700">508 000$</span>
+                  </div>
+
+                  {/* KPIs financiers */}
+                  <div className="grid grid-cols-3 gap-2 mt-2">
+                    {[
+                      { label: "Économies annuelles", value: "336 000$", sub: "récurrentes" },
+                      { label: "ROI net", value: "1.5 ans", sub: "sur investissement net" },
+                      { label: "VAN 5 ans", value: "+1.17M$", sub: "taux actualisation 8%" },
+                    ].map(m => (
+                      <div key={m.label} className="bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-2 text-center">
+                        <p className="text-xs text-gray-500">{m.label}</p>
+                        <p className="text-sm font-bold text-emerald-700">{m.value}</p>
+                        <p className="text-xs text-emerald-500">{m.sub}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {typed && (
+                <button type="button" onClick={advance} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-amber-500 text-white hover:bg-amber-600 shadow-sm">
+                  <ChevronRight className="h-3.5 w-3.5" /> Plan d'implantation
+                </button>
+              )}
+            </>
+          ) : <p className="text-xs text-gray-400 italic">Budget — 1.1M$ brut → 508K$ net, 3 subventions, ROI 1.5 ans, VAN +1.17M$</p>}
+        </SBubble>
+      )}
+
+      {/* ── Stage 6: Olivier — Plan d'implantation 20 semaines ── */}
+      {stage >= 6 && (
+        <SBubble code="COOB" collapsed={stage > 6}>
+          {stage === 6 ? (
+            <>
+              <TypewriterText text="Plan d'implantation structuré sur 20 semaines. Les phases sont parallélisables pour minimiser l'impact sur la production. Chaque phase a un responsable technique et des jalons de validation." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && (
+                <div className="mt-3 space-y-2">
+                  {[
+                    { phase: "Phase 1", title: "Réfrigération CO₂", bot: "CTOB", period: "S1 → S8 (8 sem.)", items: ["Démontage R-404A progressif (sans arrêt production)", "Installation compresseurs CO₂ transcritique", "Raccordement récupération chaleur", "Tests performance + certification MAPAQ"], color: "bg-orange-50 border-orange-200" },
+                    { phase: "Phase 2", title: "Chaudières condensation", bot: "CTOB", period: "S4 → S10 (6 sem.)", items: ["Installation séquentielle (1 chaudière à la fois)", "Couplage thermique avec chaleur CO₂ résiduelle", "Calibration rendement 95%", "Validation réduction GES Scope 1"], color: "bg-red-50 border-red-200" },
+                    { phase: "Phase 3", title: "Cobot palettisation", bot: "COOB", period: "S8 → S16 (8 sem.)", items: ["Installation cellule robotisée UR10e en fin de ligne", "Programmation séquences palettisation (6 formats)", "Formation 12 opérateurs → postes contrôle qualité", "Intégration ERP traçabilité lot automatique"], color: "bg-violet-50 border-violet-200" },
+                    { phase: "Phase 4", title: "HVAC + IoT monitoring", bot: "CTOB", period: "S12 → S20 (8 sem.)", items: ["Déploiement 32 capteurs (temp, humidité, vibrations)", "Installation HVAC zones indépendantes", "Configuration alertes prédictives (modèle ML)", "Formation équipe + dashboard opérationnel live"], color: "bg-cyan-50 border-cyan-200" },
+                  ].map(p => (
+                    <div key={p.phase} className={`border rounded-xl px-3 py-2.5 ${p.color}`}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <BotAvatar code={p.bot} size="sm" />
+                        <div className="flex-1">
+                          <p className="text-xs font-bold text-gray-800">{p.phase} — {p.title}</p>
+                          <p className="text-xs text-gray-500">{p.period}</p>
+                        </div>
+                      </div>
+                      <div className="space-y-0.5 ml-8">
+                        {p.items.map((item, i) => (
+                          <p key={i} className="text-xs text-gray-600 flex items-start gap-1.5">
+                            <span className="text-amber-500 mt-0.5">•</span> {item}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                    <p className="text-xs text-amber-800"><span className="font-bold">Gouvernance :</span> Comité de pilotage mensuel, rapports d'avancement hebdomadaires, jalons de validation à chaque fin de phase avant passage à la suivante.</p>
+                  </div>
+                </div>
+              )}
+              {typed && (
+                <>
+                  <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 ml-auto max-w-[85%]">
+                    <p className="text-xs text-blue-700 font-medium">Le plan est réaliste. On termine avec les KPIs de suivi et la conclusion.</p>
+                  </div>
+                  <button type="button" onClick={advance} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-amber-500 text-white hover:bg-amber-600 shadow-sm">
+                    <ChevronRight className="h-3.5 w-3.5" /> KPIs et suivi
+                  </button>
+                </>
+              )}
+            </>
+          ) : <p className="text-xs text-gray-400 italic">Implantation — 20 semaines, 4 phases parallélisables, gouvernance mensuelle</p>}
+        </SBubble>
+      )}
+
+      {/* ── Stage 7: CarlOS — KPIs détaillés ── */}
+      {stage >= 7 && (
+        <SBubble code="CEOB" collapsed={stage > 7}>
+          {stage === 7 ? (
+            <>
+              <TypewriterText text="4 indicateurs de performance définis pour piloter le projet. Chaque KPI a une baseline, une cible, une méthode de mesure et un responsable." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && (
+                <div className="mt-3 space-y-2">
+                  {[
+                    { label: "Coût énergie annuel", actuel: "1.2M$/an", cible: "840K$/an", delta: "-30%", methode: "Factures Hydro-Québec + compteurs sous-usine", responsable: "Frank (CFO)", icon: "⚡" },
+                    { label: "Cadence palettisation", actuel: "24 palettes/h", cible: "60 palettes/h", delta: "+150%", methode: "Compteur cobot + rapport ERP quotidien", responsable: "Olivier (COO)", icon: "📦" },
+                    { label: "Conformité température", actuel: "94%", cible: "99.5%", delta: "+5.5 pts", methode: "Capteurs IoT continus (seuil MAPAQ ±2°C)", responsable: "Tim (CTO)", icon: "🌡️" },
+                    { label: "Arrêts non planifiés", actuel: "18/an", cible: "4/an", delta: "-78%", methode: "Alertes prédictives ML + log maintenance GMAO", responsable: "Tim (CTO)", icon: "🔧" },
+                  ].map(k => (
+                    <div key={k.label} className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="text-sm">{k.icon}</span>
+                        <p className="text-xs font-bold text-gray-800">{k.label}</p>
+                        <span className="text-xs font-bold text-emerald-600 ml-auto">{k.delta}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 mb-1.5">
+                        <div className="bg-red-50 rounded-lg px-2 py-1 text-center">
+                          <p className="text-xs text-gray-500">Actuel</p>
+                          <p className="text-xs font-bold text-red-600">{k.actuel}</p>
+                        </div>
+                        <div className="bg-emerald-50 rounded-lg px-2 py-1 text-center">
+                          <p className="text-xs text-gray-500">Cible</p>
+                          <p className="text-xs font-bold text-emerald-700">{k.cible}</p>
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-500"><span className="font-medium">Mesure :</span> {k.methode}</p>
+                      <p className="text-xs text-gray-500"><span className="font-medium">Responsable :</span> {k.responsable}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {typed && (
+                <button type="button" onClick={advance} className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all bg-amber-500 text-white hover:bg-amber-600 shadow-sm">
+                  <CheckCircle2 className="h-3.5 w-3.5" /> Conclure le pré-rapport
+                </button>
+              )}
+            </>
+          ) : <p className="text-xs text-gray-400 italic">4 KPIs définis — énergie -30%, palettisation +150%, temp 99.5%, arrêts -78%</p>}
+        </SBubble>
+      )}
+
+      {/* ── Stage 8: CarlOS — Conclusion + finalisation du cahier ── */}
+      {stage >= 8 && (
+        <SBubble code="CEOB" collapsed={stage > 8}>
+          {stage === 8 ? (
+            <>
+              <TypewriterText text="Pré-rapport de projet SMART terminé. 11 sections générées et validées par 3 spécialistes de la Brain Team. Voici le résumé complet du cahier :" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && (
+                <div className="mt-3 space-y-3">
+                  {/* Completion badge */}
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                      <p className="text-sm font-bold text-emerald-700">Cahier de Projet SMART — Conclusions</p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { label: "Sections", value: "11/11" },
+                        { label: "Invest. net", value: "508K$" },
+                        { label: "Économies/an", value: "278K$" },
+                        { label: "ROI net", value: "22 mois" },
+                        { label: "Implantation", value: "20 sem." },
+                        { label: "Spécialistes", value: "3 bots" },
+                      ].map(s => (
+                        <div key={s.label} className="bg-white/70 rounded-lg px-2 py-1.5 text-center">
+                          <p className="text-xs text-emerald-600">{s.label}</p>
+                          <p className="text-xs font-bold text-emerald-800">{s.value}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <button type="button" onClick={advance} className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold cursor-pointer transition-all bg-amber-500 text-white hover:bg-amber-600 shadow-md hover:shadow-lg">
+                    <CheckCircle2 className="h-4 w-4" />
+                    Finaliser le cahier — Conclusions et validation
+                  </button>
+                </div>
+              )}
+            </>
+          ) : <p className="text-xs text-gray-400 italic">Conclusions du cahier — 11 sections, 508K$ net, ROI 22 mois</p>}
+        </SBubble>
+      )}
+
+      {/* ── Stage 9: CarlOS — Validation ingénieur + jumelage séparé ── */}
+      {stage >= 9 && (
+        <SBubble code="CEOB">
+          <TypewriterText text="Le cahier de projet est maintenant finalisé. Avant de passer à l'exécution, une étape importante :" speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+          {typed && (
+            <div className="mt-3 space-y-3">
+              {/* Document généré badge */}
+              <div className="bg-emerald-50 border-2 border-emerald-300 rounded-xl px-4 py-3 text-center">
+                <CheckCircle2 className="h-6 w-6 text-emerald-500 mx-auto mb-1" />
+                <p className="text-sm font-bold text-emerald-700">Cahier de Projet SMART — Généré avec succès</p>
+                <p className="text-xs text-emerald-600 mt-1">11 sections complètes — Document disponible dans la zone Workspace</p>
+              </div>
+
+              {/* Validation banner — ingénieur en automatisation */}
+              <div className="bg-amber-50 border-2 border-amber-300 rounded-xl px-4 py-4">
+                <div className="flex items-start gap-3">
+                  <Shield className="h-6 w-6 text-amber-600 shrink-0 mt-0.5" />
+                  <div className="space-y-2">
+                    <p className="text-sm font-bold text-amber-900">Validation professionnelle requise</p>
+                    <p className="text-xs text-gray-700 leading-relaxed">
+                      Ce rapport a été généré par les agents AI de la Brain Team (CarlOS, Olivier, Frank, Tim).
+                      Bien que les données et recommandations soient basées sur des analyses rigoureuses,
+                      <span className="font-bold text-amber-800"> ce cahier de projet doit être validé, bonifié et complété par un ingénieur en automatisation industrielle certifié</span> avant
+                      d'être considéré comme final.
+                    </p>
+                    <div className="bg-white border border-amber-200 rounded-lg px-3 py-2.5">
+                      <p className="text-xs font-bold text-gray-800 mb-1.5">Vous avez un ingénieur en automatisation à l'interne?</p>
+                      <p className="text-xs text-gray-600 mb-2">Transmettez-lui ce rapport pour révision et approbation.</p>
+                      <div className="border-t border-amber-100 pt-2">
+                        <p className="text-xs font-bold text-gray-800 mb-1.5">Vous n'avez pas cette expertise à l'interne?</p>
+                        <p className="text-xs text-gray-600">
+                          Faites une <span className="font-bold text-amber-700">demande de jumelage dans le réseau Orbit9</span> pour
+                          trouver la meilleure ressource disponible. L'ingénieur en automatisation sélectionné par
+                          Aliments Boreal analysera votre dossier, validera les solutions techniques proposées et
+                          complètera le rapport avec son expertise terrain.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 mt-1">
+                      {["Validation technique des 4 solutions", "Vérification des coûts et délais", "Bonification des spécifications", "Signature professionnelle du cahier"].map(item => (
+                        <span key={item} className="text-xs bg-amber-100 border border-amber-200 text-amber-800 px-2 py-0.5 rounded-full">{item}</span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bouton Jumelage SMART — simulation séparée */}
+              <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <Users className="h-5 w-5 text-blue-600 shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-sm font-bold text-blue-800">Jumelage SMART disponible</p>
+                    <p className="text-xs text-blue-600 mt-0.5">Lancez une session de jumelage Orbit9 pour trouver un ingénieur qualifié dans le réseau REAI (130+ professionnels).</p>
+                  </div>
+                  <Atom className="h-4 w-4 text-blue-400" />
+                </div>
+              </div>
+            </div>
+          )}
+        </SBubble>
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════
+   JUMELAGE SMART — Scan réseau, qualification AI, scoring
+   Copie riche d'AtelierJumelage: 14 stages internes, conférences AI,
+   challenge/defense, processing animations, AutoAdvance
+   ══════════════════════════════════════════════════════════════ */
+
+// Helper: AutoAdvance — auto-progress after delay (processing animation feel)
+function JAutoAdvance({ onComplete, delay }: { onComplete: () => void; delay: number }) {
+  useEffect(() => {
+    const t = setTimeout(onComplete, delay);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return null;
+}
+
+// Helper: ConferenceSession — rich supplier dialogue with insights
+function JConferenceSession({
+  sessionNum, totalSessions, supplierInfo, exchanges, insights, isActive, onExtract, isExtracted, onNext, nextLabel,
+}: {
+  sessionNum: number; totalSessions: number;
+  supplierInfo: { name: string; company: string; initial: string; color: string };
+  exchanges: readonly { from: "CPOB" | "supplier" | "user"; text: string }[];
+  insights: readonly string[];
+  isActive: boolean; onExtract: () => void; isExtracted: boolean; onNext: () => void; nextLabel: string;
+}) {
+  if (!isActive) {
+    return (
+      <div className="flex items-center gap-2 ml-10 py-1.5">
+        <div className="h-5 w-5 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+          <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
+        </div>
+        <span className="text-[9px] text-green-700 font-medium">Session {sessionNum} — {supplierInfo.company} terminee ({insights.length} points cles)</span>
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-3">
+      {/* Conference bar */}
+      <div className="bg-gray-900 rounded-xl px-4 py-2.5 flex items-center gap-3 mx-2">
+        <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+        <span className="text-[9px] text-gray-300 font-medium">Conference AI — Session {sessionNum}/{totalSessions}</span>
+        <div className="flex items-center gap-3 ml-auto">
+          <div className="flex items-center gap-1">
+            <BotAvatar code="CPOB" size="sm" />
+            <span className="text-[9px] text-gray-400">Paco</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center text-[9px] text-white font-bold">C</div>
+            <span className="text-[9px] text-gray-400">Carl</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className={cn("w-5 h-5 rounded-full flex items-center justify-center text-[9px] text-white font-bold", supplierInfo.color)}>
+              {supplierInfo.initial}
+            </div>
+            <span className="text-[9px] text-gray-400">{supplierInfo.company.split(" ")[0]}</span>
+          </div>
+        </div>
+      </div>
+      {/* Exchange bubbles */}
+      {exchanges.map((ex, i) => {
+        if (ex.from === "CPOB") {
+          return (
+            <SBubble key={i} code="CPOB" collapsed={false}>
+              <span className="text-sm text-gray-700 leading-relaxed">{ex.text}</span>
+            </SBubble>
+          );
+        }
+        if (ex.from === "user") {
+          return (
+            <div key={i} className="flex justify-end">
+              <div className="bg-blue-600 text-white rounded-xl rounded-tr-none px-3 py-2 max-w-[85%] shadow-sm">
+                <p className="text-[9px]">{ex.text}</p>
+              </div>
+            </div>
+          );
+        }
+        return (
+          <div key={i} className="flex gap-2.5">
+            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-1">
+              <Building2 className="h-3.5 w-3.5 text-emerald-600" />
+            </div>
+            <div className="bg-emerald-50 border border-emerald-200 rounded-xl rounded-tl-none px-3 py-2.5 shadow-sm flex-1 border-l-2 border-l-emerald-400">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[11px] font-semibold text-emerald-800">{supplierInfo.name}</span>
+                <span className="text-[9px] text-emerald-600">{supplierInfo.company}</span>
+              </div>
+              <p className="text-sm text-gray-700 leading-relaxed">{ex.text}</p>
+            </div>
+          </div>
+        );
+      })}
+      {/* Key insights card */}
+      <div className="ml-2 space-y-2">
+        <div className="border border-amber-200 rounded-xl p-3 bg-amber-50/50">
+          <p className="text-[9px] font-bold text-amber-800 mb-1.5 flex items-center gap-1">
+            <Sparkles className="h-3.5 w-3.5" /> Points cles — Session {sessionNum}
+          </p>
+          {insights.map((insight, i) => (
+            <div key={i} className="flex items-start gap-1.5 mb-1">
+              <CheckCircle2 className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
+              <span className="text-[9px] text-amber-900">{insight}</span>
+            </div>
+          ))}
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button type="button" onClick={onExtract} disabled={isExtracted} className={cn("text-[9px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all", isExtracted ? "bg-green-100 text-green-700 border border-green-300" : "bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100")}>
+            <Pin className="h-3.5 w-3.5" /> {isExtracted ? "Extrait" : "Extraire les points cles"}
+          </button>
+          <button type="button" onClick={onNext} className="text-[9px] bg-amber-600 text-white px-4 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-amber-700 font-medium cursor-pointer">
+            <ArrowRight className="h-3.5 w-3.5" /> {nextLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Main chat: 14 internal stages, calls advance() at 5 milestones
+const J_STAGE_ORDER = ["intro","criteres-thinking","criteres","user-critere","scan","top3","conference-setup","conference-energia","conference-techno","conference-green","scoring","winner-intro","winner","transition"] as const;
+type JStageKey = typeof J_STAGE_ORDER[number];
+
+function JumelageConceptionChat({ stage: _deliverableStage, typed, setTyped, advance, onBack }: {
+  stage: number; typed: boolean; setTyped: (v: boolean) => void; advance: () => void; onBack?: () => void;
+}) {
+  const [jStage, setJStage] = useState<JStageKey>("intro");
+  const [introTyped, setIntroTyped] = useState(false);
+  const [criteresTyped, setCriteresTyped] = useState(false);
+  const [criteresModified, setCriteresModified] = useState(false);
+  const [setupTyped, setSetupTyped] = useState(false);
+  const [extractedNotes, setExtractedNotes] = useState<string[]>([]);
+  const [showJumelageDetail, setShowJumelageDetail] = useState(false);
+  const [showChallengeDefense, setShowChallengeDefense] = useState(false);
+  const [showAlternatives, setShowAlternatives] = useState(false);
+
+  const si = J_STAGE_ORDER.indexOf(jStage);
+  const handleExtract = (note: string) => { if (!extractedNotes.includes(note)) setExtractedNotes(prev => [...prev, note]); };
+
+  return (
+    <div className="space-y-3">
+      {onBack && (
+        <button type="button" onClick={onBack} className="text-xs text-gray-500 hover:text-gray-700 cursor-pointer flex items-center gap-1">
+          <ArrowLeft className="h-3 w-3" /> Retour aux livrables
+        </button>
+      )}
+
+      {/* === INTRO === */}
+      {jStage === "intro" && (
+        <SBubble code="CEOB" collapsed={false}>
+          <TypewriterText text="Le pre-rapport de visite est genere. Maintenant, au lieu d'envoyer un integrateur a l'aveugle, on active le Jumelage SMART pour trouver LE bon partenaire dans notre reseau de 130+ membres certifies Usine Bleue. Ce processus prenait 6 semaines avec des humains — nos agents le font en quelques minutes." speed={10} className="text-sm text-gray-700 leading-relaxed" onComplete={() => setIntroTyped(true)} />
+          {introTyped && (
+            <div className="mt-3 pt-3 border-t border-gray-100">
+              <button type="button" onClick={() => setJStage("criteres-thinking")} className="text-xs text-white px-4 py-2 rounded-full flex items-center gap-1.5 font-bold cursor-pointer shadow-md hover:shadow-lg transition-shadow bg-amber-600 hover:bg-amber-700">
+                <Send className="h-3.5 w-3.5" /> Generer les criteres de matching
+              </button>
+            </div>
+          )}
+        </SBubble>
+      )}
+      {jStage !== "intro" && (
+        <SBubble code="CEOB" collapsed={true}>
+          <span className="text-[9px] text-gray-500">Pre-rapport genere. Jumelage SMART active.</span>
+        </SBubble>
+      )}
+
+      {/* === CRITERES THINKING — Processing animation === */}
+      {jStage === "criteres-thinking" && (
+        <>
+          <SBubble code="CEOB" collapsed={false}>
+            <div className="space-y-1.5">
+              {SIM_ACTE2.criteresThinking.map((step: { icon: React.ElementType; text: string }, i: number) => {
+                const Icon = step.icon;
+                return (
+                  <div key={i} className="flex items-center gap-2 text-[9px] text-blue-700">
+                    <Icon className="h-3.5 w-3.5 animate-pulse" />
+                    <span>{step.text}</span>
+                  </div>
+                );
+              })}
+              <div className="flex items-center gap-1 mt-1">
+                <span className="text-[9px] text-gray-400">Analyse en cours</span>
+                <span className="animate-pulse text-gray-400">...</span>
+              </div>
+            </div>
+          </SBubble>
+          <JAutoAdvance onComplete={() => { setJStage("criteres"); advance(); /* milestone 1: unlock Critères */ }} delay={2400} />
+        </>
+      )}
+
+      {/* === CRITERES === */}
+      {si >= J_STAGE_ORDER.indexOf("criteres") && (
+        <SBubble code="CEOB" collapsed={si > J_STAGE_ORDER.indexOf("criteres")}>
+          {jStage === "criteres" ? (
+            <>
+              <TypewriterText text="J'ai genere 8 criteres de matching bases sur votre diagnostic. Chaque critere sera utilise pour filtrer et scorer les integrateurs du reseau. Vous pouvez modifier avant de lancer le scan." speed={8} className="text-sm text-gray-700 leading-relaxed" onComplete={() => setCriteresTyped(true)} />
+              {criteresTyped && (
+                <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-2 flex-wrap">
+                  {!criteresModified && (
+                    <button type="button" onClick={() => { setCriteresModified(true); setJStage("user-critere"); }} className="text-[9px] bg-gray-100 text-gray-600 border border-gray-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-gray-200 font-medium cursor-pointer">
+                      <Cog className="h-3.5 w-3.5" /> Ajouter un critere
+                    </button>
+                  )}
+                  <button type="button" onClick={() => setJStage("scan")} className="text-[9px] bg-amber-600 text-white px-4 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-amber-700 font-medium cursor-pointer">
+                    <Search className="h-3.5 w-3.5" /> Scanner le reseau
+                  </button>
+                </div>
+              )}
+            </>
+          ) : (
+            <span className="text-[9px] text-gray-500">8 criteres de matching generes.{criteresModified ? " + 1 critere ajoute." : ""}</span>
+          )}
+        </SBubble>
+      )}
+
+      {/* === USER CRITERE === */}
+      {si >= J_STAGE_ORDER.indexOf("user-critere") && (
+        <>
+          <div className="flex justify-end">
+            <div className="bg-blue-600 text-white rounded-xl rounded-tr-none px-3 py-2 max-w-[85%] shadow-sm">
+              <p className="text-[9px]">{SIM_ACTE2.userCritereAjout}</p>
+            </div>
+          </div>
+          <SBubble code="CEOB" collapsed={si > J_STAGE_ORDER.indexOf("user-critere")}>
+            <span className="text-sm text-gray-700">Bon point. J&apos;ajoute &apos;Experience en milieu alimentaire (HACCP, zones temp.)&apos; a la liste des criteres. Ca va penaliser les integrateurs sans experience agroalimentaire directe.</span>
+          </SBubble>
+          {jStage === "user-critere" && (
+            <div className="flex justify-center">
+              <button type="button" onClick={() => setJStage("scan")} className="text-[9px] bg-amber-600 text-white px-4 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-amber-700 font-medium cursor-pointer">
+                <Search className="h-3.5 w-3.5" /> Lancer le scan
+              </button>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* === SCAN — Processing animation === */}
+      {jStage === "scan" && (
+        <>
+          <SBubble code="CEOB" collapsed={false}>
+            <div className="space-y-1.5">
+              {[
+                { icon: Search, text: `Scan de ${SIM_ACTE2.scanSteps[0].count} membres du reseau...` },
+                { icon: Building2, text: `Filtre secteur agroalimentaire → ${SIM_ACTE2.scanSteps[1].count} candidats` },
+                { icon: Zap, text: `Expertise energie + robotique → ${SIM_ACTE2.scanSteps[2].count}` },
+                { icon: CheckCircle2, text: `Certifications requises → ${SIM_ACTE2.scanSteps[3].count}` },
+                { icon: Target, text: `Score compatibilite → ${SIM_ACTE2.scanSteps[4].count} finalistes` },
+              ].map((step, i) => {
+                const SIcon = step.icon;
+                return (
+                  <div key={i} className="flex items-center gap-2 text-[9px] text-blue-700">
+                    <SIcon className="h-3.5 w-3.5 animate-pulse" />
+                    <span>{step.text}</span>
+                  </div>
+                );
+              })}
+              <div className="flex items-center gap-1 mt-1">
+                <span className="text-[9px] text-gray-400">Scan en cours</span>
+                <span className="animate-pulse text-gray-400">...</span>
+              </div>
+            </div>
+          </SBubble>
+          <JAutoAdvance onComplete={() => { setJStage("top3"); advance(); /* milestone 2: unlock Scan */ }} delay={3000} />
+        </>
+      )}
+
+      {/* Scan completed marker */}
+      {si > J_STAGE_ORDER.indexOf("scan") && (
+        <div className="flex items-center gap-2 ml-10 py-1.5">
+          <div className="h-5 w-5 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+            <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
+          </div>
+          <span className="text-[9px] text-green-700 font-medium">Scan reseau : 130 membres → 3 finalistes identifies</span>
+        </div>
+      )}
+
+      {/* === TOP 3 === */}
+      {si >= J_STAGE_ORDER.indexOf("top3") && (
+        <>
+          <SBubble code="CEOB" collapsed={si > J_STAGE_ORDER.indexOf("top3")}>
+            <span className="text-sm text-gray-700">Scan termine. Sur 130 membres du reseau, 3 integrateurs correspondent a votre profil. Les voici avec leur score de compatibilite initial — avant les sessions de jumelage detaillees.</span>
+          </SBubble>
+          {jStage === "top3" && (
+            <div className="space-y-3 ml-2">
+              {INTEGRATORS.map((integ, i) => (
+                <div key={integ.id} className="bg-white border rounded-xl px-4 py-3 shadow-sm">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className={cn("w-6 h-6 rounded-full flex items-center justify-center text-white text-[9px] font-bold", i === 0 ? "bg-amber-500" : i === 1 ? "bg-gray-400" : "bg-orange-400")}>#{i + 1}</div>
+                    <span className="text-xs font-bold text-gray-800">{integ.nom}</span>
+                    <span className="text-[9px] text-gray-500 ml-auto">{integ.ville}</span>
+                  </div>
+                  <p className="text-[9px] text-gray-600 leading-relaxed line-clamp-2">{integ.intro}</p>
+                  <div className="flex flex-wrap gap-1 mt-1.5">
+                    {integ.specialites.slice(0, 3).map((s: string, si2: number) => (
+                      <span key={si2} className="text-[9px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded-full">{s}</span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              <div className="mt-3 pt-3 border-t border-gray-100">
+                <button type="button" onClick={() => setJStage("conference-setup")} className="text-xs text-white px-4 py-2 rounded-full flex items-center gap-1.5 font-bold cursor-pointer shadow-md hover:shadow-lg transition-shadow bg-indigo-600 hover:bg-indigo-700">
+                  <Video className="h-3.5 w-3.5" /> Organiser les conferences AI
+                </button>
+              </div>
+            </div>
+          )}
+          {/* TOP 3 compact markers */}
+          {si > J_STAGE_ORDER.indexOf("top3") && (
+            <div className="ml-2 space-y-1">
+              {INTEGRATORS.map((integ, i) => (
+                <div key={integ.id} className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-1.5">
+                  <div className={cn("w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold shrink-0", i === 0 ? "bg-amber-500" : i === 1 ? "bg-gray-400" : "bg-orange-400")}>#{i + 1}</div>
+                  <span className="text-[9px] font-medium text-gray-700">{integ.nom}</span>
+                  <span className="text-[9px] text-gray-500 ml-auto">{integ.score}%</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* === CONFERENCE SETUP === */}
+      {si >= J_STAGE_ORDER.indexOf("conference-setup") && (
+        <SBubble code="CPOB" collapsed={si > J_STAGE_ORDER.indexOf("conference-setup")}>
+          {jStage === "conference-setup" ? (
+            <>
+              <TypewriterText text="C'est Paco, je prends le relais pour les sessions de jumelage. J'ai contacte les 3 integrateurs et organise des creneaux d'une heure chacune en conference AI. Format : je mene l'entrevue technique, Carl vous intervenez quand vous voulez, et je couvre tous les criteres etablis." speed={8} className="text-sm text-gray-700 leading-relaxed" onComplete={() => setSetupTyped(true)} />
+              {setupTyped && (
+                <>
+                  <div className="mt-3 border rounded-xl overflow-hidden">
+                    <div className="bg-gray-900 px-3 py-2 flex items-center gap-2">
+                      <Video className="h-3.5 w-3.5 text-gray-400" />
+                      <span className="text-[9px] text-gray-300 font-medium">3 sessions planifiees</span>
+                    </div>
+                    {[
+                      { name: "Energia Solutions", rep: "Marc-Andre Dubois, VP Projets", color: "bg-amber-500" },
+                      { name: "Techno-Froid Saguenay", rep: "Jean-Francois Tremblay, Dir. technique", color: "bg-gray-400" },
+                      { name: "GreenTech Industries", rep: "Sophie Lavoie, Presidente", color: "bg-orange-400" },
+                    ].map((s, i) => (
+                      <div key={i} className="flex items-center gap-3 px-3 py-2 border-t border-gray-800 bg-gray-900">
+                        <div className={cn("w-6 h-6 rounded-full flex items-center justify-center text-white text-[9px] font-bold", s.color)}>{i + 1}</div>
+                        <div className="flex-1">
+                          <span className="text-[9px] font-medium text-gray-200">{s.name}</span>
+                          <span className="text-[9px] text-gray-500 ml-2">{s.rep}</span>
+                        </div>
+                        <span className="text-[9px] text-green-400 font-medium">Confirme</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <button type="button" onClick={() => setJStage("conference-energia")} className="text-xs text-white px-4 py-2 rounded-full flex items-center gap-1.5 font-bold cursor-pointer shadow-md hover:shadow-lg transition-shadow bg-amber-600 hover:bg-amber-700">
+                      <Video className="h-3.5 w-3.5" /> Rejoindre la session 1 — Energia Solutions
+                    </button>
+                  </div>
+                </>
+              )}
+            </>
+          ) : (
+            <span className="text-[9px] text-gray-500">Paco a organise 3 sessions de conference AI.</span>
+          )}
+        </SBubble>
+      )}
+
+      {/* === CONFERENCE 1 — Energia === */}
+      {si >= J_STAGE_ORDER.indexOf("conference-energia") && (
+        <JConferenceSession sessionNum={1} totalSessions={3} supplierInfo={J_CONF_SUPPLIERS.energia} exchanges={J_CONF_ENERGIA_EXCHANGES} insights={J_CONF_ENERGIA_INSIGHTS} isActive={jStage === "conference-energia"} onExtract={() => handleExtract("conf-energia")} isExtracted={extractedNotes.includes("conf-energia")} onNext={() => setJStage("conference-techno")} nextLabel="Session 2 — Techno-Froid" />
+      )}
+
+      {/* === CONFERENCE 2 — Techno-Froid === */}
+      {si >= J_STAGE_ORDER.indexOf("conference-techno") && (
+        <JConferenceSession sessionNum={2} totalSessions={3} supplierInfo={J_CONF_SUPPLIERS.techno} exchanges={J_CONF_TECHNO_EXCHANGES} insights={J_CONF_TECHNO_INSIGHTS} isActive={jStage === "conference-techno"} onExtract={() => handleExtract("conf-techno")} isExtracted={extractedNotes.includes("conf-techno")} onNext={() => setJStage("conference-green")} nextLabel="Session 3 — GreenTech" />
+      )}
+
+      {/* === CONFERENCE 3 — GreenTech === */}
+      {si >= J_STAGE_ORDER.indexOf("conference-green") && (
+        <JConferenceSession sessionNum={3} totalSessions={3} supplierInfo={J_CONF_SUPPLIERS.green} exchanges={J_CONF_GREEN_EXCHANGES} insights={J_CONF_GREEN_INSIGHTS} isActive={jStage === "conference-green"} onExtract={() => handleExtract("conf-green")} isExtracted={extractedNotes.includes("conf-green")} onNext={() => { setJStage("scoring"); advance(); /* milestone 3: unlock Conférences */ }} nextLabel="Voir le scoring final" />
+      )}
+
+      {/* === SCORING === */}
+      {si >= J_STAGE_ORDER.indexOf("scoring") && (
+        <>
+          <SBubble code="CEOB" collapsed={si > J_STAGE_ORDER.indexOf("scoring")}>
+            <span className="text-sm text-gray-700">Les 5 sessions de jumelage sont terminees. Chaque candidat a repondu a mes questions sur la refrigeration CO2, la robotique, les subventions, le budget et les delais. Les resultats sont consolides dans le scoring a droite.</span>
+          </SBubble>
+          {jStage === "scoring" && (
+            <div className="space-y-3 ml-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <button type="button" onClick={() => { setShowJumelageDetail(true); handleExtract("sessions"); }} disabled={showJumelageDetail} className={cn("text-[9px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all", showJumelageDetail ? "bg-indigo-100 text-indigo-700 border border-indigo-300" : "bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100")}>
+                  <Eye className="h-3.5 w-3.5" /> Voir les reponses detaillees
+                </button>
+                <button type="button" onClick={() => { setJStage("winner-intro"); advance(); /* milestone 4: unlock Scoring */ }} className="text-[9px] bg-amber-600 text-white px-4 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-amber-700 font-medium cursor-pointer">
+                  <Trophy className="h-3.5 w-3.5" /> Voir le gagnant
+                </button>
+              </div>
+              {/* Detail Q1 + Q3 */}
+              {showJumelageDetail && (
+                <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-3">
+                  <div className="border border-gray-200 rounded-xl overflow-hidden">
+                    <div className="bg-gray-50 px-4 py-2 flex items-center gap-2 border-b">
+                      <span className="text-[9px] font-bold bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full">Q1</span>
+                      <span className="text-sm text-gray-700 font-medium">{J_HIGHLIGHT_Q1.question.slice(0, 60)}...</span>
+                    </div>
+                    <div className="p-3 space-y-2">
+                      {[J_HIGHLIGHT_Q1.energia, J_HIGHLIGHT_Q1.techno, J_HIGHLIGHT_Q1.green].map((r, i) => {
+                        const scoreColor = r.score >= 80 ? "text-green-600" : r.score >= 60 ? "text-amber-600" : "text-red-600";
+                        return (
+                          <div key={i} className="flex items-start gap-2">
+                            <span className={cn("text-[9px] font-bold shrink-0 w-8 text-center", scoreColor)}>{r.score}%</span>
+                            <div className="flex-1">
+                              <span className="text-[9px] font-bold text-gray-500">{r.integrateur}</span>
+                              <p className="text-[9px] text-gray-600 line-clamp-2">{r.reponse}</p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="border border-gray-200 rounded-xl overflow-hidden">
+                    <div className="bg-gray-50 px-4 py-2 flex items-center gap-2 border-b">
+                      <span className="text-[9px] font-bold bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full">Q3</span>
+                      <span className="text-sm text-gray-700 font-medium">{J_HIGHLIGHT_Q3.question.slice(0, 60)}...</span>
+                    </div>
+                    <div className="p-3 space-y-2">
+                      {[J_HIGHLIGHT_Q3.energia, J_HIGHLIGHT_Q3.techno, J_HIGHLIGHT_Q3.green].map((r, i) => {
+                        const scoreColor = r.score >= 80 ? "text-green-600" : r.score >= 60 ? "text-amber-600" : "text-red-600";
+                        return (
+                          <div key={i} className="flex items-start gap-2">
+                            <span className={cn("text-[9px] font-bold shrink-0 w-8 text-center", scoreColor)}>{r.score}%</span>
+                            <div className="flex-1">
+                              <span className="text-[9px] font-bold text-gray-500">{r.integrateur}</span>
+                              <p className="text-[9px] text-gray-600 line-clamp-2">{r.reponse}</p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button type="button" onClick={() => handleExtract("q1")} className={cn("text-[9px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all", extractedNotes.includes("q1") ? "bg-green-100 text-green-700 border border-green-300" : "bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100")}>
+                      <Pin className="h-3.5 w-3.5" /> {extractedNotes.includes("q1") ? "Extrait" : "Extraire les reponses"}
+                    </button>
+                    <button type="button" onClick={() => { setJStage("winner-intro"); advance(); }} className="text-[9px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer bg-amber-600 text-white hover:bg-amber-700 transition-all">
+                      <Trophy className="h-3.5 w-3.5" /> Voir le gagnant
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          {/* Scoring compact marker */}
+          {si > J_STAGE_ORDER.indexOf("scoring") && (
+            <div className="flex items-center gap-2 ml-10 py-1.5">
+              <div className="h-5 w-5 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                <BarChart3 className="h-3.5 w-3.5 text-amber-600" />
+              </div>
+              <span className="text-[9px] text-amber-700 font-medium">Scoring : {INTEGRATORS.map((integ) => `${integ.nom.split(" ")[0]} ${integ.score}%`).join(" / ")}</span>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* === WINNER INTRO === */}
+      {si >= J_STAGE_ORDER.indexOf("winner-intro") && (
+        <SBubble code="CEOB" collapsed={si > J_STAGE_ORDER.indexOf("winner-intro")}>
+          {jStage === "winner-intro" ? (
+            <TypewriterText text={SIM_ACTE2.ceoWinnerIntro} speed={8} className="text-sm text-gray-700 leading-relaxed" onComplete={() => { setJStage("winner"); advance(); /* milestone 5: unlock Recommandation */ }} />
+          ) : (
+            <span className="text-[9px] text-gray-500">{SIM_ACTE2.ceoWinnerIntro.slice(0, 80)}...</span>
+          )}
+        </SBubble>
+      )}
+
+      {/* === WINNER + CHALLENGES === */}
+      {si >= J_STAGE_ORDER.indexOf("winner") && (
+        <>
+          <SBubble code="CEOB" collapsed={false}>
+            <span className="text-sm text-gray-700 leading-relaxed">{SIM_ACTE2.winnerMessage}</span>
+          </SBubble>
+          {jStage === "winner" && (
+            <div className="space-y-3 ml-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <button type="button" onClick={() => setShowChallengeDefense(true)} disabled={showChallengeDefense} className={cn("text-[9px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all", showChallengeDefense ? "bg-red-100 text-red-700 border border-red-300" : "bg-red-50 text-red-700 border border-red-200 hover:bg-red-100")}>
+                  <Target className="h-3.5 w-3.5" /> Challenger le choix
+                </button>
+                <button type="button" onClick={() => setShowAlternatives(true)} disabled={showAlternatives} className={cn("text-[9px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all", showAlternatives ? "bg-gray-200 text-gray-700 border border-gray-300" : "bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100")}>
+                  <Eye className="h-3.5 w-3.5" /> Pourquoi pas les 2 autres?
+                </button>
+                <button type="button" onClick={() => setJStage("transition")} className="text-[9px] bg-amber-600 text-white px-4 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-amber-700 font-medium cursor-pointer">
+                  <ArrowRight className="h-3.5 w-3.5" /> Accepter et continuer
+                </button>
+              </div>
+              {/* Challenge defense */}
+              {showChallengeDefense && (
+                <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-2">
+                  <SBubble code="CEOB" collapsed={false}>
+                    <div className="text-[9px] text-blue-600 mb-1 font-medium">Defense de la selection</div>
+                    <TypewriterText text={J_CHALLENGE_DEFENSE} speed={5} className="text-sm text-gray-700 leading-relaxed" />
+                  </SBubble>
+                  <div className="flex items-center gap-2 flex-wrap ml-11">
+                    <button type="button" onClick={() => handleExtract("defense")} className={cn("text-[9px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all", extractedNotes.includes("defense") ? "bg-green-100 text-green-700 border border-green-300" : "bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100")}>
+                      <Pin className="h-3.5 w-3.5" /> {extractedNotes.includes("defense") ? "Extrait" : "Extraire l'argumentaire"}
+                    </button>
+                    <button type="button" onClick={() => setJStage("transition")} className="text-[9px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer bg-amber-600 text-white hover:bg-amber-700 transition-all">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Accepter la recommandation
+                    </button>
+                  </div>
+                </div>
+              )}
+              {/* Alternatives analysis */}
+              {showAlternatives && (
+                <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-2">
+                  <SBubble code="CEOB" collapsed={false}>
+                    <div className="text-[9px] text-gray-600 mb-1 font-medium">Analyse comparative</div>
+                    <TypewriterText text={J_ALTERNATIVE_ANALYSIS} speed={5} className="text-sm text-gray-700 leading-relaxed" />
+                  </SBubble>
+                  {/* 3-way comparison mini table */}
+                  <div className="border border-gray-200 rounded-xl overflow-hidden ml-11">
+                    <div className="grid grid-cols-3 divide-x divide-gray-200">
+                      {INTEGRATORS.map((integ, i) => {
+                        const isWinner = i === 0;
+                        return (
+                          <div key={integ.id} className={cn("p-2.5 text-center", isWinner && "bg-amber-50/50")}>
+                            <div className={cn("text-lg font-bold mb-1", integ.score >= 90 ? "text-green-600" : integ.score >= 80 ? "text-amber-600" : "text-gray-500")}>{integ.score}%</div>
+                            <div className="text-[9px] font-bold text-gray-800 truncate">{integ.nom.split(" ")[0]}</div>
+                            {isWinner && (
+                              <div className="mt-1 bg-amber-100 text-amber-800 text-[9px] font-bold rounded px-2 py-0.5 inline-flex items-center gap-1">
+                                <Trophy className="h-2.5 w-2.5" /> Selectionne
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap ml-11">
+                    <button type="button" onClick={() => handleExtract("comparaison")} className={cn("text-[9px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all", extractedNotes.includes("comparaison") ? "bg-green-100 text-green-700 border border-green-300" : "bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100")}>
+                      <Pin className="h-3.5 w-3.5" /> {extractedNotes.includes("comparaison") ? "Comparaison notee" : "Noter la comparaison"}
+                    </button>
+                    <button type="button" onClick={() => setJStage("transition")} className="text-[9px] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer bg-amber-600 text-white hover:bg-amber-700 transition-all">
+                      <ArrowRight className="h-3.5 w-3.5" /> Confirmer Energia
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* === TRANSITION === */}
+      {jStage === "transition" && (
+        <SBubble code="CEOB" collapsed={false}>
+          <span className="text-sm text-gray-700 leading-relaxed">Excellent choix. Energia Solutions est selectionne comme integrateur. Le matching est documente — le cahier de projet est complet avec la section jumelage integree.</span>
+        </SBubble>
+      )}
+    </div>
+  );
+}
 
 export function DeliverableConceptionChat({ deliverable, stage, typed, setTyped, advance, onBack }: {
   deliverable: string;
@@ -5116,59 +7970,22 @@ export function DeliverableConceptionChat({ deliverable, stage, typed, setTyped,
   advance: () => void;
   onBack?: () => void;
 }) {
-  const config = L2_CHAT_CONFIGS[deliverable];
-  if (!config) return null;
-
-  const visibleMessages = config.messages.slice(0, stage + 1);
-  const allDone = stage >= config.messages.length;
-
-  return (
-    <div className="space-y-3">
-      {/* Header */}
-      <div className="flex items-center gap-2 px-1">
-        {onBack && (
-          <button type="button" onClick={onBack} className="text-[9px] text-gray-500 hover:text-gray-700 cursor-pointer flex items-center gap-1">
-            <ArrowLeft className="h-3 w-3" /> Retour
-          </button>
-        )}
-        <div className="flex items-center gap-1.5 ml-auto">
-          <BotAvatar code={config.bot} size="sm" />
-          <span className="text-[9px] text-gray-500 font-medium">{config.botName}</span>
-        </div>
-      </div>
-
-      {/* Messages */}
-      {visibleMessages.map((group, gi) => (
-        <div key={gi}>
-          {group.map((msg, mi) => (
-            <div key={mi} className="flex items-start gap-2 mb-2">
-              <BotAvatar code={config.bot} size="sm" />
-              <div className="bg-gray-100 rounded-xl px-3 py-2 max-w-[85%]">
-                <p className="text-xs text-gray-700">{msg.text}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      ))}
-
-      {/* Continue button */}
-      {!allDone && !typed && (
-        <button type="button" onClick={() => { setTyped(true); advance(); }}
-          className="w-full text-[10px] bg-gray-900 text-white py-2 rounded-lg font-medium cursor-pointer hover:bg-gray-800 transition-colors flex items-center justify-center gap-1.5">
-          <ChevronRight className="h-3.5 w-3.5" /> Continuer
-        </button>
-      )}
-
-      {/* Completion */}
-      {allDone && (
-        <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2.5 text-center">
-          <CheckCircle2 className="h-4 w-4 text-emerald-500 mx-auto mb-1" />
-          <p className="text-[10px] font-bold text-emerald-700">Livrable genere avec succes</p>
-          <p className="text-[9px] text-emerald-600 mt-0.5">Toutes les sections sont disponibles dans le workspace</p>
-        </div>
-      )}
-    </div>
-  );
+  if (deliverable === "document") {
+    return <DocumentConceptionChat stage={stage} typed={typed} setTyped={setTyped} advance={advance} onBack={onBack} />;
+  }
+  if (deliverable === "spreadsheet") {
+    return <SpreadsheetConceptionChat stage={stage} typed={typed} setTyped={setTyped} advance={advance} onBack={onBack} />;
+  }
+  if (deliverable === "presentation") {
+    return <PresentationConceptionChat stage={stage} typed={typed} setTyped={setTyped} advance={advance} onBack={onBack} />;
+  }
+  if (deliverable === "code") {
+    return <CodeConceptionChat stage={stage} typed={typed} setTyped={setTyped} advance={advance} onBack={onBack} />;
+  }
+  if (deliverable === "jumelage") {
+    return <JumelageConceptionChat stage={stage} typed={typed} setTyped={setTyped} advance={advance} onBack={onBack} />;
+  }
+  return null;
 }
 
 // ========== MAG TRANSITION (legacy, kept for reference) ==========
@@ -5187,7 +8004,7 @@ function MagTransition() {
           </div>
         </div>
         <p className="text-sm font-bold text-amber-800">Pret pour Creer</p>
-        <p className="text-xs text-amber-600 mt-1">8 sections d'analyse sauvegardees \u2014 Phase Analyse completee</p>
+        <p className="text-xs text-amber-600 mt-1">8 sections d'analyse sauvegardees — Phase Analyse completee</p>
         <div className="mt-4 flex gap-2 justify-center">
           <button className="text-xs bg-amber-600 text-white px-4 py-2 rounded-full font-bold cursor-pointer hover:bg-amber-700">Passer en mode Creer</button>
           <button className="text-xs bg-white text-amber-700 px-4 py-2 rounded-full font-bold border border-amber-300 cursor-pointer hover:bg-amber-50">Cristalliser d'abord</button>
@@ -5197,7 +8014,7 @@ function MagTransition() {
   );
 }
 
-// ========== REFLEXION MAGAZINE PAGE (right panel \u2014 stacked sections from SimPhaseReflexion) ==========
+// ========== REFLEXION MAGAZINE PAGE (right panel — stacked sections from SimPhaseReflexion) ==========
 
 // ========== DOCFORGE BLOCK — wrapper generique pour chaque section du rapport ==========
 
@@ -5224,21 +8041,21 @@ function DocForgeBlock({ children }: {
 const REFLEXION_DOCFORGE_SECTIONS: { id: number; title: string; icon: React.ElementType; minStage: number }[] = [
   { id: 1, title: "Diagnostic initial", icon: Stethoscope, minStage: 1 },
   { id: 2, title: "Brainstorm SCAMPER", icon: Lightbulb, minStage: 7 },
-  { id: 3, title: "Synth\u00e8se brainstorm", icon: Layers, minStage: 10 },
+  { id: 3, title: "Synthèse brainstorm", icon: Layers, minStage: 10 },
   { id: 4, title: "Analyse 5 Pourquoi", icon: Search, minStage: 12 },
   { id: 5, title: "Deep Search", icon: Globe, minStage: 15 },
-  { id: 6, title: "Synth\u00e8se recherche", icon: FileBarChart, minStage: 17 },
-  { id: 7, title: "Challenge / D\u00e9fense", icon: Swords, minStage: 19 },
-  { id: 8, title: "Pr\u00e9-rapport", icon: FileText, minStage: 22 },
+  { id: 6, title: "Synthèse recherche", icon: FileBarChart, minStage: 17 },
+  { id: 7, title: "Challenge / Défense", icon: Swords, minStage: 19 },
+  { id: 8, title: "Pré-rapport", icon: FileText, minStage: 22 },
 ];
 
 function MagConclusions() {
   return (
     <div className="space-y-3">
       {[
-        { rank: 1, title: "Programme Referral Clients", desc: "Quick win \u2014 ROI 4.2x, budget 1,200$/mois. Levier le bouche-\u00e0-oreille existant avec des incitatifs structur\u00e9s.", bot: "CFOB" },
-        { rank: 2, title: "Content Marketing LinkedIn", desc: "Moyen terme \u2014 repositionner le messaging vers le ROI concret. Calendrier \u00e9ditorial Q2-Q3.", bot: "CMOB" },
-        { rank: 3, title: "Webinaires VITAA Mensuels", desc: "Long terme \u2014 d\u00e9montrer l'IA en action. Premier webinar Q2, r\u00e9currence mensuelle Q3.", bot: "CEOB" },
+        { rank: 1, title: "Programme Referral Clients", desc: "Quick win — ROI 4.2x, budget 1,200$/mois. Levier le bouche-à-oreille existant avec des incitatifs structurés.", bot: "CFOB" },
+        { rank: 2, title: "Content Marketing LinkedIn", desc: "Moyen terme — repositionner le messaging vers le ROI concret. Calendrier éditorial Q2-Q3.", bot: "CMOB" },
+        { rank: 3, title: "Webinaires VITAA Mensuels", desc: "Long terme — démontrer l'IA en action. Premier webinar Q2, récurrence mensuelle Q3.", bot: "CEOB" },
       ].map(r => (
         <div key={r.rank} className="bg-orange-50/50 border border-orange-200 rounded-lg px-3 py-2.5">
           <div className="flex items-center gap-2 mb-1">
@@ -5253,7 +8070,7 @@ function MagConclusions() {
       <div className="border border-gray-200 rounded-lg overflow-hidden">
         <div className="bg-gray-50 px-3 py-1.5 border-b border-gray-200 flex items-center gap-2">
           <Users className="h-3.5 w-3.5 text-gray-500" />
-          <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">Vote equipe \u2014 Passage en Conception</span>
+          <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">Vote equipe — Passage en Conception</span>
         </div>
         <div className="grid grid-cols-2 gap-px bg-gray-200">
           {[

@@ -60,6 +60,7 @@ import {
   PhaseConceptionTableur,
   PhaseConceptionPresentation,
   PhaseConceptionCode,
+  PhaseConceptionJumelage,
   ChantierDrillDown,
   IconCatalog,
 } from "./simulation/sim-content-map";
@@ -112,7 +113,8 @@ export function WorkspacePhasesPanel() {
         const activeSection = (isOrbit9 && !rightSection) ? "orbit9" : rightSection;
         const DeptIcon = (activeSection && SECTION_ICON[activeSection]) ? SECTION_ICON[activeSection] : (DEPT_DASH_ICON[activeBotCode] || Home);
         const deptLabel = activeSection === "orbit9" ? "" : (DEPT_SHORT_LABEL[activeBotCode] || "");
-        const sectionLabel = (activeSection && SECTION_LABEL[activeSection]) ? SECTION_LABEL[activeSection] : activePhase === "reflexion" ? "Réflexion" : "Cockpit";
+        const sectionLabel = (activeSection && SECTION_LABEL[activeSection]) ? SECTION_LABEL[activeSection] : activePhase === "reflexion" ? "Réflexion" : activePhase === "creation" ? "Conception" : "Cockpit";
+        const DELIVERABLE_TITLE: Record<string, string> = { document: "Cahier de projet Boreal", spreadsheet: "Tableau de bord financier Boreal", presentation: "Pitch Deck CA Boreal", code: "Dashboard IoT Boreal", jumelage: "Jumelage SMART Orbit⁹" };
         const titleText = activeSection === "orbit9"
           ? "Orbit⁹"
           : `Département ${deptLabel} — ${sectionLabel}`;
@@ -176,7 +178,13 @@ export function WorkspacePhasesPanel() {
                 <span className="text-[11px] font-medium text-orange-600">{reflexionContext}</span>
               </>
             )}
-            {activeSection !== "orbit9" && activePhase !== "observation" && activePhase !== "reflexion" && !rightSection && (
+            {activeSection !== "orbit9" && activePhase === "creation" && activeDeliverable && !rightSection && (
+              <>
+                <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
+                <span className="text-[11px] font-medium text-amber-600">{DELIVERABLE_TITLE[activeDeliverable] || activeDeliverable}</span>
+              </>
+            )}
+            {activeSection !== "orbit9" && activePhase !== "observation" && activePhase !== "reflexion" && activePhase !== "creation" && !rightSection && (
               <>
                 <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
                 <span className={cn("text-[11px] font-medium", pc.text)}>{pc.label}</span>
@@ -241,13 +249,15 @@ export function WorkspacePhasesPanel() {
           /* Réflexion magazine */
           <PhaseReflexion stage={chatStage} context={reflexionContext} onStartConception={startConception} />
         ) : activePhase === "creation" && activeDeliverable === "document" ? (
-          <PhaseConceptionDocument stage={deliverableStage} onBack={() => setActiveDeliverable(null)} />
+          <PhaseConceptionDocument stage={deliverableStage} onBack={() => setActiveDeliverable(null)} onStartJumelage={() => startDeliverable("jumelage")} />
         ) : activePhase === "creation" && activeDeliverable === "spreadsheet" ? (
           <PhaseConceptionTableur stage={deliverableStage} onBack={() => setActiveDeliverable(null)} />
         ) : activePhase === "creation" && activeDeliverable === "presentation" ? (
           <PhaseConceptionPresentation stage={deliverableStage} onBack={() => setActiveDeliverable(null)} />
         ) : activePhase === "creation" && activeDeliverable === "code" ? (
           <PhaseConceptionCode stage={deliverableStage} onBack={() => setActiveDeliverable(null)} />
+        ) : activePhase === "creation" && activeDeliverable === "jumelage" ? (
+          <PhaseConceptionJumelage stage={deliverableStage} onBack={() => setActiveDeliverable(null)} />
         ) : activePhase === "creation" ? (
           /* Conception Level 1 — chantier (hero + sidebar + validation + livrables grid) */
           <PhaseConception stage={conceptionStage} context={reflexionContext} onStartExecution={() => { setActivePhase("execution"); setRightSection(null); }} onSelectDeliverable={(id) => startDeliverable(id)} />

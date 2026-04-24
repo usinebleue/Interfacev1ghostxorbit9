@@ -32,6 +32,7 @@ export {
   PhaseConceptionTableur,
   PhaseConceptionPresentation,
   PhaseConceptionCode,
+  PhaseConceptionJumelage,
 
   // ═══ Orbit9 simulation components ═══
   Orbit9SocialHome,
