@@ -35,11 +35,11 @@ interface DeptNavItem {
 const DEPT_NAV_ITEMS: DeptNavItem[] = [
   { label: "Cockpit", icon: Gauge, state: null },
   { label: "Exécution", icon: Rocket, state: null },
-  { label: "Conférence AI", icon: Video, state: null },
+  { label: "Réunion", icon: Video, state: null },
   { label: "Agenda", icon: Calendar, state: null },
   { label: "Blueprint", icon: Layers, state: null },
-  { label: "Data Room", icon: Database, state: null },
-  { label: "Playbook Store", icon: BookOpen, state: null },
+  { label: "Données", icon: Database, state: null },
+  { label: "Playbook", icon: BookOpen, state: null },
   { label: "Orbit9", icon: Atom, state: null },
 ];
 
@@ -47,9 +47,9 @@ const DEPT_SECTION_MAP: Record<string, string> = {
   "Cockpit": "cockpit",
   "Exécution": "execution",
   "Blueprint": "blueprint",
-  "Data Room": "dataroom",
-  "Playbook Store": "playbooks",
-  "Conférence AI": "conferenceai",
+  "Données": "dataroom",
+  "Playbook": "playbooks",
+  "Réunion": "conferenceai",
   "Agenda": "bureau-agenda",
 };
 
@@ -250,16 +250,18 @@ export function ControlTowerPanel() {
       {/* Sidebar content */}
       <div className="flex-1 overflow-hidden border-r border-gray-200">
         <div className="h-full flex flex-col bg-white overflow-hidden">
-          {/* Titre "Tour de contrôle" — fond blanc, texte noir, icône couleur */}
-          <div className="mx-3 mt-2 px-4 py-2.5 flex items-center gap-2 bg-white">
-            <TowerControl className={cn("h-4 w-4 stroke-[2.5]", DEPT_ICON_COLOR[activeBotCode] || "text-blue-600")} />
-            <span className="text-sm font-bold text-gray-900">Tour de contrôle</span>
-          </div>
-          {/* Image bot banner + nom en overlay bas */}
-          <div className="mx-3 shrink-0">
-            <div className="relative overflow-hidden rounded-xl bg-gray-900">
-              <img src={standbyImg} alt={botName} className="w-full h-auto object-cover" />
+          {/* Image bot banner — Tour de contrôle en overlay haut, nom en overlay bas */}
+          <div className="mx-3 mt-2 shrink-0">
+            <div className="relative overflow-hidden rounded-t-lg aspect-video bg-gray-900">
+              <img src={standbyImg} alt={botName} className="absolute inset-0 w-full h-full object-cover" />
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(10,14,26,0.3)_100%)] pointer-events-none" />
+              {/* Tour de contrôle — overlay haut */}
+              <div className="absolute top-0 left-0 right-0 z-[5]">
+                <div className="bg-gradient-to-b from-black/60 to-transparent px-4 pt-3 pb-8 flex items-center gap-2">
+                  <TowerControl className="h-4 w-4 text-white stroke-[2.5] drop-shadow-lg" />
+                  <span className="text-sm font-bold text-white drop-shadow-lg">Tour de contrôle</span>
+                </div>
+              </div>
               {/* Nom du bot — overlay bas */}
               <div className="absolute bottom-0 left-0 right-0 z-[5]">
                 <div className="bg-gradient-to-t from-black/80 to-transparent px-4 pt-10 pb-2.5">
@@ -381,7 +383,7 @@ function TabBureau({ activeBotCode, setActiveBotCode, activeDeptItem, setActiveD
         <DeptIconComp className={cn("h-4 w-4 text-gray-900 stroke-[2.5]", DEPT_ICON_COLOR[activeBotCode] || "text-blue-600")} />
         <span className="text-xs font-bold text-gray-900">Département {deptName}</span>
       </div>
-      <div className="px-3 py-2 grid grid-cols-2 gap-1.5 shrink-0">
+      <div className="px-3 py-2 grid grid-cols-3 gap-1.5 shrink-0">
         {DEPT_NAV_ITEMS.map((item) => (
           <button
             key={item.label}
@@ -418,11 +420,11 @@ function TabBureau({ activeBotCode, setActiveBotCode, activeDeptItem, setActiveD
               className={cn(
                 "relative flex items-center gap-1.5 px-2 py-1.5 rounded-lg border transition-all cursor-pointer",
                 activeDeptItem === "Admin"
-                  ? "bg-red-50 border-red-300 text-red-700"
+                  ? "bg-blue-50 border-blue-300 text-blue-700"
                   : "bg-gray-50 hover:bg-gray-100 border-gray-200 text-gray-600"
               )}
             >
-              <Shield className={cn("h-3.5 w-3.5 shrink-0", activeDeptItem === "Admin" ? "text-red-600" : "text-gray-600")} />
+              <Shield className={cn("h-3.5 w-3.5 shrink-0", activeDeptItem === "Admin" ? "text-blue-600" : "text-gray-600")} />
               <span className="text-[9px] font-medium leading-tight">Admin</span>
             </button>
             {/* BTML retiré — fusionné dans Admin > Stack Technique */}

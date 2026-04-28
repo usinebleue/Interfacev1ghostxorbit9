@@ -28,20 +28,20 @@ export const BOT_CODES = [
 
 export type BotCode = (typeof BOT_CODES)[number];
 
-// ═══ Images standby banner (croppées 15% top / 25% bottom) ═══
+// ═══ Images standby — format V2 original (16:9 complet) ═══
 export const BOT_STANDBY: Record<string, string> = {
-  CEOB: "/agents/generated/ceo-carlos-standby-v3-banner.png",
-  CTOB: "/agents/generated/cto-thierry-standby-v3-banner.png",
-  CFOB: "/agents/generated/cfo-francois-standby-v3-banner.png",
-  CMOB: "/agents/generated/cmo-martine-standby-v3-banner.png",
-  CSOB: "/agents/generated/cso-sophie-standby-v3-banner.png",
-  COOB: "/agents/generated/coo-olivier-standby-v3-banner.png",
-  CPOB: "/agents/generated/factory-bot-standby-v3-banner.png",
-  CHROB: "/agents/generated/chro-helene-standby-v3-banner.png",
-  CINOB: "/agents/generated/cino-ines-standby-v3-banner.png",
-  CROB: "/agents/generated/cro-raphael-standby-v3-banner.png",
-  CLOB: "/agents/generated/clo-louise-standby-v3-banner.png",
-  CISOB: "/agents/generated/ciso-secbot-standby-v3-banner.png",
+  CEOB: "/agents/generated/ceo-carlos-standby-v3.png",
+  CTOB: "/agents/generated/cto-thierry-standby-v3.png",
+  CFOB: "/agents/generated/cfo-francois-standby-v3.png",
+  CMOB: "/agents/generated/cmo-martine-standby-v3.png",
+  CSOB: "/agents/generated/cso-sophie-standby-v3.png",
+  COOB: "/agents/generated/coo-olivier-standby-v3.png",
+  CPOB: "/agents/generated/factory-bot-standby-v3.png",
+  CHROB: "/agents/generated/chro-helene-standby-v3.png",
+  CINOB: "/agents/generated/cino-ines-standby-v3.png",
+  CROB: "/agents/generated/cro-raphael-standby-v3.png",
+  CLOB: "/agents/generated/clo-louise-standby-v3.png",
+  CISOB: "/agents/generated/ciso-secbot-standby-v3.png",
 };
 
 // ═══ Département par bot — SOURCE UNIQUE = DEPT_SHORT_LABEL ═══

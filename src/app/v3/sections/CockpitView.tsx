@@ -988,14 +988,28 @@ export function CockpitItemRow({ item, index, onAction, showNumber }: {
   );
 }
 
+/** Derive le type de focus à partir du titre du bloc cockpit */
+function deriveFocusType(title: string): string {
+  const t = title.toLowerCase();
+  if (t.includes("chantier")) return "chantier";
+  if (t.includes("projet")) return "projet";
+  if (t.includes("mission")) return "mission";
+  if (t.includes("tâche") || t.includes("tache")) return "tache";
+  if (t.includes("pipeline")) return "chantier";
+  if (t.includes("simulation")) return "projet";
+  return "kpi";
+}
+
 // ── CockpitCard — Pattern Playbook Store card (box dans la grid 2 cols) ──
 // Pas de overflow-hidden sur le wrapper → WorkActionsOverlay visible
 export function CockpitCard({ config, onAction, onHeaderClick }: {
   config: DashboardBlocConfig;
-  onAction?: (phase: PhaseKey, context: string, deliverable?: string) => void;
+  onAction?: (phase: PhaseKey, context: string, deliverable?: string, focusType?: string) => void;
   onHeaderClick?: () => void;
 }) {
   const Icon = config.icon;
+  const ft = deriveFocusType(config.title);
+  const itemAction = onAction ? (p: PhaseKey, c: string, d?: string) => onAction(p, c, d, ft) : undefined;
   return (
     <div className="rounded-xl border border-gray-200 shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all">
       <div
@@ -1011,7 +1025,7 @@ export function CockpitCard({ config, onAction, onHeaderClick }: {
       </div>
       <ul className="py-1">
         {config.items.map((item, i) => (
-          <CockpitItemRow key={i} item={item} index={i} onAction={onAction} />
+          <CockpitItemRow key={i} item={item} index={i} onAction={itemAction} />
         ))}
       </ul>
     </div>
@@ -1022,9 +1036,10 @@ export function CockpitCard({ config, onAction, onHeaderClick }: {
 // group relative sur le div principal, WorkActionsOverlay sibling direct, PAS de overflow-hidden
 export function CockpitSignalCard({ item, onAction }: {
   item: DashboardBlocItem;
-  onAction?: (phase: PhaseKey, context: string, deliverable?: string) => void;
+  onAction?: (phase: PhaseKey, context: string, deliverable?: string, focusType?: string) => void;
 }) {
   const tag = getSignalTag(item);
+  const itemAction = onAction ? (p: PhaseKey, c: string, d?: string) => onAction(p, c, d, "signal") : undefined;
   const ps = item.phase ? PHASE_COLORS[item.phase] : null;
   return (
     <div className={cn("group relative rounded-xl p-4 hover:shadow-lg transition-shadow bg-gradient-to-r", getSignalGradient(item))}>
@@ -1040,7 +1055,7 @@ export function CockpitSignalCard({ item, onAction }: {
       </div>
       <h4 className="text-sm font-bold text-white leading-tight">{item.primary}</h4>
       <p className="text-[9px] text-white/80 mt-1.5 leading-relaxed">{item.secondary}</p>
-      {onAction && <WorkActionsOverlay context={item.primary} onAction={onAction} deliverable={item.deliverable} position="top" />}
+      {itemAction && <WorkActionsOverlay context={item.primary} onAction={itemAction} deliverable={item.deliverable} position="top" />}
     </div>
   );
 }
@@ -1235,8 +1250,10 @@ export function CockpitBlocDetail({ config, deptLabel, deptGradient, onBack, onA
   deptLabel: string;
   deptGradient: string;
   onBack: () => void;
-  onAction?: (phase: PhaseKey, context: string, deliverable?: string) => void;
+  onAction?: (phase: PhaseKey, context: string, deliverable?: string, focusType?: string) => void;
 }) {
+  const ft = deriveFocusType(config.title);
+  const itemAction = onAction ? (p: PhaseKey, c: string, d?: string) => onAction(p, c, d, ft) : undefined;
   const Icon = config.icon;
   const urgentCount = config.items.filter(it => it.urgent).length;
   const withPhase = config.items.filter(it => it.phase);
@@ -1290,7 +1307,7 @@ export function CockpitBlocDetail({ config, deptLabel, deptGradient, onBack, onA
         </div>
         <ul className="divide-y divide-gray-100">
           {config.items.map((item, i) => (
-            <CockpitItemRow key={i} item={item} index={i} onAction={onAction} showNumber />
+            <CockpitItemRow key={i} item={item} index={i} onAction={itemAction} showNumber />
           ))}
         </ul>
       </div>
@@ -1317,7 +1334,7 @@ export function getSignalTag(item: DashboardBlocItem): { label: string; classes:
   return { label: "Veille", classes: "bg-white/15 text-white" };
 }
 
-export function CockpitView({ embedded = false, onAction, initialDept = "CEOB" }: { embedded?: boolean; onAction?: (phase: string, context: string, deliverable?: string) => void; initialDept?: string }) {
+export function CockpitView({ embedded = false, onAction, initialDept = "CEOB" }: { embedded?: boolean; onAction?: (phase: string, context: string, deliverable?: string, focusType?: string) => void; initialDept?: string }) {
   const [selectedDept, setSelectedDept] = useState(initialDept);
   const [selectedBloc, setSelectedBloc] = useState<DashboardBlocConfig | null>(null);
 
@@ -1327,7 +1344,7 @@ export function CockpitView({ embedded = false, onAction, initialDept = "CEOB" }
   const DeptIcon = DEPT_DASH_ICON[selectedDept] || Zap;
   const deptLabel = DEPT_SHORT_LABEL[selectedDept] || "Direction";
   const gradient = DEPT_GRADIENT[selectedDept] || DEPT_GRADIENT.CEOB;
-  const handleAction = onAction as ((phase: PhaseKey, context: string, deliverable?: string) => void) | undefined;
+  const handleAction = onAction as ((phase: PhaseKey, context: string, deliverable?: string, focusType?: string) => void) | undefined;
 
   // Signaux = row1[0] → bande vedette. Reste = 8 boxes + 2 extras = 10 boxes.
   const signalItems = config.row1[0]?.items || [];

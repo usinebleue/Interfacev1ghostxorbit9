@@ -70,6 +70,10 @@ interface AmorcerState {
   simV3Cristallises: SimV3CristalliseItem[];
   addSimV3Cristallise: (text: string, source: string, sectionId: string) => void;
 
+  // Focus type (adapte la sidebar de FocusDiscussionView)
+  focusType: string;
+  setFocusType: (t: string) => void;
+
   // Helpers
   startReflexion: (chantier: string) => void;
   advance: () => void;
@@ -95,6 +99,9 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
   const [activeDeliverable, setActiveDeliverable] = useState<string | null>(null);
   const [deliverableStage, setDeliverableStage] = useState(0);
 
+  // Focus type state
+  const [focusType, setFocusType] = useState("chantier");
+
   // SimV3 state
   const [simV3Active, setSimV3Active] = useState(false);
   const [simV3Stage, setSimV3Stage] = useState(-1);
@@ -111,6 +118,7 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     setConceptionStage(0);
     setActiveDeliverable(null);
     setDeliverableStage(0);
+    setFocusType("chantier");
   }, []);
 
   const startReflexion = useCallback((chantier: string) => {
@@ -164,6 +172,7 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
         activeDeliverable, setActiveDeliverable,
         deliverableStage, setDeliverableStage,
         advanceDeliverable, startDeliverable,
+        focusType, setFocusType,
         simV3Active, setSimV3Active,
         simV3Stage, setSimV3Stage,
         simV3Cristallises, addSimV3Cristallise,

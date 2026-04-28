@@ -11,7 +11,6 @@
  * Accessible via /amorcer — ne touche PAS à la V2.
  */
 
-import { Palette, Library } from "lucide-react";
 import { cn } from "../components/ui/utils";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "../components/ui/resizable";
 import { ControlTowerPanel } from "./ControlTowerPanel";
@@ -28,7 +27,7 @@ export function FrameMasterAmorcer() {
 }
 
 function AmorcerLayout() {
-  const { rightSection, setRightSection } = useAmorcer();
+  const { rightSection } = useAmorcer();
 
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-white">
@@ -44,34 +43,6 @@ function AmorcerLayout() {
           </div>
         </div>
         <div className="flex-1" />
-        {/* Bouton Catalogue d'icônes — barre blanche principale */}
-        <button
-          onClick={() => setRightSection(rightSection === "icons" ? "cockpit" : "icons")}
-          className={cn(
-            "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-medium transition-all cursor-pointer",
-            rightSection === "icons"
-              ? "bg-gray-900 text-white shadow-sm"
-              : "text-gray-400 hover:bg-gray-100 hover:text-gray-600",
-          )}
-          title="Catalogue d'icônes"
-        >
-          <Palette className="h-3.5 w-3.5" />
-          <span>Icônes</span>
-        </button>
-        {/* Bouton Bibliothèque Simulations — même pattern que Icônes */}
-        <button
-          onClick={() => setRightSection(rightSection === "sim-library" ? "cockpit" : "sim-library")}
-          className={cn(
-            "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-medium transition-all cursor-pointer ml-1.5",
-            rightSection === "sim-library"
-              ? "bg-gray-900 text-white shadow-sm"
-              : "text-gray-400 hover:bg-gray-100 hover:text-gray-600",
-          )}
-          title="Bibliothèque Simulations"
-        >
-          <Library className="h-3.5 w-3.5" />
-          <span>Simulations</span>
-        </button>
       </header>
 
         {/* Layout 3 Zones — Resizable + Collapsible */}

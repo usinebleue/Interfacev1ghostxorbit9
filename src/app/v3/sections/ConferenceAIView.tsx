@@ -127,7 +127,7 @@ export function ConferenceAIView({ headerGradient, onNavigateToStore, onLaunch, 
     { id: "famille", label: "Categories", icon: FolderOpen, separator: true, expandable: "families" },
     // Poupée russe: non-CEOB = pas d'explorateur départements (on est déjà DANS un département)
     ...(isNonCEOB ? [] : [{ id: "departement" as ConfAIView | "store", label: "Departements", icon: Building2, expandable: "depts" as const }]),
-    { id: "store", label: "Playbook Store", icon: ShoppingBag, separator: true, external: true },
+    { id: "store", label: "Playbook", icon: ShoppingBag, separator: true, external: true },
   ];
 
   return (

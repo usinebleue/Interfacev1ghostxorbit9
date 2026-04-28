@@ -1403,7 +1403,7 @@ export function DataRoomView({ botCode, headerGradient, showHeader = false }: { 
           <div className="space-y-3">
             <div className="flex items-center gap-2 mb-1">
               {(() => { const DIcon = DEPT_DASH_ICON[botCode] || Database; return <DIcon className="h-4 w-4 text-blue-600" />; })()}
-              <span className="text-xs font-bold text-gray-800">Data Room — {DEPT_SHORT_LABEL[botCode] || botCode}</span>
+              <span className="text-xs font-bold text-gray-800">Données — {DEPT_SHORT_LABEL[botCode] || botCode}</span>
               <span className="text-[9px] text-gray-400">{sections.length} dossiers · {sections.reduce((s, c) => s + c.documents.length, 0)} documents</span>
             </div>
             <div className="grid grid-cols-2 gap-3">

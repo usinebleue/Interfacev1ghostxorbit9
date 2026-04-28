@@ -51,3 +51,6 @@ export {
   // Orbit9 mock data
   ORBIT9_CELLULES,
 } from "../../v2/zones/center/atelier/demos/SimAmorcer";
+
+// ═══ Focus Discussion View (composant V3 natif — pas un bridge SimAmorcer) ═══
+export { FocusDiscussionView } from "./FocusDiscussionView";

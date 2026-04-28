@@ -1240,7 +1240,7 @@ function PlaybookDecouvrir({ botCode, onOpenDetail, onNavigate }: { botCode: str
       {/* Bandeau Marketplace */}
       <div className="bg-blue-50/50 border border-blue-100 rounded-lg px-3 py-2 flex items-center gap-2">
         <Info className="h-3.5 w-3.5 text-blue-500 shrink-0" />
-        <span className="text-[9px] text-blue-700">Playbook Store · {botCode !== "CEOB" ? `${PLAYBOOK_STORE_DATA.filter(p => p.departement === botCode).length} playbooks ${DEPT_SHORT_LABEL[botCode] || botCode}` : `${PLAYBOOK_STORE_DATA.length} playbooks disponibles`} · 85% createur / 15% plateforme</span>
+        <span className="text-[9px] text-blue-700">Playbook · {botCode !== "CEOB" ? `${PLAYBOOK_STORE_DATA.filter(p => p.departement === botCode).length} playbooks ${DEPT_SHORT_LABEL[botCode] || botCode}` : `${PLAYBOOK_STORE_DATA.length} playbooks disponibles`} · 85% createur / 15% plateforme</span>
         <button onClick={() => onNavigate("builder")} className="text-[9px] text-blue-600 hover:text-blue-800 font-bold cursor-pointer ml-auto shrink-0">Publiez le votre →</button>
       </div>
     </div>
@@ -2085,7 +2085,7 @@ function PlaybookBuilder() {
       <div className="text-center py-4">
         <Wrench className="h-8 w-8 text-gray-300 mx-auto mb-3" />
         <h3 className="text-sm font-bold text-gray-800">Playbook Builder</h3>
-        <p className="text-[9px] text-gray-500 mt-1 max-w-sm mx-auto">Creez vos propres playbooks et publiez-les dans le Playbook Store.</p>
+        <p className="text-[9px] text-gray-500 mt-1 max-w-sm mx-auto">Creez vos propres playbooks et publiez-les dans le Playbook.</p>
       </div>
 
       {/* KPIs mock */}
@@ -2312,7 +2312,7 @@ export function PlaybookStoreView({ botCode, headerGradient, showHeader = false 
       {/* Header pleine largeur — masqué si showHeader est actif (évite le dédoublement) */}
       {!showHeader && (
         <div className={cn("bg-gradient-to-r rounded-lg px-4 py-2.5", headerGradient)}>
-          <h2 className="text-sm font-bold text-white">Playbook Store{activeView !== "decouvrir" ? ` — ${VIEW_LABELS[activeView]}` : ""}</h2>
+          <h2 className="text-sm font-bold text-white">Playbook{activeView !== "decouvrir" ? ` — ${VIEW_LABELS[activeView]}` : ""}</h2>
         </div>
       )}
 

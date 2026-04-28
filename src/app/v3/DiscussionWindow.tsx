@@ -210,8 +210,8 @@ export function DiscussionWindow() {
             <button type="button" className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer bg-blue-50 text-blue-600 hover:bg-blue-100" title="Discussion vocale">
               <Phone className="h-3.5 w-3.5" /><span className="hidden lg:inline">Discussion</span>
             </button>
-            <button type="button" className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer bg-emerald-50 text-emerald-600 hover:bg-emerald-100" title="Conférence vidéo">
-              <Video className="h-3.5 w-3.5" /><span className="hidden lg:inline">Conférence</span>
+            <button type="button" className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer bg-emerald-50 text-emerald-600 hover:bg-emerald-100" title="Réunion vidéo">
+              <Video className="h-3.5 w-3.5" /><span className="hidden lg:inline">Réunion</span>
             </button>
             <button type="button" className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer bg-cyan-50 text-cyan-600 hover:bg-cyan-100" title="Vision Ray-Ban">
               <Glasses className="h-3.5 w-3.5" /><span className="hidden lg:inline">Vision</span>

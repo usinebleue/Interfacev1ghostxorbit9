@@ -12,6 +12,7 @@ import {
   LayoutDashboard, Server, Users, Package, Activity, BookOpen, Shield,
   Plus, Trash2, CheckCircle2, XCircle, Mail,
   Globe, CreditCard, Zap, ChevronDown, ChevronRight, Loader2,
+  Palette, Library,
 } from "lucide-react";
 import { cn } from "../../components/ui/utils";
 import type { SectionProps } from "../core/types";
@@ -23,11 +24,14 @@ import {
   BTML_SIDEBAR,
 } from "./CerveauBTMLView";
 import type { BibleData } from "./CerveauBTMLView";
+import { IconCatalog } from "../simulation/sim-content-map";
+import { SimulationLibrary } from "./SimulationLibrary";
 
 // ═══ Types ═══
 
 type AdminSection = "dashboard" | "instances" | "users" | "packages" | "monitoring" | "knowledge"
-  | "bots-skills" | "api-endpoints" | "backend" | "database" | "infra" | "integrations" | "securite" | "cerveau-btml";
+  | "bots-skills" | "api-endpoints" | "backend" | "database" | "infra" | "integrations" | "securite" | "cerveau-btml"
+  | "icons" | "sim-library";
 
 interface SidebarItem {
   id: AdminSection;
@@ -659,6 +663,26 @@ export function AdminView({ showHeader }: SectionProps) {
               </button>
             );
           })}
+
+          {/* ═══ Séparateur + Groupe 3 — Outils Dev ═══ */}
+          <div className="h-px bg-gray-100 mx-2 my-2" />
+          <div className="px-2.5 py-1 text-[9px] font-bold text-gray-400 uppercase tracking-wider">Outils Dev</div>
+          {([
+            { id: "icons" as AdminSection, label: "Icônes", icon: Palette },
+            { id: "sim-library" as AdminSection, label: "Simulations", icon: Library },
+          ]).map((item) => {
+            const isActive = activeSection === item.id;
+            return (
+              <button key={item.id} onClick={() => setActiveSection(item.id)}
+                className={cn("w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
+                  isActive ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent")}>
+                <div className="flex items-center gap-1.5">
+                  <item.icon className={cn("h-3.5 w-3.5", isActive ? "text-blue-500" : "text-gray-400")} />
+                  <span className={cn("text-[10px] font-bold flex-1 leading-tight", isActive ? "text-blue-700" : "text-gray-700")}>{item.label}</span>
+                </div>
+              </button>
+            );
+          })}
         </div>
         <div className="flex-1 min-w-0">
           {/* ═══ Admin sections ═══ */}
@@ -690,6 +714,10 @@ export function AdminView({ showHeader }: SectionProps) {
               <div className="text-xs text-gray-400 p-4">Aucune donnée technique disponible.</div>
             )
           )}
+
+          {/* ═══ Outils Dev sections ═══ */}
+          {activeSection === "icons" && <IconCatalog />}
+          {activeSection === "sim-library" && <SimulationLibrary />}
         </div>
       </div>
     </div>
