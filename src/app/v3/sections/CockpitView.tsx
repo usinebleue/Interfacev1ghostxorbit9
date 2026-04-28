@@ -42,6 +42,7 @@ export interface DashboardBlocItem {
   bot?: string;
   phase?: PhaseKey;
   urgent?: boolean;
+  deliverable?: string;
 }
 
 export interface DashboardBlocConfig {
@@ -82,19 +83,19 @@ const DEPT_DASHBOARD_SECTIONS: Record<string, DeptDashboardConfig> = {
       ]},
       { icon: ClipboardCheck, title: "Décisions", count: 8, items: [
         { primary: "Expansion Laval", value: "En cours", valueColor: "text-blue-600", secondary: "D-097 — validée mars", phase: "execution" },
+        { primary: "Automatisation Boreal", value: "En cours", valueColor: "text-blue-600", secondary: "Cahier de projet — diagnostic + 4 solutions", phase: "creation", deliverable: "document" },
         { primary: "Nouveau CRM", value: "Approuvé", valueColor: "text-green-600", secondary: "D-101 — budget 45K$", phase: "retroaction" },
-        { primary: "Restructuration prod.", value: "En attente", valueColor: "text-amber-600", secondary: "D-103 — analyse ROI", phase: "reflexion" },
       ]},
       { icon: Award, title: "OKR", count: 4, items: [
         { primary: "Croissance 15%", pct: 72, pctColor: "bg-green-500", secondary: "Objectif annuel", phase: "execution" },
-        { primary: "Satisfaction client >90", pct: 88, pctColor: "bg-green-500", secondary: "NPS actuel: 88", phase: "retroaction" },
+        { primary: "Budget et subventions Boreal", value: "En cours", valueColor: "text-teal-600", secondary: "Tableur financier — projections 36 mois", phase: "creation", deliverable: "spreadsheet" },
         { primary: "Marge brute 35%", pct: 91, pctColor: "bg-green-500", secondary: "En avance sur cible", phase: "retroaction" },
       ]},
     ],
     row2: [
       { icon: User, title: "Comité", count: 3, items: [
         { primary: "CA mensuel", value: "12 avr.", secondary: "5 points à l'ordre du jour" },
-        { primary: "Comité stratégique", value: "18 avr.", secondary: "Revue portefeuille", phase: "reflexion" },
+        { primary: "Pitch Deck CA Boreal", value: "En cours", valueColor: "text-blue-600", secondary: "Présentation 8 slides — investissement 1.1M$", phase: "creation", deliverable: "presentation" },
         { primary: "1:1 avec Frank (CFO)", value: "8 avr.", secondary: "Budget Q2" },
       ]},
       { icon: Shield, title: "Gouvernance", count: 2, items: [
@@ -104,14 +105,14 @@ const DEPT_DASHBOARD_SECTIONS: Record<string, DeptDashboardConfig> = {
       ]},
       { icon: TrendingUp, title: "Pipeline", count: 7, items: [
         { primary: "Pipeline total", value: "3.2M$", valueColor: "text-green-600", secondary: "32 opportunités actives" },
-        { primary: "Taux conversion", pct: 24, pctColor: "bg-amber-500", secondary: "Cible: 30%", phase: "reflexion" },
+        { primary: "Jumelage intégrateur Boreal", value: "Nouveau", valueColor: "text-green-600", secondary: "Matching Orbit⁹ — sélection fournisseur", phase: "creation", deliverable: "jumelage" },
         { primary: "Temps moyen cycle", value: "42j", secondary: "En baisse vs Q4 (51j)", phase: "retroaction" },
       ]},
     ],
     row3: [
       { icon: ListChecks, title: "Tâches", count: 23, items: [
         { primary: "Valider budget marketing Q2", value: "Urgent", valueColor: "text-red-600", secondary: "Échéance: 10 avril", urgent: true, phase: "attention" },
-        { primary: "Revoir proposition Laval", value: "Normal", valueColor: "text-blue-600", secondary: "Échéance: 15 avril", phase: "reflexion" },
+        { primary: "Dashboard IoT Monitoring", value: "En cours", valueColor: "text-violet-600", secondary: "Phase 4 — 32 capteurs, alertes ML", phase: "creation", deliverable: "code" },
         { primary: "Feedback plan embauche", value: "Normal", valueColor: "text-blue-600", secondary: "Échéance: 12 avril" },
       ]},
       { icon: Calendar, title: "Agenda", count: 6, items: [
@@ -912,7 +913,7 @@ export const WORK_ACTIONS: { key: PhaseKey; icon: React.ElementType; label: stri
 /** Rollover unique — 5 boutons d'action. UN composant, ZÉRO silo.
  *  position="center" (défaut) = centré vertical (pour lignes de liste)
  *  position="top"            = coin haut-droit (pour cards hautes) */
-export function WorkActionsOverlay({ context, onAction, position = "center" }: { context: string; onAction: (phase: PhaseKey, ctx: string) => void; position?: "center" | "top" }) {
+export function WorkActionsOverlay({ context, onAction, deliverable, position = "center" }: { context: string; onAction: (phase: PhaseKey, ctx: string, deliverable?: string) => void; deliverable?: string; position?: "center" | "top" }) {
   return (
     <div className={cn(
       "hidden group-hover:flex items-center gap-1 absolute right-1.5 bg-white/95 backdrop-blur-sm rounded-lg shadow-sm border border-gray-200 px-1 py-0.5 z-20",
@@ -921,7 +922,7 @@ export function WorkActionsOverlay({ context, onAction, position = "center" }: {
       {WORK_ACTIONS.map(wa => (
         <button
           key={wa.key}
-          onClick={(e) => { e.stopPropagation(); onAction(wa.key, context); }}
+          onClick={(e) => { e.stopPropagation(); onAction(wa.key, context, deliverable); }}
           className={cn("p-1 rounded-md transition-colors cursor-pointer text-gray-700", wa.hover)}
           title={wa.label}
         >
@@ -937,7 +938,7 @@ export function WorkActionsOverlay({ context, onAction, position = "center" }: {
 export function CockpitItemRow({ item, index, onAction, showNumber }: {
   item: DashboardBlocItem;
   index: number;
-  onAction?: (phase: PhaseKey, context: string) => void;
+  onAction?: (phase: PhaseKey, context: string, deliverable?: string) => void;
   showNumber?: boolean;
 }) {
   const ps = item.phase ? PHASE_COLORS[item.phase] : null;
@@ -982,7 +983,7 @@ export function CockpitItemRow({ item, index, onAction, showNumber }: {
           </span>
         )}
       </div>
-      {onAction && <WorkActionsOverlay context={item.primary} onAction={onAction} />}
+      {onAction && <WorkActionsOverlay context={item.primary} onAction={onAction} deliverable={item.deliverable} />}
     </li>
   );
 }
@@ -991,7 +992,7 @@ export function CockpitItemRow({ item, index, onAction, showNumber }: {
 // Pas de overflow-hidden sur le wrapper → WorkActionsOverlay visible
 export function CockpitCard({ config, onAction, onHeaderClick }: {
   config: DashboardBlocConfig;
-  onAction?: (phase: PhaseKey, context: string) => void;
+  onAction?: (phase: PhaseKey, context: string, deliverable?: string) => void;
   onHeaderClick?: () => void;
 }) {
   const Icon = config.icon;
@@ -1021,7 +1022,7 @@ export function CockpitCard({ config, onAction, onHeaderClick }: {
 // group relative sur le div principal, WorkActionsOverlay sibling direct, PAS de overflow-hidden
 export function CockpitSignalCard({ item, onAction }: {
   item: DashboardBlocItem;
-  onAction?: (phase: PhaseKey, context: string) => void;
+  onAction?: (phase: PhaseKey, context: string, deliverable?: string) => void;
 }) {
   const tag = getSignalTag(item);
   const ps = item.phase ? PHASE_COLORS[item.phase] : null;
@@ -1039,7 +1040,7 @@ export function CockpitSignalCard({ item, onAction }: {
       </div>
       <h4 className="text-sm font-bold text-white leading-tight">{item.primary}</h4>
       <p className="text-[9px] text-white/80 mt-1.5 leading-relaxed">{item.secondary}</p>
-      {onAction && <WorkActionsOverlay context={item.primary} onAction={onAction} position="top" />}
+      {onAction && <WorkActionsOverlay context={item.primary} onAction={onAction} deliverable={item.deliverable} position="top" />}
     </div>
   );
 }
@@ -1075,6 +1076,15 @@ export const DEPT_ORDER = ["CEOB", "CTOB", "CFOB", "CMOB", "CSOB", "COOB", "CPOB
 // Carl: "je veux toujours 10 box sur les vues d'ensemble de chaque département"
 const COCKPIT_EXTRA_BLOCS: Record<string, DashboardBlocConfig[]> = {
   CEOB: [
+    { icon: Play, title: "Simulations — Documents", count: 3, items: [
+      { primary: "Cahier de projet", value: "Document", valueColor: "text-blue-600", secondary: "Rédaction complète — diagnostic + 4 solutions Boreal", phase: "creation", deliverable: "document" },
+      { primary: "Tableau de bord financier", value: "Tableur", valueColor: "text-emerald-600", secondary: "Projections 36 mois — budget et subventions", phase: "creation", deliverable: "spreadsheet" },
+      { primary: "Pitch Deck Présentation", value: "Slides", valueColor: "text-purple-600", secondary: "8 slides — investissement 1.1M$ pour le CA", phase: "creation", deliverable: "presentation" },
+    ]},
+    { icon: Zap, title: "Simulations — Projets", count: 2, items: [
+      { primary: "Dashboard IoT (Tim Code)", value: "Code", valueColor: "text-amber-600", secondary: "32 capteurs, alertes ML — coding avec Tim", phase: "creation", deliverable: "code" },
+      { primary: "Jumelage SMART Orbit⁹", value: "Matching", valueColor: "text-teal-600", secondary: "Sélection fournisseur — matching intégrateurs", phase: "creation", deliverable: "jumelage" },
+    ]},
     { icon: Rocket, title: "Projets stratégiques", count: 5, items: [
       { primary: "Brain Team V2", pct: 65, pctColor: "bg-blue-500", secondary: "Plateforme IA pour PME", phase: "execution" },
       { primary: "Expansion Laval", pct: 40, pctColor: "bg-amber-500", secondary: "Ouverture Q3 2026", phase: "execution" },
@@ -1225,7 +1235,7 @@ export function CockpitBlocDetail({ config, deptLabel, deptGradient, onBack, onA
   deptLabel: string;
   deptGradient: string;
   onBack: () => void;
-  onAction?: (phase: PhaseKey, context: string) => void;
+  onAction?: (phase: PhaseKey, context: string, deliverable?: string) => void;
 }) {
   const Icon = config.icon;
   const urgentCount = config.items.filter(it => it.urgent).length;
@@ -1307,7 +1317,7 @@ export function getSignalTag(item: DashboardBlocItem): { label: string; classes:
   return { label: "Veille", classes: "bg-white/15 text-white" };
 }
 
-export function CockpitView({ embedded = false, onAction, initialDept = "CEOB" }: { embedded?: boolean; onAction?: (phase: string, context: string) => void; initialDept?: string }) {
+export function CockpitView({ embedded = false, onAction, initialDept = "CEOB" }: { embedded?: boolean; onAction?: (phase: string, context: string, deliverable?: string) => void; initialDept?: string }) {
   const [selectedDept, setSelectedDept] = useState(initialDept);
   const [selectedBloc, setSelectedBloc] = useState<DashboardBlocConfig | null>(null);
 
@@ -1317,15 +1327,15 @@ export function CockpitView({ embedded = false, onAction, initialDept = "CEOB" }
   const DeptIcon = DEPT_DASH_ICON[selectedDept] || Zap;
   const deptLabel = DEPT_SHORT_LABEL[selectedDept] || "Direction";
   const gradient = DEPT_GRADIENT[selectedDept] || DEPT_GRADIENT.CEOB;
-  const handleAction = onAction as ((phase: PhaseKey, context: string) => void) | undefined;
+  const handleAction = onAction as ((phase: PhaseKey, context: string, deliverable?: string) => void) | undefined;
 
   // Signaux = row1[0] → bande vedette. Reste = 8 boxes + 2 extras = 10 boxes.
   const signalItems = config.row1[0]?.items || [];
   const gridBlocs = [
+    ...(COCKPIT_EXTRA_BLOCS[selectedDept] || []),
     ...config.row1.slice(1),
     ...config.row2,
     ...config.row3,
-    ...(COCKPIT_EXTRA_BLOCS[selectedDept] || []),
   ];
 
   const Wrapper = embedded ? "div" : PageLayout;

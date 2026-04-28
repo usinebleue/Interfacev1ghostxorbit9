@@ -8,18 +8,18 @@
  * JAMAIS importer directement depuis SimAmorcer dans les fichiers V3.
  */
 
-export {
-  // Mock team data (avatars dans le header Discussion)
-  TEAM,
+// TEAM = source V3 (sim-data.ts) — ZERO import V2 pour les données
+export { TEAM } from "./sim-data";
 
-  // Chat components par phase
+// Chat components par phase — encore dans SimAmorcer (V2) temporairement.
+// Quand le backend sera branché, ces composants seront remplacés par de vrais chats.
+export {
   ObservationChat,
   ReflexionChat,
   ConceptionChat,
   AttentionChat,
   ModerationChat,
   PlaceholderChat,
-
-  // Level 2 — Deliverable conception chat
   DeliverableConceptionChat,
+  ExecutionChat,
 } from "../../v2/zones/center/atelier/demos/SimAmorcer";

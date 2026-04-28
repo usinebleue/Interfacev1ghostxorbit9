@@ -9,11 +9,10 @@
 
 import { useState } from "react";
 import {
-  Gauge, Flame, Video, Calendar, Layers, Database, BookOpen, Atom,
+  Gauge, Video, Calendar, Layers, Database, BookOpen, Atom,
   Bot, Network, ArrowRight, ArrowLeft, Zap, TowerControl,
   Home, ChevronRight, Users, MessageSquare,
   Handshake, Shield, Rocket, Activity, UserCircle,
-  Settings,
 } from "lucide-react";
 import { cn } from "../components/ui/utils";
 import { useAmorcer } from "./AmorcerContext";
@@ -35,24 +34,22 @@ interface DeptNavItem {
 
 const DEPT_NAV_ITEMS: DeptNavItem[] = [
   { label: "Cockpit", icon: Gauge, state: null },
-  { label: "Chantiers", icon: Flame, state: null },
+  { label: "Exécution", icon: Rocket, state: null },
   { label: "Conférence AI", icon: Video, state: null },
   { label: "Agenda", icon: Calendar, state: null },
   { label: "Blueprint", icon: Layers, state: null },
   { label: "Data Room", icon: Database, state: null },
   { label: "Playbook Store", icon: BookOpen, state: null },
-  { label: "Opérations", icon: Settings, state: null },
   { label: "Orbit9", icon: Atom, state: null },
 ];
 
 const DEPT_SECTION_MAP: Record<string, string> = {
   "Cockpit": "cockpit",
-  "Chantiers": "chantiers",
+  "Exécution": "execution",
   "Blueprint": "blueprint",
   "Data Room": "dataroom",
   "Playbook Store": "playbooks",
   "Conférence AI": "conferenceai",
-  "Opérations": "operations",
   "Agenda": "bureau-agenda",
 };
 
@@ -224,6 +221,7 @@ export function ControlTowerPanel() {
     cockpitTab, setCockpitTab,
     o9Section, setO9Section,
     rightSection, setRightSection,
+    resetChat,
   } = useAmorcer();
   const [activeDeptItem, setActiveDeptItem] = useState<string | null>("Cockpit");
   const [cockpitSubTab, setCockpitSubTab] = useState<"brainteam" | "cellules">("brainteam");
@@ -275,7 +273,7 @@ export function ControlTowerPanel() {
           {/* Contenu Bureau — toujours visible (Orbit9 = section du panneau droit, pas un tab gauche) */}
           <div className="flex-1 overflow-hidden flex flex-col mt-2">
             <div className="flex-1 overflow-hidden">
-              <TabBureau activeBotCode={activeBotCode} setActiveBotCode={setActiveBotCode} activeDeptItem={activeDeptItem} setActiveDeptItem={setActiveDeptItem} cockpitSubTab={cockpitSubTab} setCockpitSubTab={setCockpitSubTab} DeptIconComp={DeptIconComp} deptName={deptName} setCockpitTab={setCockpitTab} setRightSection={setRightSection} />
+              <TabBureau activeBotCode={activeBotCode} setActiveBotCode={setActiveBotCode} activeDeptItem={activeDeptItem} setActiveDeptItem={setActiveDeptItem} cockpitSubTab={cockpitSubTab} setCockpitSubTab={setCockpitSubTab} DeptIconComp={DeptIconComp} deptName={deptName} setCockpitTab={setCockpitTab} setRightSection={setRightSection} resetChat={resetChat} />
             </div>
           </div>
         </div>
@@ -371,9 +369,10 @@ interface TabBureauProps {
   deptName: string;
   setCockpitTab: (tab: "bureau" | "orbit9") => void;
   setRightSection: (s: string) => void;
+  resetChat: () => void;
 }
 
-function TabBureau({ activeBotCode, setActiveBotCode, activeDeptItem, setActiveDeptItem, cockpitSubTab, setCockpitSubTab, DeptIconComp, deptName, setCockpitTab, setRightSection }: TabBureauProps) {
+function TabBureau({ activeBotCode, setActiveBotCode, activeDeptItem, setActiveDeptItem, cockpitSubTab, setCockpitSubTab, DeptIconComp, deptName, setCockpitTab, setRightSection, resetChat }: TabBureauProps) {
   const { isDieu } = useTenant();
   return (
     <div className="overflow-y-auto h-full text-[11px] flex flex-col">
@@ -388,12 +387,12 @@ function TabBureau({ activeBotCode, setActiveBotCode, activeDeptItem, setActiveD
             key={item.label}
             onClick={() => {
               setActiveDeptItem(item.label);
+              resetChat();
               if (item.label === "Orbit9") {
                 setCockpitTab("orbit9");
-
                 setRightSection(null);
               } else if (DEPT_SECTION_MAP[item.label]) {
-
+                setCockpitTab("bureau");
                 setRightSection(DEPT_SECTION_MAP[item.label]);
               }
             }}

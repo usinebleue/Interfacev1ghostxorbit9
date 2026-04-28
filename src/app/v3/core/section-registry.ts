@@ -42,7 +42,7 @@ export const SECTIONS: SectionDef[] = [
   { id: "ventes",        label: "Ventes",        group: "departement", order: 1,  gpsView: "department", gpsSub: "ventes",        flowType: "data", botPrimaire: "CROB",  botSecondaires: ["CMOB", "CSOB"] },
   { id: "marketing",     label: "Marketing",     group: "departement", order: 2,  gpsView: "department", gpsSub: "marketing",     flowType: "data", botPrimaire: "CMOB",  botSecondaires: ["CCOB", "CROB"] },
   { id: "finance",       label: "Finance",       group: "departement", order: 3,  gpsView: "department", gpsSub: "finance",       flowType: "data", botPrimaire: "CFOB",  botSecondaires: ["CEOB", "COOB"] },
-  { id: "operations",    label: "Opérations",    group: "departement", order: 4,  gpsView: "department", gpsSub: "operations",    flowType: "data", botPrimaire: "COOB",  botSecondaires: ["CPOB", "CTOB"] },
+  { id: "execution",     label: "Exécution",     group: "departement", order: 4,  gpsView: "department", gpsSub: "execution",     flowType: "data", botPrimaire: "COOB",  botSecondaires: ["CPOB", "CTOB"] },
   { id: "technologie",   label: "Technologie",   group: "departement", order: 5,  gpsView: "department", gpsSub: "technologie",   flowType: "data", botPrimaire: "CTOB",  botSecondaires: ["CINOB", "CISOB"] },
   { id: "strategie",     label: "Stratégie",     group: "departement", order: 6,  gpsView: "department", gpsSub: "strategie",     flowType: "data", botPrimaire: "CSOB",  botSecondaires: ["CEOB", "CFOB"] },
   { id: "innovation",    label: "Innovation",    group: "departement", order: 7,  gpsView: "department", gpsSub: "innovation",    flowType: "data", botPrimaire: "CINOB", botSecondaires: ["CTOB", "CMOB"] },

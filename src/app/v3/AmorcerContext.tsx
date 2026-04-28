@@ -73,6 +73,7 @@ interface AmorcerState {
   // Helpers
   startReflexion: (chantier: string) => void;
   advance: () => void;
+  resetChat: () => void;
 }
 
 const AmorcerCtx = createContext<AmorcerState | null>(null);
@@ -100,6 +101,16 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
   const [simV3Cristallises, setSimV3Cristallises] = useState<SimV3CristalliseItem[]>([]);
   const addSimV3Cristallise = useCallback((text: string, source: string, sectionId: string) => {
     setSimV3Cristallises((prev) => [...prev, { id: `c-${Date.now()}`, text, source, sectionId }]);
+  }, []);
+
+  const resetChat = useCallback(() => {
+    setActivePhase("observation");
+    setChatStage(0);
+    setTyped(false);
+    setReflexionContext(null);
+    setConceptionStage(0);
+    setActiveDeliverable(null);
+    setDeliverableStage(0);
   }, []);
 
   const startReflexion = useCallback((chantier: string) => {
@@ -156,7 +167,7 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
         simV3Active, setSimV3Active,
         simV3Stage, setSimV3Stage,
         simV3Cristallises, addSimV3Cristallise,
-        startReflexion, advance,
+        startReflexion, advance, resetChat,
       }}
     >
       {children}

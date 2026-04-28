@@ -34,6 +34,9 @@ export {
   PhaseConceptionCode,
   PhaseConceptionJumelage,
 
+  // Phase Execution (workspace — hero vert + sidebar SF 5 sections)
+  PhaseExecution,
+
   // ═══ Orbit9 simulation components ═══
   Orbit9SocialHome,
   Orbit9BlueprintCollaboration,

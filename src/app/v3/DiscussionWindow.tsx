@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { cn } from "../components/ui/utils";
 import { useAmorcer } from "./AmorcerContext";
-import { BotAvatar } from "../v2/zones/center/shared/simulation-components";
+import { BotAvatar } from "./simulation/primitives";
 
 // ═══ V3 Core — source unique constantes ═══
 import { PHASE_CONFIG } from "./core/phases";
@@ -41,6 +41,7 @@ import {
   ModerationChat,
   PlaceholderChat,
   DeliverableConceptionChat,
+  ExecutionChat,
 } from "./simulation/sim-chat-map";
 
 export function DiscussionWindow() {
@@ -51,6 +52,7 @@ export function DiscussionWindow() {
     typed,
     setTyped,
     reflexionContext,
+    rightSection,
     cockpitTab,
     advance,
     conceptionStage,
@@ -69,10 +71,21 @@ export function DiscussionWindow() {
   const isOrbit9 = cockpitTab === "orbit9";
   const isDash = activePhase === "observation" || activePhase === "attention" || activePhase === "moderation";
 
-  // Scroll to bottom on chat changes (copié de SimAmorcer L557)
+  // Auto-scroll — MutationObserver suit TOUT nouveau contenu (typewriter, animations, messages)
   useEffect(() => {
-    chatRef.current && (chatRef.current.scrollTop = chatRef.current.scrollHeight);
-  }, [chatStage, typed]);
+    const el = chatRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+    const scrollToBottom = () => {
+      requestAnimationFrame(() => {
+        const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 150;
+        if (isNearBottom) el.scrollTop = el.scrollHeight;
+      });
+    };
+    const observer = new MutationObserver(scrollToBottom);
+    observer.observe(el, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [activePhase, activeDeliverable]);
 
   return (
     <div className="h-full flex flex-col bg-white">
@@ -106,26 +119,40 @@ export function DiscussionWindow() {
       {/* Discussion — scrollable, phase-specific */}
       <div ref={chatRef} className="flex-1 overflow-auto">
         <div className="p-3 space-y-3">
-          {activePhase === "observation" && (
-            <ObservationChat typed={typed} setTyped={setTyped} />
-          )}
-          {activePhase === "attention" && (
-            <AttentionChat stage={chatStage} typed={typed} setTyped={setTyped} advance={advance} pc={pc} />
-          )}
-          {activePhase === "moderation" && (
-            <ModerationChat stage={chatStage} typed={typed} setTyped={setTyped} advance={advance} pc={pc} />
-          )}
-          {activePhase === "reflexion" && (
-            <ReflexionChat stage={chatStage} typed={typed} setTyped={setTyped} advance={advance} pc={pc} context={reflexionContext} />
-          )}
-          {activePhase === "creation" && activeDeliverable && (
-            <DeliverableConceptionChat deliverable={activeDeliverable} stage={deliverableStage} typed={typed} setTyped={setTyped} advance={advanceDeliverable} onBack={() => setActiveDeliverable(null)} />
-          )}
-          {activePhase === "creation" && !activeDeliverable && (
-            <ConceptionChat stage={conceptionStage} typed={typed} setTyped={setTyped} advance={advanceConception} onBackToReflexion={() => setActivePhase("reflexion")} />
-          )}
-          {!isDash && activePhase !== "reflexion" && activePhase !== "creation" && (
-            <PlaceholderChat phase={activePhase} />
+          {rightSection ? (
+            /* Section active (cockpit, blueprint, etc.) — pas de chat de simulation */
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Bot className="h-8 w-8 text-gray-200 mb-3" />
+              <p className="text-sm font-medium text-gray-400">Posez une question sur cette section</p>
+              <p className="text-xs text-gray-300 mt-1">L'équipe Brain Team est prête à vous aider.</p>
+            </div>
+          ) : (
+            <>
+              {activePhase === "observation" && (
+                <ObservationChat typed={typed} setTyped={setTyped} />
+              )}
+              {activePhase === "attention" && (
+                <AttentionChat stage={chatStage} typed={typed} setTyped={setTyped} advance={advance} pc={pc} />
+              )}
+              {activePhase === "moderation" && (
+                <ModerationChat stage={chatStage} typed={typed} setTyped={setTyped} advance={advance} pc={pc} />
+              )}
+              {activePhase === "reflexion" && (
+                <ReflexionChat stage={chatStage} typed={typed} setTyped={setTyped} advance={advance} pc={pc} context={reflexionContext} />
+              )}
+              {activePhase === "creation" && activeDeliverable && (
+                <DeliverableConceptionChat deliverable={activeDeliverable} stage={deliverableStage} typed={typed} setTyped={setTyped} advance={advanceDeliverable} onBack={() => setActiveDeliverable(null)} />
+              )}
+              {activePhase === "creation" && !activeDeliverable && (
+                <ConceptionChat stage={conceptionStage} typed={typed} setTyped={setTyped} advance={advanceConception} onBackToReflexion={() => setActivePhase("reflexion")} />
+              )}
+              {activePhase === "execution" && (
+                <ExecutionChat stage={chatStage} typed={typed} setTyped={setTyped} advance={advance} pc={pc} context={reflexionContext} />
+              )}
+              {!isDash && activePhase !== "reflexion" && activePhase !== "creation" && activePhase !== "execution" && (
+                <PlaceholderChat phase={activePhase} />
+              )}
+            </>
           )}
         </div>
       </div>

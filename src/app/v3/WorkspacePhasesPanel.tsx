@@ -22,8 +22,7 @@ import {
   BookOpen,
   Video,
   Calendar,
-  Flame,
-  Settings,
+  Rocket,
   Shield,
 } from "lucide-react";
 import { cn } from "../components/ui/utils";
@@ -41,11 +40,15 @@ import { BlueprintView, BLUEPRINT_HEADER_TABS } from "./sections/BlueprintView";
 import { DataRoomView } from "./sections/DataRoomView";
 import { PlaybookStoreView } from "./sections/PlaybookStoreView";
 import { ConferenceAIView } from "./sections/ConferenceAIView";
-import { ChantierView } from "./sections/ChantierView";
-import { OperationsView } from "./sections/OperationsView";
+import { ExecutionView } from "./sections/ExecutionView";
+import { EXECUTION_HEADER_TABS } from "./sections/execution-data";
 import { AgendaView } from "./sections/AgendaView";
 import { AdminView } from "./sections/AdminView";
 // CerveauBTMLView retiré — fusionné dans AdminView > Stack Technique
+// ChantierView + OperationsView — absorbés dans ExecutionView (Option C)
+
+// ═══ Bibliothèque Simulations ═══
+import { SimulationLibrary } from "./sections/SimulationLibrary";
 
 // ═══ Orbit9 V3 — composant cristallisé ═══
 import { Orbit9View } from "./sections/orbit9/Orbit9View";
@@ -63,6 +66,7 @@ import {
   PhaseConceptionJumelage,
   ChantierDrillDown,
   IconCatalog,
+  PhaseExecution,
 } from "./simulation/sim-content-map";
 
 export function WorkspacePhasesPanel() {
@@ -90,6 +94,7 @@ export function WorkspacePhasesPanel() {
   const rightRef = useRef<HTMLDivElement>(null);
   const [blueprintHeaderView, setBlueprintHeaderView] = useState<HeaderView>("blueprint");
   const [blueprintStats, setBlueprintStats] = useState<{ tier: string; tierLabel: string; score: number } | null>(null);
+  const [executionTab, setExecutionTab] = useState<string>("live");
 
   const pc = PHASE_CONFIG[activePhase];
   const isOrbit9 = cockpitTab === "orbit9";
@@ -107,8 +112,8 @@ export function WorkspacePhasesPanel() {
 
       {/* ═══ HEADER DÉPARTEMENT PASTEL h-12 ═══ */}
       {(() => {
-        const SECTION_ICON: Record<string, React.ElementType> = { cockpit: Gauge, chantiers: Flame, blueprint: Layers, dataroom: Database, playbooks: BookOpen, conferenceai: Video, operations: Settings, "bureau-agenda": Calendar, admin: Shield, orbit9: Atom };
-        const SECTION_LABEL: Record<string, string> = { cockpit: "Cockpit", chantiers: "Chantiers", blueprint: "Blueprint", dataroom: "Data Room", playbooks: "Playbook Store", conferenceai: "Conference AI", operations: "Opérations", "bureau-agenda": "Agenda", admin: "Administration", orbit9: "Orbit⁹" };
+        const SECTION_ICON: Record<string, React.ElementType> = { cockpit: Gauge, execution: Rocket, blueprint: Layers, dataroom: Database, playbooks: BookOpen, conferenceai: Video, "bureau-agenda": Calendar, admin: Shield, orbit9: Atom };
+        const SECTION_LABEL: Record<string, string> = { cockpit: "Cockpit", execution: "Exécution", blueprint: "Blueprint", dataroom: "Data Room", playbooks: "Playbook Store", conferenceai: "Conference AI", "bureau-agenda": "Agenda", admin: "Administration", orbit9: "Orbit⁹" };
         // activeSection = source unique pour icon, label, tabs (orbit9 traité comme une section)
         const activeSection = (isOrbit9 && !rightSection) ? "orbit9" : rightSection;
         const DeptIcon = (activeSection && SECTION_ICON[activeSection]) ? SECTION_ICON[activeSection] : (DEPT_DASH_ICON[activeBotCode] || Home);
@@ -120,6 +125,7 @@ export function WorkspacePhasesPanel() {
           : `Département ${deptLabel} — ${sectionLabel}`;
         const showBlueprintTabs = activeSection === "blueprint";
         const showOrbit9Tabs = activeSection === "orbit9";
+        const showExecutionTabs = activeSection === "execution";
         return (
           <div className="h-12 px-3 shrink-0 flex items-center gap-2 border-b border-gray-200 bg-[#00B4D8]/[0.12]">
             <DeptIcon className="h-4 w-4 text-gray-900 stroke-[2.5]" />
@@ -172,6 +178,30 @@ export function WorkspacePhasesPanel() {
                 </div>
               </>
             )}
+            {/* Sous-tabs Exécution — même pattern que Orbit9/Blueprint */}
+            {showExecutionTabs && (
+              <>
+                <div className="w-px h-5 bg-gray-300 mx-1.5" />
+                <div className="flex items-center gap-1">
+                  {EXECUTION_HEADER_TABS.map(tab => (
+                    <button
+                      key={tab.key}
+                      type="button"
+                      onClick={() => setExecutionTab(tab.key)}
+                      className={cn(
+                        "px-2 py-1 rounded-md text-[10px] font-medium flex items-center gap-1 transition-all cursor-pointer",
+                        executionTab === tab.key
+                          ? "bg-[#073E5A] text-white shadow-sm"
+                          : "text-gray-600 hover:bg-gray-100"
+                      )}
+                    >
+                      <tab.icon className="h-3.5 w-3.5" />
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
             {activeSection !== "orbit9" && activePhase === "reflexion" && reflexionContext && !rightSection && (
               <>
                 <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
@@ -203,7 +233,10 @@ export function WorkspacePhasesPanel() {
 
       {/* ═══ CONTENU DYNAMIQUE ═══ */}
       <div ref={rightRef} className="flex-1 overflow-auto bg-gray-50">
-        {rightSection === "icons" ? (
+        {rightSection === "sim-library" ? (
+          /* Bibliothèque des éléments de simulation */
+          <SimulationLibrary />
+        ) : rightSection === "icons" ? (
           /* Catalogue d'icônes officiel */
           <IconCatalog />
         ) : rightSection ? (
@@ -223,13 +256,12 @@ export function WorkspacePhasesPanel() {
               }
             `}</style>
             <CanvasActionProvider>
-              {rightSection === "cockpit" && <CockpitView embedded initialDept={activeBotCode} onAction={(phase, context) => { setActivePhase(phase as PhaseKey); setReflexionContext(context); setRightSection(null); }} />}
+              {rightSection === "cockpit" && <CockpitView embedded initialDept={activeBotCode} onAction={(phase, context, deliverable) => { if (phase === "creation" && deliverable) { setActivePhase("creation"); startDeliverable(deliverable); } else { setActivePhase(phase as PhaseKey); setReflexionContext(context); } setRightSection(null); }} />}
               {rightSection === "blueprint" && <BlueprintView botCode={activeBotCode} headerGradient="from-blue-600 to-blue-500" hideHeader activeHeaderView={blueprintHeaderView} onHeaderViewChange={setBlueprintHeaderView} onStats={setBlueprintStats} />}
               {rightSection === "dataroom" && <DataRoomView botCode={activeBotCode} headerGradient="from-blue-600 to-blue-500" showHeader />}
               {rightSection === "playbooks" && <PlaybookStoreView botCode={activeBotCode} headerGradient="from-blue-600 to-blue-500" showHeader />}
               {rightSection === "conferenceai" && <ConferenceAIView headerGradient="from-blue-600 to-blue-500" onNavigateToStore={() => setRightSection("playbooks")} botCode={activeBotCode} />}
-              {rightSection === "chantiers" && <ChantierView botCode={activeBotCode} showHeader onAction={(phase, context) => { setActivePhase(phase as PhaseKey); setReflexionContext(context); setRightSection(null); }} />}
-              {rightSection === "operations" && <OperationsView botCode={activeBotCode} showHeader onAction={(phase, context) => { setActivePhase(phase as PhaseKey); setReflexionContext(context); setRightSection(null); }} />}
+              {rightSection === "execution" && <ExecutionView botCode={activeBotCode} showHeader activeTab={executionTab} onTabChange={setExecutionTab} onAction={(phase, context) => { setActivePhase(phase as PhaseKey); setReflexionContext(context); setRightSection(null); }} />}
               {rightSection === "bureau-agenda" && <AgendaView botCode={activeBotCode} showHeader onAction={(phase, context) => { setActivePhase(phase as PhaseKey); setReflexionContext(context); setRightSection(null); }} />}
               {rightSection === "admin" && <AdminView botCode={activeBotCode} showHeader onAction={(phase, context) => { setActivePhase(phase as PhaseKey); setReflexionContext(context); setRightSection(null); }} />}
               {/* cerveau-btml fusionné dans AdminView > Stack Technique */}
@@ -243,7 +275,7 @@ export function WorkspacePhasesPanel() {
         ) : isDash ? (
           /* Dashboard views (Observation, Attention, Moderation) */
           <div className="max-w-4xl mx-auto px-6 py-4 pb-12">
-            <VueEnsemble phase={activePhase} chatStage={chatStage} onStartReflexion={startReflexion} />
+            <VueEnsemble phase={activePhase} chatStage={chatStage} onStartReflexion={startReflexion} onStartSimulation={(type) => startDeliverable(type)} />
           </div>
         ) : activePhase === "reflexion" ? (
           /* Réflexion magazine */
@@ -261,8 +293,11 @@ export function WorkspacePhasesPanel() {
         ) : activePhase === "creation" ? (
           /* Conception Level 1 — chantier (hero + sidebar + validation + livrables grid) */
           <PhaseConception stage={conceptionStage} context={reflexionContext} onStartExecution={() => { setActivePhase("execution"); setRightSection(null); }} onSelectDeliverable={(id) => startDeliverable(id)} />
+        ) : activePhase === "execution" ? (
+          /* Exécution — hero vert + sidebar SF 5 sections */
+          <PhaseExecution stage={chatStage} />
         ) : (
-          /* Exécution, Rétroaction — drill-down */
+          /* Rétroaction et autres — drill-down */
           <ChantierDrillDown phase={activePhase} />
         )}
       </div>

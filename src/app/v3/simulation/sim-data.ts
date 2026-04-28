@@ -1,0 +1,68 @@
+/**
+ * sim-data.ts — Donnees partagees V3 (BOT_COLORS, TEAM, SOURCE_ICONS, REFLECTION_MODES)
+ * Source unique V3 — tous les composants simulation importent depuis ce fichier.
+ * Quand le backend sera branche, les mock data seront remplaces par des API calls.
+ */
+
+import {
+  Eye,
+  Swords,
+  Lightbulb,
+  Target,
+  Sparkles,
+  CheckCircle2,
+  Zap,
+  Brain,
+  FileText,
+  BarChart3,
+  Database,
+} from "lucide-react";
+import type { BotColorConfig, ReflectionMode } from "./sim-types";
+
+// ========== BOT C-LEVEL COLORS (12 bots) ==========
+
+export const BOT_COLORS: Record<string, BotColorConfig> = {
+  CEOB: { bg: "bg-blue-600", bgLight: "bg-blue-50", text: "text-blue-700", border: "border-blue-400", ring: "ring-blue-300", dot: "bg-blue-500", emoji: "\u{1F454}", name: "CarlOS", role: "CEO", avatar: "/agents/generated/ceo-carlos-profil-v3.png" },
+  CTOB: { bg: "bg-violet-600", bgLight: "bg-violet-50", text: "text-violet-700", border: "border-violet-400", ring: "ring-violet-300", dot: "bg-violet-500", emoji: "\u{1F4BB}", name: "Tim", role: "CTO", avatar: "/agents/generated/cto-thierry-profil-v3.png" },
+  CFOB: { bg: "bg-emerald-600", bgLight: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-400", ring: "ring-emerald-300", dot: "bg-emerald-500", emoji: "\u{1F4B0}", name: "Frank", role: "CFO", avatar: "/agents/generated/cfo-francois-profil-v3.png" },
+  CMOB: { bg: "bg-pink-600", bgLight: "bg-pink-50", text: "text-pink-700", border: "border-pink-400", ring: "ring-pink-300", dot: "bg-pink-500", emoji: "\u{1F4E3}", name: "Mathilde", role: "CMO", avatar: "/agents/generated/cmo-martine-profil-v3.png" },
+  CSOB: { bg: "bg-red-600", bgLight: "bg-red-50", text: "text-red-700", border: "border-red-400", ring: "ring-red-300", dot: "bg-red-500", emoji: "\u{1F3AF}", name: "Simone", role: "CSO", avatar: "/agents/generated/cso-sophie-profil-v3.png" },
+  COOB: { bg: "bg-orange-600", bgLight: "bg-orange-50", text: "text-orange-700", border: "border-orange-400", ring: "ring-orange-300", dot: "bg-orange-500", emoji: "\u2699\uFE0F", name: "Olivier", role: "COO", avatar: "/agents/generated/coo-olivier-profil-v3.png" },
+  CPOB: { bg: "bg-slate-600", bgLight: "bg-slate-50", text: "text-slate-700", border: "border-slate-400", ring: "ring-slate-300", dot: "bg-slate-500", emoji: "\u{1F3ED}", name: "Paco", role: "CPO", avatar: "/agents/generated/factory-bot-profil-v3.png" },
+  CHROB: { bg: "bg-teal-600", bgLight: "bg-teal-50", text: "text-teal-700", border: "border-teal-400", ring: "ring-teal-300", dot: "bg-teal-500", emoji: "\u{1F91D}", name: "H\u00e9l\u00e8ne", role: "CHRO", avatar: "/agents/generated/chro-helene-profil-v3.png" },
+  CINOB: { bg: "bg-rose-600", bgLight: "bg-rose-50", text: "text-rose-700", border: "border-rose-400", ring: "ring-rose-300", dot: "bg-rose-500", emoji: "\u{1F4CA}", name: "In\u00e8s", role: "CINO", avatar: "/agents/generated/cino-ines-profil-v3.png" },
+  CROB: { bg: "bg-amber-600", bgLight: "bg-amber-50", text: "text-amber-700", border: "border-amber-400", ring: "ring-amber-300", dot: "bg-amber-500", emoji: "\u{1F4C8}", name: "Rich", role: "CRO", avatar: "/agents/generated/cro-raphael-profil-v3.png" },
+  CLOB: { bg: "bg-indigo-600", bgLight: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-400", ring: "ring-indigo-300", dot: "bg-indigo-500", emoji: "\u2696\uFE0F", name: "Loulou", role: "CLO", avatar: "/agents/generated/clo-louise-profil-v3.png" },
+  CISOB: { bg: "bg-zinc-700", bgLight: "bg-zinc-50", text: "text-zinc-700", border: "border-zinc-400", ring: "ring-zinc-300", dot: "bg-zinc-500", emoji: "\u{1F6E1}\uFE0F", name: "S\u00e9bastien", role: "CISO", avatar: "/agents/generated/ciso-secbot-profil-v3.png" },
+};
+
+export const USER_AVATAR = "/agents/carl-fugere.jpg";
+
+// ========== TEAM (avatars Discussion header) ==========
+
+export const TEAM = [
+  { code: "CFOB", name: "Frank CFO" },
+  { code: "CTOB", name: "Tim CTO" },
+  { code: "CSOB", name: "Simone CSO" },
+];
+
+// ========== REFLECTION MODES (8+1) ==========
+
+export const REFLECTION_MODES: ReflectionMode[] = [
+  { id: "analyse", label: "Analyse", icon: Eye, bg: "bg-blue-100", text: "text-blue-700", ring: "ring-blue-300" },
+  { id: "debat", label: "D\u00e9bat", icon: Swords, bg: "bg-red-100", text: "text-red-700", ring: "ring-red-300" },
+  { id: "brainstorm", label: "Brainstorm", icon: Lightbulb, bg: "bg-amber-100", text: "text-amber-700", ring: "ring-amber-300" },
+  { id: "strategie", label: "Strat\u00e9gie", icon: Target, bg: "bg-purple-100", text: "text-purple-700", ring: "ring-purple-300" },
+  { id: "innovation", label: "Innovation", icon: Sparkles, bg: "bg-pink-100", text: "text-pink-700", ring: "ring-pink-300" },
+  { id: "decision", label: "D\u00e9cision", icon: CheckCircle2, bg: "bg-green-100", text: "text-green-700", ring: "ring-green-300" },
+  { id: "crise", label: "Crise", icon: Zap, bg: "bg-orange-100", text: "text-orange-700", ring: "ring-orange-300" },
+  { id: "deep", label: "Deep", icon: Brain, bg: "bg-indigo-100", text: "text-indigo-700", ring: "ring-indigo-300" },
+];
+
+// ========== SOURCE ICON CONFIG ==========
+
+export const SOURCE_ICONS = {
+  doc: { icon: FileText, color: "text-blue-500" },
+  stat: { icon: BarChart3, color: "text-emerald-500" },
+  data: { icon: Database, color: "text-purple-500" },
+};
