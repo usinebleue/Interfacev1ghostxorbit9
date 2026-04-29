@@ -22,17 +22,7 @@ function AppRouter() {
   const { isOnboarded, setAuthenticated, setOnboarded } = useFrameMaster();
   const auth = useAuth();
 
-  // Route bypass: /amorcer = V3 shell (3 colonnes)
   const path = window.location.pathname;
-  if (path === "/amorcer") {
-    return (
-      <CanvasActionProvider>
-        <ChatProvider>
-          <FrameMasterAmorcer />
-        </ChatProvider>
-      </CanvasActionProvider>
-    );
-  }
 
   // Route bypass: /meeting/{slug} = page guest externe (pas d'auth)
   const meetingMatch = path.match(/^\/meeting\/([a-z0-9]+)$/);
@@ -46,7 +36,7 @@ function AppRouter() {
     return <SimulationFullPage simulationId={simMatch[1]} />;
   }
 
-  // Loading spinner while checking JWT on mount
+  // Auth check EN PREMIER — avant tout routing V2/V3 (Fix R8)
   if (auth.isLoading) {
     return (
       <div className="h-screen flex items-center justify-center bg-white">
@@ -59,7 +49,6 @@ function AppRouter() {
     return (
       <LoginView
         onLogin={() => {
-          // Sync FrameMaster state with AuthContext
           setAuthenticated(true);
         }}
       />
@@ -70,10 +59,22 @@ function AppRouter() {
     return <WelcomeOnboardingView onComplete={() => setOnboarded(true)} />;
   }
 
+  // /v2 → V2 classique
+  if (path === "/v2") {
+    return (
+      <CanvasActionProvider>
+        <ChatProvider>
+          <FrameMaster />
+        </ChatProvider>
+      </CanvasActionProvider>
+    );
+  }
+
+  // / (défaut) → V3 Frame Master Amorcer
   return (
     <CanvasActionProvider>
       <ChatProvider>
-        <FrameMaster />
+        <FrameMasterAmorcer />
       </ChatProvider>
     </CanvasActionProvider>
   );

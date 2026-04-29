@@ -13,16 +13,52 @@ import {
   Bot, Network, ArrowRight, ArrowLeft, Zap, TowerControl,
   Home, ChevronRight, Users, MessageSquare,
   Handshake, Shield, Rocket, Activity, UserCircle,
+  User, Settings, LogOut, SlidersHorizontal,
+  BookOpenCheck, Play, Map as MapIcon, CreditCard, Building2,
 } from "lucide-react";
 import { cn } from "../components/ui/utils";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
+  DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent,
+} from "../components/ui/dropdown-menu";
 import { useAmorcer } from "./AmorcerContext";
+import { useFrameMaster } from "../v2/context/FrameMasterContext";
 import { useTenant } from "../v2/context/TenantContext";
+import { useBots } from "../v2/api/hooks";
+import type { BotInfo } from "../v2/api/types";
 
 import {
   BOT_CODES, BOT_NAME, BOT_ROLE, BOT_AVATAR, BOT_STANDBY,
   BOT_ACTIONS, STATE_DOT, STATE_LABEL, STATE_TAG, DEPT_ICON_COLOR,
   DEPT_SHORT_LABEL, DEPT_DASH_ICON,
 } from "./constants";
+// ═══ DEMOS CLIENTS — données inline (évite import circulaire TopBar) ═══
+
+const KIT_BRAND: Record<string, { color: string; initials: string }> = {
+  "usine-bleue":        { color: "#073E5A", initials: "UB" },
+  "alimentation-boreal":{ color: "#2D7D46", initials: "AB" },
+  "couche-tard":        { color: "#E4002B", initials: "CT" },
+  "saputo":             { color: "#003DA5", initials: "SA" },
+  "wsp-global":         { color: "#FF6900", initials: "WS" },
+  "derlea":             { color: "#8B6914", initials: "DL" },
+  "pharmatech":         { color: "#7C3AED", initials: "PT" },
+  "precision-qc":       { color: "#475569", initials: "PQ" },
+  "plastipro":          { color: "#0891B2", initials: "PP" },
+  "acier-plus":         { color: "#374151", initials: "A+" },
+  "boisnoble":          { color: "#92400E", initials: "BN" },
+  "boucher-alim":       { color: "#DC2626", initials: "BA" },
+  "premier-tech":       { color: "#00843D", initials: "PT" },
+  "consignaction":      { color: "#0077C8", initials: "CQ" },
+  "fonds-ftq":          { color: "#003B71", initials: "FQ" },
+  "investissement-quebec": { color: "#00529B", initials: "IQ" },
+};
+
+function switchKit(slug: string) {
+  const userId = localStorage.getItem("ghostx_user_id") || "carl";
+  fetch(`/api/v1/kit/set?slug=${encodeURIComponent(slug)}&user_id=${encodeURIComponent(userId)}`, { method: "POST" })
+    .then(() => window.location.reload());
+}
 
 // ═══ CONFIG LOCALE (spécifique à ce panneau, pas partageable) ═══
 
@@ -213,6 +249,95 @@ function CelluleCard({ cellule, onClick }: { cellule: O9Cellule; onClick: () => 
   );
 }
 
+// ═══ DROPDOWN UTILISATEUR (réutilisé expanded + collapsed) ═══
+
+function UserDropdownContent({ setRightSection, setAuthenticated, isDieu, mode, setMode }: {
+  setRightSection: (s: string) => void;
+  setAuthenticated: (v: boolean) => void;
+  isDieu: boolean;
+  mode: string;
+  setMode: (m: "perso" | "pro") => void;
+}) {
+  return (
+    <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuLabel className="text-xs text-muted-foreground">Mon compte</DropdownMenuLabel>
+      <DropdownMenuItem onClick={() => setRightSection("bureau")} className="flex items-center gap-2 cursor-pointer">
+        <User className="h-3.5 w-3.5" />
+        Mon Profil
+      </DropdownMenuItem>
+      <DropdownMenuItem onClick={() => setRightSection("reglages")} className="flex items-center gap-2 cursor-pointer">
+        <Settings className="h-3.5 w-3.5" />
+        Réglages Généraux
+      </DropdownMenuItem>
+      <DropdownMenuItem disabled className="flex items-center gap-2 cursor-default opacity-50">
+        <CreditCard className="h-3.5 w-3.5" />
+        Abonnement
+      </DropdownMenuItem>
+      <DropdownMenuSeparator />
+      <DropdownMenuLabel className="text-xs text-muted-foreground">Référence & Simulations</DropdownMenuLabel>
+      <DropdownMenuItem onClick={() => setRightSection("bible-officielle")} className="flex items-center gap-2 cursor-pointer">
+        <BookOpenCheck className="h-3.5 w-3.5" />
+        Bible & Référence
+      </DropdownMenuItem>
+      <DropdownMenuItem onClick={() => setRightSection("scenarios")} className="flex items-center gap-2 cursor-pointer">
+        <Play className="h-3.5 w-3.5" />
+        Scénarios de simulation
+      </DropdownMenuItem>
+      <DropdownMenuItem onClick={() => setRightSection("ateliers")} className="flex items-center gap-2 cursor-pointer">
+        <MapIcon className="h-3.5 w-3.5" />
+        Ateliers split-screen
+      </DropdownMenuItem>
+      <DropdownMenuSeparator />
+      <DropdownMenuLabel className="text-xs text-muted-foreground">Mode</DropdownMenuLabel>
+      <div className="px-2 py-1.5 flex items-center gap-1.5">
+        {(["perso", "pro"] as const).map(m => (
+          <button
+            key={m}
+            onClick={() => setMode(m)}
+            className={cn(
+              "flex-1 px-2 py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer text-center",
+              mode === m
+                ? "bg-[#073E5A] text-white shadow-sm"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            )}
+          >
+            {m === "perso" ? "Personnel" : "Professionnel"}
+          </button>
+        ))}
+      </div>
+      {isDieu && (
+        <>
+          <DropdownMenuSeparator />
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger className="flex items-center gap-2 cursor-pointer">
+              <Building2 className="h-3.5 w-3.5" />
+              Demos Clients
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent className="w-52 max-h-60 overflow-y-auto">
+              {Object.entries(KIT_BRAND).map(([slug, brand]) => (
+                <DropdownMenuItem key={slug} onClick={() => switchKit(slug)} className="flex items-center gap-2 cursor-pointer">
+                  <span
+                    className="w-6 h-6 rounded flex items-center justify-center text-[9px] font-bold text-white shrink-0"
+                    style={{ backgroundColor: brand.color }}
+                  >
+                    {brand.initials}
+                  </span>
+                  <span className="text-xs truncate">{slug}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
+        </>
+      )}
+      <DropdownMenuSeparator />
+      <DropdownMenuItem onClick={() => setAuthenticated(false)} className="flex items-center gap-2 cursor-pointer text-red-600">
+        <LogOut className="h-3.5 w-3.5" />
+        Se déconnecter
+      </DropdownMenuItem>
+    </DropdownMenuContent>
+  );
+}
+
 // ═══ COMPOSANT PRINCIPAL ═══
 
 export function ControlTowerPanel() {
@@ -226,6 +351,9 @@ export function ControlTowerPanel() {
   const [activeDeptItem, setActiveDeptItem] = useState<string | null>("Cockpit");
   const [cockpitSubTab, setCockpitSubTab] = useState<"brainteam" | "cellules">("brainteam");
   const [o9SelectedCellule, setO9SelectedCellule] = useState<number | null>(null);
+  const { setAuthenticated, leftSidebarCollapsed } = useFrameMaster();
+  const { isDieu, mode, setMode } = useTenant();
+  const collapsed = leftSidebarCollapsed;
   const DeptIconComp = DEPT_DASH_ICON[activeBotCode] || Zap;
   const deptName = DEPT_SHORT_LABEL[activeBotCode] || "Direction";
   const botName = BOT_NAME[activeBotCode] || "CarlOS";
@@ -235,47 +363,75 @@ export function ControlTowerPanel() {
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* TopBarCockpit — barre bleue UB */}
-      <div className="h-12 flex items-center gap-2 px-3 shrink-0 bg-[#073E5A]">
-        <img src="/logo-usine-bleue.png" alt="Usine Bleue" className="h-7 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-        <div className="flex-1" />
-        <div className="flex items-center gap-1.5">
-          <div className="relative">
-            <img src="/agents/carl-fugere.jpg" alt="Carl" className="w-7 h-7 rounded-full object-cover ring-1 ring-white/30" />
-            <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-[#073E5A]" />
-          </div>
-          <span className="text-[11px] text-white/80 max-w-28 truncate">Carl Fugère</span>
-        </div>
+      <div className={cn("h-12 flex items-center shrink-0 bg-[#073E5A]",
+        collapsed ? "justify-center px-1" : "gap-2 px-3"
+      )}>
+        <img
+          src={collapsed ? "/logo-usine-bleue-icon.png" : "/logo-usine-bleue.png"}
+          alt="Usine Bleue"
+          className={cn("object-contain", collapsed ? "h-6" : "h-7")}
+          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+        />
+        {!collapsed && (
+          <>
+            <div className="flex-1" />
+            <DropdownMenu>
+              <DropdownMenuTrigger className="h-8 gap-1.5 px-1.5 text-white/80 hover:text-white hover:bg-white/10 inline-flex items-center rounded-md text-sm outline-none cursor-pointer">
+                <div className="relative">
+                  <img src="/agents/carl-fugere.jpg" alt="Carl" className="w-7 h-7 rounded-full object-cover ring-1 ring-white/30" />
+                  <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-[#073E5A]" />
+                </div>
+                <span className="text-[11px] text-white/80 max-w-28 truncate">Carl Fugère</span>
+              </DropdownMenuTrigger>
+              <UserDropdownContent setRightSection={setRightSection} setAuthenticated={setAuthenticated} isDieu={isDieu} mode={mode} setMode={setMode} />
+            </DropdownMenu>
+          </>
+        )}
       </div>
+
+      {/* Avatar utilisateur cliquable en mode collapsed */}
+      {collapsed && (
+        <div className="flex justify-center py-2 shrink-0 bg-white border-r border-gray-200">
+          <DropdownMenu>
+            <DropdownMenuTrigger className="outline-none cursor-pointer">
+              <img src="/agents/carl-fugere.jpg" alt="Carl" className="w-8 h-8 rounded-full object-cover ring-2 ring-white/30" />
+            </DropdownMenuTrigger>
+            <UserDropdownContent setRightSection={setRightSection} setAuthenticated={setAuthenticated} isDieu={isDieu} mode={mode} setMode={setMode} />
+          </DropdownMenu>
+        </div>
+      )}
 
       {/* Sidebar content */}
       <div className="flex-1 overflow-hidden border-r border-gray-200">
         <div className="h-full flex flex-col bg-white overflow-hidden">
-          {/* Image bot banner — Tour de contrôle en overlay haut, nom en overlay bas */}
-          <div className="mx-3 mt-2 shrink-0">
-            <div className="relative overflow-hidden rounded-t-lg aspect-video bg-gray-900">
-              <img src={standbyImg} alt={botName} className="absolute inset-0 w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(10,14,26,0.3)_100%)] pointer-events-none" />
-              {/* Tour de contrôle — overlay haut */}
-              <div className="absolute top-0 left-0 right-0 z-[5]">
-                <div className="bg-gradient-to-b from-black/60 to-transparent px-4 pt-3 pb-8 flex items-center gap-2">
-                  <TowerControl className="h-4 w-4 text-white stroke-[2.5] drop-shadow-lg" />
-                  <span className="text-sm font-bold text-white drop-shadow-lg">Tour de contrôle</span>
+          {/* Image bot banner — masqué en collapsed */}
+          {!collapsed && (
+            <div className="mx-3 mt-2 shrink-0">
+              <div className="relative overflow-hidden rounded-t-lg aspect-video bg-gray-900">
+                <img src={standbyImg} alt={botName} className="absolute inset-0 w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(10,14,26,0.3)_100%)] pointer-events-none" />
+                {/* Tour de contrôle — overlay haut */}
+                <div className="absolute top-0 left-0 right-0 z-[5]">
+                  <div className="bg-gradient-to-b from-black/50 to-transparent px-2.5 pt-1.5 pb-5 flex items-center gap-1">
+                    <TowerControl className="h-2.5 w-2.5 text-white stroke-[2] drop-shadow-lg" />
+                    <span className="text-[9px] font-bold text-white drop-shadow-lg">Tour de contrôle</span>
+                  </div>
                 </div>
-              </div>
-              {/* Nom du bot — overlay bas */}
-              <div className="absolute bottom-0 left-0 right-0 z-[5]">
-                <div className="bg-gradient-to-t from-black/80 to-transparent px-4 pt-10 pb-2.5">
-                  <div className="text-base font-bold text-white tracking-wide drop-shadow-lg leading-none">{botName}</div>
-                  <div className="text-[9px] text-white/80 font-medium tracking-[0.2em] uppercase drop-shadow-md mt-1">{botRole} AI · Brain Team</div>
+                {/* Nom du bot — overlay bas */}
+                <div className="absolute bottom-0 left-0 right-0 z-[5]">
+                  <div className="bg-gradient-to-t from-black/80 to-transparent px-4 pt-10 pb-2.5">
+                    <div className="text-base font-bold text-white tracking-wide drop-shadow-lg leading-none">{botName}</div>
+                    <div className="text-[9px] text-white/80 font-medium tracking-[0.2em] uppercase drop-shadow-md mt-1">{botRole} AI · Brain Team</div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Contenu Bureau — toujours visible (Orbit9 = section du panneau droit, pas un tab gauche) */}
           <div className="flex-1 overflow-hidden flex flex-col mt-2">
             <div className="flex-1 overflow-hidden">
-              <TabBureau activeBotCode={activeBotCode} setActiveBotCode={setActiveBotCode} activeDeptItem={activeDeptItem} setActiveDeptItem={setActiveDeptItem} cockpitSubTab={cockpitSubTab} setCockpitSubTab={setCockpitSubTab} DeptIconComp={DeptIconComp} deptName={deptName} setCockpitTab={setCockpitTab} setRightSection={setRightSection} resetChat={resetChat} />
+              <TabBureau collapsed={collapsed} activeBotCode={activeBotCode} setActiveBotCode={setActiveBotCode} activeDeptItem={activeDeptItem} setActiveDeptItem={setActiveDeptItem} cockpitSubTab={cockpitSubTab} setCockpitSubTab={setCockpitSubTab} DeptIconComp={DeptIconComp} deptName={deptName} setCockpitTab={setCockpitTab} setRightSection={setRightSection} resetChat={resetChat} />
             </div>
           </div>
         </div>
@@ -361,6 +517,7 @@ function CelluleDetail({ cellule, onBack }: { cellule: O9Cellule; onBack: () => 
 // ═══ TAB BUREAU ═══
 
 interface TabBureauProps {
+  collapsed: boolean;
   activeBotCode: string;
   setActiveBotCode: (code: string) => void;
   activeDeptItem: string | null;
@@ -374,22 +531,26 @@ interface TabBureauProps {
   resetChat: () => void;
 }
 
-function TabBureau({ activeBotCode, setActiveBotCode, activeDeptItem, setActiveDeptItem, cockpitSubTab, setCockpitSubTab, DeptIconComp, deptName, setCockpitTab, setRightSection, resetChat }: TabBureauProps) {
+function TabBureau({ collapsed, activeBotCode, setActiveBotCode, activeDeptItem, setActiveDeptItem, cockpitSubTab, setCockpitSubTab, DeptIconComp, deptName, setCockpitTab, setRightSection, resetChat }: TabBureauProps) {
   const { isDieu } = useTenant();
   return (
     <div className="overflow-y-auto h-full text-[11px] flex flex-col">
-      {/* Département dynamique */}
-      <div className="mx-3 mt-2 px-3 py-1.5 flex items-center gap-2 rounded-t-xl shrink-0 bg-[#00B4D8]/10">
-        <DeptIconComp className={cn("h-4 w-4 text-gray-900 stroke-[2.5]", DEPT_ICON_COLOR[activeBotCode] || "text-blue-600")} />
-        <span className="text-xs font-bold text-gray-900">Département {deptName}</span>
-      </div>
-      <div className="px-3 py-2 grid grid-cols-3 gap-1.5 shrink-0">
+      {/* Département dynamique — masqué en collapsed */}
+      {!collapsed && (
+        <div className="mx-3 mt-2 px-3 py-1.5 flex items-center gap-2 rounded-t-xl shrink-0 bg-[#00B4D8]/10">
+          <DeptIconComp className={cn("h-4 w-4 text-gray-900 stroke-[2.5]", DEPT_ICON_COLOR[activeBotCode] || "text-blue-600")} />
+          <span className="text-xs font-bold text-gray-900">Département {deptName}</span>
+        </div>
+      )}
+      {/* Nav grid — icônes seulement en collapsed */}
+      <div className={cn("shrink-0",
+        collapsed ? "px-1 py-2 flex flex-col items-center gap-1" : "px-3 py-2 grid grid-cols-3 gap-1.5"
+      )}>
         {DEPT_NAV_ITEMS.map((item) => (
           <button
             key={item.label}
             onClick={() => {
               setActiveDeptItem(item.label);
-              resetChat();
               if (item.label === "Orbit9") {
                 setCockpitTab("orbit9");
                 setRightSection(null);
@@ -398,42 +559,49 @@ function TabBureau({ activeBotCode, setActiveBotCode, activeDeptItem, setActiveD
                 setRightSection(DEPT_SECTION_MAP[item.label]);
               }
             }}
+            title={collapsed ? item.label : undefined}
             className={cn(
-              "relative flex items-center gap-1.5 px-2 py-1.5 rounded-lg border transition-all cursor-pointer",
+              "rounded-lg border transition-all cursor-pointer",
+              collapsed
+                ? "w-9 h-9 flex items-center justify-center"
+                : "relative flex items-center gap-1.5 px-2 py-1.5",
               activeDeptItem === item.label
                 ? "bg-blue-50 border-blue-300 text-blue-700"
                 : "bg-gray-50 hover:bg-gray-100 border-gray-200 text-gray-600"
             )}
           >
             <item.icon className={cn("h-3.5 w-3.5 shrink-0", activeDeptItem === item.label ? "text-blue-600" : "text-gray-600")} />
-            <span className="text-[9px] font-medium leading-tight">{item.label}</span>
-            {item.state && (
+            {!collapsed && <span className="text-[9px] font-medium leading-tight">{item.label}</span>}
+            {!collapsed && item.state && (
               <span className={cn("absolute top-1 right-1 w-2 h-2 rounded-full", STATE_DOT[item.state])} />
             )}
           </button>
         ))}
-        {/* God Mode — Admin + Cerveau BTML */}
+        {/* God Mode — Admin */}
         {isDieu && (
-          <>
-            <button
-              onClick={() => { setActiveDeptItem("Admin"); setRightSection("admin"); }}
-              className={cn(
-                "relative flex items-center gap-1.5 px-2 py-1.5 rounded-lg border transition-all cursor-pointer",
-                activeDeptItem === "Admin"
-                  ? "bg-blue-50 border-blue-300 text-blue-700"
-                  : "bg-gray-50 hover:bg-gray-100 border-gray-200 text-gray-600"
-              )}
-            >
-              <Shield className={cn("h-3.5 w-3.5 shrink-0", activeDeptItem === "Admin" ? "text-blue-600" : "text-gray-600")} />
-              <span className="text-[9px] font-medium leading-tight">Admin</span>
-            </button>
-            {/* BTML retiré — fusionné dans Admin > Stack Technique */}
-          </>
+          <button
+            onClick={() => { setActiveDeptItem("Admin"); setRightSection("admin"); }}
+            title={collapsed ? "Admin" : undefined}
+            className={cn(
+              "rounded-lg border transition-all cursor-pointer",
+              collapsed
+                ? "w-9 h-9 flex items-center justify-center"
+                : "relative flex items-center gap-1.5 px-2 py-1.5",
+              activeDeptItem === "Admin"
+                ? "bg-blue-50 border-blue-300 text-blue-700"
+                : "bg-gray-50 hover:bg-gray-100 border-gray-200 text-gray-600"
+            )}
+          >
+            <Shield className={cn("h-3.5 w-3.5 shrink-0", activeDeptItem === "Admin" ? "text-blue-600" : "text-gray-600")} />
+            {!collapsed && <span className="text-[9px] font-medium leading-tight">Admin</span>}
+          </button>
         )}
       </div>
 
-      {/* Tabs Brain Team + Mes Cellules */}
-      <div className="flex border-y border-gray-200 shrink-0 bg-gray-50/50 mt-1">
+      {/* Tabs Brain Team + Mes Cellules — icônes seulement en collapsed */}
+      <div className={cn("flex border-y border-gray-200 shrink-0 bg-gray-50/50 mt-1",
+        collapsed && "flex-col"
+      )}>
         {([
           { id: "brainteam" as const, label: "Brain Team", icon: Bot },
           { id: "cellules" as const, label: "Mes Cellules", icon: Network },
@@ -441,23 +609,25 @@ function TabBureau({ activeBotCode, setActiveBotCode, activeDeptItem, setActiveD
           <button
             key={tab.id}
             onClick={() => setCockpitSubTab(tab.id)}
+            title={collapsed ? tab.label : undefined}
             className={cn(
-              "flex-1 flex items-center justify-center gap-1 py-2 text-[11px] font-medium transition-colors cursor-pointer",
+              "flex items-center justify-center gap-1 py-2 text-[11px] font-medium transition-colors cursor-pointer",
+              collapsed ? "w-full" : "flex-1",
               cockpitSubTab === tab.id
                 ? "text-blue-600 border-b-2 border-blue-500 bg-white"
                 : "text-gray-500 hover:text-gray-700 hover:bg-gray-50",
             )}
           >
             <tab.icon className="h-3.5 w-3.5" />
-            {tab.label}
+            {!collapsed && tab.label}
           </button>
         ))}
       </div>
 
       {/* Contenu */}
       <div className="flex-1 overflow-y-auto min-h-0">
-        {cockpitSubTab === "brainteam" && <BrainTeamList activeBotCode={activeBotCode} setActiveBotCode={setActiveBotCode} />}
-        {cockpitSubTab === "cellules" && <CockpitCellulesList />}
+        {cockpitSubTab === "brainteam" && <BrainTeamList collapsed={collapsed} activeBotCode={activeBotCode} setActiveBotCode={setActiveBotCode} />}
+        {cockpitSubTab === "cellules" && <CockpitCellulesList collapsed={collapsed} />}
       </div>
     </div>
   );
@@ -465,12 +635,39 @@ function TabBureau({ activeBotCode, setActiveBotCode, activeDeptItem, setActiveD
 
 // ═══ BRAIN TEAM LIST ═══
 
-function BrainTeamList({ activeBotCode, setActiveBotCode }: { activeBotCode: string; setActiveBotCode: (code: string) => void }) {
+function BrainTeamList({ collapsed, activeBotCode, setActiveBotCode }: { collapsed: boolean; activeBotCode: string; setActiveBotCode: (code: string) => void }) {
+  const { bots: apiBots } = useBots();
+  const botMap = new Map((apiBots || []).map(b => [b.code, b]));
+
+  if (collapsed) {
+    return (
+      <div className="flex flex-col items-center gap-1.5 py-2">
+        {BOT_CODES.filter(code => code !== activeBotCode).map((code) => (
+          <button
+            key={code}
+            onClick={() => setActiveBotCode(code)}
+            title={BOT_NAME[code]}
+            className="cursor-pointer"
+          >
+            <img
+              src={BOT_AVATAR[code]}
+              alt={BOT_NAME[code]}
+              className={cn("w-7 h-7 rounded-full object-cover transition-all",
+                activeBotCode === code ? "ring-2 ring-blue-500" : "ring-1 ring-gray-200 hover:ring-blue-300"
+              )}
+            />
+          </button>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="p-2 text-[11px]">
       <div className="space-y-1.5">
-        {BOT_CODES.map((code) => {
-          const isActive = activeBotCode === code;
+        {BOT_CODES.filter(code => code !== activeBotCode).map((code) => {
+          const isActive = false;
+          const apiBot = botMap.get(code);
           const actions = BOT_ACTIONS[code];
           const dept = DEPT_SHORT_LABEL[code] || "";
           return (
@@ -481,11 +678,12 @@ function BrainTeamList({ activeBotCode, setActiveBotCode }: { activeBotCode: str
                 isActive ? "border-blue-200 bg-blue-50/50" : "border-gray-200 hover:border-gray-300 bg-white hover:shadow-md",
               )}
             >
-              {/* Header bleu pastel — dept name + Aller → (cliquable) */}
+              {/* Header bleu pastel — icône dept + dept name + Aller → (cliquable) */}
               <button
                 onClick={() => setActiveBotCode(code)}
                 className="w-full flex items-center gap-1.5 px-2.5 py-1.5 bg-[#00B4D8]/10 rounded-t-xl cursor-pointer hover:bg-[#00B4D8]/20 transition-colors"
               >
+                {(() => { const DIcon = DEPT_DASH_ICON[code] || Zap; return <DIcon className={cn("h-3.5 w-3.5 shrink-0", DEPT_ICON_COLOR[code] || "text-blue-600")} />; })()}
                 <span className="text-[11px] font-bold text-gray-700 truncate flex-1 text-left">{dept}</span>
                 <span className="flex items-center gap-1 text-[11px] font-bold text-blue-600 shrink-0">
                   <span className="hidden xl:inline">Aller</span>
@@ -500,7 +698,12 @@ function BrainTeamList({ activeBotCode, setActiveBotCode }: { activeBotCode: str
                 <div className="flex-1 min-w-0">
                   <span className={cn("text-[11px] font-semibold", isActive ? "text-blue-700" : "text-gray-800")}>{BOT_NAME[code]} {BOT_ROLE[code]}</span>
                 </div>
-                {actions && (
+                {apiBot ? (
+                  <span className={cn("text-[11px] px-2 py-0.5 rounded-full font-bold shrink-0 flex items-center gap-1", apiBot.actif ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-500")}>
+                    <span className={cn("w-2 h-2 rounded-full shrink-0", apiBot.actif ? "bg-green-500" : "bg-gray-400")} />
+                    {apiBot.actif ? "Actif" : "Veille"}
+                  </span>
+                ) : actions && (
                   <span className={cn("text-[11px] px-2 py-0.5 rounded-full font-bold shrink-0 flex items-center gap-1", STATE_TAG[actions.state])}>
                     <span className={cn("w-2 h-2 rounded-full shrink-0", STATE_DOT[actions.state])} />
                     {STATE_LABEL[actions.state]}
@@ -517,11 +720,23 @@ function BrainTeamList({ activeBotCode, setActiveBotCode }: { activeBotCode: str
 
 // ═══ COCKPIT CELLULES LIST ═══
 
-function CockpitCellulesList() {
+function CockpitCellulesList({ collapsed }: { collapsed: boolean }) {
   const [selectedCellule, setSelectedCellule] = useState<number | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
   const [newType, setNewType] = useState<"interne" | "externe">("interne");
+
+  if (collapsed) {
+    return (
+      <div className="flex flex-col items-center gap-1.5 py-2">
+        {O9_CELLULES.map((cell, i) => (
+          <button key={i} title={cell.name} className="w-9 h-9 rounded-lg bg-teal-50 border border-teal-200 flex items-center justify-center cursor-pointer hover:bg-teal-100 transition-colors">
+            <Atom className="h-3.5 w-3.5 text-teal-600" />
+          </button>
+        ))}
+      </div>
+    );
+  }
 
   if (selectedCellule !== null) {
     return <CelluleDetail cellule={O9_CELLULES[selectedCellule]} onBack={() => setSelectedCellule(null)} />;

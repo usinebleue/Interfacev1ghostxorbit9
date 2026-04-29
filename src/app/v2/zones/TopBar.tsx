@@ -76,14 +76,14 @@ const UB_BLUE = "#073E5A";
 // Meme donnees que SectionMasterGHML.tsx
 // ═══════════════════════════════════════
 
-interface BTMLItem {
+export interface BTMLItem {
   id: ActiveView;
   label: string;
   icon: React.ElementType;
   color: string;
 }
 
-interface BTMLBloc {
+export interface BTMLBloc {
   bloc: string;
   label: string;
   icon: React.ElementType;
@@ -91,7 +91,7 @@ interface BTMLBloc {
   items: BTMLItem[];
 }
 
-const MASTER_BTML_BLOCS: BTMLBloc[] = [
+export const MASTER_BTML_BLOCS: BTMLBloc[] = [
   {
     bloc: "FE", label: "Frontend", icon: BookOpen, color: "text-blue-600",
     items: [
@@ -152,7 +152,7 @@ const MASTER_BTML_BLOCS: BTMLBloc[] = [
   },
 ];
 
-const KIT_BRAND: Record<string, { color: string; initials: string }> = {
+export const KIT_BRAND: Record<string, { color: string; initials: string }> = {
   "couche-tard":        { color: "#E4002B", initials: "CT" },
   "saputo":             { color: "#003DA5", initials: "SA" },
   "wsp-global":         { color: "#FF6900", initials: "WS" },
@@ -171,7 +171,7 @@ const KIT_BRAND: Record<string, { color: string; initials: string }> = {
   "investissement-quebec": { color: "#00529B", initials: "IQ" },
 };
 
-function getKitBrand(slug: string) {
+export function getKitBrand(slug: string) {
   return KIT_BRAND[slug] || { color: "#6B7280", initials: slug.slice(0, 2).toUpperCase() };
 }
 
@@ -452,7 +452,7 @@ export function TopBarChat() {
 // Mode de vue — definitions
 // ═══════════════════════════════════════
 
-interface ViewModeOption {
+export interface ViewModeOption {
   id: string;
   label: string;
   niveau: NiveauAcces;
@@ -460,7 +460,7 @@ interface ViewModeOption {
   icon: React.ElementType;
 }
 
-const VIEW_MODES: ViewModeOption[] = [
+export const VIEW_MODES: ViewModeOption[] = [
   { id: "dieu",        label: "Mode Dieu",         niveau: "dieu",      icon: Shield },
   { id: "mfg",         label: "Vue Manufacturier", niveau: "client",    typeActeur: "MFG", icon: Building2 },
   { id: "int",         label: "Vue Integrateur",   niveau: "client",    typeActeur: "INT", icon: Building2 },

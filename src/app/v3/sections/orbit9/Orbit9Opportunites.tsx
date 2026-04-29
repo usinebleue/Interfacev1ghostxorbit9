@@ -17,6 +17,7 @@ import {
 import { cn } from "../../../components/ui/utils";
 import { SF } from "../../core/styles";
 import { TrustBadge, QualifiedBadge, O9ScoreBar, StagePipeline } from "./orbit9-helpers";
+import { LivingHero } from "../shared/LivingHero";
 import {
   O9_OPPORTUNITIES_VEDETTES,
   OPPORTUNITY_TYPE_LABEL,
@@ -278,7 +279,56 @@ export function Orbit9Opportunites() {
 
   // ═══ VUE PRINCIPALE — Sidebar + Contenu ═══
   return (
-    <div className="flex gap-3">
+    <div className="space-y-4">
+      {/* Hero animé — Opportunités */}
+      <LivingHero blur1="bg-emerald-100/70" blur2="bg-cyan-100/60" subtitleColor="text-emerald-600" subtitle="Opportunités Réseau" title="Découvrez vos synergies." description="Matches, alliances et collaborations détectés par votre Scout Bot.">
+        <div className="relative flex items-center justify-center overflow-visible" style={{ width: 340, height: 160 }}>
+          <svg viewBox="0 0 200 150" className="overflow-visible" style={{ width: 300, height: 200 }}>
+            {/* Noeud central — Votre entreprise */}
+            <circle cx="100" cy="75" r="18" fill="url(#opp-core-grad)" filter="drop-shadow(0 0 12px #10b981)" />
+            <text x="100" y="79" textAnchor="middle" className="text-[7px] font-bold fill-white">Vous</text>
+            {/* Orbite interne — matches proches */}
+            <circle cx="100" cy="75" r="40" fill="none" stroke="#34d399" strokeWidth="0.75" strokeDasharray="3 5" opacity="0.5" className="anim-orb-1" />
+            {/* Orbite externe — opportunités */}
+            <circle cx="100" cy="75" r="65" fill="none" stroke="#6ee7b7" strokeWidth="1" strokeDasharray="2 8" opacity="0.4" className="anim-orb-2" />
+            {/* Noeuds partenaires — orbite interne */}
+            <g className="anim-orb-1">
+              <circle cx="140" cy="75" r="10" fill="rgba(16,185,129,0.15)" stroke="#10b981" strokeWidth="1" />
+              <text x="140" y="78" textAnchor="middle" className="text-[5px] fill-emerald-700">87%</text>
+            </g>
+            <g className="anim-orb-1">
+              <circle cx="75" cy="42" r="8" fill="rgba(16,185,129,0.1)" stroke="#34d399" strokeWidth="0.75" />
+              <text x="75" y="45" textAnchor="middle" className="text-[5px] fill-emerald-600">79%</text>
+            </g>
+            <g className="anim-orb-1">
+              <circle cx="80" cy="112" r="9" fill="rgba(16,185,129,0.12)" stroke="#10b981" strokeWidth="0.75" />
+              <text x="80" y="115" textAnchor="middle" className="text-[5px] fill-emerald-700">82%</text>
+            </g>
+            {/* Noeuds opportunités — orbite externe */}
+            <g className="anim-orb-2">
+              <circle cx="165" cy="75" r="7" fill="rgba(52,211,153,0.1)" stroke="#6ee7b7" strokeWidth="0.5" className="anim-dot" style={{ color: '#34d399' }} />
+            </g>
+            <g className="anim-orb-2">
+              <circle cx="100" cy="10" r="6" fill="rgba(52,211,153,0.1)" stroke="#6ee7b7" strokeWidth="0.5" className="anim-dot" style={{ color: '#6ee7b7' }} />
+            </g>
+            <g className="anim-orb-2">
+              <circle cx="35" cy="75" r="7" fill="rgba(52,211,153,0.1)" stroke="#6ee7b7" strokeWidth="0.5" className="anim-dot" style={{ color: '#34d399' }} />
+            </g>
+            {/* Liens de connexion */}
+            <path d="M 118 75 L 130 75" fill="none" stroke="url(#opp-link)" strokeWidth="1.5" opacity="0.6" />
+            <path d="M 92 60 L 80 47" fill="none" stroke="url(#opp-link)" strokeWidth="1" opacity="0.4" />
+            <path d="M 90 88 L 83 105" fill="none" stroke="url(#opp-link)" strokeWidth="1" opacity="0.4" />
+            {/* Handshake icon au centre-bas */}
+            <text x="100" y="100" textAnchor="middle" className="text-[10px]">🤝</text>
+            <defs>
+              <radialGradient id="opp-core-grad" cx="50%" cy="50%" r="50%"><stop offset="0%" stopColor="#6ee7b7" /><stop offset="100%" stopColor="#059669" /></radialGradient>
+              <linearGradient id="opp-link" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#10b981" stopOpacity="0" /><stop offset="50%" stopColor="#10b981" stopOpacity="0.8" /><stop offset="100%" stopColor="#10b981" stopOpacity="0" /></linearGradient>
+            </defs>
+          </svg>
+        </div>
+      </LivingHero>
+
+      <div className="flex gap-3">
       {/* Sidebar w-[180px] — Pattern PlaybookStoreView */}
       <div className={SF.sidebarW}>
         {OPP_SIDEBAR.map((item, idx) => {
@@ -588,6 +638,7 @@ export function Orbit9Opportunites() {
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

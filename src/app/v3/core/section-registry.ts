@@ -42,7 +42,7 @@ export const SECTIONS: SectionDef[] = [
   { id: "ventes",        label: "Ventes",        group: "departement", order: 1,  gpsView: "department", gpsSub: "ventes",        flowType: "data", botPrimaire: "CROB",  botSecondaires: ["CMOB", "CSOB"] },
   { id: "marketing",     label: "Marketing",     group: "departement", order: 2,  gpsView: "department", gpsSub: "marketing",     flowType: "data", botPrimaire: "CMOB",  botSecondaires: ["CCOB", "CROB"] },
   { id: "finance",       label: "Finance",       group: "departement", order: 3,  gpsView: "department", gpsSub: "finance",       flowType: "data", botPrimaire: "CFOB",  botSecondaires: ["CEOB", "COOB"] },
-  { id: "execution",     label: "Exécution",     group: "departement", order: 4,  gpsView: "department", gpsSub: "execution",     flowType: "data", botPrimaire: "COOB",  botSecondaires: ["CPOB", "CTOB"] },
+  { id: "execution",     label: "Exécution",     group: "departement", order: 4,  gpsView: "department", gpsSub: "operations",    flowType: "data", botPrimaire: "COOB",  botSecondaires: ["CPOB", "CTOB"] },
   { id: "technologie",   label: "Technologie",   group: "departement", order: 5,  gpsView: "department", gpsSub: "technologie",   flowType: "data", botPrimaire: "CTOB",  botSecondaires: ["CINOB", "CISOB"] },
   { id: "strategie",     label: "Stratégie",     group: "departement", order: 6,  gpsView: "department", gpsSub: "strategie",     flowType: "data", botPrimaire: "CSOB",  botSecondaires: ["CEOB", "CFOB"] },
   { id: "innovation",    label: "Innovation",    group: "departement", order: 7,  gpsView: "department", gpsSub: "innovation",    flowType: "data", botPrimaire: "CINOB", botSecondaires: ["CTOB", "CMOB"] },
@@ -61,15 +61,15 @@ export const SECTIONS: SectionDef[] = [
   { id: "bureau-agenda",    label: "Agenda",     group: "bureau", order: 6, gpsView: "espace-bureau", gpsSub: "agenda",    flowType: "data", botPrimaire: "CEOB", botSecondaires: ["COOB"] },
 
   // ── Plateforme (sections DATA globales) ─────────────────────────
-  { id: "cockpit",     label: "Cockpit",            group: "plateforme", order: 1, gpsView: "cockpit",      flowType: "data", botPrimaire: "CEOB", botSecondaires: ["CFOB", "COOB"] },
-  { id: "dashboard",   label: "Dashboard",          group: "plateforme", order: 2, gpsView: "cockpit",      flowType: "data", botPrimaire: "CEOB" },
-  { id: "sante",       label: "Santé",              group: "plateforme", order: 3, gpsView: "cockpit",      flowType: "data", botPrimaire: "CEOB", botSecondaires: ["CFOB", "COOB"] },
-  { id: "marketplace", label: "Marketplace",        group: "plateforme", order: 4, gpsView: "cockpit",      flowType: "data", botPrimaire: "CEOB", botSecondaires: ["CROB", "CSOB"] },
-  { id: "gouvernance", label: "Gouvernance",        group: "plateforme", order: 5, gpsView: "cockpit",      flowType: "data", botPrimaire: "CEOB", botSecondaires: ["CLOB", "CFOB"] },
-  { id: "pionniers",   label: "Pionniers",          group: "plateforme", order: 6, gpsView: "cockpit",      flowType: "data", botPrimaire: "CEOB", botSecondaires: ["CMOB"] },
-  { id: "nouvelles",   label: "Nouvelles",          group: "plateforme", order: 7, gpsView: "cockpit",      flowType: "data", botPrimaire: "CEOB", botSecondaires: ["CCOB"] },
-  { id: "evenements",  label: "Événements",         group: "plateforme", order: 8, gpsView: "cockpit",      flowType: "data", botPrimaire: "CEOB", botSecondaires: ["CCOB", "CMOB"] },
-  { id: "industrie",   label: "Dashboard Industrie", group: "plateforme", order: 9, gpsView: "cockpit",     flowType: "data", botPrimaire: "CEOB", botSecondaires: ["CSOB", "CINOB"] },
+  { id: "cockpit",     label: "Cockpit",            group: "plateforme", order: 1, gpsView: "cockpit",      gpsSub: "cockpit",     flowType: "data", botPrimaire: "CEOB", botSecondaires: ["CFOB", "COOB"] },
+  { id: "dashboard",   label: "Dashboard",          group: "plateforme", order: 2, gpsView: "cockpit",      gpsSub: "dashboard",   flowType: "data", botPrimaire: "CEOB" },
+  { id: "sante",       label: "Santé",              group: "plateforme", order: 3, gpsView: "cockpit",      gpsSub: "sante",       flowType: "data", botPrimaire: "CEOB", botSecondaires: ["CFOB", "COOB"] },
+  { id: "marketplace", label: "Marketplace",        group: "plateforme", order: 4, gpsView: "cockpit",      gpsSub: "marketplace", flowType: "data", botPrimaire: "CEOB", botSecondaires: ["CROB", "CSOB"] },
+  { id: "gouvernance", label: "Gouvernance",        group: "plateforme", order: 5, gpsView: "cockpit",      gpsSub: "gouvernance", flowType: "data", botPrimaire: "CEOB", botSecondaires: ["CLOB", "CFOB"] },
+  { id: "pionniers",   label: "Pionniers",          group: "plateforme", order: 6, gpsView: "cockpit",      gpsSub: "pionniers",   flowType: "data", botPrimaire: "CEOB", botSecondaires: ["CMOB"] },
+  { id: "nouvelles",   label: "Nouvelles",          group: "plateforme", order: 7, gpsView: "cockpit",      gpsSub: "nouvelles",   flowType: "data", botPrimaire: "CEOB", botSecondaires: ["CCOB"] },
+  { id: "evenements",  label: "Événements",         group: "plateforme", order: 8, gpsView: "cockpit",      gpsSub: "evenements",  flowType: "data", botPrimaire: "CEOB", botSecondaires: ["CCOB", "CMOB"] },
+  { id: "industrie",   label: "Dashboard Industrie", group: "plateforme", order: 9, gpsView: "cockpit",     gpsSub: "industrie",   flowType: "data", botPrimaire: "CEOB", botSecondaires: ["CSOB", "CINOB"] },
 
   // ── Orbit9 (sections réseau) ────────────────────────────────────
   // NOTE CARL: Ces sous-sections seront éventuellement fusionnées en UNE SEULE

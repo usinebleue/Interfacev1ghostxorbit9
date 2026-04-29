@@ -15,6 +15,7 @@ interface ChatState {
   isTyping: boolean;
   activeReflectionMode: ReflectionMode;
   currentCREDOPhase: CREDOPhase;
+  currentMode: string | null;
   threads: Thread[];
   activeThreadId: string | null;
   crystals: Crystal[];
@@ -114,12 +115,20 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [activeReflectionMode, setReflectionMode] =
     useState<ReflectionMode>("credo");
   const [currentCREDOPhase, setCurrentCREDOPhase] = useState<CREDOPhase>("C");
+  const [currentMode, setCurrentMode] = useState<string | null>(null);
   // Sync CREDO phase from backend via useChat
   useEffect(() => {
     if (lastCREDOPhase && ["C", "R", "E", "D", "O"].includes(lastCREDOPhase)) {
       setCurrentCREDOPhase(lastCREDOPhase as CREDOPhase);
     }
   }, [lastCREDOPhase]);
+  // Sync mode from last bot message bubbleContext
+  useEffect(() => {
+    const lastBot = [...messages].reverse().find(m => m.role === "assistant" && m.bubbleContext?.mode);
+    if (lastBot?.bubbleContext?.mode) {
+      setCurrentMode(lastBot.bubbleContext.mode);
+    }
+  }, [messages]);
   const [autoTTSEnabled, setAutoTTSEnabled] = useState(false);
   const [videoAvatarEnabled, setVideoAvatarEnabled] = useState(false);
   const tts = useTextToSpeech();
@@ -217,6 +226,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         isTyping,
         activeReflectionMode,
         currentCREDOPhase,
+        currentMode,
         setCurrentCREDOPhase,
         threads,
         activeThreadId,

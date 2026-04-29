@@ -1,26 +1,112 @@
 /**
  * FrameMasterAmorcer.tsx — Root Layout V3
  * Layout ResizablePanel — 3 zones redimensionnables et rétractables
- * Architecture V3 — Zéro Destruction
+ * Architecture V3 — Intégration Backend
  *
  *   Zone 1 (~15%)  : ControlTowerPanel  (navigation) — collapsible
- *   Zone 2 (~35%)  : DiscussionWindow   (vrai LiveChat + input) — collapsible
+ *   Zone 2 (~35%)  : DiscussionWindow   (vrai LiveChat V2) — collapsible
  *   Zone 3 (~50%)  : WorkspacePhasesPanel (atelier AMORCER) — collapsible
  *
  * Wrappé par AmorcerProvider pour état partagé entre zones.
- * Accessible via /amorcer — ne touche PAS à la V2.
+ * BotCodeSync synchronise V3 → V2 (unidirectionnel, Fix R1+R2).
+ * / = V3 (défaut), /v2 = ancienne interface.
  */
 
-import { cn } from "../components/ui/utils";
+import { useEffect, useRef } from "react";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "../components/ui/resizable";
 import { ControlTowerPanel } from "./ControlTowerPanel";
 import { DiscussionWindow } from "./DiscussionWindow";
 import { WorkspacePhasesPanel } from "./WorkspacePhasesPanel";
 import { AmorcerProvider, useAmorcer } from "./AmorcerContext";
+import { useFrameMaster } from "../v2/context/FrameMasterContext";
+import { getSectionGPS } from "./core/section-registry";
+
+// ═══ Mapping V3 rightSection → V2 activeView (fallback quand pas dans section-registry) ═══
+const V3_TO_V2_VIEW: Record<string, string> = {
+  cockpit: "department",
+  blueprint: "blueprint",
+  dataroom: "espace-bureau",
+  playbooks: "espace-bureau",
+  conferenceai: "conference-ai",
+  execution: "department",
+  "bureau-agenda": "espace-bureau",
+  admin: "admin",
+  bureau: "espace-bureau",
+  dashboard: "dashboard",
+  "mon-reseau": "mon-reseau",
+  "salles-hub": "salles-hub",
+  "board-room": "board-room",
+  "war-room": "war-room",
+  "think-room": "think-room",
+  "diagnostic-ia": "diagnostic-ia",
+  "mon-equipe": "mon-equipe",
+  "mon-entreprise": "mon-entreprise",
+  reglages: "reglages",
+  "agent-settings": "agent-settings",
+};
+
+/**
+ * BotCodeSync — Bridge unidirectionnel V3 → V2 (invisible)
+ * Fix R1: useRef guard anti-boucle infinie
+ * Fix R2: mapping rightSection → activeView pour bons prompts backend
+ * RÈGLE: V3 = MAÎTRE, V2 = ESCLAVE. JAMAIS de reverse sync.
+ */
+function BotCodeSync() {
+  const { activeBotCode, rightSection, cockpitTab, o9Section } = useAmorcer();
+  const { setActiveBotCode, setActiveView } = useFrameMaster();
+
+  const prevBotRef = useRef(activeBotCode);
+  const prevSectionRef = useRef(rightSection);
+  const prevO9Ref = useRef(o9Section);
+  const prevTabRef = useRef(cockpitTab);
+
+  // Sync activeBotCode V3 → V2
+  useEffect(() => {
+    if (activeBotCode !== prevBotRef.current) {
+      prevBotRef.current = activeBotCode;
+      setActiveBotCode(activeBotCode);
+    }
+  }, [activeBotCode, setActiveBotCode]);
+
+  // Sync rightSection + cockpitTab + o9Section → V2 activeView (Fix R2)
+  useEffect(() => {
+    const sectionChanged = rightSection !== prevSectionRef.current;
+    const o9Changed = o9Section !== prevO9Ref.current;
+    const tabChanged = cockpitTab !== prevTabRef.current;
+    if (!sectionChanged && !o9Changed && !tabChanged) return;
+
+    prevSectionRef.current = rightSection;
+    prevO9Ref.current = o9Section;
+    prevTabRef.current = cockpitTab;
+
+    if (cockpitTab === "orbit9" || (rightSection && rightSection.startsWith("orbit9"))) {
+      setActiveView("orbit9-detail" as any);
+      return;
+    }
+    if (!rightSection) {
+      setActiveView("department");
+      return;
+    }
+    const gps = getSectionGPS(rightSection);
+    if (gps) {
+      setActiveView(gps.view as any);
+      return;
+    }
+    const v2View = V3_TO_V2_VIEW[rightSection];
+    if (v2View) {
+      setActiveView(v2View as any);
+      return;
+    }
+    setActiveView("department");
+  }, [rightSection, cockpitTab, o9Section, setActiveView]);
+
+  return null;
+}
 
 export function FrameMasterAmorcer() {
   return (
     <AmorcerProvider>
+      <BotCodeSync />
       <AmorcerLayout />
     </AmorcerProvider>
   );
@@ -28,28 +114,20 @@ export function FrameMasterAmorcer() {
 
 function AmorcerLayout() {
   const { rightSection } = useAmorcer();
+  const { setLeftCollapsed } = useFrameMaster();
 
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-white">
-      {/* Haut : Header */}
-      <header className="shrink-0 h-14 border-b border-gray-200 flex items-center px-4 z-10 bg-white">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center">
-            <span className="text-white font-bold text-xs">BT</span>
-          </div>
-          <div>
-            <h1 className="text-sm font-bold text-gray-900">Brain Team</h1>
-            <p className="text-[10px] text-gray-400">V3 — Amorcer</p>
-          </div>
-        </div>
-        <div className="flex-1" />
-      </header>
-
         {/* Layout 3 Zones — Resizable + Collapsible */}
         <ResizablePanelGroup direction="horizontal" className="flex-1">
 
           {/* ZONE 1 : Sidebar Gauche — collapsible */}
-          <ResizablePanel defaultSize={15} minSize={10} maxSize={30}>
+          <ResizablePanel
+            defaultSize={18} minSize={10} maxSize={30}
+            collapsible collapsedSize={4}
+            onCollapse={() => setLeftCollapsed(true)}
+            onExpand={() => setLeftCollapsed(false)}
+          >
             <aside className="h-full flex flex-col overflow-hidden">
               <ControlTowerPanel />
             </aside>

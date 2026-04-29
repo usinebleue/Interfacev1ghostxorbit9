@@ -129,7 +129,7 @@ export function injectHeroStyles() {
 }
 
 // ═══ LIVING HERO WRAPPER — V20 Carl's exact layout ═══
-export function LivingHero({ blur1, blur2, subtitleColor, subtitle, title, description, scaleClass, slim, children }: {
+export function LivingHero({ blur1, blur2, subtitleColor, subtitle, title, description, scaleClass, slim, footer, children }: {
   blur1: string;
   blur2: string;
   subtitleColor: string;
@@ -138,6 +138,7 @@ export function LivingHero({ blur1, blur2, subtitleColor, subtitle, title, descr
   description: string;
   scaleClass?: string;
   slim?: boolean;
+  footer?: React.ReactNode;
   children?: React.ReactNode;
 }) {
   useEffect(() => { injectHeroStyles(); }, []);
@@ -155,6 +156,7 @@ export function LivingHero({ blur1, blur2, subtitleColor, subtitle, title, descr
         <p className={cn("uppercase tracking-widest text-[9px] font-bold mb-1", subtitleColor)}>{subtitle}</p>
         <h2 className={cn("font-extrabold text-gray-900 mb-1", slim ? "text-base" : "text-xl")}>{title}</h2>
         {!slim && <p className="text-slate-500 text-[12.5px] font-medium leading-snug">{description}</p>}
+        {footer}
       </div>
     </div>
   );

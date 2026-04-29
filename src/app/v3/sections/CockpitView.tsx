@@ -5,8 +5,10 @@
  * Structure: LivingHero → Grid VITAA → Vedettes grid-cols-3 → Sidebar w-[180px] + Contenu grid-cols-2
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { PageLayout } from "../../v2/zones/center/layouts";
+import { useBots } from "../../v2/api/hooks";
+import { useChantiers } from "../../v2/api/hooks";
 import {
   Activity, AlertTriangle, Atom, Award, Banknote, BarChart3, Bell,
   BookOpen, Bot, Brain, Bug, Building2, Calendar, ChevronRight,
@@ -1338,6 +1340,25 @@ export function CockpitView({ embedded = false, onAction, initialDept = "CEOB" }
   const [selectedDept, setSelectedDept] = useState(initialDept);
   const [selectedBloc, setSelectedBloc] = useState<DashboardBlocConfig | null>(null);
 
+  // ═══ API réelle — données vivantes ═══
+  const { bots } = useBots();
+  const { chantiers: apiChantiers } = useChantiers();
+
+  // Compteurs réels par département
+  const realCounts = useMemo(() => {
+    const counts: Record<string, { chantiers: number; brule: number; missions: number }> = {};
+    for (const ch of apiChantiers) {
+      const deptCodes = ch.bot_codes?.length ? ch.bot_codes : ["CEOB"];
+      for (const code of deptCodes) {
+        if (!counts[code]) counts[code] = { chantiers: 0, brule: 0, missions: 0 };
+        counts[code].chantiers++;
+        if (ch.chaleur === "brule") counts[code].brule++;
+        counts[code].missions += ch.missions_count || 0;
+      }
+    }
+    return counts;
+  }, [apiChantiers]);
+
   // Sync quand le bot change depuis l'extérieur
   useEffect(() => { setSelectedDept(initialDept); setSelectedBloc(null); }, [initialDept]);
   const config = DEPT_DASHBOARD_SECTIONS[selectedDept] || DEPT_DASHBOARD_SECTIONS.CEOB;
@@ -1442,7 +1463,11 @@ export function CockpitView({ embedded = false, onAction, initialDept = "CEOB" }
                 <div className="flex items-center gap-1.5">
                   <Icon className={cn("h-3.5 w-3.5", isActive ? "text-blue-500" : "text-gray-400")} />
                   <span className={cn("text-[10px] font-bold flex-1 leading-tight", isActive ? "text-blue-700" : "text-gray-700")}>{label}</span>
-                  <span className="text-[9px] text-gray-400">{itemCount}</span>
+                  {realCounts[code]?.chantiers ? (
+                    <span className="text-[9px] font-bold text-blue-500">{realCounts[code].chantiers}</span>
+                  ) : (
+                    <span className="text-[9px] text-gray-400">{itemCount}</span>
+                  )}
                 </div>
               </button>
             );

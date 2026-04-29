@@ -55,7 +55,7 @@ const MODE_LIVE_CONFIG: Record<string, ModeConfig> = {
     coachingConverge: "On a bien explore. Pret pour la synthese?",
     synthesisPrompt: "Synthetise: (1) Tension identifiee, (2) Recherche faite, (3) Options exposees, (4) Meilleure option demontree, (5) Prochaines etapes concretes.",
     autoConsultBots: [],
-    maxExchanges: 6,
+    maxExchanges: 15,
   },
   debat: {
     options: ["Argument pour", "Argument contre", "Trouver un compromis", "Verdict final"],
@@ -63,7 +63,7 @@ const MODE_LIVE_CONFIG: Record<string, ModeConfig> = {
     coachingConverge: "Les arguments sont clairs des 2 cotes. On passe au verdict?",
     synthesisPrompt: "Synthetise le debat: Position A (arguments + forces), Position B (arguments + forces), Verdict (quelle position est la plus solide et pourquoi), Decision recommandee.",
     autoConsultBots: ["CFOB", "CSOB"],
-    maxExchanges: 8,
+    maxExchanges: 16,
   },
   brainstorm: {
     options: ["Plus d'idees!", "Combiner 2 idees", "Idee folle", "Assez — on trie"],
@@ -71,7 +71,7 @@ const MODE_LIVE_CONFIG: Record<string, ModeConfig> = {
     coachingConverge: "On a assez d'idees. On passe au tri?",
     synthesisPrompt: "Classe les idees par potentiel (fort/moyen/faible). Top 3 idees avec justification. Prochaine etape pour chaque top idee.",
     autoConsultBots: ["CMOB", "CTOB"],
-    maxExchanges: 5,
+    maxExchanges: 12,
   },
   crise: {
     options: ["Impact immediat?", "Qui est affecte?", "Plan B", "Action dans les 30 min"],
@@ -79,7 +79,7 @@ const MODE_LIVE_CONFIG: Record<string, ModeConfig> = {
     coachingConverge: "Situation evaluee. On passe au plan d'action immediat?",
     synthesisPrompt: "Plan de crise: (1) Severite 1-10, (2) Actions immediates (30 min), (3) Communication a faire, (4) Responsable de chaque action, (5) Suivi dans 24h.",
     autoConsultBots: ["COOB"],
-    maxExchanges: 4,
+    maxExchanges: 10,
   },
   analyse: {
     options: ["Cause racine?", "Données manquantes", "Comparer avec un benchmark", "Conclusions?"],
@@ -87,7 +87,7 @@ const MODE_LIVE_CONFIG: Record<string, ModeConfig> = {
     coachingConverge: "L'analyse est solide. On formule les conclusions?",
     synthesisPrompt: "Analyse structurée: (1) Problème décomposé, (2) Causes racines identifiées, (3) Données clés, (4) Conclusions, (5) Recommandations actionnables.",
     autoConsultBots: ["CTOB", "CFOB"],
-    maxExchanges: 6,
+    maxExchanges: 14,
   },
   decision: {
     options: ["Quels critères?", "Risques de chaque option", "Comparer Go vs No-Go", "Ma décision"],
@@ -95,7 +95,7 @@ const MODE_LIVE_CONFIG: Record<string, ModeConfig> = {
     coachingConverge: "Les options sont évaluées. Prêt à trancher?",
     synthesisPrompt: "Matrice de décision: Options évaluées (critères, risques, potentiel). Recommandation avec niveau de confiance. Conditions de succès du Go. Plan B si No-Go.",
     autoConsultBots: ["CFOB", "CSOB"],
-    maxExchanges: 5,
+    maxExchanges: 12,
   },
   strategie: {
     options: ["Forces et faiblesses", "Opportunités du marché", "Menaces à anticiper", "Plan d'exécution"],
@@ -103,7 +103,7 @@ const MODE_LIVE_CONFIG: Record<string, ModeConfig> = {
     coachingConverge: "La stratégie se dessine. On formalise le plan?",
     synthesisPrompt: "Plan stratégique: (1) Forces et faiblesses, (2) 3 axes prioritaires, (3) Quick wins (30 jours), (4) Moyen terme (90 jours), (5) Indicateurs de succès.",
     autoConsultBots: ["CSOB", "CFOB"],
-    maxExchanges: 7,
+    maxExchanges: 14,
   },
   innovation: {
     options: ["Technique disruptive?", "Qui fait ça ailleurs?", "Prototype minimal", "Potentiel marché"],
@@ -111,7 +111,7 @@ const MODE_LIVE_CONFIG: Record<string, ModeConfig> = {
     coachingConverge: "On a identifié des pistes. On sélectionne la plus prometteuse?",
     synthesisPrompt: "Innovation brief: (1) Opportunité identifiée, (2) Solution proposée, (3) Différenciateur clé, (4) Premier prototype (description), (5) Marché potentiel, (6) Prochaine étape concrète.",
     autoConsultBots: ["CTOB", "CMOB"],
-    maxExchanges: 6,
+    maxExchanges: 14,
   },
   deep: {
     options: ["Creuse plus profond", "Lien inattendu?", "Analogie avec un autre domaine", "Insight a retenir"],
@@ -119,7 +119,7 @@ const MODE_LIVE_CONFIG: Record<string, ModeConfig> = {
     coachingConverge: "Des insights profonds emergent. On cristallise?",
     synthesisPrompt: "Insights: (1) Ce qui n'etait pas evident, (2) Connexions inattendues, (3) Question que personne ne posait, (4) Recommandation contre-intuitive, (5) Ce que ca change pour la suite.",
     autoConsultBots: ["CSOB"],
-    maxExchanges: 5,
+    maxExchanges: 12,
   },
 };
 
@@ -276,8 +276,17 @@ function parseApiOptions(responseText: string): { cleanText: string; parsedOptio
   const parsedOptions: string[] = [];
   const cleanLines: string[] = [];
 
+  // Collect → lines at the end to detect web-format proposals
+  const arrowOptions: string[] = [];
+
   for (const line of lines) {
     const trimmed = line.trim();
+
+    // Strip [TACHE] internal markers — never show to user
+    if (/^\[TACHE\]\s*/i.test(trimmed)) {
+      continue;
+    }
+
     // Detect Telegram-style options: 📌 1 · Option A | 2 · Option B | 3 · Option C
     if (/^\p{Emoji}?\s*1\s*[·.]\s*/u.test(trimmed) && /\|/.test(trimmed)) {
       const parts = trimmed.split(/\s*\|\s*/);
@@ -285,8 +294,31 @@ function parseApiOptions(responseText: string): { cleanText: string; parsedOptio
         const cleaned = part.replace(/^\p{Emoji}?\s*\d+\s*[·.]\s*/u, "").trim();
         if (cleaned) parsedOptions.push(cleaned);
       }
+    }
+    // Detect REGLE_3_PROPOSITIONS format: 1. Label | 2. Label | 3. Label
+    else if (/^\d+\.\s+.+\|/.test(trimmed) && !trimmed.startsWith("[")) {
+      const parts = trimmed.split(/\s*\|\s*/);
+      for (const part of parts) {
+        const cleaned = part.replace(/^\d+\.\s*/, "").trim();
+        if (cleaned) parsedOptions.push(cleaned);
+      }
+    }
+    // Detect web-format proposals: → Action text
+    else if (/^→\s+/.test(trimmed)) {
+      const cleaned = trimmed.replace(/^→\s+/, "").trim();
+      if (cleaned) arrowOptions.push(cleaned);
     } else {
       cleanLines.push(line);
+    }
+  }
+
+  // Arrow options only count if we got 2-4 of them (real proposals, not random arrows)
+  if (parsedOptions.length === 0 && arrowOptions.length >= 2 && arrowOptions.length <= 4) {
+    parsedOptions.push(...arrowOptions);
+  } else if (arrowOptions.length > 0 && parsedOptions.length === 0) {
+    // Put arrow lines back if not enough to be proposals
+    for (const opt of arrowOptions) {
+      cleanLines.push(`→ ${opt}`);
     }
   }
 
@@ -587,6 +619,19 @@ export function useChat() {
             api.linkThreadToMission(parseInt(pendingMissionId), newId).catch(() => {});
           }
         } catch { /* noop */ }
+
+        // Auto-link thread to parent chantier (from handleWorkAction phase buttons)
+        try {
+          const pendingChantier = sessionStorage.getItem("ghostx-pending-chantier-link");
+          const pendingSection = sessionStorage.getItem("ghostx-pending-flow-section");
+          if (pendingChantier) {
+            sessionStorage.removeItem("ghostx-pending-chantier-link");
+            sessionStorage.removeItem("ghostx-pending-flow-section");
+            setThreads((prev) =>
+              prev.map((t) => t.id === newId ? { ...t, parentChantier: pendingChantier, flowSection: pendingSection || undefined } : t)
+            );
+          }
+        } catch { /* noop */ }
       }
 
       const req: ChatRequest = {
@@ -630,10 +675,12 @@ export function useChat() {
         await new Promise<void>((resolve, reject) => {
           const controller = api.chatStream(req, {
             onToken: (_chunk: string, accumulated: string) => {
+              // Strip [TACHE] lines during streaming so they never appear
+              const cleaned = accumulated.split("\n").filter(l => !/^\[TACHE\]\s*/i.test(l.trim())).join("\n");
               // Update the bot message content progressively
               setMessages((prev) =>
                 prev.map((m) =>
-                  m.id === botMsgId ? { ...m, content: accumulated } : m
+                  m.id === botMsgId ? { ...m, content: cleaned } : m
                 )
               );
             },
@@ -646,13 +693,14 @@ export function useChat() {
               if (data.has_product !== undefined) setHasProduct(data.has_product);
 
               // Final update with all metadata
-              let cleanText = data.response;
+              // TOUJOURS strip [TACHE] du texte, même quand le backend envoie des options explicites
+              let cleanText = data.response.split("\n").filter((l: string) => !/^\[TACHE\]\s*/i.test(l.trim())).join("\n").trim();
               let parsedOptions: string[] = [];
 
               if (data.options && data.options.length > 0) {
                 parsedOptions = data.options.map((o) => o.label);
               } else {
-                const parsed = parseApiOptions(data.response);
+                const parsed = parseApiOptions(cleanText);
                 cleanText = parsed.cleanText;
                 parsedOptions = parsed.parsedOptions;
               }
@@ -717,6 +765,13 @@ export function useChat() {
               const botCount = allMsgs.filter((m) => m.role === "assistant").length + 1;
               const userMsgs = allMsgs.filter((m) => m.role === "user");
 
+              // Greeting detection — reset coaching counters on new topic
+              const isGreeting = /^(allo|salut|bonjour|hey|hi|hello|yo|coucou|bonsoir)\b/i.test(text.trim());
+              if (isGreeting) {
+                driftWarningCount.current = 0;
+                missionNudgeShownAt.current = 0;
+              }
+
               if (botCount === 1) {
                 // Titre intelligent genere par CarlOS apres le 1er echange
                 generateSmartTitle(text, cleanText).then((smartTitle) => {
@@ -734,7 +789,7 @@ export function useChat() {
                 if (false && modeConf.autoConsultBots.length > 0 && msgType === "normal") {
                   // ... code gardé mais désactivé
                 }
-              } else if (botCount >= modeConf.maxExchanges) {
+              } else if (!isGreeting && botCount >= modeConf.maxExchanges) {
                 setTimeout(() => {
                   injectCoaching(modeConf.coachingConverge, ["Synthese", "Continuer l'exploration"]);
                 }, 500);
@@ -747,7 +802,7 @@ export function useChat() {
                 }, 700);
               }
 
-              if (!data.sentinel_alert && userMsgs.length >= 3 && msgType === "normal") {
+              if (!data.sentinel_alert && !isGreeting && userMsgs.length >= 8 && msgType === "normal") {
                 const originalTension = userMsgs[0]?.content || "";
                 const isDrifting = detectDrift(originalTension, text);
                 if (isDrifting) {
@@ -770,10 +825,11 @@ export function useChat() {
                 }
               }
 
-              // Phase 2B — Nudge "en faire une mission?" apres 5+ messages user sans mission liee
+              // Phase 2B — Nudge "en faire une mission?" apres 12+ messages user sans mission liee
               const currentThread = threads.find((t) => t.id === activeThreadId);
               if (
-                userMsgs.length >= 5 &&
+                !isGreeting &&
+                userMsgs.length >= 12 &&
                 msgType === "normal" &&
                 !currentThread?.missionId &&
                 missionNudgeShownAt.current === 0
@@ -786,10 +842,10 @@ export function useChat() {
                   );
                 }, 800);
               } else if (
-                userMsgs.length >= 10 &&
+                userMsgs.length >= 20 &&
                 !currentThread?.missionId &&
                 missionNudgeShownAt.current > 0 &&
-                missionNudgeShownAt.current <= 5
+                missionNudgeShownAt.current <= 12
               ) {
                 missionNudgeShownAt.current = userMsgs.length;
                 setTimeout(() => {

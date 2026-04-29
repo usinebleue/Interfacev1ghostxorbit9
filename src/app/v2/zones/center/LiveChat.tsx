@@ -859,6 +859,15 @@ function ModeBar({ activeMode, onSelectMode, activeBranch, onAdvance, onComplete
 // Bot Message Actions — options cliquables + Challenger/Approfondir/Consulter
 // ══════════════════════════════════════════════
 
+// CREDO phase → pill colors for splitMode V3
+const CREDO_PILL_COLORS: Record<string, string> = {
+  C: "bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300",
+  R: "bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100 hover:border-purple-300",
+  E: "bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100 hover:border-amber-300",
+  D: "bg-green-50 border-green-200 text-green-700 hover:bg-green-100 hover:border-green-300",
+  O: "bg-red-50 border-red-200 text-red-700 hover:bg-red-100 hover:border-red-300",
+};
+
 interface BotActionsProps {
   msg: { id: string; content: string; agent?: string; options?: string[]; bubbleContext?: BubbleContext };
   isLast: boolean;
@@ -872,6 +881,7 @@ interface BotActionsProps {
   // Sprint Discussion 1 — phase-gating
   currentPhase?: string | null;
   exchangeCount?: number;
+  splitMode?: boolean;
 }
 
 function BotMessageActions({
@@ -886,6 +896,7 @@ function BotMessageActions({
   currentBotCode,
   currentPhase,
   exchangeCount = 0,
+  splitMode = false,
 }: BotActionsProps) {
   const [showConsulter, setShowConsulter] = useState(false);
 
@@ -904,7 +915,10 @@ function BotMessageActions({
               key={i}
               onClick={() => onOptionClick(opt)}
               disabled={disabled}
-              className="text-xs px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              className={cn(
+                "text-xs px-3 py-1.5 rounded-full border transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed font-medium",
+                splitMode && currentPhase ? (CREDO_PILL_COLORS[currentPhase] || CREDO_PILL_COLORS.C) : "bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300"
+              )}
             >
               {opt}
             </button>
@@ -1067,12 +1081,14 @@ export function LiveChat({
   compact = false,
   splitMode = false,
   splitTitle,
+  hideHeader = false,
 }: {
   initialMode?: string;
   onBack?: () => void;
   compact?: boolean;
   splitMode?: boolean;
   splitTitle?: string;
+  hideHeader?: boolean;
 }) {
   const {
     messages, isTyping, activeReflectionMode, currentCREDOPhase, newConversation, sendMessage, sendMultiPerspective,
@@ -1354,7 +1370,7 @@ export function LiveChat({
   return (
     <div className="h-full flex flex-col bg-gradient-to-b from-gray-50 to-white">
       {/* Header — harmonisé avec FocusModeLayout en split mode */}
-      {(() => {
+      {!hideHeader && (() => {
         const txtColor = splitMode ? "text-white" : "text-gray-800";
         const txtMuted = splitMode ? "text-white/60" : "text-gray-400";
         const hoverBg = splitMode ? "hover:bg-white/10" : "hover:bg-gray-100";
@@ -1975,7 +1991,7 @@ export function LiveChat({
                   {!isUser && (
                     <BotAvatar
                       code={msg.agent || "CEOB"}
-                      size="md"
+                      size={splitMode ? "sm" : "md"}
                       className={cn(
                         "mt-1",
                         isChallenge && "ring-red-200",
@@ -1984,14 +2000,14 @@ export function LiveChat({
                     />
                   )}
                   <div className={cn(
-                    "rounded-2xl shadow-sm max-w-[85%] relative group",
+                    splitMode ? "rounded-lg shadow-sm max-w-[85%] relative group" : "rounded-2xl shadow-sm max-w-[85%] relative group",
                     isUser
                       ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white px-4 py-3 rounded-tr-md"
                       : isChallenge
-                        ? cn("bg-white border border-red-100 border-l-[3px] px-5 py-4 rounded-tl-md", agentInfo?.border || "border-l-red-400")
+                        ? cn(splitMode ? "bg-blue-50/30 border border-red-100 border-l-[3px] px-3 py-2.5 rounded-tl-md" : "bg-white border border-red-100 border-l-[3px] px-5 py-4 rounded-tl-md", agentInfo?.border || "border-l-red-400")
                         : isConsultation
-                          ? cn("bg-white border border-violet-100 border-l-[3px] px-5 py-4 rounded-tl-md", agentInfo?.border || "border-l-violet-400")
-                          : cn("bg-white border border-gray-100 border-l-[3px] px-5 py-4 rounded-tl-md", agentInfo?.border || "border-l-blue-400")
+                          ? cn(splitMode ? "bg-blue-50/30 border border-violet-100 border-l-[3px] px-3 py-2.5 rounded-tl-md" : "bg-white border border-violet-100 border-l-[3px] px-5 py-4 rounded-tl-md", agentInfo?.border || "border-l-violet-400")
+                          : cn(splitMode ? "bg-blue-50/30 border border-gray-200 border-l-[3px] px-3 py-2.5 rounded-tl-md" : "bg-white border border-gray-100 border-l-[3px] px-5 py-4 rounded-tl-md", agentInfo?.border || "border-l-blue-400")
                   )}>
                     {/* Voice indicator */}
                     {isVoice && isUser && (
@@ -2003,8 +2019,13 @@ export function LiveChat({
 
                     {/* Agent name + écouter/copier en haut */}
                     {!isUser && agentInfo && (
-                      <div className={cn("text-xs mb-2 font-semibold flex items-center gap-1.5", agentInfo.text)}>
+                      <div className={cn(
+                        "flex items-center gap-1.5 font-semibold",
+                        splitMode ? "text-[11px] mb-1.5 text-blue-700" : "text-xs mb-2",
+                        !splitMode && agentInfo.text
+                      )}>
                         {kitBotFullName(msg.agent || "CEOB")}
+                        {splitMode && <span className="text-[10px] text-gray-400 font-normal">{agentInfo.role}</span>}
                         {isVoice && <Mic className="h-2.5 w-2.5 opacity-50" />}
                         {isDiagnosticMsg && (
                           <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-300 ml-1">
@@ -2130,6 +2151,7 @@ export function LiveChat({
                         currentBotCode={msg.agent || activeBotCode}
                         currentPhase={currentCREDOPhase}
                         exchangeCount={exchangeCount}
+                        splitMode={splitMode}
                       />
                     )}
 

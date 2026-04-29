@@ -6,13 +6,14 @@
  * Utilisé par: WorkspacePhasesPanel (section "conferenceai")
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Activity, BarChart3, Bot, Building2, Calendar, ChevronDown, ChevronLeft, ChevronRight,
   Clock, Crown, ExternalLink, Eye, FileText, FolderOpen, Heart, Info, Layers, LayoutGrid,
   ListChecks, MessageSquare, PenLine, Play, Rocket, RotateCcw, Search, Settings, ShoppingBag,
   Sparkles, Star, Target, Users, Video, Zap,
 } from "lucide-react";
+import { api } from "../../v2/api/client";
 import { Card } from "../../components/ui/card";
 import { cn } from "../../components/ui/utils";
 import { BOT_AVATAR, BOT_NAME } from "../../v2/api/types";
@@ -64,6 +65,25 @@ const MOCK_RECENT_SESSIONS = [
 
 const MOCK_PLANNED_SESSIONS: { id: string; pbId: string; date: string; heure: string; participants: string[] }[] = [];
 
+function useRecentSessions() {
+  const [sessions, setSessions] = useState(MOCK_RECENT_SESSIONS);
+  useEffect(() => {
+    api.meetingList().then(res => {
+      if (res.meetings?.length) {
+        setSessions(res.meetings.map((m: any) => ({
+          id: m.slug || m.id,
+          pbId: m.playbook_id || "",
+          date: m.created_at?.slice(0, 10) || "",
+          duree: m.duration || "—",
+          participants: m.participant_count || 0,
+          livrables: m.deliverable_count || 0,
+        })));
+      }
+    }).catch(() => {});
+  }, []);
+  return sessions;
+}
+
 type ConfAIView = "accueil" | "recentes" | "planifiees" | "famille" | "departement" | "tous";
 
 export function ConferenceAIView({ headerGradient, onNavigateToStore, onLaunch, botCode }: {
@@ -72,6 +92,7 @@ export function ConferenceAIView({ headerGradient, onNavigateToStore, onLaunch, 
   onLaunch?: (type: string, title: string) => void;
   botCode?: string;
 }) {
+  const recentSessions = useRecentSessions();
   const [activeView, setActiveView] = useState<ConfAIView>("accueil");
   const [selectedPlaybook, setSelectedPlaybook] = useState<typeof PLAYBOOK_STORE_DATA[0] | null>(null);
   const [expandFamilies, setExpandFamilies] = useState(false);
@@ -301,11 +322,11 @@ export function ConferenceAIView({ headerGradient, onNavigateToStore, onLaunch, 
       <div className="flex-1 min-w-0 space-y-2">
         {/* Fiche detaillee INLINE (drill-down) */}
         {selectedPlaybook ? (
-          <ConfAIFicheDetail pb={selectedPlaybook} onBack={handleBack} onLaunch={onLaunch} allConf={allConf} />
+          <ConfAIFicheDetail pb={selectedPlaybook} onBack={handleBack} onLaunch={onLaunch} allConf={allConf} recentSessions={recentSessions} />
         ) : (
           <>
             {activeView === "accueil" && <ConfAIAccueil playbooks={allConf} onOpenDetail={handleOpenDetail} onNavigate={handleNavigate} onLaunch={onLaunch} familyEntries={familyEntries} deptEntries={deptEntries} botCode={botCode} />}
-            {activeView === "recentes" && <ConfAIRecentes allConf={allConf} onOpenDetail={handleOpenDetail} onLaunch={onLaunch} onBack={() => setActiveView("accueil")} />}
+            {activeView === "recentes" && <ConfAIRecentes allConf={allConf} onOpenDetail={handleOpenDetail} onLaunch={onLaunch} onBack={() => setActiveView("accueil")} recentSessions={recentSessions} />}
             {activeView === "planifiees" && <ConfAIPlanifiees onBack={() => setActiveView("accueil")} />}
             {activeView === "famille" && selectedFamily && <ConfAIFiltered playbooks={allConf.filter(pb => getPlaybookFamily(pb) === selectedFamily)} title={CONFERENCE_FAMILIES[selectedFamily]?.label || selectedFamily} icon={CONFERENCE_FAMILIES[selectedFamily]?.icon || Video} onOpenDetail={handleOpenDetail} onLaunch={onLaunch} onBack={() => setActiveView("accueil")} />}
             {activeView === "famille" && !selectedFamily && <ConfAIAccueil playbooks={allConf} onOpenDetail={handleOpenDetail} onNavigate={handleNavigate} onLaunch={onLaunch} familyEntries={familyEntries} deptEntries={deptEntries} botCode={botCode} />}
@@ -479,11 +500,12 @@ function ConfAIAccueil({ playbooks, onOpenDetail, onNavigate, onLaunch, familyEn
 }
 
 /* ConfAIRecentes — Dernieres sessions lancees */
-function ConfAIRecentes({ allConf, onOpenDetail, onLaunch, onBack }: {
+function ConfAIRecentes({ allConf, onOpenDetail, onLaunch, onBack, recentSessions }: {
   allConf: typeof PLAYBOOK_STORE_DATA;
   onOpenDetail: (pb: typeof PLAYBOOK_STORE_DATA[0]) => void;
   onLaunch?: (type: string, title: string) => void;
   onBack: () => void;
+  recentSessions: typeof MOCK_RECENT_SESSIONS;
 }) {
   return (
     <div className="space-y-3">
@@ -492,11 +514,11 @@ function ConfAIRecentes({ allConf, onOpenDetail, onLaunch, onBack }: {
         <Clock className="h-4 w-4 text-gray-600" />
         <h3 className="text-sm font-bold text-gray-800">Sessions recentes</h3>
       </div>
-      {MOCK_RECENT_SESSIONS.length === 0 ? (
+      {recentSessions.length === 0 ? (
         <p className="text-xs text-gray-400 text-center py-6">Aucune session recente</p>
       ) : (
         <div className="space-y-2">
-          {MOCK_RECENT_SESSIONS.map(session => {
+          {recentSessions.map(session => {
             const pb = allConf.find(p => p.id === session.pbId);
             const name = pb?.nom || session.pbId;
             return (
@@ -562,11 +584,12 @@ function ConfAIPlanifiees({ onBack }: { onBack: () => void }) {
 }
 
 /* ConfAIFicheDetail — Fiche detail orientee UTILISATION (pas store) */
-function ConfAIFicheDetail({ pb, onBack, onLaunch, allConf }: {
+function ConfAIFicheDetail({ pb, onBack, onLaunch, allConf, recentSessions }: {
   pb: typeof PLAYBOOK_STORE_DATA[0];
   onBack: () => void;
   onLaunch?: (type: string, title: string) => void;
   allConf: typeof PLAYBOOK_STORE_DATA;
+  recentSessions: typeof MOCK_RECENT_SESSIONS;
 }) {
   const [planDate, setPlanDate] = useState("");
   const [planHeure, setPlanHeure] = useState("");
@@ -581,7 +604,7 @@ function ConfAIFicheDetail({ pb, onBack, onLaunch, allConf }: {
   }));
   const livrables = PLAYBOOK_LIVRABLES[pb.id] || [];
   const similarDept = allConf.filter(p => p.departement === pb.departement && p.id !== pb.id).slice(0, 3);
-  const recentForThis = MOCK_RECENT_SESSIONS.filter(s => s.pbId === pb.id).slice(0, 3);
+  const recentForThis = recentSessions.filter(s => s.pbId === pb.id).slice(0, 3);
 
   return (
     <div className="space-y-3">

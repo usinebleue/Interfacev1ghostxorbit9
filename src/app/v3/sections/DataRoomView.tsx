@@ -5,7 +5,8 @@
  * Utilisé par: WorkspacePhasesPanel (section "dataroom")
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { api } from "../../v2/api/client";
 import {
   Activity, ArrowDown, ArrowUp, ArrowUpDown, BarChart3, BookOpen, Briefcase, Bug, Building2, Calendar,
   CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, ClipboardCheck, Clock, Cpu, Database, DollarSign,
@@ -1079,10 +1080,35 @@ export function DataRoomView({ botCode, headerGradient, showHeader = false }: { 
     if (!expandedDepts.has(deptCode)) setExpandedDepts(prev => new Set([...prev, deptCode]));
   };
 
+  // ═══ API réelle — documents bureau uploadés ═══
+  const [bureauDocs, setBureauDocs] = useState<any[]>([]);
+  useEffect(() => {
+    api.listBureauItems("document").then(res => {
+      if (res.items?.length) setBureauDocs(res.items);
+    }).catch(() => {});
+  }, []);
+
+  // Convertir bureau items en DataRoomDoc format
+  const realDocs: DataRoomDoc[] = useMemo(() =>
+    bureauDocs.map((item: any) => ({
+      id: `bureau-${item.id}`,
+      titre: item.titre || item.nom || "Sans titre",
+      type: item.type_item || "document",
+      categorie: "Documents importés",
+      categorieId: "_bureau",
+      format: item.filename?.split(".").pop()?.toUpperCase() || "PDF",
+      modifie: item.updated_at?.slice(0, 10) || item.created_at?.slice(0, 10) || "",
+      taille: item.file_size ? `${Math.round(item.file_size / 1024)} Ko` : "—",
+    })),
+  [bureauDocs]);
+
   // Flatten all docs for this department with category + format + date + taille
-  const allDeptDocs: DataRoomDoc[] = sections.flatMap(s =>
-    s.documents.map(d => ({ ...d, categorie: s.label, categorieId: s.id, format: inferFormat(d.type, d.titre), modifie: mockDate(d.titre), taille: mockTaille(d.titre, d.type) }))
-  );
+  const allDeptDocs: DataRoomDoc[] = [
+    ...realDocs,
+    ...sections.flatMap(s =>
+      s.documents.map(d => ({ ...d, categorie: s.label, categorieId: s.id, format: inferFormat(d.type, d.titre), modifie: mockDate(d.titre), taille: mockTaille(d.titre, d.type) }))
+    ),
+  ];
 
   // Active folder
   const activeSection = sections.find(s => s.id === activeFolder);

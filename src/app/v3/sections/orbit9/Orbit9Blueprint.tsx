@@ -14,13 +14,14 @@ import {
   Coins, Rocket, TrendingUp, LogOut, AlertTriangle,
   Building2, MapPin, Award, Eye, Zap, Scale,
   Network, Crown, FileCheck, Clock, CheckCircle2,
-  Handshake, Target, MessageCircle, Vote, Layers,
+  Handshake, Target, MessageCircle, Vote, Layers, Search,
 } from "lucide-react";
 import { cn } from "../../../components/ui/utils";
 import { SF } from "../../core/styles";
 import { O9ScoreBar, PionnierDot } from "./orbit9-helpers";
 import { O9_PIONNIERS } from "./orbit9-data";
 import { BOT_AVATAR_MAP } from "../shared/dept-data";
+import { LivingHero } from "../shared/LivingHero";
 
 // ═══ Sidebar config ═══
 
@@ -30,6 +31,7 @@ const BP_SIDEBAR: ({ id: string; label: string; icon: React.ElementType; count?:
   { id: "capacites", label: "Capacités & Offres", icon: Package },
   null,
   { id: "cellules", label: "Cellules", icon: Atom, count: "4" },
+  { id: "jumelage", label: "Jumelage", icon: Handshake, count: "4" },
   { id: "vitaa-faas", label: "VITAA FAAS", icon: Activity },
   null,
   { id: "gouvernance", label: "Gouvernance & Rôles", icon: Shield },
@@ -61,7 +63,55 @@ export function Orbit9Blueprint() {
   const [activeSection, setActiveSection] = useState("vue-consolidee");
 
   return (
-    <div className="flex gap-3">
+    <div className="space-y-4">
+      {/* Hero animé — Blueprint Collaboration */}
+      <LivingHero blur1="bg-cyan-100/70" blur2="bg-teal-100/60" subtitleColor="text-cyan-600" subtitle="Blueprint Réseau" title="Votre stratégie collaborative." description="Profil, cellules, gouvernance et croissance réseau."
+        footer={
+          <div className="flex items-center gap-2 mt-2">
+            <span className="text-[10px] font-bold text-gray-500">Complétion</span>
+            <div className="flex-1 h-2 bg-gray-200/60 rounded-full overflow-hidden">
+              <div className="h-full bg-cyan-500 rounded-full transition-all duration-700" style={{ width: "35%" }} />
+            </div>
+            <span className="text-[10px] font-bold text-cyan-600">35%</span>
+          </div>
+        }>
+        <div className="relative flex items-center justify-center overflow-visible" style={{ width: 340, height: 160 }}>
+          <svg viewBox="0 0 240 140" className="overflow-visible" style={{ width: 300, height: 180 }}>
+            {/* Noeud racine */}
+            <rect x="95" y="10" width="50" height="24" rx="8" className="org-node anim-org-root" />
+            <text x="120" y="26" textAnchor="middle" className="text-[8px] font-bold fill-gray-700">Blueprint</text>
+            {/* Ligne verticale descendante */}
+            <line x1="120" y1="34" x2="120" y2="55" stroke="#38bdf8" strokeWidth="2" opacity="0.4" />
+            <rect x="119" y="34" width="2" height="21" fill="url(#bp-flow-v)" className="anim-org-line-vert" />
+            {/* Ligne horizontale */}
+            <line x1="40" y1="55" x2="200" y2="55" stroke="#38bdf8" strokeWidth="1.5" opacity="0.3" />
+            <rect x="40" y="54" width="160" height="2" fill="url(#bp-flow-h)" className="anim-org-line-hor" />
+            {/* Noeuds enfants */}
+            <rect x="15" y="62" width="50" height="22" rx="6" className="org-node anim-org-child-1" />
+            <text x="40" y="77" textAnchor="middle" className="text-[7px] fill-gray-600">Profil</text>
+            <rect x="95" y="62" width="50" height="22" rx="6" className="org-node anim-org-child-2" />
+            <text x="120" y="77" textAnchor="middle" className="text-[7px] fill-gray-600">Cellules</text>
+            <rect x="175" y="62" width="50" height="22" rx="6" className="org-node anim-org-child-3" />
+            <text x="200" y="77" textAnchor="middle" className="text-[7px] fill-gray-600">VITAA</text>
+            {/* Sous-noeuds */}
+            <line x1="40" y1="84" x2="40" y2="100" stroke="#38bdf8" strokeWidth="1" opacity="0.25" />
+            <circle cx="40" cy="105" r="8" fill="rgba(56,189,248,0.1)" stroke="#38bdf8" strokeWidth="0.75" />
+            <text x="40" y="108" textAnchor="middle" className="text-[5px] fill-cyan-600">87%</text>
+            <line x1="120" y1="84" x2="120" y2="100" stroke="#38bdf8" strokeWidth="1" opacity="0.25" />
+            <circle cx="120" cy="105" r="8" fill="rgba(56,189,248,0.1)" stroke="#38bdf8" strokeWidth="0.75" />
+            <text x="120" y="108" textAnchor="middle" className="text-[5px] fill-cyan-600">4</text>
+            <line x1="200" y1="84" x2="200" y2="100" stroke="#38bdf8" strokeWidth="1" opacity="0.25" />
+            <circle cx="200" cy="105" r="8" fill="rgba(56,189,248,0.1)" stroke="#38bdf8" strokeWidth="0.75" />
+            <text x="200" y="108" textAnchor="middle" className="text-[5px] fill-cyan-600">8.4</text>
+            <defs>
+              <linearGradient id="bp-flow-v" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#38bdf8" stopOpacity="0" /><stop offset="50%" stopColor="#38bdf8" stopOpacity="0.9" /><stop offset="100%" stopColor="#38bdf8" stopOpacity="0" /></linearGradient>
+              <linearGradient id="bp-flow-h" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#38bdf8" stopOpacity="0" /><stop offset="50%" stopColor="#38bdf8" stopOpacity="0.9" /><stop offset="100%" stopColor="#38bdf8" stopOpacity="0" /></linearGradient>
+            </defs>
+          </svg>
+        </div>
+      </LivingHero>
+
+      <div className="flex gap-3">
       {/* Sidebar w-[180px] — Pattern BlueprintView */}
       <div className={SF.sidebarW}>
         {BP_SIDEBAR.map((item, idx) => {
@@ -85,10 +135,12 @@ export function Orbit9Blueprint() {
         {activeSection === "profil" && <SectionProfil />}
         {activeSection === "capacites" && <SectionCapacites />}
         {activeSection === "cellules" && <SectionCellules />}
+        {activeSection === "jumelage" && <SectionJumelage />}
         {activeSection === "vitaa-faas" && <SectionVitaaFaas />}
         {activeSection === "gouvernance" && <SectionGouvernanceRoles />}
         {activeSection === "timetokens" && <SectionTimeTokens />}
         {activeSection === "pionniers" && <SectionPionniersCroissance />}
+      </div>
       </div>
     </div>
   );
@@ -97,6 +149,20 @@ export function Orbit9Blueprint() {
 // ═══ 1. VUE CONSOLIDÉE — État de votre réseau en un coup d'œil ═══
 
 function SectionVueConsolidee() {
+  const KPI_SUMMARY = [
+    { label: "Profil", value: "87%", icon: UserCircle, color: "text-blue-600" },
+    { label: "Capacités", value: "5", icon: Package, color: "text-cyan-600" },
+    { label: "Cellules", value: "4", icon: Atom, color: "text-teal-600" },
+    { label: "Jumelage", value: "4", icon: Handshake, color: "text-violet-600" },
+    { label: "VITAA", value: "8.4", icon: Activity, color: "text-emerald-600" },
+    { label: "Gouvernance", value: "5", icon: Shield, color: "text-amber-600" },
+    { label: "Rôles", value: "4", icon: Users, color: "text-pink-600" },
+    { label: "TimeTokens", value: "1,847", icon: Coins, color: "text-orange-600" },
+    { label: "Pionniers", value: "5/9", icon: Rocket, color: "text-indigo-600" },
+    { label: "Croissance", value: "9→81", icon: TrendingUp, color: "text-rose-600" },
+    { label: "Matrice sortie", value: "4", icon: LogOut, color: "text-slate-600" },
+  ];
+
   return (
     <div className="space-y-3">
       <BPCard icon={BarChart3} title="Score réseau global" badge="+5 pts ce mois" badgeColor="bg-emerald-50 text-emerald-700">
@@ -106,6 +172,24 @@ function SectionVueConsolidee() {
             <O9ScoreBar value={78} color="bg-cyan-500" />
             <p className="text-[10px] text-gray-500 mt-1">Moyenne de vos 4 cellules — Top 15% du réseau Brain Team</p>
           </div>
+        </div>
+      </BPCard>
+
+      {/* KPI Summary — 9 sections en un coup d'œil (pattern V2) */}
+      <BPCard icon={Eye} title="Résumé par section">
+        <div className="grid grid-cols-3 gap-2">
+          {KPI_SUMMARY.map(k => {
+            const KIcon = k.icon;
+            return (
+              <div key={k.label} className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 border border-gray-100">
+                <KIcon className={cn("h-3.5 w-3.5 shrink-0", k.color)} />
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-bold text-gray-800">{k.value}</div>
+                  <div className="text-[9px] text-gray-500 truncate">{k.label}</div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </BPCard>
 
@@ -207,6 +291,50 @@ function SectionProfil() {
         </div>
       </BPCard>
 
+      {/* Scores VITAA individuels (pattern V2) */}
+      <BPCard icon={Activity} title="Scores VITAA" badge="Mon profil">
+        <div className="space-y-2">
+          {[
+            { key: "V", label: "Vente", value: 72, color: "bg-blue-500" },
+            { key: "I", label: "Idée", value: 65, color: "bg-violet-500" },
+            { key: "T", label: "Temps", value: 58, color: "bg-amber-500" },
+            { key: "A₁", label: "Argent", value: 71, color: "bg-emerald-500" },
+            { key: "A₂", label: "Actif", value: 80, color: "bg-cyan-500" },
+          ].map(p => (
+            <div key={p.key} className="flex items-center gap-2">
+              <span className="text-[10px] font-bold text-gray-700 w-6 shrink-0">{p.key}</span>
+              <span className="text-[10px] text-gray-600 w-14 shrink-0">{p.label}</span>
+              <div className="flex-1"><O9ScoreBar value={p.value} color={p.color} /></div>
+              <span className="text-[10px] font-bold text-gray-700 w-8 text-right">{p.value}%</span>
+            </div>
+          ))}
+          <p className="text-[9px] text-gray-400 text-center pt-1">Score global: 69.2% — Seuil réseau: 40% minimum par pilier</p>
+        </div>
+      </BPCard>
+
+      <BPCard icon={Zap} title="Personnalisation profil">
+        <div className="space-y-2">
+          {[
+            { label: "Photo de profil", done: true },
+            { label: "Description entreprise", done: true },
+            { label: "Spécialités (min. 3)", done: true },
+            { label: "Certifications", done: true },
+            { label: "Vidéo de présentation", done: false },
+            { label: "Portfolio projets (min. 2)", done: false },
+          ].map(item => (
+            <div key={item.label} className="flex items-center gap-2">
+              <CheckCircle2 className={cn("h-3.5 w-3.5 shrink-0", item.done ? "text-emerald-500" : "text-gray-300")} />
+              <span className={cn("text-xs", item.done ? "text-gray-700" : "text-gray-400")}>{item.label}</span>
+            </div>
+          ))}
+          <div className="flex items-center gap-2 pt-1 border-t border-gray-100">
+            <span className="text-[10px] text-gray-500">Complété:</span>
+            <div className="flex-1"><O9ScoreBar value={67} color="bg-cyan-500" /></div>
+            <span className="text-[10px] font-bold text-gray-700">67%</span>
+          </div>
+        </div>
+      </BPCard>
+
       <button className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg border border-cyan-200 bg-cyan-50 text-cyan-700 text-xs font-medium hover:bg-cyan-100 transition-colors cursor-pointer">
         <Eye className="h-3.5 w-3.5" /> Prévisualiser comme les autres me voient
       </button>
@@ -222,15 +350,21 @@ function SectionCapacites() {
       <BPCard icon={Package} title="Spécialités offertes">
         <div className="space-y-2">
           {[
-            { label: "Automatisation industrielle", level: 95 },
-            { label: "Intégration robotique", level: 88 },
-            { label: "Vision artificielle", level: 72 },
-            { label: "Programmation PLC/SCADA", level: 85 },
-            { label: "Intelligence artificielle manufacturière", level: 68 },
+            { label: "Automatisation industrielle", level: 95, badge: "Expert" },
+            { label: "Intégration robotique", level: 88, badge: "Expert" },
+            { label: "Vision artificielle", level: 72, badge: "Intermédiaire" },
+            { label: "Programmation PLC/SCADA", level: 85, badge: "Avancé" },
+            { label: "Intelligence artificielle manufacturière", level: 68, badge: "Intermédiaire" },
           ].map(s => (
             <div key={s.label} className="flex items-center gap-2">
-              <span className="text-xs text-gray-700 w-48 shrink-0 truncate">{s.label}</span>
-              <div className="flex-1"><O9ScoreBar value={s.level} color="bg-cyan-500" /></div>
+              <CheckCircle2 className="h-3.5 w-3.5 text-cyan-500 shrink-0" />
+              <span className="text-xs text-gray-700 flex-1 truncate">{s.label}</span>
+              <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0",
+                s.badge === "Expert" ? "bg-emerald-50 text-emerald-700" :
+                s.badge === "Avancé" ? "bg-blue-50 text-blue-700" :
+                "bg-amber-50 text-amber-700"
+              )}>{s.badge}</span>
+              <div className="w-16 shrink-0"><O9ScoreBar value={s.level} color="bg-cyan-500" /></div>
             </div>
           ))}
         </div>
@@ -254,6 +388,50 @@ function SectionCapacites() {
           <p className="text-[10px] text-gray-500">Capacité résiduelle disponible pour projets collaboratifs — environ 2 mandats simultanés</p>
         </div>
       </BPCard>
+
+      {/* Ce que nous cherchons — besoins urgents (pattern V2) */}
+      <BPCard icon={Search} title="Ce que nous cherchons" badge="4 besoins" badgeColor="bg-amber-50 text-amber-700">
+        <div className="space-y-2">
+          {[
+            { label: "Soudure TIG/MIG", urgence: "Élevée", color: "bg-red-500" },
+            { label: "Usinage CNC 5 axes", urgence: "Moyenne", color: "bg-amber-500" },
+            { label: "Transport logistique", urgence: "Moyenne", color: "bg-amber-500" },
+            { label: "Tests qualité NDT", urgence: "Faible", color: "bg-blue-500" },
+          ].map(b => (
+            <div key={b.label} className="flex items-center gap-2 py-1 border-b border-gray-50 last:border-0">
+              <span className={cn("w-2 h-2 rounded-full shrink-0", b.color)} />
+              <span className="text-xs text-gray-700 flex-1">{b.label}</span>
+              <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-full",
+                b.urgence === "Élevée" ? "bg-red-50 text-red-700" :
+                b.urgence === "Moyenne" ? "bg-amber-50 text-amber-700" :
+                "bg-blue-50 text-blue-700"
+              )}>{b.urgence}</span>
+            </div>
+          ))}
+        </div>
+      </BPCard>
+
+      {/* Suggestion CarlOS AI (pattern V2) */}
+      <div className="rounded-xl border-2 border-cyan-200 bg-cyan-50/30 shadow-sm overflow-hidden">
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-cyan-100/50">
+          <img src={BOT_AVATAR_MAP.CEOB} alt="CarlOS" className="w-6 h-6 rounded-full ring-1 ring-cyan-300 object-cover" />
+          <span className="text-xs font-bold text-cyan-800 flex-1">Suggestion CarlOS</span>
+          <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-cyan-100 text-cyan-700">IA</span>
+        </div>
+        <div className="px-4 py-3 space-y-2">
+          <p className="text-xs text-gray-700 leading-relaxed">
+            <span className="font-bold">Match 87%</span> — <span className="text-cyan-700 font-medium">MetalPro Industries</span> offre exactement la soudure TIG/MIG et l'usinage CNC que vous cherchez. Ils sont dans votre cellule externe.
+          </p>
+          <div className="flex items-center gap-2">
+            <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold">Confiance 92%</span>
+            <span className="text-[9px] px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 font-bold">Montérégie</span>
+            <span className="text-[9px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-bold">ISO 9001</span>
+          </div>
+          <button className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-cyan-600 text-white text-xs font-medium hover:bg-cyan-700 transition-colors cursor-pointer">
+            <Handshake className="h-3.5 w-3.5" /> Initier le jumelage
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -327,6 +505,113 @@ function SectionCellules() {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+// ═══ 4b. JUMELAGE — Pipeline de matching et collaborations (pattern V2) ═══
+
+function SectionJumelage() {
+  const PIPELINE_STAGES = [
+    { label: "Découverte", count: 12, color: "bg-blue-500" },
+    { label: "Qualification", count: 6, color: "bg-violet-500" },
+    { label: "Introduction", count: 4, color: "bg-amber-500" },
+    { label: "Collaboration", count: 3, color: "bg-cyan-500" },
+    { label: "Intégration", count: 1, color: "bg-emerald-500" },
+  ];
+
+  const MATCHES = [
+    { name: "MetalPro Industries", score: 92, sector: "Métallurgie", region: "Montérégie", status: "Introduction", bots: [BOT_AVATAR_MAP.CPOB, BOT_AVATAR_MAP.CEOB], specialites: ["Soudure TIG/MIG", "Usinage CNC"] },
+    { name: "RoboVision Québec", score: 87, sector: "Vision artificielle", region: "Québec", status: "Qualification", bots: [BOT_AVATAR_MAP.CTOB, BOT_AVATAR_MAP.CINOB], specialites: ["Caméras 3D", "Inspection auto"] },
+    { name: "TechnoSoudure Inc.", score: 81, sector: "Assemblage", region: "Estrie", status: "Découverte", bots: [BOT_AVATAR_MAP.CSOB, BOT_AVATAR_MAP.CROB], specialites: ["Soudure robotisée", "Assemblage"] },
+    { name: "LogiTrans Solutions", score: 74, sector: "Logistique", region: "Lanaudière", status: "Découverte", bots: [BOT_AVATAR_MAP.COOB, BOT_AVATAR_MAP.CFOB], specialites: ["Transport", "Entreposage"] },
+  ];
+
+  return (
+    <div className="space-y-3">
+      {/* Pipeline visuel — 5 étapes (pattern V2) */}
+      <BPCard icon={Handshake} title="Pipeline de jumelage" badge="26 actifs" badgeColor="bg-violet-50 text-violet-700">
+        <div className="space-y-3">
+          {PIPELINE_STAGES.map((stage, i) => (
+            <div key={stage.label} className="flex items-center gap-2">
+              <div className={cn("w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0", stage.color)}>{i + 1}</div>
+              <span className="text-xs text-gray-700 w-24 shrink-0">{stage.label}</span>
+              <div className="flex-1 h-4 bg-gray-100 rounded-full overflow-hidden relative">
+                <div className={cn("h-full rounded-full transition-all duration-700", stage.color)} style={{ width: `${(stage.count / 12) * 100}%` }} />
+                <span className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-gray-700">{stage.count}</span>
+              </div>
+            </div>
+          ))}
+          <div className="flex items-center gap-3 pt-2 border-t border-gray-100">
+            <span className="text-[10px] text-gray-500">Taux de conversion global:</span>
+            <span className="text-xs font-bold text-emerald-600">8.3%</span>
+            <span className="text-[10px] text-gray-400">(Découverte → Intégration)</span>
+          </div>
+        </div>
+      </BPCard>
+
+      {/* KPIs jumelage */}
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { label: "Matches actifs", value: "4", sub: "score moyen 84%" },
+          { label: "Trisociations", value: "2", sub: "LiveKit complétées" },
+          { label: "Valeur pipeline", value: "42K$", sub: "potentiel annuel" },
+        ].map(k => (
+          <div key={k.label} className="rounded-xl border border-gray-200 shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all p-3 text-center">
+            <div className="text-2xl font-bold text-gray-800">{k.value}</div>
+            <div className="text-[10px] text-gray-500">{k.label}</div>
+            <div className="text-[9px] text-gray-400">{k.sub}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Cards matches (pattern BPCard) */}
+      {MATCHES.map(m => (
+        <div key={m.name} className="rounded-xl border border-gray-200 shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all">
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
+            <Building2 className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+            <span className="text-sm font-bold text-gray-900 flex-1 truncate">{m.name}</span>
+            <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-full",
+              m.score >= 90 ? "bg-emerald-50 text-emerald-700" :
+              m.score >= 80 ? "bg-cyan-50 text-cyan-700" :
+              "bg-amber-50 text-amber-700"
+            )}>{m.score}%</span>
+          </div>
+          <div className="px-4 py-3 space-y-2">
+            <div className="flex items-center gap-2 text-[10px] text-gray-600">
+              <Package className="h-3 w-3 text-gray-400" />
+              <span>{m.sector}</span>
+              <span className="text-gray-300">•</span>
+              <MapPin className="h-3 w-3 text-gray-400" />
+              <span>{m.region}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              {m.specialites.map(s => (
+                <span key={s} className="text-[9px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 font-medium">{s}</span>
+              ))}
+            </div>
+            <div className="flex items-center justify-between pt-1 border-t border-gray-50">
+              <div className="flex items-center gap-1">
+                <span className="text-[9px] text-gray-500">Bots assignés:</span>
+                {m.bots.map((a, i) => (
+                  <img key={i} src={a} alt="" className="w-5 h-5 rounded-full ring-1 ring-white object-cover" />
+                ))}
+              </div>
+              <span className={cn("text-[9px] font-bold px-2 py-0.5 rounded-full",
+                m.status === "Introduction" ? "bg-amber-50 text-amber-700" :
+                m.status === "Qualification" ? "bg-violet-50 text-violet-700" :
+                "bg-blue-50 text-blue-700"
+              )}>{m.status}</span>
+            </div>
+          </div>
+        </div>
+      ))}
+
+      {/* Bandeau info */}
+      <div className="bg-blue-50/50 border border-blue-100 rounded-lg px-3 py-2 flex items-center gap-2">
+        <Target className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+        <span className="text-[9px] text-blue-700">Le jumelage utilise la trisociation — rencontre CarlOS + 2 spécialistes en temps réel via LiveKit pour valider la compatibilité.</span>
+      </div>
     </div>
   );
 }

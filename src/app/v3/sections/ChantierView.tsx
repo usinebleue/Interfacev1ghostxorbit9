@@ -1223,9 +1223,31 @@ export function ChantierView({ botCode, showHeader = true, onAction }: { botCode
   useEffect(() => { setSelectedDept(botCode); resetNav(); }, [botCode]);
   const resetNav = () => { setLevel("chantiers"); setSelectedChantier(null); setSelectedProjet(null); setSelectedMission(null); setDetailTache(null); };
 
-  // Merge API + mock — mock data toujours visible pour la simulation
+  // Merge API + mock — API chantiers en premier, mock pour la simulation
   const deptMock = selectedDept === botCode ? mockData : getMockChantiers(selectedDept);
-  const allChantiers = deptMock;
+  const apiConverted: MockChantierItem[] = (apiChantiers || [])
+    .filter(ch => {
+      if (!ch.bot_codes?.length) return selectedDept === "CEOB";
+      return ch.bot_codes.includes(selectedDept);
+    })
+    .map(ch => ({
+      id: ch.id + 90000,
+      titre: ch.titre,
+      description: ch.description || "",
+      phase: statusToPhase(ch.status, ch.progression),
+      progression: ch.progression || 0,
+      dateDebut: ch.created_at?.slice(0, 10) || "",
+      echeance: ch.echeance || "",
+      botPrimaire: ch.bot_codes?.[0] || "CEOB",
+      botCodes: ch.bot_codes || [],
+      objectifs: ch.objectifs || [],
+      budget: ch.budget_estime || "",
+      risques: ch.risques || [],
+      documents: [],
+      jalons: [],
+      projets: [],
+    }));
+  const allChantiers = [...apiConverted, ...deptMock];
 
   // Filter + sort
   const filtered = allChantiers
