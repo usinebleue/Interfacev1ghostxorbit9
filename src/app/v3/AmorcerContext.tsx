@@ -157,15 +157,22 @@ interface AmorcerState {
 const AmorcerCtx = createContext<AmorcerState | null>(null);
 
 export function AmorcerProvider({ children }: { children: ReactNode }) {
-  const [activePhase, setActivePhase] = useState<PhaseKey>("observation");
+  const [activePhase, setActivePhaseRaw] = useState<PhaseKey>(() => lsGet("activePhase", "observation"));
   const [chatStage, setChatStage] = useState(0);
   const [typed, setTyped] = useState(false);
-  const [reflexionContext, setReflexionContext] = useState<string | null>(null);
+  const [reflexionContext, setReflexionContextRaw] = useState<string | null>(() => lsGet("reflexionContext", null));
   // Parse URL une seule fois au mount
   const [initialURL] = useState(() => parseURL());
 
   const [rightSection, setRightSectionRaw] = useState<string | null>(() => {
     if (initialURL.section === "orbit9") return null;
+    // Si on est dans une phase focus (discussion, reflexion, etc.) avec un contexte,
+    // ne PAS restaurer rightSection — laisser null pour que le workspace focus s'affiche
+    const restoredPhase = lsGet<string>("activePhase", "observation");
+    const restoredContext = lsGet<string | null>("reflexionContext", null);
+    if (restoredContext && ["discussion", "reflexion", "creation", "retroaction"].includes(restoredPhase)) {
+      return null;
+    }
     return initialURL.section || lsGet("rightSection", "cockpit");
   });
   const [activeBotCode, setActiveBotCodeRaw] = useState(() => {
@@ -243,8 +250,8 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
   const [activeDeliverable, setActiveDeliverable] = useState<string | null>(null);
   const [deliverableStage, setDeliverableStage] = useState(0);
 
-  // Focus type state
-  const [focusType, setFocusType] = useState("chantier");
+  // Focus type state — persisté en localStorage
+  const [focusType, setFocusTypeRaw] = useState(() => lsGet("focusType", "chantier"));
 
   // SimV3 state
   const [simV3Active, setSimV3Active] = useState(false);
@@ -252,6 +259,20 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
   const [simV3Cristallises, setSimV3Cristallises] = useState<SimV3CristalliseItem[]>([]);
   const addSimV3Cristallise = useCallback((text: string, source: string, sectionId: string) => {
     setSimV3Cristallises((prev) => [...prev, { id: `c-${Date.now()}`, text, source, sectionId }]);
+  }, []);
+
+  // Wrappers avec localStorage pour activePhase, reflexionContext, focusType
+  const setActivePhase = useCallback((p: PhaseKey) => {
+    setActivePhaseRaw(p);
+    lsSet("activePhase", p);
+  }, []);
+  const setReflexionContext = useCallback((c: string | null) => {
+    setReflexionContextRaw(c);
+    lsSet("reflexionContext", c);
+  }, []);
+  const setFocusType = useCallback((t: string) => {
+    setFocusTypeRaw(t);
+    lsSet("focusType", t);
   }, []);
 
   const resetChat = useCallback(() => {
@@ -263,7 +284,7 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     setActiveDeliverable(null);
     setDeliverableStage(0);
     setFocusType("chantier");
-  }, []);
+  }, [setActivePhase, setReflexionContext, setFocusType]);
 
   const startReflexion = useCallback((chantier: string) => {
     setReflexionContext(chantier);

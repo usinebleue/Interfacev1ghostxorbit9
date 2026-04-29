@@ -213,9 +213,10 @@ export function WorkspacePhasesPanel() {
       setRightSection(null);
     }
 
-    // 3. Envoyer le message initial — crée le thread avec parentChantier auto-linked
+    // 3. Envoyer le message initial — délai pour que React flush le reset de newConversation()
+    // Sans ce délai, sendMessage voit encore les anciens messages → coaching "39 échanges" se déclenche
     const prompt = PHASE_PROMPT[phase] || "Parlons de";
-    sendMessage(`${prompt} ${context}`);
+    setTimeout(() => sendMessage(`${prompt} ${context}`), 80);
   };
 
   const pc = PHASE_CONFIG[activePhase];

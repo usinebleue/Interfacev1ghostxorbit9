@@ -282,8 +282,8 @@ function parseApiOptions(responseText: string): { cleanText: string; parsedOptio
   for (const line of lines) {
     const trimmed = line.trim();
 
-    // Strip [TACHE] internal markers — never show to user
-    if (/^\[TACHE\]\s*/i.test(trimmed)) {
+    // Strip [TACHE] internal markers — never show to user (peut être précédé de • ou -)
+    if (/\[TACHE\]/i.test(trimmed)) {
       continue;
     }
 
@@ -676,7 +676,7 @@ export function useChat() {
           const controller = api.chatStream(req, {
             onToken: (_chunk: string, accumulated: string) => {
               // Strip [TACHE] lines during streaming so they never appear
-              const cleaned = accumulated.split("\n").filter(l => !/^\[TACHE\]\s*/i.test(l.trim())).join("\n");
+              const cleaned = accumulated.split("\n").filter(l => !/\[TACHE\]/i.test(l)).join("\n");
               // Update the bot message content progressively
               setMessages((prev) =>
                 prev.map((m) =>
@@ -694,7 +694,7 @@ export function useChat() {
 
               // Final update with all metadata
               // TOUJOURS strip [TACHE] du texte, même quand le backend envoie des options explicites
-              let cleanText = data.response.split("\n").filter((l: string) => !/^\[TACHE\]\s*/i.test(l.trim())).join("\n").trim();
+              let cleanText = data.response.split("\n").filter((l: string) => !/\[TACHE\]/i.test(l)).join("\n").trim();
               let parsedOptions: string[] = [];
 
               if (data.options && data.options.length > 0) {
