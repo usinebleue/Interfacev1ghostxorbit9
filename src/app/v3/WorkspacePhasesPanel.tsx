@@ -245,7 +245,7 @@ export function WorkspacePhasesPanel() {
         const DELIVERABLE_TITLE: Record<string, string> = { document: "Cahier de projet Boreal", spreadsheet: "Tableau de bord financier Boreal", presentation: "Pitch Deck CA Boreal", code: "Dashboard IoT Boreal", jumelage: "Jumelage SMART Orbit⁹" };
         const titleText = activeSection === "orbit9"
           ? "Orbit⁹"
-          : `Département ${deptLabel} — ${sectionLabel}`;
+          : `${sectionLabel} — ${deptLabel}`;
         const showBlueprintTabs = activeSection === "blueprint";
         const showOrbit9Tabs = activeSection === "orbit9";
         const showExecutionTabs = activeSection === "execution";

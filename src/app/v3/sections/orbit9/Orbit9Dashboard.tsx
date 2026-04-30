@@ -15,7 +15,10 @@ import { cn } from "../../../components/ui/utils";
 import { SF } from "../../core/styles";
 import { PHASE_COLORS, type PhaseKey, BOT_AVATAR_MAP } from "../shared/dept-data";
 import { LivingHero } from "../shared/LivingHero";
+import { useDataSource } from "../../data/use-data-source";
+import { DomainBadge } from "../../data/source-badge";
 
+import { O9_SECTION_DESC } from "./orbit9-data";
 import {
   O9_DASHBOARD_KPIS,
   O9_DASH_ROW1,
@@ -23,7 +26,6 @@ import {
   O9_GRID_BLOCS,
   O9_GRID_IDS,
   O9_SECTION_BLOCS,
-  O9_SECTION_DESC,
   O9_FEED_OVERVIEW,
   O9_PIONNIERS,
   O9_TECH_ADOPTION,
@@ -37,7 +39,10 @@ import {
   O9_COST_SOLUTIONS,
   O9_ROBOT_DENSITY,
   O9_REFERENCE_STUDIES,
-} from "./orbit9-data";
+  createFeedPosts,
+  FEED_TYPE_CONFIG,
+} from "../../data/mock/orbit9.mock";
+import type { FeedPost, FeedPostType } from "../../data/mock/orbit9.mock";
 
 import {
   CockpitCard,
@@ -48,84 +53,9 @@ import {
   PionnierDot,
 } from "./orbit9-helpers";
 
-// ═══ FEED SOCIAL — Données du fil d'actualité réseau ═══
+// ═══ FEED SOCIAL — Données initialisées depuis le mock centralisé ═══
 
-type FeedPostType = "win" | "bot" | "member" | "trisociation" | "milestone" | "collab" | "alert";
-
-interface FeedPost {
-  id: string;
-  type: FeedPostType;
-  avatar: string;
-  author: string;
-  role: string;
-  time: string;
-  content: string;
-  detail?: string;
-  likes: number;
-  comments: number;
-  isNew?: boolean;
-}
-
-const FEED_TYPE_CONFIG: Record<FeedPostType, { label: string; color: string; icon: React.ElementType }> = {
-  win:          { label: "Victoire",      color: "bg-emerald-50 text-emerald-700", icon: Trophy },
-  bot:          { label: "Auto-Scout",    color: "bg-blue-50 text-blue-700",       icon: Bot },
-  member:       { label: "Nouveau membre",color: "bg-teal-50 text-teal-700",       icon: UserPlus },
-  trisociation: { label: "Trisociation",  color: "bg-violet-50 text-violet-700",   icon: Handshake },
-  milestone:    { label: "Jalon",         color: "bg-amber-50 text-amber-700",     icon: Zap },
-  collab:       { label: "Collaboration", color: "bg-cyan-50 text-cyan-700",       icon: Handshake },
-  alert:        { label: "Alerte réseau", color: "bg-red-50 text-red-700",         icon: AlertTriangle },
-};
-
-const FEED_POSTS: FeedPost[] = [
-  {
-    id: "f1", type: "win", avatar: BOT_AVATAR_MAP.CEOB, author: "Les Titans", role: "Cellule interne",
-    time: "il y a 12 min", isNew: true,
-    content: "Contrat de 500K$ remporté en collaboration avec MetalPro! La cellule Les Titans livre son 3e projet conjoint.",
-    detail: "Automatisation d'une ligne de soudure complète — 18 mois de collaboration récompensés.",
-    likes: 24, comments: 8,
-  },
-  {
-    id: "f2", type: "bot", avatar: BOT_AVATAR_MAP.CEOB, author: "CarlOS — Auto-Scout", role: "Intelligence artificielle",
-    time: "il y a 45 min", isNew: true,
-    content: "3 nouvelles complémentarités détectées dans le réseau. Scores: 87%, 79%, 74%.",
-    detail: "AutomatikPro (R&D partagée), TransQC (vente conjointe), FormaTech (alliance formation).",
-    likes: 5, comments: 2,
-  },
-  {
-    id: "f3", type: "trisociation", avatar: BOT_AVATAR_MAP.CROB, author: "Usine Bleue × AutomatikPro", role: "Session facilitée par CarlOS",
-    time: "il y a 2h",
-    content: "Trisociation terminée avec succès! Plan d'action défini pour la R&D en vision artificielle.",
-    detail: "Prochaine étape: prototype commun d'ici juin 2026. Budget partagé 50/50.",
-    likes: 18, comments: 6,
-  },
-  {
-    id: "f4", type: "member", avatar: BOT_AVATAR_MAP.CPOB, author: "AcierPlus Inc.", role: "Nouveau membre — Usinage / Métal",
-    time: "il y a 5h",
-    content: "Bienvenue à AcierPlus Inc. dans le réseau Brain Team! Secteur Usinage, basé en Montérégie.",
-    detail: "Spécialités: transformation d'acier et aluminium, 200T/an. Score VITAA initial: 68%.",
-    likes: 31, comments: 12,
-  },
-  {
-    id: "f5", type: "milestone", avatar: BOT_AVATAR_MAP.CSOB, author: "Réseau Brain Team", role: "Jalon réseau",
-    time: "il y a 8h",
-    content: "Le réseau atteint 142 entreprises scannées par Auto-Scout! Taux de conversion: 62%.",
-    likes: 42, comments: 15,
-  },
-  {
-    id: "f6", type: "collab", avatar: BOT_AVATAR_MAP.CFOB, author: "Escouade Ventes", role: "Cellule interne",
-    time: "il y a 1j",
-    content: "Mutualisation d'achats acier complétée avec AcierPlus. Économie combinée de 8% sur le volume.",
-    detail: "350T/an combinées — palier fournisseur premium atteint.",
-    likes: 15, comments: 4,
-  },
-  {
-    id: "f7", type: "alert", avatar: BOT_AVATAR_MAP.COOB, author: "Cellule MetalPro", role: "Alerte confiance",
-    time: "il y a 2j",
-    content: "Score de confiance en baisse: 78% → 62%. Inactivité de 3 semaines détectée.",
-    detail: "Action suggérée: planifier un point de suivi avec le leader de cellule.",
-    likes: 3, comments: 7,
-  },
-];
+const FEED_POSTS: FeedPost[] = createFeedPosts(BOT_AVATAR_MAP);
 
 // Helper — Badge de phase réutilisable
 function PhaseBadge({ phase }: { phase?: string }) {
@@ -140,6 +70,8 @@ function PhaseBadge({ phase }: { phase?: string }) {
 }
 
 export function Orbit9Dashboard() {
+  const { data: dashboardData } = useDataSource("orbit9-dashboard", { O9_DASHBOARD_KPIS, O9_DASH_ROW1, O9_GRID_BLOCS, O9_FEED_OVERVIEW });
+
   // null = vue d'ensemble, string = sous-section active
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [feedExpanded, setFeedExpanded] = useState(false);
@@ -184,7 +116,7 @@ export function Orbit9Dashboard() {
       {!activeSection && (
         <>
           {/* Hero compact */}
-          <LivingHero blur1="bg-violet-100/70" blur2="bg-indigo-100/60" subtitleColor="text-violet-600" subtitle="Réseau Orbit9" title="Votre réseau interconnecté." description="Cellules, partenaires et opportunités en synergie.">
+          <LivingHero blur1="bg-violet-100/70" blur2="bg-indigo-100/60" title="Réseau en synergie." description="Cellules, partenaires et opportunités." badge={<DomainBadge domain="orbit9-dashboard" />}>
             <div className="relative flex items-center justify-center overflow-visible" style={{ width: 340, height: 160 }}>
               <svg viewBox="0 0 200 200" className="overflow-visible" style={{ width: 300, height: 300 }}>
                 <circle cx="100" cy="100" r="16" fill="url(#o9-core-grad)" filter="drop-shadow(0 0 15px #a78bfa)"/>
@@ -550,7 +482,7 @@ export function Orbit9Dashboard() {
                         {[
                           { label: "Établissements", value: "13,694", detail: "Employeurs (800+ en automatisation)", source: "ISQ/REAI 2024" },
                           { label: "ERP connecté", value: "3%", detail: "51% ont un ERP mais 3% pleinement connecté", source: "MEIE 2025" },
-                          { label: "Maturité numérique haute", value: "19%", detail: "24% font 4 types d'innovation", source: "MEIE/STIQ 2025" },
+                          { label: "Maturité num.", value: "19%", detail: "24% font 4 types d'innovation", source: "MEIE/STIQ 2025" },
                         ].map((s, i) => (
                           <div key={i} className="rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md hover:border-blue-200 transition-all p-3">
                             <p className="text-[8px] text-gray-400 uppercase font-bold mb-0.5">{s.label}</p>
@@ -619,9 +551,9 @@ export function Orbit9Dashboard() {
 
                       {/* 5. ROI Transformation Numérique */}
                       <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-                        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+                        <div className="flex items-center justify-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
                           <DollarSign className="h-4 w-4 text-gray-900 stroke-[2.5]" />
-                          <span className="text-sm font-bold text-gray-900">ROI de la transformation numérique</span>
+                          <span className="text-sm font-bold text-gray-900">ROI numérique</span>
                         </div>
                         <div className="px-4 py-3">
                           <div className="grid grid-cols-2 gap-3 mb-3">

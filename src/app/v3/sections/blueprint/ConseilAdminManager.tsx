@@ -7,69 +7,17 @@ import {
   Save, Loader2, BarChart3, Info,
 } from "lucide-react";
 import { cn } from "../../../components/ui/utils";
-
-// ── Types partagés — Membres humains (internes + externes) ──
-
-interface Membre {
-  nom: string;
-  titre: string;
-  courriel: string;
-  type: "interne" | "externe";
-}
+import { useDataSource } from "../../data/use-data-source";
+import { DomainBadge } from "../../data/source-badge";
+import {
+  type MembreCA, type ConseilAdmin,
+  CA_DEFAULT, CA_MOCK_REUNIONS, CA_MOCK_CONFERENCES, CA_MOCK_DOCUMENTS, CA_BLUEPRINT_COMPLETIONS,
+} from "../../data/mock/blueprint.mock";
 
 function parseJSON<T>(raw: string, fallback: T): T {
   if (!raw) return fallback;
   try { return JSON.parse(raw); } catch { return fallback; }
 }
-
-// ── Conseil d'Administration Manager — CEOB seulement ──
-
-interface MembreCA extends Membre {
-  expertise: string;
-  independant: boolean;
-  depuis: string;
-}
-
-interface ConseilAdmin {
-  president: string;
-  frequence: string;
-  format: string;
-  charte: string;
-  assurance_do: string;
-  prochaine_reunion: string;
-  membres: MembreCA[];
-}
-
-const CA_DEFAULT: ConseilAdmin = {
-  president: "", frequence: "Trimestrielle", format: "Conférence AI",
-  charte: "Non", assurance_do: "Non", prochaine_reunion: "", membres: [],
-};
-
-// ── Mock data — Conseil d'Administration ──
-
-const CA_MOCK_REUNIONS = [
-  { date: "2026-03-15", type: "Trimestrielle", participants: 7, duree: "2h30", statut_pv: "Approuvé", sujet: "Bilan Q1 et orientations stratégiques" },
-  { date: "2026-01-20", type: "Extraordinaire", participants: 5, duree: "1h15", statut_pv: "Approuvé", sujet: "Approbation budget 2026" },
-  { date: "2025-12-12", type: "Trimestrielle", participants: 8, duree: "3h00", statut_pv: "Approuvé", sujet: "Bilan annuel et planification" },
-  { date: "2026-04-25", type: "Trimestrielle", participants: 0, duree: "—", statut_pv: "À venir", sujet: "Revue Q1 et croissance" },
-];
-
-const CA_MOCK_CONFERENCES = [
-  { date: "2026-03-10", sujet: "Analyse SWOT avec CarlOS", duree: "45min", bots: ["CEOB", "CSOB", "CFOB"], participants: 5 },
-  { date: "2026-02-15", sujet: "Scénario de croissance M&A", duree: "1h10", bots: ["CEOB", "CFOB", "CROB"], participants: 6 },
-  { date: "2026-01-28", sujet: "Revue technologique annuelle", duree: "55min", bots: ["CTOB", "CINOB", "CEOB"], participants: 4 },
-];
-
-const CA_MOCK_DOCUMENTS = [
-  { titre: "Charte du CA", statut: "Actif", maj: "2026-01-15", type: "Gouvernance" },
-  { titre: "Code d'éthique et de conduite", statut: "Actif", maj: "2025-11-20", type: "Éthique" },
-  { titre: "Politique D&O (Assurance)", statut: "En révision", maj: "2026-03-01", type: "Assurance" },
-  { titre: "Matrice RACI — Responsabilités CA", statut: "Brouillon", maj: "2026-02-28", type: "Opérationnel" },
-  { titre: "Politique sur les conflits d'intérêts", statut: "Actif", maj: "2025-09-10", type: "Conformité" },
-  { titre: "Règlements généraux de l'organisation", statut: "Actif", maj: "2024-06-15", type: "Juridique" },
-];
-
-const CA_BLUEPRINT_COMPLETIONS = [65, 82, 45, 73, 58, 91, 38, 70];
 
 export function ConseilAdminManager({ headerGradient, data, onFieldChange, onSave, saving, dirty }: {
   headerGradient: string;
@@ -79,6 +27,8 @@ export function ConseilAdminManager({ headerGradient, data, onFieldChange, onSav
   saving: boolean;
   dirty: boolean;
 }) {
+  const { data: caSourceData } = useDataSource("conseil-admin", { CA_DEFAULT, CA_MOCK_REUNIONS, CA_MOCK_CONFERENCES, CA_MOCK_DOCUMENTS });
+
   const [activeCASection, setActiveCASection] = useState("tableau");
   const KEY = "ca_conseil";
   const ca: ConseilAdmin = parseJSON(data[KEY] || "", CA_DEFAULT);
@@ -126,6 +76,7 @@ export function ConseilAdminManager({ headerGradient, data, onFieldChange, onSav
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="text-lg font-bold text-white">Conseil d'administration</h3>
+              <DomainBadge domain="conseil-admin" className="ml-1" />
               <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white">{ca.membres.length} membre{ca.membres.length !== 1 ? "s" : ""}</span>
             </div>
             <p className="text-xs text-white/80">
@@ -162,41 +113,41 @@ export function ConseilAdminManager({ headerGradient, data, onFieldChange, onSav
           {activeCASection === "tableau" && (<>
             <div className="grid grid-cols-4 gap-3">
               <div className="rounded-xl border border-gray-200 shadow-sm bg-white">
-                <div className="flex items-center gap-2 px-3 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
+                <div className="flex items-center justify-center gap-2 px-3 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
                   <Users className="h-4 w-4 text-gray-900 stroke-[2.5]" />
                   <span className="text-sm font-bold text-gray-900">Membres</span>
                 </div>
-                <div className="px-3 py-2">
+                <div className="px-3 py-2 text-center">
                   <div className="text-2xl font-bold text-gray-900">{ca.membres.length}</div>
                   <div className="text-[9px] text-gray-400">Total CA</div>
                 </div>
               </div>
               <div className="rounded-xl border border-gray-200 shadow-sm bg-white">
-                <div className="flex items-center gap-2 px-3 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
+                <div className="flex items-center justify-center gap-2 px-3 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
                   <Shield className="h-4 w-4 text-gray-900 stroke-[2.5]" />
                   <span className="text-sm font-bold text-gray-900">Indépendants</span>
                 </div>
-                <div className="px-3 py-2">
+                <div className="px-3 py-2 text-center">
                   <div className="text-2xl font-bold text-gray-900">{nbIndependants}</div>
                   <div className="text-[9px] text-gray-400">{ca.membres.length > 0 ? Math.round((nbIndependants / ca.membres.length) * 100) : 0}% du CA</div>
                 </div>
               </div>
               <div className="rounded-xl border border-gray-200 shadow-sm bg-white">
-                <div className="flex items-center gap-2 px-3 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
+                <div className="flex items-center justify-center gap-2 px-3 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
                   <UserPlus className="h-4 w-4 text-gray-900 stroke-[2.5]" />
                   <span className="text-sm font-bold text-gray-900">Externes</span>
                 </div>
-                <div className="px-3 py-2">
+                <div className="px-3 py-2 text-center">
                   <div className="text-2xl font-bold text-gray-900">{nbExternes}</div>
                   <div className="text-[9px] text-gray-400">Invités plateforme</div>
                 </div>
               </div>
               <div className="rounded-xl border border-gray-200 shadow-sm bg-white">
-                <div className="flex items-center gap-2 px-3 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
+                <div className="flex items-center justify-center gap-2 px-3 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
                   <Briefcase className="h-4 w-4 text-gray-900 stroke-[2.5]" />
                   <span className="text-sm font-bold text-gray-900">Réunions</span>
                 </div>
-                <div className="px-3 py-2">
+                <div className="px-3 py-2 text-center">
                   <div className="text-2xl font-bold text-gray-900">{ca.frequence || "—"}</div>
                   <div className="text-[9px] text-gray-400">{ca.format}</div>
                 </div>
@@ -516,41 +467,41 @@ export function ConseilAdminManager({ headerGradient, data, onFieldChange, onSav
           {activeCASection === "surveillance" && (<>
             <div className="grid grid-cols-4 gap-3">
               <div className="rounded-xl border border-gray-200 shadow-sm bg-white">
-                <div className="flex items-center gap-2 px-3 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
+                <div className="flex items-center justify-center gap-2 px-3 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
                   <DollarSign className="h-4 w-4 text-gray-900 stroke-[2.5]" />
                   <span className="text-sm font-bold text-gray-900">Revenu YTD</span>
                 </div>
-                <div className="px-3 py-2">
+                <div className="px-3 py-2 text-center">
                   <div className="text-2xl font-bold text-gray-900">2.4M$</div>
                   <div className="text-[9px] text-gray-400">+12% vs objectif</div>
                 </div>
               </div>
               <div className="rounded-xl border border-gray-200 shadow-sm bg-white">
-                <div className="flex items-center gap-2 px-3 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
+                <div className="flex items-center justify-center gap-2 px-3 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
                   <TrendingUp className="h-4 w-4 text-gray-900 stroke-[2.5]" />
                   <span className="text-sm font-bold text-gray-900">EBITDA</span>
                 </div>
-                <div className="px-3 py-2">
+                <div className="px-3 py-2 text-center">
                   <div className="text-2xl font-bold text-gray-900">18.5%</div>
                   <div className="text-[9px] text-gray-400">Marge opérationnelle</div>
                 </div>
               </div>
               <div className="rounded-xl border border-gray-200 shadow-sm bg-white">
-                <div className="flex items-center gap-2 px-3 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
+                <div className="flex items-center justify-center gap-2 px-3 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
                   <Activity className="h-4 w-4 text-gray-900 stroke-[2.5]" />
                   <span className="text-sm font-bold text-gray-900">Cash Flow</span>
                 </div>
-                <div className="px-3 py-2">
+                <div className="px-3 py-2 text-center">
                   <div className="text-2xl font-bold text-gray-900">+340K$</div>
                   <div className="text-[9px] text-gray-400">Flux de trésorerie</div>
                 </div>
               </div>
               <div className="rounded-xl border border-gray-200 shadow-sm bg-white">
-                <div className="flex items-center gap-2 px-3 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
+                <div className="flex items-center justify-center gap-2 px-3 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
                   <Shield className="h-4 w-4 text-gray-900 stroke-[2.5]" />
                   <span className="text-sm font-bold text-gray-900">Ratio dette</span>
                 </div>
-                <div className="px-3 py-2">
+                <div className="px-3 py-2 text-center">
                   <div className="text-2xl font-bold text-gray-900">1.8x</div>
                   <div className="text-[9px] text-gray-400">Dette/EBITDA</div>
                 </div>

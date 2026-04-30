@@ -8,6 +8,8 @@ import {
 } from "lucide-react";
 import { Card } from "../../../components/ui/card";
 import { cn } from "../../../components/ui/utils";
+import { useDataSource } from "../../data/use-data-source";
+import { DomainBadge } from "../../data/source-badge";
 import { getFieldsForTier, type SizeTier, type FieldDef } from "../../../v2/zones/center/blueprint/blueprint-config";
 import { BlueprintField, isWideField } from "./blueprint-helpers";
 
@@ -107,58 +109,7 @@ const PERSONAL_SECTIONS: { id: string; label: string; icon: React.ComponentType<
   },
 ];
 
-// ── Donnees de simulation — pre-remplissage pour "Vue completee" ──
-const SIMULATION_DATA: Record<string, string> = {
-  "personnel_identite.nom_complet": "Carl Fugere",
-  "personnel_identite.titre_poste": "CEO & Fondateur",
-  "personnel_identite.entreprise": "Usine Bleue AI",
-  "personnel_identite.parcours_resume": "26 ans d'experience entrepreneuriale, 7 entreprises, 50M$+ en ventes cumulees. Fondateur du REAI (reseau de 130+ manufacturiers au Quebec).",
-  "personnel_identite.forces_cles": "Vision strategique\nLeadership entrepreneurial\nDeveloppement d'affaires\nReseautage et partenariats",
-  "personnel_vitaa.score_vente": "72",
-  "personnel_vitaa.score_idee": "85",
-  "personnel_vitaa.score_temps": "38",
-  "personnel_vitaa.score_argent": "61",
-  "personnel_vitaa.score_actif": "45",
-  "personnel_vision.mission_personnelle": "Je crois que chaque dirigeant de PME merite un copilote IA qui comprend sa realite. Brain Team est cette revolution — un conseil d'administration virtuel accessible, abordable et aligne sur les besoins reels du terrain.",
-  "personnel_vision.vision_personnelle": "Devenir la plateforme #1 d'intelligence d'affaires pour les PME manufacturieres au Canada, avec 1000+ entreprises actives d'ici 2029.",
-  "personnel_vision.valeurs": "Authenticite — Dire la verite, meme quand ca fait mal\nExcellence — Livrer le meilleur dans les contraintes reelles\nInnovation — Remettre en question chaque processus",
-  "personnel_vision.style_primaire": "Visionnaire",
-  "personnel_vision.style_secondaire": "Directif",
-  "personnel_vision.style_description": "Part de la destination finale et remonte vers l'execution. Communique la vision de facon obsessive, prend des decisions rapides et assume les consequences.",
-  "personnel_vision.legacy": "Avoir donne aux PME quebecoises les memes outils d'intelligence d'affaires que les Fortune 500, a une fraction du cout.",
-  "personnel_objectifs.objectif_1": "Lancer Brain Team en mode Pioneer (9 clients)",
-  "personnel_objectifs.objectif_1_cible": "Q2 2026",
-  "personnel_objectifs.objectif_2": "Atteindre 50K$ MRR",
-  "personnel_objectifs.objectif_2_cible": "Q4 2026",
-  "personnel_objectifs.objectif_3": "Recruter 3 developpeurs",
-  "personnel_objectifs.objectif_3_cible": "Q3 2026",
-  "personnel_objectifs.objectif_4": "Fermer ronde seed 500K$",
-  "personnel_objectifs.objectif_4_cible": "Q2 2026",
-  "personnel_objectifs.objectif_5": "130 a 200 membres REAI",
-  "personnel_objectifs.objectif_5_cible": "Q4 2026",
-  "personnel_performance.kpi_pipeline": "320000",
-  "personnel_performance.kpi_pipeline_cible": "500000",
-  "personnel_performance.kpi_mrr": "12500",
-  "personnel_performance.kpi_mrr_cible": "50000",
-  "personnel_performance.projets_livres": "7",
-  "personnel_performance.projets_cible": "12",
-  "personnel_performance.satisfaction_equipe": "82",
-  "personnel_performance.decisions_strategiques": "23",
-  "personnel_developpement.competences_a_developper": "Vente enterprise (B2B SaaS)\nGestion de produit (Product-Led Growth)\nLevee de fonds (Pitch, Term Sheets)",
-  "personnel_developpement.formations": "YC Startup School — complete\nReforge Growth Series — planifie\nAI Leadership (Stanford Online) — planifie",
-  "personnel_developpement.mentorat": "Mentor en SaaS B2B — recherche\nReseau REAI — mentorat reciproque — actif",
-  "personnel_developpement.lectures": "Zero to One (Peter Thiel)\nThe Hard Thing About Hard Things (Ben Horowitz)",
-  "personnel_equilibre.heures_actuelles": "58",
-  "personnel_equilibre.heures_cible": "45",
-  "personnel_equilibre.taches_a_deleguer": "Support technique niveau 1\nGestion des deploiements\nAdmin comptable\nPlanification meetings recurrents",
-  "personnel_equilibre.temps_non_negociable": "Souper en famille 5x/sem\nSport 3x/sem\nDeconnexion dimanche",
-  "personnel_equilibre.indicateurs_stress": "Insomnie\nMicro-management\nSauter des repas",
-  "personnel_succession.horizon": "5-10 ans",
-  "personnel_succession.plan_succession": "Batir une equipe de leadership autonome capable de gerer les operations sans dependance quotidienne au fondateur. Objectif: ne plus etre indispensable d'ici 2031.",
-  "personnel_succession.personnes_cles": "Tim (CTOB) — CTO, pipeline technique autonome — 75%\nRich (CROB) — VP Ventes, pipeline commercial — 45%\nOlivier (COOB) — COO, operations quotidiennes — 60%",
-  "personnel_succession.connaissances_critiques": "Vision produit & roadmap\nRelations REAI (130+ contacts)\nArchitecture BTML / GHML\nProcessus de vente consultative",
-  "personnel_succession.scenario_urgence": "Tim assume la direction technique, Rich prend le pipeline ventes, Olivier gere les operations. CA consultatif prend les decisions strategiques majeures.",
-};
+import { SIMULATION_DATA } from "../../data/mock/blueprint.mock";
 
 export function BlueprintPersonnel({ botCode, headerGradient, data, onFieldChange, onSave, saving, dirty, tier }: {
   botCode: string; headerGradient: string;
@@ -169,12 +120,14 @@ export function BlueprintPersonnel({ botCode, headerGradient, data, onFieldChang
   dirty: boolean;
   tier: SizeTier;
 }) {
+  const { data: simulationSourceData } = useDataSource("blueprint-sections", SIMULATION_DATA);
+
   const [activeSection, setActiveSection] = useState(PERSONAL_SECTIONS[0].id);
   const [previewMode, setPreviewMode] = useState(true);
 
   // En mode preview: fusionner données réelles + simulation pour les champs vides
   const d = previewMode
-    ? { ...SIMULATION_DATA, ...Object.fromEntries(Object.entries(data).filter(([, v]) => v !== "")) }
+    ? { ...simulationSourceData, ...Object.fromEntries(Object.entries(data).filter(([, v]) => v !== "")) }
     : data;
 
   const scrollToSection = (id: string) => {
@@ -213,6 +166,7 @@ export function BlueprintPersonnel({ botCode, headerGradient, data, onFieldChang
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="text-lg font-bold text-white">{nom}</h3>
+              <DomainBadge domain="blueprint-sections" className="ml-1" />
               {titre && <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white">{titre}</span>}
               {entreprise && <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white">{entreprise}</span>}
             </div>

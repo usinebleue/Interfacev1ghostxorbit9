@@ -592,7 +592,7 @@ export function AdminView({ showHeader }: SectionProps) {
   return (
     <div className="space-y-4">
       {showHeader && (
-        <LivingHero blur1="bg-slate-200/70" blur2="bg-gray-100/60" subtitleColor="text-slate-500" subtitle="God Mode" title="Le centre de contrôle absolu." description="Instances, utilisateurs, packages, monitoring — tout le système sous vos yeux.">
+        <LivingHero blur1="bg-slate-200/70" blur2="bg-gray-100/60" title="Contrôle absolu." description="Tout le système sous vos yeux.">
           <div className="relative w-[360px] h-[140px]">
             {/* Shield background */}
             <div className="absolute right-[20px] bottom-[-10px] opacity-[0.12] text-slate-600 anim-admin-shield">

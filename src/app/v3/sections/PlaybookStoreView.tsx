@@ -2201,9 +2201,8 @@ export function PlaybookStoreView({ botCode, headerGradient, showHeader = false 
       {showHeader && (
         <LivingHero
           blur1="bg-cyan-100/60" blur2="bg-blue-100/40"
-          subtitleColor="text-cyan-600" subtitle="Automatisations"
-          title="Des recettes prêtes à lancer."
-          description="Chaque playbook est une séquence d'actions que le système exécute pour vous. Choisissez, lancez, c'est fait."
+          title="Lancez, c'est fait."
+          description="Des automatisations prêtes à déclencher."
         >
           <div className="relative w-[380px] h-[160px] flex items-center">
             <div className="absolute right-[20px] flex flex-row items-center gap-0 w-[340px]">

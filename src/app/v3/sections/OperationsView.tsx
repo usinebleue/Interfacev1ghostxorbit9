@@ -29,74 +29,23 @@ import { cn } from "../../components/ui/utils";
 import { LivingHero } from "./shared/LivingHero";
 import { DEPT_SHORT_LABEL, DEPT_DASH_ICON, PHASE_COLORS, BOT_DISPLAY, BOT_AVATAR_MAP, type PhaseKey } from "./shared/dept-data";
 import { SF } from "../core/styles";
+import { ViewModeToolbar } from "./shared/ViewModeToolbar";
 import { CockpitSectionHeader, WorkActionsOverlay, WORK_ACTIONS, DEPT_ORDER } from "./CockpitView";
+
+import {
+  MOCK_OPERATIONS, getMockOperations,
+  type MockExecutionLog, type MockDocument, type MockCheckItem,
+  type MockRACIItem, type MockDecisionLog, type MockDependency,
+  type MockConferenceAI, type MockActivityLog, type MockKPICible,
+  type MockEtapeItem, type MockRoutineItem, type MockProcessusItem,
+  type MockOperationItem,
+} from "../data/mock/execution.mock";
+import { useDataSource } from "../data/use-data-source";
+import { DomainBadge } from "../data/source-badge";
 
 // ═══ Types — même structure que ChantierView mais vocabulaire opérationnel ═══
 
 type OperationLevel = "operations" | "processus" | "routines" | "etapes";
-
-interface MockExecutionLog { date: string; statut: "conforme" | "retard" | "echec" | "partiel"; duree: string; note?: string }
-interface MockDocument { id: string; titre: string; type: string; format: string; modifie: string; auteur: string }
-interface MockCheckItem { label: string; done: boolean }
-interface MockRACIItem { type: "R" | "A" | "C" | "I"; bot: string; role: string }
-interface MockDecisionLog { date: string; decision: string; decideur: string; rationnel: string }
-interface MockDependency { label: string; type: "bloque" | "depend"; entite: string; statut: "resolu" | "en-cours" | "critique" }
-interface MockConferenceAI { id: string; date: string; titre: string; duree: string; participants: string[]; resume?: string }
-interface MockActivityLog { date: string; type: "creation" | "modification" | "decision" | "livrable" | "commentaire"; action: string; auteur: string }
-interface MockKPICible { label: string; cible: string; actuel: string; ok: boolean }
-
-interface MockEtapeItem {
-  id: number; titre: string; description: string; cadence: string;
-  dureeEstimee: string; assignee: string; statut: "complete" | "en_cours" | "a-faire";
-  instructions?: string; validateur?: string;
-}
-
-interface MockRoutineItem {
-  id: number; titre: string; description: string; cadence: string;
-  sla: string; regularity: number; botPrimaire: string;
-  etapes: MockEtapeItem[];
-  checklist?: MockCheckItem[];
-  historique?: MockExecutionLog[];
-  documents?: MockDocument[];
-  risques?: string[];
-  kpisCibles?: MockKPICible[];
-}
-
-interface MockProcessusItem {
-  id: number; titre: string; description: string; cadence: string;
-  regularity: number; botPrimaire: string; echeance: string;
-  routines: MockRoutineItem[];
-  documents?: MockDocument[];
-  historique?: MockExecutionLog[];
-  derniereExecution?: string;
-  prochaineExecution?: string;
-  raci?: MockRACIItem[];
-  risques?: string[];
-  dependances?: MockDependency[];
-}
-
-interface MockOperationItem {
-  id: number; titre: string; description: string; phase: PhaseKey;
-  cadence: string; sla: string; regularity: number;
-  botPrimaire: string; botCodes: string[];
-  processus: MockProcessusItem[];
-  sourceChantier?: string;
-  derniereExecution?: string;
-  prochaineExecution?: string;
-  historique?: MockExecutionLog[];
-  documents?: MockDocument[];
-  sante?: { score: number; tendance: "up" | "down" | "stable"; conformite?: string; optimisation?: string };
-  raci?: MockRACIItem[];
-  risques?: string[];
-  livrables?: string[];
-  kpisCibles?: MockKPICible[];
-  coutRecurrent?: string;
-  dependances?: MockDependency[];
-  decisions?: MockDecisionLog[];
-  conferences?: MockConferenceAI[];
-  activites?: MockActivityLog[];
-  bilanOptimisation?: { positifs: string[]; negatifs: string[]; actions: string[] };
-}
 
 // ═══ Phase derivation ═══
 function regularityToPhase(regularity: number): PhaseKey {
@@ -128,217 +77,6 @@ const ETAPE_STATUS = {
   "a-faire": { icon: Target, color: "text-gray-400", label: "À faire" },
 };
 
-// ═══ Mock data réaliste — enrichi pour OperationEntityDetail ═══
-const MOCK_OPERATIONS: Record<string, MockOperationItem[]> = {
-  CEOB: [
-    {
-      id: 1, titre: "Cycle de facturation mensuel", description: "Processus récurrent de facturation client, encaissement et relance. Transformé du chantier 'Refonte facturation' (CAPEX→OPEX).",
-      phase: "execution", cadence: "Mensuel", sla: "J+5", regularity: 92,
-      botPrimaire: "CFOB", botCodes: ["CFOB", "COOB", "CROB"],
-      sourceChantier: "Refonte facturation Q1",
-      derniereExecution: "2026-04-05", prochaineExecution: "2026-05-01",
-      coutRecurrent: "2 450 $/mois",
-      sante: { score: 92, tendance: "up", conformite: "11/12 cycles conformes", optimisation: "Automatiser l'envoi batch pour gagner 2h/mois" },
-      historique: [
-        { date: "2026-04-05", statut: "conforme", duree: "4.5 jours", note: "Toutes factures envoyées J+4" },
-        { date: "2026-03-05", statut: "conforme", duree: "5 jours" },
-        { date: "2026-02-05", statut: "retard", duree: "7 jours", note: "Retard extraction ERP — bug corrigé" },
-        { date: "2026-01-05", statut: "conforme", duree: "4 jours" },
-      ],
-      documents: [
-        { id: "od1", titre: "SOP Facturation mensuelle", type: "procédure", format: "PDF", modifie: "2026-03-15", auteur: "Frank (CFO)" },
-        { id: "od2", titre: "Template facture V3", type: "template", format: "HTML", modifie: "2026-04-01", auteur: "Frank (CFO)" },
-        { id: "od3", titre: "Rapport conformité Q1", type: "rapport", format: "Excel", modifie: "2026-04-10", auteur: "Olivier (COO)" },
-      ],
-      raci: [
-        { type: "R", bot: "CFOB", role: "Exécution facturation & validation" },
-        { type: "A", bot: "CEOB", role: "Approbation finale cycle" },
-        { type: "C", bot: "CROB", role: "Suivi relances & encaissement" },
-        { type: "I", bot: "COOB", role: "Reporting conformité" },
-      ],
-      risques: [
-        "Timeout ERP lors de l'extraction (récurrence: 1/12 mois)",
-        "Erreur de tarification si grille pas à jour",
-        "Retard envoi si serveur email indisponible",
-      ],
-      livrables: [
-        "Factures PDF générées et envoyées",
-        "Rapport de conformité mensuel",
-        "Tableau de suivi encaissements",
-        "Relances automatiques J+15/30/45",
-      ],
-      kpisCibles: [
-        { label: "Délai envoi factures", cible: "≤ J+5", actuel: "J+4", ok: true },
-        { label: "Taux erreurs factures", cible: "< 2%", actuel: "0.8%", ok: true },
-        { label: "Taux encaissement J+30", cible: "> 85%", actuel: "82%", ok: false },
-        { label: "Temps cycle complet", cible: "≤ 5 jours", actuel: "4.5 jours", ok: true },
-      ],
-      dependances: [
-        { label: "Extraction ERP doit être complétée avant calcul", type: "depend", entite: "Processus: Génération factures", statut: "resolu" },
-        { label: "Relances bloquent la clôture mensuelle si non envoyées", type: "bloque", entite: "Processus: Encaissement", statut: "en-cours" },
-      ],
-      decisions: [
-        { date: "2026-04-02", decision: "Passage à l'envoi batch automatique en mai", decideur: "Frank (CFO)", rationnel: "Réduire le temps cycle de 5j à 3j et éliminer les erreurs manuelles d'envoi." },
-        { date: "2026-03-10", decision: "Ajout validation croisée ERP↔Dashboard", decideur: "Tim (CTO)", rationnel: "Suite au retard février, on valide automatiquement les montants extraits." },
-      ],
-      conferences: [
-        { id: "oc1", date: "2026-04-08", titre: "Revue cycle facturation Q1", duree: "25 min", participants: ["CFOB", "COOB", "CROB"], resume: "Performance 92% — objectif 95% pour Q2. Automatisation batch prioritaire." },
-      ],
-      activites: [
-        { date: "2026-04-10", type: "livrable", action: "Rapport conformité Q1 livré", auteur: "Olivier (COO)" },
-        { date: "2026-04-08", type: "decision", action: "Envoi batch automatique approuvé pour mai", auteur: "Frank (CFO)" },
-        { date: "2026-04-05", type: "modification", action: "Cycle avril exécuté — J+4 conforme", auteur: "Frank (CFO)" },
-        { date: "2026-03-10", type: "creation", action: "Script validation croisée ERP ajouté", auteur: "Tim (CTO)" },
-        { date: "2026-02-20", type: "commentaire", action: "Bug extraction ERP documenté et corrigé", auteur: "Tim (CTO)" },
-      ],
-      bilanOptimisation: {
-        positifs: ["Régularité 92% maintenue sur 12 mois", "Temps cycle réduit de 7j à 4.5j", "Zéro erreur tarification depuis mars"],
-        negatifs: ["Envoi encore manuel (2h/mois)", "Taux encaissement J+30 sous la cible", "Pas de fallback si serveur email down"],
-        actions: ["Implémenter envoi batch automatique (mai)", "Ajouter alerte SMS pour relances critiques", "Créer procédure de fallback email"],
-      },
-      processus: [
-        {
-          id: 101, titre: "Génération des factures", description: "Extraction des données de livraison, calcul des montants, génération PDF et envoi automatique.",
-          cadence: "Mensuel (J+1)", regularity: 95, botPrimaire: "CFOB", echeance: "Récurrent",
-          derniereExecution: "2026-04-01", prochaineExecution: "2026-05-01",
-          documents: [{ id: "pd1", titre: "Script extract_billing.py", type: "code", format: "Python", modifie: "2026-03-20", auteur: "Tim (CTO)" }],
-          historique: [
-            { date: "2026-04-01", statut: "conforme", duree: "6h" },
-            { date: "2026-03-01", statut: "conforme", duree: "7h" },
-            { date: "2026-02-01", statut: "retard", duree: "14h", note: "Timeout ERP, relance manuelle" },
-          ],
-          raci: [
-            { type: "R", bot: "CFOB", role: "Exécution extraction & génération" },
-            { type: "C", bot: "CTOB", role: "Support technique script" },
-          ],
-          risques: ["Timeout ERP si volume > 500 lignes", "Grille tarifaire périmée"],
-          routines: [
-            { id: 1001, titre: "Extraction données ERP", description: "Collecter les données de livraison du mois écoulé depuis l'ERP.", cadence: "Mensuel J+1", sla: "4h", regularity: 98, botPrimaire: "CTOB",
-              checklist: [{ label: "Paramètres mois configurés", done: true }, { label: "Connexion ERP vérifiée", done: true }, { label: "Données extraites sans erreur", done: true }, { label: "Montants validés vs dashboard", done: false }],
-              historique: [{ date: "2026-04-01", statut: "conforme", duree: "35 min" }, { date: "2026-03-01", statut: "conforme", duree: "40 min" }],
-              documents: [{ id: "rd1", titre: "Runbook extraction ERP", type: "procédure", format: "Markdown", modifie: "2026-03-10", auteur: "Tim (CTO)" }],
-              kpisCibles: [{ label: "Durée extraction", cible: "< 1h", actuel: "35 min", ok: true }, { label: "Erreurs données", cible: "0", actuel: "0", ok: true }],
-              etapes: [
-                { id: 10001, titre: "Lancer le script d'extraction", description: "Exécuter extract_billing.py avec les paramètres du mois.", cadence: "Mensuel", dureeEstimee: "15 min", assignee: "Tim (CTO)", statut: "complete", instructions: "cd /opt/billing && python3 extract_billing.py --month=$(date +%Y-%m) --validate", validateur: "Frank (CFO)" },
-                { id: 10002, titre: "Valider les données extraites", description: "Vérifier la cohérence des montants avec le dashboard.", cadence: "Mensuel", dureeEstimee: "30 min", assignee: "Frank (CFO)", statut: "complete" },
-              ],
-            },
-            { id: 1002, titre: "Calcul et génération PDF", description: "Appliquer les tarifs, calculer les taxes et générer les factures PDF.", cadence: "Mensuel J+2", sla: "8h", regularity: 90, botPrimaire: "CFOB",
-              checklist: [{ label: "Grille tarifaire à jour", done: true }, { label: "Taxes calculées correctement", done: false }, { label: "PDFs générés sans erreur", done: false }],
-              etapes: [
-                { id: 10003, titre: "Appliquer la grille tarifaire", description: "Vérifier les contrats actifs et appliquer les bons tarifs.", cadence: "Mensuel", dureeEstimee: "1h", assignee: "Frank (CFO)", statut: "en_cours" },
-                { id: 10004, titre: "Générer les PDF", description: "Lancer la génération batch des factures.", cadence: "Mensuel", dureeEstimee: "20 min", assignee: "Tim (CTO)", statut: "a-faire" },
-              ],
-            },
-            { id: 1003, titre: "Envoi et suivi", description: "Envoi des factures par email et suivi des ouvertures.", cadence: "Mensuel J+3", sla: "24h", regularity: 88, botPrimaire: "CMOB",
-              etapes: [
-                { id: 10005, titre: "Envoi batch par email", description: "Déclencher l'envoi via le système de mailing.", cadence: "Mensuel", dureeEstimee: "10 min", assignee: "Mathilde (CMO)", statut: "a-faire" },
-              ],
-            },
-          ],
-        },
-        {
-          id: 102, titre: "Encaissement et relances", description: "Suivi des paiements reçus, rapprochement bancaire et relances automatiques.",
-          cadence: "Continu", regularity: 85, botPrimaire: "CFOB", echeance: "Récurrent",
-          dependances: [{ label: "Factures doivent être envoyées avant relances", type: "depend", entite: "Processus: Génération factures", statut: "resolu" }],
-          routines: [
-            { id: 1004, titre: "Rapprochement bancaire", description: "Comparer les paiements reçus avec les factures émises.", cadence: "Hebdo", sla: "48h", regularity: 82, botPrimaire: "CFOB",
-              etapes: [
-                { id: 10006, titre: "Importer le relevé bancaire", description: "Télécharger le relevé et l'importer dans le système.", cadence: "Hebdo", dureeEstimee: "15 min", assignee: "Frank (CFO)", statut: "complete" },
-              ],
-            },
-            { id: 1005, titre: "Relances automatiques", description: "Envoyer les relances J+15, J+30, J+45.", cadence: "Auto", sla: "J+15/30/45", regularity: 90, botPrimaire: "CROB",
-              etapes: [
-                { id: 10007, titre: "Vérifier la file de relances", description: "Contrôler les relances en attente.", cadence: "Quotidien", dureeEstimee: "10 min", assignee: "Rich (CRO)", statut: "en_cours" },
-              ],
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: 2, titre: "Maintenance préventive équipements", description: "Cycle récurrent d'inspection, maintenance et calibration des équipements de production.",
-      phase: "execution", cadence: "Hebdo/Mensuel", sla: "72h", regularity: 78,
-      botPrimaire: "CPOB", botCodes: ["CPOB", "COOB", "CISOB"],
-      derniereExecution: "2026-04-14", prochaineExecution: "2026-04-21",
-      coutRecurrent: "1 800 $/mois",
-      sante: { score: 78, tendance: "down", conformite: "8/12 inspections conformes", optimisation: "Standardiser la check-list ligne 2 — trop de variabilité" },
-      historique: [
-        { date: "2026-04-14", statut: "partiel", duree: "3h", note: "Ligne 2 reportée — pièce en commande" },
-        { date: "2026-04-07", statut: "conforme", duree: "4h" },
-        { date: "2026-03-31", statut: "conforme", duree: "3.5h" },
-      ],
-      raci: [
-        { type: "R", bot: "CPOB", role: "Exécution inspections & calibrations" },
-        { type: "A", bot: "COOB", role: "Validation conformité" },
-        { type: "I", bot: "CISOB", role: "Suivi sécurité" },
-      ],
-      risques: [
-        "Pièces de rechange non disponibles (délai fournisseur 2-3 sem.)",
-        "Variabilité check-list ligne 2 — résultats non reproductibles",
-      ],
-      livrables: [
-        "Rapport d'inspection hebdomadaire",
-        "Certificat de calibration mensuel",
-        "Plan de maintenance préventive mis à jour",
-      ],
-      processus: [
-        {
-          id: 201, titre: "Inspections hebdomadaires", description: "Tour d'inspection visuel et fonctionnel des équipements critiques.",
-          cadence: "Hebdo (lundi)", regularity: 85, botPrimaire: "CPOB", echeance: "Récurrent",
-          routines: [
-            { id: 2001, titre: "Check-list équipements", description: "Parcourir la check-list de 42 points pour chaque équipement.", cadence: "Hebdo", sla: "4h", regularity: 88, botPrimaire: "CPOB",
-              checklist: [{ label: "Pression vérifiée", done: true }, { label: "Température dans les normes", done: true }, { label: "Vibrations normales", done: false }, { label: "Lubrification OK", done: false }],
-              etapes: [
-                { id: 20001, titre: "Inspection ligne 1", description: "Vérifier pression, température, vibrations.", cadence: "Hebdo", dureeEstimee: "45 min", assignee: "Paco (CPO)", statut: "complete" },
-                { id: 20002, titre: "Inspection ligne 2", description: "Vérifier alignement, lubrification.", cadence: "Hebdo", dureeEstimee: "45 min", assignee: "Paco (CPO)", statut: "en_cours" },
-              ],
-            },
-          ],
-        },
-        {
-          id: 202, titre: "Calibration mensuelle", description: "Calibration des instruments de mesure et capteurs.",
-          cadence: "Mensuel (1er lundi)", regularity: 72, botPrimaire: "CPOB", echeance: "Récurrent",
-          routines: [
-            { id: 2002, titre: "Calibration capteurs", description: "Recalibrer les capteurs de température et pression.", cadence: "Mensuel", sla: "8h", regularity: 70, botPrimaire: "CPOB",
-              etapes: [
-                { id: 20003, titre: "Préparer les standards", description: "Sortir les étalons certifiés.", cadence: "Mensuel", dureeEstimee: "30 min", assignee: "Paco (CPO)", statut: "a-faire" },
-              ],
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: 3, titre: "Reporting exécutif hebdomadaire", description: "Compilation et diffusion des KPIs stratégiques à la direction. Inclut le dashboard IA et les alertes VITAA.",
-      phase: "execution", cadence: "Hebdo (vendredi)", sla: "EOD", regularity: 95,
-      botPrimaire: "CEOB", botCodes: ["CEOB", "CFOB", "COOB"],
-      derniereExecution: "2026-04-11", prochaineExecution: "2026-04-18",
-      sante: { score: 95, tendance: "stable", conformite: "12/12 rapports livrés à temps" },
-      kpisCibles: [
-        { label: "Livraison avant 17h", cible: "100%", actuel: "100%", ok: true },
-        { label: "Couverture départements", cible: "12/12", actuel: "12/12", ok: true },
-      ],
-      processus: [
-        {
-          id: 301, titre: "Collecte des KPIs", description: "Agrégation automatique des métriques de tous les départements.",
-          cadence: "Hebdo (jeudi soir)", regularity: 96, botPrimaire: "COOB", echeance: "Récurrent",
-          routines: [
-            { id: 3001, titre: "Pull données départements", description: "Extraire les KPIs de chaque département via API.", cadence: "Hebdo", sla: "2h", regularity: 98, botPrimaire: "CTOB",
-              etapes: [
-                { id: 30001, titre: "Lancer l'agrégation", description: "Déclencher le script weekly_kpi_pull.py.", cadence: "Hebdo", dureeEstimee: "5 min", assignee: "Tim (CTO)", statut: "complete" },
-              ],
-            },
-          ],
-        },
-      ],
-    },
-  ],
-};
-
-function getMockOperations(botCode: string): MockOperationItem[] {
-  return MOCK_OPERATIONS[botCode] || MOCK_OPERATIONS.CEOB || [];
-}
 
 // ═══ OperationEntityDetail — Fiche detail inline (pattern dBlocks de ChantierEntityDetail) ═══
 function OperationEntityDetail({ type, title, description, cadence, sla, regularity, botPrimaire, botCodes, sourceChantier, derniereExecution, prochaineExecution, sante, historique, documents, checklist, instructions, validateur, dureeEstimee, assignee, raci, risques, livrables, kpisCibles, coutRecurrent, dependances, decisions, conferences, activites, bilanOptimisation, subItems, onSubItemClick, subTitle, subCount, onBack, onAction, backLabel }: {
@@ -967,28 +705,8 @@ function OperationEntityDetail({ type, title, description, cadence, sla, regular
   );
 }
 
-// ── SubElementsToolbar — Toolbar viewMode (cards/list/table) pour sous-éléments drill-down ──
-function SubElementsToolbar({ viewMode, onViewMode, count, label }: { viewMode: "cards" | "list" | "table"; onViewMode: (m: "cards" | "list" | "table") => void; count: number; label: string }) {
-  const views = [
-    { key: "cards" as const, icon: LayoutGrid, tip: "Cartes" },
-    { key: "list" as const, icon: LayoutList, tip: "Liste" },
-    { key: "table" as const, icon: Table2, tip: "Tableau" },
-  ];
-  return (
-    <div className="flex items-center gap-2 mb-2">
-      <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
-        {views.map(v => (
-          <button key={v.key} onClick={() => onViewMode(v.key)} title={v.tip}
-            className={cn("p-1.5 rounded-md cursor-pointer transition-colors", viewMode === v.key ? "bg-white shadow-sm text-gray-900" : "text-gray-400 hover:text-gray-600")}>
-            <v.icon className="h-3.5 w-3.5" />
-          </button>
-        ))}
-      </div>
-      <div className="flex-1" />
-      <span className={SF.itemCount}>{count} {label}</span>
-    </div>
-  );
-}
+// ── SubElementsToolbar — PARTAGÉ depuis shared/ViewModeToolbar.tsx (classes SF standardisées) ──
+// import { ViewModeToolbar } from "./shared/ViewModeToolbar"; (déjà importé en haut)
 
 // ── SubElementsList — Rendu en mode liste ──
 function SubElementsList({ items }: { items: { typeIcon: React.ElementType; title: string; regularity: number; cadence: string; sla?: string; onClick: () => void }[] }) {
@@ -1053,7 +771,7 @@ export function OperationsView({ botCode, showHeader = true, onAction }: {
   showHeader?: boolean;
   onAction?: (phase: PhaseKey, ctx: string) => void;
 }) {
-  const mockData = getMockOperations(botCode);
+  const { data: mockData } = useDataSource<MockOperationItem[]>("operations", getMockOperations(botCode));
   const [selectedDept, setSelectedDept] = useState(botCode);
   const [level, setLevel] = useState<OperationLevel>("operations");
   const [selectedOp, setSelectedOp] = useState<number | null>(null);
@@ -1090,7 +808,7 @@ export function OperationsView({ botCode, showHeader = true, onAction }: {
     <div className="space-y-3">
       {/* 1. LIVING HERO — Pattern SectionView */}
       {showHeader && level === "operations" && (
-        <LivingHero blur1="bg-cyan-100/70" blur2="bg-teal-100/60" subtitleColor="text-cyan-600" subtitle="Récurrence & Fiabilité" title="Vos processus, rôdés comme une horloge." description="CAPEX transformé en OPEX — suivez la régularité, les SLA et l'optimisation continue de vos opérations.">
+        <LivingHero blur1="bg-cyan-100/70" blur2="bg-teal-100/60" title="Rôdé comme une horloge." description="Régularité, SLA et optimisation continue." badge={<DomainBadge domain="operations" />}>
           <div className="relative w-[360px] h-[140px]">
             <div className="glass-base absolute right-[70px] top-[10px] w-64 h-32 p-4 border-cyan-100">
               <div className="flex justify-between items-center mb-4">
@@ -1207,15 +925,15 @@ export function OperationsView({ botCode, showHeader = true, onAction }: {
                   <option value="regularity">Régularité</option>
                   <option value="alpha">A → Z</option>
                 </select>
-                <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
+                <div className={SF.viewToggleGroup}>
                   {([
                     { key: "cards" as const, icon: LayoutGrid, tip: "Cartes" },
                     { key: "list" as const, icon: LayoutList, tip: "Liste" },
                     { key: "table" as const, icon: Table2, tip: "Tableau" },
                   ]).map(v => (
                     <button key={v.key} onClick={() => setSubViewMode(v.key)} title={v.tip}
-                      className={cn("p-1.5 rounded-md cursor-pointer transition-colors", subViewMode === v.key ? "bg-white shadow-sm text-gray-900" : "text-gray-400 hover:text-gray-600")}>
-                      <v.icon className="h-3.5 w-3.5" />
+                      className={subViewMode === v.key ? SF.viewToggleBtnActive : SF.viewToggleBtnInactive}>
+                      <v.icon className={SF.viewToggleIcon} />
                     </button>
                   ))}
                 </div>

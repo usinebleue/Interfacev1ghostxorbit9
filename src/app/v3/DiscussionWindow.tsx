@@ -10,17 +10,24 @@
  * ChatBox V3 = design Claude AI (SimAmorcer L676-754) branché sur sendMessage réel.
  */
 
-import { useState, useRef, useEffect, type KeyboardEvent } from "react";
+import { useState, useRef, useEffect, useCallback, type KeyboardEvent } from "react";
 import {
   Bot, Atom, Plus, Send, ChevronUp,
-  Phone, Video, Glasses, Paperclip, Globe, Zap, Activity,
+  Phone, PhoneOff, Video, Glasses, Paperclip, Globe, Zap, Activity,
   Brain, Target, AlertTriangle, Scale, Sparkles, MessageSquare,
+  Mic, MicOff, Loader2, Upload,
 } from "lucide-react";
 import { cn } from "../components/ui/utils";
 import { LiveChat } from "../v2/zones/center/LiveChat";
 import { useAmorcer } from "./AmorcerContext";
 import { useChatContext } from "../v2/context/ChatContext";
 import { BOT_AVATAR, BOT_NAME, BOT_ROLE } from "../v2/api/types";
+import { api } from "../v2/api/client";
+import {
+  Room, RoomEvent, Track,
+  type RemoteTrack, type RemoteTrackPublication,
+  type Participant, type DisconnectReason,
+} from "livekit-client";
 
 const ALL_BOT_CODES = ["CEOB","CTOB","CFOB","CMOB","CSOB","COOB","CPOB","CHROB","CINOB","CROB","CLOB","CISOB"];
 
@@ -148,14 +155,39 @@ export function DiscussionWindow() {
   );
 }
 
-// ═══ CHATBOX V3 — DESIGN MODÉLISÉ (Style Claude AI) ═══
+// ═══ CHATBOX V3 — DESIGN MODÉLISÉ (Style Claude AI) + BACKEND BRANCHÉ ═══
+
+type CallState = "idle" | "connecting" | "connected" | "error";
+
+const formatCallDuration = (s: number) => {
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return `${m}:${sec.toString().padStart(2, "0")}`;
+};
 
 function ChatBoxV3() {
   const [inputText, setInputText] = useState("");
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const attachRef = useRef<HTMLDivElement>(null);
-  const { sendMessage } = useChatContext();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  // visionInputRef retiré — Vision = app mobile (Ray-Ban Meta)
+  const { sendMessage, injectVoiceMessage, newConversation } = useChatContext();
+  const { activeBotCode, setRightSection } = useAmorcer();
+
+  // ═══ VOICE CALL STATE ═══
+  const [callState, setCallState] = useState<CallState>("idle");
+  const [micOn, setMicOn] = useState(true);
+  const [callDuration, setCallDuration] = useState(0);
+  const [uploading, setUploading] = useState(false);
+  const roomRef = useRef<Room | null>(null);
+  const audioElRef = useRef<HTMLAudioElement | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollCursorRef = useRef(0);
+  const userHangupRef = useRef(false);
+  const injectRef = useRef(injectVoiceMessage);
+  injectRef.current = injectVoiceMessage;
 
   // Fermer menu attach si click extérieur
   useEffect(() => {
@@ -167,6 +199,153 @@ function ChatBoxV3() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [showAttachMenu]);
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, []);
+
+  // ═══ VOICE POLLING ═══
+  const startVoicePolling = useCallback((roomName: string) => {
+    if (pollRef.current) clearInterval(pollRef.current);
+    pollCursorRef.current = 0;
+    pollRef.current = setInterval(async () => {
+      try {
+        const res = await fetch(
+          `/api/v1/voice/events/${roomName}?cursor=${pollCursorRef.current}`,
+          { headers: { "X-API-Key": import.meta.env.VITE_API_KEY || "" } }
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.events?.length > 0) {
+          for (const evt of data.events) {
+            if (evt.type === "exchange") {
+              if (evt.user_text) injectRef.current("user", evt.user_text);
+              if (evt.bot_text) injectRef.current("assistant", evt.bot_text, evt.agent);
+            }
+          }
+          pollCursorRef.current = data.cursor;
+        }
+      } catch { /* retry next poll */ }
+    }, 2000);
+  }, []);
+
+  const stopVoicePolling = useCallback(() => {
+    if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+    pollCursorRef.current = 0;
+  }, []);
+
+  // ═══ END CALL ═══
+  const endCall = useCallback(() => {
+    userHangupRef.current = true;
+    if (roomRef.current) { roomRef.current.disconnect(); roomRef.current = null; }
+    if (audioElRef.current) { audioElRef.current.srcObject = null; audioElRef.current.remove(); audioElRef.current = null; }
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    stopVoicePolling();
+    setCallState("idle");
+    setCallDuration(0);
+    setMicOn(true);
+  }, [stopVoicePolling]);
+
+  // ═══ START CALL ═══
+  const startCall = useCallback(async () => {
+    if (callState === "connecting" || callState === "connected") return;
+    setCallState("connecting");
+    setCallDuration(0);
+    newConversation();
+    try {
+      const tokenData = await api.voiceToken(activeBotCode, 1, false);
+      const room = new Room({ adaptiveStream: true, dynacast: true, disconnectOnPageLeave: false });
+      roomRef.current = room;
+
+      room.on(RoomEvent.TrackSubscribed, (track: RemoteTrack, _pub: RemoteTrackPublication, _p: Participant) => {
+        if (track.kind === Track.Kind.Audio) {
+          if (!audioElRef.current) {
+            audioElRef.current = document.createElement("audio");
+            audioElRef.current.autoplay = true;
+            document.body.appendChild(audioElRef.current);
+          }
+          track.attach(audioElRef.current);
+        }
+      });
+
+      room.on(RoomEvent.Disconnected, (reason?: DisconnectReason) => {
+        if (userHangupRef.current) { userHangupRef.current = false; return; }
+        if (reason !== undefined && reason !== 0) {
+          setCallState("error");
+          if (timerRef.current) clearInterval(timerRef.current);
+          setTimeout(() => setCallState("idle"), 3000);
+        } else {
+          endCall();
+        }
+      });
+      room.on(RoomEvent.Reconnecting, () => setCallState("connecting"));
+      room.on(RoomEvent.Reconnected, () => setCallState("connected"));
+
+      await room.connect(tokenData.livekit_url, tokenData.token);
+      await room.localParticipant.setMicrophoneEnabled(true);
+      setCallState("connected");
+
+      // Connection sound (A major chord)
+      try {
+        const ac = new AudioContext();
+        const t = ac.currentTime;
+        [440, 554, 659].forEach((freq) => {
+          const o = ac.createOscillator(); const g = ac.createGain();
+          o.type = "sine"; o.frequency.value = freq;
+          o.connect(g); g.connect(ac.destination);
+          g.gain.setValueAtTime(0, t);
+          g.gain.linearRampToValueAtTime(0.08, t + 0.05);
+          g.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
+          o.start(t); o.stop(t + 0.9);
+        });
+      } catch { /* silent */ }
+
+      startVoicePolling(tokenData.room_name);
+      timerRef.current = setInterval(() => setCallDuration(d => d + 1), 1000);
+    } catch (err) {
+      console.error("[ChatBoxV3] Voice connection failed:", err);
+      setCallState("error");
+      setTimeout(() => setCallState("idle"), 3000);
+    }
+  }, [activeBotCode, callState, newConversation, endCall, startVoicePolling]);
+
+  // ═══ TOGGLE MIC ═══
+  const toggleMic = useCallback(async () => {
+    if (roomRef.current && callState === "connected") {
+      const next = !micOn;
+      await roomRef.current.localParticipant.setMicrophoneEnabled(next);
+      setMicOn(next);
+    }
+  }, [micOn, callState]);
+
+  // ═══ VISION — Carlos Vision (Ray-Ban Meta / app mobile) ═══
+  const [visionToast, setVisionToast] = useState(false);
+  const handleVision = useCallback(() => {
+    setVisionToast(true);
+    setTimeout(() => setVisionToast(false), 3000);
+  }, []);
+
+  // ═══ FILE UPLOAD — pièce jointe → bureau upload ═══
+  const handleFileUpload = useCallback(async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    setShowAttachMenu(false);
+    setUploading(true);
+    try {
+      const result = await api.uploadBureauFile(file, file.name);
+      sendMessage(`Fichier joint: ${result.titre || file.name}`);
+    } catch (err) {
+      console.error("[ChatBoxV3] Upload error:", err);
+    } finally {
+      setUploading(false);
+    }
+  }, [sendMessage]);
+
+  // ═══ TEXT HANDLERS ═══
   const handleSend = () => {
     const text = inputText.trim();
     if (!text) return;
@@ -182,8 +361,51 @@ function ChatBoxV3() {
     }
   };
 
+  const isInCall = callState === "connected" || callState === "connecting";
+  const botName = BOT_NAME[activeBotCode] || "CarlOS";
+
   return (
     <div className="shrink-0 bg-white px-3 pb-2 pt-1">
+      {/* Hidden file inputs */}
+      <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileUpload} />
+      {/* Vision toast — disponible dans l'app mobile */}
+      {visionToast && (
+        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-4 py-2 rounded-full shadow-lg z-30 whitespace-nowrap">
+          Carlos Vision sera disponible dans l&apos;app mobile
+        </div>
+      )}
+
+      {/* Inline call bar — visible pendant un appel vocal */}
+      {isInCall && (
+        <div className={cn(
+          "flex items-center gap-2 rounded-xl px-3 py-2 mb-1.5 shadow-sm",
+          callState === "connecting" ? "bg-amber-50 border border-amber-200" : "bg-blue-50 border border-blue-200"
+        )}>
+          {callState === "connecting" ? (
+            <Loader2 className="h-3.5 w-3.5 text-amber-600 animate-spin" />
+          ) : (
+            <Phone className="h-3.5 w-3.5 text-blue-600" />
+          )}
+          <span className="text-xs font-medium text-gray-700 flex-1">
+            {callState === "connecting" ? `Connexion à ${botName}...` : `Appel avec ${botName}`}
+          </span>
+          {callState === "connected" && (
+            <span className="text-xs font-mono text-gray-500">{formatCallDuration(callDuration)}</span>
+          )}
+          {callState === "connected" && (
+            <button onClick={toggleMic} className={cn(
+              "p-1.5 rounded-lg transition-colors cursor-pointer",
+              micOn ? "text-gray-500 hover:bg-gray-100" : "bg-red-100 text-red-600"
+            )} title={micOn ? "Couper le micro" : "Activer le micro"}>
+              {micOn ? <Mic className="h-3.5 w-3.5" /> : <MicOff className="h-3.5 w-3.5" />}
+            </button>
+          )}
+          <button onClick={endCall} className="p-1.5 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors cursor-pointer" title="Raccrocher">
+            <PhoneOff className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+
       <div className="relative rounded-2xl border border-gray-300 bg-white shadow-sm focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
         {/* Textarea */}
         <textarea
@@ -201,14 +423,14 @@ function ChatBoxV3() {
           <div className="relative" ref={attachRef}>
             <button
               onClick={() => setShowAttachMenu(!showAttachMenu)}
-              className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
+              className={cn("p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer", uploading && "pointer-events-none")}
               title="Ajouter"
             >
-              <Plus className="h-4 w-4" />
+              {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
             </button>
             {showAttachMenu && (
               <div className="absolute bottom-full left-0 mb-1 w-52 bg-white rounded-xl border border-gray-200 shadow-lg py-1 z-20">
-                <button onClick={() => setShowAttachMenu(false)} className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-colors cursor-pointer text-left">
+                <button onClick={() => { setShowAttachMenu(false); fileInputRef.current?.click(); }} className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-colors cursor-pointer text-left">
                   <Paperclip className="h-4 w-4 text-gray-500" />
                   <span className="text-xs text-gray-700">Pièce jointe</span>
                 </button>
@@ -232,14 +454,30 @@ function ChatBoxV3() {
             )}
           </div>
 
-          {/* 3 modes: Discussion, Conférence, Vision */}
-          <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer bg-blue-50 text-blue-600 hover:bg-blue-100" title="Discussion vocale">
-            <Phone className="h-3.5 w-3.5" /><span className="hidden lg:inline">Discussion</span>
+          {/* 3 modes: Discussion, Conférence, Vision — BRANCHÉS */}
+          <button
+            onClick={isInCall ? endCall : startCall}
+            className={cn(
+              "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
+              isInCall ? "bg-red-50 text-red-600 hover:bg-red-100" : "bg-blue-50 text-blue-600 hover:bg-blue-100"
+            )}
+            title={isInCall ? "Raccrocher" : "Discussion vocale"}
+          >
+            {callState === "connecting" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : isInCall ? <PhoneOff className="h-3.5 w-3.5" /> : <Phone className="h-3.5 w-3.5" />}
+            <span className="hidden lg:inline">{isInCall ? "Raccrocher" : "Discussion"}</span>
           </button>
-          <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer bg-emerald-50 text-emerald-600 hover:bg-emerald-100" title="Conférence vidéo">
-            <Video className="h-3.5 w-3.5" /><span className="hidden lg:inline">Conférence</span>
+          <button
+            onClick={() => setRightSection("conferenceai")}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
+            title="Réunion AI"
+          >
+            <Video className="h-3.5 w-3.5" /><span className="hidden lg:inline">Réunion</span>
           </button>
-          <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer bg-cyan-50 text-cyan-600 hover:bg-cyan-100" title="Vision Ray-Ban">
+          <button
+            onClick={handleVision}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer bg-cyan-50 text-cyan-600 hover:bg-cyan-100"
+            title="Vision Ray-Ban"
+          >
             <Glasses className="h-3.5 w-3.5" /><span className="hidden lg:inline">Vision</span>
           </button>
 

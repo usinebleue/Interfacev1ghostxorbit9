@@ -355,9 +355,8 @@ export function BlueprintView({ botCode, headerGradient, sizeTier: propTier, hid
           {/* Hero — Living Heroes V20 Blueprint */}
           <LivingHero
             blur1="bg-indigo-100/60" blur2="bg-sky-100/50"
-            subtitleColor="text-indigo-600" subtitle="Plan de match"
-            title="Le plan de votre département, noir sur blanc."
-            description="Objectifs, équipe, forces, faiblesses — tout ce qui définit où vous allez et comment."
+            title="Votre plan, noir sur blanc."
+            description="Objectifs, forces et cap — tout est là."
           >
             <div className="relative w-[340px] h-[160px] flex flex-col items-center justify-center mt-2 px-6">
               {/* ROOT NODE */}
@@ -408,13 +407,13 @@ export function BlueprintView({ botCode, headerGradient, sizeTier: propTier, hid
               <div className="grid grid-cols-5 gap-3">
                 {kpis.map(kpi => (
                   <div key={kpi.label} className="rounded-xl border border-gray-200 shadow-sm bg-white">
-                    <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
+                    <div className="flex items-center justify-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
                       <kpi.icon className="h-4 w-4 text-gray-900 stroke-[2.5]" />
                       <span className="text-sm font-bold text-gray-900">{kpi.label}</span>
                     </div>
-                    <div className="px-4 py-3">
+                    <div className="px-4 py-3 text-center">
                       <div className="text-2xl font-bold text-gray-800">{kpi.value}</div>
-                      <div className={cn("text-xs flex items-center gap-1 mt-0.5", kpi.up ? "text-emerald-600" : "text-red-500")}>
+                      <div className={cn("text-xs flex items-center justify-center gap-1 mt-0.5", kpi.up ? "text-emerald-600" : "text-red-500")}>
                         {kpi.up ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
                         {kpi.delta}
                       </div>

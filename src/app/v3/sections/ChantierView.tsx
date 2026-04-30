@@ -21,9 +21,13 @@ import { cn } from "../../components/ui/utils";
 import { BOT_AVATAR } from "../../v2/api/types";
 import { useChantiers } from "../../v2/api/hooks";
 import { LivingHero } from "./shared/LivingHero";
+import { useDataSource } from "../data/use-data-source";
+import { DomainBadge } from "../data/source-badge";
 import { DEPT_SHORT_LABEL, DEPT_DASH_ICON, PHASE_COLORS, BOT_DISPLAY, BOT_AVATAR_MAP, type PhaseKey } from "./shared/dept-data";
 import { SF } from "../core/styles";
+import { ViewModeToolbar } from "./shared/ViewModeToolbar";
 import { CockpitSectionHeader, WorkActionsOverlay, DEPT_ORDER, WORK_ACTIONS } from "./CockpitView";
+import { type MockChantierItem, type MockProjetItem, type MockMissionItem, type MockTacheItem, type MockDocument, type MockJalon, type MockRACIItem, type MockDecisionLog, type MockConferenceAI, type MockActivityLog, type MockCriterion, type MockDependency, MOCK_CHANTIERS, getMockChantiers } from "../data/mock/chantiers.mock";
 
 type ChantierLevel = "chantiers" | "projets" | "missions" | "taches" | "tache-detail";
 type ChantierSortKey = "recent" | "progression" | "phase" | "alpha";
@@ -52,434 +56,7 @@ function ProgressMiniPhased({ value, phase }: { value: number; phase?: PhaseKey 
   );
 }
 
-// ── Mock data réaliste par département pour simulation ──
-// Types enrichis — chaque niveau a ses propres éléments (poupées russes)
-interface MockDocument { id: string; titre: string; type: string; format: string; modifie: string; auteur: string }
-interface MockJalon { date: string; label: string; done: boolean }
-interface MockRACIItem { role: string; bot: string; type: "R" | "A" | "C" | "I" }
-interface MockCriterion { label: string; done: boolean }
-interface MockDependency { label: string; type: "bloque" | "bloque-par"; entite: string; statut: "resolu" | "en-cours" | "critique" }
-interface MockDecisionLog { date: string; decision: string; decideur: string; rationnel: string }
-interface MockConferenceAI { id: string; date: string; titre: string; participants: string[]; duree: string; resume?: string }
-interface MockActivityLog { date: string; action: string; auteur: string; type: "creation" | "modification" | "decision" | "livrable" | "commentaire" }
-interface MockTacheItem { id: number; titre: string; description: string; phase: PhaseKey; progression: number; assignee: string; echeance: string; documents: MockDocument[]; jalons: MockJalon[]; instructions?: string; validateur?: string; criteresAcceptation?: MockCriterion[]; dependances?: MockDependency[]; conferences?: MockConferenceAI[]; tempsEstime?: string; tempsReel?: string }
-interface MockMissionItem { id: number; titre: string; description: string; phase: PhaseKey; progression: number; botPrimaire: string; echeance: string; livrables: string[]; documents: MockDocument[]; jalons: MockJalon[]; taches: MockTacheItem[]; objectifs?: string[]; equipe?: string[]; criteresAcceptation?: MockCriterion[]; dependances?: MockDependency[]; conferences?: MockConferenceAI[] }
-interface MockProjetItem { id: number; titre: string; description: string; phase: PhaseKey; progression: number; botPrimaire: string; echeance: string; objectifs: string[]; livrables: string[]; budget: string; documents: MockDocument[]; jalons: MockJalon[]; missions: MockMissionItem[]; raci?: MockRACIItem[]; dependances?: MockDependency[]; decisions?: MockDecisionLog[]; conferences?: MockConferenceAI[]; sante?: { score: number; tendance: "up" | "down" | "stable"; burnRate?: string; roi?: string } }
-interface MockChantierItem {
-  id: number; titre: string; description: string; phase: PhaseKey; progression: number;
-  echeance: string; dateDebut: string; botPrimaire: string; botCodes: string[];
-  objectifs: string[]; budget: string; risques: string[];
-  documents: MockDocument[]; jalons: MockJalon[];
-  projets: MockProjetItem[];
-  dateMaj?: string; sante?: { score: number; tendance: "up" | "down" | "stable"; burnRate?: string; roi?: string };
-  raci?: MockRACIItem[]; decisions?: MockDecisionLog[]; conferences?: MockConferenceAI[];
-  activites?: MockActivityLog[]; retrospective?: { positifs: string[]; negatifs: string[]; actions: string[] };
-}
-
-const MOCK_CHANTIERS: Record<string, MockChantierItem[]> = {
-  CEOB: [
-    { id: 1, titre: "Transformation numérique PME", description: "Moderniser l'infrastructure technologique et les processus d'affaires pour accélérer la croissance. Ce chantier couvre la migration cloud, l'automatisation des processus clés et la formation de toutes les équipes aux nouveaux outils.", phase: "execution", progression: 65, dateDebut: "2026-02-15", echeance: "2026-06-30", botPrimaire: "CTOB", botCodes: ["CTOB", "COOB", "CINOB"],
-      objectifs: ["Réduire les coûts opérationnels de 20%", "Automatiser 5 processus clés", "Former 100% de l'équipe aux outils numériques", "Migrer 100% des services vers le cloud"],
-      budget: "125 000 $", risques: ["Résistance au changement des équipes terrain", "Dépendance à un fournisseur cloud unique", "Délais de migration des données legacy"],
-      documents: [
-        { id: "d1", titre: "Plan stratégique transformation", type: "plan", format: "PDF", modifie: "2026-04-10", auteur: "CarlOS" },
-        { id: "d2", titre: "Architecture cible cloud", type: "technique", format: "Diagramme", modifie: "2026-04-08", auteur: "Tim (CTO)" },
-        { id: "d3", titre: "Budget détaillé Q2-Q3", type: "finance", format: "Excel", modifie: "2026-04-05", auteur: "Frank (CFO)" },
-        { id: "d4", titre: "Matrice des risques", type: "risque", format: "PDF", modifie: "2026-03-28", auteur: "Simone (CSO)" },
-      ],
-      jalons: [
-        { date: "2026-02-15", label: "Lancement du chantier", done: true },
-        { date: "2026-03-15", label: "Audit infrastructure terminé", done: true },
-        { date: "2026-04-30", label: "Migration phase 1 (non-critique)", done: true },
-        { date: "2026-05-15", label: "Migration phase 2 (DB principale)", done: false },
-        { date: "2026-06-01", label: "Formation équipes", done: false },
-        { date: "2026-06-30", label: "Livraison finale + rétroaction", done: false },
-      ],
-      dateMaj: "2026-04-12",
-      sante: { score: 72, tendance: "up", burnRate: "58%", roi: "3.2x projeté" },
-      raci: [
-        { role: "Migration cloud", bot: "CTOB", type: "R" },
-        { role: "Automatisation processus", bot: "COOB", type: "R" },
-        { role: "Budget & ROI", bot: "CFOB", type: "A" },
-        { role: "Sécurité infra", bot: "CISOB", type: "C" },
-        { role: "Formation équipes", bot: "CHROB", type: "C" },
-        { role: "Direction générale", bot: "CEOB", type: "I" },
-      ],
-      decisions: [
-        { date: "2026-04-08", decision: "Choisir AWS plutôt qu'Azure pour la migration", decideur: "CarlOS (CEO)", rationnel: "Meilleur rapport coût/performance pour nos volumes, plus d'expertise disponible dans l'équipe" },
-        { date: "2026-03-20", decision: "Reporter la migration DB principale à mai", decideur: "Tim (CTO)", rationnel: "Tests de charge insuffisants, risque de perte de données si migration précipitée" },
-        { date: "2026-03-01", decision: "Allouer 125K$ au chantier transformation", decideur: "Frank (CFO)", rationnel: "ROI projeté de 3.2x sur 18 mois justifie l'investissement" },
-      ],
-      conferences: [
-        { id: "conf-1", date: "2026-04-10", titre: "Revue hebdo migration cloud", participants: ["CTOB", "COOB", "CEOB"], duree: "45 min", resume: "Discussion sur le timeline migration DB. Tim propose un dry-run avant le cutover." },
-        { id: "conf-2", date: "2026-04-03", titre: "Brainstorm automatisation processus", participants: ["COOB", "CINOB", "CPOB"], duree: "30 min", resume: "Identification des 10 processus prioritaires. Focus sur la facturation et le reporting." },
-        { id: "conf-3", date: "2026-03-15", titre: "Kickoff transformation numérique", participants: ["CEOB", "CTOB", "CFOB", "COOB", "CISOB"], duree: "60 min", resume: "Définition du scope, allocation budget, assignment des responsabilités." },
-      ],
-      activites: [
-        { date: "2026-04-12", action: "Migration phase 1 complétée — 8 services non-critiques migrés", auteur: "Tim (CTO)", type: "livrable" },
-        { date: "2026-04-10", action: "Revue hebdomadaire du chantier", auteur: "CarlOS", type: "commentaire" },
-        { date: "2026-04-08", action: "Décision: AWS sélectionné comme provider cloud", auteur: "CarlOS", type: "decision" },
-        { date: "2026-04-05", action: "Budget Q2-Q3 révisé et approuvé", auteur: "Frank (CFO)", type: "modification" },
-        { date: "2026-04-03", action: "Brainstorm automatisation — 10 processus identifiés", auteur: "Olivier (COO)", type: "commentaire" },
-        { date: "2026-03-28", action: "Matrice des risques mise à jour", auteur: "Simone (CSO)", type: "modification" },
-        { date: "2026-03-15", action: "Chantier créé — kickoff réunion complétée", auteur: "CarlOS", type: "creation" },
-      ],
-      retrospective: { positifs: ["Migration phase 1 sans incident", "Bonne collaboration CTO-COO", "Budget respecté à ce jour"], negatifs: ["Retard sur la migration DB principale", "Formation équipes pas encore planifiée en détail"], actions: ["Planifier dry-run migration DB avant mai", "Préparer le calendrier de formation avec CHRO"] },
-      projets: [
-        { id: 101, titre: "Migration cloud", description: "Migrer les serveurs on-premise vers AWS/Azure pour plus de flexibilité et réduire les coûts d'hébergement de 40%.", phase: "execution", progression: 80, botPrimaire: "CTOB", echeance: "2026-05-15",
-          objectifs: ["Migrer 12 serveurs vers AWS", "Configurer le failover automatique", "Zéro downtime pendant la migration"],
-          livrables: ["Architecture cloud documentée", "Scripts Terraform", "Runbook de migration", "Tests de charge validés"],
-          budget: "45 000 $",
-          documents: [
-            { id: "d5", titre: "Terraform modules", type: "code", format: "HCL", modifie: "2026-04-10", auteur: "Tim (CTO)" },
-            { id: "d6", titre: "Runbook migration", type: "procedure", format: "Markdown", modifie: "2026-04-08", auteur: "Tim (CTO)" },
-            { id: "d7", titre: "Rapport tests de charge", type: "rapport", format: "PDF", modifie: "2026-04-12", auteur: "Sébastien (CISO)" },
-          ],
-          jalons: [
-            { date: "2026-03-01", label: "Audit serveurs terminé", done: true },
-            { date: "2026-04-01", label: "VPC et réseau configurés", done: true },
-            { date: "2026-04-20", label: "Services non-critiques migrés", done: true },
-            { date: "2026-05-10", label: "Base de données principale migrée", done: false },
-            { date: "2026-05-15", label: "Validation et cutover", done: false },
-          ],
-          sante: { score: 82, tendance: "up", burnRate: "65%", roi: "4x projeté" },
-          raci: [
-            { role: "Architecture cloud", bot: "CTOB", type: "R" },
-            { role: "Validation sécurité", bot: "CISOB", type: "A" },
-            { role: "Budget migration", bot: "CFOB", type: "C" },
-          ],
-          dependances: [
-            { label: "Tests de charge validés", type: "bloque-par", entite: "Rapport Sébastien (CISO)", statut: "en-cours" },
-            { label: "Migration DB bloque déploiement production", type: "bloque", entite: "Projet Automatisation processus", statut: "en-cours" },
-          ],
-          decisions: [
-            { date: "2026-04-08", decision: "AWS sélectionné — migration multi-AZ", decideur: "Tim (CTO)", rationnel: "Redundancy et latence optimale pour le Québec" },
-          ],
-          conferences: [
-            { id: "conf-p1", date: "2026-04-10", titre: "Sprint review migration S15", participants: ["CTOB", "CISOB"], duree: "30 min", resume: "Phase 1 complétée. Phase 2 planifiée pour mai." },
-          ],
-          missions: [
-            { id: 1001, titre: "Audit infrastructure actuelle", description: "Cartographier tous les serveurs, bases de données et applications existantes. Documenter les dépendances, les versions et les configurations.", phase: "retroaction", progression: 100, botPrimaire: "CTOB", echeance: "2026-03-15",
-              objectifs: ["Inventorier 100% des serveurs", "Documenter toutes les dépendances inter-services", "Identifier les SPOF critiques"],
-              equipe: ["CTOB", "CISOB"],
-              livrables: ["Inventaire complet des serveurs", "Carte des dépendances", "Rapport de recommandations"],
-              documents: [
-                { id: "d8", titre: "Inventaire serveurs v3", type: "inventaire", format: "Excel", modifie: "2026-03-14", auteur: "Tim (CTO)" },
-                { id: "d9", titre: "Diagramme dépendances", type: "technique", format: "Draw.io", modifie: "2026-03-12", auteur: "Tim (CTO)" },
-              ],
-              jalons: [
-                { date: "2026-03-01", label: "Inventaire physique terminé", done: true },
-                { date: "2026-03-10", label: "Dépendances cartographiées", done: true },
-                { date: "2026-03-15", label: "Rapport livré", done: true },
-              ],
-              criteresAcceptation: [
-                { label: "100% des serveurs physiques et virtuels documentés", done: true },
-                { label: "Diagramme de dépendances validé par CISO", done: true },
-                { label: "Rapport de recommandations approuvé", done: true },
-              ],
-              conferences: [
-                { id: "conf-m1", date: "2026-03-10", titre: "Revue audit infra", participants: ["CTOB", "CISOB"], duree: "25 min", resume: "Validation de l'inventaire. 3 SPOF critiques identifiés." },
-              ],
-              taches: [
-                { id: 10001, titre: "Inventaire des serveurs", description: "Lister tous les serveurs physiques et virtuels avec leurs specs (CPU, RAM, stockage), rôles et uptime. Inclure les services Docker et les cronjobs.", phase: "retroaction", progression: 100, assignee: "Tim (CTO)", echeance: "2026-03-05",
-                  instructions: "Utiliser les scripts d'inventaire existants (inventory.sh) + audit manuel Docker. Vérifier chaque VM dans le dashboard OVH.",
-                  validateur: "Sébastien (CISO)",
-                  criteresAcceptation: [{ label: "Tous les serveurs listés avec specs", done: true }, { label: "Services Docker inventoriés", done: true }, { label: "Cronjobs documentés", done: true }],
-                  tempsEstime: "3 jours", tempsReel: "2.5 jours",
-                  documents: [{ id: "d10", titre: "Liste serveurs.xlsx", type: "données", format: "Excel", modifie: "2026-03-04", auteur: "Tim (CTO)" }],
-                  jalons: [{ date: "2026-03-05", label: "Inventaire complété", done: true }] },
-                { id: 10002, titre: "Cartographie des dépendances", description: "Documenter les connexions entre services, APIs et bases de données. Identifier les single points of failure et les bottlenecks.", phase: "retroaction", progression: 100, assignee: "Tim (CTO)", echeance: "2026-03-10",
-                  instructions: "Tracer les appels API entre services. Utiliser Draw.io pour le diagramme. Marquer en rouge les SPOF.",
-                  validateur: "Sébastien (CISO)",
-                  criteresAcceptation: [{ label: "Toutes les connexions API documentées", done: true }, { label: "SPOF identifiés et marqués", done: true }],
-                  dependances: [{ label: "Inventaire serveurs terminé", type: "bloque-par", entite: "Tâche #10001", statut: "resolu" }],
-                  tempsEstime: "4 jours", tempsReel: "3 jours",
-                  documents: [{ id: "d11", titre: "dependency-map.drawio", type: "technique", format: "Draw.io", modifie: "2026-03-09", auteur: "Tim (CTO)" }],
-                  jalons: [{ date: "2026-03-10", label: "Carte complétée", done: true }] },
-              ] },
-            { id: 1002, titre: "Déploiement environnement cloud", description: "Configurer VPC, groupes de sécurité, IAM et services managés sur AWS. Implémenter l'infrastructure as code avec Terraform.", phase: "execution", progression: 60, botPrimaire: "CTOB", echeance: "2026-05-10",
-              livrables: ["VPC configuré", "IAM policies", "RDS PostgreSQL", "Scripts Terraform"],
-              documents: [
-                { id: "d12", titre: "main.tf", type: "code", format: "Terraform", modifie: "2026-04-10", auteur: "Tim (CTO)" },
-                { id: "d13", titre: "Guide IAM policies", type: "sécurité", format: "PDF", modifie: "2026-04-08", auteur: "Sébastien (CISO)" },
-              ],
-              jalons: [
-                { date: "2026-04-01", label: "VPC opérationnel", done: true },
-                { date: "2026-04-15", label: "IAM et sécurité configurés", done: true },
-                { date: "2026-05-01", label: "RDS prêt pour migration", done: false },
-                { date: "2026-05-10", label: "Migration DB complétée", done: false },
-              ],
-              taches: [
-                { id: 10003, titre: "Configurer le VPC et sous-réseaux", description: "Créer l'architecture réseau cloud avec zones publiques et privées, NAT gateways et routing tables.", phase: "retroaction", progression: 100, assignee: "Tim (CTO)", echeance: "2026-04-01",
-                  documents: [{ id: "d14", titre: "vpc-config.tf", type: "code", format: "Terraform", modifie: "2026-03-30", auteur: "Tim (CTO)" }],
-                  jalons: [{ date: "2026-04-01", label: "VPC live", done: true }] },
-                { id: 10004, titre: "Migrer la base de données principale", description: "Transférer PostgreSQL vers RDS avec réplication et failover. Valider l'intégrité des données et les performances.", phase: "execution", progression: 45, assignee: "Tim (CTO)", echeance: "2026-05-10",
-                  documents: [
-                    { id: "d15", titre: "Script migration pg_dump", type: "code", format: "Shell", modifie: "2026-04-08", auteur: "Tim (CTO)" },
-                    { id: "d16", titre: "Checklist validation données", type: "checklist", format: "Markdown", modifie: "2026-04-10", auteur: "Tim (CTO)" },
-                  ],
-                  jalons: [
-                    { date: "2026-04-20", label: "Réplication configurée", done: true },
-                    { date: "2026-05-01", label: "Tests intégrité passés", done: false },
-                    { date: "2026-05-10", label: "Cutover production", done: false },
-                  ] },
-              ] },
-          ] },
-        { id: 102, titre: "Automatisation des processus", description: "Identifier et automatiser les tâches répétitives avec des playbooks. Réduire le temps consacré aux opérations manuelles de 60%.", phase: "reflexion", progression: 25, botPrimaire: "COOB", echeance: "2026-06-30",
-          objectifs: ["Cartographier 20 processus manuels", "Automatiser les 10 plus chronophages", "Réduire 60% du temps manuel"],
-          livrables: ["Cartographie des processus", "10 playbooks d'automatisation", "Dashboard de monitoring"],
-          budget: "35 000 $",
-          documents: [
-            { id: "d17", titre: "Cartographie processus V1", type: "analyse", format: "Miro", modifie: "2026-04-05", auteur: "Olivier (COO)" },
-          ],
-          jalons: [
-            { date: "2026-04-15", label: "Cartographie terminée", done: false },
-            { date: "2026-05-15", label: "5 premiers playbooks prêts", done: false },
-            { date: "2026-06-30", label: "10 playbooks déployés", done: false },
-          ],
-          missions: [
-            { id: 1003, titre: "Cartographie des processus", description: "Documenter tous les workflows manuels avec temps et coûts. Interviewer chaque département.", phase: "execution", progression: 50, botPrimaire: "COOB", echeance: "2026-04-15",
-              livrables: ["Flowcharts de 20 processus", "Matrice temps/coût", "Priorisation des automatisations"],
-              documents: [{ id: "d18", titre: "Process-map-draft.miro", type: "analyse", format: "Miro", modifie: "2026-04-03", auteur: "Olivier (COO)" }],
-              jalons: [{ date: "2026-04-05", label: "Interviews 50% complétées", done: true }, { date: "2026-04-15", label: "Cartographie livrée", done: false }],
-              taches: [
-                { id: 10005, titre: "Interviewer les chefs d'équipe", description: "Rencontrer chaque département (30min/personne) pour identifier les goulots d'étranglement et les tâches les plus chronophages.", phase: "execution", progression: 60, assignee: "Olivier (COO)", echeance: "2026-04-08",
-                  documents: [{ id: "d19", titre: "Guide d'interview", type: "template", format: "Google Doc", modifie: "2026-03-25", auteur: "Olivier (COO)" }],
-                  jalons: [{ date: "2026-04-01", label: "6/12 départements interviewés", done: true }, { date: "2026-04-08", label: "12/12 complétés", done: false }] },
-                { id: 10006, titre: "Documenter les 10 processus prioritaires", description: "Créer des flowcharts détaillés pour les processus les plus chronophages avec temps estimé, coût et fréquence.", phase: "discussion", progression: 10, assignee: "Olivier (COO)", echeance: "2026-04-15",
-                  documents: [], jalons: [{ date: "2026-04-15", label: "10 flowcharts livrés", done: false }] },
-              ] },
-          ] },
-      ] },
-    { id: 2, titre: "Expansion marché Ontario", description: "Pénétrer le marché ontarien avec une stratégie adaptée au contexte anglophone. Identifier les segments prioritaires, adapter le messaging et établir une présence locale.", phase: "reflexion", progression: 15, dateDebut: "2026-03-01", echeance: "2026-09-30", botPrimaire: "CSOB", botCodes: ["CSOB", "CMOB", "CROB"],
-      objectifs: ["Identifier 50 prospects qualifiés", "Ouvrir un bureau satellite à Toronto", "Générer 500K$ en pipeline Q3", "Recruter 2 représentants bilingues"],
-      budget: "200 000 $", risques: ["Concurrence forte des acteurs locaux établis", "Différences culturelles business QC vs ON", "Coût immobilier Toronto élevé"],
-      documents: [
-        { id: "d20", titre: "Étude de marché Ontario V2", type: "recherche", format: "PDF", modifie: "2026-04-08", auteur: "Simone (CSO)" },
-        { id: "d21", titre: "Business case expansion", type: "finance", format: "Excel", modifie: "2026-03-20", auteur: "Frank (CFO)" },
-        { id: "d22", titre: "Personas acheteurs Ontario", type: "marketing", format: "PDF", modifie: "2026-04-01", auteur: "Mathilde (CMO)" },
-      ],
-      jalons: [
-        { date: "2026-03-01", label: "Lancement analyse", done: true },
-        { date: "2026-04-30", label: "Étude de marché livrée", done: false },
-        { date: "2026-06-15", label: "Stratégie GTM validée", done: false },
-        { date: "2026-07-15", label: "Premiers prospects contactés", done: false },
-        { date: "2026-09-30", label: "Bureau Toronto opérationnel", done: false },
-      ],
-      dateMaj: "2026-04-08",
-      sante: { score: 45, tendance: "stable", burnRate: "12%", roi: "En évaluation" },
-      decisions: [
-        { date: "2026-03-15", decision: "Focus sur le segment manufacturier en Ontario", decideur: "Simone (CSO)", rationnel: "Meilleur fit avec notre expertise et notre réseau REAI" },
-      ],
-      conferences: [
-        { id: "conf-4", date: "2026-04-05", titre: "Revue étude de marché Ontario", participants: ["CSOB", "CMOB", "CEOB"], duree: "35 min", resume: "Premiers résultats encourageants. 50+ manufacturiers identifiés dans la GTA." },
-      ],
-      activites: [
-        { date: "2026-04-08", action: "Étude de marché — analyse concurrentielle en cours", auteur: "Simone (CSO)", type: "modification" },
-        { date: "2026-03-15", action: "Segment manufacturier sélectionné comme cible prioritaire", auteur: "Simone (CSO)", type: "decision" },
-        { date: "2026-03-01", action: "Chantier lancé — équipe Simone + Mathilde + Rich", auteur: "CarlOS", type: "creation" },
-      ],
-      projets: [
-        { id: 103, titre: "Étude de marché Ontario", description: "Analyser le paysage concurrentiel, identifier les segments prioritaires et quantifier l'opportunité.", phase: "execution", progression: 70, botPrimaire: "CSOB", echeance: "2026-04-30",
-          objectifs: ["Profiler 20 compétiteurs", "Identifier 5 segments prioritaires", "Estimer le TAM/SAM/SOM"],
-          livrables: ["Rapport d'analyse concurrentielle", "Segmentation marché", "Recommandations stratégiques"],
-          budget: "15 000 $",
-          documents: [{ id: "d23", titre: "Competitive-landscape.pdf", type: "recherche", format: "PDF", modifie: "2026-04-08", auteur: "Simone (CSO)" }],
-          jalons: [{ date: "2026-03-15", label: "Données collectées", done: true }, { date: "2026-04-15", label: "Analyse complétée", done: false }, { date: "2026-04-30", label: "Rapport livré", done: false }],
-          missions: [
-            { id: 1004, titre: "Analyse concurrentielle", description: "Profiler les 20 compétiteurs principaux en Ontario. Documenter leurs forces, faiblesses, pricing et positionnement.", phase: "retroaction", progression: 90, botPrimaire: "CSOB", echeance: "2026-04-15",
-              livrables: ["20 fiches compétiteurs", "Matrice positionnement", "SWOT global"],
-              documents: [{ id: "d24", titre: "Fiches compétiteurs", type: "recherche", format: "Google Sheets", modifie: "2026-04-10", auteur: "Simone (CSO)" }],
-              jalons: [{ date: "2026-04-01", label: "10/20 profils complétés", done: true }, { date: "2026-04-15", label: "20/20 + synthèse", done: false }],
-              taches: [
-                { id: 10007, titre: "Recherche web et rapports industrie", description: "Compiler les données publiques sur les compétiteurs (revenus, parts de marché, positionnement, avis clients).", phase: "retroaction", progression: 100, assignee: "Simone (CSO)", echeance: "2026-04-01",
-                  documents: [{ id: "d25", titre: "Sources et liens", type: "recherche", format: "Notion", modifie: "2026-03-30", auteur: "Simone (CSO)" }],
-                  jalons: [{ date: "2026-04-01", label: "Recherche terminée", done: true }] },
-                { id: 10008, titre: "Synthèse SWOT par compétiteur", description: "Rédiger une fiche SWOT pour chaque compétiteur. Identifier les angles d'attaque et les différenciateurs.", phase: "execution", progression: 75, assignee: "Simone (CSO)", echeance: "2026-04-15",
-                  documents: [{ id: "d26", titre: "SWOT-template.docx", type: "template", format: "Word", modifie: "2026-04-05", auteur: "Simone (CSO)" }],
-                  jalons: [{ date: "2026-04-10", label: "15/20 SWOT rédigés", done: true }, { date: "2026-04-15", label: "20/20 livrés", done: false }] },
-              ] },
-          ] },
-        { id: 104, titre: "Stratégie go-to-market", description: "Définir le positionnement, pricing, canaux et messaging pour le marché ontarien.", phase: "discussion", progression: 5, botPrimaire: "CMOB", echeance: "2026-06-15",
-          objectifs: ["Définir le positionnement différencié", "Adapter le pricing au marché ON", "Choisir 3 canaux d'acquisition"],
-          livrables: ["Document GTM", "Pricing grid", "Plan média"], budget: "25 000 $",
-          documents: [], jalons: [{ date: "2026-05-01", label: "Kickoff GTM", done: false }, { date: "2026-06-15", label: "GTM validé", done: false }],
-          missions: [] },
-      ] },
-    { id: 3, titre: "Programme fidélisation clients", description: "Réduire le churn de 15% et augmenter le LTV de 25% via un programme de fidélisation structuré. Inclut tiers, récompenses, gamification et portail client.", phase: "creation", progression: 40, dateDebut: "2026-03-15", echeance: "2026-08-15", botPrimaire: "CROB", botCodes: ["CROB", "CMOB", "CFOB"],
-      objectifs: ["Réduire le churn à moins de 5%", "Augmenter le NPS de 20 points", "Lancer le programme loyalty Q2", "Atteindre 80% d'adoption en 3 mois"],
-      budget: "85 000 $", risques: ["Faible adoption si UX complexe", "Coût des récompenses mal calibré", "Intégration CRM difficile"],
-      documents: [
-        { id: "d27", titre: "Blueprint programme loyalty", type: "stratégie", format: "PDF", modifie: "2026-04-10", auteur: "Mathilde (CMO)" },
-        { id: "d28", titre: "Analyse churn Q1 2026", type: "données", format: "Excel", modifie: "2026-04-01", auteur: "Rich (CRO)" },
-        { id: "d29", titre: "Budget rewards program", type: "finance", format: "Excel", modifie: "2026-03-25", auteur: "Frank (CFO)" },
-      ],
-      jalons: [
-        { date: "2026-03-15", label: "Kickoff chantier", done: true },
-        { date: "2026-04-15", label: "Benchmark terminé", done: true },
-        { date: "2026-05-15", label: "Design programme validé", done: false },
-        { date: "2026-06-30", label: "Développement portail", done: false },
-        { date: "2026-08-15", label: "Lancement programme", done: false },
-      ],
-      dateMaj: "2026-04-10",
-      sante: { score: 60, tendance: "down", burnRate: "35%", roi: "2.5x projeté" },
-      decisions: [
-        { date: "2026-04-10", decision: "Programme à 3 tiers: Bronze, Argent, Or", decideur: "Rich (CRO)", rationnel: "Simple à comprendre pour les clients, scalable" },
-        { date: "2026-03-20", decision: "Gamification intégrée dès le V1", decideur: "Mathilde (CMO)", rationnel: "Les benchmarks montrent +40% d'engagement avec gamification" },
-      ],
-      conferences: [
-        { id: "conf-5", date: "2026-04-08", titre: "Design review programme fidélisation", participants: ["CROB", "CMOB", "CFOB"], duree: "40 min", resume: "Validation des 3 tiers. Discussion sur le coût des récompenses — Frank veut un cap à 5% du revenu." },
-      ],
-      activites: [
-        { date: "2026-04-10", action: "Décision sur les 3 tiers du programme", auteur: "Rich (CRO)", type: "decision" },
-        { date: "2026-04-08", action: "Design review complétée", auteur: "Mathilde (CMO)", type: "commentaire" },
-        { date: "2026-04-01", action: "Benchmark de 10 programmes B2B livré", auteur: "Mathilde (CMO)", type: "livrable" },
-        { date: "2026-03-15", action: "Chantier fidélisation lancé", auteur: "CarlOS", type: "creation" },
-      ],
-      projets: [
-        { id: 105, titre: "Design du programme loyalty", description: "Concevoir les tiers, récompenses et mécaniques de fidélisation. Valider avec un panel de 10 clients.", phase: "creation", progression: 55, botPrimaire: "CMOB", echeance: "2026-05-15",
-          objectifs: ["3 tiers de fidélisation définis", "Catalogue de 20 récompenses", "Mécaniques de gamification validées"],
-          livrables: ["Document de design", "Maquettes UI", "Plan de test client"], budget: "20 000 $",
-          documents: [
-            { id: "d30", titre: "Loyalty-design-v2.fig", type: "design", format: "Figma", modifie: "2026-04-08", auteur: "Mathilde (CMO)" },
-            { id: "d31", titre: "Tiers et rewards matrix", type: "stratégie", format: "Google Sheets", modifie: "2026-04-05", auteur: "Rich (CRO)" },
-          ],
-          jalons: [{ date: "2026-04-01", label: "Benchmark complété", done: true }, { date: "2026-04-20", label: "Tiers définis", done: false }, { date: "2026-05-15", label: "Design validé", done: false }],
-          missions: [
-            { id: 1005, titre: "Benchmark programmes existants", description: "Étudier les meilleurs programmes de fidélisation B2B (Salesforce, HubSpot, Slack, etc.).", phase: "retroaction", progression: 100, botPrimaire: "CMOB", echeance: "2026-04-01",
-              livrables: ["Rapport benchmark 10 programmes", "Matrice de comparaison", "Recommandations"],
-              documents: [{ id: "d32", titre: "Benchmark-B2B-loyalty.pdf", type: "recherche", format: "PDF", modifie: "2026-03-30", auteur: "Mathilde (CMO)" }],
-              jalons: [{ date: "2026-04-01", label: "Benchmark livré", done: true }],
-              taches: [
-                { id: 10009, titre: "Analyser 10 programmes B2B leaders", description: "Documenter les mécaniques de Salesforce, HubSpot, Slack, Notion, Figma, Linear, Atlassian, Datadog, Stripe, Twilio.", phase: "retroaction", progression: 100, assignee: "Mathilde (CMO)", echeance: "2026-03-25",
-                  documents: [{ id: "d33", titre: "Fiches programmes", type: "recherche", format: "Notion", modifie: "2026-03-24", auteur: "Mathilde (CMO)" }],
-                  jalons: [{ date: "2026-03-25", label: "10 fiches rédigées", done: true }] },
-              ] },
-          ] },
-      ] },
-  ],
-  CTOB: [
-    { id: 4, titre: "Refonte architecture microservices", description: "Découper le monolithe en microservices pour améliorer la scalabilité et la vélocité de développement.", phase: "execution", progression: 45, dateDebut: "2026-03-01", echeance: "2026-07-31", botPrimaire: "CTOB", botCodes: ["CTOB", "CISOB"],
-      objectifs: ["Découper 8 domaines en services indépendants", "Réduire le temps de déploiement de 4h à 15min", "Atteindre 99.9% uptime"],
-      budget: "90 000 $", risques: ["Complexité de la migration de données entre services", "Performance des appels inter-services"],
-      documents: [
-        { id: "dt1", titre: "Architecture microservices v3", type: "technique", format: "Diagramme", modifie: "2026-04-10", auteur: "Tim (CTO)" },
-        { id: "dt2", titre: "ADR-001 — Choix message broker", type: "décision", format: "Markdown", modifie: "2026-03-20", auteur: "Tim (CTO)" },
-      ],
-      jalons: [
-        { date: "2026-03-01", label: "Kickoff architecture", done: true },
-        { date: "2026-04-01", label: "Service auth extrait", done: true },
-        { date: "2026-05-15", label: "Service billing extrait", done: false },
-        { date: "2026-07-31", label: "8 services opérationnels", done: false },
-      ],
-      projets: [
-        { id: 106, titre: "Service authentification", description: "Extraire l'auth en microservice avec JWT + OAuth2. Zero downtime migration.", phase: "retroaction", progression: 95, botPrimaire: "CTOB", echeance: "2026-05-01",
-          objectifs: ["JWT refresh tokens", "OAuth2 flows", "Rate limiting"], livrables: ["Service Go déployé", "Documentation API", "Tests E2E"], budget: "15 000 $",
-          documents: [{ id: "dt3", titre: "auth-service/README.md", type: "doc", format: "Markdown", modifie: "2026-04-10", auteur: "Tim (CTO)" }],
-          jalons: [{ date: "2026-04-01", label: "MVP auth service", done: true }, { date: "2026-04-20", label: "Migration traffic", done: true }, { date: "2026-05-01", label: "Ancien code retiré", done: false }],
-          missions: [
-            { id: 1006, titre: "Implémenter JWT refresh tokens", description: "Ajouter le mécanisme de refresh avec rotation et invalidation automatique.", phase: "retroaction", progression: 100, botPrimaire: "CTOB", echeance: "2026-04-20",
-              livrables: ["Endpoint /auth/refresh", "Tests unitaires", "Documentation Swagger"],
-              documents: [{ id: "dt4", titre: "jwt-refresh.go", type: "code", format: "Go", modifie: "2026-04-18", auteur: "Tim (CTO)" }],
-              jalons: [{ date: "2026-04-20", label: "Déployé en prod", done: true }],
-              taches: [
-                { id: 10010, titre: "Coder le endpoint /auth/refresh", description: "Implémenter la rotation de tokens avec invalidation de l'ancien. Inclure le rate limiting par IP.", phase: "retroaction", progression: 100, assignee: "Tim (CTO)", echeance: "2026-04-15",
-                  documents: [{ id: "dt5", titre: "refresh_handler.go", type: "code", format: "Go", modifie: "2026-04-14", auteur: "Tim (CTO)" }],
-                  jalons: [{ date: "2026-04-15", label: "Code mergé", done: true }] },
-              ] },
-          ] },
-        { id: 107, titre: "Service facturation", description: "Microservice de billing avec Stripe integration et gestion des abonnements.", phase: "execution", progression: 35, botPrimaire: "CFOB", echeance: "2026-06-15",
-          objectifs: ["Stripe webhooks", "Dashboard revenus", "Relances automatiques"], livrables: ["Service Python déployé", "Dashboard Metabase", "Alertes Slack"], budget: "25 000 $",
-          documents: [{ id: "dt6", titre: "billing-service/architecture.md", type: "technique", format: "Markdown", modifie: "2026-04-05", auteur: "Frank (CFO)" }],
-          jalons: [{ date: "2026-04-15", label: "Stripe connecté", done: true }, { date: "2026-05-15", label: "Webhooks opérationnels", done: false }, { date: "2026-06-15", label: "Dashboard live", done: false }],
-          missions: [
-            { id: 1007, titre: "Intégration Stripe", description: "Connecter l'API Stripe pour les paiements récurrents et gérer les webhooks.", phase: "execution", progression: 40, botPrimaire: "CFOB", echeance: "2026-05-15",
-              livrables: ["Webhooks configurés", "Tests de paiement", "Monitoring erreurs"],
-              documents: [{ id: "dt7", titre: "stripe-webhook-handler.py", type: "code", format: "Python", modifie: "2026-04-08", auteur: "Frank (CFO)" }],
-              jalons: [{ date: "2026-04-15", label: "API connectée", done: true }, { date: "2026-05-15", label: "Webhooks live", done: false }],
-              taches: [
-                { id: 10011, titre: "Configurer webhooks Stripe", description: "Écouter payment_intent.succeeded, invoice.paid, subscription.updated. Gérer les retries et les erreurs.", phase: "execution", progression: 60, assignee: "Frank (CFO)", echeance: "2026-05-01",
-                  documents: [{ id: "dt8", titre: "webhook_config.json", type: "config", format: "JSON", modifie: "2026-04-10", auteur: "Frank (CFO)" }],
-                  jalons: [{ date: "2026-04-20", label: "3/6 events configurés", done: true }, { date: "2026-05-01", label: "6/6 events live", done: false }] },
-                { id: 10012, titre: "Dashboard revenus temps réel", description: "Afficher MRR, churn, ARPU, LTV en temps réel avec alertes sur anomalies.", phase: "discussion", progression: 0, assignee: "Frank (CFO)", echeance: "2026-06-01",
-                  documents: [], jalons: [{ date: "2026-05-15", label: "Maquette validée", done: false }, { date: "2026-06-01", label: "Dashboard déployé", done: false }] },
-              ] },
-          ] },
-      ] },
-  ],
-  CMOB: [
-    { id: 5, titre: "Campagne lancement produit V2", description: "Orchestrer le lancement marketing du produit V2 sur tous les canaux. Vidéo, landing page, PR, social media, email nurturing.", phase: "creation", progression: 50, dateDebut: "2026-03-15", echeance: "2026-06-15", botPrimaire: "CMOB", botCodes: ["CMOB", "CROB"],
-      objectifs: ["Générer 10K visiteurs uniques jour du lancement", "Obtenir 500 inscriptions en 48h", "Coverage dans 5 médias spécialisés"],
-      budget: "60 000 $", risques: ["Retard vidéo = décalage lancement", "Budget média insuffisant si CPC élevé"],
-      documents: [
-        { id: "dm1", titre: "Plan lancement V2", type: "stratégie", format: "PDF", modifie: "2026-04-05", auteur: "Mathilde (CMO)" },
-        { id: "dm2", titre: "Brief créatif vidéo", type: "brief", format: "Google Doc", modifie: "2026-04-01", auteur: "Mathilde (CMO)" },
-      ],
-      jalons: [
-        { date: "2026-03-15", label: "Kickoff campagne", done: true },
-        { date: "2026-04-30", label: "Assets créatifs terminés", done: false },
-        { date: "2026-05-30", label: "Landing page live", done: false },
-        { date: "2026-06-15", label: "Jour de lancement", done: false },
-      ],
-      projets: [
-        { id: 108, titre: "Contenu et assets créatifs", description: "Produire vidéo de présentation, landing page, séquence email et posts sociaux.", phase: "execution", progression: 65, botPrimaire: "CMOB", echeance: "2026-05-30",
-          objectifs: ["Vidéo 2min tournée et montée", "Landing page responsive", "10 emails de nurturing"], livrables: ["Vidéo MP4 HD", "Landing page HTML", "Templates emails"], budget: "30 000 $",
-          documents: [{ id: "dm3", titre: "Storyboard vidéo", type: "creative", format: "Figma", modifie: "2026-04-03", auteur: "Mathilde (CMO)" }],
-          jalons: [{ date: "2026-04-15", label: "Script validé", done: true }, { date: "2026-05-15", label: "Vidéo montée", done: false }, { date: "2026-05-30", label: "Tous assets livrés", done: false }],
-          missions: [
-            { id: 1008, titre: "Vidéo de présentation 2min", description: "Script, tournage et montage de la vidéo produit avec témoignages clients.", phase: "execution", progression: 70, botPrimaire: "CMOB", echeance: "2026-05-15",
-              livrables: ["Script final", "Rush vidéo", "Vidéo montée", "Sous-titres FR/EN"],
-              documents: [
-                { id: "dm4", titre: "Script-V2-final.docx", type: "script", format: "Word", modifie: "2026-04-10", auteur: "Mathilde (CMO)" },
-                { id: "dm5", titre: "Rush tournage 2026-04-12", type: "vidéo", format: "MP4", modifie: "2026-04-12", auteur: "Mathilde (CMO)" },
-              ],
-              jalons: [{ date: "2026-04-10", label: "Script approuvé", done: true }, { date: "2026-04-12", label: "Tournage terminé", done: true }, { date: "2026-05-01", label: "Premier montage", done: false }, { date: "2026-05-15", label: "Version finale", done: false }],
-              taches: [
-                { id: 10013, titre: "Écrire le script vidéo", description: "Rédiger le script avec les points clés: problème, solution, preuve sociale, CTA. Inclure les transitions et les notes de réalisation.", phase: "retroaction", progression: 100, assignee: "Mathilde (CMO)", echeance: "2026-04-10",
-                  documents: [{ id: "dm6", titre: "Script-draft-v3.docx", type: "script", format: "Word", modifie: "2026-04-08", auteur: "Mathilde (CMO)" }],
-                  jalons: [{ date: "2026-04-10", label: "Script validé par Carl", done: true }] },
-                { id: 10014, titre: "Montage et post-production", description: "Assembler les séquences, ajouter animations, lower thirds, sous-titres bilingues et musique.", phase: "execution", progression: 40, assignee: "Mathilde (CMO)", echeance: "2026-05-15",
-                  documents: [{ id: "dm7", titre: "Timeline Premiere Pro", type: "projet", format: "Premiere", modifie: "2026-04-12", auteur: "Mathilde (CMO)" }],
-                  jalons: [{ date: "2026-04-20", label: "Rough cut", done: false }, { date: "2026-05-01", label: "Fine cut", done: false }, { date: "2026-05-15", label: "Master final", done: false }] },
-              ] },
-          ] },
-      ] },
-  ],
-  CFOB: [
-    { id: 6, titre: "Optimisation trésorerie Q2-Q3", description: "Améliorer le BFR et sécuriser le runway pour les 12 prochains mois. Automatiser la facturation et réduire les délais de paiement.", phase: "execution", progression: 55, dateDebut: "2026-02-01", echeance: "2026-07-31", botPrimaire: "CFOB", botCodes: ["CFOB", "COOB"],
-      objectifs: ["Réduire le DSO de 45 à 30 jours", "Augmenter la réserve de cash de 200K$", "Automatiser 80% de la facturation"],
-      budget: "40 000 $", risques: ["Clients résistants aux nouvelles conditions de paiement", "Intégration ERP complexe"],
-      documents: [
-        { id: "df1", titre: "Plan trésorerie Q2-Q3", type: "finance", format: "Excel", modifie: "2026-04-08", auteur: "Frank (CFO)" },
-        { id: "df2", titre: "Analyse DSO par client", type: "données", format: "Excel", modifie: "2026-04-05", auteur: "Frank (CFO)" },
-      ],
-      jalons: [
-        { date: "2026-02-01", label: "Audit trésorerie", done: true },
-        { date: "2026-03-15", label: "Nouvelles conditions paiement", done: true },
-        { date: "2026-05-01", label: "Facturation automatique live", done: false },
-        { date: "2026-07-31", label: "Objectif DSO 30j atteint", done: false },
-      ],
-      projets: [
-        { id: 109, titre: "Automatisation facturation", description: "Mettre en place la facturation automatique, les relances et le suivi des paiements.", phase: "execution", progression: 70, botPrimaire: "CFOB", echeance: "2026-05-01",
-          objectifs: ["Templates factures automatiques", "Relances J+7/J+15/J+30", "Dashboard suivi paiements"], livrables: ["Système de facturation", "Templates email relance", "Dashboard"], budget: "15 000 $",
-          documents: [{ id: "df3", titre: "Specs facturation auto", type: "specs", format: "PDF", modifie: "2026-03-25", auteur: "Frank (CFO)" }],
-          jalons: [{ date: "2026-03-15", label: "Specs validées", done: true }, { date: "2026-04-15", label: "Templates configurés", done: true }, { date: "2026-05-01", label: "Système live", done: false }],
-          missions: [
-            { id: 1009, titre: "Intégrer le système de facturation", description: "Connecter ERP → facturation automatique → relances → dashboard de suivi.", phase: "execution", progression: 70, botPrimaire: "CFOB", echeance: "2026-05-01",
-              livrables: ["Connecteur ERP", "Engine de relance", "Dashboard revenus"],
-              documents: [{ id: "df4", titre: "erp-connector.py", type: "code", format: "Python", modifie: "2026-04-10", auteur: "Frank (CFO)" }],
-              jalons: [{ date: "2026-04-01", label: "Connecteur ERP prêt", done: true }, { date: "2026-04-20", label: "Relances automatiques testées", done: true }, { date: "2026-05-01", label: "Production", done: false }],
-              taches: [
-                { id: 10015, titre: "Configurer les templates de factures", description: "Créer les modèles avec branding, termes de paiement, calculs automatiques et numérotation séquentielle.", phase: "retroaction", progression: 100, assignee: "Frank (CFO)", echeance: "2026-04-15",
-                  documents: [{ id: "df5", titre: "invoice-template.html", type: "template", format: "HTML", modifie: "2026-04-14", auteur: "Frank (CFO)" }],
-                  jalons: [{ date: "2026-04-15", label: "Templates déployés", done: true }] },
-              ] },
-          ] },
-      ] },
-  ],
-};
-// Fallback: départements sans mock spécifique → utiliser CEOB
-const getMockChantiers = (botCode: string): MockChantierItem[] => MOCK_CHANTIERS[botCode] || MOCK_CHANTIERS.CEOB || [];
+// Mock interfaces and data imported from ../data/mock/chantiers.mock.ts
 
 // ── ChantierCard — Card standard pattern SectionView (grid-cols-2, header bg-[#00B4D8]/10) ──
 function ChantierCard({ typeLabel, typeIcon: TypeIcon, title, description, phase, progression, subCount, subLabel, echeance, assignee, onAction, onClick }: {
@@ -1127,28 +704,8 @@ function ChantierEntityDetail({ type, title, description, phase, progression, ec
   );
 }
 
-// ── SubElementsToolbar — Toolbar viewMode (cards/list/table) pour sous-éléments drill-down ──
-function SubElementsToolbar({ viewMode, onViewMode, count, label }: { viewMode: "cards" | "list" | "table"; onViewMode: (m: "cards" | "list" | "table") => void; count: number; label: string }) {
-  const views = [
-    { key: "cards" as const, icon: LayoutGrid, tip: "Cartes" },
-    { key: "list" as const, icon: LayoutList, tip: "Liste" },
-    { key: "table" as const, icon: Table2, tip: "Tableau" },
-  ];
-  return (
-    <div className="flex items-center gap-2 mb-2">
-      <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
-        {views.map(v => (
-          <button key={v.key} onClick={() => onViewMode(v.key)} title={v.tip}
-            className={cn("p-1.5 rounded-md cursor-pointer transition-colors", viewMode === v.key ? "bg-white shadow-sm text-gray-900" : "text-gray-400 hover:text-gray-600")}>
-            <v.icon className="h-3.5 w-3.5" />
-          </button>
-        ))}
-      </div>
-      <div className="flex-1" />
-      <span className={SF.itemCount}>{count} {label}</span>
-    </div>
-  );
-}
+// ── SubElementsToolbar — PARTAGÉ depuis shared/ViewModeToolbar.tsx (classes SF standardisées) ──
+// Ancien code inline supprimé — utiliser <ViewModeToolbar /> importé en haut
 
 // ── SubElementsList — Rendu en mode liste ──
 function SubElementsList({ items, onAction }: { items: { typeLabel: string; typeIcon: React.ElementType; title: string; phase: PhaseKey; progression: number; echeance?: string; assignee?: string; onClick: () => void }[]; onAction?: (phase: PhaseKey, ctx: string) => void }) {
@@ -1207,7 +764,8 @@ function SubElementsTable({ items, onAction }: { items: { typeLabel: string; tit
 export function ChantierView({ botCode, showHeader = true, onAction }: { botCode: string; showHeader?: boolean; onAction?: (phase: PhaseKey, ctx: string) => void }) {
   // API data (real DB) + mock data (simulation réaliste)
   const { chantiers: apiChantiers, loading: loadingCh } = useChantiers();
-  const mockData = getMockChantiers(botCode);
+  const { data: mockChantiers } = useDataSource("chantiers", MOCK_CHANTIERS);
+  const mockData = (mockChantiers[botCode] || mockChantiers.CEOB || []) as MockChantierItem[];
   const [selectedDept, setSelectedDept] = useState(botCode);
   const [level, setLevel] = useState<ChantierLevel>("chantiers");
   const [selectedChantier, setSelectedChantier] = useState<number | null>(null);
@@ -1224,7 +782,7 @@ export function ChantierView({ botCode, showHeader = true, onAction }: { botCode
   const resetNav = () => { setLevel("chantiers"); setSelectedChantier(null); setSelectedProjet(null); setSelectedMission(null); setDetailTache(null); };
 
   // Merge API + mock — API chantiers en premier, mock pour la simulation
-  const deptMock = selectedDept === botCode ? mockData : getMockChantiers(selectedDept);
+  const deptMock = selectedDept === botCode ? mockData : (mockChantiers[selectedDept] || mockChantiers.CEOB || []) as MockChantierItem[];
   const apiConverted: MockChantierItem[] = (apiChantiers || [])
     .filter(ch => {
       if (!ch.bot_codes?.length) return selectedDept === "CEOB";
@@ -1276,7 +834,7 @@ export function ChantierView({ botCode, showHeader = true, onAction }: { botCode
     <div className="space-y-3">
       {/* 1. LIVING HERO — Pattern SectionView */}
       {showHeader && level === "chantiers" && (
-        <LivingHero blur1="bg-orange-100/70" blur2="bg-amber-100/60" subtitleColor="text-orange-600" subtitle="Gestion & Vélocité" title="Vos visions, érigées brique par brique." description="Suivez l'avancement stratégique, consolidez vos sprints et regardez vos chantiers prendre vie.">
+        <LivingHero blur1="bg-orange-100/70" blur2="bg-amber-100/60" title="Brique par brique." description="Avancement, sprints et vélocité réelle." badge={<DomainBadge domain="chantiers" />}>
           <div className="relative w-[360px] h-[140px]">
             <div className="absolute right-[30px] bottom-[-20px] w-48 h-32 flex items-end justify-between px-4 opacity-50 space-x-2">
               <div className="w-12 bg-orange-200 border-t-4 border-orange-400 anim-block-1" />
@@ -1340,7 +898,7 @@ export function ChantierView({ botCode, showHeader = true, onAction }: { botCode
             <button onClick={() => { setSelectedDept(botCode); resetNav(); }} className={cn(SF.btnBase, selectedDept === botCode && level === "chantiers" ? SF.btnActive : SF.btnInactive)}>
               <Home className={selectedDept === botCode ? SF.iconActive : SF.iconInactive} />
               <span className={selectedDept === botCode ? SF.labelActive : SF.labelInactive}>Vue d'ensemble</span>
-              <span className={SF.count}>{getMockChantiers(botCode).length}</span>
+              <span className={SF.count}>{(mockChantiers[botCode] || []).length}</span>
             </button>
             <div className={SF.separator} />
             {/* Départements — comme Cockpit sidebar */}
@@ -1348,7 +906,7 @@ export function ChantierView({ botCode, showHeader = true, onAction }: { botCode
               const isActive = selectedDept === code && selectedDept !== botCode;
               const Icon = DEPT_DASH_ICON[code] || Zap;
               const label = DEPT_SHORT_LABEL[code] || code;
-              const deptCount = getMockChantiers(code).length;
+              const deptCount = (mockChantiers[code] || []).length;
               return (
                 <button key={code} onClick={() => { setSelectedDept(code); resetNav(); }}
                   className={cn(SF.btnBase, isActive ? SF.btnActive : SF.btnInactive)}>
@@ -1422,13 +980,35 @@ export function ChantierView({ botCode, showHeader = true, onAction }: { botCode
                   <option value="recent">Récent</option>
                   <option value="alpha">A → Z</option>
                 </select>
+                <div className={SF.viewToggleGroup}>
+                  {([
+                    { key: "cards" as const, icon: LayoutGrid, tip: "Cartes" },
+                    { key: "list" as const, icon: LayoutList, tip: "Liste" },
+                    { key: "table" as const, icon: Table2, tip: "Tableau" },
+                  ]).map(v => (
+                    <button key={v.key} onClick={() => setSubViewMode(v.key)} title={v.tip}
+                      className={subViewMode === v.key ? SF.viewToggleBtnActive : SF.viewToggleBtnInactive}>
+                      <v.icon className={SF.viewToggleIcon} />
+                    </button>
+                  ))}
+                </div>
                 <span className={SF.itemCount}>{filtered.length} chantier{filtered.length > 1 ? "s" : ""}</span>
               </div>
 
-              {/* Section header + grid-cols-2 cards */}
+              {/* Section header + contenu selon viewMode */}
               <CockpitSectionHeader icon={Flame} title="Chantiers" count={filtered.length} color="text-orange-500" />
               {filtered.length === 0 ? (
                 <div className="text-center py-12 text-gray-400 text-xs">Aucun chantier trouvé</div>
+              ) : subViewMode === "list" ? (
+                <SubElementsList items={filtered.map(ch => ({
+                  typeLabel: "Chantier", typeIcon: Flame, title: ch.titre, phase: ch.phase, progression: ch.progression, echeance: ch.echeance, assignee: BOT_DISPLAY[ch.botPrimaire]?.name,
+                  onClick: () => { setSelectedChantier(ch.id); setLevel("projets"); },
+                }))} onAction={onAction} />
+              ) : subViewMode === "table" ? (
+                <SubElementsTable items={filtered.map(ch => ({
+                  typeLabel: "Chantier", title: ch.titre, phase: ch.phase, progression: ch.progression, echeance: ch.echeance, assignee: BOT_DISPLAY[ch.botPrimaire]?.name,
+                  onClick: () => { setSelectedChantier(ch.id); setLevel("projets"); },
+                }))} onAction={onAction} />
               ) : (
                 <div className={SF.gridContent}>
                   {filtered.map(ch => (

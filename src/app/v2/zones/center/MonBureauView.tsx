@@ -1684,7 +1684,7 @@ export function AgendaPage() {
   return (
     <div className="space-y-3">
       {/* ═══ HERO V20 — Agenda Clock + Timeline ═══ */}
-      <LivingHero blur1="bg-rose-100/70" blur2="bg-red-100/40" subtitleColor="text-rose-600" subtitle="Synchronisation Totale" title="La maîtrise absolue de votre temps." description="Synchronisez vos équipes et vos bots sur une frise temporelle parfaite.">
+      <LivingHero blur1="bg-rose-100/70" blur2="bg-red-100/40" title="Votre quartier général." description="Agenda, docs et outils au même endroit.">
         <div className="relative flex items-center justify-end" style={{ width: 360, height: 140 }}>
           <div className="absolute right-[20px] opacity-[0.15] text-rose-600">
             <svg viewBox="0 0 100 100" className="w-36 h-36">

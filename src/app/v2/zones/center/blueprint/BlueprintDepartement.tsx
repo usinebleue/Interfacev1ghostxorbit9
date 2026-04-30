@@ -147,12 +147,12 @@ function injectHeroStyles() {
   document.head.appendChild(s);
 }
 
-// ═══ LIVING HERO WRAPPER — V20 Carl's exact layout ═══
-export function LivingHero({ blur1, blur2, subtitleColor, subtitle, title, description, scaleClass, children }: {
+// ═══ LIVING HERO WRAPPER — V21 Compact (subtitle removed, thinner) ═══
+export function LivingHero({ blur1, blur2, title, description, scaleClass, children }: {
   blur1: string;
   blur2: string;
-  subtitleColor: string;
-  subtitle: string;
+  subtitleColor?: string;
+  subtitle?: string;
   title: string;
   description: string;
   scaleClass?: string;
@@ -160,19 +160,18 @@ export function LivingHero({ blur1, blur2, subtitleColor, subtitle, title, descr
 }) {
   useEffect(() => { injectHeroStyles(); }, []);
   return (
-    <div className="relative w-full rounded-xl bg-white border border-gray-200 shadow-sm py-5 px-8 overflow-hidden min-h-[110px] flex items-center">
+    <div className="relative w-full rounded-xl bg-white border border-gray-200 shadow-sm py-3 px-8 overflow-hidden min-h-[80px] flex items-center">
       <div className={cn("absolute rounded-full blur-[100px] opacity-60", blur1)} style={{ top: '-50%', left: '-10%', width: '50%', height: '200%' }} />
       <div className={cn("absolute rounded-full blur-[120px] opacity-50", blur2)} style={{ bottom: '-50%', right: '10%', width: '60%', height: '200%' }} />
       <div className="absolute inset-0 bg-pattern-grid opacity-[0.35]" />
       {/* Illustration */}
-      <div className={cn("absolute top-0 bottom-0 flex items-center transform origin-right pointer-events-none", scaleClass === "scale-[0.80]" ? "right-0 scale-[0.80]" : "right-[1rem] scale-[0.70]")}>
+      <div className={cn("absolute top-0 bottom-0 flex items-center transform origin-right pointer-events-none", scaleClass === "scale-[0.80]" ? "right-0 scale-[0.55]" : "right-[0.5rem] scale-[0.50]")}>
         {children}
       </div>
       {/* Text */}
-      <div className="relative z-20 w-full pr-[250px]">
-        <p className={cn("uppercase tracking-widest text-[9px] font-bold mb-1", subtitleColor)}>{subtitle}</p>
-        <h2 className="text-xl font-extrabold text-gray-900 mb-1">{title}</h2>
-        <p className="text-slate-500 text-[12.5px] font-medium leading-snug">{description}</p>
+      <div className="relative z-20 w-full pr-[180px]">
+        <h2 className="text-lg font-extrabold text-gray-900 mb-0.5">{title}</h2>
+        <p className="text-slate-500 text-[12px] font-medium leading-snug">{description}</p>
       </div>
     </div>
   );
@@ -4879,9 +4878,8 @@ export function DataRoomView({ botCode, headerGradient, showHeader = false }: { 
       {showHeader && (
         <LivingHero
           blur1="bg-emerald-100/60" blur2="bg-teal-100/50"
-          subtitleColor="text-emerald-600" subtitle="Documents & Fichiers"
-          title="Vos documents importants, tous au même endroit."
-          description="Rapports, contrats, analyses — classés, protégés, toujours accessibles en 2 clics."
+          title="Vos docs, blindés ici."
+          description="Classés, protégés, accessibles en 2 clics."
         >
           <div className="relative w-[340px] h-[150px] flex items-center justify-center">
             <div className="absolute right-[100px] top-[15px] w-[140px] h-[120px] bg-white border border-emerald-100 rounded-xl shadow-xl transform rotate-3 overflow-hidden p-4 text-[7px] text-slate-300 leading-tight" style={{fontFamily:'ui-monospace,monospace'}}>
@@ -7383,9 +7381,8 @@ export function PlaybookStoreView({ botCode, headerGradient, showHeader = false 
       {showHeader && (
         <LivingHero
           blur1="bg-cyan-100/60" blur2="bg-blue-100/40"
-          subtitleColor="text-cyan-600" subtitle="Automatisations"
-          title="Des recettes prêtes à lancer."
-          description="Chaque playbook est une séquence d'actions que le système exécute pour vous. Choisissez, lancez, c'est fait."
+          title="Lancez, c'est fait."
+          description="Des automatisations prêtes à déclencher."
         >
           <div className="relative w-[380px] h-[160px] flex items-center">
             <div className="absolute right-[20px] flex flex-row items-center gap-0 w-[340px]">
@@ -7707,9 +7704,8 @@ export function ConferenceAIView({ headerGradient, onNavigateToStore, onLaunch, 
       {/* Hero — Living Heroes V20 Conference AI */}
       <LivingHero
         blur1="bg-fuchsia-100/60" blur2="bg-violet-100/50"
-        subtitleColor="text-fuchsia-600" subtitle="Réunions intelligentes"
-        title="Ici, l'organique fusionne avec l'artificielle."
-        description="Mettez vos experts humains et AI face à face. Ce qui prenait des semaines se règle en une session."
+        title="Humain + IA, face à face."
+        description="Des semaines de travail en une session."
       >
         <div className="relative w-[360px] h-[140px] flex items-center justify-center">
           <svg className="absolute inset-0 w-full h-full opacity-[0.15] text-violet-800" viewBox="0 0 360 140"><path d="M 20 70 L 60 40 L 180 40 L 220 70 L 180 100 L 60 100 Z" fill="none" stroke="currentColor" strokeWidth="1"/><path d="M 60 40 L 60 100 M 180 40 L 180 100 M 20 70 L 220 70" fill="none" stroke="currentColor" strokeWidth="0.5" strokeDasharray="2 2"/><circle cx="120" cy="70" r="50" fill="none" stroke="currentColor" strokeWidth="0.5"/></svg>
@@ -9841,9 +9837,8 @@ export function CockpitView({ embedded = false, onAction, initialDept = "CEOB" }
       {/* Hero — Living Heroes V20 Cockpit */}
       <LivingHero
         blur1="bg-blue-100" blur2="bg-cyan-100/50"
-        subtitleColor="text-blue-600" subtitle="Tableau de bord"
-        title="Tout voir d'un coup d'oeil."
-        description="Vos chiffres clés, alertes et signaux importants. Décidez vite, décidez bien."
+        title="Votre pouls, en direct."
+        description="Alertes, signaux et KPIs. Décidez vite."
       >
         <div className="relative w-[360px] h-[140px]">
           <div className="absolute right-[10px] bottom-[-20px] w-40 h-40 opacity-40">
@@ -10256,9 +10251,8 @@ export function BlueprintView({ botCode, headerGradient, sizeTier: propTier, hid
           {/* Hero — Living Heroes V20 Blueprint */}
           <LivingHero
             blur1="bg-indigo-100/60" blur2="bg-sky-100/50"
-            subtitleColor="text-indigo-600" subtitle="Plan de match"
-            title="Le plan de votre département, noir sur blanc."
-            description="Objectifs, équipe, forces, faiblesses — tout ce qui définit où vous allez et comment."
+            title="Votre plan, noir sur blanc."
+            description="Objectifs, forces et cap — tout est là."
           >
             <div className="relative w-[340px] h-[160px] flex flex-col items-center justify-center mt-2 px-6">
               {/* ROOT NODE */}
@@ -11868,7 +11862,7 @@ export function ChantierView({ botCode, showHeader = true, onAction }: { botCode
     <div className="space-y-3">
       {/* 1. LIVING HERO — Pattern SectionView */}
       {showHeader && level === "chantiers" && (
-        <LivingHero blur1="bg-orange-100/70" blur2="bg-amber-100/60" subtitleColor="text-orange-600" subtitle="Gestion & Vélocité" title="Vos visions, érigées brique par brique." description="Suivez l'avancement stratégique, consolidez vos sprints et regardez vos chantiers prendre vie.">
+        <LivingHero blur1="bg-orange-100/70" blur2="bg-amber-100/60" title="Brique par brique." description="Avancement, sprints et vélocité réelle.">
           <div className="relative w-[360px] h-[140px]">
             <div className="absolute right-[30px] bottom-[-20px] w-48 h-32 flex items-end justify-between px-4 opacity-50 space-x-2">
               <div className="w-12 bg-orange-200 border-t-4 border-orange-400 anim-block-1" />

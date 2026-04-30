@@ -156,9 +156,8 @@ export function ConferenceAIView({ headerGradient, onNavigateToStore, onLaunch, 
       {/* Hero — Living Heroes V20 Conference AI */}
       <LivingHero
         blur1="bg-fuchsia-100/60" blur2="bg-violet-100/50"
-        subtitleColor="text-fuchsia-600" subtitle="Réunions intelligentes"
-        title="Ici, l'organique fusionne avec l'artificielle."
-        description="Mettez vos experts humains et AI face à face. Ce qui prenait des semaines se règle en une session."
+        title="Humain + IA, face à face."
+        description="Des semaines de travail en une session."
       >
         <div className="relative w-[360px] h-[140px] flex items-center justify-center">
           <svg className="absolute inset-0 w-full h-full opacity-[0.15] text-violet-800" viewBox="0 0 360 140"><path d="M 20 70 L 60 40 L 180 40 L 220 70 L 180 100 L 60 100 Z" fill="none" stroke="currentColor" strokeWidth="1"/><path d="M 60 40 L 60 100 M 180 40 L 180 100 M 20 70 L 220 70" fill="none" stroke="currentColor" strokeWidth="0.5" strokeDasharray="2 2"/><circle cx="120" cy="70" r="50" fill="none" stroke="currentColor" strokeWidth="0.5"/></svg>

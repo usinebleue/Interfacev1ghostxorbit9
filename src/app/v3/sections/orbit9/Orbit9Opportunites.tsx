@@ -10,96 +10,35 @@
 import { useState } from "react";
 import {
   Search, Handshake, Star, ArrowLeft,
-  Globe, Zap, Users, Atom, Factory, Wrench, FlaskConical,
-  ShoppingCart, FileCheck, Eye, Bot, Clock, Calendar,
-  Building2, MapPin, Activity, Shield, SortAsc,
+  Globe, Zap, Users, Atom, Factory,
+  Eye, Bot, Clock, Calendar,
+  Building2, MapPin, Activity, Shield,
 } from "lucide-react";
 import { cn } from "../../../components/ui/utils";
 import { SF } from "../../core/styles";
 import { TrustBadge, QualifiedBadge, O9ScoreBar, StagePipeline } from "./orbit9-helpers";
 import { LivingHero } from "../shared/LivingHero";
+import { useDataSource } from "../../data/use-data-source";
+import { DomainBadge } from "../../data/source-badge";
 import {
   O9_OPPORTUNITIES_VEDETTES,
+  O9_OPPORTUNITIES_ALL,
   OPPORTUNITY_TYPE_LABEL,
   OPPORTUNITY_STAGE_CONFIG,
-} from "./orbit9-data";
-import type { OpportunityData, OpportunityType, OpportunityStage } from "./orbit9-data";
+  OPP_SIDEBAR,
+  TYPE_ICON,
+} from "../../data/mock/orbit9.mock";
+import type { OpportunityData, OpportunityType, OpportunityStage, SidebarView } from "../../data/mock/orbit9.mock";
 import { BOT_AVATAR_MAP, DEPT_GRADIENT } from "../shared/dept-data";
 
 // ═══ Card standard avec hover — Pattern EXACT CockpitCard (pas de p-0 overflow-hidden) ═══
 const CARD_HOVER = "rounded-xl border border-gray-200 shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all";
 
-// ═══ Mock data complémentaire (en plus des 3 vedettes) ═══
-
-const O9_OPPORTUNITIES_ALL: OpportunityData[] = [
-  ...O9_OPPORTUNITIES_VEDETTES,
-  {
-    id: "opp-004", entreprise: "SoudurePro Ltée", secteur: "Usinage / Soudure", region: "Laurentides",
-    type: "sous-traitance", score: 71, trustScore: 3.2, trustTier: "argent",
-    description: "Sous-traitance soudure spécialisée pour projets d'envergure nécessitant certification.",
-    apport: "Volume de commandes, gestion de projets", apportPartenaire: "12 soudeurs CWB, capacité 24/7",
-    stage: "decouverte", botAssigne: "CPOB", dateDetection: "il y a 2 semaines", pilierVitaa: "Actif",
-  },
-  {
-    id: "opp-005", entreprise: "InspekTech", secteur: "Contrôle qualité", region: "Montréal",
-    type: "validation-requise", score: 68, trustScore: 3.0, trustTier: "bronze",
-    description: "Validation de processus qualité par un tiers certifié ISO 17025.",
-    apport: "Données production, accès ligne", apportPartenaire: "Certification ISO 17025, équipement métrologie",
-    stage: "decouverte", botAssigne: "COOB", dateDetection: "il y a 3 semaines", pilierVitaa: "Idée",
-  },
-  {
-    id: "opp-006", entreprise: "AcierPlus Inc.", secteur: "Usinage / Métal", region: "Montérégie",
-    type: "mutualisation-achats", score: 74, trustScore: 3.6, trustTier: "argent",
-    description: "Groupement d'achats pour aluminium et acier — volume combiné pour meilleurs prix.",
-    apport: "Volume achat aluminium 200T/an", apportPartenaire: "Volume achat acier 150T/an, entrepôt",
-    stage: "qualification", botAssigne: "CFOB", dateDetection: "il y a 10 jours", pilierVitaa: "Argent",
-  },
-  {
-    id: "opp-007", entreprise: "FormaTech QC", secteur: "Formation", region: "Québec",
-    type: "alliance-strategique", score: 65, trustScore: 2.8, trustTier: "bronze",
-    description: "Alliance pour offrir des formations IA en usine aux manufacturiers du réseau.",
-    apport: "Contenu IA, plateforme CarlOS", apportPartenaire: "Réseau 200+ formateurs, accréditations",
-    stage: "decouverte", botAssigne: "CHROB", dateDetection: "il y a 1 mois", pilierVitaa: "Idée + Temps",
-  },
-  {
-    id: "opp-008", entreprise: "TransQC Logistique", secteur: "Logistique", region: "Centre-du-Québec",
-    type: "vente-conjointe", score: 79, trustScore: 3.9, trustTier: "argent",
-    description: "Offre conjointe automatisation + logistique pour les PME manufacturières.",
-    apport: "Solutions automatisation, réseau clients", apportPartenaire: "Flotte 40 camions, réseau distribution",
-    stage: "introduction", botAssigne: "CROB", dateDetection: "il y a 1 semaine", pilierVitaa: "Vente", isNew: true,
-  },
-];
-
-// ═══ Sidebar config ═══
-
-type SidebarView = "decouvrir" | "secteur" | "type" | "mes-interets" | "sessions" | "historique" | "scout";
-
-const OPP_SIDEBAR: ({ id: SidebarView; label: string; icon: React.ElementType; count?: string } | null)[] = [
-  { id: "decouvrir", label: "Découvrir", icon: Globe, count: String(O9_OPPORTUNITIES_ALL.length) },
-  { id: "secteur", label: "Par Secteur", icon: Factory },
-  { id: "type", label: "Par Type", icon: Zap },
-  null,
-  { id: "mes-interets", label: "Mes Intérêts", icon: Handshake, count: "3" },
-  { id: "sessions", label: "Sessions planifiées", icon: Calendar, count: "1" },
-  { id: "historique", label: "Historique", icon: Clock, count: "5" },
-  null,
-  { id: "scout", label: "Mon Scout Bot", icon: Bot },
-];
-
-// ═══ TYPE ICONS ═══
-
-const TYPE_ICON: Record<OpportunityType, React.ElementType> = {
-  "alliance-strategique": Handshake,
-  "vente-conjointe": ShoppingCart,
-  "mutualisation-achats": ShoppingCart,
-  "rd-partagee": FlaskConical,
-  "sous-traitance": Wrench,
-  "validation-requise": FileCheck,
-};
-
 // ═══ COMPOSANT PRINCIPAL ═══
 
 export function Orbit9Opportunites() {
+  const { data: opportunitesData } = useDataSource("orbit9-opportunites", O9_OPPORTUNITIES_ALL);
+
   const [activeView, setActiveView] = useState<SidebarView>("decouvrir");
   const [selectedOpp, setSelectedOpp] = useState<OpportunityData | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -281,7 +220,7 @@ export function Orbit9Opportunites() {
   return (
     <div className="space-y-4">
       {/* Hero animé — Opportunités */}
-      <LivingHero blur1="bg-emerald-100/70" blur2="bg-cyan-100/60" subtitleColor="text-emerald-600" subtitle="Opportunités Réseau" title="Découvrez vos synergies." description="Matches, alliances et collaborations détectés par votre Scout Bot.">
+      <LivingHero blur1="bg-emerald-100/70" blur2="bg-cyan-100/60" title="Synergies détectées." description="Matches et alliances par Scout Bot." badge={<DomainBadge domain="orbit9-opportunites" />}>
         <div className="relative flex items-center justify-center overflow-visible" style={{ width: 340, height: 160 }}>
           <svg viewBox="0 0 200 150" className="overflow-visible" style={{ width: 300, height: 200 }}>
             {/* Noeud central — Votre entreprise */}
@@ -328,6 +267,37 @@ export function Orbit9Opportunites() {
         </div>
       </LivingHero>
 
+      {/* Top 3 Vedettes — pleine largeur au-dessus du sidebar, pattern grid-cols-3 */}
+      <div>
+        <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5 mb-2">
+          <Star className="h-3.5 w-3.5 text-amber-500" /> Meilleures opportunités pour vous
+        </h3>
+        <div className="grid grid-cols-3 gap-3">
+          {vedettes.map((opp, i) => (
+            <div
+              key={opp.id}
+              onClick={() => setSelectedOpp(opp)}
+              className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all cursor-pointer"
+            >
+              <div className="bg-gradient-to-r from-cyan-600 to-blue-500 px-3 py-2.5 flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-white/20 text-white text-[10px] font-bold flex items-center justify-center">#{i + 1}</span>
+                <span className="text-xs font-bold text-white truncate flex-1">{opp.entreprise}</span>
+              </div>
+              <div className="px-3 py-2.5 space-y-2">
+                <p className="text-[10px] text-gray-600 line-clamp-2">{opp.description}</p>
+                <div className="flex items-center justify-between">
+                  <TrustBadge tier={opp.trustTier} score={opp.trustScore} />
+                  <span className="text-xs font-bold text-cyan-600">{opp.score}%</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-cyan-50 text-cyan-700 font-medium">{OPPORTUNITY_TYPE_LABEL[opp.type]}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div className="flex gap-3">
       {/* Sidebar w-[180px] — Pattern PlaybookStoreView */}
       <div className={SF.sidebarW}>
@@ -356,37 +326,6 @@ export function Orbit9Opportunites() {
       <div className={SF.content}>
         {activeView === "decouvrir" && (
           <div className="space-y-4">
-            {/* Top 3 Vedettes */}
-            <div>
-              <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5 mb-2">
-                <Star className="h-3.5 w-3.5 text-amber-500" /> Meilleures opportunités pour vous
-              </h3>
-              <div className="grid grid-cols-3 gap-3">
-                {vedettes.map((opp, i) => (
-                  <div
-                    key={opp.id}
-                    onClick={() => setSelectedOpp(opp)}
-                    className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all cursor-pointer"
-                  >
-                    <div className="bg-gradient-to-r from-cyan-600 to-blue-500 px-3 py-2.5 flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-white/20 text-white text-[10px] font-bold flex items-center justify-center">#{i + 1}</span>
-                      <span className="text-xs font-bold text-white truncate flex-1">{opp.entreprise}</span>
-                    </div>
-                    <div className="px-3 py-2.5 space-y-2">
-                      <p className="text-[10px] text-gray-600 line-clamp-2">{opp.description}</p>
-                      <div className="flex items-center justify-between">
-                        <TrustBadge tier={opp.trustTier} score={opp.trustScore} />
-                        <span className="text-xs font-bold text-cyan-600">{opp.score}%</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-cyan-50 text-cyan-700 font-medium">{OPPORTUNITY_TYPE_LABEL[opp.type]}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             {/* Toolbar recherche + filtres — Pattern PlaybookStoreView */}
             <div className={SF.toolbarWrap}>
               <div className={SF.searchWrap}>

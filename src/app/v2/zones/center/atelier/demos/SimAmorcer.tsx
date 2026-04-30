@@ -13072,7 +13072,7 @@ export function Orbit9SocialHome() {
   return (
     <div className="space-y-4">
       {/* ═══ HERO V20 — Stellar Orbit ═══ */}
-      <LivingHero blur1="bg-violet-100/70" blur2="bg-indigo-100/60" subtitleColor="text-violet-600" subtitle="Écosystème & Synergie" title="Votre galaxie d'opportunités, interconnectée." description="Les cellules gravitent autour du cœur. C'est l'essence du réseau global, le mouvement perpétuel." scaleClass="scale-[0.80]">
+      <LivingHero blur1="bg-violet-100/70" blur2="bg-indigo-100/60" title="Galaxie d'opportunités." description="Le réseau global en mouvement perpétuel." scaleClass="scale-[0.80]">
         <div className="relative flex items-center justify-center overflow-visible" style={{ width: 340, height: 160 }}>
           <svg viewBox="0 0 200 200" className="overflow-visible" style={{ width: 300, height: 300 }}>
             <circle cx="100" cy="100" r="16" fill="url(#o9-core-grad)" filter="drop-shadow(0 0 15px #a78bfa)"/>

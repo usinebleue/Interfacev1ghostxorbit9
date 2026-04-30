@@ -44,6 +44,24 @@ export const SF = {
   select: "text-[9px] border border-gray-200 rounded-lg px-2 py-1.5 bg-white",
   itemCount: "text-[9px] font-bold text-gray-500 whitespace-nowrap",
 
+  // View-mode toggle (cards/list/table)
+  viewToggleWrap: "flex items-center gap-2 mb-2",
+  viewToggleGroup: "flex items-center gap-1 bg-gray-100 rounded-lg p-0.5",
+  viewToggleBtnActive: "p-1.5 rounded-md cursor-pointer transition-colors bg-white shadow-sm text-gray-900",
+  viewToggleBtnInactive: "p-1.5 rounded-md cursor-pointer transition-colors text-gray-400 hover:text-gray-600",
+  viewToggleIcon: "h-3.5 w-3.5",
+
+  // List-mode row
+  listRow: "flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white border border-gray-200 hover:shadow-md transition-all cursor-pointer group",
+
+  // Table-mode
+  tableWrap: "rounded-xl border border-gray-200 overflow-hidden bg-white",
+  tableFull: "w-full text-xs",
+  tableHead: "bg-gray-50 border-b border-gray-200",
+  tableTh: "text-left px-3 py-2 text-[10px] font-bold text-gray-500 uppercase",
+  tableTr: "border-b border-gray-100 last:border-0 hover:bg-blue-50/50 cursor-pointer transition-colors",
+  tableTd: "px-3 py-2",
+
   // Contenu
   content: "flex-1 min-w-0 space-y-3",
   gridContent: "grid grid-cols-2 gap-3",

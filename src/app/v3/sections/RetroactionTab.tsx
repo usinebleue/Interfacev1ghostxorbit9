@@ -12,12 +12,20 @@ import {
   Home, CheckCircle2, TrendingUp, TrendingDown,
   BarChart3, BookOpen, Lightbulb, AlertTriangle,
   ThumbsUp, ThumbsDown, ArrowRight, Bot,
-  Calendar, Filter,
+  Calendar, Filter, Flame, Settings,
 } from "lucide-react";
 import { cn } from "../../components/ui/utils";
 import { LivingHero } from "./shared/LivingHero";
 import { PHASE_COLORS, BOT_AVATAR_MAP, type PhaseKey } from "./shared/dept-data";
+import { ViewModeToolbar, type ViewMode } from "./shared/ViewModeToolbar";
 import { SF } from "../core/styles";
+
+import {
+  MOCK_CYCLES, MOCK_APPRENTISSAGES, MOCK_RECOMMANDATIONS, MOCK_METRIQUES,
+  type CompletedCycle, type Apprentissage, type Recommandation,
+} from "../data/mock/execution.mock";
+import { useDataSource } from "../data/use-data-source";
+import { DomainBadge } from "../data/source-badge";
 
 // ═══ Types ═══
 
@@ -25,75 +33,16 @@ type RetroSidebarItem = "overview" | "cycles" | "apprentissages" | "recommandati
 type RetroFilter = "tout" | "chantiers" | "operations";
 type RetroPeriod = "mois" | "trimestre" | "annee";
 
-interface CompletedCycle {
-  id: number;
-  titre: string;
-  type: "chantier" | "operation";
-  dateCompletion: string;
-  duree: string;
-  scorePerformance: number;
-  botPrimaire: string;
-  resultats: string;
-}
-
-interface Apprentissage {
-  type: "positif" | "negatif" | "action";
-  message: string;
-  source: string;
-}
-
-interface Recommandation {
-  bot: string;
-  message: string;
-  priorite: "haute" | "moyenne" | "basse";
-  categorie: string;
-}
-
-// ═══ Mock data ═══
-
-const MOCK_CYCLES: CompletedCycle[] = [
-  { id: 1, titre: "Migration CRM Salesforce", type: "chantier", dateCompletion: "2026-04-10", duree: "3 mois", scorePerformance: 88, botPrimaire: "CTOB", resultats: "Migration complétée. 230 utilisateurs transférés. 2 semaines de retard (intégration API)." },
-  { id: 2, titre: "Onboarding Q1 2026", type: "operation", dateCompletion: "2026-03-31", duree: "Cycle Q1", scorePerformance: 94, botPrimaire: "CHROB", resultats: "12 employés onboardés. Satisfaction 94%. Temps moyen réduit de 2 semaines à 8 jours." },
-  { id: 3, titre: "Audit sécurité annuel", type: "operation", dateCompletion: "2026-04-05", duree: "Cycle annuel", scorePerformance: 91, botPrimaire: "CISOB", resultats: "42 vulnérabilités corrigées. 3 critiques, 15 hautes. Score passé de 72% à 91%." },
-  { id: 4, titre: "Sprint design V2 marque", type: "chantier", dateCompletion: "2026-03-20", duree: "6 semaines", scorePerformance: 76, botPrimaire: "CMOB", resultats: "Nouveau brand book livré. 3 itérations nécessaires (brief initial incomplet)." },
-  { id: 5, titre: "Boucle PDCA Mars", type: "operation", dateCompletion: "2026-03-31", duree: "Mensuel", scorePerformance: 85, botPrimaire: "COOB", resultats: "14 KPIs mesurés. 11 dans la cible. 3 actions correctives lancées." },
-];
-
-const MOCK_APPRENTISSAGES: Apprentissage[] = [
-  { type: "positif", message: "Le pipeline CI/CD a réduit les incidents de déploiement de 67%", source: "Pipeline CI/CD" },
-  { type: "positif", message: "L'onboarding structuré en 8 jours augmente la rétention à 6 mois de 23%", source: "Onboarding Q1" },
-  { type: "positif", message: "Les revues de code systématiques ont éliminé les bugs critiques en prod", source: "Pipeline CI/CD" },
-  { type: "negatif", message: "Le brief incomplet du sprint design a causé 3 itérations évitables", source: "Sprint design V2" },
-  { type: "negatif", message: "Sous-estimation du temps d'intégration API dans la migration CRM", source: "Migration CRM" },
-  { type: "negatif", message: "Manque de documentation des processus opérationnels existants", source: "Boucle PDCA" },
-  { type: "action", message: "Standardiser les briefs créatifs avec un template obligatoire", source: "Sprint design V2" },
-  { type: "action", message: "Ajouter un buffer de 30% pour les intégrations tierces", source: "Migration CRM" },
-  { type: "action", message: "Créer une base de connaissances opérationnelle dans la Data Room", source: "Boucle PDCA" },
-  { type: "action", message: "Automatiser les tests de régression avant chaque cycle", source: "Pipeline CI/CD" },
-];
-
-const MOCK_RECOMMANDATIONS: Recommandation[] = [
-  { bot: "COOB", message: "La régularité des opérations a augmenté de 8 points ce trimestre. Recommandation: transformer le chantier 'Pipeline CI/CD' en opération permanente avec SLA de 99.5%.", priorite: "haute", categorie: "Pérennisation" },
-  { bot: "CEOB", message: "3 chantiers terminés sans retro formelle. Planifier une session de lessons learned consolidée avant le kick-off Q2.", priorite: "haute", categorie: "Gouvernance" },
-  { bot: "CFOB", message: "Le coût moyen des chantiers a baissé de 12% grâce à la réutilisation de composants. Capitaliser ce pattern dans le playbook 'Efficience CAPEX'.", priorite: "moyenne", categorie: "Optimisation" },
-  { bot: "CTOB", message: "Le temps de résolution des incidents a augmenté de 15% — investiguer la charge de l'équipe tech et évaluer un recrutement.", priorite: "moyenne", categorie: "Capacité" },
-];
-
-const MOCK_METRIQUES = [
-  { label: "Régularité tendance", value: "87%", delta: "+3 pts", up: true, icon: BarChart3 },
-  { label: "Vélocité projets", value: "1.2x", delta: "+0.1x", up: true, icon: TrendingUp },
-  { label: "SLA respect", value: "96%", delta: "+2 pts", up: true, icon: CheckCircle2 },
-  { label: "Amélioration continue", value: "14%", delta: "+5 pts QoQ", up: true, icon: Lightbulb },
-];
-
 // ═══ Composant principal ═══
 
 export function RetroactionTab({ botCode }: { botCode: string }) {
+  const { data: cycles } = useDataSource<CompletedCycle[]>("retroaction", MOCK_CYCLES);
   const [sidebarItem, setSidebarItem] = useState<RetroSidebarItem>("overview");
   const [filter, setFilter] = useState<RetroFilter>("tout");
   const [period, setPeriod] = useState<RetroPeriod>("trimestre");
+  const [viewMode, setViewMode] = useState<ViewMode>("cards");
 
-  const filteredCycles = MOCK_CYCLES.filter(c => {
+  const filteredCycles = cycles.filter(c => {
     if (filter === "chantiers") return c.type === "chantier";
     if (filter === "operations") return c.type === "operation";
     return true;
@@ -105,10 +54,9 @@ export function RetroactionTab({ botCode }: { botCode: string }) {
       <LivingHero
         blur1="bg-violet-100/70"
         blur2="bg-purple-100/60"
-        subtitleColor="text-violet-600"
-        subtitle="Amélioration continue"
-        title="Bilan & Apprentissages"
-        description="Cycles complétés, leçons apprises et recommandations IA pour améliorer votre exécution."
+        title="Bilan & Leçons"
+        description="Leçons apprises, recommandations IA."
+        badge={<DomainBadge domain="retroaction" />}
       >
         <div className="relative w-[360px] h-[140px]">
           <div className="glass-base absolute right-[70px] top-[10px] w-64 h-32 p-4 border-violet-100">
@@ -125,6 +73,25 @@ export function RetroactionTab({ botCode }: { botCode: string }) {
           </div>
         </div>
       </LivingHero>
+
+      {/* 4 KPI cards — pattern Cockpit (header bleu pastel), au-dessus du sidebar comme En direct */}
+      <div className="grid grid-cols-4 gap-3 mt-4">
+        {MOCK_METRIQUES.map((m, i) => (
+          <div key={i} className="rounded-xl border border-gray-200 shadow-sm bg-white">
+            <div className="flex items-center justify-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
+              <m.icon className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+              <span className="text-sm font-bold text-gray-900">{m.label}</span>
+            </div>
+            <div className="px-4 py-3 text-center">
+              <div className="text-2xl font-bold text-gray-800">{m.value}</div>
+              <div className="flex items-center justify-center gap-1 mt-1">
+                {m.up ? <TrendingUp className="h-3 w-3 text-emerald-500" /> : <TrendingDown className="h-3 w-3 text-red-500" />}
+                <span className={cn("text-[9px] font-medium", m.up ? "text-emerald-600" : "text-red-600")}>{m.delta}</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
 
       {/* Sidebar + Contenu */}
       <div className="flex gap-4 mt-4">
@@ -184,66 +151,99 @@ export function RetroactionTab({ botCode }: { botCode: string }) {
 
         {/* Contenu principal */}
         <div className="flex-1 space-y-4">
-          {/* Métriques KPI (overview + metriques) */}
-          {(sidebarItem === "overview" || sidebarItem === "metriques") && (
-            <div className="grid grid-cols-4 gap-3">
-              {MOCK_METRIQUES.map((m, i) => (
-                <div key={i} className="rounded-xl border border-gray-200 bg-white shadow-sm p-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <m.icon className="h-3.5 w-3.5 text-violet-500" />
-                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">{m.label}</span>
-                  </div>
-                  <div className="text-xl font-extrabold text-gray-900">{m.value}</div>
-                  <div className="flex items-center gap-1 mt-0.5">
-                    {m.up ? <TrendingUp className="h-3 w-3 text-emerald-500" /> : <TrendingDown className="h-3 w-3 text-red-500" />}
-                    <span className={cn("text-[9px] font-medium", m.up ? "text-emerald-600" : "text-red-600")}>{m.delta}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
           {/* Cycles complétés */}
           {(sidebarItem === "overview" || sidebarItem === "cycles") && (
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
                 <span className="text-xs font-bold text-gray-900">Cycles complétés</span>
-                <span className="text-[9px] text-gray-400">{filteredCycles.length} terminés</span>
               </div>
-              <div className="space-y-2">
-                {filteredCycles.map(cycle => (
-                  <div key={cycle.id} className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden hover:shadow-md transition-all">
-                    <div className="p-3">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        {cycle.type === "chantier"
-                          ? <CheckCircle2 className="h-3.5 w-3.5 text-orange-500 shrink-0" />
-                          : <CheckCircle2 className="h-3.5 w-3.5 text-cyan-500 shrink-0" />
-                        }
-                        <span className="text-[11px] font-bold text-gray-900 flex-1 truncate">{cycle.titre}</span>
-                        <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-bold",
-                          cycle.scorePerformance >= 90 ? "bg-emerald-100 text-emerald-700" :
-                          cycle.scorePerformance >= 75 ? "bg-amber-100 text-amber-700" :
-                          "bg-red-100 text-red-700"
-                        )}>
-                          {cycle.scorePerformance}%
-                        </span>
-                        <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium", cycle.type === "chantier" ? "bg-orange-50 text-orange-600" : "bg-cyan-50 text-cyan-600")}>
-                          {cycle.type === "chantier" ? "CAPEX" : "OPEX"}
-                        </span>
+              <ViewModeToolbar viewMode={viewMode} onViewMode={setViewMode} count={filteredCycles.length} label="terminés" />
+
+              {/* Mode liste */}
+              {viewMode === "list" && (
+                <div className="space-y-1">
+                  {filteredCycles.map(cycle => {
+                    const scoreColor = cycle.scorePerformance >= 90 ? "bg-emerald-100 text-emerald-700" : cycle.scorePerformance >= 75 ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700";
+                    return (
+                      <div key={cycle.id} className={SF.listRow}>
+                        {cycle.type === "chantier" ? <Flame className="h-3.5 w-3.5 text-orange-500 shrink-0" /> : <Settings className="h-3.5 w-3.5 text-cyan-500 shrink-0" />}
+                        <span className="text-xs font-bold text-gray-900 flex-1 min-w-0 truncate">{cycle.titre}</span>
+                        <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0", scoreColor)}>{cycle.scorePerformance}%</span>
+                        <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium shrink-0", cycle.type === "chantier" ? "bg-orange-50 text-orange-600" : "bg-cyan-50 text-cyan-600")}>{cycle.type === "chantier" ? "CAPEX" : "OPEX"}</span>
+                        <span className="text-[9px] text-gray-400 shrink-0">{cycle.duree}</span>
+                        <span className="text-[9px] text-gray-400 shrink-0">{cycle.dateCompletion}</span>
                       </div>
-                      <p className="text-[10px] text-gray-500 mb-1.5">{cycle.resultats}</p>
-                      <div className="flex items-center gap-3">
-                        {BOT_AVATAR_MAP[cycle.botPrimaire] && (
-                          <img src={BOT_AVATAR_MAP[cycle.botPrimaire]} alt="" className="w-5 h-5 rounded-full object-cover ring-1 ring-gray-200" />
-                        )}
-                        <span className="text-[9px] text-gray-400">{cycle.duree}</span>
-                        <span className="text-[9px] text-gray-400">Terminé le {cycle.dateCompletion}</span>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Mode tableau */}
+              {viewMode === "table" && (
+                <div className={SF.tableWrap}>
+                  <table className={SF.tableFull}>
+                    <thead><tr className={SF.tableHead}>
+                      <th className={SF.tableTh}>Nom</th>
+                      <th className={SF.tableTh}>Type</th>
+                      <th className={SF.tableTh}>Score</th>
+                      <th className={SF.tableTh}>Durée</th>
+                      <th className={SF.tableTh}>Terminé le</th>
+                    </tr></thead>
+                    <tbody>
+                      {filteredCycles.map(cycle => {
+                        const scoreColor = cycle.scorePerformance >= 90 ? "bg-emerald-100 text-emerald-700" : cycle.scorePerformance >= 75 ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700";
+                        return (
+                          <tr key={cycle.id} className={SF.tableTr}>
+                            <td className={cn(SF.tableTd, "font-medium text-gray-900")}>{cycle.titre}</td>
+                            <td className={SF.tableTd}><span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-bold", cycle.type === "chantier" ? "bg-orange-50 text-orange-600" : "bg-cyan-50 text-cyan-600")}>{cycle.type === "chantier" ? "CAPEX" : "OPEX"}</span></td>
+                            <td className={SF.tableTd}><span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-bold", scoreColor)}>{cycle.scorePerformance}%</span></td>
+                            <td className={cn(SF.tableTd, "text-gray-500")}>{cycle.duree}</td>
+                            <td className={cn(SF.tableTd, "text-gray-500")}>{cycle.dateCompletion}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Mode cartes (défaut) */}
+              {viewMode === "cards" && (
+                <div className="space-y-2">
+                  {filteredCycles.map(cycle => (
+                    <div key={cycle.id} className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden hover:shadow-md transition-all">
+                      <div className="p-3">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          {cycle.type === "chantier"
+                            ? <Flame className="h-3.5 w-3.5 text-orange-500 shrink-0" />
+                            : <Settings className="h-3.5 w-3.5 text-cyan-500 shrink-0" />
+                          }
+                          <span className="text-[11px] font-bold text-gray-900 flex-1 truncate">{cycle.titre}</span>
+                          <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-bold",
+                            cycle.scorePerformance >= 90 ? "bg-emerald-100 text-emerald-700" :
+                            cycle.scorePerformance >= 75 ? "bg-amber-100 text-amber-700" :
+                            "bg-red-100 text-red-700"
+                          )}>
+                            {cycle.scorePerformance}%
+                          </span>
+                          <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium", cycle.type === "chantier" ? "bg-orange-50 text-orange-600" : "bg-cyan-50 text-cyan-600")}>
+                            {cycle.type === "chantier" ? "CAPEX" : "OPEX"}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-gray-500 mb-1.5">{cycle.resultats}</p>
+                        <div className="flex items-center gap-3">
+                          {BOT_AVATAR_MAP[cycle.botPrimaire] && (
+                            <img src={BOT_AVATAR_MAP[cycle.botPrimaire]} alt="" className="w-5 h-5 rounded-full object-cover ring-1 ring-gray-200" />
+                          )}
+                          <span className="text-[9px] text-gray-400">{cycle.duree}</span>
+                          <span className="text-[9px] text-gray-400">Terminé le {cycle.dateCompletion}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

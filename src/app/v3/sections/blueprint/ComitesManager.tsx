@@ -6,59 +6,21 @@ import {
   Sparkles, Settings, UserPlus, Trash2, Plus, Save, Loader2, Info,
 } from "lucide-react";
 import { cn } from "../../../components/ui/utils";
-
-// ── Types locaux ──
-
-interface Membre {
-  nom: string;
-  titre: string;
-  courriel: string;
-  type: "interne" | "externe";
-}
+import { useDataSource } from "../../data/use-data-source";
+import { DomainBadge } from "../../data/source-badge";
+import {
+  type Membre, type Comite,
+  COMITES_SUGGESTED_TEMPLATES, COMITE_MOCK_REUNIONS, COMITE_MOCK_DOCUMENTS,
+} from "../../data/mock/blueprint.mock";
 
 function parseJSON<T>(raw: string, fallback: T): T {
   if (!raw) return fallback;
   try { return JSON.parse(raw); } catch { return fallback; }
 }
 
-// ── Comités Manager — Gestion des comités par département ──
-
-interface Comite {
-  id: string;
-  nom: string;
-  frequence: string;
-  format: string;
-  description: string;
-  responsable: string;
-  prochaine_reunion: string;
-  membres: Membre[];
-}
-
 function parseComites(raw: string): Comite[] {
   return parseJSON<Comite[]>(raw, []);
 }
-
-// ── Mock data — Comités ──
-
-const COMITES_SUGGESTED_TEMPLATES = [
-  { nom: "Comité stratégique", description: "Orientations long terme, analyse compétitive, M&A", frequence: "Trimestrielle" },
-  { nom: "Comité SST", description: "Santé et sécurité au travail, conformité, prévention", frequence: "Mensuelle" },
-  { nom: "Comité R&D", description: "Innovation, prototypes, veille technologique", frequence: "Bimensuelle" },
-  { nom: "Comité finance", description: "Budget, trésorerie, investissements, audit interne", frequence: "Mensuelle" },
-  { nom: "Comité RH", description: "Recrutement, rétention, formation, culture", frequence: "Mensuelle" },
-];
-
-const COMITE_MOCK_REUNIONS = [
-  { date: "2026-03-20", type: "Régulière", participants: 5, duree: "1h30", statut_pv: "Approuvé", sujet: "Suivi des actions et objectifs Q1" },
-  { date: "2026-02-18", type: "Régulière", participants: 4, duree: "1h15", statut_pv: "Approuvé", sujet: "Bilan mensuel et ajustements" },
-  { date: "2026-01-15", type: "Spéciale", participants: 6, duree: "2h00", statut_pv: "Approuvé", sujet: "Planification annuelle 2026" },
-];
-
-const COMITE_MOCK_DOCUMENTS = [
-  { titre: "Mandat du comité", statut: "Actif", maj: "2026-01-10", type: "Gouvernance" },
-  { titre: "Procès-verbal — Mars 2026", statut: "Approuvé", maj: "2026-03-22", type: "PV" },
-  { titre: "Feuille de route 2026", statut: "En révision", maj: "2026-02-28", type: "Planification" },
-];
 
 export function ComitesManager({ botCode, deptLabel, headerGradient, data, onFieldChange, onSave, saving, dirty }: {
   botCode: string;
@@ -70,6 +32,8 @@ export function ComitesManager({ botCode, deptLabel, headerGradient, data, onFie
   saving: boolean;
   dirty: boolean;
 }) {
+  const { data: comitesSourceData } = useDataSource("comites", { COMITES_SUGGESTED_TEMPLATES, COMITE_MOCK_REUNIONS, COMITE_MOCK_DOCUMENTS });
+
   const KEY = `comites_${botCode}`;
   const comites = parseComites(data[KEY] || "");
   const [activeComite, setActiveComite] = useState<string | null>(comites[0]?.id || null);
@@ -148,6 +112,7 @@ export function ComitesManager({ botCode, deptLabel, headerGradient, data, onFie
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="text-lg font-bold text-white">Comités — {deptLabel}</h3>
+              <DomainBadge domain="comites" className="ml-1" />
               <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white">{comites.length} comité{comites.length !== 1 ? "s" : ""}</span>
             </div>
             <p className="text-xs text-white/80">
@@ -213,41 +178,41 @@ export function ComitesManager({ botCode, deptLabel, headerGradient, data, onFie
           {(showOverview || !activeComite) && (<>
             <div className="grid grid-cols-4 gap-3">
               <div className="rounded-xl border border-gray-200 shadow-sm bg-white">
-                <div className="flex items-center gap-2 px-3 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
+                <div className="flex items-center justify-center gap-2 px-3 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
                   <Briefcase className="h-4 w-4 text-gray-900 stroke-[2.5]" />
                   <span className="text-sm font-bold text-gray-900">Comités</span>
                 </div>
-                <div className="px-3 py-2">
+                <div className="px-3 py-2 text-center">
                   <div className="text-2xl font-bold text-gray-900">{comites.length}</div>
                   <div className="text-[9px] text-gray-400">Total actifs</div>
                 </div>
               </div>
               <div className="rounded-xl border border-gray-200 shadow-sm bg-white">
-                <div className="flex items-center gap-2 px-3 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
+                <div className="flex items-center justify-center gap-2 px-3 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
                   <Users className="h-4 w-4 text-gray-900 stroke-[2.5]" />
                   <span className="text-sm font-bold text-gray-900">Participants</span>
                 </div>
-                <div className="px-3 py-2">
+                <div className="px-3 py-2 text-center">
                   <div className="text-2xl font-bold text-gray-900">{totalParticipants}</div>
                   <div className="text-[9px] text-gray-400">Total membres</div>
                 </div>
               </div>
               <div className="rounded-xl border border-gray-200 shadow-sm bg-white">
-                <div className="flex items-center gap-2 px-3 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
+                <div className="flex items-center justify-center gap-2 px-3 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
                   <Calendar className="h-4 w-4 text-gray-900 stroke-[2.5]" />
                   <span className="text-sm font-bold text-gray-900">Réunions</span>
                 </div>
-                <div className="px-3 py-2">
+                <div className="px-3 py-2 text-center">
                   <div className="text-2xl font-bold text-gray-900">{comites.filter(c => c.prochaine_reunion).length}</div>
                   <div className="text-[9px] text-gray-400">Planifiées</div>
                 </div>
               </div>
               <div className="rounded-xl border border-gray-200 shadow-sm bg-white">
-                <div className="flex items-center gap-2 px-3 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
+                <div className="flex items-center justify-center gap-2 px-3 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
                   <Activity className="h-4 w-4 text-gray-900 stroke-[2.5]" />
-                  <span className="text-sm font-bold text-gray-900">Taux activité</span>
+                  <span className="text-sm font-bold text-gray-900">Activité</span>
                 </div>
-                <div className="px-3 py-2">
+                <div className="px-3 py-2 text-center">
                   <div className="text-2xl font-bold text-gray-900">{comites.length > 0 ? Math.round((comites.filter(c => c.membres.length > 0).length / comites.length) * 100) : 0}%</div>
                   <div className="text-[9px] text-gray-400">Comités actifs</div>
                 </div>

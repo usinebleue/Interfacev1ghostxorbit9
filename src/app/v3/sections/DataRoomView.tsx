@@ -520,7 +520,7 @@ const TYPE_BADGE: Record<string, { label: string; bg: string; text: string }> = 
 const ASSET_TYPES: { id: string; label: string; icon: React.ElementType; bgColor: string; iconColor: string; valueColor: string; desc: string; docType: string }[] = [
   { id: "documents", label: "Documents", icon: FileText, bgColor: "bg-blue-50", iconColor: "text-blue-500", valueColor: "text-blue-600", desc: "Contrats, rapports, plans", docType: "Document" },
   { id: "dashboards", label: "Dashboards", icon: BarChart3, bgColor: "bg-purple-50", iconColor: "text-purple-500", valueColor: "text-purple-600", desc: "KPIs temps reel", docType: "Dashboard" },
-  { id: "flows", label: "Flows", icon: Zap, bgColor: "bg-amber-50", iconColor: "text-amber-500", valueColor: "text-amber-600", desc: "Automatisations", docType: "Flow" },
+  { id: "flows", label: "Automatisations", icon: Zap, bgColor: "bg-amber-50", iconColor: "text-amber-500", valueColor: "text-amber-600", desc: "Workflows, scripts", docType: "Flow" },
   { id: "datasets", label: "Datasets", icon: Database, bgColor: "bg-teal-50", iconColor: "text-teal-500", valueColor: "text-teal-600", desc: "Registres, inventaires", docType: "Dataset" },
   { id: "media", label: "Media", icon: Palette, bgColor: "bg-pink-50", iconColor: "text-pink-500", valueColor: "text-pink-600", desc: "Logos, visuels, brand", docType: "Media" },
   { id: "procedures", label: "Procedures", icon: ListChecks, bgColor: "bg-orange-50", iconColor: "text-orange-500", valueColor: "text-orange-600", desc: "SOPs, checklists", docType: "Procedure" },
@@ -582,50 +582,6 @@ function DataRoomVueConsolidee({ onNavigateDept }: { onNavigateDept: (deptCode: 
 
   return (
     <div className="space-y-4">
-      {/* ── KPI Cards — 4 metriques cles (design-system standard) ── */}
-      <div className="grid grid-cols-4 gap-3">
-        <Card className="p-0 gap-0 overflow-hidden">
-          <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-500">
-            <FileText className="h-4 w-4 text-white" />
-            <span className="text-sm font-bold text-white">Documents</span>
-          </div>
-          <div className="px-3 py-2">
-            <div className="text-2xl font-bold text-blue-600">{totalDocs}</div>
-            <div className="text-[9px] text-gray-500">{totalActifs} actifs · {totalDocs - totalActifs} en cours</div>
-          </div>
-        </Card>
-        <Card className="p-0 gap-0 overflow-hidden">
-          <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-purple-600 to-purple-500">
-            <Layers className="h-4 w-4 text-white" />
-            <span className="text-sm font-bold text-white">Templates</span>
-          </div>
-          <div className="px-3 py-2">
-            <div className="text-2xl font-bold text-purple-600">{totalTemplates}</div>
-            <div className="text-[9px] text-gray-500">12 departements couverts</div>
-          </div>
-        </Card>
-        <Card className="p-0 gap-0 overflow-hidden">
-          <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-emerald-600 to-emerald-500">
-            <Activity className="h-4 w-4 text-white" />
-            <span className="text-sm font-bold text-white">Sante Doc.</span>
-          </div>
-          <div className="px-3 py-2">
-            <div className="text-2xl font-bold text-emerald-600">{santeScore}%</div>
-            <div className="text-[9px] text-gray-500">{totalCritiques} critiques a traiter</div>
-          </div>
-        </Card>
-        <Card className="p-0 gap-0 overflow-hidden">
-          <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-amber-600 to-amber-500">
-            <Database className="h-4 w-4 text-white" />
-            <span className="text-sm font-bold text-white">Types actifs</span>
-          </div>
-          <div className="px-3 py-2">
-            <div className="text-2xl font-bold text-amber-600">6</div>
-            <div className="text-[9px] text-gray-500">Doc · Dashboard · Flow · Data · Media · SOP</div>
-          </div>
-        </Card>
-      </div>
-
       {/* ── 6 Types d'actifs numeriques ── */}
       <div className="border rounded-xl overflow-hidden shadow-sm">
         <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
@@ -1155,9 +1111,8 @@ export function DataRoomView({ botCode, headerGradient, showHeader = false }: { 
       {showHeader && (
         <LivingHero
           blur1="bg-emerald-100/60" blur2="bg-teal-100/50"
-          subtitleColor="text-emerald-600" subtitle="Documents & Fichiers"
-          title="Vos documents importants, sécurisé, ici !"
-          description="Rapports, contrats, analyses — classés, protégés, toujours accessibles en 2 clics."
+          title="Vos docs, blindés ici."
+          description="Classés, protégés, accessibles en 2 clics."
         >
           <div className="relative w-[340px] h-[150px] flex items-center justify-center">
             <div className="absolute right-[100px] top-[15px] w-[140px] h-[120px] bg-white border border-emerald-100 rounded-xl shadow-xl transform rotate-3 overflow-hidden p-4 text-[7px] text-slate-300 leading-tight" style={{fontFamily:'ui-monospace,monospace'}}>

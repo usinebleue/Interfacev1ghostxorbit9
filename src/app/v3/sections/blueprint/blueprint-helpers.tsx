@@ -98,11 +98,11 @@ export function KPIDisplay({ kpi, value }: { kpi: KPIDef; value?: number }) {
   const color = displayValue >= kpi.seuils.vert ? "text-emerald-600" : displayValue >= kpi.seuils.jaune ? "text-amber-600" : "text-red-600";
   return (
     <Card className="p-0 gap-0 overflow-hidden">
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-100 bg-[#00B4D8]/10">
+      <div className="flex items-center justify-center gap-2 px-3 py-2 border-b border-gray-100 bg-[#00B4D8]/10">
         <TrendingUp className="h-3.5 w-3.5 text-gray-900 stroke-[2.5]" />
         <span className="text-xs font-bold text-gray-900">{kpi.label}</span>
       </div>
-      <div className="px-3 py-2">
+      <div className="px-3 py-2 text-center">
         <div className={cn("text-2xl font-bold", color)}>{displayValue}{kpi.unite}</div>
         <div className="text-[9px] text-gray-400">Benchmark: {kpi.benchmark}</div>
         {kpi.formule && <div className="text-[9px] text-gray-300 mt-0.5">{kpi.formule}</div>}

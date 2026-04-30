@@ -65,7 +65,7 @@ export function Orbit9Blueprint() {
   return (
     <div className="space-y-4">
       {/* Hero animé — Blueprint Collaboration */}
-      <LivingHero blur1="bg-cyan-100/70" blur2="bg-teal-100/60" subtitleColor="text-cyan-600" subtitle="Blueprint Réseau" title="Votre stratégie collaborative." description="Profil, cellules, gouvernance et croissance réseau."
+      <LivingHero blur1="bg-cyan-100/70" blur2="bg-teal-100/60" title="Stratégie réseau." description="Gouvernance, cellules et croissance."
         footer={
           <div className="flex items-center gap-2 mt-2">
             <span className="text-[10px] font-bold text-gray-500">Complétion</span>

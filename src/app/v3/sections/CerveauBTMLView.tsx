@@ -1112,7 +1112,7 @@ export function CerveauBTMLView({ showHeader }: SectionProps) {
     <div className="space-y-4">
       {/* Hero animé */}
       {showHeader && (
-        <LivingHero blur1="bg-purple-100/70" blur2="bg-violet-100/60" subtitleColor="text-purple-600" subtitle="Intelligence d'Affaires" title="Le cerveau qui pense business." description="12 bots C-Level, 6 primitives BTML, CREDO, VITAA — l'intelligence d'affaires modélisée comme la chimie.">
+        <LivingHero blur1="bg-purple-100/70" blur2="bg-violet-100/60" title="Le cerveau business." description="12 bots, CREDO, VITAA — modélisé.">
           <div className="relative w-[380px] h-[150px]">
             {/* Brain outline + business network */}
             <svg className="absolute right-[10px] top-[0px]" viewBox="0 0 240 150" width="340" height="150">

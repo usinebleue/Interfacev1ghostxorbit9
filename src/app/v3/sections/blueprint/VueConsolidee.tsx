@@ -5,6 +5,7 @@ import {
   Loader2, Heart, Users, AlertTriangle, CheckCircle2,
 } from "lucide-react";
 import { cn } from "../../../components/ui/utils";
+import { DomainBadge } from "../../data/source-badge";
 import { api } from "../../../v2/api/client";
 import {
   getBlueprintConfig,
@@ -14,82 +15,12 @@ import {
   type SizeTier,
 } from "../../../v2/zones/center/blueprint/blueprint-config";
 
-// ── Vue d'ensemble 11 departements — CEOB uniquement ──
-const OTHER_BOTS: { code: string; label: string; bot: string; short: string; gradient: string }[] = [
-  { code: "CTOB", label: "Technologie", bot: "Tim", short: "CTO", gradient: "from-violet-600 to-violet-500" },
-  { code: "CFOB", label: "Finance", bot: "Frank", short: "CFO", gradient: "from-emerald-600 to-emerald-500" },
-  { code: "CMOB", label: "Marketing", bot: "Mathilde", short: "CMO", gradient: "from-pink-600 to-pink-500" },
-  { code: "CSOB", label: "Strategie", bot: "Simone", short: "CSO", gradient: "from-red-600 to-red-500" },
-  { code: "COOB", label: "Operations", bot: "Olivier", short: "COO", gradient: "from-orange-600 to-orange-500" },
-  { code: "CPOB", label: "Production", bot: "Paco", short: "CPO", gradient: "from-amber-600 to-amber-500" },
-  { code: "CHROB", label: "RH", bot: "Helene", short: "CHRO", gradient: "from-teal-600 to-teal-500" },
-  { code: "CINOB", label: "Innovation", bot: "Ines", short: "CINO", gradient: "from-rose-600 to-rose-500" },
-  { code: "CROB", label: "Ventes", bot: "Rich", short: "CRO", gradient: "from-amber-600 to-amber-500" },
-  { code: "CLOB", label: "Legal", bot: "Loulou", short: "CLO", gradient: "from-indigo-600 to-indigo-500" },
-  { code: "CISOB", label: "Securite", bot: "Sebastien", short: "CISO", gradient: "from-gray-600 to-gray-500" },
-];
-
-// Champs-clés par département — données les plus pertinentes pour la vue consolidée Direction
-const DEPT_KEY_FIELDS: Record<string, { sectionId: string; fieldId: string; label: string }[]> = {
-  CTOB: [
-    { sectionId: "stack_technique", fieldId: "cloud_provider", label: "Cloud" },
-    { sectionId: "infrastructure", fieldId: "cout_mensuel", label: "Coût infra/mois" },
-    { sectionId: "dette_technique", fieldId: "score_dette", label: "Dette technique" },
-  ],
-  CFOB: [
-    { sectionId: "modele_revenus", fieldId: "chiffre_affaires_estime", label: "CA estimé" },
-    { sectionId: "tresorerie", fieldId: "solde_bancaire", label: "Solde bancaire" },
-    { sectionId: "tresorerie", fieldId: "burn_rate", label: "Burn rate" },
-  ],
-  CMOB: [
-    { sectionId: "personas_icp", fieldId: "icp_principal", label: "ICP principal" },
-    { sectionId: "positionnement", fieldId: "uvp", label: "UVP" },
-    { sectionId: "canaux_budget", fieldId: "budget_marketing", label: "Budget marketing" },
-  ],
-  CSOB: [
-    { sectionId: "marche", fieldId: "tam", label: "TAM" },
-    { sectionId: "concurrence", fieldId: "top_3_concurrents", label: "Top 3 concurrents" },
-    { sectionId: "avantage_concurrentiel", fieldId: "differenciateur_cle", label: "Différenciateur" },
-  ],
-  COOB: [
-    { sectionId: "processus", fieldId: "processus_livraison", label: "Processus livraison" },
-    { sectionId: "capacite_planification", fieldId: "taux_utilisation_capacite", label: "Utilisation capacité" },
-    { sectionId: "supply_chain", fieldId: "fournisseurs_cles", label: "Fournisseurs clés" },
-  ],
-  CPOB: [
-    { sectionId: "planification_production", fieldId: "capacite_journaliere", label: "Capacité/jour" },
-    { sectionId: "gestion_stocks", fieldId: "valeur_inventaire", label: "Inventaire" },
-    { sectionId: "qualite", fieldId: "systeme_qualite", label: "Système qualité" },
-  ],
-  CHROB: [
-    { sectionId: "organigramme", fieldId: "nb_employes_total", label: "Employés" },
-    { sectionId: "recrutement", fieldId: "postes_ouverts", label: "Postes ouverts" },
-    { sectionId: "remuneration", fieldId: "avantages_sociaux", label: "Avantages sociaux" },
-  ],
-  CINOB: [
-    { sectionId: "pipeline_innovation", fieldId: "projets_actifs", label: "Projets R&D" },
-    { sectionId: "propriete_intellectuelle", fieldId: "marques_commerce", label: "Marques" },
-    { sectionId: "propriete_intellectuelle", fieldId: "brevets", label: "Brevets" },
-  ],
-  CROB: [
-    { sectionId: "pipeline_funnel", fieldId: "valeur_pipeline", label: "Pipeline ($)" },
-    { sectionId: "pipeline_funnel", fieldId: "nb_opportunites", label: "Opportunités" },
-    { sectionId: "methodologie_vente", fieldId: "crm_integre_facturation", label: "CRM intégré" },
-  ],
-  CLOB: [
-    { sectionId: "structure_corporative", fieldId: "type_entite", label: "Type entité" },
-    { sectionId: "contrats", fieldId: "registre_centralise_clm", label: "CLM" },
-    { sectionId: "pi_marques", fieldId: "marques_commerce_deposees", label: "Marques déposées" },
-  ],
-  CISOB: [
-    { sectionId: "politiques_iam", fieldId: "mfa_active", label: "MFA" },
-    { sectionId: "vulnerabilites", fieldId: "dernier_pentest", label: "Dernier pentest" },
-    { sectionId: "sauvegardes", fieldId: "strategie_backup", label: "Backup" },
-  ],
-};
-
-interface KeyFieldValue { label: string; value: string }
-interface DeptScore { code: string; score: number; sections: number; gaps: number; gapLabels: string[]; keyFields: KeyFieldValue[] }
+import {
+  type KeyFieldValue, type DeptScore,
+  VUE_CONSOLIDEE_OTHER_BOTS as OTHER_BOTS,
+  DEPT_KEY_FIELDS,
+  VUE_CONSOLIDEE_MOCK_SCORES,
+} from "../../data/mock/blueprint.mock";
 
 export function VueConsolidee({ tier }: { tier: SizeTier }) {
   const [scores, setScores] = useState<DeptScore[]>([]);
@@ -137,21 +68,8 @@ export function VueConsolidee({ tier }: { tier: SizeTier }) {
 
   // Si tous les scores sont à 0 (aucun blueprint rempli = demo/simulation), injecter des données mock
   const allEmpty = scores.every(d => d.score === 0);
-  const MOCK_SCORES: Record<string, { score: number; gaps: number; gapLabels: string[]; keyFields: KeyFieldValue[] }> = {
-    CTOB: { score: 45, gaps: 3, gapLabels: ["Stack technique", "Infrastructure"], keyFields: [{ label: "Cloud", value: "AWS" }, { label: "Coût infra/mois", value: "2 400$" }, { label: "Dette technique", value: "Moyenne" }] },
-    CFOB: { score: 72, gaps: 1, gapLabels: ["Trésorerie"], keyFields: [{ label: "CA estimé", value: "3.2M$" }, { label: "Solde bancaire", value: "485K$" }, { label: "Burn rate", value: "42K$/mois" }] },
-    CMOB: { score: 38, gaps: 4, gapLabels: ["Personas ICP", "Positionnement", "Canaux"], keyFields: [{ label: "ICP principal", value: "PME manufact. 50-200 emp." }, { label: "Budget marketing", value: "8 500$/mois" }] },
-    CSOB: { score: 61, gaps: 2, gapLabels: ["Concurrence", "Avantage concurrentiel"], keyFields: [{ label: "TAM", value: "890M$" }, { label: "Différenciateur", value: "IA + réseau REAI" }] },
-    COOB: { score: 55, gaps: 2, gapLabels: ["Supply chain", "Capacité"], keyFields: [{ label: "Utilisation capacité", value: "78%" }, { label: "Fournisseurs clés", value: "12 actifs" }] },
-    CPOB: { score: 29, gaps: 5, gapLabels: ["Planification", "Stocks", "Qualité"], keyFields: [{ label: "Capacité/jour", value: "—" }, { label: "Système qualité", value: "ISO en cours" }] },
-    CHROB: { score: 67, gaps: 1, gapLabels: ["Rémunération"], keyFields: [{ label: "Employés", value: "47" }, { label: "Postes ouverts", value: "3" }, { label: "Avantages sociaux", value: "Groupe + REER" }] },
-    CINOB: { score: 42, gaps: 3, gapLabels: ["Pipeline innovation", "PI"], keyFields: [{ label: "Projets R&D", value: "4 actifs" }, { label: "Brevets", value: "1 en cours" }] },
-    CROB: { score: 58, gaps: 2, gapLabels: ["Pipeline funnel", "Méthodologie"], keyFields: [{ label: "Pipeline ($)", value: "1.8M$" }, { label: "Opportunités", value: "23" }, { label: "CRM intégré", value: "HubSpot" }] },
-    CLOB: { score: 35, gaps: 4, gapLabels: ["Contrats", "PI/Marques", "Conformité"], keyFields: [{ label: "Type entité", value: "Inc. fédérale" }, { label: "Marques déposées", value: "2" }] },
-    CISOB: { score: 22, gaps: 5, gapLabels: ["Politiques IAM", "Vulnérabilités", "Sauvegardes"], keyFields: [{ label: "MFA", value: "Partiel" }, { label: "Dernier pentest", value: "Jamais" }, { label: "Backup", value: "Manuel" }] },
-  };
   const effectiveScores = allEmpty
-    ? scores.map(d => ({ ...d, ...(MOCK_SCORES[d.code] || {}) }))
+    ? scores.map(d => ({ ...d, ...(VUE_CONSOLIDEE_MOCK_SCORES[d.code] || {}) }))
     : scores;
 
   const avg = effectiveScores.length > 0 ? Math.round(effectiveScores.reduce((s, d) => s + d.score, 0) / effectiveScores.length) : 0;
@@ -163,6 +81,9 @@ export function VueConsolidee({ tier }: { tier: SizeTier }) {
   return (
     <div className="space-y-3">
       {/* ── VITAAFAST — VITAA (5 piliers) + FAAS (4 piliers) côte à côte ── */}
+      <div className="flex items-center gap-2 mb-1">
+        <DomainBadge domain="blueprint-sections" />
+      </div>
       <div className="grid grid-cols-2 gap-3">
         {/* VITAA — 5 piliers d'affaires */}
         <div className="rounded-xl border border-gray-200 shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all">
