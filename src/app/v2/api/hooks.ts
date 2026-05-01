@@ -396,6 +396,7 @@ function extractFocusItems(data: unknown): Array<{ label: string; value: string 
 export function useChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isTyping, setIsTyping] = useState(false);
+  const [thinkingSteps, setThinkingSteps] = useState<string[]>([]);
   const [threads, setThreads] = useState<Thread[]>(() => loadThreads());
   const [activeThreadId, setActiveThreadIdRaw] = useState<string | null>(() => loadActiveThreadId());
   // Roster de bots actifs — max 3, CarlOS en défaut
@@ -590,6 +591,7 @@ export function useChat() {
       };
       setMessages((prev) => [...prev, userMsg]);
       setIsTyping(true);
+      setThinkingSteps(["Connexion..."]);
 
       // Auto-create thread on first message
       if (!activeThreadId) {
@@ -634,6 +636,7 @@ export function useChat() {
         } catch { /* noop */ }
       }
 
+      console.log("[hooks.sendMessage] agent:", agent, "text:", text.slice(0, 30));
       const req: ChatRequest = {
         message: text,
         user_id: 1,
@@ -674,7 +677,14 @@ export function useChat() {
       try {
         await new Promise<void>((resolve, reject) => {
           const controller = api.chatStream(req, {
+            onStatus: (label: string) => {
+              setThinkingSteps(prev => [...prev, label]);
+            },
             onToken: (_chunk: string, accumulated: string) => {
+              // Clear thinking animation au premier token
+              if (accumulated.length === _chunk.length) {
+                setThinkingSteps([]);
+              }
               // Strip [TACHE] lines during streaming so they never appear
               const cleaned = accumulated.split("\n").filter(l => !/\[TACHE\]/i.test(l)).join("\n");
               // Update the bot message content progressively
@@ -927,6 +937,7 @@ export function useChat() {
         }
       } finally {
         setIsTyping(false);
+        setThinkingSteps([]);
         streamAbort.current = null;
       }
     },
@@ -955,7 +966,7 @@ export function useChat() {
     setActiveRoster(limited.length > 0 ? limited : ["CEOB"]);
   }, []);
 
-  const newConversation = useCallback(() => {
+  const newConversation = useCallback((initialBot?: string) => {
     // Park current thread if it has messages
     if (activeThreadId && messages.length > 0) {
       setThreads((prev) =>
@@ -966,13 +977,13 @@ export function useChat() {
     }
     setMessages([]);
     setActiveThreadId(null);
-    setActiveRoster(["CEOB"]); // BUG FIX S74: Reset roster to CarlOS only on new conversation
+    setActiveRoster([initialBot || "CEOB"]);
     idCounter.current = 0;
     driftWarningCount.current = 0;
     missionNudgeShownAt.current = 0;
   }, [activeThreadId, messages]);
 
-  const parkThread = useCallback(() => {
+  const parkThread = useCallback((initialBot?: string) => {
     if (activeThreadId) {
       setThreads((prev) =>
         prev.map((t) =>
@@ -981,7 +992,7 @@ export function useChat() {
       );
       setMessages([]);
       setActiveThreadId(null);
-      setActiveRoster(["CEOB"]); // BUG FIX S74: Reset roster when parking thread
+      setActiveRoster([initialBot || "CEOB"]);
       idCounter.current = 0;
     }
   }, [activeThreadId, messages]);
@@ -1214,6 +1225,8 @@ export function useChat() {
     // Sprint Discussion 1 — phase-gating data
     exchangeCount,
     hasProduct,
+    // Animations de réflexion dynamiques
+    thinkingSteps,
   };
 }
 

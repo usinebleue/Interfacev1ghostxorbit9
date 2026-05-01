@@ -297,10 +297,9 @@ function TabEtat({ onQuickAction, onReflectionMode, onNavigate }: {
 // ──────────────────────────────────────────
 function TabDiscussions() {
   const { threads, activeThreadId, messages, resumeThread, deleteThread, newConversation } = useChatContext();
-  const { setActiveView } = useFrameMaster();
-
+  const { setActiveView, activeBotCode } = useFrameMaster();
   const activeThread = threads.find((t) => t.id === activeThreadId);
-  const parkedThreads = threads.filter((t) => t.id !== activeThreadId);
+  const parkedThreads = threads.filter((t) => t.id !== activeThreadId && t.primaryBot === activeBotCode);
   const hasActiveMessages = messages.length > 0;
 
   const handleNewDiscussion = () => {

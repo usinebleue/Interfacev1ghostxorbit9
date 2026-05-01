@@ -25,6 +25,8 @@ interface ChatState {
   // Sprint Discussion 1 — CREDO phase-gating
   exchangeCount: number;
   hasProduct: boolean;
+  // Animations de réflexion dynamiques (backend-driven)
+  thinkingSteps: string[];
 }
 
 interface BranchMeta {
@@ -85,6 +87,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     exchangeCount,
     hasProduct,
     renameThread,
+    thinkingSteps,
   } = useChat();
   const { crystals, addCrystal, deleteCrystal, exportCrystals } = useCrystals();
   const { dispatchBatch, focusData, clearFocusMode } = useCanvasActions();
@@ -103,7 +106,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!focusData) return;
     // Parker la conversation en cours (si elle a des messages) et repartir à zéro
-    newConversation();
+    newConversation(activeBotCode);
     // Injecter la carte focus comme premier message du nouveau fil (bulle de discussion)
     injectFocusCard({
       title: focusData.title,
@@ -112,6 +115,16 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       bot: focusData.bot,
     });
   }, [focusData]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Reset conversation quand on change de bot/département
+  const prevBotRef = useRef(activeBotCode);
+  useEffect(() => {
+    if (activeBotCode !== prevBotRef.current) {
+      prevBotRef.current = activeBotCode;
+      newConversation(activeBotCode);
+    }
+  }, [activeBotCode]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const [activeReflectionMode, setReflectionMode] =
     useState<ReflectionMode>("credo");
   const [currentCREDOPhase, setCurrentCREDOPhase] = useState<CREDOPhase>("C");
@@ -196,9 +209,9 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   );
 
   const handleNewConversation = useCallback(() => {
-    newConversation();
+    newConversation(activeBotCode);
     setReflectionMode("credo");
-  }, [newConversation]);
+  }, [newConversation, activeBotCode]);
 
   // Crystallize a bot response — extract title from first line, save to banque
   const crystallize = useCallback(
@@ -236,6 +249,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         activeRoster,
         exchangeCount,
         hasProduct,
+        thinkingSteps,
         sendMessage,
         sendMultiPerspective,
         injectVoiceMessage,

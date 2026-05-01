@@ -443,94 +443,16 @@ function useCopy() {
 // Thinking Process — animation multi-étapes
 // ══════════════════════════════════════════════
 
-interface ThinkingStep {
-  icon: typeof Zap;
-  label: string;
-  duration: number; // ms before moving to next
-}
-
-function getThinkingSteps(mode: string): ThinkingStep[] {
-  const common: ThinkingStep[] = [
-    { icon: Search, label: "Analyse de la tension...", duration: 1200 },
-  ];
-
-  const modeSteps: Record<string, ThinkingStep[]> = {
-    credo: [
-      { icon: Users, label: "Consultation du C-Level...", duration: 1400 },
-      { icon: Brain, label: "Analyse en profondeur...", duration: 1200 },
-      { icon: Cpu, label: "Synthese en cours...", duration: 0 },
-    ],
-    analyse: [
-      { icon: Search, label: "Decomposition du probleme...", duration: 1300 },
-      { icon: Users, label: "Mobilisation CTO + CFO...", duration: 1400 },
-      { icon: Cpu, label: "Analyse approfondie...", duration: 0 },
-    ],
-    brainstorm: [
-      { icon: Sparkles, label: "Ouverture du champ créatif...", duration: 1200 },
-      { icon: Users, label: "Convocation CMO + CEO...", duration: 1300 },
-      { icon: Brain, label: "Génération d'idées...", duration: 0 },
-    ],
-    debat: [
-      { icon: Users, label: "Positionnement des débatteurs...", duration: 1300 },
-      { icon: MessageSquare, label: "Arguments et contre-arguments...", duration: 1500 },
-      { icon: Scale, label: "Arbitrage en cours...", duration: 0 },
-    ],
-    decision: [
-      { icon: FileText, label: "Compilation des données...", duration: 1200 },
-      { icon: Users, label: "Consultation CEO + CFO...", duration: 1400 },
-      { icon: Scale, label: "Évaluation Go/No-Go...", duration: 0 },
-    ],
-    crise: [
-      { icon: AlertTriangle, label: "Évaluation de la sévérité...", duration: 800 },
-      { icon: Users, label: "Mobilisation d'urgence COO + CEO...", duration: 1000 },
-      { icon: Cpu, label: "Plan d'action immédiat...", duration: 0 },
-    ],
-    strategie: [
-      { icon: Target, label: "Cadrage stratégique...", duration: 1300 },
-      { icon: Users, label: "Consultation CSO + CFO + CEO...", duration: 1500 },
-      { icon: Cpu, label: "Élaboration du plan...", duration: 0 },
-    ],
-    innovation: [
-      { icon: Sparkles, label: "Scan des possibilites...", duration: 1200 },
-      { icon: Users, label: "Mobilisation CTO + CMO...", duration: 1300 },
-      { icon: Brain, label: "Catalyse d'innovation...", duration: 0 },
-    ],
-    deep: [
-      { icon: Brain, label: "Plongee en profondeur...", duration: 1500 },
-      { icon: Users, label: "Resonance multi-perspectives...", duration: 1600 },
-      { icon: Cpu, label: "Synthese spirale...", duration: 0 },
-    ],
-  };
-
-  return [...common, ...(modeSteps[mode] || modeSteps.credo)];
-}
-
-/** ThinkingAnimation — style simulation : bot photo, random timing, hidden pending steps */
-function ThinkingAnimation({ mode, botCode }: { mode: string; botCode?: string }) {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
-  const steps = useMemo(() => getThinkingSteps(mode), [mode]);
+/** ThinkingAnimation — dynamic backend-driven steps via SSE status events */
+function ThinkingAnimation({ botCode, steps }: { botCode?: string; steps: string[] }) {
   const bot = BOT_COLORS[botCode || "CEOB"];
-
-  useEffect(() => {
-    setCurrentStep(0);
-    setCompletedSteps([]);
-  }, [mode]);
-
-  useEffect(() => {
-    if (currentStep >= steps.length) return;
-    const timer = setTimeout(() => {
-      setCompletedSteps(prev => [...prev, currentStep]);
-      setCurrentStep(prev => prev + 1);
-    }, 800 + Math.random() * 600); // randomized timing
-    return () => clearTimeout(timer);
-  }, [currentStep, steps.length]);
+  const displaySteps = steps.length > 0 ? steps : ["Connexion..."];
 
   return (
     <div className="flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
       <BotAvatar code={botCode || "CEOB"} size="md" className="mt-1" />
       <div className={cn(
-        "bg-white border rounded-2xl rounded-tl-md px-5 py-4 shadow-sm min-w-[280px]",
+        "bg-white border rounded-2xl rounded-tl-md px-5 py-4 shadow-sm min-w-64",
         bot && `border-l-[3px] ${bot.border}`
       )}>
         <div className={cn("text-xs font-semibold mb-2.5 flex items-center gap-1.5", bot?.text || "text-blue-600")}>
@@ -538,12 +460,9 @@ function ThinkingAnimation({ mode, botCode }: { mode: string; botCode?: string }
           {bot?.name || "CarlOS"} reflechit...
         </div>
         <div className="space-y-2">
-          {steps.map((step, i) => {
-            const StepIcon = step.icon;
-            const isActive = i === currentStep;
-            const isDone = completedSteps.includes(i);
-            const isPending = i > currentStep;
-            if (isPending) return null; // hidden until reached (simulation style)
+          {displaySteps.map((label, i) => {
+            const isActive = i === displaySteps.length - 1;
+            const isDone = i < displaySteps.length - 1;
             return (
               <div key={i} className={cn(
                 "flex items-center gap-2.5 text-sm transition-all duration-300 animate-in fade-in slide-in-from-left-2",
@@ -552,8 +471,7 @@ function ThinkingAnimation({ mode, botCode }: { mode: string; botCode?: string }
               )}>
                 {isActive && <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />}
                 {isDone && <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />}
-                <StepIcon className="h-3.5 w-3.5 shrink-0" />
-                <span className={cn(isDone && "line-through")}>{step.label}</span>
+                <span className={cn(isDone && "line-through")}>{label}</span>
               </div>
             );
           })}
@@ -1097,7 +1015,7 @@ export function LiveChat({
     videoAvatarEnabled, toggleVideoAvatar,
     injectVoiceMessage,
     activeRoster, addBotToRoster, removeBotFromRoster, acceptTeamProposal,
-    exchangeCount, renameThread,
+    exchangeCount, renameThread, thinkingSteps,
   } = useChatContext();
   const { activeBotCode } = useFrameMaster();
   const { bots } = useBots();
@@ -1476,41 +1394,7 @@ export function LiveChat({
                 )}
               </div>
             </div>
-            {/* Ligne 2: Équipe active (splitMode) — masquée car h-12 fixe harmonisé avec TopBarContent */}
-            {false && splitMode && !compact && (
-              <div className="flex items-center gap-2 pt-1 mt-1 border-t border-white/15">
-                {activeRoster.map((code, idx) => {
-                  const info = BOT_COLORS[code];
-                  return (
-                    <div key={code} className="flex items-center gap-1">
-                      <BotAvatar code={code} size="sm" />
-                      <span className="text-[9px] text-white font-medium">{info?.name || code}</span>
-                      <span className="text-[9px] text-white/50">{info?.role || ""}</span>
-                      {activeRoster.length > 1 && (
-                        <button onClick={() => removeBotFromRoster(code)} className="text-white/30 hover:text-white/70 cursor-pointer transition-colors" title={`Retirer ${info?.name}`}>
-                          <span className="text-xs">×</span>
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
-                {activeRoster.length < 3 && (
-                  <select
-                    onChange={(e) => { if (e.target.value) { addBotToRoster(e.target.value); e.target.value = ""; } }}
-                    className="text-[9px] text-white/70 bg-white/10 border border-dashed border-white/30 rounded-full px-2.5 py-0.5 cursor-pointer"
-                    defaultValue=""
-                  >
-                    <option value="" disabled className="text-gray-800 bg-white">+ Ajouter un agent</option>
-                    {Object.entries(BOT_COLORS)
-                      .filter(([c]) => !activeRoster.includes(c))
-                      .map(([c, info]) => (
-                        <option key={c} value={c} className="text-gray-800 bg-white">{info.name} — {info.role}</option>
-                      ))
-                    }
-                  </select>
-                )}
-              </div>
-            )}
+            {/* Ancien roster ligne 2 retiré — intégré dans ligne 1 ci-dessus */}
             {/* Ligne 2: Équipe active (mode normal) + dots CREDO */}
             {!compact && !splitMode && (
               <div className="flex items-center justify-between mt-1">
@@ -1707,7 +1591,7 @@ export function LiveChat({
 
           {/* Perspectives bar retirée — trop d'options sans logique contextuelle */}
 
-          {/* Roster de bots actifs — en splitMode, l'équipe est dans le header */}
+          {/* Roster de bots actifs — en splitMode, intégré dans le header */}
           {!splitMode && activeRoster.length > 0 && messages.length > 0 && (
             <div className="flex items-center gap-2 py-2 px-3 bg-white/60 rounded-xl border border-gray-100">
               <Bot className="h-3 w-3 text-gray-400 shrink-0" />
@@ -2224,10 +2108,13 @@ export function LiveChat({
             </div>
           )}
 
-          {/* Thinking process animation */}
-          {isTyping && (
-            <ThinkingAnimation mode={activeReflectionMode} botCode={activeBotCode} />
-          )}
+          {/* Thinking process animation — dynamic backend-driven */}
+          {isTyping && thinkingSteps.length > 0 && (() => {
+            // Utiliser le bot du message en cours de streaming (pas le département actif)
+            const streamMsg = [...messages].reverse().find(m => m.role === "assistant" && m.isStreaming);
+            const thinkingBot = streamMsg?.agent || activeBotCode;
+            return <ThinkingAnimation botCode={thinkingBot} steps={thinkingSteps} />;
+          })()}
         </div>
       </div>
 

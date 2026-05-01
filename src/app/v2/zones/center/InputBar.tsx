@@ -32,6 +32,7 @@ import {
 import { useChatContext } from "../../context/ChatContext";
 import { useFrameMaster } from "../../context/FrameMasterContext";
 import type { ReflectionMode } from "../../api/types";
+import { BOT_NAME } from "../../api/types";
 import { cn } from "../../../components/ui/utils";
 import { useSpeechToText } from "../../api/useVocal";
 
@@ -65,7 +66,7 @@ export function InputBar({ compact = false }: { compact?: boolean }) {
     e.target.value = "";
   }, []);
 
-  const botName = activeBot?.nom || "CarlOS";
+  const botName = BOT_NAME[activeBotCode] || activeBot?.nom || "CarlOS";
 
   // Quand le transcript change, injecter dans le textarea
   useEffect(() => {

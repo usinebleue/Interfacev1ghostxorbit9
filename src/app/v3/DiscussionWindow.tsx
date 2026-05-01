@@ -29,7 +29,6 @@ import {
   type Participant, type DisconnectReason,
 } from "livekit-client";
 
-const ALL_BOT_CODES = ["CEOB","CTOB","CFOB","CMOB","CSOB","COOB","CPOB","CHROB","CINOB","CROB","CLOB","CISOB"];
 
 // CREDO phase colors for PhaseBar dots
 const CREDO_DOT: Record<string, { active: string; label: string }> = {
@@ -103,7 +102,7 @@ function PhaseBar() {
 
 export function DiscussionWindow() {
   const { cockpitTab } = useAmorcer();
-  const { activeRoster, addBotToRoster, removeBotFromRoster } = useChatContext();
+  const { activeRoster } = useChatContext();
   const isOrbit9 = cockpitTab === "orbit9";
 
   return (
@@ -122,24 +121,16 @@ export function DiscussionWindow() {
             <span className="text-[11px] text-white font-medium">Brain Team</span>
             <div className="flex-1" />
 
-            {/* Équipe active — dynamique depuis ChatContext */}
-            {activeRoster.map((code) => (
-              <div key={code} className="flex items-center gap-1 ml-1">
+            {/* Bot actif — affichage statique */}
+            {activeRoster.slice(0, 1).map((code) => (
+              <div key={code} className="flex items-center gap-1.5 ml-1">
                 <div className="w-5 h-5 rounded-full overflow-hidden ring-1 ring-white/30 shrink-0">
                   <img src={BOT_AVATAR[code] || `/agents/${code.toLowerCase()}.png`} alt={BOT_NAME[code] || code} className="w-full h-full object-cover" />
                 </div>
                 <span className="text-[9px] text-white font-medium">{BOT_NAME[code] || code}</span>
                 <span className="text-[9px] text-white/50">{BOT_ROLE[code] || ""}</span>
-                {activeRoster.length > 1 && (
-                  <button onClick={() => removeBotFromRoster(code)} className="text-white/30 hover:text-white/70 cursor-pointer transition-colors" title={`Retirer ${BOT_NAME[code]}`}>
-                    <span className="text-xs">×</span>
-                  </button>
-                )}
               </div>
             ))}
-
-            {/* Dropdown ajout de bot — custom avec avatars */}
-            {activeRoster.length < 3 && <BotAddDropdown activeRoster={activeRoster} addBotToRoster={addBotToRoster} />}
           </>
         )}
       </div>
@@ -337,7 +328,7 @@ function ChatBoxV3() {
     setUploading(true);
     try {
       const result = await api.uploadBureauFile(file, file.name);
-      sendMessage(`Fichier joint: ${result.titre || file.name}`);
+      sendMessage(`Fichier joint: ${result.titre || file.name}`, activeBotCode);
     } catch (err) {
       console.error("[ChatBoxV3] Upload error:", err);
     } finally {
@@ -350,7 +341,7 @@ function ChatBoxV3() {
     const text = inputText.trim();
     if (!text) return;
     setInputText("");
-    sendMessage(text);
+    sendMessage(text, activeBotCode);
     textareaRef.current?.focus();
   };
 
@@ -507,52 +498,3 @@ function ChatBoxV3() {
   );
 }
 
-// ═══ DROPDOWN AJOUT BOT AVEC AVATARS ═══
-
-function BotAddDropdown({ activeRoster, addBotToRoster }: { activeRoster: string[]; addBotToRoster: (code: string) => void }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  // Fermer si click extérieur
-  useEffect(() => {
-    if (!open) return;
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
-
-  const available = ALL_BOT_CODES.filter((c) => !activeRoster.includes(c));
-
-  return (
-    <div className="relative ml-1" ref={ref}>
-      <button
-        onClick={() => setOpen(!open)}
-        className="flex items-center gap-1 text-[9px] text-white/70 bg-white/10 border border-dashed border-white/30 rounded-full px-2 py-0.5 cursor-pointer hover:bg-white/20 transition-colors"
-      >
-        <Plus className="h-3 w-3" />
-        Agent
-      </button>
-      {open && (
-        <div className="absolute top-full right-0 mt-1 w-52 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-50 max-h-72 overflow-y-auto">
-          {available.map((code) => (
-            <button
-              key={code}
-              onClick={() => { addBotToRoster(code); setOpen(false); }}
-              className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 transition-colors cursor-pointer text-left"
-            >
-              <div className="w-6 h-6 rounded-full overflow-hidden shrink-0 bg-gray-100">
-                <img src={BOT_AVATAR[code] || `/agents/${code.toLowerCase()}.png`} alt={BOT_NAME[code] || code} className="w-full h-full object-cover" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <span className="text-[11px] font-medium text-gray-800">{BOT_NAME[code] || code}</span>
-                <span className="text-[9px] text-gray-400 ml-1">{BOT_ROLE[code] || ""}</span>
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}

@@ -350,17 +350,6 @@ export function WorkspacePhasesPanel() {
               </>
             )}
             <div className="flex-1" />
-            {/* Indicateur discussion active — retour rapide */}
-            {rightSection && reflexionContext && (activePhase === "discussion" || activePhase === "reflexion" || activePhase === "creation") && (
-              <button
-                onClick={() => setRightSection(null)}
-                className="flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-medium bg-sky-50 text-sky-700 hover:bg-sky-100 transition-colors cursor-pointer shrink-0"
-                title={`Retour à : ${reflexionContext}`}
-              >
-                <MessageCircle className="h-3 w-3" />
-                <span className="max-w-[120px] truncate">{reflexionContext}</span>
-              </button>
-            )}
             {showBlueprintTabs && blueprintStats && (
               <div className="flex items-center gap-2 shrink-0">
                 <span className="text-[10px] text-gray-500">{blueprintStats.tierLabel}</span>

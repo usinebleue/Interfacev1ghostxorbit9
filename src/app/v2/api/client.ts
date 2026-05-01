@@ -94,6 +94,7 @@ export interface StreamDoneEvent {
   team_proposal?: TeamProposal | null;
   is_diagnostic?: boolean;
   is_code_task?: boolean;
+  is_greeting?: boolean;
   // D-101 — GPS du Flow
   flow_type?: "data" | "action" | null;
   flow_step?: string | null;
@@ -111,6 +112,7 @@ export type StreamCallback = {
   onToken: (text: string, accumulated: string) => void;
   onDone: (data: StreamDoneEvent) => void;
   onError: (error: string) => void;
+  onStatus?: (label: string) => void;
 };
 
 // Chemin relatif — nginx reverse proxy vers FastAPI :8000
@@ -1219,6 +1221,8 @@ export const api = {
                 if (currentEvent === "token") {
                   accumulated += data.t;
                   callbacks.onToken(data.t, accumulated);
+                } else if (currentEvent === "status") {
+                  callbacks.onStatus?.(data.s);
                 } else if (currentEvent === "done") {
                   callbacks.onDone(data as StreamDoneEvent);
                 } else if (currentEvent === "error") {
