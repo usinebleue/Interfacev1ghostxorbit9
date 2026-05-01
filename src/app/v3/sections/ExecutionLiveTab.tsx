@@ -25,6 +25,58 @@ import {
 import { useDataSource } from "../data/use-data-source";
 import { DomainBadge } from "../data/source-badge";
 
+// ═══ Helpers: transformer données API → PriorityItem ═══
+
+function chaleurToUrgence(chaleur: string): "critique" | "haute" | "normale" {
+  if (chaleur === "brule") return "critique";
+  if (chaleur === "couve") return "haute";
+  return "normale";
+}
+
+function statusToPhase(status: string, progression: number): PhaseKey {
+  if (status === "completee" || status === "done") return "retroaction";
+  if (status === "en-cours" || status === "in_progress") return "execution";
+  if (status === "active") return progression >= 80 ? "retroaction" : progression >= 20 ? "execution" : "creation";
+  if (status === "pause") return "reflexion";
+  return "discussion";
+}
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+function apiChantiersToPriorities(chantiers: any[]): PriorityItem[] {
+  if (!Array.isArray(chantiers) || chantiers.length === 0) return [];
+  return chantiers.map((c) => ({
+    id: c.id,
+    titre: c.titre || "Sans titre",
+    type: "chantier" as const,
+    phase: statusToPhase(c.status || "active", c.progression || 0),
+    progression: c.progression ?? 0,
+    urgence: chaleurToUrgence(c.chaleur || ""),
+    botPrimaire: (c.bot_codes && c.bot_codes[0]) || "CEOB",
+    echeance: c.echeance || "—",
+    description: c.description || "",
+  }));
+}
+
+function apiMissionsToPriorities(missions: any[]): PriorityItem[] {
+  if (!Array.isArray(missions) || missions.length === 0) return [];
+  // Only active/in-progress missions, max 10 for dashboard
+  return missions
+    .filter((m) => m.status === "active" || m.status === "a-faire" || m.status === "en-cours")
+    .slice(0, 10)
+    .map((m) => ({
+      id: 10000 + m.id,
+      titre: m.titre || "Mission sans titre",
+      type: "operation" as const,
+      phase: statusToPhase(m.status || "active", m.progression || 0),
+      progression: m.progression ?? 0,
+      urgence: (m.priorite >= 80 ? "critique" : m.priorite >= 50 ? "haute" : "normale") as PriorityItem["urgence"],
+      botPrimaire: m.bot_primaire || "CEOB",
+      echeance: m.completed_at ? m.completed_at.slice(0, 10) : "—",
+      description: m.description || "",
+    }));
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
 // ═══ Types ═══
 
 type LiveFilter = "tout" | "capex" | "opex";
@@ -48,7 +100,24 @@ function ProgressMiniPhased({ value, phase }: { value: number; phase?: PhaseKey 
 // ═══ Composant principal ═══
 
 export function ExecutionLiveTab({ botCode }: { botCode: string }) {
-  const { data: priorities } = useDataSource<PriorityItem[]>("execution-live", MOCK_PRIORITIES);
+  // Fetch real chantiers from API (registry "execution-live" → /api/v1/chantiers)
+  const { data: rawChantiers, isLive } = useDataSource<any[]>("execution-live", []);
+  // Fetch real missions for KPI count
+  const { data: rawMissions } = useDataSource<any[]>("missions", []);
+
+  // Transform API chantiers + missions → PriorityItem[] (or fallback to mock)
+  const priorities: PriorityItem[] = isLive && rawChantiers.length > 0
+    ? [...apiChantiersToPriorities(rawChantiers), ...apiMissionsToPriorities(Array.isArray(rawMissions) ? rawMissions : [])]
+    : MOCK_PRIORITIES;
+
+  // Dynamic KPIs from real data (or mock fallback)
+  const dynamicKpis = isLive ? [
+    { label: "Chantiers", value: String(rawChantiers.length), icon: Flame, delta: `${rawChantiers.filter((c: any) => c.chaleur === "brule").length} brûlent`, up: rawChantiers.length > 0, color: "text-orange-600" },
+    { label: "Missions", value: String(Array.isArray(rawMissions) ? rawMissions.filter((m: any) => m.status === "active" || m.status === "a-faire").length : 0), icon: Target, delta: `${Array.isArray(rawMissions) ? rawMissions.filter((m: any) => m.status === "a-faire").length : 0} à faire`, up: false, color: "text-blue-600" },
+    { label: "Complétées", value: String(Array.isArray(rawMissions) ? rawMissions.filter((m: any) => m.status === "completee").length : 0), icon: Settings, delta: "missions terminées", up: true, color: "text-cyan-600" },
+    { label: "Progression", value: rawChantiers.length > 0 ? `${Math.round(rawChantiers.reduce((s: number, c: any) => s + (c.progression || 0), 0) / rawChantiers.length)}%` : "—", icon: BarChart3, delta: "moyenne chantiers", up: true, color: "text-emerald-600" },
+  ] : MOCK_KPIS;
+
   const [sidebarItem, setSidebarItem] = useState<LiveSidebarItem>("overview");
   const [filter, setFilter] = useState<LiveFilter>("tout");
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
@@ -101,7 +170,7 @@ export function ExecutionLiveTab({ botCode }: { botCode: string }) {
 
       {/* 4 KPI cards — pattern Cockpit (header bleu pastel) */}
       <div className="grid grid-cols-4 gap-3 mt-4">
-        {MOCK_KPIS.map((kpi, i) => (
+        {dynamicKpis.map((kpi, i) => (
           <div key={i} className="rounded-xl border border-gray-200 shadow-sm bg-white">
             <div className="flex items-center justify-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
               <kpi.icon className="h-4 w-4 text-gray-900 stroke-[2.5]" />
@@ -126,7 +195,7 @@ export function ExecutionLiveTab({ botCode }: { botCode: string }) {
           {([
             { key: "overview" as const, label: "Vue d'ensemble", icon: Home, count: null },
             { key: "priorites" as const, label: "Priorités", icon: AlertTriangle, count: filteredPriorities.length },
-            { key: "activite" as const, label: "Activité récente", icon: Clock, count: MOCK_ACTIVITY.length },
+            { key: "activite" as const, label: "Activité récente", icon: Clock, count: MOCK_ACTIVITY.length /* TODO: wire to decision_log */ },
           ]).map(item => (
             <button
               key={item.key}

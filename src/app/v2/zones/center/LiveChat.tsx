@@ -623,15 +623,16 @@ function CommandLaunchBanner({ ctx, onLaunch, disabled }: {
 // Suggestions Welcome — pilules debut de session (BLOC 4)
 // ══════════════════════════════════════════════
 
-function SuggestionsWelcome({ onSelect, disabled }: {
+function SuggestionsWelcome({ onSelect, disabled, botCode }: {
   onSelect: (text: string, mode?: string) => void;
   disabled: boolean;
+  botCode?: string;
 }) {
   const [data, setData] = useState<import("../../api/types").SuggestionsResponse | null>(null);
 
   useEffect(() => {
-    api.suggestions(1).then(setData).catch(() => {});
-  }, []);
+    api.suggestions(1, botCode || undefined).then(setData).catch(() => {});
+  }, [botCode]);
 
   if (!data) return null;
 
@@ -1000,6 +1001,7 @@ export function LiveChat({
   splitMode = false,
   splitTitle,
   hideHeader = false,
+  hideEmptyState = false,
 }: {
   initialMode?: string;
   onBack?: () => void;
@@ -1007,6 +1009,7 @@ export function LiveChat({
   splitMode?: boolean;
   splitTitle?: string;
   hideHeader?: boolean;
+  hideEmptyState?: boolean;
 }) {
   const {
     messages, isTyping, activeReflectionMode, currentCREDOPhase, newConversation, sendMessage, sendMultiPerspective,
@@ -1562,8 +1565,8 @@ export function LiveChat({
       <div ref={scrollRef} className="flex-1 overflow-auto">
         <div className={cn(compact ? "px-3 py-4 space-y-3" : "max-w-3xl mx-auto px-10 py-5 space-y-5")}>
 
-          {/* Empty state + Suggestions Welcome (BLOC 4) */}
-          {messages.length === 0 && !isTyping && (
+          {/* Empty state + Suggestions Welcome (BLOC 4) — masqué si hideEmptyState (V3 gère son propre accueil) */}
+          {messages.length === 0 && !isTyping && !hideEmptyState && (
             <div className="flex justify-center py-16">
               <div className="text-center space-y-5 max-w-md">
                 <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-xl">
@@ -1579,6 +1582,7 @@ export function LiveChat({
                 <SuggestionsWelcome
                   onSelect={(text) => sendMessage(text, activeBotCode)}
                   disabled={isTyping}
+                  botCode={activeBotCode}
                 />
               </div>
             </div>

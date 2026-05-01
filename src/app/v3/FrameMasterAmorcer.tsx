@@ -60,12 +60,10 @@ function BotCodeSync() {
   const prevO9Ref = useRef(o9Section);
   const prevTabRef = useRef(cockpitTab);
 
-  // Sync activeBotCode V3 → V2
+  // Sync activeBotCode V3 → V2 (toujours pousser — React bail-out si même valeur)
   useEffect(() => {
-    if (activeBotCode !== prevBotRef.current) {
-      prevBotRef.current = activeBotCode;
-      setActiveBotCode(activeBotCode);
-    }
+    prevBotRef.current = activeBotCode;
+    setActiveBotCode(activeBotCode);
   }, [activeBotCode, setActiveBotCode]);
 
   // Sync rightSection + cockpitTab + o9Section → V2 activeView (Fix R2)

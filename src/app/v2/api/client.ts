@@ -923,6 +923,11 @@ export const api = {
     return apiFetch(`/discussions/${discussionId}/archive`, { method: "POST" });
   },
 
+  /** Sync discussion (upsert par external_id) — fire-and-forget depuis hooks */
+  syncDiscussion(data: { external_id: string; titre?: string; status?: string; bot_primaire?: string; work_phase?: string; message_count?: number }): Promise<Record<string, unknown>> {
+    return apiFetch("/discussions/sync", { method: "POST", body: JSON.stringify(data) });
+  },
+
   /** Discussions stagnantes */
   staleDiscussions(heures = 48): Promise<Discussion[]> {
     return apiFetch<Discussion[]>(`/discussions/stale?heures=${heures}`);
@@ -998,9 +1003,10 @@ export const api = {
 
   // ── SUGGESTIONS (BLOC 4) ───────────────────────────────────
 
-  /** Suggestions proactives pour le canvas */
-  suggestions(userId = getCurrentUserId()): Promise<SuggestionsResponse> {
-    return apiFetch<SuggestionsResponse>(`/suggestions?user_id=${userId}`);
+  /** Suggestions proactives pour le canvas — filtre par departement */
+  suggestions(userId = getCurrentUserId(), botCode?: string): Promise<SuggestionsResponse> {
+    const qs = botCode ? `?user_id=${userId}&bot_code=${botCode}` : `?user_id=${userId}`;
+    return apiFetch<SuggestionsResponse>(`/suggestions${qs}`);
   },
 
   // ── QUESTIONNAIRE (BLOC 6) ─────────────────────────────────

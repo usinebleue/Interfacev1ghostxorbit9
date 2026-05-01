@@ -336,6 +336,7 @@ export interface Thread {
   // Sprint 4 — Rattachement au squelette
   parentChantier?: string;  // ID du chantier parent (null = orphelin)
   credoPhase?: string;      // Dernière phase CREDO atteinte (C/R/E/D/O)
+  workPhase?: string;       // Phase de travail active (discussion/reflexion/conception/execution/retroaction)
 }
 
 // ─── Missions — structure hiérarchique ───
@@ -581,6 +582,7 @@ export interface Discussion {
   bot_primaire: string;
   section?: string;
   flow_type?: "data" | "action" | "mode_branch";
+  work_phase?: string;
   message_count: number;
   last_user_message_at?: string | null;
   participants?: Participant[];

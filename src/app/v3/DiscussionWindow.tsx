@@ -1,28 +1,36 @@
 /**
- * DiscussionWindow.tsx — Zone Discussion V3
- * Zone centrale — Header Brain Team modélisé + VRAI LiveChat V2
- * Architecture V3 — Intégration Backend
+ * DiscussionWindow.tsx — Zone Discussion V3 (système unifié)
  *
- * Le header h-12 bleu UB est le design modélisé V3 (SimAmorcer L572-606).
- * Équipe active dynamique via activeRoster (ChatContext).
- * Le LiveChat V2 gère messages, input et streaming (sans son propre header).
- * BotCodeSync synchronise AmorcerContext → FrameMasterContext en amont.
- * ChatBox V3 = design Claude AI (SimAmorcer L676-754) branché sur sendMessage réel.
+ * Architecture:
+ *   1. Header h-12 UB_BLUE — avatar bot actif, roster, AgentSelector (+)
+ *   2. Messages — V3MessageList (rendu natif V3: bulles colorées par bot,
+ *      options cliquables, streaming cursor, thinking steps, coaching sentinelle)
+ *   3. Input — ChatBoxV3 (texte, voice call LiveKit, upload fichier)
+ *   4. Accueil — DeptWelcomeScreen quand la discussion est vide
+ *
+ * Pipeline unique:
+ *   AmorcerContext (activeBotCode) → BotCodeSync → FrameMasterContext
+ *   ChatBoxV3 envoie sendMessage(text, activeBotCode) via ChatContext
+ *   V3MessageList lit messages via ChatContext (même source unique)
+ *
+ * ZERO LiveChat V2. UN SEUL système de rendu. Pas de spaghetti.
  */
 
-import { useState, useRef, useEffect, useCallback, type KeyboardEvent } from "react";
+import { useState, useRef, useEffect, useCallback, type KeyboardEvent, type ChangeEvent } from "react";
 import {
-  Bot, Atom, Plus, Send, ChevronUp,
+  Bot, Atom, Plus, Send, ChevronUp, X, Check, ChevronDown, ChevronRight,
   Phone, PhoneOff, Video, Glasses, Paperclip, Globe, Zap, Activity,
   Brain, Target, AlertTriangle, Scale, Sparkles, MessageSquare,
-  Mic, MicOff, Loader2, Upload,
+  Mic, MicOff, Loader2, Upload, MessageCircle, Clock,
 } from "lucide-react";
 import { cn } from "../components/ui/utils";
-import { LiveChat } from "../v2/zones/center/LiveChat";
 import { useAmorcer } from "./AmorcerContext";
 import { useChatContext } from "../v2/context/ChatContext";
 import { BOT_AVATAR, BOT_NAME, BOT_ROLE } from "../v2/api/types";
 import { api } from "../v2/api/client";
+import { BOT_CODES } from "./constants";
+import { DEPT_DASH_ICON, DEPT_GRADIENT, BOT_DISPLAY, PHASE_COLORS } from "./sections/shared/dept-data";
+import { DEPT_GREETING, DEPT_ACTIONS, ACTION_COLORS } from "./data/dept-welcome";
 import {
   Room, RoomEvent, Track,
   type RemoteTrack, type RemoteTrackPublication,
@@ -30,80 +38,404 @@ import {
 } from "livekit-client";
 
 
-// CREDO phase colors for PhaseBar dots
-const CREDO_DOT: Record<string, { active: string; label: string }> = {
-  C: { active: "bg-blue-500 text-white", label: "Connecter" },
-  R: { active: "bg-purple-500 text-white", label: "Rechercher" },
-  E: { active: "bg-amber-500 text-white", label: "Exposer" },
-  D: { active: "bg-green-500 text-white", label: "Demontrer" },
-  O: { active: "bg-red-500 text-white", label: "Obtenir" },
+// ═══ V3 BUBBLE PALETTE — couleurs par bot (1 source de vérité) ═══
+const V3_STYLE: Record<string, { text: string; border: string; ring: string; bubble: string }> = {
+  CEOB:  { text: "text-blue-700",    border: "border-blue-400",    ring: "ring-blue-300",    bubble: "bg-blue-50/40" },
+  CTOB:  { text: "text-violet-700",  border: "border-violet-400",  ring: "ring-violet-300",  bubble: "bg-violet-50/40" },
+  CFOB:  { text: "text-emerald-700", border: "border-emerald-400", ring: "ring-emerald-300", bubble: "bg-emerald-50/40" },
+  CMOB:  { text: "text-pink-700",    border: "border-pink-400",    ring: "ring-pink-300",    bubble: "bg-pink-50/40" },
+  CSOB:  { text: "text-red-700",     border: "border-red-400",     ring: "ring-red-300",     bubble: "bg-red-50/40" },
+  COOB:  { text: "text-orange-700",  border: "border-orange-400",  ring: "ring-orange-300",  bubble: "bg-orange-50/40" },
+  CPOB:  { text: "text-slate-700",   border: "border-slate-400",   ring: "ring-slate-300",   bubble: "bg-slate-50/40" },
+  CHROB: { text: "text-teal-700",    border: "border-teal-400",    ring: "ring-teal-300",    bubble: "bg-teal-50/40" },
+  CINOB: { text: "text-rose-700",    border: "border-rose-400",    ring: "ring-rose-300",    bubble: "bg-rose-50/40" },
+  CROB:  { text: "text-amber-700",   border: "border-amber-400",   ring: "ring-amber-300",   bubble: "bg-amber-50/40" },
+  CLOB:  { text: "text-indigo-700",  border: "border-indigo-400",  ring: "ring-indigo-300",  bubble: "bg-indigo-50/40" },
+  CISOB: { text: "text-zinc-700",    border: "border-zinc-400",    ring: "ring-zinc-300",    bubble: "bg-zinc-50/40" },
 };
+const DEFAULT_STYLE = V3_STYLE.CEOB;
 
-// Reflection mode badges
-const MODE_BADGE: Record<string, { label: string; style: string }> = {
-  analyse: { label: "Analyse", style: "bg-red-100 text-red-700" },
-  brainstorm: { label: "Brainstorm", style: "bg-amber-100 text-amber-700" },
-  decision: { label: "Decision", style: "bg-indigo-100 text-indigo-700" },
-  crise: { label: "Crise", style: "bg-red-100 text-red-700" },
-  strategie: { label: "Strategie", style: "bg-emerald-100 text-emerald-700" },
-  debat: { label: "Debat", style: "bg-violet-100 text-violet-700" },
-  innovation: { label: "Innovation", style: "bg-fuchsia-100 text-fuchsia-700" },
-  deep: { label: "Deep Resonance", style: "bg-cyan-100 text-cyan-700" },
-};
+/** Markdown léger → HTML (bold, italic, code, listes, linebreaks) */
+function formatMarkdown(text: string): string {
+  if (!text) return "";
+  let h = text
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  // Bold, italic, inline code
+  h = h.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  h = h.replace(/\*(.+?)\*/g, "<em>$1</em>");
+  h = h.replace(/`(.+?)`/g, '<code class="text-xs bg-gray-100 px-1 py-0.5 rounded font-mono">$1</code>');
+  // Bullet lists: lines starting with * or -
+  h = h.replace(/^[\*\-]\s+(.+)$/gm, '<li class="ml-4 list-disc">$1</li>');
+  // Numbered lists: lines starting with 1. 2. etc
+  h = h.replace(/^\d+\.\s+(.+)$/gm, '<li class="ml-4 list-decimal">$1</li>');
+  // Line breaks (but not inside <li>)
+  h = h.replace(/\n/g, "<br />");
+  // Clean up <br /> before/after <li>
+  h = h.replace(/<br \/><li/g, "<li").replace(/<\/li><br \/>/g, "</li>");
+  return h;
+}
 
-// ═══ PHASE BAR — indicateur CREDO + mode + flow type ═══
-function PhaseBar() {
-  const { currentCREDOPhase, currentMode, messages } = useChatContext();
-  // Get bubbleContext from last bot message
-  const lastBot = [...messages].reverse().find(m => m.role === "assistant" && m.bubbleContext);
-  const bubbleCtx = lastBot?.bubbleContext;
+// ═══ V3 MESSAGE LIST — Système unique de rendu des discussions ═══
+// Gère: bulles V3, options cliquables, streaming, thinking, coaching, voice
+function V3MessageList() {
+  const { messages, isTyping, sendMessage, thinkingSteps, parkThread, activeRoster } = useChatContext();
+  const { activeBotCode } = useAmorcer();
+  const endRef = useRef<HTMLDivElement>(null);
+  const isAnyStreaming = messages.some(m => m.isStreaming);
+
+  // Dernier message bot (pour afficher les options seulement sur le dernier)
+  const lastBotId = [...messages].reverse().find(m => m.role === "assistant" && !m.isStreaming)?.id;
+
+  // Auto-scroll
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages.length]);
+  useEffect(() => {
+    if (!isAnyStreaming) return;
+    const id = setInterval(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), 250);
+    return () => clearInterval(id);
+  }, [isAnyStreaming]);
+
+  // Option click — gère les cas spéciaux coaching + envoi standard
+  const handleOption = useCallback((opt: string) => {
+    if (isTyping) return;
+    const lower = opt.toLowerCase();
+    if (lower.includes("parker") && lower.includes("thread")) { parkThread(); return; }
+    if (lower.includes("synthes") || lower.includes("synthét")) {
+      sendMessage("Fais une synthèse structurée de notre discussion.", activeBotCode);
+      return;
+    }
+    // Default: envoyer le texte de l'option au bot actif
+    sendMessage(opt, activeBotCode);
+  }, [isTyping, sendMessage, activeBotCode, parkThread]);
 
   return (
-    <div className="h-8 px-3 flex items-center gap-3 bg-gray-50 border-b border-gray-200 shrink-0">
-      {/* CREDO dots */}
-      <div className="flex items-center gap-1">
-        {(["C","R","E","D","O"] as const).map(p => (
-          <div
-            key={p}
-            className={cn(
-              "w-5 h-5 rounded-full flex items-center justify-center font-bold text-[9px] transition-colors",
-              p === currentCREDOPhase
-                ? CREDO_DOT[p].active
-                : "bg-gray-200 text-gray-400"
-            )}
-            title={CREDO_DOT[p].label}
-          >
-            {p}
+    <div className="flex-1 overflow-auto px-4 py-3 space-y-3">
+      {messages.map((msg) => {
+        if (msg.role === "system") return null;
+        if (msg.isStreaming && !msg.content) return null;
+
+        const isUser = msg.role === "user";
+        const botCode = msg.agent || activeBotCode || "CEOB";
+        const s = V3_STYLE[botCode] || DEFAULT_STYLE;
+        const isCoaching = msg.msgType === "coaching";
+        const isLast = msg.id === lastBotId;
+
+        // ── User bubble ──
+        if (isUser) {
+          return (
+            <div key={msg.id} className="flex gap-2.5 justify-end">
+              <div className="bg-blue-50 border border-blue-100 rounded-xl rounded-tr-none px-3.5 py-2.5 max-w-[80%] shadow-sm">
+                <p className="text-sm text-blue-900 whitespace-pre-wrap">{msg.content}</p>
+              </div>
+              <div className="w-7 h-7 rounded-full overflow-hidden shrink-0 mt-0.5 ring-2 ring-blue-300">
+                <img src="/agents/carl-fugere.jpg" alt="Carl" className="w-full h-full object-cover" />
+              </div>
+            </div>
+          );
+        }
+
+        // ── Coaching bubble (CarlOS sentinelle — style ambre) ──
+        if (isCoaching) {
+          return (
+            <div key={msg.id} className="flex gap-2.5">
+              <div className="w-7 h-7 rounded-full overflow-hidden shrink-0 ring-2 ring-amber-300 mt-0.5">
+                <img src={BOT_AVATAR.CEOB} alt="CarlOS" className="w-full h-full object-cover" />
+              </div>
+              <div className="flex-1 max-w-[85%]">
+                <div className="border-l-[3px] border-amber-400 border border-amber-200 rounded-xl rounded-tl-none px-3.5 py-2.5 shadow-sm bg-amber-50/40">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <AlertTriangle className="h-3 w-3 text-amber-600" />
+                    <span className="text-[11px] font-semibold text-amber-700">CarlOS — Sentinelle</span>
+                  </div>
+                  <p className="text-sm text-amber-800">{msg.content}</p>
+                </div>
+                {/* Options coaching */}
+                {isLast && msg.options && msg.options.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {msg.options.map((opt, i) => (
+                      <button key={i} onClick={() => handleOption(opt)}
+                        className="text-[11px] px-3 py-1.5 rounded-full border border-amber-300 bg-white text-amber-700 hover:bg-amber-50 transition-colors cursor-pointer font-medium">
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        }
+
+        // ── Bot bubble standard ──
+        return (
+          <div key={msg.id} className="flex gap-2.5">
+            <div className={cn("w-7 h-7 rounded-full overflow-hidden shrink-0 ring-2 mt-0.5", s.ring)}>
+              <img src={BOT_AVATAR[botCode] || `/agents/${botCode.toLowerCase()}.png`}
+                alt={BOT_NAME[botCode] || botCode} className="w-full h-full object-cover" />
+            </div>
+            <div className="flex-1 max-w-[85%]">
+              <div className={cn("border-l-[3px] border border-gray-200 rounded-xl rounded-tl-none px-3.5 py-2.5 shadow-sm", s.border, s.bubble)}>
+                {/* Agent name + role */}
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className={cn("text-[11px] font-semibold", s.text)}>{BOT_NAME[botCode] || botCode}</span>
+                  <span className="text-[10px] text-gray-400">{BOT_ROLE[botCode] || ""}</span>
+                </div>
+                {/* Content — streaming OU formatted */}
+                {msg.isStreaming ? (
+                  <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                    {msg.content}
+                    <span className="inline-block w-0.5 h-4 bg-current ml-0.5 animate-pulse align-text-bottom" />
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-700 leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: formatMarkdown(msg.content) }} />
+                )}
+              </div>
+              {/* Options — boutons cliquables (seulement sur le dernier message bot) */}
+              {isLast && !msg.isStreaming && msg.options && msg.options.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {msg.options.map((opt, i) => (
+                    <button key={i} onClick={() => handleOption(opt)}
+                      className="text-[11px] px-3 py-1.5 rounded-full border border-gray-200 bg-white text-gray-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-colors cursor-pointer font-medium shadow-sm">
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        ))}
-      </div>
+        );
+      })}
 
-      {/* Mode badge — visible quand mode != standard/credo */}
-      {currentMode && currentMode !== "credo" && MODE_BADGE[currentMode] && (
-        <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium", MODE_BADGE[currentMode].style)}>
-          {MODE_BADGE[currentMode].label}
-        </span>
-      )}
+      {/* Thinking steps — animation pendant la réflexion du bot (même pattern que ThinkingAnimation V2) */}
+      {isTyping && thinkingSteps.length > 0 && (() => {
+        const streamMsg = [...messages].reverse().find(m => m.role === "assistant" && m.isStreaming);
+        const thinkBot = streamMsg?.agent || activeBotCode;
+        const ts = V3_STYLE[thinkBot] || DEFAULT_STYLE;
+        const botName = BOT_NAME[thinkBot] || "CarlOS";
+        return (
+          <div className="flex gap-2.5 animate-in fade-in duration-500">
+            <div className={cn("w-7 h-7 rounded-full overflow-hidden shrink-0 ring-2 mt-0.5", ts.ring)}>
+              <img src={BOT_AVATAR[thinkBot] || `/agents/${thinkBot.toLowerCase()}.png`} alt="" className="w-full h-full object-cover" />
+            </div>
+            <div className={cn("border-l-[3px] border border-gray-200 rounded-xl rounded-tl-none px-4 py-3 shadow-sm min-w-64", ts.border, ts.bubble)}>
+              {/* Header — "{bot} réfléchit..." avec Brain pulse */}
+              <div className={cn("text-xs font-semibold mb-2 flex items-center gap-1.5", ts.text)}>
+                <Brain className="h-3 w-3 animate-pulse" />
+                {botName} réfléchit...
+              </div>
+              <div className="space-y-1.5">
+                {thinkingSteps.map((step, i) => {
+                  const isActive = i === thinkingSteps.length - 1;
+                  const isDone = i < thinkingSteps.length - 1;
+                  return (
+                    <div key={i} className={cn(
+                      "flex items-center gap-2 text-sm transition-all duration-300",
+                      isActive && ts.text,
+                      isDone && "text-green-600 opacity-60",
+                    )}>
+                      {isActive && <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />}
+                      {isDone && <Check className="h-3.5 w-3.5 shrink-0" />}
+                      <span className={cn(isDone && "line-through")}>{step}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
-      {/* Flow indicator — DATA vs ACTION */}
-      {bubbleCtx?.flow_type && (
-        <span className={cn(
-          "px-2 py-0.5 rounded-full text-[10px] font-medium",
-          bubbleCtx.flow_type === "action"
-            ? "bg-green-100 text-green-700"
-            : "bg-gray-100 text-gray-500"
-        )}>
-          {bubbleCtx.flow_type === "action" ? `Action: ${bubbleCtx.flow_step || ""}` : "Consultation"}
-        </span>
+      {/* Typing dots — quand le bot réfléchit sans thinking steps */}
+      {isTyping && !isAnyStreaming && thinkingSteps.length === 0 && (() => {
+        const ts = V3_STYLE[activeBotCode] || DEFAULT_STYLE;
+        return (
+          <div className="flex gap-2.5">
+            <div className={cn("w-7 h-7 rounded-full overflow-hidden shrink-0 ring-2 mt-0.5", ts.ring)}>
+              <img src={BOT_AVATAR[activeBotCode] || `/agents/${activeBotCode.toLowerCase()}.png`} alt="" className="w-full h-full object-cover" />
+            </div>
+            <div className="border border-gray-200 rounded-xl rounded-tl-none px-3.5 py-3 shadow-sm bg-white">
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                <div className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                <div className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      <div ref={endRef} />
+    </div>
+  );
+}
+
+// ═══ AGENT SELECTOR — dropdown d'ajout d'agents dans le header ═══
+function AgentSelector({ activeRoster, addBotToRoster, removeBotFromRoster }: {
+  activeRoster: string[];
+  addBotToRoster: (code: string) => void;
+  removeBotFromRoster: (code: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleClick(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors cursor-pointer"
+        title="Ajouter un agent"
+      >
+        <Plus className="h-3 w-3 text-white/70" />
+      </button>
+      {open && (
+        <div className="absolute top-full right-0 mt-1.5 w-56 bg-white rounded-xl border border-gray-200 shadow-lg py-1 z-30 max-h-[360px] overflow-auto">
+          <div className="px-3 py-1.5 text-[9px] font-bold text-gray-400 uppercase tracking-wider">Agents Brain Team</div>
+          {BOT_CODES.map((code) => {
+            const inRoster = activeRoster.includes(code);
+            return (
+              <button
+                key={code}
+                onClick={() => { inRoster ? removeBotFromRoster(code) : addBotToRoster(code); }}
+                className="w-full flex items-center gap-2.5 px-3 py-1.5 hover:bg-gray-50 transition-colors cursor-pointer text-left"
+              >
+                <div className="w-6 h-6 rounded-full overflow-hidden ring-1 ring-gray-200 shrink-0">
+                  <img src={BOT_AVATAR[code] || `/agents/${code.toLowerCase()}.png`} alt={BOT_NAME[code]} className="w-full h-full object-cover" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs font-medium text-gray-800 block truncate">{BOT_NAME[code]}</span>
+                  <span className="text-[9px] text-gray-400 block truncate">{BOT_ROLE[code]}</span>
+                </div>
+                {inRoster && <Check className="h-3.5 w-3.5 text-blue-500 shrink-0" />}
+              </button>
+            );
+          })}
+        </div>
       )}
     </div>
   );
 }
 
+// ═══ DEPT WELCOME SCREEN — accueil dynamique par département ═══
+function DeptWelcomeScreen({ botCode, onAction, onResumeThread, threads }: {
+  botCode: string;
+  onAction: (text: string) => void;
+  onResumeThread: (threadId: string) => void;
+  threads: Array<{ id: string; title: string; primaryBot?: string; updatedAt?: string; status?: string; workPhase?: string }>;
+}) {
+  const DeptIcon = DEPT_DASH_ICON[botCode] || Bot;
+  const gradient = DEPT_GRADIENT[botCode] || "from-blue-700 to-blue-500";
+  const greeting = DEPT_GREETING[botCode] || "Comment puis-je t'aider?";
+  const actions = DEPT_ACTIONS[botCode] || [];
+  const botName = BOT_NAME[botCode] || "CarlOS";
+  const botDisplay = BOT_DISPLAY[botCode];
+  const recentThreads = threads.slice(0, 5);
+
+  return (
+    <div className="flex justify-center py-10">
+      <div className="text-center space-y-5 max-w-lg w-full">
+        {/* Bot icon with department gradient */}
+        <div className={cn("inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br shadow-lg", gradient)}>
+          <DeptIcon className="h-8 w-8 text-white" />
+        </div>
+
+        {/* Greeting */}
+        <div>
+          <h3 className="text-lg font-bold text-gray-800">{botName}</h3>
+          {botDisplay && <p className="text-[10px] text-gray-400 font-medium mt-0.5">{botDisplay.role} — {botDisplay.dept}</p>}
+          <p className="text-sm text-gray-500 mt-2 leading-relaxed">{greeting}</p>
+        </div>
+
+        {/* Action buttons — style pilules colorées (SuggestionsWelcome pattern) */}
+        {actions.length > 0 && (
+          <div className="flex flex-wrap gap-2 justify-center">
+            {actions.map((action) => {
+              const colors = ACTION_COLORS[action.color] || ACTION_COLORS.blue;
+              return (
+                <button
+                  key={action.label}
+                  onClick={() => onAction(action.description)}
+                  className={cn(
+                    "flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl border font-medium transition-colors cursor-pointer",
+                    colors
+                  )}
+                >
+                  <action.icon className="h-3.5 w-3.5" />
+                  {action.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Recent threads — cards with CREDO phase indicator */}
+        {recentThreads.length > 0 && (
+          <div className="pt-4 text-left max-w-md mx-auto w-full">
+            <div className="flex items-center gap-1.5 mb-3 px-1">
+              <Clock className="h-3 w-3 text-gray-400" />
+              <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Reprendre une discussion</span>
+            </div>
+            <div className="space-y-2">
+              {recentThreads.map((thread) => {
+                // 5 phases de travail: discussion, reflexion, creation (conception), execution, retroaction
+                // Default à "discussion" si la phase n'est pas définie (threads créés avant le feature)
+                const phaseKey = thread.workPhase || "discussion";
+                const phaseData = PHASE_COLORS[phaseKey as keyof typeof PHASE_COLORS] || PHASE_COLORS.discussion;
+                // "parked" = état normal (thread mis de côté) — ne pas afficher. Seulement "Terminée" est pertinent.
+                const statusLabel = thread.status === "completed" ? "Terminée" : null;
+                const statusStyle = thread.status === "completed" ? "bg-green-100 text-green-600" : "";
+                return (
+                  <button
+                    key={thread.id}
+                    onClick={() => onResumeThread(thread.id)}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 hover:shadow-sm transition-all cursor-pointer text-left group"
+                  >
+                    {/* Phase dot — seulement si la phase existe sur le thread */}
+                    {phaseData ? (
+                      <div className={cn("w-2.5 h-2.5 rounded-full shrink-0", phaseData.dot)} title={phaseData.label} />
+                    ) : (
+                      <MessageCircle className="h-3.5 w-3.5 text-gray-300 shrink-0" />
+                    )}
+                    {/* Thread info */}
+                    <div className="flex-1 min-w-0">
+                      <span className="text-xs font-medium text-gray-700 block truncate">{thread.title || "Discussion sans titre"}</span>
+                      {(phaseData || statusLabel) && (
+                        <div className="flex items-center gap-2 mt-0.5">
+                          {phaseData && <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium", phaseData.badge)}>{phaseData.label}</span>}
+                          {statusLabel && (
+                            <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium", statusStyle)}>{statusLabel}</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    {/* Arrow indicator */}
+                    <ChevronRight className="h-3.5 w-3.5 text-gray-300 group-hover:text-gray-500 transition-colors shrink-0" />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
 export function DiscussionWindow() {
-  const { cockpitTab } = useAmorcer();
-  const { activeRoster } = useChatContext();
+  const { cockpitTab, activeBotCode, activePhase, setActivePhase, setRightSection, setReflexionContext, setFocusType, setActiveDeliverable } = useAmorcer();
+  const { activeRoster, addBotToRoster, removeBotFromRoster, messages, sendMessage, threads, resumeThread } = useChatContext();
   const isOrbit9 = cockpitTab === "orbit9";
+  const isEmpty = messages.length === 0;
 
   return (
     <div className="h-full flex flex-col bg-white">
@@ -121,23 +453,113 @@ export function DiscussionWindow() {
             <span className="text-[11px] text-white font-medium">Brain Team</span>
             <div className="flex-1" />
 
-            {/* Bot actif — affichage statique */}
-            {activeRoster.slice(0, 1).map((code) => (
-              <div key={code} className="flex items-center gap-1.5 ml-1">
-                <div className="w-5 h-5 rounded-full overflow-hidden ring-1 ring-white/30 shrink-0">
-                  <img src={BOT_AVATAR[code] || `/agents/${code.toLowerCase()}.png`} alt={BOT_NAME[code] || code} className="w-full h-full object-cover" />
+            {/* Agents du roster — avatars empilés */}
+            <div className="flex items-center -space-x-1.5">
+              {activeRoster.map((code) => (
+                <div key={code} className="relative group">
+                  <div className="w-6 h-6 rounded-full overflow-hidden ring-2 ring-[#073E5A] shrink-0">
+                    <img src={BOT_AVATAR[code] || `/agents/${code.toLowerCase()}.png`} alt={BOT_NAME[code] || code} className="w-full h-full object-cover" />
+                  </div>
+                  {/* Remove button on hover (sauf le premier = bot principal) */}
+                  {activeRoster.indexOf(code) > 0 && (
+                    <button
+                      onClick={() => removeBotFromRoster(code)}
+                      className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                      title={`Retirer ${BOT_NAME[code]}`}
+                    >
+                      <X className="h-2 w-2" />
+                    </button>
+                  )}
                 </div>
-                <span className="text-[9px] text-white font-medium">{BOT_NAME[code] || code}</span>
-                <span className="text-[9px] text-white/50">{BOT_ROLE[code] || ""}</span>
+              ))}
+            </div>
+
+            {/* Nom du bot principal */}
+            {activeRoster.length > 0 && (
+              <div className="flex items-center gap-1 ml-1">
+                <span className="text-[9px] text-white font-medium">{BOT_NAME[activeRoster[0]] || activeRoster[0]}</span>
+                {activeRoster.length > 1 && (
+                  <span className="text-[9px] text-white/50">+{activeRoster.length - 1}</span>
+                )}
               </div>
-            ))}
+            )}
+
+            {/* Bouton + pour ajouter un agent */}
+            <AgentSelector
+              activeRoster={activeRoster}
+              addBotToRoster={addBotToRoster}
+              removeBotFromRoster={removeBotFromRoster}
+            />
           </>
         )}
       </div>
 
-      {/* LiveChat réel — sans header, sans BotRosterBar (splitMode masque le roster interne) */}
-      <div className="flex-1 overflow-hidden">
-        <LiveChat splitMode hideHeader />
+      {/* Zone principale: DeptWelcomeScreen quand vide, V3MessageList sinon */}
+      <div className="flex-1 overflow-hidden flex flex-col">
+        {isEmpty ? (
+          <div className="flex-1 overflow-auto">
+            <DeptWelcomeScreen
+              botCode={activeBotCode}
+              onAction={(text) => {
+                sendMessage(text, activeBotCode);
+                // Basculer le workspace du cockpit vers le contenu de phase
+                setReflexionContext(text.substring(0, 80));
+                setFocusType("chantier");
+                setRightSection(null);
+                setActivePhase("observation" as any);
+              }}
+              onResumeThread={(threadId) => {
+                const thread = threads.find(t => t.id === threadId);
+                const restoredPhase = resumeThread(threadId, activePhase);
+                const phase = restoredPhase || "observation";
+                const context = thread?.title || "";
+
+                // Restaurer le contexte de réflexion (même logique que handleWorkAction)
+                if (context) {
+                  setReflexionContext(context);
+                  setFocusType("chantier");
+                }
+
+                // Router vers la bonne vue workspace selon la phase du thread
+                // Même pattern que handleWorkAction dans WorkspacePhasesPanel
+                switch (phase) {
+                  case "execution":
+                    setActivePhase("execution" as any);
+                    try { sessionStorage.setItem("bt_exec_tab_request", "live"); } catch {}
+                    setRightSection("execution");
+                    break;
+                  case "retroaction":
+                    // Retroaction = tab dans ExecutionView (même section)
+                    setActivePhase("execution" as any);
+                    try { sessionStorage.setItem("bt_exec_tab_request", "retroaction"); } catch {}
+                    setRightSection("execution");
+                    break;
+                  case "creation":
+                  case "conception":
+                    setActivePhase("creation" as any);
+                    setActiveDeliverable("document");
+                    setRightSection(null);
+                    break;
+                  case "reflexion":
+                    setActivePhase("reflexion" as any);
+                    setRightSection(null);
+                    break;
+                  case "discussion":
+                    setActivePhase("discussion" as any);
+                    setRightSection(null);
+                    break;
+                  default:
+                    // observation, attention, moderation → VueEnsemble
+                    setActivePhase("observation" as any);
+                    setRightSection(null);
+                }
+              }}
+              threads={threads.filter((t) => t.primaryBot === activeBotCode)}
+            />
+          </div>
+        ) : (
+          <V3MessageList />
+        )}
       </div>
 
       {/* ChatBox V3 — design Claude AI (SimAmorcer L676-754) branché sur sendMessage réel */}

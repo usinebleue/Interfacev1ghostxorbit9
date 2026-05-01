@@ -42,9 +42,9 @@ interface ChatActions {
   injectTeamProposal: (proposal: TeamProposal, agent: string) => void;
   setReflectionMode: (mode: ReflectionMode) => void;
   setCurrentCREDOPhase: (phase: CREDOPhase) => void;
-  newConversation: () => void;
-  parkThread: () => void;
-  resumeThread: (threadId: string) => void;
+  newConversation: (initialBot?: string, workPhase?: string) => void;
+  parkThread: (initialBot?: string, workPhase?: string) => void;
+  resumeThread: (threadId: string, currentWorkPhase?: string) => string | undefined;
   completeThread: () => void;
   deleteThread: (threadId: string) => void;
   crystallize: (msgContent: string, botCode: string) => Crystal;

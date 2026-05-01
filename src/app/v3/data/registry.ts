@@ -20,35 +20,35 @@ export const REGISTRY: Record<string, DomainEntry> = {
     key: "chantiers",
     label: "Chantiers",
     endpoint: "/api/v1/chantiers",
-    status: "simu",
+    status: "live",
     v2Hook: "useChantiers",
   },
   "projets": {
     key: "projets",
     label: "Projets",
     endpoint: "/api/v1/projets",
-    status: "simu",
+    status: "live",
     v2Hook: "useProjets",
   },
   "missions": {
     key: "missions",
     label: "Missions",
     endpoint: "/api/v1/missions-user",
-    status: "simu",
+    status: "live",
     v2Hook: "useMissions",
   },
   "taches": {
     key: "taches",
     label: "Tâches",
-    endpoint: "/api/v1/taches",
-    status: "simu",
+    endpoint: "/api/v1/taches-user",
+    status: "live",
     v2Hook: "useTachesUser",
   },
   "discussions": {
     key: "discussions",
     label: "Discussions",
     endpoint: "/api/v1/discussions",
-    status: "simu",
+    status: "live",
     v2Hook: "useDiscussions",
   },
   "bureau": {
@@ -62,7 +62,7 @@ export const REGISTRY: Record<string, DomainEntry> = {
     key: "decisions",
     label: "Décisions",
     endpoint: "/api/v1/decisions",
-    status: "simu",
+    status: "live",
     v2Hook: "useDecisionLog",
   },
   "tensions": {
@@ -90,13 +90,13 @@ export const REGISTRY: Record<string, DomainEntry> = {
     key: "orbit9-members",
     label: "Membres Orbit9",
     endpoint: "/api/v1/orbit9/members",
-    status: "simu",
+    status: "live",
   },
   "orbit9-matches": {
     key: "orbit9-matches",
     label: "Matches Orbit9",
     endpoint: "/api/v1/orbit9/matches",
-    status: "simu",
+    status: "live",
   },
 
   // ═══ Domaines sans endpoint API (simu seulement pour l'instant) ═══
@@ -145,8 +145,8 @@ export const REGISTRY: Record<string, DomainEntry> = {
   "execution-live": {
     key: "execution-live",
     label: "Exécution en direct",
-    endpoint: null,
-    status: "simu",
+    endpoint: "/api/v1/chantiers",
+    status: "live",
   },
   "orbit9-dashboard": {
     key: "orbit9-dashboard",

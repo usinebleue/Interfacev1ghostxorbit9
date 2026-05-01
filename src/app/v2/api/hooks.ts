@@ -202,6 +202,25 @@ function generateThreadId(): string {
   return `thread-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
 }
 
+/** Fire-and-forget sync d'un thread vers la table discussions en PostgreSQL */
+function syncThreadToApi(thread: Thread) {
+  try {
+    const statusMap: Record<string, string> = {
+      active: "active",
+      parked: "parked",
+      completed: "closed_promoted",
+    };
+    api.syncDiscussion({
+      external_id: thread.id,
+      titre: thread.title,
+      status: statusMap[thread.status] || thread.status,
+      bot_primaire: thread.primaryBot || "CEOB",
+      work_phase: thread.workPhase || "",
+      message_count: thread.messages?.length || 0,
+    }).catch(() => {}); // fire-and-forget
+  } catch { /* noop */ }
+}
+
 /** Titre temporaire — nettoyage basique en attendant le titre IA */
 function generateThreadTitle(messages: ChatMessage[]): string {
   const firstUser = messages.find((m) => m.role === "user");
@@ -474,10 +493,53 @@ export function useChat() {
     return () => clearTimeout(timeout);
   }, [isTyping]);
 
-  // Persist threads to localStorage
+  // Persist threads to localStorage + sync metadata to PostgreSQL
+  const prevThreadsRef = useRef<string>("");
   useEffect(() => {
     saveThreads(threads);
+    // Sync changed threads to API (debounced via comparison)
+    const key = threads.map((t) => `${t.id}:${t.status}:${t.title}:${t.messages?.length || 0}:${t.workPhase || ""}`).join("|");
+    if (key !== prevThreadsRef.current) {
+      prevThreadsRef.current = key;
+      // Sync all non-empty threads
+      for (const t of threads) {
+        if (t.messages && t.messages.length > 0) {
+          syncThreadToApi(t);
+        }
+      }
+    }
   }, [threads]);
+
+  // Load thread metadata from API on mount (recover threads lost from localStorage)
+  const hasLoadedFromApi = useRef(false);
+  useEffect(() => {
+    if (hasLoadedFromApi.current) return;
+    hasLoadedFromApi.current = true;
+    api.listDiscussions().then((apiDiscussions) => {
+      if (!apiDiscussions || apiDiscussions.length === 0) return;
+      setThreads((prev) => {
+        const existingIds = new Set(prev.map((t) => t.id));
+        const recovered = apiDiscussions
+          .filter((d) => !existingIds.has(d.external_id) && d.status !== "closed_archived")
+          .map((d) => ({
+            id: d.external_id,
+            title: d.titre,
+            status: (d.status === "closed_promoted" ? "completed" : d.status) as ThreadStatus,
+            messages: [] as ChatMessage[],
+            primaryBot: d.bot_primaire,
+            workPhase: d.work_phase,
+            createdAt: d.created_at,
+            updatedAt: d.updated_at,
+            mode: "credo" as const,
+          }));
+        if (recovered.length > 0) {
+          console.log(`[useChat] Recovered ${recovered.length} threads from API`);
+          return [...prev, ...recovered];
+        }
+        return prev;
+      });
+    }).catch(() => {}); // API down = no merge
+  }, []);
 
   // Update active thread messages when messages change (ne pas ecraser le titre smart)
   useEffect(() => {
@@ -593,6 +655,25 @@ export function useChat() {
       setIsTyping(true);
       setThinkingSteps(["Connexion..."]);
 
+      // Frontend-driven thinking steps — progression visuelle pendant l'attente
+      // (les SSE status du backend sont souvent bufferisés par nginx)
+      const _THINK_LABELS = [
+        "Analyse de votre message...",
+        "Préparation du contexte...",
+        "Enrichissement BTML...",
+        "Routage intelligent...",
+        "Génération de la réponse...",
+      ];
+      let _thinkIdx = 0;
+      const _thinkTimer = setInterval(() => {
+        if (_thinkIdx < _THINK_LABELS.length) {
+          setThinkingSteps(prev => [...prev, _THINK_LABELS[_thinkIdx]]);
+          _thinkIdx++;
+        } else {
+          clearInterval(_thinkTimer);
+        }
+      }, 2500);
+
       // Auto-create thread on first message
       if (!activeThreadId) {
         const newId = generateThreadId();
@@ -677,12 +758,13 @@ export function useChat() {
       try {
         await new Promise<void>((resolve, reject) => {
           const controller = api.chatStream(req, {
-            onStatus: (label: string) => {
-              setThinkingSteps(prev => [...prev, label]);
+            onStatus: () => {
+              // Frontend timer handles thinking steps (nginx buffers SSE status events)
             },
             onToken: (_chunk: string, accumulated: string) => {
-              // Clear thinking animation au premier token
+              // Clear thinking animation + timer au premier token
               if (accumulated.length === _chunk.length) {
+                clearInterval(_thinkTimer);
                 setThinkingSteps([]);
               }
               // Strip [TACHE] lines during streaming so they never appear
@@ -869,6 +951,7 @@ export function useChat() {
               resolve();
             },
             onError: (error: string) => {
+              clearInterval(_thinkTimer);
               reject(new Error(error));
             },
           });
@@ -876,6 +959,7 @@ export function useChat() {
         });
       } catch (err) {
         // Streaming failed — fallback to standard chat
+        clearInterval(_thinkTimer);
         streamingMsgId.current = null;
 
         try {
@@ -966,12 +1050,12 @@ export function useChat() {
     setActiveRoster(limited.length > 0 ? limited : ["CEOB"]);
   }, []);
 
-  const newConversation = useCallback((initialBot?: string) => {
+  const newConversation = useCallback((initialBot?: string, workPhase?: string) => {
     // Park current thread if it has messages
     if (activeThreadId && messages.length > 0) {
       setThreads((prev) =>
         prev.map((t) =>
-          t.id === activeThreadId ? { ...t, status: "parked" as ThreadStatus } : t
+          t.id === activeThreadId ? { ...t, status: "parked" as ThreadStatus, workPhase: workPhase || t.workPhase } : t
         )
       );
     }
@@ -983,11 +1067,11 @@ export function useChat() {
     missionNudgeShownAt.current = 0;
   }, [activeThreadId, messages]);
 
-  const parkThread = useCallback((initialBot?: string) => {
+  const parkThread = useCallback((initialBot?: string, workPhase?: string) => {
     if (activeThreadId) {
       setThreads((prev) =>
         prev.map((t) =>
-          t.id === activeThreadId ? { ...t, status: "parked" as ThreadStatus, messages } : t
+          t.id === activeThreadId ? { ...t, status: "parked" as ThreadStatus, messages, workPhase: workPhase || t.workPhase } : t
         )
       );
       setMessages([]);
@@ -997,15 +1081,15 @@ export function useChat() {
     }
   }, [activeThreadId, messages]);
 
-  const resumeThread = useCallback((threadId: string) => {
+  const resumeThread = useCallback((threadId: string, currentWorkPhase?: string): string | undefined => {
     const thread = threads.find((t) => t.id === threadId);
-    if (!thread) return;
+    if (!thread) return undefined;
 
-    // Park current if needed
+    // Park current if needed — save current workPhase
     if (activeThreadId && messages.length > 0) {
       setThreads((prev) =>
         prev.map((t) =>
-          t.id === activeThreadId ? { ...t, status: "parked" as ThreadStatus, messages } : t
+          t.id === activeThreadId ? { ...t, status: "parked" as ThreadStatus, messages, workPhase: currentWorkPhase || t.workPhase } : t
         )
       );
     }
@@ -1014,12 +1098,20 @@ export function useChat() {
     setActiveThreadId(threadId);
     idCounter.current = thread.messages.length;
 
+    // Restore roster to thread's primaryBot
+    if (thread.primaryBot) {
+      setActiveRoster([thread.primaryBot]);
+    }
+
     // Mark resumed thread as active
     setThreads((prev) =>
       prev.map((t) =>
         t.id === threadId ? { ...t, status: "active" as ThreadStatus } : t
       )
     );
+
+    // Return the resumed thread's workPhase so caller can restore it (default "discussion")
+    return thread.workPhase || "discussion";
   }, [threads, activeThreadId, messages]);
 
   const completeThread = useCallback(() => {
@@ -2123,16 +2215,16 @@ export function useBriefings() {
 // useSuggestions — BLOC 4 : suggestions proactives
 // ══════════════════════════════════════════════
 
-export function useSuggestions() {
+export function useSuggestions(botCode?: string) {
   const [data, setData] = useState<import("./types").SuggestionsResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.suggestions(1)
+    api.suggestions(1, botCode || undefined)
       .then(setData)
       .catch(() => setData(null))
       .finally(() => setLoading(false));
-  }, []);
+  }, [botCode]);
 
   return { data, loading };
 }

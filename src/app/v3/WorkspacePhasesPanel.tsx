@@ -179,6 +179,18 @@ export function WorkspacePhasesPanel() {
     pushSectionURL("execution", t === "live" ? null : t);
   }, []);
 
+  // Auto-switch execution tab quand demandé par DiscussionWindow (thread resume)
+  useEffect(() => {
+    if (rightSection !== "execution") return;
+    try {
+      const requested = sessionStorage.getItem("bt_exec_tab_request");
+      if (requested) {
+        setExecutionTab(requested);
+        sessionStorage.removeItem("bt_exec_tab_request");
+      }
+    } catch { /* noop */ }
+  }, [rightSection, setExecutionTab]);
+
   // Handler réel — ouvre la vue focus workspace + envoie un vrai message au chat
   const PHASE_PROMPT: Record<string, string> = {
     discussion: "Parlons de",
