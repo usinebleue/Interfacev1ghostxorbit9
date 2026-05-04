@@ -24,6 +24,9 @@ export {
   // Phase Conception (right panel — même pattern que PhaseReflexion)
   PhaseConception,
 
+  // Conception Wizard (sélection de livrable — entry point création)
+  ConceptionWizard,
+
   // Opérations drill-down (même pattern chantiers — CAPEX→OPEX)
   OperationsDrillDown,
 
@@ -54,3 +57,6 @@ export {
 
 // ═══ Focus Discussion View (composant V3 natif — pas un bridge SimAmorcer) ═══
 export { FocusDiscussionView } from "./FocusDiscussionView";
+
+// ═══ V3 Unified Phase View (artefacts progressifs) — importé directement dans WorkspacePhasesPanel ═══
+// LiveReflexionView et LiveConceptionView sont remplacés par UnifiedPhaseView

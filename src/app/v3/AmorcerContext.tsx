@@ -8,7 +8,7 @@
  */
 
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
-import type { PhaseKey } from "./core/types";
+import type { PhaseKey, CredoPhaseKey, WorkflowItem } from "./core/types";
 
 // ═══ localStorage persistence (Fix R5 — état survit au refresh) ═══
 const LS_PREFIX = "v3:";
@@ -144,9 +144,24 @@ interface AmorcerState {
   simV3Cristallises: SimV3CristalliseItem[];
   addSimV3Cristallise: (text: string, source: string, sectionId: string) => void;
 
+  // Workspace capture (artefacts progressifs)
+  pendingCapture: string | null;
+  setPendingCapture: (sectionId: string | null) => void;
+  getCristallise: (sectionId: string) => string | null;
+
   // Focus type (adapte la sidebar de FocusDiscussionView)
   focusType: string;
   setFocusType: (t: string) => void;
+
+  // CREDO phase (sub-phase de Discussion)
+  credoPhase: CredoPhaseKey;
+  setCredoPhase: (p: CredoPhaseKey) => void;
+
+  // Workflow items (captures pendant le flow 5 phases)
+  workflowItems: WorkflowItem[];
+  addWorkflowItem: (phase: string, text: string, type: WorkflowItem["type"], credoKey?: string) => void;
+  removeWorkflowItem: (id: string) => void;
+  clearWorkflowItems: () => void;
 
   // Helpers
   startReflexion: (chantier: string) => void;
@@ -189,8 +204,8 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
   // Wrappers with localStorage + URL persistence
   const setRightSection = useCallback((s: string | null) => {
     setRightSectionRaw(s);
+    lsSet("rightSection", s);
     if (s) {
-      lsSet("rightSection", s);
       pushSectionURL(s);
     }
   }, []);
@@ -219,6 +234,22 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     setActiveBotCodeRaw(code);
     lsSet("activeBotCode", code);
     _activeBotSlug = BOT_TO_SLUG[code] || "ceo";
+    // Bug fix: reset workspace state au switch de bot
+    setRightSectionRaw("cockpit"); lsSet("rightSection", "cockpit");
+    setActivePhaseRaw("observation"); lsSet("activePhase", "observation");
+    setFocusTypeRaw("chantier"); lsSet("focusType", "chantier");
+    setReflexionContextRaw(null); lsSet("reflexionContext", null);
+    setActiveDeliverable(null);
+    setDeliverableStage(0);
+    setChatStage(0);
+    setConceptionStage(0);
+    setTyped(false);
+    setCredoPhase("C");
+    setWorkflowItems([]);
+    const target = `/${BOT_TO_SLUG[code] || "ceo"}/cockpit`;
+    if (window.location.pathname !== target) {
+      window.history.pushState({ section: "cockpit" }, "", target);
+    }
   }, []);
   const setCockpitTab = useCallback((t: string) => {
     setCockpitTabRaw(t);
@@ -258,8 +289,37 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
   const [simV3Stage, setSimV3Stage] = useState(-1);
   const [simV3Cristallises, setSimV3Cristallises] = useState<SimV3CristalliseItem[]>([]);
   const addSimV3Cristallise = useCallback((text: string, source: string, sectionId: string) => {
-    setSimV3Cristallises((prev) => [...prev, { id: `c-${Date.now()}`, text, source, sectionId }]);
+    setSimV3Cristallises((prev) => {
+      // Replace existing entry for same sectionId (action = update)
+      const existing = prev.findIndex(item => item.sectionId === sectionId);
+      if (existing >= 0) {
+        const copy = [...prev];
+        copy[existing] = { id: `c-${Date.now()}`, text, source, sectionId };
+        return copy;
+      }
+      return [...prev, { id: `c-${Date.now()}`, text, source, sectionId }];
+    });
   }, []);
+
+  // Workspace capture — pendingCapture tracks which section awaits a bot response
+  const [pendingCapture, setPendingCapture] = useState<string | null>(null);
+  const getCristallise = useCallback((sectionId: string): string | null => {
+    const item = simV3Cristallises.find(c => c.sectionId === sectionId);
+    return item ? item.text : null;
+  }, [simV3Cristallises]);
+
+  // CREDO phase state
+  const [credoPhase, setCredoPhase] = useState<CredoPhaseKey>("C");
+
+  // Workflow items state
+  const [workflowItems, setWorkflowItems] = useState<WorkflowItem[]>([]);
+  const addWorkflowItem = useCallback((phase: string, text: string, type: WorkflowItem["type"], credoKey?: string) => {
+    setWorkflowItems((prev) => [...prev, { id: `wi-${Date.now()}`, phase, text, type, credoKey, timestamp: Date.now() }]);
+  }, []);
+  const removeWorkflowItem = useCallback((id: string) => {
+    setWorkflowItems((prev) => prev.filter(w => w.id !== id));
+  }, []);
+  const clearWorkflowItems = useCallback(() => setWorkflowItems([]), []);
 
   // Wrappers avec localStorage pour activePhase, reflexionContext, focusType
   const setActivePhase = useCallback((p: PhaseKey) => {
@@ -284,6 +344,8 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     setActiveDeliverable(null);
     setDeliverableStage(0);
     setFocusType("chantier");
+    setCredoPhase("C");
+    setWorkflowItems([]);
   }, [setActivePhase, setReflexionContext, setFocusType]);
 
   const startReflexion = useCallback((chantier: string) => {
@@ -338,9 +400,12 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
         deliverableStage, setDeliverableStage,
         advanceDeliverable, startDeliverable,
         focusType, setFocusType,
+        credoPhase, setCredoPhase,
+        workflowItems, addWorkflowItem, removeWorkflowItem, clearWorkflowItems,
         simV3Active, setSimV3Active,
         simV3Stage, setSimV3Stage,
         simV3Cristallises, addSimV3Cristallise,
+        pendingCapture, setPendingCapture, getCristallise,
         startReflexion, advance, resetChat,
       }}
     >

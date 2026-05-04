@@ -25,6 +25,7 @@ import {
   Rocket,
   Shield,
   MessageCircle,
+  Check,
 } from "lucide-react";
 import { cn } from "../components/ui/utils";
 import { useAmorcer, pushSectionURL } from "./AmorcerContext";
@@ -56,6 +57,7 @@ import {
   VueEnsemble,
   PhaseReflexion,
   PhaseConception,
+  ConceptionWizard,
   PhaseConceptionDocument,
   PhaseConceptionTableur,
   PhaseConceptionPresentation,
@@ -65,6 +67,9 @@ import {
   PhaseExecution,
   FocusDiscussionView,
 } from "./simulation/sim-content-map";
+
+// ═══ V3 Unified Phase View (remplace LiveReflexionView + LiveConceptionView) ═══
+import { UnifiedPhaseView } from "./phases/UnifiedPhaseView";
 
 // ═══ V2 Sections — lazy imports pour adapter V2→V3 (Fix R7) ═══
 const LazyMonBureauView = lazy(() => import("../v2/zones/center/MonBureauView").then(m => ({ default: m.MonBureauView })));
@@ -150,6 +155,7 @@ export function WorkspacePhasesPanel() {
     startDeliverable,
     focusType,
     setFocusType,
+    workflowItems,
   } = useAmorcer();
 
   const { sendMessage, newConversation } = useChatContext();
@@ -199,7 +205,7 @@ export function WorkspacePhasesPanel() {
     execution: "Plan d'exécution pour",
     retroaction: "Bilan et rétroaction sur",
   };
-  const handleWorkAction = (phase: string, context: string, deliverable?: string, ft?: string) => {
+  const handleWorkAction = (phase: string, context: string, deliverable?: string, ft?: string | undefined) => {
     // 1. Parker le thread courant et créer un nouveau thread lié à l'élément
     try {
       sessionStorage.setItem("ghostx-pending-chantier-link", context);
@@ -212,10 +218,7 @@ export function WorkspacePhasesPanel() {
     setReflexionContext(context);
     setFocusType(ft || "chantier");
 
-    if (phase === "execution") {
-      // Exécution → section réelle ExecutionView
-      setRightSection("execution");
-    } else if (phase === "creation" && deliverable) {
+    if (phase === "creation" && deliverable) {
       // Conception avec livrable → Blueprint réel
       setRightSection("blueprint");
     } else {
@@ -253,7 +256,7 @@ export function WorkspacePhasesPanel() {
         const activeSection = (isOrbit9 && !rightSection) ? "orbit9" : rightSection;
         const DeptIcon = (activeSection && SECTION_ICON[activeSection]) ? SECTION_ICON[activeSection] : (DEPT_DASH_ICON[activeBotCode] || Home);
         const deptLabel = activeSection === "orbit9" ? "" : (DEPT_SHORT_LABEL[activeBotCode] || "");
-        const sectionLabel = (activeSection && SECTION_LABEL[activeSection]) ? SECTION_LABEL[activeSection] : activePhase === "discussion" ? "Discussion" : activePhase === "reflexion" ? "Réflexion" : activePhase === "creation" ? "Conception" : "Tableau de bord";
+        const sectionLabel = (activeSection && SECTION_LABEL[activeSection]) ? SECTION_LABEL[activeSection] : PHASE_CONFIG[activePhase]?.label || "Tableau de bord";
         const DELIVERABLE_TITLE: Record<string, string> = { document: "Cahier de projet Boreal", spreadsheet: "Tableau de bord financier Boreal", presentation: "Pitch Deck CA Boreal", code: "Dashboard IoT Boreal", jumelage: "Jumelage SMART Orbit⁹" };
         const titleText = activeSection === "orbit9"
           ? "Orbit⁹"
@@ -372,6 +375,46 @@ export function WorkspacePhasesPanel() {
         );
       })()}
 
+      {/* ═══ BARRE DE PROGRESSION 5 PHASES ═══ */}
+      {reflexionContext && !rightSection && !isOrbit9 && (() => {
+        const WORKFLOW_PHASES: { key: string; label: string }[] = [
+          { key: "discussion", label: "Discussion" },
+          { key: "reflexion", label: "Réflexion" },
+          { key: "creation", label: "Conception" },
+          { key: "execution", label: "Exécution" },
+          { key: "retroaction", label: "Rétroaction" },
+        ];
+        const phaseOrder = WORKFLOW_PHASES.map(p => p.key);
+        const activeIdx = phaseOrder.indexOf(activePhase);
+        return (
+          <div className="h-9 px-3 shrink-0 flex items-center gap-1 border-b border-gray-200 bg-white">
+            {WORKFLOW_PHASES.map((wp, i) => {
+              const pc2 = PHASE_CONFIG[wp.key as PhaseKey];
+              const isCurrent = wp.key === activePhase;
+              const isDone = i < activeIdx;
+              const isFuture = i > activeIdx;
+              const count = workflowItems.filter(w => w.phase === wp.key).length;
+              return (
+                <button
+                  key={wp.key}
+                  onClick={() => { setActivePhase(wp.key as PhaseKey); setRightSection(null); }}
+                  className={cn(
+                    "flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium transition-all cursor-pointer",
+                    isCurrent ? `${pc2.btnBg} ${pc2.btnText} ${pc2.btnBorder} border shadow-sm` :
+                    isDone ? "bg-green-50 text-green-700 border border-green-200" :
+                    "text-gray-400 hover:bg-gray-50 border border-transparent"
+                  )}
+                >
+                  {isDone ? <Check className="h-3 w-3 text-green-500" /> : <pc2.Icon className={cn("h-3 w-3", isCurrent ? pc2.text : "text-gray-300")} />}
+                  <span>{wp.label}</span>
+                  {count > 0 && <span className={cn("text-[9px] px-1 rounded-full", isCurrent ? pc2.badge : "bg-gray-100 text-gray-500")}>{count}</span>}
+                </button>
+              );
+            })}
+          </div>
+        );
+      })()}
+
       {/* ═══ CONTENU DYNAMIQUE ═══ */}
       <div ref={rightRef} className="flex-1 overflow-auto bg-gray-50">
         {rightSection ? (
@@ -427,32 +470,36 @@ export function WorkspacePhasesPanel() {
             onBack={() => { setActivePhase("observation"); setReflexionContext(null); setRightSection("cockpit"); }}
             onAdvancePhase={(phase) => {
               setActivePhase(phase as PhaseKey);
-              if (phase === "execution") setRightSection("execution");
+              setRightSection(null);
             }}
             activePhase="discussion"
           />
         ) : activePhase === "reflexion" ? (
-          /* Réflexion magazine */
-          <PhaseReflexion stage={chatStage} context={reflexionContext} onStartConception={startConception} />
+          /* Réflexion — composant V3 unifié (artefacts progressifs) */
+          <UnifiedPhaseView phaseKey="reflexion" context={reflexionContext} onPhaseComplete={startConception} />
         ) : activePhase === "creation" && activeDeliverable === "document" ? (
-          <PhaseConceptionDocument stage={deliverableStage} onBack={() => setActiveDeliverable(null)} onStartJumelage={() => startDeliverable("jumelage")} />
+          <PhaseConceptionDocument stage={Math.max(deliverableStage, 1)} onBack={() => setActiveDeliverable(null)} onStartJumelage={() => startDeliverable("jumelage")} />
         ) : activePhase === "creation" && activeDeliverable === "spreadsheet" ? (
-          <PhaseConceptionTableur stage={deliverableStage} onBack={() => setActiveDeliverable(null)} />
+          <PhaseConceptionTableur stage={Math.max(deliverableStage, 1)} onBack={() => setActiveDeliverable(null)} />
         ) : activePhase === "creation" && activeDeliverable === "presentation" ? (
-          <PhaseConceptionPresentation stage={deliverableStage} onBack={() => setActiveDeliverable(null)} />
+          <PhaseConceptionPresentation stage={Math.max(deliverableStage, 1)} onBack={() => setActiveDeliverable(null)} />
         ) : activePhase === "creation" && activeDeliverable === "code" ? (
-          <PhaseConceptionCode stage={deliverableStage} onBack={() => setActiveDeliverable(null)} />
+          <PhaseConceptionCode stage={Math.max(deliverableStage, 1)} onBack={() => setActiveDeliverable(null)} />
         ) : activePhase === "creation" && activeDeliverable === "jumelage" ? (
-          <PhaseConceptionJumelage stage={deliverableStage} onBack={() => setActiveDeliverable(null)} />
+          <PhaseConceptionJumelage stage={Math.max(deliverableStage, 1)} onBack={() => setActiveDeliverable(null)} />
         ) : activePhase === "creation" ? (
-          /* Conception Level 1 — chantier (hero + sidebar + validation + livrables grid) */
-          <PhaseConception stage={conceptionStage} context={reflexionContext} onStartExecution={() => { setActivePhase("execution"); setRightSection(null); }} onSelectDeliverable={(id) => startDeliverable(id)} />
+          /* Conception — composant V3 unifié (artefacts progressifs) */
+          <UnifiedPhaseView phaseKey="creation" context={reflexionContext} />
         ) : activePhase === "execution" ? (
-          /* Exécution — hero vert + sidebar SF 5 sections */
-          <PhaseExecution stage={chatStage} />
+          /* Exécution — section ExecutionView (4 tabs: live, chantiers, opérations, rétroaction) */
+          <div className="max-w-4xl mx-auto px-6 py-4 pb-12">
+            <ExecutionView botCode={activeBotCode} activeTab={executionTab} onTabChange={setExecutionTab} onAction={handleWorkAction} />
+          </div>
         ) : (
-          /* Rétroaction et autres — drill-down */
-          <ChantierDrillDown phase={activePhase} />
+          /* Rétroaction — ExecutionView avec tab rétroaction */
+          <div className="max-w-4xl mx-auto px-6 py-4 pb-12">
+            <ExecutionView botCode={activeBotCode} activeTab="retroaction" onTabChange={setExecutionTab} onAction={handleWorkAction} />
+          </div>
         )}
       </div>
     </div>
