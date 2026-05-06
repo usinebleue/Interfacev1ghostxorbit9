@@ -39,6 +39,7 @@ export interface DashboardBlocItem {
   phase?: PhaseKey;
   urgent?: boolean;
   deliverable?: string;
+  focusType?: string;
 }
 
 export interface DashboardBlocConfig {
@@ -905,6 +906,19 @@ export const WORK_ACTIONS: { key: PhaseKey; icon: React.ElementType; label: stri
   { key: "execution",   icon: Rocket,        label: "Exécution",    hover: "hover:bg-green-50 hover:text-green-700" },
   { key: "retroaction", icon: BarChart3,     label: "Rétroaction",  hover: "hover:bg-emerald-50 hover:text-emerald-700" },
 ];
+
+// Phases pertinentes par type d'élément (filtre dynamique du rollover)
+export const PHASES_BY_ELEMENT_TYPE: Record<string, PhaseKey[]> = {
+  chantier:  ["discussion", "reflexion", "creation", "execution", "retroaction"],
+  projet:    ["discussion", "reflexion", "creation", "execution", "retroaction"],
+  mission:   ["discussion", "creation", "execution", "retroaction"],
+  tache:     ["discussion", "execution", "retroaction"],
+  kpi:       ["discussion", "reflexion"],
+  signal:    ["discussion", "execution"],
+  document:  ["reflexion", "creation"],
+  playbook:  ["discussion", "execution"],
+  match:     ["discussion", "execution"],
+};
 
 export const DEPT_ORDER = ["CEOB", "CTOB", "CFOB", "CMOB", "CSOB", "COOB", "CPOB", "CHROB", "CINOB", "CROB", "CLOB", "CISOB"];
 

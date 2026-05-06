@@ -10,7 +10,7 @@
 import { useState } from "react";
 import {
   Gauge, Video, Calendar, Layers, Database, BookOpen, Atom,
-  Bot, Network, ArrowRight, ArrowLeft, Zap, TowerControl,
+  Bot, BrainCog, Network, ArrowRight, ArrowLeft, Zap, TowerControl,
   Home, ChevronRight, Users, MessageSquare,
   Handshake, Shield, Rocket, Activity, UserCircle,
   User, Settings, LogOut, SlidersHorizontal,
@@ -81,7 +81,7 @@ const DEPT_NAV_ITEMS: DeptNavItem[] = [
 
 const DEPT_SECTION_MAP: Record<string, string> = {
   "Cockpit": "cockpit",
-  "Exécution": "execution",
+  // "Exécution" retiré — c'est une PHASE (activePhase), pas une SECTION (rightSection)
   "Blueprint": "blueprint",
   "Données": "dataroom",
   "Playbook": "playbooks",
@@ -532,6 +532,7 @@ interface TabBureauProps {
 }
 
 function TabBureau({ collapsed, activeBotCode, setActiveBotCode, activeDeptItem, setActiveDeptItem, cockpitSubTab, setCockpitSubTab, DeptIconComp, deptName, setCockpitTab, setRightSection, resetChat }: TabBureauProps) {
+  const { setActivePhase } = useAmorcer();
   const { isDieu } = useTenant();
   return (
     <div className="overflow-y-auto h-full text-[11px] flex flex-col">
@@ -551,7 +552,12 @@ function TabBureau({ collapsed, activeBotCode, setActiveBotCode, activeDeptItem,
             key={item.label}
             onClick={() => {
               setActiveDeptItem(item.label);
-              if (item.label === "Orbit9") {
+              if (item.label === "Exécution") {
+                // Exécution = PHASE, pas section — route via activePhase (anti-persistence)
+                setCockpitTab("bureau");
+                setActivePhase("execution");
+                setRightSection(null);
+              } else if (item.label === "Orbit9") {
                 setCockpitTab("orbit9");
                 setRightSection(null);
               } else if (DEPT_SECTION_MAP[item.label]) {
@@ -603,7 +609,7 @@ function TabBureau({ collapsed, activeBotCode, setActiveBotCode, activeDeptItem,
         collapsed && "flex-col"
       )}>
         {([
-          { id: "brainteam" as const, label: "Brain Team", icon: Bot },
+          { id: "brainteam" as const, label: "Brain Team", icon: BrainCog },
           { id: "cellules" as const, label: "Mes Cellules", icon: Network },
         ]).map(tab => (
           <button

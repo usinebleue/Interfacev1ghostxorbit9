@@ -1,0 +1,256 @@
+/**
+ * LivePhaseView.tsx — Composant UNIVERSEL pour les 5 phases de travail
+ *
+ * COMPORTEMENT (comme les artefacts Claude AI):
+ * - Le workspace est PASSIF — il REÇOIT le contenu de la discussion
+ * - Chaque réponse du bot remplit l'étape courante et débloque la suivante
+ * - Les phases changent UNIQUEMENT par bouton explicite (jamais d'auto-détection)
+ *
+ * VISUEL (copie exacte des simulations FocusXxxView.tsx):
+ * - Hero compact avec couleur de phase
+ * - Sidebar w-[180px] avec navigation par étapes (stage-gated)
+ * - Zone contenu (flex-1) qui affiche le texte capturé ou l'état d'attente
+ * - Section notes capturées
+ * - Bouton de transition vers la phase suivante
+ */
+
+import { useState, useEffect } from "react";
+import {
+  CheckCircle2,
+  Zap,
+  X,
+  ArrowRight,
+  RotateCcw,
+} from "lucide-react";
+import { cn } from "../../components/ui/utils";
+import { SF } from "../core/styles";
+import { useAmorcer } from "../AmorcerContext";
+import { PHASE_CONFIGS } from "./phase-config";
+import type { PhaseConfig, PhaseStep } from "./phase-config";
+
+interface LivePhaseViewProps {
+  phaseKey: string;
+  context: string | null;
+  onPhaseComplete?: () => void;
+  onReturnToCockpit?: () => void;
+}
+
+export function LivePhaseView({ phaseKey, context, onPhaseComplete, onReturnToCockpit }: LivePhaseViewProps) {
+  const config = PHASE_CONFIGS[phaseKey];
+  if (!config) return null;
+
+  return <LivePhaseViewInner config={config} context={context} onPhaseComplete={onPhaseComplete} onReturnToCockpit={onReturnToCockpit} />;
+}
+
+function LivePhaseViewInner({ config, context, onPhaseComplete, onReturnToCockpit }: {
+  config: PhaseConfig;
+  context: string | null;
+  onPhaseComplete?: () => void;
+  onReturnToCockpit?: () => void;
+}) {
+  const { chatStage, workflowItems, removeWorkflowItem, getCristallise } = useAmorcer();
+  const displayContext = context || config.label;
+
+  // useWorkspaceCapture() → déplacé dans WorkspacePhasesPanel (toujours actif)
+
+  const [activeStepId, setActiveStepId] = useState<string>(config.steps[0]?.id || "");
+
+  // Auto-switch vers la dernière étape qui vient de recevoir du contenu
+  useEffect(() => {
+    const latestWithContent = [...config.steps].reverse().find(s => getCristallise(s.id) !== null);
+    if (latestWithContent && latestWithContent.id !== activeStepId) {
+      setActiveStepId(latestWithContent.id);
+    }
+  }, [chatStage]);
+
+  // Reset activeStepId quand la phase change
+  useEffect(() => {
+    setActiveStepId(config.steps[0]?.id || "");
+  }, [config.key]);
+
+  const activeStep = config.steps.find(s => s.id === activeStepId) || config.steps[0];
+  const completedCount = config.steps.filter(s => getCristallise(s.id) !== null).length;
+  const progress = Math.round((completedCount / config.steps.length) * 100);
+  const phaseNotes = workflowItems.filter(w => w.phase === config.key);
+  const minRequired = Math.max(1, config.steps.length - 1); // Au moins N-1 étapes pour débloquer transition
+
+  const col = config.colors;
+  const PhaseIcon = config.icon;
+
+  return (
+    <div className="max-w-4xl mx-auto px-6 py-4 pb-12 space-y-4">
+
+      {/* ═══ HERO COMPACT ═══ */}
+      <div className="relative rounded-xl border border-gray-200 shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all px-5 py-4 flex items-center gap-4 overflow-hidden">
+        <div className={cn("absolute -top-6 -right-6 w-24 h-24 rounded-full blur-2xl opacity-40", col.hero.gradient1)} />
+        <div className={cn("absolute -bottom-4 right-12 w-16 h-16 rounded-full blur-xl opacity-30", col.hero.gradient2)} />
+        <div className={cn("relative z-10 p-2 rounded-xl border", col.hero.iconBg, col.hero.iconBg.replace("bg-", "border-").replace("/", "-"))}>
+          <PhaseIcon className={cn("h-4 w-4 stroke-[2.5]", col.hero.iconText)} />
+        </div>
+        <div className="relative z-10 flex-1">
+          <h2 className="text-sm font-bold text-gray-900">{config.label}</h2>
+          <p className="text-xs text-gray-500 mt-0.5">{displayContext}</p>
+        </div>
+        <div className="relative z-10 flex items-center gap-2">
+          <div className={cn("w-28 h-2 rounded-full overflow-hidden", col.hero.iconBg)}>
+            <div className={cn("h-full rounded-full transition-all", col.hero.iconBg.replace("/", "").replace("bg-", "bg-").replace("100", "400"))} style={{ width: `${progress}%` }} />
+          </div>
+          <span className="text-xs font-bold text-gray-900">{completedCount}/{config.steps.length}</span>
+        </div>
+      </div>
+
+      {/* ═══ SIDEBAR + CONTENU ═══ */}
+      <div className="flex gap-3">
+        {/* Sidebar */}
+        <div className={SF.sidebarW}>
+          {config.steps.map((s) => {
+            const isUnlocked = chatStage >= s.minStage;
+            const isActive = activeStepId === s.id;
+            const hasContent = getCristallise(s.id) !== null;
+            return (
+              <button
+                key={s.id}
+                onClick={() => isUnlocked && setActiveStepId(s.id)}
+                disabled={!isUnlocked}
+                className={cn(
+                  SF.btnBase,
+                  isActive
+                    ? cn(col.sidebar.active, "border shadow-sm")
+                    : isUnlocked
+                    ? SF.btnInactive
+                    : "opacity-40 cursor-not-allowed border border-transparent"
+                )}
+              >
+                <s.icon className={cn(
+                  isActive ? cn("h-3.5 w-3.5", col.sidebar.activeText)
+                  : isUnlocked ? SF.iconInactive
+                  : "h-3.5 w-3.5 text-gray-300"
+                )} />
+                <span className={cn(
+                  isActive ? cn("text-[10px] font-bold", col.sidebar.activeText)
+                  : isUnlocked ? SF.labelInactive
+                  : "text-[10px] text-gray-400"
+                )}>{s.title}</span>
+                {hasContent && (
+                  <span className="ml-auto w-4 h-4 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="h-2.5 w-2.5 text-emerald-600" />
+                  </span>
+                )}
+                {!hasContent && isUnlocked && chatStage === s.minStage && (
+                  <span className="ml-auto w-3 h-3 rounded-full bg-amber-400 animate-pulse shrink-0" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Contenu */}
+        <div className={SF.content}>
+          <StepContent
+            step={activeStep}
+            captured={getCristallise(activeStep.id)}
+            isUnlocked={chatStage >= activeStep.minStage}
+            colors={col}
+          />
+
+          {/* Notes capturées */}
+          {phaseNotes.length > 0 && (
+            <div className={cn("mt-4 rounded-xl p-4", col.notes.border, col.notes.bg)}>
+              <h4 className={cn("text-[10px] font-bold uppercase tracking-wider mb-2", col.notes.text)}>Notes capturées ({phaseNotes.length})</h4>
+              <div className="space-y-1.5">
+                {phaseNotes.map(item => (
+                  <div key={item.id} className="flex items-start gap-2 group/note">
+                    <Zap className={cn("h-3 w-3 mt-0.5 shrink-0", col.notes.iconText)} />
+                    <p className="text-[11px] text-gray-700 leading-relaxed flex-1">{item.text}</p>
+                    <button onClick={() => removeWorkflowItem(item.id)} className="p-0.5 rounded opacity-0 group-hover/note:opacity-100 hover:bg-red-100 transition-all cursor-pointer shrink-0" title="Retirer">
+                      <X className="h-3 w-3 text-red-400" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Bouton transition vers la phase suivante */}
+          {completedCount >= minRequired && config.nextPhase && onPhaseComplete && (
+            <button
+              onClick={onPhaseComplete}
+              className={cn("w-full mt-4 py-3 rounded-xl border text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2",
+                col.transition.bg, col.transition.border, col.transition.text, col.transition.hoverBg
+              )}
+            >
+              <ArrowRight className="h-4 w-4" />
+              {config.nextPhaseLabel}
+            </button>
+          )}
+
+          {/* Bouton retour au cockpit (rétroaction terminée) */}
+          {completedCount >= minRequired && !config.nextPhase && onReturnToCockpit && (
+            <button
+              onClick={onReturnToCockpit}
+              className={cn("w-full mt-4 py-3 rounded-xl border text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2",
+                col.transition.bg, col.transition.border, col.transition.text, col.transition.hoverBg
+              )}
+            >
+              <RotateCcw className="h-4 w-4" />
+              {config.nextPhaseLabel}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══ Contenu d'une étape — PASSIF (affiche le contenu capturé ou l'état d'attente) ═══
+
+function StepContent({ step, captured, isUnlocked, colors }: {
+  step: PhaseStep;
+  captured: string | null;
+  isUnlocked: boolean;
+  colors: import("./phase-config").PhaseColors;
+}) {
+  const [appeared, setAppeared] = useState(false);
+  useEffect(() => { setAppeared(false); const t = setTimeout(() => setAppeared(true), 80); return () => clearTimeout(t); }, [step.id]);
+
+  return (
+    <div className={cn("transition-all duration-300", appeared ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2")}>
+      <div className="rounded-xl border border-gray-200 shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all overflow-hidden">
+        {/* Header */}
+        <div className="px-5 py-3 border-b border-gray-100 flex items-center gap-3">
+          <step.icon className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+          <h3 className="text-sm font-bold text-gray-900 flex-1">{step.title}</h3>
+          {captured && (
+            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-600">Cristallisé</span>
+          )}
+          {!captured && isUnlocked && (
+            <span className={cn("text-[10px] font-medium px-2 py-0.5 rounded-full animate-pulse", colors.badge.bg, colors.badge.text)}>En attente</span>
+          )}
+          {!isUnlocked && (
+            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-400">Verrouillé</span>
+          )}
+        </div>
+        {/* Body */}
+        <div className="px-5 py-4">
+          {captured ? (
+            <div className="text-xs text-gray-700 leading-relaxed whitespace-pre-wrap max-h-[500px] overflow-y-auto">
+              {captured}
+            </div>
+          ) : isUnlocked ? (
+            <div className="flex items-center gap-3">
+              <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center animate-pulse", colors.hero.iconBg)}>
+                <step.icon className={cn("h-4 w-4", colors.hero.iconText)} />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-700">En attente de la discussion...</p>
+                <p className="text-[10px] text-gray-400">{step.subtitle} — le contenu apparaîtra ici automatiquement.</p>
+              </div>
+            </div>
+          ) : (
+            <p className="text-[11px] text-gray-400 italic text-center">Cette étape se débloquera au fil de la discussion.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -174,6 +174,17 @@ export function CanvasActionProvider({ children }: { children: React.ReactNode }
         }
         break;
       }
+      case "phase_transition": {
+        // Pont CREDO → Workspace: dispatch CustomEvent pour que V3 écoute (zéro couplage V2↔V3)
+        const ptData = action.data as Record<string, unknown> | undefined;
+        const wsPhase = ptData?.workspace_phase as string;
+        if (wsPhase) {
+          window.dispatchEvent(new CustomEvent("bt-work-phase-transition", {
+            detail: { phase: wsPhase, context: action.message || "", bot: action.bot }
+          }));
+        }
+        break;
+      }
     }
 
     setLastAction(action);

@@ -621,7 +621,7 @@ export function useChat() {
       agent?: string,
       ghost?: string,
       mode?: string,
-      meta?: { msgType?: MessageType; parentId?: string; branchLabel?: string; activeView?: string; activeSubSection?: string }
+      meta?: { msgType?: MessageType; parentId?: string; branchLabel?: string; activeView?: string; activeSubSection?: string; workspacePhase?: string }
     ) => {
       const msgType = meta?.msgType || "normal";
       const branchDepth = msgType === "challenge" || msgType === "consultation"
@@ -653,21 +653,28 @@ export function useChat() {
       };
       setMessages((prev) => [...prev, userMsg]);
       setIsTyping(true);
-      setThinkingSteps(["Connexion..."]);
 
-      // Frontend-driven thinking steps — progression visuelle pendant l'attente
-      // (les SSE status du backend sont souvent bufferisés par nginx)
-      const _THINK_LABELS = [
-        "Analyse de votre message...",
-        "Préparation du contexte...",
-        "Enrichissement BTML...",
-        "Routage intelligent...",
-        "Génération de la réponse...",
-      ];
-      let _thinkIdx = 0;
+      // Frontend-driven thinking steps — contextuels par bot
+      const _BOT_STEPS: Record<string, string[]> = {
+        CEOB: ["Lecture du contexte stratégique...", "Analyse de la situation...", "Consultation du Blueprint...", "Évaluation des options...", "Formulation de la recommandation..."],
+        CTOB: ["Analyse technique...", "Revue de l'architecture...", "Évaluation des solutions...", "Préparation des spécifications..."],
+        CFOB: ["Analyse financière...", "Revue des projections...", "Calcul du ROI...", "Recommandation budgétaire..."],
+        CMOB: ["Analyse de marché...", "Évaluation du positionnement...", "Stratégie de contenu...", "Recommandation marketing..."],
+        CSOB: ["Analyse concurrentielle...", "Évaluation des risques...", "Cartographie des opportunités...", "Recommandation stratégique..."],
+        COOB: ["Revue des processus...", "Analyse opérationnelle...", "Optimisation des ressources...", "Plan d'action opérationnel..."],
+        CPOB: ["Analyse de la chaîne de valeur...", "Revue de la capacité...", "Optimisation industrielle...", "Recommandation production..."],
+        CHROB: ["Analyse des compétences...", "Évaluation de l'équipe...", "Stratégie talent...", "Recommandation RH..."],
+        CINOB: ["Veille technologique...", "Analyse des tendances...", "Évaluation d'impact...", "Recommandation innovation..."],
+        CROB: ["Analyse du pipeline...", "Évaluation des revenus...", "Optimisation de la conversion...", "Stratégie de croissance..."],
+        CLOB: ["Revue juridique...", "Analyse de conformité...", "Évaluation des risques légaux...", "Recommandation légale..."],
+        CISOB: ["Audit de sécurité...", "Analyse des vulnérabilités...", "Évaluation des protocoles...", "Recommandation sécurité..."],
+      };
+      const _steps = _BOT_STEPS[agent] || ["Analyse de votre message...", "Préparation du contexte...", "Génération de la réponse..."];
+      setThinkingSteps([_steps[0]]);
+      let _thinkIdx = 1;
       const _thinkTimer = setInterval(() => {
-        if (_thinkIdx < _THINK_LABELS.length) {
-          setThinkingSteps(prev => [...prev, _THINK_LABELS[_thinkIdx]]);
+        if (_thinkIdx < _steps.length) {
+          setThinkingSteps([_steps[_thinkIdx]]);
           _thinkIdx++;
         } else {
           clearInterval(_thinkTimer);
@@ -731,6 +738,8 @@ export function useChat() {
         // D-101 — GPS du Flow
         active_view: meta?.activeView,
         active_sub_section: meta?.activeSubSection,
+        // Mega Plan V5 — workspace phase
+        workspace_phase: meta?.workspacePhase,
       };
 
       // Create placeholder bot message for streaming
@@ -811,7 +820,7 @@ export function useChat() {
                     ? {
                         ...m,
                         content: cleanText,
-                        agent: data.agent,
+                        agent: data.agent || agent || "CEOB",
                         ghost: data.ghost_actif,
                         tier: data.tier,
                         latence_ms: data.latence_ms,
@@ -822,6 +831,7 @@ export function useChat() {
                         bubbleContext: data.bubble_context || undefined,
                         cascadeSuggestions: data.cascade_suggestions?.length ? data.cascade_suggestions : undefined,
                         scaffoldProgress: data.scaffold_progress || undefined,
+                        cristallisationSuggestion: data.cristallisation_suggestion || undefined,
                       }
                     : m
                 )
@@ -841,8 +851,14 @@ export function useChat() {
                   localStorage.setItem("carlos-codes-active-desc", data.response || "");
                 }
                 canvasActionsCallbackRef.current(data.canvas_actions);
-              } else if (data.canvas_actions && data.canvas_actions.length > 0 && canvasActionsCallbackRef.current && !isInChat) {
-                canvasActionsCallbackRef.current(data.canvas_actions);
+              } else if (data.canvas_actions && data.canvas_actions.length > 0 && canvasActionsCallbackRef.current) {
+                // Laisser passer phase_transition même en chat, bloquer le reste si isInChat
+                const filteredActions = isInChat
+                  ? data.canvas_actions.filter((a: any) => a.type === "phase_transition")
+                  : data.canvas_actions;
+                if (filteredActions.length > 0) {
+                  canvasActionsCallbackRef.current(filteredActions);
+                }
               }
 
               // Team proposal — injecter apres la reponse du bot
@@ -994,6 +1010,7 @@ export function useChat() {
                     isDiagnostic: res.is_diagnostic || false,
                     cascadeSuggestions: res.cascade_suggestions?.length ? res.cascade_suggestions : undefined,
                     scaffoldProgress: res.scaffold_progress || undefined,
+                    cristallisationSuggestion: res.cristallisation_suggestion || undefined,
                   }
                 : m
             )

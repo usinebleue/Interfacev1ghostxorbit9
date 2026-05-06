@@ -31,6 +31,8 @@ export interface ChatRequest {
   // D-101 — GPS du Flow
   active_view?: string;
   active_sub_section?: string;
+  // Mega Plan V5 — workspace phase active
+  workspace_phase?: string;
 }
 
 // --- Équipe 3 Bots (Chef d'Orchestre) ---
@@ -301,6 +303,8 @@ export interface ChatMessage {
   cascadeSuggestions?: CascadeSuggestion[];
   // S43 — Scaffold progress
   scaffoldProgress?: ScaffoldProgress;
+  // Mega Plan V5 — CarlOS GPS cristallisation suggestion
+  cristallisationSuggestion?: { section_id: string; section_label: string; confidence: number };
 }
 
 // --- Crystal (idee cristallisee) ---

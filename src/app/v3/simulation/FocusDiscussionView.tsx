@@ -35,6 +35,7 @@ import {
   GitBranch,
   Package,
   Zap,
+  X,
 } from "lucide-react";
 import { cn } from "../../components/ui/utils";
 import { SF } from "../core/styles";
@@ -507,17 +508,25 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 // ═══════════════════════════════════════════════════════════════
-// COMPOSANT PRINCIPAL
+// COMPOSANT PRINCIPAL — Discussion DocForge (4 sections stage-driven)
 // ═══════════════════════════════════════════════════════════════
 
-// ═══ Séquence des 5 phases AMORCER ═══
-const PHASE_SEQUENCE = [
-  { key: "discussion",  label: "Discussion",  icon: MessageCircle, color: "text-sky-700",    bg: "bg-sky-50 border-sky-200 hover:bg-sky-100" },
-  { key: "reflexion",   label: "Réflexion",   icon: Target,        color: "text-orange-700", bg: "bg-orange-50 border-orange-200 hover:bg-orange-100" },
-  { key: "creation",    label: "Conception",   icon: Layers,        color: "text-yellow-700", bg: "bg-yellow-50 border-yellow-200 hover:bg-yellow-100" },
-  { key: "execution",   label: "Exécution",   icon: Activity,      color: "text-green-700",  bg: "bg-green-50 border-green-200 hover:bg-green-100" },
-  { key: "retroaction", label: "Rétroaction",  icon: BarChart3,     color: "text-emerald-700", bg: "bg-emerald-50 border-emerald-200 hover:bg-emerald-100" },
+import { useAmorcer } from "../AmorcerContext";
+
+// ═══ 4 étapes neutres — même pattern que PhaseReflexion (minStage) ═══
+const DISCUSSION_STEPS: { id: number; key: string; title: string; subtitle: string; icon: React.ElementType; minStage: number }[] = [
+  { id: 1, key: "contexte",     title: "Contexte",      subtitle: "Situation et enjeux",          icon: Target,       minStage: 0 },
+  { id: 2, key: "exploration",  title: "Exploration",   subtitle: "Options et pistes",            icon: TrendingUp,   minStage: 3 },
+  { id: 3, key: "synthese",     title: "Synthèse",      subtitle: "Comparaison des avenues",      icon: Layers,       minStage: 6 },
+  { id: 4, key: "plan",         title: "Plan d'action", subtitle: "Prochaines étapes",            icon: Target,       minStage: 9 },
 ];
+
+const STEP_COLORS: Record<string, { dot: string; active: string; text: string; bg: string }> = {
+  contexte:    { dot: "bg-sky-500",     active: "bg-sky-50 border-sky-200",     text: "text-sky-700",     bg: "bg-sky-100" },
+  exploration: { dot: "bg-violet-500",  active: "bg-violet-50 border-violet-200", text: "text-violet-700",  bg: "bg-violet-100" },
+  synthese:    { dot: "bg-amber-500",   active: "bg-amber-50 border-amber-200",  text: "text-amber-700",   bg: "bg-amber-100" },
+  plan:        { dot: "bg-emerald-500", active: "bg-emerald-50 border-emerald-200", text: "text-emerald-700", bg: "bg-emerald-100" },
+};
 
 interface FocusDiscussionViewProps {
   context: string;
@@ -528,14 +537,13 @@ interface FocusDiscussionViewProps {
 }
 
 export function FocusDiscussionView({ context, focusType = "chantier", onBack, onAdvancePhase, activePhase = "discussion" }: FocusDiscussionViewProps) {
-  const sections = TYPE_SECTIONS[focusType] || TYPE_SECTIONS.chantier;
-  const [activeKey, setActiveKey] = useState<SectionKey>(sections[0].key);
+  const { chatStage, workflowItems, removeWorkflowItem } = useAmorcer();
   const typeLabel = TYPE_LABELS[focusType] || "Élément";
   const data = getCtx(context, focusType);
 
-  useEffect(() => { setActiveKey(sections[0].key); }, [focusType]);
-
-  const activeIdx = sections.findIndex(s => s.key === activeKey) + 1;
+  // Sections visibles basées sur chatStage (même pattern que PhaseReflexion)
+  const visibleSteps = DISCUSSION_STEPS.filter(s => chatStage >= s.minStage);
+  const [activeStepKey, setActiveStepKey] = useState<string>("contexte");
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-4 pb-12 space-y-4">
@@ -555,49 +563,72 @@ export function FocusDiscussionView({ context, focusType = "chantier", onBack, o
           </div>
           <div className="flex-1 min-w-0">
             <h2 className="text-sm font-bold text-gray-900 truncate">{context}</h2>
-            <p className="text-[10px] text-gray-500">{typeLabel} · {data.dept || "—"} · {data.bot || "CarlOS"} — {sections.length} sections</p>
+            <p className="text-[10px] text-gray-500">{typeLabel} · {data.dept || "—"} · {data.bot || "CarlOS"} — Discussion</p>
           </div>
         </div>
 
-        {/* Phase pastilles — indicateur passif */}
+        {/* Progression compacte — étapes visibles */}
         <div className="relative z-10 flex items-center gap-1 shrink-0">
-          {PHASE_SEQUENCE.map((phase) => {
-            const isActive = phase.key === activePhase;
-            const PIcon = phase.icon;
+          {DISCUSSION_STEPS.map((s) => {
+            const visible = chatStage >= s.minStage;
+            const col = STEP_COLORS[s.key];
             return (
-              <div
-                key={phase.key}
-                className={cn(
-                  "flex items-center justify-center rounded-md transition-all",
-                  isActive ? "w-7 h-7 bg-sky-100 ring-1 ring-sky-300" : "w-5 h-5 bg-gray-50"
-                )}
-                title={phase.label}
-              >
-                <PIcon className={cn("transition-all", isActive ? "h-3.5 w-3.5 text-sky-600" : "h-2.5 w-2.5 text-gray-300")} />
+              <div key={s.key} className={cn("w-6 h-6 rounded-md flex items-center justify-center transition-all", visible ? `${col.bg} ${col.text}` : "bg-gray-100 text-gray-300")} title={s.title}>
+                <s.icon className="h-3 w-3" />
               </div>
             );
           })}
         </div>
       </div>
 
-      {/* 2. SIDEBAR SF + CONTENU */}
+      {/* 2. SIDEBAR ÉTAPES + CONTENU */}
       <div className="flex gap-4">
         <div className={SF.sidebarW}>
-          {sections.map((s, i) => {
-            const isActive = activeKey === s.key;
+          {DISCUSSION_STEPS.map((s) => {
+            const visible = chatStage >= s.minStage;
+            const isActive = activeStepKey === s.key && visible;
+            const col = STEP_COLORS[s.key];
             return (
-              <button key={s.key} onClick={() => setActiveKey(s.key)}
-                className={cn(SF.btnBase, isActive ? SF.btnActive : SF.btnInactive)}
+              <button
+                key={s.key}
+                onClick={() => visible && setActiveStepKey(s.key)}
+                disabled={!visible}
+                className={cn(
+                  SF.btnBase,
+                  isActive ? `${col.active} border shadow-sm` : visible ? SF.btnInactive : "opacity-40 cursor-not-allowed border border-transparent"
+                )}
               >
-                <s.icon className={isActive ? SF.iconActive : SF.iconInactive} />
-                <span className={isActive ? SF.labelActive : SF.labelInactive}>{i + 1}. {s.title}</span>
+                <div className={cn("w-5 h-5 rounded-md flex items-center justify-center shrink-0", visible ? `${col.bg} ${col.text}` : "bg-gray-100 text-gray-300")}>
+                  <s.icon className="h-3 w-3" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className={cn("text-[10px] font-bold leading-tight block", isActive ? col.text : visible ? "text-gray-700" : "text-gray-400")}>{s.title}</span>
+                  <span className="text-[9px] text-gray-400 leading-tight block">{s.subtitle}</span>
+                </div>
               </button>
             );
           })}
         </div>
 
         <div className={SF.content}>
-          <SectionContent sectionKey={activeKey} context={context} focusType={focusType} data={data} />
+          <StepContent stepKey={activeStepKey} context={context} focusType={focusType} data={data} chatStage={chatStage} onAdvancePhase={onAdvancePhase} />
+          {/* Notes capturées depuis la discussion */}
+          {workflowItems.filter(w => w.phase === "discussion").length > 0 && (
+            <div className="mt-4 rounded-xl border border-sky-200 bg-sky-50/50 p-4">
+              <h4 className="text-[10px] font-bold text-sky-700 uppercase tracking-wider mb-2">Notes capturées ({workflowItems.filter(w => w.phase === "discussion").length})</h4>
+              <div className="space-y-1.5">
+                {workflowItems.filter(w => w.phase === "discussion").map(item => (
+                  <div key={item.id} className="flex items-start gap-2 group/note">
+                    <Zap className="h-3 w-3 text-sky-500 mt-0.5 shrink-0" />
+                    <p className="text-[11px] text-gray-700 leading-relaxed flex-1">{item.text}</p>
+                    <button onClick={() => removeWorkflowItem(item.id)} className="p-0.5 rounded opacity-0 group-hover/note:opacity-100 hover:bg-red-100 transition-all cursor-pointer shrink-0" title="Retirer">
+                      <X className="h-3 w-3 text-red-400" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -605,7 +636,201 @@ export function FocusDiscussionView({ context, focusType = "chantier", onBack, o
   );
 }
 
-// ═══ Routeur de contenu par section key ═══
+// ═══ Step Content — contenu adaptatif par étape de discussion ═══
+function StepContent({ stepKey, context, focusType, data, chatStage, onAdvancePhase }: { stepKey: string; context: string; focusType: string; data: FocusCtxData; chatStage: number; onAdvancePhase?: (phase: string) => void }) {
+  const [appeared, setAppeared] = useState(false);
+  useEffect(() => { setAppeared(false); const t = setTimeout(() => setAppeared(true), 80); return () => clearTimeout(t); }, [stepKey]);
+
+  return (
+    <div className={cn("transition-all duration-300", appeared ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2")}>
+      {stepKey === "contexte" && <StepContexte context={context} focusType={focusType} data={data} />}
+      {stepKey === "exploration" && <StepExploration context={context} focusType={focusType} data={data} />}
+      {stepKey === "synthese" && <StepSynthese context={context} focusType={focusType} data={data} />}
+      {stepKey === "plan" && <StepPlan context={context} focusType={focusType} data={data} onAdvancePhase={onAdvancePhase} />}
+    </div>
+  );
+}
+
+// ═══ Étape 1 — Contexte: situation, parties prenantes, enjeux ═══
+function StepContexte({ context, focusType, data }: SProps) {
+  const typeLabel = TYPE_LABELS[focusType] || "Élément";
+  return (
+    <div className="space-y-3">
+      <div className="rounded-xl border border-gray-200 bg-white p-4">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-sky-100 text-sky-700 font-bold">Contexte</span>
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">{typeLabel}</span>
+        </div>
+        <h3 className="text-xs font-bold text-gray-900 mb-2">{context}</h3>
+        <p className="text-[11px] text-gray-600 leading-relaxed">{data.description}</p>
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        <StatCard label="Progression" value={`${data.pct}%`} icon={TrendingUp} color="text-sky-600" bg="bg-sky-50" />
+        <StatCard label="Piloté par" value={data.bot} icon={Briefcase} color="text-violet-600" bg="bg-violet-50" />
+        <StatCard label="Équipe" value={`${data.team.length} membres`} icon={Layers} color="text-amber-600" bg="bg-amber-50" />
+      </div>
+      {(data.deadline || data.budget) && (
+        <div className="grid grid-cols-2 gap-3">
+          {data.deadline && <StatCard label="Deadline" value={data.deadline} icon={CalendarDays} color="text-red-600" bg="bg-red-50" />}
+          {data.budget && <StatCard label="Budget" value={data.budget} icon={BarChart3} color="text-emerald-600" bg="bg-emerald-50" />}
+        </div>
+      )}
+      <div className="rounded-xl border border-gray-200 bg-white p-4">
+        <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Parties prenantes</h4>
+        <div className="flex flex-wrap gap-2">
+          {data.team.map(bot => (
+            <span key={bot} className="text-[10px] px-2 py-1 rounded-full bg-gray-100 text-gray-700 font-medium">{bot}</span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══ Étape 2 — Exploration: options, données, pistes ═══
+function StepExploration({ context, data }: SProps) {
+  return (
+    <div className="space-y-3">
+      <div className="rounded-xl border border-gray-200 bg-white p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 font-bold">Exploration</span>
+        </div>
+        <h4 className="text-xs font-bold text-gray-900 mb-2">Avenues explorées</h4>
+        <p className="text-[11px] text-gray-600 leading-relaxed">Options identifiées durant la discussion pour « {context} ».</p>
+      </div>
+      {data.pipeline && data.pipeline.length > 0 && (
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">Pipeline identifié</h4>
+          <div className="space-y-2">
+            {data.pipeline.map((e, i) => (
+              <div key={i} className="flex items-center gap-2 text-xs">
+                <div className={cn("w-2 h-2 rounded-full shrink-0", e.status === "done" ? "bg-green-500" : e.status === "in_progress" ? "bg-blue-500" : "bg-gray-300")} />
+                <span className="flex-1 text-gray-800">{e.titre}</span>
+                <span className="text-[10px] text-gray-400">{e.bot}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {data.projets && data.projets.length > 0 && (
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">Projets connexes</h4>
+          <div className="space-y-2">
+            {data.projets.map((p, i) => (
+              <div key={i} className="flex items-center gap-2 text-xs">
+                <Target className="h-3.5 w-3.5 text-indigo-400 shrink-0" />
+                <span className="flex-1 text-gray-800">{p.titre}</span>
+                <span className="text-[10px] font-bold text-gray-500">{p.pct}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══ Étape 3 — Synthèse: scénarios, trade-offs ═══
+function StepSynthese({ context, data }: SProps) {
+  return (
+    <div className="space-y-3">
+      <div className="rounded-xl border border-gray-200 bg-white p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-bold">Synthèse</span>
+        </div>
+        <h4 className="text-xs font-bold text-gray-900 mb-2">Scénarios et options</h4>
+        <p className="text-[11px] text-gray-600 leading-relaxed">Analyse comparative des avenues pour « {context} ».</p>
+      </div>
+      {data.missions && data.missions.length > 0 && (
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">Actions en cours et planifiées</h4>
+          <div className="space-y-1.5">
+            {data.missions.map((m, i) => {
+              const SB: Record<string, string> = { "En cours": "bg-blue-100 text-blue-700", "En attente": "bg-amber-100 text-amber-700", "Planifiée": "bg-gray-100 text-gray-600", "Complétée": "bg-green-100 text-green-700" };
+              return (
+                <div key={i} className="flex items-center gap-2 text-xs py-1.5 border-b border-gray-100 last:border-0">
+                  {m.urgent && <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />}
+                  <span className="flex-1 text-gray-800">{m.titre}</span>
+                  <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium shrink-0", SB[m.status] || "bg-gray-100 text-gray-600")}>{m.status}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      {data.metriques && data.metriques.length > 0 && (
+        <div className="grid grid-cols-2 gap-3">
+          {data.metriques.slice(0, 4).map((m, i) => (
+            <div key={i} className="rounded-xl border border-gray-200 bg-white p-3">
+              <p className="text-[10px] text-gray-400 mb-1">{m.label}</p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-sm font-bold text-gray-900">{m.value}</span>
+                <span className={cn("text-[10px] font-medium", m.positive ? "text-green-600" : "text-red-600")}>{m.delta}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══ Étape 4 — Plan d'action: objectifs, prochaines étapes ═══
+function StepPlan({ context, data, onAdvancePhase }: SProps & { onAdvancePhase?: (phase: string) => void }) {
+  return (
+    <div className="space-y-3">
+      <div className="rounded-xl border border-gray-200 bg-white p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-bold">Plan d'action</span>
+        </div>
+        <h4 className="text-xs font-bold text-gray-900 mb-2">Prochaines étapes</h4>
+        <p className="text-[11px] text-gray-600 leading-relaxed">Synthèse des décisions et plan d'action pour « {context} ».</p>
+      </div>
+      <div className="rounded-xl border border-gray-200 bg-white p-4">
+        <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">Objectifs validés</h4>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-xs">
+            <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
+            <span className="text-gray-800">Contexte clarifié et enjeux identifiés</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs">
+            <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
+            <span className="text-gray-800">Options explorées et comparées</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs">
+            <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
+            <span className="text-gray-800">Direction validée avec données</span>
+          </div>
+        </div>
+      </div>
+      {data.historique && data.historique.length > 0 && (
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">Décisions récentes</h4>
+          <div className="space-y-2">
+            {data.historique.slice(0, 3).map((e, i) => (
+              <div key={i} className="flex items-start gap-2 text-xs">
+                <span className="text-[10px] text-gray-400 w-12 shrink-0">{e.date}</span>
+                <span className="text-gray-700">{e.action}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {/* Bouton "Passer en Réflexion" */}
+      {onAdvancePhase && (
+        <button
+          onClick={() => onAdvancePhase("reflexion")}
+          className="w-full mt-4 py-3 rounded-xl bg-orange-50 border border-orange-200 text-orange-700 text-xs font-bold hover:bg-orange-100 transition-colors cursor-pointer flex items-center justify-center gap-2"
+        >
+          <Target className="h-4 w-4" />
+          Passer en Réflexion →
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ═══ Routeur de contenu par section key (legacy — pour compatibilité) ═══
 function SectionContent({ sectionKey, context, focusType, data }: { sectionKey: SectionKey; context: string; focusType: string; data: FocusCtxData }) {
   const [appeared, setAppeared] = useState(false);
   useEffect(() => { setAppeared(false); const t = setTimeout(() => setAppeared(true), 80); return () => clearTimeout(t); }, [sectionKey]);

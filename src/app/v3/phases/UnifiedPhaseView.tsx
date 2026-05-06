@@ -9,14 +9,14 @@
  * - Capture automatique des réponses bot via useWorkspaceCapture
  */
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Brain, ArrowRight, Hammer, Rocket, Check } from "lucide-react";
 import { SF } from "../core/styles";
 import { useChatContext } from "../../v2/context/ChatContext";
 import { useAmorcer } from "../AmorcerContext";
-import { useWorkspaceCapture } from "../hooks/useWorkspaceCapture";
 import { PHASE_SECTIONS } from "./phase-sections";
 import { WorkspaceSection } from "./WorkspaceSection";
+import { BOT_NAME } from "../../v2/api/types";
 
 interface UnifiedPhaseViewProps {
   phaseKey: "reflexion" | "creation";
@@ -55,10 +55,9 @@ export function UnifiedPhaseView({ phaseKey, context, onPhaseComplete }: Unified
   const [activeSection, setActiveSection] = useState(sections[0]?.id || "");
 
   const { sendMessage } = useChatContext();
-  const { activeBotCode, pendingCapture, setPendingCapture, getCristallise } = useAmorcer();
+  const { activeBotCode, pendingCapture, setPendingCapture, getCristallise, getCristalliseItem, editCristallise, addWorkflowItem, activePhase } = useAmorcer();
 
-  // Activate the capture hook (watches messages)
-  useWorkspaceCapture();
+  // useWorkspaceCapture() → déplacé dans WorkspacePhasesPanel (toujours actif)
 
   // Count cristallised sections
   const cristallisedCount = sections.filter(s => getCristallise(s.id) !== null).length;
@@ -73,11 +72,28 @@ export function UnifiedPhaseView({ phaseKey, context, onPhaseComplete }: Unified
     setPendingCapture(sectionId);
   };
 
-  const handleAction = (sectionId: string, prompt: string) => {
+  const handleAction = useCallback((sectionId: string, action: import("./phase-sections").SectionAction) => {
+    // Épingler = action locale (copier dans workflowItems, pas de prompt)
+    if (action.label === "Épingler") {
+      const content = getCristallise(sectionId);
+      if (content) {
+        addWorkflowItem(activePhase, content.substring(0, 200), "capture");
+      }
+      return;
+    }
+    // Fusionner, Approfondir, Challenger, etc. = envoyer un prompt contextualisé
+    const captured = getCristallise(sectionId);
+    const prompt = captured && action.promptTemplate
+      ? action.promptTemplate.replace("{content}", captured.slice(0, 800))
+      : action.promptTemplate;
     const contextSuffix = context ? ` (contexte : ${context})` : "";
     sendMessage(prompt + contextSuffix, activeBotCode);
     setPendingCapture(sectionId);
-  };
+  }, [context, activeBotCode, getCristallise, addWorkflowItem, activePhase, sendMessage, setPendingCapture]);
+
+  const handleEditSave = useCallback((sectionId: string, newText: string) => {
+    editCristallise(sectionId, newText);
+  }, [editCristallise]);
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-4 pb-12 space-y-4">
@@ -131,15 +147,22 @@ export function UnifiedPhaseView({ phaseKey, context, onPhaseComplete }: Unified
 
         {/* Content */}
         <div className={SF.content}>
-          {activeS && (
-            <WorkspaceSection
-              section={activeS}
-              cristallise={getCristallise(activeS.id)}
-              isPending={pendingCapture === activeS.id}
-              phaseColor={meta.color}
-              onLaunch={handleLaunch}
-              onAction={handleAction}
-            />
+          {activeS && (() => {
+            const item = getCristalliseItem(activeS.id);
+            return (
+              <WorkspaceSection
+                section={activeS}
+                cristallise={item?.text || null}
+                isPending={pendingCapture === activeS.id}
+                phaseColor={meta.color}
+                onLaunch={handleLaunch}
+                onAction={handleAction}
+                onEditSave={handleEditSave}
+                sourceType={item?.sourceType}
+                sourceBotName={item ? BOT_NAME[item.source] || item.source : undefined}
+              />
+            );
+          })()
           )}
 
           {/* Phase complete CTA */}

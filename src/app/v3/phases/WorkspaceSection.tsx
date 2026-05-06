@@ -4,12 +4,14 @@
  * 3 états visuels:
  * - Vide: description + bouton "Lancer"
  * - En attente: skeleton pulse (bot en train de répondre)
- * - Cristallisé: contenu markdown du bot + boutons d'action
+ * - Cristallisé: contenu markdown du bot + boutons d'action + hover "Modifier"
  *
  * Les actions re-envoient un prompt avec le contenu actuel → remplace le cristallisé.
+ * "Épingler" = action locale (pas de prompt, gérée par le parent).
  */
 
-import { Rocket } from "lucide-react";
+import { useState } from "react";
+import { Rocket, Pencil, Mic, Users, MessageSquare } from "lucide-react";
 import type { PhaseSection, SectionAction } from "./phase-sections";
 
 interface WorkspaceSectionProps {
@@ -18,7 +20,10 @@ interface WorkspaceSectionProps {
   isPending: boolean;
   phaseColor: string; // "orange" | "yellow"
   onLaunch: (sectionId: string, prompt: string) => void;
-  onAction: (sectionId: string, prompt: string) => void;
+  onAction: (sectionId: string, action: SectionAction) => void;
+  onEditSave?: (sectionId: string, newText: string) => void;
+  sourceType?: "chat" | "voice" | "meeting";
+  sourceBotName?: string;
 }
 
 export function WorkspaceSection({
@@ -28,18 +33,36 @@ export function WorkspaceSection({
   phaseColor,
   onLaunch,
   onAction,
+  onEditSave,
+  sourceType,
+  sourceBotName,
 }: WorkspaceSectionProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editText, setEditText] = useState("");
+
   const colorMap: Record<string, { bg: string; border: string; text: string; hoverBg: string }> = {
     orange: { bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-700", hoverBg: "hover:bg-orange-100" },
     yellow: { bg: "bg-yellow-50", border: "border-yellow-200", text: "text-yellow-700", hoverBg: "hover:bg-yellow-100" },
   };
   const c = colorMap[phaseColor] || colorMap.orange;
 
-  const handleAction = (action: SectionAction) => {
-    const prompt = cristallise
-      ? action.promptTemplate.replace("{content}", cristallise.slice(0, 800))
-      : action.promptTemplate.replace("{content}", "");
-    onAction(section.id, prompt);
+  const startEdit = () => {
+    if (cristallise) {
+      setEditText(cristallise);
+      setIsEditing(true);
+    }
+  };
+
+  const saveEdit = () => {
+    if (onEditSave && editText.trim()) {
+      onEditSave(section.id, editText.trim());
+    }
+    setIsEditing(false);
+  };
+
+  const cancelEdit = () => {
+    setIsEditing(false);
+    setEditText("");
   };
 
   return (
@@ -49,13 +72,13 @@ export function WorkspaceSection({
         <section.icon className="h-4 w-4 text-gray-900 stroke-[2.5]" />
         <h3 className="text-sm font-bold text-gray-900 flex-1">{section.title}</h3>
         {!cristallise && !isPending && (
-          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">{"\u00c0"} faire</span>
+          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">À faire</span>
         )}
         {isPending && (
           <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${c.bg} ${c.text} animate-pulse`}>En cours</span>
         )}
         {cristallise && !isPending && (
-          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-600">Cristallis\u00e9</span>
+          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-600">Cristallisé</span>
         )}
       </div>
 
@@ -83,36 +106,90 @@ export function WorkspaceSection({
             <div className={`h-3 ${c.bg} rounded animate-pulse w-4/6`} />
             <div className={`h-3 ${c.bg} rounded animate-pulse w-full`} />
             <div className={`h-3 ${c.bg} rounded animate-pulse w-3/6`} />
-            <p className="text-[10px] text-gray-400 italic mt-3">L{"\u2019"}\u00e9quipe AI r\u00e9pond...</p>
+            <p className="text-[10px] text-gray-400 italic mt-3">L'équipe AI répond...</p>
           </div>
         )}
 
         {/* État: Cristallisé */}
         {cristallise && !isPending && (
           <>
-            <div className="text-xs text-gray-700 leading-relaxed whitespace-pre-wrap max-h-[400px] overflow-y-auto">
-              {cristallise}
-            </div>
-            {/* Action buttons */}
-            <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-gray-100">
-              {section.actions.map((action, i) => {
-                const variantClass = action.variant === "warning"
-                  ? "border-amber-200 text-amber-700 hover:bg-amber-50"
-                  : action.variant === "success"
-                  ? "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 font-bold"
-                  : "border-gray-200 text-gray-600 hover:bg-gray-50";
-                return (
+            {isEditing ? (
+              /* Mode édition inline */
+              <div className="space-y-2">
+                <textarea
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                  className="w-full min-h-[160px] text-xs text-gray-700 leading-relaxed p-3 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 resize-y"
+                  autoFocus
+                />
+                <div className="flex items-center gap-2 justify-end">
                   <button
-                    key={i}
-                    onClick={() => handleAction(action)}
-                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[10px] font-medium transition-colors ${variantClass}`}
+                    onClick={cancelEdit}
+                    className="px-3 py-1.5 text-[10px] font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
                   >
-                    <action.icon className="h-3 w-3" />
-                    {action.label}
+                    Annuler
                   </button>
-                );
-              })}
-            </div>
+                  <button
+                    onClick={saveEdit}
+                    className="px-3 py-1.5 text-[10px] font-bold text-white bg-gray-900 hover:bg-gray-800 rounded-lg transition-colors"
+                  >
+                    Sauvegarder
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* Contenu cristallisé avec hover "Modifier" */
+              <div className="relative group/edit">
+                <div
+                  className="absolute top-1.5 right-2 opacity-0 group-hover/edit:opacity-100 transition-opacity z-10
+                    flex items-center gap-1 bg-white/90 border border-blue-200 rounded px-1.5 py-0.5 shadow-sm cursor-pointer"
+                  onClick={startEdit}
+                >
+                  <Pencil className="h-3 w-3 text-blue-400" />
+                  <span className="text-[9px] text-blue-400 font-medium">Modifier</span>
+                </div>
+                <div className="group-hover/edit:ring-1 group-hover/edit:ring-blue-200 rounded-lg transition-all">
+                  <div className="text-xs text-gray-700 leading-relaxed whitespace-pre-wrap max-h-[400px] overflow-y-auto">
+                    {cristallise}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Source badge */}
+            {!isEditing && sourceType && (
+              <div className="flex items-center gap-1.5 pt-2 border-t border-gray-100">
+                {sourceType === "voice" && <Mic className="h-3 w-3 text-blue-400" />}
+                {sourceType === "meeting" && <Users className="h-3 w-3 text-purple-400" />}
+                {sourceType === "chat" && <MessageSquare className="h-3 w-3 text-gray-400" />}
+                <span className="text-[9px] text-gray-400">
+                  {sourceBotName || "CarlOS"} — {sourceType === "voice" ? "Vocal" : sourceType === "meeting" ? "Réunion" : "Chat"}
+                </span>
+              </div>
+            )}
+
+            {/* Action buttons */}
+            {!isEditing && (
+              <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-gray-100">
+                {section.actions.map((action, i) => {
+                  const variantClass = action.variant === "warning"
+                    ? "border-amber-200 text-amber-700 hover:bg-amber-50"
+                    : action.variant === "success"
+                    ? "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 font-bold"
+                    : "border-gray-200 text-gray-600 hover:bg-gray-50";
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => onAction(section.id, action)}
+                      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[10px] font-medium transition-colors ${variantClass}`}
+                    >
+                      <action.icon className="h-3 w-3" />
+                      {action.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </>
         )}
       </div>

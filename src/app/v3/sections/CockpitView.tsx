@@ -33,6 +33,7 @@ import {
   type DeptDashboardConfig,
   DEPT_DASHBOARD_SECTIONS,
   WORK_ACTIONS,
+  PHASES_BY_ELEMENT_TYPE,
   DEPT_ORDER,
   COCKPIT_EXTRA_BLOCS,
 } from "../data/mock/cockpit.mock";
@@ -42,19 +43,22 @@ export { WORK_ACTIONS, DEPT_ORDER };
 
 /* ── Mock data removed — now in ../data/mock/cockpit.mock.ts ── */
 
-/** Rollover unique — 5 boutons d'action. UN composant, ZÉRO silo.
+/** Rollover unique — boutons d'action dynamiques par type d'élément.
  *  position="center" (défaut) = centré vertical (pour lignes de liste)
- *  position="top"            = coin haut-droit (pour cards hautes) */
-export function WorkActionsOverlay({ context, onAction, deliverable, position = "center" }: { context: string; onAction: (phase: PhaseKey, ctx: string, deliverable?: string) => void; deliverable?: string; position?: "center" | "top" }) {
+ *  position="top"            = coin haut-droit (pour cards hautes)
+ *  focusType = filtre les phases affichées (chantier=5, tache=3, kpi=2, etc.) */
+export function WorkActionsOverlay({ context, onAction, deliverable, position = "center", focusType }: { context: string; onAction: (phase: PhaseKey, ctx: string, deliverable?: string, focusType?: string) => void; deliverable?: string; position?: "center" | "top"; focusType?: string }) {
+  const allowed = focusType ? PHASES_BY_ELEMENT_TYPE[focusType] : null;
+  const actions = allowed ? WORK_ACTIONS.filter(wa => allowed.includes(wa.key)) : WORK_ACTIONS;
   return (
     <div className={cn(
       "hidden group-hover:flex items-center gap-1 absolute right-1.5 bg-white/95 backdrop-blur-sm rounded-lg shadow-sm border border-gray-200 px-1 py-0.5 z-20",
       position === "center" ? "top-1/2 -translate-y-1/2" : "top-2"
     )}>
-      {WORK_ACTIONS.map(wa => (
+      {actions.map(wa => (
         <button
           key={wa.key}
-          onClick={(e) => { e.stopPropagation(); onAction(wa.key, context, deliverable); }}
+          onClick={(e) => { e.stopPropagation(); onAction(wa.key, context, deliverable, focusType); }}
           className={cn("p-1 rounded-md transition-colors cursor-pointer text-gray-700", wa.hover)}
           title={wa.label}
         >
@@ -115,7 +119,7 @@ export function CockpitItemRow({ item, index, onAction, showNumber }: {
           </span>
         )}
       </div>
-      {onAction && <WorkActionsOverlay context={item.primary} onAction={onAction} deliverable={item.deliverable} />}
+      {onAction && <WorkActionsOverlay context={item.primary} onAction={onAction} deliverable={item.deliverable} focusType={item.focusType} />}
     </li>
   );
 }

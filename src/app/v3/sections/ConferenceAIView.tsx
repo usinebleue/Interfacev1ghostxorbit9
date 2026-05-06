@@ -23,6 +23,7 @@ import { SF } from "../core/styles";
 // Shared data from PlaybookStoreView
 import { PLAYBOOK_STORE_DATA, PlaybookCardV2, CONFERENCE_FAMILIES, getPlaybookFamily, PLAYBOOK_WORKFLOWS, PLAYBOOK_LIVRABLES, PLAYBOOK_LONG_DESC } from "./PlaybookStoreView";
 import { getWorkspaceTarget } from "../meeting/conference-workspace-map";
+import { resolveBackendMeetingType } from "../meeting/playbook-meeting-type-map";
 import { useAmorcer } from "../AmorcerContext";
 import type { PhaseKey } from "../core/types";
 
@@ -131,16 +132,21 @@ export function ConferenceAIView({ headerGradient, onNavigateToStore, onLaunch, 
     setActivePhase(target.phase as PhaseKey);
     setRightSection(null); // Laisser le workspace afficher la phase par défaut
 
+    // Résoudre le meeting_type backend (pas le type UI générique)
+    const resolvedType = matchedPb
+      ? resolveBackendMeetingType(matchedPb)
+      : type;
+
     // Activer la réunion dans le contexte global (déclenche useLiveKitMeeting dans WorkspacePhasesPanel)
     setActiveMeeting({
-      type,
+      type: resolvedType,
       title,
       family,
       playbookId: matchedPb?.id,
     });
 
     // Callback parent si fourni
-    if (onLaunch) onLaunch(type, title);
+    if (onLaunch) onLaunch(resolvedType, title);
   }, [onLaunch, allConfRaw, botCode, setActivePhase, setRightSection, setActiveMeeting]);
   const allConf = botCode && botCode !== "CEOB"
     ? [...allConfRaw.filter(pb => pb.departement === botCode), ...allConfRaw.filter(pb => pb.departement !== botCode)]
@@ -742,7 +748,19 @@ function ConfAIFicheDetail({ pb, onBack, onLaunch, allConf, recentSessions }: {
             <button onClick={() => onLaunch?.(pb.type, pb.nom)} className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg cursor-pointer transition-colors">
               <Rocket className="h-3.5 w-3.5" /> Lancer maintenant
             </button>
-            <button className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer transition-colors">
+            <button onClick={async () => {
+              if (!planDate || !planHeure) return;
+              const resolvedType = resolveBackendMeetingType(pb);
+              const scheduledAt = `${planDate}T${planHeure}:00`;
+              try {
+                const res = await api.meetingCreate({ title: pb.nom, meeting_type: resolvedType, scheduled_at: scheduledAt });
+                const slug = res?.slug;
+                if (slug && planParticipants.trim()) {
+                  const emails = planParticipants.split(",").map((e: string) => e.trim()).filter(Boolean);
+                  await api.meetingInvite(slug, { emails, message: planMessage || undefined });
+                }
+              } catch (e) { /* silently fail */ }
+            }} className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer transition-colors">
               <Calendar className="h-3.5 w-3.5" /> Planifier pour plus tard
             </button>
           </div>

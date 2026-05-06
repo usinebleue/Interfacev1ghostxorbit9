@@ -385,6 +385,14 @@ function formatBotText(text: string): string {
       continue;
     }
 
+    const numberedMatch = line.match(/^(\s*)(\d+)[.)]\s+(.+)/);
+    if (numberedMatch) {
+      if (!inList) { result.push('<ol class="space-y-1.5 my-2 list-none">'); inList = true; }
+      const content = applyInlineFormatting(numberedMatch[3]);
+      result.push(`<li class="flex items-start gap-2 text-sm"><span class="text-gray-400 mt-0.5 shrink-0 font-semibold">${numberedMatch[2]}.</span><span>${content}</span></li>`);
+      continue;
+    }
+
     const bulletMatch = line.match(/^(\s*)([-*•]|\p{Emoji_Presentation}|\p{Emoji}\uFE0F?)\s+(.+)/u);
     if (bulletMatch) {
       if (!inList) { result.push('<ul class="space-y-1.5 my-2">'); inList = true; }
@@ -1596,7 +1604,7 @@ export function LiveChat({
           {/* Perspectives bar retirée — trop d'options sans logique contextuelle */}
 
           {/* Roster de bots actifs — en splitMode, intégré dans le header */}
-          {!splitMode && activeRoster.length > 0 && messages.length > 0 && (
+          {!splitMode && activeRoster.length > 0 && (
             <div className="flex items-center gap-2 py-2 px-3 bg-white/60 rounded-xl border border-gray-100">
               <Bot className="h-3 w-3 text-gray-400 shrink-0" />
               <span className="text-[10px] text-gray-400 font-medium shrink-0">Équipe active :</span>

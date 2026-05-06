@@ -8,6 +8,7 @@ import { useChat, useCrystals } from "../api/hooks";
 import { useTextToSpeech } from "../api/useVocal";
 import { useCanvasActions } from "./CanvasActionContext";
 import { useFrameMaster } from "./FrameMasterContext";
+import { useAmorcerSafe } from "../../v3/AmorcerContext";
 import type { ChatMessage, ReflectionMode, CREDOPhase, Thread, MessageType, Crystal, TeamProposal } from "../api/types";
 
 interface ChatState {
@@ -92,6 +93,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const { crystals, addCrystal, deleteCrystal, exportCrystals } = useCrystals();
   const { dispatchBatch, focusData, clearFocusMode } = useCanvasActions();
   const { activeView, activeBotCode, activeOrbit9Section, activeEspaceSection, activeBlueprintLiveSection, chatSourceView } = useFrameMaster();
+  const amorcerCtx = useAmorcerSafe();
+  const workspacePhase = amorcerCtx?.activePhase ?? null;
 
   // Connecter le hook chat au Canvas Action Bus
   useEffect(() => {
@@ -195,9 +198,10 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         ...meta,
         activeView: effectiveView,
         activeSubSection: chatSourceView ? undefined : subSection,
+        workspacePhase: workspacePhase || undefined,
       });
     },
-    [rawSend, activeReflectionMode, activeView, resolveSubSection, chatSourceView]
+    [rawSend, activeReflectionMode, activeView, resolveSubSection, chatSourceView, workspacePhase]
   );
 
   // B.1 — Multi-perspectives wrapper

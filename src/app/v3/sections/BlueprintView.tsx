@@ -26,6 +26,7 @@ import { VueConsolidee } from "./blueprint/VueConsolidee";
 import { LivingHero } from "./shared/LivingHero";
 import { DEPT_DASH_ICON, OTHER_BOTS } from "./shared/dept-data";
 import { SF } from "../core/styles";
+import { useAmorcerSafe } from "../AmorcerContext";
 import {
   getBlueprintConfig,
   getSizeTier,
@@ -145,24 +146,20 @@ export function BlueprintView({ botCode, headerGradient, sizeTier: propTier, hid
     } catch { /* retry later */ } finally { setSaving(false); }
   };
 
+  const amorcerCtx = useAmorcerSafe();
+
   const openInAtelier = (section: SubSectionDef) => {
-    dispatch({
-      layer: "focus",
-      type: "focus",
-      bot: botCode,
-      data: {
-        title: section.label,
-        element_type: "blueprint_section",
-        data: {
-          canvasKey: `blueprint_${botCode}`,
-          botCode,
-          sectionId: section.id,
-          sectionLabel: section.label,
-          sectionDescription: section.description,
-          sectionIntro: section.intro,
-        },
-      },
-    });
+    if (amorcerCtx) {
+      // V3 path: ouvrir dans le workspace (Sprint 5)
+      amorcerCtx.setActivePhase("creation");
+      amorcerCtx.setActiveDocumentKey(`blueprint_${botCode}`);
+      amorcerCtx.setActiveDocumentSection(section.id);
+      amorcerCtx.setReflexionContext(section.label);
+      amorcerCtx.setRightSection(null);
+    } else {
+      // V2 fallback: overlay FocusModeLayout
+      dispatch({ type: "focus", data: { mode: "blueprint-section", botCode, canvasKey: `blueprint_${botCode}`, sectionId: section.id } });
+    }
   };
 
   if (!config) return <p className="text-xs text-gray-400 text-center py-8">Configuration Blueprint non disponible pour {botCode}</p>;

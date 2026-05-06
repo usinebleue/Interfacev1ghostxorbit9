@@ -111,8 +111,32 @@ export function FrameMasterAmorcer() {
 }
 
 function AmorcerLayout() {
-  const { rightSection } = useAmorcer();
+  const { rightSection, setActivePhase, setRightSection, setReflexionContext } = useAmorcer();
   const { setLeftCollapsed } = useFrameMaster();
+
+  // Écouter les transitions de phase CREDO → Workspace (CustomEvent depuis CanvasActionContext)
+  // PROTÉGÉ: ne switch PAS si l'utilisateur est déjà dans un workflow actif
+  const { activePhase } = useAmorcer();
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { phase, context } = (e as CustomEvent).detail || {};
+      if (!phase) return;
+      // Exécution/Rétroaction = phases EXPLICITES uniquement (progress bar, sidebar, boutons)
+      // JAMAIS auto-transition depuis le backend — ça hijack le workspace
+      if (phase === "execution" || phase === "retroaction") return;
+      // Ne pas interrompre un workflow actif (reflexion, creation)
+      const inWorkflow = activePhase && !["observation", "attention", "moderation", "discussion"].includes(activePhase);
+      if (inWorkflow) {
+        console.log(`[FrameMaster] phase_transition BLOQUÉ: déjà en ${activePhase}, ignoré ${phase}`);
+        return;
+      }
+      setActivePhase(phase);
+      setReflexionContext(context || "discussion en cours");
+      setRightSection(null);
+    };
+    window.addEventListener("bt-work-phase-transition", handler);
+    return () => window.removeEventListener("bt-work-phase-transition", handler);
+  }, [setActivePhase, setReflexionContext, setRightSection, activePhase]);
 
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-white">

@@ -102,5 +102,18 @@ export type Orbit9Section =
 // ═══ Context mode ═══
 export type ContextMode = "brainteam" | "orbit9";
 
+// ═══ CREDO phases (discussion CREDO sub-phases) ═══
+export type CredoPhaseKey = "C" | "R" | "E" | "D" | "O" | "done";
+
+// ═══ Workflow items (captures pendant le flow 5 phases) ═══
+export interface WorkflowItem {
+  id: string;
+  phase: string;        // "discussion" | "reflexion" | "creation" | "execution" | "retroaction"
+  credoKey?: string;     // "C" | "R" | "E" | "D" | "O" (si capture pendant discussion)
+  text: string;
+  type: "insight" | "decision" | "action" | "question";
+  timestamp: number;
+}
+
 // ═══ Blueprint header views ═══
 export type HeaderView = "blueprint" | "ca" | "comites" | "personnel" | "bot";
