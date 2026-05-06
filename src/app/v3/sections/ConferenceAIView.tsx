@@ -22,6 +22,9 @@ import { DEPT_SHORT_LABEL, DEPT_DASH_ICON, DEPT_LABELS, DEPT_ICONS, DEPT_GRADIEN
 import { SF } from "../core/styles";
 // Shared data from PlaybookStoreView
 import { PLAYBOOK_STORE_DATA, PlaybookCardV2, CONFERENCE_FAMILIES, getPlaybookFamily, PLAYBOOK_WORKFLOWS, PLAYBOOK_LIVRABLES, PLAYBOOK_LONG_DESC } from "./PlaybookStoreView";
+import { getWorkspaceTarget } from "../meeting/conference-workspace-map";
+import { useAmorcer } from "../AmorcerContext";
+import type { PhaseKey } from "../core/types";
 
 // ══════════════════════════════════════════
 // CONFERENCE AI — Section DEDIEE (tab departement)
@@ -63,7 +66,7 @@ const MOCK_RECENT_SESSIONS = [
   { id: "rs-5", pbId: "pb-CSOB-CREA-001", date: "2026-03-28", duree: "1h05", participants: 4, livrables: 3 },
 ];
 
-const MOCK_PLANNED_SESSIONS: { id: string; pbId: string; date: string; heure: string; participants: string[] }[] = [];
+// MOCK_PLANNED_SESSIONS retiré — ConfAIPlanifiees fetch l'API réelle maintenant
 
 function useRecentSessions() {
   const [sessions, setSessions] = useState(MOCK_RECENT_SESSIONS);
@@ -100,6 +103,9 @@ export function ConferenceAIView({ headerGradient, onNavigateToStore, onLaunch, 
   const [selectedFamily, setSelectedFamily] = useState<string | null>(null);
   const [selectedDept, setSelectedDept] = useState<string | null>(null);
 
+  // Meeting live — workspace routing via AmorcerContext (plus de MeetingRoomView silo)
+  const { setActivePhase, setRightSection, setActiveMeeting } = useAmorcer();
+
   // Synchroniser quand botCode change — revenir à l'accueil (le contenu s'adapte au département)
   useEffect(() => {
     setSelectedPlaybook(null);
@@ -114,6 +120,28 @@ export function ConferenceAIView({ headerGradient, onNavigateToStore, onLaunch, 
     const family = getPlaybookFamily(pb);
     return (family !== "" && CONFERENCE_FAMILIES[family] !== undefined) || pb.id.startsWith("pb-GHO-") || pb.type === "conference" || pb.type === "formation" || pb.type === "cognitif";
   });
+
+  const handleLaunchInternal = useCallback((type: string, title: string) => {
+    // Déterminer la famille du playbook et le target workspace
+    const matchedPb = allConfRaw.find(pb => pb.nom === title || pb.id === type);
+    const family = matchedPb ? getPlaybookFamily(matchedPb) : "";
+    const target = getWorkspaceTarget(family, title, botCode || "CEOB");
+
+    // Router vers la bonne phase du workspace
+    setActivePhase(target.phase as PhaseKey);
+    setRightSection(null); // Laisser le workspace afficher la phase par défaut
+
+    // Activer la réunion dans le contexte global (déclenche useLiveKitMeeting dans WorkspacePhasesPanel)
+    setActiveMeeting({
+      type,
+      title,
+      family,
+      playbookId: matchedPb?.id,
+    });
+
+    // Callback parent si fourni
+    if (onLaunch) onLaunch(type, title);
+  }, [onLaunch, allConfRaw, botCode, setActivePhase, setRightSection, setActiveMeeting]);
   const allConf = botCode && botCode !== "CEOB"
     ? [...allConfRaw.filter(pb => pb.departement === botCode), ...allConfRaw.filter(pb => pb.departement !== botCode)]
     : allConfRaw;
@@ -321,17 +349,17 @@ export function ConferenceAIView({ headerGradient, onNavigateToStore, onLaunch, 
       <div className="flex-1 min-w-0 space-y-2">
         {/* Fiche detaillee INLINE (drill-down) */}
         {selectedPlaybook ? (
-          <ConfAIFicheDetail pb={selectedPlaybook} onBack={handleBack} onLaunch={onLaunch} allConf={allConf} recentSessions={recentSessions} />
+          <ConfAIFicheDetail pb={selectedPlaybook} onBack={handleBack} onLaunch={handleLaunchInternal} allConf={allConf} recentSessions={recentSessions} />
         ) : (
           <>
-            {activeView === "accueil" && <ConfAIAccueil playbooks={allConf} onOpenDetail={handleOpenDetail} onNavigate={handleNavigate} onLaunch={onLaunch} familyEntries={familyEntries} deptEntries={deptEntries} botCode={botCode} />}
-            {activeView === "recentes" && <ConfAIRecentes allConf={allConf} onOpenDetail={handleOpenDetail} onLaunch={onLaunch} onBack={() => setActiveView("accueil")} recentSessions={recentSessions} />}
+            {activeView === "accueil" && <ConfAIAccueil playbooks={allConf} onOpenDetail={handleOpenDetail} onNavigate={handleNavigate} onLaunch={handleLaunchInternal} familyEntries={familyEntries} deptEntries={deptEntries} botCode={botCode} />}
+            {activeView === "recentes" && <ConfAIRecentes allConf={allConf} onOpenDetail={handleOpenDetail} onLaunch={handleLaunchInternal} onBack={() => setActiveView("accueil")} recentSessions={recentSessions} />}
             {activeView === "planifiees" && <ConfAIPlanifiees onBack={() => setActiveView("accueil")} />}
-            {activeView === "famille" && selectedFamily && <ConfAIFiltered playbooks={allConf.filter(pb => getPlaybookFamily(pb) === selectedFamily)} title={CONFERENCE_FAMILIES[selectedFamily]?.label || selectedFamily} icon={CONFERENCE_FAMILIES[selectedFamily]?.icon || Video} onOpenDetail={handleOpenDetail} onLaunch={onLaunch} onBack={() => setActiveView("accueil")} />}
-            {activeView === "famille" && !selectedFamily && <ConfAIAccueil playbooks={allConf} onOpenDetail={handleOpenDetail} onNavigate={handleNavigate} onLaunch={onLaunch} familyEntries={familyEntries} deptEntries={deptEntries} botCode={botCode} />}
-            {activeView === "departement" && selectedDept && <ConfAIFiltered playbooks={allConf.filter(pb => pb.departement === selectedDept)} title={DEPT_LABELS[selectedDept] || selectedDept} icon={DEPT_ICONS[selectedDept] || Building2} onOpenDetail={handleOpenDetail} onLaunch={onLaunch} onBack={() => setActiveView("accueil")} />}
-            {activeView === "departement" && !selectedDept && <ConfAIAccueil playbooks={allConf} onOpenDetail={handleOpenDetail} onNavigate={handleNavigate} onLaunch={onLaunch} familyEntries={familyEntries} deptEntries={deptEntries} botCode={botCode} />}
-            {activeView === "tous" && <ConfAIFiltered playbooks={allConf} title="Toutes les conferences" icon={Video} onOpenDetail={handleOpenDetail} onLaunch={onLaunch} onBack={() => setActiveView("accueil")} />}
+            {activeView === "famille" && selectedFamily && <ConfAIFiltered playbooks={allConf.filter(pb => getPlaybookFamily(pb) === selectedFamily)} title={CONFERENCE_FAMILIES[selectedFamily]?.label || selectedFamily} icon={CONFERENCE_FAMILIES[selectedFamily]?.icon || Video} onOpenDetail={handleOpenDetail} onLaunch={handleLaunchInternal} onBack={() => setActiveView("accueil")} />}
+            {activeView === "famille" && !selectedFamily && <ConfAIAccueil playbooks={allConf} onOpenDetail={handleOpenDetail} onNavigate={handleNavigate} onLaunch={handleLaunchInternal} familyEntries={familyEntries} deptEntries={deptEntries} botCode={botCode} />}
+            {activeView === "departement" && selectedDept && <ConfAIFiltered playbooks={allConf.filter(pb => pb.departement === selectedDept)} title={DEPT_LABELS[selectedDept] || selectedDept} icon={DEPT_ICONS[selectedDept] || Building2} onOpenDetail={handleOpenDetail} onLaunch={handleLaunchInternal} onBack={() => setActiveView("accueil")} />}
+            {activeView === "departement" && !selectedDept && <ConfAIAccueil playbooks={allConf} onOpenDetail={handleOpenDetail} onNavigate={handleNavigate} onLaunch={handleLaunchInternal} familyEntries={familyEntries} deptEntries={deptEntries} botCode={botCode} />}
+            {activeView === "tous" && <ConfAIFiltered playbooks={allConf} title="Toutes les conferences" icon={Video} onOpenDetail={handleOpenDetail} onLaunch={handleLaunchInternal} onBack={() => setActiveView("accueil")} />}
           </>
         )}
       </div>
@@ -546,8 +574,18 @@ function ConfAIRecentes({ allConf, onOpenDetail, onLaunch, onBack, recentSession
   );
 }
 
-/* ConfAIPlanifiees — Conferences planifiees a venir */
+/* ConfAIPlanifiees — Conferences planifiees a venir (API réelle) */
 function ConfAIPlanifiees({ onBack }: { onBack: () => void }) {
+  const [planned, setPlanned] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.meetingList("scheduled")
+      .then(res => setPlanned(res.meetings || []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
     <div className="space-y-3">
       <button onClick={onBack} className="text-[10px] text-gray-500 hover:text-gray-700 flex items-center gap-1 cursor-pointer"><ChevronLeft className="h-3.5 w-3.5" /> Retour</button>
@@ -555,7 +593,11 @@ function ConfAIPlanifiees({ onBack }: { onBack: () => void }) {
         <Calendar className="h-4 w-4 text-gray-600" />
         <h3 className="text-sm font-bold text-gray-800">Conferences planifiees</h3>
       </div>
-      {MOCK_PLANNED_SESSIONS.length === 0 ? (
+      {loading ? (
+        <div className="text-center py-8">
+          <p className="text-xs text-gray-400 animate-pulse">Chargement...</p>
+        </div>
+      ) : planned.length === 0 ? (
         <div className="text-center py-8">
           <Calendar className="h-8 w-8 text-gray-300 mx-auto mb-2" />
           <p className="text-xs text-gray-400">Aucune conference planifiee</p>
@@ -563,17 +605,15 @@ function ConfAIPlanifiees({ onBack }: { onBack: () => void }) {
         </div>
       ) : (
         <div className="space-y-2">
-          {MOCK_PLANNED_SESSIONS.map(session => (
-            <div key={session.id} className="rounded-xl border border-gray-200 bg-white shadow-sm px-4 py-3 flex items-center gap-3">
+          {planned.map((session: any) => (
+            <div key={session.slug || session.id} className="rounded-xl border border-gray-200 bg-white shadow-sm px-4 py-3 flex items-center gap-3">
               <div className="flex-1 min-w-0">
-                <span className="text-xs font-bold text-gray-800 block truncate">{session.pbId}</span>
+                <span className="text-xs font-bold text-gray-800 block truncate">{session.title || session.playbook_id || "Reunion"}</span>
                 <div className="flex items-center gap-3 mt-1 text-[10px] text-gray-500">
-                  <span>{session.date} a {session.heure}</span>
-                  <span>{session.participants.length} invites</span>
+                  <span>{session.scheduled_at?.slice(0, 16).replace("T", " a ") || "—"}</span>
+                  <span>{session.participant_count || 0} invites</span>
                 </div>
               </div>
-              <button className="text-[10px] font-bold text-blue-600 hover:text-blue-800 cursor-pointer">Modifier</button>
-              <button className="text-[10px] font-bold text-red-500 hover:text-red-700 cursor-pointer">Annuler</button>
             </div>
           ))}
         </div>

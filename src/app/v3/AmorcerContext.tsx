@@ -7,8 +7,9 @@
  * Consommé par: DiscussionWindow, WorkspacePhasesPanel, ControlTowerPanel
  */
 
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from "react";
 import type { PhaseKey, CredoPhaseKey, WorkflowItem } from "./core/types";
+import { api } from "../v2/api/client";
 
 // ═══ localStorage persistence (Fix R5 — état survit au refresh) ═══
 const LS_PREFIX = "v3:";
@@ -89,6 +90,7 @@ export interface SimV3CristalliseItem {
   text: string;
   source: string;
   sectionId: string;
+  sourceType?: "chat" | "voice" | "meeting";
 }
 
 interface AmorcerState {
@@ -142,12 +144,14 @@ interface AmorcerState {
   simV3Stage: number;
   setSimV3Stage: React.Dispatch<React.SetStateAction<number>>;
   simV3Cristallises: SimV3CristalliseItem[];
-  addSimV3Cristallise: (text: string, source: string, sectionId: string) => void;
+  addSimV3Cristallise: (text: string, source: string, sectionId: string, sourceType?: "chat" | "voice" | "meeting") => void;
 
   // Workspace capture (artefacts progressifs)
   pendingCapture: string | null;
   setPendingCapture: (sectionId: string | null) => void;
   getCristallise: (sectionId: string) => string | null;
+  getCristalliseItem: (sectionId: string) => SimV3CristalliseItem | null;
+  editCristallise: (sectionId: string, newText: string) => void;
 
   // Focus type (adapte la sidebar de FocusDiscussionView)
   focusType: string;
@@ -163,6 +167,20 @@ interface AmorcerState {
   removeWorkflowItem: (id: string) => void;
   clearWorkflowItems: () => void;
 
+  // Workspace session (multi-communication partagé)
+  workspaceSessionId: string | null;
+  startWorkspaceSession: () => string;
+
+  // Blueprint Atelier dans workspace (Sprint 5)
+  activeDocumentKey: string | null;
+  setActiveDocumentKey: (k: string | null) => void;
+  activeDocumentSection: string | null;
+  setActiveDocumentSection: (s: string | null) => void;
+
+  // Réunion active (survit à la navigation entre sections)
+  activeMeeting: { type: string; title: string; slug?: string; playbookId?: string; family?: string } | null;
+  setActiveMeeting: (m: { type: string; title: string; slug?: string; playbookId?: string; family?: string } | null) => void;
+
   // Helpers
   startReflexion: (chantier: string) => void;
   advance: () => void;
@@ -172,7 +190,15 @@ interface AmorcerState {
 const AmorcerCtx = createContext<AmorcerState | null>(null);
 
 export function AmorcerProvider({ children }: { children: ReactNode }) {
-  const [activePhase, setActivePhaseRaw] = useState<PhaseKey>(() => lsGet("activePhase", "observation"));
+  const [activePhase, setActivePhaseRaw] = useState<PhaseKey>(() => {
+    const stored = lsGet<string>("activePhase", "observation");
+    // Never restore execution/retroaction — always entered via explicit workflow transition
+    if (stored === "execution" || stored === "retroaction") {
+      lsSet("activePhase", "observation"); // Also clear localStorage
+      return "observation" as PhaseKey;
+    }
+    return stored as PhaseKey;
+  });
   const [chatStage, setChatStage] = useState(0);
   const [typed, setTyped] = useState(false);
   const [reflexionContext, setReflexionContextRaw] = useState<string | null>(() => lsGet("reflexionContext", null));
@@ -181,14 +207,19 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
 
   const [rightSection, setRightSectionRaw] = useState<string | null>(() => {
     if (initialURL.section === "orbit9") return null;
-    // Si on est dans une phase focus (discussion, reflexion, etc.) avec un contexte,
-    // ne PAS restaurer rightSection — laisser null pour que le workspace focus s'affiche
     const restoredPhase = lsGet<string>("activePhase", "observation");
     const restoredContext = lsGet<string | null>("reflexionContext", null);
+    // Phase focus avec contexte → null (workspace affiche la vue phase)
     if (restoredContext && ["discussion", "reflexion", "creation", "retroaction"].includes(restoredPhase)) {
       return null;
     }
-    return initialURL.section || lsGet("rightSection", "cockpit");
+    const stored = initialURL.section || lsGet("rightSection", "cockpit");
+    // Never restore "execution" — always set at transition points (handleWorkAction, progress bar, onPhaseComplete)
+    if (stored === "execution") {
+      lsSet("rightSection", "cockpit"); // Also clear localStorage
+      return "cockpit";
+    }
+    return stored;
   });
   const [activeBotCode, setActiveBotCodeRaw] = useState(() => {
     const fromURL = initialURL.dept;
@@ -224,7 +255,8 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
         setO9SectionRaw(sub || "dashboard");
       } else {
         setCockpitTabRaw("bureau");
-        setRightSectionRaw(section || lsGet("rightSection", "cockpit"));
+        const resolved = section || lsGet("rightSection", "cockpit");
+        setRightSectionRaw(resolved === "execution" ? "cockpit" : resolved);
       }
     };
     window.addEventListener("popstate", onPopState);
@@ -284,20 +316,24 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
   // Focus type state — persisté en localStorage
   const [focusType, setFocusTypeRaw] = useState(() => lsGet("focusType", "chantier"));
 
+  // Blueprint Atelier dans workspace (Sprint 5)
+  const [activeDocumentKey, setActiveDocumentKey] = useState<string | null>(null);
+  const [activeDocumentSection, setActiveDocumentSection] = useState<string | null>(null);
+
   // SimV3 state
   const [simV3Active, setSimV3Active] = useState(false);
   const [simV3Stage, setSimV3Stage] = useState(-1);
   const [simV3Cristallises, setSimV3Cristallises] = useState<SimV3CristalliseItem[]>([]);
-  const addSimV3Cristallise = useCallback((text: string, source: string, sectionId: string) => {
+  const addSimV3Cristallise = useCallback((text: string, source: string, sectionId: string, sourceType?: "chat" | "voice" | "meeting") => {
     setSimV3Cristallises((prev) => {
       // Replace existing entry for same sectionId (action = update)
       const existing = prev.findIndex(item => item.sectionId === sectionId);
       if (existing >= 0) {
         const copy = [...prev];
-        copy[existing] = { id: `c-${Date.now()}`, text, source, sectionId };
+        copy[existing] = { id: `c-${Date.now()}`, text, source, sectionId, sourceType: sourceType || "chat" };
         return copy;
       }
-      return [...prev, { id: `c-${Date.now()}`, text, source, sectionId }];
+      return [...prev, { id: `c-${Date.now()}`, text, source, sectionId, sourceType: sourceType || "chat" }];
     });
   }, []);
 
@@ -307,6 +343,16 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     const item = simV3Cristallises.find(c => c.sectionId === sectionId);
     return item ? item.text : null;
   }, [simV3Cristallises]);
+
+  const getCristalliseItem = useCallback((sectionId: string): SimV3CristalliseItem | null => {
+    return simV3Cristallises.find(c => c.sectionId === sectionId) || null;
+  }, [simV3Cristallises]);
+
+  const editCristallise = useCallback((sectionId: string, newText: string) => {
+    setSimV3Cristallises(prev =>
+      prev.map(c => c.sectionId === sectionId ? { ...c, text: newText } : c)
+    );
+  }, []);
 
   // CREDO phase state
   const [credoPhase, setCredoPhase] = useState<CredoPhaseKey>("C");
@@ -325,6 +371,10 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
   const setActivePhase = useCallback((p: PhaseKey) => {
     setActivePhaseRaw(p);
     lsSet("activePhase", p);
+    // Reset chatStage à chaque changement de phase — chaque phase repart de l'étape 0
+    setChatStage(0);
+    // Nettoyer le contenu cristallisé — chaque phase repart vide (comme un nouvel artefact)
+    setSimV3Cristallises([]);
   }, []);
   const setReflexionContext = useCallback((c: string | null) => {
     setReflexionContextRaw(c);
@@ -334,6 +384,48 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     setFocusTypeRaw(t);
     lsSet("focusType", t);
   }, []);
+
+  // Réunion active (survit à la navigation entre sections)
+  const [activeMeeting, setActiveMeeting] = useState<{ type: string; title: string; slug?: string; playbookId?: string; family?: string } | null>(null);
+
+  // Workspace session ID — identifie une session de travail partagée (multi-communication)
+  const [workspaceSessionId, setWorkspaceSessionId] = useState<string | null>(null);
+  const startWorkspaceSession = useCallback(() => {
+    const id = `ws-${activeBotCode}-${Date.now()}`;
+    setWorkspaceSessionId(id);
+    return id;
+  }, [activeBotCode]);
+
+  // ═══ Canvas auto-save — persister cristallisations en DB (debounce 2s) ═══
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (simV3Cristallises.length === 0) return;
+    if (activePhase === "observation") return;
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      const canvasKey = `workspace_phase_${activeBotCode}_${activePhase}`;
+      api.getOrCreateCanvas(canvasKey).then(canvas => {
+        api.updateCanvas(canvas.id, { cristallises: simV3Cristallises, chatStage, workflowItems });
+      }).catch(() => { /* silent */ });
+    }, 2000);
+    return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
+  }, [simV3Cristallises, chatStage, activeBotCode, activePhase, workflowItems]);
+
+  // ═══ Canvas auto-load — restaurer cristallisations quand on entre dans une phase ═══
+  const prevPhaseRef = useRef(activePhase);
+  useEffect(() => {
+    if (activePhase === prevPhaseRef.current) return;
+    prevPhaseRef.current = activePhase;
+    if (activePhase === "observation") return;
+    const canvasKey = `workspace_phase_${activeBotCode}_${activePhase}`;
+    api.getOrCreateCanvas(canvasKey).then(canvas => {
+      const data = canvas.data as any;
+      if (data?.cristallises && Array.isArray(data.cristallises) && data.cristallises.length > 0) {
+        setSimV3Cristallises(data.cristallises);
+        if (typeof data.chatStage === "number") setChatStage(data.chatStage);
+      }
+    }).catch(() => { /* silent */ });
+  }, [activePhase, activeBotCode]);
 
   const resetChat = useCallback(() => {
     setActivePhase("observation");
@@ -405,7 +497,11 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
         simV3Active, setSimV3Active,
         simV3Stage, setSimV3Stage,
         simV3Cristallises, addSimV3Cristallise,
-        pendingCapture, setPendingCapture, getCristallise,
+        pendingCapture, setPendingCapture, getCristallise, getCristalliseItem, editCristallise,
+        workspaceSessionId, startWorkspaceSession,
+        activeDocumentKey, setActiveDocumentKey,
+        activeDocumentSection, setActiveDocumentSection,
+        activeMeeting, setActiveMeeting,
         startReflexion, advance, resetChat,
       }}
     >
@@ -418,4 +514,9 @@ export function useAmorcer(): AmorcerState {
   const ctx = useContext(AmorcerCtx);
   if (!ctx) throw new Error("useAmorcer must be inside AmorcerProvider");
   return ctx;
+}
+
+/** Safe version — returns null if outside AmorcerProvider (for V2 components shared with V3) */
+export function useAmorcerSafe(): AmorcerState | null {
+  return useContext(AmorcerCtx);
 }

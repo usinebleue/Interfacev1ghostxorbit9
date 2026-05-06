@@ -18,7 +18,7 @@
 
 import { useState, useRef, useEffect, useCallback, type KeyboardEvent, type ChangeEvent } from "react";
 import {
-  Bot, Atom, Plus, Send, ChevronUp, X, Check, ChevronDown, ChevronRight,
+  Bot, BrainCog, Atom, Plus, Send, ChevronUp, X, Check, ChevronDown, ChevronRight,
   Phone, PhoneOff, Video, Glasses, Paperclip, Globe, Zap, Activity,
   Brain, Target, AlertTriangle, Scale, Sparkles, MessageSquare,
   Mic, MicOff, Loader2, Upload, MessageCircle, Clock,
@@ -31,6 +31,9 @@ import { api } from "../v2/api/client";
 import { BOT_CODES } from "./constants";
 import { DEPT_DASH_ICON, DEPT_GRADIENT, BOT_DISPLAY, PHASE_COLORS } from "./sections/shared/dept-data";
 import { DEPT_GREETING, DEPT_ACTIONS, ACTION_COLORS } from "./data/dept-welcome";
+import type { PhaseKey } from "./core/types";
+import { detectPhaseFromMessage } from "./core/phase-router";
+import { getContextualActions } from "./core/contextual-actions";
 import {
   Room, RoomEvent, Track,
   type RemoteTrack, type RemoteTrackPublication,
@@ -55,44 +58,144 @@ const V3_STYLE: Record<string, { text: string; border: string; ring: string; bub
 };
 const DEFAULT_STYLE = V3_STYLE.CEOB;
 
-/** Markdown léger → HTML (bold, italic, code, listes, linebreaks) */
+/** Inline formatting: bold, italic, code — copié du V2 LiveChat (source de vérité) */
+function applyInlineFormatting(text: string): string {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em class="text-gray-600 italic">$1</em>')
+    .replace(/`(.+?)`/g, '<code class="px-1 py-0.5 bg-gray-100 rounded text-xs font-mono text-gray-800">$1</code>');
+}
+
+/** Rich markdown → HTML — copié du V2 formatBotText (source de vérité) */
 function formatMarkdown(text: string): string {
   if (!text) return "";
-  let h = text
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  // Bold, italic, inline code
-  h = h.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-  h = h.replace(/\*(.+?)\*/g, "<em>$1</em>");
-  h = h.replace(/`(.+?)`/g, '<code class="text-xs bg-gray-100 px-1 py-0.5 rounded font-mono">$1</code>');
-  // Bullet lists: lines starting with * or -
-  h = h.replace(/^[\*\-]\s+(.+)$/gm, '<li class="ml-4 list-disc">$1</li>');
-  // Numbered lists: lines starting with 1. 2. etc
-  h = h.replace(/^\d+\.\s+(.+)$/gm, '<li class="ml-4 list-decimal">$1</li>');
-  // Line breaks (but not inside <li>)
-  h = h.replace(/\n/g, "<br />");
-  // Clean up <br /> before/after <li>
-  h = h.replace(/<br \/><li/g, "<li").replace(/<\/li><br \/>/g, "</li>");
-  return h;
+  let html = text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+  const lines = html.split("\n");
+  const result: string[] = [];
+  let listTag: "ul" | "ol" | null = null;  // Track open list type
+
+  const closeList = () => {
+    if (listTag) { result.push(`</${listTag}>`); listTag = null; }
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i];
+
+    // Horizontal rules: --- ━━━ ═══
+    if (/^[━─═\-]{3,}$/.test(line.trim())) {
+      closeList();
+      result.push('<hr class="my-3 border-gray-200">');
+      continue;
+    }
+
+    // Inline option chips: "1. text | 2. text" or "1 · text | 2 · text"
+    if (/^\p{Emoji}?\s*\d+\s*[·.]\s*.+\|/u.test(line.trim())) {
+      closeList();
+      const options = line.split(/\s*\|\s*/);
+      result.push('<div class="flex flex-wrap gap-2 my-3">');
+      for (const opt of options) {
+        const cleaned = opt.replace(/^\p{Emoji}?\s*\d+\s*[·.]\s*/u, "").trim();
+        if (cleaned) result.push(`<span class="inline-flex items-center px-3 py-1.5 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 text-xs font-medium">${cleaned}</span>`);
+      }
+      result.push("</div>");
+      continue;
+    }
+
+    // Headers: ### or ##
+    if (/^#{1,3}\s+/.test(line.trim())) {
+      closeList();
+      const hText = applyInlineFormatting(line.replace(/^#{1,3}\s+/, ""));
+      result.push(`<div class="font-semibold text-gray-900 mt-3 mb-1">${hText}</div>`);
+      continue;
+    }
+
+    // Numbered list: 1. 2) etc
+    const numberedMatch = line.match(/^(\s*)(\d+)[.)]\s+(.+)/);
+    if (numberedMatch) {
+      if (listTag !== "ol") { closeList(); result.push('<ol class="space-y-1.5 my-2 list-none">'); listTag = "ol"; }
+      const content = applyInlineFormatting(numberedMatch[3]);
+      result.push(`<li class="flex items-start gap-2 text-sm"><span class="text-gray-400 mt-0.5 shrink-0 font-semibold">${numberedMatch[2]}.</span><span>${content}</span></li>`);
+      continue;
+    }
+
+    // Bullet list: * - • or emoji bullets
+    const bulletMatch = line.match(/^(\s*)([-*•]|\p{Emoji_Presentation}|\p{Emoji}\uFE0F?)\s+(.+)/u);
+    if (bulletMatch) {
+      if (listTag !== "ul") { closeList(); result.push('<ul class="space-y-1.5 my-2">'); listTag = "ul"; }
+      const content = applyInlineFormatting(bulletMatch[3]);
+      const emoji = /^[-*•]$/.test(bulletMatch[2]) ? "" : bulletMatch[2] + " ";
+      result.push(`<li class="flex items-start gap-2 text-sm"><span class="text-gray-400 mt-0.5 shrink-0">${emoji || "•"}</span><span>${content}</span></li>`);
+      continue;
+    }
+
+    // Close list if we hit a non-list line
+    if (listTag && line.trim() !== "") {
+      closeList();
+    }
+
+    // Empty line = spacing
+    if (line.trim() === "") {
+      result.push('<div class="h-2"></div>');
+      continue;
+    }
+
+    // Bold-only line = header
+    if (/^\*\*(.+)\*\*\s*:?\s*$/.test(line.trim())) {
+      const headerText = line.trim().replace(/^\*\*(.+)\*\*\s*:?\s*$/, "$1");
+      result.push(`<div class="font-semibold text-gray-900 mt-3 mb-1">${headerText}</div>`);
+      continue;
+    }
+
+    // Regular paragraph
+    result.push(`<p class="text-sm leading-relaxed">${applyInlineFormatting(line)}</p>`);
+  }
+
+  closeList();
+  return result.join("\n");
 }
 
 // ═══ V3 MESSAGE LIST — Système unique de rendu des discussions ═══
 // Gère: bulles V3, options cliquables, streaming, thinking, coaching, voice
 function V3MessageList() {
   const { messages, isTyping, sendMessage, thinkingSteps, parkThread, activeRoster } = useChatContext();
-  const { activeBotCode } = useAmorcer();
+  const { activeBotCode, activePhase, setActivePhase, setRightSection, setReflexionContext, reflexionContext, credoPhase, addWorkflowItem, workflowItems, chatStage, addSimV3Cristallise, focusType, activeDocumentSection } = useAmorcer();
   const endRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const userScrolledUp = useRef(false);
   const isAnyStreaming = messages.some(m => m.isStreaming);
 
   // Dernier message bot (pour afficher les options seulement sur le dernier)
   const lastBotId = [...messages].reverse().find(m => m.role === "assistant" && !m.isStreaming)?.id;
 
-  // Auto-scroll
+  // Détecter si l'user a scrollé vers le haut (désactive l'auto-scroll)
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
+    const el = scrollRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+      userScrolledUp.current = distFromBottom > 120;
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Auto-scroll intelligent — seulement si l'user est en bas
+  useEffect(() => {
+    if (!userScrolledUp.current) {
+      endRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages.length]);
   useEffect(() => {
     if (!isAnyStreaming) return;
-    const id = setInterval(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), 250);
+    const id = setInterval(() => {
+      if (!userScrolledUp.current) {
+        endRef.current?.scrollIntoView({ behavior: "smooth" });
+      }
+    }, 250);
     return () => clearInterval(id);
   }, [isAnyStreaming]);
 
@@ -105,12 +208,91 @@ function V3MessageList() {
       sendMessage("Fais une synthèse structurée de notre discussion.", activeBotCode);
       return;
     }
+
+    // Retour au cockpit (fin de rétroaction)
+    if (lower.includes("retour au cockpit")) {
+      setActivePhase("observation" as PhaseKey);
+      setReflexionContext(null);
+      setRightSection("cockpit");
+      return;
+    }
+
+    // Transition de phase workspace (option cliquable "Passer en mode X")
+    // Les boutons contextuels (contextual-actions.ts) contrôlent déjà QUELS boutons sont visibles
+    const phaseMatch = lower.match(/passer en mode (discussion|réflexion|conception|exécution|rétroaction)/);
+    if (phaseMatch) {
+      const labelToPhase: Record<string, string> = {
+        "discussion": "discussion",
+        "réflexion": "reflexion",
+        "conception": "creation",
+        "exécution": "execution",
+        "rétroaction": "retroaction",
+      };
+      const targetPhase = labelToPhase[phaseMatch[1]];
+      if (targetPhase) {
+        const context = reflexionContext || "discussion en cours";
+        // Flux inter-phases: injecter les notes épinglées de la phase précédente
+        const prevPhaseNotes = workflowItems.filter(w => w.phase === activePhase);
+        const notesContext = prevPhaseNotes.length > 0
+          ? `\n\nNotes de la phase ${activePhase}:\n${prevPhaseNotes.map(n => `• ${n.text}`).join("\n")}`
+          : "";
+        setActivePhase(targetPhase as PhaseKey);
+        setReflexionContext(context);
+        if (targetPhase === "execution" || targetPhase === "retroaction") {
+          setRightSection(null);
+        } else {
+          setRightSection(null);
+        }
+        const prompts: Record<string, string> = {
+          discussion: "Parlons de",
+          reflexion: "Analyse approfondie :",
+          creation: "Conception pour",
+          execution: "Plan d'exécution pour",
+          retroaction: "Bilan et rétroaction sur",
+        };
+        setTimeout(() => sendMessage(`${prompts[targetPhase]} ${context}${notesContext}`, activeBotCode, undefined, undefined, { workspacePhase: targetPhase }), 80);
+        return;
+      }
+    }
+
+    // Techniques de réflexion — envoyer le VRAI prompt, pas juste le label
+    const TECHNIQUE_PROMPTS: Record<string, string> = {
+      "brainstorm": "Lance un brainstorm créatif tous azimuts sur: ",
+      "scamper": "Applique SCAMPER (Substituer, Combiner, Adapter, Modifier, Put to other use, Éliminer, Réorganiser) à: ",
+      "5 pourquoi": "Analyse les 5 Pourquoi en profondeur pour: ",
+      "6 chapeaux": "Analyse avec les 6 Chapeaux de Bono (Blanc=faits, Rouge=émotions, Noir=risques, Jaune=bénéfices, Vert=créativité, Bleu=processus) pour: ",
+      "challenger": "Joue l'avocat du diable, challenge cette approche et trouve les failles de: ",
+      "deep search": "Recherche approfondie — tendances, benchmarks, meilleures pratiques pour: ",
+      "analyser": "Analyse approfondie structurée de: ",
+    };
+    const techniquePrompt = TECHNIQUE_PROMPTS[lower];
+    if (techniquePrompt) {
+      const topic = reflexionContext || messages.filter(m => m.role === "user").pop()?.content?.substring(0, 100) || "discussion en cours";
+      // Si pas encore en Réflexion, y passer
+      if (activePhase !== "reflexion") {
+        setActivePhase("reflexion" as PhaseKey);
+        setReflexionContext(topic);
+        setRightSection(null);
+      }
+      sendMessage(techniquePrompt + topic, activeBotCode, undefined, undefined, { workspacePhase: "reflexion" });
+      return;
+    }
+
+    // "Cristalliser vers [Section]" — Sprint 6
+    if (lower.startsWith("cristalliser vers ")) {
+      const lastBotMsg = messages.filter(m => m.role === "assistant").pop();
+      if (lastBotMsg && activeDocumentSection) {
+        addSimV3Cristallise(lastBotMsg.content, activeBotCode, activeDocumentSection, "chat");
+      }
+      return;
+    }
+
     // Default: envoyer le texte de l'option au bot actif
-    sendMessage(opt, activeBotCode);
-  }, [isTyping, sendMessage, activeBotCode, parkThread]);
+    sendMessage(opt, activeBotCode, undefined, undefined, { workspacePhase: activePhase });
+  }, [isTyping, sendMessage, activeBotCode, parkThread, setActivePhase, setRightSection, setReflexionContext, reflexionContext, activePhase, messages, activeDocumentSection, addSimV3Cristallise, workflowItems]);
 
   return (
-    <div className="flex-1 overflow-auto px-4 py-3 space-y-3">
+    <div ref={scrollRef} className="flex-1 overflow-auto px-4 py-3 space-y-3">
       {messages.map((msg) => {
         if (msg.role === "system") return null;
         if (msg.isStreaming && !msg.content) return null;
@@ -168,78 +350,80 @@ function V3MessageList() {
 
         // ── Bot bubble standard ──
         return (
-          <div key={msg.id} className="flex gap-2.5">
+          <div key={msg.id} className="flex gap-2.5 group/msg">
             <div className={cn("w-7 h-7 rounded-full overflow-hidden shrink-0 ring-2 mt-0.5", s.ring)}>
               <img src={BOT_AVATAR[botCode] || `/agents/${botCode.toLowerCase()}.png`}
                 alt={BOT_NAME[botCode] || botCode} className="w-full h-full object-cover" />
             </div>
-            <div className="flex-1 max-w-[85%]">
+            <div className="flex-1 max-w-[85%] relative">
               <div className={cn("border-l-[3px] border border-gray-200 rounded-xl rounded-tl-none px-3.5 py-2.5 shadow-sm", s.border, s.bubble)}>
                 {/* Agent name + role */}
                 <div className="flex items-center gap-1.5 mb-1">
                   <span className={cn("text-[11px] font-semibold", s.text)}>{BOT_NAME[botCode] || botCode}</span>
                   <span className="text-[10px] text-gray-400">{BOT_ROLE[botCode] || ""}</span>
                 </div>
-                {/* Content — streaming OU formatted */}
-                {msg.isStreaming ? (
-                  <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
-                    {msg.content}
-                    <span className="inline-block w-0.5 h-4 bg-current ml-0.5 animate-pulse align-text-bottom" />
-                  </div>
-                ) : (
-                  <div className="text-sm text-gray-700 leading-relaxed"
-                    dangerouslySetInnerHTML={{ __html: formatMarkdown(msg.content) }} />
-                )}
+                {/* Content — TOUJOURS formatté (même en streaming) pour éviter le markdown brut */}
+                <div className="text-sm text-gray-700 leading-relaxed [&>p]:my-0.5 [&>ul]:my-1 [&>ol]:my-1 [&>p:first-child]:mt-0 [&>p:last-child]:mb-0"
+                  dangerouslySetInnerHTML={{ __html: formatMarkdown(msg.content) + (msg.isStreaming ? '<span class="inline-block w-0.5 h-4 bg-current ml-0.5 animate-pulse align-text-bottom"></span>' : '') }} />
               </div>
-              {/* Options — boutons cliquables (seulement sur le dernier message bot) */}
-              {isLast && !msg.isStreaming && msg.options && msg.options.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  {msg.options.map((opt, i) => (
-                    <button key={i} onClick={() => handleOption(opt)}
-                      className="text-[11px] px-3 py-1.5 rounded-full border border-gray-200 bg-white text-gray-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-colors cursor-pointer font-medium shadow-sm">
-                      {opt}
-                    </button>
-                  ))}
-                </div>
+              {/* Auto-capture gère la cristallisation — plus de bouton Zap manuel (confus pour l'utilisateur) */}
+              {/* Options — boutons contextuels (seulement sur le dernier message bot) */}
+              {isLast && !msg.isStreaming && (() => {
+                const contextualOpts = getContextualActions(msg.options, activePhase, chatStage, !!reflexionContext, focusType, activeDocumentSection);
+                if (contextualOpts.length === 0) return null;
+                return (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {contextualOpts.map((opt, i) => {
+                      const isTransition = /passer en mode|retour au cockpit/i.test(opt);
+                      return (
+                        <button key={i} onClick={() => handleOption(opt)}
+                          className={cn(
+                            "text-[11px] px-3 py-1.5 rounded-full border transition-colors cursor-pointer font-medium shadow-sm",
+                            isTransition
+                              ? "border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-400"
+                              : "border-gray-200 bg-white text-gray-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700"
+                          )}>
+                          {opt}
+                        </button>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+              {/* CarlOS GPS — bouton cristallisation suggérée */}
+              {!msg.isStreaming && msg.cristallisationSuggestion && msg.cristallisationSuggestion.confidence >= 0.6 && (
+                <button
+                  onClick={() => {
+                    addSimV3Cristallise(msg.content, msg.agent || activeBotCode, msg.cristallisationSuggestion!.section_id, "chat");
+                  }}
+                  className="flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-lg border border-emerald-200 bg-emerald-50 text-xs font-medium text-emerald-700 hover:bg-emerald-100 cursor-pointer transition-colors shadow-sm"
+                >
+                  <Zap className="h-3 w-3" />
+                  <span>Cristalliser dans : {msg.cristallisationSuggestion.section_label}</span>
+                </button>
               )}
             </div>
           </div>
         );
       })}
 
-      {/* Thinking steps — animation pendant la réflexion du bot (même pattern que ThinkingAnimation V2) */}
+      {/* Thinking step — UNE ligne qui défile, contextuelle par bot */}
       {isTyping && thinkingSteps.length > 0 && (() => {
         const streamMsg = [...messages].reverse().find(m => m.role === "assistant" && m.isStreaming);
         const thinkBot = streamMsg?.agent || activeBotCode;
         const ts = V3_STYLE[thinkBot] || DEFAULT_STYLE;
         const botName = BOT_NAME[thinkBot] || "CarlOS";
+        const currentStep = thinkingSteps[thinkingSteps.length - 1];
         return (
-          <div className="flex gap-2.5 animate-in fade-in duration-500">
+          <div className="flex gap-2.5 animate-in fade-in duration-300">
             <div className={cn("w-7 h-7 rounded-full overflow-hidden shrink-0 ring-2 mt-0.5", ts.ring)}>
               <img src={BOT_AVATAR[thinkBot] || `/agents/${thinkBot.toLowerCase()}.png`} alt="" className="w-full h-full object-cover" />
             </div>
-            <div className={cn("border-l-[3px] border border-gray-200 rounded-xl rounded-tl-none px-4 py-3 shadow-sm min-w-64", ts.border, ts.bubble)}>
-              {/* Header — "{bot} réfléchit..." avec Brain pulse */}
-              <div className={cn("text-xs font-semibold mb-2 flex items-center gap-1.5", ts.text)}>
-                <Brain className="h-3 w-3 animate-pulse" />
-                {botName} réfléchit...
-              </div>
-              <div className="space-y-1.5">
-                {thinkingSteps.map((step, i) => {
-                  const isActive = i === thinkingSteps.length - 1;
-                  const isDone = i < thinkingSteps.length - 1;
-                  return (
-                    <div key={i} className={cn(
-                      "flex items-center gap-2 text-sm transition-all duration-300",
-                      isActive && ts.text,
-                      isDone && "text-green-600 opacity-60",
-                    )}>
-                      {isActive && <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />}
-                      {isDone && <Check className="h-3.5 w-3.5 shrink-0" />}
-                      <span className={cn(isDone && "line-through")}>{step}</span>
-                    </div>
-                  );
-                })}
+            <div className={cn("border-l-[3px] border border-gray-200 rounded-xl rounded-tl-none px-3.5 py-2.5 shadow-sm", ts.border, ts.bubble)}>
+              <div className={cn("flex items-center gap-2 text-sm", ts.text)}>
+                <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
+                <span className="font-medium">{botName}</span>
+                <span className="text-gray-500 animate-in fade-in duration-500" key={currentStep}>{currentStep}</span>
               </div>
             </div>
           </div>
@@ -326,10 +510,11 @@ function AgentSelector({ activeRoster, addBotToRoster, removeBotFromRoster }: {
 }
 
 // ═══ DEPT WELCOME SCREEN — accueil dynamique par département ═══
-function DeptWelcomeScreen({ botCode, onAction, onResumeThread, threads }: {
+function DeptWelcomeScreen({ botCode, onAction, onResumeThread, onDeleteThread, threads }: {
   botCode: string;
-  onAction: (text: string) => void;
+  onAction: (text: string, phase?: PhaseKey) => void;
   onResumeThread: (threadId: string) => void;
+  onDeleteThread: (threadId: string) => void;
   threads: Array<{ id: string; title: string; primaryBot?: string; updatedAt?: string; status?: string; workPhase?: string }>;
 }) {
   const DeptIcon = DEPT_DASH_ICON[botCode] || Bot;
@@ -338,7 +523,7 @@ function DeptWelcomeScreen({ botCode, onAction, onResumeThread, threads }: {
   const actions = DEPT_ACTIONS[botCode] || [];
   const botName = BOT_NAME[botCode] || "CarlOS";
   const botDisplay = BOT_DISPLAY[botCode];
-  const recentThreads = threads.slice(0, 5);
+  const recentThreads = threads;
 
   return (
     <div className="flex justify-center py-10">
@@ -363,7 +548,7 @@ function DeptWelcomeScreen({ botCode, onAction, onResumeThread, threads }: {
               return (
                 <button
                   key={action.label}
-                  onClick={() => onAction(action.description)}
+                  onClick={() => onAction(action.description, action.phase)}
                   className={cn(
                     "flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl border font-medium transition-colors cursor-pointer",
                     colors
@@ -417,6 +602,14 @@ function DeptWelcomeScreen({ botCode, onAction, onResumeThread, threads }: {
                         </div>
                       )}
                     </div>
+                    {/* Delete button on hover */}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onDeleteThread(thread.id); }}
+                      className="p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-red-100 transition-all cursor-pointer shrink-0"
+                      title="Supprimer"
+                    >
+                      <X className="h-3 w-3 text-red-400" />
+                    </button>
                     {/* Arrow indicator */}
                     <ChevronRight className="h-3.5 w-3.5 text-gray-300 group-hover:text-gray-500 transition-colors shrink-0" />
                   </button>
@@ -432,10 +625,20 @@ function DeptWelcomeScreen({ botCode, onAction, onResumeThread, threads }: {
 
 
 export function DiscussionWindow() {
-  const { cockpitTab, activeBotCode, activePhase, setActivePhase, setRightSection, setReflexionContext, setFocusType, setActiveDeliverable } = useAmorcer();
-  const { activeRoster, addBotToRoster, removeBotFromRoster, messages, sendMessage, threads, resumeThread } = useChatContext();
+  const { cockpitTab, activeBotCode, activePhase, setActivePhase, setRightSection, setReflexionContext, setFocusType, setActiveDeliverable, credoPhase, reflexionContext, addWorkflowItem } = useAmorcer();
+  const { activeRoster, addBotToRoster, removeBotFromRoster, messages, sendMessage, threads, resumeThread, deleteThread } = useChatContext();
   const isOrbit9 = cockpitTab === "orbit9";
   const isEmpty = messages.length === 0;
+
+  // Reset workspace au cockpit quand la discussion est vide (refresh, nouveau thread)
+  // Évite d'avoir une phase orpheline sans messages
+  useEffect(() => {
+    if (isEmpty && activePhase && !["observation", "attention", "moderation"].includes(activePhase)) {
+      setActivePhase("observation" as PhaseKey);
+      setReflexionContext(null);
+      setRightSection("cockpit");
+    }
+  }, [isEmpty]);
 
   return (
     <div className="h-full flex flex-col bg-white">
@@ -449,17 +652,18 @@ export function DiscussionWindow() {
           </>
         ) : (
           <>
-            <Bot className="h-4 w-4 text-white" />
+            <BrainCog className="h-4 w-4 text-white" />
             <span className="text-[11px] text-white font-medium">Brain Team</span>
             <div className="flex-1" />
 
-            {/* Agents du roster — avatars empilés */}
-            <div className="flex items-center -space-x-1.5">
+            {/* Agents du roster — avatar + nom */}
+            <div className="flex items-center gap-2">
               {activeRoster.map((code) => (
-                <div key={code} className="relative group">
-                  <div className="w-6 h-6 rounded-full overflow-hidden ring-2 ring-[#073E5A] shrink-0">
+                <div key={code} className="relative group flex items-center gap-1">
+                  <div className="w-5 h-5 rounded-full overflow-hidden ring-1 ring-white/30 shrink-0">
                     <img src={BOT_AVATAR[code] || `/agents/${code.toLowerCase()}.png`} alt={BOT_NAME[code] || code} className="w-full h-full object-cover" />
                   </div>
+                  <span className="text-[9px] text-white/80 font-medium">{BOT_NAME[code]}</span>
                   {/* Remove button on hover (sauf le premier = bot principal) */}
                   {activeRoster.indexOf(code) > 0 && (
                     <button
@@ -474,22 +678,13 @@ export function DiscussionWindow() {
               ))}
             </div>
 
-            {/* Nom du bot principal */}
-            {activeRoster.length > 0 && (
-              <div className="flex items-center gap-1 ml-1">
-                <span className="text-[9px] text-white font-medium">{BOT_NAME[activeRoster[0]] || activeRoster[0]}</span>
-                {activeRoster.length > 1 && (
-                  <span className="text-[9px] text-white/50">+{activeRoster.length - 1}</span>
-                )}
-              </div>
-            )}
-
             {/* Bouton + pour ajouter un agent */}
             <AgentSelector
               activeRoster={activeRoster}
               addBotToRoster={addBotToRoster}
               removeBotFromRoster={removeBotFromRoster}
             />
+
           </>
         )}
       </div>
@@ -500,13 +695,14 @@ export function DiscussionWindow() {
           <div className="flex-1 overflow-auto">
             <DeptWelcomeScreen
               botCode={activeBotCode}
-              onAction={(text) => {
-                sendMessage(text, activeBotCode);
-                // Basculer le workspace du cockpit vers le contenu de phase
+              onAction={(text, phase) => {
+                sendMessage(text, activeBotCode, undefined, undefined, { workspacePhase: phase || "discussion" });
                 setReflexionContext(text.substring(0, 80));
                 setFocusType("chantier");
                 setRightSection(null);
-                setActivePhase("observation" as any);
+                // Phase explicite (du bouton) OU discussion par defaut — JAMAIS d'auto-détection
+                const targetPhase = phase || "discussion";
+                setActivePhase(targetPhase as any);
               }}
               onResumeThread={(threadId) => {
                 const thread = threads.find(t => t.id === threadId);
@@ -525,14 +721,11 @@ export function DiscussionWindow() {
                 switch (phase) {
                   case "execution":
                     setActivePhase("execution" as any);
-                    try { sessionStorage.setItem("bt_exec_tab_request", "live"); } catch {}
-                    setRightSection("execution");
+                    setRightSection(null);  // V3-native inline
                     break;
                   case "retroaction":
-                    // Retroaction = tab dans ExecutionView (même section)
-                    setActivePhase("execution" as any);
-                    try { sessionStorage.setItem("bt_exec_tab_request", "retroaction"); } catch {}
-                    setRightSection("execution");
+                    setActivePhase("retroaction" as any);
+                    setRightSection(null);  // V3-native inline
                     break;
                   case "creation":
                   case "conception":
@@ -554,6 +747,7 @@ export function DiscussionWindow() {
                     setRightSection(null);
                 }
               }}
+              onDeleteThread={(threadId) => deleteThread(threadId)}
               threads={threads.filter((t) => t.primaryBot === activeBotCode)}
             />
           </div>
@@ -586,7 +780,7 @@ function ChatBoxV3() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   // visionInputRef retiré — Vision = app mobile (Ray-Ban Meta)
   const { sendMessage, injectVoiceMessage, newConversation } = useChatContext();
-  const { activeBotCode, setRightSection } = useAmorcer();
+  const { activeBotCode, setRightSection, reflexionContext, setReflexionContext, setFocusType, setActivePhase, activeMeeting } = useAmorcer();
 
   // ═══ VOICE CALL STATE ═══
   const [callState, setCallState] = useState<CallState>("idle");
@@ -619,6 +813,41 @@ function ChatBoxV3() {
       if (pollRef.current) clearInterval(pollRef.current);
     };
   }, []);
+
+  // ═══ MEETING TRANSCRIPT POLLING ═══
+  const meetingPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const meetingCursorRef = useRef(0);
+
+  useEffect(() => {
+    // Quand activeMeeting a un slug → démarrer le polling transcript
+    const slug = activeMeeting?.slug;
+    if (!slug) {
+      if (meetingPollRef.current) { clearInterval(meetingPollRef.current); meetingPollRef.current = null; }
+      meetingCursorRef.current = 0;
+      return;
+    }
+    meetingCursorRef.current = 0;
+    meetingPollRef.current = setInterval(async () => {
+      try {
+        const res = await fetch(
+          `/api/v1/meetings/${slug}/transcript?cursor=${meetingCursorRef.current}`,
+          { headers: { "X-API-Key": import.meta.env.VITE_API_KEY || "" } }
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.entries?.length > 0) {
+          for (const entry of data.entries) {
+            const role = entry.speaker === "user" ? "user" : "assistant";
+            injectRef.current(role, entry.text, entry.agent || undefined);
+          }
+          meetingCursorRef.current = data.cursor ?? (meetingCursorRef.current + data.entries.length);
+        }
+      } catch { /* retry next poll */ }
+    }, 3000);
+    return () => {
+      if (meetingPollRef.current) { clearInterval(meetingPollRef.current); meetingPollRef.current = null; }
+    };
+  }, [activeMeeting?.slug]);
 
   // ═══ VOICE POLLING ═══
   const startVoicePolling = useCallback((roomName: string) => {
@@ -763,8 +992,16 @@ function ChatBoxV3() {
     const text = inputText.trim();
     if (!text) return;
     setInputText("");
-    sendMessage(text, activeBotCode);
+    sendMessage(text, activeBotCode, undefined, undefined, { workspacePhase: activePhase });
     textareaRef.current?.focus();
+
+    // Si aucun contexte de travail actif → entrer en Discussion (pas de détection de mots-clés,
+    // juste: "l'utilisateur a commencé à parler = on entre en Discussion")
+    if (!reflexionContext) {
+      setReflexionContext(text.substring(0, 80));
+      setActivePhase("discussion" as any);
+      setRightSection(null);
+    }
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {

@@ -106,6 +106,8 @@ export interface StreamDoneEvent {
   // Sprint Discussion 1 — CREDO phase-gating
   exchange_count?: number;
   has_product?: boolean;
+  // Mega Plan V5 — CarlOS GPS cristallisation suggestion
+  cristallisation_suggestion?: { section_id: string; section_label: string; confidence: number } | null;
 }
 
 export type StreamCallback = {
@@ -1323,7 +1325,7 @@ export const api = {
 
   // ── MEETINGS (D-114) ──
 
-  meetingCreate(req: { title: string; meeting_type?: string; bot_code?: string }): Promise<any> {
+  meetingCreate(req: { title: string; meeting_type?: string; bot_code?: string; scheduled_at?: string }): Promise<any> {
     return apiFetch("/meetings", {
       method: "POST",
       body: JSON.stringify(req),

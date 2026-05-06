@@ -68,8 +68,14 @@ import {
   FocusDiscussionView,
 } from "./simulation/sim-content-map";
 
-// ═══ V3 Unified Phase View (remplace LiveReflexionView + LiveConceptionView) ═══
+// ═══ V3 Phase Views ═══
+import { LivePhaseView } from "./phases/LivePhaseView";
+import { LiveReflexionView } from "./phases/LiveReflexionView";
 import { UnifiedPhaseView } from "./phases/UnifiedPhaseView";
+import { DocumentWorkspaceView } from "./phases/DocumentWorkspaceView";
+import { useWorkspaceCapture } from "./hooks/useWorkspaceCapture";
+import { useLiveKitMeeting } from "./hooks/useLiveKitMeeting";
+import { MeetingVideoStrip } from "./meeting/MeetingVideoStrip";
 
 // ═══ V2 Sections — lazy imports pour adapter V2→V3 (Fix R7) ═══
 const LazyMonBureauView = lazy(() => import("../v2/zones/center/MonBureauView").then(m => ({ default: m.MonBureauView })));
@@ -156,9 +162,43 @@ export function WorkspacePhasesPanel() {
     focusType,
     setFocusType,
     workflowItems,
+    activeDocumentKey,
+    activeDocumentSection,
+    activeMeeting,
+    setActiveMeeting,
   } = useAmorcer();
 
   const { sendMessage, newConversation } = useChatContext();
+
+  // ═══ AUTO-CAPTURE — TOUJOURS actif, pas juste quand LivePhaseView est monté ═══
+  useWorkspaceCapture();
+
+  // ═══ MEETING LIVEKIT — intégré dans le workspace (pas de silo MeetingRoomView) ═══
+  const meeting = useLiveKitMeeting();
+
+  // Auto-start meeting quand activeMeeting change (déclenché par ConferenceAIView)
+  useEffect(() => {
+    if (activeMeeting && meeting.meetingStatus === "idle") {
+      meeting.startMeeting(activeMeeting.type, activeMeeting.title);
+    }
+  }, [activeMeeting]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Propager le slug de la réunion créée vers activeMeeting (pour le polling transcript)
+  useEffect(() => {
+    if (meeting.meetingData?.slug && activeMeeting && !activeMeeting.slug) {
+      setActiveMeeting({ ...activeMeeting, slug: meeting.meetingData.slug });
+    }
+  }, [meeting.meetingData?.slug]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-clear activeMeeting quand la réunion se termine
+  useEffect(() => {
+    if (meeting.meetingStatus === "ended") {
+      // Reset après le délai de 2s du hook (il repasse à "idle")
+      const t = setTimeout(() => setActiveMeeting(null), 2500);
+      return () => clearTimeout(t);
+    }
+  }, [meeting.meetingStatus, setActiveMeeting]);
+
   const rightRef = useRef<HTMLDivElement>(null);
 
   // Sous-tabs avec sync URL — parser le path (peut avoir dept prefix: /cmo/blueprint/ca)
@@ -221,8 +261,12 @@ export function WorkspacePhasesPanel() {
     if (phase === "creation" && deliverable) {
       // Conception avec livrable → Blueprint réel
       setRightSection("blueprint");
+    } else if (phase === "execution" || phase === "retroaction") {
+      // Exécution/Rétroaction = PHASE view, jamais dans rightSection (anti-persistence)
+      setRightSection(null);
+      setExecutionTab(phase === "retroaction" ? "retroaction" : "live");
     } else {
-      // Discussion, Réflexion, Conception, Rétroaction →
+      // Discussion, Réflexion, Conception →
       // Lâcher la section pour afficher la vue focus modélisée dans le workspace
       // + envoyer un vrai message au chat (Zone 2)
       setRightSection(null);
@@ -242,6 +286,10 @@ export function WorkspacePhasesPanel() {
   useEffect(() => {
     rightRef.current && (rightRef.current.scrollTop = 0);
   }, [activePhase]);
+
+  // Sprint 6: execution/retroaction routing
+  // "execution" rightSection est set aux POINTS DE TRANSITION (handleWorkAction, onPhaseComplete, progress bar, sidebar)
+  // Le stale localStorage est nettoyé dans AmorcerContext initialization (lsSet + guard)
 
   // Auto-scroll désactivé — chatStage simulation pas branchée sur le vrai chat
 
@@ -263,7 +311,7 @@ export function WorkspacePhasesPanel() {
           : `${sectionLabel} — ${deptLabel}`;
         const showBlueprintTabs = activeSection === "blueprint";
         const showOrbit9Tabs = activeSection === "orbit9";
-        const showExecutionTabs = activeSection === "execution";
+        const showExecutionTabs = activeSection === "execution" || (!rightSection && (activePhase === "execution" || activePhase === "retroaction"));
         return (
           <div className="h-12 px-3 shrink-0 flex items-center gap-2 border-b border-gray-200 bg-[#00B4D8]/[0.12]">
             <DeptIcon className="h-4 w-4 text-gray-900 stroke-[2.5]" />
@@ -376,7 +424,7 @@ export function WorkspacePhasesPanel() {
       })()}
 
       {/* ═══ BARRE DE PROGRESSION 5 PHASES ═══ */}
-      {reflexionContext && !rightSection && !isOrbit9 && (() => {
+      {!rightSection && !isOrbit9 && !isDash && (() => {
         const WORKFLOW_PHASES: { key: string; label: string }[] = [
           { key: "discussion", label: "Discussion" },
           { key: "reflexion", label: "Réflexion" },
@@ -397,7 +445,13 @@ export function WorkspacePhasesPanel() {
               return (
                 <button
                   key={wp.key}
-                  onClick={() => { setActivePhase(wp.key as PhaseKey); setRightSection(null); }}
+                  onClick={() => {
+                    setActivePhase(wp.key as PhaseKey);
+                    setRightSection(null); // phases rendues via activePhase, jamais rightSection
+                    if (wp.key === "execution" || wp.key === "retroaction") {
+                      setExecutionTab(wp.key === "retroaction" ? "retroaction" : "live");
+                    }
+                  }}
                   className={cn(
                     "flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium transition-all cursor-pointer",
                     isCurrent ? `${pc2.btnBg} ${pc2.btnText} ${pc2.btnBorder} border shadow-sm` :
@@ -440,7 +494,7 @@ export function WorkspacePhasesPanel() {
               {rightSection === "dataroom" && <DataRoomView botCode={activeBotCode} headerGradient="from-blue-600 to-blue-500" showHeader />}
               {rightSection === "playbooks" && <PlaybookStoreView botCode={activeBotCode} headerGradient="from-blue-600 to-blue-500" showHeader />}
               {rightSection === "conferenceai" && <ConferenceAIView headerGradient="from-blue-600 to-blue-500" onNavigateToStore={() => setRightSection("playbooks")} botCode={activeBotCode} />}
-              {rightSection === "execution" && <ExecutionView botCode={activeBotCode} showHeader activeTab={executionTab} onTabChange={setExecutionTab} onAction={handleWorkAction} />}
+              {/* ExecutionView rendu via activePhase ci-dessous — plus jamais via rightSection */}
               {rightSection === "bureau-agenda" && <AgendaView botCode={activeBotCode} showHeader onAction={handleWorkAction} />}
               {rightSection === "admin" && <AdminView botCode={activeBotCode} showHeader onAction={handleWorkAction} />}
               {/* V2 Section Adapter — fallback pour sections non-V3 (Fix R7) */}
@@ -462,21 +516,36 @@ export function WorkspacePhasesPanel() {
           <div className="max-w-4xl mx-auto px-6 py-4 pb-12">
             <VueEnsemble phase={activePhase} chatStage={chatStage} onStartReflexion={startReflexion} onStartSimulation={(type) => startDeliverable(type)} />
           </div>
-        ) : activePhase === "discussion" && reflexionContext ? (
-          /* Focus Discussion — vue focus adaptative selon le type d'élément */
-          <FocusDiscussionView
-            context={reflexionContext}
-            focusType={focusType}
-            onBack={() => { setActivePhase("observation"); setReflexionContext(null); setRightSection("cockpit"); }}
-            onAdvancePhase={(phase) => {
-              setActivePhase(phase as PhaseKey);
-              setRightSection(null);
-            }}
-            activePhase="discussion"
+        ) : activePhase === "discussion" ? (
+          /* Discussion — workspace PASSIF (reçoit le contenu de la discussion) — PAS de gate sur reflexionContext */
+          <LivePhaseView
+            phaseKey="discussion"
+            context={reflexionContext || "Discussion en cours"}
+            onPhaseComplete={() => { setActivePhase("reflexion"); setRightSection(null); }}
           />
         ) : activePhase === "reflexion" ? (
-          /* Réflexion — composant V3 unifié (artefacts progressifs) */
-          <UnifiedPhaseView phaseKey="reflexion" context={reflexionContext} onPhaseComplete={startConception} />
+          /* Réflexion — LiveReflexionView avec techniques (SCAMPER, 5 Pourquoi, modes, etc.) */
+          <LiveReflexionView
+            context={reflexionContext}
+            onPhaseComplete={() => {
+              // Inter-phase flow: notes épinglées de Réflexion → premier prompt Conception
+              const reflexionNotes = workflowItems.filter(w => w.phase === "reflexion");
+              startConception();
+              if (reflexionNotes.length > 0) {
+                const ctx = reflexionNotes.map(n => n.text).join("\n- ");
+                sendMessage(`Contexte de réflexion :\n- ${ctx}\n\nPassons à la conception.`, activeBotCode);
+              }
+            }}
+          />
+        ) : activePhase === "creation" && activeDocumentKey ? (
+          /* Conception — Blueprint Atelier dans le workspace (Sprint 5) */
+          <DocumentWorkspaceView
+            documentKey={activeDocumentKey}
+            botCode={activeBotCode}
+            initialSectionId={activeDocumentSection || undefined}
+            context={reflexionContext}
+            onPhaseComplete={() => { setActivePhase("execution"); setRightSection(null); setExecutionTab("live"); }}
+          />
         ) : activePhase === "creation" && activeDeliverable === "document" ? (
           <PhaseConceptionDocument stage={Math.max(deliverableStage, 1)} onBack={() => setActiveDeliverable(null)} onStartJumelage={() => startDeliverable("jumelage")} />
         ) : activePhase === "creation" && activeDeliverable === "spreadsheet" ? (
@@ -488,20 +557,41 @@ export function WorkspacePhasesPanel() {
         ) : activePhase === "creation" && activeDeliverable === "jumelage" ? (
           <PhaseConceptionJumelage stage={Math.max(deliverableStage, 1)} onBack={() => setActiveDeliverable(null)} />
         ) : activePhase === "creation" ? (
-          /* Conception — composant V3 unifié (artefacts progressifs) */
-          <UnifiedPhaseView phaseKey="creation" context={reflexionContext} />
-        ) : activePhase === "execution" ? (
-          /* Exécution — section ExecutionView (4 tabs: live, chantiers, opérations, rétroaction) */
+          /* Conception — 4 étapes auto-capture */
+          <LivePhaseView
+            phaseKey="creation"
+            context={reflexionContext}
+            onPhaseComplete={() => { setActivePhase("execution"); setRightSection(null); setExecutionTab("live"); }}
+          />
+        ) : (activePhase === "execution" || activePhase === "retroaction") ? (
+          /* Exécution / Rétroaction — PHASE view (rendu via activePhase, jamais rightSection) */
           <div className="max-w-4xl mx-auto px-6 py-4 pb-12">
-            <ExecutionView botCode={activeBotCode} activeTab={executionTab} onTabChange={setExecutionTab} onAction={handleWorkAction} />
+            <ExecutionView botCode={activeBotCode} showHeader activeTab={executionTab} onTabChange={setExecutionTab} onAction={handleWorkAction} />
           </div>
         ) : (
-          /* Rétroaction — ExecutionView avec tab rétroaction */
+          /* Fallback — Discussion sans contexte ou état inattendu → Cockpit */
           <div className="max-w-4xl mx-auto px-6 py-4 pb-12">
-            <ExecutionView botCode={activeBotCode} activeTab="retroaction" onTabChange={setExecutionTab} onAction={handleWorkAction} />
+            <CanvasActionProvider>
+              <FocusAwareContent>
+                <CockpitView embedded initialDept={activeBotCode} onAction={handleWorkAction} />
+              </FocusAwareContent>
+            </CanvasActionProvider>
           </div>
         )}
       </div>
+
+      {/* ═══ MEETING VIDEO STRIP — caméras en bas du workspace pendant une réunion ═══ */}
+      <MeetingVideoStrip
+        meetingStatus={meeting.meetingStatus}
+        meetingTitle={activeMeeting?.title || ""}
+        participants={meeting.participants}
+        micEnabled={meeting.micEnabled}
+        cameraEnabled={meeting.cameraEnabled}
+        elapsedTime={meeting.elapsedTime}
+        onToggleMic={meeting.toggleMic}
+        onToggleCamera={meeting.toggleCamera}
+        onEndMeeting={meeting.endMeeting}
+      />
     </div>
   );
 }
