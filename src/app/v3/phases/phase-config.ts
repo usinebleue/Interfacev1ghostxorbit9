@@ -17,6 +17,7 @@ import {
   Hammer, LayoutGrid, FolderOpen, Package,
   Rocket, Users, Activity, FileCheck, BarChart3,
   BookOpen, Archive,
+  Eye, Shield,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -92,11 +93,13 @@ const RETROACTION_COLORS: PhaseColors = {
 
 // ═══ Steps par phase ═══
 
+// 5 étapes CREDO — validées Plan Enrichissement Sprint 1
 const DISCUSSION_STEPS: PhaseStep[] = [
-  { id: "disc-1-contexte", title: "Contexte", subtitle: "Situation et enjeux", icon: Target, minStage: 0 },
-  { id: "disc-2-exploration", title: "Exploration", subtitle: "Options et pistes", icon: TrendingUp, minStage: 1 },
-  { id: "disc-3-synthese", title: "Synthèse", subtitle: "Comparaison des avenues", icon: Layers, minStage: 2 },
-  { id: "disc-4-plan", title: "Plan d'action", subtitle: "Prochaines étapes", icon: Target, minStage: 3 },
+  { id: "credo-c-comprendre", title: "Comprendre", subtitle: "Source de la tension/enjeu", icon: Eye, minStage: 0 },
+  { id: "credo-r-rechercher", title: "Rechercher", subtitle: "Questions et angles morts", icon: Search, minStage: 1 },
+  { id: "credo-e-exposer", title: "Exposer", subtitle: "Solutions potentielles primaires", icon: Lightbulb, minStage: 2 },
+  { id: "credo-d-demontrer", title: "Démontrer", subtitle: "Capacité et ressources manquantes", icon: Shield, minStage: 3 },
+  { id: "credo-o-objectif", title: "Objectif", subtitle: "Objectif final de la tension", icon: Target, minStage: 4 },
 ];
 
 // 8 étapes — validées par Carl (Session 100)
@@ -187,4 +190,11 @@ export function getPhaseStepIds(phase: string): string[] {
   const config = PHASE_CONFIGS[phase];
   if (!config) return [];
   return config.steps.map(s => s.id);
+}
+
+/** Get full step objects for a phase (used by cristallisation buttons in chat) */
+export function getPhaseSteps(phase: string): PhaseStep[] {
+  const config = PHASE_CONFIGS[phase];
+  if (!config) return [];
+  return config.steps;
 }

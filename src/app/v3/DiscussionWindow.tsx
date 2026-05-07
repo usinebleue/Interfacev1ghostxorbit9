@@ -18,7 +18,7 @@
 
 import { useState, useRef, useEffect, useCallback, type KeyboardEvent, type ChangeEvent } from "react";
 import {
-  Bot, BrainCog, Atom, Plus, Send, ChevronUp, X, Check, ChevronDown, ChevronRight,
+  Bot, BrainCog, Atom, Plus, Send, ChevronUp, X, Pin, Check, ChevronDown, ChevronRight,
   Phone, PhoneOff, Video, Glasses, Paperclip, Globe, Zap, Activity,
   Brain, Target, AlertTriangle, Scale, Sparkles, MessageSquare,
   Mic, MicOff, Loader2, Upload, MessageCircle, Clock,
@@ -33,7 +33,9 @@ import { DEPT_DASH_ICON, DEPT_GRADIENT, BOT_DISPLAY, PHASE_COLORS } from "./sect
 import { DEPT_GREETING, DEPT_ACTIONS, ACTION_COLORS } from "./data/dept-welcome";
 import type { PhaseKey } from "./core/types";
 import { detectPhaseFromMessage } from "./core/phase-router";
-import { getContextualActions } from "./core/contextual-actions";
+// getContextualActions retire — remplace par footer 2 niveaux (Bible Live 4.14)
+import { getPhaseSteps } from "./phases/phase-config";
+import { BubbleActions } from "./phases/BubbleActions";
 import {
   Room, RoomEvent, Track,
   type RemoteTrack, type RemoteTrackPublication,
@@ -158,11 +160,134 @@ function formatMarkdown(text: string): string {
   return result.join("\n");
 }
 
+// ═══ SEGMENTATION & CRISTALLISATION MANUELLE (phase discussion) ═══
+
+/** Parse un message bot en segments par headers ### */
+function parseMessageSegments(content: string): { title: string | null; text: string }[] {
+  if (!content) return [];
+  const parts = content.split(/(?=^#{1,4}\s)/m);
+  const segments: { title: string | null; text: string }[] = [];
+  for (const part of parts) {
+    const trimmed = part.trim();
+    if (!trimmed) continue;
+    const headerMatch = trimmed.match(/^#{1,4}\s+(.+?)(?:\n|$)/);
+    if (headerMatch) {
+      segments.push({
+        title: headerMatch[1].trim(),
+        text: trimmed.replace(/^#{1,4}\s+.+?\n?/, "").trim(),
+      });
+    } else {
+      segments.push({ title: null, text: trimmed });
+    }
+  }
+  return segments;
+}
+
+/** Barre de boutons CREDO pour cristalliser un contenu dans une section workspace */
+function CristalliseBar({ content, botCode, activePhase, addSimV3Cristallise }: {
+  content: string;
+  botCode: string;
+  activePhase: string;
+  addSimV3Cristallise: (content: string, source: string, sectionId: string, sourceType: "chat" | "voice") => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const steps = getPhaseSteps(activePhase);
+  if (steps.length === 0) return null;
+
+  if (!expanded) {
+    return (
+      <button
+        onClick={() => setExpanded(true)}
+        className="flex items-center gap-1.5 mt-2 text-[10px] text-gray-400 hover:text-sky-600 transition-colors cursor-pointer group/crist"
+      >
+        <Pin className="h-2.5 w-2.5" />
+        <span>Cristalliser</span>
+        <ChevronRight className="h-2.5 w-2.5 group-hover/crist:translate-x-0.5 transition-transform" />
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1 mt-2 animate-in fade-in duration-200">
+      {steps.map((step) => (
+        <button
+          key={step.id}
+          onClick={() => {
+            addSimV3Cristallise(content, botCode, step.id, "chat");
+            setExpanded(false);
+          }}
+          className="flex items-center gap-1 px-2 py-1 rounded-md border border-sky-200 bg-sky-50 text-[10px] font-medium text-sky-700 hover:bg-sky-100 hover:border-sky-300 cursor-pointer transition-all"
+        >
+          <step.icon className="h-2.5 w-2.5" />
+          {step.title}
+        </button>
+      ))}
+      <button
+        onClick={() => setExpanded(false)}
+        className="flex items-center px-1.5 py-1 rounded-md border border-gray-200 text-[10px] text-gray-400 hover:bg-gray-50 cursor-pointer"
+      >
+        <X className="h-2.5 w-2.5" />
+      </button>
+    </div>
+  );
+}
+
+/** Contenu bot segmenté — sous-bulles avec cristallise individuel */
+function SegmentedBotContent({ content, botCode, activePhase, addSimV3Cristallise }: {
+  content: string;
+  botCode: string;
+  activePhase: string;
+  addSimV3Cristallise: (content: string, source: string, sectionId: string, sourceType: "chat" | "voice") => void;
+}) {
+  const segments = parseMessageSegments(content);
+
+  // Pas de segmentation (1 seul bloc sans titre) → rendu normal + 1 bouton cristallise
+  if (segments.length <= 1) {
+    return (
+      <>
+        <div
+          className="text-sm text-gray-700 leading-relaxed [&>p]:my-0.5 [&>ul]:my-1 [&>ol]:my-1 [&>p:first-child]:mt-0 [&>p:last-child]:mb-0"
+          dangerouslySetInnerHTML={{ __html: formatMarkdown(content) }}
+        />
+        <CristalliseBar content={content} botCode={botCode} activePhase={activePhase} addSimV3Cristallise={addSimV3Cristallise} />
+      </>
+    );
+  }
+
+  // Segments multiples → sous-bulles avec cristallise individuel
+  return (
+    <div className="space-y-2">
+      {segments.map((seg, i) => (
+        <div key={i} className="rounded-lg bg-white/60 border border-gray-100 px-3 py-2">
+          {seg.title && (
+            <div className="text-xs font-semibold text-gray-800 mb-1">{seg.title}</div>
+          )}
+          <div
+            className="text-sm text-gray-700 leading-relaxed [&>p]:my-0.5 [&>ul]:my-1 [&>ol]:my-1"
+            dangerouslySetInnerHTML={{ __html: formatMarkdown(seg.text) }}
+          />
+          <CristalliseBar
+            content={seg.title ? `### ${seg.title}\n${seg.text}` : seg.text}
+            botCode={botCode}
+            activePhase={activePhase}
+            addSimV3Cristallise={addSimV3Cristallise}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ═══ V3 MESSAGE LIST — Système unique de rendu des discussions ═══
 // Gère: bulles V3, options cliquables, streaming, thinking, coaching, voice
 function V3MessageList() {
   const { messages, isTyping, sendMessage, thinkingSteps, parkThread, activeRoster } = useChatContext();
   const { activeBotCode, activePhase, setActivePhase, setRightSection, setReflexionContext, reflexionContext, credoPhase, addWorkflowItem, workflowItems, chatStage, addSimV3Cristallise, focusType, activeDocumentSection } = useAmorcer();
+  // Enrichir activePhase avec le step CREDO pour que le backend injecte le bon prompt
+  const _credoSteps = ["comprendre", "rechercher", "exposer", "demontrer", "objectif"];
+  const workspacePhase = activePhase === "discussion" && chatStage < _credoSteps.length
+    ? `discussion_${_credoSteps[chatStage]}`
+    : activePhase;
   const endRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const userScrolledUp = useRef(false);
@@ -268,13 +393,15 @@ function V3MessageList() {
     const techniquePrompt = TECHNIQUE_PROMPTS[lower];
     if (techniquePrompt) {
       const topic = reflexionContext || messages.filter(m => m.role === "user").pop()?.content?.substring(0, 100) || "discussion en cours";
-      // Si pas encore en Réflexion, y passer
-      if (activePhase !== "reflexion") {
+      // Transition vers Reflexion SEULEMENT si on n'est pas en Discussion
+      // En Discussion, on applique la technique sans changer de phase (Bible Live 4.18)
+      // La transition explicite se fait via le bouton "Passer en mode reflexion"
+      if (activePhase !== "reflexion" && activePhase !== "discussion") {
         setActivePhase("reflexion" as PhaseKey);
         setReflexionContext(topic);
         setRightSection(null);
       }
-      sendMessage(techniquePrompt + topic, activeBotCode, undefined, undefined, { workspacePhase: "reflexion" });
+      sendMessage(techniquePrompt + topic, activeBotCode, undefined, undefined, { workspacePhase });
       return;
     }
 
@@ -288,8 +415,8 @@ function V3MessageList() {
     }
 
     // Default: envoyer le texte de l'option au bot actif
-    sendMessage(opt, activeBotCode, undefined, undefined, { workspacePhase: activePhase });
-  }, [isTyping, sendMessage, activeBotCode, parkThread, setActivePhase, setRightSection, setReflexionContext, reflexionContext, activePhase, messages, activeDocumentSection, addSimV3Cristallise, workflowItems]);
+    sendMessage(opt, activeBotCode, undefined, undefined, { workspacePhase });
+  }, [isTyping, sendMessage, activeBotCode, parkThread, setActivePhase, setRightSection, setReflexionContext, reflexionContext, activePhase, workspacePhase, messages, activeDocumentSection, addSimV3Cristallise, workflowItems]);
 
   return (
     <div ref={scrollRef} className="flex-1 overflow-auto px-4 py-3 space-y-3">
@@ -362,46 +489,65 @@ function V3MessageList() {
                   <span className={cn("text-[11px] font-semibold", s.text)}>{BOT_NAME[botCode] || botCode}</span>
                   <span className="text-[10px] text-gray-400">{BOT_ROLE[botCode] || ""}</span>
                 </div>
-                {/* Content — TOUJOURS formatté (même en streaming) pour éviter le markdown brut */}
+                {/* Content — formatté markdown */}
                 <div className="text-sm text-gray-700 leading-relaxed [&>p]:my-0.5 [&>ul]:my-1 [&>ol]:my-1 [&>p:first-child]:mt-0 [&>p:last-child]:mb-0"
                   dangerouslySetInnerHTML={{ __html: formatMarkdown(msg.content) + (msg.isStreaming ? '<span class="inline-block w-0.5 h-4 bg-current ml-0.5 animate-pulse align-text-bottom"></span>' : '') }} />
-              </div>
-              {/* Auto-capture gère la cristallisation — plus de bouton Zap manuel (confus pour l'utilisateur) */}
-              {/* Options — boutons contextuels (seulement sur le dernier message bot) */}
-              {isLast && !msg.isStreaming && (() => {
-                const contextualOpts = getContextualActions(msg.options, activePhase, chatStage, !!reflexionContext, focusType, activeDocumentSection);
-                if (contextualOpts.length === 0) return null;
-                return (
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {contextualOpts.map((opt, i) => {
-                      const isTransition = /passer en mode|retour au cockpit/i.test(opt);
+                {/* ═══ Niveau 1 — Options DANS la bulle (pattern InlineOptions) ═══ */}
+                {isLast && !msg.isStreaming && msg.options && msg.options.length > 0 && (
+                  <div className="mt-3 space-y-1.5">
+                    {msg.options.map((opt, i) => {
+                      const borderColors = ["border-l-blue-500", "border-l-amber-500", "border-l-green-500", "border-l-red-500"];
+                      const hoverBgs = ["hover:bg-blue-50", "hover:bg-amber-50", "hover:bg-green-50", "hover:bg-red-50"];
                       return (
-                        <button key={i} onClick={() => handleOption(opt)}
+                        <button
+                          key={i}
+                          onClick={() => handleOption(opt)}
                           className={cn(
-                            "text-[11px] px-3 py-1.5 rounded-full border transition-colors cursor-pointer font-medium shadow-sm",
-                            isTransition
-                              ? "border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-400"
-                              : "border-gray-200 bg-white text-gray-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700"
-                          )}>
-                          {opt}
+                            "w-full text-left border border-gray-200 rounded-lg px-3 py-2 transition-all",
+                            "border-l-[3px]",
+                            borderColors[i % borderColors.length],
+                            hoverBgs[i % hoverBgs.length],
+                            "hover:shadow-sm cursor-pointer group/opt",
+                          )}
+                        >
+                          <div className="flex items-start gap-2">
+                            <span className="text-xs font-bold text-gray-400 mt-0.5 shrink-0">{i + 1}.</span>
+                            <span className="text-sm text-gray-700 group-hover/opt:text-gray-900 font-medium">{opt}</span>
+                          </div>
                         </button>
                       );
                     })}
                   </div>
+                )}
+              </div>
+              {/* ═══ Niveau 2 — Actions structurelles SOUS la bulle (phase-gatees) ═══ */}
+              {isLast && !msg.isStreaming && (() => {
+                const MIN_STAGE: Record<string, number> = { discussion: 3, reflexion: 4, creation: 2, execution: 2, retroaction: 2 };
+                const NEXT_LABEL: Record<string, string> = { discussion: "Passer en mode reflexion", reflexion: "Passer en mode conception", creation: "Passer en mode execution", execution: "Passer en mode retroaction", retroaction: "Retour au cockpit" };
+                const minStage = MIN_STAGE[activePhase] ?? 2;
+                const transitionLabel = chatStage >= minStage ? (NEXT_LABEL[activePhase] || null) : null;
+
+                return (
+                  <BubbleActions
+                    chatStage={chatStage}
+                    messageContent={msg.content}
+                    onAction={(prompt) => sendMessage(prompt, msg.agent || activeBotCode, undefined, undefined, { workspacePhase })}
+                    onCristallise={() => {
+                      const CREDO_SECTIONS = ["comprendre", "rechercher", "exposer", "demontrer", "objectif"];
+                      const credoSection = CREDO_SECTIONS[chatStage] || "comprendre";
+                      const steps = getPhaseSteps(activePhase);
+                      const targetSection = steps[chatStage]?.id || credoSection;
+                      if (targetSection) {
+                        addSimV3Cristallise(msg.content, msg.agent || activeBotCode, targetSection, "chat");
+                      }
+                    }}
+                    phaseTransition={transitionLabel}
+                    onPhaseTransition={transitionLabel ? () => handleOption(transitionLabel) : undefined}
+                    gpsSuggestion={msg.cristallisationSuggestion}
+                    onGpsCristallise={msg.cristallisationSuggestion ? () => addSimV3Cristallise(msg.content, msg.agent || activeBotCode, msg.cristallisationSuggestion!.section_id, "chat") : undefined}
+                  />
                 );
               })()}
-              {/* CarlOS GPS — bouton cristallisation suggérée */}
-              {!msg.isStreaming && msg.cristallisationSuggestion && msg.cristallisationSuggestion.confidence >= 0.6 && (
-                <button
-                  onClick={() => {
-                    addSimV3Cristallise(msg.content, msg.agent || activeBotCode, msg.cristallisationSuggestion!.section_id, "chat");
-                  }}
-                  className="flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-lg border border-emerald-200 bg-emerald-50 text-xs font-medium text-emerald-700 hover:bg-emerald-100 cursor-pointer transition-colors shadow-sm"
-                >
-                  <Zap className="h-3 w-3" />
-                  <span>Cristalliser dans : {msg.cristallisationSuggestion.section_label}</span>
-                </button>
-              )}
             </div>
           </div>
         );
@@ -780,7 +926,12 @@ function ChatBoxV3() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   // visionInputRef retiré — Vision = app mobile (Ray-Ban Meta)
   const { sendMessage, injectVoiceMessage, newConversation } = useChatContext();
-  const { activeBotCode, setRightSection, reflexionContext, setReflexionContext, setFocusType, setActivePhase, activeMeeting } = useAmorcer();
+  const { activeBotCode, activePhase, setRightSection, reflexionContext, setReflexionContext, setFocusType, setActivePhase, activeMeeting, chatStage } = useAmorcer();
+  // Enrichir activePhase avec le step CREDO pour que le backend injecte le bon prompt
+  const _credoStepsCB = ["comprendre", "rechercher", "exposer", "demontrer", "objectif"];
+  const workspacePhase = activePhase === "discussion" && chatStage < _credoStepsCB.length
+    ? `discussion_${_credoStepsCB[chatStage]}`
+    : activePhase;
 
   // ═══ VOICE CALL STATE ═══
   const [callState, setCallState] = useState<CallState>("idle");
@@ -992,7 +1143,7 @@ function ChatBoxV3() {
     const text = inputText.trim();
     if (!text) return;
     setInputText("");
-    sendMessage(text, activeBotCode, undefined, undefined, { workspacePhase: activePhase });
+    sendMessage(text, activeBotCode, undefined, undefined, { workspacePhase });
     textareaRef.current?.focus();
 
     // Si aucun contexte de travail actif → entrer en Discussion (pas de détection de mots-clés,

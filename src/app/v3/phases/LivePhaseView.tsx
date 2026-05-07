@@ -27,6 +27,8 @@ import { SF } from "../core/styles";
 import { useAmorcer } from "../AmorcerContext";
 import { PHASE_CONFIGS } from "./phase-config";
 import type { PhaseConfig, PhaseStep } from "./phase-config";
+import { formatCristallise } from "./content-formatters";
+import { CristalliseActions } from "./CristalliseActions";
 
 interface LivePhaseViewProps {
   phaseKey: string;
@@ -48,7 +50,10 @@ function LivePhaseViewInner({ config, context, onPhaseComplete, onReturnToCockpi
   onPhaseComplete?: () => void;
   onReturnToCockpit?: () => void;
 }) {
-  const { chatStage, workflowItems, removeWorkflowItem, getCristallise } = useAmorcer();
+  const {
+    chatStage, workflowItems, removeWorkflowItem, getCristallise,
+    getCristalliseItem, editCristallise, setPendingCapture, addWorkflowItem, activeBotCode,
+  } = useAmorcer();
   const displayContext = context || config.label;
 
   // useWorkspaceCapture() → déplacé dans WorkspacePhasesPanel (toujours actif)
@@ -149,8 +154,14 @@ function LivePhaseViewInner({ config, context, onPhaseComplete, onReturnToCockpi
           <StepContent
             step={activeStep}
             captured={getCristallise(activeStep.id)}
+            cristalliseItem={getCristalliseItem(activeStep.id)}
             isUnlocked={chatStage >= activeStep.minStage}
             colors={col}
+            phaseKey={config.key}
+            activeBotCode={activeBotCode}
+            onSendPrompt={(prompt) => { setPendingCapture(activeStep.id); }}
+            onPin={(text) => addWorkflowItem(config.key, text, "insight")}
+            onEdit={(newText) => editCristallise(activeStep.id, newText)}
           />
 
           {/* Notes capturées */}
@@ -203,12 +214,19 @@ function LivePhaseViewInner({ config, context, onPhaseComplete, onReturnToCockpi
 }
 
 // ═══ Contenu d'une étape — PASSIF (affiche le contenu capturé ou l'état d'attente) ═══
+// Enrichi Sprint 1: formatCristallise + CristalliseActions + BotBadgeFull
 
-function StepContent({ step, captured, isUnlocked, colors }: {
+function StepContent({ step, captured, cristalliseItem, isUnlocked, colors, phaseKey, activeBotCode, onSendPrompt, onPin, onEdit }: {
   step: PhaseStep;
   captured: string | null;
+  cristalliseItem: import("../AmorcerContext").SimV3CristalliseItem | null;
   isUnlocked: boolean;
   colors: import("./phase-config").PhaseColors;
+  phaseKey: string;
+  activeBotCode: string;
+  onSendPrompt: (prompt: string) => void;
+  onPin: (text: string) => void;
+  onEdit: (newText: string) => void;
 }) {
   const [appeared, setAppeared] = useState(false);
   useEffect(() => { setAppeared(false); const t = setTimeout(() => setAppeared(true), 80); return () => clearTimeout(t); }, [step.id]);
@@ -233,8 +251,22 @@ function StepContent({ step, captured, isUnlocked, colors }: {
         {/* Body */}
         <div className="px-5 py-4">
           {captured ? (
-            <div className="text-xs text-gray-700 leading-relaxed whitespace-pre-wrap max-h-[500px] overflow-y-auto">
-              {captured}
+            <div className="space-y-0">
+              {/* Contenu formaté markdown */}
+              <div className="text-xs text-gray-700 leading-relaxed max-h-[500px] overflow-y-auto">
+                {formatCristallise(captured)}
+              </div>
+              {/* Boutons actions + badge source */}
+              <CristalliseActions
+                content={captured}
+                sectionId={step.id}
+                source={cristalliseItem?.source || activeBotCode}
+                sourceType={cristalliseItem?.sourceType || "chat"}
+                onSendPrompt={onSendPrompt}
+                onPin={onPin}
+                onEdit={onEdit}
+                actions={["pin", "deepen", "challenge", "edit"]}
+              />
             </div>
           ) : isUnlocked ? (
             <div className="flex items-center gap-3">

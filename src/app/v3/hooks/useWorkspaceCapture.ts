@@ -2,7 +2,7 @@
  * useWorkspaceCapture.ts — Hook de capture auto des réponses bot dans le workspace
  *
  * COMPORTEMENT UNIVERSEL (toutes les phases):
- * Chaque réponse bot → capturée dans l'étape courante → chatStage avance
+ * Chaque réponse bot COMPLÉTÉE → capturée dans l'étape courante → chatStage avance
  *
  * Le workspace est PASSIF — il REÇOIT le contenu de la discussion.
  * Comme les artefacts dans Claude AI: le bot produit du contenu → il apparaît à droite.
@@ -12,6 +12,15 @@
  *
  * VOCAL: Messages vocaux aussi capturés (seuil abaissé à 5 chars).
  *
+ * STREAMING-SAFE (Fix S100): Ne capture que les messages avec isStreaming !== true.
+ * Messages en cours de streaming sont trackés via pendingStreamIds et capturés à complétion.
+ *
+ * PENDINGCAPTURE PRIORITY (Fix S100): Quand pendingCapture est set (clic bouton section),
+ * la capture va dans la section ciblée au lieu du chatStage séquentiel.
+ *
+ * MANUAL MESSAGE SAFETY (Fix S100): Si l'user tape manuellement pendant qu'un
+ * pendingCapture est actif, pendingCapture est clear pour éviter la mauvaise attribution.
+ *
  * Phases supportées: discussion, reflexion, creation, execution, retroaction
  */
 
@@ -20,8 +29,12 @@ import { useChatContext } from "../../v2/context/ChatContext";
 import { useAmorcer } from "../AmorcerContext";
 import { getPhaseStepIds } from "../phases/phase-config";
 
-/** Phases pour lesquelles l'auto-capture est active */
-const AUTO_CAPTURE_PHASES = ["discussion", "reflexion", "creation", "execution", "retroaction"];
+/** Phases où le contenu est auto-cristallisé dans le workspace */
+const AUTO_CRISTALLISE_PHASES = ["reflexion", "creation", "execution", "retroaction"];
+/** Phases où chatStage avance mais cristallisation est manuelle (boutons dans le chat) */
+const MANUAL_CRISTALLISE_PHASES = ["discussion"];
+/** Toutes les phases actives (chatStage avance) */
+const ACTIVE_PHASES = [...AUTO_CRISTALLISE_PHASES, ...MANUAL_CRISTALLISE_PHASES];
 
 /**
  * Détection d'intention de phase depuis le message utilisateur.
@@ -59,9 +72,75 @@ export function useWorkspaceCapture() {
     setRightSection,
   } = useAmorcer();
   const prevMsgCountRef = useRef(messages.length);
+  // Fix S100: Track streaming message IDs waiting for completion
+  const pendingStreamIdsRef = useRef<Set<string>>(new Set());
+  // Fix S100: Track if the button's user message has been seen (to detect manual messages)
+  const pendingUserMsgSeenRef = useRef(false);
+
+  // Reset manual message tracking when pendingCapture changes
+  useEffect(() => {
+    if (pendingCapture) {
+      pendingUserMsgSeenRef.current = false;
+    }
+  }, [pendingCapture]);
 
   useEffect(() => {
-    // Only trigger on new messages added
+    // ═══ FIX S100: STREAMING COMPLETION CHECK ═══
+    // On every render (messages ref changes during streaming token updates),
+    // check if previously-identified streaming messages have now completed.
+    // This catches the case where isStreaming flips from true→false without
+    // messages.length changing.
+    if (pendingStreamIdsRef.current.size > 0) {
+      const completed: any[] = [];
+      for (const id of Array.from(pendingStreamIdsRef.current)) {
+        const msg = messages.find((m: any) => m.id === id);
+        if (!msg) {
+          // Message removed (conversation reset) — clean up
+          pendingStreamIdsRef.current.delete(id);
+          continue;
+        }
+        if ((msg as any).isStreaming !== true && msg.content && msg.content.length >= 5) {
+          completed.push(msg);
+          pendingStreamIdsRef.current.delete(id);
+        }
+      }
+      if (completed.length > 0) {
+        // ═══ CAPTURE completed streaming messages ═══
+        if (ACTIVE_PHASES.includes(activePhase)) {
+          const sectionId = pendingCapture || getSectionIdFromChatStage(activePhase, chatStage);
+          if (sectionId) {
+            // Cristalliser seulement si capture explicite (pendingCapture) ou phase auto-cristallise
+            // En phase Discussion: PAS d'auto-cristallisation (l'utilisateur choisit via boutons dans le chat)
+            if (pendingCapture || AUTO_CRISTALLISE_PHASES.includes(activePhase)) {
+              for (const msg of completed) {
+                const source = (msg as any).botCode || activeBotCode;
+                const sourceType = (msg as any).msgType === "voice" ? "voice" as const : "chat" as const;
+                const attributed = (msg as any).branchLabel
+                  ? `**${(msg as any).branchLabel}**\n${msg.content}`
+                  : msg.content;
+                addSimV3Cristallise(attributed, source, sectionId, sourceType);
+              }
+            }
+            if (pendingCapture) {
+              setPendingCapture(null);
+            } else {
+              setChatStage((s: number) => s + 1);
+            }
+          }
+        } else if (pendingCapture) {
+          const lastBot = completed[completed.length - 1];
+          if (lastBot) {
+            const source = (lastBot as any).botCode || activeBotCode;
+            const sourceType = (lastBot as any).msgType === "voice" ? "voice" as const : "chat" as const;
+            addSimV3Cristallise(lastBot.content, source, pendingCapture, sourceType);
+          }
+          setPendingCapture(null);
+        }
+        return; // Streaming completion handled — don't double-process
+      }
+    }
+
+    // ═══ NEW MESSAGE DETECTION (length-based, same as before) ═══
     if (messages.length <= prevMsgCountRef.current) {
       prevMsgCountRef.current = messages.length;
       return;
@@ -100,39 +179,72 @@ export function useWorkspaceCapture() {
       }
     }
 
-    // Filter to assistant messages only — min 5 chars (vocal can be short)
+    // ═══ FIX S100: CLEAR pendingCapture si l'user tape manuellement ═══
+    if (pendingCapture && userMessages.length > 0) {
+      if (pendingUserMsgSeenRef.current) {
+        // Already saw the button's message → this is a manual message → clear
+        console.log(`[WorkspaceCapture] Message manuel détecté — clear pendingCapture "${pendingCapture}"`);
+        setPendingCapture(null);
+        // Don't return — still need to track streaming for this new message's response
+      } else {
+        // First user message after pendingCapture was set → this is the button's message
+        pendingUserMsgSeenRef.current = true;
+      }
+    }
+
+    // ═══ PROCESS BOT MESSAGES ═══
     const botMessages = newMessages.filter(
-      (m: any) => m.role === "assistant" && m.content && m.content.length >= 5
+      (m: any) => m.role === "assistant"
     );
     if (botMessages.length === 0) return;
 
-    // ═══ AUTO-CAPTURE — toutes les phases actives ═══
-    if (AUTO_CAPTURE_PHASES.includes(activePhase)) {
-      const sectionId = getSectionIdFromChatStage(activePhase, chatStage);
+    // Fix S100: Separate complete messages from still-streaming ones
+    const completeBots = botMessages.filter(
+      (m: any) => (m as any).isStreaming !== true && m.content && m.content.length >= 5
+    );
+    const streamingOrEmptyBots = botMessages.filter(
+      (m: any) => (m as any).isStreaming === true || !m.content || m.content.length < 5
+    );
+
+    // Track streaming/empty bots for completion check on next renders
+    for (const m of streamingOrEmptyBots) {
+      pendingStreamIdsRef.current.add(m.id);
+    }
+
+    // Capture immediately complete bot messages (non-streaming responses)
+    if (completeBots.length === 0) return;
+
+    // ═══ CAPTURE — toutes les phases actives ═══
+    if (ACTIVE_PHASES.includes(activePhase)) {
+      const sectionId = pendingCapture || getSectionIdFromChatStage(activePhase, chatStage);
       if (!sectionId) return;
 
-      // Capturer TOUS les messages bot avec attribution
-      for (const msg of botMessages) {
-        const source = (msg as any).botCode || activeBotCode;
-        const sourceType = (msg as any).msgType === "voice" ? "voice" as const : "chat" as const;
-
-        // Si multi-perspective (branchLabel), inclure le label dans le contenu
-        const attributed = (msg as any).branchLabel
-          ? `**${(msg as any).branchLabel}**\n${msg.content}`
-          : msg.content;
-
-        addSimV3Cristallise(attributed, source, sectionId, sourceType);
+      // Cristalliser seulement si capture explicite (pendingCapture) ou phase auto-cristallise
+      // En phase Discussion: PAS d'auto-cristallisation (l'utilisateur choisit via boutons dans le chat)
+      if (pendingCapture || AUTO_CRISTALLISE_PHASES.includes(activePhase)) {
+        for (const msg of completeBots) {
+          const source = (msg as any).botCode || activeBotCode;
+          const sourceType = (msg as any).msgType === "voice" ? "voice" as const : "chat" as const;
+          const attributed = (msg as any).branchLabel
+            ? `**${(msg as any).branchLabel}**\n${msg.content}`
+            : msg.content;
+          addSimV3Cristallise(attributed, source, sectionId, sourceType);
+        }
       }
 
-      // Avancer chatStage UNE fois (pas par message)
-      setChatStage((s: number) => s + 1);
+      if (pendingCapture) {
+        setPendingCapture(null);
+      } else {
+        // Avancer chatStage UNE fois (pas par message)
+        setChatStage((s: number) => s + 1);
+      }
       return;
     }
 
     // ═══ FALLBACK — capture explicite via pendingCapture ═══
     if (pendingCapture) {
       // Capturer le dernier message bot
-      const lastBot = botMessages[botMessages.length - 1];
+      const lastBot = completeBots[completeBots.length - 1];
       if (lastBot) {
         const source = (lastBot as any).botCode || activeBotCode;
         const sourceType = (lastBot as any).msgType === "voice" ? "voice" as const : "chat" as const;
@@ -140,5 +252,5 @@ export function useWorkspaceCapture() {
       }
       setPendingCapture(null);
     }
-  }, [messages, activePhase, pendingCapture, setPendingCapture, addSimV3Cristallise, activeBotCode, chatStage, setChatStage]);
+  }, [messages, activePhase, pendingCapture, setPendingCapture, addSimV3Cristallise, activeBotCode, chatStage, setChatStage, setActivePhase, setReflexionContext, setRightSection]);
 }

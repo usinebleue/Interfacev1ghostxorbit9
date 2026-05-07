@@ -94,7 +94,13 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const { dispatchBatch, focusData, clearFocusMode } = useCanvasActions();
   const { activeView, activeBotCode, activeOrbit9Section, activeEspaceSection, activeBlueprintLiveSection, chatSourceView } = useFrameMaster();
   const amorcerCtx = useAmorcerSafe();
-  const workspacePhase = amorcerCtx?.activePhase ?? null;
+  const rawWorkspacePhase = amorcerCtx?.activePhase ?? null;
+  const chatStage = amorcerCtx?.chatStage ?? 0;
+  // Enrichir workspacePhase avec sous-étape CREDO quand en discussion
+  const credoSteps = ["comprendre", "rechercher", "exposer", "demontrer", "objectif"];
+  const workspacePhase = rawWorkspacePhase === "discussion" && chatStage < credoSteps.length
+    ? `discussion_${credoSteps[chatStage]}`
+    : rawWorkspacePhase;
 
   // Connecter le hook chat au Canvas Action Bus
   useEffect(() => {
@@ -138,6 +144,17 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       setCurrentCREDOPhase(lastCREDOPhase as CREDOPhase);
     }
   }, [lastCREDOPhase]);
+  // Sync chatStage from backend CREDO phase progression
+  // Backend advances phase_credo (C→R→E→D→O) at exchange thresholds (3, 6, 9 msgs)
+  // This connects it to chatStage which gates BubbleActions + workspace_phase sent to backend
+  const CREDO_TO_STAGE: Record<string, number> = { C: 0, R: 1, E: 2, D: 3, O: 4 };
+  useEffect(() => {
+    if (!amorcerCtx || rawWorkspacePhase !== "discussion" || !lastCREDOPhase) return;
+    const targetStage = CREDO_TO_STAGE[lastCREDOPhase];
+    if (targetStage !== undefined && targetStage !== chatStage) {
+      amorcerCtx.setChatStage(targetStage);
+    }
+  }, [lastCREDOPhase, rawWorkspacePhase, chatStage, amorcerCtx]); // eslint-disable-line react-hooks/exhaustive-deps
   // Sync mode from last bot message bubbleContext
   useEffect(() => {
     const lastBot = [...messages].reverse().find(m => m.role === "assistant" && m.bubbleContext?.mode);
