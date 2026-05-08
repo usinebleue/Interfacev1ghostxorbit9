@@ -246,7 +246,7 @@ function SegmentedBotContent({ content, botCode, activePhase, addSimV3Cristallis
     return (
       <>
         <div
-          className="text-sm text-gray-700 leading-relaxed [&>p]:my-0.5 [&>ul]:my-1 [&>ol]:my-1 [&>p:first-child]:mt-0 [&>p:last-child]:mb-0"
+          className="text-sm text-gray-700 leading-relaxed isolate overflow-hidden [&>p]:my-0.5 [&>ul]:my-1 [&>ol]:my-1 [&>p:first-child]:mt-0 [&>p:last-child]:mb-0 [&>hr]:my-2 [&_li]:break-words [&_p]:break-words"
           dangerouslySetInnerHTML={{ __html: formatMarkdown(content) }}
         />
         <CristalliseBar content={content} botCode={botCode} activePhase={activePhase} addSimV3Cristallise={addSimV3Cristallise} />
@@ -489,9 +489,13 @@ function V3MessageList() {
                   <span className={cn("text-[11px] font-semibold", s.text)}>{BOT_NAME[botCode] || botCode}</span>
                   <span className="text-[10px] text-gray-400">{BOT_ROLE[botCode] || ""}</span>
                 </div>
-                {/* Content — formatté markdown */}
-                <div className="text-sm text-gray-700 leading-relaxed [&>p]:my-0.5 [&>ul]:my-1 [&>ol]:my-1 [&>p:first-child]:mt-0 [&>p:last-child]:mb-0"
+                {/* Content — formatté markdown — isolate empêche le bleed CSS entre bulles */}
+                <div className="text-sm text-gray-700 leading-relaxed isolate overflow-hidden [&>p]:my-0.5 [&>ul]:my-1 [&>ol]:my-1 [&>p:first-child]:mt-0 [&>p:last-child]:mb-0 [&>hr]:my-2 [&_li]:break-words [&_p]:break-words"
                   dangerouslySetInnerHTML={{ __html: formatMarkdown(msg.content) + (msg.isStreaming ? '<span class="inline-block w-0.5 h-4 bg-current ml-0.5 animate-pulse align-text-bottom"></span>' : '') }} />
+                {/* Cristallise bar — boutons pour ajouter ce contenu dans une section workspace */}
+                {!msg.isStreaming && msg.content && (
+                  <CristalliseBar content={msg.content} botCode={botCode} activePhase={activePhase} addSimV3Cristallise={addSimV3Cristallise} />
+                )}
                 {/* ═══ Niveau 1 — Options DANS la bulle (pattern InlineOptions) ═══ */}
                 {isLast && !msg.isStreaming && msg.options && msg.options.length > 0 && (
                   <div className="mt-3 space-y-1.5">
@@ -521,11 +525,14 @@ function V3MessageList() {
                 )}
               </div>
               {/* ═══ Niveau 2 — Actions structurelles SOUS la bulle (phase-gatees) ═══ */}
-              {isLast && !msg.isStreaming && (() => {
-                const MIN_STAGE: Record<string, number> = { discussion: 3, reflexion: 4, creation: 2, execution: 2, retroaction: 2 };
-                const NEXT_LABEL: Record<string, string> = { discussion: "Passer en mode reflexion", reflexion: "Passer en mode conception", creation: "Passer en mode execution", execution: "Passer en mode retroaction", retroaction: "Retour au cockpit" };
-                const minStage = MIN_STAGE[activePhase] ?? 2;
-                const transitionLabel = chatStage >= minStage ? (NEXT_LABEL[activePhase] || null) : null;
+              {/* Visible sur TOUS les messages bot (pas seulement le dernier) */}
+              {/* Transition de phase + GPS seulement sur le dernier */}
+              {!msg.isStreaming && (() => {
+                // Phase transition — JAMAIS en discussion (transitions via ControlTowerPanel uniquement)
+                const MIN_STAGE: Record<string, number> = { reflexion: 4, creation: 2, execution: 2, retroaction: 2 };
+                const NEXT_LABEL: Record<string, string> = { reflexion: "Passer en mode conception", creation: "Passer en mode execution", execution: "Passer en mode retroaction", retroaction: "Retour au cockpit" };
+                const minStage = MIN_STAGE[activePhase] ?? 99;
+                const transitionLabel = isLast && activePhase !== "discussion" && chatStage >= minStage ? (NEXT_LABEL[activePhase] || null) : null;
 
                 return (
                   <BubbleActions
@@ -543,8 +550,8 @@ function V3MessageList() {
                     }}
                     phaseTransition={transitionLabel}
                     onPhaseTransition={transitionLabel ? () => handleOption(transitionLabel) : undefined}
-                    gpsSuggestion={msg.cristallisationSuggestion}
-                    onGpsCristallise={msg.cristallisationSuggestion ? () => addSimV3Cristallise(msg.content, msg.agent || activeBotCode, msg.cristallisationSuggestion!.section_id, "chat") : undefined}
+                    gpsSuggestion={isLast ? msg.cristallisationSuggestion : undefined}
+                    onGpsCristallise={isLast && msg.cristallisationSuggestion ? () => addSimV3Cristallise(msg.content, msg.agent || activeBotCode, msg.cristallisationSuggestion!.section_id, "chat") : undefined}
                   />
                 );
               })()}

@@ -1,25 +1,15 @@
 /**
  * useWorkspaceCapture.ts — Hook de capture auto des réponses bot dans le workspace
  *
- * COMPORTEMENT UNIVERSEL (toutes les phases):
- * Chaque réponse bot COMPLÉTÉE → capturée dans l'étape courante → chatStage avance
+ * DISCUSSION — AUTO-CRISTALLISATION INTELLIGENTE:
+ * Chaque échange (user choice + bot response) → RÉSUMÉ capturé dans l'étape CREDO courante.
+ * Le résumé = décision de l'user + insight clé du bot (PAS le dump complet).
+ * Les résumés s'ACCUMULENT dans chaque section CREDO (effet entonnoir).
  *
- * Le workspace est PASSIF — il REÇOIT le contenu de la discussion.
- * Comme les artefacts dans Claude AI: le bot produit du contenu → il apparaît à droite.
+ * AUTRES PHASES — Capture complète du contenu (réflexion, conception, etc.)
  *
- * MULTI-BOT: Capture TOUS les nouveaux messages bot (pas juste le dernier).
- * Si 3 bots répondent en batch → 3 cristallisations avec attribution.
- *
- * VOCAL: Messages vocaux aussi capturés (seuil abaissé à 5 chars).
- *
- * STREAMING-SAFE (Fix S100): Ne capture que les messages avec isStreaming !== true.
- * Messages en cours de streaming sont trackés via pendingStreamIds et capturés à complétion.
- *
- * PENDINGCAPTURE PRIORITY (Fix S100): Quand pendingCapture est set (clic bouton section),
- * la capture va dans la section ciblée au lieu du chatStage séquentiel.
- *
- * MANUAL MESSAGE SAFETY (Fix S100): Si l'user tape manuellement pendant qu'un
- * pendingCapture est actif, pendingCapture est clear pour éviter la mauvaise attribution.
+ * STREAMING-SAFE: Ne capture que les messages avec isStreaming !== true.
+ * PENDINGCAPTURE: Quand pendingCapture est set, capture ciblée.
  *
  * Phases supportées: discussion, reflexion, creation, execution, retroaction
  */
@@ -29,23 +19,24 @@ import { useChatContext } from "../../v2/context/ChatContext";
 import { useAmorcer } from "../AmorcerContext";
 import { getPhaseStepIds } from "../phases/phase-config";
 
-/** Phases où le contenu est auto-cristallisé dans le workspace */
-const AUTO_CRISTALLISE_PHASES = ["reflexion", "creation", "execution", "retroaction"];
-/** Phases où chatStage avance mais cristallisation est manuelle (boutons dans le chat) */
-const MANUAL_CRISTALLISE_PHASES = ["discussion"];
-/** Toutes les phases actives (chatStage avance) */
-const ACTIVE_PHASES = [...AUTO_CRISTALLISE_PHASES, ...MANUAL_CRISTALLISE_PHASES];
+/** Toutes les phases auto-cristallisées (discussion = résumés intelligents, autres = contenu complet) */
+const AUTO_CRISTALLISE_PHASES = ["discussion", "reflexion", "creation", "execution", "retroaction"];
+/** Toutes les phases actives (chatStage trackable) */
+const ACTIVE_PHASES = AUTO_CRISTALLISE_PHASES;
 
 /**
- * Détection d'intention de phase depuis le message utilisateur.
- * Quand Carl dit "brainstorm" ou "analyser" → Réflexion.
- * Quand Carl dit "concevoir" ou "plan" → Conception.
- * UNIQUEMENT depuis la phase Discussion (pas de transition inter-phases automatique).
+ * Résumé intelligent pour le workspace — décision de l'user + insight clé du bot.
+ * Effet entonnoir: chaque résumé capture l'ESSENCE de l'échange, pas le dump complet.
  */
-const PHASE_INTENT: [string, RegExp][] = [
-  ["reflexion", /\b(brainstorm|réfléch|réflexion|analy[sz]|diagnostic|5\s*pourquoi|scamper|explorer|creuser|approfondi|examin|idée[s]?\s+(de|pour|sur)|trouver\s+des\s+idée)/i],
-  ["creation", /\b(concevo|conception|blueprint|structur|planifi|organis|livrable|plan\s+(d['']action|stratég|d['']exéc))/i],
-];
+const FILLER_RE = /^(absolument|exactement|parfait|bien sûr|bien reçu|oui|non|ok|d'accord|certainement|effectivement|tout à fait|excellent|super|bonne question|c'est une|je comprends|merci|salut|bonjour|hey|on y va|on s'attaque|on se penche|on met|on passe)/i;
+
+function summarizeForWorkspace(userChoice: string, botContent: string): string {
+  const lines = botContent.split('\n').map(l => l.trim()).filter(l => l.length > 20);
+  const meaningful = lines.find(l => !FILLER_RE.test(l));
+  const insight = (meaningful || lines[1] || lines[0] || "").substring(0, 200);
+  const shortChoice = userChoice.substring(0, 100);
+  return `→ **${shortChoice}**\n${insight}`;
+}
 
 /** Map chatStage → sectionId pour la phase active */
 function getSectionIdFromChatStage(phase: string, chatStage: number): string | null {
@@ -70,6 +61,8 @@ export function useWorkspaceCapture() {
     setActivePhase,
     setReflexionContext,
     setRightSection,
+    getCristallise,
+    editCristallise,
   } = useAmorcer();
   const prevMsgCountRef = useRef(messages.length);
   // Fix S100: Track streaming message IDs waiting for completion
@@ -106,15 +99,25 @@ export function useWorkspaceCapture() {
       }
       if (completed.length > 0) {
         // ═══ CAPTURE completed streaming messages ═══
+        const isDiscussion = activePhase === "discussion";
         if (ACTIVE_PHASES.includes(activePhase)) {
           const sectionId = pendingCapture || getSectionIdFromChatStage(activePhase, chatStage);
           if (sectionId) {
-            // Cristalliser seulement si capture explicite (pendingCapture) ou phase auto-cristallise
-            // En phase Discussion: PAS d'auto-cristallisation (l'utilisateur choisit via boutons dans le chat)
-            if (pendingCapture || AUTO_CRISTALLISE_PHASES.includes(activePhase)) {
-              for (const msg of completed) {
-                const source = (msg as any).botCode || activeBotCode;
-                const sourceType = (msg as any).msgType === "voice" ? "voice" as const : "chat" as const;
+            for (const msg of completed) {
+              const source = (msg as any).botCode || activeBotCode;
+              const sourceType = (msg as any).msgType === "voice" ? "voice" as const : "chat" as const;
+              if (isDiscussion) {
+                // ═══ RÉSUMÉ INTELLIGENT — décision user + insight bot ═══
+                const lastUserMsg = [...messages].reverse().find((m: any) => m.role === "user" && m.content);
+                const summary = summarizeForWorkspace(lastUserMsg?.content || "Discussion", msg.content);
+                const existing = getCristallise(sectionId);
+                if (existing) {
+                  editCristallise(sectionId, existing + "\n\n" + summary);
+                } else {
+                  addSimV3Cristallise(summary, source, sectionId, sourceType);
+                }
+              } else {
+                // ═══ CONTENU COMPLET — autres phases ═══
                 const attributed = (msg as any).branchLabel
                   ? `**${(msg as any).branchLabel}**\n${msg.content}`
                   : msg.content;
@@ -123,6 +126,10 @@ export function useWorkspaceCapture() {
             }
             if (pendingCapture) {
               setPendingCapture(null);
+            } else if (isDiscussion) {
+              const botCount = messages.filter((m: any) => m.role === "assistant" && (m as any).isStreaming !== true).length;
+              const targetStage = Math.min(4, Math.floor(botCount / 2));
+              if (targetStage > chatStage) setChatStage(targetStage);
             } else {
               setChatStage((s: number) => s + 1);
             }
@@ -142,6 +149,10 @@ export function useWorkspaceCapture() {
 
     // ═══ NEW MESSAGE DETECTION (length-based, same as before) ═══
     if (messages.length <= prevMsgCountRef.current) {
+      // Conversation was reset (messages cleared) → reset chatStage
+      if (messages.length < prevMsgCountRef.current) {
+        setChatStage(0);
+      }
       prevMsgCountRef.current = messages.length;
       return;
     }
@@ -151,32 +162,18 @@ export function useWorkspaceCapture() {
     prevMsgCountRef.current = messages.length;
 
     // ═══ AUTO-DÉTECTION DE PHASE — depuis les messages utilisateur ═══
-    // Depuis observation/attention → au minimum passer en "discussion" dès que l'user parle
-    // Depuis discussion → détecter intention spécifique (brainstorm → réflexion, plan → conception)
+    // Depuis observation/attention → passer en "discussion" dès que l'user parle
+    // PAS de transition automatique vers réflexion/conception depuis Discussion
+    // Ces transitions se font UNIQUEMENT via les boutons explicites ("Passer en mode réflexion")
     const userMessages = newMessages.filter((m: any) => m.role === "user" && m.content);
-    if (userMessages.length > 0 && (activePhase === "discussion" || activePhase === "observation" || activePhase === "attention" || activePhase === "moderation")) {
-      let transitioned = false;
-      for (const msg of userMessages) {
-        for (const [targetPhase, regex] of PHASE_INTENT) {
-          if (regex.test(msg.content)) {
-            console.log(`[WorkspaceCapture] Intention détectée: "${targetPhase}" depuis "${msg.content.substring(0, 60)}"`);
-            setActivePhase(targetPhase);
-            setReflexionContext(msg.content.substring(0, 120));
-            setRightSection(null);
-            transitioned = true;
-            break;
-          }
-        }
-        if (transitioned) break;
-      }
-      // Pas d'intention spécifique mais l'user parle → au minimum passer en Discussion
-      if (!transitioned && (activePhase === "observation" || activePhase === "attention" || activePhase === "moderation")) {
-        const firstUserMsg = userMessages[0];
-        setActivePhase("discussion");
-        setReflexionContext(firstUserMsg.content.substring(0, 120));
-        setRightSection(null);
-        console.log(`[WorkspaceCapture] Auto-transition observation → discussion`);
-      }
+    if (userMessages.length > 0 && (activePhase === "observation" || activePhase === "attention" || activePhase === "moderation")) {
+      // Depuis observation → passer en Discussion
+      const firstUserMsg = userMessages[0];
+      setActivePhase("discussion");
+      setChatStage(0); // Reset chatStage pour la nouvelle conversation
+      setReflexionContext(firstUserMsg.content.substring(0, 120));
+      setRightSection(null);
+      console.log(`[WorkspaceCapture] Auto-transition observation → discussion`);
     }
 
     // ═══ FIX S100: CLEAR pendingCapture si l'user tape manuellement ═══
@@ -215,16 +212,26 @@ export function useWorkspaceCapture() {
     if (completeBots.length === 0) return;
 
     // ═══ CAPTURE — toutes les phases actives ═══
+    const isDiscussion = activePhase === "discussion";
     if (ACTIVE_PHASES.includes(activePhase)) {
       const sectionId = pendingCapture || getSectionIdFromChatStage(activePhase, chatStage);
       if (!sectionId) return;
 
-      // Cristalliser seulement si capture explicite (pendingCapture) ou phase auto-cristallise
-      // En phase Discussion: PAS d'auto-cristallisation (l'utilisateur choisit via boutons dans le chat)
-      if (pendingCapture || AUTO_CRISTALLISE_PHASES.includes(activePhase)) {
-        for (const msg of completeBots) {
-          const source = (msg as any).botCode || activeBotCode;
-          const sourceType = (msg as any).msgType === "voice" ? "voice" as const : "chat" as const;
+      for (const msg of completeBots) {
+        const source = (msg as any).botCode || activeBotCode;
+        const sourceType = (msg as any).msgType === "voice" ? "voice" as const : "chat" as const;
+        if (isDiscussion) {
+          // ═══ RÉSUMÉ INTELLIGENT — décision user + insight bot ═══
+          const lastUserMsg = [...messages].reverse().find((m: any) => m.role === "user" && m.content);
+          const summary = summarizeForWorkspace(lastUserMsg?.content || "Discussion", msg.content);
+          const existing = getCristallise(sectionId);
+          if (existing) {
+            editCristallise(sectionId, existing + "\n\n" + summary);
+          } else {
+            addSimV3Cristallise(summary, source, sectionId, sourceType);
+          }
+        } else {
+          // ═══ CONTENU COMPLET — autres phases ═══
           const attributed = (msg as any).branchLabel
             ? `**${(msg as any).branchLabel}**\n${msg.content}`
             : msg.content;
@@ -234,8 +241,11 @@ export function useWorkspaceCapture() {
 
       if (pendingCapture) {
         setPendingCapture(null);
+      } else if (isDiscussion) {
+        const botCount = messages.filter((m: any) => m.role === "assistant" && (m as any).isStreaming !== true).length;
+        const targetStage = Math.min(4, Math.floor(botCount / 2));
+        if (targetStage > chatStage) setChatStage(targetStage);
       } else {
-        // Avancer chatStage UNE fois (pas par message)
         setChatStage((s: number) => s + 1);
       }
       return;
@@ -243,7 +253,6 @@ export function useWorkspaceCapture() {
 
     // ═══ FALLBACK — capture explicite via pendingCapture ═══
     if (pendingCapture) {
-      // Capturer le dernier message bot
       const lastBot = completeBots[completeBots.length - 1];
       if (lastBot) {
         const source = (lastBot as any).botCode || activeBotCode;
@@ -252,5 +261,5 @@ export function useWorkspaceCapture() {
       }
       setPendingCapture(null);
     }
-  }, [messages, activePhase, pendingCapture, setPendingCapture, addSimV3Cristallise, activeBotCode, chatStage, setChatStage, setActivePhase, setReflexionContext, setRightSection]);
+  }, [messages, activePhase, pendingCapture, setPendingCapture, addSimV3Cristallise, activeBotCode, chatStage, setChatStage, setActivePhase, setReflexionContext, setRightSection, getCristallise, editCristallise]);
 }

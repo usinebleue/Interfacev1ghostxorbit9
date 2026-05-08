@@ -28,9 +28,13 @@ interface BubbleActionsProps {
   onGpsCristallise?: () => void;
 }
 
-/** Extrait un resume court du message bot (premiere phrase ou 80 chars) */
+/** Extrait le VRAI sujet du message bot (skip les phrases de politesse/filler) */
 function extractSujet(messageContent: string): string {
-  return messageContent.split(/[.\n]/)[0]?.trim().substring(0, 80) || "ce sujet";
+  const FILLER = /^(absolument|exactement|parfait|bien sûr|oui|non|ok|d'accord|certainement|effectivement|tout à fait|excellent|super|bonne question|c'est une|je comprends|merci|salut|bonjour|hey)/i;
+  const sentences = messageContent.split(/[.\n]/).map(s => s.trim()).filter(s => s.length > 10);
+  // Skip filler sentences, take the first meaningful one
+  const meaningful = sentences.find(s => !FILLER.test(s));
+  return (meaningful || sentences[1] || sentences[0] || "ce sujet").substring(0, 100);
 }
 
 function buildActions(messageContent: string) {
