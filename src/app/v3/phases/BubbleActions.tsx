@@ -12,6 +12,7 @@
 
 import { useState } from "react";
 import { Swords, Search, Users, Diamond, ChevronDown, ChevronUp, Zap, ArrowRight } from "lucide-react";
+import { parseMessageSegments } from "../utils/parse-segments";
 
 interface BubbleActionsProps {
   onAction: (prompt: string) => void;
@@ -38,6 +39,28 @@ function extractSujet(messageContent: string): string {
 }
 
 function buildActions(messageContent: string) {
+  // S102-B — Section-aware: detecter les sections ### pour un challenger cible
+  const segments = parseMessageSegments(messageContent);
+  const namedSegments = segments.filter(s => s.title && s.text.length > 30);
+
+  if (namedSegments.length >= 2) {
+    // ═══ MULTI-SECTION — actions par section (SWOT, diagnostic, etc.) ═══
+    return [
+      { id: "approfondir", label: "Approfondir", icon: Search,
+        prompt: `Approfondis ton analyse globale. Donne plus de details concrets et d'exemples.`,
+        minStage: 0 },
+      // Challenger par section — max 4 sections
+      ...namedSegments.slice(0, 4).map((seg, i) => ({
+        id: `challenger-${i}`,
+        label: `Challenger: ${seg.title}`,
+        icon: Swords,
+        prompt: `Challenge specifiquement la section "${seg.title}" de ton analyse. Trouve les failles et angles morts de: ${seg.text.slice(0, 300)}`,
+        minStage: 1,
+      })),
+    ];
+  }
+
+  // ═══ SINGLE-SECTION — comportement existant (extractSujet) ═══
   const sujet = extractSujet(messageContent);
   return [
     { id: "approfondir", label: "Approfondir", icon: Search,
@@ -67,7 +90,8 @@ export function BubbleActions({ onAction, onCristallise, chatStage, messageConte
   const allActions = buildActions(messageContent);
   const visibleActions = allActions.filter(a => chatStage >= a.minStage);
   const showCristalliser = chatStage >= 3;
-  const showGps = showCristalliser && gpsSuggestion && gpsSuggestion.confidence >= 0.6 && onGpsCristallise;
+  // S103 — GPS visible dès le début (pas gate par chatStage >= 3), seuil 0.5
+  const showGps = gpsSuggestion && gpsSuggestion.confidence >= 0.5 && onGpsCristallise;
 
   return (
     <div className="space-y-1">

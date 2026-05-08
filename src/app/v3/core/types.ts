@@ -111,7 +111,7 @@ export interface WorkflowItem {
   phase: string;        // "discussion" | "reflexion" | "creation" | "execution" | "retroaction"
   credoKey?: string;     // "C" | "R" | "E" | "D" | "O" (si capture pendant discussion)
   text: string;
-  type: "insight" | "decision" | "action" | "question";
+  type: "insight" | "decision" | "action" | "question" | "branch" | "cascade";
   timestamp: number;
 }
 

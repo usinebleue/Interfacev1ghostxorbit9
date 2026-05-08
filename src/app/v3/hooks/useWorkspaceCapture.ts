@@ -48,6 +48,21 @@ function getSectionIdFromChatStage(phase: string, chatStage: number): string | n
   return stepIds[chatStage];
 }
 
+/** S103 — Résolution INTELLIGENTE de section: backend > pendingCapture > positionnelle */
+function getSmartSectionId(
+  msg: any, phase: string, chatStage: number, pendingCapture: string | null
+): string | null {
+  // Priorité 1: Backend a détecté la section sémantiquement
+  if (msg?.cristallisationSuggestion?.section_id &&
+      msg.cristallisationSuggestion.confidence >= 0.5) {
+    return msg.cristallisationSuggestion.section_id;
+  }
+  // Priorité 2: User a cliqué "Cristalliser" manuellement
+  if (pendingCapture) return pendingCapture;
+  // Priorité 3: Positionnelle (fallback)
+  return getSectionIdFromChatStage(phase, chatStage);
+}
+
 export function useWorkspaceCapture() {
   const { messages } = useChatContext();
   const {
@@ -63,6 +78,7 @@ export function useWorkspaceCapture() {
     setRightSection,
     getCristallise,
     editCristallise,
+    addWorkflowItem,
   } = useAmorcer();
   const prevMsgCountRef = useRef(messages.length);
   // Fix S100: Track streaming message IDs waiting for completion
@@ -101,11 +117,12 @@ export function useWorkspaceCapture() {
         // ═══ CAPTURE completed streaming messages ═══
         const isDiscussion = activePhase === "discussion";
         if (ACTIVE_PHASES.includes(activePhase)) {
-          const sectionId = pendingCapture || getSectionIdFromChatStage(activePhase, chatStage);
+          const sectionId = getSmartSectionId(completed[0], activePhase, chatStage, pendingCapture);
           if (sectionId) {
             for (const msg of completed) {
               const source = (msg as any).botCode || activeBotCode;
               const sourceType = (msg as any).msgType === "voice" ? "voice" as const : "chat" as const;
+              const msgContentTypes = (msg as any).cristallisationSuggestion?.content_types as string[] | undefined;
               if (isDiscussion) {
                 // ═══ RÉSUMÉ INTELLIGENT — décision user + insight bot ═══
                 const lastUserMsg = [...messages].reverse().find((m: any) => m.role === "user" && m.content);
@@ -114,24 +131,53 @@ export function useWorkspaceCapture() {
                 if (existing) {
                   editCristallise(sectionId, existing + "\n\n" + summary);
                 } else {
-                  addSimV3Cristallise(summary, source, sectionId, sourceType);
+                  addSimV3Cristallise(summary, source, sectionId, sourceType, msgContentTypes);
                 }
               } else {
                 // ═══ CONTENU COMPLET — autres phases ═══
                 const attributed = (msg as any).branchLabel
                   ? `**${(msg as any).branchLabel}**\n${msg.content}`
                   : msg.content;
-                addSimV3Cristallise(attributed, source, sectionId, sourceType);
+                addSimV3Cristallise(attributed, source, sectionId, sourceType, msgContentTypes);
               }
             }
             if (pendingCapture) {
               setPendingCapture(null);
             } else if (isDiscussion) {
-              const botCount = messages.filter((m: any) => m.role === "assistant" && (m as any).isStreaming !== true).length;
-              const targetStage = Math.min(4, Math.floor(botCount / 2));
-              if (targetStage > chatStage) setChatStage(targetStage);
+              // S103 — Auto-avancement: si backend cible une étape +1, avancer le chatStage
+              const lastCompleted = completed[completed.length - 1];
+              const backendSectionId = lastCompleted?.cristallisationSuggestion?.section_id;
+              if (backendSectionId) {
+                const stepIds = getPhaseStepIds(activePhase);
+                const sugIdx = stepIds.indexOf(backendSectionId);
+                if (sugIdx >= 0 && sugIdx === chatStage + 1) {
+                  setChatStage(sugIdx);
+                } else {
+                  const botCount = messages.filter((m: any) => m.role === "assistant" && (m as any).isStreaming !== true).length;
+                  const targetStage = Math.min(4, Math.floor(botCount / 2));
+                  if (targetStage > chatStage) setChatStage(targetStage);
+                }
+              } else {
+                const botCount = messages.filter((m: any) => m.role === "assistant" && (m as any).isStreaming !== true).length;
+                const targetStage = Math.min(4, Math.floor(botCount / 2));
+                if (targetStage > chatStage) setChatStage(targetStage);
+              }
             } else {
               setChatStage((s: number) => s + 1);
+            }
+
+            // S103 — CASCADES cross-phases (streaming path)
+            for (const cMsg of completed) {
+              const cascades = (cMsg as any).cascadeItems as Array<{section_id: string; phase: string; label: string}> | undefined;
+              if (cascades?.length) {
+                cascades.forEach(c => {
+                  const cascadeContent = `[Cascade depuis Discussion] ${cMsg.content.slice(0, 200)}...`;
+                  addSimV3Cristallise(cascadeContent, (cMsg as any).botCode || activeBotCode, c.section_id);
+                });
+                cascades.forEach(c => {
+                  addWorkflowItem(c.phase, `${c.label}`, "cascade", c.section_id);
+                });
+              }
             }
           }
         } else if (pendingCapture) {
@@ -214,40 +260,86 @@ export function useWorkspaceCapture() {
     // ═══ CAPTURE — toutes les phases actives ═══
     const isDiscussion = activePhase === "discussion";
     if (ACTIVE_PHASES.includes(activePhase)) {
-      const sectionId = pendingCapture || getSectionIdFromChatStage(activePhase, chatStage);
+      const sectionId = getSmartSectionId(completeBots[0], activePhase, chatStage, pendingCapture);
       if (!sectionId) return;
 
       for (const msg of completeBots) {
         const source = (msg as any).botCode || activeBotCode;
         const sourceType = (msg as any).msgType === "voice" ? "voice" as const : "chat" as const;
+        const msgContentTypes = (msg as any).cristallisationSuggestion?.content_types as string[] | undefined;
         if (isDiscussion) {
-          // ═══ RÉSUMÉ INTELLIGENT — décision user + insight bot ═══
+          // ═══ S102-B — MULTI-ENRICHED: capture enrichie avec contributions secondaires ═══
+          if ((msg as any).msgType === "multi-enriched" && (msg as any).secondaryInputs?.length > 0) {
+            const secondaries = (msg as any).secondaryInputs as Array<{agent: string; nom: string; contenu: string}>;
+            const lastUserMsg = [...messages].reverse().find((m: any) => m.role === "user" && m.content);
+            const primarySummary = summarizeForWorkspace(lastUserMsg?.content || "Discussion", msg.content);
+            const contribs = secondaries.map((s: any) => `  [${s.nom}] ${s.contenu}`).join("\n");
+            const enrichedSummary = `${primarySummary}\n---\n${contribs}`;
+            const existing = getCristallise(sectionId);
+            if (existing) {
+              editCristallise(sectionId, existing + "\n\n" + enrichedSummary);
+            } else {
+              addSimV3Cristallise(enrichedSummary, source, sectionId, sourceType, msgContentTypes);
+            }
+          } else {
+          // ═══ RÉSUMÉ INTELLIGENT — décision user + insight bot (existant) ═══
           const lastUserMsg = [...messages].reverse().find((m: any) => m.role === "user" && m.content);
           const summary = summarizeForWorkspace(lastUserMsg?.content || "Discussion", msg.content);
           const existing = getCristallise(sectionId);
           if (existing) {
             editCristallise(sectionId, existing + "\n\n" + summary);
           } else {
-            addSimV3Cristallise(summary, source, sectionId, sourceType);
+            addSimV3Cristallise(summary, source, sectionId, sourceType, msgContentTypes);
+          }
           }
         } else {
           // ═══ CONTENU COMPLET — autres phases ═══
           const attributed = (msg as any).branchLabel
             ? `**${(msg as any).branchLabel}**\n${msg.content}`
             : msg.content;
-          addSimV3Cristallise(attributed, source, sectionId, sourceType);
+          addSimV3Cristallise(attributed, source, sectionId, sourceType, msgContentTypes);
         }
       }
 
       if (pendingCapture) {
         setPendingCapture(null);
       } else if (isDiscussion) {
-        const botCount = messages.filter((m: any) => m.role === "assistant" && (m as any).isStreaming !== true).length;
-        const targetStage = Math.min(4, Math.floor(botCount / 2));
-        if (targetStage > chatStage) setChatStage(targetStage);
+        // S103 — Auto-avancement: si backend cible une étape +1, avancer le chatStage
+        const lastBot = completeBots[completeBots.length - 1];
+        const backendSectionId = lastBot?.cristallisationSuggestion?.section_id;
+        if (backendSectionId) {
+          const stepIds = getPhaseStepIds(activePhase);
+          const sugIdx = stepIds.indexOf(backendSectionId);
+          if (sugIdx >= 0 && sugIdx === chatStage + 1) {
+            setChatStage(sugIdx);
+          } else {
+            const botCount = messages.filter((m: any) => m.role === "assistant" && (m as any).isStreaming !== true).length;
+            const targetStage = Math.min(4, Math.floor(botCount / 2));
+            if (targetStage > chatStage) setChatStage(targetStage);
+          }
+        } else {
+          const botCount = messages.filter((m: any) => m.role === "assistant" && (m as any).isStreaming !== true).length;
+          const targetStage = Math.min(4, Math.floor(botCount / 2));
+          if (targetStage > chatStage) setChatStage(targetStage);
+        }
       } else {
         setChatStage((s: number) => s + 1);
       }
+
+      // ═══ S103 — CASCADES cross-phases ═══
+      for (const msg of completeBots) {
+        const cascades = (msg as any).cascadeItems as Array<{section_id: string; phase: string; label: string}> | undefined;
+        if (cascades?.length) {
+          cascades.forEach(c => {
+            const cascadeContent = `[Cascade depuis Discussion] ${msg.content.slice(0, 200)}...`;
+            addSimV3Cristallise(cascadeContent, (msg as any).botCode || activeBotCode, c.section_id);
+          });
+          cascades.forEach(c => {
+            addWorkflowItem(c.phase, `${c.label}`, "cascade", c.section_id);
+          });
+        }
+      }
+
       return;
     }
 
@@ -261,5 +353,5 @@ export function useWorkspaceCapture() {
       }
       setPendingCapture(null);
     }
-  }, [messages, activePhase, pendingCapture, setPendingCapture, addSimV3Cristallise, activeBotCode, chatStage, setChatStage, setActivePhase, setReflexionContext, setRightSection, getCristallise, editCristallise]);
+  }, [messages, activePhase, pendingCapture, setPendingCapture, addSimV3Cristallise, activeBotCode, chatStage, setChatStage, setActivePhase, setReflexionContext, setRightSection, getCristallise, editCristallise, addWorkflowItem]);
 }

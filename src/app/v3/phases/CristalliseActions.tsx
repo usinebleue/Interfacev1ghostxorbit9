@@ -7,10 +7,11 @@
  */
 
 import { useState } from "react";
-import { Pin, Search, Swords, Pencil, Check, X } from "lucide-react";
+import { Pin, Search, Swords, Pencil, Check, X, RotateCcw } from "lucide-react";
 import { BotBadgeFull } from "../../v2/zones/center/shared/BotBadgeFull";
+import { parseMessageSegments } from "../utils/parse-segments";
 
-export type CristalliseActionType = "pin" | "deepen" | "challenge" | "merge" | "edit";
+export type CristalliseActionType = "pin" | "deepen" | "challenge" | "merge" | "edit" | "rework";
 
 interface CristalliseActionsProps {
   content: string;
@@ -29,6 +30,7 @@ const ACTION_CONFIG: Record<CristalliseActionType, { icon: typeof Pin; label: st
   challenge: { icon: Swords, label: "Challenger",   variant: "border-amber-200 text-amber-700 hover:bg-amber-50" },
   merge:     { icon: Search, label: "Fusionner",    variant: "border-purple-200 text-purple-700 hover:bg-purple-50" },
   edit:      { icon: Pencil, label: "Modifier",     variant: "border-gray-200 text-gray-600 hover:bg-gray-50" },
+  rework:    { icon: RotateCcw, label: "Retravailler", variant: "border-sky-200 text-sky-700 hover:bg-sky-50" },
 };
 
 export function CristalliseActions({
@@ -39,7 +41,7 @@ export function CristalliseActions({
   onSendPrompt,
   onPin,
   onEdit,
-  actions = ["pin", "deepen", "challenge", "edit"],
+  actions = ["pin", "deepen", "challenge", "rework", "edit"],
 }: CristalliseActionsProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(content);
@@ -52,11 +54,27 @@ export function CristalliseActions({
       case "deepen":
         onSendPrompt("Approfondir en détail: " + content.slice(0, 400));
         break;
-      case "challenge":
-        onSendPrompt("Challenge — angles morts: " + content.slice(0, 400));
+      case "challenge": {
+        // S102-B — Section-aware challenger dans le workspace
+        const segments = parseMessageSegments(content);
+        const named = segments.filter(s => s.title && s.text.length > 30);
+        if (named.length >= 2) {
+          const sorted = [...named].sort((a, b) => b.text.length - a.text.length);
+          onSendPrompt(
+            `Challenge la section "${sorted[0].title}" en detail. ` +
+            `Aussi, verifie la coherence avec ${named.map(s => s.title).join(", ")}. ` +
+            `Contenu: ${sorted[0].text.slice(0, 400)}`
+          );
+        } else {
+          onSendPrompt("Challenge — angles morts: " + content.slice(0, 400));
+        }
         break;
+      }
       case "merge":
         onSendPrompt("Fusionner et synthétiser: " + content.slice(0, 400));
+        break;
+      case "rework":
+        onSendPrompt(`Retravaille cet élément — améliore et enrichis:\n${content.slice(0, 600)}`);
         break;
       case "edit":
         setEditText(content);

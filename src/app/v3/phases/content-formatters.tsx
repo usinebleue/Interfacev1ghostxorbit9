@@ -2,10 +2,15 @@
  * content-formatters.tsx — Formateurs de contenu cristallisé
  *
  * Transforme le texte brut markdown en JSX enrichi.
+ * S103 — Rendu riche: tables markdown, code blocks, contenu par spécialité bot.
  * Fallback: whitespace-pre-wrap (comportement actuel préservé pour texte non-markdown)
  */
 
 import React from "react";
+import { cn } from "../../components/ui/utils";
+import {
+  Table, TableHeader, TableBody, TableHead, TableRow, TableCell
+} from "../../components/ui/table";
 
 // ═══ Détection markdown ═══
 
@@ -41,12 +46,120 @@ function formatInline(text: string): React.ReactNode[] {
   return parts.length > 0 ? parts : [text];
 }
 
-// ═══ formatCristallise — Transforme markdown → JSX ═══
+// ═══ S103 — Parseur de tables markdown ═══
 
-export function formatCristallise(text: string): React.ReactNode {
+function parseMarkdownTable(text: string): { headers: string[]; rows: string[][]; beforeTable: string; afterTable: string } | null {
+  const lines = text.split("\n");
+  const tableStartIdx = lines.findIndex(l => l.trim().startsWith("|"));
+  if (tableStartIdx < 0) return null;
+
+  const tableLines = [];
+  let tableEndIdx = tableStartIdx;
+  for (let i = tableStartIdx; i < lines.length; i++) {
+    if (lines[i].trim().startsWith("|")) {
+      tableLines.push(lines[i]);
+      tableEndIdx = i;
+    } else if (tableLines.length > 0) {
+      break;
+    }
+  }
+  if (tableLines.length < 2) return null;
+
+  const parse = (line: string) => line.split("|").filter(c => c.trim()).map(c => c.trim());
+  const headers = parse(tableLines[0]);
+  // Skip separator line (|---|---|)
+  const dataStart = tableLines[1].includes("---") ? 2 : 1;
+  const rows = tableLines.slice(dataStart).map(parse);
+  if (rows.length === 0) return null;
+
+  const beforeTable = lines.slice(0, tableStartIdx).join("\n").trim();
+  const afterTable = lines.slice(tableEndIdx + 1).join("\n").trim();
+
+  return { headers, rows, beforeTable, afterTable };
+}
+
+// ═══ S103 — Rendu code block ═══
+
+function renderCodeBlock(text: string): { element: React.ReactNode; before: string; after: string } | null {
+  const match = text.match(/```(\w+)?\n([\s\S]*?)```/);
+  if (!match) return null;
+  const [fullMatch, lang, code] = match;
+  const idx = text.indexOf(fullMatch);
+  const before = text.slice(0, idx).trim();
+  const after = text.slice(idx + fullMatch.length).trim();
+  const element = (
+    <div className="rounded-lg overflow-hidden border border-gray-200 my-2">
+      {lang && (
+        <div className="bg-gray-800 text-gray-300 text-[10px] px-3 py-1 font-mono">{lang}</div>
+      )}
+      <pre className="bg-gray-900 text-gray-100 text-[11px] p-3 overflow-hidden font-mono leading-relaxed whitespace-pre-wrap break-words">
+        <code>{code}</code>
+      </pre>
+    </div>
+  );
+  return { element, before, after };
+}
+
+// ═══ formatCristallise — Transforme markdown → JSX ═══
+// S103: Enrichi avec rendu table + code block par spécialité bot
+
+export function formatCristallise(
+  text: string,
+  contentTypes?: string[],
+  botCode?: string
+): React.ReactNode {
   if (!text) return null;
 
-  // Si pas de markdown détecté → fallback whitespace-pre-wrap
+  // Priorité 1: Table markdown (CFO, COO, CSO, ou contenu avec "|")
+  if (contentTypes?.includes("tableau") || text.includes("| ")) {
+    const table = parseMarkdownTable(text);
+    if (table) {
+      const isCFO = botCode === "CFOB";
+      return (
+        <>
+          {table.beforeTable && <p className="text-[12px] text-gray-700 mb-2">{formatInline(table.beforeTable)}</p>}
+          <div className={cn("rounded-lg overflow-hidden border my-2",
+            isCFO ? "border-blue-200" : "border-gray-200")}>
+            <Table>
+              <TableHeader>
+                <TableRow className={isCFO ? "bg-blue-50" : "bg-gray-50"}>
+                  {table.headers.map((h, i) => (
+                    <TableHead key={i} className="text-[11px] font-semibold">{h}</TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {table.rows.map((row, i) => (
+                  <TableRow key={i}>
+                    {row.map((cell, j) => (
+                      <TableCell key={j} className="text-[11px]">{cell}</TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          {table.afterTable && <p className="text-[12px] text-gray-700 mt-2">{formatInline(table.afterTable)}</p>}
+        </>
+      );
+    }
+  }
+
+  // Priorité 2: Code block (CTO, CISO)
+  if (contentTypes?.includes("code") || text.includes("```")) {
+    const codeResult = renderCodeBlock(text);
+    if (codeResult) {
+      return (
+        <>
+          {codeResult.before && <p className="text-[12px] text-gray-700 mb-1">{formatInline(codeResult.before)}</p>}
+          {codeResult.element}
+          {codeResult.after && <p className="text-[12px] text-gray-700 mt-1">{formatInline(codeResult.after)}</p>}
+        </>
+      );
+    }
+  }
+
+  // Fallback: markdown → JSX (comportement existant)
   if (!hasMarkdown(text)) {
     return <span className="whitespace-pre-wrap">{text}</span>;
   }

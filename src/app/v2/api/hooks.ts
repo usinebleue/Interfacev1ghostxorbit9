@@ -654,22 +654,38 @@ export function useChat() {
       setMessages((prev) => [...prev, userMsg]);
       setIsTyping(true);
 
-      // Frontend-driven thinking steps — contextuels par bot
-      const _BOT_STEPS: Record<string, string[]> = {
-        CEOB: ["Lecture du contexte stratégique...", "Analyse de la situation...", "Consultation du Blueprint...", "Évaluation des options...", "Formulation de la recommandation..."],
-        CTOB: ["Analyse technique...", "Revue de l'architecture...", "Évaluation des solutions...", "Préparation des spécifications..."],
-        CFOB: ["Analyse financière...", "Revue des projections...", "Calcul du ROI...", "Recommandation budgétaire..."],
-        CMOB: ["Analyse de marché...", "Évaluation du positionnement...", "Stratégie de contenu...", "Recommandation marketing..."],
-        CSOB: ["Analyse concurrentielle...", "Évaluation des risques...", "Cartographie des opportunités...", "Recommandation stratégique..."],
-        COOB: ["Revue des processus...", "Analyse opérationnelle...", "Optimisation des ressources...", "Plan d'action opérationnel..."],
-        CPOB: ["Analyse de la chaîne de valeur...", "Revue de la capacité...", "Optimisation industrielle...", "Recommandation production..."],
-        CHROB: ["Analyse des compétences...", "Évaluation de l'équipe...", "Stratégie talent...", "Recommandation RH..."],
-        CINOB: ["Veille technologique...", "Analyse des tendances...", "Évaluation d'impact...", "Recommandation innovation..."],
-        CROB: ["Analyse du pipeline...", "Évaluation des revenus...", "Optimisation de la conversion...", "Stratégie de croissance..."],
-        CLOB: ["Revue juridique...", "Analyse de conformité...", "Évaluation des risques légaux...", "Recommandation légale..."],
-        CISOB: ["Audit de sécurité...", "Analyse des vulnérabilités...", "Évaluation des protocoles...", "Recommandation sécurité..."],
+      // S102-B.2 — Thinking steps contextuels: [mots-clés user] → [angle bot] → [conclusion]
+      const _THINK_STOPS = new Set([
+        "dans","pour","avec","comment","quel","quelle","cette","votre","notre",
+        "quels","quelles","faire","faut","veux","voudrais","aimerais","peux",
+        "peut","dois","doit","aussi","encore","comme","juste","vraiment",
+        "toujours","suis","sont","être","etre","avoir","tout","tous",
+      ]);
+      const _buildThinkingSteps = (ag: string, userMsg: string): string[] => {
+        const sujet = userMsg
+          .replace(/[?!.,;:'"()]/g, "")
+          .split(" ")
+          .filter(w => w.length > 3 && !_THINK_STOPS.has(w.toLowerCase()))
+          .slice(0, 3).join(" ") || "votre question";
+        // Phase 1 = mots-cles du message, Phase 2 = angle expertise bot, Phase 3 = synthese
+        const _angles: Record<string, [string, string]> = {
+          CEOB: ["Évaluation stratégique", "Décision CEO"],
+          CTOB: ["Faisabilité technique", "Architecture"],
+          CFOB: ["Impact financier", "Recommandation CFO"],
+          CMOB: ["Analyse marché", "Stratégie marketing"],
+          CSOB: ["Risques & opportunités", "Recommandation CSO"],
+          COOB: ["Plan opérationnel", "Exécution"],
+          CPOB: ["Chaîne de valeur", "Optimisation"],
+          CHROB: ["Capital humain", "Stratégie talent"],
+          CINOB: ["Veille & tendances", "Benchmark"],
+          CROB: ["Pipeline revenus", "Conversion"],
+          CLOB: ["Cadre juridique", "Conformité"],
+          CISOB: ["Audit sécurité", "Protection"],
+        };
+        const [angle, synth] = _angles[ag] || ["Analyse", "Recommandation"];
+        return [`${sujet}...`, `${angle}...`, `${synth}...`];
       };
-      const _steps = _BOT_STEPS[agent] || ["Analyse de votre message...", "Préparation du contexte...", "Génération de la réponse..."];
+      const _steps = _buildThinkingSteps(agent, text);
       setThinkingSteps([_steps[0]]);
       let _thinkIdx = 1;
       const _thinkTimer = setInterval(() => {
@@ -740,6 +756,8 @@ export function useChat() {
         active_sub_section: meta?.activeSubSection,
         // Mega Plan V5 — workspace phase
         workspace_phase: meta?.workspacePhase,
+        // S102 — conversation-level message count (pas session-wide)
+        conversation_msg_count: messages.filter((m: any) => m.role === "user").length + 1,
       };
 
       // Create placeholder bot message for streaming
@@ -832,6 +850,7 @@ export function useChat() {
                         cascadeSuggestions: data.cascade_suggestions?.length ? data.cascade_suggestions : undefined,
                         scaffoldProgress: data.scaffold_progress || undefined,
                         cristallisationSuggestion: data.cristallisation_suggestion || undefined,
+                        cascadeItems: data.cascade_items?.length ? data.cascade_items : undefined,
                       }
                     : m
                 )
@@ -1011,6 +1030,7 @@ export function useChat() {
                     cascadeSuggestions: res.cascade_suggestions?.length ? res.cascade_suggestions : undefined,
                     scaffoldProgress: res.scaffold_progress || undefined,
                     cristallisationSuggestion: res.cristallisation_suggestion || undefined,
+                    cascadeItems: res.cascade_items?.length ? res.cascade_items : undefined,
                   }
                 : m
             )
@@ -1051,7 +1071,27 @@ export function useChat() {
     setActiveRoster((prev) => {
       if (prev.includes(code)) return prev;
       if (prev.length >= 3) return prev; // max 3
-      return [...prev, code];
+      const newRoster = [...prev, code];
+
+      // Animation d'ajout — multi-thinking variant "join" (comme les simulations)
+      // content = bot code → le rendu affiche "X rejoint la discussion" avec avatar spinner
+      const joinId = `msg-join-${Date.now()}`;
+      const joinMsg: ChatMessage = {
+        id: joinId,
+        role: "assistant",
+        content: code,
+        timestamp: new Date(),
+        agent: code,
+        msgType: "multi-thinking" as any,
+      };
+      setMessages((prevMsgs) => [...prevMsgs, joinMsg]);
+
+      // S102 — Fallback: auto-remove apres 8s si l'intro ne remplace pas le join
+      setTimeout(() => {
+        setMessages((prevMsgs) => prevMsgs.filter((m) => m.id !== joinId));
+      }, 8000);
+
+      return newRoster;
     });
   }, []);
 
@@ -1066,6 +1106,81 @@ export function useChat() {
     const limited = bots.slice(0, 3);
     setActiveRoster(limited.length > 0 ? limited : ["CEOB"]);
   }, []);
+
+  // ── Auto-introduction — quand un nouveau bot rejoint, il lit la conversation et se présente ──
+  const prevRosterRef = useRef<string[]>(["CEOB"]);
+  useEffect(() => {
+    const prevRoster = prevRosterRef.current;
+    const newBot = activeRoster.find((code) => !prevRoster.includes(code));
+    prevRosterRef.current = [...activeRoster];
+
+    // Pas d'intro si pas de nouveau bot ou pas de conversation en cours
+    if (!newBot) return;
+    const realMsgs = messages.filter(
+      (m) => (m.role === "user" || m.role === "assistant") &&
+        m.content && !["multi-thinking", "typing"].includes((m.msgType as string) || "")
+    );
+    if (realMsgs.length === 0) return;
+
+    // Après l'animation (3s), demander au bot de se présenter
+    const introTimer = setTimeout(async () => {
+      // Typing animation pendant l'appel API
+      const typingId = `msg-typing-intro-${Date.now()}`;
+      // S102 — Remplacer le join message par typing (meme slot, pas de gap visuel)
+      setMessages((prev) => {
+        const hasJoin = prev.some((m) => (m.msgType as string) === "multi-thinking" && m.content === newBot);
+        if (hasJoin) {
+          return prev.map((m) =>
+            ((m.msgType as string) === "multi-thinking" && m.content === newBot)
+              ? { id: typingId, role: "assistant" as const, content: "", timestamp: new Date(), agent: newBot, msgType: "typing" as any }
+              : m
+          );
+        }
+        return [...prev, { id: typingId, role: "assistant" as const, content: "", timestamp: new Date(), agent: newBot, msgType: "typing" as any }];
+      });
+
+      try {
+        const history = realMsgs.slice(-10).map((m) => ({
+          role: m.role, content: m.content.slice(0, 500), agent: m.agent,
+        }));
+
+        const res = await api.chatMulti({
+          message: "Tu viens de rejoindre une discussion en cours entre Carl et tes collègues. " +
+            "Présente brièvement (3-4 phrases max) ce que tu peux apporter sur le sujet en cours, basé sur ton expertise. " +
+            "Sois direct et concis. Ne répète pas ce qui a été dit. Propose 2-3 pistes concrètes de ta perspective.",
+          user_id: 1,
+          agents: [newBot],
+          history,
+        });
+
+        if (res.perspectives.length > 0) {
+          const persp = res.perspectives[0];
+          const modeConf = MODE_LIVE_CONFIG.credo;
+          const introMsg: ChatMessage = {
+            id: `msg-${++idCounter.current}`,
+            role: "assistant",
+            content: persp.contenu,
+            timestamp: new Date(),
+            agent: persp.agent,
+            tier: persp.tier,
+            options: persp.options.length > 0 ? persp.options.map((o) => o.label) : modeConf.options,
+            msgType: "consultation",
+            branchLabel: `Introduction — ${persp.nom}`,
+          };
+          // S102 — Remplacer typing par intro (meme slot, transition fluide)
+          setMessages((prev) => prev.map((m) => m.id === typingId ? introMsg : m));
+        } else {
+          setMessages((prev) => prev.filter((m) => m.id !== typingId));
+        }
+      } catch (e) {
+        // S102 — Retirer le typing en cas d'erreur
+        setMessages((prev) => prev.filter((m) => m.id !== typingId));
+        console.error("Bot intro failed:", e);
+      }
+    }, 3200); // 3.2s = juste après la fin de l'animation join (3s)
+
+    return () => clearTimeout(introTimer);
+  }, [activeRoster]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const newConversation = useCallback((initialBot?: string, workPhase?: string) => {
     // Park current thread if it has messages
@@ -1154,23 +1269,25 @@ export function useChat() {
   }, [activeThreadId]);
 
   // B.1 — Multi-perspectives : consulter N bots en parallele
+  // S102-B — Feature flag: bulle consolidee vs N bulles separees
+  const MULTI_CONSOLIDATED = true;
+
   const sendMultiPerspective = useCallback(
-    async (text: string, agents: string[], mode?: string) => {
+    async (text: string, agents: string[], mode?: string, opts?: { primaryAgent?: string; workspacePhase?: string }) => {
       if (agents.length < 1) return;
 
-      setIsTyping(true);
+      // 1. Toujours ajouter le message user (bulle visible dans la discussion)
+      const userMsg: ChatMessage = {
+        id: `msg-${++idCounter.current}`,
+        role: "user",
+        content: text,
+        timestamp: new Date(),
+        msgType: "normal",
+      };
+      setMessages((prev) => [...prev, userMsg]);
 
       // Auto-create thread if needed
       if (!activeThreadId) {
-        const userMsg: ChatMessage = {
-          id: `msg-${++idCounter.current}`,
-          role: "user",
-          content: text,
-          timestamp: new Date(),
-          msgType: "normal",
-        };
-        setMessages((prev) => [...prev, userMsg]);
-
         const newId = generateThreadId();
         const thread: Thread = {
           id: newId,
@@ -1186,37 +1303,130 @@ export function useChat() {
         setActiveThreadId(newId);
       }
 
+      // Animation consultation multi-agent (comme les simulations)
+      const consultBubbleId = `msg-consult-${Date.now()}`;
+      const consultMsg: ChatMessage = {
+        id: consultBubbleId,
+        role: "assistant",
+        content: "",
+        timestamp: new Date(),
+        agent: agents[0],
+        msgType: "multi-thinking" as any,
+      };
+      // S102-B.2 — Stocker le message user pour extraction mots-cles dans la bulle multi-thinking
+      (consultMsg as any).userText = text;
+      setMessages((prev) => [...prev, consultMsg]);
+      setIsTyping(true);
+
       try {
+        // Passer les derniers messages comme historique pour que les bots connaissent le contexte
+        const recentMsgs = messages
+          .filter((m) => m.role === "user" || m.role === "assistant")
+          .filter((m) => m.msgType !== "multi-thinking" && m.msgType !== "typing" && m.msgType !== "coaching")
+          .slice(-10)
+          .map((m) => ({ role: m.role, content: m.content.slice(0, 500), agent: m.agent }));
+
         const req: MultiChatRequest = {
           message: text,
           user_id: 1,
           agents,
           mode: mode || undefined,
+          history: recentMsgs.length > 0 ? recentMsgs : undefined,
+          primary_agent: opts?.primaryAgent || agents[0],   // S102-B
+          workspace_phase: opts?.workspacePhase,             // S102-B
         };
         const res = await api.chatMulti(req);
 
-        // Creer un message par perspective
-        for (const persp of res.perspectives) {
-          const modeConf = MODE_LIVE_CONFIG[mode || "credo"] || MODE_LIVE_CONFIG.credo;
-          const options = persp.options.length > 0
-            ? persp.options.map((o) => o.label)
-            : modeConf.options;
+        // Retirer l'animation consultation
+        setMessages((prev) => prev.filter((m) => m.id !== consultBubbleId));
 
-          const botMsg: ChatMessage = {
+        // ═══ S102-B — Bulle consolidee (flag ON + multi-bot) ═══
+        if (MULTI_CONSOLIDATED && res.perspectives.length > 1) {
+          const primary = res.perspectives.find((p) => p.is_primary) || res.perspectives[res.perspectives.length - 1];
+          const secondaries = res.perspectives.filter((p) => p.agent !== primary.agent);
+
+          const modeConf = MODE_LIVE_CONFIG[mode || "credo"] || MODE_LIVE_CONFIG.credo;
+          const consolidatedMsg: ChatMessage = {
             id: `msg-${++idCounter.current}`,
             role: "assistant",
-            content: persp.contenu,
+            content: primary.contenu,
             timestamp: new Date(),
-            agent: persp.agent,
-            tier: persp.tier,
-            options,
-            msgType: "consultation",
-            branchLabel: `Consultation — ${persp.nom}`,
-            branchDepth: 1,
+            agent: primary.agent,
+            tier: primary.tier,
+            options: primary.options.length > 0
+              ? primary.options.map((o) => o.label)
+              : modeConf.options,
+            msgType: "multi-enriched" as any,
+            branchLabel: `${primary.nom} + ${secondaries.length} expert${secondaries.length > 1 ? "s" : ""}`,
           };
-          setMessages((prev) => [...prev, botMsg]);
+          // Stocker metadata consolidee (via any cast — non-standard fields)
+          (consolidatedMsg as any).secondaryInputs = secondaries.map((s) => ({
+            agent: s.agent, nom: s.nom, contenu: s.contenu,
+          }));
+          (consolidatedMsg as any).modeActif = res.mode_actif;
+          (consolidatedMsg as any).modeSteps = res.mode_steps;
+          setMessages((prev) => [...prev, consolidatedMsg]);
+        } else {
+          // ═══ ANCIEN — N bulles separees (code S102, INTACT) ═══
+          for (let i = 0; i < res.perspectives.length; i++) {
+            const persp = res.perspectives[i];
+
+            // Délai entre les réponses (sauf la première) — effet séquentiel
+            if (i > 0) {
+              const typingId = `msg-typing-${persp.agent}`;
+              const typingMsg: ChatMessage = {
+                id: typingId,
+                role: "assistant",
+                content: "",
+                timestamp: new Date(),
+                agent: persp.agent,
+                msgType: "typing" as any,
+              };
+              setMessages((prev) => [...prev, typingMsg]);
+              await new Promise((r) => setTimeout(r, 1500));
+              setMessages((prev) => prev.filter((m) => m.id !== typingId));
+            }
+
+            const modeConf = MODE_LIVE_CONFIG[mode || "credo"] || MODE_LIVE_CONFIG.credo;
+            const options = persp.options.length > 0
+              ? persp.options.map((o) => o.label)
+              : modeConf.options;
+
+            const botMsg: ChatMessage = {
+              id: `msg-${++idCounter.current}`,
+              role: "assistant",
+              content: persp.contenu,
+              timestamp: new Date(),
+              agent: persp.agent,
+              tier: persp.tier,
+              options,
+              msgType: "consultation",
+              branchLabel: `Consultation — ${persp.nom}`,
+              branchDepth: 1,
+            };
+            setMessages((prev) => [...prev, botMsg]);
+          }
+
+          // Barre de synthese apres multi-bot (ancien)
+          if (res.perspectives.length > 1) {
+            const syntheseMsg: ChatMessage = {
+              id: `msg-synthese-${Date.now()}`,
+              role: "assistant",
+              content: "",
+              timestamp: new Date(),
+              agent: "SYSTEM",
+              msgType: "synthesis-bar" as any,
+              options: [
+                "Fusionner et synthétiser les avis",
+                "Challenger les deux positions",
+                "Plan d'action combiné",
+              ],
+            };
+            setMessages((prev) => [...prev, syntheseMsg]);
+          }
         }
       } catch (err) {
+        setMessages((prev) => prev.filter((m) => m.id !== consultBubbleId));
         const errMsg: ChatMessage = {
           id: `msg-${++idCounter.current}`,
           role: "assistant",

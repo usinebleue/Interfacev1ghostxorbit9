@@ -18,10 +18,11 @@
 
 import { useState, useRef, useEffect, useCallback, type KeyboardEvent, type ChangeEvent } from "react";
 import {
-  Bot, BrainCog, Atom, Plus, Send, ChevronUp, X, Pin, Check, ChevronDown, ChevronRight,
+  Bot, BrainCog, Atom, Plus, Send, ChevronUp, X, Pin, Check, CheckCircle2, ChevronDown, ChevronRight,
   Phone, PhoneOff, Video, Glasses, Paperclip, Globe, Zap, Activity,
   Brain, Target, AlertTriangle, Scale, Sparkles, MessageSquare,
-  Mic, MicOff, Loader2, Upload, MessageCircle, Clock,
+  Mic, MicOff, Loader2, Upload, MessageCircle, Clock, Network,
+  BookOpen, Search, BarChart2, Lightbulb,
 } from "lucide-react";
 import { cn } from "../components/ui/utils";
 import { useAmorcer } from "./AmorcerContext";
@@ -183,6 +184,81 @@ function parseMessageSegments(content: string): { title: string | null; text: st
   return segments;
 }
 
+/** Card contribution secondaire — style ConferenceAI (avatar + role badge + contenu complet + collapse) */
+function ContributionCard({ agent, nom, contenu, style }: {
+  agent: string; nom: string; contenu: string;
+  style: { text: string; border: string; ring: string; bubble: string };
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const isLong = contenu.length > 300;
+  const displayed = isLong && !expanded ? contenu.slice(0, 280) + "…" : contenu;
+
+  return (
+    <div className={cn("border-l-[3px] rounded-lg rounded-tl-none px-3 py-2", style.border, "bg-white/60")}>
+      {/* Header: avatar + nom + role badge */}
+      <div className="flex items-center gap-2 mb-1">
+        <div className={cn("w-5 h-5 rounded-full overflow-hidden shrink-0 ring-1", style.ring)}>
+          <img src={BOT_AVATAR[agent] || `/agents/${agent.toLowerCase()}.png`}
+            alt="" className="w-full h-full object-cover" />
+        </div>
+        <span className={cn("text-[10px] font-semibold", style.text)}>{nom}</span>
+        <span className="text-[9px] text-gray-400">{BOT_ROLE[agent]}</span>
+        <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium ml-auto", style.bubble, style.text)}>
+          Consultant
+        </span>
+      </div>
+      {/* Contenu complet avec markdown */}
+      <div className="text-[12px] text-gray-700 leading-relaxed"
+        dangerouslySetInnerHTML={{ __html: formatMarkdown(displayed) }} />
+      {/* Toggle expand/collapse */}
+      {isLong && (
+        <button onClick={() => setExpanded(!expanded)}
+          className="text-[10px] text-blue-600 hover:text-blue-800 mt-1 cursor-pointer font-medium">
+          {expanded ? "▲ Voir moins" : "▼ Voir la réponse complète"}
+        </button>
+      )}
+    </div>
+  );
+}
+
+/** S102-B.2 — Label dynamique par bot dans la bulle multi-thinking (mots-clés contextuels) */
+function ThinkingLabel({ botCode, userText }: { botCode: string; userText?: string }) {
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setTick((p) => p + 1), 2200);
+    return () => clearInterval(t);
+  }, []);
+
+  const STOPS = new Set([
+    "dans","pour","avec","comment","quel","quelle","cette","votre","notre",
+    "quels","quelles","faire","faut","veux","voudrais","aimerais","peux",
+    "peut","dois","doit","aussi","encore","comme","juste","vraiment",
+    "toujours","suis","sont","être","etre","avoir","tout","tous",
+  ]);
+  const kw = userText
+    ? userText.replace(/[?!.,;:'"()]/g, "").split(" ")
+        .filter((w) => w.length > 3 && !STOPS.has(w.toLowerCase()))
+        .slice(0, 2).join(" ")
+    : "";
+
+  const ANGLES: Record<string, string> = {
+    CEOB: "Vision globale", CFOB: "Angle financier", CMOB: "Stratégie marché",
+    CSOB: "Risques & leviers", CTOB: "Faisabilité tech", COOB: "Plan opérationnel",
+    CPOB: "Chaîne valeur", CHROB: "Capital humain", CINOB: "Innovation",
+    CROB: "Pipeline revenus", CLOB: "Cadre juridique", CISOB: "Cybersécurité",
+  };
+
+  const angle = ANGLES[botCode] || "Analyse";
+  const phases = kw ? [kw, angle, "Formulation"] : [angle, "Évaluation", "Formulation"];
+  const label = phases[tick % phases.length];
+
+  return (
+    <span className="text-[9px] text-gray-400 text-center truncate max-w-[80px]">
+      {label}...
+    </span>
+  );
+}
+
 /** Barre de boutons CREDO pour cristalliser un contenu dans une section workspace */
 function CristalliseBar({ content, botCode, activePhase, addSimV3Cristallise }: {
   content: string;
@@ -281,7 +357,7 @@ function SegmentedBotContent({ content, botCode, activePhase, addSimV3Cristallis
 // ═══ V3 MESSAGE LIST — Système unique de rendu des discussions ═══
 // Gère: bulles V3, options cliquables, streaming, thinking, coaching, voice
 function V3MessageList() {
-  const { messages, isTyping, sendMessage, thinkingSteps, parkThread, activeRoster } = useChatContext();
+  const { messages, isTyping, sendMessage, sendMultiPerspective, thinkingSteps, parkThread, activeRoster, chatTargetBot } = useChatContext();
   const { activeBotCode, activePhase, setActivePhase, setRightSection, setReflexionContext, reflexionContext, credoPhase, addWorkflowItem, workflowItems, chatStage, addSimV3Cristallise, focusType, activeDocumentSection } = useAmorcer();
   // Enrichir activePhase avec le step CREDO pour que le backend injecte le bon prompt
   const _credoSteps = ["comprendre", "rechercher", "exposer", "demontrer", "objectif"];
@@ -330,7 +406,7 @@ function V3MessageList() {
     const lower = opt.toLowerCase();
     if (lower.includes("parker") && lower.includes("thread")) { parkThread(); return; }
     if (lower.includes("synthes") || lower.includes("synthét")) {
-      sendMessage("Fais une synthèse structurée de notre discussion.", activeBotCode);
+      sendMessage("Fais une synthèse structurée de notre discussion.", chatTargetBot);
       return;
     }
 
@@ -375,7 +451,7 @@ function V3MessageList() {
           execution: "Plan d'exécution pour",
           retroaction: "Bilan et rétroaction sur",
         };
-        setTimeout(() => sendMessage(`${prompts[targetPhase]} ${context}${notesContext}`, activeBotCode, undefined, undefined, { workspacePhase: targetPhase }), 80);
+        setTimeout(() => sendMessage(`${prompts[targetPhase]} ${context}${notesContext}`, chatTargetBot, undefined, undefined, { workspacePhase: targetPhase }), 80);
         return;
       }
     }
@@ -401,7 +477,7 @@ function V3MessageList() {
         setReflexionContext(topic);
         setRightSection(null);
       }
-      sendMessage(techniquePrompt + topic, activeBotCode, undefined, undefined, { workspacePhase });
+      sendMessage(techniquePrompt + topic, chatTargetBot, undefined, undefined, { workspacePhase });
       return;
     }
 
@@ -414,15 +490,225 @@ function V3MessageList() {
       return;
     }
 
-    // Default: envoyer le texte de l'option au bot actif
-    sendMessage(opt, activeBotCode, undefined, undefined, { workspacePhase });
-  }, [isTyping, sendMessage, activeBotCode, parkThread, setActivePhase, setRightSection, setReflexionContext, reflexionContext, activePhase, workspacePhase, messages, activeDocumentSection, addSimV3Cristallise, workflowItems]);
+    // Default: envoyer le texte de l'option — multi-perspective si roster > 1
+    if (activeRoster.length > 1) {
+      sendMultiPerspective(opt, activeRoster, undefined, { primaryAgent: chatTargetBot, workspacePhase });
+    } else {
+      sendMessage(opt, chatTargetBot, undefined, undefined, { workspacePhase });
+    }
+  }, [isTyping, sendMessage, sendMultiPerspective, chatTargetBot, activeBotCode, activeRoster, parkThread, setActivePhase, setRightSection, setReflexionContext, reflexionContext, activePhase, workspacePhase, messages, activeDocumentSection, addSimV3Cristallise, workflowItems]);
 
   return (
     <div ref={scrollRef} className="flex-1 overflow-auto px-4 py-3 space-y-3">
       {messages.map((msg) => {
         if (msg.role === "system") return null;
         if (msg.isStreaming && !msg.content) return null;
+
+        // ── Multi-thinking bubble — animation consultation multi-agent ──
+        // Variante "join" (msg.content = bot code) : un bot rejoint la discussion
+        // Variante "consult" (msg.content vide) : consultation de tous les bots
+        if ((msg.msgType as string) === "multi-thinking") {
+          const joinBotCode = msg.content && msg.content.length <= 10 && msg.content.match(/^[A-Z]+$/) ? msg.content : null;
+          const userText = (msg as any).userText as string | undefined;
+          const headerText = joinBotCode
+            ? `${BOT_NAME[joinBotCode] || joinBotCode} rejoint la discussion...`
+            : "Consultation des départements...";
+          return (
+            <div key={msg.id} className="flex gap-2.5 animate-in fade-in slide-in-from-bottom-2 duration-500">
+              <div className="ml-2 flex-1">
+                <div className="bg-gradient-to-r from-gray-50 to-blue-50 border border-blue-200 rounded-xl px-4 py-3 shadow-sm">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Network className="h-4 w-4 text-blue-600 animate-pulse" />
+                    <span className="text-xs font-semibold text-blue-800">{headerText}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {activeRoster.map((code) => {
+                      const ts = V3_STYLE[code] || DEFAULT_STYLE;
+                      const isNewBot = joinBotCode === code;
+                      const isExisting = !!joinBotCode && joinBotCode !== code;
+                      return (
+                        <div key={code} className={cn(
+                          "flex flex-col items-center gap-1 transition-all duration-500",
+                          isNewBot && "scale-110",
+                        )}>
+                          <div className={cn(
+                            "relative w-10 h-10 rounded-full overflow-hidden border-2 shadow-sm transition-all",
+                            isNewBot ? cn(ts.ring, "shadow-md") : isExisting ? "border-green-400" : ts.ring,
+                          )}>
+                            <img src={BOT_AVATAR[code] || `/agents/${code.toLowerCase()}.png`} alt=""
+                              className={cn("w-full h-full object-cover", (isNewBot || !joinBotCode) && "opacity-50")} />
+                            {(isNewBot || !joinBotCode) && (
+                              <Loader2 className={cn("h-5 w-5 animate-spin absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2", ts.text)} />
+                            )}
+                            {isExisting && (
+                              <CheckCircle2 className="h-5 w-5 text-green-500 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                            )}
+                          </div>
+                          <span className={cn("text-[10px] font-medium", isNewBot ? ts.text : isExisting ? "text-gray-500" : ts.text)}>
+                            {BOT_NAME[code]}
+                          </span>
+                          {isExisting
+                            ? <span className="text-[9px] text-green-500 text-center">✓ Fait</span>
+                            : <ThinkingLabel botCode={code} userText={userText} />
+                          }
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        // ── Typing bubble — animation dots pour un bot spécifique ──
+        if ((msg.msgType as string) === "typing") {
+          const tCode = msg.agent || activeBotCode;
+          const ts = V3_STYLE[tCode] || DEFAULT_STYLE;
+          return (
+            <div key={msg.id} className="flex gap-2.5 animate-in fade-in duration-300">
+              <div className={cn("w-7 h-7 rounded-full overflow-hidden shrink-0 ring-2 mt-0.5", ts.ring)}>
+                <img src={BOT_AVATAR[tCode] || `/agents/${tCode.toLowerCase()}.png`} alt="" className="w-full h-full object-cover" />
+              </div>
+              <div className="border border-gray-200 rounded-xl rounded-tl-none px-3.5 py-3 shadow-sm bg-white">
+                <div className="flex items-center gap-2">
+                  <span className={cn("text-[11px] font-semibold", ts.text)}>{BOT_NAME[tCode]}</span>
+                  <div className="flex items-center gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <div className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <div className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        // ── Bot-join bubble — animation quand un bot rejoint la discussion ──
+        if ((msg.msgType as string) === "bot-join") {
+          const jCode = msg.agent || "CEOB";
+          const js = V3_STYLE[jCode] || DEFAULT_STYLE;
+          return (
+            <div key={msg.id} className="flex justify-center animate-in fade-in slide-in-from-bottom-2 duration-500">
+              <div className={cn("flex items-center gap-2 px-4 py-2 rounded-full border shadow-sm", js.bubble, js.border)}>
+                <div className={cn("w-6 h-6 rounded-full overflow-hidden ring-2 shrink-0", js.ring)}>
+                  <img src={BOT_AVATAR[jCode] || `/agents/${jCode.toLowerCase()}.png`} alt="" className="w-full h-full object-cover" />
+                </div>
+                <span className={cn("text-xs font-semibold", js.text)}>{BOT_NAME[jCode]}</span>
+                <span className="text-xs text-gray-500">a rejoint la discussion</span>
+              </div>
+            </div>
+          );
+        }
+
+        // ── S102 — Synthesis bar after multi-bot responses ──
+        if ((msg.msgType as string) === "synthesis-bar") {
+          return (
+            <div key={msg.id} className="flex gap-2 justify-center py-3 px-4 animate-in fade-in duration-300">
+              {(msg.options || []).map((opt, i) => {
+                const msgTypes = ["fusionner", "challenge", "plan_action"] as const;
+                return (
+                  <button
+                    key={i}
+                    onClick={() => sendMessage(opt, chatTargetBot, undefined, undefined, { msgType: msgTypes[i] || "fusionner" } as any)}
+                    className="px-3 py-1.5 rounded-full text-xs font-medium bg-gray-50 border border-gray-200 hover:bg-gray-100 hover:border-gray-300 transition-colors text-gray-600 hover:text-gray-800"
+                  >
+                    {opt}
+                  </button>
+                );
+              })}
+            </div>
+          );
+        }
+
+        // ── S102-B — Bulle consolidee multi-agent ──
+        if ((msg.msgType as string) === "multi-enriched") {
+          const mCode = msg.agent || activeBotCode || "CEOB";
+          const ms = V3_STYLE[mCode] || DEFAULT_STYLE;
+          const secondaries = ((msg as any).secondaryInputs || []) as Array<{agent: string; nom: string; contenu: string}>;
+          const modeActif = (msg as any).modeActif as string | undefined;
+          const modeSteps = ((msg as any).modeSteps || []) as Array<{id: string; label: string}>;
+          return (
+            <div key={msg.id} className="flex gap-2.5 animate-in fade-in slide-in-from-bottom-2 duration-500">
+              <div className={cn("w-7 h-7 rounded-full overflow-hidden shrink-0 ring-2 mt-0.5", ms.ring)}>
+                <img src={BOT_AVATAR[mCode] || `/agents/${mCode.toLowerCase()}.png`} alt="" className="w-full h-full object-cover" />
+              </div>
+              <div className={cn("flex-1 border-l-[3px] border rounded-xl rounded-tl-none px-3.5 py-2.5 shadow-sm max-w-[85%]", ms.border, ms.bubble)}>
+                {/* Header primaire */}
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className={cn("text-[11px] font-semibold", ms.text)}>{BOT_NAME[mCode]}</span>
+                  <span className="text-[9px] text-gray-400">{BOT_ROLE[mCode]}</span>
+                  {msg.branchLabel && (
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 font-medium">{msg.branchLabel}</span>
+                  )}
+                </div>
+                {/* Contenu principal (markdown) */}
+                <div className="text-sm text-gray-800 leading-relaxed prose-sm"
+                  dangerouslySetInnerHTML={{ __html: formatMarkdown(msg.content) }} />
+                {/* Contributions secondaires — ContributionCards style ConferenceAI */}
+                {secondaries.length > 0 && (
+                  <div className="mt-3 pt-2.5 border-t border-gray-200/60 space-y-2">
+                    {secondaries.map((sec) => {
+                      const secStyle = V3_STYLE[sec.agent] || DEFAULT_STYLE;
+                      return (
+                        <ContributionCard
+                          key={sec.agent}
+                          agent={sec.agent}
+                          nom={sec.nom}
+                          contenu={sec.contenu}
+                          style={secStyle}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
+                {/* Options inline */}
+                {msg.options && msg.options.length > 0 && (
+                  <div className="mt-3 pt-2 border-t border-gray-200/60 space-y-1">
+                    {msg.options.map((opt, i) => (
+                      <button key={i} onClick={() => handleOption(opt)}
+                        className="w-full text-left px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 transition-colors cursor-pointer group/opt">
+                        <div className="flex items-start gap-2">
+                          <span className="text-xs font-bold text-gray-400 mt-0.5 shrink-0">{i + 1}.</span>
+                          <span className="text-sm text-gray-700 group-hover/opt:text-gray-900 font-medium">{opt}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {/* Synthese actions inline */}
+                <div className="mt-2 pt-2 border-t border-gray-200/60 flex flex-wrap gap-1.5">
+                  {["Fusionner", "Challenger", "Plan d'action"].map((label, i) => {
+                    const msgTypes = ["fusionner", "challenge", "plan_action"] as const;
+                    return (
+                      <button key={i}
+                        onClick={() => sendMessage(label, msg.agent || chatTargetBot, undefined, undefined, { msgType: msgTypes[i] || "fusionner" } as any)}
+                        className="px-2.5 py-1 rounded-full text-[10px] font-medium bg-gray-50 border border-gray-200 hover:bg-gray-100 hover:border-gray-300 transition-colors text-gray-500 hover:text-gray-700 cursor-pointer">
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+                {/* S102-B Phase 7 — Mode steps indicator */}
+                {modeSteps.length > 0 && (
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <span className="text-[9px] text-gray-400 uppercase tracking-wider mr-1">{modeActif}</span>
+                    {modeSteps.map((step, i) => (
+                      <div key={i} className={cn(
+                        "px-2 py-0.5 rounded-full text-[9px] font-medium border",
+                        i === 0
+                          ? "bg-blue-50 border-blue-200 text-blue-700"
+                          : "bg-gray-50 border-gray-200 text-gray-400"
+                      )}>
+                        {step.label}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        }
 
         const isUser = msg.role === "user";
         const botCode = msg.agent || activeBotCode || "CEOB";
@@ -497,7 +783,7 @@ function V3MessageList() {
                   <CristalliseBar content={msg.content} botCode={botCode} activePhase={activePhase} addSimV3Cristallise={addSimV3Cristallise} />
                 )}
                 {/* ═══ Niveau 1 — Options DANS la bulle (pattern InlineOptions) ═══ */}
-                {isLast && !msg.isStreaming && msg.options && msg.options.length > 0 && (
+                {(isLast || msg.msgType === "consultation") && !msg.isStreaming && msg.options && msg.options.length > 0 && (
                   <div className="mt-3 space-y-1.5">
                     {msg.options.map((opt, i) => {
                       const borderColors = ["border-l-blue-500", "border-l-amber-500", "border-l-green-500", "border-l-red-500"];
@@ -505,7 +791,14 @@ function V3MessageList() {
                       return (
                         <button
                           key={i}
-                          onClick={() => handleOption(opt)}
+                          onClick={() => {
+                            // S102 — Consultation: router vers CE bot seulement (pas multi-perspective)
+                            if (msg.msgType === "consultation" && msg.agent && activeRoster.length > 1) {
+                              sendMessage(opt, msg.agent, undefined, undefined, { workspacePhase });
+                            } else {
+                              handleOption(opt);
+                            }
+                          }}
                           className={cn(
                             "w-full text-left border border-gray-200 rounded-lg px-3 py-2 transition-all",
                             "border-l-[3px]",
@@ -525,9 +818,10 @@ function V3MessageList() {
                 )}
               </div>
               {/* ═══ Niveau 2 — Actions structurelles SOUS la bulle (phase-gatees) ═══ */}
+              {/* S102-B: masquer en multi-bot (les options inline de la bulle consolidee suffisent) */}
               {/* Visible sur TOUS les messages bot (pas seulement le dernier) */}
               {/* Transition de phase + GPS seulement sur le dernier */}
-              {!msg.isStreaming && (() => {
+              {!msg.isStreaming && activeRoster.length <= 1 && (() => {
                 // Phase transition — JAMAIS en discussion (transitions via ControlTowerPanel uniquement)
                 const MIN_STAGE: Record<string, number> = { reflexion: 4, creation: 2, execution: 2, retroaction: 2 };
                 const NEXT_LABEL: Record<string, string> = { reflexion: "Passer en mode conception", creation: "Passer en mode execution", execution: "Passer en mode retroaction", retroaction: "Retour au cockpit" };
@@ -538,7 +832,7 @@ function V3MessageList() {
                   <BubbleActions
                     chatStage={chatStage}
                     messageContent={msg.content}
-                    onAction={(prompt) => sendMessage(prompt, msg.agent || activeBotCode, undefined, undefined, { workspacePhase })}
+                    onAction={(prompt) => sendMessage(prompt, msg.agent || chatTargetBot, undefined, undefined, { workspacePhase })}
                     onCristallise={() => {
                       const CREDO_SECTIONS = ["comprendre", "rechercher", "exposer", "demontrer", "objectif"];
                       const credoSection = CREDO_SECTIONS[chatStage] || "comprendre";
@@ -550,7 +844,7 @@ function V3MessageList() {
                     }}
                     phaseTransition={transitionLabel}
                     onPhaseTransition={transitionLabel ? () => handleOption(transitionLabel) : undefined}
-                    gpsSuggestion={isLast ? msg.cristallisationSuggestion : undefined}
+                    gpsSuggestion={msg.cristallisationSuggestion || undefined}
                     onGpsCristallise={isLast && msg.cristallisationSuggestion ? () => addSimV3Cristallise(msg.content, msg.agent || activeBotCode, msg.cristallisationSuggestion!.section_id, "chat") : undefined}
                   />
                 );
@@ -560,13 +854,16 @@ function V3MessageList() {
         );
       })}
 
-      {/* Thinking step — UNE ligne qui défile, contextuelle par bot */}
+      {/* Thinking step — UNE ligne qui défile, contextuelle par bot + icones S102-B */}
       {isTyping && thinkingSteps.length > 0 && (() => {
         const streamMsg = [...messages].reverse().find(m => m.role === "assistant" && m.isStreaming);
         const thinkBot = streamMsg?.agent || activeBotCode;
         const ts = V3_STYLE[thinkBot] || DEFAULT_STYLE;
         const botName = BOT_NAME[thinkBot] || "CarlOS";
         const currentStep = thinkingSteps[thinkingSteps.length - 1];
+        const STEP_ICONS = [BookOpen, Search, BarChart2, Scale, Lightbulb];
+        const stepIdx = thinkingSteps.length - 1;
+        const StepIcon = STEP_ICONS[Math.min(stepIdx, STEP_ICONS.length - 1)];
         return (
           <div className="flex gap-2.5 animate-in fade-in duration-300">
             <div className={cn("w-7 h-7 rounded-full overflow-hidden shrink-0 ring-2 mt-0.5", ts.ring)}>
@@ -574,7 +871,7 @@ function V3MessageList() {
             </div>
             <div className={cn("border-l-[3px] border border-gray-200 rounded-xl rounded-tl-none px-3.5 py-2.5 shadow-sm", ts.border, ts.bubble)}>
               <div className={cn("flex items-center gap-2 text-sm", ts.text)}>
-                <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
+                <StepIcon className="h-3.5 w-3.5 animate-pulse shrink-0" />
                 <span className="font-medium">{botName}</span>
                 <span className="text-gray-500 animate-in fade-in duration-500" key={currentStep}>{currentStep}</span>
               </div>
@@ -849,7 +1146,7 @@ export function DiscussionWindow() {
             <DeptWelcomeScreen
               botCode={activeBotCode}
               onAction={(text, phase) => {
-                sendMessage(text, activeBotCode, undefined, undefined, { workspacePhase: phase || "discussion" });
+                sendMessage(text, chatTargetBot, undefined, undefined, { workspacePhase: phase || "discussion" });
                 setReflexionContext(text.substring(0, 80));
                 setFocusType("chantier");
                 setRightSection(null);
@@ -932,7 +1229,7 @@ function ChatBoxV3() {
   const attachRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // visionInputRef retiré — Vision = app mobile (Ray-Ban Meta)
-  const { sendMessage, injectVoiceMessage, newConversation } = useChatContext();
+  const { sendMessage, sendMultiPerspective, injectVoiceMessage, newConversation, chatTargetBot, activeRoster } = useChatContext();
   const { activeBotCode, activePhase, setRightSection, reflexionContext, setReflexionContext, setFocusType, setActivePhase, activeMeeting, chatStage } = useAmorcer();
   // Enrichir activePhase avec le step CREDO pour que le backend injecte le bon prompt
   const _credoStepsCB = ["comprendre", "rechercher", "exposer", "demontrer", "objectif"];
@@ -1137,7 +1434,7 @@ function ChatBoxV3() {
     setUploading(true);
     try {
       const result = await api.uploadBureauFile(file, file.name);
-      sendMessage(`Fichier joint: ${result.titre || file.name}`, activeBotCode);
+      sendMessage(`Fichier joint: ${result.titre || file.name}`, chatTargetBot);
     } catch (err) {
       console.error("[ChatBoxV3] Upload error:", err);
     } finally {
@@ -1150,7 +1447,12 @@ function ChatBoxV3() {
     const text = inputText.trim();
     if (!text) return;
     setInputText("");
-    sendMessage(text, activeBotCode, undefined, undefined, { workspacePhase });
+    // Multi-bot: si 2+ bots dans le roster, consultation multi-perspectives
+    if (activeRoster.length > 1) {
+      sendMultiPerspective(text, activeRoster, undefined, { primaryAgent: chatTargetBot, workspacePhase });
+    } else {
+      sendMessage(text, chatTargetBot, undefined, undefined, { workspacePhase });
+    }
     textareaRef.current?.focus();
 
     // Si aucun contexte de travail actif → entrer en Discussion (pas de détection de mots-clés,
@@ -1170,7 +1472,7 @@ function ChatBoxV3() {
   };
 
   const isInCall = callState === "connected" || callState === "connecting";
-  const botName = BOT_NAME[activeBotCode] || "CarlOS";
+  const botName = BOT_NAME[chatTargetBot] || BOT_NAME[activeBotCode] || "CarlOS";
 
   return (
     <div className="shrink-0 bg-white px-3 pb-2 pt-1">
@@ -1221,7 +1523,7 @@ function ChatBoxV3() {
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Parle à CarlOS..."
+          placeholder={activeRoster.length > 1 ? `Parle à ${activeRoster.map(c => BOT_NAME[c] || c).join(" & ")}...` : `Parle à ${botName}...`}
           className="w-full text-sm px-4 pt-3 pb-2 rounded-t-2xl border-0 focus:outline-none min-h-[70px] resize-none bg-transparent"
           rows={3}
         />

@@ -442,6 +442,7 @@ export function WorkspacePhasesPanel() {
               const isDone = i < activeIdx;
               const isFuture = i > activeIdx;
               const count = workflowItems.filter(w => w.phase === wp.key).length;
+              const cascadeCount = workflowItems.filter(w => w.phase === wp.key && w.type === "cascade").length;
               return (
                 <button
                   key={wp.key}
@@ -462,6 +463,7 @@ export function WorkspacePhasesPanel() {
                   {isDone ? <Check className="h-3 w-3 text-green-500" /> : <pc2.Icon className={cn("h-3 w-3", isCurrent ? pc2.text : "text-gray-300")} />}
                   <span>{wp.label}</span>
                   {count > 0 && <span className={cn("text-[9px] px-1 rounded-full", isCurrent ? pc2.badge : "bg-gray-100 text-gray-500")}>{count}</span>}
+                  {!isCurrent && cascadeCount > 0 && <span className="px-1.5 py-0.5 text-[9px] font-bold bg-amber-100 text-amber-700 rounded-full">{cascadeCount}</span>}
                 </button>
               );
             })}

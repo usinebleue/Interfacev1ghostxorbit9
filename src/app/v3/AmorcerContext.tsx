@@ -91,6 +91,7 @@ export interface SimV3CristalliseItem {
   source: string;
   sectionId: string;
   sourceType?: "chat" | "voice" | "meeting";
+  contentTypes?: string[];  // S103 — types détectés par backend (tableau, code, metriques, etc.)
 }
 
 interface AmorcerState {
@@ -144,7 +145,7 @@ interface AmorcerState {
   simV3Stage: number;
   setSimV3Stage: React.Dispatch<React.SetStateAction<number>>;
   simV3Cristallises: SimV3CristalliseItem[];
-  addSimV3Cristallise: (text: string, source: string, sectionId: string, sourceType?: "chat" | "voice" | "meeting") => void;
+  addSimV3Cristallise: (text: string, source: string, sectionId: string, sourceType?: "chat" | "voice" | "meeting", contentTypes?: string[]) => void;
 
   // Workspace capture (artefacts progressifs)
   pendingCapture: string | null;
@@ -324,16 +325,17 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
   const [simV3Active, setSimV3Active] = useState(false);
   const [simV3Stage, setSimV3Stage] = useState(-1);
   const [simV3Cristallises, setSimV3Cristallises] = useState<SimV3CristalliseItem[]>([]);
-  const addSimV3Cristallise = useCallback((text: string, source: string, sectionId: string, sourceType?: "chat" | "voice" | "meeting") => {
+  const addSimV3Cristallise = useCallback((text: string, source: string, sectionId: string, sourceType?: "chat" | "voice" | "meeting", contentTypes?: string[]) => {
     setSimV3Cristallises((prev) => {
       // Replace existing entry for same sectionId (action = update)
       const existing = prev.findIndex(item => item.sectionId === sectionId);
+      const item: SimV3CristalliseItem = { id: `c-${Date.now()}`, text, source, sectionId, sourceType: sourceType || "chat", contentTypes };
       if (existing >= 0) {
         const copy = [...prev];
-        copy[existing] = { id: `c-${Date.now()}`, text, source, sectionId, sourceType: sourceType || "chat" };
+        copy[existing] = item;
         return copy;
       }
-      return [...prev, { id: `c-${Date.now()}`, text, source, sectionId, sourceType: sourceType || "chat" }];
+      return [...prev, item];
     });
   }, []);
 

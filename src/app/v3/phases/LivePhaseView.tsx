@@ -21,10 +21,12 @@ import {
   X,
   ArrowRight,
   RotateCcw,
+  GitBranch,
 } from "lucide-react";
 import { cn } from "../../components/ui/utils";
 import { SF } from "../core/styles";
 import { useAmorcer } from "../AmorcerContext";
+import { useChatContext } from "../../v2/context/ChatContext";
 import { PHASE_CONFIGS } from "./phase-config";
 import type { PhaseConfig, PhaseStep } from "./phase-config";
 import { formatCristallise } from "./content-formatters";
@@ -53,7 +55,9 @@ function LivePhaseViewInner({ config, context, onPhaseComplete, onReturnToCockpi
   const {
     chatStage, workflowItems, removeWorkflowItem, getCristallise,
     getCristalliseItem, editCristallise, setPendingCapture, addWorkflowItem, activeBotCode,
+    activePhase,
   } = useAmorcer();
+  const { sendMessage } = useChatContext();
   const displayContext = context || config.label;
 
   // useWorkspaceCapture() → déplacé dans WorkspacePhasesPanel (toujours actif)
@@ -159,7 +163,10 @@ function LivePhaseViewInner({ config, context, onPhaseComplete, onReturnToCockpi
             colors={col}
             phaseKey={config.key}
             activeBotCode={activeBotCode}
-            onSendPrompt={(prompt) => { setPendingCapture(activeStep.id); }}
+            onSendPrompt={(prompt) => {
+              setPendingCapture(activeStep.id);
+              sendMessage(prompt, activeBotCode);
+            }}
             onPin={(text) => addWorkflowItem(config.key, text, "insight")}
             onEdit={(newText) => editCristallise(activeStep.id, newText)}
           />
@@ -181,6 +188,31 @@ function LivePhaseViewInner({ config, context, onPhaseComplete, onReturnToCockpi
               </div>
             </div>
           )}
+
+          {/* S103 — Options à explorer (branches non choisies) */}
+          {(() => {
+            const phaseBranches = workflowItems.filter(w => w.phase === config.key && w.type === "branch");
+            if (phaseBranches.length === 0) return null;
+            return (
+              <div className="mt-3 border border-dashed border-gray-200 rounded-xl p-3 bg-gray-50/50">
+                <span className="text-[10px] font-bold uppercase text-gray-400 tracking-wider">
+                  Options à explorer ({phaseBranches.length})
+                </span>
+                {phaseBranches.map(item => (
+                  <div key={item.id} className="flex items-center gap-2 mt-1.5">
+                    <GitBranch className="h-3 w-3 text-gray-400 shrink-0" />
+                    <span className="text-[11px] text-gray-600 flex-1">{item.text}</span>
+                    <button
+                      onClick={() => sendMessage(`Explore: ${item.text}`, activeBotCode)}
+                      className="text-[10px] text-blue-600 hover:underline cursor-pointer shrink-0"
+                    >
+                      Explorer
+                    </button>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
 
           {/* Bouton transition vers la phase suivante */}
           {completedCount >= minRequired && config.nextPhase && onPhaseComplete && (
@@ -254,7 +286,7 @@ function StepContent({ step, captured, cristalliseItem, isUnlocked, colors, phas
             <div className="space-y-0">
               {/* Contenu formaté markdown */}
               <div className="text-xs text-gray-700 leading-relaxed max-h-[500px] overflow-y-auto">
-                {formatCristallise(captured)}
+                {formatCristallise(captured, cristalliseItem?.contentTypes, cristalliseItem?.source)}
               </div>
               {/* Boutons actions + badge source */}
               <CristalliseActions
