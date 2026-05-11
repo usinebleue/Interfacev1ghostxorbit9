@@ -20,6 +20,8 @@ import { WorkspacePhasesPanel } from "./WorkspacePhasesPanel";
 import { AmorcerProvider, useAmorcer } from "./AmorcerContext";
 import { useFrameMaster } from "../v2/context/FrameMasterContext";
 import { getSectionGPS } from "./core/section-registry";
+import { useIsMobile } from "../components/ui/use-mobile";
+import { AmorcerLayoutMobile } from "./AmorcerLayoutMobile";
 
 // ═══ Mapping V3 rightSection → V2 activeView (fallback quand pas dans section-registry) ═══
 const V3_TO_V2_VIEW: Record<string, string> = {
@@ -113,6 +115,7 @@ export function FrameMasterAmorcer() {
 function AmorcerLayout() {
   const { rightSection, setActivePhase, setRightSection, setReflexionContext } = useAmorcer();
   const { setLeftCollapsed } = useFrameMaster();
+  const isMobile = useIsMobile();
 
   // Écouter les transitions de phase CREDO → Workspace (CustomEvent depuis CanvasActionContext)
   // PROTÉGÉ: ne switch PAS si l'utilisateur est déjà dans un workflow actif
@@ -137,6 +140,9 @@ function AmorcerLayout() {
     window.addEventListener("bt-work-phase-transition", handler);
     return () => window.removeEventListener("bt-work-phase-transition", handler);
   }, [setActivePhase, setReflexionContext, setRightSection, activePhase]);
+
+  // Mobile → layout 3 onglets plein ecran (desktop inchange)
+  if (isMobile) return <AmorcerLayoutMobile />;
 
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-white">

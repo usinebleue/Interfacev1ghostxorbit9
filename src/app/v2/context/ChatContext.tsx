@@ -23,6 +23,7 @@ interface ChatState {
   autoTTSEnabled: boolean;
   videoAvatarEnabled: boolean;
   activeRoster: string[];
+  chatTargetBot: string;
   // Sprint Discussion 1 — CREDO phase-gating
   exchangeCount: number;
   hasProduct: boolean;
@@ -39,7 +40,7 @@ interface BranchMeta {
 interface ChatActions {
   sendMessage: (text: string, agent?: string, ghost?: string, meta?: BranchMeta) => Promise<void>;
   sendMultiPerspective: (text: string, agents: string[]) => Promise<void>;
-  injectVoiceMessage: (role: "user" | "assistant", content: string, agent?: string) => void;
+  injectVoiceMessage: (role: "user" | "assistant", content: string, agent?: string, meta?: { options?: any[]; canvasActions?: any[]; teamProposal?: any; phaseCredo?: string; bubbleContext?: any; isDiagnostic?: boolean; ghostActif?: string | null; tier?: string; latenceMs?: number; cascadeSuggestions?: any[]; scaffoldProgress?: any }) => void;
   injectTeamProposal: (proposal: TeamProposal, agent: string) => void;
   setReflectionMode: (mode: ReflectionMode) => void;
   setCurrentCREDOPhase: (phase: CREDOPhase) => void;
@@ -55,6 +56,7 @@ interface ChatActions {
   toggleVideoAvatar: () => void;
   addBotToRoster: (code: string) => void;
   removeBotFromRoster: (code: string) => void;
+  setChatTargetBot: (code: string) => void;
   acceptTeamProposal: (bots: string[]) => void;
   renameThread: (threadId: string, newTitle: string) => void;
 }
@@ -133,6 +135,33 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       newConversation(activeBotCode);
     }
   }, [activeBotCode]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── chatTargetBot — quel bot du roster reçoit les messages ──
+  const [chatTargetBot, setChatTargetBotRaw] = useState(activeBotCode);
+
+  // Wrapper addBotToRoster: ajouter + cibler le nouveau bot
+  const wrappedAddBotToRoster = useCallback((code: string) => {
+    addBotToRoster(code);
+    setChatTargetBotRaw(code);
+  }, [addBotToRoster]);
+
+  // Wrapper removeBotFromRoster: si on retire le bot ciblé, fallback au premier du roster
+  const wrappedRemoveBotFromRoster = useCallback((code: string) => {
+    removeBotFromRoster(code);
+    setChatTargetBotRaw((prev) => prev === code ? activeRoster[0] || activeBotCode : prev);
+  }, [removeBotFromRoster, activeRoster, activeBotCode]);
+
+  // setChatTargetBot — exposé pour clics sur avatars du roster
+  const setChatTargetBot = useCallback((code: string) => {
+    setChatTargetBotRaw(code);
+  }, []);
+
+  // Reset chatTargetBot quand on change de département (activeBotCode change → newConversation)
+  // Le useEffect existant (L129-135) appelle newConversation qui reset le roster à [activeBotCode]
+  // On sync chatTargetBot ici aussi
+  useEffect(() => {
+    setChatTargetBotRaw(activeBotCode);
+  }, [activeBotCode]);
 
   const [activeReflectionMode, setReflectionMode] =
     useState<ReflectionMode>("credo");
@@ -265,6 +294,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         autoTTSEnabled,
         videoAvatarEnabled,
         activeRoster,
+        chatTargetBot,
         exchangeCount,
         hasProduct,
         thinkingSteps,
@@ -283,8 +313,9 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         exportCrystals,
         toggleAutoTTS,
         toggleVideoAvatar,
-        addBotToRoster,
-        removeBotFromRoster,
+        addBotToRoster: wrappedAddBotToRoster,
+        removeBotFromRoster: wrappedRemoveBotFromRoster,
+        setChatTargetBot,
         acceptTeamProposal,
         renameThread,
       }}

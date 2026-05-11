@@ -6,8 +6,10 @@ import {
   Sparkles, Settings, UserPlus, Trash2, Plus, Save, Loader2, Info,
 } from "lucide-react";
 import { cn } from "../../../components/ui/utils";
+import { useIsMobile } from "../../../components/ui/use-mobile";
 import { useDataSource } from "../../data/use-data-source";
 import { DomainBadge } from "../../data/source-badge";
+import { MobileSidebarSheet } from "../../core/MobileSidebarSheet";
 import {
   type Membre, type Comite,
   COMITES_SUGGESTED_TEMPLATES, COMITE_MOCK_REUNIONS, COMITE_MOCK_DOCUMENTS,
@@ -32,6 +34,7 @@ export function ComitesManager({ botCode, deptLabel, headerGradient, data, onFie
   saving: boolean;
   dirty: boolean;
 }) {
+  const isMobile = useIsMobile();
   const { data: comitesSourceData } = useDataSource("comites", { COMITES_SUGGESTED_TEMPLATES, COMITE_MOCK_REUNIONS, COMITE_MOCK_DOCUMENTS });
 
   const KEY = `comites_${botCode}`;
@@ -122,61 +125,75 @@ export function ComitesManager({ botCode, deptLabel, headerGradient, data, onFie
         </div>
       </div>
 
-      <div className="flex gap-3">
+      <div className={cn("flex gap-3", isMobile && "flex-col gap-0")}>
       {/* Sidebar — Vue d'ensemble + liste des comités */}
-      <div className="w-[180px] shrink-0 space-y-1">
-        {/* Vue d'ensemble */}
-        <button onClick={() => { setShowOverview(true); setActiveComite(null); }} className={cn(
-          "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
-          showOverview && !activeComite ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent"
-        )}>
-          <div className="flex items-center gap-1.5">
-            <BarChart3 className={cn("h-3.5 w-3.5", showOverview && !activeComite ? "text-blue-600" : "text-gray-400")} />
-            <span className={cn("text-[10px] font-bold leading-tight", showOverview && !activeComite ? "text-blue-700" : "text-gray-700")}>Vue d'ensemble</span>
-          </div>
-          <div className="text-[9px] text-gray-400 ml-[20px]">{comites.length} comités</div>
-        </button>
-
-        {/* Séparateur */}
-        {comites.length > 0 && <div className="border-t border-gray-100 my-1" />}
-
-        {/* Liste comités */}
-        {comites.map(c => (
-          <button key={c.id} onClick={() => { setActiveComite(c.id); setShowOverview(false); setComiteTab("config"); }} className={cn(
-            "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer group",
-            activeComite === c.id && !showOverview ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent"
+      {(() => {
+        const sidebarContent = (<>
+          {/* Vue d'ensemble */}
+          <button onClick={() => { setShowOverview(true); setActiveComite(null); }} className={cn(
+            "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
+            showOverview && !activeComite ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent"
           )}>
             <div className="flex items-center gap-1.5">
-              <span className={cn("text-[10px] font-bold flex-1 leading-tight truncate", activeComite === c.id && !showOverview ? "text-blue-700" : "text-gray-700")}>
-                {c.nom || "Nouveau comité"}
-              </span>
-              <button onClick={e => { e.stopPropagation(); removeComite(c.id); }} className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-400 transition-all cursor-pointer">
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
+              <BarChart3 className={cn("h-3.5 w-3.5", showOverview && !activeComite ? "text-blue-600" : "text-gray-400")} />
+              <span className={cn("text-[10px] font-bold leading-tight", showOverview && !activeComite ? "text-blue-700" : "text-gray-700")}>Vue d'ensemble</span>
             </div>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-[9px] text-gray-400">{c.membres.length} membre{c.membres.length !== 1 ? "s" : ""}</span>
-              <span className="text-[9px] text-gray-300">·</span>
-              <span className="text-[9px] text-gray-400">{c.frequence}</span>
+            <div className="text-[9px] text-gray-400 ml-[20px]">{comites.length} comités</div>
+          </button>
+
+          {/* Séparateur */}
+          {comites.length > 0 && <div className="border-t border-gray-100 my-1" />}
+
+          {/* Liste comités */}
+          {comites.map(c => (
+            <button key={c.id} onClick={() => { setActiveComite(c.id); setShowOverview(false); setComiteTab("config"); }} className={cn(
+              "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer group",
+              activeComite === c.id && !showOverview ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent"
+            )}>
+              <div className="flex items-center gap-1.5">
+                <span className={cn("text-[10px] font-bold flex-1 leading-tight truncate", activeComite === c.id && !showOverview ? "text-blue-700" : "text-gray-700")}>
+                  {c.nom || "Nouveau comité"}
+                </span>
+                <button onClick={e => { e.stopPropagation(); removeComite(c.id); }} className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-400 transition-all cursor-pointer">
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="text-[9px] text-gray-400">{c.membres.length} membre{c.membres.length !== 1 ? "s" : ""}</span>
+                <span className="text-[9px] text-gray-300">·</span>
+                <span className="text-[9px] text-gray-400">{c.frequence}</span>
+              </div>
+            </button>
+          ))}
+
+          {/* Bouton ajouter */}
+          <button onClick={addComite} className="w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer hover:bg-gray-50 border border-dashed border-gray-200 mt-1">
+            <div className="flex items-center gap-1.5">
+              <Plus className="h-3.5 w-3.5 text-gray-400" />
+              <span className="text-[10px] font-bold text-gray-400">Nouveau comité</span>
             </div>
           </button>
-        ))}
-
-        {/* Bouton ajouter */}
-        <button onClick={addComite} className="w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer hover:bg-gray-50 border border-dashed border-gray-200 mt-1">
-          <div className="flex items-center gap-1.5">
-            <Plus className="h-3.5 w-3.5 text-gray-400" />
-            <span className="text-[10px] font-bold text-gray-400">Nouveau comité</span>
+        </>);
+        const currentLabel = activeComite
+          ? (comites.find(c => c.id === activeComite)?.nom || "Comité")
+          : "Vue d'ensemble";
+        return isMobile ? (
+          <MobileSidebarSheet currentLabel={currentLabel} itemCount={comites.length + 1}>
+            {sidebarContent}
+          </MobileSidebarSheet>
+        ) : (
+          <div className="w-[180px] shrink-0 space-y-1">
+            {sidebarContent}
           </div>
-        </button>
-      </div>
+        );
+      })()}
 
       {/* Contenu */}
       <div className="flex-1 min-w-0 space-y-3">
 
           {/* Vue d'ensemble */}
           {(showOverview || !activeComite) && (<>
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div className="rounded-xl border border-gray-200 shadow-sm bg-white">
                 <div className="flex items-center justify-center gap-2 px-3 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
                   <Briefcase className="h-4 w-4 text-gray-900 stroke-[2.5]" />
@@ -288,7 +305,7 @@ export function ComitesManager({ botCode, deptLabel, headerGradient, data, onFie
                   <span className="text-xs font-bold text-gray-900">Configuration du comité</span>
                 </div>
                 <div className="p-4">
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <label className="text-xs font-bold text-gray-600 mb-1 block">Nom du comité</label>
                       <input className={inputBase} value={active.nom} onChange={e => updateComite(active.id, { nom: e.target.value })} placeholder="Ex: Comité stratégique, Comité SST..." />
@@ -354,7 +371,7 @@ export function ComitesManager({ botCode, deptLabel, headerGradient, data, onFie
                     <div className="space-y-2">
                       {active.membres.map((m, idx) => (
                         <div key={idx} className={cn("rounded-lg border px-3 py-3 group transition-all", m.type === "externe" ? "border-amber-200 bg-amber-50/30" : "border-gray-200 bg-white")}>
-                          <div className="grid grid-cols-5 gap-2 items-center">
+                          <div className="grid grid-cols-2 md:grid-cols-5 gap-2 items-center">
                             <div>
                               <label className="text-[9px] text-gray-400 block mb-0.5">Nom</label>
                               <input className="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white" value={m.nom} onChange={e => updateMembre(active.id, idx, { nom: e.target.value })} placeholder="Nom complet" />

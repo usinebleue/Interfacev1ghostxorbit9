@@ -24,7 +24,9 @@ import {
 } from "lucide-react";
 import { cn } from "../../components/ui/utils";
 import { SF } from "../core/styles";
+import { useIsMobile } from "../../components/ui/use-mobile";
 import { useAmorcer } from "../AmorcerContext";
+import { MobileSidebarSheet } from "../core/MobileSidebarSheet";
 
 // ═══ 4 etapes stage-gated — meme pattern que FocusDiscussionView ═══
 const REFLEXION_STEPS: { id: number; key: string; title: string; subtitle: string; icon: React.ElementType; minStage: number }[] = [
@@ -48,6 +50,7 @@ interface FocusReflexionViewProps {
 }
 
 export function FocusReflexionView({ context, onBack, onAdvancePhase }: FocusReflexionViewProps) {
+  const isMobile = useIsMobile();
   const { chatStage, workflowItems, removeWorkflowItem } = useAmorcer();
   const displayContext = context || "Reflexion";
 
@@ -90,33 +93,44 @@ export function FocusReflexionView({ context, onBack, onAdvancePhase }: FocusRef
       </div>
 
       {/* 2. SIDEBAR ETAPES + CONTENU */}
-      <div className="flex gap-4">
-        <div className={SF.sidebarW}>
-          {REFLEXION_STEPS.map((s) => {
-            const visible = chatStage >= s.minStage;
-            const isActive = activeStepKey === s.key && visible;
-            const col = STEP_COLORS[s.key];
-            return (
-              <button
-                key={s.key}
-                onClick={() => visible && setActiveStepKey(s.key)}
-                disabled={!visible}
-                className={cn(
-                  SF.btnBase,
-                  isActive ? `${col.active} border shadow-sm` : visible ? SF.btnInactive : "opacity-40 cursor-not-allowed border border-transparent"
-                )}
-              >
-                <div className={cn("w-5 h-5 rounded-md flex items-center justify-center shrink-0", visible ? `${col.bg} ${col.text}` : "bg-gray-100 text-gray-300")}>
-                  <s.icon className="h-3 w-3" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <span className={cn("text-[10px] font-bold leading-tight block", isActive ? col.text : visible ? "text-gray-700" : "text-gray-400")}>{s.title}</span>
-                  <span className="text-[9px] text-gray-400 leading-tight block">{s.subtitle}</span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
+      <div className={cn("flex gap-4", isMobile && "flex-col gap-0")}>
+        {(() => {
+          const sidebarContent = (<>
+            {REFLEXION_STEPS.map((s) => {
+              const visible = chatStage >= s.minStage;
+              const isActive = activeStepKey === s.key && visible;
+              const col = STEP_COLORS[s.key];
+              return (
+                <button
+                  key={s.key}
+                  onClick={() => visible && setActiveStepKey(s.key)}
+                  disabled={!visible}
+                  className={cn(
+                    SF.btnBase,
+                    isActive ? `${col.active} border shadow-sm` : visible ? SF.btnInactive : "opacity-40 cursor-not-allowed border border-transparent"
+                  )}
+                >
+                  <div className={cn("w-5 h-5 rounded-md flex items-center justify-center shrink-0", visible ? `${col.bg} ${col.text}` : "bg-gray-100 text-gray-300")}>
+                    <s.icon className="h-3 w-3" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className={cn("text-[10px] font-bold leading-tight block", isActive ? col.text : visible ? "text-gray-700" : "text-gray-400")}>{s.title}</span>
+                    <span className="text-[9px] text-gray-400 leading-tight block">{s.subtitle}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </>);
+          return isMobile ? (
+            <MobileSidebarSheet currentLabel={REFLEXION_STEPS.find(s => s.key === activeStepKey)?.title || "Diagnostic"} itemCount={REFLEXION_STEPS.length}>
+              {sidebarContent}
+            </MobileSidebarSheet>
+          ) : (
+            <div className={SF.sidebarW}>
+              {sidebarContent}
+            </div>
+          );
+        })()}
 
         <div className={SF.content}>
           <StepContent stepKey={activeStepKey} context={displayContext} chatStage={chatStage} onAdvancePhase={onAdvancePhase} />

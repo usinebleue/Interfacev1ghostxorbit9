@@ -15,11 +15,13 @@ import {
   Building2, MapPin, Activity, Shield,
 } from "lucide-react";
 import { cn } from "../../../components/ui/utils";
+import { useIsMobile } from "../../../components/ui/use-mobile";
 import { SF } from "../../core/styles";
 import { TrustBadge, QualifiedBadge, O9ScoreBar, StagePipeline } from "./orbit9-helpers";
 import { LivingHero } from "../shared/LivingHero";
 import { useDataSource } from "../../data/use-data-source";
 import { DomainBadge } from "../../data/source-badge";
+import { MobileSidebarSheet } from "../../core/MobileSidebarSheet";
 import {
   O9_OPPORTUNITIES_VEDETTES,
   O9_OPPORTUNITIES_ALL,
@@ -37,6 +39,7 @@ const CARD_HOVER = "rounded-xl border border-gray-200 shadow-sm bg-white hover:s
 // ═══ COMPOSANT PRINCIPAL ═══
 
 export function Orbit9Opportunites() {
+  const isMobile = useIsMobile();
   const { data: opportunitesData } = useDataSource("orbit9-opportunites", O9_OPPORTUNITIES_ALL);
 
   const [activeView, setActiveView] = useState<SidebarView>("decouvrir");
@@ -78,7 +81,7 @@ export function Orbit9Opportunites() {
         <div className="relative bg-gradient-to-r from-cyan-600 to-blue-500 rounded-xl overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
           <div className="relative p-5">
-            <div className="grid grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               {/* Col 1-3: Info principale */}
               <div className="col-span-3 space-y-3">
                 <div className="flex items-center gap-2">
@@ -272,7 +275,7 @@ export function Orbit9Opportunites() {
         <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5 mb-2">
           <Star className="h-3.5 w-3.5 text-amber-500" /> Meilleures opportunités pour vous
         </h3>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {vedettes.map((opp, i) => (
             <div
               key={opp.id}
@@ -298,29 +301,40 @@ export function Orbit9Opportunites() {
         </div>
       </div>
 
-      <div className="flex gap-3">
+      <div className={cn("flex gap-3", isMobile && "flex-col gap-0")}>
       {/* Sidebar w-[180px] — Pattern PlaybookStoreView */}
-      <div className={SF.sidebarW}>
-        {OPP_SIDEBAR.map((item, idx) => {
-          if (!item) return <div key={`sep-${idx}`} className={SF.separator} />;
-          const Icon = item.icon;
-          const isActive = activeView === item.id;
-          const hasPulse = item.id === "sessions";
-          return (
-            <button key={item.id} type="button" onClick={() => setActiveView(item.id)}
-              className={cn(SF.btnBase, isActive ? SF.btnActive : SF.btnInactive)}>
-              <Icon className={cn(isActive ? SF.iconActive : SF.iconInactive)} />
-              <span className={cn("flex-1", isActive ? SF.labelActive : SF.labelInactive)}>{item.label}</span>
-              {item.count && (
-                <span className="text-[9px] text-gray-400 flex items-center gap-1">
-                  {hasPulse && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />}
-                  {item.count}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
+      {(() => {
+        const sidebarContent = (<>
+          {OPP_SIDEBAR.map((item, idx) => {
+            if (!item) return <div key={`sep-${idx}`} className={SF.separator} />;
+            const Icon = item.icon;
+            const isActive = activeView === item.id;
+            const hasPulse = item.id === "sessions";
+            return (
+              <button key={item.id} type="button" onClick={() => setActiveView(item.id)}
+                className={cn(SF.btnBase, isActive ? SF.btnActive : SF.btnInactive)}>
+                <Icon className={cn(isActive ? SF.iconActive : SF.iconInactive)} />
+                <span className={cn("flex-1", isActive ? SF.labelActive : SF.labelInactive)}>{item.label}</span>
+                {item.count && (
+                  <span className="text-[9px] text-gray-400 flex items-center gap-1">
+                    {hasPulse && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />}
+                    {item.count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </>);
+        return isMobile ? (
+          <MobileSidebarSheet currentLabel={OPP_SIDEBAR.find(s => s && s.id === activeView)?.label ?? "Opportunités"} itemCount={OPP_SIDEBAR.filter(Boolean).length}>
+            {sidebarContent}
+          </MobileSidebarSheet>
+        ) : (
+          <div className={SF.sidebarW}>
+            {sidebarContent}
+          </div>
+        );
+      })()}
 
       {/* Contenu dynamique */}
       <div className={SF.content}>

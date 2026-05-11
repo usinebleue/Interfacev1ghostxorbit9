@@ -1441,9 +1441,32 @@ export function useChat() {
     [activeThreadId, messages]
   );
 
-  // Voice transcript injection — called by VideoCallWidget when SSE events arrive
+  // Voice transcript injection — called by VideoCallWidget/DiscussionWindow when voice events arrive
+  // Unification voice/text: accepts full metadata for parity with text chat bubbles
+  interface VoiceMessageMeta {
+    options?: any[];
+    canvasActions?: any[];
+    teamProposal?: any;
+    phaseCredo?: string;
+    bubbleContext?: any;
+    isDiagnostic?: boolean;
+    ghostActif?: string | null;
+    tier?: string;
+    latenceMs?: number;
+    cascadeSuggestions?: any[];
+    scaffoldProgress?: any;
+  }
+
   const injectVoiceMessage = useCallback(
-    (role: "user" | "assistant", content: string, agent?: string, options?: string[]) => {
+    (role: "user" | "assistant", content: string, agent?: string, meta?: VoiceMessageMeta) => {
+      // Thinking indicator — meme comportement que le chat texte
+      // User parle → bot reflechit (typing=true), bot repond → typing=false
+      if (role === "user") setIsTyping(true);
+      if (role === "assistant") setIsTyping(false);
+
+      // Options: extract labels from option objects (backend sends {label, emoji, ...})
+      const optionLabels = (meta?.options || []).map((o: any) => typeof o === "string" ? o : (o.label || o));
+
       const msg: ChatMessage = {
         id: `msg-${++idCounter.current}`,
         role,
@@ -1451,11 +1474,38 @@ export function useChat() {
         timestamp: new Date(),
         agent: role === "assistant" ? (agent || "CEOB") : undefined,
         msgType: "voice" as MessageType,
-        options: options || [],
+        options: optionLabels,
+        bubbleContext: meta?.bubbleContext,
+        isDiagnostic: meta?.isDiagnostic,
+        ghost: meta?.ghostActif,
+        tier: meta?.tier,
+        latence_ms: meta?.latenceMs,
+        cascadeSuggestions: meta?.cascadeSuggestions,
+        scaffoldProgress: meta?.scaffoldProgress,
       };
       setMessages((prev) => [...prev, msg]);
 
-      // Auto-create thread if first voice message
+      // CREDO sync — meme logique que onDone dans sendMessage
+      if (meta?.phaseCredo) {
+        setLastCREDOPhase(meta.phaseCredo);
+      }
+
+      // Canvas actions — dispatch via le bus (phase_transition seulement en chat)
+      if (meta?.canvasActions && meta.canvasActions.length > 0 && canvasActionsCallbackRef.current) {
+        const filteredActions = meta.canvasActions.filter((a: any) => a.type === "phase_transition");
+        if (filteredActions.length > 0) {
+          canvasActionsCallbackRef.current(filteredActions);
+        }
+      }
+
+      // Team proposal — injecter apres la reponse du bot (delai 400ms comme le texte)
+      if (meta?.teamProposal && role === "assistant") {
+        setTimeout(() => {
+          injectTeamProposal(meta.teamProposal!, agent || "CEOB");
+        }, 400);
+      }
+
+      // Auto-create thread if first voice message AND no active thread
       if (!activeThreadId && role === "user") {
         const newId = generateThreadId();
         const thread: Thread = {
@@ -1472,7 +1522,7 @@ export function useChat() {
         setActiveThreadId(newId);
       }
     },
-    [activeThreadId]
+    [activeThreadId, injectTeamProposal]
   );
 
   // Focus card injection — démarre TOUJOURS une nouvelle discussion dédiée à l'élément cliqué

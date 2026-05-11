@@ -33,6 +33,8 @@ export interface ChatRequest {
   active_sub_section?: string;
   // Mega Plan V5 — workspace phase active
   workspace_phase?: string;
+  // S102 — conversation-level message count (pas session-wide)
+  conversation_msg_count?: number;
 }
 
 // --- Équipe 3 Bots (Chef d'Orchestre) ---
@@ -99,6 +101,9 @@ export interface MultiChatRequest {
   agents: string[];
   mode?: string;
   ghost?: string;
+  history?: { role: string; content: string; agent?: string }[];
+  primary_agent?: string;       // S102-B — bot cible de la question
+  workspace_phase?: string;     // S102-B — phase CREDO courante
 }
 
 export interface PerspectiveItem {
@@ -108,12 +113,15 @@ export interface PerspectiveItem {
   options: ChatOption[];
   tier: string;
   cout_usd: number;
+  is_primary: boolean;          // S102-B — true si bot principal
 }
 
 export interface MultiChatResponse {
   perspectives: PerspectiveItem[];
   total_cout_usd: number;
   total_latence_ms: number;
+  mode_actif: string;           // S102-B — mode de reflexion actif
+  mode_steps: { id: string; label: string }[];  // S102-B — etapes du mode
 }
 
 // --- Bots ---
@@ -259,6 +267,7 @@ export type MessageType =
   | "focus_card"     // carte focus injectee depuis le dashboard
   | "team_proposal"  // G — CarlOS propose une equipe 3 bots
   | "diagnostic"     // G — CarlOS pose des questions avant de repondre
+  | "synthesis-bar"  // S102 — barre de synthese apres multi-bot
   | "plan_action"    // G — Gemini: plan d'action concret
   | "evaluer_risques"// G — Gemini: matrice de risques
   | "deleguer"       // G — Gemini: brief de delegation
@@ -266,7 +275,8 @@ export type MessageType =
   | "fusionner"      // G — Gemini: fusion perspectives multi-bot
   | "fil_parallele"  // G — Gemini: fil de reflexion parallele
   | "command_progress" // COMMAND — progress card pendant execution
-  | "command_stage";   // COMMAND — resultat d'un stage termine
+  | "command_stage"    // COMMAND — resultat d'un stage termine
+  | "multi-enriched";  // S102-B — bulle consolidee multi-agent
 
 export interface ChatMessage {
   id: string;

@@ -593,7 +593,7 @@ export function AtelierTimCode({ onBack }: { onBack: () => void }) {
       {filledCount === 0 && (
         <div className="flex flex-col items-center justify-center py-8 text-gray-400 gap-2">
           <Code2 className="h-10 w-10 text-violet-300" />
-          <p className="text-xs">L'atelier de code apparaitra ici...</p>
+          <p className="text-xs">L'atelier de code apparaîtra ici...</p>
           <p className="text-[9px]">Plan + Code + Terminal + Tests</p>
         </div>
       )}

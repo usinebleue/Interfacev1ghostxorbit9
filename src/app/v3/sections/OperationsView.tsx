@@ -13,6 +13,7 @@
  */
 
 import { useState, useEffect } from "react";
+import { useIsMobile } from "../../components/ui/use-mobile";
 import {
   Home, Target, Layers, Rocket, ChevronRight, ChevronLeft,
   Users, User, Briefcase, Search, FolderOpen, Clock,
@@ -42,6 +43,7 @@ import {
 } from "../data/mock/execution.mock";
 import { useDataSource } from "../data/use-data-source";
 import { DomainBadge } from "../data/source-badge";
+import { MobileSidebarSheet } from "../core/MobileSidebarSheet";
 
 // ═══ Types — même structure que ChantierView mais vocabulaire opérationnel ═══
 
@@ -112,7 +114,7 @@ function OperationEntityDetail({ type, title, description, cadence, sla, regular
       </button>
 
       {/* Hero + Details grid-cols-5 — MÊME PATTERN ChantierEntityDetail */}
-      <div className="grid grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <div className={cn("col-span-3 relative bg-gradient-to-r rounded-xl overflow-hidden shadow-sm", gradients[type])}>
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
           <div className="absolute bottom-0 left-0 w-20 h-20 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
@@ -606,7 +608,7 @@ function OperationEntityDetail({ type, title, description, cadence, sla, regular
               <RotateCcw className="h-4 w-4 text-gray-900 stroke-[2.5]" />
               <span className="text-sm font-bold text-gray-900">Bilan d'optimisation</span>
             </div>
-            <div className="px-4 py-3 grid grid-cols-3 gap-3">
+            <div className="px-4 py-3 grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="space-y-1.5">
                 <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-wider flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5" /> Ce qui va bien</span>
                 {bilanOptimisation.positifs.map((p, i) => <div key={i} className="text-[10px] text-gray-600 leading-relaxed bg-emerald-50 rounded px-2 py-1">{p}</div>)}
@@ -688,8 +690,8 @@ function OperationEntityDetail({ type, title, description, cadence, sla, regular
           if (n === 2 && row.totalW === 4) return <div key={ri} className="grid grid-cols-2 gap-3">{row.blocks.map(b => <div key={b.key}>{b.node}</div>)}</div>;
           if (n === 1) return <div key={ri}>{row.blocks[0].node}</div>;
           if (n === 2 && row.totalW === 2) return <div key={ri} className="grid grid-cols-2 gap-3">{row.blocks.map(b => <div key={b.key}>{b.node}</div>)}</div>;
-          if (n === 3) return <div key={ri} className="grid grid-cols-3 gap-3">{row.blocks.map(b => <div key={b.key}>{b.node}</div>)}</div>;
-          if (n === 2 && row.totalW === 3) return <div key={ri} className="grid grid-cols-3 gap-3">{row.blocks.map(b => <div key={b.key} className={b.w === 2 ? "col-span-2" : ""}>{b.node}</div>)}</div>;
+          if (n === 3) return <div key={ri} className="grid grid-cols-1 md:grid-cols-3 gap-3">{row.blocks.map(b => <div key={b.key}>{b.node}</div>)}</div>;
+          if (n === 2 && row.totalW === 3) return <div key={ri} className="grid grid-cols-1 md:grid-cols-3 gap-3">{row.blocks.map(b => <div key={b.key} className={b.w === 2 ? "col-span-2" : ""}>{b.node}</div>)}</div>;
           return <div key={ri} className="grid grid-cols-2 gap-3">{row.blocks.map(b => <div key={b.key}>{b.node}</div>)}</div>;
         };
 
@@ -771,6 +773,7 @@ export function OperationsView({ botCode, showHeader = true, onAction }: {
   showHeader?: boolean;
   onAction?: (phase: PhaseKey, ctx: string) => void;
 }) {
+  const isMobile = useIsMobile();
   const { data: mockData } = useDataSource<MockOperationItem[]>("operations", getMockOperations(botCode));
   const [selectedDept, setSelectedDept] = useState(botCode);
   const [level, setLevel] = useState<OperationLevel>("operations");
@@ -830,7 +833,7 @@ export function OperationsView({ botCode, showHeader = true, onAction }: {
       {level === "operations" && top3.length > 0 && (
         <div>
           <CockpitSectionHeader icon={Repeat} title={`Top 3 — Opérations prioritaires${selectedDept !== "CEOB" ? ` (${DEPT_SHORT_LABEL[selectedDept] || selectedDept})` : ""}`} count={deptOps.length} color="text-cyan-500" />
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {top3.map((op, i) => {
               const gradient = i === 0 ? "from-cyan-500 to-teal-500" : i === 1 ? "from-blue-500 to-cyan-500" : "from-teal-500 to-emerald-500";
               return (
@@ -858,10 +861,10 @@ export function OperationsView({ botCode, showHeader = true, onAction }: {
       )}
 
       {/* 3. SIDEBAR + CONTENT — Pattern SectionView */}
-      <div className="flex gap-3">
+      <div className={cn("flex gap-3", isMobile && "flex-col gap-0")}>
         {/* Sidebar w-[180px] */}
-        {level === "operations" && (
-          <div className={SF.sidebarW}>
+        {level === "operations" && (() => {
+          const sidebarContent = (<>
             <button onClick={() => { setSelectedDept(botCode); resetNav(); }} className={cn(SF.btnBase, selectedDept === botCode ? SF.btnActive : SF.btnInactive)}>
               <Home className={selectedDept === botCode ? SF.iconActive : SF.iconInactive} />
               <span className={selectedDept === botCode ? SF.labelActive : SF.labelInactive}>Vue d'ensemble</span>
@@ -902,8 +905,20 @@ export function OperationsView({ botCode, showHeader = true, onAction }: {
                 <span className={SF.count}>{item.count}</span>
               </button>
             ))}
-          </div>
-        )}
+          </>);
+          const deptItems = botCode === "CEOB" ? DEPT_ORDER : [botCode];
+          const sidebarItemCount = 1 + deptItems.length + 4 + 3;
+          const activeLabel = selectedDept === botCode ? "Vue d'ensemble" : (DEPT_SHORT_LABEL[selectedDept] || selectedDept);
+          return isMobile ? (
+            <MobileSidebarSheet currentLabel={activeLabel} itemCount={sidebarItemCount}>
+              {sidebarContent}
+            </MobileSidebarSheet>
+          ) : (
+            <div className={SF.sidebarW}>
+              {sidebarContent}
+            </div>
+          );
+        })()}
 
         {/* Content */}
         <div className={SF.content}>

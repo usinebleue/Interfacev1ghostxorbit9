@@ -22,6 +22,8 @@ import { BOT_AVATAR, BOT_NAME } from "../../v2/api/types";
 import { LivingHero } from "./shared/LivingHero";
 import { DEPT_COLORS, DEPT_SHORT_LABEL, DEPT_DASH_ICON, DEPT_LABELS, DEPT_ICONS, DEPT_GRADIENT, BOT_DISPLAY, BOT_AVATAR_MAP } from "./shared/dept-data";
 import { SF } from "../core/styles";
+import { useIsMobile } from "../../components/ui/use-mobile";
+import { MobileSidebarSheet } from "../core/MobileSidebarSheet";
 
 // ══════════════════════════════════════════
 // PLAYBOOKS — Mes playbooks + Recommandés + Store (layout DocForge)
@@ -241,7 +243,7 @@ export const PLAYBOOK_STORE_DATA: { id: string; nom: string; departement: string
   { id: "pb-CMOB-CREA-011", nom: "Reverse Brainstorming Produit", departement: "CMOB", bots: ["Mathilde"], etapes: 2, duree: "45min", niveau: "Standard", prix: "$49", rating: 4.3, downloads: 150, categorie: "Creativite", description: "Liste dinnovations défensives", pilier: "Idee", type: "conference" },
   { id: "pb-CMOB-CREA-015", nom: "Trisociation Marketing", departement: "CMOB", bots: ["Mathilde"], etapes: 1, duree: "45min", niveau: "Standard", prix: "$49", rating: 4.4, downloads: 1037, categorie: "Creativite", description: "Pitch de campagne disruptive", pilier: "Idee", type: "conference" },
   { id: "pb-CMOB-CREA-022", nom: "Futuristic Thinking (3 Horizons)", departement: "CMOB", bots: ["Mathilde"], etapes: 4, duree: "1h", niveau: "Standard", prix: "$49", rating: 4.5, downloads: 463, categorie: "Creativite", description: "Vision stratégique H3", pilier: "Idee", type: "conference" },
-  { id: "pb-COOB-CREA-006", nom: "LDJ Opérationnel (Logistique)", departement: "COOB", bots: ["Olivier"], etapes: 3, duree: "45min", niveau: "Standard", prix: "$49", rating: 4.4, downloads: 1191, categorie: "Creativite", description: "Tâches correctives dusine", pilier: "Idee", type: "conference" },
+  { id: "pb-COOB-CREA-006", nom: "LDJ Opérationnel (Logistique)", departement: "COOB", bots: ["Olivier"], etapes: 3, duree: "45min", niveau: "Standard", prix: "$49", rating: 4.4, downloads: 1191, categorie: "Creativite", description: "Tâches correctives d'usine", pilier: "Idee", type: "conference" },
   { id: "pb-CPOB-CREA-021", nom: "Crazy 8s (Sketching UX/Design)", departement: "CPOB", bots: ["Paco"], etapes: 3, duree: "15min", niveau: "Standard", prix: "Gratuit", rating: 4.9, downloads: 1124, categorie: "Creativite", description: "8 maquettes ou wireframes basiques", pilier: "Idee", type: "conference" },
   { id: "pb-CROB-CREA-012", nom: "Reverse Brainstorming Ventes", departement: "CROB", bots: ["Rich"], etapes: 2, duree: "45min", niveau: "Standard", prix: "$49", rating: 4.4, downloads: 158, categorie: "Creativite", description: "Procédure de sauvetage client", pilier: "Idee", type: "conference" },
   { id: "pb-CROSS-CREA-013", nom: "World Café Method", departement: "ORBIT9", bots: ["CarlOS"], etapes: 3, duree: "1h", niveau: "Avance", prix: "$99", rating: 4.8, downloads: 456, categorie: "Creativite", description: "Fresque didées unifiée", pilier: "Idee", type: "conference" },
@@ -751,7 +753,7 @@ function PlaybookFicheDetailInline({ pb, onBack }: { pb: typeof PLAYBOOK_STORE_D
       </button>
 
       {/* Section 1 — Hero + Details side by side */}
-      <div className="grid grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {/* Hero (3/5) — style Top 3 gradient */}
         <div className={cn("col-span-3 relative bg-gradient-to-r rounded-xl overflow-hidden shadow-sm", deptColor.gradient)}>
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
@@ -986,7 +988,7 @@ function PlaybookFicheDetailInline({ pb, onBack }: { pb: typeof PLAYBOOK_STORE_D
             {similarDept.length > 0 && (
               <div>
                 <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Souvent active ensemble</h4>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                   {similarDept.map(sp => {
                     const spCode = botNameToCode[sp.bots[0]] || "CEOB";
                     const spAvatar = BOT_AVATAR_MAP[spCode] || BOT_AVATAR_MAP.CEOB;
@@ -1007,7 +1009,7 @@ function PlaybookFicheDetailInline({ pb, onBack }: { pb: typeof PLAYBOOK_STORE_D
             {similarPilier.length > 0 && (
               <div>
                 <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Vous pourriez aussi aimer</h4>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                   {similarPilier.map(sp => {
                     const spCode = botNameToCode[sp.bots[0]] || "CEOB";
                     const spAvatar = BOT_AVATAR_MAP[spCode] || BOT_AVATAR_MAP.CEOB;
@@ -1188,7 +1190,7 @@ function PlaybookDecouvrir({ botCode, onOpenDetail, onNavigate }: { botCode: str
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5"><LayoutGrid className="h-3.5 w-3.5 text-gray-500" /> Explorer par departement</h3>
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {Object.entries(DEPT_LABELS).filter(([code]) => code !== "ORBIT9").map(([code, label]) => {
                   const DIcon = DEPT_ICONS[code] || Building2;
                   const deptPlaybooks = PLAYBOOK_STORE_DATA.filter(p => p.departement === code);
@@ -1222,7 +1224,7 @@ function PlaybookDecouvrir({ botCode, onOpenDetail, onNavigate }: { botCode: str
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5"><Layers className="h-3.5 w-3.5 text-indigo-500" /> {botCode !== "CEOB" ? `Types ${DEPT_SHORT_LABEL[botCode] || botCode}` : "Explorer par type"}</h3>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {Object.entries(PLAYBOOK_TYPES).map(([key, t]) => {
                 const TIcon = t.icon;
                 const typePlaybooks = botCode !== "CEOB"
@@ -1354,7 +1356,7 @@ function ConferenceAIContent({ onOpenDetail, onSelectFamily, selectedFamily }: {
             <option value="prix">Prix</option>
           </select>
         </div>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {sortedPlaybooks.map(pb => (
             <PlaybookCardV2 key={pb.id} pb={pb} onOpenDetail={onOpenDetail} />
           ))}
@@ -1402,7 +1404,7 @@ function ConferenceAIContent({ onOpenDetail, onSelectFamily, selectedFamily }: {
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5"><Star className="h-3.5 w-3.5 text-amber-500" /> Vedettes Conference AI</h3>
         </div>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {featuredPlaybooks.map(pb => (
             <PlaybookCardV2 key={pb.id} pb={pb} badge="populaire" onOpenDetail={onOpenDetail} />
           ))}
@@ -1414,7 +1416,7 @@ function ConferenceAIContent({ onOpenDetail, onSelectFamily, selectedFamily }: {
           <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5"><LayoutGrid className="h-3.5 w-3.5 text-indigo-500" /> Explorer par famille</h3>
           <span className="text-[9px] text-gray-400">{topFamilies.length} familles · {conferenceCount} playbooks</span>
         </div>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {topFamilies.map(f => {
             const FIcon = f.icon;
             return (
@@ -1445,7 +1447,7 @@ function ConferenceAIContent({ onOpenDetail, onSelectFamily, selectedFamily }: {
             <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5"><Brain className="h-3.5 w-3.5 text-orange-500" /> Ghost Cognitifs</h3>
             <span className="text-[9px] text-gray-400">{ghostPlaybooks.length} playbooks</span>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {ghostPlaybooks.map(pb => (
               <PlaybookCardV2 key={pb.id} pb={pb} onOpenDetail={onOpenDetail} />
             ))}
@@ -1459,7 +1461,7 @@ function ConferenceAIContent({ onOpenDetail, onSelectFamily, selectedFamily }: {
             <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5 text-lime-500" /> Calendrier Saisonnier</h3>
             <button onClick={() => onSelectFamily("SAIS")} className="text-[9px] text-blue-500 hover:text-blue-700 cursor-pointer font-bold">Voir les {saisonniersPlaybooks.length}</button>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {saisonniersPlaybooks.slice(0, 6).map(pb => (
               <div key={pb.id} className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white hover:shadow-md hover:border-lime-200 transition-all cursor-pointer" onClick={() => onOpenDetail(pb)}>
                 <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
@@ -2100,7 +2102,7 @@ function PlaybookBuilder() {
       </div>
 
       {/* KPIs mock */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {[
           { label: "Mes brouillons", value: "0", icon: FileText, color: "text-gray-500" },
           { label: "Publies", value: "0", icon: Upload, color: "text-blue-500" },
@@ -2166,6 +2168,8 @@ export function PlaybookStoreView({ botCode, headerGradient, showHeader = false 
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [selectedConferenceFamily, setSelectedConferenceFamily] = useState<string | null>(null);
   const [selectedCollection, setSelectedCollection] = useState<string | null>(null);
+
+  const isMobile = useIsMobile();
 
   // Synchroniser quand botCode change — revenir à l'accueil (le contenu s'adapte via PlaybookDecouvrir)
   useEffect(() => {
@@ -2269,7 +2273,7 @@ export function PlaybookStoreView({ botCode, headerGradient, showHeader = false 
                   <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
                   <h3 className="text-xs font-bold text-gray-800">{botCode !== "CEOB" ? `Top 3 — ${DEPT_SHORT_LABEL[botCode] || botCode}` : "Top 3 — Playbooks de la semaine"}</h3>
                 </div>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   {featuredItems.map(f => {
                     if (!f.pb) return null;
                     return (
@@ -2326,74 +2330,86 @@ export function PlaybookStoreView({ botCode, headerGradient, showHeader = false 
         </div>
       )}
 
-    <div className="flex gap-3">
+    <div className={cn("flex gap-3", isMobile && "flex-col gap-0")}>
       {/* Sidebar TOC */}
-      <div className={SF.sidebarW}>
-        {SIDEBAR_ITEMS.map((item, idx) => {
-          const isActive = activeView === item.id;
-          return (
-            <div key={item.id}>
-              {item.separator && idx > 0 && <div className={SF.separator} />}
-              <button
-                onClick={() => {
-                  if (item.id === "categorie") { setExpandCategories(!expandCategories); }
-                  else if (item.id === "types") { setExpandTypes(!expandTypes); }
-                  else { setActiveView(item.id); setSelectedPlaybook(null); }
-                }}
-                className={cn(
-                  "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
-                  isActive ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent"
+      {(() => {
+        const sidebarContent = (<>
+          {SIDEBAR_ITEMS.map((item, idx) => {
+            const isActive = activeView === item.id;
+            return (
+              <div key={item.id}>
+                {item.separator && idx > 0 && <div className={SF.separator} />}
+                <button
+                  onClick={() => {
+                    if (item.id === "categorie") { setExpandCategories(!expandCategories); }
+                    else if (item.id === "types") { setExpandTypes(!expandTypes); }
+                    else { setActiveView(item.id); setSelectedPlaybook(null); }
+                  }}
+                  className={cn(
+                    "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
+                    isActive ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent"
+                  )}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <item.icon className={cn("h-3.5 w-3.5", isActive ? "text-blue-500" : "text-gray-400")} />
+                    <span className={cn("text-[10px] font-bold flex-1 leading-tight", isActive ? "text-blue-700" : "text-gray-700")}>{item.label}</span>
+                    {item.dot && <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />}
+                    {item.count !== undefined && <span className="text-[9px] text-gray-400">{item.count}</span>}
+                    {item.id === "categorie" && <ChevronDown className={cn("h-3.5 w-3.5 text-gray-400 transition-transform", expandCategories && "rotate-180")} />}
+                    {item.id === "types" && <ChevronDown className={cn("h-3.5 w-3.5 text-gray-400 transition-transform", expandTypes && "rotate-180")} />}
+                  </div>
+                </button>
+                {/* Expandable categories (departements) — CEOB seulement */}
+                {!pbIsNonCEOB && item.id === "categorie" && expandCategories && (
+                  <div className="ml-3 mt-0.5 space-y-0.5">
+                    {Object.entries(DEPT_LABELS).map(([code, label]) => {
+                      const isActiveDept = activeView === "categorie" && selectedCategorie === code;
+                      return (
+                        <button key={code} onClick={() => { setSelectedCategorie(code); setActiveView("categorie"); setSelectedPlaybook(null); }}
+                          className={cn("w-full px-2 py-1 rounded text-left text-[9px] cursor-pointer transition-all",
+                            isActiveDept ? "bg-blue-50 text-blue-700 font-bold" : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                          )}>
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 )}
-              >
-                <div className="flex items-center gap-1.5">
-                  <item.icon className={cn("h-3.5 w-3.5", isActive ? "text-blue-500" : "text-gray-400")} />
-                  <span className={cn("text-[10px] font-bold flex-1 leading-tight", isActive ? "text-blue-700" : "text-gray-700")}>{item.label}</span>
-                  {item.dot && <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />}
-                  {item.count !== undefined && <span className="text-[9px] text-gray-400">{item.count}</span>}
-                  {item.id === "categorie" && <ChevronDown className={cn("h-3.5 w-3.5 text-gray-400 transition-transform", expandCategories && "rotate-180")} />}
-                  {item.id === "types" && <ChevronDown className={cn("h-3.5 w-3.5 text-gray-400 transition-transform", expandTypes && "rotate-180")} />}
-                </div>
-              </button>
-              {/* Expandable categories (departements) — CEOB seulement */}
-              {!pbIsNonCEOB && item.id === "categorie" && expandCategories && (
-                <div className="ml-3 mt-0.5 space-y-0.5">
-                  {Object.entries(DEPT_LABELS).map(([code, label]) => {
-                    const isActiveDept = activeView === "categorie" && selectedCategorie === code;
-                    return (
-                      <button key={code} onClick={() => { setSelectedCategorie(code); setActiveView("categorie"); setSelectedPlaybook(null); }}
-                        className={cn("w-full px-2 py-1 rounded text-left text-[9px] cursor-pointer transition-all",
-                          isActiveDept ? "bg-blue-50 text-blue-700 font-bold" : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
-                        )}>
-                        {label}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-              {/* Expandable types */}
-              {item.id === "types" && expandTypes && (
-                <div className="ml-3 mt-0.5 space-y-0.5">
-                  {Object.entries(PLAYBOOK_TYPES).map(([key, t]) => {
-                    const TIcon = t.icon;
-                    const isActiveType = activeView === "types" && selectedType === key;
-                    const count = PLAYBOOK_STORE_DATA.filter(p => p.type === key).length;
-                    return (
-                      <button key={key} onClick={() => { setSelectedType(key); setActiveView("types"); setSelectedPlaybook(null); }}
-                        className={cn("w-full px-2 py-1 rounded text-left text-[9px] cursor-pointer transition-all flex items-center gap-1",
-                          isActiveType ? "bg-blue-50 text-blue-700 font-bold" : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
-                        )}>
-                        <TIcon className="h-3.5 w-3.5 shrink-0" />
-                        <span className="flex-1">{t.label}</span>
-                        <span className="text-[8px] text-gray-400">{count}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+                {/* Expandable types */}
+                {item.id === "types" && expandTypes && (
+                  <div className="ml-3 mt-0.5 space-y-0.5">
+                    {Object.entries(PLAYBOOK_TYPES).map(([key, t]) => {
+                      const TIcon = t.icon;
+                      const isActiveType = activeView === "types" && selectedType === key;
+                      const count = PLAYBOOK_STORE_DATA.filter(p => p.type === key).length;
+                      return (
+                        <button key={key} onClick={() => { setSelectedType(key); setActiveView("types"); setSelectedPlaybook(null); }}
+                          className={cn("w-full px-2 py-1 rounded text-left text-[9px] cursor-pointer transition-all flex items-center gap-1",
+                            isActiveType ? "bg-blue-50 text-blue-700 font-bold" : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                          )}>
+                          <TIcon className="h-3.5 w-3.5 shrink-0" />
+                          <span className="flex-1">{t.label}</span>
+                          <span className="text-[8px] text-gray-400">{count}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </>);
+        const activeLabel = SIDEBAR_ITEMS.find(i => i.id === activeView)?.label ?? "Playbooks";
+        return isMobile ? (
+          <MobileSidebarSheet currentLabel={activeLabel} itemCount={SIDEBAR_ITEMS.length}>
+            {sidebarContent}
+          </MobileSidebarSheet>
+        ) : (
+          <div className={SF.sidebarW}>
+            {sidebarContent}
+          </div>
+        );
+      })()}
 
       {/* Contenu */}
       <div className="flex-1 min-w-0 space-y-2">

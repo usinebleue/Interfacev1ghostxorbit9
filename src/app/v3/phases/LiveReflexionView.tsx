@@ -44,6 +44,8 @@ import {
 } from "lucide-react";
 import { cn } from "../../components/ui/utils";
 import { SF } from "../core/styles";
+import { useIsMobile } from "../../components/ui/use-mobile";
+import { MobileSidebarSheet } from "../core/MobileSidebarSheet";
 import { useChatContext } from "../../v2/context/ChatContext";
 import { useAmorcer } from "../AmorcerContext";
 // ═══ 8 étapes — EXACTEMENT comme modélisé par Carl ═══
@@ -69,6 +71,7 @@ interface LiveReflexionViewProps {
 const EXPLORATION_STEP_IDS = ["ref-2-brainstorm", "ref-4-cinq-pourquoi", "ref-5-deep-search", "ref-7-challenge"];
 
 export function LiveReflexionView({ context, onPhaseComplete }: LiveReflexionViewProps) {
+  const isMobile = useIsMobile();
   const { chatStage, workflowItems, removeWorkflowItem, addWorkflowItem, getCristallise, activeBotCode, activePhase } = useAmorcer();
   const { sendMessage } = useChatContext();
   const displayContext = context || "Réflexion";
@@ -112,37 +115,49 @@ export function LiveReflexionView({ context, onPhaseComplete }: LiveReflexionVie
       </div>
 
       {/* ═══ SIDEBAR 8 ÉTAPES + CONTENU ═══ */}
-      <div className="flex gap-3">
+      <div className={cn("flex gap-3", isMobile && "flex-col gap-0")}>
         {/* Sidebar */}
-        <div className={SF.sidebarW}>
-          {REFLEXION_STEPS.map((s) => {
-            const isUnlocked = chatStage >= s.minStage;
-            const isActive = activeStepId === s.id;
-            const hasContent = getCristallise(s.id) !== null;
-            return (
-              <button
-                key={s.id}
-                onClick={() => isUnlocked && setActiveStepId(s.id)}
-                disabled={!isUnlocked}
-                className={cn(
-                  SF.btnBase,
-                  isActive ? SF.btnActive : isUnlocked ? SF.btnInactive : "opacity-40 cursor-not-allowed border border-transparent"
-                )}
-              >
-                <s.icon className={cn(isActive ? SF.iconActive : isUnlocked ? SF.iconInactive : "h-3.5 w-3.5 text-gray-300")} />
-                <span className={cn(isActive ? SF.labelActive : isUnlocked ? SF.labelInactive : "text-[10px] text-gray-400")}>{s.title}</span>
-                {hasContent && (
-                  <span className="ml-auto w-4 h-4 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
-                    <CheckCircle2 className="h-2.5 w-2.5 text-emerald-600" />
-                  </span>
-                )}
-                {!hasContent && isUnlocked && chatStage === s.minStage && (
-                  <span className="ml-auto w-3 h-3 rounded-full bg-amber-400 animate-pulse shrink-0" />
-                )}
-              </button>
-            );
-          })}
-        </div>
+        {(() => {
+          const activeLabel = activeStep?.title || "Réflexion";
+          const sidebarContent = (<>
+            {REFLEXION_STEPS.map((s) => {
+              const isUnlocked = chatStage >= s.minStage;
+              const isActive = activeStepId === s.id;
+              const hasContent = getCristallise(s.id) !== null;
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => isUnlocked && setActiveStepId(s.id)}
+                  disabled={!isUnlocked}
+                  className={cn(
+                    SF.btnBase,
+                    isActive ? SF.btnActive : isUnlocked ? SF.btnInactive : "opacity-40 cursor-not-allowed border border-transparent"
+                  )}
+                >
+                  <s.icon className={cn(isActive ? SF.iconActive : isUnlocked ? SF.iconInactive : "h-3.5 w-3.5 text-gray-300")} />
+                  <span className={cn(isActive ? SF.labelActive : isUnlocked ? SF.labelInactive : "text-[10px] text-gray-400")}>{s.title}</span>
+                  {hasContent && (
+                    <span className="ml-auto w-4 h-4 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                      <CheckCircle2 className="h-2.5 w-2.5 text-emerald-600" />
+                    </span>
+                  )}
+                  {!hasContent && isUnlocked && chatStage === s.minStage && (
+                    <span className="ml-auto w-3 h-3 rounded-full bg-amber-400 animate-pulse shrink-0" />
+                  )}
+                </button>
+              );
+            })}
+          </>);
+          return isMobile ? (
+            <MobileSidebarSheet currentLabel={activeLabel} itemCount={REFLEXION_STEPS.length}>
+              {sidebarContent}
+            </MobileSidebarSheet>
+          ) : (
+            <div className={SF.sidebarW}>
+              {sidebarContent}
+            </div>
+          );
+        })()}
 
         {/* Contenu */}
         <div className={SF.content}>

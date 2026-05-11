@@ -23,6 +23,9 @@ import {
   Rocket,
   ArrowRight,
 } from "lucide-react";
+import { cn } from "../../components/ui/utils";
+import { useIsMobile } from "../../components/ui/use-mobile";
+import { MobileSidebarSheet } from "../core/MobileSidebarSheet";
 import { useChatContext } from "../../v2/context/ChatContext";
 import { useAmorcer } from "../AmorcerContext";
 
@@ -45,6 +48,7 @@ interface LiveConceptionViewProps {
 }
 
 export function LiveConceptionView({ context }: LiveConceptionViewProps) {
+  const isMobile = useIsMobile();
   const [activeSection, setActiveSection] = useState(1);
   const [sectionStatus, setSectionStatus] = useState<Record<number, SectionStatus>>(
     Object.fromEntries(CONCEPTION_SECTIONS.map(s => [s.id, "todo"])) as Record<number, SectionStatus>
@@ -80,48 +84,60 @@ export function LiveConceptionView({ context }: LiveConceptionViewProps) {
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-4 pb-12">
-      <div className="flex gap-4">
+      <div className={cn("flex gap-4", isMobile && "flex-col gap-0")}>
         {/* ═══ TOC SIDEBAR ═══ */}
-        <div className="w-48 shrink-0 space-y-1">
-          <div className="flex items-center gap-2 px-2 py-2">
-            <Hammer className="h-4 w-4 text-yellow-500" />
-            <span className="text-xs font-bold text-gray-800">Conception du Chantier</span>
-          </div>
-
-          {CONCEPTION_SECTIONS.map(s => {
-            const isActive = s.id === activeSection;
-            const status = sectionStatus[s.id];
-            return (
-              <button
-                key={s.id}
-                onClick={() => setActiveSection(s.id)}
-                className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-[10px] text-left transition-all cursor-pointer ${
-                  status === "validated"
-                    ? "bg-emerald-50 text-emerald-700 font-medium"
-                    : isActive
-                    ? "bg-yellow-50 text-yellow-700 font-medium"
-                    : "text-gray-500 hover:bg-gray-50"
-                }`}
-              >
-                {status === "validated" ? (
-                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                ) : isActive || status === "launched" ? (
-                  <div className="w-3.5 h-3.5 rounded-full bg-yellow-400 shrink-0" />
-                ) : (
-                  <div className="w-3.5 h-3.5 rounded-full border-2 border-gray-300 shrink-0" />
-                )}
-                <span className="truncate">{s.title}</span>
-              </button>
-            );
-          })}
-
-          <div className="mt-3 px-2 space-y-1">
-            <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-              <div className="h-full bg-yellow-500 rounded-full transition-all" style={{ width: `${progress}%` }} />
+        {(() => {
+          const activeLabel = CONCEPTION_SECTIONS.find(s => s.id === activeSection)?.title || "Conception";
+          const sidebarContent = (<>
+            <div className="flex items-center gap-2 px-2 py-2">
+              <Hammer className="h-4 w-4 text-yellow-500" />
+              <span className="text-xs font-bold text-gray-800">Conception du Chantier</span>
             </div>
-            <p className="text-[10px] text-gray-500">{validatedCount}/8 valid\u00e9es</p>
-          </div>
-        </div>
+
+            {CONCEPTION_SECTIONS.map(s => {
+              const isActive = s.id === activeSection;
+              const status = sectionStatus[s.id];
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => setActiveSection(s.id)}
+                  className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-[10px] text-left transition-all cursor-pointer ${
+                    status === "validated"
+                      ? "bg-emerald-50 text-emerald-700 font-medium"
+                      : isActive
+                      ? "bg-yellow-50 text-yellow-700 font-medium"
+                      : "text-gray-500 hover:bg-gray-50"
+                  }`}
+                >
+                  {status === "validated" ? (
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                  ) : isActive || status === "launched" ? (
+                    <div className="w-3.5 h-3.5 rounded-full bg-yellow-400 shrink-0" />
+                  ) : (
+                    <div className="w-3.5 h-3.5 rounded-full border-2 border-gray-300 shrink-0" />
+                  )}
+                  <span className="truncate">{s.title}</span>
+                </button>
+              );
+            })}
+
+            <div className="mt-3 px-2 space-y-1">
+              <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                <div className="h-full bg-yellow-500 rounded-full transition-all" style={{ width: `${progress}%` }} />
+              </div>
+              <p className="text-[10px] text-gray-500">{validatedCount}/8 valid\u00e9es</p>
+            </div>
+          </>);
+          return isMobile ? (
+            <MobileSidebarSheet currentLabel={activeLabel} itemCount={8}>
+              {sidebarContent}
+            </MobileSidebarSheet>
+          ) : (
+            <div className="w-48 shrink-0 space-y-1">
+              {sidebarContent}
+            </div>
+          );
+        })()}
 
         {/* ═══ CONTENT ═══ */}
         <div className="flex-1 space-y-3">

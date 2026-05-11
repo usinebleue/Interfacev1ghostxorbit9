@@ -17,11 +17,13 @@ import {
   Handshake, Target, MessageCircle, Vote, Layers, Search,
 } from "lucide-react";
 import { cn } from "../../../components/ui/utils";
+import { useIsMobile } from "../../../components/ui/use-mobile";
 import { SF } from "../../core/styles";
 import { O9ScoreBar, PionnierDot } from "./orbit9-helpers";
 import { O9_PIONNIERS } from "./orbit9-data";
 import { BOT_AVATAR_MAP } from "../shared/dept-data";
 import { LivingHero } from "../shared/LivingHero";
+import { MobileSidebarSheet } from "../../core/MobileSidebarSheet";
 
 // ═══ Sidebar config ═══
 
@@ -60,6 +62,7 @@ function BPCard({ icon: Icon, title, badge, badgeColor, children }: {
 // ═══ COMPOSANT PRINCIPAL ═══
 
 export function Orbit9Blueprint() {
+  const isMobile = useIsMobile();
   const [activeSection, setActiveSection] = useState("vue-consolidee");
 
   return (
@@ -111,23 +114,34 @@ export function Orbit9Blueprint() {
         </div>
       </LivingHero>
 
-      <div className="flex gap-3">
+      <div className={cn("flex gap-3", isMobile && "flex-col gap-0")}>
       {/* Sidebar w-[180px] — Pattern BlueprintView */}
-      <div className={SF.sidebarW}>
-        {BP_SIDEBAR.map((item, idx) => {
-          if (!item) return <div key={`sep-${idx}`} className={SF.separator} />;
-          const Icon = item.icon;
-          const isActive = activeSection === item.id;
-          return (
-            <button key={item.id} type="button" onClick={() => setActiveSection(item.id)}
-              className={cn(SF.btnBase, isActive ? SF.btnActive : SF.btnInactive)}>
-              <Icon className={cn(isActive ? SF.iconActive : SF.iconInactive)} />
-              <span className={cn(isActive ? SF.labelActive : SF.labelInactive)}>{item.label}</span>
-              {item.count && <span className="text-[9px] text-gray-400">{item.count}</span>}
-            </button>
-          );
-        })}
-      </div>
+      {(() => {
+        const sidebarContent = (<>
+          {BP_SIDEBAR.map((item, idx) => {
+            if (!item) return <div key={`sep-${idx}`} className={SF.separator} />;
+            const Icon = item.icon;
+            const isActive = activeSection === item.id;
+            return (
+              <button key={item.id} type="button" onClick={() => setActiveSection(item.id)}
+                className={cn(SF.btnBase, isActive ? SF.btnActive : SF.btnInactive)}>
+                <Icon className={cn(isActive ? SF.iconActive : SF.iconInactive)} />
+                <span className={cn(isActive ? SF.labelActive : SF.labelInactive)}>{item.label}</span>
+                {item.count && <span className="text-[9px] text-gray-400">{item.count}</span>}
+              </button>
+            );
+          })}
+        </>);
+        return isMobile ? (
+          <MobileSidebarSheet currentLabel={BP_SIDEBAR.find(s => s && s.id === activeSection)?.label ?? "Blueprint"} itemCount={BP_SIDEBAR.filter(Boolean).length}>
+            {sidebarContent}
+          </MobileSidebarSheet>
+        ) : (
+          <div className={SF.sidebarW}>
+            {sidebarContent}
+          </div>
+        );
+      })()}
 
       {/* Contenu dynamique */}
       <div className={SF.content}>
@@ -177,7 +191,7 @@ function SectionVueConsolidee() {
 
       {/* KPI Summary — 9 sections en un coup d'œil (pattern V2) */}
       <BPCard icon={Eye} title="Résumé par section">
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
           {KPI_SUMMARY.map(k => {
             const KIcon = k.icon;
             return (
@@ -449,7 +463,7 @@ function SectionCellules() {
   return (
     <div className="space-y-3">
       {/* KPIs cellules */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {[
           { label: "Membres total", value: "18", sub: "/ 36 max" },
           { label: "Rabais actif moyen", value: "14%", sub: "palier 3" },
@@ -551,7 +565,7 @@ function SectionJumelage() {
       </BPCard>
 
       {/* KPIs jumelage */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {[
           { label: "Matches actifs", value: "4", sub: "score moyen 84%" },
           { label: "Trisociations", value: "2", sub: "LiveKit complétées" },
@@ -786,7 +800,7 @@ function SectionGouvernanceRoles() {
 function SectionTimeTokens() {
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {[
           { label: "Solde", value: "1,847 UT", sub: "≈ 2.4K$ en services" },
           { label: "Gagnés ce mois", value: "+312 UT", sub: "7 contributions" },
@@ -851,7 +865,7 @@ function SectionPionniersCroissance() {
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {[
           { label: "Confirmés", value: "5/9", color: "text-emerald-600" },
           { label: "Prospects", value: "2", color: "text-amber-600" },
@@ -865,7 +879,7 @@ function SectionPionniersCroissance() {
       </div>
 
       <BPCard icon={Rocket} title="Grille sectorielle">
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
           {O9_PIONNIERS.map(p => (
             <div key={p.id} className={cn("rounded-lg border p-2.5 text-center",
               p.status === "pris" ? "bg-emerald-50 border-emerald-200" :

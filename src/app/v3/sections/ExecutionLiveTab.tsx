@@ -169,7 +169,7 @@ export function ExecutionLiveTab({ botCode }: { botCode: string }) {
       </LivingHero>
 
       {/* 4 KPI cards — pattern Cockpit (header bleu pastel) */}
-      <div className="grid grid-cols-4 gap-3 mt-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
         {dynamicKpis.map((kpi, i) => (
           <div key={i} className="rounded-xl border border-gray-200 shadow-sm bg-white">
             <div className="flex items-center justify-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">

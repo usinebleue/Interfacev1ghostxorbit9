@@ -25,6 +25,8 @@ import { useDataSource } from "../data/use-data-source";
 import { DomainBadge } from "../data/source-badge";
 import { DEPT_SHORT_LABEL, DEPT_DASH_ICON, PHASE_COLORS, BOT_DISPLAY, BOT_AVATAR_MAP, type PhaseKey } from "./shared/dept-data";
 import { SF } from "../core/styles";
+import { useIsMobile } from "../../components/ui/use-mobile";
+import { MobileSidebarSheet } from "../core/MobileSidebarSheet";
 import { ViewModeToolbar } from "./shared/ViewModeToolbar";
 import { CockpitSectionHeader, WorkActionsOverlay, DEPT_ORDER, WORK_ACTIONS } from "./CockpitView";
 import { type MockChantierItem, type MockProjetItem, type MockMissionItem, type MockTacheItem, type MockDocument, type MockJalon, type MockRACIItem, type MockDecisionLog, type MockConferenceAI, type MockActivityLog, type MockCriterion, type MockDependency, MOCK_CHANTIERS, getMockChantiers } from "../data/mock/chantiers.mock";
@@ -121,7 +123,7 @@ function ChantierEntityDetail({ type, title, description, phase, progression, ec
         <ChevronRight className="h-3.5 w-3.5 rotate-180" /> {backLabel}
       </button>
           {/* Hero + Details grid-cols-5 */}
-          <div className="grid grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             <div className={cn("col-span-3 relative bg-gradient-to-r rounded-xl overflow-hidden shadow-sm", gradients[type])}>
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
               <div className="absolute bottom-0 left-0 w-20 h-20 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
@@ -556,7 +558,7 @@ function ChantierEntityDetail({ type, title, description, phase, progression, ec
               <RotateCcw className="h-4 w-4 text-gray-900 stroke-[2.5]" />
               <span className="text-sm font-bold text-gray-900">Rétrospective</span>
             </div>
-            <div className="px-4 py-3 grid grid-cols-3 gap-3">
+            <div className="px-4 py-3 grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="space-y-1.5">
                 <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-wider flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5" /> Ce qui va bien</span>
                 {retrospective.positifs.map((p, i) => <div key={i} className="text-[10px] text-gray-600 leading-relaxed bg-emerald-50 rounded px-2 py-1">{p}</div>)}
@@ -681,8 +683,8 @@ function ChantierEntityDetail({ type, title, description, phase, progression, ec
           if (n === 2 && row.totalW === 4) return <div key={ri} className="grid grid-cols-2 gap-3">{row.blocks.map(b => <div key={b.key}>{b.node}</div>)}</div>;
           if (n === 1) return <div key={ri}>{row.blocks[0].node}</div>;
           if (n === 2 && row.totalW === 2) return <div key={ri} className="grid grid-cols-2 gap-3">{row.blocks.map(b => <div key={b.key}>{b.node}</div>)}</div>;
-          if (n === 3) return <div key={ri} className="grid grid-cols-3 gap-3">{row.blocks.map(b => <div key={b.key}>{b.node}</div>)}</div>;
-          if (n === 2 && row.totalW === 3) return <div key={ri} className="grid grid-cols-3 gap-3">{row.blocks.map(b => <div key={b.key} className={b.w === 2 ? "col-span-2" : ""}>{b.node}</div>)}</div>;
+          if (n === 3) return <div key={ri} className="grid grid-cols-1 md:grid-cols-3 gap-3">{row.blocks.map(b => <div key={b.key}>{b.node}</div>)}</div>;
+          if (n === 2 && row.totalW === 3) return <div key={ri} className="grid grid-cols-1 md:grid-cols-3 gap-3">{row.blocks.map(b => <div key={b.key} className={b.w === 2 ? "col-span-2" : ""}>{b.node}</div>)}</div>;
           return <div key={ri} className="grid grid-cols-2 gap-3">{row.blocks.map(b => <div key={b.key}>{b.node}</div>)}</div>;
         };
 
@@ -776,6 +778,7 @@ export function ChantierView({ botCode, showHeader = true, onAction }: { botCode
   const [filterPhase, setFilterPhase] = useState<string>("all");
   const [sortKey, setSortKey] = useState<ChantierSortKey>("phase");
   const [subViewMode, setSubViewMode] = useState<"cards" | "list" | "table">("cards");
+  const isMobile = useIsMobile();
 
   // Sync quand botCode change
   useEffect(() => { setSelectedDept(botCode); resetNav(); }, [botCode]);
@@ -861,7 +864,7 @@ export function ChantierView({ botCode, showHeader = true, onAction }: { botCode
       {level === "chantiers" && top3.length > 0 && (
         <div>
           <CockpitSectionHeader icon={Flame} title={`Top 3 — Chantiers prioritaires${selectedDept !== "CEOB" ? ` (${DEPT_SHORT_LABEL[selectedDept] || selectedDept})` : ""}`} count={allChantiers.length} color="text-orange-500" />
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {top3.map((ch, i) => {
               const ps = PHASE_COLORS[ch.phase];
               const gradient = i === 0 ? "from-orange-500 to-amber-500" : i === 1 ? "from-blue-500 to-cyan-500" : "from-emerald-500 to-teal-500";
@@ -890,10 +893,27 @@ export function ChantierView({ botCode, showHeader = true, onAction }: { botCode
       )}
 
       {/* 3. SIDEBAR DÉPARTEMENTS + CONTENT — Pattern SectionView */}
-      <div className="flex gap-3">
+      <div className={cn("flex gap-3", isMobile && "flex-col gap-0")}>
         {/* Sidebar w-[180px] — départements (comme Cockpit) */}
-        {level === "chantiers" && (
-          <div className={SF.sidebarW}>
+        {level === "chantiers" && (() => {
+          const deptItems = botCode === "CEOB" ? DEPT_ORDER : [botCode];
+          const phaseFilters = [
+            { key: "all", label: "Toutes", icon: Layers, count: allChantiers.length },
+            { key: "discussion", label: "Discussion", icon: MessageCircle, count: allChantiers.filter(c => c.phase === "discussion").length },
+            { key: "reflexion", label: "Réflexion", icon: Brain, count: allChantiers.filter(c => c.phase === "reflexion").length },
+            { key: "creation", label: "Conception", icon: Hammer, count: allChantiers.filter(c => c.phase === "creation").length },
+            { key: "execution", label: "Exécution", icon: Rocket, count: allChantiers.filter(c => c.phase === "execution").length },
+            { key: "retroaction", label: "Rétroaction", icon: BarChart3, count: allChantiers.filter(c => c.phase === "retroaction").length },
+          ] as const;
+          const subSections = [
+            { id: "projets", label: "Projets", icon: FolderOpen, count: allChantiers.reduce((s, c) => s + c.projets.length, 0) },
+            { id: "missions", label: "Missions", icon: Target, count: allChantiers.reduce((s, c) => s + c.projets.reduce((s2, p) => s2 + p.missions.length, 0), 0) },
+            { id: "taches", label: "Tâches", icon: ListChecks, count: allChantiers.reduce((s, c) => s + c.projets.reduce((s2, p) => s2 + p.missions.reduce((s3, m) => s3 + m.taches.length, 0), 0), 0) },
+          ];
+          const totalSidebarItems = 1 + deptItems.length + phaseFilters.length + subSections.length;
+          const currentLabel = selectedDept === botCode ? "Vue d'ensemble" : (DEPT_SHORT_LABEL[selectedDept] || selectedDept);
+
+          const sidebarContent = (<>
             {/* Vue d'ensemble */}
             <button onClick={() => { setSelectedDept(botCode); resetNav(); }} className={cn(SF.btnBase, selectedDept === botCode && level === "chantiers" ? SF.btnActive : SF.btnInactive)}>
               <Home className={selectedDept === botCode ? SF.iconActive : SF.iconInactive} />
@@ -902,7 +922,7 @@ export function ChantierView({ botCode, showHeader = true, onAction }: { botCode
             </button>
             <div className={SF.separator} />
             {/* Départements — comme Cockpit sidebar */}
-            {(botCode === "CEOB" ? DEPT_ORDER : [botCode]).map(code => {
+            {deptItems.map(code => {
               const isActive = selectedDept === code && selectedDept !== botCode;
               const Icon = DEPT_DASH_ICON[code] || Zap;
               const label = DEPT_SHORT_LABEL[code] || code;
@@ -919,14 +939,7 @@ export function ChantierView({ botCode, showHeader = true, onAction }: { botCode
             <div className={SF.separator} />
             {/* Filtres par phase */}
             <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest px-2.5 pt-1">Phases</span>
-            {([
-              { key: "all", label: "Toutes", icon: Layers, count: allChantiers.length },
-              { key: "discussion", label: "Discussion", icon: MessageCircle, count: allChantiers.filter(c => c.phase === "discussion").length },
-              { key: "reflexion", label: "Réflexion", icon: Brain, count: allChantiers.filter(c => c.phase === "reflexion").length },
-              { key: "creation", label: "Conception", icon: Hammer, count: allChantiers.filter(c => c.phase === "creation").length },
-              { key: "execution", label: "Exécution", icon: Rocket, count: allChantiers.filter(c => c.phase === "execution").length },
-              { key: "retroaction", label: "Rétroaction", icon: BarChart3, count: allChantiers.filter(c => c.phase === "retroaction").length },
-            ] as const).map(item => {
+            {phaseFilters.map(item => {
               const isPhaseActive = filterPhase === item.key;
               const phaseColor = item.key !== "all" ? PHASE_COLORS[item.key as PhaseKey] : null;
               return (
@@ -941,19 +954,25 @@ export function ChantierView({ botCode, showHeader = true, onAction }: { botCode
             })}
             <div className={SF.separator} />
             {/* Sous-sections par type */}
-            {[
-              { id: "projets", label: "Projets", icon: FolderOpen, count: allChantiers.reduce((s, c) => s + c.projets.length, 0) },
-              { id: "missions", label: "Missions", icon: Target, count: allChantiers.reduce((s, c) => s + c.projets.reduce((s2, p) => s2 + p.missions.length, 0), 0) },
-              { id: "taches", label: "Tâches", icon: ListChecks, count: allChantiers.reduce((s, c) => s + c.projets.reduce((s2, p) => s2 + p.missions.reduce((s3, m) => s3 + m.taches.length, 0), 0), 0) },
-            ].map(item => (
+            {subSections.map(item => (
               <button key={item.id} onClick={() => {}} className={cn(SF.btnBase, SF.btnInactive)}>
                 <item.icon className={SF.iconInactive} />
                 <span className={SF.labelInactive}>{item.label}</span>
                 <span className={SF.count}>{item.count}</span>
               </button>
             ))}
-          </div>
-        )}
+          </>);
+
+          return isMobile ? (
+            <MobileSidebarSheet currentLabel={currentLabel} itemCount={totalSidebarItems}>
+              {sidebarContent}
+            </MobileSidebarSheet>
+          ) : (
+            <div className={SF.sidebarW}>
+              {sidebarContent}
+            </div>
+          );
+        })()}
 
         {/* Content — Pattern SectionView (grid-cols-2 OU fiche detail) */}
         <div className={SF.content}>

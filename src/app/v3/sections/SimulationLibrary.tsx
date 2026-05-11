@@ -630,7 +630,7 @@ export function SimulationLibrary() {
             <p className="text-[11px] text-gray-500">{totalItems} composants hot — Scenarios + Ateliers + TheRealtor</p>
           </div>
         </div>
-        <div className="grid grid-cols-4 gap-3 mt-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
           <div className="bg-white/70 rounded-lg px-3 py-2 text-center">
             <div className="text-lg font-bold text-gray-900">10</div>
             <div className="text-[9px] text-gray-500">Partages</div>

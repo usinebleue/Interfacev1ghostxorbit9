@@ -8,10 +8,12 @@ import {
 } from "lucide-react";
 import { Card } from "../../../components/ui/card";
 import { cn } from "../../../components/ui/utils";
+import { useIsMobile } from "../../../components/ui/use-mobile";
 import { useDataSource } from "../../data/use-data-source";
 import { DomainBadge } from "../../data/source-badge";
 import { getFieldsForTier, type SizeTier, type FieldDef } from "../../../v2/zones/center/blueprint/blueprint-config";
 import { BlueprintField, isWideField } from "./blueprint-helpers";
+import { MobileSidebarSheet } from "../../core/MobileSidebarSheet";
 
 // ── Blueprint Personnel — Sections avec vrais FieldDef qui persistent via canvas API ──
 // Les clés "personnel.xxx" se sauvegardent dans le même canvas (blueprint_CEOB)
@@ -120,6 +122,7 @@ export function BlueprintPersonnel({ botCode, headerGradient, data, onFieldChang
   dirty: boolean;
   tier: SizeTier;
 }) {
+  const isMobile = useIsMobile();
   const { data: simulationSourceData } = useDataSource("blueprint-sections", SIMULATION_DATA);
 
   const [activeSection, setActiveSection] = useState(PERSONAL_SECTIONS[0].id);
@@ -192,32 +195,43 @@ export function BlueprintPersonnel({ botCode, headerGradient, data, onFieldChang
         </div>
       </div>
 
-      <div className="flex gap-3">
+      <div className={cn("flex gap-3", isMobile && "flex-col gap-0")}>
       {/* Sidebar — sections nav avec progression */}
-      <div className="w-[180px] shrink-0 space-y-0.5 sticky top-0 self-start">
-        {PERSONAL_SECTIONS.map(s => {
-          const isActive = activeSection === s.id;
-          const Icon = s.icon;
-          const progress = sectionProgress(s);
-          return (
-            <button key={s.id} onClick={() => scrollToSection(s.id)} className={cn(
-              "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
-              isActive ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent"
-            )}>
-              <div className="flex items-center gap-1.5">
-                <Icon className={cn("h-3.5 w-3.5 shrink-0", isActive ? "text-blue-500" : "text-gray-400")} />
-                <span className={cn("text-[10px] font-bold flex-1 leading-tight", isActive ? "text-blue-700" : "text-gray-700")}>{s.label}</span>
-                <span className={cn("text-[8px] font-bold px-1.5 py-0.5 rounded-full",
-                  progress === 0 ? "bg-gray-100 text-gray-400" :
-                  progress < 50 ? "bg-amber-50 text-amber-600" :
-                  progress < 100 ? "bg-blue-50 text-blue-600" :
-                  "bg-emerald-50 text-emerald-600"
-                )}>{progress}%</span>
-              </div>
-            </button>
-          );
-        })}
-      </div>
+      {(() => {
+        const sidebarContent = (<>
+          {PERSONAL_SECTIONS.map(s => {
+            const isActive = activeSection === s.id;
+            const Icon = s.icon;
+            const progress = sectionProgress(s);
+            return (
+              <button key={s.id} onClick={() => scrollToSection(s.id)} className={cn(
+                "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
+                isActive ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent"
+              )}>
+                <div className="flex items-center gap-1.5">
+                  <Icon className={cn("h-3.5 w-3.5 shrink-0", isActive ? "text-blue-500" : "text-gray-400")} />
+                  <span className={cn("text-[10px] font-bold flex-1 leading-tight", isActive ? "text-blue-700" : "text-gray-700")}>{s.label}</span>
+                  <span className={cn("text-[8px] font-bold px-1.5 py-0.5 rounded-full",
+                    progress === 0 ? "bg-gray-100 text-gray-400" :
+                    progress < 50 ? "bg-amber-50 text-amber-600" :
+                    progress < 100 ? "bg-blue-50 text-blue-600" :
+                    "bg-emerald-50 text-emerald-600"
+                  )}>{progress}%</span>
+                </div>
+              </button>
+            );
+          })}
+        </>);
+        return isMobile ? (
+          <MobileSidebarSheet currentLabel={PERSONAL_SECTIONS.find(s => s.id === activeSection)?.label ?? "Personnel"} itemCount={PERSONAL_SECTIONS.length}>
+            {sidebarContent}
+          </MobileSidebarSheet>
+        ) : (
+          <div className="w-[180px] shrink-0 space-y-0.5 sticky top-0 self-start">
+            {sidebarContent}
+          </div>
+        );
+      })()}
 
       {/* Contenu — sections avec vrais champs editables */}
       <div className="flex-1 min-w-0 space-y-4">

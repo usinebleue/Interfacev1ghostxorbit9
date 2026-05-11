@@ -28,6 +28,7 @@ import { cn } from "../components/ui/utils";
 import { useAmorcer } from "./AmorcerContext";
 import { useChatContext } from "../v2/context/ChatContext";
 import { BOT_AVATAR, BOT_NAME, BOT_ROLE } from "../v2/api/types";
+import { useIsMobile } from "../components/ui/use-mobile";
 import { api } from "../v2/api/client";
 import { BOT_CODES } from "./constants";
 import { DEPT_DASH_ICON, DEPT_GRADIENT, BOT_DISPLAY, PHASE_COLORS } from "./sections/shared/dept-data";
@@ -805,6 +806,7 @@ function V3MessageList() {
                             borderColors[i % borderColors.length],
                             hoverBgs[i % hoverBgs.length],
                             "hover:shadow-sm cursor-pointer group/opt",
+                            "active:scale-[0.98] active:bg-gray-50 focus:outline-none touch-manipulation",
                           )}
                         >
                           <div className="flex items-start gap-2">
@@ -1075,15 +1077,17 @@ function DeptWelcomeScreen({ botCode, onAction, onResumeThread, onDeleteThread, 
 
 
 export function DiscussionWindow() {
-  const { cockpitTab, activeBotCode, activePhase, setActivePhase, setRightSection, setReflexionContext, setFocusType, setActiveDeliverable, credoPhase, reflexionContext, addWorkflowItem } = useAmorcer();
-  const { activeRoster, addBotToRoster, removeBotFromRoster, messages, sendMessage, threads, resumeThread, deleteThread } = useChatContext();
+  const { cockpitTab, activeBotCode, activePhase, setActivePhase, setRightSection, setReflexionContext, setFocusType, setActiveDeliverable, credoPhase, reflexionContext, addWorkflowItem, activeMeeting: dwActiveMeeting } = useAmorcer();
+  const { activeRoster, addBotToRoster, removeBotFromRoster, messages, sendMessage, threads, resumeThread, deleteThread, chatTargetBot } = useChatContext();
+  const isMobile = useIsMobile();
   const isOrbit9 = cockpitTab === "orbit9";
   const isEmpty = messages.length === 0;
 
   // Reset workspace au cockpit quand la discussion est vide (refresh, nouveau thread)
   // Évite d'avoir une phase orpheline sans messages
+  // GUARD: ne PAS reset pendant un meeting actif (la discussion est vide au début, le transcript arrive après)
   useEffect(() => {
-    if (isEmpty && activePhase && !["observation", "attention", "moderation"].includes(activePhase)) {
+    if (isEmpty && activePhase && !dwActiveMeeting && !["observation", "attention", "moderation"].includes(activePhase)) {
       setActivePhase("observation" as PhaseKey);
       setReflexionContext(null);
       setRightSection("cockpit");
@@ -1093,7 +1097,7 @@ export function DiscussionWindow() {
   return (
     <div className="h-full flex flex-col bg-white">
       {/* Header UB_BLUE h-12 — design modélisé V3 */}
-      <div className="h-12 px-3 shrink-0 flex items-center gap-2 bg-[#073E5A]">
+      <div className={cn("h-12 shrink-0 flex items-center gap-2 bg-[#073E5A]", "px-3")}>
         {isOrbit9 ? (
           <>
             <Atom className="h-4 w-4 text-white" />
@@ -1293,7 +1297,17 @@ function ChatBoxV3() {
         if (data.entries?.length > 0) {
           for (const entry of data.entries) {
             const role = entry.speaker === "user" ? "user" : "assistant";
-            injectRef.current(role, entry.text, entry.agent || undefined);
+            injectRef.current(role, entry.text, entry.agent || undefined, role === "assistant" ? {
+              options: entry.options,
+              canvasActions: entry.canvas_actions,
+              teamProposal: entry.team_proposal,
+              phaseCredo: entry.phase_credo,
+              bubbleContext: entry.bubble_context,
+              isDiagnostic: entry.is_diagnostic,
+              ghostActif: entry.ghost_actif,
+              cascadeSuggestions: entry.cascade_suggestions,
+              scaffoldProgress: entry.scaffold_progress,
+            } : undefined);
           }
           meetingCursorRef.current = data.cursor ?? (meetingCursorRef.current + data.entries.length);
         }
@@ -1318,15 +1332,30 @@ function ChatBoxV3() {
         const data = await res.json();
         if (data.events?.length > 0) {
           for (const evt of data.events) {
-            if (evt.type === "exchange") {
+            if (evt.type === "user_transcript") {
+              // Transcript immediat — affiche le texte user des qu'il parle
               if (evt.user_text) injectRef.current("user", evt.user_text);
-              if (evt.bot_text) injectRef.current("assistant", evt.bot_text, evt.agent);
+            } else if (evt.type === "exchange") {
+              if (evt.user_text) injectRef.current("user", evt.user_text);
+              if (evt.bot_text) injectRef.current("assistant", evt.bot_text, evt.agent, {
+                options: evt.options,
+                canvasActions: evt.canvas_actions,
+                teamProposal: evt.team_proposal,
+                phaseCredo: evt.phase_credo,
+                bubbleContext: evt.bubble_context,
+                isDiagnostic: evt.is_diagnostic,
+                ghostActif: evt.ghost_actif,
+                tier: evt.tier,
+                latenceMs: evt.latence_ms,
+                cascadeSuggestions: evt.cascade_suggestions,
+                scaffoldProgress: evt.scaffold_progress,
+              });
             }
           }
           pollCursorRef.current = data.cursor;
         }
       } catch { /* retry next poll */ }
-    }, 2000);
+    }, 800);
   }, []);
 
   const stopVoicePolling = useCallback(() => {
@@ -1351,7 +1380,23 @@ function ChatBoxV3() {
     if (callState === "connecting" || callState === "connected") return;
     setCallState("connecting");
     setCallDuration(0);
-    newConversation();
+    // PAS de newConversation() — le vocal injecte dans la discussion active
+    // Le user voit ses messages texte + vocaux dans le meme fil
+
+    // Mobile autoplay fix: warm up AudioContext during user gesture (synchronous, before any await)
+    // iOS/Android require AudioContext.resume() within a tap/click context
+    try {
+      const _ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      if (_ctx.state === "suspended") _ctx.resume();
+    } catch {}
+
+    // Pre-create audio element during user gesture
+    if (!audioElRef.current) {
+      audioElRef.current = document.createElement("audio");
+      audioElRef.current.autoplay = true;
+      document.body.appendChild(audioElRef.current);
+    }
+
     try {
       const tokenData = await api.voiceToken(activeBotCode, 1, false);
       const room = new Room({ adaptiveStream: true, dynacast: true, disconnectOnPageLeave: false });
@@ -1362,9 +1407,11 @@ function ChatBoxV3() {
           if (!audioElRef.current) {
             audioElRef.current = document.createElement("audio");
             audioElRef.current.autoplay = true;
+            (audioElRef.current as any).playsInline = true;
             document.body.appendChild(audioElRef.current);
           }
           track.attach(audioElRef.current);
+          audioElRef.current.play().catch(() => {});
         }
       });
 
@@ -1383,6 +1430,8 @@ function ChatBoxV3() {
 
       await room.connect(tokenData.livekit_url, tokenData.token);
       await room.localParticipant.setMicrophoneEnabled(true);
+      // LiveKit native autoplay handler — enables audio playback on mobile browsers
+      room.startAudio().catch(() => {});
       setCallState("connected");
 
       // Connection sound (A major chord)
@@ -1407,7 +1456,7 @@ function ChatBoxV3() {
       setCallState("error");
       setTimeout(() => setCallState("idle"), 3000);
     }
-  }, [activeBotCode, callState, newConversation, endCall, startVoicePolling]);
+  }, [activeBotCode, callState, endCall, startVoicePolling]);
 
   // ═══ TOGGLE MIC ═══
   const toggleMic = useCallback(async () => {

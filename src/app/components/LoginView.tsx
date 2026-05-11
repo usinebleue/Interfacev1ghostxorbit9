@@ -143,7 +143,7 @@ export function LoginView({ onLogin }: LoginViewProps) {
 
           {/* Footer */}
           <div className="text-center text-xs text-gray-500">
-            <p>Acces reserve — Usine Bleue AI</p>
+            <p>Accès réservé — Usine Bleue AI</p>
           </div>
         </div>
       </Card>

@@ -75,7 +75,7 @@ export function RetroactionTab({ botCode }: { botCode: string }) {
       </LivingHero>
 
       {/* 4 KPI cards — pattern Cockpit (header bleu pastel), au-dessus du sidebar comme En direct */}
-      <div className="grid grid-cols-4 gap-3 mt-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
         {MOCK_METRIQUES.map((m, i) => (
           <div key={i} className="rounded-xl border border-gray-200 shadow-sm bg-white">
             <div className="flex items-center justify-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
@@ -254,7 +254,7 @@ export function RetroactionTab({ botCode }: { botCode: string }) {
                 <BookOpen className="h-3.5 w-3.5 text-violet-500" />
                 <span className="text-xs font-bold text-gray-900">Apprentissages</span>
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {/* Positifs */}
                 <div>
                   <div className="flex items-center gap-1.5 mb-1.5">

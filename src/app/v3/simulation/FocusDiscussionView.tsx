@@ -39,7 +39,9 @@ import {
 } from "lucide-react";
 import { cn } from "../../components/ui/utils";
 import { SF } from "../core/styles";
+import { useIsMobile } from "../../components/ui/use-mobile";
 import { PHASE_CONFIG } from "../core/phases";
+import { MobileSidebarSheet } from "../core/MobileSidebarSheet";
 
 // ═══════════════════════════════════════════════════════════════
 // DONNÉES CONTEXTUELLES — Chaque sujet a ses propres données
@@ -537,6 +539,7 @@ interface FocusDiscussionViewProps {
 }
 
 export function FocusDiscussionView({ context, focusType = "chantier", onBack, onAdvancePhase, activePhase = "discussion" }: FocusDiscussionViewProps) {
+  const isMobile = useIsMobile();
   const { chatStage, workflowItems, removeWorkflowItem } = useAmorcer();
   const typeLabel = TYPE_LABELS[focusType] || "Élément";
   const data = getCtx(context, focusType);
@@ -582,33 +585,44 @@ export function FocusDiscussionView({ context, focusType = "chantier", onBack, o
       </div>
 
       {/* 2. SIDEBAR ÉTAPES + CONTENU */}
-      <div className="flex gap-4">
-        <div className={SF.sidebarW}>
-          {DISCUSSION_STEPS.map((s) => {
-            const visible = chatStage >= s.minStage;
-            const isActive = activeStepKey === s.key && visible;
-            const col = STEP_COLORS[s.key];
-            return (
-              <button
-                key={s.key}
-                onClick={() => visible && setActiveStepKey(s.key)}
-                disabled={!visible}
-                className={cn(
-                  SF.btnBase,
-                  isActive ? `${col.active} border shadow-sm` : visible ? SF.btnInactive : "opacity-40 cursor-not-allowed border border-transparent"
-                )}
-              >
-                <div className={cn("w-5 h-5 rounded-md flex items-center justify-center shrink-0", visible ? `${col.bg} ${col.text}` : "bg-gray-100 text-gray-300")}>
-                  <s.icon className="h-3 w-3" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <span className={cn("text-[10px] font-bold leading-tight block", isActive ? col.text : visible ? "text-gray-700" : "text-gray-400")}>{s.title}</span>
-                  <span className="text-[9px] text-gray-400 leading-tight block">{s.subtitle}</span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
+      <div className={cn("flex gap-4", isMobile && "flex-col gap-0")}>
+        {(() => {
+          const sidebarContent = (<>
+            {DISCUSSION_STEPS.map((s) => {
+              const visible = chatStage >= s.minStage;
+              const isActive = activeStepKey === s.key && visible;
+              const col = STEP_COLORS[s.key];
+              return (
+                <button
+                  key={s.key}
+                  onClick={() => visible && setActiveStepKey(s.key)}
+                  disabled={!visible}
+                  className={cn(
+                    SF.btnBase,
+                    isActive ? `${col.active} border shadow-sm` : visible ? SF.btnInactive : "opacity-40 cursor-not-allowed border border-transparent"
+                  )}
+                >
+                  <div className={cn("w-5 h-5 rounded-md flex items-center justify-center shrink-0", visible ? `${col.bg} ${col.text}` : "bg-gray-100 text-gray-300")}>
+                    <s.icon className="h-3 w-3" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className={cn("text-[10px] font-bold leading-tight block", isActive ? col.text : visible ? "text-gray-700" : "text-gray-400")}>{s.title}</span>
+                    <span className="text-[9px] text-gray-400 leading-tight block">{s.subtitle}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </>);
+          return isMobile ? (
+            <MobileSidebarSheet currentLabel={DISCUSSION_STEPS.find(s => s.key === activeStepKey)?.title || "Contexte"} itemCount={DISCUSSION_STEPS.length}>
+              {sidebarContent}
+            </MobileSidebarSheet>
+          ) : (
+            <div className={SF.sidebarW}>
+              {sidebarContent}
+            </div>
+          );
+        })()}
 
         <div className={SF.content}>
           <StepContent stepKey={activeStepKey} context={context} focusType={focusType} data={data} chatStage={chatStage} onAdvancePhase={onAdvancePhase} />
@@ -664,7 +678,7 @@ function StepContexte({ context, focusType, data }: SProps) {
         <h3 className="text-xs font-bold text-gray-900 mb-2">{context}</h3>
         <p className="text-[11px] text-gray-600 leading-relaxed">{data.description}</p>
       </div>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <StatCard label="Progression" value={`${data.pct}%`} icon={TrendingUp} color="text-sky-600" bg="bg-sky-50" />
         <StatCard label="Piloté par" value={data.bot} icon={Briefcase} color="text-violet-600" bg="bg-violet-50" />
         <StatCard label="Équipe" value={`${data.team.length} membres`} icon={Layers} color="text-amber-600" bg="bg-amber-50" />
@@ -897,7 +911,7 @@ function SectionResume({ context, focusType, data }: SProps) {
         <h3 className="text-xs font-bold text-gray-900 mb-2">{context}</h3>
         <p className="text-[11px] text-gray-600 leading-relaxed">{data.description}</p>
       </div>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <StatCard label="Progression" value={`${data.pct}%`} icon={TrendingUp} color="text-sky-600" bg="bg-sky-50" />
         <StatCard label="Piloté par" value={data.bot} icon={Briefcase} color="text-violet-600" bg="bg-violet-50" />
         <StatCard label="Équipe" value={`${data.team.length} membres`} icon={Layers} color="text-amber-600" bg="bg-amber-50" />
@@ -1091,7 +1105,7 @@ function SectionTendance({ context, data }: SProps) {
     <div className="space-y-3">
       <div className="rounded-xl border border-gray-200 bg-white p-4">
         <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">Évolution — {context}</h4>
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {points.map((p, i) => (
             <div key={i} className="text-center">
               <div className="text-sm font-bold text-gray-900">{p.valeur}</div>

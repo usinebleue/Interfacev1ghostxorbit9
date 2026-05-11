@@ -25,6 +25,8 @@ import {
 } from "lucide-react";
 import { cn } from "../../components/ui/utils";
 import { SF } from "../core/styles";
+import { useIsMobile } from "../../components/ui/use-mobile";
+import { MobileSidebarSheet } from "../core/MobileSidebarSheet";
 import { useAmorcer } from "../AmorcerContext";
 import { useChatContext } from "../../v2/context/ChatContext";
 import { PHASE_CONFIGS } from "./phase-config";
@@ -52,6 +54,7 @@ function LivePhaseViewInner({ config, context, onPhaseComplete, onReturnToCockpi
   onPhaseComplete?: () => void;
   onReturnToCockpit?: () => void;
 }) {
+  const isMobile = useIsMobile();
   const {
     chatStage, workflowItems, removeWorkflowItem, getCristallise,
     getCristalliseItem, editCristallise, setPendingCapture, addWorkflowItem, activeBotCode,
@@ -109,49 +112,61 @@ function LivePhaseViewInner({ config, context, onPhaseComplete, onReturnToCockpi
       </div>
 
       {/* ═══ SIDEBAR + CONTENU ═══ */}
-      <div className="flex gap-3">
+      <div className={cn("flex gap-3", isMobile && "flex-col gap-0")}>
         {/* Sidebar */}
-        <div className={SF.sidebarW}>
-          {config.steps.map((s) => {
-            const isUnlocked = chatStage >= s.minStage;
-            const isActive = activeStepId === s.id;
-            const hasContent = getCristallise(s.id) !== null;
-            return (
-              <button
-                key={s.id}
-                onClick={() => isUnlocked && setActiveStepId(s.id)}
-                disabled={!isUnlocked}
-                className={cn(
-                  SF.btnBase,
-                  isActive
-                    ? cn(col.sidebar.active, "border shadow-sm")
-                    : isUnlocked
-                    ? SF.btnInactive
-                    : "opacity-40 cursor-not-allowed border border-transparent"
-                )}
-              >
-                <s.icon className={cn(
-                  isActive ? cn("h-3.5 w-3.5", col.sidebar.activeText)
-                  : isUnlocked ? SF.iconInactive
-                  : "h-3.5 w-3.5 text-gray-300"
-                )} />
-                <span className={cn(
-                  isActive ? cn("text-[10px] font-bold", col.sidebar.activeText)
-                  : isUnlocked ? SF.labelInactive
-                  : "text-[10px] text-gray-400"
-                )}>{s.title}</span>
-                {hasContent && (
-                  <span className="ml-auto w-4 h-4 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
-                    <CheckCircle2 className="h-2.5 w-2.5 text-emerald-600" />
-                  </span>
-                )}
-                {!hasContent && isUnlocked && chatStage === s.minStage && (
-                  <span className="ml-auto w-3 h-3 rounded-full bg-amber-400 animate-pulse shrink-0" />
-                )}
-              </button>
-            );
-          })}
-        </div>
+        {(() => {
+          const activeLabel = activeStep?.title || config.label;
+          const sidebarContent = (<>
+            {config.steps.map((s) => {
+              const isUnlocked = chatStage >= s.minStage;
+              const isActive = activeStepId === s.id;
+              const hasContent = getCristallise(s.id) !== null;
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => isUnlocked && setActiveStepId(s.id)}
+                  disabled={!isUnlocked}
+                  className={cn(
+                    SF.btnBase,
+                    isActive
+                      ? cn(col.sidebar.active, "border shadow-sm")
+                      : isUnlocked
+                      ? SF.btnInactive
+                      : "opacity-40 cursor-not-allowed border border-transparent"
+                  )}
+                >
+                  <s.icon className={cn(
+                    isActive ? cn("h-3.5 w-3.5", col.sidebar.activeText)
+                    : isUnlocked ? SF.iconInactive
+                    : "h-3.5 w-3.5 text-gray-300"
+                  )} />
+                  <span className={cn(
+                    isActive ? cn("text-[10px] font-bold", col.sidebar.activeText)
+                    : isUnlocked ? SF.labelInactive
+                    : "text-[10px] text-gray-400"
+                  )}>{s.title}</span>
+                  {hasContent && (
+                    <span className="ml-auto w-4 h-4 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                      <CheckCircle2 className="h-2.5 w-2.5 text-emerald-600" />
+                    </span>
+                  )}
+                  {!hasContent && isUnlocked && chatStage === s.minStage && (
+                    <span className="ml-auto w-3 h-3 rounded-full bg-amber-400 animate-pulse shrink-0" />
+                  )}
+                </button>
+              );
+            })}
+          </>);
+          return isMobile ? (
+            <MobileSidebarSheet currentLabel={activeLabel} itemCount={config.steps.length}>
+              {sidebarContent}
+            </MobileSidebarSheet>
+          ) : (
+            <div className={SF.sidebarW}>
+              {sidebarContent}
+            </div>
+          );
+        })()}
 
         {/* Contenu */}
         <div className={SF.content}>

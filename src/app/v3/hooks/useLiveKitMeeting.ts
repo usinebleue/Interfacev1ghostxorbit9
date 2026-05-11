@@ -58,6 +58,7 @@ export function useLiveKitMeeting(): UseLiveKitMeetingReturn {
   const roomRef = useRef<Room | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const audioElementsRef = useRef<HTMLAudioElement[]>([]);
 
   // Timer
   useEffect(() => {
@@ -73,6 +74,8 @@ export function useLiveKitMeeting(): UseLiveKitMeetingReturn {
       if (pollRef.current) clearInterval(pollRef.current);
       if (timerRef.current) clearInterval(timerRef.current);
       if (roomRef.current) roomRef.current.disconnect();
+      audioElementsRef.current.forEach(el => { el.srcObject = null; el.remove(); });
+      audioElementsRef.current = [];
     };
   }, []);
 
@@ -80,6 +83,13 @@ export function useLiveKitMeeting(): UseLiveKitMeetingReturn {
     if (meetingStatus === "creating" || meetingStatus === "connecting" || meetingStatus === "live") return;
     setMeetingStatus("creating");
     setElapsedTime(0);
+
+    // Mobile autoplay fix: warm up AudioContext during user gesture (synchronous, before any await)
+    // iOS/Android require AudioContext.resume() within a tap/click context
+    try {
+      const _ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      if (_ctx.state === "suspended") _ctx.resume();
+    } catch {}
 
     try {
       const data = await api.meetingCreate({ title, meeting_type: type });
@@ -107,10 +117,17 @@ export function useLiveKitMeeting(): UseLiveKitMeetingReturn {
             name: participant.name || participant.identity,
           };
           if (track.kind === Track.Kind.Audio) {
-            const el = document.createElement("audio");
-            el.autoplay = true;
-            document.body.appendChild(el);
+            // Reuse pre-warmed audio element or create new one
+            let el = audioElementsRef.current.find(a => !a.srcObject);
+            if (!el) {
+              el = document.createElement("audio");
+              el.autoplay = true;
+              (el as any).playsInline = true;
+              document.body.appendChild(el);
+              audioElementsRef.current.push(el);
+            }
             track.attach(el);
+            el.play().catch(() => {});
             info.audioTrack = track.mediaStreamTrack;
           } else if (track.kind === Track.Kind.Video) {
             info.videoTrack = track.mediaStreamTrack;
@@ -152,6 +169,8 @@ export function useLiveKitMeeting(): UseLiveKitMeetingReturn {
 
       await room.connect(data.livekit_url, data.token);
       await room.localParticipant.setMicrophoneEnabled(true);
+      // LiveKit native autoplay handler — enables audio playback on mobile browsers
+      room.startAudio().catch(() => {});
 
       roomRef.current = room;
 
@@ -178,6 +197,9 @@ export function useLiveKitMeeting(): UseLiveKitMeetingReturn {
       roomRef.current.disconnect();
       roomRef.current = null;
     }
+    // Clean up audio elements
+    audioElementsRef.current.forEach(el => { el.srcObject = null; el.remove(); });
+    audioElementsRef.current = [];
     if (meetingData?.slug) {
       api.meetingEnd(meetingData.slug).catch(err => console.warn("Meeting end failed:", err));
     }

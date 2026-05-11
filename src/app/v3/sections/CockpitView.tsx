@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect, useMemo } from "react";
+import { useIsMobile } from "../../components/ui/use-mobile";
 import { PageLayout } from "../../v2/zones/center/layouts";
 import { useBots } from "../../v2/api/hooks";
 import { useChantiers } from "../../v2/api/hooks";
@@ -20,6 +21,7 @@ import {
   ShoppingBag, Sparkles, Star, TrendingDown, TrendingUp, Truck,
   User, Users, Wallet, Wrench, Zap,
 } from "lucide-react";
+import { MobileSidebarSheet } from "../core/MobileSidebarSheet";
 import { Card } from "../../components/ui/card";
 import { cn } from "../../components/ui/utils";
 import { LivingHero } from "./shared/LivingHero";
@@ -309,6 +311,7 @@ export function getSignalTag(item: DashboardBlocItem): { label: string; classes:
 export function CockpitView({ embedded = false, onAction, initialDept = "CEOB" }: { embedded?: boolean; onAction?: (phase: string, context: string, deliverable?: string, focusType?: string) => void; initialDept?: string }) {
   const [selectedDept, setSelectedDept] = useState(initialDept);
   const [selectedBloc, setSelectedBloc] = useState<DashboardBlocConfig | null>(null);
+  const isMobile = useIsMobile();
 
   // ═══ Data source — simu→live switchable ═══
   const { data: cockpitSections, source: cockpitSource } = useDataSource("cockpit-sections", DEPT_DASHBOARD_SECTIONS);
@@ -383,7 +386,7 @@ export function CockpitView({ embedded = false, onAction, initialDept = "CEOB" }
       </LivingHero>
 
       {/* VITAA 5 piliers */}
-      <div className="grid grid-cols-5 gap-3">
+      <div className={cn("grid gap-3", isMobile ? "grid-cols-2" : "grid-cols-5")}>
         {config.vitaa.map(kpi => (
           <div key={kpi.label} className="rounded-xl border border-gray-200 shadow-sm bg-white">
             <div className="flex items-center justify-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
@@ -405,7 +408,7 @@ export function CockpitView({ embedded = false, onAction, initialDept = "CEOB" }
       {signalItems.length > 0 && (
         <div>
           <CockpitSectionHeader icon={AlertTriangle} title="À porter attention" count={signalItems.length} />
-          <div className="grid grid-cols-3 gap-3">
+          <div className={cn("grid gap-3", isMobile ? "grid-cols-1" : "grid-cols-3")}>
             {signalItems.map((item, i) => (
               <CockpitSignalCard key={i} item={item} onAction={handleAction} />
             ))}
@@ -414,11 +417,10 @@ export function CockpitView({ embedded = false, onAction, initialDept = "CEOB" }
       )}
 
       {/* Sidebar départements + Contenu */}
-      <div className="flex gap-3">
-        {/* Sidebar départements — CEOB seulement (poupée russe: Direction voit tout, autres = scopé) */}
-        {initialDept === "CEOB" && (
-        <div className={cn("w-[180px] shrink-0 space-y-0.5 transition-all", selectedBloc && "pt-8")}>
-          {DEPT_ORDER.map(code => {
+      <div className={cn("flex gap-3", isMobile && "flex-col gap-0")}>
+        {/* Sidebar départements — CEOB seulement */}
+        {initialDept === "CEOB" && (() => {
+          const sidebarButtons = DEPT_ORDER.map(code => {
             const isActive = selectedDept === code;
             const Icon = DEPT_DASH_ICON[code] || Zap;
             const label = DEPT_SHORT_LABEL[code] || code;
@@ -445,16 +447,24 @@ export function CockpitView({ embedded = false, onAction, initialDept = "CEOB" }
                 </div>
               </button>
             );
-          })}
-        </div>
-        )}
+          });
+          return isMobile ? (
+            <MobileSidebarSheet currentLabel={DEPT_SHORT_LABEL[selectedDept] || "Direction"} itemCount={DEPT_ORDER.length}>
+              {sidebarButtons}
+            </MobileSidebarSheet>
+          ) : (
+            <div className={cn("w-[180px] shrink-0 space-y-0.5 transition-all", selectedBloc && "pt-8")}>
+              {sidebarButtons}
+            </div>
+          );
+        })()}
 
         {/* Contenu — CockpitCard grid 2 cols OU drill-down CockpitBlocDetail */}
         <div className="flex-1 min-w-0 space-y-3">
           {selectedBloc ? (
             <CockpitBlocDetail config={selectedBloc} deptLabel={deptLabel} deptGradient={gradient} onBack={() => setSelectedBloc(null)} onAction={handleAction} />
           ) : (
-            <div className="grid grid-cols-2 gap-3">
+            <div className={cn("grid gap-3", isMobile ? "grid-cols-1" : "grid-cols-2")}>
               {gridBlocs.map((bloc, i) => (
                 <CockpitCard key={i} config={bloc} onAction={handleAction} onHeaderClick={() => setSelectedBloc(bloc)} />
               ))}

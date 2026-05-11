@@ -303,8 +303,19 @@ export function VideoCallWidget() {
                 injectVoiceMessage("user", `[Vision] ${evt.user_text}`);
               }
               if (evt.bot_text) {
-                const optLabels = (evt.options || []).map((o: any) => o.label || o);
-                injectVoiceMessage("assistant", evt.bot_text, evt.agent || "CEOB", optLabels);
+                injectVoiceMessage("assistant", evt.bot_text, evt.agent || "CEOB", {
+                  options: evt.options,
+                  canvasActions: evt.canvas_actions,
+                  teamProposal: evt.team_proposal,
+                  phaseCredo: evt.phase_credo,
+                  bubbleContext: evt.bubble_context,
+                  isDiagnostic: evt.is_diagnostic,
+                  ghostActif: evt.ghost_actif,
+                  tier: evt.tier,
+                  latenceMs: evt.latence_ms,
+                  cascadeSuggestions: evt.cascade_suggestions,
+                  scaffoldProgress: evt.scaffold_progress,
+                });
               }
             }
           }

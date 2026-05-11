@@ -10,6 +10,7 @@
  */
 
 import { useState } from "react";
+import { useIsMobile } from "../../../components/ui/use-mobile";
 import { AlertTriangle, TrendingUp, TrendingDown, ChevronRight, ListChecks, Activity, ThumbsUp, MessageCircle, Share2, Trophy, Bot, UserPlus, Handshake, Zap, Newspaper, ChevronDown, Star, DollarSign, Rocket, Calendar, Globe, Factory, BarChart3, Clock, Info, FileText, Image as ImageIcon, MapPin, Users } from "lucide-react";
 import { cn } from "../../../components/ui/utils";
 import { SF } from "../../core/styles";
@@ -17,6 +18,7 @@ import { PHASE_COLORS, type PhaseKey, BOT_AVATAR_MAP } from "../shared/dept-data
 import { LivingHero } from "../shared/LivingHero";
 import { useDataSource } from "../../data/use-data-source";
 import { DomainBadge } from "../../data/source-badge";
+import { MobileSidebarSheet } from "../../core/MobileSidebarSheet";
 
 import { O9_SECTION_DESC } from "./orbit9-data";
 import {
@@ -70,6 +72,7 @@ function PhaseBadge({ phase }: { phase?: string }) {
 }
 
 export function Orbit9Dashboard() {
+  const isMobile = useIsMobile();
   const { data: dashboardData } = useDataSource("orbit9-dashboard", { O9_DASHBOARD_KPIS, O9_DASH_ROW1, O9_GRID_BLOCS, O9_FEED_OVERVIEW });
 
   // null = vue d'ensemble, string = sous-section active
@@ -136,7 +139,7 @@ export function Orbit9Dashboard() {
           {signalItems.length > 0 && (
             <div>
               <CockpitSectionHeader icon={AlertTriangle} title="À porter attention" count={signalItems.length} />
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {signalItems.map((item, i) => (
                   <CockpitSignalCard key={i} item={item} onAction={handleAction} />
                 ))}
@@ -203,22 +206,33 @@ export function Orbit9Dashboard() {
       })()}
 
       {/* ═══ SIDEBAR + CONTENU ═══ */}
-      <div className="flex gap-3">
+      <div className={cn("flex gap-3", isMobile && "flex-col gap-0")}>
         {/* Sidebar — switch content */}
-        <div className={cn("w-[180px] shrink-0 space-y-0.5 transition-all", activeSection && "pt-2")}>
-          {O9_DASH_SIDEBAR.map((item, idx) => {
-            if (!item) return <div key={`sep-${idx}`} className={SF.separator} />;
-            const Icon = item.icon;
-            const isActive = activeSidebarId === item.id;
-            return (
-              <button key={item.id} type="button" onClick={() => handleSidebarClick(item.id)}
-                className={cn(SF.btnBase, isActive ? SF.btnActive : SF.btnInactive)}>
-                <Icon className={cn(isActive ? SF.iconActive : SF.iconInactive)} />
-                <span className={cn(isActive ? SF.labelActive : SF.labelInactive)}>{item.label}</span>
-              </button>
-            );
-          })}
-        </div>
+        {(() => {
+          const sidebarContent = (<>
+            {O9_DASH_SIDEBAR.map((item, idx) => {
+              if (!item) return <div key={`sep-${idx}`} className={SF.separator} />;
+              const Icon = item.icon;
+              const isActive = activeSidebarId === item.id;
+              return (
+                <button key={item.id} type="button" onClick={() => handleSidebarClick(item.id)}
+                  className={cn(SF.btnBase, isActive ? SF.btnActive : SF.btnInactive)}>
+                  <Icon className={cn(isActive ? SF.iconActive : SF.iconInactive)} />
+                  <span className={cn(isActive ? SF.labelActive : SF.labelInactive)}>{item.label}</span>
+                </button>
+              );
+            })}
+          </>);
+          return isMobile ? (
+            <MobileSidebarSheet currentLabel={O9_DASH_SIDEBAR.find(s => s && s.id === activeSidebarId)?.label ?? "Dashboard"} itemCount={O9_DASH_SIDEBAR.filter(Boolean).length}>
+              {sidebarContent}
+            </MobileSidebarSheet>
+          ) : (
+            <div className={cn("w-[180px] shrink-0 space-y-0.5 transition-all", activeSection && "pt-2")}>
+              {sidebarContent}
+            </div>
+          );
+        })()}
 
         {/* Contenu */}
         <div className="flex-1 min-w-0 space-y-3">
@@ -276,7 +290,7 @@ export function Orbit9Dashboard() {
                           </div>
                         </div>
                       )}
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                         {statItems.map((item, i) => (
                           <div key={i} className="rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md hover:border-blue-200 transition-all p-3">
                             <div className="flex items-center justify-between mb-1">
@@ -467,7 +481,7 @@ export function Orbit9Dashboard() {
                   return (
                     <div className="space-y-4">
                       {/* 1. KPIs principaux — grid 4 cols */}
-                      <div className="grid grid-cols-4 gap-2">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                         {detailBloc.items.slice(0, 4).map((item, i) => (
                           <div key={i} className="rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md hover:border-blue-200 transition-all p-3 text-center">
                             <div className={cn("text-lg font-extrabold", item.valueColor || "text-gray-700")}>{item.value}</div>
@@ -478,7 +492,7 @@ export function Orbit9Dashboard() {
                       </div>
 
                       {/* 2. Portrait secondaire — 3 indicateurs clés */}
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                         {[
                           { label: "Établissements", value: "13,694", detail: "Employeurs (800+ en automatisation)", source: "ISQ/REAI 2024" },
                           { label: "ERP connecté", value: "3%", detail: "51% ont un ERP mais 3% pleinement connecté", source: "MEIE 2025" },
@@ -921,7 +935,7 @@ export function Orbit9Dashboard() {
                 case "pionniers":
                   return (
                     <div className="space-y-3">
-                      <div className="grid grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         {O9_PIONNIERS.map(p => (
                           <div key={p.id} className={cn("rounded-xl border bg-white shadow-sm hover:shadow-md hover:border-blue-200 transition-all p-4 text-center",
                             p.status === "pris" ? "border-emerald-200" : p.status === "prospect" ? "border-amber-200" : "border-gray-200 border-dashed"
@@ -952,7 +966,7 @@ export function Orbit9Dashboard() {
                   const rest = detailBloc.items.slice(4);
                   return (
                     <div className="space-y-3">
-                      <div className="grid grid-cols-4 gap-2">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                         {kpis.map((item, i) => (
                           <div key={i} className="rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md hover:border-blue-200 transition-all p-3 text-center">
                             <div className={cn("text-lg font-extrabold", item.valueColor || "text-gray-700")}>{item.value}</div>

@@ -11,7 +11,10 @@
 
 import { useState, useCallback } from "react";
 import { Brain, ArrowRight, Hammer, Rocket, Check } from "lucide-react";
+import { cn } from "../../components/ui/utils";
 import { SF } from "../core/styles";
+import { useIsMobile } from "../../components/ui/use-mobile";
+import { MobileSidebarSheet } from "../core/MobileSidebarSheet";
 import { useChatContext } from "../../v2/context/ChatContext";
 import { useAmorcer } from "../AmorcerContext";
 import { PHASE_SECTIONS } from "./phase-sections";
@@ -50,6 +53,7 @@ const PHASE_META = {
 } as const;
 
 export function UnifiedPhaseView({ phaseKey, context, onPhaseComplete }: UnifiedPhaseViewProps) {
+  const isMobile = useIsMobile();
   const sections = PHASE_SECTIONS[phaseKey] || [];
   const meta = PHASE_META[phaseKey];
   const [activeSection, setActiveSection] = useState(sections[0]?.id || "");
@@ -117,33 +121,45 @@ export function UnifiedPhaseView({ phaseKey, context, onPhaseComplete }: Unified
       </div>
 
       {/* ═══ SIDEBAR + CONTENT ═══ */}
-      <div className="flex gap-3">
+      <div className={cn("flex gap-3", isMobile && "flex-col gap-0")}>
         {/* Sidebar */}
-        <div className={SF.sidebarW}>
-          {sections.map(s => {
-            const isActive = s.id === activeSection;
-            const hasCristallise = getCristallise(s.id) !== null;
-            const isPending = pendingCapture === s.id;
-            return (
-              <button
-                key={s.id}
-                onClick={() => setActiveSection(s.id)}
-                className={`${SF.btnBase} ${isActive ? SF.btnActive : SF.btnInactive}`}
-              >
-                <s.icon className={isActive ? SF.iconActive : SF.iconInactive} />
-                <span className={isActive ? SF.labelActive : SF.labelInactive}>{s.title}</span>
-                {hasCristallise && (
-                  <span className="ml-auto w-4 h-4 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
-                    <Check className="h-2.5 w-2.5 text-emerald-600" />
-                  </span>
-                )}
-                {isPending && !hasCristallise && (
-                  <span className="ml-auto w-3 h-3 rounded-full bg-amber-400 animate-pulse shrink-0" />
-                )}
-              </button>
-            );
-          })}
-        </div>
+        {(() => {
+          const activeLabel = activeS?.title || meta.title;
+          const sidebarContent = (<>
+            {sections.map(s => {
+              const isActive = s.id === activeSection;
+              const hasCristallise = getCristallise(s.id) !== null;
+              const isPending = pendingCapture === s.id;
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => setActiveSection(s.id)}
+                  className={`${SF.btnBase} ${isActive ? SF.btnActive : SF.btnInactive}`}
+                >
+                  <s.icon className={isActive ? SF.iconActive : SF.iconInactive} />
+                  <span className={isActive ? SF.labelActive : SF.labelInactive}>{s.title}</span>
+                  {hasCristallise && (
+                    <span className="ml-auto w-4 h-4 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                      <Check className="h-2.5 w-2.5 text-emerald-600" />
+                    </span>
+                  )}
+                  {isPending && !hasCristallise && (
+                    <span className="ml-auto w-3 h-3 rounded-full bg-amber-400 animate-pulse shrink-0" />
+                  )}
+                </button>
+              );
+            })}
+          </>);
+          return isMobile ? (
+            <MobileSidebarSheet currentLabel={activeLabel} itemCount={sections.length}>
+              {sidebarContent}
+            </MobileSidebarSheet>
+          ) : (
+            <div className={SF.sidebarW}>
+              {sidebarContent}
+            </div>
+          );
+        })()}
 
         {/* Content */}
         <div className={SF.content}>

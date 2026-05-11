@@ -20,6 +20,8 @@ import { BOT_AVATAR, BOT_NAME } from "../../v2/api/types";
 import { LivingHero } from "./shared/LivingHero";
 import { DEPT_SHORT_LABEL, DEPT_DASH_ICON, DEPT_LABELS, DEPT_ICONS, DEPT_GRADIENT, DEPT_COLORS, BOT_DISPLAY, BOT_AVATAR_MAP } from "./shared/dept-data";
 import { SF } from "../core/styles";
+import { useIsMobile } from "../../components/ui/use-mobile";
+import { MobileSidebarSheet } from "../core/MobileSidebarSheet";
 // Shared data from PlaybookStoreView
 import { PLAYBOOK_STORE_DATA, PlaybookCardV2, CONFERENCE_FAMILIES, getPlaybookFamily, PLAYBOOK_WORKFLOWS, PLAYBOOK_LIVRABLES, PLAYBOOK_LONG_DESC } from "./PlaybookStoreView";
 import { getWorkspaceTarget } from "../meeting/conference-workspace-map";
@@ -90,10 +92,11 @@ function useRecentSessions() {
 
 type ConfAIView = "accueil" | "recentes" | "planifiees" | "famille" | "departement" | "tous";
 
-export function ConferenceAIView({ headerGradient, onNavigateToStore, onLaunch, botCode }: {
+export function ConferenceAIView({ headerGradient, onNavigateToStore, onLaunch, onStartMeeting, botCode }: {
   headerGradient: string;
   onNavigateToStore?: () => void;
   onLaunch?: (type: string, title: string) => void;
+  onStartMeeting?: (type: string, title: string) => Promise<void>;
   botCode?: string;
 }) {
   const recentSessions = useRecentSessions();
@@ -103,6 +106,8 @@ export function ConferenceAIView({ headerGradient, onNavigateToStore, onLaunch, 
   const [expandDepts, setExpandDepts] = useState(false);
   const [selectedFamily, setSelectedFamily] = useState<string | null>(null);
   const [selectedDept, setSelectedDept] = useState<string | null>(null);
+
+  const isMobile = useIsMobile();
 
   // Meeting live — workspace routing via AmorcerContext (plus de MeetingRoomView silo)
   const { setActivePhase, setRightSection, setActiveMeeting } = useAmorcer();
@@ -137,7 +142,7 @@ export function ConferenceAIView({ headerGradient, onNavigateToStore, onLaunch, 
       ? resolveBackendMeetingType(matchedPb)
       : type;
 
-    // Activer la réunion dans le contexte global (déclenche useLiveKitMeeting dans WorkspacePhasesPanel)
+    // Activer la réunion dans le contexte global
     setActiveMeeting({
       type: resolvedType,
       title,
@@ -145,9 +150,13 @@ export function ConferenceAIView({ headerGradient, onNavigateToStore, onLaunch, 
       playbookId: matchedPb?.id,
     });
 
+    // Démarrer le meeting DIRECTEMENT dans le handler de clic (user gesture context)
+    // Sur mobile, getUserMedia + AudioContext nécessitent un user gesture actif
+    if (onStartMeeting) onStartMeeting(resolvedType, title);
+
     // Callback parent si fourni
     if (onLaunch) onLaunch(resolvedType, title);
-  }, [onLaunch, allConfRaw, botCode, setActivePhase, setRightSection, setActiveMeeting]);
+  }, [onLaunch, onStartMeeting, allConfRaw, botCode, setActivePhase, setRightSection, setActiveMeeting]);
   const allConf = botCode && botCode !== "CEOB"
     ? [...allConfRaw.filter(pb => pb.departement === botCode), ...allConfRaw.filter(pb => pb.departement !== botCode)]
     : allConfRaw;
@@ -178,7 +187,7 @@ export function ConferenceAIView({ headerGradient, onNavigateToStore, onLaunch, 
   const SIDEBAR_ITEMS: SidebarItem[] = [
     { id: "accueil", label: "Accueil", icon: Sparkles, count: deptConfCount },
     { id: "recentes", label: "Recentes", icon: Clock },
-    { id: "planifiees", label: "Planifiees", icon: Calendar },
+    { id: "planifiees", label: "Planifiées", icon: Calendar },
     { id: "famille", label: "Categories", icon: FolderOpen, separator: true, expandable: "families" },
     // Poupée russe: non-CEOB = pas d'explorateur départements (on est déjà DANS un département)
     ...(isNonCEOB ? [] : [{ id: "departement" as ConfAIView | "store", label: "Departements", icon: Building2, expandable: "depts" as const }]),
@@ -215,6 +224,40 @@ export function ConferenceAIView({ headerGradient, onNavigateToStore, onLaunch, 
         </div>
       </LivingHero>
 
+      {/* Hero card Reunion en direct — position haute, visible sur tous les sous-onglets */}
+      {activeView === "accueil" && !selectedPlaybook && (() => {
+        const botDisplayName = botCode ? (BOT_NAME[botCode] || botCode) : "CarlOS";
+        return (
+          <div className="rounded-xl border border-violet-200 overflow-hidden shadow-sm bg-gradient-to-r from-violet-50 to-fuchsia-50">
+            <div className="px-5 py-4 flex flex-col md:flex-row md:items-center gap-4">
+              <div className="flex items-start gap-3 flex-1 min-w-0">
+                <div className="shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-md">
+                  <Video className="h-5 w-5 text-white" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-bold text-gray-900">Reunion en direct</h3>
+                  <p className="text-xs text-gray-500 leading-relaxed mt-0.5">Demarrez une reunion avec votre equipe IA</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => handleLaunchInternal("discussion_live", `Reunion — ${botDisplayName}`)}
+                  className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-violet-600 hover:bg-violet-700 active:bg-violet-800 rounded-lg cursor-pointer transition-colors shadow-sm touch-manipulation"
+                >
+                  <Play className="h-3.5 w-3.5" /> Continuer la discussion
+                </button>
+                <button
+                  onClick={() => handleLaunchInternal("brainstorm", "Nouvelle reunion")}
+                  className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-violet-700 bg-white hover:bg-violet-50 active:bg-violet-100 border border-violet-200 rounded-lg cursor-pointer transition-colors touch-manipulation"
+                >
+                  <Sparkles className="h-3.5 w-3.5" /> Nouvelle reunion
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Top 3 Conferences — adaptatif au département (même pattern que Playbook Store) */}
       {activeView === "accueil" && !selectedPlaybook && (() => {
         const confPool = isNonCEOB
@@ -237,7 +280,7 @@ export function ConferenceAIView({ headerGradient, onNavigateToStore, onLaunch, 
               <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
               <h3 className="text-xs font-bold text-gray-800">{isNonCEOB ? `Top 3 Conferences — ${DEPT_SHORT_LABEL[botCode!] || botCode}` : "Top 3 — Conferences les plus utiles"}</h3>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {top3.map(f => (
                 <div key={f.playbookId} className={cn("relative bg-gradient-to-r rounded-xl overflow-hidden cursor-pointer group hover:shadow-lg transition-shadow", f.gradient)} onClick={() => handleOpenDetail(f.pb)}>
                   <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
@@ -282,74 +325,86 @@ export function ConferenceAIView({ headerGradient, onNavigateToStore, onLaunch, 
         );
       })()}
 
-    <div className="flex gap-3">
+    <div className={cn("flex gap-3", isMobile && "flex-col gap-0")}>
       {/* Sidebar TOC */}
-      <div className={SF.sidebarW}>
-        {SIDEBAR_ITEMS.map((item, idx) => {
-          const isActive = activeView === item.id && !item.expandable && !item.external;
-          return (
-            <div key={item.id}>
-              {item.separator && idx > 0 && <div className={SF.separator} />}
-              <button
-                onClick={() => {
-                  if (item.external && onNavigateToStore) { onNavigateToStore(); return; }
-                  if (item.expandable === "families") { setExpandFamilies(!expandFamilies); }
-                  else if (item.expandable === "depts") { setExpandDepts(!expandDepts); }
-                  else if (item.id !== "store") { setActiveView(item.id as ConfAIView); setSelectedPlaybook(null); }
-                }}
-                className={cn(
-                  "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
-                  isActive ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent"
+      {(() => {
+        const sidebarContent = (<>
+          {SIDEBAR_ITEMS.map((item, idx) => {
+            const isActive = activeView === item.id && !item.expandable && !item.external;
+            return (
+              <div key={item.id}>
+                {item.separator && idx > 0 && <div className={SF.separator} />}
+                <button
+                  onClick={() => {
+                    if (item.external && onNavigateToStore) { onNavigateToStore(); return; }
+                    if (item.expandable === "families") { setExpandFamilies(!expandFamilies); }
+                    else if (item.expandable === "depts") { setExpandDepts(!expandDepts); }
+                    else if (item.id !== "store") { setActiveView(item.id as ConfAIView); setSelectedPlaybook(null); }
+                  }}
+                  className={cn(
+                    "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
+                    isActive ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent"
+                  )}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <item.icon className={cn("h-3.5 w-3.5", isActive ? "text-blue-500" : item.external ? "text-gray-300" : "text-gray-400")} />
+                    <span className={cn("text-[10px] font-bold flex-1 leading-tight", isActive ? "text-blue-700" : item.external ? "text-gray-400" : "text-gray-700")}>{item.label}</span>
+                    {item.count !== undefined && <span className="text-[9px] text-gray-400">{item.count}</span>}
+                    {item.external && <ExternalLink className="h-3.5 w-3.5 text-gray-300" />}
+                    {item.expandable === "families" && <ChevronDown className={cn("h-3.5 w-3.5 text-gray-400 transition-transform", expandFamilies && "rotate-180")} />}
+                    {item.expandable === "depts" && <ChevronDown className={cn("h-3.5 w-3.5 text-gray-400 transition-transform", expandDepts && "rotate-180")} />}
+                  </div>
+                </button>
+                {/* Expandable familles */}
+                {item.expandable === "families" && expandFamilies && (
+                  <div className="ml-3 mt-0.5 space-y-0.5">
+                    {familyEntries.map(f => {
+                      const FIcon = f.icon;
+                      const isActiveF = activeView === "famille" && selectedFamily === f.key;
+                      return (
+                        <button key={f.key} onClick={() => { setSelectedFamily(f.key); setActiveView("famille"); setSelectedPlaybook(null); }}
+                          className={cn("w-full px-2 py-1 rounded text-left text-[9px] cursor-pointer transition-all flex items-center gap-1",
+                            isActiveF ? "bg-blue-50 text-blue-700 font-bold" : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                          )}>
+                          <FIcon className="h-3.5 w-3.5 shrink-0" />
+                          <span className="flex-1">{f.label}</span>
+                          <span className="text-[8px] text-gray-400">{f.count}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 )}
-              >
-                <div className="flex items-center gap-1.5">
-                  <item.icon className={cn("h-3.5 w-3.5", isActive ? "text-blue-500" : item.external ? "text-gray-300" : "text-gray-400")} />
-                  <span className={cn("text-[10px] font-bold flex-1 leading-tight", isActive ? "text-blue-700" : item.external ? "text-gray-400" : "text-gray-700")}>{item.label}</span>
-                  {item.count !== undefined && <span className="text-[9px] text-gray-400">{item.count}</span>}
-                  {item.external && <ExternalLink className="h-3.5 w-3.5 text-gray-300" />}
-                  {item.expandable === "families" && <ChevronDown className={cn("h-3.5 w-3.5 text-gray-400 transition-transform", expandFamilies && "rotate-180")} />}
-                  {item.expandable === "depts" && <ChevronDown className={cn("h-3.5 w-3.5 text-gray-400 transition-transform", expandDepts && "rotate-180")} />}
-                </div>
-              </button>
-              {/* Expandable familles */}
-              {item.expandable === "families" && expandFamilies && (
-                <div className="ml-3 mt-0.5 space-y-0.5">
-                  {familyEntries.map(f => {
-                    const FIcon = f.icon;
-                    const isActiveF = activeView === "famille" && selectedFamily === f.key;
-                    return (
-                      <button key={f.key} onClick={() => { setSelectedFamily(f.key); setActiveView("famille"); setSelectedPlaybook(null); }}
-                        className={cn("w-full px-2 py-1 rounded text-left text-[9px] cursor-pointer transition-all flex items-center gap-1",
-                          isActiveF ? "bg-blue-50 text-blue-700 font-bold" : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
-                        )}>
-                        <FIcon className="h-3.5 w-3.5 shrink-0" />
-                        <span className="flex-1">{f.label}</span>
-                        <span className="text-[8px] text-gray-400">{f.count}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-              {/* Expandable departements */}
-              {item.expandable === "depts" && expandDepts && (
-                <div className="ml-3 mt-0.5 space-y-0.5">
-                  {deptEntries.map(d => {
-                    const isActiveD = activeView === "departement" && selectedDept === d.code;
-                    return (
-                      <button key={d.code} onClick={() => { setSelectedDept(d.code); setActiveView("departement"); setSelectedPlaybook(null); }}
-                        className={cn("w-full px-2 py-1 rounded text-left text-[9px] cursor-pointer transition-all",
-                          isActiveD ? "bg-blue-50 text-blue-700 font-bold" : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
-                        )}>
-                        {d.label} <span className="text-[8px] text-gray-400 ml-1">{d.count}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+                {/* Expandable departements */}
+                {item.expandable === "depts" && expandDepts && (
+                  <div className="ml-3 mt-0.5 space-y-0.5">
+                    {deptEntries.map(d => {
+                      const isActiveD = activeView === "departement" && selectedDept === d.code;
+                      return (
+                        <button key={d.code} onClick={() => { setSelectedDept(d.code); setActiveView("departement"); setSelectedPlaybook(null); }}
+                          className={cn("w-full px-2 py-1 rounded text-left text-[9px] cursor-pointer transition-all",
+                            isActiveD ? "bg-blue-50 text-blue-700 font-bold" : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                          )}>
+                          {d.label} <span className="text-[8px] text-gray-400 ml-1">{d.count}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </>);
+        const activeLabel = SIDEBAR_ITEMS.find(i => i.id === activeView && !i.expandable && !i.external)?.label || "Accueil";
+        return isMobile ? (
+          <MobileSidebarSheet currentLabel={activeLabel} itemCount={SIDEBAR_ITEMS.length}>
+            {sidebarContent}
+          </MobileSidebarSheet>
+        ) : (
+          <div className={SF.sidebarW}>
+            {sidebarContent}
+          </div>
+        );
+      })()}
 
       {/* Contenu */}
       <div className="flex-1 min-w-0 space-y-2">
@@ -402,7 +457,7 @@ function ConfAIAccueil({ playbooks, onOpenDetail, onNavigate, onLaunch, familyEn
       {/* Section 1 — Les plus utilisees */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5"><Star className="h-3.5 w-3.5 text-amber-500" /> {isNonCEOB ? `Conferences ${DEPT_SHORT_LABEL[botCode!] || botCode}` : "Les plus utilisees"}</h3>
+          <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5"><Star className="h-3.5 w-3.5 text-amber-500" /> {isNonCEOB ? `Conférences ${DEPT_SHORT_LABEL[botCode!] || botCode}` : "Les plus utilisées"}</h3>
         </div>
         <div className="grid grid-cols-2 gap-3">
           {topUsed.map(pb => {
@@ -445,7 +500,7 @@ function ConfAIAccueil({ playbooks, onOpenDetail, onNavigate, onLaunch, familyEn
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5"><Zap className="h-3.5 w-3.5 text-orange-500" /> Lancement rapide</h3>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {express.map(pb => {
               const DeptIcon = DEPT_ICONS[pb.departement] || Target;
               return (
@@ -472,7 +527,7 @@ function ConfAIAccueil({ playbooks, onOpenDetail, onNavigate, onLaunch, familyEn
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5"><LayoutGrid className="h-3.5 w-3.5 text-gray-500" /> {isNonCEOB ? `Categories ${DEPT_SHORT_LABEL[botCode!] || botCode}` : "Explorer par categorie"}</h3>
         </div>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {deptFamilyEntries.map(f => {
             const FIcon = f.icon;
             return (
@@ -497,7 +552,7 @@ function ConfAIAccueil({ playbooks, onOpenDetail, onNavigate, onLaunch, familyEn
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-xs font-bold text-gray-800 flex items-center gap-1.5"><Building2 className="h-3.5 w-3.5 text-gray-500" /> Explorer par departement</h3>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {deptEntries.map(d => {
               const DIcon = DEPT_ICONS[d.code] || Building2;
               const avatarSrc = BOT_AVATAR[d.code];
@@ -580,7 +635,7 @@ function ConfAIRecentes({ allConf, onOpenDetail, onLaunch, onBack, recentSession
   );
 }
 
-/* ConfAIPlanifiees — Conferences planifiees a venir (API réelle) */
+/* ConfAIPlanifiees — Conférences planifiées a venir (API réelle) */
 function ConfAIPlanifiees({ onBack }: { onBack: () => void }) {
   const [planned, setPlanned] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -659,7 +714,7 @@ function ConfAIFicheDetail({ pb, onBack, onLaunch, allConf, recentSessions }: {
       </button>
 
       {/* Section 1 — Hero + Details side by side */}
-      <div className="grid grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {/* Hero (3/5) */}
         <div className={cn("col-span-3 relative bg-gradient-to-r rounded-xl overflow-hidden shadow-sm", deptColor.gradient)}>
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />

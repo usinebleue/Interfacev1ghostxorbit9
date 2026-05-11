@@ -9,7 +9,19 @@
 
 import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from "react";
 import type { PhaseKey, CredoPhaseKey, WorkflowItem } from "./core/types";
+import type { MeetingStatus, ParticipantInfo } from "./hooks/useLiveKitMeeting";
 import { api } from "../v2/api/client";
+
+export interface MeetingControlsState {
+  meetingStatus: MeetingStatus;
+  micEnabled: boolean;
+  cameraEnabled: boolean;
+  elapsedTime: number;
+  participants: Map<string, ParticipantInfo>;
+  toggleMic: () => void;
+  toggleCamera: () => void;
+  endMeeting: () => void;
+}
 
 // ═══ localStorage persistence (Fix R5 — état survit au refresh) ═══
 const LS_PREFIX = "v3:";
@@ -181,6 +193,10 @@ interface AmorcerState {
   // Réunion active (survit à la navigation entre sections)
   activeMeeting: { type: string; title: string; slug?: string; playbookId?: string; family?: string } | null;
   setActiveMeeting: (m: { type: string; title: string; slug?: string; playbookId?: string; family?: string } | null) => void;
+
+  // Meeting controls partagés (WPP écrit, MeetingMiniBar lit)
+  meetingControls: MeetingControlsState | null;
+  setMeetingControls: (controls: MeetingControlsState | null) => void;
 
   // Helpers
   startReflexion: (chantier: string) => void;
@@ -390,6 +406,9 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
   // Réunion active (survit à la navigation entre sections)
   const [activeMeeting, setActiveMeeting] = useState<{ type: string; title: string; slug?: string; playbookId?: string; family?: string } | null>(null);
 
+  // Meeting controls partagés (WorkspacePhasesPanel écrit, MeetingMiniBar lit)
+  const [meetingControls, setMeetingControls] = useState<MeetingControlsState | null>(null);
+
   // Workspace session ID — identifie une session de travail partagée (multi-communication)
   const [workspaceSessionId, setWorkspaceSessionId] = useState<string | null>(null);
   const startWorkspaceSession = useCallback(() => {
@@ -504,6 +523,7 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
         activeDocumentKey, setActiveDocumentKey,
         activeDocumentSection, setActiveDocumentSection,
         activeMeeting, setActiveMeeting,
+        meetingControls, setMeetingControls,
         startReflexion, advance, resetChat,
       }}
     >

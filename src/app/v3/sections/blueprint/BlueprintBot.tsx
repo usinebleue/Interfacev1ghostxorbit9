@@ -8,7 +8,9 @@ import {
 } from "lucide-react";
 import { Card } from "../../../components/ui/card";
 import { cn } from "../../../components/ui/utils";
+import { useIsMobile } from "../../../components/ui/use-mobile";
 import { VitaaTable } from "./blueprint-helpers";
+import { MobileSidebarSheet } from "../../core/MobileSidebarSheet";
 
 // ── Blueprint Bot — Profil, Trisociation, Skills, APIs, Performance ──
 
@@ -607,7 +609,7 @@ function BotConfigSection({ botCode }: { botCode: string }) {
           <span className="text-[9px] bg-white/20 text-white px-2 py-0.5 rounded-full font-bold">{currentMode.label}</span>
         </div>
         <div className="p-3 space-y-2.5">
-          <div className="grid grid-cols-5 gap-1.5">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-1.5">
             {DECISION_MODES.map(mode => {
               const MIcon = mode.icon;
               const isActive = activeMode === mode.id;
@@ -643,7 +645,7 @@ function BotConfigSection({ botCode }: { botCode: string }) {
           <p className="text-[10px] text-gray-500 leading-relaxed">
             Configurez les 3 archetypes qui definissent le comportement, le style de reflexion et les priorites de {d.name}.
           </p>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
             {localGhosts.map((ghostName, i) => {
               const arch = GHOST_ARCHETYPES[ghostName];
               if (!arch) return null;
@@ -762,6 +764,7 @@ function BotConfigSection({ botCode }: { botCode: string }) {
 }
 
 export function BlueprintBot({ botCode, headerGradient }: { botCode: string; headerGradient: string }) {
+  const isMobile = useIsMobile();
   const [activeAnchor, setActiveAnchor] = useState(BOT_SECTION_META[0].id);
   const vitaa = VITAA_BOT[botCode] || VITAA_BOT.CEOB;
   const profile = BOT_PROFILES_BP[botCode] || BOT_PROFILES_BP.CEOB;
@@ -814,25 +817,36 @@ export function BlueprintBot({ botCode, headerGradient }: { botCode: string; hea
         </div>
       </div>
 
-      <div className="flex gap-3">
-      <div className="w-[180px] shrink-0 space-y-0.5 sticky top-0 self-start">
-        {BOT_SECTION_META.map(s => {
-          const isActive = activeAnchor === s.id;
-          const Icon = s.icon;
-          return (
-            <button key={s.id} onClick={() => scrollToSection(s.id)} className={cn(
-              "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
-              isActive ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent"
-            )}>
-              <div className="flex items-center gap-1.5">
-                <Icon className={cn("h-3.5 w-3.5 shrink-0", isActive ? "text-blue-500" : "text-gray-400")} />
-                <span className={cn("text-[10px] font-bold flex-1 leading-tight", isActive ? "text-blue-700" : "text-gray-700")}>{s.label}</span>
-                {isActive && <ChevronRight className="h-3.5 w-3.5 text-blue-400" />}
-              </div>
-            </button>
-          );
-        })}
-      </div>
+      <div className={cn("flex gap-3", isMobile && "flex-col gap-0")}>
+      {(() => {
+        const sidebarContent = (<>
+          {BOT_SECTION_META.map(s => {
+            const isActive = activeAnchor === s.id;
+            const Icon = s.icon;
+            return (
+              <button key={s.id} onClick={() => scrollToSection(s.id)} className={cn(
+                "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
+                isActive ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent"
+              )}>
+                <div className="flex items-center gap-1.5">
+                  <Icon className={cn("h-3.5 w-3.5 shrink-0", isActive ? "text-blue-500" : "text-gray-400")} />
+                  <span className={cn("text-[10px] font-bold flex-1 leading-tight", isActive ? "text-blue-700" : "text-gray-700")}>{s.label}</span>
+                  {isActive && <ChevronRight className="h-3.5 w-3.5 text-blue-400" />}
+                </div>
+              </button>
+            );
+          })}
+        </>);
+        return isMobile ? (
+          <MobileSidebarSheet currentLabel={BOT_SECTION_META.find(s => s.id === activeAnchor)?.label ?? "Bot"} itemCount={BOT_SECTION_META.length}>
+            {sidebarContent}
+          </MobileSidebarSheet>
+        ) : (
+          <div className="w-[180px] shrink-0 space-y-0.5 sticky top-0 self-start">
+            {sidebarContent}
+          </div>
+        );
+      })()}
       <div className="flex-1 min-w-0 space-y-4">
 
         {/* ── VUE D'ENSEMBLE ── */}
@@ -863,7 +877,7 @@ export function BlueprintBot({ botCode, headerGradient }: { botCode: string; hea
           </div>
 
           {/* 4 KPIs */}
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {kpis.map(k => {
               const Icon = k.icon;
               return (

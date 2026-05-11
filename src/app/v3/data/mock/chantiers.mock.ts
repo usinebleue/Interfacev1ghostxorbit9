@@ -55,7 +55,7 @@ export const MOCK_CHANTIERS: Record<string, MockChantierItem[]> = {
         { role: "Migration cloud", bot: "CTOB", type: "R" },
         { role: "Automatisation processus", bot: "COOB", type: "R" },
         { role: "Budget & ROI", bot: "CFOB", type: "A" },
-        { role: "Securite infra", bot: "CISOB", type: "C" },
+        { role: "Sécurité infra", bot: "CISOB", type: "C" },
         { role: "Formation equipes", bot: "CHROB", type: "C" },
         { role: "Direction generale", bot: "CEOB", type: "I" },
       ],

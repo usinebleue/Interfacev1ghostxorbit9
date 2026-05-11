@@ -809,7 +809,7 @@ export function AtelierDeepResonance({ onBack }: { onBack: () => void }) {
       {filledCount === 0 && (
         <div className="flex flex-col items-center justify-center py-8 text-gray-400 gap-2">
           <Brain className="h-10 w-10 text-indigo-300" />
-          <p className="text-xs">La spirale socratique apparaitra ici...</p>
+          <p className="text-xs">La spirale socratique apparaîtra ici...</p>
           <p className="text-[9px]">3 niveaux de profondeur + Miroir + Modeles mentaux</p>
         </div>
       )}

@@ -15,6 +15,8 @@ import {
   Palette, Library,
 } from "lucide-react";
 import { cn } from "../../components/ui/utils";
+import { useIsMobile } from "../../components/ui/use-mobile";
+import { MobileSidebarSheet } from "../core/MobileSidebarSheet";
 import type { SectionProps } from "../core/types";
 import { api } from "../../v2/api/client";
 import { LivingHero } from "./shared/LivingHero";
@@ -83,7 +85,7 @@ function AdminDashboard({ onNav }: { onNav: (s: AdminSection) => void }) {
         ]);
         if (status.status === "fulfilled" && status.value) {
           const s = status.value as Record<string, unknown>;
-          setHealth({ API: true, PostgreSQL: !!s.database, LiveKit: !!s.livekit, Nginx: true });
+          setHealth({ API: true, PostgreSQL: (s as any).checks?.postgresql === "ok", LiveKit: (s as any).checks?.livekit === "configured", Nginx: true });
         }
       } catch { /* silent */ }
       setLoading(false);
@@ -94,7 +96,7 @@ function AdminDashboard({ onNav }: { onNav: (s: AdminSection) => void }) {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {kpis.map(k => (
           <V3Card key={k.label}>
             <div className={cn("flex items-center gap-2 px-3 py-2 bg-gradient-to-r", `from-${k.color}-600 to-${k.color}-500`)}>
@@ -123,7 +125,7 @@ function AdminDashboard({ onNav }: { onNav: (s: AdminSection) => void }) {
         </V3Card>
       )}
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
         {([
           { id: "instances" as const, label: "Gérer Instances", icon: Server },
           { id: "users" as const, label: "Gérer Utilisateurs", icon: Users },
@@ -357,7 +359,7 @@ function AdminPackages() {
 
         {showCreate && (
           <div className="px-4 py-3 border-b border-gray-100 bg-blue-50/30 space-y-2">
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
               <input value={form.tenant_id} onChange={e => setForm({ ...form, tenant_id: e.target.value })} placeholder="Tenant ID" className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white" />
               <select value={form.tier_code} onChange={e => setForm({ ...form, tier_code: e.target.value })} className="text-[9px] border border-gray-200 rounded-lg px-2 py-1.5 bg-white">
                 <option value="free">Free</option><option value="solo">Solo</option><option value="direction">Direction</option><option value="csuite">C-Suite</option><option value="pioneer">Pioneer</option>
@@ -366,7 +368,7 @@ function AdminPackages() {
                 <option value="MFG">MFG</option><option value="FEQ">FEQ</option><option value="DEV">DEV</option><option value="INT">INT</option><option value="DST">DST</option><option value="ORG">ORG</option>
               </select>
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
               <input value={form.prix_mensuel} onChange={e => setForm({ ...form, prix_mensuel: e.target.value })} placeholder="Prix/mois ($)" type="number" className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white" />
               <input value={form.ut_inclus} onChange={e => setForm({ ...form, ut_inclus: e.target.value })} placeholder="UT inclus" type="number" className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white" />
               <input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Description" className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white" />
@@ -442,8 +444,8 @@ function AdminMonitoring() {
 
   const services = [
     { name: "API FastAPI", ok: true, icon: Zap },
-    { name: "PostgreSQL", ok: !!(health as any)?.database, icon: Server },
-    { name: "LiveKit", ok: !!(health as any)?.livekit, icon: Activity },
+    { name: "PostgreSQL", ok: (health as any)?.checks?.postgresql === "ok", icon: Server },
+    { name: "LiveKit", ok: (health as any)?.checks?.livekit === "configured", icon: Activity },
     { name: "Nginx", ok: true, icon: Globe },
   ];
 
@@ -571,6 +573,7 @@ const ADMIN_SIDEBAR: SidebarItem[] = [
 const BTML_SECTION_IDS = new Set(BTML_SIDEBAR.map(s => s.id));
 
 export function AdminView({ showHeader }: SectionProps) {
+  const isMobile = useIsMobile();
   const [activeSection, setActiveSection] = useState<AdminSection>("dashboard");
   const [bibleData, setBibleData] = useState<BibleData | null>(null);
   const [bibleLoading, setBibleLoading] = useState(false);
@@ -630,60 +633,76 @@ export function AdminView({ showHeader }: SectionProps) {
         </LivingHero>
       )}
 
-      <div className="flex gap-3">
-        <div className="w-[180px] shrink-0 space-y-0.5 pt-1">
-          {/* ═══ Groupe 1 — Administration ═══ */}
-          {ADMIN_SIDEBAR.map((item) => {
-            const isActive = activeSection === item.id;
-            return (
-              <button key={item.id} onClick={() => setActiveSection(item.id)}
-                className={cn("w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
-                  isActive ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent")}>
-                <div className="flex items-center gap-1.5">
-                  <item.icon className={cn("h-3.5 w-3.5", isActive ? "text-blue-500" : "text-gray-400")} />
-                  <span className={cn("text-[10px] font-bold flex-1 leading-tight", isActive ? "text-blue-700" : "text-gray-700")}>{item.label}</span>
-                </div>
-              </button>
-            );
-          })}
-
-          {/* ═══ Séparateur + Groupe 2 — Stack Technique ═══ */}
-          <div className="h-px bg-gray-100 mx-2 my-2" />
-          <div className="px-2.5 py-1 text-[9px] font-bold text-gray-400 uppercase tracking-wider">Stack Technique</div>
-          {BTML_SIDEBAR.map((item) => {
-            const isActive = activeSection === item.id;
-            return (
-              <button key={item.id} onClick={() => setActiveSection(item.id)}
-                className={cn("w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
-                  isActive ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent")}>
-                <div className="flex items-center gap-1.5">
-                  <item.icon className={cn("h-3.5 w-3.5", isActive ? "text-blue-500" : "text-gray-400")} />
-                  <span className={cn("text-[10px] font-bold flex-1 leading-tight", isActive ? "text-blue-700" : "text-gray-700")}>{item.label}</span>
-                </div>
-              </button>
-            );
-          })}
-
-          {/* ═══ Séparateur + Groupe 3 — Outils Dev ═══ */}
-          <div className="h-px bg-gray-100 mx-2 my-2" />
-          <div className="px-2.5 py-1 text-[9px] font-bold text-gray-400 uppercase tracking-wider">Outils Dev</div>
-          {([
+      <div className={cn("flex gap-3", isMobile && "flex-col gap-0")}>
+        {(() => {
+          const currentItem = [...ADMIN_SIDEBAR, ...BTML_SIDEBAR,
             { id: "icons" as AdminSection, label: "Icônes", icon: Palette },
             { id: "sim-library" as AdminSection, label: "Simulations", icon: Library },
-          ]).map((item) => {
-            const isActive = activeSection === item.id;
-            return (
-              <button key={item.id} onClick={() => setActiveSection(item.id)}
-                className={cn("w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
-                  isActive ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent")}>
-                <div className="flex items-center gap-1.5">
-                  <item.icon className={cn("h-3.5 w-3.5", isActive ? "text-blue-500" : "text-gray-400")} />
-                  <span className={cn("text-[10px] font-bold flex-1 leading-tight", isActive ? "text-blue-700" : "text-gray-700")}>{item.label}</span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
+          ].find(i => i.id === activeSection);
+          const sidebarContent = (<>
+            {/* ═══ Groupe 1 — Administration ═══ */}
+            {ADMIN_SIDEBAR.map((item) => {
+              const isActive = activeSection === item.id;
+              return (
+                <button key={item.id} onClick={() => setActiveSection(item.id)}
+                  className={cn("w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
+                    isActive ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent")}>
+                  <div className="flex items-center gap-1.5">
+                    <item.icon className={cn("h-3.5 w-3.5", isActive ? "text-blue-500" : "text-gray-400")} />
+                    <span className={cn("text-[10px] font-bold flex-1 leading-tight", isActive ? "text-blue-700" : "text-gray-700")}>{item.label}</span>
+                  </div>
+                </button>
+              );
+            })}
+
+            {/* ═══ Séparateur + Groupe 2 — Stack Technique ═══ */}
+            <div className="h-px bg-gray-100 mx-2 my-2" />
+            <div className="px-2.5 py-1 text-[9px] font-bold text-gray-400 uppercase tracking-wider">Stack Technique</div>
+            {BTML_SIDEBAR.map((item) => {
+              const isActive = activeSection === item.id;
+              return (
+                <button key={item.id} onClick={() => setActiveSection(item.id)}
+                  className={cn("w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
+                    isActive ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent")}>
+                  <div className="flex items-center gap-1.5">
+                    <item.icon className={cn("h-3.5 w-3.5", isActive ? "text-blue-500" : "text-gray-400")} />
+                    <span className={cn("text-[10px] font-bold flex-1 leading-tight", isActive ? "text-blue-700" : "text-gray-700")}>{item.label}</span>
+                  </div>
+                </button>
+              );
+            })}
+
+            {/* ═══ Séparateur + Groupe 3 — Outils Dev ═══ */}
+            <div className="h-px bg-gray-100 mx-2 my-2" />
+            <div className="px-2.5 py-1 text-[9px] font-bold text-gray-400 uppercase tracking-wider">Outils Dev</div>
+            {([
+              { id: "icons" as AdminSection, label: "Icônes", icon: Palette },
+              { id: "sim-library" as AdminSection, label: "Simulations", icon: Library },
+            ]).map((item) => {
+              const isActive = activeSection === item.id;
+              return (
+                <button key={item.id} onClick={() => setActiveSection(item.id)}
+                  className={cn("w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
+                    isActive ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent")}>
+                  <div className="flex items-center gap-1.5">
+                    <item.icon className={cn("h-3.5 w-3.5", isActive ? "text-blue-500" : "text-gray-400")} />
+                    <span className={cn("text-[10px] font-bold flex-1 leading-tight", isActive ? "text-blue-700" : "text-gray-700")}>{item.label}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </>);
+          const totalItems = ADMIN_SIDEBAR.length + BTML_SIDEBAR.length + 2;
+          return isMobile ? (
+            <MobileSidebarSheet currentLabel={currentItem?.label || "Admin"} itemCount={totalItems}>
+              {sidebarContent}
+            </MobileSidebarSheet>
+          ) : (
+            <div className="w-[180px] shrink-0 space-y-0.5 pt-1">
+              {sidebarContent}
+            </div>
+          );
+        })()}
         <div className="flex-1 min-w-0">
           {/* ═══ Admin sections ═══ */}
           {activeSection === "dashboard" && <AdminDashboard onNav={setActiveSection} />}

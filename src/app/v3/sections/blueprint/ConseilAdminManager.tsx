@@ -7,8 +7,10 @@ import {
   Save, Loader2, BarChart3, Info,
 } from "lucide-react";
 import { cn } from "../../../components/ui/utils";
+import { useIsMobile } from "../../../components/ui/use-mobile";
 import { useDataSource } from "../../data/use-data-source";
 import { DomainBadge } from "../../data/source-badge";
+import { MobileSidebarSheet } from "../../core/MobileSidebarSheet";
 import {
   type MembreCA, type ConseilAdmin,
   CA_DEFAULT, CA_MOCK_REUNIONS, CA_MOCK_CONFERENCES, CA_MOCK_DOCUMENTS, CA_BLUEPRINT_COMPLETIONS,
@@ -27,6 +29,7 @@ export function ConseilAdminManager({ headerGradient, data, onFieldChange, onSav
   saving: boolean;
   dirty: boolean;
 }) {
+  const isMobile = useIsMobile();
   const { data: caSourceData } = useDataSource("conseil-admin", { CA_DEFAULT, CA_MOCK_REUNIONS, CA_MOCK_CONFERENCES, CA_MOCK_DOCUMENTS });
 
   const [activeCASection, setActiveCASection] = useState("tableau");
@@ -86,32 +89,43 @@ export function ConseilAdminManager({ headerGradient, data, onFieldChange, onSav
         </div>
       </div>
 
-      <div className="flex gap-3">
+      <div className={cn("flex gap-3", isMobile && "flex-col gap-0")}>
       {/* Sidebar TOC */}
-      <div className="w-[180px] shrink-0 space-y-1">
-        {CA_SECTIONS.map(s => {
-          const Icon = s.icon;
-          return (
-            <button key={s.id} onClick={() => setActiveCASection(s.id)} className={cn(
-              "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
-              activeCASection === s.id ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent"
-            )}>
-              <div className="flex items-center gap-1.5">
-                <Icon className={cn("h-3.5 w-3.5", activeCASection === s.id ? "text-blue-600" : "text-gray-400")} />
-                <span className={cn("text-[10px] font-bold leading-tight", activeCASection === s.id ? "text-blue-700" : "text-gray-700")}>{s.label}</span>
-              </div>
-              <div className="text-[9px] text-gray-400 ml-[20px]">{s.meta}</div>
-            </button>
-          );
-        })}
-      </div>
+      {(() => {
+        const sidebarContent = (<>
+          {CA_SECTIONS.map(s => {
+            const Icon = s.icon;
+            return (
+              <button key={s.id} onClick={() => setActiveCASection(s.id)} className={cn(
+                "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
+                activeCASection === s.id ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent"
+              )}>
+                <div className="flex items-center gap-1.5">
+                  <Icon className={cn("h-3.5 w-3.5", activeCASection === s.id ? "text-blue-600" : "text-gray-400")} />
+                  <span className={cn("text-[10px] font-bold leading-tight", activeCASection === s.id ? "text-blue-700" : "text-gray-700")}>{s.label}</span>
+                </div>
+                <div className="text-[9px] text-gray-400 ml-[20px]">{s.meta}</div>
+              </button>
+            );
+          })}
+        </>);
+        return isMobile ? (
+          <MobileSidebarSheet currentLabel={CA_SECTIONS.find(s => s.id === activeCASection)?.label ?? "Conseil"} itemCount={CA_SECTIONS.length}>
+            {sidebarContent}
+          </MobileSidebarSheet>
+        ) : (
+          <div className="w-[180px] shrink-0 space-y-1">
+            {sidebarContent}
+          </div>
+        );
+      })()}
 
       {/* Content */}
       <div className="flex-1 min-w-0 space-y-3">
 
           {/* 1. Tableau de bord */}
           {activeCASection === "tableau" && (<>
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div className="rounded-xl border border-gray-200 shadow-sm bg-white">
                 <div className="flex items-center justify-center gap-2 px-3 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
                   <Users className="h-4 w-4 text-gray-900 stroke-[2.5]" />
@@ -154,7 +168,7 @@ export function ConseilAdminManager({ headerGradient, data, onFieldChange, onSav
               </div>
             </div>
             <div className="rounded-xl border border-gray-200 shadow-sm bg-white p-4">
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-3.5 w-3.5 text-gray-400" />
                   <div>
@@ -205,7 +219,7 @@ export function ConseilAdminManager({ headerGradient, data, onFieldChange, onSav
                   <div className="space-y-2">
                     {ca.membres.map((m, idx) => (
                       <div key={idx} className={cn("rounded-lg border px-3 py-3 group transition-all", m.type === "externe" ? "border-amber-200 bg-amber-50/30" : "border-gray-200 bg-white")}>
-                        <div className="grid grid-cols-6 gap-2 items-center">
+                        <div className="grid grid-cols-3 md:grid-cols-6 gap-2 items-center">
                           <div>
                             <label className="text-[9px] text-gray-400 block mb-0.5">Nom</label>
                             <input className="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white" value={m.nom} onChange={e => updateMembre(idx, { nom: e.target.value })} placeholder="Nom complet" />
@@ -415,7 +429,7 @@ export function ConseilAdminManager({ headerGradient, data, onFieldChange, onSav
                 <span className="text-xs font-bold text-gray-900">Configuration du CA</span>
               </div>
               <div className="p-4 space-y-4">
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="text-xs font-bold text-gray-600 mb-1 block">Président(e) du CA</label>
                     <input className={inputBase} value={ca.president} onChange={e => update({ president: e.target.value })} placeholder="Nom du président(e)" />
@@ -465,7 +479,7 @@ export function ConseilAdminManager({ headerGradient, data, onFieldChange, onSav
 
           {/* 8. Surveillance financière */}
           {activeCASection === "surveillance" && (<>
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div className="rounded-xl border border-gray-200 shadow-sm bg-white">
                 <div className="flex items-center justify-center gap-2 px-3 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
                   <DollarSign className="h-4 w-4 text-gray-900 stroke-[2.5]" />

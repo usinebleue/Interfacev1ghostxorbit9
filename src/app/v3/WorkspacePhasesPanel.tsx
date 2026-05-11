@@ -28,6 +28,7 @@ import {
   Check,
 } from "lucide-react";
 import { cn } from "../components/ui/utils";
+import { useIsMobile } from "../components/ui/use-mobile";
 import { useAmorcer, pushSectionURL } from "./AmorcerContext";
 import { useChatContext } from "../v2/context/ChatContext";
 import { CanvasActionProvider, useCanvasActions } from "../v2/context/CanvasActionContext";
@@ -166,9 +167,11 @@ export function WorkspacePhasesPanel() {
     activeDocumentSection,
     activeMeeting,
     setActiveMeeting,
+    setMeetingControls,
   } = useAmorcer();
 
   const { sendMessage, newConversation } = useChatContext();
+  const isMobile = useIsMobile();
 
   // ═══ AUTO-CAPTURE — TOUJOURS actif, pas juste quand LivePhaseView est monté ═══
   useWorkspaceCapture();
@@ -176,7 +179,8 @@ export function WorkspacePhasesPanel() {
   // ═══ MEETING LIVEKIT — intégré dans le workspace (pas de silo MeetingRoomView) ═══
   const meeting = useLiveKitMeeting();
 
-  // Auto-start meeting quand activeMeeting change (déclenché par ConferenceAIView)
+  // Auto-start meeting quand activeMeeting change (fallback — ConferenceAIView appelle onStartMeeting directement dans le click handler)
+  // Avec le batching React 18, si onStartMeeting est appelé dans le même click, meetingStatus sera déjà "creating" ici → pas de double-start
   useEffect(() => {
     if (activeMeeting && meeting.meetingStatus === "idle") {
       meeting.startMeeting(activeMeeting.type, activeMeeting.title);
@@ -198,6 +202,27 @@ export function WorkspacePhasesPanel() {
       return () => clearTimeout(t);
     }
   }, [meeting.meetingStatus, setActiveMeeting]);
+
+  // ═══ SYNC meeting controls vers AmorcerContext (pour MeetingMiniBar mobile) ═══
+  useEffect(() => {
+    if (meeting.meetingStatus !== "idle") {
+      setMeetingControls({
+        meetingStatus: meeting.meetingStatus,
+        micEnabled: meeting.micEnabled,
+        cameraEnabled: meeting.cameraEnabled,
+        elapsedTime: meeting.elapsedTime,
+        participants: meeting.participants,
+        toggleMic: meeting.toggleMic,
+        toggleCamera: meeting.toggleCamera,
+        endMeeting: meeting.endMeeting,
+      });
+    } else {
+      setMeetingControls(null);
+    }
+  }, [meeting.meetingStatus, meeting.micEnabled, meeting.cameraEnabled, meeting.elapsedTime, meeting.participants, setMeetingControls]);
+
+  // Cleanup meeting controls au démontage
+  useEffect(() => { return () => setMeetingControls(null); }, [setMeetingControls]);
 
   const rightRef = useRef<HTMLDivElement>(null);
 
@@ -313,13 +338,13 @@ export function WorkspacePhasesPanel() {
         const showOrbit9Tabs = activeSection === "orbit9";
         const showExecutionTabs = activeSection === "execution" || (!rightSection && (activePhase === "execution" || activePhase === "retroaction"));
         return (
-          <div className="h-12 px-3 shrink-0 flex items-center gap-2 border-b border-gray-200 bg-[#00B4D8]/[0.12]">
-            <DeptIcon className="h-4 w-4 text-gray-900 stroke-[2.5]" />
-            <span className="text-sm font-bold text-gray-900 shrink-0">{titleText}</span>
+          <div className={cn("h-12 shrink-0 flex items-center gap-2 border-b border-gray-200 bg-[#00B4D8]/[0.12]", "px-3")}>
+            {!isMobile && <DeptIcon className="h-4 w-4 text-gray-900 stroke-[2.5]" />}
+            <span className={cn("font-bold text-gray-900 shrink-0", isMobile ? "text-xs" : "text-sm")}>{titleText}</span>
             {/* Sous-tabs Blueprint */}
             {showBlueprintTabs && (
               <>
-                <div className="w-px h-5 bg-gray-300 mx-1.5" />
+                {!isMobile && <div className="w-px h-5 bg-gray-300 mx-1.5" />}
                 <div className="flex items-center gap-1">
                   {BLUEPRINT_HEADER_TABS.filter(t => !t.ceoOnly || activeBotCode === "CEOB").map(tab => (
                     <button
@@ -327,14 +352,15 @@ export function WorkspacePhasesPanel() {
                       type="button"
                       onClick={() => setBlueprintHeaderView(tab.key)}
                       className={cn(
-                        "px-2 py-1 rounded-md text-[10px] font-medium flex items-center gap-1 transition-all cursor-pointer",
+                        "rounded-md font-medium flex items-center gap-1 transition-all cursor-pointer",
+                        isMobile ? "px-1.5 py-0.5 text-[9px]" : "px-2 py-1 text-[10px]",
                         blueprintHeaderView === tab.key
                           ? "bg-[#073E5A] text-white shadow-sm"
                           : "text-gray-600 hover:bg-gray-100"
                       )}
                     >
-                      <tab.icon className="h-3.5 w-3.5" />
-                      {tab.key === "blueprint" ? (DEPT_SHORT_LABEL[activeBotCode] || "Direction") : tab.label}
+                      <tab.icon className={cn(isMobile ? "h-3 w-3" : "h-3.5 w-3.5")} />
+                      {!isMobile && (tab.key === "blueprint" ? (DEPT_SHORT_LABEL[activeBotCode] || "Direction") : tab.label)}
                     </button>
                   ))}
                 </div>
@@ -343,7 +369,7 @@ export function WorkspacePhasesPanel() {
             {/* Sous-tabs Orbit9 — même pattern que Blueprint */}
             {showOrbit9Tabs && (
               <>
-                <div className="w-px h-5 bg-gray-300 mx-1.5" />
+                {!isMobile && <div className="w-px h-5 bg-gray-300 mx-1.5" />}
                 <div className="flex items-center gap-1">
                   {O9_HEADER_TABS.map(tab => (
                     <button
@@ -351,14 +377,15 @@ export function WorkspacePhasesPanel() {
                       type="button"
                       onClick={() => setO9Section(tab.key)}
                       className={cn(
-                        "px-2 py-1 rounded-md text-[10px] font-medium flex items-center gap-1 transition-all cursor-pointer",
+                        "rounded-md font-medium flex items-center gap-1 transition-all cursor-pointer",
+                        isMobile ? "px-1.5 py-0.5 text-[9px]" : "px-2 py-1 text-[10px]",
                         o9Section === tab.key
                           ? "bg-[#073E5A] text-white shadow-sm"
                           : "text-gray-600 hover:bg-gray-100"
                       )}
                     >
-                      <tab.icon className="h-3.5 w-3.5" />
-                      {tab.label}
+                      <tab.icon className={cn(isMobile ? "h-3 w-3" : "h-3.5 w-3.5")} />
+                      {!isMobile && tab.label}
                     </button>
                   ))}
                 </div>
@@ -367,7 +394,7 @@ export function WorkspacePhasesPanel() {
             {/* Sous-tabs Exécution — même pattern que Orbit9/Blueprint */}
             {showExecutionTabs && (
               <>
-                <div className="w-px h-5 bg-gray-300 mx-1.5" />
+                {!isMobile && <div className="w-px h-5 bg-gray-300 mx-1.5" />}
                 <div className="flex items-center gap-1">
                   {EXECUTION_HEADER_TABS.map(tab => (
                     <button
@@ -375,38 +402,39 @@ export function WorkspacePhasesPanel() {
                       type="button"
                       onClick={() => setExecutionTab(tab.key)}
                       className={cn(
-                        "px-2 py-1 rounded-md text-[10px] font-medium flex items-center gap-1 transition-all cursor-pointer",
+                        "rounded-md font-medium flex items-center gap-1 transition-all cursor-pointer",
+                        isMobile ? "px-1.5 py-0.5 text-[9px]" : "px-2 py-1 text-[10px]",
                         executionTab === tab.key
                           ? "bg-[#073E5A] text-white shadow-sm"
                           : "text-gray-600 hover:bg-gray-100"
                       )}
                     >
-                      <tab.icon className="h-3.5 w-3.5" />
-                      {tab.label}
+                      <tab.icon className={cn(isMobile ? "h-3 w-3" : "h-3.5 w-3.5")} />
+                      {!isMobile && tab.label}
                     </button>
                   ))}
                 </div>
               </>
             )}
-            {activeSection !== "orbit9" && activePhase === "discussion" && reflexionContext && !rightSection && (
+            {!isMobile && activeSection !== "orbit9" && activePhase === "discussion" && reflexionContext && !rightSection && (
               <>
                 <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
                 <span className="text-[11px] font-medium text-sky-600">{reflexionContext}</span>
               </>
             )}
-            {activeSection !== "orbit9" && activePhase === "reflexion" && reflexionContext && !rightSection && (
+            {!isMobile && activeSection !== "orbit9" && activePhase === "reflexion" && reflexionContext && !rightSection && (
               <>
                 <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
                 <span className="text-[11px] font-medium text-orange-600">{reflexionContext}</span>
               </>
             )}
-            {activeSection !== "orbit9" && activePhase === "creation" && activeDeliverable && !rightSection && (
+            {!isMobile && activeSection !== "orbit9" && activePhase === "creation" && activeDeliverable && !rightSection && (
               <>
                 <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
                 <span className="text-[11px] font-medium text-amber-600">{DELIVERABLE_TITLE[activeDeliverable] || activeDeliverable}</span>
               </>
             )}
-            {activeSection !== "orbit9" && activePhase !== "observation" && activePhase !== "reflexion" && activePhase !== "creation" && activePhase !== "discussion" && !rightSection && (
+            {!isMobile && activeSection !== "orbit9" && activePhase !== "observation" && activePhase !== "reflexion" && activePhase !== "creation" && activePhase !== "discussion" && !rightSection && (
               <>
                 <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
                 <span className={cn("text-[11px] font-medium", pc.text)}>{pc.label}</span>
@@ -471,11 +499,14 @@ export function WorkspacePhasesPanel() {
         );
       })()}
 
+      {/* ═══ SLOT MOBILE SIDEBAR — portal target pour MobileSidebarSheet ═══ */}
+      {isMobile && <div id="mobile-sidebar-slot" className="shrink-0" />}
+
       {/* ═══ CONTENU DYNAMIQUE ═══ */}
       <div ref={rightRef} className="flex-1 overflow-auto bg-gray-50">
         {rightSection ? (
           /* Blueprint sections */
-          <div className="max-w-4xl mx-auto px-6 py-4 pb-12 sim-blueprint-pastel">
+          <div className={"max-w-4xl mx-auto px-6 py-4 pb-12 sim-blueprint-pastel"}>
             <style>{`
               .sim-blueprint-pastel [class*="bg-gradient-to-r"] {
                 background-image: none !important;
@@ -495,7 +526,7 @@ export function WorkspacePhasesPanel() {
               {rightSection === "blueprint" && <BlueprintView botCode={activeBotCode} headerGradient="from-blue-600 to-blue-500" hideHeader activeHeaderView={blueprintHeaderView} onHeaderViewChange={setBlueprintHeaderView} onStats={setBlueprintStats} />}
               {rightSection === "dataroom" && <DataRoomView botCode={activeBotCode} headerGradient="from-blue-600 to-blue-500" showHeader />}
               {rightSection === "playbooks" && <PlaybookStoreView botCode={activeBotCode} headerGradient="from-blue-600 to-blue-500" showHeader />}
-              {rightSection === "conferenceai" && <ConferenceAIView headerGradient="from-blue-600 to-blue-500" onNavigateToStore={() => setRightSection("playbooks")} botCode={activeBotCode} />}
+              {rightSection === "conferenceai" && <ConferenceAIView headerGradient="from-blue-600 to-blue-500" onNavigateToStore={() => setRightSection("playbooks")} onStartMeeting={meeting.startMeeting} botCode={activeBotCode} />}
               {/* ExecutionView rendu via activePhase ci-dessous — plus jamais via rightSection */}
               {rightSection === "bureau-agenda" && <AgendaView botCode={activeBotCode} showHeader onAction={handleWorkAction} />}
               {rightSection === "admin" && <AdminView botCode={activeBotCode} showHeader onAction={handleWorkAction} />}
@@ -510,12 +541,12 @@ export function WorkspacePhasesPanel() {
           </div>
         ) : isOrbit9 ? (
           /* Orbit9 V3 — shell unique avec routing interne */
-          <div className="max-w-4xl mx-auto px-6 py-4 pb-12">
+          <div className={"max-w-4xl mx-auto px-6 py-4 pb-12"}>
             <Orbit9View />
           </div>
         ) : isDash ? (
           /* Dashboard views (Observation, Attention, Moderation) */
-          <div className="max-w-4xl mx-auto px-6 py-4 pb-12">
+          <div className={"max-w-4xl mx-auto px-6 py-4 pb-12"}>
             <VueEnsemble phase={activePhase} chatStage={chatStage} onStartReflexion={startReflexion} onStartSimulation={(type) => startDeliverable(type)} />
           </div>
         ) : activePhase === "discussion" ? (
@@ -567,12 +598,12 @@ export function WorkspacePhasesPanel() {
           />
         ) : (activePhase === "execution" || activePhase === "retroaction") ? (
           /* Exécution / Rétroaction — PHASE view (rendu via activePhase, jamais rightSection) */
-          <div className="max-w-4xl mx-auto px-6 py-4 pb-12">
+          <div className={"max-w-4xl mx-auto px-6 py-4 pb-12"}>
             <ExecutionView botCode={activeBotCode} showHeader activeTab={executionTab} onTabChange={setExecutionTab} onAction={handleWorkAction} />
           </div>
         ) : (
           /* Fallback — Discussion sans contexte ou état inattendu → Cockpit */
-          <div className="max-w-4xl mx-auto px-6 py-4 pb-12">
+          <div className={"max-w-4xl mx-auto px-6 py-4 pb-12"}>
             <CanvasActionProvider>
               <FocusAwareContent>
                 <CockpitView embedded initialDept={activeBotCode} onAction={handleWorkAction} />
@@ -582,8 +613,8 @@ export function WorkspacePhasesPanel() {
         )}
       </div>
 
-      {/* ═══ MEETING VIDEO STRIP — caméras en bas du workspace pendant une réunion ═══ */}
-      <MeetingVideoStrip
+      {/* ═══ MEETING VIDEO STRIP — caméras en bas du workspace pendant une réunion (desktop only, mobile = MeetingMiniBar) ═══ */}
+      {!isMobile && <MeetingVideoStrip
         meetingStatus={meeting.meetingStatus}
         meetingTitle={activeMeeting?.title || ""}
         participants={meeting.participants}
@@ -593,7 +624,7 @@ export function WorkspacePhasesPanel() {
         onToggleMic={meeting.toggleMic}
         onToggleCamera={meeting.toggleCamera}
         onEndMeeting={meeting.endMeeting}
-      />
+      />}
     </div>
   );
 }

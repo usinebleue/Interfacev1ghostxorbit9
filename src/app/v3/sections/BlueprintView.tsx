@@ -26,7 +26,9 @@ import { VueConsolidee } from "./blueprint/VueConsolidee";
 import { LivingHero } from "./shared/LivingHero";
 import { DEPT_DASH_ICON, OTHER_BOTS } from "./shared/dept-data";
 import { SF } from "../core/styles";
+import { MobileSidebarSheet } from "../core/MobileSidebarSheet";
 import { useAmorcerSafe } from "../AmorcerContext";
+import { useIsMobile } from "../../components/ui/use-mobile";
 import {
   getBlueprintConfig,
   getSizeTier,
@@ -81,6 +83,7 @@ export const BLUEPRINT_HEADER_TABS: { key: HeaderView; label: string; icon: Reac
 
 export function BlueprintView({ botCode, headerGradient, sizeTier: propTier, hideHeader, activeHeaderView, onHeaderViewChange, onStats, useV2Style, contentOnly, activeSectionId }: BlueprintViewProps) {
   const config = getBlueprintConfig(botCode);
+  const isMobile = useIsMobile();
   const { dispatch } = useCanvasActions();
   const [tier, setTier] = useState<SizeTier>(propTier || "T2");
   const [phase, setPhase] = useState<Phase>("startup");
@@ -201,7 +204,7 @@ export function BlueprintView({ botCode, headerGradient, sizeTier: propTier, hid
       <div className="space-y-3">
         {coSectionGridView ? (
           /* Grille de sections avec % complétion — même pattern que le mode normal */
-          <div className="grid grid-cols-2 gap-3">
+          <div className={cn("grid gap-3", isMobile ? "grid-cols-1" : "grid-cols-2")}>
             {visibleSections.filter(s => s.id !== "vue_consolidee").map(section => {
               const SIcon = resolveIcon(section.icon);
               const pct = sectionProgress(section);
@@ -401,7 +404,7 @@ export function BlueprintView({ botCode, headerGradient, sizeTier: propTier, hid
               { icon: Zap, label: "Phase", value: PHASES.find(p => p.id === phase)?.emoji || "🚀", delta: PHASES.find(p => p.id === phase)?.label || "Démarrage", up: true },
             ];
             return (
-              <div className="grid grid-cols-5 gap-3">
+              <div className={cn("grid gap-3", isMobile ? "grid-cols-2" : "grid-cols-5")}>
                 {kpis.map(kpi => (
                   <div key={kpi.label} className="rounded-xl border border-gray-200 shadow-sm bg-white">
                     <div className="flex items-center justify-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
@@ -448,7 +451,7 @@ export function BlueprintView({ botCode, headerGradient, sizeTier: propTier, hid
                   </h3>
                   <span className="text-[9px] text-gray-400">{vedettes.length} à compléter</span>
                 </div>
-                <div className="grid grid-cols-3 gap-3">
+                <div className={cn("grid gap-3", isMobile ? "grid-cols-1" : "grid-cols-3")}>
                   {vedettes.map(s => {
                     const SIcon = resolveIcon(s.icon);
                     const tag = getVedetteTag(s.pct);
@@ -468,98 +471,114 @@ export function BlueprintView({ botCode, headerGradient, sizeTier: propTier, hid
             );
           })()}
 
-          <div className="flex gap-3">
+          <div className={cn("flex gap-3", isMobile && "flex-col gap-0")}>
 
           {/* SIDEBAR — Pattern identique au Cockpit (w-[180px], items rounded-lg, icon + label + count) */}
-          <div className="w-[180px] shrink-0 space-y-0.5">
-            {visibleSections.map(section => {
-              const pct = sectionProgress(section);
-              const isActive = activeSub === section.id && !selectedDeptCode;
-              const isConsolidee = section.id === "vue_consolidee";
-              const SectionIcon = resolveIcon(section.icon);
-
-              return (
-                <button
-                  key={section.id}
-                  onClick={() => { setActiveSub(section.id); setSectionGridView(isConsolidee); setSelectedDeptCode(null); setSelectedDeptSub(undefined); }}
-                  className={cn(
-                    "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
-                    isConsolidee && sectionGridView && !selectedDeptCode ? "bg-blue-50 border border-blue-200 shadow-sm" : isActive && !sectionGridView ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent",
-                    isConsolidee && !sectionGridView && !selectedDeptCode && "bg-gradient-to-r from-slate-50 to-blue-50/50 border-blue-100/50"
-                  )}
-                >
-                  <div className="flex items-center gap-1.5">
-                    <SectionIcon className={cn("h-3.5 w-3.5", isActive && !sectionGridView ? "text-blue-500" : "text-gray-400")} />
-                    <span className={cn("text-[10px] font-bold flex-1 leading-tight", isActive && !sectionGridView ? "text-blue-700" : "text-gray-700")}>{section.label}</span>
-                    <span className="text-[9px] text-gray-400">{pct}%</span>
-                  </div>
-                </button>
-              );
-            })}
-
-            {/* ── SECTION DÉPARTEMENTS — Accordion (même pattern que Data Room sidebar) ── */}
-            {botCode === "CEOB" && (
+          {(() => {
+            const sidebarContent = (
               <>
-                <div className={SF.separator} />
-                <div className={SF.sectionLabel}>
-                  Départements
-                </div>
-                {OTHER_BOTS.map(dept => {
-                  const DIcon = DEPT_DASH_ICON[dept.code] || Zap;
-                  const isActiveDept = selectedDeptCode === dept.code;
-                  const isExpanded = expandedBpDepts.has(dept.code);
-                  const deptConfig = getBlueprintConfig(dept.code);
-                  const deptSections = deptConfig ? getVisibleSubSections(deptConfig, tier).filter(s => s.id !== "vue_consolidee" && !s.id.startsWith("playbooks_")) : [];
+                {visibleSections.map(section => {
+                  const pct = sectionProgress(section);
+                  const isActive = activeSub === section.id && !selectedDeptCode;
+                  const isConsolidee = section.id === "vue_consolidee";
+                  const SectionIcon = resolveIcon(section.icon);
                   return (
-                    <div key={dept.code}>
-                      <button
-                        onClick={() => {
-                          setExpandedBpDepts(prev => {
-                            const next = new Set(prev);
-                            if (next.has(dept.code)) next.delete(dept.code); else next.add(dept.code);
-                            return next;
-                          });
-                          setSelectedDeptCode(dept.code);
-                          setSelectedDeptSub(undefined);
-                          setSectionGridView(false);
-                        }}
-                        className={cn(
-                          "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
-                          isActiveDept && !isExpanded ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent"
-                        )}
-                      >
-                        <div className="flex items-center gap-1.5">
-                          <ChevronDown className={cn("h-3.5 w-3.5 shrink-0 transition-transform", isExpanded ? "" : "-rotate-90", isActiveDept ? "text-blue-500" : "text-gray-300")} />
-                          <DIcon className={cn("h-3.5 w-3.5 shrink-0", isActiveDept ? "text-blue-500" : "text-gray-400")} />
-                          <span className={cn("text-[10px] font-bold flex-1 leading-tight", isActiveDept ? "text-blue-700" : "text-gray-700")}>{dept.label}</span>
-                          <span className="text-[9px] text-gray-400">{deptSections.length}</span>
-                        </div>
-                      </button>
-                      {isExpanded && deptSections.map(s => {
-                        const SIcon = resolveIcon(s.icon);
-                        const isSubActive = selectedDeptCode === dept.code && selectedDeptSub === s.id;
-                        return (
+                    <button
+                      key={section.id}
+                      onClick={() => { setActiveSub(section.id); setSectionGridView(isConsolidee); setSelectedDeptCode(null); setSelectedDeptSub(undefined); }}
+                      className={cn(
+                        "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
+                        isConsolidee && sectionGridView && !selectedDeptCode ? "bg-blue-50 border border-blue-200 shadow-sm" : isActive && !sectionGridView ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent",
+                        isConsolidee && !sectionGridView && !selectedDeptCode && "bg-gradient-to-r from-slate-50 to-blue-50/50 border-blue-100/50"
+                      )}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <SectionIcon className={cn("h-3.5 w-3.5", isActive && !sectionGridView ? "text-blue-500" : "text-gray-400")} />
+                        <span className={cn("text-[10px] font-bold flex-1 leading-tight", isActive && !sectionGridView ? "text-blue-700" : "text-gray-700")}>{section.label}</span>
+                        <span className="text-[9px] text-gray-400">{pct}%</span>
+                      </div>
+                    </button>
+                  );
+                })}
+
+                {/* ── SECTION DÉPARTEMENTS — Accordion ── */}
+                {botCode === "CEOB" && (
+                  <>
+                    <div className={SF.separator} />
+                    <div className={SF.sectionLabel}>
+                      Départements
+                    </div>
+                    {OTHER_BOTS.map(dept => {
+                      const DIcon = DEPT_DASH_ICON[dept.code] || Zap;
+                      const isActiveDept = selectedDeptCode === dept.code;
+                      const isExpanded = expandedBpDepts.has(dept.code);
+                      const deptConfig = getBlueprintConfig(dept.code);
+                      const deptSections = deptConfig ? getVisibleSubSections(deptConfig, tier).filter(s => s.id !== "vue_consolidee" && !s.id.startsWith("playbooks_")) : [];
+                      return (
+                        <div key={dept.code}>
                           <button
-                            key={s.id}
-                            onClick={() => { setSelectedDeptCode(dept.code); setSelectedDeptSub(s.id); setSectionGridView(false); }}
+                            onClick={() => {
+                              setExpandedBpDepts(prev => {
+                                const next = new Set(prev);
+                                if (next.has(dept.code)) next.delete(dept.code); else next.add(dept.code);
+                                return next;
+                              });
+                              setSelectedDeptCode(dept.code);
+                              setSelectedDeptSub(undefined);
+                              setSectionGridView(false);
+                            }}
                             className={cn(
-                              "w-full pl-6 pr-2.5 py-1 rounded-lg text-left transition-all cursor-pointer",
-                              isSubActive ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent"
+                              "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
+                              isActiveDept && !isExpanded ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent"
                             )}
                           >
                             <div className="flex items-center gap-1.5">
-                              <SIcon className={cn("h-3.5 w-3.5 shrink-0", isSubActive ? "text-blue-500" : "text-gray-400")} />
-                              <span className={cn("text-[10px] font-medium flex-1 leading-tight", isSubActive ? "text-blue-700" : "text-gray-600")}>{s.label}</span>
+                              <ChevronDown className={cn("h-3.5 w-3.5 shrink-0 transition-transform", isExpanded ? "" : "-rotate-90", isActiveDept ? "text-blue-500" : "text-gray-300")} />
+                              <DIcon className={cn("h-3.5 w-3.5 shrink-0", isActiveDept ? "text-blue-500" : "text-gray-400")} />
+                              <span className={cn("text-[10px] font-bold flex-1 leading-tight", isActiveDept ? "text-blue-700" : "text-gray-700")}>{dept.label}</span>
+                              <span className="text-[9px] text-gray-400">{deptSections.length}</span>
                             </div>
                           </button>
-                        );
-                      })}
-                    </div>
-                  );
-                })}
+                          {isExpanded && deptSections.map(s => {
+                            const SIcon = resolveIcon(s.icon);
+                            const isSubActive = selectedDeptCode === dept.code && selectedDeptSub === s.id;
+                            return (
+                              <button
+                                key={s.id}
+                                onClick={() => { setSelectedDeptCode(dept.code); setSelectedDeptSub(s.id); setSectionGridView(false); }}
+                                className={cn(
+                                  "w-full pl-6 pr-2.5 py-1 rounded-lg text-left transition-all cursor-pointer",
+                                  isSubActive ? "bg-blue-50 border border-blue-200 shadow-sm" : "hover:bg-gray-50 border border-transparent"
+                                )}
+                              >
+                                <div className="flex items-center gap-1.5">
+                                  <SIcon className={cn("h-3.5 w-3.5 shrink-0", isSubActive ? "text-blue-500" : "text-gray-400")} />
+                                  <span className={cn("text-[10px] font-medium flex-1 leading-tight", isSubActive ? "text-blue-700" : "text-gray-600")}>{s.label}</span>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
+                  </>
+                )}
               </>
-            )}
-          </div>
+            );
+            const totalItems = visibleSections.length + (botCode === "CEOB" ? OTHER_BOTS.length : 0);
+            const currentLabel = selectedDeptCode
+              ? OTHER_BOTS.find(b => b.code === selectedDeptCode)?.label || "Département"
+              : activeSection?.label || "Direction";
+            return isMobile ? (
+              <MobileSidebarSheet currentLabel={currentLabel} itemCount={totalItems}>
+                {sidebarContent}
+              </MobileSidebarSheet>
+            ) : (
+              <div className="w-[180px] shrink-0 space-y-0.5">
+                {sidebarContent}
+              </div>
+            );
+          })()}
 
           {/* CONTENU — Pattern Store exact: grid-cols-2 CockpitCards OU drill-down CockpitBlocDetail OU Blueprint département */}
           <div className="flex-1 min-w-0 space-y-3">
@@ -577,7 +596,7 @@ export function BlueprintView({ botCode, headerGradient, sizeTier: propTier, hid
               /* VUE D'ENSEMBLE — VITAA/FAAS + grille sections */
               <div className="space-y-3">
                 {/* VITAA + FAAS — boxes côte à côte */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className={cn("grid gap-3", isMobile ? "grid-cols-1" : "grid-cols-2")}>
                   {/* VITAA — 5 piliers d'affaires */}
                   <div className="rounded-xl border border-gray-200 shadow-sm bg-white">
                     <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
@@ -658,7 +677,7 @@ export function BlueprintView({ botCode, headerGradient, sizeTier: propTier, hid
                   </div>
                 </div>
                 {/* Sections du Blueprint — grille avec % complétion */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className={cn("grid gap-3", isMobile ? "grid-cols-1" : "grid-cols-2")}>
                 {visibleSections.filter(s => s.id !== "vue_consolidee").map(section => {
                   const SIcon = resolveIcon(section.icon);
                   const pct = sectionProgress(section);

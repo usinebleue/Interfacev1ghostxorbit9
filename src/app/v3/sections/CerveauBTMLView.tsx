@@ -250,7 +250,7 @@ function SectionBackend({ data }: { data: any }) {
 
       {/* Tier Routing */}
       <div className="text-xs font-bold text-gray-800 mt-4 mb-2">Routage 5 Tiers — Optimisation coût vs capacité</div>
-      <div className="grid grid-cols-5 gap-2">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
         {[
           { tier: "T0", name: "Regex/Cache", cost: "Gratuit", pct: "30-40%", color: "bg-emerald-500" },
           { tier: "T1", name: "Gemini Flash", cost: "Gratuit", pct: "~30%", color: "bg-emerald-400" },
@@ -290,7 +290,7 @@ function SectionBackend({ data }: { data: any }) {
 
       {/* State Machine */}
       <div className="text-xs font-bold text-gray-800 mt-4 mb-2">State Machine V2 — 7 états utilisateur</div>
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
         {(Array.isArray(data.state_machine) ? data.state_machine : (data.state_machine?.states || [
           { name: "DASHBOARD", desc: "Accueil / Navigation" },
           { name: "SELECTION", desc: "Choix de bot/mode" },
@@ -623,7 +623,7 @@ function SectionCerveauBTML({ data }: { data: any }) {
       {/* 6 Primitives */}
       <div className="text-xs font-bold text-gray-800 mt-4 mb-2">Les 6 Primitives BTML — L'alphabet du cerveau</div>
       <p className="text-[10px] text-gray-400 mb-2">Comme la chimie a ses atomes, BTML a 6 briques de base.</p>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {(data?.primitives || []).map((p: any) => (
           <V3Card key={p.name}>
             <div className="p-3 text-center">
@@ -890,7 +890,7 @@ function SectionCerveauBTML({ data }: { data: any }) {
       <p className="text-[10px] text-gray-400 mb-2">
         La version la plus avancée du cerveau BTML. Au lieu de juste répondre, il pense en 3 phases.
       </p>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <V3Card className="border-2 border-amber-200">
           <div className="bg-gradient-to-b from-amber-50 to-white px-3 py-2 border-b text-center">
             <div className="text-lg font-bold">⚡</div>

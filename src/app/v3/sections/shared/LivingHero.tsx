@@ -7,6 +7,7 @@
 
 import { useEffect } from "react";
 import { cn } from "../../../components/ui/utils";
+import { useIsMobile } from "../../../components/ui/use-mobile";
 
 // ═══ CSS Animations (injectées une seule fois dans le DOM) ═══
 const LIVING_HEROES_STYLES = `
@@ -142,20 +143,25 @@ export function LivingHero({ blur1, blur2, title, description, scaleClass, slim,
   badge?: React.ReactNode;
   children?: React.ReactNode;
 }) {
+  const isMobile = useIsMobile();
   useEffect(() => { injectHeroStyles(); }, []);
+  // Sur mobile, le hero est purement décoratif — on le masque pour libérer l'espace vertical
+  if (isMobile) return null;
   return (
-    <div className={cn("relative w-full rounded-xl bg-white border border-gray-200 shadow-sm overflow-hidden flex items-center", slim ? "min-h-[64px] py-2.5 px-6" : "min-h-[80px] py-3 px-8")}>
+    <div className={cn("relative w-full rounded-xl bg-white border border-gray-200 shadow-sm overflow-hidden flex items-center", slim ? "min-h-[64px] py-2.5 px-6" : isMobile ? "min-h-[64px] py-2.5 px-4" : "min-h-[80px] py-3 px-8")}>
       <div className={cn("absolute rounded-full blur-[100px] opacity-60", blur1)} style={{ top: '-50%', left: '-10%', width: '50%', height: '200%' }} />
       <div className={cn("absolute rounded-full blur-[120px] opacity-50", blur2)} style={{ bottom: '-50%', right: '10%', width: '60%', height: '200%' }} />
       <div className="absolute inset-0 bg-pattern-grid opacity-[0.35]" />
-      {/* Illustration */}
-      <div className={cn("absolute top-0 bottom-0 flex items-center transform origin-right pointer-events-none", slim ? "right-0 scale-[0.40]" : scaleClass === "scale-[0.80]" ? "right-0 scale-[0.55]" : "right-[0.5rem] scale-[0.50]")}>
-        {children}
-      </div>
+      {/* Illustration — cachée sur mobile pour libérer l'espace texte */}
+      {!isMobile && (
+        <div className={cn("absolute top-0 bottom-0 flex items-center transform origin-right pointer-events-none", slim ? "right-0 scale-[0.40]" : scaleClass === "scale-[0.80]" ? "right-0 scale-[0.55]" : "right-[0.5rem] scale-[0.50]")}>
+          {children}
+        </div>
+      )}
       {/* Text */}
-      <div className={cn("relative z-20 w-full", slim ? "pr-[120px]" : "pr-[180px]")}>
-        <h2 className={cn("font-extrabold text-gray-900 mb-0.5 flex items-center gap-2", slim ? "text-base" : "text-lg")}>{title}{badge}</h2>
-        {!slim && <p className="text-slate-500 text-[12px] font-medium leading-snug">{description}</p>}
+      <div className={cn("relative z-20 w-full", isMobile ? "pr-2" : slim ? "pr-[120px]" : "pr-[180px]")}>
+        <h2 className={cn("font-extrabold text-gray-900 mb-0.5 flex items-center gap-2", slim ? "text-base" : isMobile ? "text-sm" : "text-lg")}>{title}{badge}</h2>
+        {!slim && !isMobile && <p className="text-slate-500 text-[12px] font-medium leading-snug">{description}</p>}
         {footer}
       </div>
     </div>

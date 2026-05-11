@@ -7,6 +7,8 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { api } from "../../v2/api/client";
+import { useIsMobile } from "../../components/ui/use-mobile";
+import { MobileSidebarSheet } from "../core/MobileSidebarSheet";
 import {
   Activity, ArrowDown, ArrowUp, ArrowUpDown, BarChart3, BookOpen, Briefcase, Bug, Building2, Calendar,
   CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, ClipboardCheck, Clock, Cpu, Database, DollarSign,
@@ -516,7 +518,7 @@ const TYPE_BADGE: Record<string, { label: string; bg: string; text: string }> = 
   Media: { label: "Media", bg: "bg-pink-50", text: "text-pink-700" },
 };
 
-// 6 types d'actifs numeriques (DS-04 Part 9)
+// 6 types d'actifs numériques (DS-04 Part 9)
 const ASSET_TYPES: { id: string; label: string; icon: React.ElementType; bgColor: string; iconColor: string; valueColor: string; desc: string; docType: string }[] = [
   { id: "documents", label: "Documents", icon: FileText, bgColor: "bg-blue-50", iconColor: "text-blue-500", valueColor: "text-blue-600", desc: "Contrats, rapports, plans", docType: "Document" },
   { id: "dashboards", label: "Dashboards", icon: BarChart3, bgColor: "bg-purple-50", iconColor: "text-purple-500", valueColor: "text-purple-600", desc: "KPIs temps reel", docType: "Dashboard" },
@@ -582,14 +584,14 @@ function DataRoomVueConsolidee({ onNavigateDept }: { onNavigateDept: (deptCode: 
 
   return (
     <div className="space-y-4">
-      {/* ── 6 Types d'actifs numeriques ── */}
+      {/* ── 6 Types d'actifs numériques ── */}
       <div className="border rounded-xl overflow-hidden shadow-sm">
         <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
           <Database className="h-4 w-4 text-gray-900 stroke-[2.5]" />
-          <span className="text-sm font-bold text-gray-900">6 types d'actifs numeriques</span>
+          <span className="text-sm font-bold text-gray-900">6 types d'actifs numériques</span>
           <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/20 text-white font-medium">{allDocs.length} total</span>
         </div>
-        <div className="grid grid-cols-6 divide-x divide-gray-100">
+        <div className="grid grid-cols-3 md:grid-cols-6 divide-x divide-gray-100">
           {ASSET_TYPES.map(asset => {
             const count = typeCountMap[asset.docType] || 0;
             return (
@@ -821,7 +823,7 @@ function DataRoomTemplatesList({ botCode, viewMode: _viewMode }: { botCode: stri
           </div>
           <div className="px-5 py-4 space-y-4">
             <p className="text-xs text-gray-600 leading-relaxed">{t.description}</p>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="rounded-lg bg-gray-50 px-3 py-2">
                 <span className="text-[9px] text-gray-400 block mb-0.5">Categorie</span>
                 <span className="text-xs font-bold text-gray-800">{CATEGORY_LABELS[t.category]}</span>
@@ -873,7 +875,7 @@ function DataRoomTemplatesList({ botCode, viewMode: _viewMode }: { botCode: stri
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="rounded-lg border border-gray-200 bg-white px-3 py-2">
           <span className="text-[9px] text-gray-400 block">Total</span>
           <span className="text-lg font-bold text-gray-900">{baseTemplates.length}</span>
@@ -998,6 +1000,7 @@ function mockTaille(titre: string, type: string): string {
 }
 
 export function DataRoomView({ botCode, headerGradient, showHeader = false }: { botCode: string; headerGradient: string; showHeader?: boolean }) {
+  const isMobile = useIsMobile();
   // Department navigation — sidebar shows ALL departments
   const [activeDept, setActiveDept] = useState(botCode);
   const [expandedDepts, setExpandedDepts] = useState<Set<string>>(new Set([botCode]));
@@ -1131,9 +1134,14 @@ export function DataRoomView({ botCode, headerGradient, showHeader = false }: { 
           </div>
         </LivingHero>
       )}
-    <div className="flex gap-3">
+    <div className={cn("flex gap-3", isMobile && "flex-col gap-0")}>
       {/* Sidebar — Navigation 12 départements (accordion) */}
-      <div className="w-[180px] shrink-0 space-y-0.5">
+      {(() => {
+        const currentLabel = activeFolder === "_consolidee" ? "Vue d'ensemble"
+          : activeFolder === "_templates" ? "Templates"
+          : TRANSVERSAL_SECTIONS.find(ts => ts.id === activeFolder)?.label
+          || activeSection?.label || "Data Room";
+        const sidebarContent = (<>
         {/* Vue d'ensemble — disponible pour tous les départements */}
         <button
           onClick={() => { setActiveDept(botCode); setActiveFolder("_consolidee"); setSearchQuery(""); setTypeFilter(null); setStatusFilter(null); setFormatFilter(null); }}
@@ -1270,7 +1278,17 @@ export function DataRoomView({ botCode, headerGradient, showHeader = false }: { 
             <span className="text-[9px] text-gray-400">{templates.length}</span>
           </div>
         </button>
-      </div>
+      </>);
+        return isMobile ? (
+          <MobileSidebarSheet currentLabel={currentLabel} itemCount={sections.length + TRANSVERSAL_SECTIONS.length + 1}>
+            {sidebarContent}
+          </MobileSidebarSheet>
+        ) : (
+          <div className="w-[180px] shrink-0 space-y-0.5">
+            {sidebarContent}
+          </div>
+        );
+      })()}
 
       {/* Contenu — full height */}
       <div className="flex-1 min-w-0 space-y-2">
