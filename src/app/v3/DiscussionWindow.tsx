@@ -967,7 +967,7 @@ function DeptWelcomeScreen({ botCode, onAction, onResumeThread, onDeleteThread, 
   onAction: (text: string, phase?: PhaseKey) => void;
   onResumeThread: (threadId: string) => void;
   onDeleteThread: (threadId: string) => void;
-  threads: Array<{ id: string; title: string; primaryBot?: string; updatedAt?: string; status?: string; workPhase?: string }>;
+  threads: Array<{ id: string; title: string; primaryBot?: string; createdAt?: string; updatedAt?: string; status?: string; workPhase?: string }>;
 }) {
   const DeptIcon = DEPT_DASH_ICON[botCode] || Bot;
   const gradient = DEPT_GRADIENT[botCode] || "from-blue-700 to-blue-500";
@@ -1045,14 +1045,29 @@ function DeptWelcomeScreen({ botCode, onAction, onResumeThread, onDeleteThread, 
                     {/* Thread info */}
                     <div className="flex-1 min-w-0">
                       <span className="text-xs font-medium text-gray-700 block truncate">{thread.title || "Discussion sans titre"}</span>
-                      {(phaseData || statusLabel) && (
-                        <div className="flex items-center gap-2 mt-0.5">
-                          {phaseData && <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium", phaseData.badge)}>{phaseData.label}</span>}
-                          {statusLabel && (
-                            <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium", statusStyle)}>{statusLabel}</span>
-                          )}
-                        </div>
-                      )}
+                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                        {phaseData && <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium", phaseData.badge)}>{phaseData.label}</span>}
+                        {statusLabel && (
+                          <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium", statusStyle)}>{statusLabel}</span>
+                        )}
+                        {(thread.updatedAt || thread.createdAt) && (() => {
+                          const dateStr = thread.updatedAt || thread.createdAt!;
+                          const d = new Date(dateStr);
+                          if (isNaN(d.getTime())) return null;
+                          const now = Date.now();
+                          const diffMs = now - d.getTime();
+                          const diffMin = Math.floor(diffMs / 60000);
+                          const diffH = Math.floor(diffMs / 3600000);
+                          const diffD = Math.floor(diffMs / 86400000);
+                          let label: string;
+                          if (diffMin < 1) label = "a l'instant";
+                          else if (diffMin < 60) label = `il y a ${diffMin} min`;
+                          else if (diffH < 24) label = `il y a ${diffH} h`;
+                          else if (diffD < 7) label = `il y a ${diffD} j`;
+                          else label = d.toLocaleDateString("fr-CA", { day: "numeric", month: "short" });
+                          return <span className="text-[9px] text-gray-400">{label}</span>;
+                        })()}
+                      </div>
                     </div>
                     {/* Delete button on hover */}
                     <button
@@ -1160,8 +1175,7 @@ export function DiscussionWindow() {
               }}
               onResumeThread={(threadId) => {
                 const thread = threads.find(t => t.id === threadId);
-                const restoredPhase = resumeThread(threadId, activePhase);
-                const phase = restoredPhase || "observation";
+                resumeThread(threadId, activePhase);
                 const context = thread?.title || "";
 
                 // Restaurer le contexte de réflexion (même logique que handleWorkAction)
@@ -1170,39 +1184,17 @@ export function DiscussionWindow() {
                   setFocusType("chantier");
                 }
 
-                // Router vers la bonne vue workspace selon la phase du thread
-                // Même pattern que handleWorkAction dans WorkspacePhasesPanel
-                switch (phase) {
-                  case "execution":
-                    setActivePhase("execution" as any);
-                    setRightSection(null);  // V3-native inline
-                    break;
-                  case "retroaction":
-                    setActivePhase("retroaction" as any);
-                    setRightSection(null);  // V3-native inline
-                    break;
-                  case "creation":
-                  case "conception":
-                    setActivePhase("creation" as any);
-                    setActiveDeliverable("document");
-                    setRightSection(null);
-                    break;
-                  case "reflexion":
-                    setActivePhase("reflexion" as any);
-                    setRightSection(null);
-                    break;
-                  case "discussion":
-                    setActivePhase("discussion" as any);
-                    setRightSection(null);
-                    break;
-                  default:
-                    // observation, attention, moderation → VueEnsemble
-                    setActivePhase("observation" as any);
-                    setRightSection(null);
-                }
+                // Toujours afficher la discussion d'abord quand on reprend un thread
+                // L'utilisateur veut voir les messages, pas le workspace
+                setActivePhase("discussion" as any);
+                setRightSection(null);
               }}
               onDeleteThread={(threadId) => deleteThread(threadId)}
-              threads={threads.filter((t) => t.primaryBot === activeBotCode)}
+              threads={threads.filter((t) => t.primaryBot === activeBotCode).sort((a, b) => {
+                const da = new Date(a.updatedAt || a.createdAt || 0).getTime();
+                const db = new Date(b.updatedAt || b.createdAt || 0).getTime();
+                return db - da;
+              })}
             />
           </div>
         ) : (
