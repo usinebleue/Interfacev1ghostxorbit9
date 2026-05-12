@@ -851,6 +851,7 @@ export function useChat() {
                         scaffoldProgress: data.scaffold_progress || undefined,
                         cristallisationSuggestion: data.cristallisation_suggestion || undefined,
                         cascadeItems: data.cascade_items?.length ? data.cascade_items : undefined,
+                        workspace_block: data.workspace_block || undefined,
                       }
                     : m
                 )

@@ -27,6 +27,8 @@ interface BubbleActionsProps {
   /** Suggestion GPS de cristallisation automatique */
   gpsSuggestion?: { section_id: string; section_label: string; confidence: number } | null;
   onGpsCristallise?: () => void;
+  /** Options intelligentes du LLM — remplacent les prompts hardcodes quand presentes */
+  backendOptions?: string[];
 }
 
 /** Extrait le VRAI sujet du message bot (skip les phrases de politesse/filler) */
@@ -83,8 +85,11 @@ const ADVANCED_ACTIONS = [
   { id: "deleguer", label: "Deleguer", prompt: "Qui dans l'equipe devrait executer ca? Propose une delegation claire." },
 ];
 
-export function BubbleActions({ onAction, onCristallise, chatStage, messageContent, phaseTransition, onPhaseTransition, gpsSuggestion, onGpsCristallise }: BubbleActionsProps) {
+export function BubbleActions({ onAction, onCristallise, chatStage, messageContent, phaseTransition, onPhaseTransition, gpsSuggestion, onGpsCristallise, backendOptions }: BubbleActionsProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
+
+  // Backend options take priority when available (Sprint 1 Etape 5)
+  const hasBackendOptions = backendOptions && backendOptions.length > 0;
 
   // Phase-gate: filtrer les actions selon la progression, avec prompts contextuels
   const allActions = buildActions(messageContent);
@@ -95,7 +100,22 @@ export function BubbleActions({ onAction, onCristallise, chatStage, messageConte
 
   return (
     <div className="space-y-1">
-      {/* Actions primaires — phase-gatees */}
+      {/* Backend LLM options — intelligent, contextual (Sprint 1 Etape 5) */}
+      {hasBackendOptions && (
+        <div className="flex flex-wrap items-center gap-1">
+          {backendOptions!.map((opt, i) => (
+            <button
+              key={`llm-${i}`}
+              onClick={() => onAction(opt)}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] text-sky-700 border border-sky-200 bg-sky-50 hover:bg-sky-100 hover:border-sky-300 cursor-pointer transition-all font-medium"
+            >
+              <Zap className="h-2.5 w-2.5" />
+              {opt.length > 60 ? opt.substring(0, 57) + "..." : opt}
+            </button>
+          ))}
+        </div>
+      )}
+      {/* Actions primaires — phase-gatees (fallback si pas d'options backend) */}
       <div className="flex flex-wrap items-center gap-1">
         {visibleActions.map((action) => (
           <button

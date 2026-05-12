@@ -834,6 +834,7 @@ function V3MessageList() {
                   <BubbleActions
                     chatStage={chatStage}
                     messageContent={msg.content}
+                    backendOptions={msg.options}
                     onAction={(prompt) => sendMessage(prompt, msg.agent || chatTargetBot, undefined, undefined, { workspacePhase })}
                     onCristallise={() => {
                       const CREDO_SECTIONS = ["comprendre", "rechercher", "exposer", "demontrer", "objectif"];

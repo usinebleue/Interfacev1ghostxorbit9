@@ -315,6 +315,8 @@ export interface ChatMessage {
   scaffoldProgress?: ScaffoldProgress;
   // Mega Plan V5 — CarlOS GPS cristallisation suggestion
   cristallisationSuggestion?: { section_id: string; section_label: string; confidence: number };
+  // Workspace block from backend (structured detection)
+  workspace_block?: WorkspaceBlockData;
 }
 
 // --- Crystal (idee cristallisee) ---
@@ -638,6 +640,17 @@ export interface CascadeSuggestion {
   message: string;
   view: string;
   sub_section: string;
+}
+
+// --- Workspace Block (backend-generated structured capture) ---
+
+export interface WorkspaceBlockData {
+  type?: string;
+  title?: string;
+  summary?: string;
+  structured_data?: Record<string, any>;
+  credo_step?: string;
+  confidence?: number;
 }
 
 
