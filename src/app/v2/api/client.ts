@@ -108,6 +108,9 @@ export interface StreamDoneEvent {
   has_product?: boolean;
   // Mega Plan V5 — CarlOS GPS cristallisation suggestion
   cristallisation_suggestion?: { section_id: string; section_label: string; confidence: number } | null;
+  // Sprint 2A — Workspace block + skip flag
+  workspace_block?: Record<string, unknown> | null;
+  workspace_block_skip?: boolean;
 }
 
 export type StreamCallback = {

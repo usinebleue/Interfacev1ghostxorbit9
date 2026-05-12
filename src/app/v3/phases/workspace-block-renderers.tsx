@@ -5,12 +5,14 @@
  * Patterns portés depuis les simulations (FocusDiscussionView, LiveReflexionView, etc.)
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Pin, Search, Swords, Pencil, RotateCcw, Layers,
   CheckCircle2, AlertTriangle, TrendingUp, Lightbulb,
   Clock, Activity, FileText,
-  Check, X,
+  Check, X, Trash2,
+  ThumbsUp, ThumbsDown, Trophy, Zap, Shield,
+  Target, Globe, ExternalLink,
 } from "lucide-react";
 import { cn } from "../../components/ui/utils";
 import { formatCristallise } from "./content-formatters";
@@ -19,7 +21,7 @@ import type { WorkspaceBlock, WorkspaceBlockType } from "../core/types";
 
 // ═══ Block Action Types ═══
 
-export type BlockActionType = "pin" | "deepen" | "challenge" | "edit" | "rework" | "merge";
+export type BlockActionType = "pin" | "deepen" | "challenge" | "edit" | "rework" | "merge" | "delete";
 
 interface BlockRendererProps {
   block: WorkspaceBlock;
@@ -78,11 +80,16 @@ function BlockActions({ block, onAction }: BlockRendererProps) {
           className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[10px] font-medium transition-colors cursor-pointer border-gray-200 text-gray-600 hover:bg-gray-50">
           <Pencil className="h-3 w-3" /> Modifier
         </button>
+        {/* S2.3.1: Bouton Rejeter */}
+        <button onClick={() => onAction("delete", block.id)}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[10px] font-medium transition-colors cursor-pointer border-red-200 text-red-600 hover:bg-red-50">
+          <X className="h-3 w-3" /> Rejeter
+        </button>
       </div>
       <div className="flex items-center gap-1.5">
         <BotBadgeFull botCode={block.source} compact />
         <span className="text-[9px] text-gray-400">
-          {block.sourceType === "voice" ? "Vocal" : "Chat"}
+          {block.sourceType === "voice" ? "Vocal" : block.sourceType === "meeting" ? "Réunion" : "Chat"}
         </span>
       </div>
     </div>
@@ -92,11 +99,48 @@ function BlockActions({ block, onAction }: BlockRendererProps) {
 // ═══ Shared: Block Wrapper ═══
 
 function BlockWrapper({ block, onAction, label, labelColor, children }: BlockRendererProps & { label: string; labelColor: string; children: React.ReactNode }) {
+  const [isHoverEdit, setIsHoverEdit] = useState(false);
+  // Sprint 2A Phase 6A: fade-in + slide-up animation (pattern FocusReflexionView L164-167)
+  const [appeared, setAppeared] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setAppeared(true), 80);
+    return () => clearTimeout(t);
+  }, []);
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md hover:border-blue-200 transition-all duration-300">
+    <div
+      className={cn(
+        "group/edit rounded-xl border bg-white p-4 shadow-sm transition-all duration-300",
+        "border-gray-200 hover:shadow-md",
+        "hover:ring-1 hover:ring-blue-200 hover:border-blue-200",
+        appeared ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
+      )}
+      onMouseEnter={() => setIsHoverEdit(true)}
+      onMouseLeave={() => setIsHoverEdit(false)}
+    >
       <div className="flex items-center gap-2 mb-3">
         <span className={cn("text-[10px] px-2 py-0.5 rounded-full font-bold", labelColor)}>{label}</span>
+        {/* S2.2.3: Confidence badge */}
+        <span className={cn(
+          "text-[9px] px-1.5 py-0.5 rounded-full font-bold",
+          block.confidence >= 0.8 ? "bg-emerald-100 text-emerald-700" :
+          block.confidence >= 0.5 ? "bg-amber-100 text-amber-700" :
+          "bg-red-100 text-red-700"
+        )}>
+          {Math.round(block.confidence * 100)}%
+        </span>
         <h4 className="text-[10px] font-bold text-gray-900 flex-1 truncate">{block.title}</h4>
+        {/* Sprint 2A: Hover "Modifier" flottant (pattern WorkspaceSection.tsx L142-156) */}
+        <button
+          onClick={() => onAction("edit", block.id)}
+          className={cn(
+            "flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-medium",
+            "border border-blue-200 bg-blue-50 text-blue-600 cursor-pointer",
+            "transition-opacity duration-150",
+            isHoverEdit ? "opacity-100" : "opacity-0"
+          )}
+        >
+          <Pencil className="h-2.5 w-2.5" /> Modifier
+        </button>
         <span className="text-[9px] text-gray-300">{new Date(block.timestamp).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })}</span>
       </div>
       {children}
@@ -160,7 +204,7 @@ function DiagnosticRenderer({ block, onAction }: BlockRendererProps) {
             <div className="space-y-2">
               {parseSummaryItems(block.summary).map((item, i) => (
                 <div key={i} className="flex items-start gap-2 text-[10px]">
-                  <AlertTriangle className="h-3.5 w-3.5 text-orange-500 shrink-0 mt-0.5" />
+                  <span className="text-gray-400 font-mono shrink-0 w-4 text-right">{i + 1}.</span>
                   <span className="text-gray-700">{item}</span>
                 </div>
               ))}
@@ -183,14 +227,19 @@ function DiagnosticRenderer({ block, onAction }: BlockRendererProps) {
 // ═══ 2. Brainstorm — Hover-cards avec pin (pattern SimPhaseReflexion capture buttons) ═══
 
 function BrainstormRenderer({ block, onAction }: BlockRendererProps) {
-  const data = block.structured_data as { items?: { id: number; title: string; detail: string }[] } | undefined;
+  const data = block.structured_data as { items?: { id: number; title: string; detail: string; impact?: string; effort?: string }[] } | undefined;
   const IDEA_COLORS = ["border-l-amber-400", "border-l-blue-400", "border-l-green-400", "border-l-purple-400", "border-l-pink-400", "border-l-cyan-400"];
+  const [votes, setVotes] = useState<Record<number, number>>({});
+  const [expanded, setExpanded] = useState<number | null>(null);
   return (
     <BlockWrapper block={block} onAction={onAction} label="Brainstorm" labelColor="bg-amber-100 text-amber-700">
       {data?.items ? (
         <div className="grid grid-cols-2 gap-2">
           {data.items.map((item) => (
-            <div key={item.id} className={cn("group/idea rounded-lg border border-gray-200 border-l-[3px] bg-white px-3 py-2.5 hover:shadow-sm hover:bg-amber-50/30 transition-all", IDEA_COLORS[(item.id - 1) % IDEA_COLORS.length])}>
+            <div key={item.id}
+              className={cn("group/idea rounded-lg border border-gray-200 border-l-[3px] bg-white px-3 py-2.5 hover:shadow-sm hover:bg-amber-50/30 transition-all cursor-pointer", IDEA_COLORS[(item.id - 1) % IDEA_COLORS.length])}
+              onClick={() => setExpanded(expanded === item.id ? null : item.id)}
+            >
               <div className="flex items-start gap-2">
                 <div className="w-5 h-5 rounded-md bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
                   <Lightbulb className="h-3 w-3 text-amber-600" />
@@ -199,11 +248,46 @@ function BrainstormRenderer({ block, onAction }: BlockRendererProps) {
                   <p className="text-[11px] font-medium text-gray-900">{item.title}</p>
                   <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-2">{item.detail}</p>
                 </div>
-                <button onClick={() => onAction("pin", block.id)}
+                <button onClick={(e) => { e.stopPropagation(); onAction("pin", block.id); }}
                   className="opacity-0 group-hover/idea:opacity-100 p-1 rounded hover:bg-amber-100 transition-all cursor-pointer shrink-0" title="Epingler">
                   <Pin className="h-3 w-3 text-amber-500" />
                 </button>
               </div>
+              {/* Expanded: Impact/Effort + Voting (pattern AtelierBrainstorm L1480-1527) */}
+              {expanded === item.id && (
+                <div className="mt-2 pt-2 border-t border-gray-100 space-y-2">
+                  {(item.impact || item.effort) && (
+                    <div className="flex gap-2">
+                      {item.impact && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-green-100 text-green-700">Impact: {item.impact}</span>}
+                      {item.effort && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">Effort: {item.effort}</span>}
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <button onClick={(e) => { e.stopPropagation(); setVotes(v => ({ ...v, [item.id]: (v[item.id] || 0) + 1 })); }}
+                      className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] text-green-600 hover:bg-green-50 cursor-pointer transition-colors">
+                      <ThumbsUp className="h-2.5 w-2.5" /> +1
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); setVotes(v => ({ ...v, [item.id]: (v[item.id] || 0) - 1 })); }}
+                      className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] text-red-500 hover:bg-red-50 cursor-pointer transition-colors">
+                      <ThumbsDown className="h-2.5 w-2.5" /> -1
+                    </button>
+                    {(votes[item.id] ?? 0) !== 0 && (
+                      <span className={cn("text-[10px] font-bold", (votes[item.id] ?? 0) > 0 ? "text-green-600" : "text-red-500")}>
+                        {(votes[item.id] ?? 0) > 0 ? "+" : ""}{votes[item.id]}
+                      </span>
+                    )}
+                    <div className="flex-1" />
+                    <button onClick={(e) => { e.stopPropagation(); onAction("deepen", block.id); }}
+                      className="text-[9px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 cursor-pointer transition-colors">
+                      Développer
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); onAction("challenge", block.id); }}
+                      className="text-[9px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 hover:bg-amber-100 cursor-pointer transition-colors">
+                      Challenger
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -225,31 +309,88 @@ function BrainstormRenderer({ block, onAction }: BlockRendererProps) {
   );
 }
 
-// ═══ 3. SCAMPER — Grille 7 cellules ═══
+// ═══ 3. SCAMPER — Pipeline visual avec letter badges (pattern AtelierBrainstorm L1532-1562) ═══
 
 function ScamperRenderer({ block, onAction }: BlockRendererProps) {
-  const data = block.structured_data as { letters?: Record<string, string[]> } | undefined;
+  const data = block.structured_data as { letters?: Record<string, string[]>; activeStep?: number } | undefined;
+  const LETTERS = ["S", "C", "A", "M", "P", "E", "R"] as const;
   const LABELS: Record<string, string> = { S: "Substituer", C: "Combiner", A: "Adapter", M: "Modifier", P: "Put to other use", E: "Éliminer", R: "Renverser" };
-  const COLORS: Record<string, string> = { S: "border-l-blue-400", C: "border-l-green-400", A: "border-l-amber-400", M: "border-l-purple-400", P: "border-l-pink-400", E: "border-l-red-400", R: "border-l-orange-400" };
+  const DESCS: Record<string, string> = { S: "Remplacer un element", C: "Fusionner des idees", A: "Emprunter d'ailleurs", M: "Changer forme/echelle", P: "Autre usage possible", E: "Supprimer le superflu", R: "Inverser la logique" };
+  const BADGE_COLORS: Record<string, { card: string; badge: string; dot: string; dotDone: string }> = {
+    S: { card: "bg-red-50 border-red-200", badge: "bg-red-100 text-red-700 border-red-300", dot: "bg-red-500", dotDone: "bg-red-100 text-red-700 border-red-300" },
+    C: { card: "bg-orange-50 border-orange-200", badge: "bg-orange-100 text-orange-700 border-orange-300", dot: "bg-orange-500", dotDone: "bg-orange-100 text-orange-700 border-orange-300" },
+    A: { card: "bg-amber-50 border-amber-200", badge: "bg-amber-100 text-amber-700 border-amber-300", dot: "bg-amber-500", dotDone: "bg-amber-100 text-amber-700 border-amber-300" },
+    M: { card: "bg-green-50 border-green-200", badge: "bg-green-100 text-green-700 border-green-300", dot: "bg-green-500", dotDone: "bg-green-100 text-green-700 border-green-300" },
+    P: { card: "bg-teal-50 border-teal-200", badge: "bg-teal-100 text-teal-700 border-teal-300", dot: "bg-teal-500", dotDone: "bg-teal-100 text-teal-700 border-teal-300" },
+    E: { card: "bg-blue-50 border-blue-200", badge: "bg-blue-100 text-blue-700 border-blue-300", dot: "bg-blue-500", dotDone: "bg-blue-100 text-blue-700 border-blue-300" },
+    R: { card: "bg-violet-50 border-violet-200", badge: "bg-violet-100 text-violet-700 border-violet-300", dot: "bg-violet-500", dotDone: "bg-violet-100 text-violet-700 border-violet-300" },
+  };
+  const activeStep = data?.activeStep ?? (data?.letters ? Object.keys(data.letters).length : 7);
+
   return (
     <BlockWrapper block={block} onAction={onAction} label="SCAMPER" labelColor="bg-purple-100 text-purple-700">
+      {/* Help section */}
+      <div className="rounded-lg border border-purple-200 bg-purple-50/50 px-3 py-2 mb-3">
+        <div className="flex items-center gap-2">
+          <Lightbulb className="h-3.5 w-3.5 text-purple-600 shrink-0" />
+          <p className="text-[10px] text-purple-700 font-medium">Methode SCAMPER — 7 angles creatifs pour generer des idees</p>
+        </div>
+      </div>
+      {/* Pipeline dots — colored per letter (rainbow) */}
+      <div className="flex items-center gap-0 mb-4 px-1">
+        {LETTERS.map((letter, i) => {
+          const idx = LETTERS.indexOf(letter);
+          const bc = BADGE_COLORS[letter];
+          const isComplete = idx < activeStep;
+          const isActive = idx === activeStep;
+          return (
+            <div key={letter} className="flex items-center flex-1">
+              <div className="flex flex-col items-center gap-0.5">
+                <div className={cn(
+                  "w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold border transition-all shrink-0",
+                  isComplete ? bc.dotDone :
+                  isActive ? cn(bc.dot, "text-white border-transparent") :
+                  "bg-gray-100 text-gray-400 border-gray-200"
+                )}>
+                  {isComplete ? <CheckCircle2 className="h-3.5 w-3.5" /> : letter}
+                  {isActive && <span className="absolute w-2 h-2 rounded-full bg-white animate-pulse" />}
+                </div>
+                <span className="text-[7px] text-gray-400 font-medium leading-none">{LABELS[letter].slice(0, 5)}</span>
+              </div>
+              {i < LETTERS.length - 1 && (
+                <div className={cn("h-0.5 flex-1 mx-0.5 rounded-full transition-all mt-[-10px]", isComplete ? bc.dot.replace("bg-", "bg-").replace("500", "300") : "bg-gray-200")} />
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {/* Letter cards with content — colored per letter */}
       {data?.letters ? (
         <div className="grid grid-cols-2 gap-2">
-          {Object.entries(LABELS).map(([letter, label]) => (
-            <div key={letter} className={cn("rounded-lg border border-gray-200 border-l-[3px] bg-white px-3 py-2", COLORS[letter])}>
-              <p className="text-[10px] font-bold text-gray-500 uppercase">{letter} — {label}</p>
-              <ul className="mt-1 space-y-0.5">
-                {(data.letters?.[letter] || []).map((item, i) => (
-                  <li key={i} className="text-[10px] text-gray-700 flex items-start gap-1">
-                    <span className="text-gray-300 mt-0.5">•</span> {item}
-                  </li>
-                ))}
-                {(!data.letters?.[letter] || data.letters[letter].length === 0) && (
-                  <li className="text-[10px] text-gray-300 italic">—</li>
-                )}
-              </ul>
-            </div>
-          ))}
+          {LETTERS.map((letter) => {
+            const bc = BADGE_COLORS[letter];
+            return (
+              <div key={letter} className={cn("rounded-lg border bg-white px-3 py-2 transition-all hover:shadow-sm", bc.card)}>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className={cn("w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold border", bc.badge)}>{letter}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-bold text-gray-700">{LABELS[letter]}</p>
+                    <p className="text-[8px] text-gray-400 leading-tight">{DESCS[letter]}</p>
+                  </div>
+                </div>
+                <ul className="space-y-0.5">
+                  {(data.letters?.[letter] || []).map((item, i) => (
+                    <li key={i} className="text-[10px] text-gray-700 flex items-start gap-1">
+                      <span className="text-gray-300 mt-0.5">•</span> {item}
+                    </li>
+                  ))}
+                  {(!data.letters?.[letter] || data.letters[letter].length === 0) && (
+                    <li className="text-[10px] text-gray-300 italic">—</li>
+                  )}
+                </ul>
+              </div>
+            );
+          })}
         </div>
       ) : (
         <p className="text-[11px] text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
@@ -261,24 +402,78 @@ function ScamperRenderer({ block, onAction }: BlockRendererProps) {
 // ═══ 4. 5 Pourquoi — Arbre hiérarchique indenté ═══
 
 function CinqPourquoiRenderer({ block, onAction }: BlockRendererProps) {
-  const data = block.structured_data as { levels?: { question: string; answer: string }[] } | undefined;
+  const data = block.structured_data as { levels?: { question: string; answer: string }[]; rootCause?: string } | undefined;
+  // Progressive color depth (pattern SimPhaseReflexion L652-665)
+  const DEPTH_COLORS = [
+    { dot: "bg-orange-300", text: "text-orange-500", bg: "bg-orange-50", border: "border-orange-200", line: "from-orange-200 to-orange-300" },
+    { dot: "bg-orange-400", text: "text-orange-600", bg: "bg-orange-50", border: "border-orange-200", line: "from-orange-300 to-amber-400" },
+    { dot: "bg-amber-500", text: "text-amber-700", bg: "bg-amber-50", border: "border-amber-200", line: "from-amber-400 to-red-300" },
+    { dot: "bg-red-400", text: "text-red-600", bg: "bg-red-50", border: "border-red-200", line: "from-red-300 to-red-500" },
+    { dot: "bg-red-600", text: "text-red-700", bg: "bg-red-50", border: "border-red-300", line: "from-red-500 to-red-600" },
+  ];
+  // Auto-reveal stagger state
+  const [revealedCount, setRevealedCount] = useState(0);
+  useEffect(() => {
+    if (!data?.levels) return;
+    setRevealedCount(0);
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    data.levels.forEach((_, i) => {
+      timers.push(setTimeout(() => setRevealedCount(c => c + 1), 400 + i * 600));
+    });
+    return () => timers.forEach(clearTimeout);
+  }, [data?.levels?.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const isActiveLevel = (i: number) => data?.levels && i === revealedCount - 1 && revealedCount < data.levels.length;
+
   return (
     <BlockWrapper block={block} onAction={onAction} label="5 Pourquoi" labelColor="bg-orange-100 text-orange-700">
       {data?.levels ? (
         <div className="space-y-0">
-          {data.levels.map((level, i) => (
-            <div key={i} className="flex gap-2" style={{ paddingLeft: `${i * 16}px` }}>
-              <div className="flex flex-col items-center shrink-0 pt-1">
-                <div className={cn("w-2.5 h-2.5 rounded-full", i === data.levels!.length - 1 ? "bg-red-400" : "bg-orange-300")} />
-                {i < data.levels!.length - 1 && <div className="w-px flex-1 bg-orange-200 mt-1" />}
+          {data.levels.map((level, i) => {
+            const depth = DEPTH_COLORS[i] || DEPTH_COLORS[4];
+            const isLast = i === data.levels!.length - 1;
+            const isRevealed = i < revealedCount;
+            const isActive = isActiveLevel(i);
+            return (
+              <div
+                key={i}
+                className={cn("flex gap-2 transition-all duration-700", isRevealed ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3")}
+                style={{ paddingLeft: `${i * 20}px`, transitionDelay: `${i * 100}ms` }}
+              >
+                <div className="flex flex-col items-center shrink-0 pt-1">
+                  <div className={cn(
+                    "w-4 h-4 rounded-full transition-all",
+                    depth.dot,
+                    isLast && "ring-2 ring-red-300 ring-offset-1",
+                    isActive && "animate-pulse ring-2 ring-orange-300 ring-offset-1"
+                  )} />
+                  {!isLast && <div className={cn("w-0.5 flex-1 mt-1 rounded-full bg-gradient-to-b", depth.line)} />}
+                </div>
+                <div className={cn("pb-3 flex-1 min-w-0 rounded-lg px-3 py-1.5 -ml-1 transition-colors", isLast ? depth.bg : "", isActive && "bg-orange-50/50")}>
+                  <p className={cn("text-[10px] font-bold", depth.text)}>Pourquoi {i + 1}?</p>
+                  <p className="text-[11px] text-gray-700">{level.question}</p>
+                  <p className="text-[10px] text-gray-500 mt-0.5">→ {level.answer}</p>
+                </div>
               </div>
-              <div className="pb-3 flex-1 min-w-0">
-                <p className="text-[10px] font-bold text-orange-600">Pourquoi {i + 1}?</p>
-                <p className="text-[11px] text-gray-700">{level.question}</p>
-                <p className="text-[10px] text-gray-500 mt-0.5">→ {level.answer}</p>
+            );
+          })}
+          {/* Root cause highlight — Target icon, prominent red */}
+          {data.rootCause && (
+            <div
+              className={cn("mt-3 rounded-xl border-2 border-red-300 bg-red-50 p-4 transition-all duration-700", revealedCount >= (data.levels?.length || 0) ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3")}
+              style={{ marginLeft: `${((data.levels?.length || 1) - 1) * 20}px`, transitionDelay: `${(data.levels?.length || 0) * 100}ms` }}
+            >
+              <div className="flex items-start gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-red-100 flex items-center justify-center shrink-0">
+                  <Target className="h-4 w-4 text-red-600" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-red-700 uppercase tracking-wider">Cause racine identifiee</p>
+                  <p className="text-[11px] text-gray-800 mt-1 leading-relaxed font-medium">{data.rootCause}</p>
+                </div>
               </div>
             </div>
-          ))}
+          )}
         </div>
       ) : (
         <p className="text-[11px] text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
@@ -707,8 +902,21 @@ function RapportRenderer({ block, onAction }: BlockRendererProps) {
 
 function LibreRenderer({ block, onAction }: BlockRendererProps) {
   const items = parseSummaryItems(block.summary);
+  const imageUrl = block.structured_data?.image_url as string | undefined;
+  const isVision = imageUrl || block.structured_data?.vision;
   return (
-    <BlockWrapper block={block} onAction={onAction} label="Note" labelColor="bg-gray-100 text-gray-600">
+    <BlockWrapper block={block} onAction={onAction} label={isVision ? "Vision" : "Note"} labelColor={isVision ? "bg-cyan-100 text-cyan-700" : "bg-gray-100 text-gray-600"}>
+      {/* Image capture from CarlOS Vision */}
+      {imageUrl && (
+        <div className="mb-3 rounded-lg overflow-hidden border border-cyan-200">
+          <img
+            src={imageUrl}
+            alt={block.title || "Vision capture"}
+            className="w-full h-auto max-h-[300px] object-cover"
+            loading="lazy"
+          />
+        </div>
+      )}
       {items.length > 1 ? (
         <div className="space-y-2">
           {items.map((item, i) => (
@@ -722,6 +930,275 @@ function LibreRenderer({ block, onAction }: BlockRendererProps) {
         </div>
       ) : (
         <div className="text-[11px] text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</div>
+      )}
+    </BlockWrapper>
+  );
+}
+
+// ═══ 18. Débat — POUR/CONTRE colonnes + verdict (pattern AtelierDebat L450-600) ═══
+
+function DebatRenderer({ block, onAction }: BlockRendererProps) {
+  const data = block.structured_data as {
+    pour?: { point: string; force?: string }[];
+    contre?: { point: string; force?: string }[];
+    verdict?: string;
+  } | undefined;
+  return (
+    <BlockWrapper block={block} onAction={onAction} label="Débat" labelColor="bg-red-100 text-red-700">
+      {(data?.pour || data?.contre) ? (
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            {/* POUR */}
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-1.5 mb-2">
+                <ThumbsUp className="h-3 w-3 text-emerald-600" />
+                <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Pour</span>
+              </div>
+              {(data?.pour || []).map((p, i) => (
+                <div key={i} className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2">
+                  <p className="text-[10px] text-gray-700">{p.point}</p>
+                  {p.force && <span className="text-[9px] text-emerald-600 font-medium mt-0.5 inline-block">{p.force}</span>}
+                </div>
+              ))}
+            </div>
+            {/* CONTRE */}
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-1.5 mb-2">
+                <ThumbsDown className="h-3 w-3 text-red-600" />
+                <span className="text-[10px] font-bold text-red-700 uppercase tracking-wider">Contre</span>
+              </div>
+              {(data?.contre || []).map((c, i) => (
+                <div key={i} className="rounded-lg border border-red-200 bg-red-50 px-3 py-2">
+                  <p className="text-[10px] text-gray-700">{c.point}</p>
+                  {c.force && <span className="text-[9px] text-red-600 font-medium mt-0.5 inline-block">{c.force}</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* Verdict — Trophy moment (pattern AtelierDebat verdict) */}
+          {data?.verdict && (
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+              <div className="flex items-start gap-2">
+                <Trophy className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-[9px] font-bold text-emerald-700 uppercase tracking-wider">Verdict</p>
+                  <p className="text-[11px] text-gray-700 mt-0.5 leading-relaxed">{data.verdict}</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <p className="text-[11px] text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
+      )}
+    </BlockWrapper>
+  );
+}
+
+// ═══ 19. Décision — Matrice pondérée + verdict (pattern AtelierDecision) ═══
+
+function DecisionRenderer({ block, onAction }: BlockRendererProps) {
+  const data = block.structured_data as {
+    options?: { label: string; scores?: Record<string, number>; total?: number }[];
+    criteres?: string[];
+    verdict?: string;
+  } | undefined;
+  return (
+    <BlockWrapper block={block} onAction={onAction} label="Décision" labelColor="bg-green-100 text-green-700">
+      {data?.options ? (
+        <div className="space-y-3">
+          {/* Matrix table */}
+          <div className="rounded-lg overflow-hidden border border-gray-200">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="text-[10px] font-bold text-left px-3 py-2 text-gray-600">Option</th>
+                  {(data.criteres || []).map((c, i) => (
+                    <th key={i} className="text-[10px] font-bold text-center px-2 py-2 text-gray-500">{c}</th>
+                  ))}
+                  <th className="text-[10px] font-bold text-center px-3 py-2 text-gray-600">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.options.map((opt, i) => {
+                  const isWinner = data.options && opt.total === Math.max(...data.options.map(o => o.total || 0));
+                  return (
+                    <tr key={i} className={cn("border-t border-gray-100", isWinner && "bg-green-50")}>
+                      <td className={cn("text-[10px] px-3 py-2", isWinner ? "font-bold text-green-700" : "text-gray-700")}>{opt.label}</td>
+                      {(data.criteres || []).map((c, j) => (
+                        <td key={j} className="text-[10px] text-center px-2 py-2 text-gray-600">
+                          {opt.scores?.[c] ?? "—"}
+                        </td>
+                      ))}
+                      <td className={cn("text-[10px] text-center px-3 py-2 font-bold", isWinner ? "text-green-700" : "text-gray-700")}>
+                        {opt.total ?? "—"}
+                        {isWinner && <Trophy className="inline h-3 w-3 ml-1 text-green-500" />}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {data.verdict && (
+            <div className="rounded-xl border border-green-200 bg-green-50 p-3">
+              <div className="flex items-start gap-2">
+                <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-[9px] font-bold text-green-700 uppercase tracking-wider">Décision recommandée</p>
+                  <p className="text-[11px] text-gray-700 mt-0.5 leading-relaxed">{data.verdict}</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <p className="text-[11px] text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
+      )}
+    </BlockWrapper>
+  );
+}
+
+// ═══ 20. Crise — Urgence rouge/orange (pattern AtelierCrise) ═══
+
+function CriseRenderer({ block, onAction }: BlockRendererProps) {
+  const data = block.structured_data as {
+    actions?: { titre: string; urgence: string; responsable?: string }[];
+    situation?: string;
+  } | undefined;
+  const URG: Record<string, { bg: string; text: string; border: string }> = {
+    critique: { bg: "bg-red-50", text: "text-red-700", border: "border-red-300" },
+    urgent: { bg: "bg-orange-50", text: "text-orange-700", border: "border-orange-300" },
+    important: { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200" },
+  };
+  return (
+    <BlockWrapper block={block} onAction={onAction} label="Crise" labelColor="bg-red-100 text-red-700">
+      <div className="space-y-3">
+        {/* Situation banner */}
+        {data?.situation && (
+          <div className="rounded-lg border border-red-300 bg-red-50 p-3">
+            <div className="flex items-center gap-2">
+              <Zap className="h-4 w-4 text-red-600 animate-pulse shrink-0" />
+              <p className="text-[11px] font-bold text-red-700">{data.situation}</p>
+            </div>
+          </div>
+        )}
+        {/* Crisis actions */}
+        {data?.actions ? (
+          <div className="space-y-1.5">
+            {data.actions.map((a, i) => {
+              const u = URG[a.urgence] || URG.important;
+              return (
+                <div key={i} className={cn("rounded-xl border px-4 py-2.5 flex items-center gap-3 transition-all", u.bg, u.border)}>
+                  <Zap className={cn("h-3.5 w-3.5 shrink-0", u.text, a.urgence === "critique" && "animate-bounce")} />
+                  <div className="flex-1 min-w-0">
+                    <span className={cn("text-[10px] font-bold", u.text)}>{a.titre}</span>
+                  </div>
+                  <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase", u.bg, u.text)}>{a.urgence}</span>
+                  {a.responsable && <span className="text-[10px] text-gray-400 shrink-0">{a.responsable}</span>}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {parseSummaryItems(block.summary).map((item, i) => (
+              <div key={i} className="flex items-start gap-2 text-[10px]">
+                <Zap className="h-3.5 w-3.5 text-red-500 shrink-0 mt-0.5" />
+                <span className="text-gray-700">{item}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </BlockWrapper>
+  );
+}
+
+// ═══ 21. Deep Search — Source cards avec score circulaire (pattern FocusReflexionView DeepSearch) ═══
+
+function DeepSearchRenderer({ block, onAction }: BlockRendererProps) {
+  const data = block.structured_data as {
+    sources?: { title: string; detail: string; score?: number; url?: string }[];
+    status?: string;
+    conclusion?: string;
+  } | undefined;
+
+  // Circular score component
+  const CircularScore = ({ score }: { score: number }) => {
+    const radius = 14;
+    const circumference = 2 * Math.PI * radius;
+    const offset = circumference - (score / 100) * circumference;
+    const color = score >= 80 ? "text-green-500" : score >= 50 ? "text-amber-500" : "text-red-500";
+    const strokeColor = score >= 80 ? "stroke-green-500" : score >= 50 ? "stroke-amber-500" : "stroke-red-500";
+    return (
+      <div className="relative w-10 h-10 shrink-0">
+        <svg className="w-10 h-10 -rotate-90" viewBox="0 0 36 36">
+          <circle cx="18" cy="18" r={radius} fill="none" stroke="#f3f4f6" strokeWidth="3" />
+          <circle cx="18" cy="18" r={radius} fill="none" className={strokeColor} strokeWidth="3" strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" style={{ transition: "stroke-dashoffset 0.8s ease" }} />
+        </svg>
+        <span className={cn("absolute inset-0 flex items-center justify-center text-[9px] font-bold", color)}>
+          {score}
+        </span>
+      </div>
+    );
+  };
+
+  return (
+    <BlockWrapper block={block} onAction={onAction} label="Deep Search" labelColor="bg-cyan-100 text-cyan-700">
+      {/* Status badge */}
+      <div className="flex items-center gap-2 mb-3">
+        <div className={cn(
+          "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-bold",
+          data?.status === "complete" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
+        )}>
+          {data?.status === "complete" ? <CheckCircle2 className="h-3 w-3" /> : <Activity className="h-3 w-3 animate-pulse" />}
+          {data?.status === "complete" ? "Recherche terminee" : "Recherche en cours..."}
+        </div>
+      </div>
+      {/* Source cards */}
+      {data?.sources ? (
+        <div className="space-y-2">
+          {data.sources.map((source, i) => (
+            <div key={i} className="rounded-lg border border-gray-200 bg-white px-4 py-3 hover:bg-cyan-50/30 hover:border-cyan-200 transition-all">
+              <div className="flex items-center gap-3">
+                <div className="w-7 h-7 rounded-lg bg-cyan-100 flex items-center justify-center shrink-0">
+                  <Globe className="h-3.5 w-3.5 text-cyan-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-[11px] font-medium text-gray-900 truncate">{source.title}</p>
+                    {source.url && (
+                      <ExternalLink className="h-2.5 w-2.5 text-gray-300 shrink-0" />
+                    )}
+                  </div>
+                  <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-2">{source.detail}</p>
+                </div>
+                {source.score !== undefined && <CircularScore score={source.score} />}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {parseSummaryItems(block.summary).map((item, i) => (
+            <div key={i} className="rounded-lg border border-gray-200 bg-white px-4 py-3">
+              <div className="flex items-start gap-2">
+                <Globe className="h-3.5 w-3.5 text-cyan-600 shrink-0 mt-0.5" />
+                <p className="text-[11px] text-gray-700 leading-relaxed flex-1">{item}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {/* Conclusion */}
+      {data?.conclusion && (
+        <div className="rounded-xl border border-cyan-200 bg-cyan-50/50 p-3 mt-3">
+          <div className="flex items-start gap-2">
+            <TrendingUp className="h-3.5 w-3.5 text-cyan-600 shrink-0 mt-0.5" />
+            <p className="text-[11px] text-gray-700 leading-relaxed italic">{data.conclusion}</p>
+          </div>
+        </div>
       )}
     </BlockWrapper>
   );
@@ -779,6 +1256,10 @@ const BLOCK_RENDERERS: Record<WorkspaceBlockType, React.FC<BlockRendererProps>> 
   synthese: SyntheseRenderer,
   rapport: RapportRenderer,
   libre: LibreRenderer,
+  debat: DebatRenderer,
+  decision: DecisionRenderer,
+  crise: CriseRenderer,
+  deep_search: DeepSearchRenderer,
 };
 
 export function BlockRenderer({ block, onAction }: BlockRendererProps) {
@@ -804,4 +1285,29 @@ export const BLOCK_TYPE_LABELS: Record<WorkspaceBlockType, string> = {
   synthese: "Synthèse",
   rapport: "Rapport",
   libre: "Note",
+  debat: "Débat",
+  decision: "Décision",
+  crise: "Crise",
+  deep_search: "Deep Search",
 };
+
+// ═══ Sprint 2A Phase 6A: Skeleton loading block (pattern WorkspaceSection.tsx L104-109) ═══
+
+export function SkeletonBlock({ label }: { label?: string }) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-4 animate-pulse">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="h-4 w-16 bg-gray-100 rounded-full" />
+        <div className="h-3 w-32 bg-gray-100 rounded" />
+      </div>
+      <div className="space-y-2">
+        <div className="h-3 bg-gray-100 rounded w-full" />
+        <div className="h-3 bg-gray-100 rounded w-5/6" />
+        <div className="h-3 bg-gray-100 rounded w-4/6" />
+      </div>
+      {label && (
+        <p className="mt-3 text-[10px] text-gray-400 text-center">{label}</p>
+      )}
+    </div>
+  );
+}

@@ -317,6 +317,8 @@ export interface ChatMessage {
   cristallisationSuggestion?: { section_id: string; section_label: string; confidence: number };
   // Workspace block from backend (structured detection)
   workspace_block?: WorkspaceBlockData;
+  // Sprint 2A Fix A — backend dit "pas de bloc" → frontend respecte
+  workspace_block_skip?: boolean;
 }
 
 // --- Crystal (idee cristallisee) ---

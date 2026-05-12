@@ -115,5 +115,28 @@ export interface WorkflowItem {
   timestamp: number;
 }
 
+// ═══ Workspace Block types (workspace dynamique intelligent) ═══
+export type WorkspaceBlockType =
+  | "diagnostic" | "brainstorm" | "scamper" | "5pourquoi"
+  | "plan_action" | "budget" | "timeline" | "metriques"
+  | "projets" | "taches" | "recommandations" | "risques"
+  | "benchmark" | "challenge" | "synthese" | "rapport" | "libre"
+  | "debat" | "decision" | "crise" | "deep_search";
+
+export interface WorkspaceBlock {
+  id: string;
+  type: WorkspaceBlockType;
+  title: string;
+  summary: string;
+  structured_data?: Record<string, any>;
+  credo_step: "C" | "R" | "E" | "D" | "O";
+  confidence: number;
+  source: string;         // bot code
+  sourceType: "chat" | "voice" | "meeting";
+  sectionId?: string;     // Section workspace cible (ex: "credo-r-rechercher")
+  timestamp: number;
+  replace_block_id?: string;
+}
+
 // ═══ Blueprint header views ═══
 export type HeaderView = "blueprint" | "ca" | "comites" | "personnel" | "bot";

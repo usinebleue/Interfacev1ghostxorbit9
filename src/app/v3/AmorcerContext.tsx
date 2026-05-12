@@ -8,7 +8,7 @@
  */
 
 import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from "react";
-import type { PhaseKey, CredoPhaseKey, WorkflowItem } from "./core/types";
+import type { PhaseKey, CredoPhaseKey, WorkflowItem, WorkspaceBlock, WorkspaceBlockType } from "./core/types";
 import type { MeetingStatus, ParticipantInfo } from "./hooks/useLiveKitMeeting";
 import { api } from "../v2/api/client";
 
@@ -156,9 +156,6 @@ interface AmorcerState {
   setSimV3Active: (v: boolean) => void;
   simV3Stage: number;
   setSimV3Stage: React.Dispatch<React.SetStateAction<number>>;
-  simV3Cristallises: SimV3CristalliseItem[];
-  addSimV3Cristallise: (text: string, source: string, sectionId: string, sourceType?: "chat" | "voice" | "meeting", contentTypes?: string[]) => void;
-
   // Workspace capture (artefacts progressifs)
   pendingCapture: string | null;
   setPendingCapture: (sectionId: string | null) => void;
@@ -197,6 +194,14 @@ interface AmorcerState {
   // Meeting controls partagés (WPP écrit, MeetingMiniBar lit)
   meetingControls: MeetingControlsState | null;
   setMeetingControls: (controls: MeetingControlsState | null) => void;
+
+  // Workspace blocks dynamiques (discussion)
+  workspaceBlocks: WorkspaceBlock[];
+  addWorkspaceBlock: (block: WorkspaceBlock) => void;
+  updateWorkspaceBlock: (id: string, updates: Partial<WorkspaceBlock>) => void;
+  removeWorkspaceBlock: (id: string) => void;
+  getBlocksByCredoStep: (step: string) => WorkspaceBlock[];
+  getBlocksByType: (type: WorkspaceBlockType) => WorkspaceBlock[];
 
   // Helpers
   startReflexion: (chantier: string) => void;
@@ -279,7 +284,39 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
+
+  // ═══ Refs pour valeurs courantes (useCallback capture stale values sans refs) ═══
+  // Placés AVANT setActiveBotCode/setActivePhase pour éviter TDZ
+  const activeBotCodeRef = useRef(activeBotCode);
+  activeBotCodeRef.current = activeBotCode;
+  const activePhaseRef = useRef(activePhase);
+  activePhaseRef.current = activePhase;
+  const chatStageRef = useRef(chatStage);
+  chatStageRef.current = chatStage;
+  const workflowItemsRef = useRef<WorkflowItem[]>([]);
+  // blocksRef initialisé à [] — mis à jour plus bas quand workspaceBlocks est déclaré
+  const blocksRef = useRef<WorkspaceBlock[]>([]);
+
+  // ═══ saveCanvasNow — fire-and-forget sauvegarde immédiate ═══
+  const saveCanvasNow = useCallback((botCode: string, phase: string) => {
+    const blocks = blocksRef.current;
+    const stage = chatStageRef.current;
+    const wfItems = workflowItemsRef.current;
+    if (blocks.length === 0 && stage === 0 && wfItems.length === 0) return;
+    if (phase === "observation") return;
+    const canvasKey = `workspace_phase_${botCode}_${phase}`;
+    api.getOrCreateCanvas(canvasKey).then(canvas => {
+      api.updateCanvas(canvas.id, { workspaceBlocks: blocks, chatStage: stage, workflowItems: wfItems });
+    }).catch(() => { /* silent */ });
+  }, []);
+
   const setActiveBotCode = useCallback((code: string) => {
+    const prevBot = activeBotCodeRef.current;
+    const prevPhase = activePhaseRef.current;
+    // Save-before-clear: sauvegarder le canvas avant de changer de bot
+    if (prevPhase !== "observation") {
+      saveCanvasNow(prevBot, prevPhase);
+    }
     setActiveBotCodeRaw(code);
     lsSet("activeBotCode", code);
     _activeBotSlug = BOT_TO_SLUG[code] || "ceo";
@@ -295,11 +332,14 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     setTyped(false);
     setCredoPhase("C");
     setWorkflowItems([]);
+    // Nettoyer workspace blocks au switch de bot
+    setWorkspaceBlocks([]);
+    try { localStorage.removeItem("workspaceBlocks"); } catch { /* silent */ }
     const target = `/${BOT_TO_SLUG[code] || "ceo"}/cockpit`;
     if (window.location.pathname !== target) {
       window.history.pushState({ section: "cockpit" }, "", target);
     }
-  }, []);
+  }, [saveCanvasNow]);
   const setCockpitTab = useCallback((t: string) => {
     setCockpitTabRaw(t);
     lsSet("cockpitTab", t);
@@ -337,46 +377,19 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
   const [activeDocumentKey, setActiveDocumentKey] = useState<string | null>(null);
   const [activeDocumentSection, setActiveDocumentSection] = useState<string | null>(null);
 
-  // SimV3 state
+  // SimV3 state (legacy sim — kept for backward compat)
   const [simV3Active, setSimV3Active] = useState(false);
   const [simV3Stage, setSimV3Stage] = useState(-1);
-  const [simV3Cristallises, setSimV3Cristallises] = useState<SimV3CristalliseItem[]>([]);
-  const addSimV3Cristallise = useCallback((text: string, source: string, sectionId: string, sourceType?: "chat" | "voice" | "meeting", contentTypes?: string[]) => {
-    setSimV3Cristallises((prev) => {
-      // Replace existing entry for same sectionId (action = update)
-      const existing = prev.findIndex(item => item.sectionId === sectionId);
-      const item: SimV3CristalliseItem = { id: `c-${Date.now()}`, text, source, sectionId, sourceType: sourceType || "chat", contentTypes };
-      if (existing >= 0) {
-        const copy = [...prev];
-        copy[existing] = item;
-        return copy;
-      }
-      return [...prev, item];
-    });
-  }, []);
 
   // Workspace capture — pendingCapture tracks which section awaits a bot response
   const [pendingCapture, setPendingCapture] = useState<string | null>(null);
-  const getCristallise = useCallback((sectionId: string): string | null => {
-    const item = simV3Cristallises.find(c => c.sectionId === sectionId);
-    return item ? item.text : null;
-  }, [simV3Cristallises]);
-
-  const getCristalliseItem = useCallback((sectionId: string): SimV3CristalliseItem | null => {
-    return simV3Cristallises.find(c => c.sectionId === sectionId) || null;
-  }, [simV3Cristallises]);
-
-  const editCristallise = useCallback((sectionId: string, newText: string) => {
-    setSimV3Cristallises(prev =>
-      prev.map(c => c.sectionId === sectionId ? { ...c, text: newText } : c)
-    );
-  }, []);
 
   // CREDO phase state
   const [credoPhase, setCredoPhase] = useState<CredoPhaseKey>("C");
 
   // Workflow items state
   const [workflowItems, setWorkflowItems] = useState<WorkflowItem[]>([]);
+  workflowItemsRef.current = workflowItems;
   const addWorkflowItem = useCallback((phase: string, text: string, type: WorkflowItem["type"], credoKey?: string) => {
     setWorkflowItems((prev) => [...prev, { id: `wi-${Date.now()}`, phase, text, type, credoKey, timestamp: Date.now() }]);
   }, []);
@@ -387,13 +400,20 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
 
   // Wrappers avec localStorage pour activePhase, reflexionContext, focusType
   const setActivePhase = useCallback((p: PhaseKey) => {
+    const prevPhase = activePhaseRef.current;
+    const prevBot = activeBotCodeRef.current;
+    // Save-before-clear: sauvegarder le canvas avant de changer de phase
+    if (prevPhase !== "observation" && prevPhase !== p) {
+      saveCanvasNow(prevBot, prevPhase);
+    }
     setActivePhaseRaw(p);
     lsSet("activePhase", p);
     // Reset chatStage à chaque changement de phase — chaque phase repart de l'étape 0
     setChatStage(0);
-    // Nettoyer le contenu cristallisé — chaque phase repart vide (comme un nouvel artefact)
-    setSimV3Cristallises([]);
-  }, []);
+    // Nettoyer les workspace blocks — chaque phase repart vide
+    setWorkspaceBlocks([]);
+    try { localStorage.removeItem("workspaceBlocks"); } catch { /* silent */ }
+  }, [saveCanvasNow]);
   const setReflexionContext = useCallback((c: string | null) => {
     setReflexionContextRaw(c);
     lsSet("reflexionContext", c);
@@ -417,36 +437,141 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     return id;
   }, [activeBotCode]);
 
-  // ═══ Canvas auto-save — persister cristallisations en DB (debounce 2s) ═══
+  // ═══ Workspace Blocks dynamiques (discussion) ═══
+  const [workspaceBlocks, setWorkspaceBlocks] = useState<WorkspaceBlock[]>(() => {
+    try {
+      const stored = localStorage.getItem("workspaceBlocks");
+      return stored ? JSON.parse(stored) : [];
+    } catch { return []; }
+  });
+
+  // Sync blocksRef avec workspaceBlocks (ref déclarée plus haut pour saveCanvasNow)
+  blocksRef.current = workspaceBlocks;
+
+  // Persist workspace blocks
+  useEffect(() => {
+    try {
+      if (workspaceBlocks.length === 0) {
+        localStorage.removeItem("workspaceBlocks");
+      } else {
+        localStorage.setItem("workspaceBlocks", JSON.stringify(workspaceBlocks));
+      }
+    } catch { /* silent */ }
+  }, [workspaceBlocks]);
+
+  // ═══ getCristallise/getCristalliseItem — vues dérivées de workspaceBlocks ═══
+  const getCristallise = useCallback((sectionId: string): string | null => {
+    const block = workspaceBlocks.find(b => b.sectionId === sectionId);
+    return block ? block.summary : null;
+  }, [workspaceBlocks]);
+
+  const getCristalliseItem = useCallback((sectionId: string): SimV3CristalliseItem | null => {
+    const block = workspaceBlocks.find(b => b.sectionId === sectionId);
+    if (!block) return null;
+    return {
+      id: block.id,
+      text: block.summary,
+      source: block.source,
+      sectionId,
+      sourceType: block.sourceType,
+      contentTypes: block.structured_data?.content_types,
+    };
+  }, [workspaceBlocks]);
+
+  const editCristallise = useCallback((sectionId: string, newText: string) => {
+    setWorkspaceBlocks(prev =>
+      prev.map(b => b.sectionId === sectionId ? { ...b, summary: newText } : b)
+    );
+  }, []);
+
+  // ═══ Canvas auto-save — persister workspaceBlocks en DB (debounce 2s) ═══
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    if (simV3Cristallises.length === 0) return;
+    if (workspaceBlocks.length === 0) return;
     if (activePhase === "observation") return;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
       const canvasKey = `workspace_phase_${activeBotCode}_${activePhase}`;
       api.getOrCreateCanvas(canvasKey).then(canvas => {
-        api.updateCanvas(canvas.id, { cristallises: simV3Cristallises, chatStage, workflowItems });
+        api.updateCanvas(canvas.id, { workspaceBlocks, chatStage, workflowItems });
       }).catch(() => { /* silent */ });
     }, 2000);
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
-  }, [simV3Cristallises, chatStage, activeBotCode, activePhase, workflowItems]);
+  }, [workspaceBlocks, chatStage, activeBotCode, activePhase, workflowItems]);
 
-  // ═══ Canvas auto-load — restaurer cristallisations quand on entre dans une phase ═══
-  const prevPhaseRef = useRef(activePhase);
+  // ═══ Canvas auto-load — restaurer workspaceBlocks quand on entre dans une phase ═══
+  const prevLoadPhaseRef = useRef(activePhase);
   useEffect(() => {
-    if (activePhase === prevPhaseRef.current) return;
-    prevPhaseRef.current = activePhase;
+    if (activePhase === prevLoadPhaseRef.current) return;
+    prevLoadPhaseRef.current = activePhase;
     if (activePhase === "observation") return;
     const canvasKey = `workspace_phase_${activeBotCode}_${activePhase}`;
     api.getOrCreateCanvas(canvasKey).then(canvas => {
       const data = canvas.data as any;
-      if (data?.cristallises && Array.isArray(data.cristallises) && data.cristallises.length > 0) {
-        setSimV3Cristallises(data.cristallises);
-        if (typeof data.chatStage === "number") setChatStage(data.chatStage);
+      if (data?.workspaceBlocks && Array.isArray(data.workspaceBlocks) && data.workspaceBlocks.length > 0) {
+        setWorkspaceBlocks(data.workspaceBlocks);
       }
+      if (typeof data?.chatStage === "number") setChatStage(data.chatStage);
     }).catch(() => { /* silent */ });
   }, [activePhase, activeBotCode]);
+
+  const addWorkspaceBlock = useCallback((block: WorkspaceBlock) => {
+    setWorkspaceBlocks((prev) => {
+      // If replace_block_id, update the existing block
+      if (block.replace_block_id) {
+        const idx = prev.findIndex(b => b.id === block.replace_block_id);
+        if (idx >= 0) {
+          const copy = [...prev];
+          copy[idx] = { ...block, id: block.replace_block_id };
+          return copy;
+        }
+      }
+      return [...prev, block];
+    });
+  }, []);
+
+  const updateWorkspaceBlock = useCallback((id: string, updates: Partial<WorkspaceBlock>) => {
+    setWorkspaceBlocks((prev) => prev.map(b => b.id === id ? { ...b, ...updates } : b));
+  }, []);
+
+  const removeWorkspaceBlock = useCallback((id: string) => {
+    setWorkspaceBlocks((prev) => prev.filter(b => b.id !== id));
+  }, []);
+
+  const getBlocksByCredoStep = useCallback((step: string): WorkspaceBlock[] => {
+    return workspaceBlocks.filter(b => b.credo_step === step);
+  }, [workspaceBlocks]);
+
+  const getBlocksByType = useCallback((type: WorkspaceBlockType): WorkspaceBlock[] => {
+    return workspaceBlocks.filter(b => b.type === type);
+  }, [workspaceBlocks]);
+
+  // ═══ Auto-contribute — POST nouveaux blocs vers workspace_contributions (4 canaux) ═══
+  const prevBlockCountRef = useRef(0);
+  useEffect(() => {
+    if (workspaceBlocks.length <= prevBlockCountRef.current) {
+      prevBlockCountRef.current = workspaceBlocks.length;
+      return;
+    }
+    const newBlocks = workspaceBlocks.slice(prevBlockCountRef.current);
+    prevBlockCountRef.current = workspaceBlocks.length;
+    const API_BASE = import.meta.env.VITE_API_URL || "";
+    const API_KEY = import.meta.env.VITE_API_KEY || "";
+    for (const block of newBlocks) {
+      fetch(`${API_BASE}/api/v1/workspace/contribute`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-API-Key": API_KEY },
+        body: JSON.stringify({
+          session_id: workspaceSessionId || `ws-${activeBotCode}-default`,
+          phase: activePhase,
+          section_id: block.sectionId || block.credo_step || "unknown",
+          content: block.summary,
+          source_type: block.sourceType || "chat",
+          author_code: block.source || activeBotCode,
+        }),
+      }).catch(() => { /* silent */ });
+    }
+  }, [workspaceBlocks]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const resetChat = useCallback(() => {
     setActivePhase("observation");
@@ -459,11 +584,15 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     setFocusType("chantier");
     setCredoPhase("C");
     setWorkflowItems([]);
+    // Clear workspace blocks — nouvelle discussion = workspace vide
+    setWorkspaceBlocks([]);
+    try { localStorage.removeItem("workspaceBlocks"); } catch { /* silent */ }
   }, [setActivePhase, setReflexionContext, setFocusType]);
 
+  // Sprint 2A Phase 4: reflexion fusionnée dans discussion
   const startReflexion = useCallback((chantier: string) => {
     setReflexionContext(chantier);
-    setActivePhase("reflexion");
+    setActivePhase("discussion");
     setRightSection(null);
   }, []);
 
@@ -517,13 +646,13 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
         workflowItems, addWorkflowItem, removeWorkflowItem, clearWorkflowItems,
         simV3Active, setSimV3Active,
         simV3Stage, setSimV3Stage,
-        simV3Cristallises, addSimV3Cristallise,
         pendingCapture, setPendingCapture, getCristallise, getCristalliseItem, editCristallise,
         workspaceSessionId, startWorkspaceSession,
         activeDocumentKey, setActiveDocumentKey,
         activeDocumentSection, setActiveDocumentSection,
         activeMeeting, setActiveMeeting,
         meetingControls, setMeetingControls,
+        workspaceBlocks, addWorkspaceBlock, updateWorkspaceBlock, removeWorkspaceBlock, getBlocksByCredoStep, getBlocksByType,
         startReflexion, advance, resetChat,
       }}
     >

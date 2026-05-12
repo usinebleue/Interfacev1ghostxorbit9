@@ -1,9 +1,9 @@
 /**
  * useWorkspaceSync.ts — Synchronise les contributions externes (vocal, réunion)
- * avec le workspace local (simV3Cristallises).
+ * avec le workspace local (workspaceBlocks).
  *
  * Poll toutes les 3s quand une phase est active et un workspaceSessionId existe.
- * Merge les nouvelles contributions dans AmorcerContext.
+ * Merge les nouvelles contributions dans AmorcerContext via addWorkspaceBlock.
  */
 
 import { useEffect, useRef } from "react";
@@ -13,7 +13,7 @@ const API_KEY = import.meta.env.VITE_API_KEY || "";
 const API_BASE = import.meta.env.VITE_API_URL || "";
 
 export function useWorkspaceSync(sessionId: string | null) {
-  const { addSimV3Cristallise, activePhase } = useAmorcer();
+  const { addWorkspaceBlock, activePhase } = useAmorcer();
   const cursorRef = useRef(0);
 
   useEffect(() => {
@@ -28,12 +28,18 @@ export function useWorkspaceSync(sessionId: string | null) {
         if (!resp.ok) return;
         const data = await resp.json();
         for (const contrib of data.contributions || []) {
-          addSimV3Cristallise(
-            contrib.content,
-            contrib.author_code,
-            contrib.section_id,
-            contrib.source_type as "chat" | "voice" | "meeting"
-          );
+          addWorkspaceBlock({
+            id: `blk-sync-${contrib.id || Date.now()}`,
+            type: "libre",
+            title: (contrib.content || "").substring(0, 60),
+            summary: contrib.content,
+            credo_step: "C",
+            confidence: 0.8,
+            source: contrib.author_code,
+            sourceType: (contrib.source_type as "chat" | "voice" | "meeting") || "chat",
+            sectionId: contrib.section_id,
+            timestamp: Date.now(),
+          });
           cursorRef.current = Math.max(cursorRef.current, contrib.id);
         }
       } catch {
@@ -42,5 +48,5 @@ export function useWorkspaceSync(sessionId: string | null) {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [sessionId, activePhase, addSimV3Cristallise]);
+  }, [sessionId, activePhase, addWorkspaceBlock]);
 }

@@ -25,7 +25,7 @@ import { MobileSidebarSheet } from "../core/MobileSidebarSheet";
 import { useAmorcer } from "../AmorcerContext";
 import { useChatContext } from "../../v2/context/ChatContext";
 import { PHASE_CONFIGS } from "./phase-config";
-import { REFLEXION_TOOL_IDS, ReflexionModeActions, TechniqueSelector } from "./reflexion-tools";
+import { REFLEXION_TOOL_IDS, TechniqueSidebarList, TechniquePanel } from "./reflexion-tools";
 import { BlockRenderer, BLOCK_TYPE_LABELS } from "./workspace-block-renderers";
 import type { CascadeSuggestion } from "../../v2/api/types";
 
@@ -50,12 +50,14 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
   const {
     chatStage, workflowItems, removeWorkflowItem, getCristallise,
     getCristalliseItem, editCristallise, setPendingCapture, addWorkflowItem,
-    activeBotCode, activePhase, workspaceBlocks, addWorkspaceBlock,
+    activeBotCode, activePhase, setActivePhase, workspaceBlocks, addWorkspaceBlock,
     updateWorkspaceBlock, removeWorkspaceBlock, getBlocksByCredoStep, getBlocksByType,
   } = useAmorcer();
   const { sendMessage, messages } = useChatContext();
   const displayContext = context || "Discussion en cours";
   const blocksEndRef = useRef<HTMLDivElement>(null);
+
+  const [activeStepId, setActiveStepId] = useState<string>(config.steps[0]?.id || "");
 
   // Extract latest cascade suggestions from recent bot messages
   const latestCascadeSuggestions: CascadeSuggestion[] = (() => {
@@ -70,10 +72,9 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
     : activeStepId.includes("exposer") ? "E"
     : activeStepId.includes("demontrer") ? "D"
     : activeStepId.includes("objectif") ? "O" : "C";
-  const isPhaseR = currentCredoLetter === "R" && chatStage >= 1;
-
-  const [activeStepId, setActiveStepId] = useState<string>(config.steps[0]?.id || "");
   const [filterStep, setFilterStep] = useState<string | null>(null);
+  // Sprint 2A v2: technique panel — clic sidebar → sous-section workspace
+  const [selectedTechnique, setSelectedTechnique] = useState<string | null>(null);
   const [contentAppeared, setContentAppeared] = useState(false);
 
   // Fade-in animation on content (pattern FocusReflexionView StepContent)
@@ -90,6 +91,26 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
       setActiveStepId(latestWithContent.id);
     }
   }, [chatStage]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // S2.2.2: LoopGuard — detect stagnation on same CREDO step
+  const loopGuardRef = useRef({ stage: chatStage, msgCount: 0 });
+  const [loopGuardVisible, setLoopGuardVisible] = useState(false);
+  useEffect(() => {
+    if (chatStage !== loopGuardRef.current.stage) {
+      // Stage advanced → reset
+      loopGuardRef.current = { stage: chatStage, msgCount: 0 };
+      setLoopGuardVisible(false);
+    }
+  }, [chatStage]);
+  useEffect(() => {
+    const userMsgCount = messages.filter(m => m.role === "user").length;
+    if (chatStage === loopGuardRef.current.stage) {
+      loopGuardRef.current.msgCount = userMsgCount;
+      if (userMsgCount >= 6 && !loopGuardVisible) {
+        setLoopGuardVisible(true);
+      }
+    }
+  }, [messages.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-scroll vers les nouveaux blocks
   const prevBlockCount = useRef(workspaceBlocks.length);
@@ -154,6 +175,15 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
     sendMessage(prompt, activeBotCode);
   }, [sendMessage, activeBotCode]);
 
+  // Sprint 2A: Technique metadata handler — passes technique session info through sendMessage meta
+  const handleSendWithMeta = useCallback((prompt: string, meta: { techniqueActive: string; techniqueStep: number; techniqueContext: string }) => {
+    sendMessage(prompt, activeBotCode, undefined, {
+      techniqueActive: meta.techniqueActive,
+      techniqueStep: meta.techniqueStep,
+      techniqueContext: meta.techniqueContext,
+    });
+  }, [sendMessage, activeBotCode]);
+
   // CREDO step labels
   const CREDO_LABELS: Record<string, string> = { C: "Comprendre", R: "Rechercher", E: "Exposer", D: "Demontrer", O: "Objectif" };
 
@@ -193,8 +223,34 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
               </div>
             );
           })}
+          {/* S2.2.1: Scaffold progress fraction */}
+          <div className="relative z-10 flex items-center gap-1.5 shrink-0 ml-2">
+            <span className={cn("text-[9px] font-bold", progress === 100 ? "text-emerald-600" : "text-gray-400")}>
+              {completedCount}/{config.steps.length}
+            </span>
+          </div>
+        </div>
+        {/* S2.2.1: Scaffold progress bar — thin accent at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-100 z-10 rounded-b-xl overflow-hidden">
+          <div
+            className={cn("h-full transition-all duration-500 rounded-r-full", progress === 100 ? "bg-emerald-400" : "bg-sky-400")}
+            style={{ width: `${progress}%` }}
+          />
         </div>
       </div>
+
+      {/* S2.2.2: LoopGuard nudge — subtle banner when stagnating */}
+      {loopGuardVisible && (
+        <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-700">
+          <Zap className="h-3.5 w-3.5 shrink-0" />
+          <span className="text-[10px] font-medium flex-1">
+            Vous explorez cette etape depuis un moment. Essayez de passer a l'etape suivante ou utilisez un outil de reflexion.
+          </span>
+          <button onClick={() => setLoopGuardVisible(false)} className="p-0.5 rounded hover:bg-amber-100 cursor-pointer shrink-0">
+            <X className="h-3 w-3" />
+          </button>
+        </div>
+      )}
 
       {/* SIDEBAR + CONTENU */}
       <div className={cn("flex gap-3", isMobile && "flex-col gap-0")}>
@@ -225,18 +281,15 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
                       <button
                         key={s.id}
                         onClick={() => {
-                          if (isUnlocked) {
-                            setActiveStepId(s.id);
-                            setFilterStep(credoLetter);
-                          }
+                          setActiveStepId(s.id);
+                          setFilterStep(credoLetter);
                         }}
-                        disabled={!isUnlocked}
                         className={cn(
                           SF.btnBase,
                           isActive
                             ? cn(col.sidebar.active, "border shadow-sm")
                             : isUnlocked ? SF.btnInactive
-                            : "opacity-40 cursor-not-allowed border border-transparent"
+                            : "opacity-50 hover:opacity-70 border border-transparent cursor-pointer"
                         )}
                       >
                         {/* Colored icon box — pattern FocusReflexionView L113-114 */}
@@ -266,25 +319,36 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
                 </div>
               </div>
 
-              {/* Tier 2: Outils reflexion */}
-              {chatStage >= 1 && (
-                <div>
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 px-2">Outils reflexion</span>
-                  <div className="mt-1 space-y-0.5">
-                    {REFLEXION_TOOL_IDS.map(tool => (
-                      <button
-                        key={tool.id}
-                        onClick={() => handleReflexionSend(tool.prompt(displayContext))}
-                        className={cn(SF.btnBase, "hover:bg-orange-50 hover:shadow-sm border border-transparent transition-all")}
-                      >
-                        <div className="w-5 h-5 rounded-md bg-orange-100 flex items-center justify-center shrink-0">
-                          <tool.icon className="h-3 w-3 text-orange-600" />
-                        </div>
-                        <span className="text-[10px] font-bold text-gray-700">{tool.label}</span>
-                      </button>
-                    ))}
+              {/* Tier 2+2b: Modes de reflexion + Techniques — visibles UNIQUEMENT sur etape Rechercher */}
+              {activeStepId === "credo-r-rechercher" && (
+                <>
+                  {/* Tier 2: Modes de reflexion — clic = envoie prompt au bot */}
+                  <div>
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 px-2">Reflexion</span>
+                    <div className="mt-1 space-y-0.5">
+                      {REFLEXION_TOOL_IDS.map(tool => (
+                        <button
+                          key={tool.id}
+                          onClick={() => handleReflexionSend(tool.prompt(displayContext))}
+                          className={cn(SF.btnBase, "hover:bg-orange-50 hover:shadow-sm border border-transparent transition-all")}
+                        >
+                          <div className="w-5 h-5 rounded-md bg-orange-100 flex items-center justify-center shrink-0">
+                            <tool.icon className="h-3 w-3 text-orange-600" />
+                          </div>
+                          <span className="text-[10px] font-bold text-gray-700">{tool.label}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
+
+                  {/* Tier 2b: Techniques — clic = ouvre sous-section dans le workspace */}
+                  <div>
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 px-2">Techniques</span>
+                    <div className="mt-1">
+                      <TechniqueSidebarList selectedId={selectedTechnique} onSelect={setSelectedTechnique} />
+                    </div>
+                  </div>
+                </>
               )}
 
               {/* Tier 3: Index des blocks */}
@@ -336,48 +400,63 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
         <div className={SF.content}>
          <div className={cn("transition-all duration-300", contentAppeared ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2")}>
 
-          {/* OUTILS REFLEXION — Phase R seulement (Sprint 1 Etape 2) */}
-          {isPhaseR && (
-            <div className="space-y-3 mt-3">
-              <div className="rounded-xl border border-blue-200 bg-blue-50/30 p-4">
-                <h4 className="text-[10px] font-bold uppercase tracking-wider text-blue-600 mb-3">Modes de reflexion</h4>
-                <ReflexionModeActions context={displayContext} onSend={handleReflexionSend} />
-                <TechniqueSelector context={displayContext} onSend={handleReflexionSend} />
-              </div>
+          {/* TECHNIQUE PANEL — sous-section ouverte depuis le sidebar */}
+          {selectedTechnique && (
+            <div className="mt-3">
+              <TechniquePanel
+                techniqueId={selectedTechnique}
+                context={displayContext}
+                onSend={handleReflexionSend}
+                onSendWithMeta={handleSendWithMeta}
+                onClose={() => setSelectedTechnique(null)}
+              />
             </div>
           )}
 
-          {/* WORKSPACE BLOCKS DYNAMIQUES */}
+          {/* WORKSPACE BLOCKS — La discussion EST le plan de match */}
           {displayBlocks.length > 0 ? (
             <div className="space-y-3 mt-3">
-              {/* Group separator by CREDO step */}
+              {/* Group separator by CREDO step with narrative connectors (Sprint 2A Phase 3) */}
               {(() => {
+                const CREDO_NARRATIVES: Record<string, string> = {
+                  C: "Voici ce que nous comprenons de la tension...",
+                  R: "Notre recherche a revele...",
+                  E: "Les solutions envisagees...",
+                  D: "Le plan d'execution propose...",
+                  O: "Decisions et prochaines etapes...",
+                };
                 let lastStep = "";
                 return displayBlocks.map((block) => {
                   const showSeparator = block.credo_step !== lastStep;
+                  const isFirst = lastStep === "";
                   lastStep = block.credo_step;
                   return (
                     <div key={block.id} id={`block-${block.type}`}>
                       {showSeparator && (
-                        <div className="flex items-center gap-2 pt-2 pb-1">
-                          <div className={cn(
-                            "w-2 h-2 rounded-full",
-                            block.credo_step === "C" ? "bg-sky-400" :
-                            block.credo_step === "R" ? "bg-blue-400" :
-                            block.credo_step === "E" ? "bg-amber-400" :
-                            block.credo_step === "D" ? "bg-green-400" :
-                            "bg-purple-400"
-                          )} />
-                          <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400">
-                            {CREDO_LABELS[block.credo_step] || block.credo_step}
-                          </span>
-                          <span className="text-[9px] bg-gray-100 px-1.5 py-0.5 rounded-full text-gray-500">
-                            {blocksByCredoStep[block.credo_step] || 0} bloc{(blocksByCredoStep[block.credo_step] || 0) > 1 ? "s" : ""}
-                          </span>
-                          <div className="flex-1 h-px bg-gray-200" />
-                          {(blocksByCredoStep[block.credo_step] || 0) >= 2 && (
-                            <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-                          )}
+                        <div className="pt-3 pb-1">
+                          <div className="flex items-center gap-2">
+                            <div className={cn(
+                              "w-2 h-2 rounded-full",
+                              block.credo_step === "C" ? "bg-sky-400" :
+                              block.credo_step === "R" ? "bg-blue-400" :
+                              block.credo_step === "E" ? "bg-amber-400" :
+                              block.credo_step === "D" ? "bg-green-400" :
+                              "bg-purple-400"
+                            )} />
+                            <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400">
+                              {CREDO_LABELS[block.credo_step] || block.credo_step}
+                            </span>
+                            <span className="text-[9px] bg-gray-100 px-1.5 py-0.5 rounded-full text-gray-500">
+                              {blocksByCredoStep[block.credo_step] || 0} bloc{(blocksByCredoStep[block.credo_step] || 0) > 1 ? "s" : ""}
+                            </span>
+                            <div className="flex-1 h-px bg-gray-200" />
+                            {(blocksByCredoStep[block.credo_step] || 0) >= 2 && (
+                              <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                            )}
+                          </div>
+                          <p className="text-[9px] italic text-gray-400 mt-1 ml-4">
+                            {CREDO_NARRATIVES[block.credo_step] || ""}
+                          </p>
                         </div>
                       )}
                       <div className="transition-all duration-300 animate-in fade-in slide-in-from-bottom-2">
@@ -390,49 +469,13 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
               <div ref={blocksEndRef} />
             </div>
           ) : (
-            /* Empty state — contextuel par phase CREDO (Sprint 1 Etape 3) */
-            <div className="mt-4 space-y-3">
-              {(() => {
-                const CREDO_EMPTY: Record<string, { title: string; desc: string; color: string; iconBg: string; iconText: string }> = {
-                  C: { title: "Comprendre la tension", desc: "Decrivez votre tension ou enjeu. CarlOS va reformuler et identifier les parties prenantes.", color: "border-sky-200 bg-sky-50/30", iconBg: "bg-sky-100", iconText: "text-sky-500" },
-                  R: { title: "Rechercher en profondeur", desc: "Explorez en profondeur avec les outils de reflexion ci-dessous. Diagnostics, brainstorms, analyses...", color: "border-blue-200 bg-blue-50/30", iconBg: "bg-blue-100", iconText: "text-blue-500" },
-                  E: { title: "Exposer les solutions", desc: "Presentez vos solutions. CarlOS va comparer les avantages et inconvenients de chaque piste.", color: "border-amber-200 bg-amber-50/30", iconBg: "bg-amber-100", iconText: "text-amber-500" },
-                  D: { title: "Demontrer la capacite", desc: "Detaillez le plan d'execution. CarlOS va identifier les risques, ressources et budget necessaires.", color: "border-green-200 bg-green-50/30", iconBg: "bg-green-100", iconText: "text-green-500" },
-                  O: { title: "Objectif final", desc: "Validez l'objectif final et cristallisez les decisions cles. Definissez les prochaines etapes.", color: "border-purple-200 bg-purple-50/30", iconBg: "bg-purple-100", iconText: "text-purple-500" },
-                };
-                const empty = CREDO_EMPTY[currentCredoLetter] || CREDO_EMPTY.C;
-                return (
-                  <div className={cn("rounded-xl border border-dashed p-6 text-center", empty.color)}>
-                    <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3", empty.iconBg)}>
-                      <PhaseIcon className={cn("h-6 w-6", empty.iconText)} />
-                    </div>
-                    <p className="text-[10px] font-medium text-gray-700">{empty.title}</p>
-                    <p className="text-[10px] text-gray-400 mt-1">{empty.desc}</p>
-                  </div>
-                );
-              })()}
-              {/* Quick-start tools — all 5, shown when at phase R or as generic starters */}
-              {(isPhaseR || chatStage === 0) && (
-                <div className="rounded-xl border border-gray-200 bg-white p-4">
-                  <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">
-                    {isPhaseR ? "Outils de recherche" : "Demarrer la reflexion"}
-                  </h4>
-                  <div className="grid grid-cols-2 gap-2">
-                    {REFLEXION_TOOL_IDS.map(tool => (
-                      <button
-                        key={tool.id}
-                        onClick={() => handleReflexionSend(tool.prompt(displayContext))}
-                        className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200 hover:border-orange-200 hover:bg-orange-50/50 hover:shadow-sm text-[10px] font-medium text-gray-700 cursor-pointer transition-all"
-                      >
-                        <div className="w-6 h-6 rounded-lg bg-orange-100 flex items-center justify-center shrink-0">
-                          <tool.icon className="h-3 w-3 text-orange-600" />
-                        </div>
-                        {tool.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
+            /* Empty state — minimaliste, la discussion EST le workspace */
+            <div className="mt-4">
+              <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/30 p-6 text-center">
+                <PhaseIcon className="h-6 w-6 text-sky-400 mx-auto mb-2" />
+                <p className="text-[11px] font-medium text-gray-600">Commencez la discussion</p>
+                <p className="text-[10px] text-gray-400 mt-1">Les elements importants seront cristallises ici automatiquement.</p>
+              </div>
             </div>
           )}
 
@@ -442,7 +485,13 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
               {latestCascadeSuggestions.map((sug, i) => (
                 <button
                   key={i}
-                  onClick={() => sendMessage(sug.message, activeBotCode)}
+                  onClick={() => {
+                    const targetPhase = sug.view;
+                    if (targetPhase && targetPhase !== activePhase && ["discussion","reflexion","creation","execution","retroaction"].includes(targetPhase)) {
+                      setActivePhase(targetPhase as any);
+                    }
+                    sendMessage(sug.message, activeBotCode);
+                  }}
                   className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-amber-200 bg-amber-50/50 hover:bg-amber-100 hover:border-amber-300 cursor-pointer transition-all text-left"
                 >
                   <ArrowRight className="h-3 w-3 text-amber-600 shrink-0" />
@@ -474,6 +523,11 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
             </div>
           )}
 
+          {/* S2.4.2: Vue resume multi-phase accordion */}
+          {workspaceBlocks.length > 2 && (
+            <MultiPhaseAccordion workspaceBlocks={workspaceBlocks} credoLabels={CREDO_LABELS} />
+          )}
+
           {/* Bouton transition vers Conception — pattern FocusReflexionView L348-354 */}
           {chatStage >= 3 && config.nextPhase && onPhaseComplete && (
             <button
@@ -487,6 +541,77 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
          </div>{/* close fade-in wrapper */}
         </div>
       </div>
+    </div>
+  );
+}
+
+// ═══ S2.4.2: Multi-phase accordion — resume des blocs par etape CREDO ═══
+
+function MultiPhaseAccordion({ workspaceBlocks, credoLabels }: {
+  workspaceBlocks: import("../core/types").WorkspaceBlock[];
+  credoLabels: Record<string, string>;
+}) {
+  const [openStep, setOpenStep] = useState<string | null>(null);
+
+  const STEP_COLORS: Record<string, { dot: string; bg: string; border: string; text: string }> = {
+    C: { dot: "bg-sky-400", bg: "bg-sky-50", border: "border-sky-200", text: "text-sky-700" },
+    R: { dot: "bg-blue-400", bg: "bg-blue-50", border: "border-blue-200", text: "text-blue-700" },
+    E: { dot: "bg-amber-400", bg: "bg-amber-50", border: "border-amber-200", text: "text-amber-700" },
+    D: { dot: "bg-green-400", bg: "bg-green-50", border: "border-green-200", text: "text-green-700" },
+    O: { dot: "bg-purple-400", bg: "bg-purple-50", border: "border-purple-200", text: "text-purple-700" },
+  };
+
+  const steps = ["C", "R", "E", "D", "O"];
+  const grouped = steps.map(s => ({
+    step: s,
+    blocks: workspaceBlocks.filter(b => b.credo_step === s),
+  })).filter(g => g.blocks.length > 0);
+
+  if (grouped.length <= 1) return null;
+
+  return (
+    <div className="mt-4 rounded-xl border border-gray-200 bg-white overflow-hidden">
+      <div className="px-4 py-2 border-b border-gray-100 bg-gray-50/50">
+        <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400">Resume CREDO</span>
+      </div>
+      {grouped.map(({ step, blocks }) => {
+        const sc = STEP_COLORS[step] || STEP_COLORS.C;
+        const isOpen = openStep === step;
+        return (
+          <div key={step} className="border-b border-gray-100 last:border-0">
+            <button
+              onClick={() => setOpenStep(isOpen ? null : step)}
+              className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 transition-colors cursor-pointer"
+            >
+              <div className={cn("w-2 h-2 rounded-full shrink-0", sc.dot)} />
+              <span className={cn("text-[10px] font-bold flex-1 text-left", sc.text)}>
+                {credoLabels[step] || step}
+              </span>
+              <span className="text-[9px] bg-gray-100 px-1.5 py-0.5 rounded-full text-gray-500">
+                {blocks.length} bloc{blocks.length > 1 ? "s" : ""}
+              </span>
+              <ArrowRight className={cn("h-3 w-3 text-gray-400 transition-transform", isOpen && "rotate-90")} />
+            </button>
+            {isOpen && (
+              <div className="px-4 pb-3 space-y-1.5">
+                {blocks.map(b => (
+                  <div key={b.id} className={cn("flex items-start gap-2 px-3 py-2 rounded-lg border", sc.bg, sc.border)}>
+                    <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0 mt-0.5",
+                      b.confidence >= 0.8 ? "bg-emerald-100 text-emerald-700" :
+                      b.confidence >= 0.5 ? "bg-amber-100 text-amber-700" :
+                      "bg-red-100 text-red-700"
+                    )}>{Math.round(b.confidence * 100)}%</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] font-bold text-gray-900 truncate">{b.title}</p>
+                      <p className="text-[9px] text-gray-500 line-clamp-2 leading-relaxed">{b.summary.substring(0, 150)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

@@ -128,19 +128,35 @@ function eventToCanvasAction(evt: GlassesEvent): CanvasAction | null {
         priority: "high",
       };
     }
-    case "push_content":
+    case "push_content": {
+      const imageUrl = evt.data?.image_url;
+
+      // Fire custom event for V3 workspace (vision captures with images)
+      if (imageUrl) {
+        window.dispatchEvent(new CustomEvent("vision-capture", {
+          detail: {
+            title: evt.title || "Vision CarlOS",
+            content: evt.content || "",
+            imageUrl,
+            ts: evt.ts,
+          },
+        }));
+      }
+
       return {
         type: "push_content",
         layer: "cerveau",
         data: {
           titre: evt.title || "Info CarlOS",
           contenu: evt.content || "",
-          content_types: ["text"],
+          content_types: imageUrl ? ["text", "image"] : ["text"],
+          image_url: imageUrl || undefined,
           full_length: (evt.content || "").length,
         },
         bot: "CEOB",
         priority: "high",
       };
+    }
     case "show_kpi": {
       const target = evt.target.toLowerCase().trim();
       const botCode = SECTION_TO_BOT[target];

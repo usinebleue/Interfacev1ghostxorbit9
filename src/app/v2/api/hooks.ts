@@ -621,7 +621,7 @@ export function useChat() {
       agent?: string,
       ghost?: string,
       mode?: string,
-      meta?: { msgType?: MessageType; parentId?: string; branchLabel?: string; activeView?: string; activeSubSection?: string; workspacePhase?: string }
+      meta?: { msgType?: MessageType; parentId?: string; branchLabel?: string; activeView?: string; activeSubSection?: string; workspacePhase?: string; techniqueActive?: string; techniqueStep?: number; techniqueContext?: string }
     ) => {
       const msgType = meta?.msgType || "normal";
       const branchDepth = msgType === "challenge" || msgType === "consultation"
@@ -756,6 +756,10 @@ export function useChat() {
         active_sub_section: meta?.activeSubSection,
         // Mega Plan V5 — workspace phase
         workspace_phase: meta?.workspacePhase,
+        // Sprint 2A — Techniques interactives
+        technique_active: meta?.techniqueActive,
+        technique_step: meta?.techniqueStep,
+        technique_context: meta?.techniqueContext,
         // S102 — conversation-level message count (pas session-wide)
         conversation_msg_count: messages.filter((m: any) => m.role === "user").length + 1,
       };
@@ -852,6 +856,7 @@ export function useChat() {
                         cristallisationSuggestion: data.cristallisation_suggestion || undefined,
                         cascadeItems: data.cascade_items?.length ? data.cascade_items : undefined,
                         workspace_block: data.workspace_block || undefined,
+                        workspace_block_skip: data.workspace_block_skip || false,
                       }
                     : m
                 )

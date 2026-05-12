@@ -261,11 +261,11 @@ function ThinkingLabel({ botCode, userText }: { botCode: string; userText?: stri
 }
 
 /** Barre de boutons CREDO pour cristalliser un contenu dans une section workspace */
-function CristalliseBar({ content, botCode, activePhase, addSimV3Cristallise }: {
+function CristalliseBar({ content, botCode, activePhase, addWorkspaceBlock }: {
   content: string;
   botCode: string;
   activePhase: string;
-  addSimV3Cristallise: (content: string, source: string, sectionId: string, sourceType: "chat" | "voice") => void;
+  addWorkspaceBlock: (block: import("./core/types").WorkspaceBlock) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const steps = getPhaseSteps(activePhase);
@@ -290,7 +290,18 @@ function CristalliseBar({ content, botCode, activePhase, addSimV3Cristallise }: 
         <button
           key={step.id}
           onClick={() => {
-            addSimV3Cristallise(content, botCode, step.id, "chat");
+            addWorkspaceBlock({
+              id: `blk-${Date.now()}`,
+              type: "libre",
+              title: content.substring(0, 60),
+              summary: content,
+              credo_step: (step.id.split("-")[1]?.charAt(0)?.toUpperCase() || "C") as "C" | "R" | "E" | "D" | "O",
+              confidence: 1.0,
+              source: botCode,
+              sourceType: "chat",
+              sectionId: step.id,
+              timestamp: Date.now(),
+            });
             setExpanded(false);
           }}
           className="flex items-center gap-1 px-2 py-1 rounded-md border border-sky-200 bg-sky-50 text-[10px] font-medium text-sky-700 hover:bg-sky-100 hover:border-sky-300 cursor-pointer transition-all"
@@ -310,11 +321,11 @@ function CristalliseBar({ content, botCode, activePhase, addSimV3Cristallise }: 
 }
 
 /** Contenu bot segmenté — sous-bulles avec cristallise individuel */
-function SegmentedBotContent({ content, botCode, activePhase, addSimV3Cristallise }: {
+function SegmentedBotContent({ content, botCode, activePhase, addWorkspaceBlock }: {
   content: string;
   botCode: string;
   activePhase: string;
-  addSimV3Cristallise: (content: string, source: string, sectionId: string, sourceType: "chat" | "voice") => void;
+  addWorkspaceBlock: (block: import("./core/types").WorkspaceBlock) => void;
 }) {
   const segments = parseMessageSegments(content);
 
@@ -326,7 +337,7 @@ function SegmentedBotContent({ content, botCode, activePhase, addSimV3Cristallis
           className="text-sm text-gray-700 leading-relaxed isolate overflow-hidden [&>p]:my-0.5 [&>ul]:my-1 [&>ol]:my-1 [&>p:first-child]:mt-0 [&>p:last-child]:mb-0 [&>hr]:my-2 [&_li]:break-words [&_p]:break-words"
           dangerouslySetInnerHTML={{ __html: formatMarkdown(content) }}
         />
-        <CristalliseBar content={content} botCode={botCode} activePhase={activePhase} addSimV3Cristallise={addSimV3Cristallise} />
+        <CristalliseBar content={content} botCode={botCode} activePhase={activePhase} addWorkspaceBlock={addWorkspaceBlock} />
       </>
     );
   }
@@ -347,7 +358,7 @@ function SegmentedBotContent({ content, botCode, activePhase, addSimV3Cristallis
             content={seg.title ? `### ${seg.title}\n${seg.text}` : seg.text}
             botCode={botCode}
             activePhase={activePhase}
-            addSimV3Cristallise={addSimV3Cristallise}
+            addWorkspaceBlock={addWorkspaceBlock}
           />
         </div>
       ))}
@@ -359,7 +370,7 @@ function SegmentedBotContent({ content, botCode, activePhase, addSimV3Cristallis
 // Gère: bulles V3, options cliquables, streaming, thinking, coaching, voice
 function V3MessageList() {
   const { messages, isTyping, sendMessage, sendMultiPerspective, thinkingSteps, parkThread, activeRoster, chatTargetBot } = useChatContext();
-  const { activeBotCode, activePhase, setActivePhase, setRightSection, setReflexionContext, reflexionContext, credoPhase, addWorkflowItem, workflowItems, chatStage, addSimV3Cristallise, focusType, activeDocumentSection } = useAmorcer();
+  const { activeBotCode, activePhase, setActivePhase, setRightSection, setReflexionContext, reflexionContext, credoPhase, addWorkflowItem, workflowItems, chatStage, addWorkspaceBlock, focusType, activeDocumentSection } = useAmorcer();
   // Enrichir activePhase avec le step CREDO pour que le backend injecte le bon prompt
   const _credoSteps = ["comprendre", "rechercher", "exposer", "demontrer", "objectif"];
   const workspacePhase = activePhase === "discussion" && chatStage < _credoSteps.length
@@ -486,7 +497,18 @@ function V3MessageList() {
     if (lower.startsWith("cristalliser vers ")) {
       const lastBotMsg = messages.filter(m => m.role === "assistant").pop();
       if (lastBotMsg && activeDocumentSection) {
-        addSimV3Cristallise(lastBotMsg.content, activeBotCode, activeDocumentSection, "chat");
+        addWorkspaceBlock({
+          id: `blk-${Date.now()}`,
+          type: "libre",
+          title: lastBotMsg.content.substring(0, 60),
+          summary: lastBotMsg.content,
+          credo_step: "C",
+          confidence: 1.0,
+          source: activeBotCode,
+          sourceType: "chat",
+          sectionId: activeDocumentSection,
+          timestamp: Date.now(),
+        });
       }
       return;
     }
@@ -497,7 +519,7 @@ function V3MessageList() {
     } else {
       sendMessage(opt, chatTargetBot, undefined, undefined, { workspacePhase });
     }
-  }, [isTyping, sendMessage, sendMultiPerspective, chatTargetBot, activeBotCode, activeRoster, parkThread, setActivePhase, setRightSection, setReflexionContext, reflexionContext, activePhase, workspacePhase, messages, activeDocumentSection, addSimV3Cristallise, workflowItems]);
+  }, [isTyping, sendMessage, sendMultiPerspective, chatTargetBot, activeBotCode, activeRoster, parkThread, setActivePhase, setRightSection, setReflexionContext, reflexionContext, activePhase, workspacePhase, messages, activeDocumentSection, addWorkspaceBlock, workflowItems]);
 
   return (
     <div ref={scrollRef} className="flex-1 overflow-auto px-4 py-3 space-y-3">
@@ -781,7 +803,7 @@ function V3MessageList() {
                   dangerouslySetInnerHTML={{ __html: formatMarkdown(msg.content) + (msg.isStreaming ? '<span class="inline-block w-0.5 h-4 bg-current ml-0.5 animate-pulse align-text-bottom"></span>' : '') }} />
                 {/* Cristallise bar — boutons pour ajouter ce contenu dans une section workspace */}
                 {!msg.isStreaming && msg.content && (
-                  <CristalliseBar content={msg.content} botCode={botCode} activePhase={activePhase} addSimV3Cristallise={addSimV3Cristallise} />
+                  <CristalliseBar content={msg.content} botCode={botCode} activePhase={activePhase} addWorkspaceBlock={addWorkspaceBlock} />
                 )}
                 {/* ═══ Niveau 1 — Options DANS la bulle (pattern InlineOptions) ═══ */}
                 {(isLast || msg.msgType === "consultation") && !msg.isStreaming && msg.options && msg.options.length > 0 && (
@@ -842,13 +864,35 @@ function V3MessageList() {
                       const steps = getPhaseSteps(activePhase);
                       const targetSection = steps[chatStage]?.id || credoSection;
                       if (targetSection) {
-                        addSimV3Cristallise(msg.content, msg.agent || activeBotCode, targetSection, "chat");
+                        addWorkspaceBlock({
+                          id: `blk-${Date.now()}`,
+                          type: "libre",
+                          title: msg.content.substring(0, 60),
+                          summary: msg.content,
+                          credo_step: (["C","R","E","D","O"] as const)[chatStage] || "C",
+                          confidence: 1.0,
+                          source: msg.agent || activeBotCode,
+                          sourceType: "chat",
+                          sectionId: targetSection,
+                          timestamp: Date.now(),
+                        });
                       }
                     }}
                     phaseTransition={transitionLabel}
                     onPhaseTransition={transitionLabel ? () => handleOption(transitionLabel) : undefined}
                     gpsSuggestion={msg.cristallisationSuggestion || undefined}
-                    onGpsCristallise={isLast && msg.cristallisationSuggestion ? () => addSimV3Cristallise(msg.content, msg.agent || activeBotCode, msg.cristallisationSuggestion!.section_id, "chat") : undefined}
+                    onGpsCristallise={isLast && msg.cristallisationSuggestion ? () => addWorkspaceBlock({
+                      id: `blk-${Date.now()}`,
+                      type: "libre",
+                      title: msg.content.substring(0, 60),
+                      summary: msg.content,
+                      credo_step: (["C","R","E","D","O"] as const)[chatStage] || "C",
+                      confidence: 1.0,
+                      source: msg.agent || activeBotCode,
+                      sourceType: "chat",
+                      sectionId: msg.cristallisationSuggestion!.section_id,
+                      timestamp: Date.now(),
+                    }) : undefined}
                   />
                 );
               })()}
@@ -1499,10 +1543,17 @@ function ChatBoxV3() {
 
   // ═══ VISION — Carlos Vision (Ray-Ban Meta / app mobile) ═══
   const [visionToast, setVisionToast] = useState(false);
+  const [visionActive, setVisionActive] = useState(false);
   const handleVision = useCallback(() => {
-    setVisionToast(true);
-    setTimeout(() => setVisionToast(false), 3000);
-  }, []);
+    // Mobile: deep link vers l'APK CarlOS Vision + polling transcripts
+    const isMobileDevice = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobileDevice) {
+      window.location.href = "cameraaccess://launch";
+    }
+    // Start polling vision room transcripts (mobile + desktop pour la demo)
+    startVoicePolling("carlos-vision-rayban");
+    setVisionActive(true);
+  }, [startVoicePolling]);
 
   // ═══ FILE UPLOAD — pièce jointe → bureau upload ═══
   const handleFileUpload = useCallback(async (e: ChangeEvent<HTMLInputElement>) => {
@@ -1560,7 +1611,7 @@ function ChatBoxV3() {
       {/* Vision toast — disponible dans l'app mobile */}
       {visionToast && (
         <div className="absolute bottom-24 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-4 py-2 rounded-full shadow-lg z-30 whitespace-nowrap">
-          Carlos Vision sera disponible dans l&apos;app mobile
+          Ouvre l&apos;app CarlOS Vision sur ton téléphone
         </div>
       )}
 
@@ -1663,11 +1714,14 @@ function ChatBoxV3() {
             <Video className="h-3.5 w-3.5" /><span className="hidden lg:inline">Réunion</span>
           </button>
           <button
-            onClick={handleVision}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer bg-cyan-50 text-cyan-600 hover:bg-cyan-100"
-            title="Vision Ray-Ban"
+            onClick={visionActive ? () => { stopVoicePolling(); setVisionActive(false); } : handleVision}
+            className={cn(
+              "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
+              visionActive ? "bg-cyan-600 text-white hover:bg-cyan-700" : "bg-cyan-50 text-cyan-600 hover:bg-cyan-100"
+            )}
+            title={visionActive ? "Arrêter Vision" : "Vision Ray-Ban"}
           >
-            <Glasses className="h-3.5 w-3.5" /><span className="hidden lg:inline">Vision</span>
+            <Glasses className="h-3.5 w-3.5" /><span className="hidden lg:inline">{visionActive ? "Vision ON" : "Vision"}</span>
           </button>
 
           <div className="flex-1" />

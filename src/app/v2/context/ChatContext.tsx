@@ -35,6 +35,10 @@ interface BranchMeta {
   msgType?: MessageType;
   parentId?: string;
   branchLabel?: string;
+  // Sprint 2A — Techniques interactives
+  techniqueActive?: string;
+  techniqueStep?: number;
+  techniqueContext?: string;
 }
 
 interface ChatActions {

@@ -72,9 +72,11 @@ import {
 // ═══ V3 Phase Views ═══
 import { LivePhaseView } from "./phases/LivePhaseView";
 import { LiveReflexionView } from "./phases/LiveReflexionView";
+import { LiveDiscussionView } from "./phases/LiveDiscussionView";
 import { UnifiedPhaseView } from "./phases/UnifiedPhaseView";
 import { DocumentWorkspaceView } from "./phases/DocumentWorkspaceView";
 import { useWorkspaceCapture } from "./hooks/useWorkspaceCapture";
+import { useWorkspaceSync } from "./hooks/useWorkspaceSync";
 import { useLiveKitMeeting } from "./hooks/useLiveKitMeeting";
 import { MeetingVideoStrip } from "./meeting/MeetingVideoStrip";
 
@@ -168,6 +170,7 @@ export function WorkspacePhasesPanel() {
     activeMeeting,
     setActiveMeeting,
     setMeetingControls,
+    workspaceSessionId,
   } = useAmorcer();
 
   const { sendMessage, newConversation } = useChatContext();
@@ -175,6 +178,9 @@ export function WorkspacePhasesPanel() {
 
   // ═══ AUTO-CAPTURE — TOUJOURS actif, pas juste quand LivePhaseView est monté ═══
   useWorkspaceCapture();
+
+  // ═══ WORKSPACE SYNC — poll contributions externes (voice, meeting d'un autre device) ═══
+  useWorkspaceSync(workspaceSessionId);
 
   // ═══ MEETING LIVEKIT — intégré dans le workspace (pas de silo MeetingRoomView) ═══
   const meeting = useLiveKitMeeting();
@@ -416,16 +422,34 @@ export function WorkspacePhasesPanel() {
                 </div>
               </>
             )}
-            {!isMobile && activeSection !== "orbit9" && activePhase === "discussion" && reflexionContext && !rightSection && (
+            {!isMobile && activeSection !== "orbit9" && activePhase === "discussion" && !rightSection && (
               <>
+                {reflexionContext && (
+                  <>
+                    <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
+                    <span className="text-[11px] font-medium text-sky-600">{reflexionContext}</span>
+                  </>
+                )}
+                {/* S2.2.4: GPS breadcrumb — current CREDO step */}
                 <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
-                <span className="text-[11px] font-medium text-sky-600">{reflexionContext}</span>
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-sky-100 text-sky-700">
+                  {["Comprendre", "Rechercher", "Exposer", "Démontrer", "Objectif"][chatStage] || "Comprendre"}
+                </span>
               </>
             )}
-            {!isMobile && activeSection !== "orbit9" && activePhase === "reflexion" && reflexionContext && !rightSection && (
+            {!isMobile && activeSection !== "orbit9" && activePhase === "reflexion" && !rightSection && (
               <>
+                {reflexionContext && (
+                  <>
+                    <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
+                    <span className="text-[11px] font-medium text-orange-600">{reflexionContext}</span>
+                  </>
+                )}
+                {/* S2.2.4: GPS breadcrumb — current CREDO step */}
                 <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
-                <span className="text-[11px] font-medium text-orange-600">{reflexionContext}</span>
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-orange-100 text-orange-700">
+                  {["Comprendre", "Rechercher", "Exposer", "Démontrer", "Objectif"][chatStage] || "Comprendre"}
+                </span>
               </>
             )}
             {!isMobile && activeSection !== "orbit9" && activePhase === "creation" && activeDeliverable && !rightSection && (
@@ -453,9 +477,9 @@ export function WorkspacePhasesPanel() {
 
       {/* ═══ BARRE DE PROGRESSION 5 PHASES ═══ */}
       {!rightSection && !isOrbit9 && !isDash && (() => {
+        // Sprint 2A Phase 4: 4 phases (reflexion fusionnée dans discussion)
         const WORKFLOW_PHASES: { key: string; label: string }[] = [
           { key: "discussion", label: "Discussion" },
-          { key: "reflexion", label: "Réflexion" },
           { key: "creation", label: "Conception" },
           { key: "execution", label: "Exécution" },
           { key: "retroaction", label: "Rétroaction" },
@@ -549,24 +573,17 @@ export function WorkspacePhasesPanel() {
           <div className={"max-w-4xl mx-auto px-6 py-4 pb-12"}>
             <VueEnsemble phase={activePhase} chatStage={chatStage} onStartReflexion={startReflexion} onStartSimulation={(type) => startDeliverable(type)} />
           </div>
-        ) : activePhase === "discussion" ? (
-          /* Discussion — workspace PASSIF (reçoit le contenu de la discussion) — PAS de gate sur reflexionContext */
-          <LivePhaseView
-            phaseKey="discussion"
+        ) : activePhase === "discussion" || activePhase === "reflexion" ? (
+          /* Discussion + Réflexion unifiées — LiveDiscussionView avec workspace dynamique */
+          <LiveDiscussionView
             context={reflexionContext || "Discussion en cours"}
-            onPhaseComplete={() => { setActivePhase("reflexion"); setRightSection(null); }}
-          />
-        ) : activePhase === "reflexion" ? (
-          /* Réflexion — LiveReflexionView avec techniques (SCAMPER, 5 Pourquoi, modes, etc.) */
-          <LiveReflexionView
-            context={reflexionContext}
             onPhaseComplete={() => {
-              // Inter-phase flow: notes épinglées de Réflexion → premier prompt Conception
-              const reflexionNotes = workflowItems.filter(w => w.phase === "reflexion");
+              // Skip reflexion → go direct to conception
+              const discussionNotes = workflowItems.filter(w => w.phase === "discussion" || w.phase === "reflexion");
               startConception();
-              if (reflexionNotes.length > 0) {
-                const ctx = reflexionNotes.map(n => n.text).join("\n- ");
-                sendMessage(`Contexte de réflexion :\n- ${ctx}\n\nPassons à la conception.`, activeBotCode);
+              if (discussionNotes.length > 0) {
+                const ctx = discussionNotes.map(n => n.text).join("\n- ");
+                sendMessage(`Contexte de discussion :\n- ${ctx}\n\nPassons à la conception.`, activeBotCode);
               }
             }}
           />
