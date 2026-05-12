@@ -21,7 +21,7 @@ import {
   Bot, BrainCog, Atom, Plus, Send, ChevronUp, X, Pin, Check, CheckCircle2, ChevronDown, ChevronRight,
   Phone, PhoneOff, Video, Glasses, Paperclip, Globe, Zap, Activity,
   Brain, Target, AlertTriangle, Scale, Sparkles, MessageSquare,
-  Mic, MicOff, Loader2, Upload, MessageCircle, Clock, Network,
+  Mic, MicOff, Loader2, Upload, MessageCircle, Clock, Network, Pencil,
   BookOpen, Search, BarChart2, Lightbulb,
 } from "lucide-react";
 import { cn } from "../components/ui/utils";
@@ -962,11 +962,12 @@ function AgentSelector({ activeRoster, addBotToRoster, removeBotFromRoster }: {
 }
 
 // ═══ DEPT WELCOME SCREEN — accueil dynamique par département ═══
-function DeptWelcomeScreen({ botCode, onAction, onResumeThread, onDeleteThread, threads }: {
+function DeptWelcomeScreen({ botCode, onAction, onResumeThread, onDeleteThread, onRenameThread, threads }: {
   botCode: string;
   onAction: (text: string, phase?: PhaseKey) => void;
   onResumeThread: (threadId: string) => void;
   onDeleteThread: (threadId: string) => void;
+  onRenameThread: (threadId: string, newTitle: string) => void;
   threads: Array<{ id: string; title: string; primaryBot?: string; createdAt?: string; updatedAt?: string; status?: string; workPhase?: string }>;
 }) {
   const DeptIcon = DEPT_DASH_ICON[botCode] || Bot;
@@ -976,6 +977,8 @@ function DeptWelcomeScreen({ botCode, onAction, onResumeThread, onDeleteThread, 
   const botName = BOT_NAME[botCode] || "CarlOS";
   const botDisplay = BOT_DISPLAY[botCode];
   const recentThreads = threads;
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState("");
 
   return (
     <div className="flex justify-center py-10">
@@ -1044,7 +1047,32 @@ function DeptWelcomeScreen({ botCode, onAction, onResumeThread, onDeleteThread, 
                     )}
                     {/* Thread info */}
                     <div className="flex-1 min-w-0">
-                      <span className="text-xs font-medium text-gray-700 block truncate">{thread.title || "Discussion sans titre"}</span>
+                      {editingId === thread.id ? (
+                        <input
+                          autoFocus
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              const trimmed = editValue.trim();
+                              if (trimmed && trimmed !== thread.title) onRenameThread(thread.id, trimmed);
+                              setEditingId(null);
+                            } else if (e.key === "Escape") {
+                              setEditingId(null);
+                            }
+                          }}
+                          onBlur={() => {
+                            const trimmed = editValue.trim();
+                            if (trimmed && trimmed !== thread.title) onRenameThread(thread.id, trimmed);
+                            setEditingId(null);
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-xs font-medium text-gray-700 w-full bg-white border border-blue-300 rounded px-1.5 py-0.5 outline-none focus:ring-1 focus:ring-blue-400"
+                        />
+                      ) : (
+                        <span className="text-xs font-medium text-gray-700 block truncate">{thread.title || "Discussion sans titre"}</span>
+                      )}
                       <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                         {phaseData && <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium", phaseData.badge)}>{phaseData.label}</span>}
                         {statusLabel && (
@@ -1069,6 +1097,14 @@ function DeptWelcomeScreen({ botCode, onAction, onResumeThread, onDeleteThread, 
                         })()}
                       </div>
                     </div>
+                    {/* Rename button on hover */}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setEditValue(thread.title || ""); setEditingId(thread.id); }}
+                      className="p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-blue-100 transition-all cursor-pointer shrink-0"
+                      title="Renommer"
+                    >
+                      <Pencil className="h-3 w-3 text-blue-400" />
+                    </button>
                     {/* Delete button on hover */}
                     <button
                       onClick={(e) => { e.stopPropagation(); onDeleteThread(thread.id); }}
@@ -1093,7 +1129,7 @@ function DeptWelcomeScreen({ botCode, onAction, onResumeThread, onDeleteThread, 
 
 export function DiscussionWindow() {
   const { cockpitTab, activeBotCode, activePhase, setActivePhase, setRightSection, setReflexionContext, setFocusType, setActiveDeliverable, credoPhase, reflexionContext, addWorkflowItem, activeMeeting: dwActiveMeeting } = useAmorcer();
-  const { activeRoster, addBotToRoster, removeBotFromRoster, messages, sendMessage, threads, resumeThread, deleteThread, chatTargetBot } = useChatContext();
+  const { activeRoster, addBotToRoster, removeBotFromRoster, messages, sendMessage, threads, resumeThread, deleteThread, renameThread, chatTargetBot } = useChatContext();
   const isMobile = useIsMobile();
   const isOrbit9 = cockpitTab === "orbit9";
   const isEmpty = messages.length === 0;
@@ -1190,6 +1226,7 @@ export function DiscussionWindow() {
                 setRightSection(null);
               }}
               onDeleteThread={(threadId) => deleteThread(threadId)}
+              onRenameThread={(threadId, newTitle) => renameThread(threadId, newTitle)}
               threads={threads.filter((t) => t.primaryBot === activeBotCode).sort((a, b) => {
                 const da = new Date(a.updatedAt || a.createdAt || 0).getTime();
                 const db = new Date(b.updatedAt || b.createdAt || 0).getTime();

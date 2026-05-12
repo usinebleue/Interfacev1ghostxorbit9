@@ -30,11 +30,14 @@ function formatTime(s: number) {
 
 function ParticipantTile({ participant }: { participant: ParticipantInfo }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const isLocal = participant.identity === "host-1";
 
   useEffect(() => {
     if (participant.videoTrack && videoRef.current) {
       const stream = new MediaStream([participant.videoTrack]);
       videoRef.current.srcObject = stream;
+    } else if (!participant.videoTrack && videoRef.current) {
+      videoRef.current.srcObject = null;
     }
   }, [participant.videoTrack]);
 
@@ -44,7 +47,7 @@ function ParticipantTile({ participant }: { participant: ParticipantInfo }) {
       participant.isSpeaking && "ring-2 ring-green-400"
     )}>
       {participant.videoTrack ? (
-        <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+        <video ref={videoRef} autoPlay playsInline muted className={cn("w-full h-full object-cover", isLocal && "[transform:scaleX(-1)]")} />
       ) : (
         <div className="w-8 h-8 rounded-full bg-gray-500 flex items-center justify-center text-white text-xs font-bold">
           {(participant.name || "?")[0].toUpperCase()}

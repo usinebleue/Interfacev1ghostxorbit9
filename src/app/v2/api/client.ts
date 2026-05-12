@@ -1325,7 +1325,7 @@ export const api = {
 
   // ── MEETINGS (D-114) ──
 
-  meetingCreate(req: { title: string; meeting_type?: string; bot_code?: string; scheduled_at?: string }): Promise<any> {
+  meetingCreate(req: { title: string; meeting_type?: string; bot_code?: string; bot_codes?: string[]; scheduled_at?: string }): Promise<any> {
     return apiFetch("/meetings", {
       method: "POST",
       body: JSON.stringify(req),

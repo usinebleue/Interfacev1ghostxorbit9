@@ -40,7 +40,7 @@ export interface UseLiveKitMeetingReturn {
   micEnabled: boolean;
   cameraEnabled: boolean;
   elapsedTime: number;
-  startMeeting: (type: string, title: string) => Promise<void>;
+  startMeeting: (type: string, title: string, botCodes?: string[]) => Promise<void>;
   endMeeting: () => void;
   toggleMic: () => void;
   toggleCamera: () => void;
@@ -79,7 +79,7 @@ export function useLiveKitMeeting(): UseLiveKitMeetingReturn {
     };
   }, []);
 
-  const startMeeting = useCallback(async (type: string, title: string) => {
+  const startMeeting = useCallback(async (type: string, title: string, botCodes?: string[]) => {
     if (meetingStatus === "creating" || meetingStatus === "connecting" || meetingStatus === "live") return;
     setMeetingStatus("creating");
     setElapsedTime(0);
@@ -92,7 +92,7 @@ export function useLiveKitMeeting(): UseLiveKitMeetingReturn {
     } catch {}
 
     try {
-      const data = await api.meetingCreate({ title, meeting_type: type });
+      const data = await api.meetingCreate({ title, meeting_type: type, ...(botCodes && botCodes.length > 0 ? { bot_codes: botCodes } : {}) });
       setMeetingData({
         slug: data.slug,
         title: data.title || title,
@@ -226,6 +226,20 @@ export function useLiveKitMeeting(): UseLiveKitMeetingReturn {
       const next = !cameraEnabled;
       await roomRef.current.localParticipant.setCameraEnabled(next);
       setCameraEnabled(next);
+
+      // Attach/detach local video track to the host-1 participant tile
+      setParticipants(prev => {
+        const updated = new Map(prev);
+        const hostInfo = updated.get("host-1") || { identity: "host-1", name: "Carl (Vous)" };
+        if (next) {
+          const camPub = roomRef.current?.localParticipant.getTrackPublication(Track.Source.Camera);
+          hostInfo.videoTrack = camPub?.track?.mediaStreamTrack;
+        } else {
+          hostInfo.videoTrack = undefined;
+        }
+        updated.set("host-1", { ...hostInfo });
+        return updated;
+      });
     }
   }, [cameraEnabled, meetingStatus]);
 

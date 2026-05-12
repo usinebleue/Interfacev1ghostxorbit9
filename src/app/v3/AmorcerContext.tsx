@@ -191,8 +191,8 @@ interface AmorcerState {
   setActiveDocumentSection: (s: string | null) => void;
 
   // Réunion active (survit à la navigation entre sections)
-  activeMeeting: { type: string; title: string; slug?: string; playbookId?: string; family?: string } | null;
-  setActiveMeeting: (m: { type: string; title: string; slug?: string; playbookId?: string; family?: string } | null) => void;
+  activeMeeting: { type: string; title: string; slug?: string; playbookId?: string; family?: string; botCodes?: string[] } | null;
+  setActiveMeeting: (m: { type: string; title: string; slug?: string; playbookId?: string; family?: string; botCodes?: string[] } | null) => void;
 
   // Meeting controls partagés (WPP écrit, MeetingMiniBar lit)
   meetingControls: MeetingControlsState | null;
@@ -404,7 +404,7 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Réunion active (survit à la navigation entre sections)
-  const [activeMeeting, setActiveMeeting] = useState<{ type: string; title: string; slug?: string; playbookId?: string; family?: string } | null>(null);
+  const [activeMeeting, setActiveMeeting] = useState<{ type: string; title: string; slug?: string; playbookId?: string; family?: string; botCodes?: string[] } | null>(null);
 
   // Meeting controls partagés (WorkspacePhasesPanel écrit, MeetingMiniBar lit)
   const [meetingControls, setMeetingControls] = useState<MeetingControlsState | null>(null);

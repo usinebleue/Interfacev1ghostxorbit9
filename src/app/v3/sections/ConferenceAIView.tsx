@@ -27,6 +27,7 @@ import { PLAYBOOK_STORE_DATA, PlaybookCardV2, CONFERENCE_FAMILIES, getPlaybookFa
 import { getWorkspaceTarget } from "../meeting/conference-workspace-map";
 import { resolveBackendMeetingType } from "../meeting/playbook-meeting-type-map";
 import { useAmorcer } from "../AmorcerContext";
+import { useChatContext } from "../../v2/context/ChatContext";
 import type { PhaseKey } from "../core/types";
 
 // ══════════════════════════════════════════
@@ -96,10 +97,11 @@ export function ConferenceAIView({ headerGradient, onNavigateToStore, onLaunch, 
   headerGradient: string;
   onNavigateToStore?: () => void;
   onLaunch?: (type: string, title: string) => void;
-  onStartMeeting?: (type: string, title: string) => Promise<void>;
+  onStartMeeting?: (type: string, title: string, botCodes?: string[]) => Promise<void>;
   botCode?: string;
 }) {
   const recentSessions = useRecentSessions();
+  const { activeRoster } = useChatContext();
   const [activeView, setActiveView] = useState<ConfAIView>("accueil");
   const [selectedPlaybook, setSelectedPlaybook] = useState<typeof PLAYBOOK_STORE_DATA[0] | null>(null);
   const [expandFamilies, setExpandFamilies] = useState(false);
@@ -142,21 +144,25 @@ export function ConferenceAIView({ headerGradient, onNavigateToStore, onLaunch, 
       ? resolveBackendMeetingType(matchedPb)
       : type;
 
+    // Utiliser le roster actif pour le multi-agent (mêmes bots que dans le chat texte)
+    const meetingBotCodes = activeRoster.length > 0 ? activeRoster : (botCode ? [botCode] : ["CEOB"]);
+
     // Activer la réunion dans le contexte global
     setActiveMeeting({
       type: resolvedType,
       title,
       family,
       playbookId: matchedPb?.id,
+      botCodes: meetingBotCodes,
     });
 
     // Démarrer le meeting DIRECTEMENT dans le handler de clic (user gesture context)
     // Sur mobile, getUserMedia + AudioContext nécessitent un user gesture actif
-    if (onStartMeeting) onStartMeeting(resolvedType, title);
+    if (onStartMeeting) onStartMeeting(resolvedType, title, meetingBotCodes);
 
     // Callback parent si fourni
     if (onLaunch) onLaunch(resolvedType, title);
-  }, [onLaunch, onStartMeeting, allConfRaw, botCode, setActivePhase, setRightSection, setActiveMeeting]);
+  }, [onLaunch, onStartMeeting, allConfRaw, botCode, activeRoster, setActivePhase, setRightSection, setActiveMeeting]);
   const allConf = botCode && botCode !== "CEOB"
     ? [...allConfRaw.filter(pb => pb.departement === botCode), ...allConfRaw.filter(pb => pb.departement !== botCode)]
     : allConfRaw;

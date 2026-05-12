@@ -13,7 +13,9 @@ import {
   BarChart3, Zap, ListChecks,
 } from "lucide-react";
 import { cn } from "../../components/ui/utils";
+import { useIsMobile } from "../../components/ui/use-mobile";
 import { LivingHero } from "./shared/LivingHero";
+import { MobileSidebarSheet } from "../core/MobileSidebarSheet";
 import { PHASE_COLORS, BOT_AVATAR_MAP, type PhaseKey } from "./shared/dept-data";
 import { ViewModeToolbar, type ViewMode } from "./shared/ViewModeToolbar";
 import { SF } from "../core/styles";
@@ -118,6 +120,7 @@ export function ExecutionLiveTab({ botCode }: { botCode: string }) {
     { label: "Progression", value: rawChantiers.length > 0 ? `${Math.round(rawChantiers.reduce((s: number, c: any) => s + (c.progression || 0), 0) / rawChantiers.length)}%` : "—", icon: BarChart3, delta: "moyenne chantiers", up: true, color: "text-emerald-600" },
   ] : MOCK_KPIS;
 
+  const isMobile = useIsMobile();
   const [sidebarItem, setSidebarItem] = useState<LiveSidebarItem>("overview");
   const [filter, setFilter] = useState<LiveFilter>("tout");
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
@@ -143,7 +146,7 @@ export function ExecutionLiveTab({ botCode }: { botCode: string }) {
   };
 
   return (
-    <div>
+    <div className="space-y-4">
       {/* Hero — Living Hero compact vert */}
       <LivingHero
         blur1="bg-green-100/70"
@@ -169,7 +172,7 @@ export function ExecutionLiveTab({ botCode }: { botCode: string }) {
       </LivingHero>
 
       {/* 4 KPI cards — pattern Cockpit (header bleu pastel) */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+      <div className="grid grid-cols-2 gap-3">
         {dynamicKpis.map((kpi, i) => (
           <div key={i} className="rounded-xl border border-gray-200 shadow-sm bg-white">
             <div className="flex items-center justify-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
@@ -188,45 +191,56 @@ export function ExecutionLiveTab({ botCode }: { botCode: string }) {
       </div>
 
       {/* Sidebar + Contenu */}
-      <div className="flex gap-4 mt-4">
-        {/* Sidebar w-[180px] — copie SF pattern */}
-        <div className={SF.sidebarW}>
-          <div className={SF.sectionLabel}>Navigation</div>
-          {([
-            { key: "overview" as const, label: "Vue d'ensemble", icon: Home, count: null },
-            { key: "priorites" as const, label: "Priorités", icon: AlertTriangle, count: filteredPriorities.length },
-            { key: "activite" as const, label: "Activité récente", icon: Clock, count: MOCK_ACTIVITY.length /* TODO: wire to decision_log */ },
-          ]).map(item => (
-            <button
-              key={item.key}
-              onClick={() => setSidebarItem(item.key)}
-              className={cn(SF.btnBase, sidebarItem === item.key ? SF.btnActive : SF.btnInactive)}
-            >
-              <item.icon className={sidebarItem === item.key ? SF.iconActive : SF.iconInactive} />
-              <span className={sidebarItem === item.key ? SF.labelActive : SF.labelInactive}>{item.label}</span>
-              {item.count !== null && <span className={SF.count}>{item.count}</span>}
-            </button>
-          ))}
-
-          <div className={SF.separator} />
-          <div className={SF.sectionLabel}>Filtre</div>
-          {([
-            { key: "tout" as const, label: "Tout" },
-            { key: "capex" as const, label: "CAPEX (Chantiers)" },
-            { key: "opex" as const, label: "OPEX (Opérations)" },
-          ]).map(f => (
-            <button
-              key={f.key}
-              onClick={() => setFilter(f.key)}
-              className={cn(SF.btnBase, filter === f.key ? SF.btnActive : SF.btnInactive)}
-            >
-              <span className={filter === f.key ? SF.labelActive : SF.labelInactive}>{f.label}</span>
-            </button>
-          ))}
-        </div>
+      <div className={cn("flex gap-3", isMobile && "flex-col gap-0")}>
+        {/* Sidebar — MobileSidebarSheet sur mobile, SF.sidebarW sur desktop */}
+        {(() => {
+          const sidebarContent = (<>
+            <div className={SF.sectionLabel}>Navigation</div>
+            {([
+              { key: "overview" as const, label: "Vue d'ensemble", icon: Home, count: null },
+              { key: "priorites" as const, label: "Priorités", icon: AlertTriangle, count: filteredPriorities.length },
+              { key: "activite" as const, label: "Activité récente", icon: Clock, count: MOCK_ACTIVITY.length /* TODO: wire to decision_log */ },
+            ]).map(item => (
+              <button
+                key={item.key}
+                onClick={() => setSidebarItem(item.key)}
+                className={cn(SF.btnBase, sidebarItem === item.key ? SF.btnActive : SF.btnInactive)}
+              >
+                <item.icon className={sidebarItem === item.key ? SF.iconActive : SF.iconInactive} />
+                <span className={sidebarItem === item.key ? SF.labelActive : SF.labelInactive}>{item.label}</span>
+                {item.count !== null && <span className={SF.count}>{item.count}</span>}
+              </button>
+            ))}
+            <div className={SF.separator} />
+            <div className={SF.sectionLabel}>Filtre</div>
+            {([
+              { key: "tout" as const, label: "Tout" },
+              { key: "capex" as const, label: "CAPEX (Chantiers)" },
+              { key: "opex" as const, label: "OPEX (Opérations)" },
+            ]).map(f => (
+              <button
+                key={f.key}
+                onClick={() => setFilter(f.key)}
+                className={cn(SF.btnBase, filter === f.key ? SF.btnActive : SF.btnInactive)}
+              >
+                <span className={filter === f.key ? SF.labelActive : SF.labelInactive}>{f.label}</span>
+              </button>
+            ))}
+          </>);
+          const activeLabel = sidebarItem === "overview" ? "Vue d'ensemble" : sidebarItem === "priorites" ? "Priorités" : "Activité récente";
+          return isMobile ? (
+            <MobileSidebarSheet currentLabel={activeLabel} itemCount={6}>
+              {sidebarContent}
+            </MobileSidebarSheet>
+          ) : (
+            <div className={SF.sidebarW}>
+              {sidebarContent}
+            </div>
+          );
+        })()}
 
         {/* Contenu principal */}
-        <div className="flex-1 space-y-4">
+        <div className="flex-1 min-w-0 space-y-4">
           {/* Section Priorités */}
           {(sidebarItem === "overview" || sidebarItem === "priorites") && (
             <div>

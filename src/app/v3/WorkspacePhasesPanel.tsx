@@ -183,7 +183,7 @@ export function WorkspacePhasesPanel() {
   // Avec le batching React 18, si onStartMeeting est appelé dans le même click, meetingStatus sera déjà "creating" ici → pas de double-start
   useEffect(() => {
     if (activeMeeting && meeting.meetingStatus === "idle") {
-      meeting.startMeeting(activeMeeting.type, activeMeeting.title);
+      meeting.startMeeting(activeMeeting.type, activeMeeting.title, activeMeeting.botCodes);
     }
   }, [activeMeeting]); // eslint-disable-line react-hooks/exhaustive-deps
 
