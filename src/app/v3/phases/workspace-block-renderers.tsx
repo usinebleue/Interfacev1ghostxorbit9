@@ -66,16 +66,16 @@ function BlockActions({ block, onAction }: BlockRendererProps) {
         <textarea
           value={editText}
           onChange={(e) => setEditText(e.target.value)}
-          className="w-full min-h-[100px] text-[10px] text-gray-700 leading-relaxed p-3 rounded-lg border border-blue-200 bg-blue-50/30 focus:outline-none focus:ring-1 focus:ring-blue-300 resize-y"
+          className="w-full min-h-[100px] text-xs text-gray-700 leading-relaxed p-3 rounded-lg border border-blue-200 bg-blue-50/30 focus:outline-none focus:ring-1 focus:ring-blue-300 resize-y"
           autoFocus
         />
         <div className="flex items-center gap-2">
           <button onClick={() => { onAction("edit", block.id, editText); setIsEditing(false); }}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 text-[10px] font-bold transition-colors cursor-pointer">
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 text-xs font-bold transition-colors cursor-pointer">
             <Check className="h-3 w-3" /> Sauvegarder
           </button>
           <button onClick={() => { setEditText(block.summary); setIsEditing(false); }}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-[10px] font-medium transition-colors cursor-pointer">
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs font-medium transition-colors cursor-pointer">
             <X className="h-3 w-3" /> Annuler
           </button>
         </div>
@@ -87,28 +87,28 @@ function BlockActions({ block, onAction }: BlockRendererProps) {
     <div className="pt-2 border-t border-gray-100 mt-3 space-y-2">
       <div className="flex flex-wrap gap-1.5">
         <button onClick={() => onAction("pin", block.id)}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[10px] font-medium transition-colors cursor-pointer border-gray-200 text-gray-600 hover:bg-gray-50">
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors cursor-pointer border-gray-200 text-gray-600 hover:bg-gray-50">
           <Pin className="h-3 w-3" /> Épingler
         </button>
         <button onClick={() => onAction("deepen", block.id)}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[10px] font-medium transition-colors cursor-pointer border-blue-200 text-blue-700 hover:bg-blue-50">
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors cursor-pointer border-blue-200 text-blue-700 hover:bg-blue-50">
           <Search className="h-3 w-3" /> Approfondir
         </button>
         <button onClick={() => onAction("challenge", block.id)}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[10px] font-medium transition-colors cursor-pointer border-amber-200 text-amber-700 hover:bg-amber-50">
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors cursor-pointer border-amber-200 text-amber-700 hover:bg-amber-50">
           <Swords className="h-3 w-3" /> Challenger
         </button>
         <button onClick={() => onAction("rework", block.id)}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[10px] font-medium transition-colors cursor-pointer border-sky-200 text-sky-700 hover:bg-sky-50">
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors cursor-pointer border-sky-200 text-sky-700 hover:bg-sky-50">
           <RotateCcw className="h-3 w-3" /> Retravailler
         </button>
         <button onClick={() => setIsEditing(true)}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[10px] font-medium transition-colors cursor-pointer border-gray-200 text-gray-600 hover:bg-gray-50">
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors cursor-pointer border-gray-200 text-gray-600 hover:bg-gray-50">
           <Pencil className="h-3 w-3" /> Modifier
         </button>
         {/* S2.3.1: Bouton Rejeter */}
         <button onClick={() => onAction("delete", block.id)}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[10px] font-medium transition-colors cursor-pointer border-red-200 text-red-600 hover:bg-red-50">
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors cursor-pointer border-red-200 text-red-600 hover:bg-red-50">
           <X className="h-3 w-3" /> Rejeter
         </button>
       </div>
@@ -150,7 +150,7 @@ function BlockWrapper({ block, onAction, label, labelColor, children }: BlockRen
       onMouseLeave={() => setIsHoverEdit(false)}
     >
       <div className="flex items-center gap-2 mb-3">
-        <span className={cn("text-[10px] px-2 py-0.5 rounded-full font-bold", labelColor)}>{label}</span>
+        <span className={cn("text-xs px-2 py-0.5 rounded-full font-bold", labelColor)}>{label}</span>
         {/* S2.2.3: Confidence badge */}
         <span className={cn(
           "text-[9px] px-1.5 py-0.5 rounded-full font-bold",
@@ -160,7 +160,7 @@ function BlockWrapper({ block, onAction, label, labelColor, children }: BlockRen
         )}>
           {Math.round(block.confidence * 100)}%
         </span>
-        <h4 className="text-[10px] font-bold text-gray-900 flex-1 truncate">{block.title}</h4>
+        <h4 className="text-xs font-bold text-gray-900 flex-1 truncate">{block.title}</h4>
         {/* Sprint 2A: Hover "Modifier" flottant (pattern WorkspaceSection.tsx L142-156) */}
         <button
           onClick={() => onAction("edit", block.id)}
@@ -196,15 +196,15 @@ function DiagnosticRenderer({ block, onAction }: BlockRendererProps) {
       {data?.axes ? (
         <div className="space-y-3">
           <div className="rounded-xl border border-gray-200 bg-white p-4">
-            <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">Indicateurs cles</h4>
+            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Indicateurs cles</h4>
             <div className="grid grid-cols-2 gap-3">
               {data.axes.map((ax, i) => {
                 const s = SEV[ax.color] || SEV.amber;
                 return (
                   <div key={i} className={cn("rounded-lg p-3", s.bg.replace("100", "50"))}>
-                    <p className="text-[10px] text-gray-400 mb-1">{ax.label}</p>
+                    <p className="text-xs text-gray-400 mb-1">{ax.label}</p>
                     <div className="flex items-center gap-2">
-                      <p className={cn("text-[10px] font-bold", s.text)}>{ax.score}/10</p>
+                      <p className={cn("text-xs font-bold", s.text)}>{ax.score}/10</p>
                       <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                         <div className={cn("h-full rounded-full transition-all", s.bg)} style={{ width: `${ax.score * 10}%` }} />
                       </div>
@@ -217,10 +217,10 @@ function DiagnosticRenderer({ block, onAction }: BlockRendererProps) {
           {/* Points de friction — pattern FocusReflexionView StepDiagnostic */}
           {data.frictions && data.frictions.length > 0 && (
             <div className="rounded-xl border border-gray-200 bg-white p-4">
-              <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">Points de friction</h4>
+              <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Points de friction</h4>
               <div className="space-y-2">
                 {data.frictions.map((f, i) => (
-                  <div key={i} className="flex items-center gap-2 text-[10px]">
+                  <div key={i} className="flex items-center gap-2 text-xs">
                     <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
                     <span className="text-gray-800">{f}</span>
                   </div>
@@ -232,10 +232,10 @@ function DiagnosticRenderer({ block, onAction }: BlockRendererProps) {
       ) : (
         <div className="space-y-3">
           <div className="rounded-xl border border-gray-200 bg-white p-4">
-            <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">Analyse</h4>
+            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Analyse</h4>
             <div className="space-y-2">
               {parseSummaryItems(block.summary).map((item, i) => (
-                <div key={i} className="flex items-start gap-2 text-[10px]">
+                <div key={i} className="flex items-start gap-2 text-xs">
                   <span className="text-gray-400 font-mono shrink-0 w-4 text-right">{i + 1}.</span>
                   <span className="text-gray-700">{item}</span>
                 </div>
@@ -248,7 +248,7 @@ function DiagnosticRenderer({ block, onAction }: BlockRendererProps) {
         <div className="rounded-xl border border-orange-200 bg-orange-50/50 p-3 mt-2">
           <div className="flex items-start gap-2">
             <TrendingUp className="h-3.5 w-3.5 text-orange-600 shrink-0 mt-0.5" />
-            <p className="text-[11px] text-gray-700 leading-relaxed italic">{data.conclusion}</p>
+            <p className="text-sm text-gray-700 leading-relaxed italic">{data.conclusion}</p>
           </div>
         </div>
       )}
@@ -277,8 +277,8 @@ function BrainstormRenderer({ block, onAction }: BlockRendererProps) {
                   <Lightbulb className="h-3 w-3 text-amber-600" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[11px] font-medium text-gray-900">{item.title}</p>
-                  <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-2">{item.detail}</p>
+                  <p className="text-sm font-medium text-gray-900">{item.title}</p>
+                  <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{item.detail}</p>
                 </div>
                 <button onClick={(e) => { e.stopPropagation(); onAction("pin", block.id); }}
                   className="opacity-0 group-hover/idea:opacity-100 p-1 rounded hover:bg-amber-100 transition-all cursor-pointer shrink-0" title="Epingler">
@@ -304,7 +304,7 @@ function BrainstormRenderer({ block, onAction }: BlockRendererProps) {
                       <ThumbsDown className="h-2.5 w-2.5" /> -1
                     </button>
                     {(votes[item.id] ?? 0) !== 0 && (
-                      <span className={cn("text-[10px] font-bold", (votes[item.id] ?? 0) > 0 ? "text-green-600" : "text-red-500")}>
+                      <span className={cn("text-xs font-bold", (votes[item.id] ?? 0) > 0 ? "text-green-600" : "text-red-500")}>
                         {(votes[item.id] ?? 0) > 0 ? "+" : ""}{votes[item.id]}
                       </span>
                     )}
@@ -331,7 +331,7 @@ function BrainstormRenderer({ block, onAction }: BlockRendererProps) {
                 <div className="w-5 h-5 rounded-md bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
                   <Lightbulb className="h-3 w-3 text-amber-600" />
                 </div>
-                <p className="text-[11px] text-gray-700 leading-relaxed flex-1">{item}</p>
+                <p className="text-sm text-gray-700 leading-relaxed flex-1">{item}</p>
               </div>
             </div>
           ))}
@@ -365,7 +365,7 @@ function ScamperRenderer({ block, onAction }: BlockRendererProps) {
       <div className="rounded-lg border border-purple-200 bg-purple-50/50 px-3 py-2 mb-3">
         <div className="flex items-center gap-2">
           <Lightbulb className="h-3.5 w-3.5 text-purple-600 shrink-0" />
-          <p className="text-[10px] text-purple-700 font-medium">Methode SCAMPER — 7 angles creatifs pour generer des idees</p>
+          <p className="text-xs text-purple-700 font-medium">Methode SCAMPER — 7 angles creatifs pour generer des idees</p>
         </div>
       </div>
       {/* Pipeline dots — colored per letter (rainbow) */}
@@ -379,7 +379,7 @@ function ScamperRenderer({ block, onAction }: BlockRendererProps) {
             <div key={letter} className="flex items-center flex-1">
               <div className="flex flex-col items-center gap-0.5">
                 <div className={cn(
-                  "w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold border transition-all shrink-0",
+                  "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border transition-all shrink-0",
                   isComplete ? bc.dotDone :
                   isActive ? cn(bc.dot, "text-white border-transparent") :
                   "bg-gray-100 text-gray-400 border-gray-200"
@@ -406,18 +406,18 @@ function ScamperRenderer({ block, onAction }: BlockRendererProps) {
                 <div className="flex items-center gap-1.5 mb-1">
                   <span className={cn("w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold border", bc.badge)}>{letter}</span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] font-bold text-gray-700">{LABELS[letter]}</p>
+                    <p className="text-xs font-bold text-gray-700">{LABELS[letter]}</p>
                     <p className="text-[8px] text-gray-400 leading-tight">{DESCS[letter]}</p>
                   </div>
                 </div>
                 <ul className="space-y-0.5">
                   {(data.letters?.[letter] || []).map((item, i) => (
-                    <li key={i} className="text-[10px] text-gray-700 flex items-start gap-1">
+                    <li key={i} className="text-xs text-gray-700 flex items-start gap-1">
                       <span className="text-gray-300 mt-0.5">•</span> {item}
                     </li>
                   ))}
                   {(!data.letters?.[letter] || data.letters[letter].length === 0) && (
-                    <li className="text-[10px] text-gray-300 italic">—</li>
+                    <li className="text-xs text-gray-300 italic">—</li>
                   )}
                 </ul>
               </div>
@@ -425,7 +425,7 @@ function ScamperRenderer({ block, onAction }: BlockRendererProps) {
           })}
         </div>
       ) : (
-        <p className="text-[11px] text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
+        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
       )}
     </BlockWrapper>
   );
@@ -482,9 +482,9 @@ function CinqPourquoiRenderer({ block, onAction }: BlockRendererProps) {
                   {!isLast && <div className={cn("w-0.5 flex-1 mt-1 rounded-full bg-gradient-to-b", depth.line)} />}
                 </div>
                 <div className={cn("pb-3 flex-1 min-w-0 rounded-lg px-3 py-1.5 -ml-1 transition-colors", isLast ? depth.bg : "", isActive && "bg-orange-50/50")}>
-                  <p className={cn("text-[10px] font-bold", depth.text)}>Pourquoi {i + 1}?</p>
-                  <p className="text-[11px] text-gray-700">{level.question}</p>
-                  <p className="text-[10px] text-gray-500 mt-0.5">→ {level.answer}</p>
+                  <p className={cn("text-xs font-bold", depth.text)}>Pourquoi {i + 1}?</p>
+                  <p className="text-sm text-gray-700">{level.question}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">→ {level.answer}</p>
                 </div>
               </div>
             );
@@ -500,15 +500,15 @@ function CinqPourquoiRenderer({ block, onAction }: BlockRendererProps) {
                   <Target className="h-4 w-4 text-red-600" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-red-700 uppercase tracking-wider">Cause racine identifiee</p>
-                  <p className="text-[11px] text-gray-800 mt-1 leading-relaxed font-medium">{data.rootCause}</p>
+                  <p className="text-xs font-bold text-red-700 uppercase tracking-wider">Cause racine identifiee</p>
+                  <p className="text-sm text-gray-800 mt-1 leading-relaxed font-medium">{data.rootCause}</p>
                 </div>
               </div>
             </div>
           )}
         </div>
       ) : (
-        <p className="text-[11px] text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
+        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
       )}
     </BlockWrapper>
   );
@@ -527,15 +527,15 @@ function PlanActionRenderer({ block, onAction }: BlockRendererProps) {
             <div key={i} className={cn("rounded-xl border bg-white px-4 py-2.5 flex items-center gap-3", a.done ? "border-green-200 bg-green-50/30" : "border-gray-200")}>
               <CheckCircle2 className={cn("h-4 w-4 shrink-0", a.done ? "text-green-500" : "text-gray-300")} />
               <div className="flex-1 min-w-0">
-                <span className={cn("text-[10px] font-medium", a.done ? "text-gray-400 line-through" : "text-gray-900")}>{a.titre}</span>
+                <span className={cn("text-xs font-medium", a.done ? "text-gray-400 line-through" : "text-gray-900")}>{a.titre}</span>
               </div>
               {a.priorite && <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium", PRIO[a.priorite] || PRIO.normale)}>{a.priorite}</span>}
-              {a.assignee && <span className="text-[10px] text-gray-400 shrink-0">{a.assignee}</span>}
+              {a.assignee && <span className="text-xs text-gray-400 shrink-0">{a.assignee}</span>}
             </div>
           ))}
         </div>
       ) : (
-        <p className="text-[11px] text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
+        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
       )}
     </BlockWrapper>
   );
@@ -552,23 +552,23 @@ function BudgetRenderer({ block, onAction }: BlockRendererProps) {
           <table className="w-full">
             <thead>
               <tr className="bg-gray-50">
-                <th className="text-[11px] font-semibold text-left px-3 py-2">Poste</th>
-                <th className="text-[11px] font-semibold text-right px-3 py-2">Montant</th>
-                <th className="text-[11px] font-semibold text-left px-3 py-2">Note</th>
+                <th className="text-sm font-semibold text-left px-3 py-2">Poste</th>
+                <th className="text-sm font-semibold text-right px-3 py-2">Montant</th>
+                <th className="text-sm font-semibold text-left px-3 py-2">Note</th>
               </tr>
             </thead>
             <tbody>
               {data.rows.map((r, i) => (
                 <tr key={i} className="border-t border-gray-100">
-                  <td className="text-[11px] text-gray-700 px-3 py-2">{r.poste}</td>
-                  <td className="text-[11px] text-gray-900 font-medium text-right px-3 py-2">{r.montant.toLocaleString()} $</td>
-                  <td className="text-[10px] text-gray-500 px-3 py-2">{r.note || "—"}</td>
+                  <td className="text-sm text-gray-700 px-3 py-2">{r.poste}</td>
+                  <td className="text-sm text-gray-900 font-medium text-right px-3 py-2">{r.montant.toLocaleString()} $</td>
+                  <td className="text-xs text-gray-500 px-3 py-2">{r.note || "—"}</td>
                 </tr>
               ))}
               {data.total !== undefined && (
                 <tr className="border-t-2 border-gray-300 bg-gray-50">
-                  <td className="text-[11px] font-bold text-gray-900 px-3 py-2">Total</td>
-                  <td className="text-[11px] font-bold text-gray-900 text-right px-3 py-2">{data.total.toLocaleString()} $</td>
+                  <td className="text-sm font-bold text-gray-900 px-3 py-2">Total</td>
+                  <td className="text-sm font-bold text-gray-900 text-right px-3 py-2">{data.total.toLocaleString()} $</td>
                   <td className="px-3 py-2" />
                 </tr>
               )}
@@ -602,20 +602,20 @@ function TimelineRenderer({ block, onAction }: BlockRendererProps) {
             const TIcon = ti.icon;
             return (
               <div key={i} className="flex gap-3 py-2.5 border-b border-gray-100 last:border-0">
-                <span className="text-[10px] text-gray-400 w-12 shrink-0 pt-0.5 text-right">{e.date}</span>
+                <span className="text-xs text-gray-400 w-12 shrink-0 pt-0.5 text-right">{e.date}</span>
                 <div className="flex flex-col items-center shrink-0">
                   <TIcon className={cn("h-3.5 w-3.5", ti.color)} />
                   {i < data.events.length - 1 && <div className="w-px flex-1 bg-gray-200 mt-1" />}
                 </div>
                 <div className="flex-1 min-w-0 pb-1">
-                  <p className="text-[11px] text-gray-700 leading-relaxed">{e.action}</p>
+                  <p className="text-sm text-gray-700 leading-relaxed">{e.action}</p>
                 </div>
               </div>
             );
           })}
         </div>
       ) : (
-        <p className="text-[11px] text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
+        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
       )}
     </BlockWrapper>
   );
@@ -635,15 +635,15 @@ function MetriquesRenderer({ block, onAction }: BlockRendererProps) {
                 <TrendingUp className={cn("h-4 w-4", kpi.positive !== false ? "text-green-600" : "text-red-600")} />
               </div>
               <div>
-                <p className="text-[10px] text-gray-400">{kpi.label}</p>
-                <p className="text-[10px] font-bold text-gray-900">{kpi.value}</p>
+                <p className="text-xs text-gray-400">{kpi.label}</p>
+                <p className="text-xs font-bold text-gray-900">{kpi.value}</p>
                 {kpi.delta && <p className={cn("text-[9px] font-medium", kpi.positive !== false ? "text-green-600" : "text-red-600")}>{kpi.delta}</p>}
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <p className="text-[11px] text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
+        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
       )}
     </BlockWrapper>
   );
@@ -660,8 +660,8 @@ function ProjetsRenderer({ block, onAction }: BlockRendererProps) {
           {data.projets.map((p, i) => (
             <div key={i} className="rounded-xl border border-gray-200 bg-white px-4 py-3">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-medium text-gray-900">{p.titre}</span>
-                <span className="text-[10px] font-bold text-gray-500">{p.pct}%</span>
+                <span className="text-xs font-medium text-gray-900">{p.titre}</span>
+                <span className="text-xs font-bold text-gray-500">{p.pct}%</span>
               </div>
               <div className="h-1 bg-gray-100 rounded-full">
                 <div className="h-full bg-violet-400 rounded-full transition-all" style={{ width: `${p.pct}%` }} />
@@ -676,7 +676,7 @@ function ProjetsRenderer({ block, onAction }: BlockRendererProps) {
           ))}
         </div>
       ) : (
-        <p className="text-[11px] text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
+        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
       )}
     </BlockWrapper>
   );
@@ -692,7 +692,7 @@ function TachesRenderer({ block, onAction }: BlockRendererProps) {
     <BlockWrapper block={block} onAction={onAction} label="Tâches" labelColor="bg-green-100 text-green-700">
       {taches.length > 0 ? (
         <div className="space-y-1.5">
-          <div className="flex items-center gap-3 text-[10px] text-gray-500 mb-2">
+          <div className="flex items-center gap-3 text-xs text-gray-500 mb-2">
             <span className="font-medium">{doneCount}/{taches.length} complétées</span>
             <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
               <div className="h-full bg-green-400 rounded-full" style={{ width: `${(doneCount / taches.length) * 100}%` }} />
@@ -702,14 +702,14 @@ function TachesRenderer({ block, onAction }: BlockRendererProps) {
             <div key={i} className={cn("rounded-xl border bg-white px-4 py-2.5 flex items-center gap-3", t.done ? "border-green-200 bg-green-50/30" : "border-gray-200")}>
               <CheckCircle2 className={cn("h-4 w-4 shrink-0", t.done ? "text-green-500" : "text-gray-300")} />
               <div className="flex-1 min-w-0">
-                <span className={cn("text-[10px] font-medium", t.done ? "text-gray-400 line-through" : "text-gray-900")}>{t.titre}</span>
+                <span className={cn("text-xs font-medium", t.done ? "text-gray-400 line-through" : "text-gray-900")}>{t.titre}</span>
               </div>
-              {t.assignee && <span className="text-[10px] text-gray-400 shrink-0">{t.assignee}</span>}
+              {t.assignee && <span className="text-xs text-gray-400 shrink-0">{t.assignee}</span>}
             </div>
           ))}
         </div>
       ) : (
-        <p className="text-[11px] text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
+        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
       )}
     </BlockWrapper>
   );
@@ -726,17 +726,17 @@ function RecommandationsRenderer({ block, onAction }: BlockRendererProps) {
           {data.items.map((item) => (
             <div key={item.id} className="rounded-lg border border-gray-200 bg-white px-4 py-3 hover:bg-gray-50 transition-colors">
               <div className="flex items-start gap-2">
-                <span className="text-[10px] font-bold text-sky-500 mt-0.5 w-4 shrink-0">{item.id}.</span>
+                <span className="text-xs font-bold text-sky-500 mt-0.5 w-4 shrink-0">{item.id}.</span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[11px] font-medium text-gray-900">{item.title}</p>
-                  <p className="text-[10px] text-gray-500 mt-0.5">{item.detail}</p>
+                  <p className="text-sm font-medium text-gray-900">{item.title}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{item.detail}</p>
                 </div>
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <p className="text-[11px] text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
+        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
       )}
     </BlockWrapper>
   );
@@ -762,15 +762,15 @@ function RisquesRenderer({ block, onAction }: BlockRendererProps) {
                 <div className="flex items-center gap-2 mb-1">
                   <AlertTriangle className={cn("h-3.5 w-3.5", s.text)} />
                   <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium", s.bg, s.text)}>{r.severite}</span>
-                  <span className="text-[10px] font-medium text-gray-900 flex-1">{r.zone}</span>
+                  <span className="text-xs font-medium text-gray-900 flex-1">{r.zone}</span>
                 </div>
-                <p className="text-[10px] text-gray-600 ml-5">{r.desc}</p>
+                <p className="text-xs text-gray-600 ml-5">{r.desc}</p>
               </div>
             );
           })}
         </div>
       ) : (
-        <p className="text-[11px] text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
+        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
       )}
     </BlockWrapper>
   );
@@ -790,10 +790,10 @@ function BenchmarkRenderer({ block, onAction }: BlockRendererProps) {
                 <div className="w-6 h-6 rounded-lg bg-indigo-100 flex items-center justify-center shrink-0">
                   <TrendingUp className="h-3 w-3 text-indigo-600" />
                 </div>
-                <span className="text-[10px] font-medium text-gray-900 flex-1">{b.source}</span>
-                {b.score && <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-bold">{b.score}</span>}
+                <span className="text-xs font-medium text-gray-900 flex-1">{b.source}</span>
+                {b.score && <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-bold">{b.score}</span>}
               </div>
-              <p className="text-[10px] text-gray-600 leading-relaxed ml-8">{b.insight}</p>
+              <p className="text-xs text-gray-600 leading-relaxed ml-8">{b.insight}</p>
             </div>
           ))}
         </div>
@@ -805,7 +805,7 @@ function BenchmarkRenderer({ block, onAction }: BlockRendererProps) {
                 <div className="w-6 h-6 rounded-lg bg-indigo-100 flex items-center justify-center shrink-0 mt-0.5">
                   <TrendingUp className="h-3 w-3 text-indigo-600" />
                 </div>
-                <p className="text-[11px] text-gray-700 leading-relaxed flex-1">{item}</p>
+                <p className="text-sm text-gray-700 leading-relaxed flex-1">{item}</p>
               </div>
             </div>
           ))}
@@ -824,7 +824,7 @@ function ChallengeRenderer({ block, onAction }: BlockRendererProps) {
       <div className="rounded-xl border border-amber-200 bg-amber-50/30 p-3 mb-2">
         <div className="flex items-center gap-2 mb-2">
           <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
-          <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">Avocat du diable</span>
+          <span className="text-xs font-bold text-amber-700 uppercase tracking-wider">Avocat du diable</span>
         </div>
         {data?.arguments ? (
           <div className="space-y-2 ml-6">
@@ -832,8 +832,8 @@ function ChallengeRenderer({ block, onAction }: BlockRendererProps) {
               const sevColor = a.severity === "critique" ? "text-red-600" : a.severity === "modere" ? "text-amber-600" : "text-gray-600";
               return (
                 <div key={i} className="flex items-start gap-2">
-                  <span className={cn("text-[10px] font-bold shrink-0 mt-0.5", sevColor)}>{i + 1}.</span>
-                  <p className="text-[11px] text-gray-700 leading-relaxed">{a.point}</p>
+                  <span className={cn("text-xs font-bold shrink-0 mt-0.5", sevColor)}>{i + 1}.</span>
+                  <p className="text-sm text-gray-700 leading-relaxed">{a.point}</p>
                 </div>
               );
             })}
@@ -842,8 +842,8 @@ function ChallengeRenderer({ block, onAction }: BlockRendererProps) {
           <div className="space-y-2 ml-6">
             {parseSummaryItems(block.summary).map((item, i) => (
               <div key={i} className="flex items-start gap-2">
-                <span className="text-[10px] font-bold text-amber-600 shrink-0 mt-0.5">{i + 1}.</span>
-                <p className="text-[11px] text-gray-700 leading-relaxed">{item}</p>
+                <span className="text-xs font-bold text-amber-600 shrink-0 mt-0.5">{i + 1}.</span>
+                <p className="text-sm text-gray-700 leading-relaxed">{item}</p>
               </div>
             ))}
           </div>
@@ -860,11 +860,11 @@ function SyntheseRenderer({ block, onAction }: BlockRendererProps) {
   return (
     <BlockWrapper block={block} onAction={onAction} label="Synthèse" labelColor="bg-sky-100 text-sky-700">
       <div className="rounded-xl border border-gray-200 bg-white p-4 mb-2">
-        <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">Résumé exécutif</h4>
+        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Résumé exécutif</h4>
         {data?.points ? (
           <div className="space-y-2">
             {data.points.map((p, i) => (
-              <div key={i} className="flex items-center gap-2 text-[10px]">
+              <div key={i} className="flex items-center gap-2 text-xs">
                 <CheckCircle2 className={cn("h-3.5 w-3.5 shrink-0", p.done !== false ? "text-green-500" : "text-gray-300")} />
                 <span className="text-gray-800">{p.label}</span>
               </div>
@@ -873,7 +873,7 @@ function SyntheseRenderer({ block, onAction }: BlockRendererProps) {
         ) : (
           <div className="space-y-2">
             {parseSummaryItems(block.summary).map((item, i) => (
-              <div key={i} className="flex items-center gap-2 text-[10px]">
+              <div key={i} className="flex items-center gap-2 text-xs">
                 <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
                 <span className="text-gray-800">{item}</span>
               </div>
@@ -885,7 +885,7 @@ function SyntheseRenderer({ block, onAction }: BlockRendererProps) {
         <div className="rounded-xl border border-sky-200 bg-sky-50/50 p-3">
           <div className="flex items-start gap-2">
             <TrendingUp className="h-3.5 w-3.5 text-sky-600 shrink-0 mt-0.5" />
-            <p className="text-[11px] text-gray-700 leading-relaxed">{data.conclusion}</p>
+            <p className="text-sm text-gray-700 leading-relaxed">{data.conclusion}</p>
           </div>
         </div>
       )}
@@ -904,10 +904,10 @@ function RapportRenderer({ block, onAction }: BlockRendererProps) {
           {data.sections.map((s, i) => (
             <div key={i} className="rounded-xl border border-gray-200 bg-white p-4">
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-bold">{i + 1}</span>
-                <h4 className="text-[10px] font-bold text-gray-900">{s.title}</h4>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-bold">{i + 1}</span>
+                <h4 className="text-xs font-bold text-gray-900">{s.title}</h4>
               </div>
-              <p className="text-[11px] text-gray-600 leading-relaxed">{s.content}</p>
+              <p className="text-sm text-gray-600 leading-relaxed">{s.content}</p>
             </div>
           ))}
         </div>
@@ -917,11 +917,11 @@ function RapportRenderer({ block, onAction }: BlockRendererProps) {
             <div key={i} className="rounded-xl border border-gray-200 bg-white p-4">
               {s.title && (
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-bold">{i + 1}</span>
-                  <h4 className="text-[10px] font-bold text-gray-900">{s.title}</h4>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-bold">{i + 1}</span>
+                  <h4 className="text-xs font-bold text-gray-900">{s.title}</h4>
                 </div>
               )}
-              <p className="text-[11px] text-gray-600 leading-relaxed">{s.body}</p>
+              <p className="text-sm text-gray-600 leading-relaxed">{s.body}</p>
             </div>
           ))}
         </div>
@@ -954,14 +954,14 @@ function LibreRenderer({ block, onAction }: BlockRendererProps) {
           {items.map((item, i) => (
             <div key={i} className="rounded-lg border border-gray-200 bg-white px-4 py-2.5 hover:bg-gray-50 transition-colors">
               <div className="flex items-start gap-2">
-                <span className="text-[10px] font-bold text-gray-400 mt-0.5 w-4 shrink-0">{i + 1}.</span>
-                <p className="text-[11px] text-gray-700 leading-relaxed flex-1">{item}</p>
+                <span className="text-xs font-bold text-gray-400 mt-0.5 w-4 shrink-0">{i + 1}.</span>
+                <p className="text-sm text-gray-700 leading-relaxed flex-1">{item}</p>
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="text-[11px] text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</div>
+        <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</div>
       )}
     </BlockWrapper>
   );
@@ -984,11 +984,11 @@ function DebatRenderer({ block, onAction }: BlockRendererProps) {
             <div className="space-y-1.5">
               <div className="flex items-center gap-1.5 mb-2">
                 <ThumbsUp className="h-3 w-3 text-emerald-600" />
-                <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Pour</span>
+                <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Pour</span>
               </div>
               {(data?.pour || []).map((p, i) => (
                 <div key={i} className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2">
-                  <p className="text-[10px] text-gray-700">{p.point}</p>
+                  <p className="text-xs text-gray-700">{p.point}</p>
                   {p.force && <span className="text-[9px] text-emerald-600 font-medium mt-0.5 inline-block">{p.force}</span>}
                 </div>
               ))}
@@ -997,11 +997,11 @@ function DebatRenderer({ block, onAction }: BlockRendererProps) {
             <div className="space-y-1.5">
               <div className="flex items-center gap-1.5 mb-2">
                 <ThumbsDown className="h-3 w-3 text-red-600" />
-                <span className="text-[10px] font-bold text-red-700 uppercase tracking-wider">Contre</span>
+                <span className="text-xs font-bold text-red-700 uppercase tracking-wider">Contre</span>
               </div>
               {(data?.contre || []).map((c, i) => (
                 <div key={i} className="rounded-lg border border-red-200 bg-red-50 px-3 py-2">
-                  <p className="text-[10px] text-gray-700">{c.point}</p>
+                  <p className="text-xs text-gray-700">{c.point}</p>
                   {c.force && <span className="text-[9px] text-red-600 font-medium mt-0.5 inline-block">{c.force}</span>}
                 </div>
               ))}
@@ -1014,14 +1014,14 @@ function DebatRenderer({ block, onAction }: BlockRendererProps) {
                 <Trophy className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
                 <div>
                   <p className="text-[9px] font-bold text-emerald-700 uppercase tracking-wider">Verdict</p>
-                  <p className="text-[11px] text-gray-700 mt-0.5 leading-relaxed">{data.verdict}</p>
+                  <p className="text-sm text-gray-700 mt-0.5 leading-relaxed">{data.verdict}</p>
                 </div>
               </div>
             </div>
           )}
         </div>
       ) : (
-        <p className="text-[11px] text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
+        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
       )}
     </BlockWrapper>
   );
@@ -1044,11 +1044,11 @@ function DecisionRenderer({ block, onAction }: BlockRendererProps) {
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50">
-                  <th className="text-[10px] font-bold text-left px-3 py-2 text-gray-600">Option</th>
+                  <th className="text-xs font-bold text-left px-3 py-2 text-gray-600">Option</th>
                   {(data.criteres || []).map((c, i) => (
-                    <th key={i} className="text-[10px] font-bold text-center px-2 py-2 text-gray-500">{c}</th>
+                    <th key={i} className="text-xs font-bold text-center px-2 py-2 text-gray-500">{c}</th>
                   ))}
-                  <th className="text-[10px] font-bold text-center px-3 py-2 text-gray-600">Total</th>
+                  <th className="text-xs font-bold text-center px-3 py-2 text-gray-600">Total</th>
                 </tr>
               </thead>
               <tbody>
@@ -1056,13 +1056,13 @@ function DecisionRenderer({ block, onAction }: BlockRendererProps) {
                   const isWinner = data.options && opt.total === Math.max(...data.options.map(o => o.total || 0));
                   return (
                     <tr key={i} className={cn("border-t border-gray-100", isWinner && "bg-green-50")}>
-                      <td className={cn("text-[10px] px-3 py-2", isWinner ? "font-bold text-green-700" : "text-gray-700")}>{opt.label}</td>
+                      <td className={cn("text-xs px-3 py-2", isWinner ? "font-bold text-green-700" : "text-gray-700")}>{opt.label}</td>
                       {(data.criteres || []).map((c, j) => (
-                        <td key={j} className="text-[10px] text-center px-2 py-2 text-gray-600">
+                        <td key={j} className="text-xs text-center px-2 py-2 text-gray-600">
                           {opt.scores?.[c] ?? "—"}
                         </td>
                       ))}
-                      <td className={cn("text-[10px] text-center px-3 py-2 font-bold", isWinner ? "text-green-700" : "text-gray-700")}>
+                      <td className={cn("text-xs text-center px-3 py-2 font-bold", isWinner ? "text-green-700" : "text-gray-700")}>
                         {opt.total ?? "—"}
                         {isWinner && <Trophy className="inline h-3 w-3 ml-1 text-green-500" />}
                       </td>
@@ -1078,14 +1078,14 @@ function DecisionRenderer({ block, onAction }: BlockRendererProps) {
                 <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />
                 <div>
                   <p className="text-[9px] font-bold text-green-700 uppercase tracking-wider">Décision recommandée</p>
-                  <p className="text-[11px] text-gray-700 mt-0.5 leading-relaxed">{data.verdict}</p>
+                  <p className="text-sm text-gray-700 mt-0.5 leading-relaxed">{data.verdict}</p>
                 </div>
               </div>
             </div>
           )}
         </div>
       ) : (
-        <p className="text-[11px] text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
+        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
       )}
     </BlockWrapper>
   );
@@ -1111,7 +1111,7 @@ function CriseRenderer({ block, onAction }: BlockRendererProps) {
           <div className="rounded-lg border border-red-300 bg-red-50 p-3">
             <div className="flex items-center gap-2">
               <Zap className="h-4 w-4 text-red-600 animate-pulse shrink-0" />
-              <p className="text-[11px] font-bold text-red-700">{data.situation}</p>
+              <p className="text-sm font-bold text-red-700">{data.situation}</p>
             </div>
           </div>
         )}
@@ -1124,10 +1124,10 @@ function CriseRenderer({ block, onAction }: BlockRendererProps) {
                 <div key={i} className={cn("rounded-xl border px-4 py-2.5 flex items-center gap-3 transition-all", u.bg, u.border)}>
                   <Zap className={cn("h-3.5 w-3.5 shrink-0", u.text, a.urgence === "critique" && "animate-bounce")} />
                   <div className="flex-1 min-w-0">
-                    <span className={cn("text-[10px] font-bold", u.text)}>{a.titre}</span>
+                    <span className={cn("text-xs font-bold", u.text)}>{a.titre}</span>
                   </div>
                   <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase", u.bg, u.text)}>{a.urgence}</span>
-                  {a.responsable && <span className="text-[10px] text-gray-400 shrink-0">{a.responsable}</span>}
+                  {a.responsable && <span className="text-xs text-gray-400 shrink-0">{a.responsable}</span>}
                 </div>
               );
             })}
@@ -1135,7 +1135,7 @@ function CriseRenderer({ block, onAction }: BlockRendererProps) {
         ) : (
           <div className="space-y-2">
             {parseSummaryItems(block.summary).map((item, i) => (
-              <div key={i} className="flex items-start gap-2 text-[10px]">
+              <div key={i} className="flex items-start gap-2 text-xs">
                 <Zap className="h-3.5 w-3.5 text-red-500 shrink-0 mt-0.5" />
                 <span className="text-gray-700">{item}</span>
               </div>
@@ -1199,12 +1199,12 @@ function DeepSearchRenderer({ block, onAction }: BlockRendererProps) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <p className="text-[11px] font-medium text-gray-900 truncate">{source.title}</p>
+                    <p className="text-sm font-medium text-gray-900 truncate">{source.title}</p>
                     {source.url && (
                       <ExternalLink className="h-2.5 w-2.5 text-gray-300 shrink-0" />
                     )}
                   </div>
-                  <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-2">{source.detail}</p>
+                  <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{source.detail}</p>
                 </div>
                 {source.score !== undefined && <CircularScore score={source.score} />}
               </div>
@@ -1217,7 +1217,7 @@ function DeepSearchRenderer({ block, onAction }: BlockRendererProps) {
             <div key={i} className="rounded-lg border border-gray-200 bg-white px-4 py-3">
               <div className="flex items-start gap-2">
                 <Globe className="h-3.5 w-3.5 text-cyan-600 shrink-0 mt-0.5" />
-                <p className="text-[11px] text-gray-700 leading-relaxed flex-1">{item}</p>
+                <p className="text-sm text-gray-700 leading-relaxed flex-1">{item}</p>
               </div>
             </div>
           ))}
@@ -1228,7 +1228,7 @@ function DeepSearchRenderer({ block, onAction }: BlockRendererProps) {
         <div className="rounded-xl border border-cyan-200 bg-cyan-50/50 p-3 mt-3">
           <div className="flex items-start gap-2">
             <TrendingUp className="h-3.5 w-3.5 text-cyan-600 shrink-0 mt-0.5" />
-            <p className="text-[11px] text-gray-700 leading-relaxed italic">{data.conclusion}</p>
+            <p className="text-sm text-gray-700 leading-relaxed italic">{data.conclusion}</p>
           </div>
         </div>
       )}
@@ -1338,7 +1338,7 @@ export function SkeletonBlock({ label }: { label?: string }) {
         <div className="h-3 bg-gray-100 rounded w-4/6" />
       </div>
       {label && (
-        <p className="mt-3 text-[10px] text-gray-400 text-center">{label}</p>
+        <p className="mt-3 text-xs text-gray-400 text-center">{label}</p>
       )}
     </div>
   );

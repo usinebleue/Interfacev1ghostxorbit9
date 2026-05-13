@@ -365,6 +365,60 @@ function CristalliseBar({ content, botCode, activePhase, addWorkspaceBlock, last
   );
 }
 
+/** Helper: cristallisation intelligente via API (shared par tous les chemins) */
+async function cristalliseViaAPI(
+  content: string,
+  opts: {
+    botCode: string;
+    sectionId: string;
+    credoStep: "C" | "R" | "E" | "D" | "O";
+    userMsg?: string;
+    addWorkspaceBlock: (block: import("./core/types").WorkspaceBlock) => void;
+  },
+) {
+  const { botCode, sectionId, credoStep, userMsg, addWorkspaceBlock } = opts;
+  try {
+    const apiKey = (import.meta as Record<string, Record<string, string>>).env?.VITE_API_KEY || "";
+    const res = await fetch("/api/v1/workspace/cristallise", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-API-Key": apiKey },
+      body: JSON.stringify({
+        content,
+        user_msg: userMsg || "",
+        credo_phase: credoStep,
+      }),
+    });
+    const block = await res.json();
+    addWorkspaceBlock({
+      id: `blk-${Date.now()}`,
+      type: block.type || "libre",
+      title: block.title || content.substring(0, 60),
+      summary: block.summary || content.substring(0, 300),
+      structured_data: { ...block.structured_data, originalContent: content },
+      credo_step: credoStep,
+      confidence: block.confidence || 0.5,
+      source: botCode,
+      sourceType: "chat",
+      sectionId,
+      timestamp: Date.now(),
+    });
+  } catch {
+    // Fallback copie brute si API echoue
+    addWorkspaceBlock({
+      id: `blk-${Date.now()}`,
+      type: "libre",
+      title: content.substring(0, 60),
+      summary: content,
+      credo_step: credoStep,
+      confidence: 1.0,
+      source: botCode,
+      sourceType: "chat",
+      sectionId,
+      timestamp: Date.now(),
+    });
+  }
+}
+
 /** Contenu bot segmenté — sous-bulles avec cristallise individuel */
 function SegmentedBotContent({ content, botCode, activePhase, addWorkspaceBlock, lastUserMessage }: {
   content: string;
@@ -554,17 +608,13 @@ function V3MessageList() {
     if (lower.startsWith("cristalliser vers ")) {
       const lastBotMsg = messages.filter(m => m.role === "assistant").pop();
       if (lastBotMsg && activeDocumentSection) {
-        addWorkspaceBlock({
-          id: `blk-${Date.now()}`,
-          type: "libre",
-          title: lastBotMsg.content.substring(0, 60),
-          summary: lastBotMsg.content,
-          credo_step: "C",
-          confidence: 1.0,
-          source: activeBotCode,
-          sourceType: "chat",
+        const lastUserMsg = messages.filter(m => m.role === "user").pop()?.content;
+        cristalliseViaAPI(lastBotMsg.content, {
+          botCode: activeBotCode,
           sectionId: activeDocumentSection,
-          timestamp: Date.now(),
+          credoStep: "C",
+          userMsg: lastUserMsg,
+          addWorkspaceBlock,
         });
       }
       return;
@@ -921,35 +971,29 @@ function V3MessageList() {
                       const steps = getPhaseSteps(activePhase);
                       const targetSection = steps[chatStage]?.id || credoSection;
                       if (targetSection) {
-                        addWorkspaceBlock({
-                          id: `blk-${Date.now()}`,
-                          type: "libre",
-                          title: msg.content.substring(0, 60),
-                          summary: msg.content,
-                          credo_step: (["C","R","E","D","O"] as const)[chatStage] || "C",
-                          confidence: 1.0,
-                          source: msg.agent || activeBotCode,
-                          sourceType: "chat",
+                        const lastUserMsg = messages.filter(m => m.role === "user").pop()?.content;
+                        cristalliseViaAPI(msg.content, {
+                          botCode: msg.agent || activeBotCode,
                           sectionId: targetSection,
-                          timestamp: Date.now(),
+                          credoStep: (["C","R","E","D","O"] as const)[chatStage] || "C",
+                          userMsg: lastUserMsg,
+                          addWorkspaceBlock,
                         });
                       }
                     }}
                     phaseTransition={transitionLabel}
                     onPhaseTransition={transitionLabel ? () => handleOption(transitionLabel) : undefined}
                     gpsSuggestion={msg.cristallisationSuggestion || undefined}
-                    onGpsCristallise={isLast && msg.cristallisationSuggestion ? () => addWorkspaceBlock({
-                      id: `blk-${Date.now()}`,
-                      type: "libre",
-                      title: msg.content.substring(0, 60),
-                      summary: msg.content,
-                      credo_step: (["C","R","E","D","O"] as const)[chatStage] || "C",
-                      confidence: 1.0,
-                      source: msg.agent || activeBotCode,
-                      sourceType: "chat",
-                      sectionId: msg.cristallisationSuggestion!.section_id,
-                      timestamp: Date.now(),
-                    }) : undefined}
+                    onGpsCristallise={isLast && msg.cristallisationSuggestion ? () => {
+                      const lastUserMsg = messages.filter(m => m.role === "user").pop()?.content;
+                      cristalliseViaAPI(msg.content, {
+                        botCode: msg.agent || activeBotCode,
+                        sectionId: msg.cristallisationSuggestion!.section_id,
+                        credoStep: (["C","R","E","D","O"] as const)[chatStage] || "C",
+                        userMsg: lastUserMsg,
+                        addWorkspaceBlock,
+                      });
+                    } : undefined}
                   />
                 );
               })()}
