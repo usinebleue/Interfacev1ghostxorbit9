@@ -149,7 +149,8 @@ interface AmorcerState {
   deliverableStage: number;
   setDeliverableStage: React.Dispatch<React.SetStateAction<number>>;
   advanceDeliverable: () => void;
-  startDeliverable: (deliverable: string) => void;
+  startDeliverable: (deliverable: string, draftLibraryId?: number) => void;
+  draftLibraryId: number | null;
 
   // SimV3 shared state (chat ↔ right panel)
   simV3Active: boolean;
@@ -327,6 +328,7 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     setReflexionContextRaw(null); lsSet("reflexionContext", null);
     setActiveDeliverable(null);
     setDeliverableStage(0);
+    setDraftLibraryId(null);
     setChatStage(0);
     setConceptionStage(0);
     setTyped(false);
@@ -369,6 +371,7 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
   // Deliverable conception state (Level 2)
   const [activeDeliverable, setActiveDeliverable] = useState<string | null>(null);
   const [deliverableStage, setDeliverableStage] = useState(0);
+  const [draftLibraryId, setDraftLibraryId] = useState<number | null>(null);
 
   // Focus type state — persisté en localStorage
   const [focusType, setFocusTypeRaw] = useState(() => lsGet("focusType", "chantier"));
@@ -619,10 +622,11 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     setDeliverableStage((s) => s + 1);
   }, []);
 
-  const startDeliverable = useCallback((deliverable: string) => {
+  const startDeliverable = useCallback((deliverable: string, draftId?: number) => {
     setActiveDeliverable(deliverable);
     setDeliverableStage(0);
     setTyped(false);
+    setDraftLibraryId(draftId ?? null);
   }, []);
 
   return (
@@ -640,7 +644,7 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
         advanceConception, startConception,
         activeDeliverable, setActiveDeliverable,
         deliverableStage, setDeliverableStage,
-        advanceDeliverable, startDeliverable,
+        advanceDeliverable, startDeliverable, draftLibraryId,
         focusType, setFocusType,
         credoPhase, setCredoPhase,
         workflowItems, addWorkflowItem, removeWorkflowItem, clearWorkflowItems,

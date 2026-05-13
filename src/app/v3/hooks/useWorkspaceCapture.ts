@@ -18,6 +18,7 @@ import { useEffect, useRef } from "react";
 import { useChatContext } from "../../v2/context/ChatContext";
 import { useAmorcer } from "../AmorcerContext";
 import { getPhaseStepIds } from "../phases/phase-config";
+import { DOCFORGE_CONFIGS } from "../phases/docforge-config";
 import type { WorkspaceBlock, WorkspaceBlockType } from "../core/types";
 
 /** Toutes les phases auto-cristallisées (discussion = résumés intelligents, autres = contenu complet) */
@@ -263,9 +264,26 @@ function getSectionIdFromChatStage(phase: string, chatStage: number): string | n
   return stepIds[chatStage];
 }
 
-/** S103 — Résolution INTELLIGENTE de section: backend > pendingCapture > positionnelle */
+/** Resolve sectionId pour un livrable DocForge actif (keyword matching) */
+function getDocForgeSectionId(deliverableType: string, content: string): string | null {
+  const config = DOCFORGE_CONFIGS[deliverableType];
+  if (!config) return null;
+  const lower = content.toLowerCase();
+  // Keyword match: compare contenu bot avec titres de sections
+  for (const sec of config.sections) {
+    const keywords = sec.title.toLowerCase().split(/[\s—&]+/).filter(w => w.length > 3);
+    if (keywords.some(kw => lower.includes(kw))) {
+      return sec.sectionId;
+    }
+  }
+  // Fallback: premiere section
+  return config.sections[0]?.sectionId || null;
+}
+
+/** S103 — Résolution INTELLIGENTE de section: backend > pendingCapture > docforge > positionnelle */
 function getSmartSectionId(
-  msg: any, phase: string, chatStage: number, pendingCapture: string | null
+  msg: any, phase: string, chatStage: number, pendingCapture: string | null,
+  activeDeliverable?: string | null
 ): string | null {
   // Priorité 1: Backend a détecté la section sémantiquement
   if (msg?.cristallisationSuggestion?.section_id &&
@@ -274,7 +292,11 @@ function getSmartSectionId(
   }
   // Priorité 2: User a cliqué "Cristalliser" manuellement
   if (pendingCapture) return pendingCapture;
-  // Priorité 3: Positionnelle (fallback)
+  // Priorité 3: DocForge livrable actif — keyword matching
+  if (activeDeliverable && msg?.content) {
+    return getDocForgeSectionId(activeDeliverable, msg.content);
+  }
+  // Priorité 4: Positionnelle (fallback)
   return getSectionIdFromChatStage(phase, chatStage);
 }
 
@@ -294,6 +316,7 @@ export function useWorkspaceCapture() {
     editCristallise,
     addWorkflowItem,
     addWorkspaceBlock,
+    activeDeliverable,
   } = useAmorcer();
   const prevMsgCountRef = useRef(messages.length);
 
@@ -356,7 +379,7 @@ export function useWorkspaceCapture() {
         // ═══ CAPTURE completed streaming messages ═══
         const isDiscussion = activePhase === "discussion";
         if (ACTIVE_PHASES.includes(activePhase)) {
-          const sectionId = getSmartSectionId(completed[0], activePhase, chatStage, pendingCapture);
+          const sectionId = getSmartSectionId(completed[0], activePhase, chatStage, pendingCapture, activeDeliverable);
           if (sectionId) {
             for (const msg of completed) {
               const source = (msg as any).botCode || activeBotCode;
@@ -568,7 +591,7 @@ export function useWorkspaceCapture() {
     // ═══ CAPTURE — toutes les phases actives ═══
     const isDiscussion = activePhase === "discussion";
     if (ACTIVE_PHASES.includes(activePhase)) {
-      const sectionId = getSmartSectionId(completeBots[0], activePhase, chatStage, pendingCapture);
+      const sectionId = getSmartSectionId(completeBots[0], activePhase, chatStage, pendingCapture, activeDeliverable);
       if (!sectionId) return;
 
       for (const msg of completeBots) {

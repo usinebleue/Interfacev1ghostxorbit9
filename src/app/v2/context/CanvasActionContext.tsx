@@ -185,6 +185,17 @@ export function CanvasActionProvider({ children }: { children: React.ReactNode }
         }
         break;
       }
+      case "start_deliverable": {
+        // DocForge: dispatch CustomEvent pour proposer l'activation du workspace livrable
+        const sdData = action.data as Record<string, unknown> | undefined;
+        const deliverableType = sdData?.deliverable_type as string;
+        if (deliverableType) {
+          window.dispatchEvent(new CustomEvent("bt-start-deliverable", {
+            detail: { deliverableType }
+          }));
+        }
+        break;
+      }
     }
 
     setLastAction(action);

@@ -17,6 +17,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
   CheckCircle2, Zap, X, ArrowRight,
+  Loader2, Network,
 } from "lucide-react";
 import { cn } from "../../components/ui/utils";
 import { SF } from "../core/styles";
@@ -25,9 +26,25 @@ import { MobileSidebarSheet } from "../core/MobileSidebarSheet";
 import { useAmorcer } from "../AmorcerContext";
 import { useChatContext } from "../../v2/context/ChatContext";
 import { PHASE_CONFIGS } from "./phase-config";
-import { REFLEXION_TOOL_IDS, TechniqueSidebarList, TechniquePanel } from "./reflexion-tools";
+import { TechniquePanel } from "./reflexion-tools";
+import { WorkspaceReflexionHub } from "./WorkspaceReflexionHub";
 import { BlockRenderer, BLOCK_TYPE_LABELS } from "./workspace-block-renderers";
+import { BOT_NAME } from "../../v2/api/types";
 import type { CascadeSuggestion } from "../../v2/api/types";
+
+// ═══ B.1: ThinkingAnimation steps par etape CREDO (pattern primitives.tsx ThinkingAnimation) ═══
+
+const THINKING_STEPS: Record<string, string[]> = {
+  C: ["Analyse du contexte", "Identification des enjeux", "Formulation"],
+  R: ["Recherche d'insights", "Analyse croisee", "Synthese"],
+  E: ["Evaluation des options", "Arguments cles", "Formulation"],
+  D: ["Verification des donnees", "Validation logique", "Mise en forme"],
+  O: ["Consolidation", "Plan d'action", "Recommandations"],
+};
+
+// ═══ B.4: Cascade suggestion border colors (pattern InlineOptions from primitives.tsx) ═══
+
+const SUGGESTION_BORDER_COLORS = ["border-l-blue-500", "border-l-amber-500", "border-l-green-500", "border-l-red-500"];
 
 interface LiveDiscussionViewProps {
   context: string | null;
@@ -119,6 +136,30 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
       blocksEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
     }
     prevBlockCount.current = workspaceBlocks.length;
+  }, [workspaceBlocks.length]);
+
+  // B.1: ThinkingOverlay — detect when bot is processing
+  const isThinking = messages.length > 0 && messages[messages.length - 1]?.role === "user";
+  const [currentThinkingStep, setCurrentThinkingStep] = useState(0);
+  useEffect(() => {
+    if (!isThinking) { setCurrentThinkingStep(0); return; }
+    const timer = setInterval(() => {
+      setCurrentThinkingStep(prev => prev < 2 ? prev + 1 : prev);
+    }, 1200);
+    return () => clearInterval(timer);
+  }, [isThinking]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // B.2: Multi-phase consultation detection
+  const multiPhaseTargets = [...new Set(latestCascadeSuggestions.map(s => s.view || s.target_section).filter(Boolean))];
+  const hasMultiPhaseConsult = multiPhaseTargets.length >= 2;
+
+  // B.3: TypewriterText cursor — visible briefly after new block appears
+  const [showTypingCursor, setShowTypingCursor] = useState(false);
+  useEffect(() => {
+    if (workspaceBlocks.length === 0) return;
+    setShowTypingCursor(true);
+    const t = setTimeout(() => setShowTypingCursor(false), 3000);
+    return () => clearTimeout(t);
   }, [workspaceBlocks.length]);
 
   const activeStep = config.steps.find(s => s.id === activeStepId) || config.steps[0];
@@ -319,37 +360,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
                 </div>
               </div>
 
-              {/* Tier 2+2b: Modes de reflexion + Techniques — visibles UNIQUEMENT sur etape Rechercher */}
-              {activeStepId === "credo-r-rechercher" && (
-                <>
-                  {/* Tier 2: Modes de reflexion — clic = envoie prompt au bot */}
-                  <div>
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 px-2">Reflexion</span>
-                    <div className="mt-1 space-y-0.5">
-                      {REFLEXION_TOOL_IDS.map(tool => (
-                        <button
-                          key={tool.id}
-                          onClick={() => handleReflexionSend(tool.prompt(displayContext))}
-                          className={cn(SF.btnBase, "hover:bg-orange-50 hover:shadow-sm border border-transparent transition-all")}
-                        >
-                          <div className="w-5 h-5 rounded-md bg-orange-100 flex items-center justify-center shrink-0">
-                            <tool.icon className="h-3 w-3 text-orange-600" />
-                          </div>
-                          <span className="text-[10px] font-bold text-gray-700">{tool.label}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Tier 2b: Techniques — clic = ouvre sous-section dans le workspace */}
-                  <div>
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 px-2">Techniques</span>
-                    <div className="mt-1">
-                      <TechniqueSidebarList selectedId={selectedTechnique} onSelect={setSelectedTechnique} />
-                    </div>
-                  </div>
-                </>
-              )}
+              {/* Modes reflexion et techniques deplacees vers WorkspaceReflexionHub (phase reflexion) */}
 
               {/* Tier 3: Index des blocks */}
               {workspaceBlocks.length > 0 && (
@@ -413,6 +424,64 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
             </div>
           )}
 
+          {/* REFLEXION HUB — visible quand on est sur l'etape Rechercher (modes + techniques) */}
+          {activeStepId.includes("rechercher") && !selectedTechnique && (
+            <div className="mt-3">
+              <WorkspaceReflexionHub
+                context={displayContext !== "Discussion en cours" ? displayContext : null}
+                onSendMessage={sendMessage}
+                messages={messages}
+                activeBotCode={activeBotCode}
+                activeBotName={BOT_NAME[activeBotCode] || "CarlOS"}
+              />
+            </div>
+          )}
+
+          {/* B.1: ThinkingOverlay — visible quand le bot reflechit (pattern ThinkingAnimation primitives.tsx) */}
+          {isThinking && (
+            <div className="mt-3 rounded-xl border border-sky-200 bg-gradient-to-r from-sky-50 to-blue-50 p-4 shadow-sm animate-in fade-in duration-300">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-sky-100 flex items-center justify-center shrink-0">
+                  <Loader2 className="h-4 w-4 text-sky-600 animate-spin" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] font-bold text-sky-700">Reflexion en cours...</p>
+                  <div className="flex flex-wrap gap-3 mt-1.5">
+                    {(THINKING_STEPS[currentCredoLetter] || THINKING_STEPS.C).map((step, j) => (
+                      <span key={j} className={cn(
+                        "text-[9px] flex items-center gap-1 transition-all",
+                        j < currentThinkingStep ? "text-emerald-600 line-through opacity-60" :
+                        j === currentThinkingStep ? "text-sky-700 font-bold" :
+                        "text-gray-400"
+                      )}>
+                        {j < currentThinkingStep && <CheckCircle2 className="h-2.5 w-2.5" />}
+                        {j === currentThinkingStep && <Loader2 className="h-2.5 w-2.5 animate-spin" />}
+                        {step}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* B.2: MultiConsultOverlay — visible quand cascade suggestions ciblent plusieurs phases */}
+          {hasMultiPhaseConsult && !isThinking && (
+            <div className="mt-3 rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-50 to-violet-50 p-3 shadow-sm animate-in fade-in duration-300">
+              <div className="flex items-center gap-2 mb-2">
+                <Network className="h-4 w-4 text-indigo-600 animate-pulse" />
+                <span className="text-[10px] font-bold text-indigo-700">Perspectives multi-phases disponibles</span>
+              </div>
+              <div className="flex items-center gap-2">
+                {multiPhaseTargets.map((phase, j) => (
+                  <span key={j} className="text-[9px] px-2 py-1 rounded-full bg-indigo-100 text-indigo-700 font-bold capitalize">
+                    {phase}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* WORKSPACE BLOCKS — La discussion EST le plan de match */}
           {displayBlocks.length > 0 ? (
             <div className="space-y-3 mt-3">
@@ -426,7 +495,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
                   O: "Decisions et prochaines etapes...",
                 };
                 let lastStep = "";
-                return displayBlocks.map((block) => {
+                return displayBlocks.map((block, i) => {
                   const showSeparator = block.credo_step !== lastStep;
                   const isFirst = lastStep === "";
                   lastStep = block.credo_step;
@@ -459,13 +528,23 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
                           </p>
                         </div>
                       )}
-                      <div className="transition-all duration-300 animate-in fade-in slide-in-from-bottom-2">
+                      <div
+                        className="animate-in fade-in slide-in-from-bottom-2 duration-500"
+                        style={{ animationDelay: `${Math.min(i, 5) * 120}ms`, animationFillMode: 'backwards' }}
+                      >
                         <BlockRenderer block={block} onAction={handleBlockAction} />
                       </div>
                     </div>
                   );
                 });
               })()}
+              {/* B.3: TypewriterText cursor — pulse apres le dernier bloc cristallise */}
+              {showTypingCursor && (
+                <div className="flex items-center gap-1.5 px-4 py-2 animate-in fade-in duration-300">
+                  <span className="inline-block w-0.5 h-4 bg-gray-800 animate-pulse rounded-full" />
+                  <span className="text-[9px] text-gray-400 italic">cristallisation en cours...</span>
+                </div>
+              )}
               <div ref={blocksEndRef} />
             </div>
           ) : (
@@ -479,12 +558,12 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
             </div>
           )}
 
-          {/* CASCADE SUGGESTIONS — cross-phase (Sprint 1 Etape 6) */}
+          {/* CASCADE SUGGESTIONS — cross-phase (Sprint 1 Etape 6) + B.4 bordure gauche coloree */}
           {latestCascadeSuggestions.length > 0 && (
-            <div className="mt-3 space-y-1.5">
-              {latestCascadeSuggestions.map((sug, i) => (
+            <div className="mt-3 space-y-1.5 animate-in fade-in duration-500">
+              {latestCascadeSuggestions.map((sug, sugIdx) => (
                 <button
-                  key={i}
+                  key={sugIdx}
                   onClick={() => {
                     const targetPhase = sug.view;
                     if (targetPhase && targetPhase !== activePhase && ["discussion","reflexion","creation","execution","retroaction"].includes(targetPhase)) {
@@ -492,10 +571,16 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
                     }
                     sendMessage(sug.message, activeBotCode);
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-amber-200 bg-amber-50/50 hover:bg-amber-100 hover:border-amber-300 cursor-pointer transition-all text-left"
+                  className={cn(
+                    "w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white/80",
+                    "border-l-[3px]", SUGGESTION_BORDER_COLORS[sugIdx % SUGGESTION_BORDER_COLORS.length],
+                    "hover:shadow-sm hover:bg-gray-50 cursor-pointer transition-all text-left",
+                    "animate-in fade-in slide-in-from-bottom-1 duration-300"
+                  )}
+                  style={{ animationDelay: `${sugIdx * 100}ms`, animationFillMode: 'backwards' }}
                 >
-                  <ArrowRight className="h-3 w-3 text-amber-600 shrink-0" />
-                  <span className="text-[10px] text-amber-700 font-medium">
+                  <ArrowRight className="h-3 w-3 text-gray-500 shrink-0" />
+                  <span className="text-[10px] text-gray-700 font-medium">
                     Explorer en {sug.view || sug.target_section}: {sug.message.substring(0, 100)}
                   </span>
                 </button>

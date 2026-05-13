@@ -13,11 +13,37 @@ import {
   Check, X, Trash2,
   ThumbsUp, ThumbsDown, Trophy, Zap, Shield,
   Target, Globe, ExternalLink,
+  MessageCircle, Mic, Video,
 } from "lucide-react";
 import { cn } from "../../components/ui/utils";
 import { formatCristallise } from "./content-formatters";
 import { BotBadgeFull } from "../../v2/zones/center/shared/BotBadgeFull";
 import type { WorkspaceBlock, WorkspaceBlockType } from "../core/types";
+
+// ═══ Bot Accent Borders (B.9 — pattern BOT_COLORS from sim-data.ts) ═══
+
+const BOT_ACCENT_BORDERS: Record<string, string> = {
+  BCO: "border-l-blue-400", CEOB: "border-l-blue-400",
+  BCT: "border-l-violet-400", CTOB: "border-l-violet-400",
+  BCF: "border-l-emerald-400", CFOB: "border-l-emerald-400",
+  BCM: "border-l-pink-400", CMOB: "border-l-pink-400",
+  BCS: "border-l-red-400", CSOB: "border-l-red-400",
+  BOO: "border-l-orange-400", COOB: "border-l-orange-400",
+  CPOB: "border-l-slate-400",
+  CHROB: "border-l-teal-400",
+  CINOB: "border-l-rose-400",
+  CROB: "border-l-amber-400",
+  CLOB: "border-l-indigo-400",
+  CISOB: "border-l-zinc-400",
+};
+
+// ═══ Source badges enrichis (B.11) ═══
+
+const SOURCE_CONFIG: Record<string, { icon: React.ElementType; bg: string; text: string; label: string }> = {
+  chat: { icon: MessageCircle, bg: "bg-sky-100", text: "text-sky-600", label: "Chat" },
+  voice: { icon: Mic, bg: "bg-violet-100", text: "text-violet-600", label: "Vocal" },
+  meeting: { icon: Video, bg: "bg-amber-100", text: "text-amber-600", label: "Reunion" },
+};
 
 // ═══ Block Action Types ═══
 
@@ -88,9 +114,14 @@ function BlockActions({ block, onAction }: BlockRendererProps) {
       </div>
       <div className="flex items-center gap-1.5">
         <BotBadgeFull botCode={block.source} compact />
-        <span className="text-[9px] text-gray-400">
-          {block.sourceType === "voice" ? "Vocal" : block.sourceType === "meeting" ? "Réunion" : "Chat"}
-        </span>
+        {(() => {
+          const src = SOURCE_CONFIG[block.sourceType] || SOURCE_CONFIG.chat;
+          return (
+            <span className={cn("text-[8px] px-1.5 py-0.5 rounded-full flex items-center gap-0.5 font-medium", src.bg, src.text)}>
+              <src.icon className="h-2.5 w-2.5" /> {src.label}
+            </span>
+          );
+        })()}
       </div>
     </div>
   );
@@ -112,7 +143,8 @@ function BlockWrapper({ block, onAction, label, labelColor, children }: BlockRen
         "group/edit rounded-xl border bg-white p-4 shadow-sm transition-all duration-300",
         "border-gray-200 hover:shadow-md",
         "hover:ring-1 hover:ring-blue-200 hover:border-blue-200",
-        appeared ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
+        appeared ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3",
+        block.source && BOT_ACCENT_BORDERS[block.source] && cn("border-l-[3px]", BOT_ACCENT_BORDERS[block.source])
       )}
       onMouseEnter={() => setIsHoverEdit(true)}
       onMouseLeave={() => setIsHoverEdit(false)}

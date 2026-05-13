@@ -69,7 +69,7 @@ interface TechniqueSession {
   mode: "guided" | "solo";
 }
 
-const TECHNIQUE_CONFIGS: Record<string, { label: string; totalSteps: number; stepLabels: string[]; colors: string[]; description: string }> = {
+export const TECHNIQUE_CONFIGS: Record<string, { label: string; totalSteps: number; stepLabels: string[]; colors: string[]; description: string }> = {
   scamper: {
     label: "SCAMPER",
     totalSteps: 7,
@@ -94,7 +94,7 @@ const TECHNIQUE_CONFIGS: Record<string, { label: string; totalSteps: number; ste
 };
 
 // All techniques (multi-step + one-shot)
-const ALL_TECHNIQUES = [
+export const ALL_TECHNIQUES = [
   { id: "scamper", label: "SCAMPER", icon: Lightbulb,
     color: "bg-amber-50 text-amber-700",
     soloPrompt: (ctx: string) => `Applique SCAMPER complet (Substituer, Combiner, Adapter, Modifier, Proposer d'autres usages, Éliminer, Réorganiser) à: ${ctx}. Pour chaque lettre, donne 2-3 idées. Termine par un Top 3 classé par faisabilité.` },
@@ -356,8 +356,12 @@ export function parseContentSections(text: string): { title: string; body: strin
 // ═══ IDs des outils réflexion dans la sidebar ═══
 
 export const REFLEXION_TOOL_IDS = [
-  { id: "diagnostic", label: "Diagnostic", icon: Eye, prompt: (ctx: string) => `Fais un diagnostic complet de: ${ctx}` },
-  { id: "brainstorm", label: "Brainstorm", icon: Lightbulb, prompt: (ctx: string) => `Génère un maximum d'idées créatives pour: ${ctx}` },
-  { id: "deepsearch", label: "Deep Search", icon: Globe, prompt: (ctx: string) => `Recherche approfondie: tendances, benchmarks, meilleures pratiques pour: ${ctx}` },
-  { id: "challenge", label: "Challenge", icon: Shield, prompt: (ctx: string) => `Challenge et trouve les failles de: ${ctx}` },
+  { id: "analyse", label: "Analyse", icon: Eye, bg: "bg-blue-100", text: "text-blue-600", prompt: (ctx: string) => `Fais une analyse approfondie et structuree de: ${ctx}` },
+  { id: "debat", label: "Debat", icon: Swords, bg: "bg-red-100", text: "text-red-600", prompt: (ctx: string) => `Joue l'avocat du diable — debats les pour et les contre de: ${ctx}` },
+  { id: "brainstorm", label: "Brainstorm", icon: Lightbulb, bg: "bg-amber-100", text: "text-amber-600", prompt: (ctx: string) => `Genere un maximum d'idees creatives pour: ${ctx}` },
+  { id: "strategie", label: "Strategie", icon: Target, bg: "bg-purple-100", text: "text-purple-600", prompt: (ctx: string) => `Pense long terme — propose une vision strategique pour: ${ctx}` },
+  { id: "innovation", label: "Innovation", icon: Sparkles, bg: "bg-pink-100", text: "text-pink-600", prompt: (ctx: string) => `Sors du cadre — propose des approches innovantes pour: ${ctx}` },
+  { id: "decision", label: "Decision", icon: CheckCircle2, bg: "bg-green-100", text: "text-green-600", prompt: (ctx: string) => `Tranche et recommande — quelle decision prendre pour: ${ctx}` },
+  { id: "crise", label: "Crise", icon: Zap, bg: "bg-orange-100", text: "text-orange-600", prompt: (ctx: string) => `Mode crise — urgence et pragmatisme. Que faire MAINTENANT pour: ${ctx}` },
+  { id: "deep", label: "Deep", icon: Brain, bg: "bg-indigo-100", text: "text-indigo-600", prompt: (ctx: string) => `Reflexion profonde et nuancee — explore toutes les dimensions de: ${ctx}` },
 ] as const;

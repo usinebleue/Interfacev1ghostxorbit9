@@ -11,7 +11,7 @@
  */
 
 import { useState } from "react";
-import { Rocket, Pencil, Mic, Users, MessageSquare } from "lucide-react";
+import { Rocket, Pencil, Mic, Users, MessageSquare, ThumbsUp, ThumbsDown } from "lucide-react";
 import type { PhaseSection, SectionAction } from "./phase-sections";
 
 interface WorkspaceSectionProps {
@@ -39,6 +39,7 @@ export function WorkspaceSection({
 }: WorkspaceSectionProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState("");
+  const [feedback, setFeedback] = useState<"up" | "down" | null>(null);
 
   const colorMap: Record<string, { bg: string; border: string; text: string; hoverBg: string }> = {
     orange: { bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-700", hoverBg: "hover:bg-orange-100" },
@@ -87,10 +88,10 @@ export function WorkspaceSection({
         {/* État: Vide */}
         {!cristallise && !isPending && (
           <>
-            <p className="text-xs text-gray-600 leading-relaxed">{section.description}</p>
+            <p className="text-sm text-gray-600 leading-relaxed">{section.description}</p>
             <button
               onClick={() => onLaunch(section.id, section.prompt)}
-              className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg ${c.bg} border ${c.border} ${c.text} text-xs font-bold ${c.hoverBg} transition-colors`}
+              className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg ${c.bg} border ${c.border} ${c.text} text-sm font-bold ${c.hoverBg} transition-colors`}
             >
               <Rocket className="h-3.5 w-3.5" />
               Lancer {section.title.toLowerCase()}
@@ -119,7 +120,7 @@ export function WorkspaceSection({
                 <textarea
                   value={editText}
                   onChange={(e) => setEditText(e.target.value)}
-                  className="w-full min-h-[160px] text-xs text-gray-700 leading-relaxed p-3 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 resize-y"
+                  className="w-full min-h-[160px] text-sm text-gray-700 leading-relaxed p-3 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 resize-y"
                   autoFocus
                 />
                 <div className="flex items-center gap-2 justify-end">
@@ -149,7 +150,7 @@ export function WorkspaceSection({
                   <span className="text-[9px] text-blue-400 font-medium">Modifier</span>
                 </div>
                 <div className="group-hover/edit:ring-1 group-hover/edit:ring-blue-200 rounded-lg transition-all">
-                  <div className="text-xs text-gray-700 leading-relaxed whitespace-pre-wrap max-h-[400px] overflow-y-auto">
+                  <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap max-h-[400px] overflow-y-auto">
                     {cristallise}
                   </div>
                 </div>
@@ -168,7 +169,7 @@ export function WorkspaceSection({
               </div>
             )}
 
-            {/* Action buttons */}
+            {/* Action buttons + feedback */}
             {!isEditing && (
               <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-gray-100">
                 {section.actions.map((action, i) => {
@@ -188,6 +189,20 @@ export function WorkspaceSection({
                     </button>
                   );
                 })}
+                <div className="ml-auto flex items-center gap-1">
+                  <button
+                    onClick={() => setFeedback(feedback === "up" ? null : "up")}
+                    className={`p-1 rounded-md transition-colors cursor-pointer ${feedback === "up" ? "text-emerald-600 bg-emerald-50" : "text-gray-300 hover:text-emerald-500 hover:bg-emerald-50"}`}
+                  >
+                    <ThumbsUp className="h-3 w-3" />
+                  </button>
+                  <button
+                    onClick={() => setFeedback(feedback === "down" ? null : "down")}
+                    className={`p-1 rounded-md transition-colors cursor-pointer ${feedback === "down" ? "text-red-500 bg-red-50" : "text-gray-300 hover:text-red-400 hover:bg-red-50"}`}
+                  >
+                    <ThumbsDown className="h-3 w-3" />
+                  </button>
+                </div>
               </div>
             )}
           </>

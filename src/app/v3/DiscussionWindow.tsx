@@ -261,13 +261,15 @@ function ThinkingLabel({ botCode, userText }: { botCode: string; userText?: stri
 }
 
 /** Barre de boutons CREDO pour cristalliser un contenu dans une section workspace */
-function CristalliseBar({ content, botCode, activePhase, addWorkspaceBlock }: {
+function CristalliseBar({ content, botCode, activePhase, addWorkspaceBlock, lastUserMessage }: {
   content: string;
   botCode: string;
   activePhase: string;
   addWorkspaceBlock: (block: import("./core/types").WorkspaceBlock) => void;
+  lastUserMessage?: string;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [loading, setLoading] = useState(false);
   const steps = getPhaseSteps(activePhase);
   if (steps.length === 0) return null;
 
@@ -284,48 +286,92 @@ function CristalliseBar({ content, botCode, activePhase, addWorkspaceBlock }: {
     );
   }
 
+  const handleCristallise = async (step: ReturnType<typeof getPhaseSteps>[number]) => {
+    const credoLetter = (step.id.split("-")[1]?.charAt(0)?.toUpperCase() || "C") as "C" | "R" | "E" | "D" | "O";
+    setLoading(true);
+    try {
+      const apiKey = (import.meta as Record<string, Record<string, string>>).env?.VITE_API_KEY || "";
+      const res = await fetch("/api/v1/workspace/cristallise", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-API-Key": apiKey },
+        body: JSON.stringify({
+          content,
+          user_msg: lastUserMessage || "",
+          credo_phase: credoLetter,
+        }),
+      });
+      const block = await res.json();
+      addWorkspaceBlock({
+        id: `blk-${Date.now()}`,
+        type: block.type || "libre",
+        title: block.title || content.substring(0, 60),
+        summary: block.summary || content.substring(0, 300),
+        structured_data: { ...block.structured_data, originalContent: content },
+        credo_step: credoLetter,
+        confidence: block.confidence || 0.5,
+        source: botCode,
+        sourceType: "chat",
+        sectionId: step.id,
+        timestamp: Date.now(),
+      });
+    } catch {
+      // Fallback copie brute si API echoue
+      addWorkspaceBlock({
+        id: `blk-${Date.now()}`,
+        type: "libre",
+        title: content.substring(0, 60),
+        summary: content,
+        credo_step: credoLetter,
+        confidence: 1.0,
+        source: botCode,
+        sourceType: "chat",
+        sectionId: step.id,
+        timestamp: Date.now(),
+      });
+    } finally {
+      setLoading(false);
+      setExpanded(false);
+    }
+  };
+
   return (
     <div className="flex flex-wrap gap-1 mt-2 animate-in fade-in duration-200">
-      {steps.map((step) => (
-        <button
-          key={step.id}
-          onClick={() => {
-            addWorkspaceBlock({
-              id: `blk-${Date.now()}`,
-              type: "libre",
-              title: content.substring(0, 60),
-              summary: content,
-              credo_step: (step.id.split("-")[1]?.charAt(0)?.toUpperCase() || "C") as "C" | "R" | "E" | "D" | "O",
-              confidence: 1.0,
-              source: botCode,
-              sourceType: "chat",
-              sectionId: step.id,
-              timestamp: Date.now(),
-            });
-            setExpanded(false);
-          }}
-          className="flex items-center gap-1 px-2 py-1 rounded-md border border-sky-200 bg-sky-50 text-[10px] font-medium text-sky-700 hover:bg-sky-100 hover:border-sky-300 cursor-pointer transition-all"
-        >
-          <step.icon className="h-2.5 w-2.5" />
-          {step.title}
-        </button>
-      ))}
-      <button
-        onClick={() => setExpanded(false)}
-        className="flex items-center px-1.5 py-1 rounded-md border border-gray-200 text-[10px] text-gray-400 hover:bg-gray-50 cursor-pointer"
-      >
-        <X className="h-2.5 w-2.5" />
-      </button>
+      {loading ? (
+        <span className="flex items-center gap-1.5 px-3 py-1 text-[10px] text-sky-600 font-medium">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          Cristallisation intelligente...
+        </span>
+      ) : (
+        <>
+          {steps.map((step) => (
+            <button
+              key={step.id}
+              onClick={() => handleCristallise(step)}
+              className="flex items-center gap-1 px-2 py-1 rounded-md border border-sky-200 bg-sky-50 text-[10px] font-medium text-sky-700 hover:bg-sky-100 hover:border-sky-300 cursor-pointer transition-all"
+            >
+              <step.icon className="h-2.5 w-2.5" />
+              {step.title}
+            </button>
+          ))}
+          <button
+            onClick={() => setExpanded(false)}
+            className="flex items-center px-1.5 py-1 rounded-md border border-gray-200 text-[10px] text-gray-400 hover:bg-gray-50 cursor-pointer"
+          >
+            <X className="h-2.5 w-2.5" />
+          </button>
+        </>
+      )}
     </div>
   );
 }
 
 /** Contenu bot segmenté — sous-bulles avec cristallise individuel */
-function SegmentedBotContent({ content, botCode, activePhase, addWorkspaceBlock }: {
+function SegmentedBotContent({ content, botCode, activePhase, addWorkspaceBlock, lastUserMessage }: {
   content: string;
   botCode: string;
   activePhase: string;
   addWorkspaceBlock: (block: import("./core/types").WorkspaceBlock) => void;
+  lastUserMessage?: string;
 }) {
   const segments = parseMessageSegments(content);
 
@@ -337,7 +383,7 @@ function SegmentedBotContent({ content, botCode, activePhase, addWorkspaceBlock 
           className="text-sm text-gray-700 leading-relaxed isolate overflow-hidden [&>p]:my-0.5 [&>ul]:my-1 [&>ol]:my-1 [&>p:first-child]:mt-0 [&>p:last-child]:mb-0 [&>hr]:my-2 [&_li]:break-words [&_p]:break-words"
           dangerouslySetInnerHTML={{ __html: formatMarkdown(content) }}
         />
-        <CristalliseBar content={content} botCode={botCode} activePhase={activePhase} addWorkspaceBlock={addWorkspaceBlock} />
+        <CristalliseBar content={content} botCode={botCode} activePhase={activePhase} addWorkspaceBlock={addWorkspaceBlock} lastUserMessage={lastUserMessage} />
       </>
     );
   }
@@ -359,6 +405,7 @@ function SegmentedBotContent({ content, botCode, activePhase, addWorkspaceBlock 
             botCode={botCode}
             activePhase={activePhase}
             addWorkspaceBlock={addWorkspaceBlock}
+            lastUserMessage={lastUserMessage}
           />
         </div>
       ))}
@@ -370,7 +417,7 @@ function SegmentedBotContent({ content, botCode, activePhase, addWorkspaceBlock 
 // Gère: bulles V3, options cliquables, streaming, thinking, coaching, voice
 function V3MessageList() {
   const { messages, isTyping, sendMessage, sendMultiPerspective, thinkingSteps, parkThread, activeRoster, chatTargetBot } = useChatContext();
-  const { activeBotCode, activePhase, setActivePhase, setRightSection, setReflexionContext, reflexionContext, credoPhase, addWorkflowItem, workflowItems, chatStage, addWorkspaceBlock, focusType, activeDocumentSection } = useAmorcer();
+  const { activeBotCode, activePhase, setActivePhase, setRightSection, setReflexionContext, reflexionContext, credoPhase, addWorkflowItem, workflowItems, chatStage, addWorkspaceBlock, focusType, activeDocumentSection, startDeliverable } = useAmorcer();
   // Enrichir activePhase avec le step CREDO pour que le backend injecte le bon prompt
   const _credoSteps = ["comprendre", "rechercher", "exposer", "demontrer", "objectif"];
   const workspacePhase = activePhase === "discussion" && chatStage < _credoSteps.length
@@ -383,6 +430,8 @@ function V3MessageList() {
 
   // Dernier message bot (pour afficher les options seulement sur le dernier)
   const lastBotId = [...messages].reverse().find(m => m.role === "assistant" && !m.isStreaming)?.id;
+  // Dernier message user (pour cristallisation intelligente)
+  const lastUserMessage = [...messages].reverse().find(m => m.role === "user")?.content || "";
 
   // Détecter si l'user a scrollé vers le haut (désactive l'auto-scroll)
   useEffect(() => {
@@ -419,6 +468,14 @@ function V3MessageList() {
     if (lower.includes("parker") && lower.includes("thread")) { parkThread(); return; }
     if (lower.includes("synthes") || lower.includes("synthét")) {
       sendMessage("Fais une synthèse structurée de notre discussion.", chatTargetBot);
+      return;
+    }
+
+    // Detection livrable DocForge — "Ouvrir l'atelier X"
+    const atelierMatch = opt.match(/(?:ouvrir|activer|lancer)\s+l'atelier\s+(document|tableur|presentation|code|jumelage)/i);
+    if (atelierMatch) {
+      const deliverableType = atelierMatch[1].toLowerCase();
+      startDeliverable(deliverableType);
       return;
     }
 
@@ -803,7 +860,7 @@ function V3MessageList() {
                   dangerouslySetInnerHTML={{ __html: formatMarkdown(msg.content) + (msg.isStreaming ? '<span class="inline-block w-0.5 h-4 bg-current ml-0.5 animate-pulse align-text-bottom"></span>' : '') }} />
                 {/* Cristallise bar — boutons pour ajouter ce contenu dans une section workspace */}
                 {!msg.isStreaming && msg.content && (
-                  <CristalliseBar content={msg.content} botCode={botCode} activePhase={activePhase} addWorkspaceBlock={addWorkspaceBlock} />
+                  <CristalliseBar content={msg.content} botCode={botCode} activePhase={activePhase} addWorkspaceBlock={addWorkspaceBlock} lastUserMessage={lastUserMessage} />
                 )}
                 {/* ═══ Niveau 1 — Options DANS la bulle (pattern InlineOptions) ═══ */}
                 {(isLast || msg.msgType === "consultation") && !msg.isStreaming && msg.options && msg.options.length > 0 && (

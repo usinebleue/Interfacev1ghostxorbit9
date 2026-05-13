@@ -12,7 +12,8 @@
  * / = V3 (défaut), /v2 = ancienne interface.
  */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { FileText } from "lucide-react";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "../components/ui/resizable";
 import { ControlTowerPanel } from "./ControlTowerPanel";
 import { DiscussionWindow } from "./DiscussionWindow";
@@ -112,10 +113,35 @@ export function FrameMasterAmorcer() {
   );
 }
 
+const DELIVERABLE_LABELS: Record<string, string> = {
+  document: "Document", spreadsheet: "Tableur", presentation: "Presentation",
+  code: "Code", jumelage: "Jumelage",
+};
+
 function AmorcerLayout() {
-  const { rightSection, setActivePhase, setRightSection, setReflexionContext } = useAmorcer();
+  const { rightSection, setActivePhase, setRightSection, setReflexionContext, startDeliverable } = useAmorcer();
   const { setLeftCollapsed } = useFrameMaster();
   const isMobile = useIsMobile();
+
+  // --- DocForge: proposition livrable via bandeau ---
+  const [deliverableProposal, setDeliverableProposal] = useState<{ type: string; draftId?: number; titre?: string; sectionsCount?: number; botName?: string } | null>(null);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail || {};
+      if (detail.deliverableType) {
+        setDeliverableProposal({
+          type: detail.deliverableType,
+          draftId: detail.draftLibraryId,
+          titre: detail.draftTitre,
+          sectionsCount: detail.draftSectionsCount,
+          botName: detail.botName,
+        });
+      }
+    };
+    window.addEventListener("bt-start-deliverable", handler);
+    return () => window.removeEventListener("bt-start-deliverable", handler);
+  }, []);
 
   // Écouter les transitions de phase CREDO → Workspace (CustomEvent depuis CanvasActionContext)
   // PROTÉGÉ: ne switch PAS si l'utilisateur est déjà dans un workflow actif
@@ -173,6 +199,33 @@ function AmorcerLayout() {
           {/* ZONE 3 : L'Atelier / Workspace Droit */}
           <ResizablePanel defaultSize={50} minSize={30} maxSize={65}>
             <section className="h-full flex flex-col overflow-hidden relative">
+              {deliverableProposal && (
+                <div className="mx-4 mt-2 mb-1 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-blue-600" />
+                    <span className="text-sm font-medium text-gray-800">
+                      {deliverableProposal.draftId && deliverableProposal.botName
+                        ? `${deliverableProposal.botName} a prepare: ${deliverableProposal.titre || DELIVERABLE_LABELS[deliverableProposal.type] || deliverableProposal.type}, ${deliverableProposal.sectionsCount || "?"} sections`
+                        : `Ouvrir l'atelier ${DELIVERABLE_LABELS[deliverableProposal.type] || deliverableProposal.type} ?`
+                      }
+                    </span>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => { startDeliverable(deliverableProposal.type, deliverableProposal.draftId); setDeliverableProposal(null); }}
+                      className="px-3 py-1 text-xs font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    >
+                      {deliverableProposal.draftId ? "Ouvrir le brouillon" : "Oui, ouvrir"}
+                    </button>
+                    <button
+                      onClick={() => setDeliverableProposal(null)}
+                      className="px-3 py-1 text-xs font-medium text-gray-500 hover:text-gray-700"
+                    >
+                      Plus tard
+                    </button>
+                  </div>
+                </div>
+              )}
               <WorkspacePhasesPanel />
             </section>
           </ResizablePanel>

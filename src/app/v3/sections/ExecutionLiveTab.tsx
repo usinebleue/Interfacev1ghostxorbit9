@@ -10,7 +10,7 @@ import { useState } from "react";
 import {
   Home, Flame, Settings, Target, AlertTriangle,
   TrendingUp, CheckCircle2, Clock, ArrowRight,
-  BarChart3, Zap, ListChecks,
+  BarChart3, Zap, ListChecks, Cpu,
 } from "lucide-react";
 import { cn } from "../../components/ui/utils";
 import { useIsMobile } from "../../components/ui/use-mobile";
@@ -26,6 +26,7 @@ import {
 } from "../data/mock/execution.mock";
 import { useDataSource } from "../data/use-data-source";
 import { DomainBadge } from "../data/source-badge";
+import { AgentPixelGrid } from "./AgentPixelGrid";
 
 // ═══ Helpers: transformer données API → PriorityItem ═══
 
@@ -82,7 +83,7 @@ function apiMissionsToPriorities(missions: any[]): PriorityItem[] {
 // ═══ Types ═══
 
 type LiveFilter = "tout" | "capex" | "opex";
-type LiveSidebarItem = "overview" | "priorites" | "activite";
+type LiveSidebarItem = "overview" | "priorites" | "activite" | "agents";
 
 // ═══ Progress bar — copie ChantierView ═══
 function ProgressMiniPhased({ value, phase }: { value: number; phase?: PhaseKey }) {
@@ -198,6 +199,7 @@ export function ExecutionLiveTab({ botCode }: { botCode: string }) {
             <div className={SF.sectionLabel}>Navigation</div>
             {([
               { key: "overview" as const, label: "Vue d'ensemble", icon: Home, count: null },
+              { key: "agents" as const, label: "Agents en direct", icon: Cpu, count: null },
               { key: "priorites" as const, label: "Priorités", icon: AlertTriangle, count: filteredPriorities.length },
               { key: "activite" as const, label: "Activité récente", icon: Clock, count: MOCK_ACTIVITY.length /* TODO: wire to decision_log */ },
             ]).map(item => (
@@ -241,6 +243,11 @@ export function ExecutionLiveTab({ botCode }: { botCode: string }) {
 
         {/* Contenu principal */}
         <div className="flex-1 min-w-0 space-y-4">
+          {/* Section Agents en direct */}
+          {(sidebarItem === "overview" || sidebarItem === "agents") && (
+            <AgentPixelGrid />
+          )}
+
           {/* Section Priorités */}
           {(sidebarItem === "overview" || sidebarItem === "priorites") && (
             <div>

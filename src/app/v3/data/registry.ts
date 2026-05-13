@@ -148,6 +148,12 @@ export const REGISTRY: Record<string, DomainEntry> = {
     endpoint: "/chantiers",
     status: "live",
   },
+  "agent-pixels": {
+    key: "agent-pixels",
+    label: "Agents en direct",
+    endpoint: "/agent-pixels",
+    status: "live",
+  },
   "orbit9-dashboard": {
     key: "orbit9-dashboard",
     label: "Dashboard Orbit9",

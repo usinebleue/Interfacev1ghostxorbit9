@@ -71,10 +71,14 @@ import {
 
 // ═══ V3 Phase Views ═══
 import { LivePhaseView } from "./phases/LivePhaseView";
-import { LiveReflexionView } from "./phases/LiveReflexionView";
 import { LiveDiscussionView } from "./phases/LiveDiscussionView";
 import { UnifiedPhaseView } from "./phases/UnifiedPhaseView";
 import { DocumentWorkspaceView } from "./phases/DocumentWorkspaceView";
+import { LiveDocForgeLivrable } from "./phases/LiveDocForgeLivrable";
+import { ConceptionRouter } from "./phases/ConceptionRouter";
+import { NotificationCenter } from "./sections/NotificationCenter";
+import { StandingOrdersView } from "./sections/StandingOrdersView";
+import { NotificationBell } from "./core/NotificationBell";
 import { useWorkspaceCapture } from "./hooks/useWorkspaceCapture";
 import { useWorkspaceSync } from "./hooks/useWorkspaceSync";
 import { useLiveKitMeeting } from "./hooks/useLiveKitMeeting";
@@ -162,6 +166,7 @@ export function WorkspacePhasesPanel() {
     setActiveDeliverable,
     deliverableStage,
     startDeliverable,
+    draftLibraryId,
     focusType,
     setFocusType,
     workflowItems,
@@ -173,7 +178,7 @@ export function WorkspacePhasesPanel() {
     workspaceSessionId,
   } = useAmorcer();
 
-  const { sendMessage, newConversation } = useChatContext();
+  const { sendMessage, newConversation, messages } = useChatContext();
   const isMobile = useIsMobile();
 
   // ═══ AUTO-CAPTURE — TOUJOURS actif, pas juste quand LivePhaseView est monté ═══
@@ -271,7 +276,6 @@ export function WorkspacePhasesPanel() {
   // Handler réel — ouvre la vue focus workspace + envoie un vrai message au chat
   const PHASE_PROMPT: Record<string, string> = {
     discussion: "Parlons de",
-    reflexion: "Analyse approfondie :",
     creation: "Conception pour",
     execution: "Plan d'exécution pour",
     retroaction: "Bilan et rétroaction sur",
@@ -343,10 +347,22 @@ export function WorkspacePhasesPanel() {
         const showBlueprintTabs = activeSection === "blueprint";
         const showOrbit9Tabs = activeSection === "orbit9";
         const showExecutionTabs = activeSection === "execution" || (!rightSection && (activePhase === "execution" || activePhase === "retroaction"));
+        // Phase-specific header gradient (when in phase view, not a section)
+        const PHASE_HEADER_BG: Record<string, string> = {
+          discussion: "bg-gradient-to-r from-blue-50 to-white",
+          reflexion: "bg-gradient-to-r from-orange-50 to-white",
+          creation: "bg-gradient-to-r from-purple-50 to-white",
+          execution: "bg-gradient-to-r from-green-50 to-white",
+          retroaction: "bg-gradient-to-r from-green-50 to-white",
+        };
+        const headerBg = (!rightSection && !activeSection && PHASE_HEADER_BG[activePhase])
+          ? PHASE_HEADER_BG[activePhase]
+          : "bg-[#00B4D8]/[0.12]";
         return (
-          <div className={cn("h-12 shrink-0 flex items-center gap-2 border-b border-gray-200 bg-[#00B4D8]/[0.12]", "px-3")}>
+          <div className={cn("h-12 shrink-0 flex items-center gap-2 border-b border-gray-200", headerBg, "px-3")}>
             {!isMobile && <DeptIcon className="h-4 w-4 text-gray-900 stroke-[2.5]" />}
             <span className={cn("font-bold text-gray-900 shrink-0", isMobile ? "text-xs" : "text-sm")}>{titleText}</span>
+            <div className="flex-1" />
             {/* Sous-tabs Blueprint */}
             {showBlueprintTabs && (
               <>
@@ -424,30 +440,8 @@ export function WorkspacePhasesPanel() {
             )}
             {!isMobile && activeSection !== "orbit9" && activePhase === "discussion" && !rightSection && (
               <>
-                {reflexionContext && (
-                  <>
-                    <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
-                    <span className="text-[11px] font-medium text-sky-600">{reflexionContext}</span>
-                  </>
-                )}
-                {/* S2.2.4: GPS breadcrumb — current CREDO step */}
                 <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
                 <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-sky-100 text-sky-700">
-                  {["Comprendre", "Rechercher", "Exposer", "Démontrer", "Objectif"][chatStage] || "Comprendre"}
-                </span>
-              </>
-            )}
-            {!isMobile && activeSection !== "orbit9" && activePhase === "reflexion" && !rightSection && (
-              <>
-                {reflexionContext && (
-                  <>
-                    <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
-                    <span className="text-[11px] font-medium text-orange-600">{reflexionContext}</span>
-                  </>
-                )}
-                {/* S2.2.4: GPS breadcrumb — current CREDO step */}
-                <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
-                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-orange-100 text-orange-700">
                   {["Comprendre", "Rechercher", "Exposer", "Démontrer", "Objectif"][chatStage] || "Comprendre"}
                 </span>
               </>
@@ -458,13 +452,14 @@ export function WorkspacePhasesPanel() {
                 <span className="text-[11px] font-medium text-amber-600">{DELIVERABLE_TITLE[activeDeliverable] || activeDeliverable}</span>
               </>
             )}
-            {!isMobile && activeSection !== "orbit9" && activePhase !== "observation" && activePhase !== "reflexion" && activePhase !== "creation" && activePhase !== "discussion" && !rightSection && (
+            {!isMobile && activeSection !== "orbit9" && activePhase !== "observation" && activePhase !== "creation" && activePhase !== "discussion" && activePhase !== "reflexion" && !rightSection && (
               <>
                 <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
                 <span className={cn("text-[11px] font-medium", pc.text)}>{pc.label}</span>
               </>
             )}
             <div className="flex-1" />
+            <NotificationBell />
             {showBlueprintTabs && blueprintStats && (
               <div className="flex items-center gap-2 shrink-0">
                 <span className="text-[10px] text-gray-500">{blueprintStats.tierLabel}</span>
@@ -477,12 +472,12 @@ export function WorkspacePhasesPanel() {
 
       {/* ═══ BARRE DE PROGRESSION 5 PHASES ═══ */}
       {!rightSection && !isOrbit9 && !isDash && (() => {
-        // Sprint 2A Phase 4: 4 phases (reflexion fusionnée dans discussion)
+        // 4 phases — reflexion integree dans l'etape Rechercher de Discussion
         const WORKFLOW_PHASES: { key: string; label: string }[] = [
           { key: "discussion", label: "Discussion" },
           { key: "creation", label: "Conception" },
-          { key: "execution", label: "Exécution" },
-          { key: "retroaction", label: "Rétroaction" },
+          { key: "execution", label: "Execution" },
+          { key: "retroaction", label: "Retroaction" },
         ];
         const phaseOrder = WORKFLOW_PHASES.map(p => p.key);
         const activeIdx = phaseOrder.indexOf(activePhase);
@@ -554,8 +549,10 @@ export function WorkspacePhasesPanel() {
               {/* ExecutionView rendu via activePhase ci-dessous — plus jamais via rightSection */}
               {rightSection === "bureau-agenda" && <AgendaView botCode={activeBotCode} showHeader onAction={handleWorkAction} />}
               {rightSection === "admin" && <AdminView botCode={activeBotCode} showHeader onAction={handleWorkAction} />}
+              {rightSection === "notification-center" && <NotificationCenter />}
+              {rightSection === "standing-orders" && <StandingOrdersView />}
               {/* V2 Section Adapter — fallback pour sections non-V3 (Fix R7) */}
-              {rightSection && !["cockpit","blueprint","dataroom","playbooks","conferenceai","execution","bureau-agenda","admin"].includes(rightSection) && (() => {
+              {rightSection && !["cockpit","blueprint","dataroom","playbooks","conferenceai","execution","bureau-agenda","admin","notification-center","standing-orders"].includes(rightSection) && (() => {
                 const V2Comp = V2_SECTION_MAP[rightSection];
                 if (V2Comp) return <Suspense fallback={<V2SectionFallback />}><V2Comp /></Suspense>;
                 return null;
@@ -573,12 +570,11 @@ export function WorkspacePhasesPanel() {
           <div className={"max-w-4xl mx-auto px-6 py-4 pb-12"}>
             <VueEnsemble phase={activePhase} chatStage={chatStage} onStartReflexion={startReflexion} onStartSimulation={(type) => startDeliverable(type)} />
           </div>
-        ) : activePhase === "discussion" || activePhase === "reflexion" ? (
-          /* Discussion + Réflexion unifiées — LiveDiscussionView avec workspace dynamique */
+        ) : (activePhase === "discussion" || activePhase === "reflexion") ? (
+          /* Discussion — LiveDiscussionView avec workspace dynamique */
           <LiveDiscussionView
             context={reflexionContext || "Discussion en cours"}
             onPhaseComplete={() => {
-              // Skip reflexion → go direct to conception
               const discussionNotes = workflowItems.filter(w => w.phase === "discussion" || w.phase === "reflexion");
               startConception();
               if (discussionNotes.length > 0) {
@@ -587,31 +583,18 @@ export function WorkspacePhasesPanel() {
               }
             }}
           />
-        ) : activePhase === "creation" && activeDocumentKey ? (
-          /* Conception — Blueprint Atelier dans le workspace (Sprint 5) */
-          <DocumentWorkspaceView
-            documentKey={activeDocumentKey}
-            botCode={activeBotCode}
-            initialSectionId={activeDocumentSection || undefined}
-            context={reflexionContext}
-            onPhaseComplete={() => { setActivePhase("execution"); setRightSection(null); setExecutionTab("live"); }}
-          />
-        ) : activePhase === "creation" && activeDeliverable === "document" ? (
-          <PhaseConceptionDocument stage={Math.max(deliverableStage, 1)} onBack={() => setActiveDeliverable(null)} onStartJumelage={() => startDeliverable("jumelage")} />
-        ) : activePhase === "creation" && activeDeliverable === "spreadsheet" ? (
-          <PhaseConceptionTableur stage={Math.max(deliverableStage, 1)} onBack={() => setActiveDeliverable(null)} />
-        ) : activePhase === "creation" && activeDeliverable === "presentation" ? (
-          <PhaseConceptionPresentation stage={Math.max(deliverableStage, 1)} onBack={() => setActiveDeliverable(null)} />
-        ) : activePhase === "creation" && activeDeliverable === "code" ? (
-          <PhaseConceptionCode stage={Math.max(deliverableStage, 1)} onBack={() => setActiveDeliverable(null)} />
-        ) : activePhase === "creation" && activeDeliverable === "jumelage" ? (
-          <PhaseConceptionJumelage stage={Math.max(deliverableStage, 1)} onBack={() => setActiveDeliverable(null)} />
         ) : activePhase === "creation" ? (
-          /* Conception — 4 étapes auto-capture */
-          <LivePhaseView
-            phaseKey="creation"
-            context={reflexionContext}
+          /* Conception — router unifie (3 chemins: document, livrable, fallback) */
+          <ConceptionRouter
+            activeDocumentKey={activeDocumentKey}
+            activeDocumentSection={activeDocumentSection}
+            activeDeliverable={activeDeliverable}
+            activeBotCode={activeBotCode}
+            reflexionContext={reflexionContext}
+            draftLibraryId={draftLibraryId}
             onPhaseComplete={() => { setActivePhase("execution"); setRightSection(null); setExecutionTab("live"); }}
+            onDeliverableBack={() => setActiveDeliverable(null)}
+            onStartJumelage={activeDeliverable === "document" ? () => startDeliverable("jumelage") : undefined}
           />
         ) : (activePhase === "execution" || activePhase === "retroaction") ? (
           /* Exécution / Rétroaction — PHASE view (rendu via activePhase, jamais rightSection) */
