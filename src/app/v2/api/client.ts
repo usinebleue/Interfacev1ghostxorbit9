@@ -1765,4 +1765,67 @@ export const api = {
   testIntegration(tenantId: number, key: string): Promise<{ ok: boolean; message: string }> {
     return apiFetch(`/tenants/${tenantId}/integrations/${key}/test`, { method: "POST" });
   },
+
+  // ═══════════════════════════════════════
+  // Notifications (D3)
+  // ═══════════════════════════════════════
+
+  getNotifications(lu?: boolean): Promise<{ notifications: any[] }> {
+    const params = lu !== undefined ? `?lu=${lu}` : "";
+    return apiFetch(`/notifications${params}`);
+  },
+  markNotificationRead(notifId: number): Promise<{ ok: boolean }> {
+    return apiFetch(`/notifications/${notifId}/read`, { method: "POST" });
+  },
+  markAllNotificationsRead(): Promise<{ count: number }> {
+    return apiFetch("/notifications/read-all", { method: "POST" });
+  },
+  getNotificationCount(): Promise<{ count: number }> {
+    return apiFetch("/notifications/count");
+  },
+
+  // ═══════════════════════════════════════
+  // Standing Orders (D3)
+  // ═══════════════════════════════════════
+
+  getStandingOrders(): Promise<{ orders: any[] }> {
+    return apiFetch("/standing-orders");
+  },
+  createStandingOrder(data: {
+    bot_code: string;
+    type_ordre: string;
+    config?: Record<string, unknown>;
+    schedule?: Record<string, unknown>;
+  }): Promise<{ id: number }> {
+    return apiFetch("/standing-orders", { method: "POST", body: JSON.stringify(data) });
+  },
+  getStandingOrder(orderId: number): Promise<any> {
+    return apiFetch(`/standing-orders/${orderId}`);
+  },
+  updateStandingOrder(orderId: number, data: Record<string, unknown>): Promise<{ ok: boolean }> {
+    return apiFetch(`/standing-orders/${orderId}`, { method: "PUT", body: JSON.stringify(data) });
+  },
+  pauseStandingOrder(orderId: number): Promise<{ ok: boolean }> {
+    return apiFetch(`/standing-orders/${orderId}/pause`, { method: "POST" });
+  },
+  resumeStandingOrder(orderId: number): Promise<{ ok: boolean }> {
+    return apiFetch(`/standing-orders/${orderId}/resume`, { method: "POST" });
+  },
+  deleteStandingOrder(orderId: number): Promise<{ ok: boolean }> {
+    return apiFetch(`/standing-orders/${orderId}`, { method: "DELETE" });
+  },
+  pauseAllStandingOrders(): Promise<{ count: number }> {
+    return apiFetch("/standing-orders/pause-all", { method: "POST" });
+  },
+
+  // ═══════════════════════════════════════
+  // DocForge Library approve/reject (D2)
+  // ═══════════════════════════════════════
+
+  docForgeLibraryApprove(libraryId: number): Promise<{ ok: boolean }> {
+    return apiFetch(`/docforge/libraries/${libraryId}/approve`, { method: "POST" });
+  },
+  docForgeLibraryReject(libraryId: number, feedback: string = ""): Promise<{ ok: boolean }> {
+    return apiFetch(`/docforge/libraries/${libraryId}/reject`, { method: "POST", body: JSON.stringify({ feedback }) });
+  },
 };

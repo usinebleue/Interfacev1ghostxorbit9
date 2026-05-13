@@ -877,9 +877,9 @@ export function useChat() {
                 }
                 canvasActionsCallbackRef.current(data.canvas_actions);
               } else if (data.canvas_actions && data.canvas_actions.length > 0 && canvasActionsCallbackRef.current) {
-                // Laisser passer phase_transition même en chat, bloquer le reste si isInChat
+                // Laisser passer phase_transition + start_deliverable même en chat, bloquer le reste si isInChat
                 const filteredActions = isInChat
-                  ? data.canvas_actions.filter((a: any) => a.type === "phase_transition")
+                  ? data.canvas_actions.filter((a: any) => a.type === "phase_transition" || a.type === "start_deliverable")
                   : data.canvas_actions;
                 if (filteredActions.length > 0) {
                   canvasActionsCallbackRef.current(filteredActions);
@@ -3143,4 +3143,145 @@ export function useDocForgeLibrary(libraryId: number | null) {
   }, [libraryId]);
 
   return { library, blocks, facts, loading, refresh, approveBlock, rejectBlock, resolveFact, process, ingestText, ingestDrive };
+}
+
+// ═══════════════════════════════════════
+// D2 — Approvals
+// ═══════════════════════════════════════
+
+export function useApprovals(status: string = "pending") {
+  const [approvals, setApprovals] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await api.getApprovals(status);
+      setApprovals(res.approvals || []);
+    } catch (err) {
+      console.error("useApprovals:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [status]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  const approve = useCallback(async (approvalId: number, note: string = "") => {
+    await api.approveAction(approvalId, note);
+    setApprovals((prev) => prev.filter((a) => a.id !== approvalId));
+  }, []);
+
+  const reject = useCallback(async (approvalId: number, note: string = "") => {
+    await api.rejectAction(approvalId, note);
+    setApprovals((prev) => prev.filter((a) => a.id !== approvalId));
+  }, []);
+
+  return { approvals, loading, refresh, approve, reject };
+}
+
+// ═══════════════════════════════════════
+// D3 — Notifications
+// ═══════════════════════════════════════
+
+export function useNotifications() {
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [res, countRes] = await Promise.all([
+        api.getNotifications(),
+        api.getNotificationCount(),
+      ]);
+      setNotifications(res.notifications || []);
+      setUnreadCount(countRes.count || 0);
+    } catch (err) {
+      console.error("useNotifications:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    refresh();
+    const interval = setInterval(refresh, 30000);
+    return () => clearInterval(interval);
+  }, [refresh]);
+
+  const markRead = useCallback(async (notifId: number) => {
+    await api.markNotificationRead(notifId);
+    setNotifications((prev) => prev.map((n) => n.id === notifId ? { ...n, lu: true } : n));
+    setUnreadCount((prev) => Math.max(0, prev - 1));
+  }, []);
+
+  const markAllRead = useCallback(async () => {
+    await api.markAllNotificationsRead();
+    setNotifications((prev) => prev.map((n) => ({ ...n, lu: true })));
+    setUnreadCount(0);
+  }, []);
+
+  return { notifications, unreadCount, loading, refresh, markRead, markAllRead };
+}
+
+// ═══════════════════════════════════════
+// D3 — Standing Orders
+// ═══════════════════════════════════════
+
+export function useStandingOrders() {
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await api.getStandingOrders();
+      setOrders(res.orders || []);
+    } catch (err) {
+      console.error("useStandingOrders:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  const create = useCallback(async (data: {
+    bot_code: string;
+    type_ordre: string;
+    config?: Record<string, unknown>;
+    schedule?: Record<string, unknown>;
+  }) => {
+    const res = await api.createStandingOrder(data);
+    refresh();
+    return res.id;
+  }, [refresh]);
+
+  const pause = useCallback(async (orderId: number) => {
+    await api.pauseStandingOrder(orderId);
+    setOrders((prev) => prev.map((o) => o.id === orderId ? { ...o, status: "pause" } : o));
+  }, []);
+
+  const resume = useCallback(async (orderId: number) => {
+    await api.resumeStandingOrder(orderId);
+    setOrders((prev) => prev.map((o) => o.id === orderId ? { ...o, status: "actif" } : o));
+  }, []);
+
+  const remove = useCallback(async (orderId: number) => {
+    await api.deleteStandingOrder(orderId);
+    setOrders((prev) => prev.filter((o) => o.id !== orderId));
+  }, []);
+
+  const pauseAll = useCallback(async () => {
+    await api.pauseAllStandingOrders();
+    setOrders((prev) => prev.map((o) => ({ ...o, status: "pause" })));
+  }, []);
+
+  return { orders, loading, refresh, create, pause, resume, remove, pauseAll };
 }

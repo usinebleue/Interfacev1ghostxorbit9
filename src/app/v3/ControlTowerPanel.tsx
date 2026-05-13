@@ -12,7 +12,7 @@ import {
   Gauge, Video, Calendar, Layers, Database, BookOpen, Atom,
   Bot, BrainCog, Network, ArrowRight, ArrowLeft, Zap, TowerControl,
   Home, ChevronRight, Users, MessageSquare,
-  Handshake, Shield, Rocket, Activity, UserCircle,
+  Handshake, Shield, Rocket, Activity, UserCircle, OctagonX,
   User, Settings, LogOut, SlidersHorizontal,
   BookOpenCheck, Play, Map as MapIcon, CreditCard, Building2,
 } from "lucide-react";
@@ -25,7 +25,7 @@ import {
 import { useAmorcer } from "./AmorcerContext";
 import { useFrameMaster } from "../v2/context/FrameMasterContext";
 import { useTenant } from "../v2/context/TenantContext";
-import { useBots } from "../v2/api/hooks";
+import { useBots, useStandingOrders } from "../v2/api/hooks";
 import type { BotInfo } from "../v2/api/types";
 
 import {
@@ -246,6 +246,49 @@ function CelluleCard({ cellule, onClick }: { cellule: O9Cellule; onClick: () => 
         </div>
       </div>
     </div>
+  );
+}
+
+// ═══ KILL SWITCH — Stopper toute autonomie ═══
+
+function KillSwitchButton({ collapsed }: { collapsed: boolean }) {
+  const { orders, pauseAll } = useStandingOrders();
+  const [confirming, setConfirming] = useState(false);
+  const activeCount = orders.filter((o: any) => o.status === "actif").length;
+
+  if (activeCount === 0) return null;
+
+  const handleClick = async () => {
+    if (!confirming) {
+      setConfirming(true);
+      setTimeout(() => setConfirming(false), 3000);
+      return;
+    }
+    await pauseAll();
+    setConfirming(false);
+  };
+
+  return (
+    <button
+      onClick={handleClick}
+      title={collapsed ? "Stop autonomie" : undefined}
+      className={cn(
+        "rounded-lg border transition-all cursor-pointer",
+        collapsed
+          ? "w-9 h-9 flex items-center justify-center"
+          : "relative flex items-center gap-1.5 px-2 py-1.5",
+        confirming
+          ? "bg-red-100 border-red-400 text-red-700 animate-pulse"
+          : "bg-red-50 hover:bg-red-100 border-red-200 text-red-600",
+      )}
+    >
+      <OctagonX className="h-3.5 w-3.5 shrink-0" />
+      {!collapsed && (
+        <span className="text-[9px] font-medium leading-tight">
+          {confirming ? "Confirmer STOP" : `Stop (${activeCount})`}
+        </span>
+      )}
+    </button>
   );
 }
 
@@ -602,6 +645,9 @@ function TabBureau({ collapsed, activeBotCode, setActiveBotCode, activeDeptItem,
             {!collapsed && <span className="text-[9px] font-medium leading-tight">Admin</span>}
           </button>
         )}
+
+        {/* Kill Switch — Stopper toute autonomie */}
+        <KillSwitchButton collapsed={collapsed} />
       </div>
 
       {/* Tabs Brain Team + Mes Cellules — icônes seulement en collapsed */}
