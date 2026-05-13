@@ -613,16 +613,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
             <MultiPhaseAccordion workspaceBlocks={workspaceBlocks} credoLabels={CREDO_LABELS} />
           )}
 
-          {/* Bouton transition vers Conception — pattern FocusReflexionView L348-354 */}
-          {chatStage >= 3 && config.nextPhase && onPhaseComplete && (
-            <button
-              onClick={onPhaseComplete}
-              className="w-full mt-4 py-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-bold hover:bg-amber-100 hover:shadow-sm transition-all cursor-pointer flex items-center justify-center gap-2"
-            >
-              <ArrowRight className="h-4 w-4" />
-              {config.nextPhaseLabel}
-            </button>
-          )}
+          {/* Phase transitions via ControlTowerPanel sidebar uniquement — bouton retire (Carl feedback 13 mai) */}
          </div>{/* close fade-in wrapper */}
         </div>
       </div>
