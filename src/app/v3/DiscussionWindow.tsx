@@ -949,7 +949,7 @@ function V3MessageList() {
                 {!msg.isStreaming && msg.content && (
                   <CristalliseBar content={msg.content} botCode={botCode} activePhase={activePhase} addWorkspaceBlock={addWorkspaceBlock} lastUserMessage={lastUserMessage} />
                 )}
-                {/* ═══ Niveau 1 — Options DANS la bulle (pattern InlineOptions) ═══ */}
+                {/* ═══ Niveau 1 — Options DANS la bulle (pattern InlineOptions, fade-in staggere) ═══ */}
                 {(isLast || msg.msgType === "consultation") && !msg.isStreaming && msg.options && msg.options.length > 0 && (() => {
                   // Filtrer les options "Ouvrir l'atelier" — la navigation se fait via les tabs
                   const filteredOpts = msg.options.filter(opt => !/ouvrir\s+l'atelier/i.test(opt));
@@ -970,6 +970,7 @@ function V3MessageList() {
                               handleOption(opt);
                             }
                           }}
+                          style={{ animation: `fadeSlideUp 0.3s ease-out ${i * 0.08}s both` }}
                           className={cn(
                             "w-full text-left border border-gray-200 rounded-lg px-3 py-2 transition-all",
                             "border-l-[3px]",

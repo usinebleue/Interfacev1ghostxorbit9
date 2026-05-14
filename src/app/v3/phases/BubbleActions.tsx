@@ -31,6 +31,7 @@ export function BubbleActions({ onAction, onCristallise, backendOptions }: Bubbl
             <button
               key={i}
               onClick={() => onAction(opt)}
+              style={{ animation: `fadeSlideUp 0.3s ease-out ${i * 0.08}s both` }}
               className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] text-sky-700 border border-sky-200 bg-sky-50 hover:bg-sky-100 hover:border-sky-300 cursor-pointer transition-all font-medium max-w-[180px] text-left"
             >
               <ArrowRight className="h-2.5 w-2.5 flex-shrink-0" />

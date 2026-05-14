@@ -1,2 +1,8 @@
 @import './tailwind.css';
 @import './theme.css';
+
+/* S109 — Entrance animations for options and workspace blocks */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
