@@ -160,7 +160,7 @@ function BlockWrapper({ block, onAction, label, labelColor, children }: BlockRen
         )}>
           {Math.round(block.confidence * 100)}%
         </span>
-        <h4 className="text-xs font-bold text-gray-900 flex-1 truncate">{block.title}</h4>
+        <h4 className="text-sm font-bold text-gray-900 flex-1 truncate">{block.title}</h4>
         {/* Sprint 2A: Hover "Modifier" flottant (pattern WorkspaceSection.tsx L142-156) */}
         <button
           onClick={() => onAction("edit", block.id)}

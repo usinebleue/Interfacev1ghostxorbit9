@@ -81,6 +81,9 @@ function formatMarkdown(text: string): string {
   const lines = html.split("\n");
   const result: string[] = [];
   let listTag: "ul" | "ol" | null = null;  // Track open list type
+  let inCodeBlock = false;
+  let codeBlockLang = "";
+  let codeBlockLines: string[] = [];
 
   const closeList = () => {
     if (listTag) { result.push(`</${listTag}>`); listTag = null; }
@@ -88,6 +91,30 @@ function formatMarkdown(text: string): string {
 
   for (let i = 0; i < lines.length; i++) {
     let line = lines[i];
+
+    // Code blocks: ``` or ```language
+    if (line.trim().startsWith("```")) {
+      if (!inCodeBlock) {
+        closeList();
+        inCodeBlock = true;
+        codeBlockLang = line.trim().replace(/^```/, "").trim();
+        codeBlockLines = [];
+        continue;
+      } else {
+        // Closing code block
+        inCodeBlock = false;
+        const langLabel = codeBlockLang ? `<div class="text-[10px] text-gray-400 mb-1 font-mono">${codeBlockLang}</div>` : "";
+        result.push(`<div class="my-2 rounded-lg bg-gray-900 text-gray-100 p-3"><pre class="text-xs font-mono whitespace-pre-wrap break-all leading-relaxed">${langLabel}${codeBlockLines.join("\n")}</pre></div>`);
+        codeBlockLines = [];
+        codeBlockLang = "";
+        continue;
+      }
+    }
+
+    if (inCodeBlock) {
+      codeBlockLines.push(line);
+      continue;
+    }
 
     // Horizontal rules: --- ━━━ ═══
     if (/^[━─═\-]{3,}$/.test(line.trim())) {
@@ -159,6 +186,11 @@ function formatMarkdown(text: string): string {
   }
 
   closeList();
+  // Flush any unclosed code block (e.g. during streaming)
+  if (inCodeBlock && codeBlockLines.length > 0) {
+    const langLabel = codeBlockLang ? `<div class="text-[10px] text-gray-400 mb-1 font-mono">${codeBlockLang}</div>` : "";
+    result.push(`<div class="my-2 rounded-lg bg-gray-900 text-gray-100 p-3"><pre class="text-xs font-mono whitespace-pre-wrap break-all leading-relaxed">${langLabel}${codeBlockLines.join("\n")}</pre></div>`);
+  }
   return result.join("\n");
 }
 
@@ -574,7 +606,7 @@ function V3MessageList() {
           execution: "Plan d'exécution pour",
           retroaction: "Bilan et rétroaction sur",
         };
-        setTimeout(() => sendMessage(`${prompts[targetPhase]} ${context}${notesContext}`, chatTargetBot, undefined, undefined, { workspacePhase: targetPhase }), 80);
+        setTimeout(() => sendMessage(`${prompts[targetPhase]} ${context}${notesContext}`, chatTargetBot, undefined, { workspacePhase: targetPhase }), 80);
         return;
       }
     }
@@ -600,7 +632,7 @@ function V3MessageList() {
         setReflexionContext(topic);
         setRightSection(null);
       }
-      sendMessage(techniquePrompt + topic, chatTargetBot, undefined, undefined, { workspacePhase });
+      sendMessage(techniquePrompt + topic, chatTargetBot, undefined, { workspacePhase });
       return;
     }
 
@@ -624,7 +656,7 @@ function V3MessageList() {
     if (activeRoster.length > 1) {
       sendMultiPerspective(opt, activeRoster, undefined, { primaryAgent: chatTargetBot, workspacePhase });
     } else {
-      sendMessage(opt, chatTargetBot, undefined, undefined, { workspacePhase });
+      sendMessage(opt, chatTargetBot, undefined, { workspacePhase });
     }
   }, [isTyping, sendMessage, sendMultiPerspective, chatTargetBot, activeBotCode, activeRoster, parkThread, setActivePhase, setRightSection, setReflexionContext, reflexionContext, activePhase, workspacePhase, messages, activeDocumentSection, addWorkspaceBlock, workflowItems]);
 
@@ -740,7 +772,7 @@ function V3MessageList() {
                 return (
                   <button
                     key={i}
-                    onClick={() => sendMessage(opt, chatTargetBot, undefined, undefined, { msgType: msgTypes[i] || "fusionner" } as any)}
+                    onClick={() => sendMessage(opt, chatTargetBot, undefined, { msgType: msgTypes[i] || "fusionner", workspacePhase } as any)}
                     className="px-3 py-1.5 rounded-full text-xs font-medium bg-gray-50 border border-gray-200 hover:bg-gray-100 hover:border-gray-300 transition-colors text-gray-600 hover:text-gray-800"
                   >
                     {opt}
@@ -812,7 +844,7 @@ function V3MessageList() {
                     const msgTypes = ["fusionner", "challenge", "plan_action"] as const;
                     return (
                       <button key={i}
-                        onClick={() => sendMessage(label, msg.agent || chatTargetBot, undefined, undefined, { msgType: msgTypes[i] || "fusionner" } as any)}
+                        onClick={() => sendMessage(label, msg.agent || chatTargetBot, undefined, { msgType: msgTypes[i] || "fusionner", workspacePhase } as any)}
                         className="px-2.5 py-1 rounded-full text-[10px] font-medium bg-gray-50 border border-gray-200 hover:bg-gray-100 hover:border-gray-300 transition-colors text-gray-500 hover:text-gray-700 cursor-pointer">
                         {label}
                       </button>
@@ -913,9 +945,13 @@ function V3MessageList() {
                   <CristalliseBar content={msg.content} botCode={botCode} activePhase={activePhase} addWorkspaceBlock={addWorkspaceBlock} lastUserMessage={lastUserMessage} />
                 )}
                 {/* ═══ Niveau 1 — Options DANS la bulle (pattern InlineOptions) ═══ */}
-                {(isLast || msg.msgType === "consultation") && !msg.isStreaming && msg.options && msg.options.length > 0 && (
+                {(isLast || msg.msgType === "consultation") && !msg.isStreaming && msg.options && msg.options.length > 0 && (() => {
+                  // Filtrer les options "Ouvrir l'atelier" — la navigation se fait via les tabs
+                  const filteredOpts = msg.options.filter(opt => !/ouvrir\s+l'atelier/i.test(opt));
+                  if (filteredOpts.length === 0) return null;
+                  return (
                   <div className="mt-3 space-y-1.5">
-                    {msg.options.map((opt, i) => {
+                    {filteredOpts.map((opt, i) => {
                       const borderColors = ["border-l-blue-500", "border-l-amber-500", "border-l-green-500", "border-l-red-500"];
                       const hoverBgs = ["hover:bg-blue-50", "hover:bg-amber-50", "hover:bg-green-50", "hover:bg-red-50"];
                       return (
@@ -924,7 +960,7 @@ function V3MessageList() {
                           onClick={() => {
                             // S102 — Consultation: router vers CE bot seulement (pas multi-perspective)
                             if (msg.msgType === "consultation" && msg.agent && activeRoster.length > 1) {
-                              sendMessage(opt, msg.agent, undefined, undefined, { workspacePhase });
+                              sendMessage(opt, msg.agent, undefined, { workspacePhase });
                             } else {
                               handleOption(opt);
                             }
@@ -946,7 +982,8 @@ function V3MessageList() {
                       );
                     })}
                   </div>
-                )}
+                  );
+                })()}
               </div>
               {/* ═══ Niveau 2 — Actions structurelles SOUS la bulle (phase-gatees) ═══ */}
               {/* S102-B: masquer en multi-bot (les options inline de la bulle consolidee suffisent) */}
@@ -964,7 +1001,7 @@ function V3MessageList() {
                     chatStage={chatStage}
                     messageContent={msg.content}
                     backendOptions={msg.options}
-                    onAction={(prompt) => sendMessage(prompt, msg.agent || chatTargetBot, undefined, undefined, { workspacePhase })}
+                    onAction={(prompt) => sendMessage(prompt, msg.agent || chatTargetBot, undefined, { workspacePhase })}
                     onCristallise={() => {
                       const CREDO_SECTIONS = ["comprendre", "rechercher", "exposer", "demontrer", "objectif"];
                       const credoSection = CREDO_SECTIONS[chatStage] || "comprendre";
@@ -1347,7 +1384,7 @@ export function DiscussionWindow() {
             <DeptWelcomeScreen
               botCode={activeBotCode}
               onAction={(text, phase) => {
-                sendMessage(text, chatTargetBot, undefined, undefined, { workspacePhase: phase || "discussion" });
+                sendMessage(text, chatTargetBot, undefined, { workspacePhase: phase || "discussion" });
                 setReflexionContext(text.substring(0, 80));
                 setFocusType("chantier");
                 setRightSection(null);
@@ -1678,21 +1715,24 @@ function ChatBoxV3() {
     const text = inputText.trim();
     if (!text) return;
     setInputText("");
-    // Multi-bot: si 2+ bots dans le roster, consultation multi-perspectives
-    if (activeRoster.length > 1) {
-      sendMultiPerspective(text, activeRoster, undefined, { primaryAgent: chatTargetBot, workspacePhase });
-    } else {
-      sendMessage(text, chatTargetBot, undefined, undefined, { workspacePhase });
-    }
-    textareaRef.current?.focus();
 
-    // Si aucun contexte de travail actif → entrer en Discussion (pas de détection de mots-clés,
-    // juste: "l'utilisateur a commencé à parler = on entre en Discussion")
+    // FIX Lacune 1: Entrer en Discussion AVANT le sendMessage pour que workspacePhase
+    // soit "discussion_comprendre" des le premier message (au lieu de "observation")
+    let effectivePhase = workspacePhase;
     if (!reflexionContext) {
       setReflexionContext(text.substring(0, 80));
       setActivePhase("discussion" as any);
       setRightSection(null);
+      effectivePhase = "discussion_comprendre";
     }
+
+    // Multi-bot: si 2+ bots dans le roster, consultation multi-perspectives
+    if (activeRoster.length > 1) {
+      sendMultiPerspective(text, activeRoster, undefined, { primaryAgent: chatTargetBot, workspacePhase: effectivePhase });
+    } else {
+      sendMessage(text, chatTargetBot, undefined, { workspacePhase: effectivePhase });
+    }
+    textareaRef.current?.focus();
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {

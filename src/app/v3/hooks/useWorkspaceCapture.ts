@@ -6,7 +6,7 @@
  * Le résumé = décision de l'user + insight clé du bot (PAS le dump complet).
  * Les résumés s'ACCUMULENT dans chaque section CREDO (effet entonnoir).
  *
- * AUTRES PHASES — Capture complète du contenu (réflexion, conception, etc.)
+ * AUTRES PHASES — Résumé intelligent (détection type + structured_data + résumé, même pipeline que discussion)
  *
  * STREAMING-SAFE: Ne capture que les messages avec isStreaming !== true.
  * PENDINGCAPTURE: Quand pendingCapture est set, capture ciblée.
@@ -301,7 +301,7 @@ function getSmartSectionId(
 }
 
 export function useWorkspaceCapture() {
-  const { messages } = useChatContext();
+  const { messages, lastCREDOPhase } = useChatContext();
   const {
     activePhase,
     pendingCapture,
@@ -432,22 +432,42 @@ export function useWorkspaceCapture() {
                   editCristallise(sectionId, existing + "\n\n" + summary);
                 }
               } else {
-                // ═══ CONTENU COMPLET — autres phases ═══
-                const attributed = (msg as any).branchLabel
-                  ? `**${(msg as any).branchLabel}**\n${msg.content}`
-                  : msg.content;
-                addWorkspaceBlock({
-                  id: `blk-${Date.now()}`,
-                  type: "libre",
-                  title: extractTitle(msg.content),
-                  summary: attributed,
-                  credo_step: getCurrentCredoStep(chatStage),
-                  confidence: 0.8,
-                  source,
-                  sourceType,
-                  sectionId,
-                  timestamp: Date.now(),
-                });
+                // ═══ RÉSUMÉ INTELLIGENT — autres phases (conception, exécution, etc.) ═══
+                // Même pipeline que discussion fallback: détection type + extraction structured_data + résumé
+                const wsBlock = (msg as any).workspace_block as Partial<WorkspaceBlock> | undefined;
+                if (wsBlock && wsBlock.type && wsBlock.title) {
+                  // Backend a généré un workspace_block structuré
+                  addWorkspaceBlock({
+                    id: wsBlock.id || `blk-${Date.now()}`,
+                    type: wsBlock.type as WorkspaceBlockType,
+                    title: wsBlock.title,
+                    summary: wsBlock.summary || msg.content.substring(0, 300),
+                    structured_data: wsBlock.structured_data,
+                    credo_step: getCurrentCredoStep(chatStage),
+                    confidence: wsBlock.confidence || 0.8,
+                    source,
+                    sourceType,
+                    sectionId,
+                    timestamp: Date.now(),
+                  });
+                } else {
+                  const detectedType = detectBlockTypeFrontend(msg.content);
+                  const structuredData = extractStructuredDataFrontend(msg.content, detectedType);
+                  const lastUserMsg = [...messages].reverse().find((m: any) => m.role === "user" && m.content);
+                  addWorkspaceBlock({
+                    id: `blk-${Date.now()}`,
+                    type: detectedType,
+                    title: extractTitle(msg.content),
+                    summary: summarizeForWorkspace(lastUserMsg?.content || "Conception", msg.content),
+                    structured_data: structuredData,
+                    credo_step: getCurrentCredoStep(chatStage),
+                    confidence: 0.6,
+                    source,
+                    sourceType,
+                    sectionId,
+                    timestamp: Date.now(),
+                  });
+                }
               }
             }
             if (pendingCapture) {
@@ -667,22 +687,41 @@ export function useWorkspaceCapture() {
             editCristallise(sectionId, existing + "\n\n" + enrichedSummary);
           }
         } else {
-          // ═══ CONTENU COMPLET — autres phases ═══
-          const attributed = (msg as any).branchLabel
-            ? `**${(msg as any).branchLabel}**\n${msg.content}`
-            : msg.content;
-          addWorkspaceBlock({
-            id: `blk-${Date.now()}`,
-            type: "libre",
-            title: extractTitle(msg.content),
-            summary: attributed,
-            credo_step: getCurrentCredoStep(chatStage),
-            confidence: 0.8,
-            source,
-            sourceType,
-            sectionId,
-            timestamp: Date.now(),
-          });
+          // ═══ RÉSUMÉ INTELLIGENT — autres phases (conception, exécution, etc.) ═══
+          const wsBlock = (msg as any).workspace_block as Partial<WorkspaceBlock> | undefined;
+          if (wsBlock && wsBlock.type && wsBlock.title) {
+            // Backend a généré un workspace_block structuré
+            addWorkspaceBlock({
+              id: wsBlock.id || `blk-${Date.now()}`,
+              type: wsBlock.type as WorkspaceBlockType,
+              title: wsBlock.title,
+              summary: wsBlock.summary || msg.content.substring(0, 300),
+              structured_data: wsBlock.structured_data,
+              credo_step: getCurrentCredoStep(chatStage),
+              confidence: wsBlock.confidence || 0.8,
+              source,
+              sourceType,
+              sectionId,
+              timestamp: Date.now(),
+            });
+          } else {
+            const detectedType = detectBlockTypeFrontend(msg.content);
+            const extractedData = extractStructuredDataFrontend(msg.content, detectedType);
+            const lastUserMsg2 = [...messages].reverse().find((m: any) => m.role === "user" && m.content);
+            addWorkspaceBlock({
+              id: `blk-${Date.now()}`,
+              type: detectedType,
+              title: extractTitle(msg.content),
+              summary: summarizeForWorkspace(lastUserMsg2?.content || "Conception", msg.content),
+              structured_data: extractedData,
+              credo_step: getCurrentCredoStep(chatStage),
+              confidence: 0.6,
+              source,
+              sourceType,
+              sectionId,
+              timestamp: Date.now(),
+            });
+          }
         }
       }
 
@@ -698,14 +737,30 @@ export function useWorkspaceCapture() {
           if (sugIdx >= 0 && sugIdx === chatStage + 1) {
             setChatStage(sugIdx);
           } else {
-            const botCount = messages.filter((m: any) => m.role === "assistant" && (m as any).isStreaming !== true).length;
-            const targetStage = Math.min(4, Math.floor(botCount / 2));
-            if (targetStage > chatStage) setChatStage(targetStage);
+            // FIX Lacune 2: Sync avec backend phase_credo au lieu de botCount/2
+            const CREDO_TO_STAGE: Record<string, number> = { C: 0, R: 1, E: 2, D: 3, O: 4 };
+            if (lastCREDOPhase && CREDO_TO_STAGE[lastCREDOPhase] !== undefined) {
+              const target = CREDO_TO_STAGE[lastCREDOPhase];
+              if (target > chatStage) setChatStage(target);
+            } else {
+              // Fallback conservateur: botCount/3 (aligne sur backend seuils 3,6,9)
+              const botCount = messages.filter((m: any) => m.role === "assistant" && (m as any).isStreaming !== true).length;
+              const targetStage = Math.min(4, Math.floor(botCount / 3));
+              if (targetStage > chatStage) setChatStage(targetStage);
+            }
           }
         } else {
-          const botCount = messages.filter((m: any) => m.role === "assistant" && (m as any).isStreaming !== true).length;
-          const targetStage = Math.min(4, Math.floor(botCount / 2));
-          if (targetStage > chatStage) setChatStage(targetStage);
+          // FIX Lacune 2: Sync avec backend phase_credo au lieu de botCount/2
+          const CREDO_TO_STAGE: Record<string, number> = { C: 0, R: 1, E: 2, D: 3, O: 4 };
+          if (lastCREDOPhase && CREDO_TO_STAGE[lastCREDOPhase] !== undefined) {
+            const target = CREDO_TO_STAGE[lastCREDOPhase];
+            if (target > chatStage) setChatStage(target);
+          } else {
+            // Fallback conservateur: botCount/3 (aligne sur backend seuils 3,6,9)
+            const botCount = messages.filter((m: any) => m.role === "assistant" && (m as any).isStreaming !== true).length;
+            const targetStage = Math.min(4, Math.floor(botCount / 3));
+            if (targetStage > chatStage) setChatStage(targetStage);
+          }
         }
       } else {
         setChatStage((s: number) => s + 1);
