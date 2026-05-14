@@ -623,6 +623,8 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const startDeliverable = useCallback((deliverable: string, draftId?: number) => {
+    setActivePhase("creation");
+    setRightSection(null);
     setActiveDeliverable(deliverable);
     setDeliverableStage(0);
     setTyped(false);
