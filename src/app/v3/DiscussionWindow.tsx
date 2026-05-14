@@ -1342,7 +1342,7 @@ export function DiscussionWindow() {
   // Évite d'avoir une phase orpheline sans messages
   // GUARD: ne PAS reset pendant un meeting actif (la discussion est vide au début, le transcript arrive après)
   useEffect(() => {
-    if (isEmpty && activePhase && !dwActiveMeeting && !["observation", "attention", "moderation"].includes(activePhase)) {
+    if (isEmpty && activePhase && !dwActiveMeeting && !["observation", "attention", "moderation", "execution", "retroaction"].includes(activePhase)) {
       setActivePhase("observation" as PhaseKey);
       setReflexionContext(null);
       setRightSection("cockpit");

@@ -11,8 +11,16 @@ import { cn } from "../../components/ui/utils";
 import { BOT_AVATAR_MAP, BOT_DISPLAY } from "../sections/shared/dept-data";
 
 const API_BASE = "/api/v1";
-const API_KEY = "dev-key-brain-2024";
-const headers = { "x-api-key": API_KEY, "Content-Type": "application/json" };
+const API_KEY = import.meta.env.VITE_API_KEY || "missing-key";
+
+function notifHeaders(): Record<string, string> {
+  const h: Record<string, string> = { "X-API-Key": API_KEY, "Content-Type": "application/json" };
+  try {
+    const jwt = localStorage.getItem("ghostx-jwt");
+    if (jwt) h["Authorization"] = `Bearer ${jwt}`;
+  } catch { /* noop */ }
+  return h;
+}
 
 interface NotifPreview {
   id: number;
@@ -32,14 +40,14 @@ export function NotificationBell() {
 
   const refreshCount = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/notifications/count`, { headers });
+      const res = await fetch(`${API_BASE}/notifications/count`, { headers: notifHeaders() });
       if (res.ok) { const d = await res.json(); setCount(d.count || 0); }
     } catch { /* silent */ }
   }, []);
 
   const loadNotifs = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/notifications?limit=8`, { headers });
+      const res = await fetch(`${API_BASE}/notifications?limit=8`, { headers: notifHeaders() });
       if (res.ok) { const d = await res.json(); setNotifs(d.notifications || []); }
     } catch { /* silent */ }
   }, []);
@@ -67,13 +75,13 @@ export function NotificationBell() {
   }, [open]);
 
   const markRead = async (id: number) => {
-    await fetch(`${API_BASE}/notifications/${id}/read`, { method: "POST", headers });
+    await fetch(`${API_BASE}/notifications/${id}/read`, { method: "POST", headers: notifHeaders() });
     refreshCount();
     loadNotifs();
   };
 
   const markAllRead = async () => {
-    await fetch(`${API_BASE}/notifications/read-all`, { method: "POST", headers });
+    await fetch(`${API_BASE}/notifications/read-all`, { method: "POST", headers: notifHeaders() });
     setCount(0);
     loadNotifs();
   };

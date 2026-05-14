@@ -215,7 +215,13 @@ const AmorcerCtx = createContext<AmorcerState | null>(null);
 export function AmorcerProvider({ children }: { children: ReactNode }) {
   const [activePhase, setActivePhaseRaw] = useState<PhaseKey>(() => {
     const stored = lsGet<string>("activePhase", "observation");
-    // Never restore execution/retroaction — always entered via explicit workflow transition
+    // URL-based: allow direct navigation to /ceo/execution/*
+    const urlSection = parseURL().section;
+    if (urlSection === "execution") {
+      lsSet("activePhase", "execution");
+      return "execution" as PhaseKey;
+    }
+    // Never restore execution/retroaction from localStorage — always entered via explicit workflow transition
     if (stored === "execution" || stored === "retroaction") {
       lsSet("activePhase", "observation"); // Also clear localStorage
       return "observation" as PhaseKey;
@@ -237,9 +243,12 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
       return null;
     }
     const stored = initialURL.section || lsGet("rightSection", "cockpit");
-    // Never restore "execution" — always set at transition points (handleWorkAction, progress bar, onPhaseComplete)
+    // Allow URL-based navigation to execution; block localStorage restoration
     if (stored === "execution") {
-      lsSet("rightSection", "cockpit"); // Also clear localStorage
+      if (initialURL.section === "execution") {
+        return null; // ExecutionView renders via activePhase, not rightSection
+      }
+      lsSet("rightSection", "cockpit");
       return "cockpit";
     }
     return stored;
@@ -279,7 +288,14 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
       } else {
         setCockpitTabRaw("bureau");
         const resolved = section || lsGet("rightSection", "cockpit");
-        setRightSectionRaw(resolved === "execution" ? "cockpit" : resolved);
+        // Execution/retroaction navigate via activePhase, not rightSection
+        if (resolved === "execution" || resolved === "retroaction") {
+          setActivePhaseRaw("execution" as PhaseKey);
+          lsSet("activePhase", "execution");
+          setRightSectionRaw(null);
+        } else {
+          setRightSectionRaw(resolved);
+        }
       }
     };
     window.addEventListener("popstate", onPopState);
