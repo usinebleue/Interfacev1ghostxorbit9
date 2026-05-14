@@ -459,13 +459,13 @@ export function WorkspacePhasesPanel() {
               </>
             )}
             <div className="flex-1" />
-            <NotificationBell />
             {showBlueprintTabs && blueprintStats && (
               <div className="flex items-center gap-2 shrink-0">
                 <span className="text-[10px] text-gray-500">{blueprintStats.tierLabel}</span>
                 <span className="text-[10px] font-bold bg-gray-900 text-white px-2 py-0.5 rounded-full">{blueprintStats.score}%</span>
               </div>
             )}
+            <NotificationBell />
           </div>
         );
       })()}

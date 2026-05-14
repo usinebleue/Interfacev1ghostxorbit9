@@ -249,6 +249,40 @@ function CelluleCard({ cellule, onClick }: { cellule: O9Cellule; onClick: () => 
   );
 }
 
+// ═══ S5.4 — Autonomie bot (4 niveaux) ═══
+
+const AUTONOMY_LEVELS = [
+  { key: "dieu", label: "Dieu", short: "D", color: "bg-purple-100 text-purple-700 border-purple-300" },
+  { key: "coequipier", label: "Coéquipier", short: "Co", color: "bg-sky-100 text-sky-700 border-sky-300" },
+  { key: "operateur", label: "Opérateur", short: "Op", color: "bg-amber-100 text-amber-700 border-amber-300" },
+  { key: "client", label: "Client", short: "Cl", color: "bg-gray-100 text-gray-600 border-gray-300" },
+] as const;
+
+function AutonomyToggle({ collapsed }: { collapsed: boolean }) {
+  const [level, setLevel] = useState(1); // default: Coequipier (index 1)
+  const current = AUTONOMY_LEVELS[level];
+  const cycle = () => setLevel(l => (l + 1) % AUTONOMY_LEVELS.length);
+
+  return (
+    <button
+      onClick={cycle}
+      title={collapsed ? `Autonomie: ${current.label}` : undefined}
+      className={cn(
+        "rounded-lg border transition-all cursor-pointer",
+        collapsed
+          ? "w-9 h-9 flex items-center justify-center"
+          : "flex items-center gap-1.5 px-2 py-1.5",
+        current.color,
+      )}
+    >
+      <SlidersHorizontal className="h-3.5 w-3.5 shrink-0" />
+      {!collapsed && (
+        <span className="text-[9px] font-medium leading-tight">{current.label}</span>
+      )}
+    </button>
+  );
+}
+
 // ═══ KILL SWITCH — Stopper toute autonomie ═══
 
 function KillSwitchButton({ collapsed }: { collapsed: boolean }) {
@@ -646,6 +680,8 @@ function TabBureau({ collapsed, activeBotCode, setActiveBotCode, activeDeptItem,
           </button>
         )}
 
+        {/* S5.4 — Autonomie bot */}
+        <AutonomyToggle collapsed={collapsed} />
         {/* Kill Switch — Stopper toute autonomie */}
         <KillSwitchButton collapsed={collapsed} />
       </div>

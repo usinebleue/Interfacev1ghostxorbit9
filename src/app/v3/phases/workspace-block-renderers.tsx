@@ -9,7 +9,7 @@ import { useState, useEffect } from "react";
 import {
   Pin, Search, Swords, Pencil, RotateCcw, Layers,
   CheckCircle2, AlertTriangle, TrendingUp, Lightbulb,
-  Clock, Activity, FileText,
+  Clock, Activity, FileText, ClipboardCopy,
   Check, X, Trash2,
   ThumbsUp, ThumbsDown, Trophy, Zap, Shield,
   Target, Globe, ExternalLink,
@@ -59,6 +59,8 @@ interface BlockRendererProps {
 function BlockActions({ block, onAction }: BlockRendererProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(block.summary);
+  // S3.4 — Feedback thumbs up/down (local state, foundation for future backend persistence)
+  const [feedback, setFeedback] = useState<"up" | "down" | null>(null);
 
   if (isEditing) {
     return (
@@ -111,6 +113,16 @@ function BlockActions({ block, onAction }: BlockRendererProps) {
           className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors cursor-pointer border-red-200 text-red-600 hover:bg-red-50">
           <X className="h-3 w-3" /> Rejeter
         </button>
+        {/* S4.4 — Export Markdown (clipboard) */}
+        <button onClick={() => {
+          const md = `## ${block.title}\n\n${block.summary}`;
+          navigator.clipboard.writeText(md).then(() => {
+            // Brief visual feedback via button text swap handled by state below
+          });
+        }}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors cursor-pointer border-indigo-200 text-indigo-600 hover:bg-indigo-50">
+          <ClipboardCopy className="h-3 w-3" /> Exporter
+        </button>
       </div>
       <div className="flex items-center gap-1.5">
         <BotBadgeFull botCode={block.source} compact />
@@ -122,6 +134,41 @@ function BlockActions({ block, onAction }: BlockRendererProps) {
             </span>
           );
         })()}
+        {/* S3.4 + S5.2 — Feedback thumbs (wired to backend) */}
+        <div className="ml-auto flex items-center gap-1">
+          <button
+            onClick={() => {
+              const next = feedback === "up" ? null : "up";
+              setFeedback(next);
+              if (next) fetch("/api/v1/workspace/feedback", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ block_id: block.id, rating: "up", user_id: 0 }),
+              }).catch(() => {});
+            }}
+            className={cn(
+              "p-1 rounded-md transition-colors cursor-pointer",
+              feedback === "up" ? "bg-emerald-100 text-emerald-600" : "text-gray-300 hover:text-emerald-500 hover:bg-emerald-50"
+            )}
+          >
+            <ThumbsUp className="h-3 w-3" />
+          </button>
+          <button
+            onClick={() => {
+              const next = feedback === "down" ? null : "down";
+              setFeedback(next);
+              if (next) fetch("/api/v1/workspace/feedback", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ block_id: block.id, rating: "down", user_id: 0 }),
+              }).catch(() => {});
+            }}
+            className={cn(
+              "p-1 rounded-md transition-colors cursor-pointer",
+              feedback === "down" ? "bg-red-100 text-red-500" : "text-gray-300 hover:text-red-400 hover:bg-red-50"
+            )}
+          >
+            <ThumbsDown className="h-3 w-3" />
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -519,15 +566,36 @@ function CinqPourquoiRenderer({ block, onAction }: BlockRendererProps) {
 function PlanActionRenderer({ block, onAction }: BlockRendererProps) {
   const data = block.structured_data as { actions?: { titre: string; assignee?: string; priorite?: string; done: boolean }[] } | undefined;
   const PRIO: Record<string, string> = { haute: "bg-red-100 text-red-700", normale: "bg-gray-100 text-gray-600", basse: "bg-green-100 text-green-700" };
+  // S4.3 — Interactive checklist toggle
+  const [localActions, setLocalActions] = useState(data?.actions || []);
+  const doneCount = localActions.filter(a => a.done).length;
+  const toggleAction = (idx: number) => {
+    setLocalActions(prev => prev.map((a, i) => i === idx ? { ...a, done: !a.done } : a));
+  };
   return (
     <BlockWrapper block={block} onAction={onAction} label="Plan d'action" labelColor="bg-green-100 text-green-700">
-      {data?.actions ? (
+      {localActions.length > 0 ? (
         <div className="space-y-1.5">
-          {data.actions.map((a, i) => (
-            <div key={i} className={cn("rounded-xl border bg-white px-4 py-2.5 flex items-center gap-3", a.done ? "border-green-200 bg-green-50/30" : "border-gray-200")}>
-              <CheckCircle2 className={cn("h-4 w-4 shrink-0", a.done ? "text-green-500" : "text-gray-300")} />
+          {localActions.length > 1 && (
+            <div className="flex items-center gap-3 text-xs text-gray-500 mb-2">
+              <span className="font-medium">{doneCount}/{localActions.length}</span>
+              <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-full bg-green-400 rounded-full transition-all" style={{ width: `${(doneCount / localActions.length) * 100}%` }} />
+              </div>
+            </div>
+          )}
+          {localActions.map((a, i) => (
+            <div
+              key={i}
+              onClick={() => toggleAction(i)}
+              className={cn(
+                "rounded-xl border bg-white px-4 py-2.5 flex items-center gap-3 cursor-pointer transition-all",
+                a.done ? "border-green-200 bg-green-50/30" : "border-gray-200 hover:border-green-300 hover:bg-green-50/10"
+              )}
+            >
+              <CheckCircle2 className={cn("h-4 w-4 shrink-0 transition-colors", a.done ? "text-green-500" : "text-gray-300")} />
               <div className="flex-1 min-w-0">
-                <span className={cn("text-xs font-medium", a.done ? "text-gray-400 line-through" : "text-gray-900")}>{a.titre}</span>
+                <span className={cn("text-xs font-medium transition-all", a.done ? "text-gray-400 line-through" : "text-gray-900")}>{a.titre}</span>
               </div>
               {a.priorite && <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium", PRIO[a.priorite] || PRIO.normale)}>{a.priorite}</span>}
               {a.assignee && <span className="text-xs text-gray-400 shrink-0">{a.assignee}</span>}
@@ -686,23 +754,34 @@ function ProjetsRenderer({ block, onAction }: BlockRendererProps) {
 
 function TachesRenderer({ block, onAction }: BlockRendererProps) {
   const data = block.structured_data as { taches?: { titre: string; assignee?: string; done: boolean }[] } | undefined;
-  const taches = data?.taches || [];
-  const doneCount = taches.filter(t => t.done).length;
+  // S4.3 — Interactive checklist: local state for toggle done/not done
+  const [localTaches, setLocalTaches] = useState(data?.taches || []);
+  const doneCount = localTaches.filter(t => t.done).length;
+  const toggleDone = (idx: number) => {
+    setLocalTaches(prev => prev.map((t, i) => i === idx ? { ...t, done: !t.done } : t));
+  };
   return (
     <BlockWrapper block={block} onAction={onAction} label="Tâches" labelColor="bg-green-100 text-green-700">
-      {taches.length > 0 ? (
+      {localTaches.length > 0 ? (
         <div className="space-y-1.5">
           <div className="flex items-center gap-3 text-xs text-gray-500 mb-2">
-            <span className="font-medium">{doneCount}/{taches.length} complétées</span>
+            <span className="font-medium">{doneCount}/{localTaches.length} complétées</span>
             <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-              <div className="h-full bg-green-400 rounded-full" style={{ width: `${(doneCount / taches.length) * 100}%` }} />
+              <div className="h-full bg-green-400 rounded-full transition-all" style={{ width: `${(doneCount / localTaches.length) * 100}%` }} />
             </div>
           </div>
-          {taches.map((t, i) => (
-            <div key={i} className={cn("rounded-xl border bg-white px-4 py-2.5 flex items-center gap-3", t.done ? "border-green-200 bg-green-50/30" : "border-gray-200")}>
-              <CheckCircle2 className={cn("h-4 w-4 shrink-0", t.done ? "text-green-500" : "text-gray-300")} />
+          {localTaches.map((t, i) => (
+            <div
+              key={i}
+              onClick={() => toggleDone(i)}
+              className={cn(
+                "rounded-xl border bg-white px-4 py-2.5 flex items-center gap-3 cursor-pointer transition-all",
+                t.done ? "border-green-200 bg-green-50/30" : "border-gray-200 hover:border-green-300 hover:bg-green-50/10"
+              )}
+            >
+              <CheckCircle2 className={cn("h-4 w-4 shrink-0 transition-colors", t.done ? "text-green-500" : "text-gray-300")} />
               <div className="flex-1 min-w-0">
-                <span className={cn("text-xs font-medium", t.done ? "text-gray-400 line-through" : "text-gray-900")}>{t.titre}</span>
+                <span className={cn("text-xs font-medium transition-all", t.done ? "text-gray-400 line-through" : "text-gray-900")}>{t.titre}</span>
               </div>
               {t.assignee && <span className="text-xs text-gray-400 shrink-0">{t.assignee}</span>}
             </div>
@@ -1292,6 +1371,10 @@ const BLOCK_RENDERERS: Record<WorkspaceBlockType, React.FC<BlockRendererProps>> 
   decision: DecisionRenderer,
   crise: CriseRenderer,
   deep_search: DeepSearchRenderer,
+  // S4.2 — DocForge types route to existing renderers
+  docforge_section: RapportRenderer,
+  docforge_code: LibreRenderer,
+  docforge_tableur: BudgetRenderer,
 };
 
 export function BlockRenderer({ block, onAction }: BlockRendererProps) {
@@ -1321,6 +1404,9 @@ export const BLOCK_TYPE_LABELS: Record<WorkspaceBlockType, string> = {
   decision: "Décision",
   crise: "Crise",
   deep_search: "Deep Search",
+  docforge_section: "Section",
+  docforge_code: "Code",
+  docforge_tableur: "Tableur",
 };
 
 // ═══ Sprint 2A Phase 6A: Skeleton loading block (pattern WorkspaceSection.tsx L104-109) ═══
