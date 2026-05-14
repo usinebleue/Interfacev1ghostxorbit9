@@ -6,3 +6,25 @@
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* S109 — Scrollbar visible pour la zone de discussion */
+.scrollbar-discussion::-webkit-scrollbar {
+  width: 8px;
+}
+.scrollbar-discussion::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-discussion::-webkit-scrollbar-thumb {
+  background: #c4c4c4;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.scrollbar-discussion::-webkit-scrollbar-thumb:hover {
+  background: #999;
+  background-clip: content-box;
+}
+.scrollbar-discussion {
+  scrollbar-width: auto;
+  scrollbar-color: #c4c4c4 transparent;
+}

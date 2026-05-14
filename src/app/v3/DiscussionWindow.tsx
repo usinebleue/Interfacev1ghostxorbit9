@@ -666,7 +666,7 @@ function V3MessageList() {
   }, [isTyping, sendMessage, sendMultiPerspective, chatTargetBot, activeBotCode, activeRoster, parkThread, setActivePhase, setRightSection, setReflexionContext, reflexionContext, activePhase, workspacePhase, messages, activeDocumentSection, addWorkspaceBlock, workflowItems]);
 
   return (
-    <div ref={scrollRef} className="flex-1 overflow-auto px-4 py-3 space-y-3">
+    <div ref={scrollRef} className="flex-1 overflow-auto px-4 py-3 space-y-3 scrollbar-discussion">
       {messages.map((msg) => {
         if (msg.role === "system") return null;
         if (msg.isStreaming && !msg.content) return null;
@@ -683,39 +683,48 @@ function V3MessageList() {
           return (
             <div key={msg.id} className="flex gap-2.5 animate-in fade-in slide-in-from-bottom-2 duration-500">
               <div className="ml-2 flex-1">
-                <div className="bg-gradient-to-r from-gray-50 to-blue-50 border border-blue-200 rounded-xl px-4 py-3 shadow-sm">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Network className="h-4 w-4 text-blue-600 animate-pulse" />
-                    <span className="text-xs font-semibold text-blue-800">{headerText}</span>
+                <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 border border-blue-200/60 rounded-2xl px-5 py-4 shadow-md">
+                  <div className="flex items-center gap-2.5 mb-3">
+                    <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                      <Network className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
+                    </div>
+                    <span className="text-xs font-bold text-blue-900 tracking-wide">{headerText}</span>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-start justify-center gap-6">
                     {activeRoster.map((code) => {
                       const ts = V3_STYLE[code] || DEFAULT_STYLE;
                       const isNewBot = joinBotCode === code;
                       const isExisting = !!joinBotCode && joinBotCode !== code;
                       return (
                         <div key={code} className={cn(
-                          "flex flex-col items-center gap-1 transition-all duration-500",
+                          "flex flex-col items-center gap-1.5 transition-all duration-500",
                           isNewBot && "scale-110",
                         )}>
                           <div className={cn(
-                            "relative w-10 h-10 rounded-full overflow-hidden border-2 shadow-sm transition-all",
-                            isNewBot ? cn(ts.ring, "shadow-md") : isExisting ? "border-green-400" : ts.ring,
+                            "relative w-12 h-12 rounded-full overflow-hidden border-2 shadow-md transition-all",
+                            isNewBot ? cn(ts.ring, "shadow-lg ring-2 ring-offset-1", ts.ring) : isExisting ? "border-green-400 shadow-green-100" : cn("border-2", ts.ring),
                           )}>
                             <img src={BOT_AVATAR[code] || `/agents/${code.toLowerCase()}.png`} alt=""
-                              className={cn("w-full h-full object-cover", (isNewBot || !joinBotCode) && "opacity-50")} />
+                              className={cn("w-full h-full object-cover", (isNewBot || !joinBotCode) && "opacity-60")} />
                             {(isNewBot || !joinBotCode) && (
-                              <Loader2 className={cn("h-5 w-5 animate-spin absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2", ts.text)} />
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                                <Loader2 className={cn("h-5 w-5 animate-spin", ts.text)} />
+                              </div>
                             )}
                             {isExisting && (
-                              <CheckCircle2 className="h-5 w-5 text-green-500 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                              <div className="absolute inset-0 flex items-center justify-center bg-green-500/10">
+                                <CheckCircle2 className="h-5 w-5 text-green-500 drop-shadow-sm" />
+                              </div>
                             )}
                           </div>
-                          <span className={cn("text-[10px] font-medium", isNewBot ? ts.text : isExisting ? "text-gray-500" : ts.text)}>
+                          <span className={cn("text-[11px] font-semibold", isNewBot ? ts.text : isExisting ? "text-gray-500" : ts.text)}>
                             {BOT_NAME[code]}
                           </span>
+                          <span className={cn("text-[10px]", isExisting ? "text-gray-400" : ts.text)}>
+                            {BOT_ROLE[code] || ""}
+                          </span>
                           {isExisting
-                            ? <span className="text-[9px] text-green-500 text-center">✓ Fait</span>
+                            ? <span className="text-[9px] text-green-600 font-medium">✓ Terminé</span>
                             : <ThinkingLabel botCode={code} userText={userText} />
                           }
                         </div>
@@ -944,25 +953,31 @@ function V3MessageList() {
                 </div>
                 {/* Content — formatté markdown — isolate empêche le bleed CSS entre bulles */}
                 <div className="text-sm text-gray-700 leading-relaxed isolate overflow-hidden [&>p]:my-0.5 [&>ul]:my-1 [&>ol]:my-1 [&>p:first-child]:mt-0 [&>p:last-child]:mb-0 [&>hr]:my-2 [&_li]:break-words [&_p]:break-words"
-                  dangerouslySetInnerHTML={{ __html: formatMarkdown(msg.content) + (msg.isStreaming ? '<span class="inline-block w-0.5 h-4 bg-current ml-0.5 animate-pulse align-text-bottom"></span>' : '') }} />
+                  dangerouslySetInnerHTML={{ __html: (msg.isStreaming
+                    ? msg.content.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br/>") + '<span class="inline-block w-0.5 h-4 bg-current ml-0.5 animate-pulse align-text-bottom"></span>'
+                    : formatMarkdown(msg.content)
+                  ) }} />
                 {/* Cristallise bar — boutons pour ajouter ce contenu dans une section workspace */}
                 {!msg.isStreaming && msg.content && (
                   <CristalliseBar content={msg.content} botCode={botCode} activePhase={activePhase} addWorkspaceBlock={addWorkspaceBlock} lastUserMessage={lastUserMessage} />
                 )}
                 {/* ═══ Niveau 1 — Options DANS la bulle (pattern InlineOptions, fade-in staggere) ═══ */}
-                {(isLast || msg.msgType === "consultation") && !msg.isStreaming && msg.options && msg.options.length > 0 && (() => {
+                {!msg.isStreaming && msg.options && msg.options.length > 0 && (() => {
                   // Filtrer les options "Ouvrir l'atelier" — la navigation se fait via les tabs
                   const filteredOpts = msg.options.filter(opt => !/ouvrir\s+l'atelier/i.test(opt));
                   if (filteredOpts.length === 0) return null;
+                  const isActive = isLast; // Seul le dernier message a des options cliquables
                   return (
-                  <div className="mt-3 space-y-1.5">
+                  <div className={cn("mt-3 space-y-1.5", !isActive && "opacity-40 pointer-events-none")}>
                     {filteredOpts.map((opt, i) => {
                       const borderColors = ["border-l-blue-500", "border-l-amber-500", "border-l-green-500", "border-l-red-500"];
-                      const hoverBgs = ["hover:bg-blue-50", "hover:bg-amber-50", "hover:bg-green-50", "hover:bg-red-50"];
+                      const hoverBgs = isActive ? ["hover:bg-blue-50", "hover:bg-amber-50", "hover:bg-green-50", "hover:bg-red-50"] : [""];
                       return (
                         <button
                           key={i}
+                          disabled={!isActive}
                           onClick={() => {
+                            if (!isActive) return;
                             // S102 — Consultation: router vers CE bot seulement (pas multi-perspective)
                             if (msg.msgType === "consultation" && msg.agent && activeRoster.length > 1) {
                               sendMessage(opt, msg.agent, undefined, { workspacePhase });
@@ -970,19 +985,19 @@ function V3MessageList() {
                               handleOption(opt);
                             }
                           }}
-                          style={{ animation: `fadeSlideUp 0.3s ease-out ${i * 0.08}s both` }}
+                          style={isActive ? { animation: `fadeSlideUp 0.3s ease-out ${i * 0.08}s both` } : undefined}
                           className={cn(
                             "w-full text-left border border-gray-200 rounded-lg px-3 py-2 transition-all",
                             "border-l-[3px]",
                             borderColors[i % borderColors.length],
-                            hoverBgs[i % hoverBgs.length],
-                            "hover:shadow-sm cursor-pointer group/opt",
-                            "active:scale-[0.98] active:bg-gray-50 focus:outline-none touch-manipulation",
+                            isActive && hoverBgs[i % hoverBgs.length],
+                            isActive ? "hover:shadow-sm cursor-pointer group/opt" : "cursor-default",
+                            isActive && "active:scale-[0.98] active:bg-gray-50 focus:outline-none touch-manipulation",
                           )}
                         >
                           <div className="flex items-start gap-2">
                             <span className="text-xs font-bold text-gray-400 mt-0.5 shrink-0">{i + 1}.</span>
-                            <span className="text-sm text-gray-700 group-hover/opt:text-gray-900 font-medium">{opt}</span>
+                            <span className={cn("text-sm font-medium", isActive ? "text-gray-700 group-hover/opt:text-gray-900" : "text-gray-400")}>{opt}</span>
                           </div>
                         </button>
                       );
@@ -1006,7 +1021,7 @@ function V3MessageList() {
                   <BubbleActions
                     chatStage={chatStage}
                     messageContent={msg.content}
-                    backendOptions={msg.options}
+                    backendOptions={undefined}
                     onAction={(prompt) => sendMessage(prompt, msg.agent || chatTargetBot, undefined, { workspacePhase })}
                     onCristallise={() => {
                       const CREDO_SECTIONS = ["comprendre", "rechercher", "exposer", "demontrer", "objectif"];
@@ -1052,9 +1067,6 @@ function V3MessageList() {
         const ts = V3_STYLE[thinkBot] || DEFAULT_STYLE;
         const botName = BOT_NAME[thinkBot] || "CarlOS";
         const currentStep = thinkingSteps[thinkingSteps.length - 1];
-        const STEP_ICONS = [BookOpen, Search, BarChart2, Scale, Lightbulb];
-        const stepIdx = thinkingSteps.length - 1;
-        const StepIcon = STEP_ICONS[Math.min(stepIdx, STEP_ICONS.length - 1)];
         return (
           <div className="flex gap-2.5 animate-in fade-in duration-300">
             <div className={cn("w-7 h-7 rounded-full overflow-hidden shrink-0 ring-2 mt-0.5", ts.ring)}>
@@ -1062,7 +1074,7 @@ function V3MessageList() {
             </div>
             <div className={cn("border-l-[3px] border border-gray-200 rounded-xl rounded-tl-none px-3.5 py-2.5 shadow-sm", ts.border, ts.bubble)}>
               <div className={cn("flex items-center gap-2 text-sm", ts.text)}>
-                <StepIcon className="h-3.5 w-3.5 animate-pulse shrink-0" />
+                <img src={BOT_AVATAR[thinkBot] || `/agents/${thinkBot.toLowerCase()}.png`} alt="" className="h-4 w-4 rounded-full shrink-0 animate-pulse" />
                 <span className="font-medium">{botName}</span>
                 <span className="text-gray-500 animate-in fade-in duration-500" key={currentStep}>{currentStep}</span>
               </div>
@@ -1073,17 +1085,20 @@ function V3MessageList() {
 
       {/* Typing dots — quand le bot réfléchit sans thinking steps */}
       {isTyping && !isAnyStreaming && thinkingSteps.length === 0 && (() => {
-        const ts = V3_STYLE[activeBotCode] || DEFAULT_STYLE;
+        const thinkBot2 = activeBotCode;
+        const ts = V3_STYLE[thinkBot2] || DEFAULT_STYLE;
+        const botName2 = BOT_NAME[thinkBot2] || "CarlOS";
+        const lastUserMsg = messages.filter(m => m.role === "user").pop()?.content;
         return (
-          <div className="flex gap-2.5">
+          <div className="flex gap-2.5 animate-in fade-in duration-300">
             <div className={cn("w-7 h-7 rounded-full overflow-hidden shrink-0 ring-2 mt-0.5", ts.ring)}>
-              <img src={BOT_AVATAR[activeBotCode] || `/agents/${activeBotCode.toLowerCase()}.png`} alt="" className="w-full h-full object-cover" />
+              <img src={BOT_AVATAR[thinkBot2] || `/agents/${thinkBot2.toLowerCase()}.png`} alt="" className="w-full h-full object-cover" />
             </div>
-            <div className="border border-gray-200 rounded-xl rounded-tl-none px-3.5 py-3 shadow-sm bg-white">
-              <div className="flex items-center gap-1.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "0ms" }} />
-                <div className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "150ms" }} />
-                <div className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+            <div className={cn("border-l-[3px] border border-gray-200 rounded-xl rounded-tl-none px-3.5 py-2.5 shadow-sm", ts.border, ts.bubble)}>
+              <div className={cn("flex items-center gap-2 text-sm", ts.text)}>
+                <img src={BOT_AVATAR[thinkBot2] || `/agents/${thinkBot2.toLowerCase()}.png`} alt="" className="h-4 w-4 rounded-full shrink-0 animate-pulse" />
+                <span className="font-medium">{botName2}</span>
+                <ThinkingLabel botCode={thinkBot2} userText={lastUserMsg} />
               </div>
             </div>
           </div>
