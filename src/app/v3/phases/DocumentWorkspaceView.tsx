@@ -274,18 +274,7 @@ export function DocumentWorkspaceView({
               );
             })}
 
-            {/* CTA execution */}
-            {completionPct >= 30 && (
-              <div className="mt-4 px-2">
-                <button
-                  onClick={onPhaseComplete}
-                  className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-green-50 border border-green-200 text-green-700 text-[10px] font-bold hover:bg-green-100 transition-colors"
-                >
-                  <ChevronRight className="h-3.5 w-3.5 stroke-[2.5]" />
-                  Passer en exécution
-                </button>
-              </div>
-            )}
+            {/* Phase transitions via ControlTowerPanel sidebar + progress bar uniquement (Carl feedback 13 mai) */}
           </>);
           return isMobile ? (
             <MobileSidebarSheet currentLabel={activeLabel} itemCount={sections.length}>

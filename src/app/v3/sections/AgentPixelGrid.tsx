@@ -452,7 +452,7 @@ function AgentCharacter({
           />
         ) : (
           <div className="w-full h-full bg-gray-600 flex items-center justify-center text-[10px] text-white font-bold">
-            {display.name.charAt(0)}
+            {display.name?.charAt(0) || "?"}
           </div>
         )}
 

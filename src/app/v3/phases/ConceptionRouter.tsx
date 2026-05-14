@@ -46,10 +46,14 @@ export function ConceptionRouter({
     );
   }
 
-  if (activeDeliverable) {
+  // Smart default: Tim CTO → code atelier, pas la vue generique
+  const effectiveDeliverable = activeDeliverable
+    || (activeBotCode === "CTOB" ? "code" : null);
+
+  if (effectiveDeliverable) {
     return (
       <LiveDocForgeLivrable
-        deliverableType={activeDeliverable}
+        deliverableType={effectiveDeliverable}
         context={reflexionContext}
         onBack={onDeliverableBack}
         onStartJumelage={onStartJumelage}

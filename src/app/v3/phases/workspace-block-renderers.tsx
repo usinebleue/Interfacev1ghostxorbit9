@@ -10,7 +10,7 @@ import {
   Pin, Search, Swords, Pencil, RotateCcw, Layers,
   CheckCircle2, AlertTriangle, TrendingUp, Lightbulb,
   Clock, Activity, FileText, ClipboardCopy,
-  Check, X, Trash2,
+  Check, X, Trash2, Code,
   ThumbsUp, ThumbsDown, Trophy, Zap, Shield,
   Target, Globe, ExternalLink,
   MessageCircle, Mic, Video,
@@ -1046,6 +1046,111 @@ function LibreRenderer({ block, onAction }: BlockRendererProps) {
   );
 }
 
+// ═══ 17b. Code — Rendu code monospace avec coloration et copie ═══
+
+function parseCodeBlocks(text: string): { language: string; code: string }[] {
+  const fenceRegex = /```(\w*)\n([\s\S]*?)```/g;
+  const blocks: { language: string; code: string }[] = [];
+  let match;
+  while ((match = fenceRegex.exec(text)) !== null) {
+    blocks.push({ language: match[1] || "text", code: match[2].trimEnd() });
+  }
+  if (blocks.length === 0 && text.trim()) {
+    let cleaned = text.trim();
+    if (cleaned.startsWith("```")) cleaned = cleaned.slice(3);
+    if (cleaned.endsWith("```")) cleaned = cleaned.slice(0, -3);
+    blocks.push({ language: "text", code: cleaned.trim() });
+  }
+  return blocks;
+}
+
+const LANG_LABELS: Record<string, { label: string; color: string }> = {
+  typescript: { label: "TypeScript", color: "text-blue-400" },
+  ts: { label: "TypeScript", color: "text-blue-400" },
+  tsx: { label: "TSX", color: "text-blue-400" },
+  javascript: { label: "JavaScript", color: "text-yellow-400" },
+  js: { label: "JavaScript", color: "text-yellow-400" },
+  jsx: { label: "JSX", color: "text-yellow-400" },
+  python: { label: "Python", color: "text-green-400" },
+  py: { label: "Python", color: "text-green-400" },
+  sql: { label: "SQL", color: "text-orange-400" },
+  bash: { label: "Bash", color: "text-lime-400" },
+  sh: { label: "Shell", color: "text-lime-400" },
+  json: { label: "JSON", color: "text-amber-400" },
+  html: { label: "HTML", color: "text-red-400" },
+  css: { label: "CSS", color: "text-pink-400" },
+  yaml: { label: "YAML", color: "text-cyan-400" },
+  yml: { label: "YAML", color: "text-cyan-400" },
+  text: { label: "Code", color: "text-gray-400" },
+};
+
+function CodeBlockView({ language, code }: { language: string; code: string }) {
+  const [copied, setCopied] = useState(false);
+  const langInfo = LANG_LABELS[language.toLowerCase()] || { label: language || "Code", color: "text-gray-400" };
+  const lines = code.split("\n");
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(code).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  return (
+    <div className="rounded-xl border border-gray-700 bg-[#1e1e2e] shadow-sm overflow-hidden">
+      {/* Header bar */}
+      <div className="flex items-center justify-between px-3 py-1.5 bg-[#181825] border-b border-gray-700">
+        <div className="flex items-center gap-1.5">
+          <Code className={cn("h-3 w-3", langInfo.color)} />
+          <span className={cn("text-[10px] font-medium", langInfo.color)}>{langInfo.label}</span>
+        </div>
+        <button
+          onClick={handleCopy}
+          className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] text-gray-400 hover:text-gray-200 hover:bg-gray-700/50 transition-colors"
+        >
+          {copied ? <Check className="h-3 w-3 text-emerald-400" /> : <ClipboardCopy className="h-3 w-3" />}
+          {copied ? "Copié" : "Copier"}
+        </button>
+      </div>
+      {/* Code content with scroll for wide lines */}
+      <div className="overflow-auto max-h-[500px]">
+        <pre className="p-3 text-sm leading-relaxed">
+          <code className="font-mono text-[13px] text-gray-200">
+            {lines.map((line, i) => (
+              <div key={i} className="flex">
+                <span className="select-none text-gray-600 text-right w-8 pr-3 shrink-0 text-[11px] leading-relaxed">{i + 1}</span>
+                <span className="flex-1 whitespace-pre">{line}</span>
+              </div>
+            ))}
+          </code>
+        </pre>
+      </div>
+    </div>
+  );
+}
+
+function CodeRenderer({ block, onAction }: BlockRendererProps) {
+  const lang = (block.structured_data?.language as string) || "";
+  const codeBlocks = parseCodeBlocks(block.summary);
+  const descriptionText = block.summary
+    .replace(/```\w*\n[\s\S]*?```/g, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  return (
+    <BlockWrapper block={block} onAction={onAction} label="Code" labelColor="bg-violet-100 text-violet-700">
+      {descriptionText && (
+        <div className="text-sm text-gray-700 leading-relaxed mb-3 whitespace-pre-wrap">{descriptionText}</div>
+      )}
+      <div className="space-y-3">
+        {codeBlocks.map((cb, i) => (
+          <CodeBlockView key={i} language={lang || cb.language} code={cb.code} />
+        ))}
+      </div>
+    </BlockWrapper>
+  );
+}
+
 // ═══ 18. Débat — POUR/CONTRE colonnes + verdict (pattern AtelierDebat L450-600) ═══
 
 function DebatRenderer({ block, onAction }: BlockRendererProps) {
@@ -1373,7 +1478,7 @@ const BLOCK_RENDERERS: Record<WorkspaceBlockType, React.FC<BlockRendererProps>> 
   deep_search: DeepSearchRenderer,
   // S4.2 — DocForge types route to existing renderers
   docforge_section: RapportRenderer,
-  docforge_code: LibreRenderer,
+  docforge_code: CodeRenderer,
   docforge_tableur: BudgetRenderer,
 };
 

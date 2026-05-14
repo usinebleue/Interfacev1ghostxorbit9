@@ -110,6 +110,8 @@ export interface StreamDoneEvent {
   cristallisation_suggestion?: { section_id: string; section_label: string; confidence: number } | null;
   // Sprint 2A — Workspace block + skip flag
   workspace_block?: Record<string, unknown> | null;
+  // S2.3 — Multi-artifact support
+  workspace_blocks?: Record<string, unknown>[] | null;
   workspace_block_skip?: boolean;
 }
 
@@ -150,6 +152,28 @@ function getCurrentUserId(): number {
   return 1;
 }
 
+let _refreshingToken: Promise<string | null> | null = null;
+
+async function _tryRefreshToken(): Promise<string | null> {
+  const refreshToken = localStorage.getItem("ghostx-jwt-refresh");
+  if (!refreshToken) return null;
+  try {
+    const res = await fetch(`${BASE_URL}/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-API-Key": API_KEY },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.access_token) {
+        setJwtToken(data.access_token);
+        return data.access_token;
+      }
+    }
+  } catch { /* refresh failed */ }
+  return null;
+}
+
 async function apiFetch<T>(
   path: string,
   options: RequestInit = {}
@@ -163,7 +187,18 @@ async function apiFetch<T>(
     ...(options.headers as Record<string, string>),
   };
 
-  const res = await fetch(url, { ...options, headers });
+  let res = await fetch(url, { ...options, headers });
+
+  // Auto-refresh JWT on 401
+  if (res.status === 401 && jwt) {
+    if (!_refreshingToken) _refreshingToken = _tryRefreshToken();
+    const newJwt = await _refreshingToken;
+    _refreshingToken = null;
+    if (newJwt) {
+      const retryHeaders = { ...headers, Authorization: `Bearer ${newJwt}` };
+      res = await fetch(url, { ...options, headers: retryHeaders });
+    }
+  }
 
   if (!res.ok) {
     const body = await res.text().catch(() => "");

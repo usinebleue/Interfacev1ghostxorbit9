@@ -622,12 +622,33 @@ export function useWorkspaceCapture() {
           // ═══ WORKSPACE BLOCK INTELLIGENT — backend ou fallback frontend ═══
           const lastUserMsg = [...messages].reverse().find((m: any) => m.role === "user" && m.content);
           const wsBlock = (msg as any).workspace_block as Partial<WorkspaceBlock> | undefined;
+          // S2.4 — Multi-artifact support
+          const wsBlocks = (msg as any).workspace_blocks as Partial<WorkspaceBlock>[] | undefined;
           const secondaries = (msg as any).msgType === "multi-enriched" && (msg as any).secondaryInputs?.length > 0
             ? (msg as any).secondaryInputs as Array<{agent: string; nom: string; contenu: string}>
             : null;
 
-          if (wsBlock && wsBlock.type && wsBlock.title) {
-            // Backend a généré un workspace_block structuré
+          if (wsBlocks && wsBlocks.length > 0) {
+            // Multi-artifact: bot generated multiple <artifact> tags
+            for (let ai = 0; ai < wsBlocks.length; ai++) {
+              const ab = wsBlocks[ai];
+              if (!ab.type || !ab.title) continue;
+              addWorkspaceBlock({
+                id: ab.id || `blk-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                type: ab.type as WorkspaceBlockType,
+                title: ab.title,
+                summary: ab.summary || msg.content.substring(0, 200),
+                structured_data: ab.structured_data,
+                credo_step: (ab.credo_step as any) || getCurrentCredoStep(chatStage),
+                confidence: ab.confidence || 0.95,
+                source,
+                sourceType,
+                sectionId,
+                timestamp: Date.now() + ai,
+              });
+            }
+          } else if (wsBlock && wsBlock.type && wsBlock.title) {
+            // Single artifact from backend
             const blockData: WorkspaceBlock = {
               id: wsBlock.id || `blk-${Date.now()}`,
               type: wsBlock.type as WorkspaceBlockType,

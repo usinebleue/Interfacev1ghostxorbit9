@@ -438,26 +438,6 @@ export function WorkspacePhasesPanel() {
                 </div>
               </>
             )}
-            {!isMobile && activeSection !== "orbit9" && activePhase === "discussion" && !rightSection && (
-              <>
-                <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
-                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-sky-100 text-sky-700">
-                  {["Comprendre", "Rechercher", "Exposer", "Démontrer", "Objectif"][chatStage] || "Comprendre"}
-                </span>
-              </>
-            )}
-            {!isMobile && activeSection !== "orbit9" && activePhase === "creation" && activeDeliverable && !rightSection && (
-              <>
-                <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
-                <span className="text-[11px] font-medium text-amber-600">{DELIVERABLE_TITLE[activeDeliverable] || activeDeliverable}</span>
-              </>
-            )}
-            {!isMobile && activeSection !== "orbit9" && activePhase !== "observation" && activePhase !== "creation" && activePhase !== "discussion" && activePhase !== "reflexion" && !rightSection && (
-              <>
-                <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
-                <span className={cn("text-[11px] font-medium", pc.text)}>{pc.label}</span>
-              </>
-            )}
             <div className="flex-1" />
             {showBlueprintTabs && blueprintStats && (
               <div className="flex items-center gap-2 shrink-0">

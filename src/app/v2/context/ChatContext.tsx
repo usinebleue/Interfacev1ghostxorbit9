@@ -241,11 +241,13 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       const subSection = resolveSubSection();
       // D-109: Si on vient d'une Room, utiliser chatSourceView comme active_view
       const effectiveView = chatSourceView || activeView;
+      // FIX: meta.workspacePhase (from ChatBoxV3) takes precedence over ChatContext's computed value
+      const effectiveWorkspacePhase = meta?.workspacePhase || workspacePhase || undefined;
       await rawSend(text, agent, ghost, activeReflectionMode, {
         ...meta,
         activeView: effectiveView,
         activeSubSection: chatSourceView ? undefined : subSection,
-        workspacePhase: workspacePhase || undefined,
+        workspacePhase: effectiveWorkspacePhase,
       });
     },
     [rawSend, activeReflectionMode, activeView, resolveSubSection, chatSourceView, workspacePhase]

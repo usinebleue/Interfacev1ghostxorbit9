@@ -181,36 +181,7 @@ export function UnifiedPhaseView({ phaseKey, context, onPhaseComplete }: Unified
           })()
           )}
 
-          {/* Phase complete CTA */}
-          {allComplete && onPhaseComplete && (
-            <div className="mt-6 rounded-xl border border-gray-200 bg-[#00B4D8]/10 p-5 flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                {phaseKey === "reflexion" ? (
-                  <>
-                    <Brain className="h-4 w-4 text-gray-900 stroke-[2.5]" />
-                    <ArrowRight className="h-4 w-4 text-gray-400 stroke-[2.5]" />
-                    <Hammer className="h-4 w-4 text-gray-900 stroke-[2.5]" />
-                  </>
-                ) : (
-                  <>
-                    <Hammer className="h-4 w-4 text-gray-900 stroke-[2.5]" />
-                    <ArrowRight className="h-4 w-4 text-gray-400 stroke-[2.5]" />
-                    <Rocket className="h-4 w-4 text-emerald-500 stroke-[2.5]" />
-                  </>
-                )}
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-bold text-gray-900">{meta.completeCta}</p>
-                <p className="text-xs text-gray-500">{meta.completeDesc}</p>
-              </div>
-              <button
-                onClick={onPhaseComplete}
-                className="bg-gray-900 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-gray-800 transition-colors"
-              >
-                {meta.completeCta}
-              </button>
-            </div>
-          )}
+          {/* Phase transitions via ControlTowerPanel sidebar + progress bar uniquement (Carl feedback 13 mai) */}
         </div>
       </div>
     </div>

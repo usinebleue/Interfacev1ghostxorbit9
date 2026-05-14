@@ -199,16 +199,7 @@ export function LiveReflexionView({ context, onPhaseComplete }: LiveReflexionVie
             </div>
           )}
 
-          {/* Bouton Passer en Conception — quand toutes les étapes ont du contenu */}
-          {completedCount >= 7 && onPhaseComplete && (
-            <button
-              onClick={onPhaseComplete}
-              className="w-full mt-4 py-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-xs font-bold hover:bg-amber-100 transition-colors cursor-pointer flex items-center justify-center gap-2"
-            >
-              <Target className="h-4 w-4" />
-              Passer en Conception →
-            </button>
-          )}
+          {/* Phase transitions via ControlTowerPanel sidebar + progress bar uniquement (Carl feedback 13 mai) */}
         </div>
       </div>
 

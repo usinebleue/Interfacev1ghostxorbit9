@@ -865,6 +865,8 @@ export function useChat() {
               // Final update with all metadata
               // TOUJOURS strip [TACHE] du texte, même quand le backend envoie des options explicites
               let cleanText = data.response.split("\n").filter((l: string) => !/\[TACHE\]/i.test(l)).join("\n").trim();
+              // S2.3 — Strip residual <artifact> tags from chat display (safety net)
+              cleanText = cleanText.replace(/<artifact\s+[^>]*>[\s\S]*?<\/artifact>/g, '').replace(/\n{3,}/g, '\n\n').trim();
               let parsedOptions: string[] = [];
 
               if (data.options && data.options.length > 0) {
@@ -903,6 +905,7 @@ export function useChat() {
                         cristallisationSuggestion: data.cristallisation_suggestion || undefined,
                         cascadeItems: data.cascade_items?.length ? data.cascade_items : undefined,
                         workspace_block: data.workspace_block || undefined,
+                        workspace_blocks: data.workspace_blocks || undefined,
                         workspace_block_skip: data.workspace_block_skip || false,
                       }
                     : m
@@ -3255,6 +3258,9 @@ export function useNotifications() {
   }, []);
 
   useEffect(() => {
+    // Don't poll without a valid JWT — prevents 401 loop
+    const jwt = localStorage.getItem("ghostx-jwt");
+    if (!jwt) return;
     refresh();
     const interval = setInterval(refresh, 30000);
     return () => clearInterval(interval);

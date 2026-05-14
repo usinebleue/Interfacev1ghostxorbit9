@@ -229,31 +229,7 @@ function LivePhaseViewInner({ config, context, onPhaseComplete, onReturnToCockpi
             );
           })()}
 
-          {/* Bouton transition vers la phase suivante */}
-          {completedCount >= minRequired && config.nextPhase && onPhaseComplete && (
-            <button
-              onClick={onPhaseComplete}
-              className={cn("w-full mt-4 py-3 rounded-xl border text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2",
-                col.transition.bg, col.transition.border, col.transition.text, col.transition.hoverBg
-              )}
-            >
-              <ArrowRight className="h-4 w-4" />
-              {config.nextPhaseLabel}
-            </button>
-          )}
-
-          {/* Bouton retour au cockpit (rétroaction terminée) */}
-          {completedCount >= minRequired && !config.nextPhase && onReturnToCockpit && (
-            <button
-              onClick={onReturnToCockpit}
-              className={cn("w-full mt-4 py-3 rounded-xl border text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2",
-                col.transition.bg, col.transition.border, col.transition.text, col.transition.hoverBg
-              )}
-            >
-              <RotateCcw className="h-4 w-4" />
-              {config.nextPhaseLabel}
-            </button>
-          )}
+          {/* Phase transitions via ControlTowerPanel sidebar + progress bar uniquement (Carl feedback 13 mai) */}
         </div>
       </div>
     </div>

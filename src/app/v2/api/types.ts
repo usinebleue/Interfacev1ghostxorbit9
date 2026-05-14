@@ -317,6 +317,8 @@ export interface ChatMessage {
   cristallisationSuggestion?: { section_id: string; section_label: string; confidence: number };
   // Workspace block from backend (structured detection)
   workspace_block?: WorkspaceBlockData;
+  // S2.3 — Multi-artifact support (bot can generate up to 2 artifacts per response)
+  workspace_blocks?: WorkspaceBlockData[];
   // Sprint 2A Fix A — backend dit "pas de bloc" → frontend respecte
   workspace_block_skip?: boolean;
 }
