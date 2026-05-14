@@ -254,11 +254,11 @@ function ContributionCard({ agent, nom, contenu, style }: {
   );
 }
 
-/** S102-B.2 — Label dynamique par bot dans la bulle multi-thinking (mots-clés contextuels) */
+/** S109 — Label dynamique par bot dans la bulle multi-thinking (etapes variees contextuelles) */
 function ThinkingLabel({ botCode, userText }: { botCode: string; userText?: string }) {
   const [tick, setTick] = useState(0);
   useEffect(() => {
-    const t = setInterval(() => setTick((p) => p + 1), 2200);
+    const t = setInterval(() => setTick((p) => p + 1), 1800);
     return () => clearInterval(t);
   }, []);
 
@@ -267,6 +267,7 @@ function ThinkingLabel({ botCode, userText }: { botCode: string; userText?: stri
     "quels","quelles","faire","faut","veux","voudrais","aimerais","peux",
     "peut","dois","doit","aussi","encore","comme","juste","vraiment",
     "toujours","suis","sont","être","etre","avoir","tout","tous",
+    "mais","puis","donc","alors","meme","tres","plus","moins",
   ]);
   const kw = userText
     ? userText.replace(/[?!.,;:'"()]/g, "").split(" ")
@@ -274,15 +275,19 @@ function ThinkingLabel({ botCode, userText }: { botCode: string; userText?: stri
         .slice(0, 2).join(" ")
     : "";
 
-  const ANGLES: Record<string, string> = {
-    CEOB: "Vision globale", CFOB: "Angle financier", CMOB: "Stratégie marché",
-    CSOB: "Risques & leviers", CTOB: "Faisabilité tech", COOB: "Plan opérationnel",
-    CPOB: "Chaîne valeur", CHROB: "Capital humain", CINOB: "Innovation",
-    CROB: "Pipeline revenus", CLOB: "Cadre juridique", CISOB: "Cybersécurité",
+  const ANGLES: Record<string, [string, string]> = {
+    CEOB: ["Vision strategique", "Priorites"], CFOB: ["Modelisation", "Projection"],
+    CMOB: ["Positionnement", "Acquisition"], CSOB: ["Risques", "Scenarios"],
+    CTOB: ["Architecture", "Faisabilite"], COOB: ["Operations", "Execution"],
+    CPOB: ["Chaine valeur", "Flux"], CHROB: ["Equipe", "Talent"],
+    CINOB: ["Tendances", "Benchmark"], CROB: ["Pipeline", "Conversion"],
+    CLOB: ["Conformite", "Juridique"], CISOB: ["Securite", "Protection"],
   };
 
-  const angle = ANGLES[botCode] || "Analyse";
-  const phases = kw ? [kw, angle, "Formulation"] : [angle, "Évaluation", "Formulation"];
+  const [a1, a2] = ANGLES[botCode] || ["Analyse", "Evaluation"];
+  const phases = kw
+    ? [kw, a1, "Enjeux", a2, "Formulation"]
+    : [a1, "Contexte", a2, "Evaluation", "Formulation"];
   const label = phases[tick % phases.length];
 
   return (

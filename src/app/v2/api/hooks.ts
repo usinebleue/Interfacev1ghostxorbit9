@@ -239,6 +239,9 @@ function generateThreadTitle(messages: ChatMessage[]): string {
   // Retirer les articles en debut
   text = text.replace(/^(le |la |les |un |une |des |du |de la |l')/i, "");
 
+  // Guard: si le texte est vide après nettoyage
+  if (!text) return "Nouvelle discussion";
+
   // Majuscule
   text = text.charAt(0).toUpperCase() + text.slice(1);
 
@@ -338,6 +341,41 @@ function parseApiOptions(responseText: string): { cleanText: string; parsedOptio
     // Put arrow lines back if not enough to be proposals
     for (const opt of arrowOptions) {
       cleanLines.push(`→ ${opt}`);
+    }
+  }
+
+  // Fallback: detect 2-4 short plain-text lines at end of message (no numbering, no arrows)
+  // Mirrors backend _extraire_options() raw text detection
+  if (parsedOptions.length === 0) {
+    const tailCandidates: { idx: number; text: string }[] = [];
+    for (let i = cleanLines.length - 1; i >= Math.max(cleanLines.length - 8, 0); i--) {
+      const stripped = cleanLines[i].trim();
+      if (!stripped) {
+        if (tailCandidates.length > 0) break; // blank line = delimiter before options
+        continue;
+      }
+      // Short line (< 60 chars), no sentence-ending punctuation, no list markers
+      if (
+        stripped.length < 60 &&
+        stripped.length > 3 &&
+        !/[.?!:]$/.test(stripped) &&
+        !/^[•\-*–·]/.test(stripped) &&
+        !/^\d+[.)]\s/.test(stripped) &&
+        !/[?]/.test(stripped) &&
+        stripped.split(/\s+/).length <= 10
+      ) {
+        tailCandidates.unshift({ idx: i, text: stripped });
+      } else {
+        break;
+      }
+    }
+    if (tailCandidates.length >= 2 && tailCandidates.length <= 4) {
+      for (const c of tailCandidates) {
+        parsedOptions.push(c.text.replace(/^\*+|\*+$/g, "").trim());
+      }
+      // Remove those lines from cleanLines
+      const firstIdx = tailCandidates[0].idx;
+      cleanLines.splice(firstIdx);
     }
   }
 
@@ -654,36 +692,45 @@ export function useChat() {
       setMessages((prev) => [...prev, userMsg]);
       setIsTyping(true);
 
-      // S102-B.2 — Thinking steps contextuels: [mots-clés user] → [angle bot] → [conclusion]
+      // S109 — Thinking steps contextuels enrichis: 7 etapes variees, 1.8s cycle
       const _THINK_STOPS = new Set([
         "dans","pour","avec","comment","quel","quelle","cette","votre","notre",
         "quels","quelles","faire","faut","veux","voudrais","aimerais","peux",
         "peut","dois","doit","aussi","encore","comme","juste","vraiment",
         "toujours","suis","sont","être","etre","avoir","tout","tous",
+        "mais","puis","donc","alors","meme","tres","plus","moins",
       ]);
       const _buildThinkingSteps = (ag: string, userMsg: string): string[] => {
-        const sujet = userMsg
+        const words = userMsg
           .replace(/[?!.,;:'"()]/g, "")
           .split(" ")
-          .filter(w => w.length > 3 && !_THINK_STOPS.has(w.toLowerCase()))
-          .slice(0, 3).join(" ") || "votre question";
-        // Phase 1 = mots-cles du message, Phase 2 = angle expertise bot, Phase 3 = synthese
-        const _angles: Record<string, [string, string]> = {
-          CEOB: ["Évaluation stratégique", "Décision CEO"],
-          CTOB: ["Faisabilité technique", "Architecture"],
-          CFOB: ["Impact financier", "Recommandation CFO"],
-          CMOB: ["Analyse marché", "Stratégie marketing"],
-          CSOB: ["Risques & opportunités", "Recommandation CSO"],
-          COOB: ["Plan opérationnel", "Exécution"],
-          CPOB: ["Chaîne de valeur", "Optimisation"],
-          CHROB: ["Capital humain", "Stratégie talent"],
-          CINOB: ["Veille & tendances", "Benchmark"],
-          CROB: ["Pipeline revenus", "Conversion"],
-          CLOB: ["Cadre juridique", "Conformité"],
-          CISOB: ["Audit sécurité", "Protection"],
+          .filter(w => w.length > 3 && !_THINK_STOPS.has(w.toLowerCase()));
+        const sujet = words.slice(0, 3).join(" ") || "votre question";
+        const sujet2 = words.slice(1, 4).join(" ") || sujet;
+        const _expertise: Record<string, [string, string, string]> = {
+          CEOB: ["Vision strategique", "Scenarios de croissance", "Alignement des priorites"],
+          CTOB: ["Architecture technique", "Faisabilite et risques", "Solutions technologiques"],
+          CFOB: ["Modelisation financiere", "Analyse cout-benefice", "Projection des resultats"],
+          CMOB: ["Positionnement marche", "Strategie d'acquisition", "Impact sur la marque"],
+          CSOB: ["Cartographie des risques", "Scenarios concurrentiels", "Avantages strategiques"],
+          COOB: ["Processus operationnels", "Allocation des ressources", "Plan d'execution"],
+          CPOB: ["Chaine de valeur", "Optimisation des flux", "Gains de productivite"],
+          CHROB: ["Dynamique d'equipe", "Competences requises", "Strategie de talent"],
+          CINOB: ["Veille sectorielle", "Tendances emergentes", "Opportunites de marche"],
+          CROB: ["Pipeline de revenus", "Leviers de conversion", "Croissance des ventes"],
+          CLOB: ["Cadre reglementaire", "Analyse de conformite", "Protection juridique"],
+          CISOB: ["Evaluation de securite", "Vulnerabilites potentielles", "Mesures de protection"],
         };
-        const [angle, synth] = _angles[ag] || ["Analyse", "Recommandation"];
-        return [`${sujet}...`, `${angle}...`, `${synth}...`];
+        const angles = _expertise[ag] || ["Analyse approfondie", "Evaluation des options", "Synthese"];
+        return [
+          `Lecture: ${sujet}`,
+          `Contexte et enjeux`,
+          angles[0],
+          `${sujet2} — options`,
+          angles[1],
+          `Evaluation des scenarios`,
+          `${angles[2]} — formulation`,
+        ];
       };
       const _steps = _buildThinkingSteps(agent, text);
       setThinkingSteps([_steps[0]]);
@@ -695,7 +742,7 @@ export function useChat() {
         } else {
           clearInterval(_thinkTimer);
         }
-      }, 2500);
+      }, 1800);
 
       // Auto-create thread on first message
       if (!activeThreadId) {
