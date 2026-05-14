@@ -55,7 +55,7 @@ export const REGISTRY: Record<string, DomainEntry> = {
     key: "bureau",
     label: "Mon Bureau",
     endpoint: "/bureau",
-    status: "simu",
+    status: "live",
     v2Hook: "useBureau",
   },
   "decisions": {
@@ -69,14 +69,14 @@ export const REGISTRY: Record<string, DomainEntry> = {
     key: "tensions",
     label: "Tensions",
     endpoint: "/tensions",
-    status: "simu",
+    status: "live",
     v2Hook: "useTensions",
   },
   "diagnostics": {
     key: "diagnostics",
     label: "Diagnostics",
     endpoint: "/diagnostic-ia",
-    status: "simu",
+    status: "live",
     v2Hook: "useDiagnostic",
   },
   "templates": {
@@ -157,8 +157,8 @@ export const REGISTRY: Record<string, DomainEntry> = {
   "orbit9-dashboard": {
     key: "orbit9-dashboard",
     label: "Dashboard Orbit9",
-    endpoint: null,
-    status: "simu",
+    endpoint: "/orbit9/kpi",
+    status: "live",
   },
   "orbit9-opportunites": {
     key: "orbit9-opportunites",
