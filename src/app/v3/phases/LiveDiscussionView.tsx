@@ -504,31 +504,9 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
             </div>
           )}
 
-          {/* S3A.2: EtatDesLieuxPanel — visible at step C when etat_des_lieux blocks exist */}
-          {chatStage === 0 && workspaceBlocks.some(b => b.type === "etat_des_lieux") && (
-            <div className="mt-3 rounded-xl border border-sky-200 bg-gradient-to-r from-sky-50 to-blue-50 p-4 shadow-sm animate-in fade-in duration-500">
-              <div className="flex items-center gap-2 mb-3">
-                <Activity className="h-4 w-4 text-sky-600" />
-                <span className="text-[11px] font-bold text-sky-700">Etat des lieux — Perspectives multi-agents</span>
-              </div>
-              <div className="space-y-2">
-                {workspaceBlocks
-                  .filter(b => b.type === "etat_des_lieux")
-                  .slice(0, 1)
-                  .map(b => {
-                    const data = b.structured_data as { perspectives?: { bot: string; analysis: string }[] } | undefined;
-                    return data?.perspectives?.map((p, j) => (
-                      <div key={j} className="flex items-start gap-2 rounded-lg bg-white/80 border border-sky-100 px-3 py-2 animate-in fade-in slide-in-from-left-2 duration-300" style={{ animationDelay: `${j * 400}ms`, animationFillMode: 'backwards' }}>
-                        <BotAvatar code={p.bot} size="sm" />
-                        <div className="flex-1 min-w-0">
-                          <span className="text-[9px] font-bold text-gray-500">{BOT_NAME[p.bot] || p.bot}</span>
-                          <p className="text-xs text-gray-700">{p.analysis}</p>
-                        </div>
-                      </div>
-                    ));
-                  })}
-              </div>
-            </div>
+          {/* S3A.2: AgentMobilizationPanel — pattern exact SimAmorcer ReflexionChat stages 0-2 */}
+          {chatStage === 0 && messages.some(m => m.role === "user") && (
+            <AgentMobilizationPanel workspaceBlocks={workspaceBlocks} />
           )}
 
           {/* WORKSPACE BLOCKS — La discussion EST le plan de match */}
@@ -820,6 +798,141 @@ function CreateChantierButton({ workspaceBlocks, activeBotCode }: {
         <Rocket className="h-4 w-4" />
         <span className="text-sm font-bold">Creer le Chantier</span>
       </button>
+    </div>
+  );
+}
+
+// ═══ S2.4.2: Multi-phase accordion — resume des blocs par etape CREDO ═══
+
+// ═══ S3A.2: AgentMobilizationPanel — Pattern EXACT SimAmorcer ReflexionChat stages 0-2 ═══
+// Stage 0: Bot mobilization — 3 bots rejoignent avec staggered slide-in
+// Stage 2: Multi-bot parallel analysis — bouncing dots + per-bot tasks
+// Auto-progresse puis auto-collapse
+
+const MOBILIZED_BOTS = [
+  { code: "CMOB", name: "Mathilde", role: "CMO — Analyse marche", task: "Mathilde analyse le positionnement marche..." },
+  { code: "CFOB", name: "Frank", role: "CFO — Budget et ROI", task: "Frank modele le budget et le ROI..." },
+  { code: "CTOB", name: "Tim", role: "CTO — Faisabilite technique", task: "Tim evalue la faisabilite technique..." },
+];
+
+function AgentMobilizationPanel({ workspaceBlocks }: {
+  workspaceBlocks: import("../core/types").WorkspaceBlock[];
+}) {
+  const [phase, setPhase] = useState<"mobilize" | "analyze" | "complete" | "hidden">("mobilize");
+  const [botsJoined, setBotsJoined] = useState(0);
+
+  // Phase 1: Staggered bot join (500ms apart — pattern SimAmorcer L1427-1441)
+  useEffect(() => {
+    if (phase !== "mobilize") return;
+    if (botsJoined >= MOBILIZED_BOTS.length) {
+      const t = setTimeout(() => setPhase("analyze"), 600);
+      return () => clearTimeout(t);
+    }
+    const t = setTimeout(() => setBotsJoined(c => c + 1), 500);
+    return () => clearTimeout(t);
+  }, [phase, botsJoined]);
+
+  // Phase 2: analyze → complete after 3.5s (pattern SimAmorcer L1497-1521)
+  useEffect(() => {
+    if (phase !== "analyze") return;
+    const t = setTimeout(() => setPhase("complete"), 3500);
+    return () => clearTimeout(t);
+  }, [phase]);
+
+  // Phase 3: auto-hide after 5s
+  useEffect(() => {
+    if (phase !== "complete") return;
+    const t = setTimeout(() => setPhase("hidden"), 5000);
+    return () => clearTimeout(t);
+  }, [phase]);
+
+  // If etat_des_lieux block arrives during analyze, skip to complete
+  useEffect(() => {
+    if (phase === "analyze" && workspaceBlocks.some(b => b.type === "etat_des_lieux")) {
+      setPhase("complete");
+    }
+  }, [workspaceBlocks, phase]);
+
+  if (phase === "hidden") return null;
+
+  return (
+    <div className="mt-3 space-y-3 animate-in fade-in duration-500">
+
+      {/* Badge "Mode actif" — exact SimAmorcer L1416-1419 */}
+      <div className="flex items-center gap-1.5 bg-orange-50 border border-orange-200 rounded-lg px-2 py-1 w-fit">
+        <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
+        <span className="text-xs text-orange-600 font-medium">
+          {phase === "mobilize" ? "Mobilisation des specialistes..." :
+           phase === "analyze" ? "Analyse multi-agents en cours..." :
+           "Comprehension initiale terminee"}
+        </span>
+        {phase === "complete" && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />}
+      </div>
+
+      {/* Bot join cards — exact SimAmorcer L1427-1441 */}
+      <div className="space-y-1.5">
+        {MOBILIZED_BOTS.map((bot, i) => {
+          const isJoined = i < botsJoined || phase !== "mobilize";
+          if (!isJoined) return null;
+          return (
+            <div
+              key={bot.code}
+              className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-lg px-3 py-1.5 animate-in fade-in slide-in-from-left-2"
+              style={{ animationDelay: phase === "mobilize" ? "0ms" : `${i * 400}ms`, animationFillMode: "both", animationDuration: "500ms" }}
+            >
+              <BotAvatar code={bot.code} size="sm" />
+              <div className="flex-1 min-w-0">
+                <span className="text-xs font-bold text-gray-700">{bot.name}</span>
+                <span className="text-xs text-gray-500 ml-1.5">{bot.role}</span>
+              </div>
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+              <span className="text-xs text-emerald-600 font-medium">Rejoint</span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Tool badges — exact SimAmorcer L1446-1449 */}
+      {phase !== "mobilize" && (
+        <div className="flex flex-wrap gap-1 animate-in fade-in duration-300">
+          {["Brainstorm", "Diagnostic", "Recherche", "Challenge", "Deep Search", "5 Pourquoi"].map(b => (
+            <span key={b} className="text-xs bg-orange-50 border border-orange-200 text-orange-700 px-2.5 py-1 rounded-full font-medium">{b}</span>
+          ))}
+        </div>
+      )}
+
+      {/* Parallel analysis — exact SimAmorcer L1497-1521 */}
+      {phase === "analyze" && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-3 animate-in fade-in duration-300">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="flex gap-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-red-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+              <div className="w-1.5 h-1.5 rounded-full bg-red-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+              <div className="w-1.5 h-1.5 rounded-full bg-red-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+            </div>
+            <span className="text-xs text-red-600 font-medium">3 agents analysent en parallele...</span>
+          </div>
+          <div className="space-y-1">
+            {MOBILIZED_BOTS.map(b => (
+              <div key={b.code} className="flex items-center gap-2 text-xs text-gray-600">
+                <BotAvatar code={b.code} size="sm" />
+                <span>{b.task}</span>
+                <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse ml-auto" />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Complete state */}
+      {phase === "complete" && (
+        <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3 animate-in fade-in duration-300">
+          <div className="flex items-center gap-2 text-xs text-emerald-700">
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            <span className="font-medium">Comprehension initiale terminee — les resultats apparaissent ci-dessous</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
