@@ -684,20 +684,29 @@ function ScamperRenderer({ block, onAction }: BlockRendererProps) {
   );
 }
 
-// ═══ 4. 5 Pourquoi — Arbre hiérarchique indenté ═══
+// ═══ 4. 5 Pourquoi — Arbre avec debats inter-bot (pattern MagCinqPourquoi L2342-2530) ═══
 
 function CinqPourquoiRenderer({ block, onAction }: BlockRendererProps) {
-  const data = block.structured_data as { levels?: { question: string; answer: string }[]; rootCause?: string } | undefined;
-  // Progressive color depth (pattern SimPhaseReflexion L652-665)
+  const data = block.structured_data as {
+    levels?: {
+      question: string; answer: string; reflexion?: string; bot?: string;
+      debate?: { challenger: string; challengeText: string; defense: string; defenseText: string; verdict: string };
+    }[];
+    rootCause?: string;
+  } | undefined;
+  // Progressive color depth (MagCinqPourquoi exact pattern)
   const DEPTH_COLORS = [
-    { dot: "bg-orange-300", text: "text-orange-500", bg: "bg-orange-50", border: "border-orange-200", line: "from-orange-200 to-orange-300" },
-    { dot: "bg-orange-400", text: "text-orange-600", bg: "bg-orange-50", border: "border-orange-200", line: "from-orange-300 to-amber-400" },
-    { dot: "bg-amber-500", text: "text-amber-700", bg: "bg-amber-50", border: "border-amber-200", line: "from-amber-400 to-red-300" },
-    { dot: "bg-red-400", text: "text-red-600", bg: "bg-red-50", border: "border-red-200", line: "from-red-300 to-red-500" },
-    { dot: "bg-red-600", text: "text-red-700", bg: "bg-red-50", border: "border-red-300", line: "from-red-500 to-red-600" },
+    { dot: "bg-orange-300", text: "text-orange-500", bg: "bg-orange-50", border: "border-orange-200", line: "from-orange-200 to-orange-300", num: "bg-orange-100 text-orange-700 border-orange-300" },
+    { dot: "bg-orange-400", text: "text-orange-600", bg: "bg-orange-50", border: "border-orange-200", line: "from-orange-300 to-amber-400", num: "bg-orange-200 text-orange-800 border-orange-400" },
+    { dot: "bg-amber-500", text: "text-amber-700", bg: "bg-amber-50", border: "border-amber-200", line: "from-amber-400 to-red-300", num: "bg-amber-200 text-amber-800 border-amber-400" },
+    { dot: "bg-red-400", text: "text-red-600", bg: "bg-red-50", border: "border-red-200", line: "from-red-300 to-red-500", num: "bg-red-200 text-red-800 border-red-400" },
+    { dot: "bg-red-600", text: "text-red-700", bg: "bg-red-50", border: "border-red-300", line: "from-red-500 to-red-600", num: "bg-red-300 text-red-900 border-red-500" },
   ];
+  // Progress indicator — pattern MagCinqPourquoi progress dots
+  const totalLevels = data?.levels?.length || 5;
   // Auto-reveal stagger state
   const [revealedCount, setRevealedCount] = useState(0);
+  const [showDebate, setShowDebate] = useState<number | null>(null);
   useEffect(() => {
     if (!data?.levels) return;
     setRevealedCount(0);
@@ -714,6 +723,22 @@ function CinqPourquoiRenderer({ block, onAction }: BlockRendererProps) {
     <BlockWrapper block={block} onAction={onAction} label="5 Pourquoi" labelColor="bg-orange-100 text-orange-700">
       {data?.levels ? (
         <div className="space-y-0">
+          {/* Progress indicator — MagCinqPourquoi pattern */}
+          <div className="flex items-center gap-0 mb-4 px-1">
+            {[1, 2, 3, 4, 5].map(n => (
+              <div key={n} className={cn("flex items-center", n > 1 ? "flex-1" : "")}>
+                {n > 1 && <div className={cn("flex-1 h-0.5 transition-all duration-500", n <= revealedCount ? "bg-orange-400" : "bg-gray-200")} />}
+                <div className={cn(
+                  "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border transition-all shrink-0",
+                  n <= revealedCount ? (DEPTH_COLORS[n - 1] || DEPTH_COLORS[4]).num : "bg-gray-100 text-gray-400 border-gray-200",
+                  n === revealedCount && "ring-2 ring-orange-300 ring-offset-1"
+                )}>
+                  {n <= revealedCount ? <CheckCircle2 className="h-3.5 w-3.5" /> : n}
+                </div>
+              </div>
+            ))}
+          </div>
+
           {data.levels.map((level, i) => {
             const depth = DEPTH_COLORS[i] || DEPTH_COLORS[4];
             const isLast = i === data.levels!.length - 1;
@@ -723,39 +748,108 @@ function CinqPourquoiRenderer({ block, onAction }: BlockRendererProps) {
               <div
                 key={i}
                 className={cn("flex gap-2 transition-all duration-700", isRevealed ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3")}
-                style={{ paddingLeft: `${i * 20}px`, transitionDelay: `${i * 100}ms` }}
+                style={{ paddingLeft: `${i * 16}px`, transitionDelay: `${i * 100}ms` }}
               >
                 <div className="flex flex-col items-center shrink-0 pt-1">
                   <div className={cn(
-                    "w-4 h-4 rounded-full transition-all",
+                    "w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white transition-all",
                     depth.dot,
                     isLast && "ring-2 ring-red-300 ring-offset-1",
                     isActive && "animate-pulse ring-2 ring-orange-300 ring-offset-1"
-                  )} />
+                  )}>{i + 1}</div>
                   {!isLast && <div className={cn("w-0.5 flex-1 mt-1 rounded-full bg-gradient-to-b", depth.line)} />}
                 </div>
-                <div className={cn("pb-3 flex-1 min-w-0 rounded-lg px-3 py-1.5 -ml-1 transition-colors", isLast ? depth.bg : "", isActive && "bg-orange-50/50")}>
-                  <p className={cn("text-xs font-bold", depth.text)}>Pourquoi {i + 1}?</p>
-                  <p className="text-sm text-gray-700">{level.question}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">→ {level.answer}</p>
+                <div className={cn("pb-3 flex-1 min-w-0 rounded-lg px-3 py-2 -ml-1 transition-colors", isLast ? depth.bg : "", isActive && "bg-orange-50/50")}>
+                  <div className="flex items-start gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className={cn("text-xs font-bold", depth.text)}>Pourquoi {i + 1}?</p>
+                      <p className="text-sm text-gray-700">{level.question}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">→ {level.answer}</p>
+                      {level.reflexion && (
+                        <p className="text-[10px] text-gray-400 mt-1 italic">{level.reflexion}</p>
+                      )}
+                    </div>
+                    {/* Bot attribution + debate toggle — pattern MagCinqPourquoi */}
+                    <div className="flex gap-1 shrink-0">
+                      {level.bot && <BotAvatar code={level.bot} size="sm" />}
+                      {level.debate && (
+                        <button
+                          onClick={() => setShowDebate(showDebate === i ? null : i)}
+                          className={cn("text-[10px] px-1.5 py-0.5 rounded font-medium cursor-pointer transition-colors",
+                            showDebate === i ? "bg-orange-100 border border-orange-200 text-orange-700" : "bg-white border border-gray-200 text-gray-500 hover:bg-gray-100"
+                          )}
+                        >
+                          {showDebate === i ? "Fermer" : "Voir le debat"}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  {/* Inter-bot debate — pattern MagCinqPourquoi debate section */}
+                  {showDebate === i && level.debate && (
+                    <div className="mt-1.5 ml-2 space-y-1.5 border-l-2 border-orange-200 pl-3 animate-in fade-in duration-300">
+                      <div className="flex items-start gap-2">
+                        <BotAvatar code={level.debate.challenger} size="sm" />
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg rounded-tl-none px-2.5 py-1.5 flex-1">
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <span className="text-xs font-bold text-amber-700">{BOT_NAME[level.debate.challenger] || level.debate.challenger}</span>
+                            <span className="text-[10px] bg-amber-200 text-amber-800 px-1 py-0.5 rounded">Challenge</span>
+                          </div>
+                          <p className="text-xs text-gray-700">{level.debate.challengeText}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <BotAvatar code={level.debate.defense} size="sm" />
+                        <div className="bg-emerald-50 border border-emerald-200 rounded-lg rounded-tl-none px-2.5 py-1.5 flex-1">
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <span className="text-xs font-bold text-emerald-700">{BOT_NAME[level.debate.defense] || level.debate.defense}</span>
+                            <span className="text-[10px] bg-emerald-200 text-emerald-800 px-1 py-0.5 rounded">Defense</span>
+                          </div>
+                          <p className="text-xs text-gray-700">{level.debate.defenseText}</p>
+                        </div>
+                      </div>
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg px-2.5 py-1.5 flex items-center gap-2">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                        <p className="text-xs text-blue-700 font-medium">{level.debate.verdict}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             );
           })}
-          {/* Root cause highlight — Target icon, prominent red */}
+          {/* Root cause highlight + bonification synthese — pattern MagCinqPourquoi */}
           {data.rootCause && (
             <div
-              className={cn("mt-3 rounded-xl border-2 border-red-300 bg-red-50 p-4 transition-all duration-700", revealedCount >= (data.levels?.length || 0) ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3")}
-              style={{ marginLeft: `${((data.levels?.length || 1) - 1) * 20}px`, transitionDelay: `${(data.levels?.length || 0) * 100}ms` }}
+              className={cn("pt-2 border-t border-orange-200 mt-2 transition-all duration-700", revealedCount >= (data.levels?.length || 0) ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3")}
+              style={{ transitionDelay: `${(data.levels?.length || 0) * 100}ms` }}
             >
-              <div className="flex items-start gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-red-100 flex items-center justify-center shrink-0">
-                  <Target className="h-4 w-4 text-red-600" />
+              <div className="flex items-start gap-3">
+                <span className="shrink-0 w-6 h-6 rounded-full bg-orange-500 text-white flex items-center justify-center text-xs font-bold">{totalLevels}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-orange-800 uppercase tracking-wider">Cause racine</p>
+                  <p className="text-sm text-gray-800 mt-0.5 leading-relaxed font-medium">{data.rootCause}</p>
                 </div>
-                <div>
-                  <p className="text-xs font-bold text-red-700 uppercase tracking-wider">Cause racine identifiee</p>
-                  <p className="text-sm text-gray-800 mt-1 leading-relaxed font-medium">{data.rootCause}</p>
+              </div>
+              {/* Bonification — synthesis of debates verdicts */}
+              {data.levels?.some(l => l.debate) && (
+                <div className="ml-9 mt-2 bg-orange-50 rounded-lg px-3 py-2 border border-orange-200">
+                  <p className="text-xs font-bold text-orange-700 mb-1">Bonification — Synthese des debats:</p>
+                  <div className="space-y-1">
+                    {data.levels.filter(l => l.debate).map((l, i) => (
+                      <div key={i} className="flex items-center gap-1.5 text-xs text-orange-600">
+                        <span className="w-3 h-3 rounded-full bg-orange-200 flex items-center justify-center text-[8px] font-bold text-orange-700 shrink-0">{i + 1}</span>
+                        <span>{l.debate!.verdict}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
+              )}
+              {/* Action buttons — pattern MagCinqPourquoi bottom actions */}
+              <div className="flex flex-wrap gap-1.5 mt-3 ml-9">
+                <button onClick={() => onAction("deepen", block.id, "rootCause")}
+                  className="text-[10px] bg-orange-600 text-white px-2.5 py-1 rounded-full font-medium cursor-pointer hover:bg-orange-700 transition-colors">Creuser cette cause</button>
+                <button onClick={() => onAction("challenge", block.id, "rootCause")}
+                  className="text-[10px] bg-white border border-orange-200 text-orange-700 px-2.5 py-1 rounded-full font-medium cursor-pointer hover:bg-orange-50 transition-colors">Challenger la conclusion</button>
               </div>
             </div>
           )}
@@ -1265,10 +1359,37 @@ function SyntheseRenderer({ block, onAction }: BlockRendererProps) {
   );
 }
 
-// ═══ 16. Rapport — Document multi-sections (pattern FocusReflexionView Pre-rapport) ═══
+// ═══ 16. Rapport — Document multi-sections (pattern MagPreRapport L2908-3149) ═══
+
+const SECTION_ICONS: Record<string, { icon: React.ElementType; color: string; bg: string }> = {
+  tension: { icon: Zap, color: "text-red-600", bg: "bg-red-50" },
+  analyse: { icon: Search, color: "text-blue-600", bg: "bg-blue-50" },
+  idees: { icon: Lightbulb, color: "text-amber-600", bg: "bg-amber-50" },
+  decisions: { icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-50" },
+  plan: { icon: Target, color: "text-violet-600", bg: "bg-violet-50" },
+  budget: { icon: BarChart3, color: "text-green-600", bg: "bg-green-50" },
+  risques: { icon: AlertTriangle, color: "text-orange-600", bg: "bg-orange-50" },
+  recommandations: { icon: TrendingUp, color: "text-cyan-600", bg: "bg-cyan-50" },
+};
+
+function guessSectionIcon(title: string): { icon: React.ElementType; color: string; bg: string } {
+  const t = title.toLowerCase();
+  if (t.includes("tension") || t.includes("probleme") || t.includes("enjeu")) return SECTION_ICONS.tension;
+  if (t.includes("analyse") || t.includes("constat") || t.includes("diagnostic") || t.includes("etat")) return SECTION_ICONS.analyse;
+  if (t.includes("idee") || t.includes("brainstorm") || t.includes("proposit") || t.includes("explor")) return SECTION_ICONS.idees;
+  if (t.includes("decision") || t.includes("valid") || t.includes("choix") || t.includes("priorit")) return SECTION_ICONS.decisions;
+  if (t.includes("plan") || t.includes("action") || t.includes("etape") || t.includes("timeline")) return SECTION_ICONS.plan;
+  if (t.includes("budget") || t.includes("cout") || t.includes("financ") || t.includes("invest")) return SECTION_ICONS.budget;
+  if (t.includes("risque") || t.includes("danger") || t.includes("attention")) return SECTION_ICONS.risques;
+  return SECTION_ICONS.recommandations;
+}
 
 function RapportRenderer({ block, onAction }: BlockRendererProps) {
-  const data = block.structured_data as { sections?: { title: string; content: string }[] } | undefined;
+  const data = block.structured_data as {
+    sections?: { title: string; content: string; bot?: string; icon?: string }[];
+    votes?: { bot: string; vote: string; reason: string }[];
+    metrics?: { label: string; value: string; sub?: string; color?: string }[];
+  } | undefined;
   // S3B.1: Accordion state for expandable sections
   const [expandedSections, setExpandedSections] = useState<Set<number>>(new Set([0]));
   const toggleSection = (idx: number) => {
@@ -1278,7 +1399,7 @@ function RapportRenderer({ block, onAction }: BlockRendererProps) {
       return next;
     });
   };
-  // S3A.1: Staggered reveal
+  // S3A.1: Staggered reveal — progressive compilation (pattern MagPreRapport)
   const [revealedSections, setRevealedSections] = useState(0);
   const sections = data?.sections || parseSummarySections(block.summary).map(s => ({ title: s.title, content: s.body }));
   useEffect(() => {
@@ -1290,31 +1411,81 @@ function RapportRenderer({ block, onAction }: BlockRendererProps) {
     return () => timers.forEach(clearTimeout);
   }, [sections.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const [pinnedSection, setPinnedSection] = useState<number | null>(null);
+  const [activeAction, setActiveAction] = useState<{ sectionId: number; action: string } | null>(null);
+  const isCompiling = revealedSections < sections.length;
+
   return (
     <BlockWrapper block={block} onAction={onAction} label="Rapport" labelColor="bg-gray-200 text-gray-700">
+      {/* Compilation progress bar — pattern MagPreRapport */}
+      {isCompiling && (
+        <div className="rounded-lg border border-orange-200 bg-orange-50 p-2.5 flex items-center gap-3 mb-3">
+          <Loader2 className="h-4 w-4 text-orange-500 animate-spin shrink-0" />
+          <div className="flex-1">
+            <p className="text-xs text-orange-600 font-medium">Compilation du rapport... {revealedSections}/{sections.length} sections</p>
+            <div className="h-1.5 bg-orange-100 rounded-full mt-1.5 overflow-hidden">
+              <div className="h-full bg-orange-500 rounded-full transition-all duration-500" style={{ width: `${(revealedSections / sections.length) * 100}%` }} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sections accordion — pattern MagPreRapport sections with micro-actions */}
       <div className="space-y-2">
         {sections.map((s, i) => {
           const isExpanded = expandedSections.has(i);
           const isRevealed = i < revealedSections;
+          const isPinned = pinnedSection === i;
+          const si = guessSectionIcon(s.title);
+          const SectionIcon = si.icon;
           return (
             <div key={i} className={cn(
-              "rounded-xl border border-gray-200 bg-white overflow-hidden transition-all duration-500",
+              "rounded-xl border-2 bg-white overflow-hidden transition-all duration-500",
+              isPinned ? "border-blue-300 ring-2 ring-blue-100" : "border-gray-200",
               isRevealed ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
             )} style={{ transitionDelay: `${i * 100}ms` }}>
+              {/* Section header with icon + bot */}
               <button
                 onClick={() => toggleSection(i)}
-                className="flex items-center gap-2 w-full px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer"
+                className={cn("flex items-center gap-2 w-full px-4 py-2.5 transition-colors cursor-pointer", si.bg)}
               >
-                <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-bold shrink-0">{i + 1}</span>
+                <div className={cn("w-6 h-6 rounded-lg flex items-center justify-center shrink-0", si.bg)}>
+                  <SectionIcon className={cn("h-3.5 w-3.5", si.color)} />
+                </div>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/60 text-gray-600 font-bold shrink-0">{i + 1}</span>
                 <h4 className="text-xs font-bold text-gray-900 flex-1 text-left">{s.title || `Section ${i + 1}`}</h4>
+                {(s as any).bot && <BotAvatar code={(s as any).bot} size="sm" />}
                 <ChevronDown className={cn("h-3.5 w-3.5 text-gray-400 transition-transform shrink-0", isExpanded && "rotate-180")} />
               </button>
               {isExpanded && (
-                <div className="px-4 pb-3 animate-in fade-in duration-200">
-                  <p className="text-sm text-gray-600 leading-relaxed">{s.content}</p>
-                  <div className="flex gap-1.5 mt-2 pt-2 border-t border-gray-100">
-                    <button onClick={() => onAction("deepen", block.id, s.title)} className="text-[9px] px-2 py-0.5 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 cursor-pointer transition-colors">Approfondir</button>
-                    <button onClick={() => onAction("challenge", block.id, s.title)} className="text-[9px] px-2 py-0.5 rounded bg-amber-50 text-amber-600 hover:bg-amber-100 cursor-pointer transition-colors">Challenger</button>
+                <div className="px-4 pb-3 pt-2 animate-in fade-in duration-200">
+                  <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{s.content}</p>
+                  {/* Micro-actions bar — pattern MagPreRapport per-section actions */}
+                  <div className="flex gap-1.5 mt-3 pt-2 border-t border-gray-100">
+                    <button
+                      onClick={() => { setActiveAction({ sectionId: i, action: "approfondir" }); onAction("deepen", block.id, s.title); }}
+                      className={cn("text-[9px] px-2 py-0.5 rounded font-medium cursor-pointer transition-colors",
+                        activeAction?.sectionId === i && activeAction?.action === "approfondir"
+                          ? "bg-blue-100 border border-blue-200 text-blue-700"
+                          : "bg-blue-50 text-blue-600 hover:bg-blue-100"
+                      )}
+                    >Approfondir</button>
+                    <button
+                      onClick={() => { setActiveAction({ sectionId: i, action: "challenger" }); onAction("challenge", block.id, s.title); }}
+                      className={cn("text-[9px] px-2 py-0.5 rounded font-medium cursor-pointer transition-colors",
+                        activeAction?.sectionId === i && activeAction?.action === "challenger"
+                          ? "bg-amber-100 border border-amber-200 text-amber-700"
+                          : "bg-amber-50 text-amber-600 hover:bg-amber-100"
+                      )}
+                    >Challenger</button>
+                    <button
+                      onClick={() => setPinnedSection(isPinned ? null : i)}
+                      className={cn("text-[9px] px-2 py-0.5 rounded font-medium cursor-pointer transition-colors",
+                        isPinned
+                          ? "bg-blue-100 border border-blue-200 text-blue-700"
+                          : "bg-gray-50 text-gray-500 hover:bg-gray-100"
+                      )}
+                    >{isPinned ? "Desepingler" : "Epingler"}</button>
                   </div>
                 </div>
               )}
@@ -1322,6 +1493,55 @@ function RapportRenderer({ block, onAction }: BlockRendererProps) {
           );
         })}
       </div>
+
+      {/* Team vote grid — pattern MagPreRapport passage en Conception */}
+      {data?.votes && data.votes.length > 0 && (
+        <div className={cn("border border-gray-200 rounded-xl overflow-hidden mt-3 transition-all duration-700",
+          revealedSections >= sections.length ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
+        )}>
+          <div className="bg-gray-50 px-3 py-1.5 border-b border-gray-200 flex items-center gap-2">
+            <Users className="h-3.5 w-3.5 text-gray-500" />
+            <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">Vote equipe</span>
+          </div>
+          <div className="grid grid-cols-2 gap-px bg-gray-200">
+            {data.votes.map((v, i) => (
+              <div key={i} className="bg-white px-2.5 py-2 flex items-start gap-2">
+                <BotAvatar code={v.bot} size="sm" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-bold text-gray-700">{BOT_NAME[v.bot] || v.bot}</span>
+                    <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-bold",
+                      v.vote === "GO" ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"
+                    )}>{v.vote}</span>
+                  </div>
+                  <p className="text-[10px] text-gray-500 mt-0.5">{v.reason}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Budget/ROI/Timeline metric cards — pattern MagPreRapport 3-col metrics */}
+      {data?.metrics && data.metrics.length > 0 && (
+        <div className={cn("grid gap-2 mt-3 transition-all duration-700",
+          data.metrics.length === 3 ? "grid-cols-3" : "grid-cols-2",
+          revealedSections >= sections.length ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
+        )}>
+          {data.metrics.map((m, i) => {
+            const mc = m.color || ["emerald", "blue", "orange"][i % 3];
+            return (
+              <div key={i} className={cn("border rounded-lg px-3 py-2 text-center",
+                `bg-${mc}-50 border-${mc}-200`
+              )}>
+                <p className={cn("text-lg font-extrabold", `text-${mc}-700`)}>{m.value}</p>
+                <p className={cn("text-[10px]", `text-${mc}-600`)}>{m.label}</p>
+                {m.sub && <p className="text-[9px] text-gray-400 mt-0.5">{m.sub}</p>}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </BlockWrapper>
   );
 }
@@ -1648,13 +1868,14 @@ function CriseRenderer({ block, onAction }: BlockRendererProps) {
   );
 }
 
-// ═══ 21. Deep Search — Source cards avec score circulaire (pattern FocusReflexionView DeepSearch) ═══
+// ═══ 21. Deep Search — Source cards avec progress bar live (pattern MagDeepSearch L2532-2685) ═══
 
 function DeepSearchRenderer({ block, onAction }: BlockRendererProps) {
   const data = block.structured_data as {
-    sources?: { title: string; detail: string; score?: number; url?: string }[];
+    sources?: { title: string; detail: string; score?: number; url?: string; type?: string; crossRef?: string[] }[];
     status?: string;
     conclusion?: string;
+    total_expected?: number;
   } | undefined;
   // S3A.1: Staggered reveal — sources appear one by one (600ms apart)
   const [revealedSources, setRevealedSources] = useState(0);
@@ -1667,6 +1888,11 @@ function DeepSearchRenderer({ block, onAction }: BlockRendererProps) {
     });
     return () => timers.forEach(clearTimeout);
   }, [data?.sources?.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const sourceCount = data?.sources?.length || 0;
+  const totalExpected = data?.total_expected || sourceCount;
+  const isSearching = data?.status !== "complete" && revealedSources < sourceCount;
+  const avgScore = sourceCount > 0 ? Math.round((data?.sources || []).reduce((sum, s) => sum + (s.score || 0), 0) / sourceCount) : 0;
 
   // Circular score component
   const CircularScore = ({ score }: { score: number }) => {
@@ -1688,39 +1914,73 @@ function DeepSearchRenderer({ block, onAction }: BlockRendererProps) {
     );
   };
 
+  // Source type icon
+  const sourceTypeIcon = (type?: string) => {
+    if (type === "academic") return "bg-violet-100 text-violet-600";
+    if (type === "industry") return "bg-blue-100 text-blue-600";
+    if (type === "news") return "bg-amber-100 text-amber-600";
+    return "bg-cyan-100 text-cyan-600";
+  };
+
   return (
     <BlockWrapper block={block} onAction={onAction} label="Deep Search" labelColor="bg-cyan-100 text-cyan-700">
-      {/* Status badge */}
-      <div className="flex items-center gap-2 mb-3">
-        <div className={cn(
-          "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-bold",
-          data?.status === "complete" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
-        )}>
-          {data?.status === "complete" ? <CheckCircle2 className="h-3 w-3" /> : <Activity className="h-3 w-3 animate-pulse" />}
-          {data?.status === "complete" ? "Recherche terminee" : "Recherche en cours..."}
+      {/* Status + progress bar — pattern MagDeepSearch */}
+      <div className="rounded-lg border border-cyan-200 bg-cyan-50/30 p-2.5 mb-3">
+        <div className="flex items-center gap-2 mb-1.5">
+          <div className={cn(
+            "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-bold",
+            data?.status === "complete" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
+          )}>
+            {data?.status === "complete" ? <CheckCircle2 className="h-3 w-3" /> : <Activity className="h-3 w-3 animate-pulse" />}
+            {data?.status === "complete" ? "Recherche terminee" : "Recherche en cours..."}
+          </div>
+          <span className="text-[10px] text-gray-500 ml-auto">{revealedSources}/{totalExpected} sources</span>
+          {data?.status === "complete" && avgScore > 0 && (
+            <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-full",
+              avgScore >= 70 ? "bg-green-100 text-green-700" : avgScore >= 40 ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"
+            )}>Score moyen: {avgScore}%</span>
+          )}
+        </div>
+        {/* Live progress bar */}
+        <div className="h-1.5 bg-cyan-100 rounded-full overflow-hidden">
+          <div className={cn("h-full rounded-full transition-all duration-500",
+            data?.status === "complete" ? "bg-green-500" : "bg-cyan-500"
+          )} style={{ width: `${totalExpected > 0 ? (revealedSources / totalExpected) * 100 : 0}%` }} />
         </div>
       </div>
-      {/* Source cards */}
+
+      {/* Source cards with ranking */}
       {data?.sources ? (
         <div className="space-y-2">
           {data.sources.map((source, i) => (
             <div key={i} className={cn(
-              "rounded-lg border border-gray-200 bg-white px-4 py-3 hover:bg-cyan-50/30 hover:border-cyan-200",
+              "rounded-xl border-2 bg-white overflow-hidden hover:shadow-md",
               "transition-all duration-500",
+              source.score !== undefined && source.score >= 80 ? "border-green-200" :
+              source.score !== undefined && source.score >= 50 ? "border-gray-200" : "border-gray-200",
               i < revealedSources ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
             )} style={{ transitionDelay: `${i * 100}ms` }}>
-              <div className="flex items-center gap-3">
-                <div className="w-7 h-7 rounded-lg bg-cyan-100 flex items-center justify-center shrink-0">
-                  <Globe className="h-3.5 w-3.5 text-cyan-600" />
+              <div className="flex items-center gap-3 px-4 py-3">
+                {/* Ranking number */}
+                <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0", sourceTypeIcon(source.type))}>
+                  <span className="text-xs font-bold">{i + 1}</span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <p className="text-sm font-medium text-gray-900 truncate">{source.title}</p>
+                    <p className="text-sm font-bold text-gray-900 truncate">{source.title}</p>
                     {source.url && (
                       <ExternalLink className="h-2.5 w-2.5 text-gray-300 shrink-0" />
                     )}
                   </div>
                   <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{source.detail}</p>
+                  {/* Cross-reference badges — pattern MagDeepSearch */}
+                  {source.crossRef && source.crossRef.length > 0 && (
+                    <div className="flex gap-1 mt-1.5">
+                      {source.crossRef.map((ref, j) => (
+                        <span key={j} className="text-[8px] px-1.5 py-0.5 rounded-full bg-cyan-100 text-cyan-700 font-medium">{ref}</span>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 {source.score !== undefined && <CircularScore score={source.score} />}
               </div>
@@ -1739,12 +1999,15 @@ function DeepSearchRenderer({ block, onAction }: BlockRendererProps) {
           ))}
         </div>
       )}
-      {/* Conclusion */}
+      {/* Conclusion — enhanced with score summary */}
       {data?.conclusion && (
-        <div className="rounded-xl border border-cyan-200 bg-cyan-50/50 p-3 mt-3">
+        <div className="rounded-xl border-2 border-cyan-200 bg-gradient-to-r from-cyan-50 to-white p-3 mt-3">
           <div className="flex items-start gap-2">
-            <TrendingUp className="h-3.5 w-3.5 text-cyan-600 shrink-0 mt-0.5" />
-            <p className="text-sm text-gray-700 leading-relaxed italic">{data.conclusion}</p>
+            <TrendingUp className="h-4 w-4 text-cyan-600 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-[10px] font-bold text-cyan-700 uppercase tracking-wider mb-1">Synthese de la recherche</p>
+              <p className="text-sm text-gray-700 leading-relaxed">{data.conclusion}</p>
+            </div>
           </div>
         </div>
       )}
