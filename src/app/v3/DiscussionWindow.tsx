@@ -26,6 +26,8 @@ import {
 } from "lucide-react";
 import { cn } from "../components/ui/utils";
 import { useAmorcer } from "./AmorcerContext";
+import { useDemo } from "./DemoContext";
+import { DemoChatPlayer } from "./DemoChatPlayer";
 import { useChatContext } from "../v2/context/ChatContext";
 import { BOT_AVATAR, BOT_NAME, BOT_ROLE } from "../v2/api/types";
 import { useIsMobile } from "../components/ui/use-mobile";
@@ -84,9 +86,33 @@ function formatMarkdown(text: string): string {
   let inCodeBlock = false;
   let codeBlockLang = "";
   let codeBlockLines: string[] = [];
+  let tableLines: string[] = [];
 
   const closeList = () => {
     if (listTag) { result.push(`</${listTag}>`); listTag = null; }
+  };
+
+  const flushTable = () => {
+    if (tableLines.length === 0) return;
+    const rows = tableLines.map(r => r.replace(/^\|/, "").replace(/\|$/, "").split("|").map(c => c.trim()));
+    // Detect separator row (---|---) to split header from body
+    let headerEnd = -1;
+    for (let r = 0; r < rows.length; r++) {
+      if (rows[r].every(c => /^[-:]+$/.test(c))) { headerEnd = r; break; }
+    }
+    let html = '<div class="my-2"><table class="text-sm border-collapse w-full">';
+    for (let r = 0; r < rows.length; r++) {
+      if (headerEnd >= 0 && r === headerEnd) continue; // skip separator
+      const isHead = headerEnd > 0 && r < headerEnd;
+      const tag = isHead ? "th" : "td";
+      const cls = isHead
+        ? 'class="px-3 py-1.5 text-left font-semibold text-gray-900 border-b border-gray-300 bg-gray-50"'
+        : 'class="px-3 py-1.5 text-left text-gray-700 border-b border-gray-100"';
+      html += "<tr>" + rows[r].map(c => `<${tag} ${cls}>${applyInlineFormatting(c)}</${tag}>`).join("") + "</tr>";
+    }
+    html += "</table></div>";
+    result.push(html);
+    tableLines = [];
   };
 
   for (let i = 0; i < lines.length; i++) {
@@ -168,6 +194,17 @@ function formatMarkdown(text: string): string {
       closeList();
     }
 
+    // Table rows: lines starting with |
+    if (/^\s*\|/.test(line)) {
+      closeList();
+      tableLines.push(line.trim());
+      continue;
+    }
+    // Flush table if we exit table lines
+    if (tableLines.length > 0) {
+      flushTable();
+    }
+
     // Empty line = spacing
     if (line.trim() === "") {
       result.push('<div class="h-2"></div>');
@@ -186,6 +223,7 @@ function formatMarkdown(text: string): string {
   }
 
   closeList();
+  flushTable();
   // Flush any unclosed code block (e.g. during streaming)
   if (inCodeBlock && codeBlockLines.length > 0) {
     const langLabel = codeBlockLang ? `<div class="text-[10px] text-gray-400 mb-1 font-mono">${codeBlockLang}</div>` : "";
@@ -611,7 +649,7 @@ function V3MessageList() {
           execution: "Plan d'exécution pour",
           retroaction: "Bilan et rétroaction sur",
         };
-        setTimeout(() => sendMessage(`${prompts[targetPhase]} ${context}${notesContext}`, chatTargetBot, undefined, undefined, { workspacePhase: targetPhase }), 80);
+        setTimeout(() => sendMessage(`${prompts[targetPhase]} ${context}${notesContext}`, chatTargetBot, undefined, { workspacePhase: targetPhase }), 80);
         return;
       }
     }
@@ -637,7 +675,7 @@ function V3MessageList() {
         setReflexionContext(topic);
         setRightSection(null);
       }
-      sendMessage(techniquePrompt + topic, chatTargetBot, undefined, undefined, { workspacePhase });
+      sendMessage(techniquePrompt + topic, chatTargetBot, undefined, { workspacePhase });
       return;
     }
 
@@ -661,7 +699,7 @@ function V3MessageList() {
     if (activeRoster.length > 1) {
       sendMultiPerspective(opt, activeRoster, undefined, { primaryAgent: chatTargetBot, workspacePhase });
     } else {
-      sendMessage(opt, chatTargetBot, undefined, undefined, { workspacePhase });
+      sendMessage(opt, chatTargetBot, undefined, { workspacePhase });
     }
   }, [isTyping, sendMessage, sendMultiPerspective, chatTargetBot, activeBotCode, activeRoster, parkThread, setActivePhase, setRightSection, setReflexionContext, reflexionContext, activePhase, workspacePhase, messages, activeDocumentSection, addWorkspaceBlock, workflowItems]);
 
@@ -786,7 +824,7 @@ function V3MessageList() {
                 return (
                   <button
                     key={i}
-                    onClick={() => sendMessage(opt, chatTargetBot, undefined, undefined, { msgType: msgTypes[i] || "fusionner", workspacePhase })}
+                    onClick={() => sendMessage(opt, chatTargetBot, undefined, { msgType: msgTypes[i] || "fusionner", workspacePhase })}
                     className="px-3 py-1.5 rounded-full text-xs font-medium bg-gray-50 border border-gray-200 hover:bg-gray-100 hover:border-gray-300 transition-colors text-gray-600 hover:text-gray-800"
                   >
                     {opt}
@@ -858,7 +896,7 @@ function V3MessageList() {
                     const msgTypes = ["fusionner", "challenge", "plan_action"] as const;
                     return (
                       <button key={i}
-                        onClick={() => sendMessage(label, msg.agent || chatTargetBot, undefined, undefined, { msgType: msgTypes[i] || "fusionner", workspacePhase })}
+                        onClick={() => sendMessage(label, msg.agent || chatTargetBot, undefined, { msgType: msgTypes[i] || "fusionner", workspacePhase })}
                         className="px-2.5 py-1 rounded-full text-[10px] font-medium bg-gray-50 border border-gray-200 hover:bg-gray-100 hover:border-gray-300 transition-colors text-gray-500 hover:text-gray-700 cursor-pointer">
                         {label}
                       </button>
@@ -894,10 +932,23 @@ function V3MessageList() {
 
         // ── User bubble ──
         if (isUser) {
+          // S3B.2: Detect workspace-sourced actions (pill indicator)
+          const wsMatch = msg.content.match(/^(Approfondir en detail|Challenge cet element, trouve les failles|Retravaille et enrichis):\s*(.+?)(?:\n|$)/);
+          const wsLabel = wsMatch ? (wsMatch[1].startsWith("Approfondir") ? "Approfondir" : wsMatch[1].startsWith("Challenge") ? "Challenger" : "Modifier") : null;
+          const wsTitle = wsMatch?.[2]?.substring(0, 60) || null;
           return (
             <div key={msg.id} className="flex gap-2.5 justify-end">
-              <div className="bg-blue-50 border border-blue-100 rounded-xl rounded-tr-none px-3.5 py-2.5 max-w-[80%] shadow-sm">
-                <p className="text-sm text-blue-900 whitespace-pre-wrap">{msg.content}</p>
+              <div className="max-w-[80%]">
+                {wsLabel && wsTitle && (
+                  <div className="flex justify-end mb-1">
+                    <span className="text-[10px] bg-sky-50 border border-sky-200 rounded-full px-2 py-0.5 text-sky-600 font-medium">
+                      [{wsLabel}] {wsTitle}
+                    </span>
+                  </div>
+                )}
+                <div className="bg-blue-50 border border-blue-100 rounded-xl rounded-tr-none px-3.5 py-2.5 shadow-sm">
+                  <p className="text-sm text-blue-900 whitespace-pre-wrap">{msg.content}</p>
+                </div>
               </div>
               <div className="w-7 h-7 rounded-full overflow-hidden shrink-0 mt-0.5 ring-2 ring-blue-300">
                 <img src="/agents/carl-fugere.jpg" alt="Carl" className="w-full h-full object-cover" />
@@ -980,7 +1031,7 @@ function V3MessageList() {
                             if (!isActive) return;
                             // S102 — Consultation: router vers CE bot seulement (pas multi-perspective)
                             if (msg.msgType === "consultation" && msg.agent && activeRoster.length > 1) {
-                              sendMessage(opt, msg.agent, undefined, undefined, { workspacePhase });
+                              sendMessage(opt, msg.agent, undefined, { workspacePhase });
                             } else {
                               handleOption(opt);
                             }
@@ -1022,7 +1073,7 @@ function V3MessageList() {
                     chatStage={chatStage}
                     messageContent={msg.content}
                     backendOptions={undefined}
-                    onAction={(prompt) => sendMessage(prompt, msg.agent || chatTargetBot, undefined, undefined, { workspacePhase })}
+                    onAction={(prompt) => sendMessage(prompt, msg.agent || chatTargetBot, undefined, { workspacePhase })}
                     onCristallise={() => {
                       const CREDO_SECTIONS = ["comprendre", "rechercher", "exposer", "demontrer", "objectif"];
                       const credoSection = CREDO_SECTIONS[chatStage] || "comprendre";
@@ -1332,6 +1383,17 @@ function DeptWelcomeScreen({ botCode, onAction, onResumeThread, onDeleteThread, 
 
 
 export function DiscussionWindow() {
+  const { demoSimId } = useDemo();
+
+  // Mode demo actif → afficher DemoChatPlayer a la place du vrai chat
+  if (demoSimId) {
+    return <DemoChatPlayer />;
+  }
+
+  return <DiscussionWindowInner />;
+}
+
+function DiscussionWindowInner() {
   const { cockpitTab, activeBotCode, activePhase, setActivePhase, setRightSection, setReflexionContext, setFocusType, setActiveDeliverable, credoPhase, reflexionContext, addWorkflowItem, activeMeeting: dwActiveMeeting } = useAmorcer();
   const { activeRoster, addBotToRoster, removeBotFromRoster, messages, sendMessage, threads, resumeThread, deleteThread, renameThread, chatTargetBot } = useChatContext();
   const isMobile = useIsMobile();
@@ -1405,7 +1467,7 @@ export function DiscussionWindow() {
             <DeptWelcomeScreen
               botCode={activeBotCode}
               onAction={(text, phase) => {
-                sendMessage(text, chatTargetBot, undefined, undefined, { workspacePhase: phase || "discussion" });
+                sendMessage(text, chatTargetBot, undefined, { workspacePhase: phase || "discussion" });
                 setReflexionContext(text.substring(0, 80));
                 setFocusType("chantier");
                 setRightSection(null);
@@ -1721,15 +1783,47 @@ function ChatBoxV3() {
     e.target.value = "";
     setShowAttachMenu(false);
     setUploading(true);
+
+    // S3C.2: Document type detection — route documents to DocForge restructuration
+    const docExts = [".pdf", ".docx", ".doc", ".txt", ".md", ".rtf"];
+    const ext = file.name.substring(file.name.lastIndexOf(".")).toLowerCase();
+    const isDocument = docExts.includes(ext);
+
     try {
-      const result = await api.uploadBureauFile(file, file.name);
-      sendMessage(`Fichier joint: ${result.titre || file.name}`, chatTargetBot);
+      if (isDocument) {
+        // Upload + restructure → auto-switch to Conception
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("bot_code", chatTargetBot);
+        const res = await fetch("/api/v1/workspace/upload-restructure", {
+          method: "POST",
+          headers: { "X-API-Key": localStorage.getItem("bt_api_key") || "" },
+          body: formData,
+        });
+        if (res.ok) {
+          const data = await res.json();
+          sendMessage(`Document analyse: ${file.name} — ${data.sections?.length || 0} sections detectees`, chatTargetBot);
+          // Dispatch event to trigger DocForge with pre-populated sections
+          if (data.sections?.length) {
+            window.dispatchEvent(new CustomEvent("bt-start-deliverable", {
+              detail: { deliverableType: "docforge_section", sections: data.sections, fileName: file.name },
+            }));
+          }
+        } else {
+          // Fallback: upload as regular bureau file
+          const result = await api.uploadBureauFile(file, file.name);
+          sendMessage(`Fichier joint: ${result.titre || file.name}`, chatTargetBot);
+        }
+      } else {
+        const result = await api.uploadBureauFile(file, file.name);
+        sendMessage(`Fichier joint: ${result.titre || file.name}`, chatTargetBot);
+      }
     } catch (err) {
       console.error("[ChatBoxV3] Upload error:", err);
     } finally {
       setUploading(false);
     }
-  }, [sendMessage]);
+  }, [sendMessage, chatTargetBot]);
 
   // ═══ TEXT HANDLERS ═══
   const handleSend = () => {
@@ -1737,21 +1831,24 @@ function ChatBoxV3() {
     if (!text) return;
     setInputText("");
 
-    // FIX Lacune 1: Entrer en Discussion AVANT le sendMessage pour que workspacePhase
+    // FIX Lacune 1 + Sprint 3: Entrer en Discussion AVANT le sendMessage pour que workspacePhase
     // soit "discussion_comprendre" des le premier message (au lieu de "observation")
     let effectivePhase = workspacePhase;
     if (!reflexionContext) {
       setReflexionContext(text.substring(0, 80));
+    }
+    // Sprint 3 fix: si workspacePhase est falsy (pas de phase active), forcer discussion
+    if (!effectivePhase || effectivePhase === "observation") {
       setActivePhase("discussion" as any);
       setRightSection(null);
-      effectivePhase = "discussion_comprendre";
+      effectivePhase = `discussion_${_credoStepsCB[chatStage] || "comprendre"}`;
     }
 
     // Multi-bot: si 2+ bots dans le roster, consultation multi-perspectives
     if (activeRoster.length > 1) {
       sendMultiPerspective(text, activeRoster, undefined, { primaryAgent: chatTargetBot, workspacePhase: effectivePhase });
     } else {
-      sendMessage(text, chatTargetBot, undefined, undefined, { workspacePhase: effectivePhase });
+      sendMessage(text, chatTargetBot, undefined, { workspacePhase: effectivePhase });
     }
     textareaRef.current?.focus();
   };

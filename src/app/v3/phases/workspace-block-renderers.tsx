@@ -14,10 +14,14 @@ import {
   ThumbsUp, ThumbsDown, Trophy, Zap, Shield,
   Target, Globe, ExternalLink,
   MessageCircle, Mic, Video,
+  BarChart3, Loader2, ChevronDown, Users,
 } from "lucide-react";
 import { cn } from "../../components/ui/utils";
 import { formatCristallise } from "./content-formatters";
 import { BotBadgeFull } from "../../v2/zones/center/shared/BotBadgeFull";
+import { ThinkingAnimation, BotAvatar } from "../simulation/primitives";
+import type { ThinkingStep } from "../simulation/sim-types";
+import { BOT_NAME } from "../../v2/api/types";
 import type { WorkspaceBlock, WorkspaceBlockType } from "../core/types";
 
 // ═══ Bot Accent Borders (B.9 — pattern BOT_COLORS from sim-data.ts) ═══
@@ -45,6 +49,81 @@ const SOURCE_CONFIG: Record<string, { icon: React.ElementType; bg: string; text:
   meeting: { icon: Video, bg: "bg-amber-100", text: "text-amber-600", label: "Reunion" },
 };
 
+// ═══ Sprint 3A.1: AnimatedBlockEntry — ThinkingAnimation before reveal ═══
+
+const ANIMATED_THINKING_STEPS: Record<string, ThinkingStep[]> = {
+  diagnostic: [
+    { icon: Search, text: "Analyse des axes..." },
+    { icon: Activity, text: "Evaluation des scores..." },
+    { icon: TrendingUp, text: "Compilation du diagnostic..." },
+  ],
+  brainstorm: [
+    { icon: Lightbulb, text: "Generation d'idees..." },
+    { icon: TrendingUp, text: "Evaluation d'impact..." },
+    { icon: Layers, text: "Clustering des concepts..." },
+  ],
+  "5pourquoi": [
+    { icon: Search, text: "Exploration niveau 1..." },
+    { icon: Target, text: "Approfondissement..." },
+    { icon: AlertTriangle, text: "Identification cause racine..." },
+  ],
+  deep_search: [
+    { icon: Globe, text: "Recherche de sources..." },
+    { icon: CheckCircle2, text: "Verification de fiabilite..." },
+    { icon: BarChart3, text: "Scoring des resultats..." },
+  ],
+  challenge: [
+    { icon: Swords, text: "Formulation du challenge..." },
+    { icon: Shield, text: "Construction de la defense..." },
+    { icon: Trophy, text: "Deliberation du verdict..." },
+  ],
+  scamper: [
+    { icon: Lightbulb, text: "Activation des 7 angles..." },
+    { icon: Layers, text: "Generation par lettre..." },
+    { icon: TrendingUp, text: "Synthese creatrice..." },
+  ],
+  etat_des_lieux: [
+    { icon: Search, text: "Analyse de la situation..." },
+    { icon: Users, text: "Consultation des experts..." },
+    { icon: BarChart3, text: "Evaluation globale..." },
+  ],
+  rapport: [
+    { icon: Search, text: "Compilation des blocs..." },
+    { icon: BarChart3, text: "Analyse des decisions..." },
+    { icon: FileText, text: "Structuration du rapport..." },
+  ],
+  _default: [
+    { icon: Search, text: "Analyse en cours..." },
+    { icon: TrendingUp, text: "Structuration..." },
+    { icon: CheckCircle2, text: "Finalisation..." },
+  ],
+};
+
+function AnimatedBlockEntry({ block, children, animated }: {
+  block: WorkspaceBlock;
+  children: React.ReactNode;
+  animated?: boolean;
+}) {
+  // useState captures initial animated value — won't reset if prop changes on re-render
+  const [phase, setPhase] = useState<"thinking" | "revealed">(animated ? "thinking" : "revealed");
+  const steps = ANIMATED_THINKING_STEPS[block.type] || ANIMATED_THINKING_STEPS._default;
+
+  if (phase === "revealed") {
+    return <>{children}</>;
+  }
+
+  return (
+    <ThinkingAnimation
+      botCode={block.source || "CEOB"}
+      botEmoji="🤖"
+      botName={BOT_NAME[block.source] || "CarlOS"}
+      steps={steps}
+      onComplete={() => setPhase("revealed")}
+      speed={600}
+    />
+  );
+}
+
 // ═══ Block Action Types ═══
 
 export type BlockActionType = "pin" | "deepen" | "challenge" | "edit" | "rework" | "merge" | "delete";
@@ -52,6 +131,7 @@ export type BlockActionType = "pin" | "deepen" | "challenge" | "edit" | "rework"
 interface BlockRendererProps {
   block: WorkspaceBlock;
   onAction: (action: BlockActionType, blockId: string, payload?: string) => void;
+  animated?: boolean;
 }
 
 // ═══ Shared: Block Actions Bar ═══
@@ -198,6 +278,13 @@ function BlockWrapper({ block, onAction, label, labelColor, children }: BlockRen
     >
       <div className="flex items-center gap-2 mb-3">
         <span className={cn("text-xs px-2 py-0.5 rounded-full font-bold", labelColor)}>{label}</span>
+        {/* S3A.1: BotAvatar attribution */}
+        {block.source && (
+          <div className="flex items-center gap-1 shrink-0">
+            <BotAvatar code={block.source} size="sm" />
+            <span className="text-[9px] text-gray-400 font-medium">{BOT_NAME[block.source] || block.source}</span>
+          </div>
+        )}
         {/* S2.2.3: Confidence badge */}
         <span className={cn(
           "text-[9px] px-1.5 py-0.5 rounded-full font-bold",
@@ -232,6 +319,17 @@ function BlockWrapper({ block, onAction, label, labelColor, children }: BlockRen
 
 function DiagnosticRenderer({ block, onAction }: BlockRendererProps) {
   const data = block.structured_data as { axes?: { label: string; score: number; color: string }[]; conclusion?: string; frictions?: string[] } | undefined;
+  // S3A.1: Staggered reveal for axes with animated score bars
+  const [revealedAxes, setRevealedAxes] = useState(0);
+  useEffect(() => {
+    if (!data?.axes) return;
+    setRevealedAxes(0);
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    data.axes.forEach((_, i) => {
+      timers.push(setTimeout(() => setRevealedAxes(c => c + 1), 300 + i * 400));
+    });
+    return () => timers.forEach(clearTimeout);
+  }, [data?.axes?.length]); // eslint-disable-line react-hooks/exhaustive-deps
   const SEV: Record<string, { bg: string; text: string; border: string }> = {
     green: { bg: "bg-green-100", text: "text-green-700", border: "border-green-200" },
     amber: { bg: "bg-amber-100", text: "text-amber-700", border: "border-amber-200" },
@@ -247,13 +345,18 @@ function DiagnosticRenderer({ block, onAction }: BlockRendererProps) {
             <div className="grid grid-cols-2 gap-3">
               {data.axes.map((ax, i) => {
                 const s = SEV[ax.color] || SEV.amber;
+                const isRevealed = i < revealedAxes;
                 return (
-                  <div key={i} className={cn("rounded-lg p-3", s.bg.replace("100", "50"))}>
+                  <div key={i} className={cn(
+                    "rounded-lg p-3 transition-all duration-500",
+                    s.bg.replace("100", "50"),
+                    isRevealed ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
+                  )} style={{ transitionDelay: `${i * 100}ms` }}>
                     <p className="text-xs text-gray-400 mb-1">{ax.label}</p>
                     <div className="flex items-center gap-2">
                       <p className={cn("text-xs font-bold", s.text)}>{ax.score}/10</p>
                       <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                        <div className={cn("h-full rounded-full transition-all", s.bg)} style={{ width: `${ax.score * 10}%` }} />
+                        <div className={cn("h-full rounded-full", s.bg)} style={{ width: isRevealed ? `${ax.score * 10}%` : "0%", transition: "width 0.8s ease-out", transitionDelay: `${i * 100 + 200}ms` }} />
                       </div>
                     </div>
                   </div>
@@ -310,13 +413,30 @@ function BrainstormRenderer({ block, onAction }: BlockRendererProps) {
   const IDEA_COLORS = ["border-l-amber-400", "border-l-blue-400", "border-l-green-400", "border-l-purple-400", "border-l-pink-400", "border-l-cyan-400"];
   const [votes, setVotes] = useState<Record<number, number>>({});
   const [expanded, setExpanded] = useState<number | null>(null);
+  // S3A.1: Staggered reveal — items appear 2 by 2 (300ms apart)
+  const [revealedItems, setRevealedItems] = useState(0);
+  useEffect(() => {
+    if (!data?.items) return;
+    setRevealedItems(0);
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    data.items.forEach((_, i) => {
+      timers.push(setTimeout(() => setRevealedItems(c => c + 1), 200 + Math.floor(i / 2) * 300));
+    });
+    return () => timers.forEach(clearTimeout);
+  }, [data?.items?.length]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <BlockWrapper block={block} onAction={onAction} label="Brainstorm" labelColor="bg-amber-100 text-amber-700">
       {data?.items ? (
         <div className="grid grid-cols-2 gap-2">
-          {data.items.map((item) => (
+          {data.items.map((item, idx) => (
             <div key={item.id}
-              className={cn("group/idea rounded-lg border border-gray-200 border-l-[3px] bg-white px-3 py-2.5 hover:shadow-sm hover:bg-amber-50/30 transition-all cursor-pointer", IDEA_COLORS[(item.id - 1) % IDEA_COLORS.length])}
+              className={cn(
+                "group/idea rounded-lg border border-gray-200 border-l-[3px] bg-white px-3 py-2.5 hover:shadow-sm hover:bg-amber-50/30 cursor-pointer",
+                IDEA_COLORS[(item.id - 1) % IDEA_COLORS.length],
+                "transition-all duration-500",
+                idx < revealedItems ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
+              )}
+              style={{ transitionDelay: `${Math.floor(idx / 2) * 80}ms` }}
               onClick={() => setExpanded(expanded === item.id ? null : item.id)}
             >
               <div className="flex items-start gap-2">
@@ -897,37 +1017,108 @@ function BenchmarkRenderer({ block, onAction }: BlockRendererProps) {
 // ═══ 14. Challenge — Contre-arguments avec AlertTriangle (pattern FocusReflexionView StepAnalyse) ═══
 
 function ChallengeRenderer({ block, onAction }: BlockRendererProps) {
-  const data = block.structured_data as { arguments?: { point: string; severity?: string }[] } | undefined;
+  const data = block.structured_data as {
+    arguments?: { point: string; severity?: string }[];
+    // S3A.1: 3-phase format (challenge → defense → verdict)
+    challenge?: string[];
+    defense?: string[];
+    verdict?: string;
+  } | undefined;
+  // S3A.1: 3-phase sequential reveal (1.2s apart)
+  const has3Phase = data?.challenge && data?.defense;
+  const [revealPhase, setRevealPhase] = useState(0);
+  useEffect(() => {
+    if (!has3Phase) return;
+    setRevealPhase(0);
+    const t1 = setTimeout(() => setRevealPhase(1), 800);
+    const t2 = setTimeout(() => setRevealPhase(2), 2000);
+    const t3 = setTimeout(() => setRevealPhase(3), 3200);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, [has3Phase]);
+  // Stagger for legacy arguments
+  const [revealedArgs, setRevealedArgs] = useState(0);
+  useEffect(() => {
+    if (has3Phase || !data?.arguments) return;
+    setRevealedArgs(0);
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    data.arguments.forEach((_, i) => {
+      timers.push(setTimeout(() => setRevealedArgs(c => c + 1), 300 + i * 400));
+    });
+    return () => timers.forEach(clearTimeout);
+  }, [data?.arguments?.length, has3Phase]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <BlockWrapper block={block} onAction={onAction} label="Challenge" labelColor="bg-amber-100 text-amber-700">
-      <div className="rounded-xl border border-amber-200 bg-amber-50/30 p-3 mb-2">
-        <div className="flex items-center gap-2 mb-2">
-          <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
-          <span className="text-xs font-bold text-amber-700 uppercase tracking-wider">Avocat du diable</span>
-        </div>
-        {data?.arguments ? (
-          <div className="space-y-2 ml-6">
-            {data.arguments.map((a, i) => {
-              const sevColor = a.severity === "critique" ? "text-red-600" : a.severity === "modere" ? "text-amber-600" : "text-gray-600";
-              return (
-                <div key={i} className="flex items-start gap-2">
-                  <span className={cn("text-xs font-bold shrink-0 mt-0.5", sevColor)}>{i + 1}.</span>
-                  <p className="text-sm text-gray-700 leading-relaxed">{a.point}</p>
-                </div>
-              );
-            })}
+      {has3Phase ? (
+        <div className="space-y-3">
+          {/* Phase 1: Challenge (amber) */}
+          <div className={cn("rounded-xl border border-amber-200 bg-amber-50/30 p-3 transition-all duration-500", revealPhase >= 1 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3")}>
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
+              <span className="text-xs font-bold text-amber-700 uppercase tracking-wider">Challenge</span>
+            </div>
+            <div className="space-y-1.5 ml-6">
+              {data.challenge!.map((pt, i) => (
+                <p key={i} className="text-sm text-gray-700 leading-relaxed">• {pt}</p>
+              ))}
+            </div>
           </div>
-        ) : (
-          <div className="space-y-2 ml-6">
-            {parseSummaryItems(block.summary).map((item, i) => (
-              <div key={i} className="flex items-start gap-2">
-                <span className="text-xs font-bold text-amber-600 shrink-0 mt-0.5">{i + 1}.</span>
-                <p className="text-sm text-gray-700 leading-relaxed">{item}</p>
+          {/* Phase 2: Defense (emerald) */}
+          <div className={cn("rounded-xl border border-emerald-200 bg-emerald-50/30 p-3 transition-all duration-500", revealPhase >= 2 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3")}>
+            <div className="flex items-center gap-2 mb-2">
+              <Shield className="h-4 w-4 text-emerald-600 shrink-0" />
+              <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Defense</span>
+            </div>
+            <div className="space-y-1.5 ml-6">
+              {data.defense!.map((pt, i) => (
+                <p key={i} className="text-sm text-gray-700 leading-relaxed">• {pt}</p>
+              ))}
+            </div>
+          </div>
+          {/* Phase 3: Verdict (blue) */}
+          {data.verdict && (
+            <div className={cn("rounded-xl border border-blue-200 bg-blue-50/30 p-3 transition-all duration-500", revealPhase >= 3 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3")}>
+              <div className="flex items-center gap-2 mb-2">
+                <Trophy className="h-4 w-4 text-blue-600 shrink-0" />
+                <span className="text-xs font-bold text-blue-700 uppercase tracking-wider">Verdict</span>
               </div>
-            ))}
+              <p className="text-sm text-gray-700 leading-relaxed ml-6">{data.verdict}</p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="rounded-xl border border-amber-200 bg-amber-50/30 p-3 mb-2">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
+            <span className="text-xs font-bold text-amber-700 uppercase tracking-wider">Avocat du diable</span>
           </div>
-        )}
-      </div>
+          {data?.arguments ? (
+            <div className="space-y-2 ml-6">
+              {data.arguments.map((a, i) => {
+                const sevColor = a.severity === "critique" ? "text-red-600" : a.severity === "modere" ? "text-amber-600" : "text-gray-600";
+                return (
+                  <div key={i} className={cn(
+                    "flex items-start gap-2 transition-all duration-500",
+                    i < revealedArgs ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
+                  )} style={{ transitionDelay: `${i * 100}ms` }}>
+                    <span className={cn("text-xs font-bold shrink-0 mt-0.5", sevColor)}>{i + 1}.</span>
+                    <p className="text-sm text-gray-700 leading-relaxed">{a.point}</p>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="space-y-2 ml-6">
+              {parseSummaryItems(block.summary).map((item, i) => (
+                <div key={i} className="flex items-start gap-2">
+                  <span className="text-xs font-bold text-amber-600 shrink-0 mt-0.5">{i + 1}.</span>
+                  <p className="text-sm text-gray-700 leading-relaxed">{item}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </BlockWrapper>
   );
 }
@@ -976,35 +1167,59 @@ function SyntheseRenderer({ block, onAction }: BlockRendererProps) {
 
 function RapportRenderer({ block, onAction }: BlockRendererProps) {
   const data = block.structured_data as { sections?: { title: string; content: string }[] } | undefined;
+  // S3B.1: Accordion state for expandable sections
+  const [expandedSections, setExpandedSections] = useState<Set<number>>(new Set([0]));
+  const toggleSection = (idx: number) => {
+    setExpandedSections(prev => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx); else next.add(idx);
+      return next;
+    });
+  };
+  // S3A.1: Staggered reveal
+  const [revealedSections, setRevealedSections] = useState(0);
+  const sections = data?.sections || parseSummarySections(block.summary).map(s => ({ title: s.title, content: s.body }));
+  useEffect(() => {
+    setRevealedSections(0);
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    sections.forEach((_, i) => {
+      timers.push(setTimeout(() => setRevealedSections(c => c + 1), 300 + i * 400));
+    });
+    return () => timers.forEach(clearTimeout);
+  }, [sections.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <BlockWrapper block={block} onAction={onAction} label="Rapport" labelColor="bg-gray-200 text-gray-700">
-      {data?.sections ? (
-        <div className="space-y-3">
-          {data.sections.map((s, i) => (
-            <div key={i} className="rounded-xl border border-gray-200 bg-white p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-bold">{i + 1}</span>
-                <h4 className="text-xs font-bold text-gray-900">{s.title}</h4>
-              </div>
-              <p className="text-sm text-gray-600 leading-relaxed">{s.content}</p>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {parseSummarySections(block.summary).map((s, i) => (
-            <div key={i} className="rounded-xl border border-gray-200 bg-white p-4">
-              {s.title && (
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-bold">{i + 1}</span>
-                  <h4 className="text-xs font-bold text-gray-900">{s.title}</h4>
+      <div className="space-y-2">
+        {sections.map((s, i) => {
+          const isExpanded = expandedSections.has(i);
+          const isRevealed = i < revealedSections;
+          return (
+            <div key={i} className={cn(
+              "rounded-xl border border-gray-200 bg-white overflow-hidden transition-all duration-500",
+              isRevealed ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
+            )} style={{ transitionDelay: `${i * 100}ms` }}>
+              <button
+                onClick={() => toggleSection(i)}
+                className="flex items-center gap-2 w-full px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer"
+              >
+                <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-bold shrink-0">{i + 1}</span>
+                <h4 className="text-xs font-bold text-gray-900 flex-1 text-left">{s.title || `Section ${i + 1}`}</h4>
+                <ChevronDown className={cn("h-3.5 w-3.5 text-gray-400 transition-transform shrink-0", isExpanded && "rotate-180")} />
+              </button>
+              {isExpanded && (
+                <div className="px-4 pb-3 animate-in fade-in duration-200">
+                  <p className="text-sm text-gray-600 leading-relaxed">{s.content}</p>
+                  <div className="flex gap-1.5 mt-2 pt-2 border-t border-gray-100">
+                    <button onClick={() => onAction("deepen", block.id, s.title)} className="text-[9px] px-2 py-0.5 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 cursor-pointer transition-colors">Approfondir</button>
+                    <button onClick={() => onAction("challenge", block.id, s.title)} className="text-[9px] px-2 py-0.5 rounded bg-amber-50 text-amber-600 hover:bg-amber-100 cursor-pointer transition-colors">Challenger</button>
+                  </div>
                 </div>
               )}
-              <p className="text-sm text-gray-600 leading-relaxed">{s.body}</p>
             </div>
-          ))}
-        </div>
-      )}
+          );
+        })}
+      </div>
     </BlockWrapper>
   );
 }
@@ -1339,6 +1554,17 @@ function DeepSearchRenderer({ block, onAction }: BlockRendererProps) {
     status?: string;
     conclusion?: string;
   } | undefined;
+  // S3A.1: Staggered reveal — sources appear one by one (600ms apart)
+  const [revealedSources, setRevealedSources] = useState(0);
+  useEffect(() => {
+    if (!data?.sources) return;
+    setRevealedSources(0);
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    data.sources.forEach((_, i) => {
+      timers.push(setTimeout(() => setRevealedSources(c => c + 1), 400 + i * 600));
+    });
+    return () => timers.forEach(clearTimeout);
+  }, [data?.sources?.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Circular score component
   const CircularScore = ({ score }: { score: number }) => {
@@ -1376,7 +1602,11 @@ function DeepSearchRenderer({ block, onAction }: BlockRendererProps) {
       {data?.sources ? (
         <div className="space-y-2">
           {data.sources.map((source, i) => (
-            <div key={i} className="rounded-lg border border-gray-200 bg-white px-4 py-3 hover:bg-cyan-50/30 hover:border-cyan-200 transition-all">
+            <div key={i} className={cn(
+              "rounded-lg border border-gray-200 bg-white px-4 py-3 hover:bg-cyan-50/30 hover:border-cyan-200",
+              "transition-all duration-500",
+              i < revealedSources ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
+            )} style={{ transitionDelay: `${i * 100}ms` }}>
               <div className="flex items-center gap-3">
                 <div className="w-7 h-7 rounded-lg bg-cyan-100 flex items-center justify-center shrink-0">
                   <Globe className="h-3.5 w-3.5 text-cyan-600" />
@@ -1414,6 +1644,90 @@ function DeepSearchRenderer({ block, onAction }: BlockRendererProps) {
             <TrendingUp className="h-3.5 w-3.5 text-cyan-600 shrink-0 mt-0.5" />
             <p className="text-sm text-gray-700 leading-relaxed italic">{data.conclusion}</p>
           </div>
+        </div>
+      )}
+    </BlockWrapper>
+  );
+}
+
+// ═══ 22. Etat des Lieux — Multi-agent diagnostic rapide (Sprint 3A.2) ═══
+
+function EtatDesLieuxRenderer({ block, onAction }: BlockRendererProps) {
+  const data = block.structured_data as {
+    perspectives?: { bot: string; analysis: string; score?: number }[];
+    temperature?: number;
+    temperature_label?: string;
+  } | undefined;
+  // Staggered reveal for perspectives
+  const [revealedPerspectives, setRevealedPerspectives] = useState(0);
+  useEffect(() => {
+    if (!data?.perspectives) return;
+    setRevealedPerspectives(0);
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    data.perspectives.forEach((_, i) => {
+      timers.push(setTimeout(() => setRevealedPerspectives(c => c + 1), 300 + i * 400));
+    });
+    return () => timers.forEach(clearTimeout);
+  }, [data?.perspectives?.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const tempColor = (data?.temperature ?? 50) >= 70 ? "text-red-600" :
+    (data?.temperature ?? 50) >= 40 ? "text-amber-600" : "text-emerald-600";
+  const tempBg = (data?.temperature ?? 50) >= 70 ? "bg-red-500" :
+    (data?.temperature ?? 50) >= 40 ? "bg-amber-500" : "bg-emerald-500";
+
+  return (
+    <BlockWrapper block={block} onAction={onAction} label="Etat des lieux" labelColor="bg-sky-100 text-sky-700">
+      {/* Temperature gauge */}
+      {data?.temperature !== undefined && (
+        <div className="mb-3">
+          <div className="flex items-center gap-2 mb-1">
+            <Activity className="h-3.5 w-3.5 text-gray-400" />
+            <span className="text-[10px] text-gray-500 font-medium">Temperature</span>
+            <span className={cn("text-xs font-bold", tempColor)}>{data.temperature}/100</span>
+            {data.temperature_label && (
+              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">{data.temperature_label}</span>
+            )}
+          </div>
+          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <div className={cn("h-full rounded-full", tempBg)} style={{ width: `${data.temperature}%`, transition: "width 1s ease-out" }} />
+          </div>
+        </div>
+      )}
+      {/* Agent perspectives */}
+      {data?.perspectives ? (
+        <div className="space-y-2">
+          {data.perspectives.map((p, i) => {
+            const isRevealed = i < revealedPerspectives;
+            return (
+              <div key={i} className={cn(
+                "flex items-start gap-2.5 rounded-lg border border-gray-200 bg-white px-3 py-2.5 transition-all duration-500",
+                isRevealed ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
+              )} style={{ transitionDelay: `${i * 100}ms` }}>
+                <BotAvatar code={p.bot} size="sm" />
+                <div className="flex-1 min-w-0">
+                  <span className="text-[10px] font-bold text-gray-500">{BOT_NAME[p.bot] || p.bot}</span>
+                  <p className="text-sm text-gray-700 leading-relaxed">{p.analysis}</p>
+                </div>
+                {p.score !== undefined && (
+                  <span className={cn(
+                    "text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0",
+                    p.score >= 7 ? "bg-emerald-100 text-emerald-700" :
+                    p.score >= 4 ? "bg-amber-100 text-amber-700" :
+                    "bg-red-100 text-red-700"
+                  )}>{p.score}/10</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {parseSummaryItems(block.summary).map((item, i) => (
+            <div key={i} className="flex items-start gap-2 text-xs">
+              <CheckCircle2 className="h-3.5 w-3.5 text-sky-500 shrink-0 mt-0.5" />
+              <span className="text-gray-700">{item}</span>
+            </div>
+          ))}
         </div>
       )}
     </BlockWrapper>
@@ -1476,15 +1790,20 @@ const BLOCK_RENDERERS: Record<WorkspaceBlockType, React.FC<BlockRendererProps>> 
   decision: DecisionRenderer,
   crise: CriseRenderer,
   deep_search: DeepSearchRenderer,
+  etat_des_lieux: EtatDesLieuxRenderer,
   // S4.2 — DocForge types route to existing renderers
   docforge_section: RapportRenderer,
   docforge_code: CodeRenderer,
   docforge_tableur: BudgetRenderer,
 };
 
-export function BlockRenderer({ block, onAction }: BlockRendererProps) {
+export function BlockRenderer({ block, onAction, animated }: BlockRendererProps) {
   const Renderer = BLOCK_RENDERERS[block.type] || LibreRenderer;
-  return <Renderer block={block} onAction={onAction} />;
+  return (
+    <AnimatedBlockEntry block={block} animated={animated}>
+      <Renderer block={block} onAction={onAction} />
+    </AnimatedBlockEntry>
+  );
 }
 
 export const BLOCK_TYPE_LABELS: Record<WorkspaceBlockType, string> = {
@@ -1509,6 +1828,7 @@ export const BLOCK_TYPE_LABELS: Record<WorkspaceBlockType, string> = {
   decision: "Décision",
   crise: "Crise",
   deep_search: "Deep Search",
+  etat_des_lieux: "Etat des lieux",
   docforge_section: "Section",
   docforge_code: "Code",
   docforge_tableur: "Tableur",

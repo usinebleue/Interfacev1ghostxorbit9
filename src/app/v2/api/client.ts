@@ -1982,4 +1982,12 @@ export const api = {
   docForgeLibraryReject(libraryId: number, feedback: string = ""): Promise<{ ok: boolean }> {
     return apiFetch(`/docforge/libraries/${libraryId}/reject`, { method: "POST", body: JSON.stringify({ feedback }) });
   },
+
+  // ═══════════════════════════════════════
+  // Discussion Report (Sprint 3B.1)
+  // ═══════════════════════════════════════
+
+  generateDiscussionReport(data: { blocks: Record<string, unknown>[]; bot_code: string }): Promise<{ block: Record<string, unknown> }> {
+    return apiFetch("/workspace/discussion-report", { method: "POST", body: JSON.stringify(data) });
+  },
 };

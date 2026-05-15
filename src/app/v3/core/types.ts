@@ -122,7 +122,8 @@ export type WorkspaceBlockType =
   | "projets" | "taches" | "recommandations" | "risques"
   | "benchmark" | "challenge" | "synthese" | "rapport" | "libre"
   | "debat" | "decision" | "crise" | "deep_search"
-  | "docforge_section" | "docforge_code" | "docforge_tableur";
+  | "docforge_section" | "docforge_code" | "docforge_tableur"
+  | "etat_des_lieux";
 
 export interface WorkspaceBlock {
   id: string;

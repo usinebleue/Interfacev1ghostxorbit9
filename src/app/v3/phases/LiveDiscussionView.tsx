@@ -17,7 +17,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
   CheckCircle2, Zap, X, ArrowRight,
-  Loader2, Network,
+  Loader2, Network, FileText, Activity, Rocket,
 } from "lucide-react";
 import { cn } from "../../components/ui/utils";
 import { SF } from "../core/styles";
@@ -28,8 +28,10 @@ import { useChatContext } from "../../v2/context/ChatContext";
 import { PHASE_CONFIGS } from "./phase-config";
 import { TechniquePanel } from "./reflexion-tools";
 import { WorkspaceReflexionHub } from "./WorkspaceReflexionHub";
-import { BlockRenderer, BLOCK_TYPE_LABELS } from "./workspace-block-renderers";
+import { BlockRenderer, SkeletonBlock, BLOCK_TYPE_LABELS } from "./workspace-block-renderers";
+import { BotAvatar } from "../simulation/primitives";
 import { BOT_NAME } from "../../v2/api/types";
+import { api } from "../../v2/api/client";
 import type { CascadeSuggestion } from "../../v2/api/types";
 
 // ═══ B.1: ThinkingAnimation steps par etape CREDO (pattern primitives.tsx ThinkingAnimation) ═══
@@ -129,6 +131,17 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
     }
   }, [messages.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // S3A.1: Track new blocks for animated entry — skip initial load (800ms grace)
+  const animReadyRef = useRef(false);
+  const seenBlocksRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    const t = setTimeout(() => { animReadyRef.current = true; }, 800);
+    return () => clearTimeout(t);
+  }, []);
+  useEffect(() => {
+    workspaceBlocks.forEach(b => seenBlocksRef.current.add(b.id));
+  }, [workspaceBlocks]);
+
   // Auto-scroll vers les nouveaux blocks
   const prevBlockCount = useRef(workspaceBlocks.length);
   useEffect(() => {
@@ -152,6 +165,9 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
   // B.2: Multi-phase consultation detection
   const multiPhaseTargets = [...new Set(latestCascadeSuggestions.map(s => s.view || s.target_section).filter(Boolean))];
   const hasMultiPhaseConsult = multiPhaseTargets.length >= 2;
+
+  // S3B.2: Pulse animation on block when workspace action triggered
+  const [pulsingBlockId, setPulsingBlockId] = useState<string | null>(null);
 
   // B.3: TypewriterText cursor — visible briefly after new block appears
   const [showTypingCursor, setShowTypingCursor] = useState(false);
@@ -197,12 +213,18 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
         addWorkflowItem("discussion", `[${BLOCK_TYPE_LABELS[block.type] || block.type}] ${block.title}: ${block.summary.substring(0, 120)}`, "insight");
         break;
       case "deepen":
+        setPulsingBlockId(blockId);
+        setTimeout(() => setPulsingBlockId(null), 1500);
         sendMessage(`Approfondir en detail: ${block.title}\n\nContexte: ${block.summary}`, activeBotCode);
         break;
       case "challenge":
+        setPulsingBlockId(blockId);
+        setTimeout(() => setPulsingBlockId(null), 1500);
         sendMessage(`Challenge cet element, trouve les failles: ${block.title}\n\n${block.summary}`, activeBotCode);
         break;
       case "rework":
+        setPulsingBlockId(blockId);
+        setTimeout(() => setPulsingBlockId(null), 1500);
         sendMessage(`Retravaille et enrichis: ${block.title}\n\n${block.summary}`, activeBotCode);
         break;
       case "delete":
@@ -482,6 +504,33 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
             </div>
           )}
 
+          {/* S3A.2: EtatDesLieuxPanel — visible at step C when etat_des_lieux blocks exist */}
+          {chatStage === 0 && workspaceBlocks.some(b => b.type === "etat_des_lieux") && (
+            <div className="mt-3 rounded-xl border border-sky-200 bg-gradient-to-r from-sky-50 to-blue-50 p-4 shadow-sm animate-in fade-in duration-500">
+              <div className="flex items-center gap-2 mb-3">
+                <Activity className="h-4 w-4 text-sky-600" />
+                <span className="text-[11px] font-bold text-sky-700">Etat des lieux — Perspectives multi-agents</span>
+              </div>
+              <div className="space-y-2">
+                {workspaceBlocks
+                  .filter(b => b.type === "etat_des_lieux")
+                  .slice(0, 1)
+                  .map(b => {
+                    const data = b.structured_data as { perspectives?: { bot: string; analysis: string }[] } | undefined;
+                    return data?.perspectives?.map((p, j) => (
+                      <div key={j} className="flex items-start gap-2 rounded-lg bg-white/80 border border-sky-100 px-3 py-2 animate-in fade-in slide-in-from-left-2 duration-300" style={{ animationDelay: `${j * 400}ms`, animationFillMode: 'backwards' }}>
+                        <BotAvatar code={p.bot} size="sm" />
+                        <div className="flex-1 min-w-0">
+                          <span className="text-[9px] font-bold text-gray-500">{BOT_NAME[p.bot] || p.bot}</span>
+                          <p className="text-xs text-gray-700">{p.analysis}</p>
+                        </div>
+                      </div>
+                    ));
+                  })}
+              </div>
+            </div>
+          )}
+
           {/* WORKSPACE BLOCKS — La discussion EST le plan de match */}
           {displayBlocks.length > 0 ? (
             <div className="space-y-3 mt-3">
@@ -529,10 +578,13 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
                         </div>
                       )}
                       <div
-                        className="animate-in fade-in slide-in-from-bottom-2 duration-500"
+                        className={cn(
+                          "animate-in fade-in slide-in-from-bottom-2 duration-500",
+                          pulsingBlockId === block.id && "ring-2 ring-blue-400 rounded-xl transition-all"
+                        )}
                         style={{ animationDelay: `${Math.min(i, 5) * 120}ms`, animationFillMode: 'backwards' }}
                       >
-                        <BlockRenderer block={block} onAction={handleBlockAction} />
+                        <BlockRenderer block={block} onAction={handleBlockAction} animated={animReadyRef.current && !seenBlocksRef.current.has(block.id)} />
                       </div>
                     </div>
                   );
@@ -608,6 +660,23 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
             </div>
           )}
 
+          {/* S3B.1: GenerateReportButton — visible when chatStage >= 3 and enough blocks */}
+          {chatStage >= 3 && workspaceBlocks.length >= 3 && !workspaceBlocks.some(b => b.type === "rapport") && (
+            <GenerateReportButton
+              workspaceBlocks={workspaceBlocks}
+              activeBotCode={activeBotCode}
+              addWorkspaceBlock={addWorkspaceBlock}
+            />
+          )}
+
+          {/* S3C.1: CreateChantierButton — visible when rapport exists */}
+          {workspaceBlocks.some(b => b.type === "rapport") && (
+            <CreateChantierButton
+              workspaceBlocks={workspaceBlocks}
+              activeBotCode={activeBotCode}
+            />
+          )}
+
           {/* S2.4.2: Vue resume multi-phase accordion */}
           {workspaceBlocks.length > 2 && (
             <MultiPhaseAccordion workspaceBlocks={workspaceBlocks} credoLabels={CREDO_LABELS} />
@@ -617,6 +686,140 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
          </div>{/* close fade-in wrapper */}
         </div>
       </div>
+    </div>
+  );
+}
+
+// ═══ S3B.1: GenerateReportButton — Generer le Rapport de Discussion ═══
+
+function GenerateReportButton({ workspaceBlocks, activeBotCode, addWorkspaceBlock }: {
+  workspaceBlocks: import("../core/types").WorkspaceBlock[];
+  activeBotCode: string;
+  addWorkspaceBlock: (block: import("../core/types").WorkspaceBlock) => void;
+}) {
+  const [generating, setGenerating] = useState(false);
+  const [thinkingStep, setThinkingStep] = useState(0);
+
+  useEffect(() => {
+    if (!generating) { setThinkingStep(0); return; }
+    const timer = setInterval(() => {
+      setThinkingStep(prev => prev < 2 ? prev + 1 : prev);
+    }, 1200);
+    return () => clearInterval(timer);
+  }, [generating]);
+
+  const REPORT_STEPS = ["Compilation des blocs...", "Analyse des decisions...", "Structuration du rapport..."];
+
+  const handleGenerate = async () => {
+    setGenerating(true);
+    try {
+      const res = await api.generateDiscussionReport({
+        blocks: workspaceBlocks.map(b => ({ type: b.type, title: b.title, summary: b.summary, credo_step: b.credo_step })),
+        bot_code: activeBotCode,
+      });
+      if (res?.block) {
+        addWorkspaceBlock({
+          id: `rapport-${Date.now()}`,
+          type: "rapport",
+          title: res.block.title || "Rapport de discussion",
+          summary: res.block.summary || "",
+          structured_data: res.block.structured_data,
+          credo_step: "O",
+          confidence: res.block.confidence || 0.85,
+          source: activeBotCode,
+          sourceType: "chat",
+          timestamp: Date.now(),
+        });
+      }
+    } catch {
+      // Fallback: generate a basic report client-side
+      const sections = [
+        { title: "Tension identifiee", content: workspaceBlocks.find(b => b.credo_step === "C")?.summary || "—" },
+        { title: "Analyse", content: workspaceBlocks.filter(b => b.credo_step === "R").map(b => b.summary).join("\n") || "—" },
+        { title: "Solutions explorees", content: workspaceBlocks.filter(b => b.credo_step === "E").map(b => b.summary).join("\n") || "—" },
+        { title: "Plan d'action", content: workspaceBlocks.filter(b => ["D", "O"].includes(b.credo_step)).map(b => b.summary).join("\n") || "—" },
+      ].filter(s => s.content !== "—");
+      addWorkspaceBlock({
+        id: `rapport-${Date.now()}`,
+        type: "rapport",
+        title: "Rapport de discussion",
+        summary: sections.map(s => `**${s.title}**\n${s.content}`).join("\n\n"),
+        structured_data: { sections },
+        credo_step: "O",
+        confidence: 0.75,
+        source: activeBotCode,
+        sourceType: "chat",
+        timestamp: Date.now(),
+      });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  if (generating) {
+    return (
+      <div className="mt-4 rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-green-50 p-4 shadow-sm animate-in fade-in duration-300">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+            <Loader2 className="h-4 w-4 text-emerald-600 animate-spin" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] font-bold text-emerald-700">Generation du rapport...</p>
+            <div className="flex flex-wrap gap-3 mt-1.5">
+              {REPORT_STEPS.map((step, j) => (
+                <span key={j} className={cn(
+                  "text-[9px] flex items-center gap-1 transition-all",
+                  j < thinkingStep ? "text-emerald-600 line-through opacity-60" :
+                  j === thinkingStep ? "text-emerald-700 font-bold" :
+                  "text-gray-400"
+                )}>
+                  {j < thinkingStep && <CheckCircle2 className="h-2.5 w-2.5" />}
+                  {j === thinkingStep && <Loader2 className="h-2.5 w-2.5 animate-spin" />}
+                  {step}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-4">
+      <button
+        onClick={handleGenerate}
+        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-emerald-600 text-white hover:bg-emerald-700 transition-colors cursor-pointer shadow-sm"
+      >
+        <FileText className="h-4 w-4" />
+        <span className="text-sm font-bold">Generer le Rapport</span>
+      </button>
+    </div>
+  );
+}
+
+// ═══ S3C.1: CreateChantierButton — Creer un chantier depuis le rapport ═══
+
+function CreateChantierButton({ workspaceBlocks, activeBotCode }: {
+  workspaceBlocks: import("../core/types").WorkspaceBlock[];
+  activeBotCode: string;
+}) {
+  const { setActivePhase, startConception } = useAmorcer();
+  const rapport = workspaceBlocks.find(b => b.type === "rapport");
+  if (!rapport) return null;
+
+  return (
+    <div className="mt-3">
+      <button
+        onClick={() => {
+          // Navigate to Conception phase with rapport context
+          startConception();
+        }}
+        className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-full border-2 border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors cursor-pointer"
+      >
+        <Rocket className="h-4 w-4" />
+        <span className="text-sm font-bold">Creer le Chantier</span>
+      </button>
     </div>
   );
 }
