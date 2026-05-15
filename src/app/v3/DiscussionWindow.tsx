@@ -601,7 +601,9 @@ function V3MessageList() {
     }
 
     // Detection livrable DocForge — "Ouvrir l'atelier X"
-    const atelierMatch = opt.match(/(?:ouvrir|activer|lancer)\s+l'atelier\s+(document|tableur|presentation|code|jumelage)/i);
+    // JUMELAGE EXCLU: doit etre demande explicitement par l'utilisateur via navigation sidebar
+    // (protocole de questions + contexte ressource requis avant jumelage)
+    const atelierMatch = opt.match(/(?:ouvrir|activer|lancer)\s+l'atelier\s+(document|tableur|presentation|code)/i);
     if (atelierMatch) {
       const deliverableType = atelierMatch[1].toLowerCase();
       startDeliverable(deliverableType);
@@ -876,10 +878,13 @@ function V3MessageList() {
                     })}
                   </div>
                 )}
-                {/* Options inline */}
-                {msg.options && msg.options.length > 0 && (
+                {/* Options inline — filtrer "Ouvrir l'atelier" (navigation via sidebar) */}
+                {msg.options && msg.options.length > 0 && (() => {
+                  const filteredOpts = msg.options.filter(opt => !/ouvrir\s+l'atelier/i.test(opt));
+                  if (filteredOpts.length === 0) return null;
+                  return (
                   <div className="mt-3 pt-2 border-t border-gray-200/60 space-y-1">
-                    {msg.options.map((opt, i) => (
+                    {filteredOpts.map((opt, i) => (
                       <button key={i} onClick={() => handleOption(opt)}
                         className="w-full text-left px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 transition-colors cursor-pointer group/opt">
                         <div className="flex items-start gap-2">
@@ -889,7 +894,8 @@ function V3MessageList() {
                       </button>
                     ))}
                   </div>
-                )}
+                  );
+                })()}
                 {/* Synthese actions inline */}
                 <div className="mt-2 pt-2 border-t border-gray-200/60 flex flex-wrap gap-1.5">
                   {["Fusionner", "Challenger", "Plan d'action"].map((label, i) => {

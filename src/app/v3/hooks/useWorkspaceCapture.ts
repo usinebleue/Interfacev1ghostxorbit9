@@ -317,6 +317,7 @@ export function useWorkspaceCapture() {
     addWorkflowItem,
     addWorkspaceBlock,
     activeDeliverable,
+    workspaceBlocks,
   } = useAmorcer();
   const prevMsgCountRef = useRef(messages.length);
 
@@ -405,7 +406,9 @@ export function useWorkspaceCapture() {
                     timestamp: Date.now(),
                     replace_block_id: wsBlock.replace_block_id,
                   });
-                } else if (!(msg as any).workspace_block_skip) {
+                } else if (!(msg as any).workspace_block_skip || workspaceBlocks.length === 0) {
+                  // TOUJOURS generer un bloc pour le PREMIER message de discussion
+                  // meme si le backend a skip (reponse question-heavy en CREDO C)
                   // Fallback frontend: détection locale + extraction structured_data
                   const detectedType = detectBlockTypeFrontend(msg.content);
                   const structuredData = extractStructuredDataFrontend(msg.content, detectedType);
@@ -684,8 +687,9 @@ export function useWorkspaceCapture() {
               }));
             }
             addWorkspaceBlock(blockData);
-          } else if (!(msg as any).workspace_block_skip) {
+          } else if (!(msg as any).workspace_block_skip || workspaceBlocks.length === 0) {
             // Fallback frontend: détection locale + extraction structured_data
+            // TOUJOURS generer un bloc pour le PREMIER message (meme si backend a skip)
             const detectedType = detectBlockTypeFrontend(msg.content);
             const extractedData = extractStructuredDataFrontend(msg.content, detectedType);
             const blockData: WorkspaceBlock = {

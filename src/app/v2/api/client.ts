@@ -1990,4 +1990,18 @@ export const api = {
   generateDiscussionReport(data: { blocks: Record<string, unknown>[]; bot_code: string }): Promise<{ block: Record<string, unknown> }> {
     return apiFetch("/workspace/discussion-report", { method: "POST", body: JSON.stringify(data) });
   },
+
+  // ═══════════════════════════════════════
+  // Section Action — inline approfondir/reformuler/challenger
+  // ═══════════════════════════════════════
+
+  sectionAction(data: {
+    action: "approfondir" | "reformuler" | "challenger";
+    section_title: string;
+    section_content: string;
+    block_id?: string;
+    bot_code?: string;
+  }): Promise<Record<string, unknown>> {
+    return apiFetch("/workspace/section-action", { method: "POST", body: JSON.stringify(data) });
+  },
 };

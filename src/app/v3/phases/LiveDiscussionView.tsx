@@ -18,6 +18,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import {
   CheckCircle2, Zap, X, ArrowRight,
   Loader2, Network, FileText, Activity, Rocket,
+  AlertTriangle, Lightbulb, Target, TrendingUp,
 } from "lucide-react";
 import { cn } from "../../components/ui/utils";
 import { SF } from "../core/styles";
@@ -302,18 +303,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
         </div>
       </div>
 
-      {/* S2.2.2: LoopGuard nudge — subtle banner when stagnating */}
-      {loopGuardVisible && (
-        <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-700">
-          <Zap className="h-3.5 w-3.5 shrink-0" />
-          <span className="text-[10px] font-medium flex-1">
-            Vous explorez cette etape depuis un moment. Essayez de passer a l'etape suivante ou utilisez un outil de reflexion.
-          </span>
-          <button onClick={() => setLoopGuardVisible(false)} className="p-0.5 rounded hover:bg-amber-100 cursor-pointer shrink-0">
-            <X className="h-3 w-3" />
-          </button>
-        </div>
-      )}
+      {/* LoopGuard retire — les utilisateurs passent le temps logique qu'il faut pour cerner la tension */}
 
       {/* SIDEBAR + CONTENU */}
       <div className={cn("flex gap-3", isMobile && "flex-col gap-0")}>
@@ -504,89 +494,20 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
             </div>
           )}
 
-          {/* S3A.2: AgentMobilizationPanel — pattern exact SimAmorcer ReflexionChat stages 0-2 */}
-          {chatStage === 0 && messages.some(m => m.role === "user") && (
-            <AgentMobilizationPanel workspaceBlocks={workspaceBlocks} />
-          )}
-
-          {/* WORKSPACE BLOCKS — La discussion EST le plan de match */}
-          {displayBlocks.length > 0 ? (
-            <div className="space-y-3 mt-3">
-              {/* Group separator by CREDO step with narrative connectors (Sprint 2A Phase 3) */}
-              {(() => {
-                const CREDO_NARRATIVES: Record<string, string> = {
-                  C: "Voici ce que nous comprenons de la tension...",
-                  R: "Notre recherche a revele...",
-                  E: "Les solutions envisagees...",
-                  D: "Le plan d'execution propose...",
-                  O: "Decisions et prochaines etapes...",
-                };
-                let lastStep = "";
-                return displayBlocks.map((block, i) => {
-                  const showSeparator = block.credo_step !== lastStep;
-                  const isFirst = lastStep === "";
-                  lastStep = block.credo_step;
-                  return (
-                    <div key={block.id} id={`block-${block.type}`}>
-                      {showSeparator && (
-                        <div className="pt-3 pb-1">
-                          <div className="flex items-center gap-2">
-                            <div className={cn(
-                              "w-2 h-2 rounded-full",
-                              block.credo_step === "C" ? "bg-sky-400" :
-                              block.credo_step === "R" ? "bg-blue-400" :
-                              block.credo_step === "E" ? "bg-amber-400" :
-                              block.credo_step === "D" ? "bg-green-400" :
-                              "bg-purple-400"
-                            )} />
-                            <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400">
-                              {CREDO_LABELS[block.credo_step] || block.credo_step}
-                            </span>
-                            <span className="text-[9px] bg-gray-100 px-1.5 py-0.5 rounded-full text-gray-500">
-                              {blocksByCredoStep[block.credo_step] || 0} bloc{(blocksByCredoStep[block.credo_step] || 0) > 1 ? "s" : ""}
-                            </span>
-                            <div className="flex-1 h-px bg-gray-200" />
-                            {(blocksByCredoStep[block.credo_step] || 0) >= 2 && (
-                              <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-                            )}
-                          </div>
-                          <p className="text-[9px] italic text-gray-400 mt-1 ml-4">
-                            {CREDO_NARRATIVES[block.credo_step] || ""}
-                          </p>
-                        </div>
-                      )}
-                      <div
-                        className={cn(
-                          "animate-in fade-in slide-in-from-bottom-2 duration-500",
-                          pulsingBlockId === block.id && "ring-2 ring-blue-400 rounded-xl transition-all"
-                        )}
-                        style={{ animationDelay: `${Math.min(i, 5) * 120}ms`, animationFillMode: 'backwards' }}
-                      >
-                        <BlockRenderer block={block} onAction={handleBlockAction} animated={animReadyRef.current && !seenBlocksRef.current.has(block.id)} />
-                      </div>
-                    </div>
-                  );
-                });
-              })()}
-              {/* B.3: TypewriterText cursor — pulse apres le dernier bloc cristallise */}
-              {showTypingCursor && (
-                <div className="flex items-center gap-1.5 px-4 py-2 animate-in fade-in duration-300">
-                  <span className="inline-block w-0.5 h-4 bg-gray-800 animate-pulse rounded-full" />
-                  <span className="text-[9px] text-gray-400 italic">cristallisation en cours...</span>
-                </div>
-              )}
-              <div ref={blocksEndRef} />
-            </div>
-          ) : (
-            /* Empty state — minimaliste, la discussion EST le workspace */
-            <div className="mt-4">
-              <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/30 p-6 text-center">
-                <PhaseIcon className="h-6 w-6 text-sky-400 mx-auto mb-2" />
-                <p className="text-[11px] font-medium text-gray-600">Commencez la discussion</p>
-                <p className="text-[10px] text-gray-400 mt-1">Les elements importants seront cristallises ici automatiquement.</p>
-              </div>
+          {/* DYNAMIC STEP CONTENT — tous les blocs, pas de filtrage par step */}
+          <DynamicStepContent
+            allBlocks={workspaceBlocks}
+            context={displayContext}
+            onBlockAction={handleBlockAction}
+            pulsingBlockId={pulsingBlockId}
+          />
+          {showTypingCursor && (
+            <div className="flex items-center gap-1.5 px-4 py-2 animate-in fade-in duration-300">
+              <span className="inline-block w-0.5 h-4 bg-gray-800 animate-pulse rounded-full" />
+              <span className="text-[9px] text-gray-400 italic">cristallisation en cours...</span>
             </div>
           )}
+          <div ref={blocksEndRef} />
 
           {/* CASCADE SUGGESTIONS — cross-phase (Sprint 1 Etape 6) + B.4 bordure gauche coloree */}
           {latestCascadeSuggestions.length > 0 && (
@@ -595,10 +516,8 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
                 <button
                   key={sugIdx}
                   onClick={() => {
-                    const targetPhase = sug.view;
-                    if (targetPhase && targetPhase !== activePhase && ["discussion","reflexion","creation","execution","retroaction"].includes(targetPhase)) {
-                      setActivePhase(targetPhase as any);
-                    }
+                    // PAS de switch de phase auto — l'utilisateur reste en discussion
+                    // La transition de phase se fait explicitement via la sidebar/ControlTower
                     sendMessage(sug.message, activeBotCode);
                   }}
                   className={cn(
@@ -776,163 +695,103 @@ function GenerateReportButton({ workspaceBlocks, activeBotCode, addWorkspaceBloc
   );
 }
 
-// ═══ S3C.1: CreateChantierButton — Creer un chantier depuis le rapport ═══
+// ═══ S3C.1: CreateChantierButton — Passer en Conception depuis le rapport-minutes ═══
 
 function CreateChantierButton({ workspaceBlocks, activeBotCode }: {
   workspaceBlocks: import("../core/types").WorkspaceBlock[];
   activeBotCode: string;
 }) {
-  const { setActivePhase, startConception } = useAmorcer();
+  const { startConception } = useAmorcer();
   const rapport = workspaceBlocks.find(b => b.type === "rapport");
   if (!rapport) return null;
 
   return (
     <div className="mt-3">
       <button
-        onClick={() => {
-          // Navigate to Conception phase with rapport context
-          startConception();
-        }}
+        onClick={() => startConception()}
         className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-full border-2 border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors cursor-pointer"
       >
         <Rocket className="h-4 w-4" />
-        <span className="text-sm font-bold">Creer le Chantier</span>
+        <span className="text-sm font-bold">Passer en Conception</span>
       </button>
     </div>
   );
 }
 
-// ═══ S2.4.2: Multi-phase accordion — resume des blocs par etape CREDO ═══
+// ═══ DynamicStepContent — workspace dynamique, pattern simulations ═══
+// Montre TOUS les blocs cristallises (pas de filtrage par step).
+// Le header donne le contexte de l'etape active, mais tous les blocs sont visibles.
 
-// ═══ S3A.2: AgentMobilizationPanel — Pattern EXACT SimAmorcer ReflexionChat stages 0-2 ═══
-// Stage 0: Bot mobilization — 3 bots rejoignent avec staggered slide-in
-// Stage 2: Multi-bot parallel analysis — bouncing dots + per-bot tasks
-// Auto-progresse puis auto-collapse
+const STEP_BADGE: Record<string, { badge: string; bg: string }> = {
+  C: { badge: "C", bg: "bg-sky-100 text-sky-700" },
+  R: { badge: "R", bg: "bg-blue-100 text-blue-700" },
+  E: { badge: "E", bg: "bg-amber-100 text-amber-700" },
+  D: { badge: "D", bg: "bg-green-100 text-green-700" },
+  O: { badge: "O", bg: "bg-purple-100 text-purple-700" },
+};
 
-const MOBILIZED_BOTS = [
-  { code: "CMOB", name: "Mathilde", role: "CMO — Analyse marche", task: "Mathilde analyse le positionnement marche..." },
-  { code: "CFOB", name: "Frank", role: "CFO — Budget et ROI", task: "Frank modele le budget et le ROI..." },
-  { code: "CTOB", name: "Tim", role: "CTO — Faisabilite technique", task: "Tim evalue la faisabilite technique..." },
-];
-
-function AgentMobilizationPanel({ workspaceBlocks }: {
-  workspaceBlocks: import("../core/types").WorkspaceBlock[];
+function DynamicStepContent({ allBlocks, context, onBlockAction, pulsingBlockId }: {
+  allBlocks: import("../core/types").WorkspaceBlock[];
+  context: string;
+  onBlockAction: (action: string, blockId: string) => void;
+  pulsingBlockId: string | null;
 }) {
-  const [phase, setPhase] = useState<"mobilize" | "analyze" | "complete" | "hidden">("mobilize");
-  const [botsJoined, setBotsJoined] = useState(0);
+  if (allBlocks.length === 0) {
+    // Etat vide: contexte minimal — les vrais blocs (diagnostic, brainstorm, etc.)
+    // arrivent dynamiquement via le pipeline backend _llm_crystallize → useWorkspaceCapture → BlockRenderer
+    return (
+      <div className="mt-3">
+        <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/50 p-4">
+          <div className="flex items-center gap-2">
+            <Activity className="h-3.5 w-3.5 text-gray-400 animate-pulse" />
+            <h3 className="text-xs font-medium text-gray-500">{context || "Discussion en cours"}</h3>
+          </div>
+          <p className="text-[10px] text-gray-400 mt-1.5">
+            Les analyses et diagnostics apparaitront ici au fil de la conversation.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
-  // Phase 1: Staggered bot join (500ms apart — pattern SimAmorcer L1427-1441)
-  useEffect(() => {
-    if (phase !== "mobilize") return;
-    if (botsJoined >= MOBILIZED_BOTS.length) {
-      const t = setTimeout(() => setPhase("analyze"), 600);
-      return () => clearTimeout(t);
-    }
-    const t = setTimeout(() => setBotsJoined(c => c + 1), 500);
-    return () => clearTimeout(t);
-  }, [phase, botsJoined]);
-
-  // Phase 2: analyze → complete after 3.5s (pattern SimAmorcer L1497-1521)
-  useEffect(() => {
-    if (phase !== "analyze") return;
-    const t = setTimeout(() => setPhase("complete"), 3500);
-    return () => clearTimeout(t);
-  }, [phase]);
-
-  // Phase 3: auto-hide after 5s
-  useEffect(() => {
-    if (phase !== "complete") return;
-    const t = setTimeout(() => setPhase("hidden"), 5000);
-    return () => clearTimeout(t);
-  }, [phase]);
-
-  // If etat_des_lieux block arrives during analyze, skip to complete
-  useEffect(() => {
-    if (phase === "analyze" && workspaceBlocks.some(b => b.type === "etat_des_lieux")) {
-      setPhase("complete");
-    }
-  }, [workspaceBlocks, phase]);
-
-  if (phase === "hidden") return null;
-
+  // Show ALL blocks — sorted by timestamp, with per-block step badge
   return (
-    <div className="mt-3 space-y-3 animate-in fade-in duration-500">
-
-      {/* Badge "Mode actif" — exact SimAmorcer L1416-1419 */}
-      <div className="flex items-center gap-1.5 bg-orange-50 border border-orange-200 rounded-lg px-2 py-1 w-fit">
-        <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
-        <span className="text-xs text-orange-600 font-medium">
-          {phase === "mobilize" ? "Mobilisation des specialistes..." :
-           phase === "analyze" ? "Analyse multi-agents en cours..." :
-           "Comprehension initiale terminee"}
-        </span>
-        {phase === "complete" && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />}
+    <div className="mt-3 space-y-3">
+      {/* Summary header — shows count + context */}
+      <div className="rounded-xl border border-gray-200 bg-white p-4">
+        <div className="flex items-center gap-2 mb-2">
+          <Activity className="h-3.5 w-3.5 text-gray-500" />
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-bold">
+            {allBlocks.length} element{allBlocks.length > 1 ? "s" : ""} cristallise{allBlocks.length > 1 ? "s" : ""}
+          </span>
+          {/* Show which CREDO steps have content */}
+          {["C","R","E","D","O"].map(s => {
+            const count = allBlocks.filter(b => b.credo_step === s).length;
+            if (count === 0) return null;
+            const badge = STEP_BADGE[s] || STEP_BADGE.C;
+            return (
+              <span key={s} className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-bold", badge.bg)}>
+                {badge.badge}·{count}
+              </span>
+            );
+          })}
+        </div>
+        <h3 className="text-xs font-bold text-gray-900">{context}</h3>
       </div>
 
-      {/* Bot join cards — exact SimAmorcer L1427-1441 */}
-      <div className="space-y-1.5">
-        {MOBILIZED_BOTS.map((bot, i) => {
-          const isJoined = i < botsJoined || phase !== "mobilize";
-          if (!isJoined) return null;
-          return (
-            <div
-              key={bot.code}
-              className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-lg px-3 py-1.5 animate-in fade-in slide-in-from-left-2"
-              style={{ animationDelay: phase === "mobilize" ? "0ms" : `${i * 400}ms`, animationFillMode: "both", animationDuration: "500ms" }}
-            >
-              <BotAvatar code={bot.code} size="sm" />
-              <div className="flex-1 min-w-0">
-                <span className="text-xs font-bold text-gray-700">{bot.name}</span>
-                <span className="text-xs text-gray-500 ml-1.5">{bot.role}</span>
-              </div>
-              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-              <span className="text-xs text-emerald-600 font-medium">Rejoint</span>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Tool badges — exact SimAmorcer L1446-1449 */}
-      {phase !== "mobilize" && (
-        <div className="flex flex-wrap gap-1 animate-in fade-in duration-300">
-          {["Brainstorm", "Diagnostic", "Recherche", "Challenge", "Deep Search", "5 Pourquoi"].map(b => (
-            <span key={b} className="text-xs bg-orange-50 border border-orange-200 text-orange-700 px-2.5 py-1 rounded-full font-medium">{b}</span>
-          ))}
-        </div>
-      )}
-
-      {/* Parallel analysis — exact SimAmorcer L1497-1521 */}
-      {phase === "analyze" && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-3 animate-in fade-in duration-300">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="flex gap-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-red-400 animate-bounce" style={{ animationDelay: "0ms" }} />
-              <div className="w-1.5 h-1.5 rounded-full bg-red-400 animate-bounce" style={{ animationDelay: "150ms" }} />
-              <div className="w-1.5 h-1.5 rounded-full bg-red-400 animate-bounce" style={{ animationDelay: "300ms" }} />
-            </div>
-            <span className="text-xs text-red-600 font-medium">3 agents analysent en parallele...</span>
+      {/* All blocks — BlockRenderer per block, in order */}
+      {allBlocks.map(block => {
+        const badge = STEP_BADGE[block.credo_step] || STEP_BADGE.C;
+        return (
+          <div
+            key={block.id}
+            id={`block-${block.type}`}
+            className={cn(pulsingBlockId === block.id && "ring-2 ring-blue-400 rounded-xl transition-all")}
+          >
+            <BlockRenderer block={block} onAction={onBlockAction} animated={false} />
           </div>
-          <div className="space-y-1">
-            {MOBILIZED_BOTS.map(b => (
-              <div key={b.code} className="flex items-center gap-2 text-xs text-gray-600">
-                <BotAvatar code={b.code} size="sm" />
-                <span>{b.task}</span>
-                <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse ml-auto" />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Complete state */}
-      {phase === "complete" && (
-        <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3 animate-in fade-in duration-300">
-          <div className="flex items-center gap-2 text-xs text-emerald-700">
-            <CheckCircle2 className="h-3.5 w-3.5" />
-            <span className="font-medium">Comprehension initiale terminee — les resultats apparaissent ci-dessous</span>
-          </div>
-        </div>
-      )}
+        );
+      })}
     </div>
   );
 }

@@ -22,7 +22,11 @@ import { BotBadgeFull } from "../../v2/zones/center/shared/BotBadgeFull";
 import { ThinkingAnimation, BotAvatar } from "../simulation/primitives";
 import type { ThinkingStep } from "../simulation/sim-types";
 import { BOT_NAME } from "../../v2/api/types";
+import { api } from "../../v2/api/client";
 import type { WorkspaceBlock, WorkspaceBlockType } from "../core/types";
+
+// ═══ Lucide icons used by inline section actions ═══
+import { ArrowRight, RefreshCw, Merge } from "lucide-react";
 
 // ═══ Bot Accent Borders (B.9 — pattern BOT_COLORS from sim-data.ts) ═══
 
@@ -99,29 +103,13 @@ const ANIMATED_THINKING_STEPS: Record<string, ThinkingStep[]> = {
   ],
 };
 
-function AnimatedBlockEntry({ block, children, animated }: {
+function AnimatedBlockEntry({ children }: {
   block: WorkspaceBlock;
   children: React.ReactNode;
   animated?: boolean;
 }) {
-  // useState captures initial animated value — won't reset if prop changes on re-render
-  const [phase, setPhase] = useState<"thinking" | "revealed">(animated ? "thinking" : "revealed");
-  const steps = ANIMATED_THINKING_STEPS[block.type] || ANIMATED_THINKING_STEPS._default;
-
-  if (phase === "revealed") {
-    return <>{children}</>;
-  }
-
-  return (
-    <ThinkingAnimation
-      botCode={block.source || "CEOB"}
-      botEmoji="🤖"
-      botName={BOT_NAME[block.source] || "CarlOS"}
-      steps={steps}
-      onComplete={() => setPhase("revealed")}
-      speed={600}
-    />
-  );
+  // Animation retirée — les blocs apparaissent directement dans le workspace
+  return <>{children}</>;
 }
 
 // ═══ Block Action Types ═══
@@ -1412,8 +1400,41 @@ function RapportRenderer({ block, onAction }: BlockRendererProps) {
   }, [sections.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [pinnedSection, setPinnedSection] = useState<number | null>(null);
+  // Inline action state: which section has an active action + result
   const [activeAction, setActiveAction] = useState<{ sectionId: number; action: string } | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionResults, setActionResults] = useState<Record<number, { action: string; data: Record<string, unknown> }>>({});
+  const [sectionContents, setSectionContents] = useState<Record<number, string>>({});
   const isCompiling = revealedSections < sections.length;
+
+  // Inline action handler — calls API and stores result per section
+  const handleSectionAction = async (sectionIdx: number, action: "approfondir" | "reformuler" | "challenger") => {
+    const s = sections[sectionIdx];
+    if (!s) return;
+    setActiveAction({ sectionId: sectionIdx, action });
+    setActionLoading(true);
+    try {
+      const result = await api.sectionAction({
+        action,
+        section_title: s.title || `Section ${sectionIdx + 1}`,
+        section_content: sectionContents[sectionIdx] || s.content,
+        block_id: block.id,
+        bot_code: (s as any).bot || "CPOB",
+      });
+      setActionResults(prev => ({ ...prev, [sectionIdx]: { action, data: result } }));
+    } catch {
+      setActionResults(prev => ({ ...prev, [sectionIdx]: { action, data: { error: true } } }));
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Apply reformulation — replace section content
+  const applyReformulation = (sectionIdx: number, newContent: string) => {
+    setSectionContents(prev => ({ ...prev, [sectionIdx]: newContent }));
+    setActionResults(prev => { const n = { ...prev }; delete n[sectionIdx]; return n; });
+    setActiveAction(null);
+  };
 
   return (
     <BlockWrapper block={block} onAction={onAction} label="Rapport" labelColor="bg-gray-200 text-gray-700">
@@ -1430,7 +1451,7 @@ function RapportRenderer({ block, onAction }: BlockRendererProps) {
         </div>
       )}
 
-      {/* Sections accordion — pattern MagPreRapport sections with micro-actions */}
+      {/* Sections accordion — pattern MagPreRapport sections with inline actions */}
       <div className="space-y-2">
         {sections.map((s, i) => {
           const isExpanded = expandedSections.has(i);
@@ -1438,6 +1459,9 @@ function RapportRenderer({ block, onAction }: BlockRendererProps) {
           const isPinned = pinnedSection === i;
           const si = guessSectionIcon(s.title);
           const SectionIcon = si.icon;
+          const displayContent = sectionContents[i] || s.content;
+          const inlineResult = actionResults[i];
+          const isThisLoading = actionLoading && activeAction?.sectionId === i;
           return (
             <div key={i} className={cn(
               "rounded-xl border-2 bg-white overflow-hidden transition-all duration-500",
@@ -1459,11 +1483,12 @@ function RapportRenderer({ block, onAction }: BlockRendererProps) {
               </button>
               {isExpanded && (
                 <div className="px-4 pb-3 pt-2 animate-in fade-in duration-200">
-                  <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{s.content}</p>
-                  {/* Micro-actions bar — pattern MagPreRapport per-section actions */}
-                  <div className="flex gap-1.5 mt-3 pt-2 border-t border-gray-100">
+                  <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{displayContent}</p>
+                  {/* Micro-actions bar — Approfondir + Reformuler + Challenger + Fusionner + Epingler */}
+                  <div className="flex flex-wrap gap-1.5 mt-3 pt-2 border-t border-gray-100">
                     <button
-                      onClick={() => { setActiveAction({ sectionId: i, action: "approfondir" }); onAction("deepen", block.id, s.title); }}
+                      onClick={() => handleSectionAction(i, "approfondir")}
+                      disabled={isThisLoading}
                       className={cn("text-[9px] px-2 py-0.5 rounded font-medium cursor-pointer transition-colors",
                         activeAction?.sectionId === i && activeAction?.action === "approfondir"
                           ? "bg-blue-100 border border-blue-200 text-blue-700"
@@ -1471,13 +1496,27 @@ function RapportRenderer({ block, onAction }: BlockRendererProps) {
                       )}
                     >Approfondir</button>
                     <button
-                      onClick={() => { setActiveAction({ sectionId: i, action: "challenger" }); onAction("challenge", block.id, s.title); }}
+                      onClick={() => handleSectionAction(i, "reformuler")}
+                      disabled={isThisLoading}
+                      className={cn("text-[9px] px-2 py-0.5 rounded font-medium cursor-pointer transition-colors",
+                        activeAction?.sectionId === i && activeAction?.action === "reformuler"
+                          ? "bg-violet-100 border border-violet-200 text-violet-700"
+                          : "bg-violet-50 text-violet-600 hover:bg-violet-100"
+                      )}
+                    >Reformuler</button>
+                    <button
+                      onClick={() => handleSectionAction(i, "challenger")}
+                      disabled={isThisLoading}
                       className={cn("text-[9px] px-2 py-0.5 rounded font-medium cursor-pointer transition-colors",
                         activeAction?.sectionId === i && activeAction?.action === "challenger"
                           ? "bg-amber-100 border border-amber-200 text-amber-700"
                           : "bg-amber-50 text-amber-600 hover:bg-amber-100"
                       )}
                     >Challenger</button>
+                    <button
+                      onClick={() => onAction("merge", block.id, s.title)}
+                      className="text-[9px] px-2 py-0.5 rounded font-medium cursor-pointer bg-gray-50 text-gray-500 hover:bg-gray-100 transition-colors"
+                    >Fusionner</button>
                     <button
                       onClick={() => setPinnedSection(isPinned ? null : i)}
                       className={cn("text-[9px] px-2 py-0.5 rounded font-medium cursor-pointer transition-colors",
@@ -1487,6 +1526,138 @@ function RapportRenderer({ block, onAction }: BlockRendererProps) {
                       )}
                     >{isPinned ? "Desepingler" : "Epingler"}</button>
                   </div>
+
+                  {/* Loading indicator — bouncing dots */}
+                  {isThisLoading && (
+                    <div className={cn("mt-3 rounded-lg border p-3 flex items-center gap-2",
+                      activeAction?.action === "reformuler" ? "border-amber-200 bg-amber-50" : "border-violet-200 bg-violet-50"
+                    )}>
+                      <div className="flex gap-1">
+                        {[0, 1, 2].map(d => (
+                          <div key={d} className={cn("w-1.5 h-1.5 rounded-full animate-bounce",
+                            activeAction?.action === "reformuler" ? "bg-amber-400" : "bg-violet-400"
+                          )} style={{ animationDelay: `${d * 150}ms` }} />
+                        ))}
+                      </div>
+                      <span className={cn("text-[10px] font-medium",
+                        activeAction?.action === "reformuler" ? "text-amber-600" : "text-violet-600"
+                      )}>
+                        {activeAction?.action === "approfondir" ? "Analyse approfondie en cours..." :
+                         activeAction?.action === "reformuler" ? "Reformulation en cours..." :
+                         "Challenge en cours..."}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* ═══ INLINE RESULT: Approfondir ═══ */}
+                  {inlineResult?.action === "approfondir" && !isThisLoading && (
+                    <div className="mt-3 rounded-lg border-2 border-violet-200 bg-violet-50/50 p-3 animate-in slide-in-from-bottom-2 duration-300">
+                      <div className="flex items-center gap-2 mb-2">
+                        <BotAvatar code={String(inlineResult.data.bot || "CPOB")} size="sm" />
+                        <span className="text-[10px] font-bold text-violet-700">
+                          Analyse approfondie par {BOT_NAME[String(inlineResult.data.bot || "CPOB")] || "Expert"}
+                        </span>
+                      </div>
+                      <div className="bg-white rounded-lg border border-violet-100 p-2.5 mb-2">
+                        <p className="text-xs text-gray-700 leading-relaxed whitespace-pre-wrap">
+                          {String(inlineResult.data.expanded || "")}
+                        </p>
+                      </div>
+                      {Array.isArray(inlineResult.data.data_points) && (inlineResult.data.data_points as string[]).length > 0 && (
+                        <ul className="space-y-1 mb-2">
+                          {(inlineResult.data.data_points as string[]).map((dp, j) => (
+                            <li key={j} className="flex items-start gap-1.5 text-[10px] text-violet-700">
+                              <BarChart3 className="h-3 w-3 mt-0.5 shrink-0 text-violet-400" />
+                              <span>{dp}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      <div className="flex gap-1.5">
+                        <button
+                          onClick={() => {
+                            const expanded = String(inlineResult.data.expanded || "");
+                            setSectionContents(prev => ({ ...prev, [i]: displayContent + "\n\n" + expanded }));
+                            setActionResults(prev => { const n = { ...prev }; delete n[i]; return n; });
+                            setActiveAction(null);
+                          }}
+                          className="text-[9px] px-2 py-1 rounded bg-violet-600 text-white font-medium hover:bg-violet-700 cursor-pointer transition-colors"
+                        >Integrer au rapport</button>
+                        <button
+                          onClick={() => handleSectionAction(i, "approfondir")}
+                          className="text-[9px] px-2 py-1 rounded bg-violet-100 text-violet-700 font-medium hover:bg-violet-200 cursor-pointer transition-colors"
+                        >Encore plus profond</button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ═══ INLINE RESULT: Reformuler ═══ */}
+                  {inlineResult?.action === "reformuler" && !isThisLoading && (
+                    <div className="mt-3 rounded-lg border-2 border-amber-200 bg-amber-50/50 p-3 animate-in slide-in-from-bottom-2 duration-300">
+                      <div className="grid grid-cols-2 gap-2 mb-2">
+                        <div className="rounded-lg bg-gray-100 p-2">
+                          <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wider">Avant</span>
+                          <p className="text-[10px] text-gray-400 mt-1 line-through leading-relaxed">
+                            {String(inlineResult.data.before || displayContent)}
+                          </p>
+                        </div>
+                        <div className="rounded-lg bg-amber-100 p-2">
+                          <span className="text-[9px] font-bold text-amber-600 uppercase tracking-wider">Apres</span>
+                          <p className="text-[10px] text-amber-800 mt-1 leading-relaxed">
+                            {String(inlineResult.data.after || "")}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex gap-1.5">
+                        <button
+                          onClick={() => applyReformulation(i, String(inlineResult.data.after || ""))}
+                          className="text-[9px] px-2 py-1 rounded bg-amber-600 text-white font-medium hover:bg-amber-700 cursor-pointer transition-colors"
+                        >Appliquer la reformulation</button>
+                        <button
+                          onClick={() => handleSectionAction(i, "reformuler")}
+                          className="text-[9px] px-2 py-1 rounded bg-amber-100 text-amber-700 font-medium hover:bg-amber-200 cursor-pointer transition-colors"
+                        >Autre version</button>
+                        <button
+                          onClick={() => { setActionResults(prev => { const n = { ...prev }; delete n[i]; return n; }); setActiveAction(null); }}
+                          className="text-[9px] px-2 py-1 rounded bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 cursor-pointer transition-colors"
+                        >Garder l'original</button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ═══ INLINE RESULT: Challenger ═══ */}
+                  {inlineResult?.action === "challenger" && !isThisLoading && (
+                    <div className="mt-3 rounded-lg border-2 border-red-200 bg-red-50/50 p-3 animate-in slide-in-from-bottom-2 duration-300">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Swords className="h-3.5 w-3.5 text-red-500" />
+                        <span className="text-[10px] font-bold text-red-700">Challenge</span>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="bg-white rounded-lg border border-red-100 p-2">
+                          <p className="text-[9px] font-bold text-red-600 uppercase mb-0.5">Contre-argument</p>
+                          <p className="text-xs text-gray-700 leading-relaxed">{String(inlineResult.data.challenge || "")}</p>
+                        </div>
+                        {inlineResult.data.risk && (
+                          <div className="bg-white rounded-lg border border-amber-100 p-2">
+                            <p className="text-[9px] font-bold text-amber-600 uppercase mb-0.5">Risque</p>
+                            <p className="text-xs text-gray-700 leading-relaxed">{String(inlineResult.data.risk)}</p>
+                          </div>
+                        )}
+                        {inlineResult.data.alternative && (
+                          <div className="bg-white rounded-lg border border-emerald-100 p-2">
+                            <p className="text-[9px] font-bold text-emerald-600 uppercase mb-0.5">Alternative</p>
+                            <p className="text-xs text-gray-700 leading-relaxed">{String(inlineResult.data.alternative)}</p>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex gap-1.5 mt-2">
+                        <button
+                          onClick={() => { setActionResults(prev => { const n = { ...prev }; delete n[i]; return n; }); setActiveAction(null); }}
+                          className="text-[9px] px-2 py-1 rounded bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 cursor-pointer transition-colors"
+                        >Fermer</button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
