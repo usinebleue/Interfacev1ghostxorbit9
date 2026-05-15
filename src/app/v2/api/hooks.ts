@@ -890,11 +890,9 @@ export function useChat() {
               // Frontend timer handles thinking steps (nginx buffers SSE status events)
             },
             onToken: (_chunk: string, accumulated: string) => {
-              // Clear thinking animation + timer au premier token
-              if (accumulated.length === _chunk.length) {
-                clearInterval(_thinkTimer);
-                setThinkingSteps([]);
-              }
+              // NE PAS effacer le thinking overlay au premier token
+              // L'overlay reste visible pendant le streaming pour montrer la reflexion
+              // Il sera effacé dans onDone quand le streaming est terminé
               // Strip [TACHE] lines during streaming so they never appear
               const cleaned = accumulated.split("\n").filter(l => !/\[TACHE\]/i.test(l)).join("\n");
               // Update the bot message content progressively
@@ -905,6 +903,9 @@ export function useChat() {
               );
             },
             onDone: (data: StreamDoneEvent) => {
+              // Clear thinking overlay maintenant que le streaming est terminé
+              clearInterval(_thinkTimer);
+              setThinkingSteps([]);
               // Sync CREDO phase from backend
               const backendPhase = data.bubble_context?.credo_phase || data.phase_credo;
               if (backendPhase) setLastCREDOPhase(backendPhase);

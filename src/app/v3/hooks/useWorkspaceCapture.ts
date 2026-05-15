@@ -320,6 +320,8 @@ export function useWorkspaceCapture() {
     workspaceBlocks,
   } = useAmorcer();
   const prevMsgCountRef = useRef(messages.length);
+  // Guard anti-duplication: track which message IDs have already generated workspace blocks
+  const processedBlockMsgIds = useRef(new Set<string>());
 
   // ═══ VISION CAPTURE — écoute les events CustomEvent depuis useGlassesEvents ═══
   useEffect(() => {
@@ -387,11 +389,16 @@ export function useWorkspaceCapture() {
               const sourceType = (msg as any).msgType === "voice" ? "voice" as const : "chat" as const;
               const msgContentTypes = (msg as any).cristallisationSuggestion?.content_types as string[] | undefined;
               if (isDiscussion) {
+                // ═══ GUARD ANTI-DUPLICATION — skip si ce message a déjà généré un bloc ═══
+                if (processedBlockMsgIds.current.has(msg.id)) {
+                  console.log(`[WorkspaceCapture] SKIP duplicate block for msg ${msg.id} (streaming path)`);
+                } else {
                 // ═══ WORKSPACE BLOCK INTELLIGENT — backend ou fallback frontend ═══
                 const lastUserMsg = [...messages].reverse().find((m: any) => m.role === "user" && m.content);
                 const wsBlock = (msg as any).workspace_block as Partial<WorkspaceBlock> | undefined;
                 if (wsBlock && wsBlock.type && wsBlock.title) {
                   // Backend a généré un workspace_block structuré
+                  processedBlockMsgIds.current.add(msg.id);
                   addWorkspaceBlock({
                     id: wsBlock.id || `blk-${Date.now()}`,
                     type: wsBlock.type as WorkspaceBlockType,
@@ -407,9 +414,8 @@ export function useWorkspaceCapture() {
                     replace_block_id: wsBlock.replace_block_id,
                   });
                 } else if (!(msg as any).workspace_block_skip || workspaceBlocks.length === 0) {
-                  // TOUJOURS generer un bloc pour le PREMIER message de discussion
-                  // meme si le backend a skip (reponse question-heavy en CREDO C)
                   // Fallback frontend: détection locale + extraction structured_data
+                  processedBlockMsgIds.current.add(msg.id);
                   const detectedType = detectBlockTypeFrontend(msg.content);
                   const structuredData = extractStructuredDataFrontend(msg.content, detectedType);
                   const lastUserMsg = [...messages].reverse().find((m: any) => m.role === "user" && m.content);
@@ -427,6 +433,7 @@ export function useWorkspaceCapture() {
                     timestamp: Date.now(),
                   });
                 }
+                } // end dedup guard
                 // Accumulate in existing block for same sectionId (entonnoir effect)
                 const lastUserMsg2 = [...messages].reverse().find((m: any) => m.role === "user" && m.content);
                 const summary = summarizeForWorkspace(lastUserMsg2?.content || "Discussion", msg.content);
@@ -636,6 +643,11 @@ export function useWorkspaceCapture() {
         const sourceType = (msg as any).msgType === "voice" ? "voice" as const : "chat" as const;
         const msgContentTypes = (msg as any).cristallisationSuggestion?.content_types as string[] | undefined;
         if (isDiscussion) {
+          // ═══ GUARD ANTI-DUPLICATION — skip si ce message a déjà généré un bloc ═══
+          if (processedBlockMsgIds.current.has(msg.id)) {
+            console.log(`[WorkspaceCapture] SKIP duplicate block for msg ${msg.id} (length path)`);
+            continue;
+          }
           // ═══ WORKSPACE BLOCK INTELLIGENT — backend ou fallback frontend ═══
           const lastUserMsg = [...messages].reverse().find((m: any) => m.role === "user" && m.content);
           const wsBlock = (msg as any).workspace_block as Partial<WorkspaceBlock> | undefined;
@@ -647,6 +659,7 @@ export function useWorkspaceCapture() {
 
           if (wsBlocks && wsBlocks.length > 0) {
             // Multi-artifact: bot generated multiple <artifact> tags
+            processedBlockMsgIds.current.add(msg.id);
             for (let ai = 0; ai < wsBlocks.length; ai++) {
               const ab = wsBlocks[ai];
               if (!ab.type || !ab.title) continue;
@@ -666,6 +679,7 @@ export function useWorkspaceCapture() {
             }
           } else if (wsBlock && wsBlock.type && wsBlock.title) {
             // Single artifact from backend
+            processedBlockMsgIds.current.add(msg.id);
             const blockData: WorkspaceBlock = {
               id: wsBlock.id || `blk-${Date.now()}`,
               type: wsBlock.type as WorkspaceBlockType,
@@ -689,7 +703,7 @@ export function useWorkspaceCapture() {
             addWorkspaceBlock(blockData);
           } else if (!(msg as any).workspace_block_skip || workspaceBlocks.length === 0) {
             // Fallback frontend: détection locale + extraction structured_data
-            // TOUJOURS generer un bloc pour le PREMIER message (meme si backend a skip)
+            processedBlockMsgIds.current.add(msg.id);
             const detectedType = detectBlockTypeFrontend(msg.content);
             const extractedData = extractStructuredDataFrontend(msg.content, detectedType);
             const blockData: WorkspaceBlock = {

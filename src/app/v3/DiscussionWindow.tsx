@@ -1008,8 +1008,10 @@ function V3MessageList() {
                   <span className={cn("text-[11px] font-semibold", s.text)}>{BOT_NAME[botCode] || botCode}</span>
                   <span className="text-[10px] text-gray-400">{BOT_ROLE[botCode] || ""}</span>
                 </div>
-                {/* Content — formatté markdown — isolate empêche le bleed CSS entre bulles */}
-                <div className="text-sm text-gray-700 leading-relaxed isolate overflow-hidden [&>p]:my-0.5 [&>ul]:my-1 [&>ol]:my-1 [&>p:first-child]:mt-0 [&>p:last-child]:mb-0 [&>hr]:my-2 [&_li]:break-words [&_p]:break-words"
+                {/* Content — formatté markdown — key force le re-render quand streaming termine */}
+                <div
+                  key={`${msg.id}-${msg.isStreaming ? 's' : 'f'}`}
+                  className="text-sm text-gray-700 leading-relaxed isolate overflow-hidden [&>p]:my-0.5 [&>ul]:my-1 [&>ol]:my-1 [&>p:first-child]:mt-0 [&>p:last-child]:mb-0 [&>hr]:my-2 [&_li]:break-words [&_p]:break-words"
                   dangerouslySetInnerHTML={{ __html: (msg.isStreaming
                     ? msg.content.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br/>") + '<span class="inline-block w-0.5 h-4 bg-current ml-0.5 animate-pulse align-text-bottom"></span>'
                     : formatMarkdown(msg.content)
