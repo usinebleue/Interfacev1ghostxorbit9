@@ -18,6 +18,7 @@ import { ControlTowerPanel } from "./ControlTowerPanel";
 import { DiscussionWindow } from "./DiscussionWindow";
 import { WorkspacePhasesPanel } from "./WorkspacePhasesPanel";
 import { AmorcerProvider, useAmorcer } from "./AmorcerContext";
+import { DemoProvider } from "./DemoContext";
 import { useFrameMaster } from "../v2/context/FrameMasterContext";
 import { getSectionGPS } from "./core/section-registry";
 import { useIsMobile } from "../components/ui/use-mobile";
@@ -106,8 +107,10 @@ function BotCodeSync() {
 export function FrameMasterAmorcer() {
   return (
     <AmorcerProvider>
-      <BotCodeSync />
-      <AmorcerLayout />
+      <DemoProvider>
+        <BotCodeSync />
+        <AmorcerLayout />
+      </DemoProvider>
     </AmorcerProvider>
   );
 }

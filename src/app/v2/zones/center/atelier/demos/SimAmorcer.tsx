@@ -137,6 +137,7 @@ import {
   FileBarChart,
   X,
   Award,
+  Archive,
   Crosshair,
   Pin,
   Navigation,
@@ -9764,6 +9765,180 @@ export function ExecutionChat({ stage, typed, setTyped, advance, pc, context }: 
               <span className="text-xs text-green-700 font-medium">Bilan complet dans le workspace</span>
             </div>
           )}
+        </SBubble>
+      )}
+    </div>
+  );
+}
+
+// ========== RETROACTION CHAT (left panel — Bilan, Apprentissages, Recommandations, Archivage) ==========
+
+export function RetroactionChat({ stage, typed, setTyped, advance, pc }: {
+  stage: number; typed: boolean; setTyped: (v: boolean) => void; advance: () => void; pc: PhaseStyle;
+}) {
+  return (
+    <div className="space-y-3">
+      {/* ═══ STAGE 0: Ouverture bilan — CarlOS lance la retroaction ═══ */}
+      {stage >= 0 && (
+        <>
+          {stage === 0 && (
+            <div className="flex items-center gap-1.5 ml-10 bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-1.5">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-xs text-emerald-600 font-medium">Mode Retroaction actif</span>
+            </div>
+          )}
+          <SBubble code="CEOB" collapsed={stage > 0}>
+            {stage === 0 ? (
+              <>
+                <TypewriterText text="Phase Retroaction lancee. On fait le bilan complet du cycle — resultats, apprentissages, et recommandations pour le prochain sprint. C'est ici qu'on capitalise sur tout ce qu'on a appris." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+                {typed && (
+                  <div className="mt-3 space-y-1.5">
+                    {[
+                      { label: "Resultats", desc: "Mesurer les outcomes vs objectifs", icon: "📊" },
+                      { label: "Apprentissages", desc: "Identifier ce qui a fonctionne et ce qui doit changer", icon: "📖" },
+                      { label: "Recommandations", desc: "Formuler les actions pour le prochain cycle", icon: "💡" },
+                      { label: "Archivage", desc: "Consolider et documenter", icon: "📁" },
+                    ].map(item => (
+                      <div key={item.label} className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
+                        <span className="text-sm">{item.icon}</span>
+                        <div className="flex-1">
+                          <span className="text-xs font-bold text-gray-700">{item.label}</span>
+                          <span className="text-xs text-gray-500 ml-1.5">— {item.desc}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {typed && <SBtn onClick={advance} icon={BarChart3} label="Analyser les resultats" pc={pc} />}
+              </>
+            ) : <p className="text-xs text-gray-400 italic">CarlOS — Retroaction lancee, 4 etapes planifiees</p>}
+          </SBubble>
+        </>
+      )}
+
+      {/* ═══ STAGE 1: Resultats — metriques et KPIs ═══ */}
+      {stage >= 1 && (
+        <SBubble code="CEOB" collapsed={stage > 1}>
+          {stage === 1 ? (
+            <>
+              <TypewriterText text="Voici le bilan chiffre. Sur les 10 missions du cycle, 8 sont completees, 1 en cours, 1 reportee. Le budget est maitrise a 94% et la velocite equipe est a 85%." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && (
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  {[
+                    { label: "Missions", value: "8/10", sub: "completees", color: "text-emerald-600" },
+                    { label: "Budget", value: "94%", sub: "maitrise", color: "text-blue-600" },
+                    { label: "Velocite", value: "85%", sub: "equipe", color: "text-violet-600" },
+                    { label: "Satisfaction", value: "4.2/5", sub: "client", color: "text-amber-600" },
+                  ].map(m => (
+                    <div key={m.label} className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-center">
+                      <p className={cn("text-lg font-bold", m.color)}>{m.value}</p>
+                      <p className="text-[10px] text-gray-500">{m.label} — {m.sub}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {typed && <SBtn onClick={advance} icon={BookOpen} label="Identifier les apprentissages" pc={pc} />}
+            </>
+          ) : <p className="text-xs text-gray-400 italic">Bilan: 8/10 missions, budget 94%, velocite 85%</p>}
+        </SBubble>
+      )}
+
+      {/* ═══ STAGE 2: Apprentissages — ce qui a marche / a ameliorer ═══ */}
+      {stage >= 2 && (
+        <SBubble code="CEOB" collapsed={stage > 2}>
+          {stage === 2 ? (
+            <>
+              <TypewriterText text="3 apprentissages cles ressortent de ce cycle. Le sprint planning ameliore a eu un impact majeur, mais la communication inter-equipes reste un point faible." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && (
+                <div className="mt-3 space-y-2">
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                      <span className="text-xs font-bold text-emerald-700">Ce qui a fonctionne</span>
+                    </div>
+                    <p className="text-xs text-gray-600 ml-5">Sprint planning structure, dailys de 10min, livrables incrementaux</p>
+                  </div>
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <TrendingUp className="h-3.5 w-3.5 text-amber-600" />
+                      <span className="text-xs font-bold text-amber-700">A ameliorer</span>
+                    </div>
+                    <p className="text-xs text-gray-600 ml-5">Communication inter-equipes, gestion des dependances, documentation technique</p>
+                  </div>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Star className="h-3.5 w-3.5 text-blue-600" />
+                      <span className="text-xs font-bold text-blue-700">Surprise positive</span>
+                    </div>
+                    <p className="text-xs text-gray-600 ml-5">L'equipe a developpe un outil interne qui accelere le deploiement de 40%</p>
+                  </div>
+                </div>
+              )}
+              {typed && <SBtn onClick={advance} icon={Lightbulb} label="Formuler les recommandations" pc={pc} />}
+            </>
+          ) : <p className="text-xs text-gray-400 italic">3 apprentissages: sprint planning ✓, communication ↑, outil interne ★</p>}
+        </SBubble>
+      )}
+
+      {/* ═══ STAGE 3: Recommandations — actions concretes ═══ */}
+      {stage >= 3 && (
+        <SBubble code="CEOB" collapsed={stage > 3}>
+          {stage === 3 ? (
+            <>
+              <TypewriterText text="Voici mes 4 recommandations pour le prochain cycle. Chacune est actionnable et mesurable." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && (
+                <div className="mt-3 space-y-1.5">
+                  {[
+                    { num: 1, text: "Instaurer un sync inter-equipes hebdomadaire (30min max)", priority: "Haute" },
+                    { num: 2, text: "Deployer l'outil interne a toutes les equipes", priority: "Haute" },
+                    { num: 3, text: "Reduire le WIP limit a 3 par personne", priority: "Moyenne" },
+                    { num: 4, text: "Documenter les processus critiques dans le wiki", priority: "Moyenne" },
+                  ].map(r => (
+                    <div key={r.num} className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2">
+                      <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                        <span className="text-[10px] font-bold text-emerald-700">{r.num}</span>
+                      </div>
+                      <p className="text-xs text-gray-700 flex-1">{r.text}</p>
+                      <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-medium", r.priority === "Haute" ? "bg-red-50 text-red-600" : "bg-amber-50 text-amber-600")}>{r.priority}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {typed && <SBtn onClick={advance} icon={Archive} label="Archiver et cloturer" pc={pc} />}
+            </>
+          ) : <p className="text-xs text-gray-400 italic">4 recommandations formulees (2 haute, 2 moyenne priorite)</p>}
+        </SBubble>
+      )}
+
+      {/* ═══ STAGE 4: Archivage — cloture du cycle ═══ */}
+      {stage >= 4 && (
+        <SBubble code="CEOB">
+          {stage === 4 ? (
+            <>
+              <TypewriterText text="Cycle cloture et archive. Le rapport de retroaction est genere, les apprentissages sont capitalises dans la base de connaissances, et les recommandations sont injectees dans le backlog du prochain sprint. Bravo a toute l'equipe." speed={8} className="text-sm text-gray-700" onComplete={() => setTyped(true)} />
+              {typed && (
+                <div className="mt-3 bg-emerald-50 border border-emerald-200 rounded-xl p-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                    <span className="text-xs font-bold text-emerald-700">Cycle cloture avec succes</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { label: "Rapport", status: "Archive" },
+                      { label: "Apprentissages", status: "Capitalises" },
+                      { label: "Recommandations", status: "Au backlog" },
+                      { label: "Metriques", status: "Snapshottees" },
+                    ].map(item => (
+                      <div key={item.label} className="flex items-center gap-1.5">
+                        <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                        <span className="text-[10px] text-gray-600">{item.label}: <strong>{item.status}</strong></span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          ) : <p className="text-xs text-gray-400 italic">Cycle cloture et archive</p>}
         </SBubble>
       )}
     </div>

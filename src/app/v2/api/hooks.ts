@@ -356,6 +356,42 @@ function parseApiOptions(responseText: string): { cleanText: string; parsedOptio
     }
   }
 
+  // Numbered list at end of message: 1. Option\n2. Option\n3. Option
+  // Mirrors backend _extraire_options() "Format liste" detection
+  if (parsedOptions.length === 0) {
+    const numberedLines: { idx: number; label: string }[] = [];
+    for (let i = cleanLines.length - 1; i >= Math.max(cleanLines.length - 25, 0); i--) {
+      const stripped = cleanLines[i].trim();
+      const m = stripped.match(/^\d+[.)]\s+(.+)/);
+      if (m) {
+        let label = m[1].replace(/^\*+|\*+$/g, "").replace(/[:\s]+$/, "").trim();
+        // Reject questions and overly long labels
+        if (label.includes("?") || label.length > 80 || label.split(/\s+/).length > 10) {
+          // Try short label before : or —
+          const short = label.split(/\s*[:\u2014\u2013]\s*/)[0].replace(/^\*+|\*+$/g, "").trim();
+          if (short && short !== label && !short.includes("?") && short.length <= 80) {
+            label = short;
+          } else {
+            continue;
+          }
+        }
+        numberedLines.unshift({ idx: i, label });
+      } else if (!stripped) {
+        // blank line before numbered block — stop scanning
+        if (numberedLines.length > 0) break;
+      } else {
+        // Non-numbered, non-blank line — stop if we already collected some
+        if (numberedLines.length > 0) break;
+      }
+    }
+    if (numberedLines.length >= 2 && numberedLines.length <= 6) {
+      for (const nl of numberedLines) parsedOptions.push(nl.label);
+      // Remove those lines from cleanLines
+      const firstIdx = numberedLines[0].idx;
+      cleanLines.splice(firstIdx);
+    }
+  }
+
   // Fallback: detect 2-4 short plain-text lines at end of message (no numbering, no arrows)
   // Mirrors backend _extraire_options() raw text detection
   if (parsedOptions.length === 0) {
@@ -879,8 +915,8 @@ export function useChat() {
               // Final update with all metadata
               // TOUJOURS strip [TACHE] du texte, même quand le backend envoie des options explicites
               let cleanText = data.response.split("\n").filter((l: string) => !/\[TACHE\]/i.test(l)).join("\n").trim();
-              // S2.3 — Strip residual <artifact> tags from chat display (safety net)
-              cleanText = cleanText.replace(/<artifact\s+[^>]*>[\s\S]*?<\/artifact>/g, '').replace(/\n{3,}/g, '\n\n').trim();
+              // S2.3 — Strip residual <artifact> tags from chat display (keep content inside)
+              cleanText = cleanText.replace(/<\/?artifact[^>]*>/g, '').replace(/\n{3,}/g, '\n\n').trim();
               let parsedOptions: string[] = [];
 
               if (data.options && data.options.length > 0) {

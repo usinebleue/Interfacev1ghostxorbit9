@@ -322,13 +322,9 @@ function UserDropdownContent({ setRightSection, setAuthenticated, isDieu, mode, 
         <BookOpenCheck className="h-3.5 w-3.5" />
         Bible & Référence
       </DropdownMenuItem>
-      <DropdownMenuItem onClick={() => setRightSection("scenarios")} className="flex items-center gap-2 cursor-pointer">
-        <Play className="h-3.5 w-3.5" />
-        Scénarios de simulation
-      </DropdownMenuItem>
-      <DropdownMenuItem onClick={() => setRightSection("ateliers")} className="flex items-center gap-2 cursor-pointer">
-        <MapIcon className="h-3.5 w-3.5" />
-        Ateliers split-screen
+      <DropdownMenuItem onClick={() => setRightSection("simulations")} className="flex items-center gap-2 cursor-pointer">
+        <Layers className="h-3.5 w-3.5" />
+        Toutes les Simulations
       </DropdownMenuItem>
       <DropdownMenuSeparator />
       <DropdownMenuLabel className="text-xs text-muted-foreground">Mode</DropdownMenuLabel>

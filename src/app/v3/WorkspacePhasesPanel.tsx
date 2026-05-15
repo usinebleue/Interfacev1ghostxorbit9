@@ -99,6 +99,7 @@ const LazySanteGlobaleView = lazy(() => import("../v2/zones/center/SanteGlobaleV
 const LazyScenarioHub = lazy(() => import("../v2/zones/center/ScenarioHub").then(m => ({ default: m.ScenarioHub })));
 const LazyAtelierHub = lazy(() => import("../v2/zones/center/atelier/AtelierHub").then(m => ({ default: m.AtelierHub })));
 const LazyBibleOfficielle = lazy(() => import("../v2/zones/center/orbit9/MasterBibleOfficielle").then(m => ({ default: m.MasterBibleOfficielle })));
+const LazySimulationGallery = lazy(() => import("./sections/SimulationGallery").then(m => ({ default: m.SimulationGallery })));
 
 // ═══ FocusModeLayout — lazy import pour Fix R4 (FocusMode dans panel V3) ═══
 const LazyFocusModeLayout = lazy(() => import("../v2/zones/center/FocusModeLayout").then(m => ({ default: m.FocusModeLayout })));
@@ -122,6 +123,7 @@ const V2_SECTION_MAP: Record<string, React.LazyExoticComponent<React.ComponentTy
   "scenarios": LazyScenarioHub,
   "ateliers": LazyAtelierHub,
   "bible-officielle": LazyBibleOfficielle,
+  "simulations": LazySimulationGallery,
 };
 
 function V2SectionFallback() {

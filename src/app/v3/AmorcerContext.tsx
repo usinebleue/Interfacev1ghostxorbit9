@@ -429,9 +429,12 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     lsSet("activePhase", p);
     // Reset chatStage à chaque changement de phase — chaque phase repart de l'étape 0
     setChatStage(0);
-    // Nettoyer les workspace blocks — chaque phase repart vide
+    // Nettoyer le deliverable actif (évite que Jumelage/DocForge reste bloqué)
+    setActiveDeliverable(null);
+    // Vider les workspace blocks — l'auto-load useEffect (ligne ~525) restaurera
+    // les blocks sauvegardés de la nouvelle phase depuis le canvas API
     setWorkspaceBlocks([]);
-    try { localStorage.removeItem("workspaceBlocks"); } catch { /* silent */ }
+    // Note: pas de localStorage.removeItem ici — le useEffect workspaceBlocks le gère déjà
   }, [saveCanvasNow]);
   const setReflexionContext = useCallback((c: string | null) => {
     setReflexionContextRaw(c);
@@ -693,3 +696,6 @@ export function useAmorcer(): AmorcerState {
 export function useAmorcerSafe(): AmorcerState | null {
   return useContext(AmorcerCtx);
 }
+
+/** Exported for DemoContext stage override in SimulationGallery */
+export { AmorcerCtx };

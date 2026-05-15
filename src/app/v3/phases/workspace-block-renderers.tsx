@@ -14,7 +14,7 @@ import {
   ThumbsUp, ThumbsDown, Trophy, Zap, Shield,
   Target, Globe, ExternalLink,
   MessageCircle, Mic, Video,
-  BarChart3, Loader2, ChevronDown, Users,
+  BarChart3, Loader2, ChevronDown, Users, Gauge,
 } from "lucide-react";
 import { cn } from "../../components/ui/utils";
 import { formatCristallise } from "./content-formatters";
@@ -318,7 +318,7 @@ function BlockWrapper({ block, onAction, label, labelColor, children }: BlockRen
 // ═══ 1. Diagnostic — KPI cards + points de friction (pattern FocusReflexionView StepDiagnostic) ═══
 
 function DiagnosticRenderer({ block, onAction }: BlockRendererProps) {
-  const data = block.structured_data as { axes?: { label: string; score: number; color: string }[]; conclusion?: string; frictions?: string[] } | undefined;
+  const data = block.structured_data as { axes?: { label: string; score: number; color?: string; description?: string; detail?: string; bot?: string; action?: string; expanded?: { gap?: string; effort?: string; actions?: string[]; impact?: string } }[]; conclusion?: string; frictions?: string[]; score_global?: number } | undefined;
   // S3A.1: Staggered reveal for axes with animated score bars
   const [revealedAxes, setRevealedAxes] = useState(0);
   useEffect(() => {
@@ -330,48 +330,140 @@ function DiagnosticRenderer({ block, onAction }: BlockRendererProps) {
     });
     return () => timers.forEach(clearTimeout);
   }, [data?.axes?.length]); // eslint-disable-line react-hooks/exhaustive-deps
-  const SEV: Record<string, { bg: string; text: string; border: string }> = {
-    green: { bg: "bg-green-100", text: "text-green-700", border: "border-green-200" },
-    amber: { bg: "bg-amber-100", text: "text-amber-700", border: "border-amber-200" },
-    red:   { bg: "bg-red-100",   text: "text-red-700",   border: "border-red-200" },
+  // Score normalization: handles both /10 and /100 scales from backend
+  const isScale10 = data?.axes ? data.axes.every(a => a.score <= 10) : true;
+  const normScore = (s: number) => isScale10 ? s * 10 : s;
+  const globalScore = data?.score_global ?? (data?.axes ? Math.round(data.axes.reduce((sum, a) => sum + normScore(a.score), 0) / data.axes.length) : 0);
+  const criticalCount = data?.axes?.filter(a => normScore(a.score) < 40).length ?? 0;
+  const scoreStyle = (s: number) => {
+    const pct = isScale10 ? s * 10 : s;
+    return pct < 40
+      ? { border: "border-orange-400", bg: "bg-gradient-to-b from-orange-50 to-white", hdr: "bg-orange-100/60", badge: "bg-orange-600 text-white", bar: "bg-orange-500", tag: "bg-orange-100 text-orange-700", btn: "bg-orange-600 text-white hover:bg-orange-700" }
+      : pct < 60
+      ? { border: "border-amber-300", bg: "bg-gradient-to-b from-amber-50 to-white", hdr: "bg-amber-100/60", badge: "bg-amber-500 text-white", bar: "bg-amber-500", tag: "bg-amber-100 text-amber-700", btn: "bg-amber-500 text-white hover:bg-amber-600" }
+      : { border: "border-emerald-300", bg: "bg-gradient-to-b from-emerald-50 to-white", hdr: "bg-emerald-100/60", badge: "bg-emerald-500 text-white", bar: "bg-emerald-500", tag: "bg-emerald-100 text-emerald-700", btn: "bg-emerald-500 text-white hover:bg-emerald-600" };
   };
+  const globalBarColor = globalScore < 40 ? "bg-orange-400" : globalScore < 60 ? "bg-amber-400" : "bg-emerald-400";
   return (
     <BlockWrapper block={block} onAction={onAction} label="Diagnostic" labelColor="bg-orange-100 text-orange-700">
-      {/* KPI Grid — pattern StatCard FocusDiscussionView L887-899 */}
+      {/* Pattern MagDiagnostic SimAmorcer — Score global + grille axes */}
       {data?.axes ? (
-        <div className="space-y-3">
-          <div className="rounded-xl border border-gray-200 bg-white p-4">
-            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Indicateurs cles</h4>
-            <div className="grid grid-cols-2 gap-3">
-              {data.axes.map((ax, i) => {
-                const s = SEV[ax.color] || SEV.amber;
-                const isRevealed = i < revealedAxes;
-                return (
-                  <div key={i} className={cn(
-                    "rounded-lg p-3 transition-all duration-500",
-                    s.bg.replace("100", "50"),
-                    isRevealed ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
-                  )} style={{ transitionDelay: `${i * 100}ms` }}>
-                    <p className="text-xs text-gray-400 mb-1">{ax.label}</p>
-                    <div className="flex items-center gap-2">
-                      <p className={cn("text-xs font-bold", s.text)}>{ax.score}/10</p>
-                      <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                        <div className={cn("h-full rounded-full", s.bg)} style={{ width: isRevealed ? `${ax.score * 10}%` : "0%", transition: "width 0.8s ease-out", transitionDelay: `${i * 100 + 200}ms` }} />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+        <div className="space-y-4">
+          {/* Score de maturite global — pattern MagDiagnostic L1843-1873 */}
+          <div className="rounded-xl border border-gray-200 shadow-sm bg-white overflow-hidden hover:shadow-md hover:border-blue-200 transition-all">
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+              <Gauge className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+              <span className="text-sm font-bold text-gray-900">Score de maturite global</span>
+              <span className="text-xs font-bold bg-gray-900 text-white px-2.5 py-0.5 rounded-full ml-auto">{globalScore}%</span>
+            </div>
+            <div className="px-4 py-3 space-y-3">
+              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div className={cn("h-full rounded-full transition-all", globalBarColor)} style={{ width: `${globalScore}%`, transition: "width 1.2s ease-out" }} />
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div>
+                  <p className="text-xs text-gray-400">Axes critiques</p>
+                  <p className="text-xs font-bold text-orange-600">{criticalCount}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400">Axes evalues</p>
+                  <p className="text-xs font-bold text-blue-600">{data.axes.length}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400">Score moyen</p>
+                  <p className="text-xs font-bold text-emerald-600">{globalScore}%</p>
+                </div>
+              </div>
+              {data.conclusion && (
+                <div className="pt-2 border-t border-gray-100 flex items-center gap-2">
+                  <span className="text-xs text-gray-500">Recommandation:</span>
+                  <span className="text-xs text-orange-700 font-medium line-clamp-1">{data.conclusion}</span>
+                </div>
+              )}
             </div>
           </div>
-          {/* Points de friction — pattern FocusReflexionView StepDiagnostic */}
+
+          {/* Grille axes — pattern MagDiagnostic L1877-1965 */}
+          <div className="grid grid-cols-2 gap-3">
+            {data.axes.map((ax, i) => {
+              const pct = normScore(ax.score);
+              const sc = scoreStyle(ax.score);
+              const isRevealed = i < revealedAxes;
+              return (
+                <div key={i}
+                  className={cn(
+                    "rounded-xl overflow-hidden border-2 shadow-sm transition-all duration-500 hover:shadow-md",
+                    sc.border, sc.bg,
+                    isRevealed ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
+                  )}
+                  style={{ transitionDelay: `${i * 100}ms` }}
+                >
+                  {/* Header avec score badge proéminent */}
+                  <div className={cn("px-3 py-2 flex items-center justify-between", sc.hdr)}>
+                    <span className="text-xs text-gray-900 font-bold">{ax.label}</span>
+                    <div className={cn("flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold", sc.badge)}>
+                      {pct}%
+                    </div>
+                  </div>
+                  <div className="px-3 py-2.5 space-y-2">
+                    {ax.description && <p className="text-[11px] text-gray-700 font-medium">{ax.description}</p>}
+                    {/* Score bar — h-2 (thicker, pattern MagDiagnostic L1921) */}
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div className={cn("h-full rounded-full transition-all", sc.bar)} style={{ width: isRevealed ? `${pct}%` : "0%", transition: "width 0.8s ease-out", transitionDelay: `${i * 100 + 200}ms` }} />
+                    </div>
+                    {ax.detail && <p className="text-[10px] text-gray-600 font-medium">{ax.detail}</p>}
+                    {/* Bot attribution + Action button — pattern MagDiagnostic L1925-1931 */}
+                    <div className="flex items-center gap-1.5">
+                      {ax.bot && <BotAvatar code={ax.bot} size="sm" />}
+                      {ax.bot && <span className="text-[10px] text-gray-500 font-medium">{BOT_NAME[ax.bot] || ax.bot}</span>}
+                      {ax.action && (
+                        <button onClick={() => onAction("deepen", block.id, ax.label)}
+                          className={cn("text-[10px] px-3 py-1.5 rounded-full font-bold cursor-pointer ml-auto shadow-sm transition-all", sc.btn)}>
+                          {ax.action}
+                        </button>
+                      )}
+                    </div>
+                    {/* Expanded details — pattern MagDiagnostic L1934-1960 */}
+                    {ax.expanded && (
+                      <div className="mt-1 pt-2 border-t border-gray-200 space-y-2">
+                        <div className="flex items-center gap-2">
+                          {ax.expanded.gap && <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", sc.tag)}>{ax.expanded.gap}</span>}
+                          {ax.expanded.effort && <span className="text-[10px] text-gray-400">Effort: {ax.expanded.effort}</span>}
+                        </div>
+                        {ax.expanded.actions && (
+                          <div className="space-y-1">
+                            {ax.expanded.actions.map((a, j) => (
+                              <div key={j} className="flex items-center gap-1.5 text-[10px] text-gray-600">
+                                <div className="w-1.5 h-1.5 rounded-full bg-orange-400 shrink-0" />
+                                <span>{a}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {ax.expanded.impact && (
+                          <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-2 flex items-center gap-1.5">
+                            <TrendingUp className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                            <span className="text-[10px] text-emerald-700 font-bold">Impact: {ax.expanded.impact}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Points de friction */}
           {data.frictions && data.frictions.length > 0 && (
-            <div className="rounded-xl border border-gray-200 bg-white p-4">
-              <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Points de friction</h4>
+            <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-4">
+              <h4 className="text-xs font-bold text-amber-700 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <AlertTriangle className="h-3.5 w-3.5" /> Points de friction
+              </h4>
               <div className="space-y-2">
                 {data.frictions.map((f, i) => (
                   <div key={i} className="flex items-center gap-2 text-xs">
-                    <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
                     <span className="text-gray-800">{f}</span>
                   </div>
                 ))}
@@ -394,14 +486,6 @@ function DiagnosticRenderer({ block, onAction }: BlockRendererProps) {
           </div>
         </div>
       )}
-      {data?.conclusion && (
-        <div className="rounded-xl border border-orange-200 bg-orange-50/50 p-3 mt-2">
-          <div className="flex items-start gap-2">
-            <TrendingUp className="h-3.5 w-3.5 text-orange-600 shrink-0 mt-0.5" />
-            <p className="text-sm text-gray-700 leading-relaxed italic">{data.conclusion}</p>
-          </div>
-        </div>
-      )}
     </BlockWrapper>
   );
 }
@@ -410,7 +494,7 @@ function DiagnosticRenderer({ block, onAction }: BlockRendererProps) {
 
 function BrainstormRenderer({ block, onAction }: BlockRendererProps) {
   const data = block.structured_data as { items?: { id: number; title: string; detail: string; impact?: string; effort?: string }[] } | undefined;
-  const IDEA_COLORS = ["border-l-amber-400", "border-l-blue-400", "border-l-green-400", "border-l-purple-400", "border-l-pink-400", "border-l-cyan-400"];
+  const IDEA_COLORS = ["border-amber-300", "border-blue-300", "border-green-300", "border-purple-300", "border-pink-300", "border-cyan-300"];
   const [votes, setVotes] = useState<Record<number, number>>({});
   const [expanded, setExpanded] = useState<number | null>(null);
   // S3A.1: Staggered reveal — items appear 2 by 2 (300ms apart)
@@ -431,7 +515,7 @@ function BrainstormRenderer({ block, onAction }: BlockRendererProps) {
           {data.items.map((item, idx) => (
             <div key={item.id}
               className={cn(
-                "group/idea rounded-lg border border-gray-200 border-l-[3px] bg-white px-3 py-2.5 hover:shadow-sm hover:bg-amber-50/30 cursor-pointer",
+                "group/idea rounded-xl border-2 overflow-hidden bg-white hover:shadow-md cursor-pointer",
                 IDEA_COLORS[(item.id - 1) % IDEA_COLORS.length],
                 "transition-all duration-500",
                 idx < revealedItems ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
@@ -439,22 +523,24 @@ function BrainstormRenderer({ block, onAction }: BlockRendererProps) {
               style={{ transitionDelay: `${Math.floor(idx / 2) * 80}ms` }}
               onClick={() => setExpanded(expanded === item.id ? null : item.id)}
             >
-              <div className="flex items-start gap-2">
-                <div className="w-5 h-5 rounded-md bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
-                  <Lightbulb className="h-3 w-3 text-amber-600" />
+              <div className="px-3 py-2.5">
+                <div className="flex items-start gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
+                    <Lightbulb className="h-3.5 w-3.5 text-amber-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-gray-900">{item.title}</p>
+                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{item.detail}</p>
+                  </div>
+                  <button onClick={(e) => { e.stopPropagation(); onAction("pin", block.id); }}
+                    className="opacity-0 group-hover/idea:opacity-100 p-1 rounded hover:bg-amber-100 transition-all cursor-pointer shrink-0" title="Epingler">
+                    <Pin className="h-3 w-3 text-amber-500" />
+                  </button>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900">{item.title}</p>
-                  <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{item.detail}</p>
-                </div>
-                <button onClick={(e) => { e.stopPropagation(); onAction("pin", block.id); }}
-                  className="opacity-0 group-hover/idea:opacity-100 p-1 rounded hover:bg-amber-100 transition-all cursor-pointer shrink-0" title="Epingler">
-                  <Pin className="h-3 w-3 text-amber-500" />
-                </button>
               </div>
               {/* Expanded: Impact/Effort + Voting (pattern AtelierBrainstorm L1480-1527) */}
               {expanded === item.id && (
-                <div className="mt-2 pt-2 border-t border-gray-100 space-y-2">
+                <div className="px-3 pb-2.5 pt-2 border-t border-gray-100 space-y-2">
                   {(item.impact || item.effort) && (
                     <div className="flex gap-2">
                       {item.impact && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-green-100 text-green-700">Impact: {item.impact}</span>}
@@ -1050,41 +1136,57 @@ function ChallengeRenderer({ block, onAction }: BlockRendererProps) {
   return (
     <BlockWrapper block={block} onAction={onAction} label="Challenge" labelColor="bg-amber-100 text-amber-700">
       {has3Phase ? (
-        <div className="space-y-3">
-          {/* Phase 1: Challenge (amber) */}
-          <div className={cn("rounded-xl border border-amber-200 bg-amber-50/30 p-3 transition-all duration-500", revealPhase >= 1 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3")}>
-            <div className="flex items-center gap-2 mb-2">
-              <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
-              <span className="text-xs font-bold text-amber-700 uppercase tracking-wider">Challenge</span>
-            </div>
-            <div className="space-y-1.5 ml-6">
-              {data.challenge!.map((pt, i) => (
-                <p key={i} className="text-sm text-gray-700 leading-relaxed">• {pt}</p>
-              ))}
-            </div>
+        <div className="bg-white border-2 border-amber-300 rounded-xl overflow-hidden">
+          <div className="bg-amber-50 px-4 py-2 border-b border-amber-200 flex items-center gap-2">
+            <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
+            <span className="text-xs font-bold text-amber-800">Challenge: {block.title}</span>
           </div>
-          {/* Phase 2: Defense (emerald) */}
-          <div className={cn("rounded-xl border border-emerald-200 bg-emerald-50/30 p-3 transition-all duration-500", revealPhase >= 2 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3")}>
-            <div className="flex items-center gap-2 mb-2">
-              <Shield className="h-4 w-4 text-emerald-600 shrink-0" />
-              <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Defense</span>
-            </div>
-            <div className="space-y-1.5 ml-6">
-              {data.defense!.map((pt, i) => (
-                <p key={i} className="text-sm text-gray-700 leading-relaxed">• {pt}</p>
-              ))}
-            </div>
-          </div>
-          {/* Phase 3: Verdict (blue) */}
-          {data.verdict && (
-            <div className={cn("rounded-xl border border-blue-200 bg-blue-50/30 p-3 transition-all duration-500", revealPhase >= 3 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3")}>
-              <div className="flex items-center gap-2 mb-2">
-                <Trophy className="h-4 w-4 text-blue-600 shrink-0" />
-                <span className="text-xs font-bold text-blue-700 uppercase tracking-wider">Verdict</span>
+          <div className="p-4 space-y-3">
+            {/* Phase 1: Challenge (amber) — pattern MagChallenge */}
+            <div className={cn("flex items-start gap-3 transition-all duration-700", revealPhase >= 1 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3")}>
+              <BotAvatar code={(data as any).challengerBot || "CSOB"} size="sm" />
+              <div className="flex-1 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="text-xs font-bold text-amber-700">{BOT_NAME[(data as any).challengerBot] || "Challenger"}</span>
+                  <span className="text-[10px] bg-amber-200 text-amber-800 px-1 py-0.5 rounded">Challenge</span>
+                </div>
+                <div className="space-y-1.5">
+                  {data.challenge!.map((pt, i) => (
+                    <p key={i} className="text-xs text-gray-700">• {pt}</p>
+                  ))}
+                </div>
               </div>
-              <p className="text-sm text-gray-700 leading-relaxed ml-6">{data.verdict}</p>
             </div>
-          )}
+            {/* Phase 2: Defense (emerald) — pattern MagChallenge */}
+            <div className={cn("flex items-start gap-3 transition-all duration-700", revealPhase >= 2 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3")}>
+              <BotAvatar code={(data as any).defenderBot || "CEOB"} size="sm" />
+              <div className="flex-1 bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="text-xs font-bold text-emerald-700">{BOT_NAME[(data as any).defenderBot] || "Defense"}</span>
+                  <span className="text-[10px] bg-emerald-200 text-emerald-800 px-1 py-0.5 rounded">Defense</span>
+                </div>
+                <div className="space-y-1.5">
+                  {data.defense!.map((pt, i) => (
+                    <p key={i} className="text-xs text-gray-700">• {pt}</p>
+                  ))}
+                </div>
+              </div>
+            </div>
+            {/* Phase 3: Verdict (blue) — pattern MagChallenge */}
+            {data.verdict && (
+              <div className={cn("flex items-start gap-3 transition-all duration-700", revealPhase >= 3 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3")}>
+                <BotAvatar code={block.source || "CEOB"} size="sm" />
+                <div className="flex-1 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Trophy className="h-3.5 w-3.5 text-blue-600" />
+                    <span className="text-xs font-bold text-blue-700">Verdict</span>
+                    <span className="text-[10px] bg-blue-200 text-blue-800 px-1 py-0.5 rounded">Final</span>
+                  </div>
+                  <p className="text-xs text-gray-700 font-medium">{data.verdict}</p>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       ) : (
         <div className="rounded-xl border border-amber-200 bg-amber-50/30 p-3 mb-2">
@@ -1677,45 +1779,60 @@ function EtatDesLieuxRenderer({ block, onAction }: BlockRendererProps) {
 
   return (
     <BlockWrapper block={block} onAction={onAction} label="Etat des lieux" labelColor="bg-sky-100 text-sky-700">
-      {/* Temperature gauge */}
+      {/* Temperature gauge — pattern MagDiagnostic score card */}
       {data?.temperature !== undefined && (
-        <div className="mb-3">
-          <div className="flex items-center gap-2 mb-1">
-            <Activity className="h-3.5 w-3.5 text-gray-400" />
-            <span className="text-[10px] text-gray-500 font-medium">Temperature</span>
-            <span className={cn("text-xs font-bold", tempColor)}>{data.temperature}/100</span>
-            {data.temperature_label && (
-              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">{data.temperature_label}</span>
-            )}
+        <div className="rounded-xl border border-gray-200 shadow-sm bg-white overflow-hidden mb-3">
+          <div className={cn("flex items-center gap-2 px-4 py-2.5 border-b border-gray-100",
+            (data.temperature ?? 50) >= 70 ? "bg-red-50" : (data.temperature ?? 50) >= 40 ? "bg-amber-50" : "bg-emerald-50"
+          )}>
+            <Activity className={cn("h-4 w-4", tempColor)} />
+            <span className="text-sm font-bold text-gray-900">Temperature de la situation</span>
+            <span className={cn("text-xs font-bold px-2.5 py-0.5 rounded-full ml-auto text-white",
+              (data.temperature ?? 50) >= 70 ? "bg-red-600" : (data.temperature ?? 50) >= 40 ? "bg-amber-500" : "bg-emerald-500"
+            )}>{data.temperature}/100</span>
           </div>
-          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-            <div className={cn("h-full rounded-full", tempBg)} style={{ width: `${data.temperature}%`, transition: "width 1s ease-out" }} />
+          <div className="px-4 py-3 space-y-2">
+            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div className={cn("h-full rounded-full", tempBg)} style={{ width: `${data.temperature}%`, transition: "width 1s ease-out" }} />
+            </div>
+            {data.temperature_label && (
+              <p className={cn("text-xs font-medium", tempColor)}>{data.temperature_label}</p>
+            )}
           </div>
         </div>
       )}
-      {/* Agent perspectives */}
+      {/* Agent perspectives — pattern ReflexionChat multi-bot analysis */}
       {data?.perspectives ? (
         <div className="space-y-2">
           {data.perspectives.map((p, i) => {
             const isRevealed = i < revealedPerspectives;
             return (
               <div key={i} className={cn(
-                "flex items-start gap-2.5 rounded-lg border border-gray-200 bg-white px-3 py-2.5 transition-all duration-500",
+                "flex items-start gap-3 rounded-xl border-2 overflow-hidden transition-all duration-500",
+                p.score !== undefined && p.score < 4 ? "border-red-300 bg-gradient-to-r from-red-50 to-white" :
+                p.score !== undefined && p.score < 7 ? "border-amber-300 bg-gradient-to-r from-amber-50 to-white" :
+                "border-emerald-300 bg-gradient-to-r from-emerald-50 to-white",
                 isRevealed ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
               )} style={{ transitionDelay: `${i * 100}ms` }}>
-                <BotAvatar code={p.bot} size="sm" />
-                <div className="flex-1 min-w-0">
-                  <span className="text-[10px] font-bold text-gray-500">{BOT_NAME[p.bot] || p.bot}</span>
-                  <p className="text-sm text-gray-700 leading-relaxed">{p.analysis}</p>
+                <div className={cn("px-3 py-3 flex flex-col items-center gap-1 shrink-0",
+                  p.score !== undefined && p.score < 4 ? "bg-red-100/60" :
+                  p.score !== undefined && p.score < 7 ? "bg-amber-100/60" :
+                  "bg-emerald-100/60"
+                )}>
+                  <BotAvatar code={p.bot} size="sm" />
+                  {p.score !== undefined && (
+                    <span className={cn(
+                      "text-[10px] px-2 py-0.5 rounded-full font-bold",
+                      p.score >= 7 ? "bg-emerald-500 text-white" :
+                      p.score >= 4 ? "bg-amber-500 text-white" :
+                      "bg-red-500 text-white"
+                    )}>{p.score}/10</span>
+                  )}
                 </div>
-                {p.score !== undefined && (
-                  <span className={cn(
-                    "text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0",
-                    p.score >= 7 ? "bg-emerald-100 text-emerald-700" :
-                    p.score >= 4 ? "bg-amber-100 text-amber-700" :
-                    "bg-red-100 text-red-700"
-                  )}>{p.score}/10</span>
-                )}
+                <div className="flex-1 min-w-0 py-2.5 pr-3">
+                  <span className="text-xs font-bold text-gray-800">{BOT_NAME[p.bot] || p.bot}</span>
+                  <p className="text-sm text-gray-700 leading-relaxed mt-0.5">{p.analysis}</p>
+                </div>
               </div>
             );
           })}
