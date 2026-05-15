@@ -37,22 +37,35 @@ export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [notifs, setNotifs] = useState<NotifPreview[]>([]);
   const dropRef = useRef<HTMLDivElement>(null);
+  const failCountRef = useRef(0);
+  const [apiAvailable, setApiAvailable] = useState(true);
 
   const refreshCount = useCallback(async () => {
+    if (!apiAvailable) return;
     try {
       const res = await fetch(`${API_BASE}/notifications/count`, { headers: notifHeaders() });
-      if (res.ok) { const d = await res.json(); setCount(d.count || 0); }
-    } catch { /* silent */ }
-  }, []);
+      if (res.ok) {
+        const d = await res.json(); setCount(d.count || 0);
+        failCountRef.current = 0;
+      } else {
+        failCountRef.current++;
+        if (failCountRef.current >= 3) setApiAvailable(false);
+      }
+    } catch {
+      failCountRef.current++;
+      if (failCountRef.current >= 3) setApiAvailable(false);
+    }
+  }, [apiAvailable]);
 
   const loadNotifs = useCallback(async () => {
+    if (!apiAvailable) return;
     try {
       const res = await fetch(`${API_BASE}/notifications?limit=8`, { headers: notifHeaders() });
       if (res.ok) { const d = await res.json(); setNotifs(d.notifications || []); }
     } catch { /* silent */ }
-  }, []);
+  }, [apiAvailable]);
 
-  // Poll count every 30s
+  // Poll count every 30s (stops after 3 consecutive failures)
   useEffect(() => {
     refreshCount();
     const iv = setInterval(refreshCount, 30000);
@@ -85,6 +98,8 @@ export function NotificationBell() {
     setCount(0);
     loadNotifs();
   };
+
+  if (!apiAvailable) return null;
 
   return (
     <div className="relative" ref={dropRef}>

@@ -150,9 +150,14 @@ export function WorkspaceSection({
                   <span className="text-[9px] text-blue-400 font-medium">Modifier</span>
                 </div>
                 <div className="group-hover/edit:ring-1 group-hover/edit:ring-blue-200 rounded-lg transition-all">
-                  <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap max-h-[400px] overflow-y-auto">
-                    {cristallise}
-                  </div>
+                  <div
+                    className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap max-h-[400px] overflow-y-auto"
+                    dangerouslySetInnerHTML={{ __html: (cristallise || "")
+                      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+                      .replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>')
+                      .replace(/\*(.+?)\*/g, '<em class="text-gray-600 italic">$1</em>')
+                    }}
+                  />
                 </div>
               </div>
             )}

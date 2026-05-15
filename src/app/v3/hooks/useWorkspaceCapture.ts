@@ -482,14 +482,28 @@ export function useWorkspaceCapture() {
                 if (sugIdx >= 0 && sugIdx === chatStage + 1) {
                   setChatStage(sugIdx);
                 } else {
-                  const botCount = messages.filter((m: any) => m.role === "assistant" && (m as any).isStreaming !== true).length;
-                  const targetStage = Math.min(4, Math.floor(botCount / 2));
-                  if (targetStage > chatStage) setChatStage(targetStage);
+                  // FIX Sprint 3: sync avec backend phase_credo + botCount/3 (meme logique que path non-streaming)
+                  const CREDO_TO_STAGE: Record<string, number> = { C: 0, R: 1, E: 2, D: 3, O: 4 };
+                  if (lastCREDOPhase && CREDO_TO_STAGE[lastCREDOPhase] !== undefined) {
+                    const target = CREDO_TO_STAGE[lastCREDOPhase];
+                    if (target > chatStage) setChatStage(target);
+                  } else {
+                    const botCount = messages.filter((m: any) => m.role === "assistant" && (m as any).isStreaming !== true).length;
+                    const targetStage = Math.min(4, Math.floor(botCount / 3));
+                    if (targetStage > chatStage) setChatStage(targetStage);
+                  }
                 }
               } else {
-                const botCount = messages.filter((m: any) => m.role === "assistant" && (m as any).isStreaming !== true).length;
-                const targetStage = Math.min(4, Math.floor(botCount / 2));
-                if (targetStage > chatStage) setChatStage(targetStage);
+                // FIX Sprint 3: sync avec backend phase_credo + botCount/3 (meme logique que path non-streaming)
+                const CREDO_TO_STAGE: Record<string, number> = { C: 0, R: 1, E: 2, D: 3, O: 4 };
+                if (lastCREDOPhase && CREDO_TO_STAGE[lastCREDOPhase] !== undefined) {
+                  const target = CREDO_TO_STAGE[lastCREDOPhase];
+                  if (target > chatStage) setChatStage(target);
+                } else {
+                  const botCount = messages.filter((m: any) => m.role === "assistant" && (m as any).isStreaming !== true).length;
+                  const targetStage = Math.min(4, Math.floor(botCount / 3));
+                  if (targetStage > chatStage) setChatStage(targetStage);
+                }
               }
             } else {
               setChatStage((s: number) => s + 1);

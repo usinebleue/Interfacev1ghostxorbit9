@@ -82,8 +82,8 @@ export const REGISTRY: Record<string, DomainEntry> = {
   "templates": {
     key: "templates",
     label: "Templates",
-    endpoint: "/templates-catalogue",
-    status: "simu",
+    endpoint: "/templates",
+    status: "live",
     v2Hook: "useUnifiedTemplates",
   },
   "orbit9-members": {

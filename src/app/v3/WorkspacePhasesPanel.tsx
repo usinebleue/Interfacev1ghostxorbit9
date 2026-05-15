@@ -307,10 +307,12 @@ export function WorkspacePhasesPanel() {
       setRightSection(null);
     }
 
-    // 3. Envoyer le message initial — délai pour que React flush le reset de newConversation()
-    // Sans ce délai, sendMessage voit encore les anciens messages → coaching "39 échanges" se déclenche
+    // 3. Envoyer le message initial — rAF + setTimeout garantit 1 cycle de rendu complet
+    // avant sendMessage, pour que activeThreadId=null soit flush par React
     const prompt = PHASE_PROMPT[phase] || "Parlons de";
-    setTimeout(() => sendMessage(`${prompt} ${context}`), 80);
+    requestAnimationFrame(() => {
+      setTimeout(() => sendMessage(`${prompt} ${context}`), 50);
+    });
   };
 
   const pc = PHASE_CONFIG[activePhase];
@@ -343,7 +345,7 @@ export function WorkspacePhasesPanel() {
         const DELIVERABLE_TITLE: Record<string, string> = { document: "Cahier de projet Boreal", spreadsheet: "Tableau de bord financier Boreal", presentation: "Pitch Deck CA Boreal", code: "Dashboard IoT Boreal", jumelage: "Jumelage SMART Orbit⁹" };
         const titleText = activeSection === "orbit9"
           ? "Orbit⁹"
-          : `${sectionLabel} — ${deptLabel}`;
+          : deptLabel ? `${sectionLabel} — ${deptLabel}` : sectionLabel;
         const showBlueprintTabs = activeSection === "blueprint";
         const showOrbit9Tabs = activeSection === "orbit9";
         const showExecutionTabs = activeSection === "execution" || (!rightSection && (activePhase === "execution" || activePhase === "retroaction"));

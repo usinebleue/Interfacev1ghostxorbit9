@@ -33,6 +33,18 @@ import type {
 } from "./types";
 import { classifyThread } from "./types";
 
+// ── Sprint 3 — OpenClaw gateway routing ──
+// Phase 1: non-CEO bots use OpenClaw. Phase 2: CEO after CREDO validation.
+const OPENCLAW_ENABLED_BOTS = new Set(["BCT", "BCF", "BCM", "BCS", "BOO", "CPOB", "CHROB", "CROB", "CISOB", "CLOB", "CINOB"]);
+const OPENCLAW_FORCE_ALL = import.meta.env.VITE_OPENCLAW_ALL === "true";
+const OPENCLAW_DISABLED = import.meta.env.VITE_OPENCLAW_DISABLED === "true";
+
+function shouldUseOpenClaw(botCode?: string): boolean {
+  if (OPENCLAW_DISABLED) return false;
+  if (OPENCLAW_FORCE_ALL) return true;
+  return OPENCLAW_ENABLED_BOTS.has(botCode || "");
+}
+
 // Options contextuelles par defaut — arbre de developpement de la pensee (wireframe p.3)
 // Options hardcodées RETIRÉES — le backend drive les suggestions via msg.options
 // Si le backend n'envoie pas d'options, on n'affiche RIEN (pas de random générique)
@@ -833,9 +845,11 @@ export function useChat() {
       const modeConf = MODE_LIVE_CONFIG[mode || "credo"] || MODE_LIVE_CONFIG.credo;
 
       // Try streaming first, fallback to standard chat
+      // Sprint 3 — Route via OpenClaw gateway for non-CEO bots
+      const useOC = shouldUseOpenClaw(agent);
       try {
         await new Promise<void>((resolve, reject) => {
-          const controller = api.chatStream(req, {
+          const controller = (useOC ? api.chatOpenClaw : api.chatStream).call(api, req, {
             onStatus: () => {
               // Frontend timer handles thinking steps (nginx buffers SSE status events)
             },
