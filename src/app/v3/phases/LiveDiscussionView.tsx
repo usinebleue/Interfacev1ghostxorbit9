@@ -36,7 +36,7 @@ import { BotAvatar } from "../simulation/primitives";
 import { BOT_NAME } from "../../v2/api/types";
 import { api } from "../../v2/api/client";
 import type { CascadeSuggestion } from "../../v2/api/types";
-import { detectBlockTypeFrontend, extractStructuredDataFrontend } from "../hooks/useWorkspaceCapture";
+import { detectBlockTypeFrontend, extractStructuredDataFrontend, detectCredoSubSection, summarizeExpertForWorkspace } from "../hooks/useWorkspaceCapture";
 
 // ═══ B.1: ThinkingAnimation steps par etape CREDO (pattern primitives.tsx ThinkingAnimation) ═══
 
@@ -250,6 +250,9 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
     const block = workspaceBlocks.find(b => b.id === blockId);
     if (!block) return;
 
+    // Expert blocks (sourceType=chat) — route actions to WORKSPACE, not discussion
+    const isExpertBlock = block.sourceType === "chat" && block.source;
+
     switch (action) {
       case "pin":
         addWorkflowItem("discussion", `[${BLOCK_TYPE_LABELS[block.type] || block.type}] ${block.title}: ${block.summary.substring(0, 120)}`, "insight");
@@ -258,28 +261,128 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
         setPulsingBlockId(blockId);
         setTimeout(() => setPulsingBlockId(null), 1500);
         const targetBot = block.source || activeBotCode;
-        sendMessage(`Approfondir en detail: ${block.title}\n\nContexte: ${block.summary}`, targetBot);
+        if (isExpertBlock) {
+          // Route to workspace — chatMulti + update block
+          (async () => {
+            try {
+              const res = await api.chatMulti({
+                message: `Approfondir en detail: ${block.title}\n\nContexte: ${block.summary}`,
+                user_id: 1,
+                agents: [targetBot],
+                primary_agent: targetBot,
+                workspace_phase: activePhase,
+              });
+              const persp = res.perspectives?.[0];
+              if (!persp) return;
+              const blockType = detectBlockTypeFrontend(persp.contenu);
+              addWorkspaceBlock({
+                id: `expert-${targetBot}-${Date.now()}`,
+                type: blockType,
+                title: `${BOT_NAME[targetBot] || targetBot} — Approfondissement`,
+                summary: summarizeExpertForWorkspace(persp.contenu),
+                structured_data: extractStructuredDataFrontend(persp.contenu, blockType),
+                credo_step: block.credo_step,
+                credo_sub_section: "experts",
+                confidence: 0.8,
+                source: targetBot,
+                sourceType: "chat",
+                timestamp: Date.now(),
+                replace_block_id: blockId,
+              });
+            } catch (err) {
+              console.error("[Expert deepen] Error:", err);
+            }
+          })();
+        } else {
+          sendMessage(`Approfondir en detail: ${block.title}\n\nContexte: ${block.summary}`, targetBot);
+        }
         break;
       }
       case "challenge": {
         setPulsingBlockId(blockId);
         setTimeout(() => setPulsingBlockId(null), 1500);
         const targetBot2 = block.source || activeBotCode;
-        sendMessage(`Challenge cet element, trouve les failles: ${block.title}\n\n${block.summary}`, targetBot2);
+        if (isExpertBlock) {
+          (async () => {
+            try {
+              const res = await api.chatMulti({
+                message: `Challenge cet element, trouve les failles: ${block.title}\n\n${block.summary}`,
+                user_id: 1,
+                agents: [targetBot2],
+                primary_agent: targetBot2,
+                workspace_phase: activePhase,
+              });
+              const persp = res.perspectives?.[0];
+              if (!persp) return;
+              const blockType = detectBlockTypeFrontend(persp.contenu);
+              addWorkspaceBlock({
+                id: `expert-${targetBot2}-${Date.now()}`,
+                type: blockType,
+                title: `${BOT_NAME[targetBot2] || targetBot2} — Challenge`,
+                summary: summarizeExpertForWorkspace(persp.contenu),
+                structured_data: extractStructuredDataFrontend(persp.contenu, blockType),
+                credo_step: block.credo_step,
+                credo_sub_section: "experts",
+                confidence: 0.8,
+                source: targetBot2,
+                sourceType: "chat",
+                timestamp: Date.now(),
+                replace_block_id: blockId,
+              });
+            } catch (err) {
+              console.error("[Expert challenge] Error:", err);
+            }
+          })();
+        } else {
+          sendMessage(`Challenge cet element, trouve les failles: ${block.title}\n\n${block.summary}`, targetBot2);
+        }
         break;
       }
       case "rework": {
         setPulsingBlockId(blockId);
         setTimeout(() => setPulsingBlockId(null), 1500);
         const targetBot3 = block.source || activeBotCode;
-        sendMessage(`Retravaille et enrichis: ${block.title}\n\n${block.summary}`, targetBot3);
+        if (isExpertBlock) {
+          (async () => {
+            try {
+              const res = await api.chatMulti({
+                message: `Retravaille et enrichis: ${block.title}\n\n${block.summary}`,
+                user_id: 1,
+                agents: [targetBot3],
+                primary_agent: targetBot3,
+                workspace_phase: activePhase,
+              });
+              const persp = res.perspectives?.[0];
+              if (!persp) return;
+              const blockType = detectBlockTypeFrontend(persp.contenu);
+              addWorkspaceBlock({
+                id: `expert-${targetBot3}-${Date.now()}`,
+                type: blockType,
+                title: `${BOT_NAME[targetBot3] || targetBot3} — Perspective`,
+                summary: summarizeExpertForWorkspace(persp.contenu),
+                structured_data: extractStructuredDataFrontend(persp.contenu, blockType),
+                credo_step: block.credo_step,
+                credo_sub_section: "experts",
+                confidence: 0.8,
+                source: targetBot3,
+                sourceType: "chat",
+                timestamp: Date.now(),
+                replace_block_id: blockId,
+              });
+            } catch (err) {
+              console.error("[Expert rework] Error:", err);
+            }
+          })();
+        } else {
+          sendMessage(`Retravaille et enrichis: ${block.title}\n\n${block.summary}`, targetBot3);
+        }
         break;
       }
       case "delete":
         removeWorkspaceBlock(blockId);
         break;
     }
-  }, [workspaceBlocks, addWorkflowItem, sendMessage, activeBotCode, removeWorkspaceBlock]);
+  }, [workspaceBlocks, addWorkflowItem, sendMessage, activeBotCode, removeWorkspaceBlock, activePhase, addWorkspaceBlock]);
 
   // Reflexion tool click handler
   const handleReflexionSend = useCallback((prompt: string) => {
@@ -338,21 +441,19 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
     });
   }, [activeTechnique, techniqueStep, techniqueContext, messages, activeBotCode, sendMessage, activeStepId]);
 
-  // W.0: Sub-section block matching
+  // W.0: Sub-section block matching (simplified — matches new phase-config sub-sections)
   const blockMatchesSubSection = useCallback((block: import("../core/types").WorkspaceBlock, subSection: string): boolean => {
     if (subSection === "experts") return !!block.source && block.source !== activeBotCode;
     if (subSection === "deep-search") return block.type === "deep_search";
-    if (subSection === "modes-reflexion") return ["libre", "debat", "decision", "crise", "challenge"].includes(block.type);
-    if (subSection === "techniques") return ["scamper", "5pourquoi", "brainstorm"].includes(block.type);
-    if (subSection === "plan-action") return ["plan_action", "taches", "timeline"].includes(block.type);
-    if (subSection === "solutions") return ["recommandations", "brainstorm"].includes(block.type);
+    if (subSection === "modes-reflexion") return ["libre", "debat", "decision", "crise", "challenge", "brainstorm", "scamper", "5pourquoi"].includes(block.type);
+    if (subSection === "situation") return !block.source || block.source === activeBotCode; // all primary bot blocks in C
+    if (subSection === "analyses") return ["diagnostic", "etat_des_lieux", "risques", "benchmark", "metriques"].includes(block.type);
+    if (subSection === "solutions") return ["recommandations", "brainstorm", "libre"].includes(block.type);
     if (subSection === "comparaison") return ["benchmark", "metriques"].includes(block.type);
-    if (subSection === "contexte") return block.type === "diagnostic" || block.type === "etat_des_lieux";
-    if (subSection === "enjeux") return block.type === "risques" || block.type === "diagnostic";
+    if (subSection === "plan-action") return ["plan_action", "taches", "timeline", "budget"].includes(block.type);
     if (subSection === "ressources") return ["budget", "metriques"].includes(block.type);
+    if (subSection === "decisions") return ["decision", "synthese"].includes(block.type);
     if (subSection === "plan-match") return ["plan_action", "synthese", "rapport"].includes(block.type);
-    if (subSection === "decisions") return block.type === "decision" || block.type === "synthese";
-    if (subSection === "angles-morts") return block.type === "challenge" || block.type === "risques";
     return true;
   }, [activeBotCode]);
 
@@ -416,8 +517,6 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
       {/* W.0: CREDO HORIZONTAL BAR — sous le Hero */}
       <div className="flex items-center gap-1 px-3 py-2 border border-gray-100 rounded-xl bg-white/80 shadow-sm">
         {config.steps.map((step, i) => {
-          const isCurrent = i === chatStage;
-          const isDone = i < chatStage;
           const isActive = activeStepId === step.id;
           const stepColors: Record<string, { bg: string; text: string }> = {
             C: { bg: "bg-sky-100", text: "text-sky-700" },
@@ -428,6 +527,8 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
           };
           const credoLetter = step.id.includes("comprendre") ? "C" : step.id.includes("rechercher") ? "R" : step.id.includes("exposer") ? "E" : step.id.includes("demontrer") ? "D" : "O";
           const sc = stepColors[credoLetter] || stepColors.C;
+          // Vert SEULEMENT si blocs existent pour cette etape (pas chatStage)
+          const hasContent = (blocksByCredoStep[credoLetter] || 0) > 0;
           return (
             <button
               key={step.id}
@@ -438,14 +539,13 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
               className={cn(
                 "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
                 isActive ? cn(sc.bg, sc.text, "shadow-sm ring-1 ring-current/20") :
-                  isDone ? "bg-emerald-50 text-emerald-700" :
-                  isCurrent ? "bg-gray-100 text-gray-600" :
+                  hasContent ? "bg-emerald-50 text-emerald-700" :
                   "bg-gray-50 text-gray-400"
               )}
             >
               <step.icon className="w-3.5 h-3.5" />
               {step.title}
-              {isDone && <Check className="w-3 h-3" />}
+              {hasContent && !isActive && <Check className="w-3 h-3" />}
             </button>
           );
         })}
@@ -505,39 +605,27 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
                 </div>
               </div>
 
-              {/* Index des blocs (compact) */}
-              {workspaceBlocks.length > 0 && (
-                <div>
-                  <div className={SF.separator} />
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 px-2">
-                    Blocs ({workspaceBlocks.length})
-                  </span>
-                  <div className="mt-1 space-y-0.5">
-                    {Object.entries(blockTypeCounts).slice(0, 5).map(([type, count]) => {
-                      const bots = blockTypeBots[type];
-                      const botArr = bots ? [...bots] : [];
-                      return (
-                        <button
-                          key={type}
-                          onClick={() => {
-                            const el = document.getElementById(`block-${type}`);
-                            el?.scrollIntoView({ behavior: "smooth", block: "start" });
-                          }}
-                          className={cn(SF.btnBase, "hover:bg-gray-50 border border-transparent")}
-                        >
-                          {botArr.length === 1 ? (
-                            <BotAvatar code={botArr[0]} size="sm" />
-                          ) : botArr.length > 1 ? (
-                            <span className="text-[8px] w-4 h-4 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold shrink-0">{botArr.length}</span>
-                          ) : null}
-                          <span className="text-[10px] text-gray-600">{BLOCK_TYPE_LABELS[type as keyof typeof BLOCK_TYPE_LABELS] || type}</span>
-                          <span className="ml-auto text-[9px] bg-gray-100 px-1.5 py-0.5 rounded-full text-gray-500">{count}</span>
-                        </button>
-                      );
-                    })}
+              {/* Participants actifs */}
+              {workspaceBlocks.length > 0 && (() => {
+                const participants = [...new Set(workspaceBlocks.map(b => b.source).filter(Boolean))];
+                if (participants.length === 0) return null;
+                return (
+                  <div>
+                    <div className={SF.separator} />
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 px-2">
+                      Participants ({participants.length})
+                    </span>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5 px-2">
+                      {participants.map(code => (
+                        <div key={code} className="flex items-center gap-1 px-2 py-1 rounded-full bg-gray-50 border border-gray-200">
+                          <BotAvatar code={code} size="sm" />
+                          <span className="text-[9px] font-medium text-gray-600">{BOT_NAME[code] || code}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
           );
 
@@ -579,9 +667,34 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
                     prompt: "Reflexion profonde et nuancee — explore toutes les dimensions de:" },
                 ].map(m => (
                   <button key={m.id}
-                    onClick={() => {
+                    onClick={async () => {
                       const ctx = messages.filter(msg => msg.role === "assistant" && msg.content).pop()?.content?.substring(0, 200) || "";
-                      sendMessage(`${m.prompt} ${ctx}`, activeBotCode, undefined, { workspacePhase: `discussion_rechercher` });
+                      const fullPrompt = `${m.prompt} ${ctx}`;
+                      try {
+                        const res = await api.chatMulti({
+                          message: fullPrompt, user_id: 1,
+                          agents: [activeBotCode], primary_agent: activeBotCode,
+                          workspace_phase: "reflexion",
+                        });
+                        const persp = res.perspectives?.[0];
+                        if (!persp) return;
+                        const blockType = detectBlockTypeFrontend(persp.contenu);
+                        addWorkspaceBlock({
+                          id: `reflexion-${m.id}-${Date.now()}`,
+                          type: blockType,
+                          title: `${BOT_NAME[activeBotCode] || activeBotCode} — ${m.label}`,
+                          summary: summarizeExpertForWorkspace(persp.contenu),
+                          structured_data: extractStructuredDataFrontend(persp.contenu, blockType),
+                          credo_step: currentCredoLetter as "C" | "R" | "E" | "D" | "O",
+                          credo_sub_section: "modes-reflexion",
+                          confidence: 0.75,
+                          source: activeBotCode,
+                          sourceType: "chat",
+                          timestamp: Date.now(),
+                        });
+                      } catch {
+                        sendMessage(fullPrompt, activeBotCode, undefined, { workspacePhase: `discussion_rechercher` });
+                      }
                     }}
                     className={cn("flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[10px] font-medium border cursor-pointer transition-colors hover:shadow-sm",
                       m.bg, m.text, "border-current/20")}>
@@ -826,8 +939,8 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
             </div>
           )}
 
-          {/* S3B.1: GenerateReportButton — visible when chatStage >= 3 and enough blocks */}
-          {chatStage >= 3 && workspaceBlocks.length >= 3 && !workspaceBlocks.some(b => b.type === "rapport") && (
+          {/* S3B.1: GenerateReportButton — SEULEMENT etape O (chatStage >= 4) */}
+          {chatStage >= 4 && workspaceBlocks.length >= 3 && !workspaceBlocks.some(b => b.type === "rapport") && (
             <GenerateReportButton
               workspaceBlocks={workspaceBlocks}
               activeBotCode={activeBotCode}
@@ -835,18 +948,15 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
             />
           )}
 
-          {/* S3C.1: CreateChantierButton — visible when rapport exists */}
-          {workspaceBlocks.some(b => b.type === "rapport") && (
+          {/* S3C.1: CreateChantierButton — SEULEMENT quand rapport existe ET etape O */}
+          {chatStage >= 4 && workspaceBlocks.some(b => b.type === "rapport") && (
             <CreateChantierButton
               workspaceBlocks={workspaceBlocks}
               activeBotCode={activeBotCode}
             />
           )}
 
-          {/* S2.4.2: Vue resume multi-phase accordion */}
-          {workspaceBlocks.length > 2 && (
-            <MultiPhaseAccordion workspaceBlocks={workspaceBlocks} credoLabels={CREDO_LABELS} />
-          )}
+          {/* MultiPhaseAccordion retiré — Carl feedback: resumé caché en bas est inutile */}
 
           {/* Phase transitions via ControlTowerPanel sidebar uniquement — bouton retire (Carl feedback 13 mai) */}
          </div>{/* close fade-in wrapper */}
@@ -1015,7 +1125,19 @@ function SuggestedExpertsPanel({ messages, activeBotCode, workspaceBlocks, addWo
 }) {
   const [expertLoadingBots, setExpertLoadingBots] = useState<Set<string>>(new Set());
   const [expertError, setExpertError] = useState<string | null>(null);
+  const [showAddDropdown, setShowAddDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!showAddDropdown) return;
+    function handleClick(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setShowAddDropdown(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [showAddDropdown]);
 
   // Extract latest team_proposal from messages
   const latestTeamProposal = (() => {
@@ -1023,13 +1145,23 @@ function SuggestedExpertsPanel({ messages, activeBotCode, workspaceBlocks, addWo
     return tp.length > 0 ? (tp[tp.length - 1] as any).teamProposal : null;
   })();
 
+  // Tour de Table: auto-detect when to show expert suggestions
+  // After first user+assistant exchange (>= 1 user + 1 assistant msg), show relevant experts
+  const hasFirstExchange = messages.filter((m: any) => m.role === "user").length >= 1
+    && messages.filter((m: any) => m.role === "assistant" && m.content).length >= 1;
+
   // Which bots are already in workspace
   const activeBotSources = new Set(workspaceBlocks.map(b => b.source).filter(Boolean));
+
+  // All available bots for the "+" dropdown (exclude primary bot)
+  const ALL_EXPERT_CODES = ["CEOB", "CTOB", "CFOB", "CMOB", "CSOB", "COOB", "CPOB", "CHROB", "CINOB", "CROB", "CLOB", "CISOB"]
+    .filter(code => code !== activeBotCode);
 
   const handleAddExpert = useCallback(async (botCode: string) => {
     if (expertLoadingBots.has(botCode)) return;
     setExpertLoadingBots(prev => new Set([...prev, botCode]));
     setExpertError(null);
+    setShowAddDropdown(false);
     try {
       const lastUserMsg = messages.filter((m: any) => m.role === "user").pop()?.content || "";
       const lastBotMsg = messages.filter((m: any) => m.role === "assistant" && m.content).pop()?.content || "";
@@ -1050,13 +1182,15 @@ function SuggestedExpertsPanel({ messages, activeBotCode, workspaceBlocks, addWo
       const existingBlock = workspaceBlocks.find(b => b.source === botCode);
 
       const blockType = detectBlockTypeFrontend(persp.contenu);
+      const expertSummary = summarizeExpertForWorkspace(persp.contenu);
       addWorkspaceBlock({
         id: `expert-${botCode}-${Date.now()}`,
         type: blockType,
         title: `${BOT_NAME[botCode] || botCode} — Perspective`,
-        summary: persp.contenu,
+        summary: expertSummary,
         structured_data: extractStructuredDataFrontend(persp.contenu, blockType),
         credo_step: currentCredoLetter as "C" | "R" | "E" | "D" | "O",
+        credo_sub_section: "experts",
         confidence: 0.7,
         source: botCode,
         sourceType: "chat",
@@ -1085,48 +1219,85 @@ function SuggestedExpertsPanel({ messages, activeBotCode, workspaceBlocks, addWo
 
   return (
     <div className="mt-3 space-y-3">
-      {/* Experts suggeres */}
+      {/* Experts panel — Tour de Table + "+" button */}
       <div className="rounded-xl border border-violet-200 bg-violet-50/50 p-4 space-y-3">
-        <h4 className="text-[10px] font-bold uppercase tracking-wider text-violet-700">
-          Experts suggeres
-        </h4>
+        <div className="flex items-center justify-between">
+          <h4 className="text-[10px] font-bold uppercase tracking-wider text-violet-700">
+            Experts
+          </h4>
+          {/* "+" button — add any expert to workspace */}
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setShowAddDropdown(!showAddDropdown)}
+              className="w-7 h-7 rounded-full bg-violet-100 hover:bg-violet-200 flex items-center justify-center transition-colors cursor-pointer"
+              title="Consulter un expert"
+            >
+              <span className="text-violet-700 font-bold text-sm">+</span>
+            </button>
+            {showAddDropdown && (
+              <div className="absolute top-full right-0 mt-1.5 w-56 bg-white rounded-xl border border-gray-200 shadow-lg py-1 z-30 max-h-[320px] overflow-auto">
+                <div className="px-3 py-1.5 text-[9px] font-bold text-gray-400 uppercase tracking-wider">Consulter un expert</div>
+                {ALL_EXPERT_CODES.map((code) => {
+                  const isDone = activeBotSources.has(code);
+                  const isLoading = expertLoadingBots.has(code);
+                  return (
+                    <button
+                      key={code}
+                      onClick={() => handleAddExpert(code)}
+                      disabled={isLoading}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 transition-colors cursor-pointer text-left"
+                    >
+                      <BotAvatar code={code} size="md" />
+                      <div className="flex-1 min-w-0">
+                        <span className="text-xs font-bold text-gray-800 block truncate">{BOT_NAME[code] || code}</span>
+                      </div>
+                      {isLoading && <Loader2 className="h-3 w-3 animate-spin text-gray-400" />}
+                      {isDone && <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
 
+        {/* Team proposal suggested bots — Tour de Table cards */}
         {suggestedBots.length > 0 ? (
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {suggestedBots.map((bot: any) => {
               const isLoading = expertLoadingBots.has(bot.code);
               const isDone = activeBotSources.has(bot.code);
               return (
                 <div key={bot.code} className={cn(
-                  "flex items-start gap-3 px-3 py-2.5 rounded-lg border bg-white border-l-[3px]",
+                  "flex items-center gap-3 px-3 py-3 rounded-lg border bg-white border-l-[4px]",
                   BOT_ACCENT[bot.code] || "border-l-gray-400",
                 )}>
-                  <BotAvatar code={bot.code} size="sm" />
+                  <BotAvatar code={bot.code} size="lg" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] font-bold text-gray-900">{BOT_NAME[bot.code] || bot.code}</span>
+                      <span className="text-sm font-bold text-gray-900">{BOT_NAME[bot.code] || bot.code}</span>
                       <span className={cn("text-[8px] px-1.5 py-0.5 rounded-full font-bold uppercase",
                         bot.role_tag === "ANGLE MORT" ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"
                       )}>
                         {bot.role_tag}
                       </span>
                     </div>
-                    <p className="text-[9px] text-gray-500 mt-0.5 line-clamp-2">{bot.raison}</p>
+                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{bot.raison}</p>
                   </div>
                   <button
                     onClick={() => handleAddExpert(bot.code)}
                     disabled={isLoading}
                     className={cn(
-                      "shrink-0 text-[9px] font-bold px-2.5 py-1 rounded-lg transition-colors cursor-pointer",
+                      "shrink-0 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer",
                       isDone ? "bg-emerald-100 text-emerald-700" :
                       isLoading ? "bg-gray-100 text-gray-400" :
                       "bg-violet-100 text-violet-700 hover:bg-violet-200"
                     )}
                   >
                     {isLoading ? (
-                      <Loader2 className="h-3 w-3 animate-spin" />
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
                     ) : isDone ? (
-                      <span className="flex items-center gap-1"><Check className="h-3 w-3" /> Actif</span>
+                      <span className="flex items-center gap-1"><Check className="h-3.5 w-3.5" /> Actif</span>
                     ) : (
                       "+ Consulter"
                     )}
@@ -1135,9 +1306,13 @@ function SuggestedExpertsPanel({ messages, activeBotCode, workspaceBlocks, addWo
               );
             })}
           </div>
+        ) : hasFirstExchange ? (
+          <p className="text-xs text-gray-500">
+            Cliquez <span className="font-bold text-violet-600">+</span> pour consulter un expert du GhostX Team.
+          </p>
         ) : (
           <p className="text-[10px] text-gray-500">
-            Les experts du GhostX Team seront suggeres au fil de la conversation.
+            Les experts seront disponibles apres le premier echange.
           </p>
         )}
 
@@ -1149,13 +1324,13 @@ function SuggestedExpertsPanel({ messages, activeBotCode, workspaceBlocks, addWo
         )}
       </div>
 
-      {/* Active expert bots summary */}
+      {/* Active expert bots contributions */}
       {filteredBlocks.length > 0 && (
         <div className="space-y-2">
           <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 px-1">
             Contributions ({filteredBlocks.length})
           </span>
-          <div className={cn("grid gap-3", isMobile ? "grid-cols-1" : "grid-cols-2")}>
+          <div className={cn("grid gap-3", isMobile ? "grid-cols-1" : "grid-cols-1")}>
             {filteredBlocks.map(b => (
               <div key={b.id} className={cn(pulsingBlockId === b.id && "ring-2 ring-blue-400 rounded-xl")}>
                 <BlockRenderer block={b} onAction={onBlockAction} animated={false} />
@@ -1403,47 +1578,52 @@ function DynamicStepContent({ allBlocks, context, onBlockAction, pulsingBlockId,
     );
   }
 
-  // Show ALL blocks — sorted by timestamp, with per-block step badge
+  // Enrich blocks with sub-section if not already set
+  const enrichedBlocks = filteredBlocks.map(block => {
+    if (block.credo_sub_section) return block;
+    const detected = detectCredoSubSection(block.summary || block.title, block.credo_step);
+    return detected ? { ...block, credo_sub_section: detected } : block;
+  });
+
+  // Group by CREDO step, then by sub-section within step
+  const CREDO_STEP_IDS: Record<string, string> = {
+    C: "credo-c-comprendre", R: "credo-r-rechercher",
+    E: "credo-e-exposer", D: "credo-d-demontrer", O: "credo-o-objectif",
+  };
+
   return (
     <BlockDisplayContext.Provider value={{ compact: true }}>
     <div className="mt-3 space-y-3">
-      {/* Summary header — shows count + context */}
-      <div className="rounded-xl border border-gray-200 bg-white p-4">
-        <div className="flex items-center gap-2 mb-2">
-          <Activity className="h-3.5 w-3.5 text-gray-500" />
-          <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-bold">
-            {filteredBlocks.length} element{filteredBlocks.length > 1 ? "s" : ""} cristallise{filteredBlocks.length > 1 ? "s" : ""}
-          </span>
-          {/* Show which CREDO steps have content */}
-          {["C","R","E","D","O"].map(s => {
-            const count = filteredBlocks.filter(b => b.credo_step === s).length;
-            if (count === 0) return null;
-            const badge = STEP_BADGE[s] || STEP_BADGE.C;
-            return (
-              <span key={s} className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-bold", badge.bg)}>
-                {badge.badge}·{count}
-              </span>
-            );
-          })}
-        </div>
-        <h3 className="text-xs font-bold text-gray-900">{context}</h3>
-      </div>
-
-      {/* All blocks — BlockRenderer per block, with CREDO phase separators */}
-      {filteredBlocks.map((block, i) => {
-        const prevBlock = i > 0 ? filteredBlocks[i - 1] : null;
-        const showSeparator = prevBlock && prevBlock.credo_step !== block.credo_step && block.type !== "synthese";
+      {/* Blocks grouped by CREDO step + sub-section */}
+      {enrichedBlocks.map((block, i) => {
+        const prevBlock = i > 0 ? enrichedBlocks[i - 1] : null;
+        const showStepSeparator = prevBlock && prevBlock.credo_step !== block.credo_step && block.type !== "synthese";
+        const showSubSectionHeader = block.credo_sub_section && (
+          !prevBlock || prevBlock.credo_step !== block.credo_step || prevBlock.credo_sub_section !== block.credo_sub_section
+        );
         const CREDO_NAMES: Record<string, string> = { C: "Connexion", R: "Recherche", E: "Exposition", D: "Demonstration", O: "Obtention" };
         const badge = STEP_BADGE[block.credo_step] || STEP_BADGE.C;
+
+        // Find sub-section config for label
+        const stepConfigId = CREDO_STEP_IDS[block.credo_step];
+        const subSections = stepConfigId ? CREDO_SUB_SECTIONS[stepConfigId] : undefined;
+        const subSectionConfig = subSections?.find(s => s.id === block.credo_sub_section);
+
         return (
           <div key={block.id}>
-            {showSeparator && (
+            {showStepSeparator && (
               <div className="flex items-center gap-3 my-1">
                 <div className="flex-1 h-px bg-gray-200" />
                 <span className={cn("text-[9px] px-2.5 py-0.5 rounded-full font-bold", badge.bg)}>
                   {CREDO_NAMES[block.credo_step] || block.credo_step}
                 </span>
                 <div className="flex-1 h-px bg-gray-200" />
+              </div>
+            )}
+            {showSubSectionHeader && subSectionConfig && (
+              <div className="flex items-center gap-2 mt-2 mb-1 px-1">
+                <subSectionConfig.icon className="h-3 w-3 text-gray-400" />
+                <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400">{subSectionConfig.label}</span>
               </div>
             )}
             <div

@@ -28,17 +28,167 @@ const AUTO_CRISTALLISE_PHASES = ["discussion", "creation", "execution", "retroac
 const ACTIVE_PHASES = AUTO_CRISTALLISE_PHASES;
 
 /**
- * Résumé intelligent pour le workspace — décision de l'user + insight clé du bot.
- * Effet entonnoir: chaque résumé capture l'ESSENCE de l'échange, pas le dump complet.
+ * Résumé intelligent pour le workspace — extraction multi-signal des insights clés.
+ *
+ * Stratégie d'extraction (par priorité):
+ * 1. Bullet points / listes numérotées (souvent les idées-clés)
+ * 2. Texte en **gras** (takeaways explicites du bot)
+ * 3. Dernière phrase substantielle (conclusion/recommandation)
+ * 4. Première phrase non-filler (contexte)
+ *
+ * Résultat: 3-5 points-clés maximum, format lisible, PAS de dump.
  */
-const FILLER_RE = /^(absolument|exactement|parfait|bien sûr|bien reçu|oui|non|ok|d'accord|certainement|effectivement|tout à fait|excellent|super|bonne question|c'est une|je comprends|merci|salut|bonjour|hey|on y va|on s'attaque|on se penche|on met|on passe)/i;
+const FILLER_RE = /^(absolument|exactement|parfait|bien sûr|bien reçu|oui|non|ok|d'accord|certainement|effectivement|tout à fait|excellent|super|bonne question|c'est une|je comprends|merci|salut|bonjour|hey|on y va|on s'attaque|on se penche|on met|on passe|voyons|alors|donc|en effet|précisément)/i;
 
 function summarizeForWorkspace(userChoice: string, botContent: string): string {
-  const lines = botContent.split('\n').map(l => l.trim()).filter(l => l.length > 20);
-  const meaningful = lines.find(l => !FILLER_RE.test(l));
-  const insight = (meaningful || lines[1] || lines[0] || "").substring(0, 200);
-  const shortChoice = userChoice.substring(0, 100);
-  return `→ **${shortChoice}**\n${insight}`;
+  const lines = botContent.split('\n').map(l => l.trim()).filter(Boolean);
+  const shortChoice = userChoice.substring(0, 80);
+
+  // 1. Extraire les bullet points / items numérotés (max 5)
+  const bulletItems: string[] = [];
+  for (const line of lines) {
+    const match = line.match(/^\s*(?:(\d+)[.)]\s+|[-*•→➤]\s+)(.+)/);
+    if (match) {
+      let text = (match[2] || "").trim();
+      // Nettoyer le markdown gras
+      text = text.replace(/\*\*(.+?)\*\*/g, "$1");
+      if (text.length > 15 && text.length < 150) {
+        bulletItems.push(text);
+      }
+    }
+    if (bulletItems.length >= 5) break;
+  }
+
+  // 2. Extraire les segments en **gras** (takeaways explicites)
+  const boldSegments: string[] = [];
+  const boldRe = /\*\*(.{10,80}?)\*\*/g;
+  let boldMatch: RegExpExecArray | null;
+  while ((boldMatch = boldRe.exec(botContent)) !== null) {
+    const seg = boldMatch[1].trim();
+    // Éviter les doublons avec les bullets
+    if (!bulletItems.some(b => b.includes(seg) || seg.includes(b))) {
+      boldSegments.push(seg);
+    }
+    if (boldSegments.length >= 3) break;
+  }
+
+  // 3. Extraire la conclusion (dernière phrase substantielle non-bullet)
+  let conclusion = "";
+  const substantialLines = lines.filter(l =>
+    l.length > 30 &&
+    !l.match(/^\s*[-*•→➤\d.)#]/) &&
+    !FILLER_RE.test(l)
+  );
+  if (substantialLines.length > 0) {
+    const lastSubstantial = substantialLines[substantialLines.length - 1];
+    // Prendre la conclusion seulement si elle est différente du contenu des bullets
+    if (!bulletItems.some(b => lastSubstantial.includes(b))) {
+      conclusion = lastSubstantial.replace(/\*\*(.+?)\*\*/g, "$1").substring(0, 120);
+    }
+  }
+
+  // 4. Construire le résumé structuré
+  const parts: string[] = [];
+
+  // Contexte utilisateur (court)
+  if (shortChoice && shortChoice.length > 5) {
+    parts.push(`**Question:** ${shortChoice}`);
+  }
+
+  // Points-clés (bullets ou gras, max 4 combinés)
+  const keyPoints: string[] = [];
+  if (bulletItems.length >= 2) {
+    // Si on a des bullets structurés, les utiliser en priorité
+    keyPoints.push(...bulletItems.slice(0, 4));
+  } else {
+    // Sinon, combiner les segments gras + premier bullet si dispo
+    if (boldSegments.length > 0) keyPoints.push(...boldSegments.slice(0, 3));
+    if (bulletItems.length > 0) keyPoints.push(...bulletItems.slice(0, 2));
+  }
+
+  if (keyPoints.length > 0) {
+    parts.push(keyPoints.map(p => `• ${p.substring(0, 100)}`).join("\n"));
+  } else {
+    // Fallback: première phrase non-filler (comme avant mais mieux formatée)
+    const firstMeaningful = substantialLines[0] || lines.find(l => l.length > 20 && !FILLER_RE.test(l));
+    if (firstMeaningful) {
+      parts.push(firstMeaningful.replace(/\*\*(.+?)\*\*/g, "$1").substring(0, 180));
+    }
+  }
+
+  // Conclusion / recommandation
+  if (conclusion && keyPoints.length > 0) {
+    parts.push(`→ ${conclusion}`);
+  }
+
+  return parts.join("\n\n");
+}
+
+/**
+ * Résumé intelligent pour les EXPERTS — garde les points-clés de la perspective.
+ * Les experts sont typiquement plus courts et plus directs que le bot primaire.
+ * On extrait: bullet points + première phrase d'intro + conclusion.
+ */
+export function summarizeExpertForWorkspace(expertContent: string): string {
+  const lines = expertContent.split('\n').map(l => l.trim()).filter(Boolean);
+
+  // Extraire les bullet points (coeur de la perspective)
+  const bulletItems: string[] = [];
+  for (const line of lines) {
+    const match = line.match(/^\s*(?:(\d+)[.)]\s+|[-*•→➤]\s+)(.+)/);
+    if (match) {
+      let text = (match[2] || "").trim().replace(/\*\*(.+?)\*\*/g, "$1");
+      if (text.length > 15 && text.length < 200) {
+        bulletItems.push(text);
+      }
+    }
+    if (bulletItems.length >= 5) break;
+  }
+
+  // Extraire les segments en gras (insights clés)
+  const boldSegments: string[] = [];
+  const boldRe = /\*\*(.{10,100}?)\*\*/g;
+  let bm: RegExpExecArray | null;
+  while ((bm = boldRe.exec(expertContent)) !== null) {
+    const seg = bm[1].trim();
+    if (!bulletItems.some(b => b.includes(seg))) boldSegments.push(seg);
+    if (boldSegments.length >= 3) break;
+  }
+
+  // Construire le résumé
+  const parts: string[] = [];
+
+  // Si on a des bullets structurés, les utiliser
+  if (bulletItems.length >= 2) {
+    parts.push(bulletItems.slice(0, 4).map(p => `• ${p.substring(0, 120)}`).join("\n"));
+  } else if (boldSegments.length >= 1) {
+    // Sinon utiliser les segments gras
+    parts.push(boldSegments.slice(0, 3).map(p => `• ${p}`).join("\n"));
+  } else {
+    // Fallback: première phrase non-filler + troncature
+    const substantialLines = lines.filter(l =>
+      l.length > 25 && !l.match(/^\s*[-*•→➤\d.)#]/) && !FILLER_RE.test(l)
+    );
+    if (substantialLines.length > 0) {
+      // Max 2 phrases pour garder compact
+      parts.push(substantialLines.slice(0, 2).map(l =>
+        l.replace(/\*\*(.+?)\*\*/g, "$1").substring(0, 150)
+      ).join("\n"));
+    } else {
+      parts.push(expertContent.replace(/\*\*(.+?)\*\*/g, "$1").substring(0, 250));
+    }
+  }
+
+  // Ajouter une ligne de conclusion si le contenu est long
+  if (bulletItems.length >= 3) {
+    const lastLines = lines.filter(l => l.length > 30 && !l.match(/^\s*[-*•→➤\d.)]/));
+    const lastLine = lastLines[lastLines.length - 1];
+    if (lastLine && !bulletItems.some(b => lastLine.includes(b))) {
+      parts.push(`→ ${lastLine.replace(/\*\*(.+?)\*\*/g, "$1").substring(0, 120)}`);
+    }
+  }
+
+  return parts.join("\n\n");
 }
 
 // ═══ Frontend fallback: detection de type de block (mêmes patterns que le backend) ═══
@@ -64,6 +214,42 @@ export function detectBlockTypeFrontend(text: string): WorkspaceBlockType {
     if (pattern.test(text)) return type;
   }
   return "libre";
+}
+
+// ═══ Sub-section detection within a CREDO step ═══
+
+const SUB_SECTION_PATTERNS: Record<string, [string, RegExp][]> = {
+  C: [
+    // "situation" regroupe contexte + enjeux + contraintes + parties prenantes
+    ["situation", /contexte|situation|environnement|historique|background|enjeu|tension|problème|probleme|defi|challenge|contrainte|limite|partie.*prenante|acteur/i],
+  ],
+  R: [
+    ["analyses", /diagnostic|analyse|swot|état.*des.*lieux|etat.*des.*lieux|approfond|détail|detail|examen|angle.*mort|benchmark|comparai|référence|reference/i],
+    ["modes-reflexion", /débat|debat|brainstorm|crise|stratégie|strategie|innovation|deep/i],
+  ],
+  E: [
+    ["solutions", /option|choix|possibilité|possibilite|alternative|scénario|scenario|recommand|suggestion|proposit|conseil/i],
+    ["comparaison", /comparai|avantage|inconvénient|inconvenient|pour.*contre|versus/i],
+  ],
+  D: [
+    ["plan-action", /plan.*action|étape|etape|procédure|procedure|implementat|budget|coût|cout|investissement|timeline|calendrier|échéancier|echeancier|jalon/i],
+    ["ressources", /ressource|équipe|equipe|outil|technologie|infrastructure/i],
+  ],
+  O: [
+    ["decisions", /décision|decision|tranch|validé|valide|approuvé|approuve/i],
+    ["plan-match", /prochain|suivant|immédiat|immediat|prochaine.*action|kpi|indicateur|métrique|metrique|engagement|responsab/i],
+  ],
+};
+
+/** Detect which sub-section a block belongs to within a CREDO step */
+export function detectCredoSubSection(content: string, credoStep: string): string | undefined {
+  const patterns = SUB_SECTION_PATTERNS[credoStep];
+  if (!patterns) return undefined;
+
+  for (const [subSection, pattern] of patterns) {
+    if (pattern.test(content)) return subSection;
+  }
+  return undefined;
 }
 
 function extractTitle(text: string): string {
@@ -891,34 +1077,5 @@ export function useWorkspaceCapture() {
     }
   }, [messages, activePhase, pendingCapture, setPendingCapture, activeBotCode, chatStage, setChatStage, setActivePhase, setReflexionContext, setRightSection, getCristallise, editCristallise, addWorkflowItem, addWorkspaceBlock]);
 
-  // ═══ AUTO-SYNTHESE — generer un bloc synthese quand chatStage monte (transition CREDO) ═══
-  const prevSynthStageRef = useRef(chatStage);
-  useEffect(() => {
-    const prevStage = prevSynthStageRef.current;
-    if (chatStage <= prevStage || chatStage < 1) {
-      prevSynthStageRef.current = chatStage;
-      return;
-    }
-    prevSynthStageRef.current = chatStage;
-
-    const CREDO_NAMES: Record<string, string> = { C: "Connexion", R: "Recherche", E: "Exposition", D: "Demonstration", O: "Obtention" };
-    const prevStep = getCurrentCredoStep(prevStage);
-    const prevBlocks = workspaceBlocks.filter(b => b.credo_step === prevStep && b.type !== "synthese" && b.type !== "rapport");
-
-    if (prevBlocks.length === 0) return;
-
-    const points = prevBlocks.map(b => ({ label: b.title || b.type, done: true }));
-    addWorkspaceBlock({
-      id: `synthese-${prevStep}-${Date.now()}`,
-      type: "synthese",
-      title: `Synthese ${CREDO_NAMES[prevStep] || prevStep}`,
-      summary: `${prevBlocks.length} element(s) captures en phase ${CREDO_NAMES[prevStep] || prevStep}`,
-      structured_data: { points },
-      credo_step: prevStep,
-      confidence: 1.0,
-      source: activeBotCode,
-      sourceType: "chat",
-      timestamp: Date.now(),
-    });
-  }, [chatStage, workspaceBlocks, activeBotCode, addWorkspaceBlock]);
+  // AUTO-SYNTHESE retiré — Carl feedback: "X elements capturés en phase Connexion" est du bruit inutile pour l'utilisateur
 }
