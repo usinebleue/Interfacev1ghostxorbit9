@@ -542,7 +542,7 @@ function SegmentedBotContent({ content, botCode, activePhase, addWorkspaceBlock,
   );
 }
 
-// ═══ InlineOptions — Multi-select + réponse inline pour options question ═══
+// ═══ InlineOptions — Click=envoi immédiat (défaut) + toggle multi-select + réponse inline questions ═══
 
 function InlineOptions({ options, onSend, isActive, msgType, agent, activeRoster, workspacePhase }: {
   options: string[];
@@ -553,6 +553,7 @@ function InlineOptions({ options, onSend, isActive, msgType, agent, activeRoster
   activeRoster: string[];
   workspacePhase?: string;
 }) {
+  const [multiMode, setMultiMode] = useState(false);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [inlineTexts, setInlineTexts] = useState<Record<number, string>>({});
   const [showInputFor, setShowInputFor] = useState<number | null>(null);
@@ -562,23 +563,6 @@ function InlineOptions({ options, onSend, isActive, msgType, agent, activeRoster
   if (filteredOpts.length === 0) return null;
 
   const isQuestion = (opt: string) => /\?\s*$/.test(opt.trim());
-  const hasSelection = selected.size > 0;
-
-  const toggleSelect = (i: number) => {
-    if (!isActive) return;
-    const next = new Set(selected);
-    if (next.has(i)) {
-      next.delete(i);
-      if (showInputFor === i) setShowInputFor(null);
-      const nextTexts = { ...inlineTexts };
-      delete nextTexts[i];
-      setInlineTexts(nextTexts);
-    } else {
-      next.add(i);
-      if (isQuestion(filteredOpts[i])) setShowInputFor(i);
-    }
-    setSelected(next);
-  };
 
   const doSend = (text: string) => {
     if (msgType === "consultation" && agent && activeRoster.length > 1) {
@@ -589,17 +573,36 @@ function InlineOptions({ options, onSend, isActive, msgType, agent, activeRoster
     setSelected(new Set());
     setInlineTexts({});
     setShowInputFor(null);
+    setMultiMode(false);
+  };
+
+  const handleClick = (i: number) => {
+    if (!isActive) return;
+    const opt = filteredOpts[i];
+
+    // Question → toujours montrer l'input inline (pas d'envoi immédiat)
+    if (isQuestion(opt)) {
+      setShowInputFor(showInputFor === i ? null : i);
+      return;
+    }
+
+    // Mode multi-select → toggle la sélection
+    if (multiMode) {
+      const next = new Set(selected);
+      if (next.has(i)) next.delete(i); else next.add(i);
+      setSelected(next);
+      return;
+    }
+
+    // Mode normal → envoi immédiat (comportement classique)
+    doSend(opt);
   };
 
   const handleSendAll = () => {
     if (selected.size === 0) return;
     const parts: string[] = [];
     for (const i of Array.from(selected).sort()) {
-      if (isQuestion(filteredOpts[i]) && inlineTexts[i]?.trim()) {
-        parts.push(inlineTexts[i].trim());
-      } else {
-        parts.push(filteredOpts[i]);
-      }
+      parts.push(filteredOpts[i]);
     }
     doSend(parts.join("\n\n"));
   };
@@ -614,40 +617,59 @@ function InlineOptions({ options, onSend, isActive, msgType, agent, activeRoster
 
   return (
     <div className={cn("mt-3 space-y-1.5", !isActive && "opacity-40 pointer-events-none")}>
+      {/* Toggle multi-select (discret, en haut à droite) */}
+      {isActive && filteredOpts.length > 1 && (
+        <button
+          onClick={() => { setMultiMode(!multiMode); if (multiMode) setSelected(new Set()); }}
+          className={cn(
+            "flex items-center gap-1 ml-auto px-2 py-0.5 rounded text-[10px] font-medium transition-colors cursor-pointer",
+            multiMode ? "bg-blue-100 text-blue-700" : "text-gray-400 hover:text-gray-600"
+          )}
+        >
+          <CheckCircle2 className="h-3 w-3" />
+          {multiMode ? "Multi ✓" : "Multi"}
+        </button>
+      )}
       {filteredOpts.map((opt, i) => {
         const isSel = selected.has(i);
         const isQ = isQuestion(opt);
+        const isInputOpen = isQ && showInputFor === i;
         return (
           <div key={i}>
             <button
               disabled={!isActive}
-              onClick={() => toggleSelect(i)}
-              style={isActive && !hasSelection ? { animation: `fadeSlideUp 0.3s ease-out ${i * 0.08}s both` } : undefined}
+              onClick={() => handleClick(i)}
+              style={isActive ? { animation: `fadeSlideUp 0.3s ease-out ${i * 0.08}s both` } : undefined}
               className={cn(
                 "w-full text-left border rounded-lg px-3 py-2 transition-all",
                 "border-l-[3px]",
                 borderColors[i % borderColors.length],
                 isSel ? "bg-blue-50 border-blue-300 ring-1 ring-blue-200" : "border-gray-200",
-                isActive && !isSel && hoverBgs[i % hoverBgs.length],
+                isInputOpen ? "bg-amber-50/50 border-amber-200" : "",
+                isActive && !isSel && !isInputOpen && hoverBgs[i % hoverBgs.length],
                 isActive ? "hover:shadow-sm cursor-pointer group/opt" : "cursor-default",
                 isActive && "active:scale-[0.98] focus:outline-none touch-manipulation",
               )}
             >
               <div className="flex items-start gap-2">
-                <span className={cn(
-                  "mt-0.5 shrink-0 w-4 h-4 rounded border flex items-center justify-center transition-colors",
-                  isSel ? "bg-blue-500 border-blue-500 text-white" : "border-gray-300"
-                )}>
-                  {isSel && <Check className="h-3 w-3" />}
-                </span>
+                {multiMode ? (
+                  <span className={cn(
+                    "mt-0.5 shrink-0 w-4 h-4 rounded border flex items-center justify-center transition-colors",
+                    isSel ? "bg-blue-500 border-blue-500 text-white" : "border-gray-300"
+                  )}>
+                    {isSel && <Check className="h-3 w-3" />}
+                  </span>
+                ) : (
+                  <span className="text-xs font-bold text-gray-400 mt-0.5 shrink-0">{i + 1}.</span>
+                )}
                 <span className={cn("text-sm font-medium flex-1", isActive ? "text-gray-700 group-hover/opt:text-gray-900" : "text-gray-400")}>
                   {opt}
                 </span>
-                {isQ && <MessageCircle className="h-3.5 w-3.5 text-gray-400 mt-0.5 shrink-0" />}
+                {isQ && <MessageCircle className="h-3.5 w-3.5 text-amber-400 mt-0.5 shrink-0" />}
               </div>
             </button>
             {/* Input inline pour les options-questions */}
-            {isQ && isSel && showInputFor === i && (
+            {isInputOpen && (
               <div className="mt-1 ml-6 flex gap-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
                 <input
                   type="text"
@@ -671,13 +693,13 @@ function InlineOptions({ options, onSend, isActive, msgType, agent, activeRoster
         );
       })}
       {/* Bouton envoi multi-sélection */}
-      {hasSelection && (
+      {multiMode && selected.size > 0 && (
         <button
           onClick={handleSendAll}
           className="w-full mt-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-blue-500 text-white text-sm font-medium hover:bg-blue-600 transition-colors cursor-pointer animate-in fade-in duration-200"
         >
           <Send className="h-3.5 w-3.5" />
-          Envoyer{selected.size > 1 ? ` (${selected.size} sélectionnés)` : ""}
+          Envoyer ({selected.size} sélectionné{selected.size > 1 ? "s" : ""})
         </button>
       )}
     </div>
