@@ -990,6 +990,7 @@ export function useChat() {
                   m.id === botMsgId
                     ? {
                         ...m,
+                        _preFinalized: undefined, // Effacer le flag stale timer — onDone est arrivé
                         content: cleanText,
                         agent: data.agent || agent || "CEOB",
                         ghost: data.ghost_actif,
