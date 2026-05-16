@@ -5,7 +5,7 @@
  * Patterns portés depuis les simulations (FocusDiscussionView, LiveReflexionView, etc.)
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, createContext, useContext } from "react";
 import {
   Pin, Search, Swords, Pencil, RotateCcw, Layers,
   CheckCircle2, AlertTriangle, TrendingUp, Lightbulb,
@@ -27,6 +27,9 @@ import type { WorkspaceBlock, WorkspaceBlockType } from "../core/types";
 
 // ═══ Lucide icons used by inline section actions ═══
 import { ArrowRight, RefreshCw, Merge } from "lucide-react";
+
+// ═══ Compact mode context — discussion blocks: 1 colonne, pas de BlockActions lourdes ═══
+export const BlockDisplayContext = createContext({ compact: false });
 
 // ═══ Bot Accent Borders (B.9 — pattern BOT_COLORS from sim-data.ts) ═══
 
@@ -191,6 +194,15 @@ function BlockActions({ block, onAction }: BlockRendererProps) {
           className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors cursor-pointer border-indigo-200 text-indigo-600 hover:bg-indigo-50">
           <ClipboardCopy className="h-3 w-3" /> Exporter
         </button>
+        {/* Assigner — deleguer a un bot via CustomEvent */}
+        <button onClick={() => {
+          window.dispatchEvent(new CustomEvent("bt-delegate-task", {
+            detail: { titre: block.title, bot: block.source, blockId: block.id },
+          }));
+        }}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors cursor-pointer border-emerald-200 text-emerald-600 hover:bg-emerald-50">
+          <Zap className="h-3 w-3" /> Assigner
+        </button>
       </div>
       <div className="flex items-center gap-1.5">
         <BotBadgeFull botCode={block.source} compact />
@@ -298,7 +310,40 @@ function BlockWrapper({ block, onAction, label, labelColor, children }: BlockRen
         <span className="text-[9px] text-gray-300">{new Date(block.timestamp).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })}</span>
       </div>
       {children}
-      <BlockActions block={block} onAction={onAction} />
+      {/* Compact mode (discussion): footer leger sans les boutons d'edition/delegation */}
+      {useContext(BlockDisplayContext).compact ? (
+        <CompactBlockFooter block={block} onAction={onAction} />
+      ) : (
+        <BlockActions block={block} onAction={onAction} />
+      )}
+    </div>
+  );
+}
+
+// ═══ Compact footer pour discussion — juste feedback + source, pas de boutons lourds ═══
+function CompactBlockFooter({ block, onAction }: BlockRendererProps) {
+  const [feedback, setFeedback] = useState<"up" | "down" | null>(null);
+  return (
+    <div className="pt-2 border-t border-gray-100 mt-3 flex items-center gap-2">
+      <BotBadgeFull botCode={block.source} compact />
+      {(() => {
+        const src = SOURCE_CONFIG[block.sourceType] || SOURCE_CONFIG.chat;
+        return (
+          <span className={cn("text-[8px] px-1.5 py-0.5 rounded-full flex items-center gap-0.5 font-medium", src.bg, src.text)}>
+            <src.icon className="h-2.5 w-2.5" /> {src.label}
+          </span>
+        );
+      })()}
+      <div className="ml-auto flex items-center gap-1">
+        <button onClick={() => { setFeedback(feedback === "up" ? null : "up"); }}
+          className={cn("p-1 rounded-md transition-colors cursor-pointer", feedback === "up" ? "bg-emerald-100 text-emerald-600" : "text-gray-300 hover:text-emerald-500 hover:bg-emerald-50")}>
+          <ThumbsUp className="h-3 w-3" />
+        </button>
+        <button onClick={() => { setFeedback(feedback === "down" ? null : "down"); }}
+          className={cn("p-1 rounded-md transition-colors cursor-pointer", feedback === "down" ? "bg-red-100 text-red-500" : "text-gray-300 hover:text-red-400 hover:bg-red-50")}>
+          <ThumbsDown className="h-3 w-3" />
+        </button>
+      </div>
     </div>
   );
 }
@@ -306,6 +351,7 @@ function BlockWrapper({ block, onAction, label, labelColor, children }: BlockRen
 // ═══ 1. Diagnostic — KPI cards + points de friction (pattern FocusReflexionView StepDiagnostic) ═══
 
 function DiagnosticRenderer({ block, onAction }: BlockRendererProps) {
+  const { compact } = useContext(BlockDisplayContext);
   const data = block.structured_data as { axes?: { label: string; score: number; color?: string; description?: string; detail?: string; bot?: string; action?: string; expanded?: { gap?: string; effort?: string; actions?: string[]; impact?: string } }[]; conclusion?: string; frictions?: string[]; score_global?: number } | undefined;
   // S3A.1: Staggered reveal for axes with animated score bars
   const [revealedAxes, setRevealedAxes] = useState(0);
@@ -372,7 +418,7 @@ function DiagnosticRenderer({ block, onAction }: BlockRendererProps) {
           </div>
 
           {/* Grille axes — pattern MagDiagnostic L1877-1965 */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className={cn("grid gap-3", compact ? "grid-cols-1" : "grid-cols-2")}>
             {data.axes.map((ax, i) => {
               const pct = normScore(ax.score);
               const sc = scoreStyle(ax.score);
@@ -481,6 +527,7 @@ function DiagnosticRenderer({ block, onAction }: BlockRendererProps) {
 // ═══ 2. Brainstorm — Hover-cards avec pin (pattern SimPhaseReflexion capture buttons) ═══
 
 function BrainstormRenderer({ block, onAction }: BlockRendererProps) {
+  const { compact } = useContext(BlockDisplayContext);
   const data = block.structured_data as { items?: { id: number; title: string; detail: string; impact?: string; effort?: string }[] } | undefined;
   const IDEA_COLORS = ["border-amber-300", "border-blue-300", "border-green-300", "border-purple-300", "border-pink-300", "border-cyan-300"];
   const [votes, setVotes] = useState<Record<number, number>>({});
@@ -499,7 +546,7 @@ function BrainstormRenderer({ block, onAction }: BlockRendererProps) {
   return (
     <BlockWrapper block={block} onAction={onAction} label="Brainstorm" labelColor="bg-amber-100 text-amber-700">
       {data?.items ? (
-        <div className="grid grid-cols-2 gap-2">
+        <div className={cn("grid gap-2", compact ? "grid-cols-1" : "grid-cols-2")}>
           {data.items.map((item, idx) => (
             <div key={item.id}
               className={cn(
@@ -565,7 +612,7 @@ function BrainstormRenderer({ block, onAction }: BlockRendererProps) {
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-2">
+        <div className={cn("grid gap-2", compact ? "grid-cols-1" : "grid-cols-2")}>
           {parseSummaryItems(block.summary).map((item, i) => (
             <div key={i} className={cn("rounded-lg border border-gray-200 border-l-[3px] bg-white px-3 py-2.5 hover:shadow-sm hover:bg-amber-50/30 transition-all", IDEA_COLORS[i % IDEA_COLORS.length])}>
               <div className="flex items-start gap-2">
@@ -585,6 +632,7 @@ function BrainstormRenderer({ block, onAction }: BlockRendererProps) {
 // ═══ 3. SCAMPER — Pipeline visual avec letter badges (pattern AtelierBrainstorm L1532-1562) ═══
 
 function ScamperRenderer({ block, onAction }: BlockRendererProps) {
+  const { compact } = useContext(BlockDisplayContext);
   const data = block.structured_data as { letters?: Record<string, string[]>; activeStep?: number } | undefined;
   const LETTERS = ["S", "C", "A", "M", "P", "E", "R"] as const;
   const LABELS: Record<string, string> = { S: "Substituer", C: "Combiner", A: "Adapter", M: "Modifier", P: "Put to other use", E: "Éliminer", R: "Renverser" };
@@ -639,7 +687,7 @@ function ScamperRenderer({ block, onAction }: BlockRendererProps) {
       </div>
       {/* Letter cards with content — colored per letter */}
       {data?.letters ? (
-        <div className="grid grid-cols-2 gap-2">
+        <div className={cn("grid gap-2", compact ? "grid-cols-1" : "grid-cols-2")}>
           {LETTERS.map((letter) => {
             const bc = BADGE_COLORS[letter];
             return (
@@ -1376,7 +1424,10 @@ function RapportRenderer({ block, onAction }: BlockRendererProps) {
   const data = block.structured_data as {
     sections?: { title: string; content: string; bot?: string; icon?: string }[];
     votes?: { bot: string; vote: string; reason: string }[];
-    metrics?: { label: string; value: string; sub?: string; color?: string }[];
+    metrics?: { label: string; value: string; sub?: string; color?: string; delta?: string; positive?: boolean }[];
+    tasks?: { titre: string; priorite: string; bot?: string; assignee?: string; status: string; echeance?: string }[];
+    timeline?: { date: string; action: string; bot?: string; type: string }[];
+    pipeline?: { phase: string; status: string; pct: number }[];
   } | undefined;
   // S3B.1: Accordion state for expandable sections
   const [expandedSections, setExpandedSections] = useState<Set<number>>(new Set([0]));
@@ -1705,12 +1756,146 @@ function RapportRenderer({ block, onAction }: BlockRendererProps) {
               <div key={i} className={cn("border rounded-lg px-3 py-2 text-center",
                 `bg-${mc}-50 border-${mc}-200`
               )}>
-                <p className={cn("text-lg font-extrabold", `text-${mc}-700`)}>{m.value}</p>
+                <div className="flex items-center justify-center gap-1">
+                  <p className={cn("text-lg font-extrabold", `text-${mc}-700`)}>{m.value}</p>
+                  {m.delta && (
+                    <span className={cn("text-[10px] font-bold", m.positive ? "text-emerald-600" : "text-red-500")}>
+                      {m.positive ? "↑" : "↓"}{m.delta}
+                    </span>
+                  )}
+                </div>
                 <p className={cn("text-[10px]", `text-${mc}-600`)}>{m.label}</p>
                 {m.sub && <p className="text-[9px] text-gray-400 mt-0.5">{m.sub}</p>}
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* ═══ Tasks checklist — plan d'action actionnable ═══ */}
+      {data?.tasks && data.tasks.length > 0 && (
+        <div className={cn("mt-3 transition-all duration-700",
+          revealedSections >= sections.length ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
+        )}>
+          <div className="border border-gray-200 rounded-xl overflow-hidden">
+            <div className="bg-gray-50 px-3 py-1.5 border-b border-gray-200 flex items-center gap-2">
+              <Target className="h-3.5 w-3.5 text-gray-500" />
+              <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">Plan d'action</span>
+              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-gray-200 text-gray-500 font-bold">{data.tasks.length}</span>
+            </div>
+            <div className="divide-y divide-gray-100">
+              {data.tasks.map((t, i) => {
+                const prioColor = t.priorite === "haute" ? "bg-red-100 text-red-700" : t.priorite === "moyenne" ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-500";
+                return (
+                  <div key={i} className="px-3 py-2 flex items-start gap-2.5">
+                    <div className={cn("mt-0.5 w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 cursor-pointer transition-colors",
+                      t.status === "fait" ? "bg-emerald-500 border-emerald-500" : "border-gray-300 hover:border-gray-400"
+                    )}>
+                      {t.status === "fait" && <Check className="h-3 w-3 text-white" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className={cn("text-xs font-medium", t.status === "fait" ? "text-gray-400 line-through" : "text-gray-800")}>{t.titre}</span>
+                        <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-bold", prioColor)}>{t.priorite}</span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {t.bot && <BotAvatar code={t.bot} size="sm" />}
+                        {t.assignee && <span className="text-[10px] text-gray-400">{t.assignee}</span>}
+                        {t.echeance && <span className="text-[10px] text-gray-400 flex items-center gap-0.5"><Clock className="h-2.5 w-2.5" />{t.echeance}</span>}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const detail = { titre: t.titre, priorite: t.priorite, bot: t.bot, assignee: t.assignee, blockId: block.id };
+                        window.dispatchEvent(new CustomEvent("bt-delegate-task", { detail }));
+                      }}
+                      className="text-[9px] px-2 py-0.5 rounded bg-blue-50 text-blue-600 font-medium hover:bg-blue-100 cursor-pointer transition-colors shrink-0"
+                    >Deleguer</button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ Timeline verticale — chronologie de la discussion ═══ */}
+      {data?.timeline && data.timeline.length > 0 && (
+        <div className={cn("mt-3 transition-all duration-700",
+          revealedSections >= sections.length ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
+        )}>
+          <div className="border border-gray-200 rounded-xl overflow-hidden">
+            <div className="bg-gray-50 px-3 py-1.5 border-b border-gray-200 flex items-center gap-2">
+              <Clock className="h-3.5 w-3.5 text-gray-500" />
+              <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">Chronologie</span>
+            </div>
+            <div className="px-3 py-2">
+              {data.timeline.map((t, i) => {
+                const dotColor = t.type === "decision" ? "bg-blue-500" : t.type === "action" ? "bg-emerald-500" : t.type === "insight" ? "bg-amber-500" : "bg-purple-500";
+                const typeBadge = t.type === "decision" ? "bg-blue-50 text-blue-600" : t.type === "action" ? "bg-emerald-50 text-emerald-600" : t.type === "insight" ? "bg-amber-50 text-amber-600" : "bg-purple-50 text-purple-600";
+                return (
+                  <div key={i} className="flex gap-3 relative">
+                    {/* Vertical line */}
+                    {i < data.timeline!.length - 1 && (
+                      <div className="absolute left-[7px] top-5 bottom-0 w-px bg-gray-200" />
+                    )}
+                    <div className={cn("w-3.5 h-3.5 rounded-full shrink-0 mt-0.5 ring-2 ring-white", dotColor)} />
+                    <div className="flex-1 pb-3">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {t.bot && <BotAvatar code={t.bot} size="sm" />}
+                        <span className="text-xs font-medium text-gray-800">{t.action}</span>
+                        <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-bold", typeBadge)}>{t.type}</span>
+                      </div>
+                      <span className="text-[10px] text-gray-400 mt-0.5 block">{t.date}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ Pipeline CREDO — progression 5 phases ═══ */}
+      {data?.pipeline && data.pipeline.length > 0 && (
+        <div className={cn("mt-3 transition-all duration-700",
+          revealedSections >= sections.length ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
+        )}>
+          <div className="border border-gray-200 rounded-xl overflow-hidden">
+            <div className="bg-gray-50 px-3 py-1.5 border-b border-gray-200 flex items-center gap-2">
+              <Activity className="h-3.5 w-3.5 text-gray-500" />
+              <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">Progression CREDO</span>
+            </div>
+            <div className="px-3 py-3 flex items-center gap-1">
+              {data.pipeline.map((p, i) => {
+                const isDone = p.status === "done";
+                const isActive = p.status === "active";
+                const letter = p.phase.charAt(0).toUpperCase();
+                return (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                    <div className={cn(
+                      "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all",
+                      isDone ? "bg-emerald-500 text-white" : isActive ? "bg-blue-500 text-white animate-pulse" : "bg-gray-200 text-gray-400"
+                    )}>
+                      {isDone ? <Check className="h-3.5 w-3.5" /> : letter}
+                    </div>
+                    <span className={cn("text-[9px] font-medium text-center",
+                      isDone ? "text-emerald-600" : isActive ? "text-blue-600" : "text-gray-400"
+                    )}>{p.phase}</span>
+                    <span className={cn("text-[8px]",
+                      isDone ? "text-emerald-500" : isActive ? "text-blue-500" : "text-gray-300"
+                    )}>{p.pct}%</span>
+                    {/* Connector bar */}
+                    {i < data.pipeline!.length - 1 && (
+                      <div className={cn("absolute h-0.5 w-full top-3.5",
+                        isDone ? "bg-emerald-300" : "bg-gray-200"
+                      )} style={{ display: "none" }} />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       )}
     </BlockWrapper>
@@ -1862,6 +2047,7 @@ function CodeRenderer({ block, onAction }: BlockRendererProps) {
 // ═══ 18. Débat — POUR/CONTRE colonnes + verdict (pattern AtelierDebat L450-600) ═══
 
 function DebatRenderer({ block, onAction }: BlockRendererProps) {
+  const { compact } = useContext(BlockDisplayContext);
   const data = block.structured_data as {
     pour?: { point: string; force?: string }[];
     contre?: { point: string; force?: string }[];
@@ -1871,7 +2057,7 @@ function DebatRenderer({ block, onAction }: BlockRendererProps) {
     <BlockWrapper block={block} onAction={onAction} label="Débat" labelColor="bg-red-100 text-red-700">
       {(data?.pour || data?.contre) ? (
         <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className={cn("grid gap-3", compact ? "grid-cols-1" : "grid-cols-2")}>
             {/* POUR */}
             <div className="space-y-1.5">
               <div className="flex items-center gap-1.5 mb-2">

@@ -29,7 +29,7 @@ import { useChatContext } from "../../v2/context/ChatContext";
 import { PHASE_CONFIGS } from "./phase-config";
 import { TechniquePanel } from "./reflexion-tools";
 import { WorkspaceReflexionHub } from "./WorkspaceReflexionHub";
-import { BlockRenderer, SkeletonBlock, BLOCK_TYPE_LABELS } from "./workspace-block-renderers";
+import { BlockRenderer, SkeletonBlock, BLOCK_TYPE_LABELS, BlockDisplayContext } from "./workspace-block-renderers";
 import { BotAvatar } from "../simulation/primitives";
 import { BOT_NAME } from "../../v2/api/types";
 import { api } from "../../v2/api/client";
@@ -72,8 +72,9 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
     getCristalliseItem, editCristallise, setPendingCapture, addWorkflowItem,
     activeBotCode, activePhase, setActivePhase, workspaceBlocks, addWorkspaceBlock,
     updateWorkspaceBlock, removeWorkspaceBlock, getBlocksByCredoStep, getBlocksByType,
+    addWorkspaceTask,
   } = useAmorcer();
-  const { sendMessage, messages } = useChatContext();
+  const { sendMessage, messages, isTyping } = useChatContext();
   const displayContext = context || "Discussion en cours";
   const blocksEndRef = useRef<HTMLDivElement>(null);
 
@@ -152,8 +153,34 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
     prevBlockCount.current = workspaceBlocks.length;
   }, [workspaceBlocks.length]);
 
-  // B.1: ThinkingOverlay — detect when bot is processing
-  const isThinking = messages.length > 0 && messages[messages.length - 1]?.role === "user";
+  // ═══ Delegation handler — ecoute CustomEvent bt-delegate-task depuis RapportRenderer ═══
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { titre: string; priorite?: string; bot?: string; assignee?: string; blockId?: string };
+      if (!detail?.titre) return;
+      const taskId = `task-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+      addWorkspaceTask({
+        id: taskId,
+        titre: detail.titre,
+        priorite: (detail.priorite as "haute" | "moyenne" | "basse") || "moyenne",
+        assignedBot: detail.bot || activeBotCode,
+        assignedHuman: detail.assignee,
+        status: "todo",
+        createdFrom: detail.blockId,
+        createdAt: Date.now(),
+      });
+      // Envoyer un message au bot assigne
+      const targetBot = detail.bot || activeBotCode;
+      sendMessage(`Tache assignee: ${detail.titre}. ${detail.assignee ? `Responsable: ${detail.assignee}.` : ""} Priorite: ${detail.priorite || "moyenne"}.`, targetBot);
+    };
+    window.addEventListener("bt-delegate-task", handler);
+    return () => window.removeEventListener("bt-delegate-task", handler);
+  }, [addWorkspaceTask, activeBotCode, sendMessage]);
+
+  // B.1: ThinkingOverlay — uses isTyping from chat hook (same source as DiscussionWindow)
+  // Show thinking only when waiting for bot AND bot hasn't started streaming yet
+  const isAnyStreaming = messages.some(m => m.isStreaming);
+  const isThinking = isTyping && !isAnyStreaming;
   const [currentThinkingStep, setCurrentThinkingStep] = useState(0);
   useEffect(() => {
     if (!isThinking) { setCurrentThinkingStep(0); return; }
@@ -192,9 +219,14 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
     ? workspaceBlocks.filter(b => b.credo_step === filterStep)
     : workspaceBlocks;
 
-  // Block type counts for sidebar index
+  // Block type counts + dominant bot for sidebar index
   const blockTypeCounts = workspaceBlocks.reduce<Record<string, number>>((acc, b) => {
     acc[b.type] = (acc[b.type] || 0) + 1;
+    return acc;
+  }, {});
+  const blockTypeBots = workspaceBlocks.reduce<Record<string, Set<string>>>((acc, b) => {
+    if (!acc[b.type]) acc[b.type] = new Set();
+    if (b.source) acc[b.type].add(b.source);
     return acc;
   }, {});
 
@@ -388,20 +420,28 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
                       <span className="text-[10px] font-bold text-gray-600">Tous</span>
                       <span className="ml-auto text-[9px] text-gray-400">{workspaceBlocks.length}</span>
                     </button>
-                    {Object.entries(blockTypeCounts).map(([type, count]) => (
-                      <button
-                        key={type}
-                        onClick={() => {
-                          // Scroll to first block of this type
-                          const el = document.getElementById(`block-${type}`);
-                          el?.scrollIntoView({ behavior: "smooth", block: "start" });
-                        }}
-                        className={cn(SF.btnBase, "hover:bg-gray-50 border border-transparent")}
-                      >
-                        <span className="text-[10px] text-gray-600">{BLOCK_TYPE_LABELS[type as keyof typeof BLOCK_TYPE_LABELS] || type}</span>
-                        <span className="ml-auto text-[9px] bg-gray-100 px-1.5 py-0.5 rounded-full text-gray-500">{count}</span>
-                      </button>
-                    ))}
+                    {Object.entries(blockTypeCounts).map(([type, count]) => {
+                      const bots = blockTypeBots[type];
+                      const botArr = bots ? [...bots] : [];
+                      return (
+                        <button
+                          key={type}
+                          onClick={() => {
+                            const el = document.getElementById(`block-${type}`);
+                            el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }}
+                          className={cn(SF.btnBase, "hover:bg-gray-50 border border-transparent")}
+                        >
+                          {botArr.length === 1 ? (
+                            <BotAvatar code={botArr[0]} size="sm" />
+                          ) : botArr.length > 1 ? (
+                            <span className="text-[8px] w-4 h-4 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold shrink-0">{botArr.length}</span>
+                          ) : null}
+                          <span className="text-[10px] text-gray-600">{BLOCK_TYPE_LABELS[type as keyof typeof BLOCK_TYPE_LABELS] || type}</span>
+                          <span className="ml-auto text-[9px] bg-gray-100 px-1.5 py-0.5 rounded-full text-gray-500">{count}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -500,6 +540,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
             context={displayContext}
             onBlockAction={handleBlockAction}
             pulsingBlockId={pulsingBlockId}
+            activeBotCode={activeBotCode}
           />
           {showTypingCursor && (
             <div className="flex items-center gap-1.5 px-4 py-2 animate-in fade-in duration-300">
@@ -610,9 +651,12 @@ function GenerateReportButton({ workspaceBlocks, activeBotCode, addWorkspaceBloc
   const handleGenerate = async () => {
     setGenerating(true);
     try {
+      const participants = [...new Set(workspaceBlocks.map(b => b.source).filter(Boolean))];
+      if (!participants.includes(activeBotCode)) participants.unshift(activeBotCode);
       const res = await api.generateDiscussionReport({
         blocks: workspaceBlocks.map(b => ({ type: b.type, title: b.title, summary: b.summary, credo_step: b.credo_step })),
         bot_code: activeBotCode,
+        participants,
       });
       if (res?.block) {
         addWorkspaceBlock({
@@ -703,12 +747,59 @@ function CreateChantierButton({ workspaceBlocks, activeBotCode }: {
 }) {
   const { startConception } = useAmorcer();
   const rapport = workspaceBlocks.find(b => b.type === "rapport");
+  const [transitioning, setTransitioning] = useState(false);
+  const [typewriterIdx, setTypewriterIdx] = useState(0);
   if (!rapport) return null;
+
+  const sectionCount = (rapport.structured_data as any)?.sections?.length || 0;
+  const transitionText = `Pret pour Creer! Les ${sectionCount || workspaceBlocks.length} sections sont sauvegardees...`;
+
+  const handleTransition = () => {
+    setTransitioning(true);
+    setTypewriterIdx(0);
+  };
+
+  // Typewriter effect during transition
+  useEffect(() => {
+    if (!transitioning) return;
+    if (typewriterIdx >= transitionText.length) {
+      // Wait 800ms after typewriter completes, then navigate
+      const nav = setTimeout(() => startConception(), 800);
+      return () => clearTimeout(nav);
+    }
+    const timer = setTimeout(() => setTypewriterIdx(prev => prev + 1), 35);
+    return () => clearTimeout(timer);
+  }, [transitioning, typewriterIdx, transitionText.length, startConception]);
+
+  if (transitioning) {
+    return (
+      <div className="mt-3 rounded-xl overflow-hidden bg-gradient-to-r from-orange-100 via-amber-50 to-yellow-100 border border-orange-200 p-4 shadow-sm animate-in fade-in duration-300">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-3 h-3 rounded-full bg-orange-400 animate-pulse shrink-0" />
+          <ArrowRight className="h-3.5 w-3.5 text-orange-500 animate-bounce" />
+          <div className="w-3 h-3 rounded-full bg-yellow-400 animate-pulse shrink-0" style={{ animationDelay: "300ms" }} />
+          <span className="text-[10px] font-bold text-orange-600 uppercase tracking-wider ml-1">
+            Discussion → Conception
+          </span>
+        </div>
+        <p className="text-sm text-orange-800 font-medium leading-relaxed min-h-[1.5rem]">
+          {transitionText.slice(0, typewriterIdx)}
+          <span className="inline-block w-0.5 h-4 bg-orange-600 animate-pulse ml-0.5 align-text-bottom" />
+        </p>
+        <div className="mt-3 h-1 bg-orange-100 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-orange-400 to-yellow-400 rounded-full transition-all duration-300"
+            style={{ width: `${Math.min(100, (typewriterIdx / transitionText.length) * 100)}%` }}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-3">
       <button
-        onClick={() => startConception()}
+        onClick={handleTransition}
         className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-full border-2 border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors cursor-pointer"
       >
         <Rocket className="h-4 w-4" />
@@ -730,13 +821,23 @@ const STEP_BADGE: Record<string, { badge: string; bg: string }> = {
   O: { badge: "O", bg: "bg-purple-100 text-purple-700" },
 };
 
-function DynamicStepContent({ allBlocks, context, onBlockAction, pulsingBlockId }: {
+const UNIVERSAL_BLOCK_TYPES = new Set(["rapport", "synthese"]);
+
+function DynamicStepContent({ allBlocks, context, onBlockAction, pulsingBlockId, activeBotCode }: {
   allBlocks: import("../core/types").WorkspaceBlock[];
   context: string;
   onBlockAction: (action: string, blockId: string) => void;
   pulsingBlockId: string | null;
+  activeBotCode?: string;
 }) {
-  if (allBlocks.length === 0) {
+  // Bot-specific filtering: if only 1 bot contributed, filter to that bot's blocks + universal types
+  const uniqueSources = [...new Set(allBlocks.map(b => b.source).filter(Boolean))];
+  const isMultiBot = uniqueSources.length > 1;
+  const filteredBlocks = (activeBotCode && !isMultiBot)
+    ? allBlocks.filter(b => UNIVERSAL_BLOCK_TYPES.has(b.type) || !b.source || b.source === activeBotCode)
+    : allBlocks;
+
+  if (filteredBlocks.length === 0) {
     // Etat vide: contexte minimal — les vrais blocs (diagnostic, brainstorm, etc.)
     // arrivent dynamiquement via le pipeline backend _llm_crystallize → useWorkspaceCapture → BlockRenderer
     return (
@@ -756,17 +857,18 @@ function DynamicStepContent({ allBlocks, context, onBlockAction, pulsingBlockId 
 
   // Show ALL blocks — sorted by timestamp, with per-block step badge
   return (
+    <BlockDisplayContext.Provider value={{ compact: true }}>
     <div className="mt-3 space-y-3">
       {/* Summary header — shows count + context */}
       <div className="rounded-xl border border-gray-200 bg-white p-4">
         <div className="flex items-center gap-2 mb-2">
           <Activity className="h-3.5 w-3.5 text-gray-500" />
           <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-bold">
-            {allBlocks.length} element{allBlocks.length > 1 ? "s" : ""} cristallise{allBlocks.length > 1 ? "s" : ""}
+            {filteredBlocks.length} element{filteredBlocks.length > 1 ? "s" : ""} cristallise{filteredBlocks.length > 1 ? "s" : ""}
           </span>
           {/* Show which CREDO steps have content */}
           {["C","R","E","D","O"].map(s => {
-            const count = allBlocks.filter(b => b.credo_step === s).length;
+            const count = filteredBlocks.filter(b => b.credo_step === s).length;
             if (count === 0) return null;
             const badge = STEP_BADGE[s] || STEP_BADGE.C;
             return (
@@ -779,20 +881,34 @@ function DynamicStepContent({ allBlocks, context, onBlockAction, pulsingBlockId 
         <h3 className="text-xs font-bold text-gray-900">{context}</h3>
       </div>
 
-      {/* All blocks — BlockRenderer per block, in order */}
-      {allBlocks.map(block => {
+      {/* All blocks — BlockRenderer per block, with CREDO phase separators */}
+      {filteredBlocks.map((block, i) => {
+        const prevBlock = i > 0 ? filteredBlocks[i - 1] : null;
+        const showSeparator = prevBlock && prevBlock.credo_step !== block.credo_step && block.type !== "synthese";
+        const CREDO_NAMES: Record<string, string> = { C: "Connexion", R: "Recherche", E: "Exposition", D: "Demonstration", O: "Obtention" };
         const badge = STEP_BADGE[block.credo_step] || STEP_BADGE.C;
         return (
-          <div
-            key={block.id}
-            id={`block-${block.type}`}
-            className={cn(pulsingBlockId === block.id && "ring-2 ring-blue-400 rounded-xl transition-all")}
-          >
-            <BlockRenderer block={block} onAction={onBlockAction} animated={false} />
+          <div key={block.id}>
+            {showSeparator && (
+              <div className="flex items-center gap-3 my-1">
+                <div className="flex-1 h-px bg-gray-200" />
+                <span className={cn("text-[9px] px-2.5 py-0.5 rounded-full font-bold", badge.bg)}>
+                  {CREDO_NAMES[block.credo_step] || block.credo_step}
+                </span>
+                <div className="flex-1 h-px bg-gray-200" />
+              </div>
+            )}
+            <div
+              id={`block-${block.type}`}
+              className={cn(pulsingBlockId === block.id && "ring-2 ring-blue-400 rounded-xl transition-all")}
+            >
+              <BlockRenderer block={block} onAction={onBlockAction} animated={false} />
+            </div>
           </div>
         );
       })}
     </div>
+    </BlockDisplayContext.Provider>
   );
 }
 
