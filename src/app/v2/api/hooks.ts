@@ -996,7 +996,7 @@ export function useChat() {
                         ghost: data.ghost_actif,
                         tier: data.tier,
                         latence_ms: data.latence_ms,
-                        options: options || undefined,
+                        options: options || m.options || undefined,
                         isStreaming: false,
                         canvasActions: visibleActions.length > 0 ? visibleActions : undefined,
                         isDiagnostic: data.is_diagnostic || false,
