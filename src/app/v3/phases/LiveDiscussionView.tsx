@@ -102,7 +102,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
     : activeStepId.includes("exposer") ? "E"
     : activeStepId.includes("demontrer") ? "D"
     : activeStepId.includes("objectif") ? "O" : "C";
-  const [filterStep, setFilterStep] = useState<string | null>(null);
+  const [filterStep, setFilterStep] = useState<string | null>("C");
   // Sprint 2A v2: technique panel — clic sidebar → sous-section workspace
   const [selectedTechnique, setSelectedTechnique] = useState<string | null>(null);
   const [contentAppeared, setContentAppeared] = useState(false);
@@ -298,11 +298,12 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
   // CREDO step labels
   const CREDO_LABELS: Record<string, string> = { C: "Comprendre", R: "Rechercher", E: "Exposer", D: "Demontrer", O: "Objectif" };
 
-  // W.0: Reset sub-section when CREDO step changes
+  // W.0: Reset sub-section when CREDO step changes + sync filterStep
   useEffect(() => {
     setActiveSubSection(null);
     setActiveTechnique(null);
-  }, [activeStepId]);
+    setFilterStep(currentCredoLetter);
+  }, [activeStepId, currentCredoLetter]);
 
   // W.0: Technique handlers
   const startTechnique = useCallback((id: string, label: string, totalSteps: number) => {
@@ -761,11 +762,12 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
           {/* DYNAMIC STEP CONTENT — filtre par sous-section active, sinon tous les blocs */}
           {!activeSubSection || !["modes-reflexion", "techniques", "deep-search", "experts"].includes(activeSubSection) ? (
             <DynamicStepContent
-              allBlocks={activeSubSection ? filteredBlocksBySubSection : workspaceBlocks}
+              allBlocks={activeSubSection ? filteredBlocksBySubSection : displayBlocks}
               context={displayContext}
               onBlockAction={handleBlockAction}
               pulsingBlockId={pulsingBlockId}
               activeBotCode={activeBotCode}
+              activeCredoStep={currentCredoLetter}
             />
           ) : null}
           {showTypingCursor && (
@@ -1361,12 +1363,21 @@ const STEP_BADGE: Record<string, { badge: string; bg: string }> = {
 
 const UNIVERSAL_BLOCK_TYPES = new Set(["rapport", "synthese"]);
 
-function DynamicStepContent({ allBlocks, context, onBlockAction, pulsingBlockId, activeBotCode }: {
+const CREDO_EMPTY_STATE: Record<string, { title: string; hint: string }> = {
+  C: { title: "Comprendre la situation", hint: "Posez des questions pour clarifier le contexte et les enjeux." },
+  R: { title: "Recherche d'angles morts", hint: "Explorez les techniques de reflexion ou consultez des experts." },
+  E: { title: "Solutions a exposer", hint: "Les options et propositions apparaitront ici." },
+  D: { title: "Demonstration et ressources", hint: "Plans d'action, budgets et ressources seront captures ici." },
+  O: { title: "Objectif et decisions", hint: "Le plan de match final et les decisions prises." },
+};
+
+function DynamicStepContent({ allBlocks, context, onBlockAction, pulsingBlockId, activeBotCode, activeCredoStep }: {
   allBlocks: import("../core/types").WorkspaceBlock[];
   context: string;
   onBlockAction: (action: string, blockId: string) => void;
   pulsingBlockId: string | null;
   activeBotCode?: string;
+  activeCredoStep?: string;
 }) {
   // Bot-specific filtering: if only 1 bot contributed, filter to that bot's blocks + universal types
   const uniqueSources = [...new Set(allBlocks.map(b => b.source).filter(Boolean))];
@@ -1376,17 +1387,16 @@ function DynamicStepContent({ allBlocks, context, onBlockAction, pulsingBlockId,
     : allBlocks;
 
   if (filteredBlocks.length === 0) {
-    // Etat vide: contexte minimal — les vrais blocs (diagnostic, brainstorm, etc.)
-    // arrivent dynamiquement via le pipeline backend _llm_crystallize → useWorkspaceCapture → BlockRenderer
+    const emptyState = CREDO_EMPTY_STATE[activeCredoStep || "C"] || CREDO_EMPTY_STATE.C;
     return (
       <div className="mt-3">
         <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/50 p-4">
           <div className="flex items-center gap-2">
             <Activity className="h-3.5 w-3.5 text-gray-400 animate-pulse" />
-            <h3 className="text-xs font-medium text-gray-500">{context || "Discussion en cours"}</h3>
+            <h3 className="text-xs font-medium text-gray-500">{emptyState.title}</h3>
           </div>
           <p className="text-[10px] text-gray-400 mt-1.5">
-            Les analyses et diagnostics apparaitront ici au fil de la conversation.
+            {emptyState.hint}
           </p>
         </div>
       </div>

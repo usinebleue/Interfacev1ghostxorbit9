@@ -1302,10 +1302,11 @@ function V3MessageList() {
 }
 
 // ═══ AGENT SELECTOR — dropdown d'ajout d'agents dans le header ═══
-function AgentSelector({ activeRoster, addBotToRoster, removeBotFromRoster }: {
+function AgentSelector({ activeRoster, addBotToRoster, removeBotFromRoster, onConsultExpert }: {
   activeRoster: string[];
   addBotToRoster: (code: string) => void;
   removeBotFromRoster: (code: string) => void;
+  onConsultExpert?: (code: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -1336,7 +1337,14 @@ function AgentSelector({ activeRoster, addBotToRoster, removeBotFromRoster }: {
             return (
               <button
                 key={code}
-                onClick={() => { inRoster ? removeBotFromRoster(code) : addBotToRoster(code); }}
+                onClick={() => {
+                  if (inRoster) {
+                    removeBotFromRoster(code);
+                  } else {
+                    addBotToRoster(code);
+                    onConsultExpert?.(code);
+                  }
+                }}
                 className="w-full flex items-center gap-2.5 px-3 py-1.5 hover:bg-gray-50 transition-colors cursor-pointer text-left"
               >
                 <div className="w-6 h-6 rounded-full overflow-hidden ring-1 ring-gray-200 shrink-0">
@@ -1534,11 +1542,47 @@ export function DiscussionWindow() {
 }
 
 function DiscussionWindowInner() {
-  const { cockpitTab, activeBotCode, activePhase, setActivePhase, setRightSection, setReflexionContext, setFocusType, setActiveDeliverable, credoPhase, reflexionContext, addWorkflowItem, activeMeeting: dwActiveMeeting } = useAmorcer();
+  const { cockpitTab, activeBotCode, activePhase, setActivePhase, setRightSection, setReflexionContext, setFocusType, setActiveDeliverable, credoPhase, reflexionContext, addWorkflowItem, activeMeeting: dwActiveMeeting, addWorkspaceBlock, workspaceBlocks, chatStage } = useAmorcer();
   const { activeRoster, addBotToRoster, removeBotFromRoster, messages, sendMessage, threads, resumeThread, deleteThread, renameThread, chatTargetBot } = useChatContext();
   const isMobile = useIsMobile();
   const isOrbit9 = cockpitTab === "orbit9";
   const isEmpty = messages.length === 0;
+
+  // Handler: consulter un expert dans le workspace (pas dans la discussion)
+  const handleConsultExpert = useCallback(async (botCode: string) => {
+    const lastUserMsg = [...messages].reverse().find(m => m.role === "user")?.content || "";
+    const lastBotMsg = [...messages].reverse().find(m => m.role === "assistant" && m.content)?.content || "";
+    const context = `Question: ${lastUserMsg}\n\nAnalyse en cours: ${lastBotMsg.substring(0, 500)}`;
+    try {
+      const res = await api.chatMulti({
+        message: context,
+        user_id: 1,
+        agents: [botCode],
+        primary_agent: botCode,
+        workspace_phase: activePhase,
+      });
+      const persp = res.perspectives?.[0];
+      if (!persp) return;
+      const { detectBlockTypeFrontend, extractStructuredDataFrontend } = await import("./hooks/useWorkspaceCapture");
+      const blockType = detectBlockTypeFrontend(persp.contenu);
+      const credoSteps = ["C", "R", "E", "D", "O"] as const;
+      const credoStep = credoSteps[Math.min(chatStage, 4)];
+      addWorkspaceBlock({
+        id: `expert-${botCode}-${Date.now()}`,
+        type: blockType,
+        title: `${BOT_NAME[botCode] || botCode} — Perspective`,
+        summary: persp.contenu,
+        structured_data: extractStructuredDataFrontend(persp.contenu, blockType),
+        credo_step: credoStep,
+        confidence: 0.7,
+        source: botCode,
+        sourceType: "chat",
+        timestamp: Date.now(),
+      });
+    } catch (err) {
+      console.error("[AgentSelector] Expert consult error:", err);
+    }
+  }, [messages, activePhase, addWorkspaceBlock, chatStage]);
 
   // Reset workspace au cockpit quand la discussion est vide (refresh, nouveau thread)
   // Évite d'avoir une phase orpheline sans messages
@@ -1589,11 +1633,12 @@ function DiscussionWindowInner() {
               ))}
             </div>
 
-            {/* Bouton + pour ajouter un agent */}
+            {/* Bouton + pour ajouter un agent → consultation workspace */}
             <AgentSelector
               activeRoster={activeRoster}
               addBotToRoster={addBotToRoster}
               removeBotFromRoster={removeBotFromRoster}
+              onConsultExpert={handleConsultExpert}
             />
 
           </>

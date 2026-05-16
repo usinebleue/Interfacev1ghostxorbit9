@@ -143,10 +143,10 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   // ── chatTargetBot — quel bot du roster reçoit les messages ──
   const [chatTargetBot, setChatTargetBotRaw] = useState(activeBotCode);
 
-  // Wrapper addBotToRoster: ajouter + cibler le nouveau bot
+  // Wrapper addBotToRoster: ajouter au roster SANS changer le chatTarget
+  // Le bot "+" ajoute un expert au workspace, pas a la discussion
   const wrappedAddBotToRoster = useCallback((code: string) => {
     addBotToRoster(code);
-    setChatTargetBotRaw(code);
   }, [addBotToRoster]);
 
   // Wrapper removeBotFromRoster: si on retire le bot ciblé, fallback au premier du roster

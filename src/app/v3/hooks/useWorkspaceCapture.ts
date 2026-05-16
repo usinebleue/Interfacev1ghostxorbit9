@@ -254,6 +254,56 @@ function getCurrentCredoStep(chatStage: number): "C" | "R" | "E" | "D" | "O" {
   return steps[Math.min(chatStage, steps.length - 1)];
 }
 
+/**
+ * Detecte la phase CREDO depuis le contenu de la reponse bot.
+ * Fallback intelligent: au lieu de botCount/3, on analyse les mots-cles.
+ */
+const CREDO_CONTENT_PATTERNS: [RegExp, "C" | "R" | "E" | "D" | "O"][] = [
+  [/objectif|conclusion|decision|prochain\s*pas|plan\s*de\s*match|on\s*retient|prochaine\s*etape/i, "O"],
+  [/plan\s*d'action|budget|ressource|calendrier|etapes?\s*concrete|timeline|echeancier|investissement/i, "D"],
+  [/solution|option|proposition|alternative|recommand|scenario|possibilite|approche\s*possible/i, "E"],
+  [/explorer|approfondir|angle\s*mort|recherche|analyse|diagnostic|pourquoi|cause|insight/i, "R"],
+  [/probleme|situation|contexte|enjeu|comprendre|clarifi|defi|besoin/i, "C"],
+];
+
+function detectCredoPhaseFromContent(text: string): "C" | "R" | "E" | "D" | "O" {
+  // Check patterns in reverse priority (O first, C last) — first match wins
+  for (const [pattern, phase] of CREDO_CONTENT_PATTERNS) {
+    if (pattern.test(text)) return phase;
+  }
+  return "C";
+}
+
+const CREDO_TO_STAGE: Record<string, number> = { C: 0, R: 1, E: 2, D: 3, O: 4 };
+
+/**
+ * Calcule le chatStage cible en combinant: backend phase_credo > content heuristic > botCount/3
+ */
+function computeTargetStage(
+  lastCREDOPhase: string | undefined,
+  botMessages: any[],
+  currentStage: number
+): number {
+  // Priorite 1: backend phase_credo
+  if (lastCREDOPhase && CREDO_TO_STAGE[lastCREDOPhase] !== undefined) {
+    const target = CREDO_TO_STAGE[lastCREDOPhase];
+    return Math.max(currentStage, target);
+  }
+  // Priorite 2: content heuristic sur les derniers messages bot
+  const recentBots = botMessages.slice(-3);
+  if (recentBots.length > 0) {
+    const lastContent = recentBots[recentBots.length - 1]?.content || "";
+    if (lastContent.length > 50) {
+      const detected = detectCredoPhaseFromContent(lastContent);
+      const target = CREDO_TO_STAGE[detected];
+      if (target > currentStage) return target;
+    }
+  }
+  // Priorite 3: fallback conservateur botCount/3
+  const botCount = botMessages.filter((m: any) => (m as any).isStreaming !== true).length;
+  return Math.max(currentStage, Math.min(4, Math.floor(botCount / 3)));
+}
+
 /** Map chatStage → sectionId pour la phase active */
 function getSectionIdFromChatStage(phase: string, chatStage: number): string | null {
   const stepIds = getPhaseStepIds(phase);
@@ -497,28 +547,12 @@ export function useWorkspaceCapture() {
                 if (sugIdx >= 0 && sugIdx === chatStage + 1) {
                   setChatStage(sugIdx);
                 } else {
-                  // FIX Sprint 3: sync avec backend phase_credo + botCount/3 (meme logique que path non-streaming)
-                  const CREDO_TO_STAGE: Record<string, number> = { C: 0, R: 1, E: 2, D: 3, O: 4 };
-                  if (lastCREDOPhase && CREDO_TO_STAGE[lastCREDOPhase] !== undefined) {
-                    const target = CREDO_TO_STAGE[lastCREDOPhase];
-                    if (target > chatStage) setChatStage(target);
-                  } else {
-                    const botCount = messages.filter((m: any) => m.role === "assistant" && (m as any).isStreaming !== true).length;
-                    const targetStage = Math.min(4, Math.floor(botCount / 3));
-                    if (targetStage > chatStage) setChatStage(targetStage);
-                  }
+                  const target1 = computeTargetStage(lastCREDOPhase, messages.filter((m: any) => m.role === "assistant"), chatStage);
+                  if (target1 > chatStage) setChatStage(target1);
                 }
               } else {
-                // FIX Sprint 3: sync avec backend phase_credo + botCount/3 (meme logique que path non-streaming)
-                const CREDO_TO_STAGE: Record<string, number> = { C: 0, R: 1, E: 2, D: 3, O: 4 };
-                if (lastCREDOPhase && CREDO_TO_STAGE[lastCREDOPhase] !== undefined) {
-                  const target = CREDO_TO_STAGE[lastCREDOPhase];
-                  if (target > chatStage) setChatStage(target);
-                } else {
-                  const botCount = messages.filter((m: any) => m.role === "assistant" && (m as any).isStreaming !== true).length;
-                  const targetStage = Math.min(4, Math.floor(botCount / 3));
-                  if (targetStage > chatStage) setChatStage(targetStage);
-                }
+                const target2 = computeTargetStage(lastCREDOPhase, messages.filter((m: any) => m.role === "assistant"), chatStage);
+                if (target2 > chatStage) setChatStage(target2);
               }
             } else {
               setChatStage((s: number) => s + 1);
@@ -795,30 +829,12 @@ export function useWorkspaceCapture() {
           if (sugIdx >= 0 && sugIdx === chatStage + 1) {
             setChatStage(sugIdx);
           } else {
-            // FIX Lacune 2: Sync avec backend phase_credo au lieu de botCount/2
-            const CREDO_TO_STAGE: Record<string, number> = { C: 0, R: 1, E: 2, D: 3, O: 4 };
-            if (lastCREDOPhase && CREDO_TO_STAGE[lastCREDOPhase] !== undefined) {
-              const target = CREDO_TO_STAGE[lastCREDOPhase];
-              if (target > chatStage) setChatStage(target);
-            } else {
-              // Fallback conservateur: botCount/3 (aligne sur backend seuils 3,6,9)
-              const botCount = messages.filter((m: any) => m.role === "assistant" && (m as any).isStreaming !== true).length;
-              const targetStage = Math.min(4, Math.floor(botCount / 3));
-              if (targetStage > chatStage) setChatStage(targetStage);
-            }
+            const target3 = computeTargetStage(lastCREDOPhase, messages.filter((m: any) => m.role === "assistant"), chatStage);
+            if (target3 > chatStage) setChatStage(target3);
           }
         } else {
-          // FIX Lacune 2: Sync avec backend phase_credo au lieu de botCount/2
-          const CREDO_TO_STAGE: Record<string, number> = { C: 0, R: 1, E: 2, D: 3, O: 4 };
-          if (lastCREDOPhase && CREDO_TO_STAGE[lastCREDOPhase] !== undefined) {
-            const target = CREDO_TO_STAGE[lastCREDOPhase];
-            if (target > chatStage) setChatStage(target);
-          } else {
-            // Fallback conservateur: botCount/3 (aligne sur backend seuils 3,6,9)
-            const botCount = messages.filter((m: any) => m.role === "assistant" && (m as any).isStreaming !== true).length;
-            const targetStage = Math.min(4, Math.floor(botCount / 3));
-            if (targetStage > chatStage) setChatStage(targetStage);
-          }
+          const target4 = computeTargetStage(lastCREDOPhase, messages.filter((m: any) => m.role === "assistant"), chatStage);
+          if (target4 > chatStage) setChatStage(target4);
         }
       } else {
         setChatStage((s: number) => s + 1);
