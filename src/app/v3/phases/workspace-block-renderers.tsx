@@ -320,29 +320,86 @@ function BlockWrapper({ block, onAction, label, labelColor, children }: BlockRen
   );
 }
 
-// ═══ Compact footer pour discussion — juste feedback + source, pas de boutons lourds ═══
+// ═══ Compact footer pour discussion — CTAs dynamiques selon le type d'analyse ═══
+
+type CompactCTA = { label: string; icon: typeof CheckCircle2; action: BlockActionType | "approve" | "execute"; color: string; activeColor: string };
+
+const BLOCK_CTAS: Record<string, CompactCTA[]> = {
+  diagnostic:      [
+    { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
+    { label: "Challenger", icon: Swords, action: "challenge", color: "border-amber-200 text-amber-700 hover:bg-amber-50", activeColor: "" },
+    { label: "Approfondir", icon: Search, action: "deepen", color: "border-blue-200 text-blue-700 hover:bg-blue-50", activeColor: "" },
+  ],
+  brainstorm:      [
+    { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
+    { label: "Approfondir", icon: Search, action: "deepen", color: "border-blue-200 text-blue-700 hover:bg-blue-50", activeColor: "" },
+    { label: "Exécuter", icon: Zap, action: "execute", color: "border-violet-200 text-violet-700 hover:bg-violet-50", activeColor: "" },
+  ],
+  plan_action:     [
+    { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
+    { label: "Modifier", icon: Pencil, action: "edit", color: "border-gray-200 text-gray-600 hover:bg-gray-50", activeColor: "" },
+    { label: "Exécuter", icon: Zap, action: "execute", color: "border-violet-200 text-violet-700 hover:bg-violet-50", activeColor: "" },
+  ],
+  taches:          [
+    { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
+    { label: "Exécuter", icon: Zap, action: "execute", color: "border-violet-200 text-violet-700 hover:bg-violet-50", activeColor: "" },
+  ],
+  recommandations: [
+    { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
+    { label: "Challenger", icon: Swords, action: "challenge", color: "border-amber-200 text-amber-700 hover:bg-amber-50", activeColor: "" },
+    { label: "Exécuter", icon: Zap, action: "execute", color: "border-violet-200 text-violet-700 hover:bg-violet-50", activeColor: "" },
+  ],
+  risques:         [
+    { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
+    { label: "Challenger", icon: Swords, action: "challenge", color: "border-amber-200 text-amber-700 hover:bg-amber-50", activeColor: "" },
+  ],
+  _default:        [
+    { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
+    { label: "Challenger", icon: Swords, action: "challenge", color: "border-amber-200 text-amber-700 hover:bg-amber-50", activeColor: "" },
+    { label: "Modifier", icon: Pencil, action: "edit", color: "border-gray-200 text-gray-600 hover:bg-gray-50", activeColor: "" },
+  ],
+};
+
 function CompactBlockFooter({ block, onAction }: BlockRendererProps) {
-  const [feedback, setFeedback] = useState<"up" | "down" | null>(null);
+  const [approved, setApproved] = useState(false);
+  const ctas = BLOCK_CTAS[block.type] || BLOCK_CTAS._default;
+
+  const handleCTA = (cta: CompactCTA) => {
+    if (cta.action === "approve") {
+      setApproved(!approved);
+      onAction("pin", block.id); // Approuver = épingler (officialiser)
+    } else if (cta.action === "execute") {
+      // Dispatch vers le chat: demander au bot d'exécuter
+      window.dispatchEvent(new CustomEvent("bt-delegate-task", {
+        detail: { titre: block.title, bot: block.source, blockId: block.id },
+      }));
+    } else {
+      onAction(cta.action as BlockActionType, block.id);
+    }
+  };
+
   return (
-    <div className="pt-2 border-t border-gray-100 mt-3 flex items-center gap-2">
-      <BotBadgeFull botCode={block.source} compact />
-      {(() => {
-        const src = SOURCE_CONFIG[block.sourceType] || SOURCE_CONFIG.chat;
-        return (
-          <span className={cn("text-[8px] px-1.5 py-0.5 rounded-full flex items-center gap-0.5 font-medium", src.bg, src.text)}>
-            <src.icon className="h-2.5 w-2.5" /> {src.label}
-          </span>
-        );
-      })()}
-      <div className="ml-auto flex items-center gap-1">
-        <button onClick={() => { setFeedback(feedback === "up" ? null : "up"); }}
-          className={cn("p-1 rounded-md transition-colors cursor-pointer", feedback === "up" ? "bg-emerald-100 text-emerald-600" : "text-gray-300 hover:text-emerald-500 hover:bg-emerald-50")}>
-          <ThumbsUp className="h-3 w-3" />
-        </button>
-        <button onClick={() => { setFeedback(feedback === "down" ? null : "down"); }}
-          className={cn("p-1 rounded-md transition-colors cursor-pointer", feedback === "down" ? "bg-red-100 text-red-500" : "text-gray-300 hover:text-red-400 hover:bg-red-50")}>
-          <ThumbsDown className="h-3 w-3" />
-        </button>
+    <div className="pt-2 border-t border-gray-100 mt-3 space-y-2">
+      {/* CTAs dynamiques */}
+      <div className="flex flex-wrap gap-1.5">
+        {ctas.map((cta) => {
+          const isApproveActive = cta.action === "approve" && approved;
+          return (
+            <button key={cta.label} onClick={() => handleCTA(cta)}
+              className={cn(
+                "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all cursor-pointer",
+                isApproveActive ? cta.activeColor : cta.color,
+              )}>
+              <cta.icon className="h-3 w-3" />
+              {isApproveActive ? "Approuvé ✓" : cta.label}
+            </button>
+          );
+        })}
+      </div>
+      {/* Source bot + timestamp */}
+      <div className="flex items-center gap-2">
+        <BotBadgeFull botCode={block.source} compact />
+        <span className="text-[9px] text-gray-300 ml-auto">{new Date(block.timestamp).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })}</span>
       </div>
     </div>
   );
