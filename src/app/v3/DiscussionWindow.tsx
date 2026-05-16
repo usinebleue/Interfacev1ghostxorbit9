@@ -542,6 +542,148 @@ function SegmentedBotContent({ content, botCode, activePhase, addWorkspaceBlock,
   );
 }
 
+// ═══ InlineOptions — Multi-select + réponse inline pour options question ═══
+
+function InlineOptions({ options, onSend, isActive, msgType, agent, activeRoster, workspacePhase }: {
+  options: string[];
+  onSend: (text: string, targetBot?: string, meta?: unknown, extra?: { workspacePhase?: string }) => void;
+  isActive: boolean;
+  msgType?: string;
+  agent?: string;
+  activeRoster: string[];
+  workspacePhase?: string;
+}) {
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [inlineTexts, setInlineTexts] = useState<Record<number, string>>({});
+  const [showInputFor, setShowInputFor] = useState<number | null>(null);
+
+  // Filtrer "Ouvrir l'atelier"
+  const filteredOpts = options.filter(opt => !/ouvrir\s+l'atelier/i.test(opt));
+  if (filteredOpts.length === 0) return null;
+
+  const isQuestion = (opt: string) => /\?\s*$/.test(opt.trim());
+  const hasSelection = selected.size > 0;
+
+  const toggleSelect = (i: number) => {
+    if (!isActive) return;
+    const next = new Set(selected);
+    if (next.has(i)) {
+      next.delete(i);
+      if (showInputFor === i) setShowInputFor(null);
+      const nextTexts = { ...inlineTexts };
+      delete nextTexts[i];
+      setInlineTexts(nextTexts);
+    } else {
+      next.add(i);
+      if (isQuestion(filteredOpts[i])) setShowInputFor(i);
+    }
+    setSelected(next);
+  };
+
+  const doSend = (text: string) => {
+    if (msgType === "consultation" && agent && activeRoster.length > 1) {
+      onSend(text, agent, undefined, { workspacePhase });
+    } else {
+      onSend(text, undefined, undefined, { workspacePhase });
+    }
+    setSelected(new Set());
+    setInlineTexts({});
+    setShowInputFor(null);
+  };
+
+  const handleSendAll = () => {
+    if (selected.size === 0) return;
+    const parts: string[] = [];
+    for (const i of Array.from(selected).sort()) {
+      if (isQuestion(filteredOpts[i]) && inlineTexts[i]?.trim()) {
+        parts.push(inlineTexts[i].trim());
+      } else {
+        parts.push(filteredOpts[i]);
+      }
+    }
+    doSend(parts.join("\n\n"));
+  };
+
+  const handleInlineSubmit = (i: number) => {
+    if (!inlineTexts[i]?.trim()) return;
+    doSend(inlineTexts[i].trim());
+  };
+
+  const borderColors = ["border-l-blue-500", "border-l-amber-500", "border-l-green-500", "border-l-red-500"];
+  const hoverBgs = isActive ? ["hover:bg-blue-50", "hover:bg-amber-50", "hover:bg-green-50", "hover:bg-red-50"] : [""];
+
+  return (
+    <div className={cn("mt-3 space-y-1.5", !isActive && "opacity-40 pointer-events-none")}>
+      {filteredOpts.map((opt, i) => {
+        const isSel = selected.has(i);
+        const isQ = isQuestion(opt);
+        return (
+          <div key={i}>
+            <button
+              disabled={!isActive}
+              onClick={() => toggleSelect(i)}
+              style={isActive && !hasSelection ? { animation: `fadeSlideUp 0.3s ease-out ${i * 0.08}s both` } : undefined}
+              className={cn(
+                "w-full text-left border rounded-lg px-3 py-2 transition-all",
+                "border-l-[3px]",
+                borderColors[i % borderColors.length],
+                isSel ? "bg-blue-50 border-blue-300 ring-1 ring-blue-200" : "border-gray-200",
+                isActive && !isSel && hoverBgs[i % hoverBgs.length],
+                isActive ? "hover:shadow-sm cursor-pointer group/opt" : "cursor-default",
+                isActive && "active:scale-[0.98] focus:outline-none touch-manipulation",
+              )}
+            >
+              <div className="flex items-start gap-2">
+                <span className={cn(
+                  "mt-0.5 shrink-0 w-4 h-4 rounded border flex items-center justify-center transition-colors",
+                  isSel ? "bg-blue-500 border-blue-500 text-white" : "border-gray-300"
+                )}>
+                  {isSel && <Check className="h-3 w-3" />}
+                </span>
+                <span className={cn("text-sm font-medium flex-1", isActive ? "text-gray-700 group-hover/opt:text-gray-900" : "text-gray-400")}>
+                  {opt}
+                </span>
+                {isQ && <MessageCircle className="h-3.5 w-3.5 text-gray-400 mt-0.5 shrink-0" />}
+              </div>
+            </button>
+            {/* Input inline pour les options-questions */}
+            {isQ && isSel && showInputFor === i && (
+              <div className="mt-1 ml-6 flex gap-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
+                <input
+                  type="text"
+                  autoFocus
+                  placeholder="Votre réponse..."
+                  value={inlineTexts[i] || ""}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setInlineTexts(prev => ({ ...prev, [i]: e.target.value }))}
+                  onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleInlineSubmit(i); } }}
+                  className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-300 focus:border-blue-300"
+                />
+                <button
+                  onClick={() => handleInlineSubmit(i)}
+                  disabled={!inlineTexts[i]?.trim()}
+                  className="px-2.5 py-1.5 rounded-lg bg-blue-500 text-white text-xs font-medium disabled:opacity-40 hover:bg-blue-600 transition-colors cursor-pointer"
+                >
+                  <Send className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      })}
+      {/* Bouton envoi multi-sélection */}
+      {hasSelection && (
+        <button
+          onClick={handleSendAll}
+          className="w-full mt-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-blue-500 text-white text-sm font-medium hover:bg-blue-600 transition-colors cursor-pointer animate-in fade-in duration-200"
+        >
+          <Send className="h-3.5 w-3.5" />
+          Envoyer{selected.size > 1 ? ` (${selected.size} sélectionnés)` : ""}
+        </button>
+      )}
+    </div>
+  );
+}
+
 // ═══ V3 MESSAGE LIST — Système unique de rendu des discussions ═══
 // Gère: bulles V3, options cliquables, streaming, thinking, coaching, voice
 function V3MessageList() {
@@ -556,6 +698,10 @@ function V3MessageList() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const userScrolledUp = useRef(false);
   const isAnyStreaming = messages.some(m => m.isStreaming);
+  // Si le DERNIER message est un assistant non-streaming avec contenu, le bot a fini de repondre
+  // → supprimer TOUT indicateur de reflexion (thinking steps + typing dots)
+  const lastMsg = messages.length > 0 ? messages[messages.length - 1] : null;
+  const botAlreadyResponded = lastMsg?.role === "assistant" && !lastMsg.isStreaming && (lastMsg.content?.length ?? 0) > 0;
 
   // Dernier message bot (pour afficher les options seulement sur le dernier)
   const lastBotId = [...messages].reverse().find(m => m.role === "assistant" && !m.isStreaming)?.id;
@@ -1008,62 +1154,37 @@ function V3MessageList() {
                   <span className={cn("text-[11px] font-semibold", s.text)}>{BOT_NAME[botCode] || botCode}</span>
                   <span className="text-[10px] text-gray-400">{BOT_ROLE[botCode] || ""}</span>
                 </div>
-                {/* Content — formatté markdown — key force le re-render quand streaming termine */}
+                {/* Content — formatMarkdown TOUJOURS (key stable = pas d'unmount/remount) */}
                 <div
-                  key={`${msg.id}-${msg.isStreaming ? 's' : 'f'}`}
+                  key={msg.id}
                   className="text-sm text-gray-700 leading-relaxed isolate overflow-hidden [&>p]:my-0.5 [&>ul]:my-1 [&>ol]:my-1 [&>p:first-child]:mt-0 [&>p:last-child]:mb-0 [&>hr]:my-2 [&_li]:break-words [&_p]:break-words"
-                  dangerouslySetInnerHTML={{ __html: (msg.isStreaming
-                    ? msg.content.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br/>") + '<span class="inline-block w-0.5 h-4 bg-current ml-0.5 animate-pulse align-text-bottom"></span>'
-                    : formatMarkdown(msg.content)
-                  ) }} />
+                  dangerouslySetInnerHTML={{ __html: formatMarkdown(msg.content) }}
+                />
+                {msg.isStreaming && (
+                  <span className="inline-block w-0.5 h-4 bg-current ml-0.5 animate-pulse align-text-bottom" />
+                )}
                 {/* Cristallise bar — boutons pour ajouter ce contenu dans une section workspace */}
                 {!msg.isStreaming && msg.content && (
                   <CristalliseBar content={msg.content} botCode={botCode} activePhase={activePhase} addWorkspaceBlock={addWorkspaceBlock} lastUserMessage={lastUserMessage} />
                 )}
-                {/* ═══ Niveau 1 — Options DANS la bulle (pattern InlineOptions, fade-in staggere) ═══ */}
-                {!msg.isStreaming && msg.options && msg.options.length > 0 && (() => {
-                  // Filtrer les options "Ouvrir l'atelier" — la navigation se fait via les tabs
-                  const filteredOpts = msg.options.filter(opt => !/ouvrir\s+l'atelier/i.test(opt));
-                  if (filteredOpts.length === 0) return null;
-                  const isActive = isLast; // Seul le dernier message a des options cliquables
-                  return (
-                  <div className={cn("mt-3 space-y-1.5", !isActive && "opacity-40 pointer-events-none")}>
-                    {filteredOpts.map((opt, i) => {
-                      const borderColors = ["border-l-blue-500", "border-l-amber-500", "border-l-green-500", "border-l-red-500"];
-                      const hoverBgs = isActive ? ["hover:bg-blue-50", "hover:bg-amber-50", "hover:bg-green-50", "hover:bg-red-50"] : [""];
-                      return (
-                        <button
-                          key={i}
-                          disabled={!isActive}
-                          onClick={() => {
-                            if (!isActive) return;
-                            // S102 — Consultation: router vers CE bot seulement (pas multi-perspective)
-                            if (msg.msgType === "consultation" && msg.agent && activeRoster.length > 1) {
-                              sendMessage(opt, msg.agent, undefined, { workspacePhase });
-                            } else {
-                              handleOption(opt);
-                            }
-                          }}
-                          style={isActive ? { animation: `fadeSlideUp 0.3s ease-out ${i * 0.08}s both` } : undefined}
-                          className={cn(
-                            "w-full text-left border border-gray-200 rounded-lg px-3 py-2 transition-all",
-                            "border-l-[3px]",
-                            borderColors[i % borderColors.length],
-                            isActive && hoverBgs[i % hoverBgs.length],
-                            isActive ? "hover:shadow-sm cursor-pointer group/opt" : "cursor-default",
-                            isActive && "active:scale-[0.98] active:bg-gray-50 focus:outline-none touch-manipulation",
-                          )}
-                        >
-                          <div className="flex items-start gap-2">
-                            <span className="text-xs font-bold text-gray-400 mt-0.5 shrink-0">{i + 1}.</span>
-                            <span className={cn("text-sm font-medium", isActive ? "text-gray-700 group-hover/opt:text-gray-900" : "text-gray-400")}>{opt}</span>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  );
-                })()}
+                {/* ═══ Niveau 1 — Options DANS la bulle (multi-select + réponse inline questions) ═══ */}
+                {!msg.isStreaming && msg.options && msg.options.length > 0 && (
+                  <InlineOptions
+                    options={msg.options}
+                    onSend={(text, targetBot, _meta, extra) => {
+                      if (targetBot) {
+                        sendMessage(text, targetBot, undefined, extra);
+                      } else {
+                        handleOption(text);
+                      }
+                    }}
+                    isActive={isLast}
+                    msgType={msg.msgType}
+                    agent={msg.agent}
+                    activeRoster={activeRoster}
+                    workspacePhase={workspacePhase}
+                  />
+                )}
               </div>
               {/* ═══ Niveau 2 — Actions structurelles SOUS la bulle (phase-gatees) ═══ */}
               {/* S102-B: masquer en multi-bot (les options inline de la bulle consolidee suffisent) */}
@@ -1120,7 +1241,7 @@ function V3MessageList() {
       })}
 
       {/* Thinking step — UNE ligne qui défile, contextuelle par bot + icones S102-B */}
-      {isTyping && thinkingSteps.length > 0 && (() => {
+      {isTyping && !botAlreadyResponded && thinkingSteps.length > 0 && (() => {
         const streamMsg = [...messages].reverse().find(m => m.role === "assistant" && m.isStreaming);
         const thinkBot = streamMsg?.agent || activeBotCode;
         const ts = V3_STYLE[thinkBot] || DEFAULT_STYLE;
@@ -1142,8 +1263,8 @@ function V3MessageList() {
         );
       })()}
 
-      {/* Typing dots — quand le bot réfléchit sans thinking steps */}
-      {isTyping && !isAnyStreaming && thinkingSteps.length === 0 && (() => {
+      {/* Typing dots — quand le bot réfléchit sans thinking steps (seulement avant la reponse bot) */}
+      {isTyping && !botAlreadyResponded && !isAnyStreaming && thinkingSteps.length === 0 && messages.length > 0 && messages[messages.length - 1]?.role === "user" && (() => {
         const thinkBot2 = activeBotCode;
         const ts = V3_STYLE[thinkBot2] || DEFAULT_STYLE;
         const botName2 = BOT_NAME[thinkBot2] || "CarlOS";
