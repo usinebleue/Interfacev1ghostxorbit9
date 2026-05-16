@@ -147,7 +147,7 @@ function enrichPromptWithContext(prompt: string, messages: ChatMessage[]): strin
 
 interface WorkspaceReflexionHubProps {
   context: string | null;
-  onSendMessage: (msg: string, botCode?: string) => void;
+  onSendMessage: (msg: string, botCode?: string) => void | Promise<void>;
   messages: ChatMessage[];
   activeBotCode: string;
   activeBotName: string;

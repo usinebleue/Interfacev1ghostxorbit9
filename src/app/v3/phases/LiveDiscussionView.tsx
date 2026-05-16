@@ -385,18 +385,65 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
   }, [workspaceBlocks, addWorkflowItem, sendMessage, activeBotCode, removeWorkspaceBlock, activePhase, addWorkspaceBlock]);
 
   // Reflexion tool click handler
-  const handleReflexionSend = useCallback((prompt: string) => {
-    sendMessage(prompt, activeBotCode);
-  }, [sendMessage, activeBotCode]);
+  // ═══ REFLEXION/TECHNIQUE → WORKSPACE ONLY (JAMAIS dans la discussion) ═══
+  // Les modes de réflexion et techniques envoient via chatMulti et créent des blocs workspace.
+  // Le prompt n'apparaît JAMAIS dans la zone discussion.
+  const handleReflexionSend = useCallback(async (prompt: string) => {
+    try {
+      const res = await api.chatMulti({
+        message: prompt, user_id: 1,
+        agents: [activeBotCode], primary_agent: activeBotCode,
+        workspace_phase: "reflexion",
+      });
+      const persp = res.perspectives?.[0];
+      if (!persp) return;
+      const blockType = detectBlockTypeFrontend(persp.contenu);
+      addWorkspaceBlock({
+        id: `reflexion-hub-${Date.now()}`,
+        type: blockType,
+        title: `${BOT_NAME[activeBotCode] || activeBotCode} — Réflexion`,
+        summary: summarizeExpertForWorkspace(persp.contenu),
+        structured_data: extractStructuredDataFrontend(persp.contenu, blockType),
+        credo_step: currentCredoLetter as "C" | "R" | "E" | "D" | "O",
+        credo_sub_section: "modes-reflexion",
+        confidence: 0.75,
+        source: activeBotCode,
+        sourceType: "chat",
+        timestamp: Date.now(),
+      });
+    } catch (err) {
+      console.error("[ReflexionSend] Error routing to workspace:", err);
+    }
+  }, [activeBotCode, addWorkspaceBlock, currentCredoLetter]);
 
-  // Sprint 2A: Technique metadata handler — passes technique session info through sendMessage meta
-  const handleSendWithMeta = useCallback((prompt: string, meta: { techniqueActive: string; techniqueStep: number; techniqueContext: string }) => {
-    sendMessage(prompt, activeBotCode, undefined, {
-      techniqueActive: meta.techniqueActive,
-      techniqueStep: meta.techniqueStep,
-      techniqueContext: meta.techniqueContext,
-    });
-  }, [sendMessage, activeBotCode]);
+  // Technique metadata handler — routes to workspace via chatMulti (JAMAIS dans discussion)
+  const handleSendWithMeta = useCallback(async (prompt: string, meta: { techniqueActive: string; techniqueStep: number; techniqueContext: string }) => {
+    try {
+      const res = await api.chatMulti({
+        message: prompt, user_id: 1,
+        agents: [activeBotCode], primary_agent: activeBotCode,
+        workspace_phase: "reflexion",
+      });
+      const persp = res.perspectives?.[0];
+      if (!persp) return;
+      const blockType = detectBlockTypeFrontend(persp.contenu);
+      addWorkspaceBlock({
+        id: `technique-${meta.techniqueActive}-${meta.techniqueStep}-${Date.now()}`,
+        type: blockType,
+        title: `${BOT_NAME[activeBotCode] || activeBotCode} — ${meta.techniqueActive} (étape ${meta.techniqueStep + 1})`,
+        summary: summarizeExpertForWorkspace(persp.contenu),
+        structured_data: extractStructuredDataFrontend(persp.contenu, blockType),
+        credo_step: currentCredoLetter as "C" | "R" | "E" | "D" | "O",
+        credo_sub_section: "modes-reflexion",
+        confidence: 0.75,
+        source: activeBotCode,
+        sourceType: "chat",
+        timestamp: Date.now(),
+      });
+    } catch (err) {
+      console.error("[TechniqueSend] Error routing to workspace:", err);
+    }
+  }, [activeBotCode, addWorkspaceBlock, currentCredoLetter]);
 
   // CREDO step labels
   const CREDO_LABELS: Record<string, string> = { C: "Comprendre", R: "Rechercher", E: "Exposer", D: "Demontrer", O: "Objectif" };
@@ -692,8 +739,8 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
                           sourceType: "chat",
                           timestamp: Date.now(),
                         });
-                      } catch {
-                        sendMessage(fullPrompt, activeBotCode, undefined, { workspacePhase: `discussion_rechercher` });
+                      } catch (err) {
+                        console.error("[ModeReflexion] Error routing to workspace:", err);
                       }
                     }}
                     className={cn("flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[10px] font-medium border cursor-pointer transition-colors hover:shadow-sm",
@@ -819,7 +866,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
             <div className="mt-3">
               <WorkspaceReflexionHub
                 context={displayContext !== "Discussion en cours" ? displayContext : null}
-                onSendMessage={sendMessage}
+                onSendMessage={handleReflexionSend}
                 messages={messages}
                 activeBotCode={activeBotCode}
                 activeBotName={BOT_NAME[activeBotCode] || "CarlOS"}

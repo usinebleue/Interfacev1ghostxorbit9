@@ -19,7 +19,7 @@
  * Stage gating: chaque réponse bot débloque l'étape suivante.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Brain,
   Stethoscope,
@@ -48,6 +48,9 @@ import { useIsMobile } from "../../components/ui/use-mobile";
 import { MobileSidebarSheet } from "../core/MobileSidebarSheet";
 import { useChatContext } from "../../v2/context/ChatContext";
 import { useAmorcer } from "../AmorcerContext";
+import { api } from "../../v2/api/client";
+import { BOT_NAME } from "../../v2/api/types";
+import { detectBlockTypeFrontend, extractStructuredDataFrontend } from "../hooks/useWorkspaceCapture";
 // ═══ 8 étapes — EXACTEMENT comme modélisé par Carl ═══
 const REFLEXION_STEPS: { id: string; title: string; subtitle: string; icon: React.ElementType; minStage: number }[] = [
   { id: "ref-1-diagnostic",        title: "Diagnostic initial",   subtitle: "Analyse de la situation",              icon: Stethoscope, minStage: 0 },
@@ -72,9 +75,42 @@ const EXPLORATION_STEP_IDS = ["ref-2-brainstorm", "ref-4-cinq-pourquoi", "ref-5-
 
 export function LiveReflexionView({ context, onPhaseComplete }: LiveReflexionViewProps) {
   const isMobile = useIsMobile();
-  const { chatStage, workflowItems, removeWorkflowItem, addWorkflowItem, getCristallise, activeBotCode, activePhase } = useAmorcer();
+  const { chatStage, workflowItems, removeWorkflowItem, addWorkflowItem, getCristallise, activeBotCode, activePhase, addWorkspaceBlock, workspaceBlocks } = useAmorcer();
   const { sendMessage } = useChatContext();
   const displayContext = context || "Réflexion";
+
+  // Route reflexion mode results to WORKSPACE blocks (not discussion)
+  const handleReflexionToWorkspace = useCallback(async (prompt: string) => {
+    try {
+      const res = await api.chatMulti({
+        message: prompt,
+        user_id: 1,
+        agents: [activeBotCode],
+        primary_agent: activeBotCode,
+        workspace_phase: "reflexion",
+      });
+      const persp = res.perspectives?.[0];
+      if (!persp) return;
+      const blockType = detectBlockTypeFrontend(persp.contenu);
+      addWorkspaceBlock({
+        id: `reflexion-${blockType}-${Date.now()}`,
+        type: blockType,
+        title: `${BOT_NAME[activeBotCode] || activeBotCode} — ${blockType.charAt(0).toUpperCase() + blockType.slice(1)}`,
+        summary: persp.contenu,
+        structured_data: extractStructuredDataFrontend(persp.contenu, blockType),
+        credo_step: "R",
+        credo_sub_section: "modes-reflexion",
+        confidence: 0.75,
+        source: activeBotCode,
+        sourceType: "chat",
+        timestamp: Date.now(),
+      });
+    } catch (err) {
+      console.error("[Reflexion→Workspace] Error:", err);
+      // Fallback to sendMessage if workspace route fails
+      sendMessage(prompt, activeBotCode, undefined, undefined, { workspacePhase: "reflexion" });
+    }
+  }, [activeBotCode, addWorkspaceBlock, sendMessage]);
 
   // useWorkspaceCapture() → déplacé dans WorkspacePhasesPanel (toujours actif)
 
@@ -161,23 +197,23 @@ export function LiveReflexionView({ context, onPhaseComplete }: LiveReflexionVie
 
         {/* Contenu */}
         <div className={SF.content}>
-          {/* Modes de réflexion — boutons d'ACTION (chaque clic envoie un prompt au bot) */}
-          <ReflexionModeActions context={displayContext} onSend={(prompt) => sendMessage(prompt, activeBotCode, undefined, undefined, { workspacePhase: "reflexion" })} />
+          {/* Modes de réflexion — boutons d'ACTION (resultats → workspace blocks) */}
+          <ReflexionModeActions context={displayContext} onSend={handleReflexionToWorkspace} />
 
           <StepContent
             step={activeStep}
             captured={getCristallise(activeStep.id)}
             isUnlocked={chatStage >= activeStep.minStage}
             onPin={(text) => addWorkflowItem("reflexion", text.substring(0, 300), "capture")}
-            onDeepen={(topic) => sendMessage(`Approfondir en détail: ${topic}`, activeBotCode, undefined, undefined, { workspacePhase: "reflexion" })}
+            onDeepen={(topic) => handleReflexionToWorkspace(`Approfondir en détail: ${topic}`)}
           />
 
-          {/* Techniques de créativité — visibles sur les étapes d'exploration */}
+          {/* Techniques de créativité — resultats → workspace blocks */}
           {EXPLORATION_STEP_IDS.includes(activeStepId) && (
             <TechniqueSelector
               context={displayContext}
               modePrefix=""
-              onSend={(prompt) => sendMessage(prompt, activeBotCode, undefined, undefined, { workspacePhase: "reflexion" })}
+              onSend={handleReflexionToWorkspace}
             />
           )}
 

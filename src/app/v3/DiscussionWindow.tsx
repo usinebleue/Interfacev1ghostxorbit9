@@ -1548,41 +1548,7 @@ function DiscussionWindowInner() {
   const isOrbit9 = cockpitTab === "orbit9";
   const isEmpty = messages.length === 0;
 
-  // Handler: consulter un expert dans le workspace (pas dans la discussion)
-  const handleConsultExpert = useCallback(async (botCode: string) => {
-    const lastUserMsg = [...messages].reverse().find(m => m.role === "user")?.content || "";
-    const lastBotMsg = [...messages].reverse().find(m => m.role === "assistant" && m.content)?.content || "";
-    const context = `Question: ${lastUserMsg}\n\nAnalyse en cours: ${lastBotMsg.substring(0, 500)}`;
-    try {
-      const res = await api.chatMulti({
-        message: context,
-        user_id: 1,
-        agents: [botCode],
-        primary_agent: botCode,
-        workspace_phase: activePhase,
-      });
-      const persp = res.perspectives?.[0];
-      if (!persp) return;
-      const { detectBlockTypeFrontend, extractStructuredDataFrontend } = await import("./hooks/useWorkspaceCapture");
-      const blockType = detectBlockTypeFrontend(persp.contenu);
-      const credoSteps = ["C", "R", "E", "D", "O"] as const;
-      const credoStep = credoSteps[Math.min(chatStage, 4)];
-      addWorkspaceBlock({
-        id: `expert-${botCode}-${Date.now()}`,
-        type: blockType,
-        title: `${BOT_NAME[botCode] || botCode} — Perspective`,
-        summary: persp.contenu,
-        structured_data: extractStructuredDataFrontend(persp.contenu, blockType),
-        credo_step: credoStep,
-        confidence: 0.7,
-        source: botCode,
-        sourceType: "chat",
-        timestamp: Date.now(),
-      });
-    } catch (err) {
-      console.error("[AgentSelector] Expert consult error:", err);
-    }
-  }, [messages, activePhase, addWorkspaceBlock, chatStage]);
+  // Expert consultation moved to workspace SuggestedExpertsPanel (LiveDiscussionView)
 
   // Reset workspace au cockpit quand la discussion est vide (refresh, nouveau thread)
   // Évite d'avoir une phase orpheline sans messages
@@ -1611,35 +1577,13 @@ function DiscussionWindowInner() {
             <span className="text-[11px] text-white font-medium">Brain Team</span>
             <div className="flex-1" />
 
-            {/* Agents du roster — avatar + nom */}
-            <div className="flex items-center gap-2">
-              {activeRoster.map((code) => (
-                <div key={code} className="relative group flex items-center gap-1">
-                  <div className="w-5 h-5 rounded-full overflow-hidden ring-1 ring-white/30 shrink-0">
-                    <img src={BOT_AVATAR[code] || `/agents/${code.toLowerCase()}.png`} alt={BOT_NAME[code] || code} className="w-full h-full object-cover" />
-                  </div>
-                  <span className="text-[9px] text-white/80 font-medium">{BOT_NAME[code]}</span>
-                  {/* Remove button on hover (sauf le premier = bot principal) */}
-                  {activeRoster.indexOf(code) > 0 && (
-                    <button
-                      onClick={() => removeBotFromRoster(code)}
-                      className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                      title={`Retirer ${BOT_NAME[code]}`}
-                    >
-                      <X className="h-2 w-2" />
-                    </button>
-                  )}
-                </div>
-              ))}
+            {/* Primary bot avatar only — experts moved to workspace */}
+            <div className="flex items-center gap-1.5">
+              <div className="w-5 h-5 rounded-full overflow-hidden ring-1 ring-white/30 shrink-0">
+                <img src={BOT_AVATAR[activeBotCode] || `/agents/${activeBotCode.toLowerCase()}.png`} alt={BOT_NAME[activeBotCode] || activeBotCode} className="w-full h-full object-cover" />
+              </div>
+              <span className="text-[9px] text-white/80 font-medium">{BOT_NAME[activeBotCode] || activeBotCode}</span>
             </div>
-
-            {/* Bouton + pour ajouter un agent → consultation workspace */}
-            <AgentSelector
-              activeRoster={activeRoster}
-              addBotToRoster={addBotToRoster}
-              removeBotFromRoster={removeBotFromRoster}
-              onConsultExpert={handleConsultExpert}
-            />
 
           </>
         )}

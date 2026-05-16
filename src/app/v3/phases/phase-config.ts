@@ -197,30 +197,28 @@ export interface CredoSubSectionConfig {
 
 export const CREDO_SUB_SECTIONS: Record<string, CredoSubSectionConfig[]> = {
   "credo-c-comprendre": [
-    { id: "contexte", label: "Contexte", icon: FileText, description: "Resume de la situation" },
-    { id: "enjeux", label: "Enjeux", icon: AlertTriangle, description: "Points de tension identifies" },
+    { id: "situation", label: "Situation", icon: FileText, description: "Contexte, enjeux et contraintes" },
     { id: "experts", label: "Experts", icon: Users, description: "Perspectives des bots experts" },
   ],
   "credo-r-rechercher": [
-    { id: "angles-morts", label: "Angles morts", icon: Eye, description: "Ce qui manque dans l'analyse" },
+    { id: "analyses", label: "Analyses", icon: Eye, description: "Diagnostics et angles morts" },
     { id: "modes-reflexion", label: "Modes reflexion", icon: Brain, description: "Debat, Brainstorm, Crise, etc." },
-    { id: "techniques", label: "Techniques", icon: Wand2, description: "SCAMPER, 5 Pourquoi, 6 Chapeaux" },
-    { id: "deep-search", label: "Deep Search", icon: Search, description: "Recherche approfondie" },
+    { id: "deep-search", label: "Deep Search", icon: Search, description: "Recherche approfondie via IA" },
     { id: "experts", label: "Experts", icon: Users, description: "Perspectives des bots experts" },
   ],
   "credo-e-exposer": [
-    { id: "solutions", label: "Solutions", icon: Lightbulb, description: "Options identifiees" },
-    { id: "comparaison", label: "Comparaison", icon: BarChart3, description: "Avantages/inconvenients" },
+    { id: "solutions", label: "Solutions", icon: Lightbulb, description: "Options et recommandations" },
+    { id: "comparaison", label: "Comparaison", icon: BarChart3, description: "Avantages / inconvenients" },
     { id: "experts", label: "Experts", icon: Users, description: "Perspectives des bots experts" },
   ],
   "credo-d-demontrer": [
+    { id: "plan-action", label: "Plan d'action", icon: ListChecks, description: "Etapes, budget, timeline" },
     { id: "ressources", label: "Ressources", icon: Package, description: "Ce qu'on a et ce qui manque" },
-    { id: "plan-action", label: "Plan d'action", icon: ListChecks, description: "Etapes concretes" },
     { id: "experts", label: "Experts", icon: Users, description: "Perspectives des bots experts" },
   ],
   "credo-o-objectif": [
-    { id: "plan-match", label: "Plan de match", icon: Target, description: "Plan final complet" },
     { id: "decisions", label: "Decisions", icon: CheckCircle, description: "Trail des decisions prises" },
+    { id: "plan-match", label: "Plan de match", icon: Target, description: "Prochains pas et KPIs" },
     { id: "experts", label: "Experts", icon: Users, description: "Synthese des contributions" },
   ],
 };

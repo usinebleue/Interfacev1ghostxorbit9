@@ -132,6 +132,7 @@ export interface WorkspaceBlock {
   summary: string;
   structured_data?: Record<string, any>;
   credo_step: "C" | "R" | "E" | "D" | "O";
+  credo_sub_section?: string;  // Sub-section within CREDO step (ex: "contexte", "enjeux", "experts")
   confidence: number;
   source: string;         // bot code
   sourceType: "chat" | "voice" | "meeting";

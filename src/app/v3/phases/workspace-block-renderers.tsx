@@ -2588,8 +2588,85 @@ const BLOCK_RENDERERS: Record<WorkspaceBlockType, React.FC<BlockRendererProps>> 
   docforge_tableur: BudgetRenderer,
 };
 
+// ═══ ExpertBlockWrapper — enhanced display for expert consultation blocks (sourceType=chat) ═══
+
+function ExpertBlockWrapper({ block, onAction, children }: BlockRendererProps & { children: React.ReactNode }) {
+  const [appeared, setAppeared] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setAppeared(true), 80);
+    return () => clearTimeout(t);
+  }, []);
+
+  const accentBorder = block.source && BOT_ACCENT_BORDERS[block.source] ? BOT_ACCENT_BORDERS[block.source] : "border-l-gray-400";
+
+  return (
+    <div
+      className={cn(
+        "group/edit rounded-xl border bg-white p-5 shadow-sm transition-all duration-300",
+        "border-gray-200 hover:shadow-md",
+        "hover:ring-1 hover:ring-violet-200 hover:border-violet-200",
+        appeared ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3",
+        "border-l-[4px]", accentBorder
+      )}
+    >
+      {/* Expert header — large avatar + bold name */}
+      <div className="flex items-center gap-3 mb-4">
+        <BotAvatar code={block.source} size="lg" />
+        <div className="flex-1 min-w-0">
+          <h3 className="text-base font-bold text-gray-900">{BOT_NAME[block.source] || block.source}</h3>
+          <span className="text-[10px] text-gray-400 font-medium">Perspective expert</span>
+        </div>
+        <span className="text-[9px] text-gray-300">{new Date(block.timestamp).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })}</span>
+      </div>
+
+      {/* Content — 14px readable text */}
+      <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+        {children}
+      </div>
+
+      {/* Expert actions: Relancer + Approfondir (routes to workspace, NOT discussion) */}
+      <div className="pt-3 border-t border-gray-100 mt-4 flex flex-wrap gap-2">
+        <button
+          onClick={() => onAction("rework", block.id)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors cursor-pointer border-violet-200 text-violet-700 hover:bg-violet-50"
+        >
+          <RotateCcw className="h-3.5 w-3.5" /> Relancer
+        </button>
+        <button
+          onClick={() => onAction("deepen", block.id)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors cursor-pointer border-blue-200 text-blue-700 hover:bg-blue-50"
+        >
+          <Search className="h-3.5 w-3.5" /> Approfondir
+        </button>
+        <button
+          onClick={() => onAction("challenge", block.id)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors cursor-pointer border-amber-200 text-amber-700 hover:bg-amber-50"
+        >
+          <Swords className="h-3.5 w-3.5" /> Challenger
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function BlockRenderer({ block, onAction, animated }: BlockRendererProps) {
   const Renderer = BLOCK_RENDERERS[block.type] || LibreRenderer;
+
+  // Expert blocks (sourceType=chat) get enhanced ExpertBlockWrapper with large avatar/fonts
+  if (block.sourceType === "chat" && block.source) {
+    return (
+      <AnimatedBlockEntry block={block} animated={animated}>
+        <ExpertBlockWrapper block={block} onAction={onAction}>
+          <div className="text-sm leading-relaxed">
+            {block.summary.split('\n').map((line, i) => (
+              <p key={i} className={line.trim() === '' ? 'h-2' : 'mb-1'}>{line}</p>
+            ))}
+          </div>
+        </ExpertBlockWrapper>
+      </AnimatedBlockEntry>
+    );
+  }
+
   return (
     <AnimatedBlockEntry block={block} animated={animated}>
       <Renderer block={block} onAction={onAction} />
