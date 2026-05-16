@@ -27,21 +27,21 @@ export function ReflexionModeActions({ context, onSend }: {
 }) {
   const MODES = [
     { id: "analyse", label: "Analyse", icon: Eye, bg: "bg-blue-100", text: "text-blue-700",
-      prompt: `Fais une analyse approfondie et structurée de: ${context}` },
-    { id: "debat", label: "Débat", icon: Swords, bg: "bg-red-100", text: "text-red-700",
-      prompt: `Joue l'avocat du diable — débats les pour et les contre de: ${context}` },
+      prompt: `Mode ANALYSE structuree (MECE) sur: ${context}. Faits, forces, contraintes, risques, leviers. Separe faits/hypotheses. Termine par VERDICT.` },
+    { id: "debat", label: "Debat", icon: Swords, bg: "bg-red-100", text: "text-red-700",
+      prompt: `Mode DEBAT CONTRADICTOIRE sur: ${context}. THESE (pour) → ANTITHESE (tests de falsification, 3+ failles obligatoires) → SYNTHESE. Pas de sycophanterie.` },
     { id: "brainstorm", label: "Brainstorm", icon: Lightbulb, bg: "bg-amber-100", text: "text-amber-700",
-      prompt: `Génère un maximum d'idées créatives et originales pour: ${context}` },
-    { id: "strategie", label: "Stratégie", icon: Target, bg: "bg-purple-100", text: "text-purple-700",
-      prompt: `Pense long terme — propose une vision stratégique pour: ${context}` },
+      prompt: `Mode BRAINSTORM DIVERGENT sur: ${context}. 8-12 idees (dont 2+ folles). Analogies inter-industries. Puis TOP 3 (Impact x Faisabilite) avec premier pas 48h.` },
+    { id: "strategie", label: "Strategie", icon: Target, bg: "bg-purple-100", text: "text-purple-700",
+      prompt: `Mode VISION STRATEGIQUE (12-36 mois) sur: ${context}. Positionnement, moats, sequencage, paris, anti-strategie. Termine par PROCHAINE DECISION CRITIQUE.` },
     { id: "innovation", label: "Innovation", icon: Sparkles, bg: "bg-pink-100", text: "text-pink-700",
-      prompt: `Sors du cadre — propose des approches innovantes et disruptives pour: ${context}` },
-    { id: "decision", label: "Décision", icon: CheckCircle2, bg: "bg-green-100", text: "text-green-700",
-      prompt: `Tranche et recommande — quelle décision prendre pour: ${context}` },
+      prompt: `Mode INNOVATION RADICALE sur: ${context}. Incremental INTERDIT. Analogies 3 industries, inversion, contrainte extreme, biomimetisme. TOP 2 + prototype 1 semaine.` },
+    { id: "decision", label: "Decision", icon: CheckCircle2, bg: "bg-green-100", text: "text-green-700",
+      prompt: `Mode AIDE A LA DECISION sur: ${context}. Reformule en choix, 4-5 criteres ponderes, matrice, trade-offs nommes. UNE recommandation. Tu DOIS trancher.` },
     { id: "crise", label: "Crise", icon: Zap, bg: "bg-orange-100", text: "text-orange-700",
-      prompt: `Mode crise — urgence et pragmatisme. Que faire MAINTENANT pour: ${context}` },
+      prompt: `Mode CRISE (72h) sur: ${context}. TRIAGE (0-4h) → CONTAINMENT (4-24h) → RESOLUTION (24-72h) → POST-MORTEM. QUI fait QUOI pour QUAND. Pragmatisme absolu.` },
     { id: "deep", label: "Deep", icon: Brain, bg: "bg-indigo-100", text: "text-indigo-700",
-      prompt: `Réflexion profonde et nuancée — explore toutes les dimensions de: ${context}` },
+      prompt: `Mode REFLEXION SYSTEMIQUE sur: ${context}. Surface → Structure → Mental → Effets 2e/3e ordre → Points de levier. Boucles de retroaction, paradoxes. Termine par INSIGHT CLE non-evident.` },
   ];
 
   return (
@@ -93,32 +93,143 @@ export const TECHNIQUE_CONFIGS: Record<string, { label: string; totalSteps: numb
   },
 };
 
-// All techniques (multi-step + one-shot)
+// All techniques (multi-step + one-shot) — anti-sycophancy aligned
 export const ALL_TECHNIQUES = [
   { id: "scamper", label: "SCAMPER", icon: Lightbulb,
     color: "bg-amber-50 text-amber-700",
-    soloPrompt: (ctx: string) => `Applique SCAMPER complet (Substituer, Combiner, Adapter, Modifier, Proposer d'autres usages, Éliminer, Réorganiser) à: ${ctx}. Pour chaque lettre, donne 2-3 idées. Termine par un Top 3 classé par faisabilité.` },
+    soloPrompt: (ctx: string) => `Applique SCAMPER complet a: ${ctx}
+
+Pour chaque lettre (Substituer, Combiner, Adapter, Modifier, Proposer d'autres usages, Eliminer, Reorganiser):
+- 2-3 idees CONCRETES et SPECIFIQUES (pas de generalites)
+- Au moins 1 idee "audacieuse" par lettre
+
+REGLES:
+- Interdit les idees evidentes que n'importe qui aurait
+- Si une idee est trop generique, pousse plus loin
+- Pas de "c'est une bonne idee" — genere directement
+
+Termine par un Top 3 classe par (Impact x Faisabilite) avec 1 premier pas concret pour tester en 48h.` },
   { id: "5pourquoi", label: "5 Pourquoi", icon: Search,
     color: "bg-orange-50 text-orange-700",
-    soloPrompt: (ctx: string) => `Analyse les 5 Pourquoi en profondeur pour: ${ctx}. Chaque Pourquoi creuse basé sur la réponse précédente. Termine par la cause racine et 3 actions.` },
+    soloPrompt: (ctx: string) => `Analyse les 5 Pourquoi en profondeur pour: ${ctx}
+
+PROTOCOLE:
+- Chaque "Pourquoi" creuse SPECIFIQUEMENT la reponse precedente (pas de saut logique)
+- Distingue les FAITS des SUPPOSITIONS a chaque niveau
+- Niveau 4-5: cherche les causes SYSTEMIQUES (culture, incitations, structure)
+
+REGLES:
+- Si tu ne peux pas creuser plus profond avec certitude, DIS-LE au lieu d'inventer
+- La cause racine doit etre ACTIONNABLE (pas "c'est la nature humaine")
+- Pas de langue de bois
+
+Termine par: CAUSE RACINE (1 phrase) + 3 ACTIONS correctives priorisees.` },
   { id: "6chapeaux", label: "6 Chapeaux", icon: Crown,
     color: "bg-violet-50 text-violet-700",
-    soloPrompt: (ctx: string) => `Analyse avec les 6 Chapeaux de Bono pour: ${ctx}. Un chapeau à la fois (Blanc/Rouge/Noir/Jaune/Vert/Bleu). Termine par une synthèse avec Top 3 conclusions.` },
+    soloPrompt: (ctx: string) => `Analyse avec les 6 Chapeaux de Bono pour: ${ctx}
+
+Un chapeau a la fois, dans cet ordre:
+- BLANC (Faits): Donnees objectives UNIQUEMENT. Pas d'interpretation.
+- ROUGE (Emotions): Reactions instinctives, peurs, enthousiasmes. Sans justification.
+- NOIR (Risques): Critique HONNETE. Pourquoi ca peut echouer? Cherche 3+ failles.
+- JAUNE (Opportunites): Avantages concrets. Pas de voeux pieux.
+- VERT (Creativite): Alternatives non-evidentes. Pousse hors du cadre connu.
+- BLEU (Processus): Meta-analyse. Qu'est-ce que les 5 chapeaux revelent ensemble?
+
+REGLES:
+- Le chapeau NOIR doit etre AUSSI approfondi que le JAUNE (pas d'asymetrie complaisante)
+- Chaque chapeau: 3-4 points max, concis
+
+Termine par SYNTHESE: Top 3 conclusions + 1 decision recommandee.` },
   { id: "analogie", label: "Analogie", icon: ArrowLeftRight,
     color: "bg-blue-50 text-blue-700",
-    soloPrompt: (ctx: string) => `Trouve des analogies d'autres industries pour: ${ctx}` },
+    soloPrompt: (ctx: string) => `Trouve des analogies de 3 industries TOTALEMENT differentes pour: ${ctx}
+
+Pour chaque analogie:
+1. L'industrie source et le probleme SIMILAIRE qu'ils ont resolu
+2. COMMENT ils l'ont resolu (mecanisme concret)
+3. La transposition: comment appliquer CE mecanisme a notre contexte
+
+REGLES:
+- Industries qui n'ont RIEN a voir avec le sujet (jeux video, aviation, restauration, sport, nature)
+- Pas d'analogies evidentes ou deja connues dans le secteur
+- Chaque transposition doit etre ACTIONNABLE, pas juste intellectuellement interessante
+
+Termine par: MEILLEURE ANALOGIE a explorer en premier + pourquoi.` },
   { id: "inversion", label: "Inversion", icon: RotateCcw,
     color: "bg-pink-50 text-pink-700",
-    soloPrompt: (ctx: string) => `Inverse le problème pour: ${ctx}` },
-  { id: "biomimetisme", label: "Biomimétisme", icon: Leaf,
+    soloPrompt: (ctx: string) => `Inverse completement le probleme pour: ${ctx}
+
+PROTOCOLE D'INVERSION:
+1. ANTI-OBJECTIF: "Comment GARANTIR l'echec?" — liste 5-8 facons sures d'echouer
+2. MIROIR: Pour chaque facon d'echouer, inverse en strategie de succes
+3. REVELATION: Quelles strategies de succes sont CONTRE-INTUITIVES? Lesquelles fait-on deja SANS le savoir?
+4. HYPOTHESES CACHEES: En inversant, quelles croyances implicites sont revelees?
+
+REGLES:
+- Sois CREATIVE dans les facons d'echouer (pas juste "ne rien faire")
+- Les inversions les plus utiles sont celles qui revelent des angles morts
+- Pas de platitudes
+
+Termine par: 2-3 ACTIONS concretes revelees par l'inversion.` },
+  { id: "biomimetisme", label: "Biomimetisme", icon: Leaf,
     color: "bg-emerald-50 text-emerald-700",
-    soloPrompt: (ctx: string) => `Applique le biomimétisme à: ${ctx}` },
+    soloPrompt: (ctx: string) => `Applique le biomimetisme a: ${ctx}
+
+PROTOCOLE:
+Identifie 4 systemes naturels qui resolvent un probleme ANALOGUE:
+1. Un systeme de CROISSANCE (mycelium, corail, foret)
+2. Un systeme de RESILIENCE (systeme immunitaire, regeneration)
+3. Un systeme d'ORGANISATION (fourmiliere, banc de poissons, essaim)
+4. Un systeme d'EFFICACITE (photosynthese, symbiose, migration)
+
+Pour chaque:
+- Le probleme que la nature resout
+- Le MECANISME precis (pas de metaphore vague)
+- La transposition concrete dans notre contexte
+- Faisabilite reelle (pas de science-fiction)
+
+REGLES:
+- Mecanismes PRECIS, pas des metaphores ("comme la nature" = trop vague)
+- Chaque transposition doit pouvoir etre prototypee
+
+Termine par: TOP 2 biomimetismes + prototype proposee en 1 semaine.` },
   { id: "deepsearch", label: "Deep Search", icon: Globe,
     color: "bg-cyan-50 text-cyan-700",
-    soloPrompt: (ctx: string) => `Recherche approfondie: tendances, benchmarks, meilleures pratiques pour: ${ctx}` },
+    soloPrompt: (ctx: string) => `Recherche approfondie sur: ${ctx}
+
+PROTOCOLE:
+1. TENDANCES — 3-5 tendances majeures dans ce domaine (avec signaux observables)
+2. BENCHMARKS — Qui fait ca BIEN? Resultats chiffres si possible.
+3. MEILLEURES PRATIQUES — Ce que les leaders font differemment (pas les evidences)
+4. CONTRE-EXEMPLES — Qui a ECHOUE en essayant? Pourquoi? (survivorship bias check)
+5. DONNEES CLES — Chiffres, etudes, metriques qui cadrent la reflexion
+
+REGLES:
+- Distingue les FAITS verifies des HYPOTHESES populaires
+- Si tu n'es pas sur d'un chiffre, DIS-LE. Pas d'invention.
+- Cherche les contre-exemples AUTANT que les succes
+- Pas de langue de bois ni de "c'est un marche en pleine croissance" sans chiffres
+
+FORMAT: Sections numerotees avec source/fiabilite pour chaque affirmation cle.` },
   { id: "challenge", label: "Challenge", icon: Shield,
     color: "bg-red-50 text-red-700",
-    soloPrompt: (ctx: string) => `Challenge cette approche, trouve les failles: ${ctx}` },
+    soloPrompt: (ctx: string) => `Challenge cette approche — trouve les failles: ${ctx}
+
+PROTOCOLE DE FALSIFICATION:
+1. HYPOTHESES CACHEES — Liste les 3-5 suppositions NON VERIFIEES dans cette approche
+2. TESTS DE FALSIFICATION — Pour chaque hypothese: "Que faudrait-il observer pour PROUVER que c'est FAUX?"
+3. BIAIS COGNITIFS — Quels biais sont probablement en jeu? (survivorship, confirmation, sunk cost, anchor...)
+4. SCENARII D'ECHEC — Les 3 facons les plus PROBABLES que ca echoue (pas les plus dramatiques)
+5. CONDITIONS DE SUCCES — Quelles conditions DOIVENT etre vraies pour que ca marche?
+
+REGLES ANTI-SYCOPHANTERIE:
+- Tu n'es PAS la pour confirmer. Tu es la pour CASSER l'argument.
+- Si l'idee est mauvaise, DIS-LE clairement.
+- Force-toi a trouver AU MOINS 3 failles SERIEUSES meme si l'idee semble bonne.
+- Pas de "c'est une bonne idee MAIS..." — va droit aux failles.
+
+FORMAT: 5 sections. Termine par VERDICT: Go/No-Go/Conditionnel + les 2 risques a eliminer EN PREMIER.` },
 ];
 
 // ═══ TechniqueSidebarList — compact sidebar items ═══
@@ -356,12 +467,180 @@ export function parseContentSections(text: string): { title: string; body: strin
 // ═══ IDs des outils réflexion dans la sidebar ═══
 
 export const REFLEXION_TOOL_IDS = [
-  { id: "analyse", label: "Analyse", icon: Eye, bg: "bg-blue-100", text: "text-blue-600", prompt: (ctx: string) => `Fais une analyse approfondie et structuree de: ${ctx}` },
-  { id: "debat", label: "Debat", icon: Swords, bg: "bg-red-100", text: "text-red-600", prompt: (ctx: string) => `Joue l'avocat du diable — debats les pour et les contre de: ${ctx}` },
-  { id: "brainstorm", label: "Brainstorm", icon: Lightbulb, bg: "bg-amber-100", text: "text-amber-600", prompt: (ctx: string) => `Genere un maximum d'idees creatives pour: ${ctx}` },
-  { id: "strategie", label: "Strategie", icon: Target, bg: "bg-purple-100", text: "text-purple-600", prompt: (ctx: string) => `Pense long terme — propose une vision strategique pour: ${ctx}` },
-  { id: "innovation", label: "Innovation", icon: Sparkles, bg: "bg-pink-100", text: "text-pink-600", prompt: (ctx: string) => `Sors du cadre — propose des approches innovantes pour: ${ctx}` },
-  { id: "decision", label: "Decision", icon: CheckCircle2, bg: "bg-green-100", text: "text-green-600", prompt: (ctx: string) => `Tranche et recommande — quelle decision prendre pour: ${ctx}` },
-  { id: "crise", label: "Crise", icon: Zap, bg: "bg-orange-100", text: "text-orange-600", prompt: (ctx: string) => `Mode crise — urgence et pragmatisme. Que faire MAINTENANT pour: ${ctx}` },
-  { id: "deep", label: "Deep", icon: Brain, bg: "bg-indigo-100", text: "text-indigo-600", prompt: (ctx: string) => `Reflexion profonde et nuancee — explore toutes les dimensions de: ${ctx}` },
+  { id: "analyse", label: "Analyse", icon: Eye, bg: "bg-blue-100", text: "text-blue-600",
+    prompt: (ctx: string) => `Tu es en mode DIAGNOSTIC STRUCTURÉ.
+
+SUJET: ${ctx}
+
+CADRE D'ANALYSE (MECE — Mutuellement Exclusif, Collectivement Exhaustif):
+1. SITUATION ACTUELLE — Faits observables uniquement. Pas d'interprétation.
+2. FORCES EN PRÉSENCE — Qui/quoi pousse dans quelle direction? Cartographie des tensions.
+3. CONTRAINTES RÉELLES — Budget, temps, compétences, marché. Chiffres si disponibles.
+4. RISQUES CRITIQUES — Le pire scénario réaliste. Probabilité + impact.
+5. LEVIERS D'ACTION — Ce qui est sous contrôle direct vs ce qui ne l'est pas.
+
+RÈGLES:
+- Sépare les FAITS des HYPOTHÈSES. Étiquette clairement chaque affirmation.
+- Identifie AU MINIMUM 1 angle mort que l'utilisateur n'a probablement pas considéré.
+- Si une donnée te manque pour conclure, DIS-LE au lieu d'inventer.
+- Pas de langue de bois. Sois direct même si le constat est inconfortable.
+
+FORMAT: Réponds en sections numérotées. Maximum 400 mots par section. Termine par "VERDICT" en 2-3 phrases.` },
+
+  { id: "debat", label: "Debat", icon: Swords, bg: "bg-red-100", text: "text-red-600",
+    prompt: (ctx: string) => `Tu es en mode DÉBAT CONTRADICTOIRE (Faiseur-Vérificateur).
+
+SUJET: ${ctx}
+
+PROTOCOLE:
+Tu dois SIMULTANÉMENT construire ET détruire l'argument. Structure en 2 colonnes mentales:
+
+THÈSE (Pour):
+- Construis le meilleur argument possible EN FAVEUR de cette approche/idée.
+- Appuie avec des exemples concrets, des précédents, de la logique.
+
+ANTITHÈSE (Contre — Tests de falsification):
+- Pour CHAQUE argument de la thèse, applique un test de falsification:
+  "Que faudrait-il observer pour PROUVER que cet argument est FAUX?"
+- Cherche les hypothèses cachées non vérifiées.
+- Identifie les biais cognitifs en jeu (survivorship, confirmation, sunk cost...).
+
+SYNTHÈSE:
+- Où se situe la vérité ENTRE les deux positions?
+- Quelles conditions rendraient la Thèse vraie? Et l'Antithèse?
+
+RÈGLES ANTI-SYCOPHANTERIE:
+- Tu n'es PAS là pour confirmer ce que l'utilisateur pense déjà.
+- Si l'idée est mauvaise, DIS-LE clairement avec tes raisons.
+- Force-toi à trouver AU MOINS 3 failles sérieuses même si l'idée semble bonne.
+- Pas de "c'est une bonne question" ou "excellente idée" — va droit au débat.
+
+FORMAT: THÈSE (3-4 arguments) → ANTITHÈSE (3-4 contre-arguments avec tests de falsification) → SYNTHÈSE (verdict nuancé + conditions de succès/échec).` },
+
+  { id: "brainstorm", label: "Brainstorm", icon: Lightbulb, bg: "bg-amber-100", text: "text-amber-600",
+    prompt: (ctx: string) => `Tu es en mode BRAINSTORM DIVERGENT.
+
+SUJET: ${ctx}
+
+PROTOCOLE DE GÉNÉRATION:
+Phase 1 — WILD IDEAS (pas de filtre, pas de censure):
+- Génère 8-12 idées en vrac. Inclus AU MOINS 2 idées "folles" qui semblent irréalisables.
+- Utilise les leviers SCAMPER implicitement: Substituer, Combiner, Adapter, Modifier, Proposer un autre usage, Éliminer, Réorganiser.
+- Pioche dans des analogies d'AUTRES industries (restauration, jeux vidéo, aviation, sport, nature...).
+
+Phase 2 — REGROUPEMENT:
+- Regroupe tes idées en 3-4 familles thématiques. Nomme chaque famille.
+
+Phase 3 — TOP 3 PRIORISÉ:
+- Classe tes 3 meilleures idées par (Impact × Faisabilité).
+- Pour chaque Top 3: 1 phrase d'idée + 1 "premier pas concret pour tester en 48h".
+
+RÈGLES:
+- QUANTITÉ d'abord, qualité ensuite. Ne te censure pas en Phase 1.
+- Interdiction de proposer des idées "évidentes" que n'importe qui aurait.
+- Chaque idée doit tenir en 1-2 phrases max. Pas de pavés.
+- Si tu te retrouves à écrire des idées génériques (type "améliorer le marketing"), STOP et pousse plus loin.
+
+FORMAT: Liste numérotée Phase 1 → Familles Phase 2 → Top 3 avec premier pas.` },
+
+  { id: "strategie", label: "Strategie", icon: Target, bg: "bg-purple-100", text: "text-purple-600",
+    prompt: (ctx: string) => `Tu es en mode VISION STRATÉGIQUE (horizon 12-36 mois).
+
+SUJET: ${ctx}
+
+CADRE STRATÉGIQUE:
+1. POSITIONNEMENT CIBLE — Où voulons-nous être dans 18 mois? Description précise de l'état futur désiré.
+2. AVANTAGES COMPÉTITIFS — Quels "moats" (fossés défensifs) construire? Qu'est-ce qui sera DIFFICILE à copier?
+3. SÉQUENÇAGE — Dans quel ORDRE faire les choses? Qu'est-ce qui débloque quoi?
+4. PARIS STRATÉGIQUES — Quelles hypothèses non prouvées sont au coeur du plan? (Les nommer explicitement)
+5. ANTI-STRATÉGIE — Que devons-nous REFUSER de faire? Les tentations à éviter.
+
+RÈGLES:
+- Pense en SYSTÈMES, pas en actions isolées. Chaque mouvement a des effets de 2e et 3e ordre.
+- Distingue les décisions RÉVERSIBLES (test vite) des IRRÉVERSIBLES (réfléchis plus).
+- Pas de voeux pieux. Chaque objectif doit avoir un mécanisme concret pour l'atteindre.
+- Si la stratégie fonctionne pour N'IMPORTE QUELLE entreprise, elle n'est pas assez spécifique.
+
+FORMAT: 5 sections numérotées. Termine par "PROCHAINE DÉCISION CRITIQUE" — la seule chose à trancher maintenant.` },
+
+  { id: "innovation", label: "Innovation", icon: Sparkles, bg: "bg-pink-100", text: "text-pink-600",
+    prompt: (ctx: string) => `Tu es en mode INNOVATION RADICALE (adjacent + transformationnel uniquement).
+
+SUJET: ${ctx}
+
+CONTRAINTE: Les idées INCRÉMENTALES sont INTERDITES. "Faire pareil mais un peu mieux" = rejeté.
+
+PROTOCOLE:
+1. ANALOGIES INTER-INDUSTRIES — Prends 3 industries TOTALEMENT différentes (ex: jeux vidéo, santé, aviation). Comment ont-ils résolu un problème SIMILAIRE? Transpose.
+2. INVERSION — Et si on faisait EXACTEMENT L'INVERSE de ce qui se fait? Que se passerait-il?
+3. CONTRAINTE EXTRÊME — Et si on avait 10× MOINS de budget? Ou 10× PLUS de clients? Qu'est-ce que ça forcerait à inventer?
+4. BIOMIMÉTISME — Quel système naturel (fourmilière, mycelium, banc de poissons, système immunitaire) résout un problème analogue? Comment le transposer?
+5. PREMIÈRE ÉTAPE — Pour chaque idée retenue: quel prototype en 1 semaine pour VALIDER l'hypothèse?
+
+RÈGLES:
+- Si ton idée existe déjà quelque part, elle n'est pas assez innovante. Pousse plus loin.
+- Pas de buzzwords (IA, blockchain, Web3) sans mécanisme CONCRET derrière.
+- Accepte que 80% des idées ici seront mauvaises. Le but est de trouver les 20% transformationnels.
+
+FORMAT: 4 sections (Analogies, Inversion, Contrainte, Biomimétisme) avec 2-3 pistes chaque. Puis TOP 2 avec prototype proposé.` },
+
+  { id: "decision", label: "Decision", icon: CheckCircle2, bg: "bg-green-100", text: "text-green-600",
+    prompt: (ctx: string) => `Tu es en mode AIDE À LA DÉCISION (trancher avec méthode).
+
+SUJET: ${ctx}
+
+PROTOCOLE DÉCISIONNEL:
+1. REFORMULATION — Reformule la décision en question binaire ou en choix entre 2-3 options explicites.
+2. CRITÈRES — Liste les 4-5 critères qui COMPTENT VRAIMENT (pas 15 critères dilués). Pondère-les.
+3. MATRICE — Évalue chaque option contre chaque critère (fort/moyen/faible).
+4. TRADE-OFFS — Nomme EXPLICITEMENT ce qu'on PERD avec chaque option. Pas de "tout est possible".
+5. RECOMMANDATION — Une seule. Claire. Avec la raison principale en 1 phrase.
+6. RÉVERSIBILITÉ — Est-ce réversible? Si oui: décide vite, ajuste après. Si non: quel test AVANT de s'engager?
+
+RÈGLES:
+- Tu DOIS trancher. "Ça dépend" n'est pas une réponse acceptable.
+- Si l'information manque pour décider, identifie QUELLE information il faut aller chercher et COMMENT.
+- Pas de recommandation tiède du type "les deux options ont du mérite". Prends position.
+- Déclare ton niveau de confiance: Haute (>80%), Moyenne (50-80%), ou Basse (<50%).
+
+FORMAT: 6 sections numérotées. La recommandation finale doit tenir en 1 phrase assertive.` },
+
+  { id: "crise", label: "Crise", icon: Zap, bg: "bg-orange-100", text: "text-orange-600",
+    prompt: (ctx: string) => `Tu es en mode GESTION DE CRISE (72h — actions immédiates).
+
+SUJET: ${ctx}
+
+PROTOCOLE D'URGENCE:
+1. TRIAGE (0-4h) — Qu'est-ce qui BRÛLE maintenant? Sépare l'urgent de l'important. Identifie les 2-3 actions qui STOPPENT l'hémorragie immédiatement.
+2. CONTAINMENT (4-24h) — Que faire pour EMPÊCHER que ça empire? Communication, isolation du problème, plan B activé.
+3. RÉSOLUTION (24-72h) — Plan d'action séquencé. Qui fait quoi, dans quel ordre, avec quelles ressources DISPONIBLES (pas idéales, disponibles).
+4. POST-MORTEM — Quand la crise sera passée: quelle SEULE chose mettre en place pour que ça ne se reproduise PAS?
+
+RÈGLES:
+- Mode PRAGMATISME ABSOLU. Pas de solution parfaite, juste la moins mauvaise option MAINTENANT.
+- Chaque action doit avoir un RESPONSABLE et un DÉLAI. Pas de "il faudrait" — "QUI fait QUOI pour QUAND".
+- Ignore les considérations long-terme. On survit d'abord, on optimise après.
+- Si la crise n'est PAS réelle (juste du stress), dis-le. Pas tout est une crise.
+
+FORMAT: 4 sections avec actions CONCRÈTES. Chaque action = verbe d'action + responsable + deadline.` },
+
+  { id: "deep", label: "Deep", icon: Brain, bg: "bg-indigo-100", text: "text-indigo-600",
+    prompt: (ctx: string) => `Tu es en mode RÉFLEXION SYSTÉMIQUE (pensée multi-niveaux).
+
+SUJET: ${ctx}
+
+CADRE DE PENSÉE EN PROFONDEUR:
+1. NIVEAU SURFACE — Ce qui est visible et évident. Les symptômes.
+2. NIVEAU STRUCTURE — Les systèmes, processus et incitations qui PRODUISENT ces symptômes. Pourquoi le problème existe-t-il structurellement?
+3. NIVEAU MENTAL — Les croyances, modèles mentaux et paradigmes qui maintiennent la structure en place. Qu'est-ce qu'on tient pour acquis sans le questionner?
+4. EFFETS DE 2e ET 3e ORDRE — Si on agit au niveau surface: quels effets en cascade? Si on agit au niveau structure: quoi d'autre est affecté?
+5. POINTS DE LEVIER — Où intervenir pour un maximum d'effet avec un minimum d'effort? (Les points de levier sont souvent contre-intuitifs.)
+
+RÈGLES:
+- Ne reste PAS au niveau surface. L'analyse évidente n'a aucune valeur. Creuse.
+- Cherche les BOUCLES DE RÉTROACTION: qu'est-ce qui s'auto-renforce? Qu'est-ce qui s'auto-corrige?
+- Identifie les PARADOXES: où deux vérités apparemment contradictoires coexistent?
+- Si tu écris quelque chose que tout le monde sait déjà, SUPPRIME-LE et va plus profond.
+
+FORMAT: 5 niveaux progressifs. Chaque niveau ajoute une couche de profondeur. Termine par "INSIGHT CLÉ" — la chose non-évidente la plus importante.` },
 ] as const;

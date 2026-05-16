@@ -5,7 +5,7 @@
  * Patterns portés depuis les simulations (FocusDiscussionView, LiveReflexionView, etc.)
  */
 
-import { useState, useEffect, createContext, useContext } from "react";
+import { useState, useEffect, useRef, createContext, useContext } from "react";
 import {
   Pin, Search, Swords, Pencil, RotateCcw, Layers,
   CheckCircle2, AlertTriangle, TrendingUp, Lightbulb,
@@ -33,7 +33,7 @@ export const BlockDisplayContext = createContext({ compact: false });
 
 // ═══ Bot Accent Borders (B.9 — pattern BOT_COLORS from sim-data.ts) ═══
 
-const BOT_ACCENT_BORDERS: Record<string, string> = {
+export const BOT_ACCENT_BORDERS: Record<string, string> = {
   BCO: "border-l-blue-400", CEOB: "border-l-blue-400",
   BCT: "border-l-violet-400", CTOB: "border-l-violet-400",
   BCF: "border-l-emerald-400", CFOB: "border-l-emerald-400",
@@ -282,12 +282,12 @@ function BlockWrapper({ block, onAction, label, labelColor, children }: BlockRen
         {block.source && (
           <div className="flex items-center gap-1 shrink-0">
             <BotAvatar code={block.source} size="sm" />
-            <span className="text-[9px] text-gray-400 font-medium">{BOT_NAME[block.source] || block.source}</span>
+            <span className="text-[10px] text-gray-400 font-medium">{BOT_NAME[block.source] || block.source}</span>
           </div>
         )}
         {/* S2.2.3: Confidence badge */}
         <span className={cn(
-          "text-[9px] px-1.5 py-0.5 rounded-full font-bold",
+          "text-[10px] px-1.5 py-0.5 rounded-full font-bold",
           block.confidence >= 0.8 ? "bg-emerald-100 text-emerald-700" :
           block.confidence >= 0.5 ? "bg-amber-100 text-amber-700" :
           "bg-red-100 text-red-700"
@@ -299,7 +299,7 @@ function BlockWrapper({ block, onAction, label, labelColor, children }: BlockRen
         <button
           onClick={() => onAction("edit", block.id)}
           className={cn(
-            "flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-medium",
+            "flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium",
             "border border-blue-200 bg-blue-50 text-blue-600 cursor-pointer",
             "transition-opacity duration-150",
             isHoverEdit ? "opacity-100" : "opacity-0"
@@ -307,7 +307,7 @@ function BlockWrapper({ block, onAction, label, labelColor, children }: BlockRen
         >
           <Pencil className="h-2.5 w-2.5" /> Modifier
         </button>
-        <span className="text-[9px] text-gray-300">{new Date(block.timestamp).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })}</span>
+        <span className="text-[10px] text-gray-300">{new Date(block.timestamp).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })}</span>
       </div>
       {children}
       {/* Compact mode (discussion): footer leger — SAUF pour rapport qui garde les boutons complets */}
@@ -2588,62 +2588,92 @@ const BLOCK_RENDERERS: Record<WorkspaceBlockType, React.FC<BlockRendererProps>> 
   docforge_tableur: BudgetRenderer,
 };
 
-// ═══ ExpertBlockWrapper — enhanced display for expert consultation blocks (sourceType=chat) ═══
+// ═══ ExpertBlockWrapper — enhanced display with Zoom Semantique (compact/expand toggle) ═══
+// CEO Review D4: useState local per block. Compact = 1 line + 80 chars summary. Expanded = full content + actions.
 
 function ExpertBlockWrapper({ block, onAction, children }: BlockRendererProps & { children: React.ReactNode }) {
   const [appeared, setAppeared] = useState(false);
+  const [expanded, setExpanded] = useState(true); // New blocks start expanded
+  const autoCollapseRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     const t = setTimeout(() => setAppeared(true), 80);
     return () => clearTimeout(t);
   }, []);
 
+  // Auto-collapse after 5 seconds (new blocks appear expanded briefly then collapse)
+  useEffect(() => {
+    autoCollapseRef.current = setTimeout(() => setExpanded(false), 5000);
+    return () => { if (autoCollapseRef.current) clearTimeout(autoCollapseRef.current); };
+  }, []);
+
   const accentBorder = block.source && BOT_ACCENT_BORDERS[block.source] ? BOT_ACCENT_BORDERS[block.source] : "border-l-gray-400";
+
+  // Compact summary: first 80 chars of block summary
+  const compactSummary = (block.summary || "").replace(/\n/g, " ").slice(0, 80) + ((block.summary || "").length > 80 ? "..." : "");
 
   return (
     <div
       className={cn(
-        "group/edit rounded-xl border bg-white p-5 shadow-sm transition-all duration-300",
+        "group/edit rounded-xl border bg-white shadow-sm transition-all duration-300",
         "border-gray-200 hover:shadow-md",
         "hover:ring-1 hover:ring-violet-200 hover:border-violet-200",
         appeared ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3",
         "border-l-[4px]", accentBorder
       )}
     >
-      {/* Expert header — large avatar + bold name */}
-      <div className="flex items-center gap-3 mb-4">
+      {/* Clickable header — always visible (compact or expanded) */}
+      <div
+        className="flex items-center gap-3 p-4 cursor-pointer select-none"
+        onClick={() => { setExpanded(!expanded); if (autoCollapseRef.current) clearTimeout(autoCollapseRef.current); }}
+      >
         <BotAvatar code={block.source} size="lg" />
         <div className="flex-1 min-w-0">
           <h3 className="text-base font-bold text-gray-900">{BOT_NAME[block.source] || block.source}</h3>
-          <span className="text-[10px] text-gray-400 font-medium">Perspective expert</span>
+          {!expanded && (
+            <p className="text-xs text-gray-500 truncate mt-0.5">{compactSummary}</p>
+          )}
+          {expanded && (
+            <span className="text-[10px] text-gray-400 font-medium">Perspective expert</span>
+          )}
         </div>
-        <span className="text-[9px] text-gray-300">{new Date(block.timestamp).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })}</span>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-[10px] text-gray-300">{new Date(block.timestamp).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })}</span>
+          <ChevronDown className={cn("h-4 w-4 text-gray-400 transition-transform duration-300", expanded && "rotate-180")} />
+        </div>
       </div>
 
-      {/* Content — 14px readable text */}
-      <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
-        {children}
-      </div>
+      {/* Expandable content — CSS transition for smooth open/close */}
+      <div className={cn(
+        "overflow-hidden transition-all duration-300 ease-in-out",
+        expanded ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"
+      )}>
+        {/* Content — 14px readable text */}
+        <div className="px-4 pb-2 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+          {children}
+        </div>
 
-      {/* Expert actions: Relancer + Approfondir (routes to workspace, NOT discussion) */}
-      <div className="pt-3 border-t border-gray-100 mt-4 flex flex-wrap gap-2">
-        <button
-          onClick={() => onAction("rework", block.id)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors cursor-pointer border-violet-200 text-violet-700 hover:bg-violet-50"
-        >
-          <RotateCcw className="h-3.5 w-3.5" /> Relancer
-        </button>
-        <button
-          onClick={() => onAction("deepen", block.id)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors cursor-pointer border-blue-200 text-blue-700 hover:bg-blue-50"
-        >
-          <Search className="h-3.5 w-3.5" /> Approfondir
-        </button>
-        <button
-          onClick={() => onAction("challenge", block.id)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors cursor-pointer border-amber-200 text-amber-700 hover:bg-amber-50"
-        >
-          <Swords className="h-3.5 w-3.5" /> Challenger
-        </button>
+        {/* Expert actions: Relancer + Approfondir + Challenger */}
+        <div className="px-4 pb-4 pt-3 border-t border-gray-100 mt-2 flex flex-wrap gap-2">
+          <button
+            onClick={(e) => { e.stopPropagation(); onAction("rework", block.id); }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors cursor-pointer border-violet-200 text-violet-700 hover:bg-violet-50"
+          >
+            <RotateCcw className="h-3.5 w-3.5" /> Relancer
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onAction("deepen", block.id); }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors cursor-pointer border-blue-200 text-blue-700 hover:bg-blue-50"
+          >
+            <Search className="h-3.5 w-3.5" /> Approfondir
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onAction("challenge", block.id); }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors cursor-pointer border-amber-200 text-amber-700 hover:bg-amber-50"
+          >
+            <Swords className="h-3.5 w-3.5" /> Challenger
+          </button>
+        </div>
       </div>
     </div>
   );

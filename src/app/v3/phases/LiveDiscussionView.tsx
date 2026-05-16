@@ -1139,18 +1139,34 @@ function DeepSearchPanel({ activeBotCode, currentCredoLetter, addWorkspaceBlock,
   );
 }
 
-// ═══ W.1: buildExpertContext — resume des blocs experts pour injection scaffold ═══
+// ═══ W.1: buildExpertContext — percolation optimisee (max 2 phrases/expert, cap 1500 chars) ═══
 
 const MAX_EXPERT_CTX = 1500;
 
+/** Truncate at the last complete sentence within maxLen */
+function truncateAtSentence(text: string, maxLen: number): string {
+  if (text.length <= maxLen) return text;
+  const truncated = text.slice(0, maxLen);
+  const lastPeriod = Math.max(truncated.lastIndexOf("."), truncated.lastIndexOf("!"), truncated.lastIndexOf("?"));
+  return lastPeriod > maxLen * 0.4 ? truncated.slice(0, lastPeriod + 1) : truncated + "...";
+}
+
+/** Extract max 2 meaningful sentences from expert content */
+function extractExpertEssence(summary: string): string {
+  const sentences = summary.replace(/\n+/g, " ").split(/(?<=[.!?])\s+/).filter(s => s.length > 15);
+  const top2 = sentences.slice(0, 2).join(" ");
+  return truncateAtSentence(top2, 200);
+}
+
 export function buildExpertContext(blocks: import("../core/types").WorkspaceBlock[], primaryBot: string): string | undefined {
-  const expertBlocks = blocks.filter(b => b.source && b.source !== primaryBot);
+  const expertBlocks = blocks.filter(b => b.source && b.source !== primaryBot && b.summary);
   if (expertBlocks.length === 0) return undefined;
 
-  let result = "[PERSPECTIVES EXPERTS WORKSPACE]\n";
+  let result = "[PERSPECTIVES EXPERTS]\n";
   for (const b of expertBlocks) {
     const botName = BOT_NAME[b.source || ""] || b.source || "Expert";
-    const line = `- **${botName}** (${b.type}): ${(b.summary || "").substring(0, 250)}\n`;
+    const essence = extractExpertEssence(b.summary || "");
+    const line = `${botName}: ${essence}\n`;
     if (result.length + line.length > MAX_EXPERT_CTX) break;
     result += line;
   }
@@ -1264,89 +1280,102 @@ function SuggestedExpertsPanel({ messages, activeBotCode, workspaceBlocks, addWo
   // Suggested bots from team_proposal (filter out primary bot)
   const suggestedBots = latestTeamProposal?.bots?.filter((b: any) => b.code !== activeBotCode) || [];
 
+  // "Consulter tous" — fan-out: forEach experts → handleAddExpert (CEO Review D5)
+  const handleConsultAll = useCallback(() => {
+    const botsToConsult = suggestedBots.filter((bot: any) => !activeBotSources.has(bot.code) && !expertLoadingBots.has(bot.code));
+    for (const bot of botsToConsult) {
+      handleAddExpert(bot.code);
+    }
+  }, [suggestedBots, activeBotSources, expertLoadingBots, handleAddExpert]);
+
   return (
     <div className="mt-3 space-y-3">
-      {/* Experts panel — Tour de Table + "+" button */}
+      {/* Tour de Table — grid cards + "+" + "Consulter tous" */}
       <div className="rounded-xl border border-violet-200 bg-violet-50/50 p-4 space-y-3">
         <div className="flex items-center justify-between">
           <h4 className="text-[10px] font-bold uppercase tracking-wider text-violet-700">
-            Experts
+            Tour de Table
           </h4>
-          {/* "+" button — add any expert to workspace */}
-          <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={() => setShowAddDropdown(!showAddDropdown)}
-              className="w-7 h-7 rounded-full bg-violet-100 hover:bg-violet-200 flex items-center justify-center transition-colors cursor-pointer"
-              title="Consulter un expert"
-            >
-              <span className="text-violet-700 font-bold text-sm">+</span>
-            </button>
-            {showAddDropdown && (
-              <div className="absolute top-full right-0 mt-1.5 w-56 bg-white rounded-xl border border-gray-200 shadow-lg py-1 z-30 max-h-[320px] overflow-auto">
-                <div className="px-3 py-1.5 text-[9px] font-bold text-gray-400 uppercase tracking-wider">Consulter un expert</div>
-                {ALL_EXPERT_CODES.map((code) => {
-                  const isDone = activeBotSources.has(code);
-                  const isLoading = expertLoadingBots.has(code);
-                  return (
-                    <button
-                      key={code}
-                      onClick={() => handleAddExpert(code)}
-                      disabled={isLoading}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 transition-colors cursor-pointer text-left"
-                    >
-                      <BotAvatar code={code} size="md" />
-                      <div className="flex-1 min-w-0">
-                        <span className="text-xs font-bold text-gray-800 block truncate">{BOT_NAME[code] || code}</span>
-                      </div>
-                      {isLoading && <Loader2 className="h-3 w-3 animate-spin text-gray-400" />}
-                      {isDone && <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0" />}
-                    </button>
-                  );
-                })}
-              </div>
+          <div className="flex items-center gap-2">
+            {/* "Consulter tous" button — fan-out (CEO Review D5) */}
+            {suggestedBots.length > 1 && suggestedBots.some((b: any) => !activeBotSources.has(b.code)) && (
+              <button
+                onClick={handleConsultAll}
+                className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-violet-500 text-white hover:bg-violet-600 transition-colors cursor-pointer"
+              >
+                Consulter tous
+              </button>
             )}
+            {/* "+" button — add any expert to workspace */}
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setShowAddDropdown(!showAddDropdown)}
+                className="w-7 h-7 rounded-full bg-violet-100 hover:bg-violet-200 flex items-center justify-center transition-colors cursor-pointer"
+                title="Ajouter un expert"
+              >
+                <span className="text-violet-700 font-bold text-sm">+</span>
+              </button>
+              {showAddDropdown && (
+                <div className="absolute top-full right-0 mt-1.5 w-56 bg-white rounded-xl border border-gray-200 shadow-lg py-1 z-30 max-h-[320px] overflow-auto">
+                  <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Consulter un expert</div>
+                  {ALL_EXPERT_CODES.map((code) => {
+                    const isDone = activeBotSources.has(code);
+                    const isLoading = expertLoadingBots.has(code);
+                    return (
+                      <button
+                        key={code}
+                        onClick={() => handleAddExpert(code)}
+                        disabled={isLoading}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 transition-colors cursor-pointer text-left"
+                      >
+                        <BotAvatar code={code} size="md" />
+                        <div className="flex-1 min-w-0">
+                          <span className="text-xs font-bold text-gray-800 block truncate">{BOT_NAME[code] || code}</span>
+                        </div>
+                        {isLoading && <Loader2 className="h-3 w-3 animate-spin text-gray-400" />}
+                        {isDone && <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Team proposal suggested bots — Tour de Table cards */}
+        {/* Team proposal suggested bots — Tour de Table grid cards */}
         {suggestedBots.length > 0 ? (
-          <div className="space-y-2.5">
+          <div className={cn("grid gap-3", suggestedBots.length >= 3 ? "grid-cols-3" : "grid-cols-2")}>
             {suggestedBots.map((bot: any) => {
               const isLoading = expertLoadingBots.has(bot.code);
               const isDone = activeBotSources.has(bot.code);
               return (
                 <div key={bot.code} className={cn(
-                  "flex items-center gap-3 px-3 py-3 rounded-lg border bg-white border-l-[4px]",
+                  "flex flex-col items-center gap-2 p-3 rounded-xl border bg-white",
+                  "border-l-[4px]",
                   BOT_ACCENT[bot.code] || "border-l-gray-400",
                 )}>
                   <BotAvatar code={bot.code} size="lg" />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-sm font-bold text-gray-900">{BOT_NAME[bot.code] || bot.code}</span>
-                      <span className={cn("text-[8px] px-1.5 py-0.5 rounded-full font-bold uppercase",
-                        bot.role_tag === "ANGLE MORT" ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"
-                      )}>
-                        {bot.role_tag}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{bot.raison}</p>
+                  <div className="text-center w-full">
+                    <span className="text-sm font-bold text-gray-900 block truncate">{BOT_NAME[bot.code] || bot.code}</span>
+                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-2 leading-tight">{bot.raison}</p>
                   </div>
                   <button
                     onClick={() => handleAddExpert(bot.code)}
                     disabled={isLoading}
                     className={cn(
-                      "shrink-0 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer",
+                      "w-full text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer mt-auto",
                       isDone ? "bg-emerald-100 text-emerald-700" :
                       isLoading ? "bg-gray-100 text-gray-400" :
-                      "bg-violet-100 text-violet-700 hover:bg-violet-200"
+                      "bg-violet-500 text-white hover:bg-violet-600"
                     )}
                   >
                     {isLoading ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <Loader2 className="h-3.5 w-3.5 animate-spin mx-auto" />
                     ) : isDone ? (
-                      <span className="flex items-center gap-1"><Check className="h-3.5 w-3.5" /> Actif</span>
+                      <span className="flex items-center justify-center gap-1"><Check className="h-3.5 w-3.5" /> Actif</span>
                     ) : (
-                      "+ Consulter"
+                      "Consulter"
                     )}
                   </button>
                 </div>
@@ -1355,7 +1384,7 @@ function SuggestedExpertsPanel({ messages, activeBotCode, workspaceBlocks, addWo
           </div>
         ) : hasFirstExchange ? (
           <p className="text-xs text-gray-500">
-            Cliquez <span className="font-bold text-violet-600">+</span> pour consulter un expert du GhostX Team.
+            Cliquez <span className="font-bold text-violet-600">+</span> pour consulter un expert du Brain Team.
           </p>
         ) : (
           <p className="text-[10px] text-gray-500">
@@ -1374,10 +1403,10 @@ function SuggestedExpertsPanel({ messages, activeBotCode, workspaceBlocks, addWo
       {/* Active expert bots contributions */}
       {filteredBlocks.length > 0 && (
         <div className="space-y-2">
-          <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 px-1">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 px-1">
             Contributions ({filteredBlocks.length})
           </span>
-          <div className={cn("grid gap-3", isMobile ? "grid-cols-1" : "grid-cols-1")}>
+          <div className="grid gap-3 grid-cols-1">
             {filteredBlocks.map(b => (
               <div key={b.id} className={cn(pulsingBlockId === b.id && "ring-2 ring-blue-400 rounded-xl")}>
                 <BlockRenderer block={b} onAction={onBlockAction} animated={false} />

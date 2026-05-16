@@ -72,33 +72,69 @@ function detectCentralTopic(messages: ChatMessage[]): string {
 }
 
 /**
- * Build a structured digest of the conversation.
- * Extracts the last 6-8 substantive exchanges, truncated for compactness.
- * User messages get more space (source of truth), bot messages are compressed.
+ * Extract structured context from conversation: tension + constraints + lastDirection.
+ * CEO Review D3: Max 500 chars. No raw dump. Targeted extraction only.
  */
-function buildConversationDigest(messages: ChatMessage[]): string {
-  const substantive = messages.filter(m => isSubstantive(m)).slice(-8);
-  if (substantive.length === 0) return "";
+function extractStructuredContext(messages: ChatMessage[]): { tension: string; constraints: string[]; lastDirection: string } {
+  const userMsgs = messages.filter(m => m.role === "user" && isSubstantive(m)).slice(-5);
+  const botMsgs = messages.filter(m => m.role === "assistant" && isSubstantive(m)).slice(-3);
 
-  const lines: string[] = [];
-  for (const msg of substantive) {
-    const role = msg.role === "user" ? "Utilisateur" : "Bot";
-    // User messages: up to 250 chars (important context)
-    // Bot messages: up to 150 chars (compress verbose responses)
-    const maxLen = msg.role === "user" ? 250 : 150;
-    const content = msg.content.length > maxLen
-      ? msg.content.slice(0, maxLen - 3) + "..."
-      : msg.content;
-    // Clean up newlines for compact digest
-    lines.push(`- ${role}: ${content.replace(/\n+/g, " ").trim()}`);
+  // 1. Tension = the core problem/question (longest recent user message)
+  let tension = "";
+  if (userMsgs.length > 0) {
+    const best = [...userMsgs].sort((a, b) => b.content.length - a.content.length)[0];
+    tension = best.content.length > 150 ? best.content.slice(0, 147) + "..." : best.content;
   }
-  return lines.join("\n");
+
+  // 2. Constraints — scan for money/dates/numbers/obligations
+  const constraints: string[] = [];
+  const constraintPatterns = [
+    /\d+[\s]?(?:k|\$|€|dollars?|budget)/gi,
+    /(?:deadline|avant le|d'ici|pour le)\s+[\w\s\d]+/gi,
+    /\d+\s*(?:personnes?|employes?|gens|manufacturiers?|entreprises?|clients?)/gi,
+    /(?:il faut|on doit|objectif|contrainte|limite|maximum|minimum)[^.]{5,60}/gi,
+  ];
+  const allText = userMsgs.map(m => m.content).join(" ");
+  for (const pat of constraintPatterns) {
+    const matches = allText.match(pat);
+    if (matches) {
+      for (const m of matches.slice(0, 2)) {
+        const clean = m.trim().replace(/\s+/g, " ");
+        if (clean.length > 5 && !constraints.includes(clean)) constraints.push(clean);
+      }
+    }
+  }
+
+  // 3. Last direction — last bot's key sentence (first substantive sentence)
+  let lastDirection = "";
+  if (botMsgs.length > 0) {
+    const lastBot = botMsgs[botMsgs.length - 1].content;
+    const sentences = lastBot.split(/[.!?]\s+/).filter(s => s.length > 20);
+    lastDirection = sentences[0] ? (sentences[0].length > 120 ? sentences[0].slice(0, 117) + "..." : sentences[0]) : "";
+  }
+
+  return { tension, constraints: constraints.slice(0, 4), lastDirection };
+}
+
+/** Build compact digest string from structured extraction. Max 500 chars. */
+function buildConversationDigest(messages: ChatMessage[]): string {
+  const { tension, constraints, lastDirection } = extractStructuredContext(messages);
+  if (!tension && constraints.length === 0) return "";
+
+  const parts: string[] = [];
+  if (tension) parts.push(`TENSION: ${tension}`);
+  if (constraints.length > 0) parts.push(`CONTRAINTES: ${constraints.join("; ")}`);
+  if (lastDirection) parts.push(`DIRECTION: ${lastDirection}`);
+
+  let result = parts.join("\n");
+  if (result.length > 500) result = result.slice(0, 497) + "...";
+  return result;
 }
 
 /**
- * Build a rich, context-aware prompt for a reflexion mode.
- * Wraps the mode's simple instruction with full conversation context.
- * This is the core intelligence: the bot receives the FULL picture.
+ * Build a structured, context-aware prompt for a reflexion mode.
+ * CEO Review D3: Extraction structured (tension + contraintes), max 500 chars injected.
+ * No raw message dump — only signal, no noise.
  */
 function buildIntelligentPrompt(
   promptFn: (ctx: string) => string,
@@ -116,31 +152,26 @@ function buildIntelligentPrompt(
   // 2. Get the mode's base instruction with the smart topic
   const baseInstruction = promptFn(effectiveTopic);
 
-  // 3. Build the conversation digest
+  // 3. Build structured digest (max 500 chars — tension + constraints + direction)
   const digest = buildConversationDigest(messages);
 
   // 4. If no digest, just return the base instruction (first message scenario)
   if (!digest) return baseInstruction;
 
-  // 5. Assemble the intelligent prompt
-  return `CONTEXTE DE NOTRE DISCUSSION:
-${digest}
+  // 5. Assemble — structured context prepended, not raw dump
+  return `${digest}
 
-SUJET CENTRAL: ${effectiveTopic}
-
-${baseInstruction}
-
-Base ta reflexion sur le contexte complet ci-dessus. Tiens compte de ce qui a ete dit, des preoccupations soulevees, et des pistes deja explorees.`;
+${baseInstruction}`;
 }
 
 /**
  * Enrich any prompt (from TechniquePanel etc.) with conversation context.
- * Lighter version — just prepends the digest without restructuring.
+ * Lighter version — prepends structured extraction (max 500 chars).
  */
 function enrichPromptWithContext(prompt: string, messages: ChatMessage[]): string {
   const digest = buildConversationDigest(messages);
   if (!digest) return prompt;
-  return `CONTEXTE DE NOTRE DISCUSSION:\n${digest}\n\n${prompt}\n\nTiens compte du contexte de la discussion ci-dessus.`;
+  return `${digest}\n\n${prompt}`;
 }
 
 // ═══ Props ═══
@@ -535,7 +566,40 @@ export function WorkspaceReflexionHub({
   );
 }
 
-// ═══ ActiveResponseView — Affiche la reponse du bot avec animations ═══
+// ═══ ActiveResponseView — Rendus visuels par type de mode reflexion ═══
+
+/** Parse debate-style content into Thèse/Antithèse/Synthèse sections */
+function parseDebatSections(text: string): { these: string; antithese: string; synthese: string } | null {
+  const theseMatch = text.match(/(?:TH[ÈE]SE|POUR|ARGUMENTS?\s+POUR)[^:]*[:]\s*([\s\S]*?)(?=(?:ANTITH[ÈE]SE|CONTRE|ARGUMENTS?\s+CONTRE|TESTS?\s+DE\s+FALSIFICATION))/i);
+  const antiMatch = text.match(/(?:ANTITH[ÈE]SE|CONTRE|ARGUMENTS?\s+CONTRE|TESTS?\s+DE\s+FALSIFICATION)[^:]*[:]\s*([\s\S]*?)(?=(?:SYNTH[ÈE]SE|VERDICT|CONCLUSION))/i);
+  const synthMatch = text.match(/(?:SYNTH[ÈE]SE|VERDICT|CONCLUSION)[^:]*[:]\s*([\s\S]*?)$/i);
+  if (!theseMatch && !antiMatch) return null;
+  return {
+    these: (theseMatch?.[1] || "").trim(),
+    antithese: (antiMatch?.[1] || "").trim(),
+    synthese: (synthMatch?.[1] || "").trim(),
+  };
+}
+
+/** Parse deep mode into progressive levels */
+function parseDeepLevels(text: string): { title: string; body: string }[] {
+  const levels: { title: string; body: string }[] = [];
+  const patterns = [/NIVEAU\s+(?:SURFACE|1)[^:]*[:]\s*/i, /NIVEAU\s+(?:STRUCTURE|2)[^:]*[:]\s*/i, /NIVEAU\s+(?:MENTAL|3)[^:]*[:]\s*/i, /EFFETS[^:]*[:]\s*/i, /POINTS?\s+DE\s+LEVIER[^:]*[:]\s*/i, /INSIGHT\s+CL[ÉE][^:]*[:]\s*/i];
+  const titles = ["Surface", "Structure", "Mental", "Effets 2e/3e ordre", "Points de levier", "Insight Cle"];
+  for (let i = 0; i < patterns.length; i++) {
+    const startMatch = text.match(patterns[i]);
+    if (!startMatch) continue;
+    const startIdx = (startMatch.index || 0) + startMatch[0].length;
+    const nextPattern = patterns[i + 1];
+    let endIdx = text.length;
+    if (nextPattern) {
+      const nextMatch = text.slice(startIdx).match(nextPattern);
+      if (nextMatch && nextMatch.index !== undefined) endIdx = startIdx + nextMatch.index;
+    }
+    levels.push({ title: titles[i], body: text.slice(startIdx, endIdx).trim() });
+  }
+  return levels;
+}
 
 function ActiveResponseView({ isThinking, response, modeId }: {
   isThinking: boolean;
@@ -550,10 +614,10 @@ function ActiveResponseView({ isThinking, response, modeId }: {
             <Loader2 className="h-4 w-4 text-orange-600 animate-spin" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[11px] font-bold text-orange-700">Reflexion en cours...</p>
+            <p className="text-sm font-bold text-orange-700">Reflexion en cours...</p>
             <div className="flex gap-3 mt-1.5">
               {["Analyse du contexte", "Generation d'insights", "Synthese"].map((step, j) => (
-                <span key={j} className="text-[9px] text-gray-400">{step}</span>
+                <span key={j} className="text-[10px] text-gray-400">{step}</span>
               ))}
             </div>
           </div>
@@ -566,35 +630,134 @@ function ActiveResponseView({ isThinking, response, modeId }: {
     return (
       <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/30 p-6 text-center">
         <Sparkles className="h-6 w-6 text-orange-400 mx-auto mb-2" />
-        <p className="text-[11px] text-gray-500">Les resultats apparaitront ici...</p>
+        <p className="text-sm text-gray-500">Les resultats apparaitront ici...</p>
       </div>
     );
   }
 
-  // Brainstorm mode — sticky notes
+  // ═══ Brainstorm — Sticky notes grid 2 cols, rotation ±1.5deg ═══
   if (modeId === "brainstorm") {
     const sections = parseContentSections(response);
     if (sections.length > 1) {
       const stickyColors = ["bg-yellow-100", "bg-pink-100", "bg-blue-100", "bg-green-100", "bg-purple-100"];
+      // Separate top 3 if last section mentions "top" or "priorit"
+      const top3Idx = sections.findIndex(s => /top\s*3|priorit|class[ée]/i.test(s.title));
+      const ideas = top3Idx > 0 ? sections.slice(0, top3Idx) : sections;
+      const top3 = top3Idx > 0 ? sections.slice(top3Idx) : [];
+
       return (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            {ideas.map((sec, i) => (
+              <div
+                key={i}
+                className={cn(
+                  "p-4 rounded-lg shadow-sm border border-gray-200",
+                  stickyColors[i % stickyColors.length],
+                  "opacity-0 animate-[slideIn_0.4s_ease-out_forwards]"
+                )}
+                style={{
+                  animationDelay: `${i * 150}ms`,
+                  transform: `rotate(${(i % 2 === 0 ? -1.5 : 1.5)}deg)`,
+                }}
+              >
+                {sec.title && (
+                  <p className="text-xs font-bold text-gray-800 mb-1">{sec.title}</p>
+                )}
+                <p className="text-xs text-gray-700 leading-relaxed">{sec.body}</p>
+              </div>
+            ))}
+          </div>
+          {top3.length > 0 && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-4 opacity-0 animate-[slideIn_0.4s_ease-out_forwards]" style={{ animationDelay: `${ideas.length * 150 + 200}ms` }}>
+              <p className="text-xs font-bold text-amber-800 mb-2">TOP 3 PRIORISE</p>
+              {top3.map((sec, i) => (
+                <div key={i} className="mb-2 last:mb-0">
+                  {sec.title && <p className="text-xs font-bold text-gray-800">{sec.title}</p>}
+                  <p className="text-xs text-gray-600 leading-relaxed">{sec.body}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+  }
+
+  // ═══ Debat — These/Antithese/Synthese structured view ═══
+  if (modeId === "debat") {
+    const debat = parseDebatSections(response);
+    if (debat) {
+      return (
+        <div className="space-y-3">
+          {/* These */}
+          <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-4 border-l-[4px] border-l-blue-400 opacity-0 animate-[slideIn_0.4s_ease-out_forwards]">
+            <p className="text-xs font-bold text-blue-800 mb-2 uppercase tracking-wider">These (Pour)</p>
+            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{debat.these}</p>
+          </div>
+          {/* Antithese */}
+          <div className="rounded-xl border border-red-200 bg-red-50/50 p-4 border-l-[4px] border-l-red-400 opacity-0 animate-[slideIn_0.4s_ease-out_forwards]" style={{ animationDelay: "150ms" }}>
+            <p className="text-xs font-bold text-red-800 mb-2 uppercase tracking-wider">Antithese (Tests de falsification)</p>
+            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{debat.antithese}</p>
+          </div>
+          {/* Synthese */}
+          {debat.synthese && (
+            <div className="rounded-xl border border-green-200 bg-green-50/50 p-4 border-l-[4px] border-l-green-500 opacity-0 animate-[slideIn_0.4s_ease-out_forwards]" style={{ animationDelay: "300ms" }}>
+              <p className="text-xs font-bold text-green-800 mb-2 uppercase tracking-wider">Synthese</p>
+              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{debat.synthese}</p>
+            </div>
+          )}
+        </div>
+      );
+    }
+  }
+
+  // ═══ Analyse — Numbered sections with progression badges ═══
+  if (modeId === "analyse") {
+    const sections = parseContentSections(response);
+    if (sections.length > 1) {
+      // Check if last section is a verdict
+      const verdictIdx = sections.findIndex(s => /verdict|conclusion/i.test(s.title));
+      const mainSections = verdictIdx > 0 ? sections.slice(0, verdictIdx) : sections;
+      const verdict = verdictIdx > 0 ? sections[verdictIdx] : null;
+      return (
+        <div className="space-y-3">
+          {mainSections.map((sec, i) => (
+            <div key={i} className="rounded-xl border border-gray-200 bg-white p-4 opacity-0 animate-[slideIn_0.4s_ease-out_forwards]" style={{ animationDelay: `${i * 120}ms` }}>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-bold">{i + 1}</span>
+                {sec.title && <p className="text-xs font-bold text-gray-800">{sec.title}</p>}
+              </div>
+              <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{sec.body}</p>
+            </div>
+          ))}
+          {verdict && (
+            <div className="rounded-xl border-2 border-blue-300 bg-blue-50 p-4 opacity-0 animate-[slideIn_0.4s_ease-out_forwards]" style={{ animationDelay: `${mainSections.length * 120 + 100}ms` }}>
+              <p className="text-xs font-bold text-blue-900 mb-1 uppercase tracking-wider">Verdict</p>
+              <p className="text-sm text-gray-800 leading-relaxed font-medium whitespace-pre-wrap">{verdict.body || verdict.title}</p>
+            </div>
+          )}
+        </div>
+      );
+    }
+  }
+
+  // ═══ Strategie — Timeline vertical 5 levels ═══
+  if (modeId === "strategie") {
+    const sections = parseContentSections(response);
+    if (sections.length > 1) {
+      const colors = ["bg-purple-100 text-purple-700", "bg-indigo-100 text-indigo-700", "bg-blue-100 text-blue-700", "bg-teal-100 text-teal-700", "bg-green-100 text-green-700"];
+      return (
+        <div className="space-y-0 relative">
+          {/* Vertical connector line */}
+          <div className="absolute left-[18px] top-6 bottom-6 w-0.5 bg-gradient-to-b from-purple-300 via-blue-300 to-green-300" />
           {sections.map((sec, i) => (
-            <div
-              key={i}
-              className={cn(
-                "p-4 rounded-lg shadow-sm border border-gray-200",
-                stickyColors[i % stickyColors.length],
-                "opacity-0 animate-[slideIn_0.4s_ease-out_forwards]"
-              )}
-              style={{
-                animationDelay: `${i * 150}ms`,
-                transform: `rotate(${(i % 2 === 0 ? -1.5 : 1.5)}deg)`,
-              }}
-            >
-              {sec.title && (
-                <p className="text-[11px] font-bold text-gray-800 mb-1">{sec.title}</p>
-              )}
-              <p className="text-[10px] text-gray-700 leading-relaxed">{sec.body}</p>
+            <div key={i} className="flex items-start gap-3 pb-4 last:pb-0 opacity-0 animate-[slideIn_0.4s_ease-out_forwards] relative" style={{ animationDelay: `${i * 150}ms` }}>
+              <div className={cn("w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 z-10 shadow-sm", colors[i % colors.length])}>{i + 1}</div>
+              <div className="flex-1 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                {sec.title && <p className="text-xs font-bold text-gray-800 mb-1">{sec.title}</p>}
+                <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{sec.body}</p>
+              </div>
             </div>
           ))}
         </div>
@@ -602,7 +765,7 @@ function ActiveResponseView({ isThinking, response, modeId }: {
     }
   }
 
-  // Innovation mode — score bars
+  // ═══ Innovation — Cards with feasibility gradient bars ═══
   if (modeId === "innovation") {
     const sections = parseContentSections(response);
     if (sections.length > 1) {
@@ -615,14 +778,14 @@ function ActiveResponseView({ isThinking, response, modeId }: {
               style={{ animationDelay: `${i * 120}ms` }}
             >
               {sec.title && (
-                <p className="text-[11px] font-bold text-gray-800 mb-2">{sec.title}</p>
+                <p className="text-xs font-bold text-gray-800 mb-2">{sec.title}</p>
               )}
-              <p className="text-[10px] text-gray-600 leading-relaxed">{sec.body}</p>
-              <div className="mt-2 flex items-center gap-2">
-                <span className="text-[8px] text-gray-400 uppercase tracking-wider">Faisabilite</span>
-                <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{sec.body}</p>
+              <div className="mt-3 flex items-center gap-2">
+                <span className="text-[10px] text-gray-400 uppercase tracking-wider font-medium">Faisabilite</span>
+                <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-pink-400 to-orange-400 rounded-full"
+                    className="h-full bg-gradient-to-r from-pink-400 to-orange-400 rounded-full transition-all"
                     style={{ width: `${55 + (i * 7) % 40}%` }}
                   />
                 </div>
@@ -634,7 +797,86 @@ function ActiveResponseView({ isThinking, response, modeId }: {
     }
   }
 
-  // Default — sections parsed with fade-in
+  // ═══ Decision — Matrix + green recommendation ═══
+  if (modeId === "decision") {
+    const sections = parseContentSections(response);
+    if (sections.length > 1) {
+      // Find recommendation section
+      const recoIdx = sections.findIndex(s => /recommandation|verdict|d[ée]cision/i.test(s.title));
+      const mainSections = recoIdx > 0 ? sections.slice(0, recoIdx) : sections;
+      const reco = recoIdx > 0 ? sections[recoIdx] : null;
+      return (
+        <div className="space-y-3">
+          {mainSections.map((sec, i) => (
+            <div key={i} className="rounded-xl border border-gray-200 bg-white p-4 opacity-0 animate-[slideIn_0.4s_ease-out_forwards]" style={{ animationDelay: `${i * 100}ms` }}>
+              {sec.title && <p className="text-xs font-bold text-gray-800 mb-1">{sec.title}</p>}
+              <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{sec.body}</p>
+            </div>
+          ))}
+          {reco && (
+            <div className="rounded-xl border-2 border-green-300 bg-green-50 p-5 opacity-0 animate-[slideIn_0.4s_ease-out_forwards]" style={{ animationDelay: `${mainSections.length * 100 + 150}ms` }}>
+              <p className="text-xs font-bold text-green-800 mb-2 uppercase tracking-wider">Recommandation</p>
+              <p className="text-base text-green-900 leading-relaxed font-medium whitespace-pre-wrap">{reco.body || reco.title}</p>
+            </div>
+          )}
+        </div>
+      );
+    }
+  }
+
+  // ═══ Crise — Timeline urgence with priority badges ═══
+  if (modeId === "crise") {
+    const sections = parseContentSections(response);
+    if (sections.length > 1) {
+      const urgencyColors = ["bg-red-100 border-red-300 text-red-800", "bg-orange-100 border-orange-300 text-orange-800", "bg-amber-100 border-amber-300 text-amber-800", "bg-yellow-100 border-yellow-300 text-yellow-800"];
+      const badgeColors = ["bg-red-500 text-white", "bg-orange-500 text-white", "bg-amber-500 text-white", "bg-yellow-500 text-gray-800"];
+      const badgeLabels = ["URGENT", "24H", "72H", "POST"];
+      return (
+        <div className="space-y-3">
+          {sections.map((sec, i) => (
+            <div key={i} className={cn("rounded-xl border p-4 opacity-0 animate-[slideIn_0.4s_ease-out_forwards]", urgencyColors[i % urgencyColors.length])} style={{ animationDelay: `${i * 120}ms` }}>
+              <div className="flex items-center gap-2 mb-2">
+                <span className={cn("text-[9px] font-bold px-2 py-0.5 rounded-full", badgeColors[i % badgeColors.length])}>{badgeLabels[i % badgeLabels.length]}</span>
+                {sec.title && <p className="text-xs font-bold">{sec.title}</p>}
+              </div>
+              <p className="text-sm leading-relaxed whitespace-pre-wrap">{sec.body}</p>
+            </div>
+          ))}
+        </div>
+      );
+    }
+  }
+
+  // ═══ Deep — Progressive indentation levels + "Insight Cle" final ═══
+  if (modeId === "deep") {
+    const levels = parseDeepLevels(response);
+    if (levels.length > 1) {
+      return (
+        <div className="space-y-2">
+          {levels.map((lvl, i) => {
+            const isInsight = /insight/i.test(lvl.title);
+            return (
+              <div
+                key={i}
+                className={cn(
+                  "rounded-xl border p-4 opacity-0 animate-[slideIn_0.4s_ease-out_forwards]",
+                  isInsight
+                    ? "border-2 border-indigo-300 bg-indigo-50"
+                    : "border-gray-200 bg-white"
+                )}
+                style={{ animationDelay: `${i * 150}ms`, marginLeft: `${Math.min(i * 12, 48)}px` }}
+              >
+                <p className={cn("text-xs font-bold mb-1 uppercase tracking-wider", isInsight ? "text-indigo-800" : "text-indigo-600")}>{lvl.title}</p>
+                <p className={cn("text-sm leading-relaxed whitespace-pre-wrap", isInsight ? "text-indigo-900 font-medium" : "text-gray-700")}>{lvl.body}</p>
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+  }
+
+  // ═══ Default — sections parsed with fade-in ═══
   const sections = parseContentSections(response);
   if (sections.length > 1) {
     return (
@@ -646,9 +888,9 @@ function ActiveResponseView({ isThinking, response, modeId }: {
             style={{ animationDelay: `${i * 120}ms` }}
           >
             {sec.title && (
-              <p className="text-[11px] font-bold text-gray-800 mb-1">{sec.title}</p>
+              <p className="text-xs font-bold text-gray-800 mb-1">{sec.title}</p>
             )}
-            <p className="text-[10px] text-gray-600 leading-relaxed">{sec.body}</p>
+            <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{sec.body}</p>
           </div>
         ))}
       </div>
