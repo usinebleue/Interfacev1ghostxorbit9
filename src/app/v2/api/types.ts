@@ -33,6 +33,8 @@ export interface ChatRequest {
   active_sub_section?: string;
   // Mega Plan V5 — workspace phase active
   workspace_phase?: string;
+  // W.1 — Contexte experts workspace pour enrichir le bot primaire
+  workspace_expert_context?: string;
   // S102 — conversation-level message count (pas session-wide)
   conversation_msg_count?: number;
 }

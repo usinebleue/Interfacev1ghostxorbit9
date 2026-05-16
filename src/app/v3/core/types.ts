@@ -140,5 +140,27 @@ export interface WorkspaceBlock {
   replace_block_id?: string;
 }
 
+// ═══ Workspace Tasks — taches assignables aux bots/humains ═══
+export interface WorkspaceTask {
+  id: string;
+  titre: string;
+  description?: string;
+  priorite: "haute" | "moyenne" | "basse";
+  assignedBot?: string;
+  assignedHuman?: string;
+  status: "todo" | "en_cours" | "fait";
+  echeance?: string;
+  createdFrom?: string; // block ID source
+  createdAt: number;
+}
+
+// ═══ W.0 — Sous-sections CREDO pour le workspace ═══
+export interface CredoSubSection {
+  id: string;
+  label: string;
+  iconName: string;  // lucide icon name (resolved in phase-config)
+  description: string;
+}
+
 // ═══ Blueprint header views ═══
 export type HeaderView = "blueprint" | "ca" | "comites" | "personnel" | "bot";

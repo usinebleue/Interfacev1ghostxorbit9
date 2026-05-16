@@ -17,7 +17,7 @@ import {
   Hammer, LayoutGrid, FolderOpen, Package,
   Rocket, Users, Activity, FileCheck, BarChart3,
   BookOpen, Archive,
-  Eye, Shield,
+  Eye, Shield, AlertTriangle, Wand2, CheckCircle, ListChecks,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -184,6 +184,45 @@ export const PHASE_CONFIGS: Record<string, PhaseConfig> = {
     nextPhase: null,
     nextPhaseLabel: "Retour au Cockpit",
   },
+};
+
+// ═══ W.0 — Sous-sections dynamiques par etape CREDO ═══
+
+export interface CredoSubSectionConfig {
+  id: string;
+  label: string;
+  icon: LucideIcon;
+  description: string;
+}
+
+export const CREDO_SUB_SECTIONS: Record<string, CredoSubSectionConfig[]> = {
+  "credo-c-comprendre": [
+    { id: "contexte", label: "Contexte", icon: FileText, description: "Resume de la situation" },
+    { id: "enjeux", label: "Enjeux", icon: AlertTriangle, description: "Points de tension identifies" },
+    { id: "experts", label: "Experts", icon: Users, description: "Perspectives des bots experts" },
+  ],
+  "credo-r-rechercher": [
+    { id: "angles-morts", label: "Angles morts", icon: Eye, description: "Ce qui manque dans l'analyse" },
+    { id: "modes-reflexion", label: "Modes reflexion", icon: Brain, description: "Debat, Brainstorm, Crise, etc." },
+    { id: "techniques", label: "Techniques", icon: Wand2, description: "SCAMPER, 5 Pourquoi, 6 Chapeaux" },
+    { id: "deep-search", label: "Deep Search", icon: Search, description: "Recherche approfondie" },
+    { id: "experts", label: "Experts", icon: Users, description: "Perspectives des bots experts" },
+  ],
+  "credo-e-exposer": [
+    { id: "solutions", label: "Solutions", icon: Lightbulb, description: "Options identifiees" },
+    { id: "comparaison", label: "Comparaison", icon: BarChart3, description: "Avantages/inconvenients" },
+    { id: "experts", label: "Experts", icon: Users, description: "Perspectives des bots experts" },
+  ],
+  "credo-d-demontrer": [
+    { id: "ressources", label: "Ressources", icon: Package, description: "Ce qu'on a et ce qui manque" },
+    { id: "plan-action", label: "Plan d'action", icon: ListChecks, description: "Etapes concretes" },
+    { id: "experts", label: "Experts", icon: Users, description: "Perspectives des bots experts" },
+  ],
+  "credo-o-objectif": [
+    { id: "plan-match", label: "Plan de match", icon: Target, description: "Plan final complet" },
+    { id: "decisions", label: "Decisions", icon: CheckCircle, description: "Trail des decisions prises" },
+    { id: "experts", label: "Experts", icon: Users, description: "Synthese des contributions" },
+  ],
 };
 
 /** Get step IDs for a phase (used by useWorkspaceCapture) */

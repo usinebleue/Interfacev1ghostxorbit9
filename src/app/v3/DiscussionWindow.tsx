@@ -39,6 +39,7 @@ import type { PhaseKey } from "./core/types";
 import { detectPhaseFromMessage } from "./core/phase-router";
 // getContextualActions retire — remplace par footer 2 niveaux (Bible Live 4.14)
 import { getPhaseSteps } from "./phases/phase-config";
+import { buildExpertContext } from "./phases/LiveDiscussionView";
 import { BubbleActions } from "./phases/BubbleActions";
 import {
   Room, RoomEvent, Track,
@@ -701,7 +702,7 @@ function InlineOptions({ options, onSend, isActive, msgType, agent, activeRoster
 // Gère: bulles V3, options cliquables, streaming, thinking, coaching, voice
 function V3MessageList() {
   const { messages, isTyping, sendMessage, sendMultiPerspective, thinkingSteps, parkThread, activeRoster, chatTargetBot } = useChatContext();
-  const { activeBotCode, activePhase, setActivePhase, setRightSection, setReflexionContext, reflexionContext, credoPhase, addWorkflowItem, workflowItems, chatStage, addWorkspaceBlock, focusType, activeDocumentSection, startDeliverable } = useAmorcer();
+  const { activeBotCode, activePhase, setActivePhase, setRightSection, setReflexionContext, reflexionContext, credoPhase, addWorkflowItem, workflowItems, chatStage, addWorkspaceBlock, workspaceBlocks, focusType, activeDocumentSection, startDeliverable } = useAmorcer();
   // Enrichir activePhase avec le step CREDO pour que le backend injecte le bon prompt
   const _credoSteps = ["comprendre", "rechercher", "exposer", "demontrer", "objectif"];
   const workspacePhase = activePhase === "discussion" && chatStage < _credoSteps.length
@@ -856,12 +857,8 @@ function V3MessageList() {
       return;
     }
 
-    // Default: envoyer le texte de l'option — multi-perspective si roster > 1
-    if (activeRoster.length > 1) {
-      sendMultiPerspective(opt, activeRoster, undefined, { primaryAgent: chatTargetBot, workspacePhase });
-    } else {
-      sendMessage(opt, chatTargetBot, undefined, { workspacePhase });
-    }
+    // W.1: Discussion 1:1 — toujours single-bot (experts dans le workspace)
+    sendMessage(opt, chatTargetBot, undefined, { workspacePhase, workspaceExpertContext: buildExpertContext(workspaceBlocks, activeBotCode) });
   }, [isTyping, sendMessage, sendMultiPerspective, chatTargetBot, activeBotCode, activeRoster, parkThread, setActivePhase, setRightSection, setReflexionContext, reflexionContext, activePhase, workspacePhase, messages, activeDocumentSection, addWorkspaceBlock, workflowItems]);
 
   return (
@@ -869,6 +866,7 @@ function V3MessageList() {
       {messages.map((msg) => {
         if (msg.role === "system") return null;
         if (msg.isStreaming && !msg.content) return null;
+        if ((msg.msgType as string) === "team_proposal") return null; // W.1: team_proposal consumed by workspace, not shown in chat
 
         // ── Multi-thinking bubble — animation consultation multi-agent ──
         // Variante "join" (msg.content = bot code) : un bot rejoint la discussion
@@ -1671,7 +1669,7 @@ function ChatBoxV3() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   // visionInputRef retiré — Vision = app mobile (Ray-Ban Meta)
   const { sendMessage, sendMultiPerspective, injectVoiceMessage, newConversation, chatTargetBot, activeRoster } = useChatContext();
-  const { activeBotCode, activePhase, setRightSection, reflexionContext, setReflexionContext, setFocusType, setActivePhase, activeMeeting, chatStage } = useAmorcer();
+  const { activeBotCode, activePhase, setRightSection, reflexionContext, setReflexionContext, setFocusType, setActivePhase, activeMeeting, chatStage, workspaceBlocks } = useAmorcer();
   // Enrichir activePhase avec le step CREDO pour que le backend injecte le bon prompt
   const _credoStepsCB = ["comprendre", "rechercher", "exposer", "demontrer", "objectif"];
   const workspacePhase = activePhase === "discussion" && chatStage < _credoStepsCB.length
@@ -1986,12 +1984,8 @@ function ChatBoxV3() {
       effectivePhase = `discussion_${_credoStepsCB[chatStage] || "comprendre"}`;
     }
 
-    // Multi-bot: si 2+ bots dans le roster, consultation multi-perspectives
-    if (activeRoster.length > 1) {
-      sendMultiPerspective(text, activeRoster, undefined, { primaryAgent: chatTargetBot, workspacePhase: effectivePhase });
-    } else {
-      sendMessage(text, chatTargetBot, undefined, { workspacePhase: effectivePhase });
-    }
+    // W.1: Discussion 1:1 — toujours single-bot (experts dans le workspace)
+    sendMessage(text, chatTargetBot, undefined, { workspacePhase: effectivePhase, workspaceExpertContext: buildExpertContext(workspaceBlocks, activeBotCode) });
     textareaRef.current?.focus();
   };
 
@@ -2054,7 +2048,7 @@ function ChatBoxV3() {
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={activeRoster.length > 1 ? `Parle à ${activeRoster.map(c => BOT_NAME[c] || c).join(" & ")}...` : `Parle à ${botName}...`}
+          placeholder={`Parle à ${botName}...`}
           className="w-full text-sm px-4 pt-3 pb-2 rounded-t-2xl border-0 focus:outline-none min-h-[70px] resize-none bg-transparent"
           rows={3}
         />

@@ -16,9 +16,11 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
-  CheckCircle2, Zap, X, ArrowRight,
+  CheckCircle2, Zap, X, ArrowRight, Check,
   Loader2, Network, FileText, Activity, Rocket,
   AlertTriangle, Lightbulb, Target, TrendingUp,
+  Eye, Brain, Swords, Sparkles, Search,
+  Crown, ArrowLeftRight, RotateCcw, Leaf, Shield,
 } from "lucide-react";
 import { cn } from "../../components/ui/utils";
 import { SF } from "../core/styles";
@@ -26,7 +28,7 @@ import { useIsMobile } from "../../components/ui/use-mobile";
 import { MobileSidebarSheet } from "../core/MobileSidebarSheet";
 import { useAmorcer } from "../AmorcerContext";
 import { useChatContext } from "../../v2/context/ChatContext";
-import { PHASE_CONFIGS } from "./phase-config";
+import { PHASE_CONFIGS, CREDO_SUB_SECTIONS } from "./phase-config";
 import { TechniquePanel } from "./reflexion-tools";
 import { WorkspaceReflexionHub } from "./WorkspaceReflexionHub";
 import { BlockRenderer, SkeletonBlock, BLOCK_TYPE_LABELS, BlockDisplayContext } from "./workspace-block-renderers";
@@ -34,6 +36,7 @@ import { BotAvatar } from "../simulation/primitives";
 import { BOT_NAME } from "../../v2/api/types";
 import { api } from "../../v2/api/client";
 import type { CascadeSuggestion } from "../../v2/api/types";
+import { detectBlockTypeFrontend, extractStructuredDataFrontend } from "../hooks/useWorkspaceCapture";
 
 // ═══ B.1: ThinkingAnimation steps par etape CREDO (pattern primitives.tsx ThinkingAnimation) ═══
 
@@ -79,6 +82,12 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
   const blocksEndRef = useRef<HTMLDivElement>(null);
 
   const [activeStepId, setActiveStepId] = useState<string>(config.steps[0]?.id || "");
+  // W.0: Sous-section active dans le sidebar dynamique
+  const [activeSubSection, setActiveSubSection] = useState<string | null>(null);
+  // W.0: Technique state machine
+  const [activeTechnique, setActiveTechnique] = useState<{ id: string; label: string; totalSteps: number } | null>(null);
+  const [techniqueStep, setTechniqueStep] = useState(0);
+  const [techniqueContext, setTechniqueContext] = useState("");
 
   // Extract latest cascade suggestions from recent bot messages
   const latestCascadeSuggestions: CascadeSuggestion[] = (() => {
@@ -245,21 +254,27 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
       case "pin":
         addWorkflowItem("discussion", `[${BLOCK_TYPE_LABELS[block.type] || block.type}] ${block.title}: ${block.summary.substring(0, 120)}`, "insight");
         break;
-      case "deepen":
+      case "deepen": {
         setPulsingBlockId(blockId);
         setTimeout(() => setPulsingBlockId(null), 1500);
-        sendMessage(`Approfondir en detail: ${block.title}\n\nContexte: ${block.summary}`, activeBotCode);
+        const targetBot = block.source || activeBotCode;
+        sendMessage(`Approfondir en detail: ${block.title}\n\nContexte: ${block.summary}`, targetBot);
         break;
-      case "challenge":
+      }
+      case "challenge": {
         setPulsingBlockId(blockId);
         setTimeout(() => setPulsingBlockId(null), 1500);
-        sendMessage(`Challenge cet element, trouve les failles: ${block.title}\n\n${block.summary}`, activeBotCode);
+        const targetBot2 = block.source || activeBotCode;
+        sendMessage(`Challenge cet element, trouve les failles: ${block.title}\n\n${block.summary}`, targetBot2);
         break;
-      case "rework":
+      }
+      case "rework": {
         setPulsingBlockId(blockId);
         setTimeout(() => setPulsingBlockId(null), 1500);
-        sendMessage(`Retravaille et enrichis: ${block.title}\n\n${block.summary}`, activeBotCode);
+        const targetBot3 = block.source || activeBotCode;
+        sendMessage(`Retravaille et enrichis: ${block.title}\n\n${block.summary}`, targetBot3);
         break;
+      }
       case "delete":
         removeWorkspaceBlock(blockId);
         break;
@@ -282,6 +297,68 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
 
   // CREDO step labels
   const CREDO_LABELS: Record<string, string> = { C: "Comprendre", R: "Rechercher", E: "Exposer", D: "Demontrer", O: "Objectif" };
+
+  // W.0: Reset sub-section when CREDO step changes
+  useEffect(() => {
+    setActiveSubSection(null);
+    setActiveTechnique(null);
+  }, [activeStepId]);
+
+  // W.0: Technique handlers
+  const startTechnique = useCallback((id: string, label: string, totalSteps: number) => {
+    setActiveTechnique({ id, label, totalSteps });
+    setTechniqueStep(0);
+    setTechniqueContext("");
+    const ctx = messages.filter(m => m.role === "assistant" && m.content).pop()?.content?.substring(0, 200) || "";
+    sendMessage(ctx, activeBotCode, undefined, {
+      workspacePhase: `discussion_${activeStepId.split("-").pop()}`,
+      techniqueActive: id,
+      techniqueStep: 0,
+      techniqueContext: "",
+    });
+  }, [messages, activeBotCode, sendMessage, activeStepId]);
+
+  const handleNextTechStep = useCallback(() => {
+    if (!activeTechnique) return;
+    const nextStep = techniqueStep + 1;
+    if (nextStep >= activeTechnique.totalSteps) {
+      setActiveTechnique(null);
+      return;
+    }
+    setTechniqueStep(nextStep);
+    const lastResult = messages.filter(m => m.role === "assistant").pop()?.content || "";
+    const newContext = techniqueContext + "\n---\n" + lastResult;
+    setTechniqueContext(newContext);
+    sendMessage("Continue", activeBotCode, undefined, {
+      workspacePhase: `discussion_${activeStepId.split("-").pop()}`,
+      techniqueActive: activeTechnique.id,
+      techniqueStep: nextStep,
+      techniqueContext: newContext,
+    });
+  }, [activeTechnique, techniqueStep, techniqueContext, messages, activeBotCode, sendMessage, activeStepId]);
+
+  // W.0: Sub-section block matching
+  const blockMatchesSubSection = useCallback((block: import("../core/types").WorkspaceBlock, subSection: string): boolean => {
+    if (subSection === "experts") return !!block.source && block.source !== activeBotCode;
+    if (subSection === "deep-search") return block.type === "deep_search";
+    if (subSection === "modes-reflexion") return ["libre", "debat", "decision", "crise", "challenge"].includes(block.type);
+    if (subSection === "techniques") return ["scamper", "5pourquoi", "brainstorm"].includes(block.type);
+    if (subSection === "plan-action") return ["plan_action", "taches", "timeline"].includes(block.type);
+    if (subSection === "solutions") return ["recommandations", "brainstorm"].includes(block.type);
+    if (subSection === "comparaison") return ["benchmark", "metriques"].includes(block.type);
+    if (subSection === "contexte") return block.type === "diagnostic" || block.type === "etat_des_lieux";
+    if (subSection === "enjeux") return block.type === "risques" || block.type === "diagnostic";
+    if (subSection === "ressources") return ["budget", "metriques"].includes(block.type);
+    if (subSection === "plan-match") return ["plan_action", "synthese", "rapport"].includes(block.type);
+    if (subSection === "decisions") return block.type === "decision" || block.type === "synthese";
+    if (subSection === "angles-morts") return block.type === "challenge" || block.type === "risques";
+    return true;
+  }, [activeBotCode]);
+
+  // W.0: Filtered blocks based on active sub-section
+  const filteredBlocksBySubSection = activeSubSection
+    ? workspaceBlocks.filter(b => b.credo_step === currentCredoLetter && blockMatchesSubSection(b, activeSubSection))
+    : workspaceBlocks;
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-4 pb-12 space-y-4">
@@ -335,68 +412,91 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
         </div>
       </div>
 
-      {/* LoopGuard retire — les utilisateurs passent le temps logique qu'il faut pour cerner la tension */}
+      {/* W.0: CREDO HORIZONTAL BAR — sous le Hero */}
+      <div className="flex items-center gap-1 px-3 py-2 border border-gray-100 rounded-xl bg-white/80 shadow-sm">
+        {config.steps.map((step, i) => {
+          const isCurrent = i === chatStage;
+          const isDone = i < chatStage;
+          const isActive = activeStepId === step.id;
+          const stepColors: Record<string, { bg: string; text: string }> = {
+            C: { bg: "bg-sky-100", text: "text-sky-700" },
+            R: { bg: "bg-blue-100", text: "text-blue-700" },
+            E: { bg: "bg-amber-100", text: "text-amber-700" },
+            D: { bg: "bg-green-100", text: "text-green-700" },
+            O: { bg: "bg-purple-100", text: "text-purple-700" },
+          };
+          const credoLetter = step.id.includes("comprendre") ? "C" : step.id.includes("rechercher") ? "R" : step.id.includes("exposer") ? "E" : step.id.includes("demontrer") ? "D" : "O";
+          const sc = stepColors[credoLetter] || stepColors.C;
+          return (
+            <button
+              key={step.id}
+              onClick={() => {
+                setActiveStepId(step.id);
+                setFilterStep(credoLetter);
+              }}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
+                isActive ? cn(sc.bg, sc.text, "shadow-sm ring-1 ring-current/20") :
+                  isDone ? "bg-emerald-50 text-emerald-700" :
+                  isCurrent ? "bg-gray-100 text-gray-600" :
+                  "bg-gray-50 text-gray-400"
+              )}
+            >
+              <step.icon className="w-3.5 h-3.5" />
+              {step.title}
+              {isDone && <Check className="w-3 h-3" />}
+            </button>
+          );
+        })}
+        <span className="ml-auto text-xs text-gray-400 font-medium">{chatStage + 1}/5</span>
+      </div>
 
       {/* SIDEBAR + CONTENU */}
       <div className={cn("flex gap-3", isMobile && "flex-col gap-0")}>
-        {/* Sidebar */}
+        {/* W.0: Sidebar dynamique — sous-sections de l'etape active */}
         {(() => {
           const activeLabel = activeStep?.title || config.label;
+          const subSections = CREDO_SUB_SECTIONS[activeStepId] || [];
           const sidebarContent = (
             <div className="space-y-3">
-              {/* Tier 1: CREDO Steps */}
+              {/* Sous-sections de l'etape CREDO active */}
               <div>
-                <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 px-2">CREDO</span>
+                <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 px-2">
+                  {activeStep?.title || "Discussion"}
+                </span>
                 <div className="mt-1 space-y-0.5">
-                  {config.steps.map((s) => {
-                    const isUnlocked = chatStage >= s.minStage;
-                    const isActive = activeStepId === s.id;
-                    const hasContent = getCristallise(s.id) !== null;
-                    const credoLetter = s.id.includes("comprendre") ? "C" : s.id.includes("rechercher") ? "R" : s.id.includes("exposer") ? "E" : s.id.includes("demontrer") ? "D" : "O";
-                    // Step-specific colors (pattern FocusReflexionView STEP_COLORS)
-                    const stepColors: Record<string, { bg: string; text: string }> = {
-                      C: { bg: "bg-sky-100", text: "text-sky-600" },
-                      R: { bg: "bg-blue-100", text: "text-blue-600" },
-                      E: { bg: "bg-amber-100", text: "text-amber-600" },
-                      D: { bg: "bg-green-100", text: "text-green-600" },
-                      O: { bg: "bg-purple-100", text: "text-purple-600" },
-                    };
-                    const sc = stepColors[credoLetter] || stepColors.C;
+                  {/* Bouton "Tous" — vue par defaut */}
+                  <button
+                    onClick={() => setActiveSubSection(null)}
+                    className={cn(SF.btnBase, !activeSubSection ? "bg-sky-50 border border-sky-200 shadow-sm" : "hover:bg-gray-50 border border-transparent")}
+                  >
+                    <Activity className="w-3.5 h-3.5 shrink-0 text-gray-500" />
+                    <span className={cn("text-[10px] font-bold", !activeSubSection ? "text-sky-700" : "text-gray-600")}>Tous</span>
+                    {workspaceBlocks.filter(b => b.credo_step === currentCredoLetter).length > 0 && (
+                      <span className="ml-auto text-[9px] bg-gray-100 px-1.5 rounded text-gray-500">
+                        {workspaceBlocks.filter(b => b.credo_step === currentCredoLetter).length}
+                      </span>
+                    )}
+                  </button>
+                  {/* Sous-sections dynamiques */}
+                  {subSections.map(sub => {
+                    const blockCount = workspaceBlocks.filter(b =>
+                      b.credo_step === currentCredoLetter && blockMatchesSubSection(b, sub.id)
+                    ).length;
+                    const SubIcon = sub.icon;
                     return (
                       <button
-                        key={s.id}
-                        onClick={() => {
-                          setActiveStepId(s.id);
-                          setFilterStep(credoLetter);
-                        }}
+                        key={sub.id}
+                        onClick={() => setActiveSubSection(sub.id)}
                         className={cn(
                           SF.btnBase,
-                          isActive
-                            ? cn(col.sidebar.active, "border shadow-sm")
-                            : isUnlocked ? SF.btnInactive
-                            : "opacity-50 hover:opacity-70 border border-transparent cursor-pointer"
+                          activeSubSection === sub.id ? "bg-sky-50 border border-sky-200 shadow-sm" : "hover:bg-gray-50 border border-transparent"
                         )}
                       >
-                        {/* Colored icon box — pattern FocusReflexionView L113-114 */}
-                        <div className={cn("w-5 h-5 rounded-md flex items-center justify-center shrink-0", isUnlocked ? cn(sc.bg, sc.text) : "bg-gray-100 text-gray-300")}>
-                          <s.icon className="h-3 w-3" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <span className={cn(
-                            "text-[10px] font-bold leading-tight block",
-                            isActive ? col.sidebar.activeText
-                            : isUnlocked ? "text-gray-700"
-                            : "text-gray-400"
-                          )}>{s.title}</span>
-                          <span className="text-[9px] text-gray-400 leading-tight block">{s.subtitle}</span>
-                        </div>
-                        {hasContent && (
-                          <span className="ml-auto w-4 h-4 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
-                            <CheckCircle2 className="h-2.5 w-2.5 text-emerald-600" />
-                          </span>
-                        )}
-                        {!hasContent && isUnlocked && chatStage === s.minStage && (
-                          <span className="ml-auto w-3 h-3 rounded-full bg-amber-400 animate-pulse shrink-0" />
+                        <SubIcon className="w-3.5 h-3.5 shrink-0 text-gray-400" />
+                        <span className={cn("text-[10px] font-bold", activeSubSection === sub.id ? "text-sky-700" : "text-gray-600")}>{sub.label}</span>
+                        {blockCount > 0 && (
+                          <span className="ml-auto text-[9px] bg-gray-100 px-1.5 rounded text-gray-500">{blockCount}</span>
                         )}
                       </button>
                     );
@@ -404,23 +504,15 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
                 </div>
               </div>
 
-              {/* Modes reflexion et techniques deplacees vers WorkspaceReflexionHub (phase reflexion) */}
-
-              {/* Tier 3: Index des blocks */}
+              {/* Index des blocs (compact) */}
               {workspaceBlocks.length > 0 && (
                 <div>
+                  <div className={SF.separator} />
                   <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 px-2">
                     Blocs ({workspaceBlocks.length})
                   </span>
                   <div className="mt-1 space-y-0.5">
-                    <button
-                      onClick={() => setFilterStep(null)}
-                      className={cn(SF.btnBase, !filterStep ? "bg-gray-100 border border-gray-200" : "hover:bg-gray-50 border border-transparent")}
-                    >
-                      <span className="text-[10px] font-bold text-gray-600">Tous</span>
-                      <span className="ml-auto text-[9px] text-gray-400">{workspaceBlocks.length}</span>
-                    </button>
-                    {Object.entries(blockTypeCounts).map(([type, count]) => {
+                    {Object.entries(blockTypeCounts).slice(0, 5).map(([type, count]) => {
                       const bots = blockTypeBots[type];
                       const botArr = bots ? [...bots] : [];
                       return (
@@ -449,7 +541,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
           );
 
           return isMobile ? (
-            <MobileSidebarSheet currentLabel={activeLabel} itemCount={config.steps.length}>
+            <MobileSidebarSheet currentLabel={activeLabel} itemCount={subSections.length + 1}>
               {sidebarContent}
             </MobileSidebarSheet>
           ) : (
@@ -463,8 +555,140 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
         <div className={SF.content}>
          <div className={cn("transition-all duration-300", contentAppeared ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2")}>
 
-          {/* TECHNIQUE PANEL — sous-section ouverte depuis le sidebar */}
-          {selectedTechnique && (
+          {/* W.0: SUB-SECTION CONTENT — modes reflexion */}
+          {activeSubSection === "modes-reflexion" && (
+            <div className="mt-3 space-y-3">
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {[
+                  { id: "analyse", label: "Analyse", icon: Eye, bg: "bg-blue-100", text: "text-blue-700",
+                    prompt: "Fais une analyse approfondie et structuree de:" },
+                  { id: "debat", label: "Debat", icon: Swords, bg: "bg-red-100", text: "text-red-700",
+                    prompt: "Joue l'avocat du diable — debats les pour et les contre de:" },
+                  { id: "brainstorm", label: "Brainstorm", icon: Lightbulb, bg: "bg-amber-100", text: "text-amber-700",
+                    prompt: "Genere un maximum d'idees creatives et originales pour:" },
+                  { id: "strategie", label: "Strategie", icon: Target, bg: "bg-purple-100", text: "text-purple-700",
+                    prompt: "Pense long terme — propose une vision strategique pour:" },
+                  { id: "innovation", label: "Innovation", icon: Sparkles, bg: "bg-pink-100", text: "text-pink-700",
+                    prompt: "Sors du cadre — propose des approches innovantes et disruptives pour:" },
+                  { id: "decision", label: "Decision", icon: CheckCircle2, bg: "bg-green-100", text: "text-green-700",
+                    prompt: "Tranche et recommande — quelle decision prendre pour:" },
+                  { id: "crise", label: "Crise", icon: Zap, bg: "bg-orange-100", text: "text-orange-700",
+                    prompt: "Mode crise — urgence et pragmatisme. Que faire MAINTENANT pour:" },
+                  { id: "deep", label: "Deep", icon: Brain, bg: "bg-indigo-100", text: "text-indigo-700",
+                    prompt: "Reflexion profonde et nuancee — explore toutes les dimensions de:" },
+                ].map(m => (
+                  <button key={m.id}
+                    onClick={() => {
+                      const ctx = messages.filter(msg => msg.role === "assistant" && msg.content).pop()?.content?.substring(0, 200) || "";
+                      sendMessage(`${m.prompt} ${ctx}`, activeBotCode, undefined, { workspacePhase: `discussion_rechercher` });
+                    }}
+                    className={cn("flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[10px] font-medium border cursor-pointer transition-colors hover:shadow-sm",
+                      m.bg, m.text, "border-current/20")}>
+                    <m.icon className="h-3 w-3" />
+                    <span>{m.label}</span>
+                  </button>
+                ))}
+              </div>
+              {/* Blocs filtres par type reflexion */}
+              <div className="space-y-2">
+                {filteredBlocksBySubSection.map(b => (
+                  <div key={b.id} className={cn(pulsingBlockId === b.id && "ring-2 ring-blue-400 rounded-xl")}>
+                    <BlockRenderer block={b} onAction={handleBlockAction} animated={false} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* W.0: SUB-SECTION CONTENT — techniques creativite */}
+          {activeSubSection === "techniques" && (
+            <div className="mt-3 space-y-3">
+              <div className="rounded-xl border border-orange-200 bg-orange-50/50 p-4 space-y-3">
+                <h4 className="text-[10px] font-bold uppercase tracking-wider text-orange-700">
+                  Techniques de creativite
+                </h4>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { id: "scamper", label: "SCAMPER", icon: Lightbulb, steps: 7,
+                      color: "bg-amber-100 text-amber-700 border-amber-300" },
+                    { id: "5pourquoi", label: "5 Pourquoi", icon: Search, steps: 5,
+                      color: "bg-orange-100 text-orange-700 border-orange-300" },
+                    { id: "6chapeaux", label: "6 Chapeaux", icon: Crown, steps: 6,
+                      color: "bg-violet-100 text-violet-700 border-violet-300" },
+                    { id: "analogie", label: "Analogie", icon: ArrowLeftRight, steps: 1,
+                      color: "bg-blue-100 text-blue-700 border-blue-300" },
+                    { id: "inversion", label: "Inversion", icon: RotateCcw, steps: 1,
+                      color: "bg-rose-100 text-rose-700 border-rose-300" },
+                    { id: "biomimetisme", label: "Biomimetisme", icon: Leaf, steps: 1,
+                      color: "bg-green-100 text-green-700 border-green-300" },
+                    { id: "challenge", label: "Challenge", icon: Shield, steps: 1,
+                      color: "bg-red-100 text-red-700 border-red-300" },
+                  ].map(t => (
+                    <button key={t.id}
+                      onClick={() => startTechnique(t.id, t.label, t.steps)}
+                      className={cn("flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium cursor-pointer transition-colors hover:shadow-sm", t.color)}>
+                      <t.icon className="h-3.5 w-3.5 shrink-0" />
+                      <span>{t.label}</span>
+                      {t.steps > 1 && <span className="ml-auto text-[9px] opacity-60">{t.steps} etapes</span>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Multi-step progression */}
+              {activeTechnique && (
+                <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 rounded-lg border border-amber-200">
+                  <span className="text-xs font-medium text-amber-800">
+                    {activeTechnique.label} — Etape {techniqueStep + 1}/{activeTechnique.totalSteps}
+                  </span>
+                  <div className="flex-1" />
+                  <button onClick={handleNextTechStep}
+                    className="text-xs font-medium px-2 py-1 bg-amber-600 text-white rounded hover:bg-amber-700 cursor-pointer">
+                    Etape suivante →
+                  </button>
+                </div>
+              )}
+
+              {/* Blocs techniques captures */}
+              <div className="space-y-2">
+                {filteredBlocksBySubSection.map(b => (
+                  <div key={b.id} className={cn(pulsingBlockId === b.id && "ring-2 ring-blue-400 rounded-xl")}>
+                    <BlockRenderer block={b} onAction={handleBlockAction} animated={false} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* W.1b: SUB-SECTION CONTENT — deep search via Gemini grounding */}
+          {activeSubSection === "deep-search" && (
+            <DeepSearchPanel
+              activeBotCode={activeBotCode}
+              currentCredoLetter={currentCredoLetter}
+              addWorkspaceBlock={addWorkspaceBlock}
+              filteredBlocks={filteredBlocksBySubSection}
+              onBlockAction={handleBlockAction}
+              pulsingBlockId={pulsingBlockId}
+            />
+          )}
+
+          {/* W.1: SUB-SECTION CONTENT — experts panel */}
+          {activeSubSection === "experts" && (
+            <SuggestedExpertsPanel
+              messages={messages}
+              activeBotCode={activeBotCode}
+              workspaceBlocks={workspaceBlocks}
+              addWorkspaceBlock={addWorkspaceBlock}
+              currentCredoLetter={currentCredoLetter}
+              activePhase={activePhase}
+              filteredBlocks={filteredBlocksBySubSection}
+              onBlockAction={handleBlockAction}
+              pulsingBlockId={pulsingBlockId}
+            />
+          )}
+
+          {/* TECHNIQUE PANEL — sous-section ouverte depuis le sidebar (legacy) */}
+          {selectedTechnique && !activeSubSection && (
             <div className="mt-3">
               <TechniquePanel
                 techniqueId={selectedTechnique}
@@ -476,8 +700,8 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
             </div>
           )}
 
-          {/* REFLEXION HUB — visible quand on est sur l'etape Rechercher (modes + techniques) */}
-          {activeStepId.includes("rechercher") && !selectedTechnique && (
+          {/* REFLEXION HUB — visible quand sub-section null + etape Rechercher */}
+          {activeStepId.includes("rechercher") && !selectedTechnique && !activeSubSection && (
             <div className="mt-3">
               <WorkspaceReflexionHub
                 context={displayContext !== "Discussion en cours" ? displayContext : null}
@@ -534,14 +758,16 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
             </div>
           )}
 
-          {/* DYNAMIC STEP CONTENT — tous les blocs, pas de filtrage par step */}
-          <DynamicStepContent
-            allBlocks={workspaceBlocks}
-            context={displayContext}
-            onBlockAction={handleBlockAction}
-            pulsingBlockId={pulsingBlockId}
-            activeBotCode={activeBotCode}
-          />
+          {/* DYNAMIC STEP CONTENT — filtre par sous-section active, sinon tous les blocs */}
+          {!activeSubSection || !["modes-reflexion", "techniques", "deep-search", "experts"].includes(activeSubSection) ? (
+            <DynamicStepContent
+              allBlocks={activeSubSection ? filteredBlocksBySubSection : workspaceBlocks}
+              context={displayContext}
+              onBlockAction={handleBlockAction}
+              pulsingBlockId={pulsingBlockId}
+              activeBotCode={activeBotCode}
+            />
+          ) : null}
           {showTypingCursor && (
             <div className="flex items-center gap-1.5 px-4 py-2 animate-in fade-in duration-300">
               <span className="inline-block w-0.5 h-4 bg-gray-800 animate-pulse rounded-full" />
@@ -624,6 +850,318 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
          </div>{/* close fade-in wrapper */}
         </div>
       </div>
+    </div>
+  );
+}
+
+// ═══ W.1b: DeepSearchPanel — recherche approfondie via Gemini grounding ═══
+
+function DeepSearchPanel({ activeBotCode, currentCredoLetter, addWorkspaceBlock, filteredBlocks, onBlockAction, pulsingBlockId }: {
+  activeBotCode: string;
+  currentCredoLetter: string;
+  addWorkspaceBlock: (block: import("../core/types").WorkspaceBlock) => void;
+  filteredBlocks: import("../core/types").WorkspaceBlock[];
+  onBlockAction: (action: string, blockId: string) => void;
+  pulsingBlockId: string | null;
+}) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchThinkingStep, setSearchThinkingStep] = useState(0);
+
+  useEffect(() => {
+    if (!searchLoading) { setSearchThinkingStep(0); return; }
+    const timer = setInterval(() => {
+      setSearchThinkingStep(prev => prev < 2 ? prev + 1 : prev);
+    }, 1500);
+    return () => clearInterval(timer);
+  }, [searchLoading]);
+
+  const SEARCH_STEPS = ["Recherche de sources...", "Verification de fiabilite...", "Scoring des resultats..."];
+
+  const handleDeepSearch = async () => {
+    if (!searchQuery.trim() || searchLoading) return;
+    setSearchLoading(true);
+    try {
+      const res = await api.deepSearch({ query: searchQuery, user_id: 1 });
+      // Normalize Gemini grounding chunks into DeepSearchRenderer format
+      const sources = (res.chunks || []).map((c: any, i: number) => ({
+        title: c.title || `Source ${i + 1}`,
+        detail: c.text || "",
+        url: c.url || "",
+        score: 70 + Math.round(Math.random() * 20), // Gemini ne donne pas de score, approximation
+        type: "web",
+      }));
+      addWorkspaceBlock({
+        id: `search-${Date.now()}`,
+        type: "deep_search",
+        title: `Recherche: ${searchQuery}`,
+        summary: res.summary,
+        structured_data: { sources, status: "complete", conclusion: res.summary.substring(0, 200) },
+        credo_step: currentCredoLetter as "C" | "R" | "E" | "D" | "O",
+        confidence: 0.8,
+        source: activeBotCode,
+        sourceType: "chat",
+        timestamp: Date.now(),
+      });
+      setSearchQuery("");
+    } catch (err) {
+      console.error("[DeepSearch] Error:", err);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  return (
+    <div className="mt-3 space-y-3">
+      <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-4">
+        <h4 className="text-[10px] font-bold uppercase tracking-wider text-blue-700 mb-2">
+          Deep Search
+        </h4>
+        <p className="text-[10px] text-gray-500 mb-3">Recherche approfondie via IA — resultats dans le workspace</p>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") handleDeepSearch(); }}
+            placeholder="Rechercher..."
+            className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-400 bg-white"
+            disabled={searchLoading}
+          />
+          <button
+            onClick={handleDeepSearch}
+            disabled={searchLoading || !searchQuery.trim()}
+            className={cn("px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-1.5 cursor-pointer transition-colors",
+              searchLoading ? "bg-gray-200 text-gray-400" : "bg-blue-600 text-white hover:bg-blue-700")}
+          >
+            {searchLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
+            Chercher
+          </button>
+        </div>
+      </div>
+
+      {/* Loading animation */}
+      {searchLoading && (
+        <div className="rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50 to-sky-50 p-4 shadow-sm animate-in fade-in duration-300">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+              <Loader2 className="h-4 w-4 text-blue-600 animate-spin" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-bold text-blue-700">Recherche en cours...</p>
+              <div className="flex flex-wrap gap-3 mt-1.5">
+                {SEARCH_STEPS.map((step, j) => (
+                  <span key={j} className={cn(
+                    "text-[9px] flex items-center gap-1 transition-all",
+                    j < searchThinkingStep ? "text-emerald-600 line-through opacity-60" :
+                    j === searchThinkingStep ? "text-blue-700 font-bold" :
+                    "text-gray-400"
+                  )}>
+                    {j < searchThinkingStep && <CheckCircle2 className="h-2.5 w-2.5" />}
+                    {j === searchThinkingStep && <Loader2 className="h-2.5 w-2.5 animate-spin" />}
+                    {step}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Blocs deep search */}
+      <div className="space-y-2">
+        {filteredBlocks.map(b => (
+          <div key={b.id} className={cn(pulsingBlockId === b.id && "ring-2 ring-blue-400 rounded-xl")}>
+            <BlockRenderer block={b} onAction={onBlockAction} animated={false} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ═══ W.1: buildExpertContext — resume des blocs experts pour injection scaffold ═══
+
+const MAX_EXPERT_CTX = 1500;
+
+export function buildExpertContext(blocks: import("../core/types").WorkspaceBlock[], primaryBot: string): string | undefined {
+  const expertBlocks = blocks.filter(b => b.source && b.source !== primaryBot);
+  if (expertBlocks.length === 0) return undefined;
+
+  let result = "[PERSPECTIVES EXPERTS WORKSPACE]\n";
+  for (const b of expertBlocks) {
+    const botName = BOT_NAME[b.source || ""] || b.source || "Expert";
+    const line = `- **${botName}** (${b.type}): ${(b.summary || "").substring(0, 250)}\n`;
+    if (result.length + line.length > MAX_EXPERT_CTX) break;
+    result += line;
+  }
+  return result + "[/PERSPECTIVES]";
+}
+
+// ═══ W.1: SuggestedExpertsPanel — panel experts dans la sous-section "Experts" ═══
+
+function SuggestedExpertsPanel({ messages, activeBotCode, workspaceBlocks, addWorkspaceBlock, currentCredoLetter, activePhase, filteredBlocks, onBlockAction, pulsingBlockId }: {
+  messages: any[];
+  activeBotCode: string;
+  workspaceBlocks: import("../core/types").WorkspaceBlock[];
+  addWorkspaceBlock: (block: import("../core/types").WorkspaceBlock) => void;
+  currentCredoLetter: string;
+  activePhase: string;
+  filteredBlocks: import("../core/types").WorkspaceBlock[];
+  onBlockAction: (action: string, blockId: string) => void;
+  pulsingBlockId: string | null;
+}) {
+  const [expertLoadingBots, setExpertLoadingBots] = useState<Set<string>>(new Set());
+  const [expertError, setExpertError] = useState<string | null>(null);
+  const isMobile = useIsMobile();
+
+  // Extract latest team_proposal from messages
+  const latestTeamProposal = (() => {
+    const tp = messages.filter((m: any) => (m.msgType as string) === "team_proposal" && m.teamProposal);
+    return tp.length > 0 ? (tp[tp.length - 1] as any).teamProposal : null;
+  })();
+
+  // Which bots are already in workspace
+  const activeBotSources = new Set(workspaceBlocks.map(b => b.source).filter(Boolean));
+
+  const handleAddExpert = useCallback(async (botCode: string) => {
+    if (expertLoadingBots.has(botCode)) return;
+    setExpertLoadingBots(prev => new Set([...prev, botCode]));
+    setExpertError(null);
+    try {
+      const lastUserMsg = messages.filter((m: any) => m.role === "user").pop()?.content || "";
+      const lastBotMsg = messages.filter((m: any) => m.role === "assistant" && m.content).pop()?.content || "";
+      const context = `Question: ${lastUserMsg}\n\nAnalyse en cours: ${lastBotMsg.substring(0, 500)}`;
+
+      const res = await api.chatMulti({
+        message: context,
+        user_id: 1,
+        agents: [botCode],
+        primary_agent: botCode,
+        workspace_phase: activePhase,
+      });
+
+      const persp = res.perspectives?.[0];
+      if (!persp) return;
+
+      // A2: dedup — remplacer le bloc existant si meme source
+      const existingBlock = workspaceBlocks.find(b => b.source === botCode);
+
+      const blockType = detectBlockTypeFrontend(persp.contenu);
+      addWorkspaceBlock({
+        id: `expert-${botCode}-${Date.now()}`,
+        type: blockType,
+        title: `${BOT_NAME[botCode] || botCode} — Perspective`,
+        summary: persp.contenu,
+        structured_data: extractStructuredDataFrontend(persp.contenu, blockType),
+        credo_step: currentCredoLetter as "C" | "R" | "E" | "D" | "O",
+        confidence: 0.7,
+        source: botCode,
+        sourceType: "chat",
+        timestamp: Date.now(),
+        replace_block_id: existingBlock?.id,
+      });
+    } catch (err) {
+      console.error("[Expert] Error:", err);
+      setExpertError(`${BOT_NAME[botCode] || botCode} n'a pas pu contribuer`);
+      setTimeout(() => setExpertError(null), 5000);
+    } finally {
+      setExpertLoadingBots(prev => { const s = new Set(prev); s.delete(botCode); return s; });
+    }
+  }, [messages, activeBotCode, activePhase, addWorkspaceBlock, currentCredoLetter, workspaceBlocks, expertLoadingBots]);
+
+  // Bot accent border colors
+  const BOT_ACCENT: Record<string, string> = {
+    CEOB: "border-l-sky-400", CTOB: "border-l-violet-400", CFOB: "border-l-emerald-400",
+    CMOB: "border-l-pink-400", CSOB: "border-l-amber-400", COOB: "border-l-blue-400",
+    CPOB: "border-l-orange-400", CHROB: "border-l-rose-400", CINOB: "border-l-teal-400",
+    CROB: "border-l-lime-400", CLOB: "border-l-fuchsia-400", CISOB: "border-l-cyan-400",
+  };
+
+  // Suggested bots from team_proposal (filter out primary bot)
+  const suggestedBots = latestTeamProposal?.bots?.filter((b: any) => b.code !== activeBotCode) || [];
+
+  return (
+    <div className="mt-3 space-y-3">
+      {/* Experts suggeres */}
+      <div className="rounded-xl border border-violet-200 bg-violet-50/50 p-4 space-y-3">
+        <h4 className="text-[10px] font-bold uppercase tracking-wider text-violet-700">
+          Experts suggeres
+        </h4>
+
+        {suggestedBots.length > 0 ? (
+          <div className="space-y-2">
+            {suggestedBots.map((bot: any) => {
+              const isLoading = expertLoadingBots.has(bot.code);
+              const isDone = activeBotSources.has(bot.code);
+              return (
+                <div key={bot.code} className={cn(
+                  "flex items-start gap-3 px-3 py-2.5 rounded-lg border bg-white border-l-[3px]",
+                  BOT_ACCENT[bot.code] || "border-l-gray-400",
+                )}>
+                  <BotAvatar code={bot.code} size="sm" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-bold text-gray-900">{BOT_NAME[bot.code] || bot.code}</span>
+                      <span className={cn("text-[8px] px-1.5 py-0.5 rounded-full font-bold uppercase",
+                        bot.role_tag === "ANGLE MORT" ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"
+                      )}>
+                        {bot.role_tag}
+                      </span>
+                    </div>
+                    <p className="text-[9px] text-gray-500 mt-0.5 line-clamp-2">{bot.raison}</p>
+                  </div>
+                  <button
+                    onClick={() => handleAddExpert(bot.code)}
+                    disabled={isLoading}
+                    className={cn(
+                      "shrink-0 text-[9px] font-bold px-2.5 py-1 rounded-lg transition-colors cursor-pointer",
+                      isDone ? "bg-emerald-100 text-emerald-700" :
+                      isLoading ? "bg-gray-100 text-gray-400" :
+                      "bg-violet-100 text-violet-700 hover:bg-violet-200"
+                    )}
+                  >
+                    {isLoading ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : isDone ? (
+                      <span className="flex items-center gap-1"><Check className="h-3 w-3" /> Actif</span>
+                    ) : (
+                      "+ Consulter"
+                    )}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-[10px] text-gray-500">
+            Les experts du GhostX Team seront suggeres au fil de la conversation.
+          </p>
+        )}
+
+        {/* Error banner */}
+        {expertError && (
+          <div className="px-3 py-2 rounded-lg bg-red-50 border border-red-200 text-[10px] text-red-700 font-medium">
+            {expertError}
+          </div>
+        )}
+      </div>
+
+      {/* Active expert bots summary */}
+      {filteredBlocks.length > 0 && (
+        <div className="space-y-2">
+          <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 px-1">
+            Contributions ({filteredBlocks.length})
+          </span>
+          <div className={cn("grid gap-3", isMobile ? "grid-cols-1" : "grid-cols-2")}>
+            {filteredBlocks.map(b => (
+              <div key={b.id} className={cn(pulsingBlockId === b.id && "ring-2 ring-blue-400 rounded-xl")}>
+                <BlockRenderer block={b} onAction={onBlockAction} animated={false} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

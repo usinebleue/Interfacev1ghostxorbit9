@@ -716,7 +716,7 @@ export function useChat() {
       agent?: string,
       ghost?: string,
       mode?: string,
-      meta?: { msgType?: MessageType; parentId?: string; branchLabel?: string; activeView?: string; activeSubSection?: string; workspacePhase?: string; techniqueActive?: string; techniqueStep?: number; techniqueContext?: string }
+      meta?: { msgType?: MessageType; parentId?: string; branchLabel?: string; activeView?: string; activeSubSection?: string; workspacePhase?: string; workspaceExpertContext?: string; techniqueActive?: string; techniqueStep?: number; techniqueContext?: string }
     ) => {
       const msgType = meta?.msgType || "normal";
       const branchDepth = msgType === "challenge" || msgType === "consultation"
@@ -877,6 +877,8 @@ export function useChat() {
         active_sub_section: meta?.activeSubSection,
         // Mega Plan V5 — workspace phase
         workspace_phase: meta?.workspacePhase,
+        // W.1 — Contexte experts workspace
+        workspace_expert_context: meta?.workspaceExpertContext,
         // Sprint 2A — Techniques interactives
         technique_active: meta?.techniqueActive,
         technique_step: meta?.techniqueStep,
@@ -909,6 +911,10 @@ export function useChat() {
       // Try streaming first, fallback to standard chat
       // Sprint 3 — Route via OpenClaw gateway for non-CEO bots
       const useOC = shouldUseOpenClaw(agent);
+      // A1 — OpenClaw perd workspace_expert_context, fallback: prepend to message
+      if (useOC && req.workspace_expert_context) {
+        req.message = `${req.workspace_expert_context}\n\n${req.message}`;
+      }
       try {
         await new Promise<void>((resolve, reject) => {
           const controller = (useOC ? api.chatOpenClaw : api.chatStream).call(api, req, {

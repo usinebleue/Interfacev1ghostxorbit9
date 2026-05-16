@@ -240,6 +240,14 @@ export const api = {
     });
   },
 
+  /** W.1b — Deep Search via Gemini grounding */
+  deepSearch(req: { query: string; user_id?: number }): Promise<{ summary: string; sources: string; chunks: { text: string; url: string; title?: string }[] }> {
+    return apiFetch("/search/deep", {
+      method: "POST",
+      body: JSON.stringify({ query: req.query, user_id: req.user_id || 1 }),
+    });
+  },
+
   /** Liste des 12+ Bots C-Level */
   listBots(): Promise<BotListResponse> {
     return apiFetch<BotListResponse>("/bots");
@@ -1987,7 +1995,7 @@ export const api = {
   // Discussion Report (Sprint 3B.1)
   // ═══════════════════════════════════════
 
-  generateDiscussionReport(data: { blocks: Record<string, unknown>[]; bot_code: string }): Promise<{ block: Record<string, unknown> }> {
+  generateDiscussionReport(data: { blocks: Record<string, unknown>[]; bot_code: string; participants?: string[] }): Promise<{ block: Record<string, unknown> }> {
     return apiFetch("/workspace/discussion-report", { method: "POST", body: JSON.stringify(data) });
   },
 

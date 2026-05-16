@@ -59,7 +59,7 @@ const BLOCK_TYPE_PATTERNS: [WorkspaceBlockType, RegExp][] = [
   ["challenge", /challenge|avocat.*diable|objection|contre.*argument/i],
 ];
 
-function detectBlockTypeFrontend(text: string): WorkspaceBlockType {
+export function detectBlockTypeFrontend(text: string): WorkspaceBlockType {
   for (const [type, pattern] of BLOCK_TYPE_PATTERNS) {
     if (pattern.test(text)) return type;
   }
@@ -76,7 +76,7 @@ function extractTitle(text: string): string {
 
 // ═══ Frontend: extraction de structured_data depuis le contenu bot ═══
 
-function extractStructuredDataFrontend(
+export function extractStructuredDataFrontend(
   content: string,
   blockType: WorkspaceBlockType
 ): Record<string, any> | undefined {

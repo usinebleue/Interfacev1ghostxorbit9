@@ -8,7 +8,7 @@
  */
 
 import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from "react";
-import type { PhaseKey, CredoPhaseKey, WorkflowItem, WorkspaceBlock, WorkspaceBlockType } from "./core/types";
+import type { PhaseKey, CredoPhaseKey, WorkflowItem, WorkspaceBlock, WorkspaceBlockType, WorkspaceTask } from "./core/types";
 import type { MeetingStatus, ParticipantInfo } from "./hooks/useLiveKitMeeting";
 import { api } from "../v2/api/client";
 
@@ -204,6 +204,12 @@ interface AmorcerState {
   getBlocksByCredoStep: (step: string) => WorkspaceBlock[];
   getBlocksByType: (type: WorkspaceBlockType) => WorkspaceBlock[];
 
+  // Workspace tasks (taches assignables)
+  workspaceTasks: WorkspaceTask[];
+  addWorkspaceTask: (task: WorkspaceTask) => void;
+  updateWorkspaceTask: (id: string, updates: Partial<WorkspaceTask>) => void;
+  removeWorkspaceTask: (id: string) => void;
+
   // Helpers
   startReflexion: (chantier: string) => void;
   advance: () => void;
@@ -314,6 +320,10 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
   // blocksRef initialisé à [] — mis à jour plus bas quand workspaceBlocks est déclaré
   const blocksRef = useRef<WorkspaceBlock[]>([]);
 
+  // ═══ Phase state cache — restauration synchrone au switch de phase (fix workspace vide) ═══
+  // Clé: `${botCode}_${phase}` → { blocks, chatStage, workflowItems }
+  const phaseStateCacheRef = useRef<Record<string, { blocks: WorkspaceBlock[]; chatStage: number; workflowItems: WorkflowItem[] }>>({});
+
   // ═══ saveCanvasNow — fire-and-forget sauvegarde immédiate ═══
   const saveCanvasNow = useCallback((botCode: string, phase: string) => {
     const blocks = blocksRef.current;
@@ -333,6 +343,13 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     // Save-before-clear: sauvegarder le canvas avant de changer de bot
     if (prevPhase !== "observation") {
       saveCanvasNow(prevBot, prevPhase);
+      // Cache synchrone — restauration au retour sur ce bot+phase
+      const cacheKey = `${prevBot}_${prevPhase}`;
+      phaseStateCacheRef.current[cacheKey] = {
+        blocks: blocksRef.current,
+        chatStage: chatStageRef.current,
+        workflowItems: workflowItemsRef.current,
+      };
     }
     setActiveBotCodeRaw(code);
     lsSet("activeBotCode", code);
@@ -350,7 +367,7 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     setTyped(false);
     setCredoPhase("C");
     setWorkflowItems([]);
-    // Nettoyer workspace blocks au switch de bot
+    // Nettoyer workspace blocks au switch de bot (observation = pas de blocks)
     setWorkspaceBlocks([]);
     try { localStorage.removeItem("workspaceBlocks"); } catch { /* silent */ }
     const target = `/${BOT_TO_SLUG[code] || "ceo"}/cockpit`;
@@ -424,17 +441,29 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     // Save-before-clear: sauvegarder le canvas avant de changer de phase
     if (prevPhase !== "observation" && prevPhase !== p) {
       saveCanvasNow(prevBot, prevPhase);
+      // Cache synchrone — restauration instantanée au retour (fix workspace vide)
+      const cacheKey = `${prevBot}_${prevPhase}`;
+      phaseStateCacheRef.current[cacheKey] = {
+        blocks: blocksRef.current,
+        chatStage: chatStageRef.current,
+        workflowItems: workflowItemsRef.current,
+      };
     }
     setActivePhaseRaw(p);
     lsSet("activePhase", p);
-    // Reset chatStage à chaque changement de phase — chaque phase repart de l'étape 0
-    setChatStage(0);
     // Nettoyer le deliverable actif (évite que Jumelage/DocForge reste bloqué)
     setActiveDeliverable(null);
-    // Vider les workspace blocks — l'auto-load useEffect (ligne ~525) restaurera
-    // les blocks sauvegardés de la nouvelle phase depuis le canvas API
-    setWorkspaceBlocks([]);
-    // Note: pas de localStorage.removeItem ici — le useEffect workspaceBlocks le gère déjà
+    // Restaurer depuis le cache local (instantané) ou vider si phase jamais visitée
+    const newCacheKey = `${activeBotCodeRef.current}_${p}`;
+    const cached = phaseStateCacheRef.current[newCacheKey];
+    if (cached) {
+      setWorkspaceBlocks(cached.blocks);
+      setChatStage(cached.chatStage);
+      setWorkflowItems(cached.workflowItems);
+    } else {
+      setWorkspaceBlocks([]);
+      setChatStage(0);
+    }
   }, [saveCanvasNow]);
   const setReflexionContext = useCallback((c: string | null) => {
     setReflexionContextRaw(c);
@@ -521,19 +550,25 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
   }, [workspaceBlocks, chatStage, activeBotCode, activePhase, workflowItems]);
 
-  // ═══ Canvas auto-load — restaurer workspaceBlocks quand on entre dans une phase ═══
+  // ═══ Canvas auto-load — fallback si le cache local est vide (ex: refresh page) ═══
   const prevLoadPhaseRef = useRef(activePhase);
   useEffect(() => {
     if (activePhase === prevLoadPhaseRef.current) return;
     prevLoadPhaseRef.current = activePhase;
     if (activePhase === "observation") return;
+    // Si le cache local a déjà restauré les blocks, pas besoin de l'API
+    const cacheKey = `${activeBotCode}_${activePhase}`;
+    if (phaseStateCacheRef.current[cacheKey]?.blocks?.length) return;
     const canvasKey = `workspace_phase_${activeBotCode}_${activePhase}`;
     api.getOrCreateCanvas(canvasKey).then(canvas => {
       const data = canvas.data as any;
       if (data?.workspaceBlocks && Array.isArray(data.workspaceBlocks) && data.workspaceBlocks.length > 0) {
-        setWorkspaceBlocks(data.workspaceBlocks);
+        // Ne pas écraser si des blocks ont été ajoutés entre-temps
+        setWorkspaceBlocks(prev => prev.length > 0 ? prev : data.workspaceBlocks);
       }
-      if (typeof data?.chatStage === "number") setChatStage(data.chatStage);
+      if (typeof data?.chatStage === "number") {
+        setChatStage(prev => prev > 0 ? prev : data.chatStage);
+      }
     }).catch(() => { /* silent */ });
   }, [activePhase, activeBotCode]);
 
@@ -568,6 +603,36 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     return workspaceBlocks.filter(b => b.type === type);
   }, [workspaceBlocks]);
 
+  // ═══ Workspace Tasks (taches assignables aux bots/humains) ═══
+  const [workspaceTasks, setWorkspaceTasks] = useState<WorkspaceTask[]>(() => {
+    try {
+      const stored = localStorage.getItem("workspaceTasks");
+      return stored ? JSON.parse(stored) : [];
+    } catch { return []; }
+  });
+
+  useEffect(() => {
+    try {
+      if (workspaceTasks.length === 0) {
+        localStorage.removeItem("workspaceTasks");
+      } else {
+        localStorage.setItem("workspaceTasks", JSON.stringify(workspaceTasks));
+      }
+    } catch { /* silent */ }
+  }, [workspaceTasks]);
+
+  const addWorkspaceTask = useCallback((task: WorkspaceTask) => {
+    setWorkspaceTasks(prev => [...prev, task]);
+  }, []);
+
+  const updateWorkspaceTask = useCallback((id: string, updates: Partial<WorkspaceTask>) => {
+    setWorkspaceTasks(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
+  }, []);
+
+  const removeWorkspaceTask = useCallback((id: string) => {
+    setWorkspaceTasks(prev => prev.filter(t => t.id !== id));
+  }, []);
+
   // ═══ Auto-contribute — POST nouveaux blocs vers workspace_contributions (4 canaux) ═══
   const prevBlockCountRef = useRef(0);
   useEffect(() => {
@@ -596,20 +661,24 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
   }, [workspaceBlocks]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const resetChat = useCallback(() => {
-    setActivePhase("observation");
+    setActivePhaseRaw("observation");
+    lsSet("activePhase", "observation");
     setChatStage(0);
     setTyped(false);
-    setReflexionContext(null);
+    setReflexionContextRaw(null);
+    lsSet("reflexionContext", null);
     setConceptionStage(0);
     setActiveDeliverable(null);
     setDeliverableStage(0);
-    setFocusType("chantier");
+    setFocusTypeRaw("chantier");
+    lsSet("focusType", "chantier");
     setCredoPhase("C");
     setWorkflowItems([]);
-    // Clear workspace blocks — nouvelle discussion = workspace vide
+    // Clear workspace blocks + cache — nouvelle discussion = tout vide
     setWorkspaceBlocks([]);
+    phaseStateCacheRef.current = {};
     try { localStorage.removeItem("workspaceBlocks"); } catch { /* silent */ }
-  }, [setActivePhase, setReflexionContext, setFocusType]);
+  }, []);
 
   // Sprint 2A Phase 4: reflexion fusionnée dans discussion
   const startReflexion = useCallback((chantier: string) => {
@@ -678,6 +747,7 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
         activeMeeting, setActiveMeeting,
         meetingControls, setMeetingControls,
         workspaceBlocks, addWorkspaceBlock, updateWorkspaceBlock, removeWorkspaceBlock, getBlocksByCredoStep, getBlocksByType,
+        workspaceTasks, addWorkspaceTask, updateWorkspaceTask, removeWorkspaceTask,
         startReflexion, advance, resetChat,
       }}
     >
