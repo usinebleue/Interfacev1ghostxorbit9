@@ -374,6 +374,11 @@ export function useWorkspaceCapture() {
           continue;
         }
         if ((msg as any).isStreaming !== true && msg.content && msg.content.length >= 5) {
+          // Guard: si le message a ete pre-finalise par le stale timer (options extraites cote client)
+          // mais onDone n'est pas encore arrive avec le workspace_block du backend → attendre
+          if ((msg as any)._preFinalized && !(msg as any).workspace_block) {
+            continue; // Garder dans pendingStreamIdsRef, onDone va arriver avec les vraies donnees
+          }
           completed.push(msg);
           pendingStreamIdsRef.current.delete(id);
         }
@@ -869,4 +874,35 @@ export function useWorkspaceCapture() {
       setPendingCapture(null);
     }
   }, [messages, activePhase, pendingCapture, setPendingCapture, activeBotCode, chatStage, setChatStage, setActivePhase, setReflexionContext, setRightSection, getCristallise, editCristallise, addWorkflowItem, addWorkspaceBlock]);
+
+  // ═══ AUTO-SYNTHESE — generer un bloc synthese quand chatStage monte (transition CREDO) ═══
+  const prevSynthStageRef = useRef(chatStage);
+  useEffect(() => {
+    const prevStage = prevSynthStageRef.current;
+    if (chatStage <= prevStage || chatStage < 1) {
+      prevSynthStageRef.current = chatStage;
+      return;
+    }
+    prevSynthStageRef.current = chatStage;
+
+    const CREDO_NAMES: Record<string, string> = { C: "Connexion", R: "Recherche", E: "Exposition", D: "Demonstration", O: "Obtention" };
+    const prevStep = getCurrentCredoStep(prevStage);
+    const prevBlocks = workspaceBlocks.filter(b => b.credo_step === prevStep && b.type !== "synthese" && b.type !== "rapport");
+
+    if (prevBlocks.length === 0) return;
+
+    const points = prevBlocks.map(b => ({ label: b.title || b.type, done: true }));
+    addWorkspaceBlock({
+      id: `synthese-${prevStep}-${Date.now()}`,
+      type: "synthese",
+      title: `Synthese ${CREDO_NAMES[prevStep] || prevStep}`,
+      summary: `${prevBlocks.length} element(s) captures en phase ${CREDO_NAMES[prevStep] || prevStep}`,
+      structured_data: { points },
+      credo_step: prevStep,
+      confidence: 1.0,
+      source: activeBotCode,
+      sourceType: "chat",
+      timestamp: Date.now(),
+    });
+  }, [chatStage, workspaceBlocks, activeBotCode, addWorkspaceBlock]);
 }

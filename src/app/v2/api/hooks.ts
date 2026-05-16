@@ -385,10 +385,15 @@ function parseApiOptions(responseText: string): { cleanText: string; parsedOptio
       }
     }
     if (numberedLines.length >= 2 && numberedLines.length <= 6) {
-      for (const nl of numberedLines) parsedOptions.push(nl.label);
-      // Remove those lines from cleanLines
+      // Guard: don't strip if removing would leave less than 30% of content
+      // (means the numbered list IS the content, not options)
       const firstIdx = numberedLines[0].idx;
-      cleanLines.splice(firstIdx);
+      const remainingText = cleanLines.slice(0, firstIdx).join("\n").trim();
+      const totalText = cleanLines.join("\n").trim();
+      if (remainingText.length > totalText.length * 0.3 || totalText.length < 100) {
+        for (const nl of numberedLines) parsedOptions.push(nl.label);
+        cleanLines.splice(firstIdx);
+      }
     }
   }
 
@@ -418,12 +423,16 @@ function parseApiOptions(responseText: string): { cleanText: string; parsedOptio
       }
     }
     if (tailCandidates.length >= 2 && tailCandidates.length <= 4) {
-      for (const c of tailCandidates) {
-        parsedOptions.push(c.text.replace(/^\*+|\*+$/g, "").trim());
-      }
-      // Remove those lines from cleanLines
+      // Guard: don't strip if removing would leave less than 30% of content
       const firstIdx = tailCandidates[0].idx;
-      cleanLines.splice(firstIdx);
+      const remainingText = cleanLines.slice(0, firstIdx).join("\n").trim();
+      const totalText = cleanLines.join("\n").trim();
+      if (remainingText.length > totalText.length * 0.3 || totalText.length < 100) {
+        for (const c of tailCandidates) {
+          parsedOptions.push(c.text.replace(/^\*+|\*+$/g, "").trim());
+        }
+        cleanLines.splice(firstIdx);
+      }
     }
   }
 
@@ -780,6 +789,23 @@ export function useChat() {
           `${angles[2]} — formulation`,
         ];
       };
+      // Throttle streaming updates — flush every 150ms instead of every token
+      let _tokenBuffer = "";
+      let _tokenFlushTimer: ReturnType<typeof setTimeout> | null = null;
+      // Stale timer: si aucun token pendant 1.5s, pre-finaliser le message (options + isStreaming:false)
+      let _staleTimer: ReturnType<typeof setTimeout> | null = null;
+      const _flushTokenBuffer = () => {
+        if (_tokenBuffer) {
+          const cleaned = _tokenBuffer.split("\n").filter((l: string) => !/\[TACHE\]/i.test(l)).join("\n");
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === botMsgId ? { ...m, content: cleaned } : m
+            )
+          );
+        }
+        _tokenFlushTimer = null;
+      };
+
       const _steps = _buildThinkingSteps(agent, text);
       setThinkingSteps([_steps[0]]);
       let _thinkIdx = 1;
@@ -890,22 +916,45 @@ export function useChat() {
               // Frontend timer handles thinking steps (nginx buffers SSE status events)
             },
             onToken: (_chunk: string, accumulated: string) => {
-              // NE PAS effacer le thinking overlay au premier token
-              // L'overlay reste visible pendant le streaming pour montrer la reflexion
-              // Il sera effacé dans onDone quand le streaming est terminé
-              // Strip [TACHE] lines during streaming so they never appear
-              const cleaned = accumulated.split("\n").filter(l => !/\[TACHE\]/i.test(l)).join("\n");
-              // Update the bot message content progressively
-              setMessages((prev) =>
-                prev.map((m) =>
-                  m.id === botMsgId ? { ...m, content: cleaned } : m
-                )
-              );
+              // Effacer le thinking overlay des le premier token
+              if (_thinkIdx < _steps.length + 1) {
+                clearInterval(_thinkTimer);
+                setThinkingSteps([]);
+                _thinkIdx = _steps.length + 1;
+              }
+              // Throttle: buffer le contenu, flush toutes les 150ms (evite formatMarkdown x100)
+              _tokenBuffer = accumulated;
+              if (!_tokenFlushTimer) {
+                _flushTokenBuffer();
+                _tokenFlushTimer = setTimeout(() => {
+                  _tokenFlushTimer = null;
+                  _flushTokenBuffer();
+                }, 150);
+              }
+              // Stale timer: pre-finaliser apres 1.5s sans token (backend post-processing peut prendre 10-15s)
+              if (_staleTimer) clearTimeout(_staleTimer);
+              _staleTimer = setTimeout(() => {
+                _staleTimer = null;
+                // Pre-finalize: parser options du texte accumule et arreter le streaming visuellement
+                const staleText = _tokenBuffer.split("\n").filter((l: string) => !/\[TACHE\]/i.test(l)).join("\n").trim();
+                const parsed = parseApiOptions(staleText);
+                setMessages((prev) =>
+                  prev.map((m) =>
+                    m.id === botMsgId && m.isStreaming
+                      ? { ...m, content: parsed.cleanText, options: parsed.parsedOptions.length > 0 ? parsed.parsedOptions : undefined, isStreaming: false, _preFinalized: true }
+                      : m
+                  )
+                );
+              }, 1500);
             },
             onDone: (data: StreamDoneEvent) => {
-              // Clear thinking overlay maintenant que le streaming est terminé
+              // Stop le throttle timer, stale timer, et flush final
+              if (_tokenFlushTimer) { clearTimeout(_tokenFlushTimer); _tokenFlushTimer = null; }
+              if (_staleTimer) { clearTimeout(_staleTimer); _staleTimer = null; }
+              // Clear thinking overlay + typing state dans le MEME batch React
               clearInterval(_thinkTimer);
               setThinkingSteps([]);
+              setIsTyping(false);
               // Sync CREDO phase from backend
               const backendPhase = data.bubble_context?.credo_phase || data.phase_credo;
               if (backendPhase) setLastCREDOPhase(backendPhase);
