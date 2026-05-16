@@ -310,8 +310,8 @@ function BlockWrapper({ block, onAction, label, labelColor, children }: BlockRen
         <span className="text-[9px] text-gray-300">{new Date(block.timestamp).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })}</span>
       </div>
       {children}
-      {/* Compact mode (discussion): footer leger sans les boutons d'edition/delegation */}
-      {useContext(BlockDisplayContext).compact ? (
+      {/* Compact mode (discussion): footer leger — SAUF pour rapport qui garde les boutons complets */}
+      {useContext(BlockDisplayContext).compact && block.type !== "rapport" ? (
         <CompactBlockFooter block={block} onAction={onAction} />
       ) : (
         <BlockActions block={block} onAction={onAction} />
@@ -322,8 +322,10 @@ function BlockWrapper({ block, onAction, label, labelColor, children }: BlockRen
 
 // ═══ Compact footer pour discussion — CTAs dynamiques selon le type d'analyse ═══
 
-type CompactCTA = { label: string; icon: typeof CheckCircle2; action: BlockActionType | "approve" | "execute"; color: string; activeColor: string };
+type CompactCTA = { label: string; icon: typeof CheckCircle2; action: BlockActionType | "approve"; color: string; activeColor: string };
 
+// CTAs discussion (C→R→E→D): construire la reflexion, PAS executer.
+// L'execution vit dans le rapport final (O) qui garde BlockActions complet.
 const BLOCK_CTAS: Record<string, CompactCTA[]> = {
   diagnostic:      [
     { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
@@ -332,22 +334,22 @@ const BLOCK_CTAS: Record<string, CompactCTA[]> = {
   ],
   brainstorm:      [
     { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
+    { label: "Challenger", icon: Swords, action: "challenge", color: "border-amber-200 text-amber-700 hover:bg-amber-50", activeColor: "" },
     { label: "Approfondir", icon: Search, action: "deepen", color: "border-blue-200 text-blue-700 hover:bg-blue-50", activeColor: "" },
-    { label: "Exécuter", icon: Zap, action: "execute", color: "border-violet-200 text-violet-700 hover:bg-violet-50", activeColor: "" },
   ],
   plan_action:     [
     { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
+    { label: "Challenger", icon: Swords, action: "challenge", color: "border-amber-200 text-amber-700 hover:bg-amber-50", activeColor: "" },
     { label: "Modifier", icon: Pencil, action: "edit", color: "border-gray-200 text-gray-600 hover:bg-gray-50", activeColor: "" },
-    { label: "Exécuter", icon: Zap, action: "execute", color: "border-violet-200 text-violet-700 hover:bg-violet-50", activeColor: "" },
   ],
   taches:          [
     { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
-    { label: "Exécuter", icon: Zap, action: "execute", color: "border-violet-200 text-violet-700 hover:bg-violet-50", activeColor: "" },
+    { label: "Challenger", icon: Swords, action: "challenge", color: "border-amber-200 text-amber-700 hover:bg-amber-50", activeColor: "" },
   ],
   recommandations: [
     { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
     { label: "Challenger", icon: Swords, action: "challenge", color: "border-amber-200 text-amber-700 hover:bg-amber-50", activeColor: "" },
-    { label: "Exécuter", icon: Zap, action: "execute", color: "border-violet-200 text-violet-700 hover:bg-violet-50", activeColor: "" },
+    { label: "Approfondir", icon: Search, action: "deepen", color: "border-blue-200 text-blue-700 hover:bg-blue-50", activeColor: "" },
   ],
   risques:         [
     { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
@@ -356,7 +358,7 @@ const BLOCK_CTAS: Record<string, CompactCTA[]> = {
   _default:        [
     { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
     { label: "Challenger", icon: Swords, action: "challenge", color: "border-amber-200 text-amber-700 hover:bg-amber-50", activeColor: "" },
-    { label: "Modifier", icon: Pencil, action: "edit", color: "border-gray-200 text-gray-600 hover:bg-gray-50", activeColor: "" },
+    { label: "Approfondir", icon: Search, action: "deepen", color: "border-blue-200 text-blue-700 hover:bg-blue-50", activeColor: "" },
   ],
 };
 
@@ -367,12 +369,7 @@ function CompactBlockFooter({ block, onAction }: BlockRendererProps) {
   const handleCTA = (cta: CompactCTA) => {
     if (cta.action === "approve") {
       setApproved(!approved);
-      onAction("pin", block.id); // Approuver = épingler (officialiser)
-    } else if (cta.action === "execute") {
-      // Dispatch vers le chat: demander au bot d'exécuter
-      window.dispatchEvent(new CustomEvent("bt-delegate-task", {
-        detail: { titre: block.title, bot: block.source, blockId: block.id },
-      }));
+      onAction("pin", block.id); // Approuver = officialiser ce point
     } else {
       onAction(cta.action as BlockActionType, block.id);
     }
