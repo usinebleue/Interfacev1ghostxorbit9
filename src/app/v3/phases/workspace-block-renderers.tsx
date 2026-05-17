@@ -28,6 +28,85 @@ import type { WorkspaceBlock, WorkspaceBlockType, ActionSuggestion } from "../co
 // ═══ Lucide icons used by inline section actions ═══
 import { ArrowRight, RefreshCw, Merge } from "lucide-react";
 
+// ═══ Rich markdown → HTML (meme formatage que les bulles discussion) ═══
+function applyInlineFmt(text: string): string {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em class="text-gray-600 italic">$1</em>')
+    .replace(/`(.+?)`/g, '<code class="px-1 py-0.5 bg-gray-100 rounded text-xs font-mono text-gray-800">$1</code>');
+}
+
+function formatBlockMarkdown(text: string): string {
+  if (!text) return "";
+  let html = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const lines = html.split("\n");
+  const result: string[] = [];
+  let listTag: "ul" | "ol" | null = null;
+  let inCodeBlock = false;
+  let codeBlockLang = "";
+  let codeBlockLines: string[] = [];
+
+  const closeList = () => { if (listTag) { result.push(`</${listTag}>`); listTag = null; } };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    if (line.trim().startsWith("```")) {
+      if (!inCodeBlock) {
+        closeList(); inCodeBlock = true;
+        codeBlockLang = line.trim().replace(/^```/, "").trim();
+        codeBlockLines = []; continue;
+      } else {
+        inCodeBlock = false;
+        const langLabel = codeBlockLang ? `<div class="text-[10px] text-gray-400 mb-1 font-mono">${codeBlockLang}</div>` : "";
+        result.push(`<div class="my-2 rounded-lg bg-gray-900 text-gray-100 p-3"><pre class="text-xs font-mono whitespace-pre-wrap break-all leading-relaxed">${langLabel}${codeBlockLines.join("\n")}</pre></div>`);
+        codeBlockLines = []; codeBlockLang = ""; continue;
+      }
+    }
+    if (inCodeBlock) { codeBlockLines.push(line); continue; }
+
+    if (/^[━─═\-]{3,}$/.test(line.trim())) { closeList(); result.push('<hr class="my-3 border-gray-200">'); continue; }
+
+    if (/^#{1,3}\s+/.test(line.trim())) {
+      closeList();
+      result.push(`<div class="font-semibold text-gray-900 mt-3 mb-1">${applyInlineFmt(line.replace(/^#{1,3}\s+/, ""))}</div>`);
+      continue;
+    }
+
+    const numberedMatch = line.match(/^(\s*)(\d+)[.)]\s+(.+)/);
+    if (numberedMatch) {
+      if (listTag !== "ol") { closeList(); result.push('<ol class="space-y-1.5 my-2 list-none">'); listTag = "ol"; }
+      result.push(`<li class="flex items-start gap-2 text-sm"><span class="text-gray-400 mt-0.5 shrink-0 font-semibold">${numberedMatch[2]}.</span><span>${applyInlineFmt(numberedMatch[3])}</span></li>`);
+      continue;
+    }
+
+    const bulletMatch = line.match(/^(\s*)([-*•]|\p{Emoji_Presentation}|\p{Emoji}\uFE0F?)\s+(.+)/u);
+    if (bulletMatch) {
+      if (listTag !== "ul") { closeList(); result.push('<ul class="space-y-1.5 my-2">'); listTag = "ul"; }
+      const emoji = /^[-*•]$/.test(bulletMatch[2]) ? "" : bulletMatch[2] + " ";
+      result.push(`<li class="flex items-start gap-2 text-sm"><span class="text-gray-400 mt-0.5 shrink-0">${emoji || "•"}</span><span>${applyInlineFmt(bulletMatch[3])}</span></li>`);
+      continue;
+    }
+
+    if (listTag && line.trim() !== "") { closeList(); }
+    if (line.trim() === "") { result.push('<div class="h-2"></div>'); continue; }
+
+    if (/^\*\*(.+)\*\*\s*:?\s*$/.test(line.trim())) {
+      result.push(`<div class="font-semibold text-gray-900 mt-3 mb-1">${line.trim().replace(/^\*\*(.+)\*\*\s*:?\s*$/, "$1")}</div>`);
+      continue;
+    }
+
+    result.push(`<p class="text-sm leading-relaxed">${applyInlineFmt(line)}</p>`);
+  }
+
+  closeList();
+  if (inCodeBlock && codeBlockLines.length > 0) {
+    const langLabel = codeBlockLang ? `<div class="text-[10px] text-gray-400 mb-1 font-mono">${codeBlockLang}</div>` : "";
+    result.push(`<div class="my-2 rounded-lg bg-gray-900 text-gray-100 p-3"><pre class="text-xs font-mono whitespace-pre-wrap break-all leading-relaxed">${langLabel}${codeBlockLines.join("\n")}</pre></div>`);
+  }
+  return result.join("\n");
+}
+
 // ═══ Compact mode context — discussion blocks: 1 colonne, pas de BlockActions lourdes ═══
 export const BlockDisplayContext = createContext({ compact: false });
 
@@ -768,7 +847,7 @@ function ScamperRenderer({ block, onAction }: BlockRendererProps) {
           })}
         </div>
       ) : (
-        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
+        <div className="text-sm text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: formatBlockMarkdown(block.summary) }} />
       )}
     </BlockWrapper>
   );
@@ -945,7 +1024,7 @@ function CinqPourquoiRenderer({ block, onAction }: BlockRendererProps) {
           )}
         </div>
       ) : (
-        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
+        <div className="text-sm text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: formatBlockMarkdown(block.summary) }} />
       )}
     </BlockWrapper>
   );
@@ -993,7 +1072,7 @@ function PlanActionRenderer({ block, onAction }: BlockRendererProps) {
           ))}
         </div>
       ) : (
-        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
+        <div className="text-sm text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: formatBlockMarkdown(block.summary) }} />
       )}
     </BlockWrapper>
   );
@@ -1073,7 +1152,7 @@ function TimelineRenderer({ block, onAction }: BlockRendererProps) {
           })}
         </div>
       ) : (
-        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
+        <div className="text-sm text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: formatBlockMarkdown(block.summary) }} />
       )}
     </BlockWrapper>
   );
@@ -1101,7 +1180,7 @@ function MetriquesRenderer({ block, onAction }: BlockRendererProps) {
           ))}
         </div>
       ) : (
-        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
+        <div className="text-sm text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: formatBlockMarkdown(block.summary) }} />
       )}
     </BlockWrapper>
   );
@@ -1134,7 +1213,7 @@ function ProjetsRenderer({ block, onAction }: BlockRendererProps) {
           ))}
         </div>
       ) : (
-        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
+        <div className="text-sm text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: formatBlockMarkdown(block.summary) }} />
       )}
     </BlockWrapper>
   );
@@ -1178,7 +1257,7 @@ function TachesRenderer({ block, onAction }: BlockRendererProps) {
           ))}
         </div>
       ) : (
-        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
+        <div className="text-sm text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: formatBlockMarkdown(block.summary) }} />
       )}
     </BlockWrapper>
   );
@@ -1205,7 +1284,7 @@ function RecommandationsRenderer({ block, onAction }: BlockRendererProps) {
           ))}
         </div>
       ) : (
-        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
+        <div className="text-sm text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: formatBlockMarkdown(block.summary) }} />
       )}
     </BlockWrapper>
   );
@@ -1239,7 +1318,7 @@ function RisquesRenderer({ block, onAction }: BlockRendererProps) {
           })}
         </div>
       ) : (
-        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
+        <div className="text-sm text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: formatBlockMarkdown(block.summary) }} />
       )}
     </BlockWrapper>
   );
@@ -1987,7 +2066,7 @@ function LibreRenderer({ block, onAction }: BlockRendererProps) {
           ))}
         </div>
       ) : (
-        <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</div>
+        <div className="text-sm text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: formatBlockMarkdown(block.summary) }} />
       )}
     </BlockWrapper>
   );
@@ -2153,7 +2232,7 @@ function DebatRenderer({ block, onAction }: BlockRendererProps) {
           )}
         </div>
       ) : (
-        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
+        <div className="text-sm text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: formatBlockMarkdown(block.summary) }} />
       )}
     </BlockWrapper>
   );
@@ -2217,7 +2296,7 @@ function DecisionRenderer({ block, onAction }: BlockRendererProps) {
           )}
         </div>
       ) : (
-        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{block.summary}</p>
+        <div className="text-sm text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: formatBlockMarkdown(block.summary) }} />
       )}
     </BlockWrapper>
   );
@@ -2815,11 +2894,10 @@ export function BlockRenderer({ block, onAction, animated }: BlockRendererProps)
     return (
       <AnimatedBlockEntry block={block} animated={animated}>
         <ExpertBlockWrapper block={block} onAction={onAction}>
-          <div className="text-sm leading-relaxed">
-            {block.summary.split('\n').map((line, i) => (
-              <p key={i} className={line.trim() === '' ? 'h-2' : 'mb-1'}>{line}</p>
-            ))}
-          </div>
+          <div
+            className="text-sm leading-relaxed text-gray-700 prose-sm"
+            dangerouslySetInnerHTML={{ __html: formatBlockMarkdown(block.summary) }}
+          />
         </ExpertBlockWrapper>
       </AnimatedBlockEntry>
     );
