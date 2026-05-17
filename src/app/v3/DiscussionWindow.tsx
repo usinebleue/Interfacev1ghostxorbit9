@@ -336,110 +336,7 @@ function ThinkingLabel({ botCode, userText }: { botCode: string; userText?: stri
   );
 }
 
-/** Barre de boutons CREDO pour cristalliser un contenu dans une section workspace */
-function CristalliseBar({ content, botCode, activePhase, addWorkspaceBlock, lastUserMessage }: {
-  content: string;
-  botCode: string;
-  activePhase: string;
-  addWorkspaceBlock: (block: import("./core/types").WorkspaceBlock) => void;
-  lastUserMessage?: string;
-}) {
-  const [expanded, setExpanded] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const steps = getPhaseSteps(activePhase);
-  if (steps.length === 0) return null;
-
-  if (!expanded) {
-    return (
-      <button
-        onClick={() => setExpanded(true)}
-        className="flex items-center gap-1.5 mt-2 text-[10px] text-gray-400 hover:text-sky-600 transition-colors cursor-pointer group/crist"
-      >
-        <Pin className="h-2.5 w-2.5" />
-        <span>Cristalliser</span>
-        <ChevronRight className="h-2.5 w-2.5 group-hover/crist:translate-x-0.5 transition-transform" />
-      </button>
-    );
-  }
-
-  const handleCristallise = async (step: ReturnType<typeof getPhaseSteps>[number]) => {
-    const credoLetter = (step.id.split("-")[1]?.charAt(0)?.toUpperCase() || "C") as "C" | "R" | "E" | "D" | "O";
-    setLoading(true);
-    try {
-      const apiKey = (import.meta as Record<string, Record<string, string>>).env?.VITE_API_KEY || "";
-      const res = await fetch("/api/v1/workspace/cristallise", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-API-Key": apiKey },
-        body: JSON.stringify({
-          content,
-          user_msg: lastUserMessage || "",
-          credo_phase: credoLetter,
-        }),
-      });
-      const block = await res.json();
-      addWorkspaceBlock({
-        id: `blk-${Date.now()}`,
-        type: block.type || "libre",
-        title: block.title || content.substring(0, 60),
-        summary: block.summary || content.substring(0, 300),
-        structured_data: { ...block.structured_data, originalContent: content },
-        credo_step: credoLetter,
-        confidence: block.confidence || 0.5,
-        source: botCode,
-        sourceType: "chat",
-        sectionId: step.id,
-        timestamp: Date.now(),
-      });
-    } catch {
-      // Fallback copie brute si API echoue
-      addWorkspaceBlock({
-        id: `blk-${Date.now()}`,
-        type: "libre",
-        title: content.substring(0, 60),
-        summary: content,
-        credo_step: credoLetter,
-        confidence: 1.0,
-        source: botCode,
-        sourceType: "chat",
-        sectionId: step.id,
-        timestamp: Date.now(),
-      });
-    } finally {
-      setLoading(false);
-      setExpanded(false);
-    }
-  };
-
-  return (
-    <div className="flex flex-wrap gap-1 mt-2 animate-in fade-in duration-200">
-      {loading ? (
-        <span className="flex items-center gap-1.5 px-3 py-1 text-[10px] text-sky-600 font-medium">
-          <Loader2 className="h-3 w-3 animate-spin" />
-          Cristallisation intelligente...
-        </span>
-      ) : (
-        <>
-          {steps.map((step) => (
-            <button
-              key={step.id}
-              onClick={() => handleCristallise(step)}
-              className="flex items-center gap-1 px-2 py-1 rounded-md border border-sky-200 bg-sky-50 text-[10px] font-medium text-sky-700 hover:bg-sky-100 hover:border-sky-300 cursor-pointer transition-all"
-            >
-              <step.icon className="h-2.5 w-2.5" />
-              {step.title}
-            </button>
-          ))}
-          <button
-            onClick={() => setExpanded(false)}
-            className="flex items-center px-1.5 py-1 rounded-md border border-gray-200 text-[10px] text-gray-400 hover:bg-gray-50 cursor-pointer"
-          >
-            <X className="h-2.5 w-2.5" />
-          </button>
-        </>
-      )}
-    </div>
-  );
-}
+// CristalliseBar removed — cristallisation is now automatic via useWorkspaceCapture
 
 /** Helper: cristallisation intelligente via API (shared par tous les chemins) */
 async function cristalliseViaAPI(
@@ -495,8 +392,8 @@ async function cristalliseViaAPI(
   }
 }
 
-/** Contenu bot segmenté — sous-bulles avec cristallise individuel */
-function SegmentedBotContent({ content, botCode, activePhase, addWorkspaceBlock, lastUserMessage }: {
+/** Contenu bot segmenté — sous-bulles (cristallisation automatique via useWorkspaceCapture) */
+function SegmentedBotContent({ content }: {
   content: string;
   botCode: string;
   activePhase: string;
@@ -505,20 +402,17 @@ function SegmentedBotContent({ content, botCode, activePhase, addWorkspaceBlock,
 }) {
   const segments = parseMessageSegments(content);
 
-  // Pas de segmentation (1 seul bloc sans titre) → rendu normal + 1 bouton cristallise
+  // Pas de segmentation (1 seul bloc sans titre) → rendu normal
   if (segments.length <= 1) {
     return (
-      <>
-        <div
-          className="text-sm text-gray-700 leading-relaxed isolate overflow-hidden [&>p]:my-0.5 [&>ul]:my-1 [&>ol]:my-1 [&>p:first-child]:mt-0 [&>p:last-child]:mb-0 [&>hr]:my-2 [&_li]:break-words [&_p]:break-words"
-          dangerouslySetInnerHTML={{ __html: formatMarkdown(content) }}
-        />
-        <CristalliseBar content={content} botCode={botCode} activePhase={activePhase} addWorkspaceBlock={addWorkspaceBlock} lastUserMessage={lastUserMessage} />
-      </>
+      <div
+        className="text-sm text-gray-700 leading-relaxed isolate overflow-hidden [&>p]:my-0.5 [&>ul]:my-1 [&>ol]:my-1 [&>p:first-child]:mt-0 [&>p:last-child]:mb-0 [&>hr]:my-2 [&_li]:break-words [&_p]:break-words"
+        dangerouslySetInnerHTML={{ __html: formatMarkdown(content) }}
+      />
     );
   }
 
-  // Segments multiples → sous-bulles avec cristallise individuel
+  // Segments multiples → sous-bulles
   return (
     <div className="space-y-2">
       {segments.map((seg, i) => (
@@ -529,13 +423,6 @@ function SegmentedBotContent({ content, botCode, activePhase, addWorkspaceBlock,
           <div
             className="text-sm text-gray-700 leading-relaxed [&>p]:my-0.5 [&>ul]:my-1 [&>ol]:my-1"
             dangerouslySetInnerHTML={{ __html: formatMarkdown(seg.text) }}
-          />
-          <CristalliseBar
-            content={seg.title ? `### ${seg.title}\n${seg.text}` : seg.text}
-            botCode={botCode}
-            activePhase={activePhase}
-            addWorkspaceBlock={addWorkspaceBlock}
-            lastUserMessage={lastUserMessage}
           />
         </div>
       ))}
@@ -556,6 +443,8 @@ function InlineOptions({ options, onSend, isActive, msgType, agent, activeRoster
 }) {
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [inlineTexts, setInlineTexts] = useState<Record<number, string>>({});
+  const [precisionTexts, setPrecisionTexts] = useState<Record<number, string>>({});
+  const [globalPrecision, setGlobalPrecision] = useState("");
   const [showInputFor, setShowInputFor] = useState<number | null>(null);
 
   // Filtrer "Ouvrir l'atelier"
@@ -573,6 +462,8 @@ function InlineOptions({ options, onSend, isActive, msgType, agent, activeRoster
     }
     setSelected(new Set());
     setInlineTexts({});
+    setPrecisionTexts({});
+    setGlobalPrecision("");
     setShowInputFor(null);
   };
 
@@ -599,7 +490,14 @@ function InlineOptions({ options, onSend, isActive, msgType, agent, activeRoster
 
     // Non-question → toggle sélection
     const next = new Set(selected);
-    if (next.has(i)) next.delete(i); else next.add(i);
+    if (next.has(i)) {
+      next.delete(i);
+      const nextP = { ...precisionTexts };
+      delete nextP[i];
+      setPrecisionTexts(nextP);
+    } else {
+      next.add(i);
+    }
     setSelected(next);
   };
 
@@ -610,10 +508,14 @@ function InlineOptions({ options, onSend, isActive, msgType, agent, activeRoster
       if (isQuestion(filteredOpts[i]) && inlineTexts[i]?.trim()) {
         parts.push(inlineTexts[i].trim());
       } else {
-        parts.push(filteredOpts[i]);
+        let optText = filteredOpts[i];
+        if (precisionTexts[i]?.trim()) optText += ` — ${precisionTexts[i].trim()}`;
+        parts.push(optText);
       }
     }
-    doSend(parts.join("\n\n"));
+    let finalText = parts.join("\n\n");
+    if (globalPrecision.trim()) finalText += `\n\nContexte: ${globalPrecision.trim()}`;
+    doSend(finalText);
   };
 
   const handleInlineSubmit = (i: number) => {
@@ -681,9 +583,35 @@ function InlineOptions({ options, onSend, isActive, msgType, agent, activeRoster
                 </button>
               </div>
             )}
+            {/* Precision input pour les options non-question selectionnees */}
+            {isSel && !isQ && (
+              <div className="mt-1 ml-6 animate-in fade-in slide-in-from-top-1 duration-200">
+                <input
+                  type="text"
+                  placeholder="Preciser (optionnel)..."
+                  value={precisionTexts[i] || ""}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setPrecisionTexts(prev => ({ ...prev, [i]: e.target.value }))}
+                  onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendAll(); } }}
+                  className="w-full text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-200 bg-gray-50/50 placeholder:text-gray-300"
+                />
+              </div>
+            )}
           </div>
         );
       })}
+      {/* Global context input quand 2+ options selectionnees */}
+      {selected.size > 1 && (
+        <div className="mt-1 animate-in fade-in duration-200">
+          <input
+            type="text"
+            placeholder="Contexte global pour vos choix (optionnel)..."
+            value={globalPrecision}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setGlobalPrecision(e.target.value)}
+            onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendAll(); } }}
+            className="w-full text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-200 bg-gray-50/50 placeholder:text-gray-300"
+          />
+        </div>
+      )}
       {/* Bouton Envoyer — toujours visible dès qu'une option est cochée */}
       {hasSelection && (
         <button
@@ -1175,9 +1103,6 @@ function V3MessageList() {
                   <span className="inline-block w-0.5 h-4 bg-current ml-0.5 animate-pulse align-text-bottom" />
                 )}
                 {/* Cristallise bar — boutons pour ajouter ce contenu dans une section workspace */}
-                {!msg.isStreaming && msg.content && (
-                  <CristalliseBar content={msg.content} botCode={botCode} activePhase={activePhase} addWorkspaceBlock={addWorkspaceBlock} lastUserMessage={lastUserMessage} />
-                )}
                 {/* ═══ Niveau 1 — Options DANS la bulle (multi-select + réponse inline questions) ═══ */}
                 {!msg.isStreaming && msg.options && msg.options.length > 0 && (
                   <InlineOptions
@@ -1214,22 +1139,6 @@ function V3MessageList() {
                     messageContent={msg.content}
                     backendOptions={undefined}
                     onAction={(prompt) => sendMessage(prompt, msg.agent || chatTargetBot, undefined, { workspacePhase })}
-                    onCristallise={() => {
-                      const CREDO_SECTIONS = ["comprendre", "rechercher", "exposer", "demontrer", "objectif"];
-                      const credoSection = CREDO_SECTIONS[chatStage] || "comprendre";
-                      const steps = getPhaseSteps(activePhase);
-                      const targetSection = steps[chatStage]?.id || credoSection;
-                      if (targetSection) {
-                        const lastUserMsg = messages.filter(m => m.role === "user").pop()?.content;
-                        cristalliseViaAPI(msg.content, {
-                          botCode: msg.agent || activeBotCode,
-                          sectionId: targetSection,
-                          credoStep: (["C","R","E","D","O"] as const)[chatStage] || "C",
-                          userMsg: lastUserMsg,
-                          addWorkspaceBlock,
-                        });
-                      }
-                    }}
                     phaseTransition={transitionLabel}
                     onPhaseTransition={transitionLabel ? () => handleOption(transitionLabel) : undefined}
                     gpsSuggestion={msg.cristallisationSuggestion || undefined}

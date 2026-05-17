@@ -378,6 +378,46 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
         }
         break;
       }
+      case "execute_action": {
+        // blockId here contains JSON-stringified ActionSuggestion
+        try {
+          const action = JSON.parse(blockId) as { label: string; prompt: string; target_bot: string };
+          const targetBot4 = action.target_bot || activeBotCode;
+          (async () => {
+            try {
+              const res = await api.chatMulti({
+                message: action.prompt,
+                user_id: 1,
+                agents: [targetBot4],
+                primary_agent: targetBot4,
+                workspace_phase: activePhase,
+              });
+              const persp = res.perspectives?.[0];
+              if (!persp) return;
+              const blockType = detectBlockTypeFrontend(persp.contenu);
+              addWorkspaceBlock({
+                id: `action-${targetBot4}-${Date.now()}`,
+                type: blockType,
+                title: `${BOT_NAME[targetBot4] || targetBot4} — ${action.label}`,
+                summary: summarizeExpertForWorkspace(persp.contenu),
+                structured_data: extractStructuredDataFrontend(persp.contenu, blockType),
+                credo_step: (workspaceBlocks[0]?.credo_step || "C") as "C" | "R" | "E" | "D" | "O",
+                credo_sub_section: "experts",
+                confidence: 0.75,
+                source: targetBot4,
+                sourceType: "chat",
+                timestamp: Date.now(),
+                is_action_result: true,
+              });
+            } catch (err) {
+              console.error("[Action execute] Error:", err);
+            }
+          })();
+        } catch {
+          console.error("[Action execute] Invalid JSON blockId");
+        }
+        break;
+      }
       case "delete":
         removeWorkspaceBlock(blockId);
         break;
@@ -1173,7 +1213,34 @@ export function buildExpertContext(blocks: import("../core/types").WorkspaceBloc
   return result + "[/PERSPECTIVES]";
 }
 
-// ═══ W.1: SuggestedExpertsPanel — panel experts dans la sous-section "Experts" ═══
+// ═══ W.1: SuggestedExpertsPanel — Employee cards grid (11 agents toujours visibles) ═══
+
+const BOT_STRENGTHS: Record<string, { conception: string; execution: string }> = {
+  CEOB: { conception: "Vision strategique", execution: "Prise de decision" },
+  CTOB: { conception: "Architecture systemes", execution: "Solutions techniques" },
+  CFOB: { conception: "Modelisation financiere", execution: "Budget & previsions" },
+  CMOB: { conception: "Strategie marketing", execution: "Campagnes & croissance" },
+  CSOB: { conception: "Analyse concurrentielle", execution: "Plans de vente" },
+  COOB: { conception: "Optimisation processus", execution: "Operations quotidiennes" },
+  CPOB: { conception: "Automatisation", execution: "Production industrielle" },
+  CHROB: { conception: "Culture d'entreprise", execution: "Recrutement & equipes" },
+  CINOB: { conception: "Recherche & tendances", execution: "Innovation produit" },
+  CROB: { conception: "Monetisation", execution: "Croissance revenus" },
+  CLOB: { conception: "Conformite reglementaire", execution: "Contrats & juridique" },
+  CISOB: { conception: "Cybersecurite", execution: "Gestion des risques" },
+};
+
+const BOT_ACCENT_CARDS: Record<string, string> = {
+  CEOB: "border-l-sky-400", CTOB: "border-l-violet-400", CFOB: "border-l-emerald-400",
+  CMOB: "border-l-pink-400", CSOB: "border-l-amber-400", COOB: "border-l-blue-400",
+  CPOB: "border-l-orange-400", CHROB: "border-l-rose-400", CINOB: "border-l-teal-400",
+  CROB: "border-l-lime-400", CLOB: "border-l-fuchsia-400", CISOB: "border-l-cyan-400",
+};
+
+const BOT_ROLE_SHORT: Record<string, string> = {
+  CEOB: "CEO", CTOB: "CTO", CFOB: "CFO", CMOB: "CMO", CSOB: "CSO", COOB: "COO",
+  CPOB: "CPO", CHROB: "CHRO", CINOB: "CINO", CROB: "CRO", CLOB: "CLO", CISOB: "CISO",
+};
 
 function SuggestedExpertsPanel({ messages, activeBotCode, workspaceBlocks, addWorkspaceBlock, currentCredoLetter, activePhase, filteredBlocks, onBlockAction, pulsingBlockId }: {
   messages: any[];
@@ -1188,19 +1255,6 @@ function SuggestedExpertsPanel({ messages, activeBotCode, workspaceBlocks, addWo
 }) {
   const [expertLoadingBots, setExpertLoadingBots] = useState<Set<string>>(new Set());
   const [expertError, setExpertError] = useState<string | null>(null);
-  const [showAddDropdown, setShowAddDropdown] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const isMobile = useIsMobile();
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    if (!showAddDropdown) return;
-    function handleClick(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setShowAddDropdown(false);
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [showAddDropdown]);
 
   // Extract latest team_proposal from messages
   const latestTeamProposal = (() => {
@@ -1208,23 +1262,22 @@ function SuggestedExpertsPanel({ messages, activeBotCode, workspaceBlocks, addWo
     return tp.length > 0 ? (tp[tp.length - 1] as any).teamProposal : null;
   })();
 
-  // Tour de Table: auto-detect when to show expert suggestions
-  // After first user+assistant exchange (>= 1 user + 1 assistant msg), show relevant experts
-  const hasFirstExchange = messages.filter((m: any) => m.role === "user").length >= 1
-    && messages.filter((m: any) => m.role === "assistant" && m.content).length >= 1;
-
   // Which bots are already in workspace
   const activeBotSources = new Set(workspaceBlocks.map(b => b.source).filter(Boolean));
 
-  // All available bots for the "+" dropdown (exclude primary bot)
+  // All 11 agents (exclude primary bot)
   const ALL_EXPERT_CODES = ["CEOB", "CTOB", "CFOB", "CMOB", "CSOB", "COOB", "CPOB", "CHROB", "CINOB", "CROB", "CLOB", "CISOB"]
     .filter(code => code !== activeBotCode);
+
+  // Suggested bots from team_proposal
+  const suggestedBots = latestTeamProposal?.bots?.filter((b: any) => b.code !== activeBotCode) || [];
+  const suggestedCodes = new Set(suggestedBots.map((b: any) => b.code));
+  const suggestedReason = (code: string) => suggestedBots.find((b: any) => b.code === code)?.raison;
 
   const handleAddExpert = useCallback(async (botCode: string) => {
     if (expertLoadingBots.has(botCode)) return;
     setExpertLoadingBots(prev => new Set([...prev, botCode]));
     setExpertError(null);
-    setShowAddDropdown(false);
     try {
       const lastUserMsg = messages.filter((m: any) => m.role === "user").pop()?.content || "";
       const lastBotMsg = messages.filter((m: any) => m.role === "assistant" && m.content).pop()?.content || "";
@@ -1269,128 +1322,67 @@ function SuggestedExpertsPanel({ messages, activeBotCode, workspaceBlocks, addWo
     }
   }, [messages, activeBotCode, activePhase, addWorkspaceBlock, currentCredoLetter, workspaceBlocks, expertLoadingBots]);
 
-  // Bot accent border colors
-  const BOT_ACCENT: Record<string, string> = {
-    CEOB: "border-l-sky-400", CTOB: "border-l-violet-400", CFOB: "border-l-emerald-400",
-    CMOB: "border-l-pink-400", CSOB: "border-l-amber-400", COOB: "border-l-blue-400",
-    CPOB: "border-l-orange-400", CHROB: "border-l-rose-400", CINOB: "border-l-teal-400",
-    CROB: "border-l-lime-400", CLOB: "border-l-fuchsia-400", CISOB: "border-l-cyan-400",
-  };
-
-  // Suggested bots from team_proposal (filter out primary bot)
-  const suggestedBots = latestTeamProposal?.bots?.filter((b: any) => b.code !== activeBotCode) || [];
-
-  // "Consulter tous" — fan-out: forEach experts → handleAddExpert (CEO Review D5)
-  const handleConsultAll = useCallback(() => {
-    const botsToConsult = suggestedBots.filter((bot: any) => !activeBotSources.has(bot.code) && !expertLoadingBots.has(bot.code));
-    for (const bot of botsToConsult) {
-      handleAddExpert(bot.code);
-    }
-  }, [suggestedBots, activeBotSources, expertLoadingBots, handleAddExpert]);
-
   return (
     <div className="mt-3 space-y-3">
-      {/* Tour de Table — grid cards + "+" + "Consulter tous" */}
-      <div className="rounded-xl border border-violet-200 bg-violet-50/50 p-4 space-y-3">
+      {/* Employee cards grid — 11 agents always visible */}
+      <div className="rounded-xl border border-violet-200 bg-violet-50/30 p-4 space-y-3">
         <div className="flex items-center justify-between">
           <h4 className="text-[10px] font-bold uppercase tracking-wider text-violet-700">
-            Tour de Table
+            Brain Team — Experts disponibles
           </h4>
-          <div className="flex items-center gap-2">
-            {/* "Consulter tous" button — fan-out (CEO Review D5) */}
-            {suggestedBots.length > 1 && suggestedBots.some((b: any) => !activeBotSources.has(b.code)) && (
-              <button
-                onClick={handleConsultAll}
-                className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-violet-500 text-white hover:bg-violet-600 transition-colors cursor-pointer"
-              >
-                Consulter tous
-              </button>
-            )}
-            {/* "+" button — add any expert to workspace */}
-            <div className="relative" ref={dropdownRef}>
-              <button
-                onClick={() => setShowAddDropdown(!showAddDropdown)}
-                className="w-7 h-7 rounded-full bg-violet-100 hover:bg-violet-200 flex items-center justify-center transition-colors cursor-pointer"
-                title="Ajouter un expert"
-              >
-                <span className="text-violet-700 font-bold text-sm">+</span>
-              </button>
-              {showAddDropdown && (
-                <div className="absolute top-full right-0 mt-1.5 w-56 bg-white rounded-xl border border-gray-200 shadow-lg py-1 z-30 max-h-[320px] overflow-auto">
-                  <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Consulter un expert</div>
-                  {ALL_EXPERT_CODES.map((code) => {
-                    const isDone = activeBotSources.has(code);
-                    const isLoading = expertLoadingBots.has(code);
-                    return (
-                      <button
-                        key={code}
-                        onClick={() => handleAddExpert(code)}
-                        disabled={isLoading}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 transition-colors cursor-pointer text-left"
-                      >
-                        <BotAvatar code={code} size="md" />
-                        <div className="flex-1 min-w-0">
-                          <span className="text-xs font-bold text-gray-800 block truncate">{BOT_NAME[code] || code}</span>
-                        </div>
-                        {isLoading && <Loader2 className="h-3 w-3 animate-spin text-gray-400" />}
-                        {isDone && <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
         </div>
 
-        {/* Team proposal suggested bots — Tour de Table grid cards */}
-        {suggestedBots.length > 0 ? (
-          <div className={cn("grid gap-3", suggestedBots.length >= 3 ? "grid-cols-3" : "grid-cols-2")}>
-            {suggestedBots.map((bot: any) => {
-              const isLoading = expertLoadingBots.has(bot.code);
-              const isDone = activeBotSources.has(bot.code);
-              return (
-                <div key={bot.code} className={cn(
-                  "flex flex-col items-center gap-2 p-3 rounded-xl border bg-white",
-                  "border-l-[4px]",
-                  BOT_ACCENT[bot.code] || "border-l-gray-400",
-                )}>
-                  <BotAvatar code={bot.code} size="lg" />
-                  <div className="text-center w-full">
-                    <span className="text-sm font-bold text-gray-900 block truncate">{BOT_NAME[bot.code] || bot.code}</span>
-                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-2 leading-tight">{bot.raison}</p>
+        <div className="grid gap-3 grid-cols-2 lg:grid-cols-3">
+          {ALL_EXPERT_CODES.map((code) => {
+            const isDone = activeBotSources.has(code);
+            const isLoading = expertLoadingBots.has(code);
+            const isSuggested = suggestedCodes.has(code);
+            const reason = suggestedReason(code);
+            const strengths = BOT_STRENGTHS[code];
+            return (
+              <div key={code} className={cn(
+                "flex flex-col items-center gap-2 p-3 rounded-xl border shadow-sm bg-white",
+                "border-l-[4px]",
+                BOT_ACCENT_CARDS[code] || "border-l-gray-400",
+                isSuggested && !isDone && "ring-1 ring-violet-200",
+              )}>
+                <BotAvatar code={code} size="lg" />
+                <span className="text-sm font-bold text-gray-900 truncate w-full text-center">{BOT_NAME[code] || code}</span>
+                <span className="text-[10px] text-gray-500">{BOT_ROLE_SHORT[code]}</span>
+                {/* Forces: conception + execution */}
+                {strengths && (
+                  <div className="w-full space-y-0.5 text-[9px] text-gray-600">
+                    <div className="truncate">💡 {strengths.conception}</div>
+                    <div className="truncate">⚡ {strengths.execution}</div>
                   </div>
-                  <button
-                    onClick={() => handleAddExpert(bot.code)}
-                    disabled={isLoading}
-                    className={cn(
-                      "w-full text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer mt-auto",
-                      isDone ? "bg-emerald-100 text-emerald-700" :
-                      isLoading ? "bg-gray-100 text-gray-400" :
-                      "bg-violet-500 text-white hover:bg-violet-600"
-                    )}
-                  >
-                    {isLoading ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin mx-auto" />
-                    ) : isDone ? (
-                      <span className="flex items-center justify-center gap-1"><Check className="h-3.5 w-3.5" /> Actif</span>
-                    ) : (
-                      "Consulter"
-                    )}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        ) : hasFirstExchange ? (
-          <p className="text-xs text-gray-500">
-            Cliquez <span className="font-bold text-violet-600">+</span> pour consulter un expert du Brain Team.
-          </p>
-        ) : (
-          <p className="text-[10px] text-gray-500">
-            Les experts seront disponibles apres le premier echange.
-          </p>
-        )}
+                )}
+                {/* Raison si team_proposal le suggere */}
+                {reason && (
+                  <p className="text-[9px] italic text-violet-600 line-clamp-2 text-center w-full">{reason}</p>
+                )}
+                {/* Bouton invitation */}
+                <button
+                  onClick={() => handleAddExpert(code)}
+                  disabled={isLoading}
+                  className={cn(
+                    "w-full text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer mt-auto",
+                    isDone ? "bg-emerald-100 text-emerald-700" :
+                    isLoading ? "bg-gray-100 text-gray-400" :
+                    "bg-violet-500 text-white hover:bg-violet-600"
+                  )}
+                >
+                  {isLoading ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin mx-auto" />
+                  ) : isDone ? (
+                    <span className="flex items-center justify-center gap-1"><Check className="h-3.5 w-3.5" /> Actif</span>
+                  ) : (
+                    "Inviter a la discussion"
+                  )}
+                </button>
+              </div>
+            );
+          })}
+        </div>
 
         {/* Error banner */}
         {expertError && (

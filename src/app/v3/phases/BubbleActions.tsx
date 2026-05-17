@@ -1,5 +1,5 @@
 /**
- * BubbleActions.tsx — S1.4: Multi-select options + Cristalliser
+ * BubbleActions.tsx — S1.4: Multi-select options sous les bulles
  *
  * Chat = generer. Workspace = travailler.
  * Les bulles ont:
@@ -7,15 +7,14 @@
  *      - Click = toggle selection (checkbox)
  *      - Double-click = envoi immediat (retro-compatible)
  *      - Bouton "Envoyer N choix" quand >= 1 selectionne
- *   2. Cristalliser (capture manuelle vers workspace)
+ *   (Cristallisation automatique via useWorkspaceCapture — pas de bouton manuel)
  */
 
 import { useState, useCallback, useRef } from "react";
-import { Diamond, ArrowRight, CheckCircle2, Send } from "lucide-react";
+import { ArrowRight, CheckCircle2, Send } from "lucide-react";
 
 interface BubbleActionsProps {
   onAction: (prompt: string) => void;
-  onCristallise: () => void;
   chatStage: number;
   messageContent: string;
   backendOptions?: string[];
@@ -25,7 +24,7 @@ interface BubbleActionsProps {
   onGpsCristallise?: () => void;
 }
 
-export function BubbleActions({ onAction, onCristallise, backendOptions }: BubbleActionsProps) {
+export function BubbleActions({ onAction, backendOptions }: BubbleActionsProps) {
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -95,16 +94,6 @@ export function BubbleActions({ onAction, onCristallise, backendOptions }: Bubbl
           )}
         </div>
       )}
-      {/* Cristalliser — capture manuelle */}
-      <div className="flex flex-wrap items-center gap-1">
-        <button
-          onClick={onCristallise}
-          className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] text-emerald-600 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 hover:border-emerald-300 cursor-pointer transition-all font-medium"
-        >
-          <Diamond className="h-2.5 w-2.5" />
-          Cristalliser
-        </button>
-      </div>
     </div>
   );
 }

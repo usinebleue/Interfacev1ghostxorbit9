@@ -123,7 +123,14 @@ export type WorkspaceBlockType =
   | "benchmark" | "challenge" | "synthese" | "rapport" | "libre"
   | "debat" | "decision" | "crise" | "deep_search"
   | "docforge_section" | "docforge_code" | "docforge_tableur"
-  | "etat_des_lieux";
+  | "etat_des_lieux" | "action_result";
+
+// ═══ Action suggestions (boutons contextuels one-shot sur blocs experts) ═══
+export interface ActionSuggestion {
+  label: string;      // "Ajuster budget"
+  prompt: string;     // Message envoye au bot
+  target_bot: string; // Code bot cible
+}
 
 export interface WorkspaceBlock {
   id: string;
@@ -140,6 +147,8 @@ export interface WorkspaceBlock {
   sectionId?: string;     // Section workspace cible (ex: "credo-r-rechercher")
   timestamp: number;
   replace_block_id?: string;
+  action_suggestions?: ActionSuggestion[];
+  is_action_result?: boolean;
 }
 
 // ═══ Workspace Tasks — taches assignables aux bots/humains ═══

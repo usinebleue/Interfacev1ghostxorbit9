@@ -669,6 +669,14 @@ export function useWorkspaceCapture() {
                 // ═══ WORKSPACE BLOCK INTELLIGENT — backend ou fallback frontend ═══
                 const lastUserMsg = [...messages].reverse().find((m: any) => m.role === "user" && m.content);
                 const wsBlock = (msg as any).workspace_block as Partial<WorkspaceBlock> | undefined;
+                // Map cascade_suggestions → action_suggestions
+                const cascadeSugs = (msg as any).cascadeSuggestions as Array<{ message: string; target_section?: string }> | undefined;
+                const actionSuggestions = cascadeSugs?.slice(0, 2).map(cs => ({
+                  label: cs.message.substring(0, 35),
+                  prompt: cs.message,
+                  target_bot: cs.target_section || source,
+                })) || undefined;
+
                 if (wsBlock && wsBlock.type && wsBlock.title) {
                   // Backend a généré un workspace_block structuré
                   processedBlockMsgIds.current.add(msg.id);
@@ -685,6 +693,7 @@ export function useWorkspaceCapture() {
                     sectionId,
                     timestamp: Date.now(),
                     replace_block_id: wsBlock.replace_block_id,
+                    action_suggestions: actionSuggestions,
                   });
                 } else if (!(msg as any).workspace_block_skip || workspaceBlocks.length === 0) {
                   // Fallback frontend: détection locale + extraction structured_data
@@ -704,6 +713,7 @@ export function useWorkspaceCapture() {
                     sourceType,
                     sectionId,
                     timestamp: Date.now(),
+                    action_suggestions: actionSuggestions,
                   });
                 }
                 } // end dedup guard

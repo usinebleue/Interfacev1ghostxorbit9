@@ -23,7 +23,7 @@ import { ThinkingAnimation, BotAvatar } from "../simulation/primitives";
 import type { ThinkingStep } from "../simulation/sim-types";
 import { BOT_NAME } from "../../v2/api/types";
 import { api } from "../../v2/api/client";
-import type { WorkspaceBlock, WorkspaceBlockType } from "../core/types";
+import type { WorkspaceBlock, WorkspaceBlockType, ActionSuggestion } from "../core/types";
 
 // ═══ Lucide icons used by inline section actions ═══
 import { ArrowRight, RefreshCw, Merge } from "lucide-react";
@@ -2586,94 +2586,178 @@ const BLOCK_RENDERERS: Record<WorkspaceBlockType, React.FC<BlockRendererProps>> 
   docforge_section: RapportRenderer,
   docforge_code: CodeRenderer,
   docforge_tableur: BudgetRenderer,
+  action_result: LibreRenderer,
 };
 
-// ═══ ExpertBlockWrapper — enhanced display with Zoom Semantique (compact/expand toggle) ═══
-// CEO Review D4: useState local per block. Compact = 1 line + 80 chars summary. Expanded = full content + actions.
+// ═══ Default action suggestions per bot role ═══
+const DEFAULT_ACTIONS: Record<string, ActionSuggestion[]> = {
+  CFOB: [
+    { label: "Ajuster budget", prompt: "Propose un ajustement budgetaire base sur cette analyse.", target_bot: "CFOB" },
+    { label: "Planifier revision", prompt: "Planifie une revision financiere de ce volet.", target_bot: "CFOB" },
+  ],
+  CTOB: [
+    { label: "Creer plan technique", prompt: "Cree un plan technique detaille pour cette recommandation.", target_bot: "CTOB" },
+    { label: "Evaluer faisabilite", prompt: "Evalue la faisabilite technique de cette approche.", target_bot: "CTOB" },
+  ],
+  CMOB: [
+    { label: "Lancer campagne", prompt: "Propose un plan de campagne marketing base sur cette analyse.", target_bot: "CMOB" },
+    { label: "Preparer brief", prompt: "Prepare un brief creatif pour cette initiative.", target_bot: "CMOB" },
+  ],
+  CSOB: [
+    { label: "Plan de vente", prompt: "Developpe un plan de vente actionnable.", target_bot: "CSOB" },
+    { label: "Analyse concurrence", prompt: "Fais une analyse concurrentielle approfondie.", target_bot: "CSOB" },
+  ],
+  COOB: [
+    { label: "Optimiser processus", prompt: "Propose une optimisation des processus impliques.", target_bot: "COOB" },
+    { label: "Plan execution", prompt: "Cree un plan d'execution operationnel.", target_bot: "COOB" },
+  ],
+  CEOB: [
+    { label: "Decision strategique", prompt: "Formule une recommandation de decision strategique.", target_bot: "CEOB" },
+    { label: "Planifier rencontre", prompt: "Propose un ordre du jour pour une rencontre sur ce sujet.", target_bot: "CEOB" },
+  ],
+};
+
+function getActionsForBlock(block: WorkspaceBlock): ActionSuggestion[] {
+  if (block.is_action_result) return []; // Anti-loop: no actions on action results
+  if (block.action_suggestions && block.action_suggestions.length > 0) return block.action_suggestions;
+  return DEFAULT_ACTIONS[block.source] || [
+    { label: "Approfondir l'analyse", prompt: "Approfondis cette analyse avec plus de details.", target_bot: block.source },
+  ];
+}
+
+// ═══ ExpertBlockWrapper — style analyse (colored header, avatar, confidence badge) ═══
+// Blocks stay OPEN by default — manual toggle only (no auto-collapse).
+
+const BOT_BG_LIGHT: Record<string, string> = {
+  CEOB: "bg-blue-50", BCO: "bg-blue-50",
+  CTOB: "bg-violet-50", BCT: "bg-violet-50",
+  CFOB: "bg-emerald-50", BCF: "bg-emerald-50",
+  CMOB: "bg-pink-50", BCM: "bg-pink-50",
+  CSOB: "bg-red-50", BCS: "bg-red-50",
+  COOB: "bg-orange-50", BOO: "bg-orange-50",
+  CPOB: "bg-slate-50",
+  CHROB: "bg-teal-50",
+  CINOB: "bg-rose-50",
+  CROB: "bg-amber-50",
+  CLOB: "bg-indigo-50",
+  CISOB: "bg-zinc-50",
+};
+
+const BOT_ROLE: Record<string, string> = {
+  CEOB: "CEO — Vision strategique", BCO: "CEO — Vision strategique",
+  CTOB: "CTO — Architecture & Tech", BCT: "CTO — Architecture & Tech",
+  CFOB: "CFO — Finance & Budget", BCF: "CFO — Finance & Budget",
+  CMOB: "CMO — Marketing & Croissance", BCM: "CMO — Marketing & Croissance",
+  CSOB: "CSO — Strategie & Vente", BCS: "CSO — Strategie & Vente",
+  COOB: "COO — Operations", BOO: "COO — Operations",
+  CPOB: "CPO — Production & Automatisation",
+  CHROB: "CHRO — RH & Culture",
+  CINOB: "CINO — Innovation & R&D",
+  CROB: "CRO — Revenus & Monetisation",
+  CLOB: "CLO — Juridique & Conformite",
+  CISOB: "CISO — Securite & Risques",
+};
 
 function ExpertBlockWrapper({ block, onAction, children }: BlockRendererProps & { children: React.ReactNode }) {
   const [appeared, setAppeared] = useState(false);
-  const [expanded, setExpanded] = useState(true); // New blocks start expanded
-  const autoCollapseRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [expanded, setExpanded] = useState(true); // Blocks start expanded — no auto-collapse
 
   useEffect(() => {
     const t = setTimeout(() => setAppeared(true), 80);
     return () => clearTimeout(t);
   }, []);
 
-  // Auto-collapse after 5 seconds (new blocks appear expanded briefly then collapse)
-  useEffect(() => {
-    autoCollapseRef.current = setTimeout(() => setExpanded(false), 5000);
-    return () => { if (autoCollapseRef.current) clearTimeout(autoCollapseRef.current); };
-  }, []);
+  const botBgLight = BOT_BG_LIGHT[block.source] || "bg-gray-50";
+  const botName = BOT_NAME[block.source] || block.source;
+  const botRole = BOT_ROLE[block.source] || "Expert";
 
-  const accentBorder = block.source && BOT_ACCENT_BORDERS[block.source] ? BOT_ACCENT_BORDERS[block.source] : "border-l-gray-400";
-
-  // Compact summary: first 80 chars of block summary
+  // Compact summary for collapsed state
   const compactSummary = (block.summary || "").replace(/\n/g, " ").slice(0, 80) + ((block.summary || "").length > 80 ? "..." : "");
 
   return (
     <div
       className={cn(
-        "group/edit rounded-xl border bg-white shadow-sm transition-all duration-300",
-        "border-gray-200 hover:shadow-md",
-        "hover:ring-1 hover:ring-violet-200 hover:border-violet-200",
+        "rounded-xl border border-gray-200 shadow-sm bg-white overflow-hidden transition-all duration-300",
+        "hover:shadow-md",
         appeared ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3",
-        "border-l-[4px]", accentBorder
       )}
     >
-      {/* Clickable header — always visible (compact or expanded) */}
+      {/* Header colore — bande bg-[botColor]/10 */}
       <div
-        className="flex items-center gap-3 p-4 cursor-pointer select-none"
-        onClick={() => { setExpanded(!expanded); if (autoCollapseRef.current) clearTimeout(autoCollapseRef.current); }}
+        className={cn("px-4 py-2.5 border-b border-gray-100 flex items-center gap-3 cursor-pointer select-none", botBgLight)}
+        onClick={() => setExpanded(!expanded)}
       >
         <BotAvatar code={block.source} size="lg" />
         <div className="flex-1 min-w-0">
-          <h3 className="text-base font-bold text-gray-900">{BOT_NAME[block.source] || block.source}</h3>
-          {!expanded && (
+          <h3 className="text-sm font-bold text-gray-900">{botName}</h3>
+          {expanded ? (
+            <span className="text-[10px] text-gray-500">{botRole}</span>
+          ) : (
             <p className="text-xs text-gray-500 truncate mt-0.5">{compactSummary}</p>
-          )}
-          {expanded && (
-            <span className="text-[10px] text-gray-400 font-medium">Perspective expert</span>
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          {block.confidence > 0 && (
+            <span className="text-[10px] font-bold bg-gray-900 text-white px-2.5 py-0.5 rounded-full">
+              {Math.round(block.confidence * 100)}%
+            </span>
+          )}
           <span className="text-[10px] text-gray-300">{new Date(block.timestamp).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })}</span>
           <ChevronDown className={cn("h-4 w-4 text-gray-400 transition-transform duration-300", expanded && "rotate-180")} />
         </div>
       </div>
 
-      {/* Expandable content — CSS transition for smooth open/close */}
+      {/* Contenu — OUVERT par defaut, fermeture manuelle seulement */}
       <div className={cn(
         "overflow-hidden transition-all duration-300 ease-in-out",
         expanded ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"
       )}>
-        {/* Content — 14px readable text */}
-        <div className="px-4 pb-2 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+        <div className="px-4 py-3 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
           {children}
         </div>
 
         {/* Expert actions: Relancer + Approfondir + Challenger */}
-        <div className="px-4 pb-4 pt-3 border-t border-gray-100 mt-2 flex flex-wrap gap-2">
-          <button
-            onClick={(e) => { e.stopPropagation(); onAction("rework", block.id); }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors cursor-pointer border-violet-200 text-violet-700 hover:bg-violet-50"
-          >
-            <RotateCcw className="h-3.5 w-3.5" /> Relancer
-          </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); onAction("deepen", block.id); }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors cursor-pointer border-blue-200 text-blue-700 hover:bg-blue-50"
-          >
-            <Search className="h-3.5 w-3.5" /> Approfondir
-          </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); onAction("challenge", block.id); }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors cursor-pointer border-amber-200 text-amber-700 hover:bg-amber-50"
-          >
-            <Swords className="h-3.5 w-3.5" /> Challenger
-          </button>
-        </div>
+        {!block.is_action_result && (
+          <div className="px-4 pb-2 border-t border-gray-100 pt-2 flex flex-wrap gap-2">
+            <button
+              onClick={(e) => { e.stopPropagation(); onAction("rework", block.id); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors cursor-pointer border-violet-200 text-violet-700 hover:bg-violet-50"
+            >
+              <RotateCcw className="h-3.5 w-3.5" /> Relancer
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); onAction("deepen", block.id); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors cursor-pointer border-blue-200 text-blue-700 hover:bg-blue-50"
+            >
+              <Search className="h-3.5 w-3.5" /> Approfondir
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); onAction("challenge", block.id); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors cursor-pointer border-amber-200 text-amber-700 hover:bg-amber-50"
+            >
+              <Swords className="h-3.5 w-3.5" /> Challenger
+            </button>
+          </div>
+        )}
+
+        {/* Action buttons contextuels — one-shot, anti-loop (pas sur action_result) */}
+        {!block.is_action_result && (() => {
+          const actions = getActionsForBlock(block);
+          if (actions.length === 0) return null;
+          return (
+            <div className="px-4 pb-3 pt-1 flex flex-wrap gap-2">
+              {actions.map((a, idx) => (
+                <button
+                  key={idx}
+                  onClick={(e) => { e.stopPropagation(); onAction("execute_action", JSON.stringify(a)); }}
+                  className="px-3 py-1.5 rounded-lg border border-sky-200 text-sky-700 text-xs font-bold bg-sky-50/50 hover:bg-sky-100 transition-colors cursor-pointer"
+                >
+                  ⚡ {a.label}
+                </button>
+              ))}
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
@@ -2730,6 +2814,7 @@ export const BLOCK_TYPE_LABELS: Record<WorkspaceBlockType, string> = {
   docforge_section: "Section",
   docforge_code: "Code",
   docforge_tableur: "Tableur",
+  action_result: "Action",
 };
 
 // ═══ Sprint 2A Phase 6A: Skeleton loading block (pattern WorkspaceSection.tsx L104-109) ═══
