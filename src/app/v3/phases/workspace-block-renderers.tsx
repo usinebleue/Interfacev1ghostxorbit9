@@ -45,15 +45,38 @@ function formatBlockMarkdown(text: string): string {
   let inCodeBlock = false;
   let codeBlockLang = "";
   let codeBlockLines: string[] = [];
+  let tableLines: string[] = [];
 
   const closeList = () => { if (listTag) { result.push(`</${listTag}>`); listTag = null; } };
+
+  const flushTable = () => {
+    if (tableLines.length === 0) return;
+    const rows = tableLines.map(r => r.replace(/^\|/, "").replace(/\|$/, "").split("|").map(c => c.trim()));
+    let headerEnd = -1;
+    for (let r = 0; r < rows.length; r++) {
+      if (rows[r].every(c => /^[-:]+$/.test(c))) { headerEnd = r; break; }
+    }
+    let tbl = '<div class="my-2"><table class="text-sm border-collapse w-full">';
+    for (let r = 0; r < rows.length; r++) {
+      if (headerEnd >= 0 && r === headerEnd) continue;
+      const isHead = headerEnd > 0 && r < headerEnd;
+      const tag = isHead ? "th" : "td";
+      const cls = isHead
+        ? 'class="px-3 py-1.5 text-left font-semibold text-gray-900 border-b border-gray-300 bg-gray-50"'
+        : 'class="px-3 py-1.5 text-left text-gray-700 border-b border-gray-100"';
+      tbl += "<tr>" + rows[r].map(c => `<${tag} ${cls}>${applyInlineFmt(c)}</${tag}>`).join("") + "</tr>";
+    }
+    tbl += "</table></div>";
+    result.push(tbl);
+    tableLines = [];
+  };
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
 
     if (line.trim().startsWith("```")) {
       if (!inCodeBlock) {
-        closeList(); inCodeBlock = true;
+        closeList(); flushTable(); inCodeBlock = true;
         codeBlockLang = line.trim().replace(/^```/, "").trim();
         codeBlockLines = []; continue;
       } else {
@@ -64,6 +87,15 @@ function formatBlockMarkdown(text: string): string {
       }
     }
     if (inCodeBlock) { codeBlockLines.push(line); continue; }
+
+    // Table rows: lines starting with |
+    if (/^\s*\|/.test(line)) {
+      closeList();
+      tableLines.push(line.trim());
+      continue;
+    }
+    // Flush table if we exit table context
+    if (tableLines.length > 0) { flushTable(); }
 
     if (/^[━─═\-]{3,}$/.test(line.trim())) { closeList(); result.push('<hr class="my-3 border-gray-200">'); continue; }
 
@@ -100,6 +132,7 @@ function formatBlockMarkdown(text: string): string {
   }
 
   closeList();
+  flushTable();
   if (inCodeBlock && codeBlockLines.length > 0) {
     const langLabel = codeBlockLang ? `<div class="text-[10px] text-gray-400 mb-1 font-mono">${codeBlockLang}</div>` : "";
     result.push(`<div class="my-2 rounded-lg bg-gray-900 text-gray-100 p-3"><pre class="text-xs font-mono whitespace-pre-wrap break-all leading-relaxed">${langLabel}${codeBlockLines.join("\n")}</pre></div>`);
