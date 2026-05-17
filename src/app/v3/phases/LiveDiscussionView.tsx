@@ -418,6 +418,46 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
         }
         break;
       }
+      case "correct": {
+        // blockId format: "actualBlockId||correctionText"
+        const [actualId, correctionText] = blockId.split("||");
+        const targetBlock = workspaceBlocks.find(b => b.id === actualId);
+        if (!targetBlock || !correctionText) break;
+        const targetBotC = targetBlock.source || activeBotCode;
+        setPulsingBlockId(actualId);
+        setTimeout(() => setPulsingBlockId(null), 1500);
+        (async () => {
+          try {
+            const res = await api.chatMulti({
+              message: `Correction demandee sur ton analyse "${targetBlock.title}":\n\n${correctionText}\n\nContexte original: ${targetBlock.summary.substring(0, 200)}`,
+              user_id: 1,
+              agents: [targetBotC],
+              primary_agent: targetBotC,
+              workspace_phase: activePhase,
+            });
+            const persp = res.perspectives?.[0];
+            if (!persp) return;
+            const blockType = detectBlockTypeFrontend(persp.contenu);
+            addWorkspaceBlock({
+              id: `expert-${targetBotC}-${Date.now()}`,
+              type: blockType,
+              title: `${BOT_NAME[targetBotC] || targetBotC} — Correction`,
+              summary: summarizeExpertForWorkspace(persp.contenu),
+              structured_data: extractStructuredDataFrontend(persp.contenu, blockType),
+              credo_step: targetBlock.credo_step,
+              credo_sub_section: "experts",
+              confidence: 0.85,
+              source: targetBotC,
+              sourceType: "chat",
+              timestamp: Date.now(),
+              replace_block_id: actualId,
+            });
+          } catch (err) {
+            console.error("[Expert correct] Error:", err);
+          }
+        })();
+        break;
+      }
       case "delete":
         removeWorkspaceBlock(blockId);
         break;

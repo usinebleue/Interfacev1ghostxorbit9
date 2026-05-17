@@ -2625,139 +2625,183 @@ function getActionsForBlock(block: WorkspaceBlock): ActionSuggestion[] {
   ];
 }
 
-// ═══ ExpertBlockWrapper — style analyse (colored header, avatar, confidence badge) ═══
-// Blocks stay OPEN by default — manual toggle only (no auto-collapse).
+// ═══ ExpertBlockWrapper — style simulation diagnostic (rounded-xl white card + badge pill) ═══
+// Pattern: FocusReflexionView.tsx StepDiagnostic. Blocks OPEN by default, manual close only.
 
-const BOT_BG_LIGHT: Record<string, string> = {
-  CEOB: "bg-blue-50", BCO: "bg-blue-50",
-  CTOB: "bg-violet-50", BCT: "bg-violet-50",
-  CFOB: "bg-emerald-50", BCF: "bg-emerald-50",
-  CMOB: "bg-pink-50", BCM: "bg-pink-50",
-  CSOB: "bg-red-50", BCS: "bg-red-50",
-  COOB: "bg-orange-50", BOO: "bg-orange-50",
-  CPOB: "bg-slate-50",
-  CHROB: "bg-teal-50",
-  CINOB: "bg-rose-50",
-  CROB: "bg-amber-50",
-  CLOB: "bg-indigo-50",
-  CISOB: "bg-zinc-50",
+const BOT_BADGE_COLORS: Record<string, { bg: string; text: string }> = {
+  CEOB: { bg: "bg-blue-100", text: "text-blue-700" }, BCO: { bg: "bg-blue-100", text: "text-blue-700" },
+  CTOB: { bg: "bg-violet-100", text: "text-violet-700" }, BCT: { bg: "bg-violet-100", text: "text-violet-700" },
+  CFOB: { bg: "bg-emerald-100", text: "text-emerald-700" }, BCF: { bg: "bg-emerald-100", text: "text-emerald-700" },
+  CMOB: { bg: "bg-pink-100", text: "text-pink-700" }, BCM: { bg: "bg-pink-100", text: "text-pink-700" },
+  CSOB: { bg: "bg-red-100", text: "text-red-700" }, BCS: { bg: "bg-red-100", text: "text-red-700" },
+  COOB: { bg: "bg-orange-100", text: "text-orange-700" }, BOO: { bg: "bg-orange-100", text: "text-orange-700" },
+  CPOB: { bg: "bg-slate-100", text: "text-slate-700" },
+  CHROB: { bg: "bg-teal-100", text: "text-teal-700" },
+  CINOB: { bg: "bg-rose-100", text: "text-rose-700" },
+  CROB: { bg: "bg-amber-100", text: "text-amber-700" },
+  CLOB: { bg: "bg-indigo-100", text: "text-indigo-700" },
+  CISOB: { bg: "bg-zinc-100", text: "text-zinc-700" },
 };
 
 const BOT_ROLE: Record<string, string> = {
-  CEOB: "CEO — Vision strategique", BCO: "CEO — Vision strategique",
-  CTOB: "CTO — Architecture & Tech", BCT: "CTO — Architecture & Tech",
-  CFOB: "CFO — Finance & Budget", BCF: "CFO — Finance & Budget",
-  CMOB: "CMO — Marketing & Croissance", BCM: "CMO — Marketing & Croissance",
-  CSOB: "CSO — Strategie & Vente", BCS: "CSO — Strategie & Vente",
-  COOB: "COO — Operations", BOO: "COO — Operations",
-  CPOB: "CPO — Production & Automatisation",
-  CHROB: "CHRO — RH & Culture",
-  CINOB: "CINO — Innovation & R&D",
-  CROB: "CRO — Revenus & Monetisation",
-  CLOB: "CLO — Juridique & Conformite",
-  CISOB: "CISO — Securite & Risques",
+  CEOB: "CEO", BCO: "CEO",
+  CTOB: "CTO", BCT: "CTO",
+  CFOB: "CFO", BCF: "CFO",
+  CMOB: "CMO", BCM: "CMO",
+  CSOB: "CSO", BCS: "CSO",
+  COOB: "COO", BOO: "COO",
+  CPOB: "CPO",
+  CHROB: "CHRO",
+  CINOB: "CINO",
+  CROB: "CRO",
+  CLOB: "CLO",
+  CISOB: "CISO",
 };
 
 function ExpertBlockWrapper({ block, onAction, children }: BlockRendererProps & { children: React.ReactNode }) {
   const [appeared, setAppeared] = useState(false);
   const [expanded, setExpanded] = useState(true); // Blocks start expanded — no auto-collapse
+  const [correction, setCorrection] = useState("");
 
   useEffect(() => {
     const t = setTimeout(() => setAppeared(true), 80);
     return () => clearTimeout(t);
   }, []);
 
-  const botBgLight = BOT_BG_LIGHT[block.source] || "bg-gray-50";
   const botName = BOT_NAME[block.source] || block.source;
   const botRole = BOT_ROLE[block.source] || "Expert";
 
+  // Confidence-based coloring (pattern DiagnosticRenderer scoreStyle)
+  const pct = Math.round(block.confidence * 100);
+  const confStyle = pct < 40
+    ? { border: "border-orange-400", bg: "bg-gradient-to-b from-orange-50 to-white", hdr: "bg-orange-100/60", badge: "bg-orange-600 text-white", bar: "bg-orange-500" }
+    : pct < 70
+    ? { border: "border-amber-300", bg: "bg-gradient-to-b from-amber-50 to-white", hdr: "bg-amber-100/60", badge: "bg-amber-500 text-white", bar: "bg-amber-500" }
+    : { border: "border-emerald-300", bg: "bg-gradient-to-b from-emerald-50 to-white", hdr: "bg-emerald-100/60", badge: "bg-emerald-500 text-white", bar: "bg-emerald-500" };
+
   // Compact summary for collapsed state
-  const compactSummary = (block.summary || "").replace(/\n/g, " ").slice(0, 80) + ((block.summary || "").length > 80 ? "..." : "");
+  const compactSummary = (block.summary || "").replace(/\n/g, " ").slice(0, 100) + ((block.summary || "").length > 100 ? "..." : "");
+
+  const handleCorrection = () => {
+    if (!correction.trim()) return;
+    onAction("correct", block.id + "||" + correction.trim());
+    setCorrection("");
+  };
 
   return (
     <div
       className={cn(
-        "rounded-xl border border-gray-200 shadow-sm bg-white overflow-hidden transition-all duration-300",
-        "hover:shadow-md",
+        "rounded-xl overflow-hidden border-2 shadow-sm transition-all duration-300 hover:shadow-md",
+        confStyle.border, confStyle.bg,
         appeared ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3",
       )}
     >
-      {/* Header colore — bande bg-[botColor]/10 */}
+      {/* Header — pattern DiagnosticRenderer (colored header + score badge) */}
       <div
-        className={cn("px-4 py-2.5 border-b border-gray-100 flex items-center gap-3 cursor-pointer select-none", botBgLight)}
+        className={cn("px-3 py-2.5 flex items-center gap-2.5 cursor-pointer select-none", confStyle.hdr)}
         onClick={() => setExpanded(!expanded)}
       >
-        <BotAvatar code={block.source} size="lg" />
+        <BotAvatar code={block.source} size="md" />
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-bold text-gray-900">{botName}</h3>
-          {expanded ? (
-            <span className="text-[10px] text-gray-500">{botRole}</span>
-          ) : (
-            <p className="text-xs text-gray-500 truncate mt-0.5">{compactSummary}</p>
-          )}
+          <span className="text-xs font-bold text-gray-900">{botName}</span>
+          <span className="text-[10px] text-gray-500 ml-1.5">{botRole}</span>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {block.confidence > 0 && (
-            <span className="text-[10px] font-bold bg-gray-900 text-white px-2.5 py-0.5 rounded-full">
-              {Math.round(block.confidence * 100)}%
-            </span>
-          )}
-          <span className="text-[10px] text-gray-300">{new Date(block.timestamp).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })}</span>
-          <ChevronDown className={cn("h-4 w-4 text-gray-400 transition-transform duration-300", expanded && "rotate-180")} />
+        <div className={cn("flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold", confStyle.badge)}>
+          {pct}%
         </div>
+        <ChevronDown className={cn("h-3.5 w-3.5 text-gray-400 transition-transform duration-300 shrink-0", expanded && "rotate-180")} />
       </div>
 
-      {/* Contenu — OUVERT par defaut, fermeture manuelle seulement */}
-      <div className={cn(
-        "overflow-hidden transition-all duration-300 ease-in-out",
-        expanded ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"
-      )}>
-        <div className="px-4 py-3 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
-          {children}
+      {/* Body */}
+      <div className="px-3 py-2.5 space-y-2">
+        {/* Title */}
+        <h3 className="text-[11px] font-bold text-gray-900">{block.title}</h3>
+
+        {/* Confidence bar */}
+        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+          <div className={cn("h-full rounded-full transition-all", confStyle.bar)} style={{ width: `${pct}%`, transition: "width 0.8s ease-out" }} />
         </div>
 
-        {/* Expert actions: Relancer + Approfondir + Challenger */}
-        {!block.is_action_result && (
-          <div className="px-4 pb-2 border-t border-gray-100 pt-2 flex flex-wrap gap-2">
-            <button
-              onClick={(e) => { e.stopPropagation(); onAction("rework", block.id); }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors cursor-pointer border-violet-200 text-violet-700 hover:bg-violet-50"
-            >
-              <RotateCcw className="h-3.5 w-3.5" /> Relancer
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); onAction("deepen", block.id); }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors cursor-pointer border-blue-200 text-blue-700 hover:bg-blue-50"
-            >
-              <Search className="h-3.5 w-3.5" /> Approfondir
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); onAction("challenge", block.id); }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors cursor-pointer border-amber-200 text-amber-700 hover:bg-amber-50"
-            >
-              <Swords className="h-3.5 w-3.5" /> Challenger
-            </button>
-          </div>
+        {/* Collapsed summary */}
+        {!expanded && (
+          <p className="text-[10px] text-gray-600 font-medium">{compactSummary}</p>
         )}
 
-        {/* Action buttons contextuels — one-shot, anti-loop (pas sur action_result) */}
-        {!block.is_action_result && (() => {
-          const actions = getActionsForBlock(block);
-          if (actions.length === 0) return null;
-          return (
-            <div className="px-4 pb-3 pt-1 flex flex-wrap gap-2">
-              {actions.map((a, idx) => (
-                <button
-                  key={idx}
-                  onClick={(e) => { e.stopPropagation(); onAction("execute_action", JSON.stringify(a)); }}
-                  className="px-3 py-1.5 rounded-lg border border-sky-200 text-sky-700 text-xs font-bold bg-sky-50/50 hover:bg-sky-100 transition-colors cursor-pointer"
-                >
-                  ⚡ {a.label}
-                </button>
-              ))}
+        {/* Expanded content — OUVERT par defaut */}
+        {expanded && (
+          <>
+            <div className="text-[11px] text-gray-700 leading-relaxed">
+              {children}
             </div>
-          );
-        })()}
+
+            {/* Input de correction — permet a l'user d'ajuster l'input du bot */}
+            {!block.is_action_result && (
+              <div className="mt-2 pt-2 border-t border-gray-200">
+                <div className="flex gap-1.5">
+                  <input
+                    type="text"
+                    placeholder="Corriger ou preciser..."
+                    value={correction}
+                    onChange={(e) => setCorrection(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleCorrection(); }}
+                    className="flex-1 text-[11px] border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-200 bg-white placeholder:text-gray-300"
+                  />
+                  {correction.trim() && (
+                    <button
+                      onClick={handleCorrection}
+                      className="px-2.5 py-1.5 rounded-lg bg-blue-500 text-white text-[10px] font-bold hover:bg-blue-600 transition-colors cursor-pointer"
+                    >
+                      Corriger
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Expert actions: Relancer + Approfondir + Challenger */}
+            {!block.is_action_result && (
+              <div className="mt-2 pt-2 border-t border-gray-100 flex flex-wrap gap-2">
+                <button
+                  onClick={(e) => { e.stopPropagation(); onAction("rework", block.id); }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors cursor-pointer border-violet-200 text-violet-700 hover:bg-violet-50"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" /> Relancer
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onAction("deepen", block.id); }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors cursor-pointer border-blue-200 text-blue-700 hover:bg-blue-50"
+                >
+                  <Search className="h-3.5 w-3.5" /> Approfondir
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onAction("challenge", block.id); }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors cursor-pointer border-amber-200 text-amber-700 hover:bg-amber-50"
+                >
+                  <Swords className="h-3.5 w-3.5" /> Challenger
+                </button>
+              </div>
+            )}
+
+            {/* Action buttons contextuels — one-shot, anti-loop */}
+            {!block.is_action_result && (() => {
+              const actions = getActionsForBlock(block);
+              if (actions.length === 0) return null;
+              return (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {actions.map((a, idx) => (
+                    <button
+                      key={idx}
+                      onClick={(e) => { e.stopPropagation(); onAction("execute_action", JSON.stringify(a)); }}
+                      className="px-3 py-1.5 rounded-lg border border-sky-200 text-sky-700 text-xs font-bold bg-sky-50/50 hover:bg-sky-100 transition-colors cursor-pointer"
+                    >
+                      ⚡ {a.label}
+                    </button>
+                  ))}
+                </div>
+              );
+            })()}
+          </>
+        )}
       </div>
     </div>
   );
