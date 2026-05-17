@@ -11,6 +11,7 @@ import { createContext, useContext, useState, useCallback, useEffect, useRef, ty
 import type { PhaseKey, CredoPhaseKey, WorkflowItem, WorkspaceBlock, WorkspaceBlockType, WorkspaceTask } from "./core/types";
 import type { MeetingStatus, ParticipantInfo } from "./hooks/useLiveKitMeeting";
 import { api } from "../v2/api/client";
+import { useChatContext } from "../v2/context/ChatContext";
 
 export interface MeetingControlsState {
   meetingStatus: MeetingStatus;
@@ -66,6 +67,26 @@ const RESERVED_PATHS = ["v2", "meeting", "simulation"];
 // Slugs de bots connus (pour distinguer /cmo/cockpit de /cockpit)
 const ALL_BOT_SLUGS = new Set(Object.values(BOT_TO_SLUG));
 
+// ═══ Thread-scoped phases — blocks liés au thread actif ══���
+const THREAD_SCOPED_PHASES = ["discussion", "reflexion", "creation", "execution", "retroaction"];
+
+/** Construire les clés de stockage selon le thread actif */
+function getStorageKeys(threadId: string | null, botCode: string, phase: string) {
+  if (threadId && THREAD_SCOPED_PHASES.includes(phase)) {
+    return {
+      lsKey: `wsBlocks:${threadId}`,
+      canvasKey: `workspace_disc_${threadId}_${phase}`,
+      cacheKey: `${threadId}_${phase}`,
+    };
+  }
+  // Fallback legacy (pas de thread actif ou phase non-scoped)
+  return {
+    lsKey: "workspaceBlocks",
+    canvasKey: `workspace_phase_${botCode}_${phase}`,
+    cacheKey: `${botCode}_${phase}`,
+  };
+}
+
 function parseURL(): { dept: string | null; section: string | null; sub: string | null } {
   const path = window.location.pathname.replace(/^\/+|\/+$/g, "");
   if (!path || RESERVED_PATHS.some(p => path.startsWith(p))) return { dept: null, section: null, sub: null };
@@ -74,9 +95,18 @@ function parseURL(): { dept: string | null; section: string | null; sub: string 
   // Check if first segment is a department slug
   if (ALL_BOT_SLUGS.has(parts[0])) {
     const dept = SLUG_TO_BOT[parts[0]] || null;
+    // Route: /{bot}/discussion/{threadId} — deep link vers une discussion spécifique
+    if (parts[1] === "discussion" && parts[2]) {
+      return { dept, section: "discussion", sub: parts[2] };
+    }
     const section = parts[1] ? (SLUG_TO_SECTION[parts[1]] || parts[1]) : null;
     const sub = parts[2] || null;
     return { dept, section, sub };
+  }
+
+  // Route: /discussion/{threadId} — sans préfixe bot
+  if (parts[0] === "discussion" && parts[1]) {
+    return { dept: null, section: "discussion", sub: parts[1] };
   }
 
   // No dept prefix — just section/sub
@@ -94,6 +124,14 @@ export function pushSectionURL(section: string, sub?: string | null) {
   const target = sub ? `/${_activeBotSlug}/${slug}/${sub}` : `/${_activeBotSlug}/${slug}`;
   if (window.location.pathname !== target) {
     window.history.pushState({ section, sub }, "", target);
+  }
+}
+
+/** Push discussion thread URL */
+export function pushDiscussionURL(threadId: string) {
+  const target = `/${_activeBotSlug}/discussion/${threadId}`;
+  if (window.location.pathname !== target) {
+    window.history.pushState({ section: "discussion", threadId }, "", target);
   }
 }
 
@@ -204,6 +242,9 @@ interface AmorcerState {
   getBlocksByCredoStep: (step: string) => WorkspaceBlock[];
   getBlocksByType: (type: WorkspaceBlockType) => WorkspaceBlock[];
 
+  // Discussion thread actif (scoping workspace blocks per-thread)
+  activeDiscussionId: string | null;
+
   // Workspace tasks (taches assignables)
   workspaceTasks: WorkspaceTask[];
   addWorkspaceTask: (task: WorkspaceTask) => void;
@@ -219,6 +260,11 @@ interface AmorcerState {
 const AmorcerCtx = createContext<AmorcerState | null>(null);
 
 export function AmorcerProvider({ children }: { children: ReactNode }) {
+  // ═══ Thread actif depuis ChatContext (scoping workspace blocks per-discussion) ═══
+  const { activeThreadId, resumeThread } = useChatContext();
+  const activeThreadIdRef = useRef(activeThreadId);
+  activeThreadIdRef.current = activeThreadId;
+
   const [activePhase, setActivePhaseRaw] = useState<PhaseKey>(() => {
     const stored = lsGet<string>("activePhase", "observation");
     // URL-based: allow direct navigation to /ceo/execution/*
@@ -226,6 +272,11 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     if (urlSection === "execution") {
       lsSet("activePhase", "execution");
       return "execution" as PhaseKey;
+    }
+    // URL-based: /discussion/{threadId} → démarrer en phase discussion
+    if (urlSection === "discussion") {
+      lsSet("activePhase", "discussion");
+      return "discussion" as PhaseKey;
     }
     // Never restore execution/retroaction from localStorage — always entered via explicit workflow transition
     if (stored === "execution" || stored === "retroaction") {
@@ -242,6 +293,8 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
 
   const [rightSection, setRightSectionRaw] = useState<string | null>(() => {
     if (initialURL.section === "orbit9") return null;
+    // Discussion URL → workspace panel (pas cockpit)
+    if (initialURL.section === "discussion") return null;
     const restoredPhase = lsGet<string>("activePhase", "observation");
     const restoredContext = lsGet<string | null>("reflexionContext", null);
     // Phase focus avec contexte → null (workspace affiche la vue phase)
@@ -287,7 +340,13 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
         setActiveBotCodeRaw(dept);
         _activeBotSlug = BOT_TO_SLUG[dept] || "ceo";
       }
-      if (section === "orbit9") {
+      if (section === "discussion" && sub) {
+        // Navigation vers une discussion spécifique
+        resumeThread(sub);
+        setActivePhaseRaw("discussion" as PhaseKey);
+        lsSet("activePhase", "discussion");
+        setRightSectionRaw(null);
+      } else if (section === "orbit9") {
         setCockpitTabRaw("orbit9");
         setRightSectionRaw(null);
         setO9SectionRaw(sub || "dashboard");
@@ -308,6 +367,16 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
 
+  // ═══ URL restore — si /discussion/{threadId} → restaurer le thread au mount ═══
+  const urlRestoredRef = useRef(false);
+  useEffect(() => {
+    if (urlRestoredRef.current) return;
+    if (initialURL.section === "discussion" && initialURL.sub) {
+      urlRestoredRef.current = true;
+      resumeThread(initialURL.sub);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ═══ Refs pour valeurs courantes (useCallback capture stale values sans refs) ═══
   // Placés AVANT setActiveBotCode/setActivePhase pour éviter TDZ
   const activeBotCodeRef = useRef(activeBotCode);
@@ -324,14 +393,14 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
   // Clé: `${botCode}_${phase}` → { blocks, chatStage, workflowItems }
   const phaseStateCacheRef = useRef<Record<string, { blocks: WorkspaceBlock[]; chatStage: number; workflowItems: WorkflowItem[] }>>({});
 
-  // ═══ saveCanvasNow — fire-and-forget sauvegarde immédiate ═══
-  const saveCanvasNow = useCallback((botCode: string, phase: string) => {
+  // ═══ saveCanvasNow — fire-and-forget sauvegarde immédiate (per-thread) ═══
+  const saveCanvasNow = useCallback((botCode: string, phase: string, threadId?: string | null) => {
     const blocks = blocksRef.current;
     const stage = chatStageRef.current;
     const wfItems = workflowItemsRef.current;
     if (blocks.length === 0 && stage === 0 && wfItems.length === 0) return;
     if (phase === "observation") return;
-    const canvasKey = `workspace_phase_${botCode}_${phase}`;
+    const { canvasKey } = getStorageKeys(threadId ?? null, botCode, phase);
     api.getOrCreateCanvas(canvasKey).then(canvas => {
       api.updateCanvas(canvas.id, { workspaceBlocks: blocks, chatStage: stage, workflowItems: wfItems });
     }).catch(() => { /* silent */ });
@@ -342,9 +411,9 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     const prevPhase = activePhaseRef.current;
     // Save-before-clear: sauvegarder le canvas avant de changer de bot
     if (prevPhase !== "observation") {
-      saveCanvasNow(prevBot, prevPhase);
+      saveCanvasNow(prevBot, prevPhase, activeThreadIdRef.current);
       // Cache synchrone — restauration au retour sur ce bot+phase
-      const cacheKey = `${prevBot}_${prevPhase}`;
+      const { cacheKey } = getStorageKeys(activeThreadIdRef.current, prevBot, prevPhase);
       phaseStateCacheRef.current[cacheKey] = {
         blocks: blocksRef.current,
         chatStage: chatStageRef.current,
@@ -369,7 +438,8 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     setWorkflowItems([]);
     // Nettoyer workspace blocks au switch de bot (observation = pas de blocks)
     setWorkspaceBlocks([]);
-    try { localStorage.removeItem("workspaceBlocks"); } catch { /* silent */ }
+    const { lsKey } = getStorageKeys(activeThreadIdRef.current, prevBot, prevPhase);
+    try { localStorage.removeItem(lsKey); } catch { /* silent */ }
     const target = `/${BOT_TO_SLUG[code] || "ceo"}/cockpit`;
     if (window.location.pathname !== target) {
       window.history.pushState({ section: "cockpit" }, "", target);
@@ -440,9 +510,9 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     const prevBot = activeBotCodeRef.current;
     // Save-before-clear: sauvegarder le canvas avant de changer de phase
     if (prevPhase !== "observation" && prevPhase !== p) {
-      saveCanvasNow(prevBot, prevPhase);
+      saveCanvasNow(prevBot, prevPhase, activeThreadIdRef.current);
       // Cache synchrone — restauration instantanée au retour (fix workspace vide)
-      const cacheKey = `${prevBot}_${prevPhase}`;
+      const { cacheKey } = getStorageKeys(activeThreadIdRef.current, prevBot, prevPhase);
       phaseStateCacheRef.current[cacheKey] = {
         blocks: blocksRef.current,
         chatStage: chatStageRef.current,
@@ -454,7 +524,7 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     // Nettoyer le deliverable actif (évite que Jumelage/DocForge reste bloqué)
     setActiveDeliverable(null);
     // Restaurer depuis le cache local (instantané) ou vider si phase jamais visitée
-    const newCacheKey = `${activeBotCodeRef.current}_${p}`;
+    const { cacheKey: newCacheKey } = getStorageKeys(activeThreadIdRef.current, activeBotCodeRef.current, p);
     const cached = phaseStateCacheRef.current[newCacheKey];
     if (cached) {
       setWorkspaceBlocks(cached.blocks);
@@ -488,10 +558,11 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     return id;
   }, [activeBotCode]);
 
-  // ═══ Workspace Blocks dynamiques (discussion) ═══
+  // ═══ Workspace Blocks dynamiques (discussion) — scoped per-thread ═══
   const [workspaceBlocks, setWorkspaceBlocks] = useState<WorkspaceBlock[]>(() => {
+    const { lsKey } = getStorageKeys(activeThreadId, activeBotCode, activePhase);
     try {
-      const stored = localStorage.getItem("workspaceBlocks");
+      const stored = localStorage.getItem(lsKey);
       return stored ? JSON.parse(stored) : [];
     } catch { return []; }
   });
@@ -499,16 +570,17 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
   // Sync blocksRef avec workspaceBlocks (ref déclarée plus haut pour saveCanvasNow)
   blocksRef.current = workspaceBlocks;
 
-  // Persist workspace blocks
+  // Persist workspace blocks — clé per-thread
   useEffect(() => {
+    const { lsKey } = getStorageKeys(activeThreadId, activeBotCode, activePhase);
     try {
       if (workspaceBlocks.length === 0) {
-        localStorage.removeItem("workspaceBlocks");
+        localStorage.removeItem(lsKey);
       } else {
-        localStorage.setItem("workspaceBlocks", JSON.stringify(workspaceBlocks));
+        localStorage.setItem(lsKey, JSON.stringify(workspaceBlocks));
       }
     } catch { /* silent */ }
-  }, [workspaceBlocks]);
+  }, [workspaceBlocks, activeThreadId, activeBotCode, activePhase]);
 
   // ═══ getCristallise/getCristalliseItem — vues dérivées de workspaceBlocks ═══
   const getCristallise = useCallback((sectionId: string): string | null => {
@@ -535,31 +607,32 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
-  // ═══ Canvas auto-save — persister workspaceBlocks en DB (debounce 2s) ═══
+  // ═══ Canvas auto-save — persister workspaceBlocks en DB (debounce 2s) — per-thread ═══
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (workspaceBlocks.length === 0) return;
     if (activePhase === "observation") return;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
-      const canvasKey = `workspace_phase_${activeBotCode}_${activePhase}`;
+      const { canvasKey } = getStorageKeys(activeThreadId, activeBotCode, activePhase);
       api.getOrCreateCanvas(canvasKey).then(canvas => {
         api.updateCanvas(canvas.id, { workspaceBlocks, chatStage, workflowItems });
       }).catch(() => { /* silent */ });
     }, 2000);
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
-  }, [workspaceBlocks, chatStage, activeBotCode, activePhase, workflowItems]);
+  }, [workspaceBlocks, chatStage, activeBotCode, activePhase, workflowItems, activeThreadId]);
 
-  // ═══ Canvas auto-load — fallback si le cache local est vide (ex: refresh page) ═══
+  // ═══ Canvas auto-load — fallback si le cache local est vide (ex: refresh page) — per-thread ═══
   const prevLoadPhaseRef = useRef(activePhase);
+  const prevThreadRef = useRef(activeThreadId);
   useEffect(() => {
-    if (activePhase === prevLoadPhaseRef.current) return;
+    if (activePhase === prevLoadPhaseRef.current && activeThreadId === prevThreadRef.current) return;
     prevLoadPhaseRef.current = activePhase;
+    prevThreadRef.current = activeThreadId;
     if (activePhase === "observation") return;
     // Si le cache local a déjà restauré les blocks, pas besoin de l'API
-    const cacheKey = `${activeBotCode}_${activePhase}`;
+    const { cacheKey, canvasKey } = getStorageKeys(activeThreadId, activeBotCode, activePhase);
     if (phaseStateCacheRef.current[cacheKey]?.blocks?.length) return;
-    const canvasKey = `workspace_phase_${activeBotCode}_${activePhase}`;
     api.getOrCreateCanvas(canvasKey).then(canvas => {
       const data = canvas.data as any;
       if (data?.workspaceBlocks && Array.isArray(data.workspaceBlocks) && data.workspaceBlocks.length > 0) {
@@ -570,7 +643,82 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
         setChatStage(prev => prev > 0 ? prev : data.chatStage);
       }
     }).catch(() => { /* silent */ });
-  }, [activePhase, activeBotCode]);
+  }, [activePhase, activeBotCode, activeThreadId]);
+
+  // ═══ Thread switch — sauvegarder l'ancien thread, charger le nouveau ═══
+  const prevActiveThreadIdRef = useRef(activeThreadId);
+  useEffect(() => {
+    const prevThreadId = prevActiveThreadIdRef.current;
+    if (activeThreadId === prevThreadId) return;
+
+    // 1. Flush save old thread's blocks
+    if (prevThreadId && activePhase !== "observation") {
+      saveCanvasNow(activeBotCode, activePhase, prevThreadId);
+      const { cacheKey: oldCacheKey } = getStorageKeys(prevThreadId, activeBotCode, activePhase);
+      phaseStateCacheRef.current[oldCacheKey] = {
+        blocks: blocksRef.current,
+        chatStage: chatStageRef.current,
+        workflowItems: workflowItemsRef.current,
+      };
+    }
+
+    prevActiveThreadIdRef.current = activeThreadId;
+
+    // 2. Load new thread's blocks
+    if (!activeThreadId) {
+      setWorkspaceBlocks([]);
+      setChatStage(0);
+      return;
+    }
+
+    // Si on est en phase observation, pas de blocks à charger — le switch vers
+    // "discussion" (via useWorkspaceCapture auto-transition) déclenchera le load
+    if (activePhase === "observation") {
+      // Push URL quand même pour deep-link
+      pushDiscussionURL(activeThreadId);
+      return;
+    }
+
+    // Try cache first
+    const { lsKey, cacheKey, canvasKey } = getStorageKeys(activeThreadId, activeBotCode, activePhase);
+    const cached = phaseStateCacheRef.current[cacheKey];
+    if (cached?.blocks?.length) {
+      setWorkspaceBlocks(cached.blocks);
+      setChatStage(cached.chatStage);
+      setWorkflowItems(cached.workflowItems);
+      // Push discussion URL
+      if (THREAD_SCOPED_PHASES.includes(activePhase)) pushDiscussionURL(activeThreadId);
+      return;
+    }
+    // Try localStorage
+    try {
+      const stored = localStorage.getItem(lsKey);
+      if (stored) {
+        const blocks = JSON.parse(stored);
+        if (blocks.length > 0) {
+          setWorkspaceBlocks(blocks);
+          if (THREAD_SCOPED_PHASES.includes(activePhase)) pushDiscussionURL(activeThreadId);
+          return;
+        }
+      }
+    } catch {}
+
+    // Fallback: load from canvas API (ne PAS écraser si des blocks ont été ajoutés entre-temps)
+    api.getOrCreateCanvas(canvasKey).then(canvas => {
+      const data = canvas.data as any;
+      if (data?.workspaceBlocks?.length > 0) {
+        setWorkspaceBlocks(prev => prev.length > 0 ? prev : data.workspaceBlocks);
+      }
+      if (typeof data?.chatStage === "number") {
+        setChatStage(prev => prev > 0 ? prev : data.chatStage);
+      }
+    }).catch(() => { /* silent — ne pas wiper les blocks existants */ });
+
+    // Push discussion URL when thread changes in a scoped phase
+    if (THREAD_SCOPED_PHASES.includes(activePhase)) {
+      pushDiscussionURL(activeThreadId);
+    }
+  }, [activeThreadId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const addWorkspaceBlock = useCallback((block: WorkspaceBlock) => {
     setWorkspaceBlocks((prev) => {
@@ -677,7 +825,12 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     // Clear workspace blocks + cache — nouvelle discussion = tout vide
     setWorkspaceBlocks([]);
     phaseStateCacheRef.current = {};
-    try { localStorage.removeItem("workspaceBlocks"); } catch { /* silent */ }
+    // Nettoyer localStorage pour le thread courant
+    if (activeThreadIdRef.current) {
+      const { lsKey } = getStorageKeys(activeThreadIdRef.current, activeBotCodeRef.current, activePhaseRef.current);
+      try { localStorage.removeItem(lsKey); } catch {}
+    }
+    try { localStorage.removeItem("workspaceBlocks"); } catch { /* silent — legacy cleanup */ }
   }, []);
 
   // Sprint 2A Phase 4: reflexion fusionnée dans discussion
@@ -747,6 +900,7 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
         activeMeeting, setActiveMeeting,
         meetingControls, setMeetingControls,
         workspaceBlocks, addWorkspaceBlock, updateWorkspaceBlock, removeWorkspaceBlock, getBlocksByCredoStep, getBlocksByType,
+        activeDiscussionId: activeThreadId,
         workspaceTasks, addWorkspaceTask, updateWorkspaceTask, removeWorkspaceTask,
         startReflexion, advance, resetChat,
       }}

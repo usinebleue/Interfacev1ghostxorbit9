@@ -140,9 +140,9 @@ function AmorcerLayout() {
     const handler = (e: Event) => {
       const { phase, context } = (e as CustomEvent).detail || {};
       if (!phase) return;
-      // Exécution/Rétroaction = phases EXPLICITES uniquement (progress bar, sidebar, boutons)
-      // JAMAIS auto-transition depuis le backend — ça hijack le workspace
-      if (phase === "execution" || phase === "retroaction") return;
+      // Création/Exécution/Rétroaction = phases EXPLICITES uniquement (boutons, sidebar)
+      // JAMAIS auto-transition depuis le backend — ça hijack le workspace et les options
+      if (phase === "creation" || phase === "execution" || phase === "retroaction") return;
       // Ne pas interrompre un workflow actif (reflexion, creation)
       const inWorkflow = activePhase && !["observation", "attention", "moderation", "discussion"].includes(activePhase);
       if (inWorkflow) {

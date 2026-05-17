@@ -127,6 +127,7 @@ export type WorkspaceBlockType =
 
 export interface WorkspaceBlock {
   id: string;
+  discussionId?: string;  // UUID du thread associé (Discussion.external_id)
   type: WorkspaceBlockType;
   title: string;
   summary: string;

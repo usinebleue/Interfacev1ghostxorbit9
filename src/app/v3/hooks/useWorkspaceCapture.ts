@@ -14,7 +14,7 @@
  * Phases supportées: discussion, reflexion, creation, execution, retroaction
  */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { useChatContext } from "../../v2/context/ChatContext";
 import { useAmorcer } from "../AmorcerContext";
 import { getPhaseStepIds } from "../phases/phase-config";
@@ -537,7 +537,7 @@ function getSmartSectionId(
 }
 
 export function useWorkspaceCapture() {
-  const { messages, lastCREDOPhase } = useChatContext();
+  const { messages, lastCREDOPhase, activeThreadId } = useChatContext();
   const {
     activePhase,
     pendingCapture,
@@ -555,9 +555,41 @@ export function useWorkspaceCapture() {
     activeDeliverable,
     workspaceBlocks,
   } = useAmorcer();
+
+  // Wrap addWorkspaceBlock pour injecter automatiquement le discussionId courant
+  const addWorkspaceBlockRaw = addWorkspaceBlock;
+  const activeThreadIdStableRef = useRef(activeThreadId);
+  activeThreadIdStableRef.current = activeThreadId;
+  const addWorkspaceBlockWithThread = useCallback((block: WorkspaceBlock) => {
+    addWorkspaceBlockRaw({
+      ...block,
+      discussionId: block.discussionId || activeThreadIdStableRef.current || undefined,
+    });
+  }, [addWorkspaceBlockRaw]);
+  // Alias pour usage dans le reste du hook
+  const addWorkspaceBlock_scoped = addWorkspaceBlockWithThread;
+
   const prevMsgCountRef = useRef(messages.length);
   // Guard anti-duplication: track which message IDs have already generated workspace blocks
   const processedBlockMsgIds = useRef(new Set<string>());
+
+  // Reset dedup quand le thread change
+  const prevThreadIdRef = useRef(activeThreadId);
+  useEffect(() => {
+    if (activeThreadId !== prevThreadIdRef.current) {
+      const wasNull = prevThreadIdRef.current === null;
+      prevThreadIdRef.current = activeThreadId;
+      processedBlockMsgIds.current.clear();
+      // Reset msg count si:
+      // - Switch entre threads existants (old-id → new-id)
+      // - Resume d'un thread avec historique (null → id, mais messages.length > 2)
+      // Ne PAS reset sur création de thread (null → id, messages = 1-2)
+      // sinon le premier message user n'est jamais traité → pas d'auto-transition
+      if (!wasNull || messages.length > 2) {
+        prevMsgCountRef.current = messages.length;
+      }
+    }
+  }, [activeThreadId, messages.length]);
 
   // ═══ VISION CAPTURE — écoute les events CustomEvent depuis useGlassesEvents ═══
   useEffect(() => {
@@ -566,7 +598,7 @@ export function useWorkspaceCapture() {
         title: string; content: string; imageUrl: string; ts: number;
       };
       if (!detail?.imageUrl) return;
-      addWorkspaceBlock({
+      addWorkspaceBlock_scoped({
         id: `vision-${Date.now()}`,
         type: "libre",
         title: detail.title || "Vision CarlOS",
@@ -581,7 +613,7 @@ export function useWorkspaceCapture() {
     };
     window.addEventListener("vision-capture", handler);
     return () => window.removeEventListener("vision-capture", handler);
-  }, [addWorkspaceBlock]);
+  }, [addWorkspaceBlock_scoped]);
   // Fix S100: Track streaming message IDs waiting for completion
   const pendingStreamIdsRef = useRef<Set<string>>(new Set());
   // Fix S100: Track if the button's user message has been seen (to detect manual messages)
@@ -640,7 +672,7 @@ export function useWorkspaceCapture() {
                 if (wsBlock && wsBlock.type && wsBlock.title) {
                   // Backend a généré un workspace_block structuré
                   processedBlockMsgIds.current.add(msg.id);
-                  addWorkspaceBlock({
+                  addWorkspaceBlock_scoped({
                     id: wsBlock.id || `blk-${Date.now()}`,
                     type: wsBlock.type as WorkspaceBlockType,
                     title: wsBlock.title,
@@ -660,7 +692,7 @@ export function useWorkspaceCapture() {
                   const detectedType = detectBlockTypeFrontend(msg.content);
                   const structuredData = extractStructuredDataFrontend(msg.content, detectedType);
                   const lastUserMsg = [...messages].reverse().find((m: any) => m.role === "user" && m.content);
-                  addWorkspaceBlock({
+                  addWorkspaceBlock_scoped({
                     id: `blk-${Date.now()}`,
                     type: detectedType,
                     title: extractTitle(msg.content),
@@ -688,7 +720,7 @@ export function useWorkspaceCapture() {
                 const wsBlock = (msg as any).workspace_block as Partial<WorkspaceBlock> | undefined;
                 if (wsBlock && wsBlock.type && wsBlock.title) {
                   // Backend a généré un workspace_block structuré
-                  addWorkspaceBlock({
+                  addWorkspaceBlock_scoped({
                     id: wsBlock.id || `blk-${Date.now()}`,
                     type: wsBlock.type as WorkspaceBlockType,
                     title: wsBlock.title,
@@ -705,7 +737,7 @@ export function useWorkspaceCapture() {
                   const detectedType = detectBlockTypeFrontend(msg.content);
                   const structuredData = extractStructuredDataFrontend(msg.content, detectedType);
                   const lastUserMsg = [...messages].reverse().find((m: any) => m.role === "user" && m.content);
-                  addWorkspaceBlock({
+                  addWorkspaceBlock_scoped({
                     id: `blk-${Date.now()}`,
                     type: detectedType,
                     title: extractTitle(msg.content),
@@ -750,7 +782,7 @@ export function useWorkspaceCapture() {
               if (cascades?.length) {
                 cascades.forEach(c => {
                   const cascadeContent = `[Cascade depuis Discussion] ${cMsg.content.slice(0, 200)}...`;
-                  addWorkspaceBlock({
+                  addWorkspaceBlock_scoped({
                     id: `blk-cascade-${Date.now()}`,
                     type: "libre",
                     title: c.label,
@@ -774,7 +806,7 @@ export function useWorkspaceCapture() {
           if (lastBot) {
             const source = (lastBot as any).botCode || activeBotCode;
             const sourceType = (lastBot as any).msgType === "voice" ? "voice" as const : "chat" as const;
-            addWorkspaceBlock({
+            addWorkspaceBlock_scoped({
               id: `blk-${Date.now()}`,
               type: "libre",
               title: extractTitle(lastBot.content),
@@ -888,7 +920,7 @@ export function useWorkspaceCapture() {
             for (let ai = 0; ai < wsBlocks.length; ai++) {
               const ab = wsBlocks[ai];
               if (!ab.type || !ab.title) continue;
-              addWorkspaceBlock({
+              addWorkspaceBlock_scoped({
                 id: ab.id || `blk-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
                 type: ab.type as WorkspaceBlockType,
                 title: ab.title,
@@ -925,7 +957,7 @@ export function useWorkspaceCapture() {
                 bot: s.agent, name: s.nom, input: s.contenu,
               }));
             }
-            addWorkspaceBlock(blockData);
+            addWorkspaceBlock_scoped(blockData);
           } else if (!(msg as any).workspace_block_skip || workspaceBlocks.length === 0) {
             // Fallback frontend: détection locale + extraction structured_data
             processedBlockMsgIds.current.add(msg.id);
@@ -952,7 +984,7 @@ export function useWorkspaceCapture() {
                 })),
               };
             }
-            addWorkspaceBlock(blockData);
+            addWorkspaceBlock_scoped(blockData);
           }
 
           // Accumulate in existing block for same sectionId (entonnoir effect)
@@ -969,7 +1001,7 @@ export function useWorkspaceCapture() {
           const wsBlock = (msg as any).workspace_block as Partial<WorkspaceBlock> | undefined;
           if (wsBlock && wsBlock.type && wsBlock.title) {
             // Backend a généré un workspace_block structuré
-            addWorkspaceBlock({
+            addWorkspaceBlock_scoped({
               id: wsBlock.id || `blk-${Date.now()}`,
               type: wsBlock.type as WorkspaceBlockType,
               title: wsBlock.title,
@@ -986,7 +1018,7 @@ export function useWorkspaceCapture() {
             const detectedType = detectBlockTypeFrontend(msg.content);
             const extractedData = extractStructuredDataFrontend(msg.content, detectedType);
             const lastUserMsg2 = [...messages].reverse().find((m: any) => m.role === "user" && m.content);
-            addWorkspaceBlock({
+            addWorkspaceBlock_scoped({
               id: `blk-${Date.now()}`,
               type: detectedType,
               title: extractTitle(msg.content),
@@ -1032,7 +1064,7 @@ export function useWorkspaceCapture() {
         if (cascades?.length) {
           cascades.forEach(c => {
             const cascadeContent = `[Cascade depuis Discussion] ${msg.content.slice(0, 200)}...`;
-            addWorkspaceBlock({
+            addWorkspaceBlock_scoped({
               id: `blk-cascade-${Date.now()}`,
               type: "libre",
               title: c.label,
@@ -1060,7 +1092,7 @@ export function useWorkspaceCapture() {
       if (lastBot) {
         const source = (lastBot as any).botCode || activeBotCode;
         const sourceType = (lastBot as any).msgType === "voice" ? "voice" as const : "chat" as const;
-        addWorkspaceBlock({
+        addWorkspaceBlock_scoped({
           id: `blk-${Date.now()}`,
           type: "libre",
           title: extractTitle(lastBot.content),
@@ -1075,7 +1107,7 @@ export function useWorkspaceCapture() {
       }
       setPendingCapture(null);
     }
-  }, [messages, activePhase, pendingCapture, setPendingCapture, activeBotCode, chatStage, setChatStage, setActivePhase, setReflexionContext, setRightSection, getCristallise, editCristallise, addWorkflowItem, addWorkspaceBlock]);
+  }, [messages, activePhase, pendingCapture, setPendingCapture, activeBotCode, chatStage, setChatStage, setActivePhase, setReflexionContext, setRightSection, getCristallise, editCristallise, addWorkflowItem, addWorkspaceBlock_scoped]);
 
   // AUTO-SYNTHESE retiré — Carl feedback: "X elements capturés en phase Connexion" est du bruit inutile pour l'utilisateur
 }
