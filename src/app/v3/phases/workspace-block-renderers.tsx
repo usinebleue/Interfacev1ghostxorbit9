@@ -141,7 +141,7 @@ function formatBlockMarkdown(text: string): string {
 }
 
 // ═══ Compact mode context — discussion blocks: 1 colonne, pas de BlockActions lourdes ═══
-export const BlockDisplayContext = createContext({ compact: false });
+export const BlockDisplayContext = createContext({ compact: false, primaryBotCode: "" });
 
 // ═══ Bot Accent Borders (B.9 — pattern BOT_COLORS from sim-data.ts) ═══
 
@@ -369,6 +369,7 @@ function BlockActions({ block, onAction }: BlockRendererProps) {
 // ═══ Shared: Block Wrapper ═══
 
 function BlockWrapper({ block, onAction, label, labelColor, children }: BlockRendererProps & { label: string; labelColor: string; children: React.ReactNode }) {
+  const displayCtx = useContext(BlockDisplayContext);
   const [isHoverEdit, setIsHoverEdit] = useState(false);
   // Sprint 2A Phase 6A: fade-in + slide-up animation (pattern FocusReflexionView L164-167)
   const [appeared, setAppeared] = useState(false);
@@ -423,10 +424,13 @@ function BlockWrapper({ block, onAction, label, labelColor, children }: BlockRen
       </div>
       {children}
       {/* Compact mode (discussion): footer leger — SAUF pour rapport qui garde les boutons complets */}
-      {useContext(BlockDisplayContext).compact && block.type !== "rapport" ? (
-        <CompactBlockFooter block={block} onAction={onAction} />
-      ) : (
-        <BlockActions block={block} onAction={onAction} />
+      {/* Primary bot blocks = captures de la discussion → PAS de boutons actions */}
+      {!(displayCtx.primaryBotCode && block.source === displayCtx.primaryBotCode) && (
+        displayCtx.compact && block.type !== "rapport" ? (
+          <CompactBlockFooter block={block} onAction={onAction} />
+        ) : (
+          <BlockActions block={block} onAction={onAction} />
+        )
       )}
     </div>
   );
@@ -2771,6 +2775,8 @@ const BOT_ROLE: Record<string, string> = {
 };
 
 function ExpertBlockWrapper({ block, onAction, children }: BlockRendererProps & { children: React.ReactNode }) {
+  const { primaryBotCode } = useContext(BlockDisplayContext);
+  const isPrimaryBot = !!(primaryBotCode && block.source === primaryBotCode);
   const [appeared, setAppeared] = useState(false);
   const [expanded, setExpanded] = useState(true); // Blocks start expanded — no auto-collapse
   const [correction, setCorrection] = useState("");
@@ -2846,8 +2852,8 @@ function ExpertBlockWrapper({ block, onAction, children }: BlockRendererProps & 
               {children}
             </div>
 
-            {/* Input de correction — permet a l'user d'ajuster l'input du bot */}
-            {!block.is_action_result && (
+            {/* Input de correction + actions — SEULEMENT pour bots secondaires (pas le bot primaire) */}
+            {!block.is_action_result && !isPrimaryBot && (
               <div className="mt-2 pt-2 border-t border-gray-200">
                 <div className="flex gap-1.5">
                   <input
@@ -2870,8 +2876,8 @@ function ExpertBlockWrapper({ block, onAction, children }: BlockRendererProps & 
               </div>
             )}
 
-            {/* Expert actions: Relancer + Approfondir + Challenger */}
-            {!block.is_action_result && (
+            {/* Expert actions: Relancer + Approfondir + Challenger — SEULEMENT bots secondaires */}
+            {!block.is_action_result && !isPrimaryBot && (
               <div className="mt-2 pt-2 border-t border-gray-100 flex flex-wrap gap-2">
                 <button
                   onClick={(e) => { e.stopPropagation(); onAction("rework", block.id); }}
@@ -2894,8 +2900,8 @@ function ExpertBlockWrapper({ block, onAction, children }: BlockRendererProps & 
               </div>
             )}
 
-            {/* Action buttons contextuels — one-shot, anti-loop */}
-            {!block.is_action_result && (() => {
+            {/* Action buttons contextuels — SEULEMENT bots secondaires */}
+            {!block.is_action_result && !isPrimaryBot && (() => {
               const actions = getActionsForBlock(block);
               if (actions.length === 0) return null;
               return (

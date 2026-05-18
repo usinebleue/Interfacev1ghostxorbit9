@@ -16,7 +16,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
-  CheckCircle2, Zap, X, ArrowRight, Check,
+  CheckCircle2, Zap, X, ArrowRight,
   Loader2, Network, FileText, Activity, Rocket,
   AlertTriangle, Lightbulb, Target, TrendingUp,
   Eye, Brain, Swords, Sparkles, Search,
@@ -36,7 +36,133 @@ import { BotAvatar } from "../simulation/primitives";
 import { BOT_NAME } from "../../v2/api/types";
 import { api } from "../../v2/api/client";
 import type { CascadeSuggestion } from "../../v2/api/types";
-import { detectBlockTypeFrontend, extractStructuredDataFrontend, detectCredoSubSection, summarizeExpertForWorkspace } from "../hooks/useWorkspaceCapture";
+import { detectBlockTypeFrontend, extractStructuredDataFrontend, detectCredoSubSection, summarizeExpertForWorkspace, generateExpertBlockTitle } from "../hooks/useWorkspaceCapture";
+
+// ═══ Etape 5: Reflexion Flow — stage prompts (module-level for stable closures) ═══
+
+const REFLEXION_STAGE_PROMPTS: Record<string, string[]> = {
+  analyse: [
+    "Fais un diagnostic precis de la situation suivante. Identifie les enjeux principaux, la complexite et l'urgence:\n\n{context}",
+    "Approfondi ton analyse. Identifie les causes racines (methode 5 Pourquoi), les parties prenantes et les contraintes:\n\n{context}\n\nDiagnostic precedent:\n{prev}",
+    "Synthese finale: recommandations concretes, actions prioritaires avec assignation, et prochaines etapes:\n\n{context}\n\nAnalyse complete:\n{prev}",
+  ],
+  debat: [
+    "Presente les arguments POUR la position suivante, avec des donnees et exemples concrets:\n\n{context}",
+    "Maintenant joue l'avocat du diable — presente les arguments CONTRE avec la meme rigueur:\n\n{context}\n\nArguments POUR:\n{prev}",
+    "Verdict final: quelle position est la plus solide? Quels compromis sont possibles? Recommandation:\n\n{context}\n\nDebat complet:\n{prev}",
+  ],
+  brainstorm: [
+    "BRAINSTORM Vague 1 — Idees en vrac.\n\nGenere exactement 8 idees creatives et variees. Format STRICT — une idee par ligne, numerotee:\n1. Titre court — Description en 1 phrase\n2. Titre court — Description en 1 phrase\n...\n\nPas de headers, pas de sous-titres, pas d'intro, pas de conclusion. JUSTE les 8 idees numerotees avec tiret entre titre et description.\n\nSujet:\n{context}",
+    "BRAINSTORM Vague 2 — SCAMPER.\n\nA partir des idees precedentes, applique SCAMPER pour en extraire 5 idees enrichies. Pour chaque idee, indique la technique SCAMPER utilisee et donne un score sur 20.\n\nFormat STRICT — une par ligne:\n1. [SUBSTITUER] Titre — Description. Score: 16/20\n2. [COMBINER] Titre — Description. Score: 18/20\n...\n\nPas de headers, pas d'intro. JUSTE les 5 idees.\n\nIdees precedentes:\n{prev}\n\nSujet:\n{context}",
+    "BRAINSTORM Top 3.\n\nSelectionne les 3 meilleures idees. Pour chacune, donne:\n- Le titre\n- Pourquoi elle gagne (1 phrase)\n- 2 actions concretes immediates\n\nFormat STRICT:\n### 1. Titre de l'idee\nPourquoi: explication courte\nAction 1: action concrete\nAction 2: action concrete\n\n### 2. Titre\nPourquoi: ...\nAction 1: ...\nAction 2: ...\n\n### 3. Titre\nPourquoi: ...\nAction 1: ...\nAction 2: ...\n\nIdees evaluees:\n{prev}\n\nSujet:\n{context}",
+  ],
+  strategie: [
+    "Analyse l'etat des lieux strategique actuel (forces, faiblesses, opportunites, menaces):\n\n{context}",
+    "Propose 3 options strategiques distinctes avec pour chacune: avantages, risques, investissement requis:\n\n{context}\n\nEtat des lieux:\n{prev}",
+    "Recommandation strategique finale: option choisie, plan d'execution en 3 phases, metriques de succes:\n\n{context}\n\nOptions evaluees:\n{prev}",
+  ],
+  decision: [
+    "Identifie les criteres de decision importants et leur poids relatif pour:\n\n{context}",
+    "Evalue chaque option contre ces criteres (score 1-5 par critere) — tableau comparatif:\n\n{context}\n\nCriteres identifies:\n{prev}",
+    "Decision finale: option recommandee, justification, risques a mitiger, prochaine action immediate:\n\n{context}\n\nEvaluation complete:\n{prev}",
+  ],
+  innovation: [
+    "Recherche d'inspiration: quelles innovations dans d'autres industries pourraient s'appliquer ici?\n\n{context}",
+    "Disruption: comment pourrait-on completement reinventer l'approche? Pense 10x pas 10%:\n\n{context}\n\nInspirations:\n{prev}",
+    "Prototype conceptuel: decris la solution ideale en detail (fonctionnement, benefices, implementation):\n\n{context}\n\nIdees disruptives:\n{prev}",
+  ],
+};
+
+const REFLEXION_STAGE_LABELS: Record<string, string[]> = {
+  analyse: ["Diagnostic", "Approfondissement", "Synthese + Actions"],
+  debat: ["Arguments Pour", "Arguments Contre", "Verdict"],
+  brainstorm: ["Vague d'idees", "SCAMPER", "Top 3 + Plan"],
+  strategie: ["Etat des lieux", "Options strategiques", "Recommandation"],
+  decision: ["Criteres", "Evaluation", "Decision finale"],
+  innovation: ["Inspiration", "Disruption", "Prototype"],
+};
+
+const REFLEXION_MODE_COLORS: Record<string, { bg: string; text: string }> = {
+  analyse: { bg: "bg-blue-100", text: "text-blue-700" },
+  debat: { bg: "bg-red-100", text: "text-red-700" },
+  brainstorm: { bg: "bg-amber-100", text: "text-amber-700" },
+  strategie: { bg: "bg-purple-100", text: "text-purple-700" },
+  decision: { bg: "bg-green-100", text: "text-green-700" },
+  innovation: { bg: "bg-pink-100", text: "text-pink-700" },
+};
+
+// ═══ Brainstorm visual: card colors + parsers (pattern AtelierBrainstorm.tsx) ═══
+
+const IDEA_CARD_COLORS = [
+  "bg-pink-50 border-pink-200",
+  "bg-blue-50 border-blue-200",
+  "bg-amber-50 border-amber-200",
+  "bg-green-50 border-green-200",
+  "bg-purple-50 border-purple-200",
+  "bg-cyan-50 border-cyan-200",
+  "bg-rose-50 border-rose-200",
+  "bg-indigo-50 border-indigo-200",
+  "bg-orange-50 border-orange-200",
+  "bg-teal-50 border-teal-200",
+];
+
+/** Parse individual ideas from a brainstorm API response (bullets/numbered) */
+function parseBrainstormIdeas(content: string): { num: number; title: string; desc: string; technique?: string; score?: number }[] {
+  const lines = content.split("\n").filter(l => l.trim());
+  const ideas: { num: number; title: string; desc: string; technique?: string; score?: number }[] = [];
+
+  for (const line of lines) {
+    // Match: "1. [TECHNIQUE] Title — Description. Score: 16/20"
+    // or: "1. Title — Description"  or: "• Title — Description"
+    const m = line.match(/^\s*(?:(\d+)[.)]\s*|[-*•]\s+)(?:\[([A-ZÉÈÊÀÂ]+(?:\s+[A-ZÉÈÊÀÂ]+)?)\]\s*)?(.+)/);
+    if (!m) continue;
+    const num = m[1] ? parseInt(m[1]) : ideas.length + 1;
+    const technique = m[2] || undefined;
+    const rest = m[3];
+
+    // Split title — desc on " — " or " - "
+    const dashIdx = rest.search(/\s[—–-]\s/);
+    const title = dashIdx > 0 ? rest.substring(0, dashIdx).trim() : rest.substring(0, 80).trim();
+    let desc = dashIdx > 0 ? rest.substring(dashIdx + 3).trim() : "";
+
+    // Extract score if present
+    const scoreMatch = desc.match(/Score\s*:\s*(\d+)\s*\/\s*20/i);
+    const score = scoreMatch ? parseInt(scoreMatch[1]) : undefined;
+    if (scoreMatch) desc = desc.replace(scoreMatch[0], "").replace(/[.,]\s*$/, "").trim();
+
+    ideas.push({ num, title, desc, technique, score });
+  }
+  return ideas;
+}
+
+/** Parse Top 3 from brainstorm stage 3 response */
+function parseTop3(content: string): { title: string; why: string; actions: string[] }[] {
+  const results: { title: string; why: string; actions: string[] }[] = [];
+  // Split by "### N." or just "N." at start of line
+  const sections = content.split(/(?=###\s*\d|^\d+[.)]\s)/m).filter(s => s.trim());
+
+  for (const section of sections.slice(0, 3)) {
+    const lines = section.split("\n").filter(l => l.trim());
+    if (!lines.length) continue;
+    const title = lines[0].replace(/^#{1,3}\s*/, "").replace(/^\d+[.)]\s*/, "").replace(/\*\*/g, "").trim();
+    if (!title || title.length < 3) continue;
+    let why = "";
+    const actions: string[] = [];
+
+    for (const line of lines.slice(1)) {
+      const l = line.trim();
+      if (/^pourquoi\s*:/i.test(l)) {
+        why = l.replace(/^pourquoi\s*:\s*/i, "").trim();
+      } else if (/^action\s*\d*\s*:/i.test(l)) {
+        actions.push(l.replace(/^action\s*\d*\s*:\s*/i, "").trim());
+      } else if (/^[-*•]\s/.test(l)) {
+        actions.push(l.replace(/^[-*•]\s+/, "").trim());
+      }
+    }
+    results.push({ title, why, actions });
+  }
+  return results;
+}
 
 // ═══ B.1: ThinkingAnimation steps par etape CREDO (pattern primitives.tsx ThinkingAnimation) ═══
 
@@ -206,6 +332,29 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
   // S3B.2: Pulse animation on block when workspace action triggered
   const [pulsingBlockId, setPulsingBlockId] = useState<string | null>(null);
 
+  // Etape 1: Loading state for async block actions (bot thinking bubble visible during full API call)
+  const [loadingBlockId, setLoadingBlockId] = useState<string | null>(null);
+  const [loadingLabel, setLoadingLabel] = useState("");
+  const [loadingBotCode, setLoadingBotCode] = useState<string | null>(null);
+
+  // Etape 4: Filter blocks by participant bot click
+  const [filterBotCode, setFilterBotCode] = useState<string | null>(null);
+
+  // Etape 5: Reflexion Flow — multi-stage progressive (replique simulations)
+  const [reflexionFlow, setReflexionFlow] = useState<{
+    mode: string;
+    label: string;
+    phase: "intro" | "running" | "done"; // intro = config, running = stages en cours
+    stage: number; // result count (0=started, 1=got first, 2=got second, 3=done)
+    results: string[];
+    context: string;
+    isThinking: boolean;
+    selectedBots: string[]; // bots qui participent
+    focusInput: string; // sujet/focus defini par l'user
+    thinkingSteps: string[]; // etapes affichees pendant le thinking (simulation-style)
+    error?: string; // message d'erreur visible si API echoue
+  } | null>(null);
+
   // B.3: TypewriterText cursor — visible briefly after new block appears
   const [showTypingCursor, setShowTypingCursor] = useState(false);
   useEffect(() => {
@@ -223,10 +372,12 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
   const col = config.colors;
   const PhaseIcon = config.icon;
 
-  // Filtered blocks for display
-  const displayBlocks = filterStep
-    ? workspaceBlocks.filter(b => b.credo_step === filterStep)
-    : workspaceBlocks;
+  // Filtered blocks for display (by CREDO step + optional bot filter)
+  const displayBlocks = (() => {
+    let blocks = filterStep ? workspaceBlocks.filter(b => b.credo_step === filterStep) : workspaceBlocks;
+    if (filterBotCode) blocks = blocks.filter(b => b.source === filterBotCode);
+    return blocks;
+  })();
 
   // Block type counts + dominant bot for sidebar index
   const blockTypeCounts = workspaceBlocks.reduce<Record<string, number>>((acc, b) => {
@@ -261,12 +412,15 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
         setPulsingBlockId(blockId);
         setTimeout(() => setPulsingBlockId(null), 1500);
         const targetBot = block.source || activeBotCode;
+        setLoadingBlockId(blockId);
+        setLoadingLabel("Approfondissement en cours...");
+        setLoadingBotCode(targetBot);
         if (isExpertBlock) {
-          // Route to workspace — chatMulti + update block
           (async () => {
             try {
+              const recentCtx = workspaceBlocks.slice(-3).map(b2 => `[${BOT_NAME[b2.source || ""] || ""}] ${b2.title}: ${(b2.summary || "").substring(0, 150)}`).join("\n");
               const res = await api.chatMulti({
-                message: `Approfondir en detail: ${block.title}\n\nContexte: ${block.summary}`,
+                message: `Approfondir en detail: ${block.title}\n\nContexte: ${block.summary.substring(0, 500)}\n\nContexte recent:\n${recentCtx}`,
                 user_id: 1,
                 agents: [targetBot],
                 primary_agent: targetBot,
@@ -278,8 +432,8 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
               addWorkspaceBlock({
                 id: `expert-${targetBot}-${Date.now()}`,
                 type: blockType,
-                title: `${BOT_NAME[targetBot] || targetBot} — Approfondissement`,
-                summary: summarizeExpertForWorkspace(persp.contenu),
+                title: generateExpertBlockTitle(BOT_NAME[targetBot] || targetBot, persp.contenu, "Approfondissement"),
+                summary: persp.contenu,
                 structured_data: extractStructuredDataFrontend(persp.contenu, blockType),
                 credo_step: block.credo_step,
                 credo_sub_section: "experts",
@@ -287,14 +441,17 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
                 source: targetBot,
                 sourceType: "chat",
                 timestamp: Date.now(),
-                replace_block_id: blockId,
+                merge_label: "Approfondissement",
               });
             } catch (err) {
               console.error("[Expert deepen] Error:", err);
+            } finally {
+              setLoadingBlockId(null);
             }
           })();
         } else {
           sendMessage(`Approfondir en detail: ${block.title}\n\nContexte: ${block.summary}`, targetBot);
+          setLoadingBlockId(null);
         }
         break;
       }
@@ -302,11 +459,15 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
         setPulsingBlockId(blockId);
         setTimeout(() => setPulsingBlockId(null), 1500);
         const targetBot2 = block.source || activeBotCode;
+        setLoadingBlockId(blockId);
+        setLoadingLabel("Challenge en cours...");
+        setLoadingBotCode(targetBot2);
         if (isExpertBlock) {
           (async () => {
             try {
+              const recentCtx = workspaceBlocks.slice(-3).map(b2 => `[${BOT_NAME[b2.source || ""] || ""}] ${b2.title}: ${(b2.summary || "").substring(0, 150)}`).join("\n");
               const res = await api.chatMulti({
-                message: `Challenge cet element, trouve les failles: ${block.title}\n\n${block.summary}`,
+                message: `Challenge cet element, trouve les failles: ${block.title}\n\n${block.summary.substring(0, 500)}\n\nContexte recent:\n${recentCtx}`,
                 user_id: 1,
                 agents: [targetBot2],
                 primary_agent: targetBot2,
@@ -318,8 +479,8 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
               addWorkspaceBlock({
                 id: `expert-${targetBot2}-${Date.now()}`,
                 type: blockType,
-                title: `${BOT_NAME[targetBot2] || targetBot2} — Challenge`,
-                summary: summarizeExpertForWorkspace(persp.contenu),
+                title: generateExpertBlockTitle(BOT_NAME[targetBot2] || targetBot2, persp.contenu, "Challenge"),
+                summary: persp.contenu,
                 structured_data: extractStructuredDataFrontend(persp.contenu, blockType),
                 credo_step: block.credo_step,
                 credo_sub_section: "experts",
@@ -327,14 +488,17 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
                 source: targetBot2,
                 sourceType: "chat",
                 timestamp: Date.now(),
-                replace_block_id: blockId,
+                merge_label: "Challenge",
               });
             } catch (err) {
               console.error("[Expert challenge] Error:", err);
+            } finally {
+              setLoadingBlockId(null);
             }
           })();
         } else {
           sendMessage(`Challenge cet element, trouve les failles: ${block.title}\n\n${block.summary}`, targetBot2);
+          setLoadingBlockId(null);
         }
         break;
       }
@@ -342,11 +506,15 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
         setPulsingBlockId(blockId);
         setTimeout(() => setPulsingBlockId(null), 1500);
         const targetBot3 = block.source || activeBotCode;
+        setLoadingBlockId(blockId);
+        setLoadingLabel("Retravail en cours...");
+        setLoadingBotCode(targetBot3);
         if (isExpertBlock) {
           (async () => {
             try {
+              const recentCtx = workspaceBlocks.slice(-3).map(b2 => `[${BOT_NAME[b2.source || ""] || ""}] ${b2.title}: ${(b2.summary || "").substring(0, 150)}`).join("\n");
               const res = await api.chatMulti({
-                message: `Retravaille et enrichis: ${block.title}\n\n${block.summary}`,
+                message: `Retravaille et enrichis: ${block.title}\n\n${block.summary.substring(0, 500)}\n\nContexte recent:\n${recentCtx}`,
                 user_id: 1,
                 agents: [targetBot3],
                 primary_agent: targetBot3,
@@ -358,8 +526,8 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
               addWorkspaceBlock({
                 id: `expert-${targetBot3}-${Date.now()}`,
                 type: blockType,
-                title: `${BOT_NAME[targetBot3] || targetBot3} — Perspective`,
-                summary: summarizeExpertForWorkspace(persp.contenu),
+                title: generateExpertBlockTitle(BOT_NAME[targetBot3] || targetBot3, persp.contenu, "Retravail"),
+                summary: persp.contenu,
                 structured_data: extractStructuredDataFrontend(persp.contenu, blockType),
                 credo_step: block.credo_step,
                 credo_sub_section: "experts",
@@ -367,26 +535,32 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
                 source: targetBot3,
                 sourceType: "chat",
                 timestamp: Date.now(),
-                replace_block_id: blockId,
+                merge_label: "Retravail",
               });
             } catch (err) {
               console.error("[Expert rework] Error:", err);
+            } finally {
+              setLoadingBlockId(null);
             }
           })();
         } else {
           sendMessage(`Retravaille et enrichis: ${block.title}\n\n${block.summary}`, targetBot3);
+          setLoadingBlockId(null);
         }
         break;
       }
       case "execute_action": {
-        // blockId here contains JSON-stringified ActionSuggestion
         try {
           const action = JSON.parse(blockId) as { label: string; prompt: string; target_bot: string };
           const targetBot4 = action.target_bot || activeBotCode;
+          setLoadingBlockId("pending-action");
+          setLoadingLabel(action.label + "...");
+          setLoadingBotCode(targetBot4);
           (async () => {
             try {
+              const recentCtx = workspaceBlocks.slice(-3).map(b2 => `[${BOT_NAME[b2.source || ""] || ""}] ${b2.title}: ${(b2.summary || "").substring(0, 150)}`).join("\n");
               const res = await api.chatMulti({
-                message: action.prompt,
+                message: `${action.prompt}\n\nContexte recent:\n${recentCtx}`,
                 user_id: 1,
                 agents: [targetBot4],
                 primary_agent: targetBot4,
@@ -398,8 +572,8 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
               addWorkspaceBlock({
                 id: `action-${targetBot4}-${Date.now()}`,
                 type: blockType,
-                title: `${BOT_NAME[targetBot4] || targetBot4} — ${action.label}`,
-                summary: summarizeExpertForWorkspace(persp.contenu),
+                title: generateExpertBlockTitle(BOT_NAME[targetBot4] || targetBot4, persp.contenu, action.label),
+                summary: persp.contenu,
                 structured_data: extractStructuredDataFrontend(persp.contenu, blockType),
                 credo_step: (workspaceBlocks[0]?.credo_step || "C") as "C" | "R" | "E" | "D" | "O",
                 credo_sub_section: "experts",
@@ -408,13 +582,17 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
                 sourceType: "chat",
                 timestamp: Date.now(),
                 is_action_result: true,
+                merge_label: action.label,
               });
             } catch (err) {
               console.error("[Action execute] Error:", err);
+            } finally {
+              setLoadingBlockId(null);
             }
           })();
         } catch {
           console.error("[Action execute] Invalid JSON blockId");
+          setLoadingBlockId(null);
         }
         break;
       }
@@ -426,6 +604,9 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
         const targetBotC = targetBlock.source || activeBotCode;
         setPulsingBlockId(actualId);
         setTimeout(() => setPulsingBlockId(null), 1500);
+        setLoadingBlockId(actualId);
+        setLoadingLabel("Correction en cours...");
+        setLoadingBotCode(targetBotC);
         (async () => {
           try {
             const res = await api.chatMulti({
@@ -441,8 +622,8 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
             addWorkspaceBlock({
               id: `expert-${targetBotC}-${Date.now()}`,
               type: blockType,
-              title: `${BOT_NAME[targetBotC] || targetBotC} — Correction`,
-              summary: summarizeExpertForWorkspace(persp.contenu),
+              title: generateExpertBlockTitle(BOT_NAME[targetBotC] || targetBotC, persp.contenu, "Correction"),
+              summary: persp.contenu,
               structured_data: extractStructuredDataFrontend(persp.contenu, blockType),
               credo_step: targetBlock.credo_step,
               credo_sub_section: "experts",
@@ -450,10 +631,12 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
               source: targetBotC,
               sourceType: "chat",
               timestamp: Date.now(),
-              replace_block_id: actualId,
+              merge_label: "Correction",
             });
           } catch (err) {
             console.error("[Expert correct] Error:", err);
+          } finally {
+            setLoadingBlockId(null);
           }
         })();
         break;
@@ -481,8 +664,8 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
       addWorkspaceBlock({
         id: `reflexion-hub-${Date.now()}`,
         type: blockType,
-        title: `${BOT_NAME[activeBotCode] || activeBotCode} — Réflexion`,
-        summary: summarizeExpertForWorkspace(persp.contenu),
+        title: generateExpertBlockTitle(BOT_NAME[activeBotCode] || activeBotCode, persp.contenu, "Réflexion"),
+        summary: persp.contenu,
         structured_data: extractStructuredDataFrontend(persp.contenu, blockType),
         credo_step: currentCredoLetter as "C" | "R" | "E" | "D" | "O",
         credo_sub_section: "modes-reflexion",
@@ -510,8 +693,8 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
       addWorkspaceBlock({
         id: `technique-${meta.techniqueActive}-${meta.techniqueStep}-${Date.now()}`,
         type: blockType,
-        title: `${BOT_NAME[activeBotCode] || activeBotCode} — ${meta.techniqueActive} (étape ${meta.techniqueStep + 1})`,
-        summary: summarizeExpertForWorkspace(persp.contenu),
+        title: generateExpertBlockTitle(BOT_NAME[activeBotCode] || activeBotCode, persp.contenu, `${meta.techniqueActive} (${meta.techniqueStep + 1})`),
+        summary: persp.contenu,
         structured_data: extractStructuredDataFrontend(persp.contenu, blockType),
         credo_step: currentCredoLetter as "C" | "R" | "E" | "D" | "O",
         credo_sub_section: "modes-reflexion",
@@ -527,6 +710,114 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
 
   // CREDO step labels
   const CREDO_LABELS: Record<string, string> = { C: "Comprendre", R: "Rechercher", E: "Exposer", D: "Demontrer", O: "Objectif" };
+
+  // ═══ Etape 5: Reflexion Flow runner + crystallizer (pattern simulations) ═══
+
+  // Thinking step labels par mode (simulation-style: montre les etapes en cours)
+  const REFLEXION_THINKING_STEPS: Record<string, string[][]> = {
+    brainstorm: [
+      ["Activation des axes creatifs...", "Exploration des possibilites...", "Generation des idees..."],
+      ["Application SCAMPER...", "Combinaison des concepts...", "Enrichissement..."],
+      ["Selection des meilleures idees...", "Structuration du plan...", "Synthese finale..."],
+    ],
+    analyse: [
+      ["Collecte des signaux...", "Identification des enjeux...", "Diagnostic initial..."],
+      ["Recherche des causes racines...", "Methode 5 Pourquoi...", "Mapping parties prenantes..."],
+      ["Synthese des recommandations...", "Priorisation des actions...", "Plan de mise en oeuvre..."],
+    ],
+    debat: [
+      ["Construction des arguments...", "Recherche de donnees...", "Structuration position..."],
+      ["Exploration des contre-arguments...", "Identification failles...", "Avocat du diable..."],
+      ["Pesee des positions...", "Recherche de compromis...", "Verdict final..."],
+    ],
+    strategie: [
+      ["Analyse forces/faiblesses...", "Scan opportunites...", "Evaluation menaces..."],
+      ["Formulation option A...", "Formulation option B...", "Formulation option C..."],
+      ["Comparaison des options...", "Calcul risque/recompense...", "Recommandation..."],
+    ],
+    decision: [
+      ["Identification des criteres...", "Ponderation relative...", "Grille de decision..."],
+      ["Evaluation option par option...", "Scoring multicritere...", "Matrice comparaison..."],
+      ["Analyse finale...", "Verdict...", "Plan d'action immediat..."],
+    ],
+    innovation: [
+      ["Scan des innovations...", "Analogies inter-industries...", "Patterns disruptifs..."],
+      ["Disruption radicale...", "Pensee 10x...", "Scenarios alternatifs..."],
+      ["Prototype conceptuel...", "Faisabilite...", "Vision finale..."],
+    ],
+  };
+
+  const runReflexionStage = useCallback(async (mode: string, stageIdx: number, ctx: string, prevResults: string[], bots: string[]) => {
+    const prompts = REFLEXION_STAGE_PROMPTS[mode];
+    if (!prompts?.[stageIdx]) return;
+
+    // Set thinking state with simulation-style steps
+    const steps = REFLEXION_THINKING_STEPS[mode]?.[stageIdx] || ["Reflexion en cours...", "Analyse...", "Structuration..."];
+    setReflexionFlow(prev => prev ? { ...prev, isThinking: true, thinkingSteps: steps } : null);
+
+    const prevText = prevResults.join("\n\n---\n\n");
+    const prompt = prompts[stageIdx].replace("{context}", ctx).replace("{prev}", prevText);
+
+    // Pick which bot answers this stage (rotate through selected bots)
+    const stageBotCode = bots[stageIdx % bots.length] || activeBotCode;
+
+    try {
+      const recentCtx = workspaceBlocks.slice(-3).map(b => `[${BOT_NAME[b.source || ""] || ""}] ${b.title}: ${(b.summary || "").substring(0, 150)}`).join("\n");
+
+      // Enhanced prompt: ask for structured output
+      const structuredInstruction = "\n\nIMPORTANT: Structure ta reponse avec des titres en **gras**, des listes numerotees, et une conclusion claire. Sois precis et actionnable (minimum 200 mots).";
+
+      const res = await api.chatMulti({
+        message: `${prompt}\n\nContexte workspace:\n${recentCtx}${structuredInstruction}`,
+        user_id: 1,
+        agents: [stageBotCode],
+        primary_agent: stageBotCode,
+        workspace_phase: "reflexion",
+      });
+
+      const content = res.perspectives?.[0]?.contenu || "";
+      setReflexionFlow(prev => {
+        if (!prev) return null;
+        const newResults = [...prev.results, content];
+        const isDone = newResults.length >= 3;
+        return {
+          ...prev,
+          stage: newResults.length,
+          results: newResults,
+          isThinking: false,
+          phase: isDone ? "done" : "running",
+        };
+      });
+    } catch (err) {
+      console.error("[ReflexionFlow] Error at stage", stageIdx, err);
+      const errMsg = err instanceof Error ? err.message : String(err);
+      setReflexionFlow(prev => prev ? { ...prev, isThinking: false, error: `Erreur: ${errMsg}` } : null);
+    }
+  }, [activeBotCode, workspaceBlocks]);
+
+  const finalizeReflexionFlow = useCallback(() => {
+    if (!reflexionFlow) return;
+    // Create ONE merged workspace block with all 3 stages as sections
+    const allContent = reflexionFlow.results.map((content, i) => {
+      const stageLabels = REFLEXION_STAGE_LABELS[reflexionFlow.mode] || REFLEXION_STAGE_LABELS.analyse;
+      return `**${stageLabels[i]}**\n\n${content}`;
+    }).join("\n\n━━━━━━━━━━━━━━━\n\n");
+
+    const botName = BOT_NAME[activeBotCode] || "CarlOS";
+    addWorkspaceBlock({
+      id: `reflexion-${reflexionFlow.mode}-${Date.now()}`,
+      type: detectBlockTypeFrontend(allContent) as any,
+      title: generateExpertBlockTitle(botName, allContent, reflexionFlow.label),
+      summary: allContent,
+      credo_step: currentCredoLetter as "C" | "R" | "E" | "D" | "O",
+      credo_sub_section: "modes-reflexion",
+      confidence: 0.85,
+      source: activeBotCode,
+      sourceType: "chat",
+      timestamp: Date.now(),
+    });
+    setReflexionFlow(null);
+  }, [reflexionFlow, activeBotCode, addWorkspaceBlock, currentCredoLetter]);
 
   // W.0: Reset sub-section when CREDO step changes + sync filterStep
   useEffect(() => {
@@ -592,7 +883,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
   return (
     <div className="max-w-4xl mx-auto px-6 py-4 pb-12 space-y-4">
 
-      {/* HERO COMPACT — blur gradients (pattern FocusReflexionView L63-65) */}
+      {/* HERO COMPACT — blur gradients + CREDO buttons integres */}
       <div className="relative w-full rounded-xl bg-white border border-gray-200 shadow-sm overflow-hidden flex items-center px-6 py-4 hover:shadow-md transition-all">
         {/* Blurred gradient orbs — exact simulation pattern */}
         <div className="absolute rounded-full blur-[100px] opacity-60 bg-sky-100/70" style={{ top: "-50%", left: "-10%", width: "50%", height: "200%" }} />
@@ -603,36 +894,40 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
             <PhaseIcon className={cn("h-5 w-5", col.hero.iconText)} />
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="text-sm font-bold text-gray-900 truncate">{config.label}</h2>
-            <p className="text-[10px] text-gray-500">CREDO — {displayContext}</p>
+            <h2 className="text-sm font-bold text-gray-900 truncate">Discussion</h2>
+            <span className="text-[10px] text-gray-500">Etape {chatStage + 1}/{config.steps.length}</span>
           </div>
         </div>
 
-        {/* CREDO Progress — colored step icons (pattern FocusReflexionView L82-92) */}
+        {/* Boutons CREDO compacts — integres dans le hero a droite */}
         <div className="relative z-10 flex items-center gap-1 shrink-0">
-          {config.steps.map((s, i) => {
-            const isDone = i < chatStage;
-            const isCurrent = i === chatStage;
-            const isLocked = i > chatStage;
+          {config.steps.map((step) => {
+            const credoLetter = step.id.includes("comprendre") ? "C" : step.id.includes("rechercher") ? "R" : step.id.includes("exposer") ? "E" : step.id.includes("demontrer") ? "D" : "O";
+            const stepColors: Record<string, { bg: string; text: string }> = {
+              C: { bg: "bg-sky-100", text: "text-sky-700" },
+              R: { bg: "bg-blue-100", text: "text-blue-700" },
+              E: { bg: "bg-amber-100", text: "text-amber-700" },
+              D: { bg: "bg-green-100", text: "text-green-700" },
+              O: { bg: "bg-purple-100", text: "text-purple-700" },
+            };
+            const sc = stepColors[credoLetter] || stepColors.C;
+            const isActive = activeStepId === step.id;
+            const hasContent = (blocksByCredoStep[credoLetter] || 0) > 0;
             return (
-              <div key={s.id} className={cn(
-                "w-6 h-6 rounded-md flex items-center justify-center transition-all",
-                isDone ? "bg-emerald-100 text-emerald-600" :
-                isCurrent ? "bg-sky-100 text-sky-600 ring-1 ring-sky-300" :
-                "bg-gray-100 text-gray-300"
-              )} title={s.title}>
-                {isDone ? <CheckCircle2 className="h-3 w-3" /> : <s.icon className="h-3 w-3" />}
-              </div>
+              <button key={step.id}
+                onClick={() => { setActiveStepId(step.id); setFilterStep(credoLetter); }}
+                className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
+                  isActive ? cn(sc.bg, sc.text, "shadow-sm ring-1 ring-current/20") :
+                  hasContent ? "bg-emerald-50 text-emerald-600" : "bg-gray-100 text-gray-400"
+                )}>
+                <step.icon className="w-3.5 h-3.5" />
+                {step.title}
+              </button>
             );
           })}
-          {/* S2.2.1: Scaffold progress fraction */}
-          <div className="relative z-10 flex items-center gap-1.5 shrink-0 ml-2">
-            <span className={cn("text-[9px] font-bold", progress === 100 ? "text-emerald-600" : "text-gray-400")}>
-              {completedCount}/{config.steps.length}
-            </span>
-          </div>
         </div>
-        {/* S2.2.1: Scaffold progress bar — thin accent at bottom */}
+
+        {/* Progress bar — thin accent at bottom */}
         <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-100 z-10 rounded-b-xl overflow-hidden">
           <div
             className={cn("h-full transition-all duration-500 rounded-r-full", progress === 100 ? "bg-emerald-400" : "bg-sky-400")}
@@ -641,43 +936,10 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
         </div>
       </div>
 
-      {/* W.0: CREDO HORIZONTAL BAR — sous le Hero */}
-      <div className="flex items-center gap-1 px-3 py-2 border border-gray-100 rounded-xl bg-white/80 shadow-sm">
-        {config.steps.map((step, i) => {
-          const isActive = activeStepId === step.id;
-          const stepColors: Record<string, { bg: string; text: string }> = {
-            C: { bg: "bg-sky-100", text: "text-sky-700" },
-            R: { bg: "bg-blue-100", text: "text-blue-700" },
-            E: { bg: "bg-amber-100", text: "text-amber-700" },
-            D: { bg: "bg-green-100", text: "text-green-700" },
-            O: { bg: "bg-purple-100", text: "text-purple-700" },
-          };
-          const credoLetter = step.id.includes("comprendre") ? "C" : step.id.includes("rechercher") ? "R" : step.id.includes("exposer") ? "E" : step.id.includes("demontrer") ? "D" : "O";
-          const sc = stepColors[credoLetter] || stepColors.C;
-          // Vert SEULEMENT si blocs existent pour cette etape (pas chatStage)
-          const hasContent = (blocksByCredoStep[credoLetter] || 0) > 0;
-          return (
-            <button
-              key={step.id}
-              onClick={() => {
-                setActiveStepId(step.id);
-                setFilterStep(credoLetter);
-              }}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
-                isActive ? cn(sc.bg, sc.text, "shadow-sm ring-1 ring-current/20") :
-                  hasContent ? "bg-emerald-50 text-emerald-700" :
-                  "bg-gray-50 text-gray-400"
-              )}
-            >
-              <step.icon className="w-3.5 h-3.5" />
-              {step.title}
-              {hasContent && !isActive && <Check className="w-3 h-3" />}
-            </button>
-          );
-        })}
-        <span className="ml-auto text-xs text-gray-400 font-medium">{chatStage + 1}/5</span>
-      </div>
+      {/* Titre article magazine — sous le hero */}
+      <h1 className="text-base font-bold text-gray-900 mt-3 mb-2 px-1 leading-snug">
+        {displayContext || "Nouvelle discussion"}
+      </h1>
 
       {/* SIDEBAR + CONTENU */}
       <div className={cn("flex gap-3", isMobile && "flex-col gap-0")}>
@@ -744,7 +1006,11 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
                     </span>
                     <div className="mt-1.5 flex flex-wrap gap-1.5 px-2">
                       {participants.map(code => (
-                        <div key={code} className="flex items-center gap-1 px-2 py-1 rounded-full bg-gray-50 border border-gray-200">
+                        <div key={code}
+                          onClick={() => setFilterBotCode(prev => prev === code ? null : code)}
+                          className={cn("flex items-center gap-1 px-2 py-1 rounded-full cursor-pointer transition-all border",
+                            filterBotCode === code ? "bg-blue-100 border-blue-300 ring-1 ring-blue-400" : "bg-gray-50 border-gray-200 hover:bg-gray-100"
+                          )}>
                           <BotAvatar code={code} size="sm" />
                           <span className="text-[9px] font-medium text-gray-600">{BOT_NAME[code] || code}</span>
                         </div>
@@ -771,65 +1037,282 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
         <div className={SF.content}>
          <div className={cn("transition-all duration-300", contentAppeared ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2")}>
 
-          {/* W.0: SUB-SECTION CONTENT — modes reflexion */}
+          {/* W.0: SUB-SECTION CONTENT — modes reflexion (Etape 5: flow simulation-style) */}
           {activeSubSection === "modes-reflexion" && (
             <div className="mt-3 space-y-3">
-              <div className="flex flex-wrap gap-1.5 mb-3">
-                {[
-                  { id: "analyse", label: "Analyse", icon: Eye, bg: "bg-blue-100", text: "text-blue-700",
-                    prompt: "Fais une analyse approfondie et structuree de:" },
-                  { id: "debat", label: "Debat", icon: Swords, bg: "bg-red-100", text: "text-red-700",
-                    prompt: "Joue l'avocat du diable — debats les pour et les contre de:" },
-                  { id: "brainstorm", label: "Brainstorm", icon: Lightbulb, bg: "bg-amber-100", text: "text-amber-700",
-                    prompt: "Genere un maximum d'idees creatives et originales pour:" },
-                  { id: "strategie", label: "Strategie", icon: Target, bg: "bg-purple-100", text: "text-purple-700",
-                    prompt: "Pense long terme — propose une vision strategique pour:" },
-                  { id: "innovation", label: "Innovation", icon: Sparkles, bg: "bg-pink-100", text: "text-pink-700",
-                    prompt: "Sors du cadre — propose des approches innovantes et disruptives pour:" },
-                  { id: "decision", label: "Decision", icon: CheckCircle2, bg: "bg-green-100", text: "text-green-700",
-                    prompt: "Tranche et recommande — quelle decision prendre pour:" },
-                  { id: "crise", label: "Crise", icon: Zap, bg: "bg-orange-100", text: "text-orange-700",
-                    prompt: "Mode crise — urgence et pragmatisme. Que faire MAINTENANT pour:" },
-                  { id: "deep", label: "Deep", icon: Brain, bg: "bg-indigo-100", text: "text-indigo-700",
-                    prompt: "Reflexion profonde et nuancee — explore toutes les dimensions de:" },
-                ].map(m => (
-                  <button key={m.id}
-                    onClick={async () => {
-                      const ctx = messages.filter(msg => msg.role === "assistant" && msg.content).pop()?.content?.substring(0, 200) || "";
-                      const fullPrompt = `${m.prompt} ${ctx}`;
-                      try {
-                        const res = await api.chatMulti({
-                          message: fullPrompt, user_id: 1,
-                          agents: [activeBotCode], primary_agent: activeBotCode,
-                          workspace_phase: "reflexion",
+              {/* Mode selector buttons — demarrage immediat (1-click) */}
+              {!reflexionFlow && (
+                <div className="flex flex-wrap gap-1.5 mb-3">
+                  {[
+                    { id: "analyse", label: "Analyse", icon: Eye, bg: "bg-blue-100", text: "text-blue-700" },
+                    { id: "debat", label: "Debat", icon: Swords, bg: "bg-red-100", text: "text-red-700" },
+                    { id: "brainstorm", label: "Brainstorm", icon: Lightbulb, bg: "bg-amber-100", text: "text-amber-700" },
+                    { id: "strategie", label: "Strategie", icon: Target, bg: "bg-purple-100", text: "text-purple-700" },
+                    { id: "innovation", label: "Innovation", icon: Sparkles, bg: "bg-pink-100", text: "text-pink-700" },
+                    { id: "decision", label: "Decision", icon: CheckCircle2, bg: "bg-green-100", text: "text-green-700" },
+                  ].map(m => (
+                    <button key={m.id}
+                      onClick={() => {
+                        const ctx = messages.filter(msg => msg.role === "assistant" && msg.content).pop()?.content?.substring(0, 500) || displayContext;
+                        // Demarrage IMMEDIAT — UX directe (pas d'intro)
+                        setReflexionFlow({
+                          mode: m.id, label: m.label,
+                          phase: "running",
+                          stage: 0, results: [], context: ctx, isThinking: true,
+                          selectedBots: [activeBotCode],
+                          focusInput: ctx,
+                          thinkingSteps: [],
                         });
-                        const persp = res.perspectives?.[0];
-                        if (!persp) return;
-                        const blockType = detectBlockTypeFrontend(persp.contenu);
-                        addWorkspaceBlock({
-                          id: `reflexion-${m.id}-${Date.now()}`,
-                          type: blockType,
-                          title: `${BOT_NAME[activeBotCode] || activeBotCode} — ${m.label}`,
-                          summary: summarizeExpertForWorkspace(persp.contenu),
-                          structured_data: extractStructuredDataFrontend(persp.contenu, blockType),
-                          credo_step: currentCredoLetter as "C" | "R" | "E" | "D" | "O",
-                          credo_sub_section: "modes-reflexion",
-                          confidence: 0.75,
-                          source: activeBotCode,
-                          sourceType: "chat",
-                          timestamp: Date.now(),
-                        });
-                      } catch (err) {
-                        console.error("[ModeReflexion] Error routing to workspace:", err);
+                        runReflexionStage(m.id, 0, ctx, [], [activeBotCode]);
+                      }}
+                      className={cn("flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[10px] font-medium border cursor-pointer transition-colors hover:shadow-sm",
+                        m.bg, m.text, "border-current/20")}>
+                      <m.icon className="h-3 w-3" />
+                      <span>{m.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* ═══ INTRO PHASE supprimee — demarrage immediat. Config accessible via bouton dans le header ═══ */}
+
+              {/* ═══ RUNNING/DONE PHASE: Flow 3 stages (pattern AtelierBrainstorm) ═══ */}
+              {reflexionFlow && (reflexionFlow.phase === "running" || reflexionFlow.phase === "done") && (() => {
+                const mc = REFLEXION_MODE_COLORS[reflexionFlow.mode] || REFLEXION_MODE_COLORS.analyse;
+                const stageLabels = REFLEXION_STAGE_LABELS[reflexionFlow.mode] || REFLEXION_STAGE_LABELS.analyse;
+                const stageIdx = reflexionFlow.results.length;
+                const canAdvance = !reflexionFlow.isThinking && reflexionFlow.results.length > 0 && reflexionFlow.results.length < 3;
+                const isDone = reflexionFlow.phase === "done";
+
+                return (
+                  <div className="space-y-4 p-4 rounded-xl border border-gray-200 bg-white/80 shadow-sm">
+                    {/* Header avec mode + progress circles + bots actifs */}
+                    <div className="flex items-center gap-2">
+                      <span className={cn("px-2.5 py-1 rounded-full text-[10px] font-bold shrink-0", mc.bg, mc.text)}>
+                        {reflexionFlow.label}
+                      </span>
+                      {/* 3 progress circles */}
+                      {[0, 1, 2].map(i => (
+                        <div key={i} className={cn("w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all",
+                          stageIdx > i ? "bg-emerald-100 text-emerald-700" :
+                          stageIdx === i && reflexionFlow.isThinking ? cn(mc.bg, mc.text, "ring-2 ring-current/30 animate-pulse") :
+                          stageIdx === i ? cn(mc.bg, mc.text) :
+                          "bg-gray-100 text-gray-400"
+                        )}>
+                          {stageIdx > i ? <CheckCircle2 className="h-3 w-3" /> : i + 1}
+                        </div>
+                      ))}
+                      {/* Bots actifs (simulation-style) */}
+                      <div className="flex items-center gap-0.5 ml-auto">
+                        {reflexionFlow.selectedBots.slice(0, 3).map(code => (
+                          <div key={code} className="flex items-center gap-0.5 bg-gray-50 rounded-full px-1.5 py-0.5">
+                            <BotAvatar code={code} size="sm" />
+                            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                          </div>
+                        ))}
+                      </div>
+                      <button onClick={() => setReflexionFlow(null)} className="p-1 rounded hover:bg-gray-100 cursor-pointer">
+                        <X className="h-3.5 w-3.5 text-gray-400" />
+                      </button>
+                    </div>
+
+                    {/* Stages rendered — mode-specific visual rendering */}
+                    {reflexionFlow.results.map((content, i) => {
+                      const stageBotCode = reflexionFlow.selectedBots[i % reflexionFlow.selectedBots.length] || activeBotCode;
+                      const stageBotName = BOT_NAME[stageBotCode] || "CarlOS";
+
+                      // ═══ BRAINSTORM: cartes d'idees visuelles (pattern AtelierBrainstorm) ═══
+                      if (reflexionFlow.mode === "brainstorm") {
+                        const ideas = parseBrainstormIdeas(content);
+
+                        // Vague 1 — grille 2 colonnes de cartes colorees
+                        if (i === 0 && ideas.length > 0) return (
+                          <div key={i} className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-2">
+                            <div className="flex items-center gap-2">
+                              <BotAvatar code={stageBotCode} size="sm" />
+                              <span className="text-[10px] font-bold text-gray-700">{stageBotName}</span>
+                              <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-bold ml-auto", mc.bg, mc.text)}>{stageLabels[0]}</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-1.5">
+                              {ideas.map((idea, j) => (
+                                <div key={j} className={cn("rounded-lg p-2.5 border text-xs animate-in fade-in duration-300", IDEA_CARD_COLORS[j % IDEA_CARD_COLORS.length])} style={{ animationDelay: `${j * 80}ms` }}>
+                                  <div className="flex items-start gap-1.5">
+                                    <span className="w-5 h-5 rounded-full bg-white/70 flex items-center justify-center text-[9px] font-bold text-gray-600 shrink-0 mt-0.5">{idea.num}</span>
+                                    <div className="min-w-0">
+                                      <p className="font-semibold text-gray-800 leading-tight">{idea.title}</p>
+                                      {idea.desc && <p className="text-[10px] text-gray-600 mt-0.5 leading-tight">{idea.desc}</p>}
+                                    </div>
+                                  </div>
+                                  <p className="text-[9px] text-gray-400 mt-1.5">{stageBotName}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+
+                        // Vague 2 — SCAMPER stack avec votes
+                        if (i === 1 && ideas.length > 0) return (
+                          <div key={i} className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-2">
+                            <div className="flex items-center gap-2">
+                              <BotAvatar code={stageBotCode} size="sm" />
+                              <span className="text-[10px] font-bold text-gray-700">{stageBotName}</span>
+                              <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-bold ml-auto", mc.bg, mc.text)}>{stageLabels[1]}</span>
+                            </div>
+                            <div className="space-y-1.5">
+                              {ideas.map((idea, j) => (
+                                <div key={j} className={cn("rounded-lg p-2.5 border text-xs animate-in fade-in duration-300", IDEA_CARD_COLORS[j % IDEA_CARD_COLORS.length])} style={{ animationDelay: `${j * 100}ms` }}>
+                                  <div className="flex items-center justify-between mb-1">
+                                    <div className="flex items-center gap-1.5">
+                                      {idea.technique && (
+                                        <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-white/80 text-gray-700 uppercase tracking-wide">{idea.technique}</span>
+                                      )}
+                                      <span className="text-[9px] text-gray-400">{stageBotName}</span>
+                                    </div>
+                                    {idea.score != null && (
+                                      <span className="flex items-center gap-0.5 text-[10px] text-amber-600 font-bold">⭐ {idea.score}/20</span>
+                                    )}
+                                  </div>
+                                  <p className="font-semibold text-gray-800 leading-tight">{idea.title}</p>
+                                  {idea.desc && <p className="text-[10px] text-gray-600 mt-0.5 leading-tight">{idea.desc}</p>}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+
+                        // Top 3 — cartes surlignees avec "Idee Phare"
+                        if (i === 2) {
+                          const top3 = parseTop3(content);
+                          if (top3.length > 0) return (
+                            <div key={i} className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-2">
+                              <div className="flex items-center gap-2">
+                                <BotAvatar code={stageBotCode} size="sm" />
+                                <span className="text-[10px] font-bold text-gray-700">{stageBotName}</span>
+                                <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-bold ml-auto", mc.bg, mc.text)}>{stageLabels[2]}</span>
+                              </div>
+                              <div className="space-y-2">
+                                {top3.map((item, j) => (
+                                  <div key={j} className={cn("rounded-xl p-3 border-2 animate-in fade-in duration-300",
+                                    j === 0 ? "border-amber-300 bg-amber-50/80 shadow-sm" : j === 1 ? "border-blue-200 bg-blue-50/50" : "border-gray-200 bg-white"
+                                  )} style={{ animationDelay: `${j * 150}ms` }}>
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className={cn("w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0",
+                                        j === 0 ? "bg-amber-200 text-amber-800" : j === 1 ? "bg-blue-200 text-blue-800" : "bg-gray-200 text-gray-700"
+                                      )}>{j + 1}</span>
+                                      <span className="text-sm font-bold text-gray-900">{item.title}</span>
+                                      {j === 0 && <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-200 text-amber-800 font-bold ml-auto shrink-0">Idee Phare</span>}
+                                    </div>
+                                    {item.why && <p className="text-xs text-gray-600 mt-1 ml-8">{item.why}</p>}
+                                    {item.actions.length > 0 && (
+                                      <div className="mt-1.5 ml-8 space-y-0.5">
+                                        {item.actions.map((a, k) => (
+                                          <div key={k} className="flex items-center gap-1.5 text-[10px] text-gray-700">
+                                            <ArrowRight className="h-3 w-3 text-emerald-500 shrink-0" />
+                                            <span>{a}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        }
                       }
-                    }}
-                    className={cn("flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[10px] font-medium border cursor-pointer transition-colors hover:shadow-sm",
-                      m.bg, m.text, "border-current/20")}>
-                    <m.icon className="h-3 w-3" />
-                    <span>{m.label}</span>
-                  </button>
-                ))}
-              </div>
+
+                      // ═══ GENERIC: rendu texte enrichi (autres modes) ═══
+                      return (
+                        <div key={i} className="rounded-xl border border-gray-200 bg-white overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
+                          <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-gray-100">
+                            <BotAvatar code={stageBotCode} size="sm" />
+                            <span className="text-[10px] font-bold text-gray-700">{stageBotName}</span>
+                            <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-bold ml-auto", mc.bg, mc.text)}>
+                              {stageLabels[i]}
+                            </span>
+                          </div>
+                          <div className="p-4">
+                            <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap"
+                              dangerouslySetInnerHTML={{ __html: content
+                                .replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>')
+                                .replace(/^\s*(\d+)[.)]\s+/gm, '<span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold mr-1.5">$1</span>')
+                                .replace(/^\s*[-*•]\s+(.+)/gm, '<div class="flex items-start gap-2 my-1"><span class="w-1.5 h-1.5 rounded-full bg-gray-400 mt-1.5 shrink-0"></span><span>$1</span></div>')
+                                .replace(/\n/g, '<br/>')
+                              }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {/* ThinkingAnimation (simulation-style: bouncing dots + etapes) */}
+                    {reflexionFlow.isThinking && (
+                      <div className="rounded-xl border border-gray-200 bg-white overflow-hidden animate-in fade-in duration-200">
+                        <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-gray-100">
+                          <BotAvatar code={reflexionFlow.selectedBots[stageIdx % reflexionFlow.selectedBots.length] || activeBotCode} size="sm" />
+                          <span className="text-[10px] font-medium text-gray-500">
+                            {BOT_NAME[reflexionFlow.selectedBots[stageIdx % reflexionFlow.selectedBots.length] || activeBotCode]} reflechit...
+                          </span>
+                          <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-bold ml-auto", mc.bg, mc.text)}>
+                            {stageLabels[stageIdx] || "..."}
+                          </span>
+                        </div>
+                        <div className="p-4 space-y-2">
+                          {/* Bouncing dots (pattern AtelierBrainstorm — amber pour brainstorm, blue sinon) */}
+                          <div className="flex gap-1 mb-3">
+                            {[0, 150, 300].map(delay => (
+                              <div key={delay} className={cn("w-2 h-2 rounded-full animate-bounce", reflexionFlow.mode === "brainstorm" ? "bg-amber-400" : "bg-blue-400")} style={{ animationDelay: `${delay}ms` }} />
+                            ))}
+                          </div>
+                          {/* Thinking steps (like simulation) */}
+                          {(reflexionFlow.thinkingSteps || []).map((step, i) => (
+                            <div key={i} className="flex items-center gap-2 text-xs text-gray-500 animate-in fade-in duration-500" style={{ animationDelay: `${i * 800}ms` }}>
+                              <Activity className={cn("h-3 w-3 animate-pulse", reflexionFlow.mode === "brainstorm" ? "text-amber-500" : "text-blue-400")} />
+                              <span>{step}</span>
+                              <div className={cn("w-1.5 h-1.5 rounded-full animate-pulse ml-auto", reflexionFlow.mode === "brainstorm" ? "bg-amber-500" : "bg-blue-500")} />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Error state — visible feedback + retry */}
+                    {reflexionFlow.error && !reflexionFlow.isThinking && (
+                      <div className="rounded-xl border border-red-200 bg-red-50/50 p-4 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <AlertTriangle className="h-4 w-4 text-red-500 shrink-0" />
+                          <span className="text-xs text-red-700 font-medium">{reflexionFlow.error}</span>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setReflexionFlow(prev => prev ? { ...prev, error: undefined } : null);
+                            runReflexionStage(reflexionFlow.mode, reflexionFlow.results.length, reflexionFlow.context, reflexionFlow.results, reflexionFlow.selectedBots);
+                          }}
+                          className="w-full py-2 rounded-lg border border-red-200 bg-white text-red-700 text-xs font-bold hover:bg-red-50 cursor-pointer transition-colors">
+                          Reessayer
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Bouton "Continuer" entre les stages */}
+                    {canAdvance && (
+                      <button onClick={() => runReflexionStage(reflexionFlow.mode, reflexionFlow.results.length, reflexionFlow.context, reflexionFlow.results, reflexionFlow.selectedBots)}
+                        className={cn("w-full py-2.5 rounded-xl border text-xs font-bold cursor-pointer transition-colors",
+                          "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100")}>
+                        {stageLabels[stageIdx] || "Etape suivante"} →
+                      </button>
+                    )}
+
+                    {/* Bouton fin — cristalliser dans workspace */}
+                    {isDone && (
+                      <button onClick={finalizeReflexionFlow}
+                        className="w-full py-3 rounded-xl bg-emerald-500 text-white text-sm font-bold hover:bg-emerald-600 cursor-pointer transition-colors shadow-sm">
+                        Cristalliser dans le workspace
+                      </button>
+                    )}
+                  </div>
+                );
+              })()}
+
               {/* Blocs filtres par type reflexion */}
               <div className="space-y-2">
                 {filteredBlocksBySubSection.map(b => (
@@ -954,29 +1437,35 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
             </div>
           )}
 
-          {/* B.1: ThinkingOverlay — visible quand le bot reflechit (pattern ThinkingAnimation primitives.tsx) */}
+          {/* B.1: Bot processing bubble — visible quand le bot synthetise la discussion */}
           {isThinking && (
-            <div className="mt-3 rounded-xl border border-sky-200 bg-gradient-to-r from-sky-50 to-blue-50 p-4 shadow-sm animate-in fade-in duration-300">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-sky-100 flex items-center justify-center shrink-0">
-                  <Loader2 className="h-4 w-4 text-sky-600 animate-spin" />
+            <div className="mt-3 flex gap-3 animate-in fade-in duration-300">
+              <BotAvatar code={activeBotCode} size="md" />
+              <div className="rounded-xl border border-gray-200 shadow-sm bg-white rounded-tl-none px-4 py-3 flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-[11px] font-bold text-gray-800">{BOT_NAME[activeBotCode] || "CarlOS"}</span>
+                  <span className="text-[9px] text-gray-400">synthetise...</span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[11px] font-bold text-sky-700">Reflexion en cours...</p>
-                  <div className="flex flex-wrap gap-3 mt-1.5">
-                    {(THINKING_STEPS[currentCredoLetter] || THINKING_STEPS.C).map((step, j) => (
-                      <span key={j} className={cn(
-                        "text-[9px] flex items-center gap-1 transition-all",
-                        j < currentThinkingStep ? "text-emerald-600 line-through opacity-60" :
-                        j === currentThinkingStep ? "text-sky-700 font-bold" :
-                        "text-gray-400"
-                      )}>
-                        {j < currentThinkingStep && <CheckCircle2 className="h-2.5 w-2.5" />}
-                        {j === currentThinkingStep && <Loader2 className="h-2.5 w-2.5 animate-spin" />}
-                        {step}
-                      </span>
-                    ))}
-                  </div>
+                <div className="space-y-1.5">
+                  {(THINKING_STEPS[currentCredoLetter] || THINKING_STEPS.C).map((step, j) => (
+                    <div key={j} className={cn(
+                      "flex items-center gap-2 text-[10px] transition-all duration-300",
+                      j < currentThinkingStep ? "text-emerald-600" :
+                      j === currentThinkingStep ? "text-gray-800 font-medium" :
+                      "text-gray-300"
+                    )}>
+                      {j < currentThinkingStep && <CheckCircle2 className="h-3 w-3 text-emerald-500 shrink-0" />}
+                      {j === currentThinkingStep && (
+                        <div className="flex gap-1 shrink-0 w-3 justify-center">
+                          {[0, 100, 200].map(d => (
+                            <div key={d} className="w-1 h-1 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: `${d}ms` }} />
+                          ))}
+                        </div>
+                      )}
+                      {j > currentThinkingStep && <div className="w-3 h-3 rounded-full border border-gray-200 shrink-0" />}
+                      <span>{step}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -1010,6 +1499,28 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
               activeCredoStep={currentCredoLetter}
             />
           ) : null}
+
+          {/* Loading — bot thinking bubble (visible during full API call) */}
+          {loadingBlockId && (
+            <div className="mt-2 flex gap-2.5 animate-in fade-in duration-200">
+              <BotAvatar code={loadingBotCode || activeBotCode} size="md" />
+              <div className="rounded-xl border border-gray-200 shadow-sm bg-white rounded-tl-none px-4 py-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-[11px] font-semibold text-gray-700">{BOT_NAME[loadingBotCode || activeBotCode] || "Bot"}</span>
+                  <span className="text-[9px] text-gray-400">reflechit...</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-1">
+                    {[0, 150, 300].map(d => (
+                      <div key={d} className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: `${d}ms` }} />
+                    ))}
+                  </div>
+                  <span className="text-xs text-blue-600 font-medium">{loadingLabel}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {showTypingCursor && (
             <div className="flex items-center gap-1.5 px-4 py-2 animate-in fade-in duration-300">
               <span className="inline-block w-0.5 h-4 bg-gray-800 animate-pulse rounded-full" />
@@ -1321,7 +1832,8 @@ function SuggestedExpertsPanel({ messages, activeBotCode, workspaceBlocks, addWo
     try {
       const lastUserMsg = messages.filter((m: any) => m.role === "user").pop()?.content || "";
       const lastBotMsg = messages.filter((m: any) => m.role === "assistant" && m.content).pop()?.content || "";
-      const context = `Question: ${lastUserMsg}\n\nAnalyse en cours: ${lastBotMsg.substring(0, 500)}`;
+      const recentCtx = workspaceBlocks.slice(-3).map(b => `[${BOT_NAME[b.source || ""] || ""}] ${b.title}: ${(b.summary || "").substring(0, 150)}`).join("\n");
+      const context = `Question: ${lastUserMsg}\n\nAnalyse en cours: ${lastBotMsg.substring(0, 500)}\n\nContexte recent:\n${recentCtx}`;
 
       const res = await api.chatMulti({
         message: context,
@@ -1338,12 +1850,12 @@ function SuggestedExpertsPanel({ messages, activeBotCode, workspaceBlocks, addWo
       const existingBlock = workspaceBlocks.find(b => b.source === botCode);
 
       const blockType = detectBlockTypeFrontend(persp.contenu);
-      const expertSummary = summarizeExpertForWorkspace(persp.contenu);
       addWorkspaceBlock({
         id: `expert-${botCode}-${Date.now()}`,
         type: blockType,
-        title: `${BOT_NAME[botCode] || botCode} — Perspective`,
-        summary: expertSummary,
+        title: generateExpertBlockTitle(BOT_NAME[botCode] || botCode, persp.contenu, "Perspective"),
+        summary: persp.contenu,
+        merge_label: "Consultation",
         structured_data: extractStructuredDataFrontend(persp.contenu, blockType),
         credo_step: currentCredoLetter as "C" | "R" | "E" | "D" | "O",
         credo_sub_section: "experts",
@@ -1372,52 +1884,36 @@ function SuggestedExpertsPanel({ messages, activeBotCode, workspaceBlocks, addWo
           </h4>
         </div>
 
-        <div className="grid gap-3 grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-2 grid-cols-1 sm:grid-cols-2">
           {ALL_EXPERT_CODES.map((code) => {
             const isDone = activeBotSources.has(code);
             const isLoading = expertLoadingBots.has(code);
             const isSuggested = suggestedCodes.has(code);
-            const reason = suggestedReason(code);
             const strengths = BOT_STRENGTHS[code];
             return (
               <div key={code} className={cn(
-                "flex flex-col items-center gap-2 p-3 rounded-xl border shadow-sm bg-white",
-                "border-l-[4px]",
+                "flex items-center gap-2.5 p-2.5 rounded-lg border shadow-sm bg-white border-l-[3px]",
                 BOT_ACCENT_CARDS[code] || "border-l-gray-400",
                 isSuggested && !isDone && "ring-1 ring-violet-200",
               )}>
-                <BotAvatar code={code} size="lg" />
-                <span className="text-sm font-bold text-gray-900 truncate w-full text-center">{BOT_NAME[code] || code}</span>
-                <span className="text-[10px] text-gray-500">{BOT_ROLE_SHORT[code]}</span>
-                {/* Forces: conception + execution */}
-                {strengths && (
-                  <div className="w-full space-y-0.5 text-[9px] text-gray-600">
-                    <div className="truncate">💡 {strengths.conception}</div>
-                    <div className="truncate">⚡ {strengths.execution}</div>
-                  </div>
-                )}
-                {/* Raison si team_proposal le suggere */}
-                {reason && (
-                  <p className="text-[9px] italic text-violet-600 line-clamp-2 text-center w-full">{reason}</p>
-                )}
-                {/* Bouton invitation */}
+                <BotAvatar code={code} size="sm" />
+                <div className="flex-1 min-w-0">
+                  <span className="text-[11px] font-bold text-gray-900 block truncate">{BOT_NAME[code] || code}</span>
+                  {strengths && <span className="text-[9px] text-gray-500 block truncate">{strengths.conception}</span>}
+                </div>
                 <button
                   onClick={() => handleAddExpert(code)}
                   disabled={isLoading}
                   className={cn(
-                    "w-full text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer mt-auto",
+                    "shrink-0 px-2 py-1 rounded-md text-[9px] font-bold transition-colors cursor-pointer",
                     isDone ? "bg-emerald-100 text-emerald-700" :
                     isLoading ? "bg-gray-100 text-gray-400" :
                     "bg-violet-500 text-white hover:bg-violet-600"
                   )}
                 >
                   {isLoading ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin mx-auto" />
-                  ) : isDone ? (
-                    <span className="flex items-center justify-center gap-1"><Check className="h-3.5 w-3.5" /> Actif</span>
-                  ) : (
-                    "Inviter a la discussion"
-                  )}
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : isDone ? "✓" : "+"}
                 </button>
               </div>
             );
@@ -1670,20 +2166,8 @@ function DynamicStepContent({ allBlocks, context, onBlockAction, pulsingBlockId,
     : allBlocks;
 
   if (filteredBlocks.length === 0) {
-    const emptyState = CREDO_EMPTY_STATE[activeCredoStep || "C"] || CREDO_EMPTY_STATE.C;
-    return (
-      <div className="mt-3">
-        <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/50 p-4">
-          <div className="flex items-center gap-2">
-            <Activity className="h-3.5 w-3.5 text-gray-400 animate-pulse" />
-            <h3 className="text-xs font-medium text-gray-500">{emptyState.title}</h3>
-          </div>
-          <p className="text-[10px] text-gray-400 mt-1.5">
-            {emptyState.hint}
-          </p>
-        </div>
-      </div>
-    );
+    // No hardcoded text — just return empty (workspace will fill as discussion progresses)
+    return null;
   }
 
   // Enrich blocks with sub-section if not already set
@@ -1700,7 +2184,7 @@ function DynamicStepContent({ allBlocks, context, onBlockAction, pulsingBlockId,
   };
 
   return (
-    <BlockDisplayContext.Provider value={{ compact: true }}>
+    <BlockDisplayContext.Provider value={{ compact: true, primaryBotCode: activeBotCode || "" }}>
     <div className="mt-3 space-y-3">
       {/* Blocks grouped by CREDO step + sub-section */}
       {enrichedBlocks.map((block, i) => {

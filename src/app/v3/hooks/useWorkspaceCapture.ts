@@ -14,7 +14,7 @@
  * Phases supportées: discussion, reflexion, creation, execution, retroaction
  */
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { useChatContext } from "../../v2/context/ChatContext";
 import { useAmorcer } from "../AmorcerContext";
 import { getPhaseStepIds } from "../phases/phase-config";
@@ -252,12 +252,85 @@ export function detectCredoSubSection(content: string, credoStep: string): strin
   return undefined;
 }
 
-function extractTitle(text: string): string {
-  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 5);
-  const meaningful = lines.find(l => !FILLER_RE.test(l) && !/^[#*\-•→➤\d.)\s]+$/.test(l));
-  const raw = meaningful || lines[0] || text.substring(0, 60);
-  const cleaned = raw.replace(/^[#*\-•→➤\d.)\s]+/, '').trim();
-  return cleaned.substring(0, 60) + (cleaned.length > 60 ? "..." : "");
+/**
+ * Génère un titre intelligent et dynamique à partir du contenu du bloc.
+ * Exporté pour usage dans LiveDiscussionView (expert blocks).
+ *
+ * Stratégie (par priorité):
+ * 1. Heading markdown (# ...) → titre direct
+ * 2. Premier segment **gras** substantiel → souvent le sujet-clé
+ * 3. Sujet extrait de la première phrase substantielle (verbe principal + objet)
+ * 4. Fallback: première ligne non-filler tronquée
+ *
+ * Le titre final est concis (max 55 chars), style "titre d'article".
+ */
+export function extractTitle(text: string): string {
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 3);
+
+  // 1. Heading markdown explicite
+  const heading = lines.find(l => /^#{1,3}\s+.{5,}/.test(l));
+  if (heading) {
+    const clean = heading.replace(/^#{1,3}\s+/, '').replace(/\*\*/g, '').trim();
+    return clean.substring(0, 55) + (clean.length > 55 ? "…" : "");
+  }
+
+  // 2. Premier segment **gras** substantiel (souvent le titre implicite du bot)
+  const boldMatch = text.match(/\*\*([^*]{8,60})\*\*/);
+  if (boldMatch) {
+    const bold = boldMatch[1].trim();
+    // Filtrer les gras qui sont juste des labels ("Question:", "Résumé:", etc.)
+    if (!/^(question|résumé|resume|contexte|note|attention|important)\s*:/i.test(bold)) {
+      return bold.substring(0, 55) + (bold.length > 55 ? "…" : "");
+    }
+  }
+
+  // 3. Extraire le sujet de la première phrase substantielle
+  const substantialLines = lines.filter(l =>
+    l.length > 20 &&
+    !FILLER_RE.test(l) &&
+    !/^[#*\-•→➤\d.)\s|]+$/.test(l) &&
+    !/^\s*[-*•→➤\d.)]\s/.test(l) // Pas de bullet
+  );
+
+  if (substantialLines.length > 0) {
+    let phrase = substantialLines[0].replace(/\*\*(.+?)\*\*/g, "$1").trim();
+    // Couper à la première ponctuation forte pour avoir un titre concis
+    const cutIdx = phrase.search(/[.!?;:—–]\s/);
+    if (cutIdx > 15 && cutIdx < 55) {
+      phrase = phrase.substring(0, cutIdx);
+    }
+    // Nettoyer les débuts verbeux
+    phrase = phrase
+      .replace(/^(voici|voilà|je vous propose|je propose|nous allons|on va|parlons de)\s+/i, '')
+      .replace(/^(un|une|le|la|les|l'|des|du)\s+/i, (m) => m.charAt(0).toUpperCase() + m.slice(1));
+    // Capitaliser la première lettre
+    phrase = phrase.charAt(0).toUpperCase() + phrase.slice(1);
+    return phrase.substring(0, 55) + (phrase.length > 55 ? "…" : "");
+  }
+
+  // 4. Fallback basique
+  const raw = lines.find(l => l.length > 5 && !FILLER_RE.test(l)) || lines[0] || text.substring(0, 55);
+  const cleaned = raw.replace(/^[#*\-•→➤\d.)\s]+/, '').replace(/\*\*/g, '').trim();
+  return cleaned.substring(0, 55) + (cleaned.length > 55 ? "…" : "");
+}
+
+/**
+ * Génère un titre pour un bloc expert — "BotName — sujet-clé du contenu"
+ * au lieu du générique "BotName — Approfondissement".
+ *
+ * Si extractTitle produit un vrai sujet, on l'utilise. Sinon fallback sur actionLabel.
+ */
+export function generateExpertBlockTitle(botName: string, content: string, actionLabel: string): string {
+  const topic = extractTitle(content);
+  // Si le titre extrait est assez substantiel, l'utiliser
+  if (topic && topic.length > 12 && !FILLER_RE.test(topic)) {
+    // Tronquer pour laisser de la place au nom du bot
+    const maxTopic = 42 - Math.min(botName.length, 10);
+    const shortTopic = topic.length > maxTopic ? topic.substring(0, maxTopic) + "…" : topic;
+    return `${botName} — ${shortTopic}`;
+  }
+  // Fallback: label d'action générique
+  return `${botName} — ${actionLabel}`;
 }
 
 // ═══ Frontend: extraction de structured_data depuis le contenu bot ═══
@@ -470,24 +543,26 @@ function computeTargetStage(
   botMessages: any[],
   currentStage: number
 ): number {
-  // Priorite 1: backend phase_credo
+  // Priorite 1: backend phase_credo — avancer de +1 max (progression graduelle)
   if (lastCREDOPhase && CREDO_TO_STAGE[lastCREDOPhase] !== undefined) {
     const target = CREDO_TO_STAGE[lastCREDOPhase];
-    return Math.max(currentStage, target);
+    // Cap a +1 pour eviter les sauts (backend peut detecter "D" des le premier message)
+    return target > currentStage ? currentStage + 1 : currentStage;
   }
-  // Priorite 2: content heuristic sur les derniers messages bot
+  // Priorite 2: content heuristic — meme logique +1 max
   const recentBots = botMessages.slice(-3);
   if (recentBots.length > 0) {
     const lastContent = recentBots[recentBots.length - 1]?.content || "";
     if (lastContent.length > 50) {
       const detected = detectCredoPhaseFromContent(lastContent);
       const target = CREDO_TO_STAGE[detected];
-      if (target > currentStage) return target;
+      if (target > currentStage) return currentStage + 1;
     }
   }
   // Priorite 3: fallback conservateur botCount/3
   const botCount = botMessages.filter((m: any) => (m as any).isStreaming !== true).length;
-  return Math.max(currentStage, Math.min(4, Math.floor(botCount / 3)));
+  const fallback = Math.min(4, Math.floor(botCount / 3));
+  return fallback > currentStage ? currentStage + 1 : currentStage;
 }
 
 /** Map chatStage → sectionId pour la phase active */
@@ -616,6 +691,8 @@ export function useWorkspaceCapture() {
   }, [addWorkspaceBlock_scoped]);
   // Fix S100: Track streaming message IDs waiting for completion
   const pendingStreamIdsRef = useRef<Set<string>>(new Set());
+  // Track when each message was first seen as _preFinalized (timeout fallback)
+  const preFinalizedTimestamps = useRef<Map<string, number>>(new Map());
   // Fix S100: Track if the button's user message has been seen (to detect manual messages)
   const pendingUserMsgSeenRef = useRef(false);
 
@@ -625,6 +702,10 @@ export function useWorkspaceCapture() {
       pendingUserMsgSeenRef.current = false;
     }
   }, [pendingCapture]);
+
+  // Force re-check for stuck _preFinalized messages (onDone never arrived)
+  const [preFinalizedTick, setPreFinalizedTick] = useState(0);
+  const preFinalizedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     // ═══ FIX S100: STREAMING COMPLETION CHECK ═══
@@ -643,10 +724,26 @@ export function useWorkspaceCapture() {
         }
         if ((msg as any).isStreaming !== true && msg.content && msg.content.length >= 5) {
           // Guard: si le message a ete pre-finalise par le stale timer (options extraites cote client)
-          // mais onDone n'est pas encore arrive avec le workspace_block du backend → attendre
+          // mais onDone n'est pas encore arrive avec le workspace_block du backend → attendre max 5s
           if ((msg as any)._preFinalized && !(msg as any).workspace_block) {
-            continue; // Garder dans pendingStreamIdsRef, onDone va arriver avec les vraies donnees
+            if (!preFinalizedTimestamps.current.has(id)) {
+              preFinalizedTimestamps.current.set(id, Date.now());
+              // Schedule re-check in 5.5s to process if onDone still hasn't arrived
+              if (!preFinalizedTimerRef.current) {
+                preFinalizedTimerRef.current = setTimeout(() => {
+                  preFinalizedTimerRef.current = null;
+                  setPreFinalizedTick(t => t + 1);
+                }, 5500);
+              }
+            }
+            const elapsed = Date.now() - (preFinalizedTimestamps.current.get(id) || Date.now());
+            if (elapsed < 5000) {
+              continue; // Attendre onDone encore un peu
+            }
+            // Timeout: onDone n'est jamais arrive — capturer quand meme avec le contenu du stale timer
+            console.log(`[WorkspaceCapture] Timeout _preFinalized (${elapsed}ms) — processing msg ${id} without onDone`);
           }
+          preFinalizedTimestamps.current.delete(id);
           completed.push(msg);
           pendingStreamIdsRef.current.delete(id);
         }
@@ -701,11 +798,13 @@ export function useWorkspaceCapture() {
                   const detectedType = detectBlockTypeFrontend(msg.content);
                   const structuredData = extractStructuredDataFrontend(msg.content, detectedType);
                   const lastUserMsg = [...messages].reverse().find((m: any) => m.role === "user" && m.content);
+                  const smartSummary = summarizeForWorkspace(lastUserMsg?.content || "", msg.content);
                   addWorkspaceBlock_scoped({
                     id: `blk-${Date.now()}`,
                     type: detectedType,
                     title: extractTitle(msg.content),
-                    summary: summarizeForWorkspace(lastUserMsg?.content || "Discussion", msg.content),
+                    summary: smartSummary,
+                    merge_label: "Discussion",
                     structured_data: structuredData,
                     credo_step: getCurrentCredoStep(chatStage),
                     confidence: 0.6,
@@ -719,10 +818,9 @@ export function useWorkspaceCapture() {
                 } // end dedup guard
                 // Accumulate in existing block for same sectionId (entonnoir effect)
                 const lastUserMsg2 = [...messages].reverse().find((m: any) => m.role === "user" && m.content);
-                const summary = summarizeForWorkspace(lastUserMsg2?.content || "Discussion", msg.content);
                 const existing = getCristallise(sectionId);
                 if (existing) {
-                  editCristallise(sectionId, existing + "\n\n" + summary);
+                  editCristallise(sectionId, existing + "\n\n" + msg.content);
                 }
               } else {
                 // ═══ RÉSUMÉ INTELLIGENT — autres phases (conception, exécution, etc.) ═══
@@ -746,12 +844,14 @@ export function useWorkspaceCapture() {
                 } else {
                   const detectedType = detectBlockTypeFrontend(msg.content);
                   const structuredData = extractStructuredDataFrontend(msg.content, detectedType);
-                  const lastUserMsg = [...messages].reverse().find((m: any) => m.role === "user" && m.content);
+                  const lastUserMsg2 = [...messages].reverse().find((m: any) => m.role === "user" && m.content);
+                  const smartSummary2 = summarizeForWorkspace(lastUserMsg2?.content || "", msg.content);
                   addWorkspaceBlock_scoped({
                     id: `blk-${Date.now()}`,
                     type: detectedType,
                     title: extractTitle(msg.content),
-                    summary: summarizeForWorkspace(lastUserMsg?.content || "Conception", msg.content),
+                    summary: smartSummary2,
+                    merge_label: "Conception",
                     structured_data: structuredData,
                     credo_step: getCurrentCredoStep(chatStage),
                     confidence: 0.6,
@@ -790,13 +890,14 @@ export function useWorkspaceCapture() {
             for (const cMsg of completed) {
               const cascades = (cMsg as any).cascadeItems as Array<{section_id: string; phase: string; label: string}> | undefined;
               if (cascades?.length) {
+                const lastUserMsgCasc = [...messages].reverse().find((m: any) => m.role === "user" && m.content);
                 cascades.forEach(c => {
-                  const cascadeContent = `[Cascade depuis Discussion] ${cMsg.content.slice(0, 200)}...`;
                   addWorkspaceBlock_scoped({
                     id: `blk-cascade-${Date.now()}`,
                     type: "libre",
                     title: c.label,
-                    summary: cascadeContent,
+                    summary: summarizeForWorkspace(lastUserMsgCasc?.content || "", cMsg.content),
+                    merge_label: "Cascade",
                     credo_step: getCurrentCredoStep(chatStage),
                     confidence: 0.7,
                     source: (cMsg as any).botCode || activeBotCode,
@@ -816,11 +917,12 @@ export function useWorkspaceCapture() {
           if (lastBot) {
             const source = (lastBot as any).botCode || activeBotCode;
             const sourceType = (lastBot as any).msgType === "voice" ? "voice" as const : "chat" as const;
+            const lastUserMsgPend = [...messages].reverse().find((m: any) => m.role === "user" && m.content);
             addWorkspaceBlock_scoped({
               id: `blk-${Date.now()}`,
               type: "libre",
               title: extractTitle(lastBot.content),
-              summary: lastBot.content,
+              summary: summarizeForWorkspace(lastUserMsgPend?.content || "", lastBot.content),
               credo_step: getCurrentCredoStep(chatStage),
               confidence: 1.0,
               source,
@@ -973,11 +1075,13 @@ export function useWorkspaceCapture() {
             processedBlockMsgIds.current.add(msg.id);
             const detectedType = detectBlockTypeFrontend(msg.content);
             const extractedData = extractStructuredDataFrontend(msg.content, detectedType);
+            const lastUserMsg3 = [...messages].reverse().find((m: any) => m.role === "user" && m.content);
             const blockData: WorkspaceBlock = {
               id: `blk-${Date.now()}`,
               type: detectedType,
               title: extractTitle(msg.content),
-              summary: summarizeForWorkspace(lastUserMsg?.content || "Discussion", msg.content),
+              summary: summarizeForWorkspace(lastUserMsg3?.content || "", msg.content),
+              merge_label: "Discussion",
               structured_data: extractedData,
               credo_step: getCurrentCredoStep(chatStage),
               confidence: 0.6,
@@ -998,10 +1102,9 @@ export function useWorkspaceCapture() {
           }
 
           // Accumulate in existing block for same sectionId (entonnoir effect)
-          const summary = summarizeForWorkspace(lastUserMsg?.content || "Discussion", msg.content);
           const enrichedSummary = secondaries
-            ? `${summary}\n---\n${secondaries.map((s: any) => `  [${s.nom}] ${s.contenu}`).join("\n")}`
-            : summary;
+            ? `${msg.content}\n---\n${secondaries.map((s: any) => `  [${s.nom}] ${s.contenu}`).join("\n")}`
+            : msg.content;
           const existing = getCristallise(sectionId);
           if (existing) {
             editCristallise(sectionId, existing + "\n\n" + enrichedSummary);
@@ -1027,12 +1130,13 @@ export function useWorkspaceCapture() {
           } else {
             const detectedType = detectBlockTypeFrontend(msg.content);
             const extractedData = extractStructuredDataFrontend(msg.content, detectedType);
-            const lastUserMsg2 = [...messages].reverse().find((m: any) => m.role === "user" && m.content);
+            const lastUserMsg4 = [...messages].reverse().find((m: any) => m.role === "user" && m.content);
             addWorkspaceBlock_scoped({
               id: `blk-${Date.now()}`,
               type: detectedType,
               title: extractTitle(msg.content),
-              summary: summarizeForWorkspace(lastUserMsg2?.content || "Conception", msg.content),
+              summary: summarizeForWorkspace(lastUserMsg4?.content || "", msg.content),
+              merge_label: "Conception",
               structured_data: extractedData,
               credo_step: getCurrentCredoStep(chatStage),
               confidence: 0.6,
@@ -1073,12 +1177,13 @@ export function useWorkspaceCapture() {
         const cascades = (msg as any).cascadeItems as Array<{section_id: string; phase: string; label: string}> | undefined;
         if (cascades?.length) {
           cascades.forEach(c => {
-            const cascadeContent = `[Cascade depuis Discussion] ${msg.content.slice(0, 200)}...`;
+            const lastUserMsg5 = [...messages].reverse().find((m: any) => m.role === "user" && m.content);
             addWorkspaceBlock_scoped({
               id: `blk-cascade-${Date.now()}`,
               type: "libre",
               title: c.label,
-              summary: cascadeContent,
+              summary: summarizeForWorkspace(lastUserMsg5?.content || "", msg.content),
+              merge_label: "Cascade",
               credo_step: getCurrentCredoStep(chatStage),
               confidence: 0.7,
               source: (msg as any).botCode || activeBotCode,
@@ -1102,11 +1207,12 @@ export function useWorkspaceCapture() {
       if (lastBot) {
         const source = (lastBot as any).botCode || activeBotCode;
         const sourceType = (lastBot as any).msgType === "voice" ? "voice" as const : "chat" as const;
+        const lastUserMsgPend2 = [...messages].reverse().find((m: any) => m.role === "user" && m.content);
         addWorkspaceBlock_scoped({
           id: `blk-${Date.now()}`,
           type: "libre",
           title: extractTitle(lastBot.content),
-          summary: lastBot.content,
+          summary: summarizeForWorkspace(lastUserMsgPend2?.content || "", lastBot.content),
           credo_step: getCurrentCredoStep(chatStage),
           confidence: 1.0,
           source,
@@ -1117,7 +1223,7 @@ export function useWorkspaceCapture() {
       }
       setPendingCapture(null);
     }
-  }, [messages, activePhase, pendingCapture, setPendingCapture, activeBotCode, chatStage, setChatStage, setActivePhase, setReflexionContext, setRightSection, getCristallise, editCristallise, addWorkflowItem, addWorkspaceBlock_scoped]);
+  }, [messages, activePhase, pendingCapture, setPendingCapture, activeBotCode, chatStage, setChatStage, setActivePhase, setReflexionContext, setRightSection, getCristallise, editCristallise, addWorkflowItem, addWorkspaceBlock_scoped, preFinalizedTick]);
 
   // AUTO-SYNTHESE retiré — Carl feedback: "X elements capturés en phase Connexion" est du bruit inutile pour l'utilisateur
 }

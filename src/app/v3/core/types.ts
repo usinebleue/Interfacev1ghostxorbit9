@@ -149,6 +149,7 @@ export interface WorkspaceBlock {
   replace_block_id?: string;
   action_suggestions?: ActionSuggestion[];
   is_action_result?: boolean;
+  merge_label?: string;  // Label for merge log entries (e.g., "Approfondissement", "Challenge")
 }
 
 // ═══ Workspace Tasks — taches assignables aux bots/humains ═══

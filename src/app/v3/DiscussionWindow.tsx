@@ -1122,39 +1122,25 @@ function V3MessageList() {
                   />
                 )}
               </div>
-              {/* ═══ Niveau 2 — Actions structurelles SOUS la bulle (phase-gatees) ═══ */}
-              {/* S102-B: masquer en multi-bot (les options inline de la bulle consolidee suffisent) */}
-              {/* Visible sur TOUS les messages bot (pas seulement le dernier) */}
-              {/* Transition de phase + GPS seulement sur le dernier */}
-              {!msg.isStreaming && activeRoster.length <= 1 && (() => {
-                // Phase transition — JAMAIS en discussion (transitions via ControlTowerPanel uniquement)
-                const MIN_STAGE: Record<string, number> = { reflexion: 4, creation: 2, execution: 2, retroaction: 2 };
-                const NEXT_LABEL: Record<string, string> = { reflexion: "Passer en mode conception", creation: "Passer en mode execution", execution: "Passer en mode retroaction", retroaction: "Retour au cockpit" };
-                const minStage = MIN_STAGE[activePhase] ?? 99;
-                const transitionLabel = isLast && activePhase !== "discussion" && chatStage >= minStage ? (NEXT_LABEL[activePhase] || null) : null;
-
-                return (
-                  <BubbleActions
-                    chatStage={chatStage}
-                    messageContent={msg.content}
-                    backendOptions={undefined}
-                    onAction={(prompt) => sendMessage(prompt, msg.agent || chatTargetBot, undefined, { workspacePhase })}
-                    phaseTransition={transitionLabel}
-                    onPhaseTransition={transitionLabel ? () => handleOption(transitionLabel) : undefined}
-                    gpsSuggestion={msg.cristallisationSuggestion || undefined}
-                    onGpsCristallise={isLast && msg.cristallisationSuggestion ? () => {
-                      const lastUserMsg = messages.filter(m => m.role === "user").pop()?.content;
-                      cristalliseViaAPI(msg.content, {
-                        botCode: msg.agent || activeBotCode,
-                        sectionId: msg.cristallisationSuggestion!.section_id,
-                        credoStep: (["C","R","E","D","O"] as const)[chatStage] || "C",
-                        userMsg: lastUserMsg,
-                        addWorkspaceBlock,
-                      });
-                    } : undefined}
-                  />
-                );
-              })()}
+              {/* ═══ Niveau 2 — Actions structurelles SOUS la bulle ═══ */}
+              {!msg.isStreaming && (
+                <div className="mt-2 pt-2 border-t border-gray-200/60 flex flex-wrap gap-1.5">
+                  {["Approfondir", "Challenger", "Plan d'action"].map((label, i) => {
+                    const prompts = [
+                      `Approfondir en detail: ${msg.content.substring(0, 80)}`,
+                      `Challenge cet element, trouve les failles: ${msg.content.substring(0, 80)}`,
+                      `Propose un plan d'action concret basé sur: ${msg.content.substring(0, 80)}`,
+                    ];
+                    return (
+                      <button key={i}
+                        onClick={() => sendMessage(prompts[i], msg.agent || chatTargetBot, undefined, { workspacePhase })}
+                        className="px-2.5 py-1 rounded-full text-[10px] font-medium bg-gray-50 border border-gray-200 hover:bg-gray-100 hover:border-gray-300 transition-colors text-gray-500 hover:text-gray-700 cursor-pointer">
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         );

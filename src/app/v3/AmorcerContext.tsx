@@ -560,6 +560,8 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
 
   // ═══ Workspace Blocks dynamiques (discussion) — scoped per-thread ═══
   const [workspaceBlocks, setWorkspaceBlocks] = useState<WorkspaceBlock[]>(() => {
+    // Pas de thread en phase scoped = pas de blocks à restaurer
+    if (!activeThreadId && THREAD_SCOPED_PHASES.includes(activePhase)) return [];
     const { lsKey } = getStorageKeys(activeThreadId, activeBotCode, activePhase);
     try {
       const stored = localStorage.getItem(lsKey);
@@ -572,6 +574,8 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
 
   // Persist workspace blocks — clé per-thread
   useEffect(() => {
+    // Ne pas persister vers clé globale quand pas de thread en phase scoped
+    if (!activeThreadId && THREAD_SCOPED_PHASES.includes(activePhase)) return;
     const { lsKey } = getStorageKeys(activeThreadId, activeBotCode, activePhase);
     try {
       if (workspaceBlocks.length === 0) {
@@ -612,6 +616,8 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (workspaceBlocks.length === 0) return;
     if (activePhase === "observation") return;
+    // Ne pas sauvegarder vers canvas global quand pas de thread actif en phase scoped
+    if (!activeThreadId && THREAD_SCOPED_PHASES.includes(activePhase)) return;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
       const { canvasKey } = getStorageKeys(activeThreadId, activeBotCode, activePhase);
@@ -630,6 +636,9 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     prevLoadPhaseRef.current = activePhase;
     prevThreadRef.current = activeThreadId;
     if (activePhase === "observation") return;
+    // Thread-scoped phases sans threadId = nouvelle discussion vide → PAS de load
+    // (sinon getStorageKeys fallback vers canvas global qui contient d'anciens blocs)
+    if (!activeThreadId && THREAD_SCOPED_PHASES.includes(activePhase)) return;
     // Si le cache local a déjà restauré les blocks, pas besoin de l'API
     const { cacheKey, canvasKey } = getStorageKeys(activeThreadId, activeBotCode, activePhase);
     if (phaseStateCacheRef.current[cacheKey]?.blocks?.length) return;
@@ -668,6 +677,8 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     if (!activeThreadId) {
       setWorkspaceBlocks([]);
       setChatStage(0);
+      setCredoPhase("C");
+      setWorkflowItems([]);
       return;
     }
 
@@ -731,6 +742,53 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
           return copy;
         }
       }
+      // Dedup guard: skip if same source + same type + similar title within 5s
+      const now = block.timestamp || Date.now();
+      const duplicate = prev.find(b =>
+        b.source === block.source &&
+        b.type === block.type &&
+        b.title === block.title &&
+        Math.abs((b.timestamp || 0) - now) < 5000
+      );
+      if (duplicate) {
+        console.log(`[WorkspaceBlock] SKIP duplicate: ${block.title} (source=${block.source})`);
+        return prev;
+      }
+
+      // ═══ MERGE LOGIC: 1 box max par bot + étape CREDO (log structuré) ═══
+      // Les modes reflexion gardent leurs propres blocs (flow brainstorm/analyse).
+      // Tout le reste (discussion + experts) du même bot au même step CREDO → MERGE dans le bloc existant.
+      // Chaque entrée est un log entry avec label + timestamp.
+      const isReflexionMode = block.credo_sub_section === "modes-reflexion";
+      if (!isReflexionMode && block.source && block.credo_step) {
+        const existing = prev.find(b =>
+          b.source === block.source &&
+          b.credo_step === block.credo_step &&
+          b.credo_sub_section !== "modes-reflexion"
+        );
+        if (existing) {
+          // Merge: append new summary as a structured log entry (action label + timestamp)
+          const timeLabel = new Date(now).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" });
+          const label = block.merge_label || "Mise a jour";
+          const separator = `\n\n---\n\n#### ${label} — ${timeLabel}\n\n`;
+          const mergedSummary = existing.summary + separator + block.summary;
+          // Update title if new one is more specific
+          const newTitle = block.title.length > existing.title.length ? block.title : existing.title;
+          const copy = [...prev];
+          const idx = prev.indexOf(existing);
+          copy[idx] = {
+            ...existing,
+            summary: mergedSummary,
+            title: newTitle,
+            timestamp: now, // Update timestamp to latest
+            confidence: Math.max(existing.confidence, block.confidence),
+            // Keep structured_data from the latest block if present
+            structured_data: block.structured_data || existing.structured_data,
+          };
+          return copy;
+        }
+      }
+
       return [...prev, block];
     });
   }, []);
