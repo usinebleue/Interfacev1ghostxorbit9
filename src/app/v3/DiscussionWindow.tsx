@@ -963,37 +963,24 @@ function V3MessageList() {
                     })}
                   </div>
                 )}
-                {/* Options inline — filtrer "Ouvrir l'atelier" (navigation via sidebar) */}
-                {msg.options && msg.options.length > 0 && (() => {
-                  const filteredOpts = msg.options.filter(opt => !/ouvrir\s+l'atelier/i.test(opt));
-                  if (filteredOpts.length === 0) return null;
-                  return (
-                  <div className="mt-3 pt-2 border-t border-gray-200/60 space-y-1">
-                    {filteredOpts.map((opt, i) => (
-                      <button key={i} onClick={() => handleOption(opt)}
-                        className="w-full text-left px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 transition-colors cursor-pointer group/opt">
-                        <div className="flex items-start gap-2">
-                          <span className="text-xs font-bold text-gray-400 mt-0.5 shrink-0">{i + 1}.</span>
-                          <span className="text-sm text-gray-700 group-hover/opt:text-gray-900 font-medium">{opt}</span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                  );
-                })()}
-                {/* Synthese actions inline */}
-                <div className="mt-2 pt-2 border-t border-gray-200/60 flex flex-wrap gap-1.5">
-                  {["Fusionner", "Challenger", "Plan d'action"].map((label, i) => {
-                    const msgTypes = ["fusionner", "challenge", "plan_action"] as const;
-                    return (
-                      <button key={i}
-                        onClick={() => sendMessage(label, msg.agent || chatTargetBot, undefined, { msgType: msgTypes[i] || "fusionner", workspacePhase })}
-                        className="px-2.5 py-1 rounded-full text-[10px] font-medium bg-gray-50 border border-gray-200 hover:bg-gray-100 hover:border-gray-300 transition-colors text-gray-500 hover:text-gray-700 cursor-pointer">
-                        {label}
-                      </button>
-                    );
-                  })}
-                </div>
+                {/* Options inline — InlineOptions avec coches + precision */}
+                {msg.options && msg.options.length > 0 && (
+                  <InlineOptions
+                    options={msg.options}
+                    onSend={(text, targetBot, _meta, extra) => {
+                      if (targetBot) {
+                        sendMessage(text, targetBot, undefined, extra);
+                      } else {
+                        handleOption(text);
+                      }
+                    }}
+                    isActive={true}
+                    msgType={msg.msgType as string}
+                    agent={msg.agent}
+                    activeRoster={activeRoster}
+                    workspacePhase={workspacePhase}
+                  />
+                )}
                 {/* S102-B Phase 7 — Mode steps indicator */}
                 {modeSteps.length > 0 && (
                   <div className="flex items-center gap-1.5 mt-2">
