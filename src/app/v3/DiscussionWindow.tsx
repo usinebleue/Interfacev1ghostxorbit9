@@ -1122,25 +1122,6 @@ function V3MessageList() {
                   />
                 )}
               </div>
-              {/* ═══ Niveau 2 — Actions structurelles SOUS la bulle ═══ */}
-              {!msg.isStreaming && (
-                <div className="mt-2 pt-2 border-t border-gray-200/60 flex flex-wrap gap-1.5">
-                  {["Approfondir", "Challenger", "Plan d'action"].map((label, i) => {
-                    const prompts = [
-                      `Approfondir en detail: ${msg.content.substring(0, 80)}`,
-                      `Challenge cet element, trouve les failles: ${msg.content.substring(0, 80)}`,
-                      `Propose un plan d'action concret basé sur: ${msg.content.substring(0, 80)}`,
-                    ];
-                    return (
-                      <button key={i}
-                        onClick={() => sendMessage(prompts[i], msg.agent || chatTargetBot, undefined, { workspacePhase })}
-                        className="px-2.5 py-1 rounded-full text-[10px] font-medium bg-gray-50 border border-gray-200 hover:bg-gray-100 hover:border-gray-300 transition-colors text-gray-500 hover:text-gray-700 cursor-pointer">
-                        {label}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
             </div>
           </div>
         );
