@@ -673,12 +673,14 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
 
     prevActiveThreadIdRef.current = activeThreadId;
 
-    // 2. Load new thread's blocks
+    // 2. TOUJOURS clear les blocks d'abord — evite que les anciens restent collés
+    setWorkspaceBlocks([]);
+    setChatStage(0);
+    setCredoPhase("C");
+    setWorkflowItems([]);
+
+    // 3. Si pas de thread (nouvelle discussion) → fini, on a déjà clear
     if (!activeThreadId) {
-      setWorkspaceBlocks([]);
-      setChatStage(0);
-      setCredoPhase("C");
-      setWorkflowItems([]);
       return;
     }
 
@@ -690,7 +692,7 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Try cache first
+    // 4. Restaurer les blocks du NOUVEAU thread (cache > localStorage > API)
     const { lsKey, cacheKey, canvasKey } = getStorageKeys(activeThreadId, activeBotCode, activePhase);
     const cached = phaseStateCacheRef.current[cacheKey];
     if (cached?.blocks?.length) {
