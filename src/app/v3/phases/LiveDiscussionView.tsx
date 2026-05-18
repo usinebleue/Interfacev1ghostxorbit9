@@ -17,18 +17,19 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
   CheckCircle2, Zap, X, ArrowRight,
-  Loader2, Network, FileText, Activity, Rocket,
+  Loader2, Network, FileText, Activity,
   AlertTriangle, Lightbulb, Target, TrendingUp,
   Eye, Brain, Swords, Sparkles, Search,
   Crown, ArrowLeftRight, RotateCcw, Leaf, Shield,
+  MessageCircle, Users,
 } from "lucide-react";
 import { cn } from "../../components/ui/utils";
 import { SF } from "../core/styles";
 import { useIsMobile } from "../../components/ui/use-mobile";
-import { MobileSidebarSheet } from "../core/MobileSidebarSheet";
+// MobileSidebarSheet removed — sidebar retired for flat timeline layout
 import { useAmorcer } from "../AmorcerContext";
 import { useChatContext } from "../../v2/context/ChatContext";
-import { PHASE_CONFIGS, CREDO_SUB_SECTIONS } from "./phase-config";
+import { PHASE_CONFIGS } from "./phase-config";
 import { TechniquePanel } from "./reflexion-tools";
 import { WorkspaceReflexionHub } from "./WorkspaceReflexionHub";
 import { BlockRenderer, SkeletonBlock, BLOCK_TYPE_LABELS, BlockDisplayContext } from "./workspace-block-renderers";
@@ -36,7 +37,8 @@ import { BotAvatar } from "../simulation/primitives";
 import { BOT_NAME } from "../../v2/api/types";
 import { api } from "../../v2/api/client";
 import type { CascadeSuggestion } from "../../v2/api/types";
-import { detectBlockTypeFrontend, extractStructuredDataFrontend, detectCredoSubSection, summarizeExpertForWorkspace, generateExpertBlockTitle } from "../hooks/useWorkspaceCapture";
+import { detectBlockTypeFrontend, extractStructuredDataFrontend, summarizeExpertForWorkspace, generateExpertBlockTitle } from "../hooks/useWorkspaceCapture";
+// chantier-requirements.ts = mecanique interne pour guider le backend, pas affichee dans le UI
 
 // ═══ Etape 5: Reflexion Flow — stage prompts (module-level for stable closures) ═══
 
@@ -203,11 +205,14 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
     updateWorkspaceBlock, removeWorkspaceBlock, getBlocksByCredoStep, getBlocksByType,
     addWorkspaceTask,
   } = useAmorcer();
-  const { sendMessage, messages, isTyping } = useChatContext();
+  const { sendMessage, messages, isTyping, activeRoster, addBotToRoster, removeBotFromRoster } = useChatContext();
   const displayContext = context || "Discussion en cours";
   const blocksEndRef = useRef<HTMLDivElement>(null);
 
   const [activeStepId, setActiveStepId] = useState<string>(config.steps[0]?.id || "");
+  // Hero tab: 3 functional tabs replacing CREDO buttons
+  type DiscussionHeroTab = "discussion" | "agents" | "reflexion";
+  const [activeHeroTab, setActiveHeroTab] = useState<DiscussionHeroTab>("discussion");
   // W.0: Sous-section active dans le sidebar dynamique
   const [activeSubSection, setActiveSubSection] = useState<string | null>(null);
   // W.0: Technique state machine
@@ -222,13 +227,61 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
     return last?.cascadeSuggestions || [];
   })();
 
+  // Zero-Silo — Extract latest consultation suggestions from recent bot messages
+  const latestConsultationSuggestions = (() => {
+    const botMsgs = messages.filter(m => m.role === "assistant" && m.consultationSuggestions?.length);
+    const last = botMsgs[botMsgs.length - 1];
+    return last?.consultationSuggestions || [];
+  })();
+
+  const [consultLoading, setConsultLoading] = useState<string | null>(null);
+
+  const handleConsultBot = useCallback(async (suggestion: typeof latestConsultationSuggestions[0]) => {
+    if (consultLoading) return;
+    setConsultLoading(suggestion.consult);
+
+    // Gather last 3 messages as consultation context
+    const recentMsgs = messages.slice(-6).map(m =>
+      `${m.role === "user" ? "Carl" : (BOT_NAME[m.agent || ""] || m.agent || "Bot")}: ${m.content.substring(0, 300)}`
+    ).join("\n");
+
+    try {
+      const resp = await api.chatMulti({
+        message: messages.filter(m => m.role === "user").pop()?.content || "",
+        agents: [suggestion.consult],
+        consultation_mode: "consultation",
+        consultation_context: recentMsgs,
+        primary_agent: activeBotCode,
+        workspace_phase: activeStepId,
+      });
+
+      if (resp.perspectives?.[0]) {
+        const p = resp.perspectives[0];
+        const block = p.workspace_block || {
+          type: "expert_consultation",
+          title: `Consultation ${suggestion.consult_titre}`,
+          content: p.contenu,
+          source: suggestion.consult,
+          source_nom: suggestion.consult_nom,
+          source_emoji: suggestion.consult_emoji,
+          confidence: 0.85,
+        };
+        addWorkspaceBlock(block);
+      }
+    } catch (err) {
+      console.error("[CONSULTATION] Error:", err);
+    } finally {
+      setConsultLoading(null);
+    }
+  }, [consultLoading, messages, activeBotCode, activeStepId, addWorkspaceBlock]);
+
   // Derive current CREDO letter from activeStepId
   const currentCredoLetter = activeStepId.includes("comprendre") ? "C"
     : activeStepId.includes("rechercher") ? "R"
     : activeStepId.includes("exposer") ? "E"
     : activeStepId.includes("demontrer") ? "D"
     : activeStepId.includes("objectif") ? "O" : "C";
-  const [filterStep, setFilterStep] = useState<string | null>("C");
+  const [filterStep, setFilterStep] = useState<string | null>(null); // null = show ALL blocks (flat timeline)
   // Sprint 2A v2: technique panel — clic sidebar → sous-section workspace
   const [selectedTechnique, setSelectedTechnique] = useState<string | null>(null);
   const [contentAppeared, setContentAppeared] = useState(false);
@@ -395,6 +448,8 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
     acc[b.credo_step] = (acc[b.credo_step] || 0) + 1;
     return acc;
   }, {});
+
+  // Chantier completeness = mecanique interne (pas de UI visible)
 
   // Handle block actions
   const handleBlockAction = useCallback((action: string, blockId: string) => {
@@ -819,6 +874,15 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
     setReflexionFlow(null);
   }, [reflexionFlow, activeBotCode, addWorkspaceBlock, currentCredoLetter]);
 
+  // Hero tab: toggle bot in roster
+  const handleToggleBot = useCallback((code: string) => {
+    if (activeRoster.includes(code)) {
+      removeBotFromRoster(code);
+    } else {
+      addBotToRoster(code);
+    }
+  }, [activeRoster, addBotToRoster, removeBotFromRoster]);
+
   // W.0: Reset sub-section when CREDO step changes + sync filterStep
   useEffect(() => {
     setActiveSubSection(null);
@@ -895,36 +959,38 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
           </div>
           <div className="flex-1 min-w-0">
             <h2 className="text-sm font-bold text-gray-900 truncate">Discussion</h2>
-            <span className="text-[10px] text-gray-500">Etape {chatStage + 1}/{config.steps.length}</span>
+            {/* CREDO progress dots — discret tracking */}
+            <div className="flex items-center gap-1 mt-1">
+              {(["C","R","E","D","O"] as const).map(letter => {
+                const hasBlocks = (blocksByCredoStep[letter] || 0) > 0;
+                return <div key={letter} className={cn("w-2 h-2 rounded-full transition-colors", hasBlocks ? "bg-sky-500" : "bg-gray-200")} title={letter} />;
+              })}
+            </div>
           </div>
         </div>
 
-        {/* Boutons CREDO compacts — integres dans le hero a droite */}
-        <div className="relative z-10 flex items-center gap-1 shrink-0">
-          {config.steps.map((step) => {
-            const credoLetter = step.id.includes("comprendre") ? "C" : step.id.includes("rechercher") ? "R" : step.id.includes("exposer") ? "E" : step.id.includes("demontrer") ? "D" : "O";
-            const stepColors: Record<string, { bg: string; text: string }> = {
-              C: { bg: "bg-sky-100", text: "text-sky-700" },
-              R: { bg: "bg-blue-100", text: "text-blue-700" },
-              E: { bg: "bg-amber-100", text: "text-amber-700" },
-              D: { bg: "bg-green-100", text: "text-green-700" },
-              O: { bg: "bg-purple-100", text: "text-purple-700" },
-            };
-            const sc = stepColors[credoLetter] || stepColors.C;
-            const isActive = activeStepId === step.id;
-            const hasContent = (blocksByCredoStep[credoLetter] || 0) > 0;
-            return (
-              <button key={step.id}
-                onClick={() => { setActiveStepId(step.id); setFilterStep(credoLetter); }}
-                className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
-                  isActive ? cn(sc.bg, sc.text, "shadow-sm ring-1 ring-current/20") :
-                  hasContent ? "bg-emerald-50 text-emerald-600" : "bg-gray-100 text-gray-400"
-                )}>
-                <step.icon className="w-3.5 h-3.5" />
-                {step.title}
-              </button>
-            );
-          })}
+        {/* 3 Hero tabs: Discussion / Ajouter un agent / Modes de reflexion */}
+        <div className="relative z-10 flex items-center gap-1.5 shrink-0">
+          {([
+            { id: "discussion" as const, label: "Discussion", icon: MessageCircle },
+            { id: "agents" as const, label: "Ajouter un agent", icon: Users },
+            { id: "reflexion" as const, label: "Modes de reflexion", icon: Brain },
+          ]).map(tab => (
+            <button key={tab.id}
+              onClick={() => {
+                setActiveHeroTab(tab.id);
+                if (tab.id === "reflexion") setActiveSubSection("modes-reflexion");
+                else if (tab.id === "discussion") setActiveSubSection(null);
+              }}
+              className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer",
+                activeHeroTab === tab.id
+                  ? "bg-sky-100 text-sky-700 shadow-sm ring-1 ring-sky-200"
+                  : "bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600"
+              )}>
+              <tab.icon className="w-3.5 h-3.5" />
+              {!isMobile && <span>{tab.label}</span>}
+            </button>
+          ))}
         </div>
 
         {/* Progress bar — thin accent at bottom */}
@@ -941,104 +1007,54 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
         {displayContext || "Nouvelle discussion"}
       </h1>
 
-      {/* SIDEBAR + CONTENU */}
-      <div className={cn("flex gap-3", isMobile && "flex-col gap-0")}>
-        {/* W.0: Sidebar dynamique — sous-sections de l'etape active */}
-        {(() => {
-          const activeLabel = activeStep?.title || config.label;
-          const subSections = CREDO_SUB_SECTIONS[activeStepId] || [];
-          const sidebarContent = (
-            <div className="space-y-3">
-              {/* Sous-sections de l'etape CREDO active */}
-              <div>
-                <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 px-2">
-                  {activeStep?.title || "Discussion"}
-                </span>
-                <div className="mt-1 space-y-0.5">
-                  {/* Bouton "Tous" — vue par defaut */}
-                  <button
-                    onClick={() => setActiveSubSection(null)}
-                    className={cn(SF.btnBase, !activeSubSection ? "bg-sky-50 border border-sky-200 shadow-sm" : "hover:bg-gray-50 border border-transparent")}
-                  >
-                    <Activity className="w-3.5 h-3.5 shrink-0 text-gray-500" />
-                    <span className={cn("text-[10px] font-bold", !activeSubSection ? "text-sky-700" : "text-gray-600")}>Tous</span>
-                    {workspaceBlocks.filter(b => b.credo_step === currentCredoLetter).length > 0 && (
-                      <span className="ml-auto text-[9px] bg-gray-100 px-1.5 rounded text-gray-500">
-                        {workspaceBlocks.filter(b => b.credo_step === currentCredoLetter).length}
-                      </span>
-                    )}
-                  </button>
-                  {/* Sous-sections dynamiques */}
-                  {subSections.map(sub => {
-                    const blockCount = workspaceBlocks.filter(b =>
-                      b.credo_step === currentCredoLetter && blockMatchesSubSection(b, sub.id)
-                    ).length;
-                    const SubIcon = sub.icon;
-                    return (
-                      <button
-                        key={sub.id}
-                        onClick={() => setActiveSubSection(sub.id)}
-                        className={cn(
-                          SF.btnBase,
-                          activeSubSection === sub.id ? "bg-sky-50 border border-sky-200 shadow-sm" : "hover:bg-gray-50 border border-transparent"
-                        )}
-                      >
-                        <SubIcon className="w-3.5 h-3.5 shrink-0 text-gray-400" />
-                        <span className={cn("text-[10px] font-bold", activeSubSection === sub.id ? "text-sky-700" : "text-gray-600")}>{sub.label}</span>
-                        {blockCount > 0 && (
-                          <span className="ml-auto text-[9px] bg-gray-100 px-1.5 rounded text-gray-500">{blockCount}</span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+      {/* GPS Banner — contextual guidance */}
+      <GPSBanner workspaceBlocks={workspaceBlocks} chatStage={chatStage} activeRoster={activeRoster} onTabSwitch={setActiveHeroTab} />
 
-              {/* Participants actifs */}
-              {workspaceBlocks.length > 0 && (() => {
-                const participants = [...new Set(workspaceBlocks.map(b => b.source).filter(Boolean))];
-                if (participants.length === 0) return null;
+      {/* CONTENU — sidebar + main area */}
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+        {/* Bot filter sidebar — desktop only, hidden when <=1 bot */}
+        {!isMobile && (() => {
+          const participatingBots = [...new Set([
+            ...workspaceBlocks.map(b => b.source).filter(Boolean) as string[],
+            ...activeRoster,
+          ])];
+          if (participatingBots.length <= 1) return null;
+          return (
+            <div className="w-[140px] shrink-0 border-r border-gray-100 py-2 space-y-1 overflow-y-auto">
+              <button onClick={() => setFilterBotCode(null)}
+                className={cn("w-full flex items-center gap-2 px-3 py-2 text-xs rounded-lg transition-colors",
+                  !filterBotCode ? "bg-sky-50 text-sky-700 font-medium" : "text-gray-500 hover:bg-gray-50")}>
+                Tous ({workspaceBlocks.length})
+              </button>
+              <div className="border-b border-gray-100 mx-2" />
+              {participatingBots.map(botCode => {
+                const count = workspaceBlocks.filter(b => b.source === botCode).length;
                 return (
-                  <div>
-                    <div className={SF.separator} />
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 px-2">
-                      Participants ({participants.length})
-                    </span>
-                    <div className="mt-1.5 flex flex-wrap gap-1.5 px-2">
-                      {participants.map(code => (
-                        <div key={code}
-                          onClick={() => setFilterBotCode(prev => prev === code ? null : code)}
-                          className={cn("flex items-center gap-1 px-2 py-1 rounded-full cursor-pointer transition-all border",
-                            filterBotCode === code ? "bg-blue-100 border-blue-300 ring-1 ring-blue-400" : "bg-gray-50 border-gray-200 hover:bg-gray-100"
-                          )}>
-                          <BotAvatar code={code} size="sm" />
-                          <span className="text-[9px] font-medium text-gray-600">{BOT_NAME[code] || code}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  <button key={botCode} onClick={() => setFilterBotCode(botCode === filterBotCode ? null : botCode)}
+                    className={cn("w-full flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg transition-colors",
+                      filterBotCode === botCode ? "bg-sky-50 text-sky-700 font-medium" : "text-gray-600 hover:bg-gray-50")}>
+                    <BotAvatar code={botCode} size="sm" />
+                    <span className="truncate">{BOT_NAME[botCode] || botCode}</span>
+                    {count > 0 && <span className="ml-auto text-[10px] text-gray-400">{count}</span>}
+                  </button>
                 );
-              })()}
-            </div>
-          );
-
-          return isMobile ? (
-            <MobileSidebarSheet currentLabel={activeLabel} itemCount={subSections.length + 1}>
-              {sidebarContent}
-            </MobileSidebarSheet>
-          ) : (
-            <div className={SF.sidebarW}>
-              {sidebarContent}
+              })}
             </div>
           );
         })()}
 
-        {/* Contenu — workspace blocks dynamiques (pattern FocusDiscussionView) */}
-        <div className={SF.content}>
+        {/* Main content area */}
+        <div className="flex-1 overflow-y-auto">
+        <div className="w-full">
          <div className={cn("transition-all duration-300", contentAppeared ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2")}>
 
-          {/* W.0: SUB-SECTION CONTENT — modes reflexion (Etape 5: flow simulation-style) */}
-          {activeSubSection === "modes-reflexion" && (
+          {/* TAB: Ajouter un agent — roster panel */}
+          {activeHeroTab === "agents" && (
+            <AgentRosterPanel activeRoster={activeRoster} onToggleBot={handleToggleBot} />
+          )}
+
+          {/* TAB: Modes de reflexion — existing reflexion flow (Etape 5: flow simulation-style) */}
+          {activeHeroTab === "reflexion" && activeSubSection === "modes-reflexion" && (
             <div className="mt-3 space-y-3">
               {/* Mode selector buttons — demarrage immediat (1-click) */}
               {!reflexionFlow && (
@@ -1324,8 +1340,8 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
             </div>
           )}
 
-          {/* W.0: SUB-SECTION CONTENT — techniques creativite */}
-          {activeSubSection === "techniques" && (
+          {/* W.0: SUB-SECTION CONTENT — techniques creativite (also under reflexion tab) */}
+          {activeHeroTab === "reflexion" && activeSubSection === "techniques" && (
             <div className="mt-3 space-y-3">
               <div className="rounded-xl border border-orange-200 bg-orange-50/50 p-4 space-y-3">
                 <h4 className="text-[10px] font-bold uppercase tracking-wider text-orange-700">
@@ -1383,6 +1399,9 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
               </div>
             </div>
           )}
+
+          {/* TAB: Discussion — all discussion content below */}
+          {activeHeroTab === "discussion" && (<>
 
           {/* W.1b: SUB-SECTION CONTENT — deep search via Gemini grounding */}
           {activeSubSection === "deep-search" && (
@@ -1488,17 +1507,18 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
             </div>
           )}
 
-          {/* DYNAMIC STEP CONTENT — filtre par sous-section active, sinon tous les blocs */}
-          {!activeSubSection || !["modes-reflexion", "techniques", "deep-search", "experts"].includes(activeSubSection) ? (
-            <DynamicStepContent
-              allBlocks={activeSubSection ? filteredBlocksBySubSection : displayBlocks}
-              context={displayContext}
-              onBlockAction={handleBlockAction}
-              pulsingBlockId={pulsingBlockId}
-              activeBotCode={activeBotCode}
-              activeCredoStep={currentCredoLetter}
-            />
-          ) : null}
+          {/* Completude CREDO = interne. Les champs manquants sont injectes dans le
+             prompt backend pour guider les options du bot, pas affiches a l'utilisateur. */}
+
+          {/* DYNAMIC STEP CONTENT — timeline plate de tous les blocs */}
+          <DynamicStepContent
+            allBlocks={displayBlocks}
+            context={displayContext}
+            onBlockAction={handleBlockAction}
+            pulsingBlockId={pulsingBlockId}
+            activeBotCode={activeBotCode}
+            activeCredoStep={currentCredoLetter}
+          />
 
           {/* Loading — bot thinking bubble (visible during full API call) */}
           {loadingBlockId && (
@@ -1557,6 +1577,36 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
             </div>
           )}
 
+          {/* CONSULTATION SUGGESTIONS — Zero-Silo cross-bot */}
+          {latestConsultationSuggestions.length > 0 && (
+            <div className="mt-3 space-y-1.5 animate-in fade-in duration-500">
+              {latestConsultationSuggestions.map((sug, sugIdx) => (
+                <button
+                  key={`consult-${sugIdx}`}
+                  onClick={() => handleConsultBot(sug)}
+                  disabled={consultLoading !== null}
+                  className={cn(
+                    "w-full flex items-center gap-2 px-3 py-2 rounded-lg border bg-white/80",
+                    "border-l-[3px] border-l-blue-400 border-gray-200",
+                    "hover:shadow-sm hover:bg-blue-50/50 cursor-pointer transition-all text-left",
+                    "animate-in fade-in slide-in-from-bottom-1 duration-300",
+                    consultLoading === sug.consult && "opacity-70 cursor-wait"
+                  )}
+                  style={{ animationDelay: `${sugIdx * 100}ms`, animationFillMode: 'backwards' }}
+                >
+                  {consultLoading === sug.consult ? (
+                    <Loader2 className="h-3 w-3 text-blue-500 shrink-0 animate-spin" />
+                  ) : (
+                    <Users className="h-3 w-3 text-blue-500 shrink-0" />
+                  )}
+                  <span className="text-[10px] text-gray-700 font-medium">
+                    Consulter {sug.consult_emoji} {sug.consult_titre}: {sug.reason.substring(0, 120)}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* Notes capturees */}
           {phaseNotes.length > 0 && (
             <div className={cn("mt-4 rounded-xl p-4", col.notes.border, col.notes.bg)}>
@@ -1577,29 +1627,109 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
             </div>
           )}
 
-          {/* S3B.1: GenerateReportButton — SEULEMENT etape O (chatStage >= 4) */}
-          {chatStage >= 4 && workspaceBlocks.length >= 3 && !workspaceBlocks.some(b => b.type === "rapport") && (
-            <GenerateReportButton
-              workspaceBlocks={workspaceBlocks}
-              activeBotCode={activeBotCode}
-              addWorkspaceBlock={addWorkspaceBlock}
-            />
-          )}
+          </>)}
+          {/* end TAB: Discussion */}
 
-          {/* S3C.1: CreateChantierButton — SEULEMENT quand rapport existe ET etape O */}
-          {chatStage >= 4 && workspaceBlocks.some(b => b.type === "rapport") && (
-            <CreateChantierButton
-              workspaceBlocks={workspaceBlocks}
-              activeBotCode={activeBotCode}
-            />
-          )}
-
-          {/* MultiPhaseAccordion retiré — Carl feedback: resumé caché en bas est inutile */}
-
-          {/* Phase transitions via ControlTowerPanel sidebar uniquement — bouton retire (Carl feedback 13 mai) */}
          </div>{/* close fade-in wrapper */}
         </div>
+      </div>{/* close main content area */}
+      </div>{/* close flex sidebar+content */}
+    </div>
+  );
+}
+
+// ═══ AgentRosterPanel — grid of all bots with toggle to add/remove from roster ═══
+
+const ALL_ROSTER_BOTS = ["CEOB","CTOB","CFOB","CMOB","CSOB","COOB","CPOB","CROB","CHROB","CLOB","CISOB","CINOB"];
+
+const _ROSTER_DEPT: Record<string, string> = {
+  CEOB: "Direction", CTOB: "Technologie", CFOB: "Finance", CMOB: "Marketing",
+  CSOB: "Strategie", COOB: "Operations", CPOB: "Production", CROB: "Ventes",
+  CHROB: "RH", CLOB: "Juridique", CISOB: "Securite", CINOB: "Innovation",
+};
+
+function AgentRosterPanel({ activeRoster, onToggleBot }: {
+  activeRoster: string[];
+  onToggleBot: (botCode: string) => void;
+}) {
+  return (
+    <div className="space-y-4 px-1">
+      <p className="text-[11px] text-gray-500">Ajoutez des experts pour enrichir la discussion.</p>
+      <div className="grid grid-cols-2 gap-2.5">
+        {ALL_ROSTER_BOTS.map(code => {
+          const inRoster = activeRoster.includes(code);
+          const role = BOT_ROLE_SHORT[code] || "";
+          const dept = _ROSTER_DEPT[code] || "";
+          return (
+            <button key={code} onClick={() => onToggleBot(code)}
+              className={cn(
+                "flex items-center gap-2.5 px-3 py-2.5 rounded-xl border text-left transition-all cursor-pointer group",
+                inRoster
+                  ? "border-sky-300 bg-sky-50/80 shadow-sm ring-1 ring-sky-200"
+                  : "border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300"
+              )}>
+              <BotAvatar code={code} size="sm" />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[12px] font-semibold text-gray-900 truncate">{BOT_NAME[code] || code}</span>
+                  <span className={cn(
+                    "text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0 uppercase tracking-wide",
+                    inRoster ? "bg-sky-200 text-sky-700" : "bg-gray-100 text-gray-500"
+                  )}>{role}</span>
+                </div>
+                <div className="text-[10px] text-gray-400 truncate mt-0.5">{dept}</div>
+              </div>
+              {inRoster && <CheckCircle2 className="w-4 h-4 text-sky-500 shrink-0" />}
+            </button>
+          );
+        })}
       </div>
+    </div>
+  );
+}
+
+// ═══ GPSBanner — contextual guidance based on discussion state heuristics ═══
+
+function GPSBanner({ workspaceBlocks, chatStage, activeRoster, onTabSwitch }: {
+  workspaceBlocks: import("../core/types").WorkspaceBlock[];
+  chatStage: number;
+  activeRoster: string[];
+  onTabSwitch: (tab: "discussion" | "agents" | "reflexion") => void;
+}) {
+  const [dismissed, setDismissed] = useState(false);
+  if (dismissed || workspaceBlocks.length < 3) return null;
+
+  const uniqueBots = new Set(workspaceBlocks.map(b => b.source).filter(Boolean));
+  const credoLetters = new Set(workspaceBlocks.map(b => b.credo_step).filter(Boolean));
+
+  let message = "";
+  let actionLabel = "";
+  let actionTab: "agents" | "reflexion" | null = null;
+
+  if (workspaceBlocks.length >= 5 && uniqueBots.size <= 1 && activeRoster.length <= 1) {
+    message = "Un seul expert contribue. Ajoutez un agent pour diversifier les perspectives.";
+    actionLabel = "Ajouter un agent";
+    actionTab = "agents";
+  } else if (workspaceBlocks.length >= 8 && chatStage >= 3) {
+    message = "Discussion mature avec du contenu riche. Pret pour structurer en chantier ?";
+  } else if (credoLetters.has("C") && credoLetters.has("R") && !credoLetters.has("E")) {
+    message = "Vous avez compris et recherche. Exposez vos solutions pour avancer.";
+  }
+
+  if (!message) return null;
+
+  return (
+    <div className="flex items-center gap-3 px-4 py-2.5 bg-sky-50 border border-sky-200 rounded-lg text-xs text-sky-700">
+      <Sparkles className="w-4 h-4 shrink-0" />
+      <span className="flex-1">{message}</span>
+      {actionLabel && actionTab && (
+        <button onClick={() => onTabSwitch(actionTab!)} className="text-sky-600 font-medium hover:underline cursor-pointer">
+          {actionLabel}
+        </button>
+      )}
+      <button onClick={() => setDismissed(true)} className="text-sky-400 hover:text-sky-600 cursor-pointer">
+        <X className="w-3.5 h-3.5" />
+      </button>
     </div>
   );
 }
@@ -1947,186 +2077,9 @@ function SuggestedExpertsPanel({ messages, activeBotCode, workspaceBlocks, addWo
   );
 }
 
-// ═══ S3B.1: GenerateReportButton — Generer le Rapport de Discussion ═══
-
-function GenerateReportButton({ workspaceBlocks, activeBotCode, addWorkspaceBlock }: {
-  workspaceBlocks: import("../core/types").WorkspaceBlock[];
-  activeBotCode: string;
-  addWorkspaceBlock: (block: import("../core/types").WorkspaceBlock) => void;
-}) {
-  const [generating, setGenerating] = useState(false);
-  const [thinkingStep, setThinkingStep] = useState(0);
-
-  useEffect(() => {
-    if (!generating) { setThinkingStep(0); return; }
-    const timer = setInterval(() => {
-      setThinkingStep(prev => prev < 2 ? prev + 1 : prev);
-    }, 1200);
-    return () => clearInterval(timer);
-  }, [generating]);
-
-  const REPORT_STEPS = ["Compilation des blocs...", "Analyse des decisions...", "Structuration du rapport..."];
-
-  const handleGenerate = async () => {
-    setGenerating(true);
-    try {
-      const participants = [...new Set(workspaceBlocks.map(b => b.source).filter(Boolean))];
-      if (!participants.includes(activeBotCode)) participants.unshift(activeBotCode);
-      const res = await api.generateDiscussionReport({
-        blocks: workspaceBlocks.map(b => ({ type: b.type, title: b.title, summary: b.summary, credo_step: b.credo_step })),
-        bot_code: activeBotCode,
-        participants,
-      });
-      if (res?.block) {
-        addWorkspaceBlock({
-          id: `rapport-${Date.now()}`,
-          type: "rapport",
-          title: res.block.title || "Rapport de discussion",
-          summary: res.block.summary || "",
-          structured_data: res.block.structured_data,
-          credo_step: "O",
-          confidence: res.block.confidence || 0.85,
-          source: activeBotCode,
-          sourceType: "chat",
-          timestamp: Date.now(),
-        });
-      }
-    } catch {
-      // Fallback: generate a basic report client-side
-      const sections = [
-        { title: "Tension identifiee", content: workspaceBlocks.find(b => b.credo_step === "C")?.summary || "—" },
-        { title: "Analyse", content: workspaceBlocks.filter(b => b.credo_step === "R").map(b => b.summary).join("\n") || "—" },
-        { title: "Solutions explorees", content: workspaceBlocks.filter(b => b.credo_step === "E").map(b => b.summary).join("\n") || "—" },
-        { title: "Plan d'action", content: workspaceBlocks.filter(b => ["D", "O"].includes(b.credo_step)).map(b => b.summary).join("\n") || "—" },
-      ].filter(s => s.content !== "—");
-      addWorkspaceBlock({
-        id: `rapport-${Date.now()}`,
-        type: "rapport",
-        title: "Rapport de discussion",
-        summary: sections.map(s => `**${s.title}**\n${s.content}`).join("\n\n"),
-        structured_data: { sections },
-        credo_step: "O",
-        confidence: 0.75,
-        source: activeBotCode,
-        sourceType: "chat",
-        timestamp: Date.now(),
-      });
-    } finally {
-      setGenerating(false);
-    }
-  };
-
-  if (generating) {
-    return (
-      <div className="mt-4 rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-green-50 p-4 shadow-sm animate-in fade-in duration-300">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
-            <Loader2 className="h-4 w-4 text-emerald-600 animate-spin" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[11px] font-bold text-emerald-700">Generation du rapport...</p>
-            <div className="flex flex-wrap gap-3 mt-1.5">
-              {REPORT_STEPS.map((step, j) => (
-                <span key={j} className={cn(
-                  "text-[9px] flex items-center gap-1 transition-all",
-                  j < thinkingStep ? "text-emerald-600 line-through opacity-60" :
-                  j === thinkingStep ? "text-emerald-700 font-bold" :
-                  "text-gray-400"
-                )}>
-                  {j < thinkingStep && <CheckCircle2 className="h-2.5 w-2.5" />}
-                  {j === thinkingStep && <Loader2 className="h-2.5 w-2.5 animate-spin" />}
-                  {step}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="mt-4">
-      <button
-        onClick={handleGenerate}
-        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-emerald-600 text-white hover:bg-emerald-700 transition-colors cursor-pointer shadow-sm"
-      >
-        <FileText className="h-4 w-4" />
-        <span className="text-sm font-bold">Generer le Rapport</span>
-      </button>
-    </div>
-  );
-}
-
-// ═══ S3C.1: CreateChantierButton — Passer en Conception depuis le rapport-minutes ═══
-
-function CreateChantierButton({ workspaceBlocks, activeBotCode }: {
-  workspaceBlocks: import("../core/types").WorkspaceBlock[];
-  activeBotCode: string;
-}) {
-  const { startConception } = useAmorcer();
-  const rapport = workspaceBlocks.find(b => b.type === "rapport");
-  const [transitioning, setTransitioning] = useState(false);
-  const [typewriterIdx, setTypewriterIdx] = useState(0);
-  if (!rapport) return null;
-
-  const sectionCount = (rapport.structured_data as any)?.sections?.length || 0;
-  const transitionText = `Pret pour Creer! Les ${sectionCount || workspaceBlocks.length} sections sont sauvegardees...`;
-
-  const handleTransition = () => {
-    setTransitioning(true);
-    setTypewriterIdx(0);
-  };
-
-  // Typewriter effect during transition
-  useEffect(() => {
-    if (!transitioning) return;
-    if (typewriterIdx >= transitionText.length) {
-      // Wait 800ms after typewriter completes, then navigate
-      const nav = setTimeout(() => startConception(), 800);
-      return () => clearTimeout(nav);
-    }
-    const timer = setTimeout(() => setTypewriterIdx(prev => prev + 1), 35);
-    return () => clearTimeout(timer);
-  }, [transitioning, typewriterIdx, transitionText.length, startConception]);
-
-  if (transitioning) {
-    return (
-      <div className="mt-3 rounded-xl overflow-hidden bg-gradient-to-r from-orange-100 via-amber-50 to-yellow-100 border border-orange-200 p-4 shadow-sm animate-in fade-in duration-300">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-3 h-3 rounded-full bg-orange-400 animate-pulse shrink-0" />
-          <ArrowRight className="h-3.5 w-3.5 text-orange-500 animate-bounce" />
-          <div className="w-3 h-3 rounded-full bg-yellow-400 animate-pulse shrink-0" style={{ animationDelay: "300ms" }} />
-          <span className="text-[10px] font-bold text-orange-600 uppercase tracking-wider ml-1">
-            Discussion → Conception
-          </span>
-        </div>
-        <p className="text-sm text-orange-800 font-medium leading-relaxed min-h-[1.5rem]">
-          {transitionText.slice(0, typewriterIdx)}
-          <span className="inline-block w-0.5 h-4 bg-orange-600 animate-pulse ml-0.5 align-text-bottom" />
-        </p>
-        <div className="mt-3 h-1 bg-orange-100 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-orange-400 to-yellow-400 rounded-full transition-all duration-300"
-            style={{ width: `${Math.min(100, (typewriterIdx / transitionText.length) * 100)}%` }}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="mt-3">
-      <button
-        onClick={handleTransition}
-        className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-full border-2 border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors cursor-pointer"
-      >
-        <Rocket className="h-4 w-4" />
-        <span className="text-sm font-bold">Passer en Conception</span>
-      </button>
-    </div>
-  );
-}
+// GenerateReportButton + CreateChantierButton RETIRÉS
+// La Discussion produit un Chantier — pas de transition auto vers Conception.
+// Le workflow: Discussion → Chantier → tâches du chantier → sessions spécialisées
 
 // ═══ DynamicStepContent — workspace dynamique, pattern simulations ═══
 // Montre TOUS les blocs cristallises (pas de filtrage par step).
@@ -2170,52 +2123,26 @@ function DynamicStepContent({ allBlocks, context, onBlockAction, pulsingBlockId,
     return null;
   }
 
-  // Enrich blocks with sub-section if not already set
-  const enrichedBlocks = filteredBlocks.map(block => {
-    if (block.credo_sub_section) return block;
-    const detected = detectCredoSubSection(block.summary || block.title, block.credo_step);
-    return detected ? { ...block, credo_sub_section: detected } : block;
-  });
-
-  // Group by CREDO step, then by sub-section within step
-  const CREDO_STEP_IDS: Record<string, string> = {
-    C: "credo-c-comprendre", R: "credo-r-rechercher",
-    E: "credo-e-exposer", D: "credo-d-demontrer", O: "credo-o-objectif",
-  };
+  // Simple flat timeline — blocks stacked vertically with CREDO step separators
+  const CREDO_NAMES: Record<string, string> = { C: "Comprendre", R: "Rechercher", E: "Exposer", D: "Demontrer", O: "Objectif" };
 
   return (
     <BlockDisplayContext.Provider value={{ compact: true, primaryBotCode: activeBotCode || "" }}>
     <div className="mt-3 space-y-3">
-      {/* Blocks grouped by CREDO step + sub-section */}
-      {enrichedBlocks.map((block, i) => {
-        const prevBlock = i > 0 ? enrichedBlocks[i - 1] : null;
-        const showStepSeparator = prevBlock && prevBlock.credo_step !== block.credo_step && block.type !== "synthese";
-        const showSubSectionHeader = block.credo_sub_section && (
-          !prevBlock || prevBlock.credo_step !== block.credo_step || prevBlock.credo_sub_section !== block.credo_sub_section
-        );
-        const CREDO_NAMES: Record<string, string> = { C: "Connexion", R: "Recherche", E: "Exposition", D: "Demonstration", O: "Obtention" };
+      {filteredBlocks.map((block, i) => {
+        const prevBlock = i > 0 ? filteredBlocks[i - 1] : null;
+        const showStepSeparator = !prevBlock || (prevBlock.credo_step !== block.credo_step && block.type !== "synthese");
         const badge = STEP_BADGE[block.credo_step] || STEP_BADGE.C;
-
-        // Find sub-section config for label
-        const stepConfigId = CREDO_STEP_IDS[block.credo_step];
-        const subSections = stepConfigId ? CREDO_SUB_SECTIONS[stepConfigId] : undefined;
-        const subSectionConfig = subSections?.find(s => s.id === block.credo_sub_section);
 
         return (
           <div key={block.id}>
             {showStepSeparator && (
-              <div className="flex items-center gap-3 my-1">
+              <div className="flex items-center gap-3 my-2">
                 <div className="flex-1 h-px bg-gray-200" />
-                <span className={cn("text-[9px] px-2.5 py-0.5 rounded-full font-bold", badge.bg)}>
+                <span className={cn("text-[10px] px-3 py-1 rounded-full font-bold", badge.bg)}>
                   {CREDO_NAMES[block.credo_step] || block.credo_step}
                 </span>
                 <div className="flex-1 h-px bg-gray-200" />
-              </div>
-            )}
-            {showSubSectionHeader && subSectionConfig && (
-              <div className="flex items-center gap-2 mt-2 mb-1 px-1">
-                <subSectionConfig.icon className="h-3 w-3 text-gray-400" />
-                <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400">{subSectionConfig.label}</span>
               </div>
             )}
             <div

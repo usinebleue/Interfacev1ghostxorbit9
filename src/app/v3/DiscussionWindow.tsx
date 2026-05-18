@@ -36,6 +36,7 @@ import { BOT_CODES } from "./constants";
 import { DEPT_DASH_ICON, DEPT_GRADIENT, BOT_DISPLAY, PHASE_COLORS } from "./sections/shared/dept-data";
 import { DEPT_GREETING, DEPT_ACTIONS, ACTION_COLORS } from "./data/dept-welcome";
 import type { PhaseKey } from "./core/types";
+import { PHASE_CONFIG } from "./core/phases";
 import { detectPhaseFromMessage } from "./core/phase-router";
 // getContextualActions retire — remplace par footer 2 niveaux (Bible Live 4.14)
 import { getPhaseSteps } from "./phases/phase-config";
@@ -447,8 +448,9 @@ function InlineOptions({ options, onSend, isActive, msgType, agent, activeRoster
   const [globalPrecision, setGlobalPrecision] = useState("");
   const [showInputFor, setShowInputFor] = useState<number | null>(null);
 
-  // Filtrer "Ouvrir l'atelier"
-  const filteredOpts = options.filter(opt => !/ouvrir\s+l'atelier/i.test(opt));
+  // Strip markdown résiduel (** et *) + filtrer "Ouvrir l'atelier"
+  const stripMd = (s: string) => s.replace(/\*{1,3}([^*]+)\*{1,3}/g, '$1').replace(/\*/g, '').trim();
+  const filteredOpts = options.map(stripMd).filter(opt => opt && !/ouvrir\s+l'atelier/i.test(opt));
   if (filteredOpts.length === 0) return null;
 
   const isQuestion = (opt: string) => /\?\s*$/.test(opt.trim());
@@ -564,7 +566,7 @@ function InlineOptions({ options, onSend, isActive, msgType, agent, activeRoster
             </button>
             {/* Input inline pour les options-questions */}
             {isInputOpen && (
-              <div className="mt-1 ml-6 flex gap-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
+              <div ref={(el) => { if (el) setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "nearest" }), 50); }} className="mt-1 ml-6 flex gap-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
                 <input
                   type="text"
                   autoFocus
@@ -585,7 +587,7 @@ function InlineOptions({ options, onSend, isActive, msgType, agent, activeRoster
             )}
             {/* Precision input pour les options non-question selectionnees */}
             {isSel && !isQ && (
-              <div className="mt-1 ml-6 animate-in fade-in slide-in-from-top-1 duration-200">
+              <div ref={(el) => { if (el) setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "nearest" }), 50); }} className="mt-1 ml-6 animate-in fade-in slide-in-from-top-1 duration-200">
                 <input
                   type="text"
                   placeholder="Preciser (optionnel)..."
@@ -615,6 +617,7 @@ function InlineOptions({ options, onSend, isActive, msgType, agent, activeRoster
       {/* Bouton Envoyer — toujours visible dès qu'une option est cochée */}
       {hasSelection && (
         <button
+          ref={(el) => { if (el) setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "nearest" }), 50); }}
           onClick={handleSendAll}
           className="w-full mt-1.5 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-blue-500 text-white text-sm font-semibold hover:bg-blue-600 transition-colors cursor-pointer shadow-sm animate-in fade-in duration-200"
         >
@@ -632,8 +635,11 @@ function V3MessageList() {
   const { messages, isTyping, sendMessage, sendMultiPerspective, thinkingSteps, parkThread, activeRoster, chatTargetBot } = useChatContext();
   const { activeBotCode, activePhase, setActivePhase, setRightSection, setReflexionContext, reflexionContext, credoPhase, addWorkflowItem, workflowItems, chatStage, addWorkspaceBlock, workspaceBlocks, focusType, activeDocumentSection, startDeliverable } = useAmorcer();
   // Enrichir activePhase avec le step CREDO pour que le backend injecte le bon prompt
+  // URL-based fallback: activePhase peut être "reflexion" si l'état a dérivé
   const _credoSteps = ["comprendre", "rechercher", "exposer", "demontrer", "objectif"];
-  const workspacePhase = activePhase === "discussion" && chatStage < _credoSteps.length
+  const _isDiscussionURL = window.location.pathname.includes("/discussion/");
+  const _effectiveDiscussion = activePhase === "discussion" || (_isDiscussionURL && !activePhase.startsWith("discussion"));
+  const workspacePhase = _effectiveDiscussion && chatStage < _credoSteps.length
     ? `discussion_${_credoSteps[chatStage]}`
     : activePhase;
   const endRef = useRef<HTMLDivElement>(null);
@@ -668,14 +674,28 @@ function V3MessageList() {
       endRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages.length]);
+  // Streaming scroll — instant (pas smooth) pour éviter le race condition où
+  // l'animation smooth n'a pas fini → distFromBottom > 120 → userScrolledUp=true → scroll perdu
   useEffect(() => {
     if (!isAnyStreaming) return;
     const id = setInterval(() => {
-      if (!userScrolledUp.current) {
-        endRef.current?.scrollIntoView({ behavior: "smooth" });
+      if (!userScrolledUp.current && scrollRef.current) {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
       }
-    }, 250);
+    }, 80);
     return () => clearInterval(id);
+  }, [isAnyStreaming]);
+  // Quand le streaming se termine, les options apparaissent → scroll pour les montrer
+  const prevStreamingRef = useRef(false);
+  useEffect(() => {
+    if (prevStreamingRef.current && !isAnyStreaming) {
+      setTimeout(() => {
+        if (!userScrolledUp.current) {
+          endRef.current?.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 150);
+    }
+    prevStreamingRef.current = isAnyStreaming;
   }, [isAnyStreaming]);
 
   // Option click — gère les cas spéciaux coaching + envoi standard
@@ -785,9 +805,27 @@ function V3MessageList() {
       return;
     }
 
+    // Log decision as workspace block when user selects an option
+    if (activePhase === "discussion") {
+      const lastBotMsg = [...messages].reverse().find(m => m.role === "assistant" && m.content);
+      const _credoLetters: ("C" | "R" | "E" | "D" | "O")[] = ["C", "R", "E", "D", "O"];
+      const credoStep = _credoLetters[Math.min(chatStage, _credoLetters.length - 1)];
+      addWorkspaceBlock({
+        id: `decision-${Date.now()}`,
+        type: "decision",
+        title: `Decision: ${opt.substring(0, 50)}`,
+        summary: `**Choix**: ${opt}${lastBotMsg ? `\n**Contexte**: ${lastBotMsg.content.substring(0, 200)}` : ""}`,
+        credo_step: credoStep,
+        confidence: 1.0,
+        source: activeBotCode,
+        sourceType: "chat",
+        timestamp: Date.now(),
+      });
+    }
+
     // W.1: Discussion 1:1 — toujours single-bot (experts dans le workspace)
     sendMessage(opt, chatTargetBot, undefined, { workspacePhase, workspaceExpertContext: buildExpertContext(workspaceBlocks, activeBotCode) });
-  }, [isTyping, sendMessage, sendMultiPerspective, chatTargetBot, activeBotCode, activeRoster, parkThread, setActivePhase, setRightSection, setReflexionContext, reflexionContext, activePhase, workspacePhase, messages, activeDocumentSection, addWorkspaceBlock, workflowItems]);
+  }, [isTyping, sendMessage, sendMultiPerspective, chatTargetBot, activeBotCode, activeRoster, parkThread, setActivePhase, setRightSection, setReflexionContext, reflexionContext, activePhase, workspacePhase, messages, activeDocumentSection, addWorkspaceBlock, workflowItems, chatStage]);
 
   return (
     <div ref={scrollRef} className="flex-1 overflow-auto px-4 py-3 space-y-3 scrollbar-discussion">
@@ -1406,10 +1444,25 @@ export function DiscussionWindow() {
 
 function DiscussionWindowInner() {
   const { cockpitTab, activeBotCode, activePhase, setActivePhase, setRightSection, setReflexionContext, setFocusType, setActiveDeliverable, credoPhase, reflexionContext, addWorkflowItem, activeMeeting: dwActiveMeeting, addWorkspaceBlock, workspaceBlocks, chatStage } = useAmorcer();
-  const { activeRoster, addBotToRoster, removeBotFromRoster, messages, sendMessage, threads, resumeThread, deleteThread, renameThread, chatTargetBot } = useChatContext();
+  const { activeRoster, addBotToRoster, removeBotFromRoster, messages, sendMessage, threads, resumeThread, deleteThread, renameThread, chatTargetBot, activeThreadId } = useChatContext();
   const isMobile = useIsMobile();
   const isOrbit9 = cockpitTab === "orbit9";
   const isEmpty = messages.length === 0;
+
+  // URL-aware thread sync — quand l'URL contient /discussion/thread-XXXX,
+  // charger ce thread si ce n'est pas déjà le thread actif
+  useEffect(() => {
+    const path = window.location.pathname;
+    const match = path.match(/\/discussion\/(thread-[a-zA-Z0-9_-]+)/);
+    if (!match) return;
+    const urlThreadId = match[1];
+    if (urlThreadId && urlThreadId !== activeThreadId) {
+      const found = threads.find(t => t.id === urlThreadId);
+      if (found) {
+        resumeThread(urlThreadId, activePhase);
+      }
+    }
+  }, [threads, activeThreadId, activePhase, resumeThread]);
 
   // Expert consultation moved to workspace SuggestedExpertsPanel (LiveDiscussionView)
 
@@ -1451,6 +1504,8 @@ function DiscussionWindowInner() {
           </>
         )}
       </div>
+
+      {/* Phase buttons — dans WorkspacePhasesPanel uniquement (workspace top bar) */}
 
       {/* Zone principale: DeptWelcomeScreen quand vide, V3MessageList sinon */}
       <div className="flex-1 overflow-hidden flex flex-col">
@@ -1829,8 +1884,10 @@ function ChatBoxV3() {
     if (!reflexionContext) {
       setReflexionContext(text.substring(0, 80));
     }
-    // Sprint 3 fix: si workspacePhase est falsy (pas de phase active), forcer discussion
-    if (!effectivePhase || effectivePhase === "observation") {
+    // Sprint 3 fix: si workspacePhase est falsy ou incohérent avec l'URL discussion, corriger
+    // Cas fréquent: activePhase stuck sur "reflexion" ou "observation" après navigation client-side
+    const _isDiscURL = window.location.pathname.includes("/discussion/");
+    if (!effectivePhase || effectivePhase === "observation" || (_isDiscURL && !effectivePhase.startsWith("discussion"))) {
       setActivePhase("discussion" as any);
       setRightSection(null);
       effectivePhase = `discussion_${_credoStepsCB[chatStage] || "comprendre"}`;

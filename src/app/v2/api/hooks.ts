@@ -33,16 +33,13 @@ import type {
 } from "./types";
 import { classifyThread } from "./types";
 
-// ── Sprint 3 — OpenClaw gateway routing ──
-// Phase 1: non-CEO bots use OpenClaw. Phase 2: CEO after CREDO validation.
-const OPENCLAW_ENABLED_BOTS = new Set(["BCT", "BCF", "BCM", "BCS", "BOO", "CPOB", "CHROB", "CROB", "CISOB", "CLOB", "CINOB"]);
-const OPENCLAW_FORCE_ALL = import.meta.env.VITE_OPENCLAW_ALL === "true";
-const OPENCLAW_DISABLED = import.meta.env.VITE_OPENCLAW_DISABLED === "true";
+// ── OpenClaw routing disabled — all traffic goes through backend chatStream pipeline ──
+// Backend handles OpenClaw via USE_OPENCLAW=1 in api_rest.py (unified pipeline with workspace_blocks)
+// To re-enable frontend OpenClaw routing, set VITE_OPENCLAW_DISABLED=false in .env
+const OPENCLAW_DISABLED = import.meta.env.VITE_OPENCLAW_DISABLED !== "false";
 
-function shouldUseOpenClaw(botCode?: string): boolean {
-  if (OPENCLAW_DISABLED) return false;
-  if (OPENCLAW_FORCE_ALL) return true;
-  return OPENCLAW_ENABLED_BOTS.has(botCode || "");
+function shouldUseOpenClaw(_botCode?: string): boolean {
+  return !OPENCLAW_DISABLED;
 }
 
 // Options contextuelles par defaut — arbre de developpement de la pensee (wireframe p.3)
@@ -326,20 +323,20 @@ function parseApiOptions(responseText: string): { cleanText: string; parsedOptio
       const parts = trimmed.split(/\s*\|\s*/);
       for (const part of parts) {
         const cleaned = part.replace(/^\p{Emoji}?\s*\d+\s*[·.]\s*/u, "").trim();
-        if (cleaned) parsedOptions.push(cleaned);
+        if (cleaned) parsedOptions.push(cleaned.replace(/\*{1,3}([^*]+)\*{1,3}/g, '$1').replace(/\*/g, ''));
       }
     }
     // Detect REGLE_3_PROPOSITIONS format: 1. Label | 2. Label | 3. Label
     else if (/^\d+\.\s+.+\|/.test(trimmed) && !trimmed.startsWith("[")) {
       const parts = trimmed.split(/\s*\|\s*/);
       for (const part of parts) {
-        const cleaned = part.replace(/^\d+\.\s*/, "").trim();
+        const cleaned = part.replace(/^\d+\.\s*/, "").replace(/\*{1,3}([^*]+)\*{1,3}/g, '$1').replace(/\*/g, '').trim();
         if (cleaned) parsedOptions.push(cleaned);
       }
     }
     // Detect web-format proposals: → Action text
     else if (/^→\s+/.test(trimmed)) {
-      const cleaned = trimmed.replace(/^→\s+/, "").trim();
+      const cleaned = trimmed.replace(/^→\s+/, "").replace(/\*{1,3}([^*]+)\*{1,3}/g, '$1').replace(/\*/g, '').trim();
       if (cleaned) arrowOptions.push(cleaned);
     } else {
       cleanLines.push(line);
@@ -364,11 +361,11 @@ function parseApiOptions(responseText: string): { cleanText: string; parsedOptio
       const stripped = cleanLines[i].trim();
       const m = stripped.match(/^\d+[.)]\s+(.+)/);
       if (m) {
-        let label = m[1].replace(/^\*+|\*+$/g, "").replace(/[:\s]+$/, "").trim();
+        let label = m[1].replace(/\*{1,3}([^*]+)\*{1,3}/g, '$1').replace(/\*/g, '').replace(/[:\s]+$/, "").trim();
         // Reject questions and overly long labels
         if (label.includes("?") || label.length > 80 || label.split(/\s+/).length > 10) {
           // Try short label before : or —
-          const short = label.split(/\s*[:\u2014\u2013]\s*/)[0].replace(/^\*+|\*+$/g, "").trim();
+          const short = label.split(/\s*[:\u2014\u2013]\s*/)[0].replace(/\*{1,3}([^*]+)\*{1,3}/g, '$1').replace(/\*/g, '').trim();
           if (short && short !== label && !short.includes("?") && short.length <= 80) {
             label = short;
           } else {
@@ -429,7 +426,7 @@ function parseApiOptions(responseText: string): { cleanText: string; parsedOptio
       const totalText = cleanLines.join("\n").trim();
       if (remainingText.length > totalText.length * 0.3 || totalText.length < 100) {
         for (const c of tailCandidates) {
-          parsedOptions.push(c.text.replace(/^\*+|\*+$/g, "").trim());
+          parsedOptions.push(c.text.replace(/\*{1,3}([^*]+)\*{1,3}/g, '$1').replace(/\*/g, '').trim());
         }
         cleanLines.splice(firstIdx);
       }
@@ -909,15 +906,10 @@ export function useChat() {
       const modeConf = MODE_LIVE_CONFIG[mode || "credo"] || MODE_LIVE_CONFIG.credo;
 
       // Try streaming first, fallback to standard chat
-      // Sprint 3 — Route via OpenClaw gateway for non-CEO bots
-      const useOC = shouldUseOpenClaw(agent);
-      // A1 — OpenClaw perd workspace_expert_context, fallback: prepend to message
-      if (useOC && req.workspace_expert_context) {
-        req.message = `${req.workspace_expert_context}\n\n${req.message}`;
-      }
+      // All traffic goes through backend chatStream (OpenClaw handled server-side via USE_OPENCLAW=1)
       try {
         await new Promise<void>((resolve, reject) => {
-          const controller = (useOC ? api.chatOpenClaw : api.chatStream).call(api, req, {
+          const controller = api.chatStream(req, {
             onStatus: () => {
               // Frontend timer handles thinking steps (nginx buffers SSE status events)
             },
@@ -937,7 +929,7 @@ export function useChat() {
                   _flushTokenBuffer();
                 }, 150);
               }
-              // Stale timer: pre-finaliser apres 1.5s sans token (backend post-processing peut prendre 10-15s)
+              // Stale timer: pre-finaliser apres 0.8s sans token (backend post-processing peut prendre 10-15s)
               if (_staleTimer) clearTimeout(_staleTimer);
               _staleTimer = setTimeout(() => {
                 _staleTimer = null;
@@ -951,9 +943,10 @@ export function useChat() {
                       : m
                   )
                 );
-              }, 1500);
+              }, 800);
             },
             onDone: (data: StreamDoneEvent) => {
+              console.log(`[WC-DEBUG] onDone received: wsBlock=${!!data.workspace_block}, type=${data.workspace_block?.type}, title=${data.workspace_block?.title?.substring(0,30)}, skip=${data.workspace_block_skip}`);
               // Stop le throttle timer, stale timer, et flush final
               if (_tokenFlushTimer) { clearTimeout(_tokenFlushTimer); _tokenFlushTimer = null; }
               if (_staleTimer) { clearTimeout(_staleTimer); _staleTimer = null; }
@@ -1011,6 +1004,7 @@ export function useChat() {
                         scaffoldProgress: data.scaffold_progress || undefined,
                         cristallisationSuggestion: data.cristallisation_suggestion || undefined,
                         cascadeItems: data.cascade_items?.length ? data.cascade_items : undefined,
+                        consultationSuggestions: data.consultation_suggestions?.length ? data.consultation_suggestions : undefined,
                         workspace_block: data.workspace_block || undefined,
                         workspace_blocks: data.workspace_blocks || undefined,
                         workspace_block_skip: data.workspace_block_skip || false,
@@ -1034,9 +1028,13 @@ export function useChat() {
                 }
                 canvasActionsCallbackRef.current(data.canvas_actions);
               } else if (data.canvas_actions && data.canvas_actions.length > 0 && canvasActionsCallbackRef.current) {
-                // Laisser passer phase_transition + start_deliverable même en chat, bloquer le reste si isInChat
+                // GUARD: Discussion = l'utilisateur décide quand changer de phase, pas le bot.
+                // Aucune canvas action automatique en discussion (phase_transition, start_deliverable).
+                const isDiscussionPhase = meta?.workspacePhase?.startsWith("discussion") || false;
                 const filteredActions = isInChat
-                  ? data.canvas_actions.filter((a: any) => a.type === "phase_transition" || a.type === "start_deliverable")
+                  ? (isDiscussionPhase
+                      ? [] // Discussion: ZERO canvas action auto — pas de switch de phase surprise
+                      : data.canvas_actions.filter((a: any) => a.type === "phase_transition" || a.type === "start_deliverable"))
                   : data.canvas_actions;
                 if (filteredActions.length > 0) {
                   canvasActionsCallbackRef.current(filteredActions);
@@ -1194,6 +1192,7 @@ export function useChat() {
                     scaffoldProgress: res.scaffold_progress || undefined,
                     cristallisationSuggestion: res.cristallisation_suggestion || undefined,
                     cascadeItems: res.cascade_items?.length ? res.cascade_items : undefined,
+                    consultationSuggestions: res.consultation_suggestions?.length ? res.consultation_suggestions : undefined,
                   }
                 : m
             )

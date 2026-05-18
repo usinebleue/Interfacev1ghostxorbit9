@@ -106,6 +106,8 @@ export interface MultiChatRequest {
   history?: { role: string; content: string; agent?: string }[];
   primary_agent?: string;       // S102-B — bot cible de la question
   workspace_phase?: string;     // S102-B — phase CREDO courante
+  consultation_mode?: string;   // "consultation" — single bot consulted by another
+  consultation_context?: string; // context from the requesting bot's conversation
 }
 
 export interface PerspectiveItem {
@@ -116,6 +118,7 @@ export interface PerspectiveItem {
   tier: string;
   cout_usd: number;
   is_primary: boolean;          // S102-B — true si bot principal
+  workspace_block?: Record<string, any>;  // consultation mode — block for workspace
 }
 
 export interface MultiChatResponse {
@@ -124,6 +127,7 @@ export interface MultiChatResponse {
   total_latence_ms: number;
   mode_actif: string;           // S102-B — mode de reflexion actif
   mode_steps: { id: string; label: string }[];  // S102-B — etapes du mode
+  consultation_suggestions?: ConsultationSuggestion[];  // cross-bot consultation suggestions
 }
 
 // --- Bots ---
@@ -323,6 +327,8 @@ export interface ChatMessage {
   workspace_blocks?: WorkspaceBlockData[];
   // Sprint 2A Fix A — backend dit "pas de bloc" → frontend respecte
   workspace_block_skip?: boolean;
+  // Zero-Silo — consultation suggestions cross-bot
+  consultationSuggestions?: ConsultationSuggestion[];
 }
 
 // --- Crystal (idee cristallisee) ---
@@ -646,6 +652,18 @@ export interface CascadeSuggestion {
   message: string;
   view: string;
   sub_section: string;
+}
+
+// --- Consultation Suggestion (Zero-Silo cross-bot) ---
+
+export interface ConsultationSuggestion {
+  consult: string;          // bot code e.g. "CTOB"
+  consult_nom: string;      // e.g. "CTO Bot"
+  consult_titre: string;    // e.g. "CTO"
+  consult_emoji: string;    // e.g. "💻"
+  reason: string;           // why this bot should be consulted
+  degree: "D1" | "D2";     // D1=factual, D2=analytical
+  from_bot: string;         // requesting bot code
 }
 
 // --- Workspace Block (backend-generated structured capture) ---
