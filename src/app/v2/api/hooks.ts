@@ -1350,7 +1350,7 @@ export function useChat() {
     if (activeThreadId && messages.length > 0) {
       setThreads((prev) =>
         prev.map((t) =>
-          t.id === activeThreadId ? { ...t, status: "parked" as ThreadStatus, workPhase: workPhase || t.workPhase } : t
+          t.id === activeThreadId ? { ...t, status: "parked" as ThreadStatus, messages, workPhase: workPhase || t.workPhase } : t
         )
       );
     }
