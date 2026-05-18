@@ -1226,6 +1226,12 @@ export const api = {
     const controller = new AbortController();
     const url = `${BASE_URL}/chat/stream`;
 
+    // Global timeout: abort stream after 90s to prevent stuck UI
+    const streamTimeout = setTimeout(() => {
+      console.warn("[chatStream] Global 90s timeout — aborting stream");
+      controller.abort();
+    }, 90_000);
+
     fetch(url, {
       method: "POST",
       headers: {
@@ -1251,6 +1257,8 @@ export const api = {
         const decoder = new TextDecoder();
         let buffer = "";
         let accumulated = "";
+
+        let doneReceived = false;
 
         while (true) {
           const { done, value } = await reader.read();
@@ -1278,6 +1286,7 @@ export const api = {
                 } else if (currentEvent === "status") {
                   callbacks.onStatus?.(data.s);
                 } else if (currentEvent === "done") {
+                  doneReceived = true;
                   callbacks.onDone(data as StreamDoneEvent);
                 } else if (currentEvent === "error") {
                   callbacks.onError(data.error || "Unknown stream error");
@@ -1288,8 +1297,23 @@ export const api = {
             }
           }
         }
+
+        clearTimeout(streamTimeout);
+
+        // Safety net: if stream closed without sending event:done,
+        // synthesize a done event from accumulated text to prevent UI from being stuck
+        if (!doneReceived && accumulated.length > 0) {
+          console.warn("[chatStream] Stream closed without done event — synthesizing from accumulated text");
+          callbacks.onDone({
+            response: accumulated,
+            agent: req.agent || "CEOB",
+          } as StreamDoneEvent);
+        } else if (!doneReceived) {
+          callbacks.onError("Stream closed without response");
+        }
       })
       .catch((err) => {
+        clearTimeout(streamTimeout);
         if (err.name !== "AbortError") {
           callbacks.onError(err.message || "Stream connection failed");
         }
