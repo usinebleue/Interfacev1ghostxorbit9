@@ -777,11 +777,16 @@ export function useWorkspaceCapture() {
                 if (wsBlock && wsBlock.type && wsBlock.title) {
                   // Backend a généré un workspace_block structuré
                   processedBlockMsgIds.current.add(msg.id);
+                  // Safety net: si le backend summary est trop long (copier-coller), re-summarize
+                  let finalSummary = wsBlock.summary || msg.content.substring(0, 200);
+                  if (finalSummary.length > 400 && !wsBlock.structured_data) {
+                    finalSummary = summarizeForWorkspace(lastUserMsg?.content || "", finalSummary);
+                  }
                   addWorkspaceBlock_scoped({
                     id: wsBlock.id || `blk-${Date.now()}`,
                     type: wsBlock.type as WorkspaceBlockType,
                     title: wsBlock.title,
-                    summary: wsBlock.summary || msg.content.substring(0, 200),
+                    summary: finalSummary,
                     structured_data: wsBlock.structured_data,
                     credo_step: (wsBlock.credo_step as any) || getCurrentCredoStep(chatStage),
                     confidence: wsBlock.confidence || 0.8,
@@ -828,11 +833,16 @@ export function useWorkspaceCapture() {
                 const wsBlock = (msg as any).workspace_block as Partial<WorkspaceBlock> | undefined;
                 if (wsBlock && wsBlock.type && wsBlock.title) {
                   // Backend a généré un workspace_block structuré
+                  let finalSummary2 = wsBlock.summary || msg.content.substring(0, 200);
+                  if (finalSummary2.length > 400 && !wsBlock.structured_data) {
+                    const lastU = [...messages].reverse().find((m2: any) => m2.role === "user" && m2.content);
+                    finalSummary2 = summarizeForWorkspace(lastU?.content || "", finalSummary2);
+                  }
                   addWorkspaceBlock_scoped({
                     id: wsBlock.id || `blk-${Date.now()}`,
                     type: wsBlock.type as WorkspaceBlockType,
                     title: wsBlock.title,
-                    summary: wsBlock.summary || msg.content.substring(0, 300),
+                    summary: finalSummary2,
                     structured_data: wsBlock.structured_data,
                     credo_step: getCurrentCredoStep(chatStage),
                     confidence: wsBlock.confidence || 0.8,
@@ -1036,7 +1046,9 @@ export function useWorkspaceCapture() {
                 id: ab.id || `blk-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
                 type: ab.type as WorkspaceBlockType,
                 title: ab.title,
-                summary: ab.summary || msg.content.substring(0, 200),
+                summary: (ab.summary && ab.summary.length > 400 && !ab.structured_data)
+                  ? summarizeForWorkspace(lastUserMsg?.content || "", ab.summary)
+                  : (ab.summary || msg.content.substring(0, 200)),
                 structured_data: ab.structured_data,
                 credo_step: (ab.credo_step as any) || getCurrentCredoStep(chatStage),
                 confidence: ab.confidence || 0.95,
@@ -1049,11 +1061,15 @@ export function useWorkspaceCapture() {
           } else if (wsBlock && wsBlock.type && wsBlock.title) {
             // Single artifact from backend
             processedBlockMsgIds.current.add(msg.id);
+            let singleSummary = wsBlock.summary || msg.content.substring(0, 200);
+            if (singleSummary.length > 400 && !wsBlock.structured_data) {
+              singleSummary = summarizeForWorkspace(lastUserMsg?.content || "", singleSummary);
+            }
             const blockData: WorkspaceBlock = {
               id: wsBlock.id || `blk-${Date.now()}`,
               type: wsBlock.type as WorkspaceBlockType,
               title: wsBlock.title,
-              summary: wsBlock.summary || msg.content.substring(0, 200),
+              summary: singleSummary,
               structured_data: wsBlock.structured_data,
               credo_step: (wsBlock.credo_step as any) || getCurrentCredoStep(chatStage),
               confidence: wsBlock.confidence || 0.8,
@@ -1114,11 +1130,16 @@ export function useWorkspaceCapture() {
           const wsBlock = (msg as any).workspace_block as Partial<WorkspaceBlock> | undefined;
           if (wsBlock && wsBlock.type && wsBlock.title) {
             // Backend a généré un workspace_block structuré
+            let phaseSummary = wsBlock.summary || msg.content.substring(0, 200);
+            if (phaseSummary.length > 400 && !wsBlock.structured_data) {
+              const lastU2 = [...messages].reverse().find((m2: any) => m2.role === "user" && m2.content);
+              phaseSummary = summarizeForWorkspace(lastU2?.content || "", phaseSummary);
+            }
             addWorkspaceBlock_scoped({
               id: wsBlock.id || `blk-${Date.now()}`,
               type: wsBlock.type as WorkspaceBlockType,
               title: wsBlock.title,
-              summary: wsBlock.summary || msg.content.substring(0, 300),
+              summary: phaseSummary,
               structured_data: wsBlock.structured_data,
               credo_step: getCurrentCredoStep(chatStage),
               confidence: wsBlock.confidence || 0.8,
