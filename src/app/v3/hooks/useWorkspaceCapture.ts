@@ -1066,13 +1066,15 @@ export function useWorkspaceCapture() {
           // Sinon: premier échange, ou backend skip/rien → pas de bloc.
           // Backend est l'autorité. Zéro fallback copier-coller.
 
-          // Accumulate in existing block for same sectionId (entonnoir effect)
-          const enrichedSummary = secondaries
-            ? `${msg.content}\n---\n${secondaries.map((s: any) => `  [${s.nom}] ${s.contenu}`).join("\n")}`
-            : msg.content;
-          const existing = getCristallise(sectionId);
-          if (existing) {
-            editCristallise(sectionId, existing + "\n\n" + enrichedSummary);
+          // D-116: entonnoir now uses workspace block summary (not raw msg.content)
+          // This prevents copy-paste accumulation — only concise syntheses are stored
+          const wsBlockForCrist = (msg as any).workspace_block as Partial<WorkspaceBlock> | undefined;
+          const cristSummary = wsBlockForCrist?.summary || wsBlockForCrist?.title;
+          if (cristSummary) {
+            const existing = getCristallise(sectionId);
+            if (existing) {
+              editCristallise(sectionId, existing + "\n• " + cristSummary);
+            }
           }
         } else {
           // ═══ RÉSUMÉ INTELLIGENT — autres phases (conception, exécution, etc.) ═══

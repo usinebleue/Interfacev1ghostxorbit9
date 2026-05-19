@@ -39,6 +39,8 @@ export interface ChatRequest {
   conversation_msg_count?: number;
   // Team awareness — bots actifs dans la discussion
   active_agents?: string[];
+  // S116 — Mémoire contextuelle intelligente
+  thread_id?: string;
 }
 
 // --- Équipe 3 Bots (Chef d'Orchestre) ---

@@ -884,6 +884,8 @@ export function useChat() {
         conversation_msg_count: messages.filter((m: any) => m.role === "user").length + 1,
         // Team awareness — roster actif pour que le bot connaisse ses collegues
         active_agents: activeRoster.length > 1 ? activeRoster : undefined,
+        // S116 — Mémoire contextuelle intelligente
+        thread_id: activeThreadId || undefined,
       };
 
       // Create placeholder bot message for streaming

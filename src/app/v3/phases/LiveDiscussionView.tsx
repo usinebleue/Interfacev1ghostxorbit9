@@ -963,7 +963,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
   useEffect(() => {
     setActiveSubSection(null);
     setActiveTechnique(null);
-    setFilterStep(currentCredoLetter);
+    setFilterStep(null);
   }, [activeStepId, currentCredoLetter]);
 
   // W.0: Technique handlers
@@ -1083,8 +1083,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
         {displayContext || "Nouvelle discussion"}
       </h1>
 
-      {/* GPS Banner — contextual guidance */}
-      <GPSBanner workspaceBlocks={workspaceBlocks} chatStage={chatStage} activeRoster={activeRoster} onTabSwitch={setActiveHeroTab} />
+      {/* GPS Banner — removed (D-116: CREDO alerts were distracting) */}
 
       {/* CONTENU — sidebar + main area */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
@@ -1586,48 +1585,9 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
           {/* Completude CREDO = interne. Les champs manquants sont injectes dans le
              prompt backend pour guider les options du bot, pas affiches a l'utilisateur. */}
 
-          {/* DYNAMIC STEP CONTENT — timeline plate de tous les blocs */}
-          <DynamicStepContent
-            allBlocks={displayBlocks}
-            context={displayContext}
-            onBlockAction={handleBlockAction}
-            pulsingBlockId={pulsingBlockId}
-            activeBotCode={activeBotCode}
-            activeCredoStep={currentCredoLetter}
-          />
-
-          {/* Loading — bot thinking bubble (visible during full API call) */}
-          {loadingBlockId && (
-            <div className="mt-2 flex gap-2.5 animate-in fade-in duration-200">
-              <BotAvatar code={loadingBotCode || activeBotCode} size="md" />
-              <div className="rounded-xl border border-gray-200 shadow-sm bg-white rounded-tl-none px-4 py-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-[11px] font-semibold text-gray-700">{BOT_NAME[loadingBotCode || activeBotCode] || "Bot"}</span>
-                  <span className="text-[9px] text-gray-400">reflechit...</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex gap-1">
-                    {[0, 150, 300].map(d => (
-                      <div key={d} className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: `${d}ms` }} />
-                    ))}
-                  </div>
-                  <span className="text-xs text-blue-600 font-medium">{loadingLabel}</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {showTypingCursor && (
-            <div className="flex items-center gap-1.5 px-4 py-2 animate-in fade-in duration-300">
-              <span className="inline-block w-0.5 h-4 bg-gray-800 animate-pulse rounded-full" />
-              <span className="text-[9px] text-gray-400 italic">cristallisation en cours...</span>
-            </div>
-          )}
-          <div ref={blocksEndRef} />
-
-          {/* CONSULTATION SUGGESTIONS — Zero-Silo cross-bot (PRIORITY — shown first) */}
+          {/* CONSULTATION SUGGESTIONS — Zero-Silo cross-bot (D-116: moved ABOVE blocks for visibility) */}
           {latestConsultationSuggestions.length > 0 && (
-            <div className="mt-4 space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <div className="mb-3 space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-500">
               <div className="flex items-center gap-2 mb-1">
                 <Users className="h-3.5 w-3.5 text-blue-600" />
                 <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600">Consultation recommandee</span>
@@ -1671,6 +1631,45 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
               ))}
             </div>
           )}
+
+          {/* DYNAMIC STEP CONTENT — timeline plate de tous les blocs */}
+          <DynamicStepContent
+            allBlocks={displayBlocks}
+            context={displayContext}
+            onBlockAction={handleBlockAction}
+            pulsingBlockId={pulsingBlockId}
+            activeBotCode={activeBotCode}
+            activeCredoStep={currentCredoLetter}
+          />
+
+          {/* Loading — bot thinking bubble (visible during full API call) */}
+          {loadingBlockId && (
+            <div className="mt-2 flex gap-2.5 animate-in fade-in duration-200">
+              <BotAvatar code={loadingBotCode || activeBotCode} size="md" />
+              <div className="rounded-xl border border-gray-200 shadow-sm bg-white rounded-tl-none px-4 py-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-[11px] font-semibold text-gray-700">{BOT_NAME[loadingBotCode || activeBotCode] || "Bot"}</span>
+                  <span className="text-[9px] text-gray-400">reflechit...</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-1">
+                    {[0, 150, 300].map(d => (
+                      <div key={d} className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: `${d}ms` }} />
+                    ))}
+                  </div>
+                  <span className="text-xs text-blue-600 font-medium">{loadingLabel}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {showTypingCursor && (
+            <div className="flex items-center gap-1.5 px-4 py-2 animate-in fade-in duration-300">
+              <span className="inline-block w-0.5 h-4 bg-gray-800 animate-pulse rounded-full" />
+              <span className="text-[9px] text-gray-400 italic">cristallisation en cours...</span>
+            </div>
+          )}
+          <div ref={blocksEndRef} />
 
           {/* CASCADE SUGGESTIONS — cross-phase (Sprint 1 Etape 6) + B.4 bordure gauche coloree */}
           {latestCascadeSuggestions.length > 0 && (
@@ -2260,12 +2259,8 @@ function DynamicStepContent({ allBlocks, context, onBlockAction, pulsingBlockId,
   activeBotCode?: string;
   activeCredoStep?: string;
 }) {
-  // Bot-specific filtering: if only 1 bot contributed AND it's the active bot, filter to that bot's blocks
-  const uniqueSources = [...new Set(allBlocks.map(b => b.source).filter(Boolean))];
-  const isMultiBot = uniqueSources.length > 1 || (uniqueSources.length === 1 && uniqueSources[0] !== activeBotCode);
-  const filteredBlocks = (activeBotCode && !isMultiBot)
-    ? allBlocks.filter(b => UNIVERSAL_BLOCK_TYPES.has(b.type) || !b.source || b.source === activeBotCode)
-    : allBlocks;
+  // Show ALL blocks — flat timeline (D-116: removed isMultiBot gate that was hiding blocks)
+  const filteredBlocks = allBlocks;
 
   if (filteredBlocks.length === 0) {
     // No hardcoded text — just return empty (workspace will fill as discussion progresses)
