@@ -17,6 +17,11 @@ export default defineConfig({
     },
   },
 
+  // Source maps for crash debugging (shows real file:line in error stack traces)
+  build: {
+    sourcemap: true,
+  },
+
   // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
   assetsInclude: ['**/*.svg', '**/*.csv'],
 
