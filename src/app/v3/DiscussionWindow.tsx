@@ -1049,7 +1049,7 @@ function V3MessageList() {
         // ── User bubble ──
         if (isUser) {
           // S3B.2: Detect workspace-sourced actions (pill indicator)
-          const wsMatch = msg.content.match(/^(Approfondir en detail|Challenge cet element, trouve les failles|Retravaille et enrichis):\s*(.+?)(?:\n|$)/);
+          const wsMatch = (msg.content || "").match(/^(Approfondir en detail|Challenge cet element, trouve les failles|Retravaille et enrichis):\s*(.+?)(?:\n|$)/);
           const wsLabel = wsMatch ? (wsMatch[1].startsWith("Approfondir") ? "Approfondir" : wsMatch[1].startsWith("Challenge") ? "Challenger" : "Modifier") : null;
           const wsTitle = wsMatch?.[2]?.substring(0, 60) || null;
           return (

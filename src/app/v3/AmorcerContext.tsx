@@ -788,9 +788,9 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
           const timeLabel = new Date(now).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" });
           const label = block.merge_label || "Mise a jour";
           const separator = `\n\n---\n\n#### ${label} — ${timeLabel}\n\n`;
-          const mergedSummary = existing.summary + separator + block.summary;
+          const mergedSummary = (existing.summary || "") + separator + (block.summary || "");
           // Update title if new one is more specific
-          const newTitle = block.title.length > existing.title.length ? block.title : existing.title;
+          const newTitle = (block.title || "").length > (existing.title || "").length ? (block.title || existing.title) : existing.title;
           const copy = [...prev];
           const idx = prev.indexOf(existing);
           copy[idx] = {
@@ -798,7 +798,7 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
             summary: mergedSummary,
             title: newTitle,
             timestamp: now, // Update timestamp to latest
-            confidence: Math.max(existing.confidence, block.confidence),
+            confidence: Math.max(existing.confidence || 0, block.confidence || 0),
             // Keep structured_data from the latest block if present
             structured_data: block.structured_data || existing.structured_data,
           };

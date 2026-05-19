@@ -242,7 +242,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
 
     // Gather last 3 messages as consultation context
     const recentMsgs = messages.slice(-6).map(m =>
-      `${m.role === "user" ? "Carl" : (BOT_NAME[m.agent || ""] || m.agent || "Bot")}: ${m.content.substring(0, 300)}`
+      `${m.role === "user" ? "Carl" : (BOT_NAME[m.agent || ""] || m.agent || "Bot")}: ${(m.content || "").substring(0, 300)}`
     ).join("\n");
 
     try {

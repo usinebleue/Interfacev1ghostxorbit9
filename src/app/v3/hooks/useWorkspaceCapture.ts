@@ -815,7 +815,7 @@ export function useWorkspaceCapture() {
                 const wsBlock = (msg as any).workspace_block as Partial<WorkspaceBlock> | undefined;
                 if (wsBlock && wsBlock.type && wsBlock.title) {
                   // Backend a généré un workspace_block structuré
-                  let finalSummary2 = wsBlock.summary || msg.content.substring(0, 200);
+                  let finalSummary2 = wsBlock.summary || (msg.content || "").substring(0, 200);
                   if (finalSummary2.length > 400 && !wsBlock.structured_data) {
                     const lastU = [...messages].reverse().find((m2: any) => m2.role === "user" && m2.content);
                     finalSummary2 = summarizeForWorkspace(lastU?.content || "", finalSummary2);
@@ -1079,7 +1079,7 @@ export function useWorkspaceCapture() {
           const wsBlock = (msg as any).workspace_block as Partial<WorkspaceBlock> | undefined;
           if (wsBlock && wsBlock.type && wsBlock.title) {
             // Backend a généré un workspace_block structuré
-            let phaseSummary = wsBlock.summary || msg.content.substring(0, 200);
+            let phaseSummary = wsBlock.summary || (msg.content || "").substring(0, 200);
             if (phaseSummary.length > 400 && !wsBlock.structured_data) {
               const lastU2 = [...messages].reverse().find((m2: any) => m2.role === "user" && m2.content);
               phaseSummary = summarizeForWorkspace(lastU2?.content || "", phaseSummary);
