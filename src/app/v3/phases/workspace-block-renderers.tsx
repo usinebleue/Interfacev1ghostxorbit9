@@ -2078,7 +2078,7 @@ function LibreRenderer({ block, onAction }: BlockRendererProps) {
   const [expanded, setExpanded] = useState(false);
   const imageUrl = block.structured_data?.image_url as string | undefined;
   const isVision = imageUrl || block.structured_data?.vision;
-  const isLong = block.summary.length > 800;
+  const isLong = (block.summary || "").length > 800;
   return (
     <BlockWrapper block={block} onAction={onAction} label={isVision ? "Vision" : "Note"} labelColor={isVision ? "bg-cyan-100 text-cyan-700" : "bg-gray-100 text-gray-600"}>
       {/* Image capture from CarlOS Vision */}
@@ -2119,6 +2119,7 @@ function LibreRenderer({ block, onAction }: BlockRendererProps) {
 // ═══ 17b. Code — Rendu code monospace avec coloration et copie ═══
 
 function parseCodeBlocks(text: string): { language: string; code: string }[] {
+  if (!text) return [];
   const fenceRegex = /```(\w*)\n([\s\S]*?)```/g;
   const blocks: { language: string; code: string }[] = [];
   let match;
@@ -2201,8 +2202,8 @@ function CodeBlockView({ language, code }: { language: string; code: string }) {
 
 function CodeRenderer({ block, onAction }: BlockRendererProps) {
   const lang = (block.structured_data?.language as string) || "";
-  const codeBlocks = parseCodeBlocks(block.summary);
-  const descriptionText = block.summary
+  const codeBlocks = parseCodeBlocks(block.summary || "");
+  const descriptionText = (block.summary || "")
     .replace(/```\w*\n[\s\S]*?```/g, "")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
@@ -2651,6 +2652,7 @@ function EtatDesLieuxRenderer({ block, onAction }: BlockRendererProps) {
 // ═══ Helpers: Parse summary text into structured items/sections ═══
 
 function parseSummaryItems(text: string): string[] {
+  if (!text) return [];
   const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
   const items: string[] = [];
   for (const line of lines) {
@@ -2661,6 +2663,7 @@ function parseSummaryItems(text: string): string[] {
 }
 
 function parseSummarySections(text: string): { title: string; body: string }[] {
+  if (!text) return [];
   const sections: { title: string; body: string }[] = [];
   const lines = text.split("\n");
   let current: { title: string; body: string } | null = null;
