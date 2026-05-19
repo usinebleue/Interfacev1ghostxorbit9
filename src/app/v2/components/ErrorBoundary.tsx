@@ -13,24 +13,42 @@ interface Props {
 interface State {
   hasError: boolean;
   error: Error | null;
+  componentStack: string | null;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, componentStack: null };
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("[ErrorBoundary] Crash intercepte:", error, errorInfo);
+    this.setState({ componentStack: errorInfo.componentStack || null });
+    // Telemetry: envoyer le crash au backend pour debug remote
+    try {
+      const entry = {
+        ts: new Date().toISOString(),
+        msg: `REACT ERROR BOUNDARY:\n${error.message}\n\nStack: ${error.stack || "?"}\n\nComponent Stack: ${errorInfo.componentStack || "?"}`.substring(0, 3000),
+      };
+      const prev = JSON.parse(localStorage.getItem("carloscrash") || "[]");
+      prev.push(entry);
+      if (prev.length > 5) prev.shift();
+      localStorage.setItem("carloscrash", JSON.stringify(prev));
+      fetch("/api/v1/crash-log", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(entry),
+      }).catch(() => {});
+    } catch { /* noop */ }
   }
 
   handleRetry = () => {
-    this.setState({ hasError: false, error: null });
+    this.setState({ hasError: false, error: null, componentStack: null });
   };
 
   handleReset = () => {
@@ -54,9 +72,11 @@ export class ErrorBoundary extends Component<Props, State> {
             <h2 className="text-lg font-bold text-gray-900 mb-2">
               CarlOS a plante
             </h2>
-            <p className="text-sm text-gray-500 mb-4">
+            <pre className="text-[10px] text-left text-red-700 bg-red-50 p-3 rounded-lg mb-3 max-h-40 overflow-auto whitespace-pre-wrap break-all">
               {this.state.error?.message || "Erreur inconnue"}
-            </p>
+              {this.state.componentStack ? "\n\nComponent:" + this.state.componentStack.substring(0, 500) : ""}
+            </pre>
+            <p className="text-[10px] text-gray-400 mb-3">Ce crash a ete enregistre automatiquement.</p>
             <div className="flex gap-3 justify-center">
               <button
                 onClick={this.handleRetry}
