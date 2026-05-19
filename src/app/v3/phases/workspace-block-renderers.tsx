@@ -56,14 +56,16 @@ function formatBlockMarkdown(text: string): string {
     for (let r = 0; r < rows.length; r++) {
       if (rows[r].every(c => /^[-:]+$/.test(c))) { headerEnd = r; break; }
     }
-    let tbl = '<div class="my-2"><table class="text-sm border-collapse w-full">';
+    let tbl = '<div class="my-2 rounded-lg overflow-hidden border border-gray-200"><table class="text-sm border-collapse w-full">';
+    let bodyRowIdx = 0;
     for (let r = 0; r < rows.length; r++) {
       if (headerEnd >= 0 && r === headerEnd) continue;
       const isHead = headerEnd > 0 && r < headerEnd;
       const tag = isHead ? "th" : "td";
       const cls = isHead
         ? 'class="px-3 py-1.5 text-left font-semibold text-gray-900 border-b border-gray-300 bg-gray-50"'
-        : 'class="px-3 py-1.5 text-left text-gray-700 border-b border-gray-100"';
+        : `class="px-3 py-1.5 text-left text-gray-700 border-b border-gray-100 ${bodyRowIdx % 2 === 1 ? "bg-gray-50/50" : ""}"`;
+      if (!isHead) bodyRowIdx++;
       tbl += "<tr>" + rows[r].map(c => `<${tag} ${cls}>${applyInlineFmt(c)}</${tag}>`).join("") + "</tr>";
     }
     tbl += "</table></div>";
@@ -99,9 +101,26 @@ function formatBlockMarkdown(text: string): string {
 
     if (/^[━─═\-]{3,}$/.test(line.trim())) { closeList(); result.push('<hr class="my-3 border-gray-200">'); continue; }
 
-    if (/^#{1,3}\s+/.test(line.trim())) {
+    const headingMatch = line.trim().match(/^(#{1,3})\s+(.+)/);
+    if (headingMatch) {
       closeList();
-      result.push(`<div class="font-semibold text-gray-900 mt-3 mb-1">${applyInlineFmt(line.replace(/^#{1,3}\s+/, ""))}</div>`);
+      const level = headingMatch[1].length;
+      const hText = applyInlineFmt(headingMatch[2]);
+      if (level === 1) {
+        result.push(`<div class="font-bold text-gray-900 text-base mt-4 mb-2">${hText}</div>`);
+      } else if (level === 2) {
+        result.push(`<div class="font-semibold text-sm text-gray-900 border-b border-gray-100 pb-1 mt-3 mb-2">${hText}</div>`);
+      } else {
+        result.push(`<div class="font-medium text-xs text-gray-700 mt-2 mb-1">${hText}</div>`);
+      }
+      continue;
+    }
+
+    // Callout/blockquote (lines starting with >)
+    const quoteMatch = line.match(/^\s*&gt;\s?(.*)/);
+    if (quoteMatch) {
+      closeList();
+      result.push(`<div class="my-1.5 pl-3 py-1.5 border-l-4 border-blue-300 bg-blue-50/50 rounded-r-lg"><p class="text-sm text-blue-900/80 leading-relaxed">${applyInlineFmt(quoteMatch[1])}</p></div>`);
       continue;
     }
 
@@ -2683,6 +2702,40 @@ function parseSummarySections(text: string): { title: string; body: string }[] {
   return sections.length > 0 ? sections : [{ title: "", body: text }];
 }
 
+// ═══ CatchingUpRenderer — Skeleton pulse while bot loads ═══
+
+function CatchingUpRenderer({ block }: BlockRendererProps) {
+  const [appeared, setAppeared] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setAppeared(true), 80);
+    return () => clearTimeout(t);
+  }, []);
+  const botName = BOT_NAME[block.source] || block.source;
+  const badgeColors = BOT_BADGE_COLORS[block.source] || { bg: "bg-gray-100", text: "text-gray-700" };
+  return (
+    <div className={cn(
+      "rounded-xl border-2 border-dashed overflow-hidden shadow-sm transition-all duration-300",
+      "border-gray-300 bg-gradient-to-b from-gray-50/80 to-white",
+      appeared ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3",
+    )}>
+      <div className={cn("px-3 py-2.5 flex items-center gap-2.5", badgeColors.bg)}>
+        <BotAvatar code={block.source} size="md" />
+        <div className="flex-1 min-w-0">
+          <span className={cn("text-xs font-bold", badgeColors.text)}>{botName}</span>
+          <span className="text-[10px] text-gray-500 ml-1.5">prend connaissance...</span>
+        </div>
+        <Loader2 className="h-4 w-4 text-gray-400 animate-spin shrink-0" />
+      </div>
+      <div className="px-3 py-3 space-y-2.5">
+        <div className="h-4 bg-gray-200/60 rounded-full w-4/5 animate-pulse" />
+        <div className="h-3 bg-gray-200/40 rounded-full w-3/5 animate-pulse" style={{ animationDelay: "150ms" }} />
+        <div className="h-3 bg-gray-200/30 rounded-full w-2/5 animate-pulse" style={{ animationDelay: "300ms" }} />
+        <p className="text-[10px] text-gray-400 italic mt-1">Analyse de la discussion en cours...</p>
+      </div>
+    </div>
+  );
+}
+
 // ═══ Registre central ═══
 
 const BLOCK_RENDERERS: Record<WorkspaceBlockType, React.FC<BlockRendererProps>> = {
@@ -2713,6 +2766,7 @@ const BLOCK_RENDERERS: Record<WorkspaceBlockType, React.FC<BlockRendererProps>> 
   docforge_code: CodeRenderer,
   docforge_tableur: BudgetRenderer,
   action_result: LibreRenderer,
+  catching_up: CatchingUpRenderer,
 };
 
 // ═══ Default action suggestions per bot role ═══
@@ -2936,6 +2990,15 @@ function ExpertBlockWrapper({ block, onAction, children }: BlockRendererProps & 
 }
 
 export function BlockRenderer({ block, onAction, animated }: BlockRendererProps) {
+  // Catching-up skeleton: render directly without ExpertBlockWrapper
+  if (block.is_catching_up || block.type === "catching_up") {
+    return (
+      <AnimatedBlockEntry block={block} animated={animated}>
+        <CatchingUpRenderer block={block} onAction={onAction} />
+      </AnimatedBlockEntry>
+    );
+  }
+
   const Renderer = BLOCK_RENDERERS[block.type] || LibreRenderer;
 
   // Expert blocks (sourceType=chat) get enhanced ExpertBlockWrapper with large avatar/fonts
@@ -2986,6 +3049,7 @@ export const BLOCK_TYPE_LABELS: Record<WorkspaceBlockType, string> = {
   docforge_code: "Code",
   docforge_tableur: "Tableur",
   action_result: "Action",
+  catching_up: "En cours...",
 };
 
 // ═══ Sprint 2A Phase 6A: Skeleton loading block (pattern WorkspaceSection.tsx L104-109) ═══

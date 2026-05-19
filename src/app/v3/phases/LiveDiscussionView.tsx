@@ -453,11 +453,17 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
 
   // Handle block actions
   const handleBlockAction = useCallback((action: string, blockId: string) => {
-    const block = workspaceBlocks.find(b => b.id === blockId);
+    // Parse effective block ID from composite formats (correct: "id||text")
+    const effectiveId = blockId.includes("||") ? blockId.split("||")[0] : blockId;
+    const block = workspaceBlocks.find(b => b.id === effectiveId);
     if (!block) return;
 
     // Expert blocks (sourceType=chat) — route actions to WORKSPACE, not discussion
     const isExpertBlock = block.sourceType === "chat" && block.source;
+
+    // Build team awareness context for expert actions
+    const teammates = activeRoster.filter(b => b !== (block.source || activeBotCode)).map(b => `${BOT_NAME[b] || b} (${BOT_ROLE_SHORT[b] || "Expert"})`);
+    const teamNote = teammates.length > 0 ? `\n\n[EQUIPE PRESENTE: ${teammates.join(", ")}. Fais reference a tes collegues par nom si pertinent.]` : "";
 
     switch (action) {
       case "pin":
@@ -475,7 +481,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
             try {
               const recentCtx = workspaceBlocks.slice(-3).map(b2 => `[${BOT_NAME[b2.source || ""] || ""}] ${b2.title}: ${(b2.summary || "").substring(0, 150)}`).join("\n");
               const res = await api.chatMulti({
-                message: `Approfondir en detail: ${block.title}\n\nContexte: ${block.summary.substring(0, 500)}\n\nContexte recent:\n${recentCtx}`,
+                message: `Approfondir en detail: ${block.title}\n\nContexte: ${block.summary.substring(0, 500)}\n\nContexte recent:\n${recentCtx}${teamNote}`,
                 user_id: 1,
                 agents: [targetBot],
                 primary_agent: targetBot,
@@ -522,7 +528,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
             try {
               const recentCtx = workspaceBlocks.slice(-3).map(b2 => `[${BOT_NAME[b2.source || ""] || ""}] ${b2.title}: ${(b2.summary || "").substring(0, 150)}`).join("\n");
               const res = await api.chatMulti({
-                message: `Challenge cet element, trouve les failles: ${block.title}\n\n${block.summary.substring(0, 500)}\n\nContexte recent:\n${recentCtx}`,
+                message: `Challenge cet element, trouve les failles: ${block.title}\n\n${block.summary.substring(0, 500)}\n\nContexte recent:\n${recentCtx}${teamNote}`,
                 user_id: 1,
                 agents: [targetBot2],
                 primary_agent: targetBot2,
@@ -569,7 +575,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
             try {
               const recentCtx = workspaceBlocks.slice(-3).map(b2 => `[${BOT_NAME[b2.source || ""] || ""}] ${b2.title}: ${(b2.summary || "").substring(0, 150)}`).join("\n");
               const res = await api.chatMulti({
-                message: `Retravaille et enrichis: ${block.title}\n\n${block.summary.substring(0, 500)}\n\nContexte recent:\n${recentCtx}`,
+                message: `Retravaille et enrichis: ${block.title}\n\n${block.summary.substring(0, 500)}\n\nContexte recent:\n${recentCtx}${teamNote}`,
                 user_id: 1,
                 agents: [targetBot3],
                 primary_agent: targetBot3,
@@ -665,7 +671,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
         (async () => {
           try {
             const res = await api.chatMulti({
-              message: `Correction demandee sur ton analyse "${targetBlock.title}":\n\n${correctionText}\n\nContexte original: ${targetBlock.summary.substring(0, 200)}`,
+              message: `Correction demandee sur ton analyse "${targetBlock.title}":\n\n${correctionText}\n\nContexte original: ${targetBlock.summary.substring(0, 200)}${teamNote}`,
               user_id: 1,
               agents: [targetBotC],
               primary_agent: targetBotC,
@@ -700,7 +706,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
         removeWorkspaceBlock(blockId);
         break;
     }
-  }, [workspaceBlocks, addWorkflowItem, sendMessage, activeBotCode, removeWorkspaceBlock, activePhase, addWorkspaceBlock]);
+  }, [workspaceBlocks, addWorkflowItem, sendMessage, activeBotCode, removeWorkspaceBlock, activePhase, addWorkspaceBlock, activeRoster]);
 
   // Reflexion tool click handler
   // ═══ REFLEXION/TECHNIQUE → WORKSPACE ONLY (JAMAIS dans la discussion) ═══
@@ -886,13 +892,35 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
     // Create workspace block via chatMulti (same pattern as SuggestedExpertsPanel)
     if (rosterLoadingBots.has(code)) return;
     setRosterLoadingBots(prev => new Set([...prev, code]));
+    // Insert catching-up skeleton block while API loads
+    const tempId = `catching-up-${code}-${Date.now()}`;
+    addWorkspaceBlock({
+      id: tempId,
+      type: "catching_up",
+      title: `${BOT_NAME[code] || code} prend connaissance...`,
+      summary: "Analyse de la discussion en cours...",
+      structured_data: {},
+      credo_step: currentCredoLetter as "C" | "R" | "E" | "D" | "O",
+      credo_sub_section: "experts",
+      confidence: 0.5,
+      source: code,
+      sourceType: "chat",
+      timestamp: Date.now(),
+      is_catching_up: true,
+    });
     try {
       const lastUserMsg = messages.filter((m: any) => m.role === "user").pop()?.content || "";
       const lastBotMsg = messages.filter((m: any) => m.role === "assistant" && m.content).pop()?.content || "";
       const recentCtx = workspaceBlocks.slice(-3).map(b => `[${BOT_NAME[b.source || ""] || ""}] ${b.title}: ${(b.summary || "").substring(0, 150)}`).join("\n");
+      // Build team context so bot knows about colleagues in the discussion
+      const rosterWithNew = [...new Set([...activeRoster, code])];
+      const teammates = rosterWithNew.filter(b => b !== code).map(b => `${BOT_NAME[b] || b} (${BOT_ROLE_SHORT[b] || "Expert"})`);
+      const teamNote = teammates.length > 0
+        ? `\n\n[EQUIPE PRESENTE: ${teammates.join(", ")}. Tu rejoins cette discussion d'equipe. Tu peux faire reference a tes collegues par nom et role.]`
+        : "";
       const context = lastUserMsg || lastBotMsg
-        ? `Question: ${lastUserMsg}\n\nAnalyse en cours: ${lastBotMsg.substring(0, 500)}\n\nContexte recent:\n${recentCtx}`
-        : "Présente brièvement (3-4 phrases max) ce que tu peux apporter dans cette discussion, basé sur ton expertise. Sois direct et concis. Propose 2-3 pistes concrètes.";
+        ? `Question: ${lastUserMsg}\n\nAnalyse en cours: ${lastBotMsg.substring(0, 500)}\n\nContexte recent:\n${recentCtx}${teamNote}`
+        : `Présente brièvement (3-4 phrases max) ce que tu peux apporter dans cette discussion, basé sur ton expertise. Sois direct et concis. Propose 2-3 pistes concrètes.${teamNote}`;
 
       const res = await api.chatMulti({
         message: context,
@@ -918,14 +946,18 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
           source: code,
           sourceType: "chat",
           timestamp: Date.now(),
+          replace_block_id: tempId,
         });
+      } else {
+        removeWorkspaceBlock(tempId);
       }
     } catch (err) {
       console.error("[RosterAdd] Error adding expert to workspace:", err);
+      removeWorkspaceBlock(tempId);
     } finally {
       setRosterLoadingBots(prev => { const s = new Set(prev); s.delete(code); return s; });
     }
-  }, [activeRoster, addBotToRoster, removeBotFromRoster, messages, workspaceBlocks, addWorkspaceBlock, activePhase, currentCredoLetter, rosterLoadingBots]);
+  }, [activeRoster, addBotToRoster, removeBotFromRoster, messages, workspaceBlocks, addWorkspaceBlock, removeWorkspaceBlock, activePhase, currentCredoLetter, rosterLoadingBots]);
 
   // W.0: Reset sub-section when CREDO step changes + sync filterStep
   useEffect(() => {
@@ -1703,10 +1735,19 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
 
 const ALL_ROSTER_BOTS = ["CEOB","CTOB","CFOB","CMOB","CSOB","COOB","CPOB","CROB","CHROB","CLOB","CISOB","CINOB"];
 
-const _ROSTER_DEPT: Record<string, string> = {
-  CEOB: "Direction", CTOB: "Technologie", CFOB: "Finance", CMOB: "Marketing",
-  CSOB: "Strategie", COOB: "Operations", CPOB: "Production", CROB: "Ventes",
-  CHROB: "RH", CLOB: "Juridique", CISOB: "Securite", CINOB: "Innovation",
+const BOT_SPECIALTIES: Record<string, { tagline: string; specs: string[] }> = {
+  CEOB: { tagline: "Vision strategique et leadership", specs: ["Strategie", "Decisions", "Culture"] },
+  CTOB: { tagline: "Innovation et architecture tech", specs: ["Tech", "R&D", "Securite"] },
+  CFOB: { tagline: "Performance financiere", specs: ["Finance", "Budget", "Previsions"] },
+  CMOB: { tagline: "Croissance et marque", specs: ["Marketing", "Branding", "Digital"] },
+  CSOB: { tagline: "Developpement des revenus", specs: ["Ventes", "Pipeline", "Clients"] },
+  COOB: { tagline: "Excellence operationnelle", specs: ["Operations", "Process", "Qualite"] },
+  CPOB: { tagline: "Production et fabrication", specs: ["Production", "Supply Chain", "Lean"] },
+  CROB: { tagline: "Revenus et croissance", specs: ["Revenus", "Monetisation", "Expansion"] },
+  CHROB: { tagline: "Capital humain et culture", specs: ["RH", "Recrutement", "Formation"] },
+  CLOB: { tagline: "Conformite et gouvernance", specs: ["Legal", "Contrats", "Risques"] },
+  CISOB: { tagline: "Cybersecurite et protection", specs: ["Securite", "Conformite", "Risques"] },
+  CINOB: { tagline: "Innovation et disruption", specs: ["Innovation", "Veille", "Tendances"] },
 };
 
 function AgentRosterPanel({ activeRoster, onToggleBot, loadingBots }: {
@@ -1721,27 +1762,42 @@ function AgentRosterPanel({ activeRoster, onToggleBot, loadingBots }: {
         {ALL_ROSTER_BOTS.map(code => {
           const inRoster = activeRoster.includes(code);
           const role = BOT_ROLE_SHORT[code] || "";
-          const dept = _ROSTER_DEPT[code] || "";
+          const specialty = BOT_SPECIALTIES[code];
+          const isLoading = loadingBots?.has(code);
           return (
             <button key={code} onClick={() => onToggleBot(code)}
               className={cn(
-                "flex items-center gap-2.5 px-3 py-2.5 rounded-xl border text-left transition-all cursor-pointer group",
+                "flex flex-col gap-2 px-3 py-2.5 rounded-xl border text-left transition-all cursor-pointer group",
                 inRoster
                   ? "border-sky-300 bg-sky-50/80 shadow-sm ring-1 ring-sky-200"
                   : "border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300"
               )}>
-              <BotAvatar code={code} size="sm" />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[12px] font-semibold text-gray-900 truncate">{BOT_NAME[code] || code}</span>
-                  <span className={cn(
-                    "text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0 uppercase tracking-wide",
-                    inRoster ? "bg-sky-200 text-sky-700" : "bg-gray-100 text-gray-500"
-                  )}>{role}</span>
+              <div className="flex items-center gap-2.5 w-full">
+                <BotAvatar code={code} size="sm" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[12px] font-semibold text-gray-900 truncate">{BOT_NAME[code] || code}</span>
+                    <span className={cn(
+                      "text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0 uppercase tracking-wide",
+                      inRoster ? "bg-sky-200 text-sky-700" : "bg-gray-100 text-gray-500"
+                    )}>{role}</span>
+                  </div>
+                  {specialty && <div className="text-[10px] text-gray-400 italic truncate mt-0.5">{specialty.tagline}</div>}
                 </div>
-                <div className="text-[10px] text-gray-400 truncate mt-0.5">{dept}</div>
+                {isLoading ? <Loader2 className="w-4 h-4 text-sky-400 animate-spin shrink-0" />
+                  : inRoster ? <CheckCircle2 className="w-4 h-4 text-sky-500 shrink-0" />
+                  : <div className="w-4 h-4 rounded-full border-2 border-gray-300 group-hover:border-gray-400 shrink-0 transition-colors" />}
               </div>
-              {loadingBots?.has(code) ? <Loader2 className="w-4 h-4 text-sky-400 animate-spin shrink-0" /> : inRoster && <CheckCircle2 className="w-4 h-4 text-sky-500 shrink-0" />}
+              {specialty && (
+                <div className="flex flex-wrap gap-1">
+                  {specialty.specs.map(s => (
+                    <span key={s} className={cn(
+                      "text-[10px] px-2 py-0.5 rounded-full",
+                      inRoster ? "bg-sky-100 text-sky-600" : "bg-gray-100 text-gray-500"
+                    )}>{s}</span>
+                  ))}
+                </div>
+              )}
             </button>
           );
         })}

@@ -37,6 +37,8 @@ export interface ChatRequest {
   workspace_expert_context?: string;
   // S102 — conversation-level message count (pas session-wide)
   conversation_msg_count?: number;
+  // Team awareness — bots actifs dans la discussion
+  active_agents?: string[];
 }
 
 // --- Équipe 3 Bots (Chef d'Orchestre) ---

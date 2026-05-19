@@ -882,6 +882,8 @@ export function useChat() {
         technique_context: meta?.techniqueContext,
         // S102 — conversation-level message count (pas session-wide)
         conversation_msg_count: messages.filter((m: any) => m.role === "user").length + 1,
+        // Team awareness — roster actif pour que le bot connaisse ses collegues
+        active_agents: activeRoster.length > 1 ? activeRoster : undefined,
       };
 
       // Create placeholder bot message for streaming
@@ -1224,7 +1226,7 @@ export function useChat() {
         streamAbort.current = null;
       }
     },
-    [activeThreadId, messages, injectCoaching, injectTeamProposal]
+    [activeThreadId, messages, injectCoaching, injectTeamProposal, activeRoster]
   );
 
   // ── Roster management — max 3 bots ──

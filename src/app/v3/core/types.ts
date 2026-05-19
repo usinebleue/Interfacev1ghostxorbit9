@@ -123,7 +123,7 @@ export type WorkspaceBlockType =
   | "benchmark" | "challenge" | "synthese" | "rapport" | "libre"
   | "debat" | "decision" | "crise" | "deep_search"
   | "docforge_section" | "docforge_code" | "docforge_tableur"
-  | "etat_des_lieux" | "action_result";
+  | "etat_des_lieux" | "action_result" | "catching_up";
 
 // ═══ Action suggestions (boutons contextuels one-shot sur blocs experts) ═══
 export interface ActionSuggestion {
@@ -150,6 +150,7 @@ export interface WorkspaceBlock {
   action_suggestions?: ActionSuggestion[];
   is_action_result?: boolean;
   merge_label?: string;  // Label for merge log entries (e.g., "Approfondissement", "Challenge")
+  is_catching_up?: boolean;  // Temp skeleton block while bot is loading
 }
 
 // ═══ Workspace Tasks — taches assignables aux bots/humains ═══
