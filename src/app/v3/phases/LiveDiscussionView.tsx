@@ -2260,9 +2260,9 @@ function DynamicStepContent({ allBlocks, context, onBlockAction, pulsingBlockId,
   activeBotCode?: string;
   activeCredoStep?: string;
 }) {
-  // Bot-specific filtering: if only 1 bot contributed, filter to that bot's blocks + universal types
+  // Bot-specific filtering: if only 1 bot contributed AND it's the active bot, filter to that bot's blocks
   const uniqueSources = [...new Set(allBlocks.map(b => b.source).filter(Boolean))];
-  const isMultiBot = uniqueSources.length > 1;
+  const isMultiBot = uniqueSources.length > 1 || (uniqueSources.length === 1 && uniqueSources[0] !== activeBotCode);
   const filteredBlocks = (activeBotCode && !isMultiBot)
     ? allBlocks.filter(b => UNIVERSAL_BLOCK_TYPES.has(b.type) || !b.source || b.source === activeBotCode)
     : allBlocks;
