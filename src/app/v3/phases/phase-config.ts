@@ -144,8 +144,8 @@ export const PHASE_CONFIGS: Record<string, PhaseConfig> = {
     icon: MessageCircle,
     colors: DISCUSSION_COLORS,
     steps: DISCUSSION_STEPS,
-    nextPhase: "creation",
-    nextPhaseLabel: "Passer en Conception →",
+    nextPhase: null,
+    nextPhaseLabel: null,
   },
   // Sprint 2A Phase 4: reflexion fusionnée dans discussion — config conservée pour backward compat
   reflexion: {

@@ -12,7 +12,7 @@ export type PhaseKey =
   | "observation"
   | "reflexion"
   | "creation"
-  | "execution"
+  | "execution"    // Phase label: "Exécution" — Section label: "Chantiers"
   | "retroaction"
   | "discussion"
   | "operations";

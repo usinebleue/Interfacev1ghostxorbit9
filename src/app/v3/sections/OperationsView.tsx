@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { cn } from "../../components/ui/utils";
 import { LivingHero } from "./shared/LivingHero";
+import { ProgressMiniPhased } from "./shared/ProgressMiniPhased";
 import { DEPT_SHORT_LABEL, DEPT_DASH_ICON, PHASE_COLORS, BOT_DISPLAY, BOT_AVATAR_MAP, type PhaseKey } from "./shared/dept-data";
 import { SF } from "../core/styles";
 import { ViewModeToolbar } from "./shared/ViewModeToolbar";
@@ -58,19 +59,7 @@ function regularityToPhase(regularity: number): PhaseKey {
 }
 
 // ═══ Progress bar — même pattern que ChantierView ═══
-function ProgressMiniPhased({ value, phase }: { value: number; phase?: PhaseKey }) {
-  const pct = Math.min(100, Math.max(0, value));
-  const phaseColor = phase ? PHASE_COLORS[phase]?.dot : null;
-  const fallback = pct >= 75 ? "bg-emerald-500" : pct >= 40 ? "bg-amber-400" : "bg-red-400";
-  return (
-    <div className="flex items-center gap-2">
-      <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-        <div className={cn("h-full rounded-full transition-all", phaseColor || fallback)} style={{ width: `${pct}%` }} />
-      </div>
-      <span className="text-[9px] font-bold text-gray-500 w-7 text-right">{pct}%</span>
-    </div>
-  );
-}
+// ProgressMiniPhased — importé depuis shared/ProgressMiniPhased.tsx
 
 // ═══ Statut étape — icône + couleur ═══
 const ETAPE_STATUS = {

@@ -70,7 +70,7 @@ interface DeptNavItem {
 
 const DEPT_NAV_ITEMS: DeptNavItem[] = [
   { label: "Cockpit", icon: Gauge, state: null },
-  { label: "Exécution", icon: Rocket, state: null },
+  { label: "Chantiers", icon: Rocket, state: null },
   { label: "Réunion", icon: Video, state: null },
   { label: "Agenda", icon: Calendar, state: null },
   { label: "Blueprint", icon: Layers, state: null },
@@ -81,7 +81,7 @@ const DEPT_NAV_ITEMS: DeptNavItem[] = [
 
 const DEPT_SECTION_MAP: Record<string, string> = {
   "Cockpit": "cockpit",
-  // "Exécution" retiré — c'est une PHASE (activePhase), pas une SECTION (rightSection)
+  // "Chantiers" retiré — route via activePhase("execution"), pas une SECTION (rightSection)
   "Blueprint": "blueprint",
   "Données": "dataroom",
   "Playbook": "playbooks",
@@ -591,11 +591,10 @@ function TabBureau({ collapsed, activeBotCode, setActiveBotCode, activeDeptItem,
             key={item.label}
             onClick={() => {
               setActiveDeptItem(item.label);
-              if (item.label === "Exécution") {
-                // Exécution = PHASE, pas section — route via activePhase (anti-persistence)
+              if (item.label === "Chantiers") {
+                // Chantiers = section dashboard — route via rightSection (pas activePhase)
                 setCockpitTab("bureau");
-                setActivePhase("execution");
-                setRightSection(null);
+                setRightSection("chantiers");
               } else if (item.label === "Orbit9") {
                 setCockpitTab("orbit9");
                 setRightSection(null);

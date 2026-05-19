@@ -25,7 +25,6 @@ import {
   Rocket,
   Shield,
   MessageCircle,
-  Check,
 } from "lucide-react";
 import { cn } from "../components/ui/utils";
 import { useIsMobile } from "../components/ui/use-mobile";
@@ -180,7 +179,7 @@ export function WorkspacePhasesPanel() {
     workspaceSessionId,
   } = useAmorcer();
 
-  const { sendMessage, newConversation, messages } = useChatContext();
+  const { sendMessage, newConversation, messages, activeThreadId } = useChatContext();
   const isMobile = useIsMobile();
 
   // ═══ AUTO-CAPTURE — TOUJOURS actif, pas juste quand LivePhaseView est monté ═══
@@ -256,11 +255,11 @@ export function WorkspacePhasesPanel() {
     const parts = window.location.pathname.replace(/^\/+|\/+$/g, "").split("/");
     const exIdx = parts.indexOf("execution");
     if (exIdx >= 0 && parts[exIdx + 1]) return parts[exIdx + 1];
-    return "live";
+    return "accueil";
   });
   const setExecutionTab = useCallback((t: string) => {
     setExecutionTabRaw(t);
-    pushSectionURL("execution", t === "live" ? null : t);
+    pushSectionURL("execution", t === "accueil" ? null : t);
   }, []);
 
   // Auto-switch execution tab quand demandé par DiscussionWindow (thread resume)
@@ -301,7 +300,7 @@ export function WorkspacePhasesPanel() {
     } else if (phase === "execution" || phase === "retroaction") {
       // Exécution/Rétroaction = PHASE view, jamais dans rightSection (anti-persistence)
       setRightSection(null);
-      setExecutionTab(phase === "retroaction" ? "retroaction" : "live");
+      setExecutionTab(phase === "retroaction" ? "retroaction" : "accueil");
     } else {
       // Discussion, Réflexion, Conception →
       // Lâcher la section pour afficher la vue focus modélisée dans le workspace
@@ -338,19 +337,24 @@ export function WorkspacePhasesPanel() {
       {/* ═══ HEADER DÉPARTEMENT PASTEL h-12 ═══ */}
       {(() => {
         const SECTION_ICON: Record<string, React.ElementType> = { cockpit: Gauge, execution: Rocket, blueprint: Layers, dataroom: Database, playbooks: BookOpen, conferenceai: Video, "bureau-agenda": Calendar, admin: Shield, orbit9: Atom };
-        const SECTION_LABEL: Record<string, string> = { cockpit: "Cockpit", execution: "Exécution", blueprint: "Blueprint", dataroom: "Données", playbooks: "Playbook", conferenceai: "Réunion", "bureau-agenda": "Agenda", admin: "Administration", orbit9: "Orbit⁹" };
+        const SECTION_LABEL: Record<string, string> = { cockpit: "Cockpit", execution: "Chantiers", blueprint: "Blueprint", dataroom: "Données", playbooks: "Playbook", conferenceai: "Réunion", "bureau-agenda": "Agenda", admin: "Administration", orbit9: "Orbit⁹" };
         // activeSection = source unique pour icon, label, tabs (orbit9 traité comme une section)
         const activeSection = (isOrbit9 && !rightSection) ? "orbit9" : rightSection;
         const DeptIcon = (activeSection && SECTION_ICON[activeSection]) ? SECTION_ICON[activeSection] : (DEPT_DASH_ICON[activeBotCode] || Home);
         const deptLabel = activeSection === "orbit9" ? "" : (DEPT_SHORT_LABEL[activeBotCode] || "");
-        const sectionLabel = (activeSection && SECTION_LABEL[activeSection]) ? SECTION_LABEL[activeSection] : PHASE_CONFIG[activePhase]?.label || "Tableau de bord";
+        // Section label: rightSection="chantiers" → "Chantiers", sinon phase label
+        const sectionLabel = rightSection === "chantiers"
+          ? "Chantiers"
+          : (activeSection && SECTION_LABEL[activeSection])
+            ? SECTION_LABEL[activeSection]
+            : PHASE_CONFIG[activePhase]?.label || "Tableau de bord";
         const DELIVERABLE_TITLE: Record<string, string> = { document: "Cahier de projet Boreal", spreadsheet: "Tableau de bord financier Boreal", presentation: "Pitch Deck CA Boreal", code: "Dashboard IoT Boreal", jumelage: "Jumelage SMART Orbit⁹" };
         const titleText = activeSection === "orbit9"
           ? "Orbit⁹"
           : deptLabel ? `${sectionLabel} — ${deptLabel}` : sectionLabel;
         const showBlueprintTabs = activeSection === "blueprint";
         const showOrbit9Tabs = activeSection === "orbit9";
-        const showExecutionTabs = activeSection === "execution" || (!rightSection && (activePhase === "execution" || activePhase === "retroaction"));
+        const showExecutionTabs = rightSection === "chantiers";
         // Phase-specific header gradient (when in phase view, not a section)
         const PHASE_HEADER_BG: Record<string, string> = {
           discussion: "bg-gradient-to-r from-blue-50 to-white",
@@ -366,7 +370,10 @@ export function WorkspacePhasesPanel() {
           <div className={cn("h-12 shrink-0 flex items-center gap-2 border-b border-gray-200", headerBg, "px-3")}>
             {!isMobile && <DeptIcon className="h-4 w-4 text-gray-900 stroke-[2.5]" />}
             <span className={cn("font-bold text-gray-900 shrink-0", isMobile ? "text-xs" : "text-sm")}>{titleText}</span>
-            <div className="flex-1" />
+            {/* ═══ Phase buttons RETIRÉS ═══ */}
+            {/* Les transitions de phase se font via actions explicites depuis la vue Chantier.
+               Pas de tabs clickables Discussion/Conception/Exécution dans le header.
+               Chaque tâche d'un chantier lance sa propre session (discussion, conception, etc.) */}
             {/* Sous-tabs Blueprint */}
             {showBlueprintTabs && (
               <>
@@ -454,53 +461,7 @@ export function WorkspacePhasesPanel() {
         );
       })()}
 
-      {/* ═══ BARRE DE PROGRESSION 5 PHASES ═══ */}
-      {!rightSection && !isOrbit9 && !isDash && (() => {
-        // 4 phases — reflexion integree dans l'etape Rechercher de Discussion
-        const WORKFLOW_PHASES: { key: string; label: string }[] = [
-          { key: "discussion", label: "Discussion" },
-          { key: "creation", label: "Conception" },
-          { key: "execution", label: "Execution" },
-          { key: "retroaction", label: "Retroaction" },
-        ];
-        const phaseOrder = WORKFLOW_PHASES.map(p => p.key);
-        const activeIdx = phaseOrder.indexOf(activePhase);
-        return (
-          <div className="h-9 px-3 shrink-0 flex items-center gap-1 border-b border-gray-200 bg-white">
-            {WORKFLOW_PHASES.map((wp, i) => {
-              const pc2 = PHASE_CONFIG[wp.key as PhaseKey];
-              const isCurrent = wp.key === activePhase;
-              const isDone = i < activeIdx;
-              const isFuture = i > activeIdx;
-              const count = workflowItems.filter(w => w.phase === wp.key).length;
-              const cascadeCount = workflowItems.filter(w => w.phase === wp.key && w.type === "cascade").length;
-              return (
-                <button
-                  key={wp.key}
-                  onClick={() => {
-                    setActivePhase(wp.key as PhaseKey);
-                    setRightSection(null); // phases rendues via activePhase, jamais rightSection
-                    if (wp.key === "execution" || wp.key === "retroaction") {
-                      setExecutionTab(wp.key === "retroaction" ? "retroaction" : "live");
-                    }
-                  }}
-                  className={cn(
-                    "flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium transition-all cursor-pointer",
-                    isCurrent ? `${pc2.btnBg} ${pc2.btnText} ${pc2.btnBorder} border shadow-sm` :
-                    isDone ? "bg-green-50 text-green-700 border border-green-200" :
-                    "text-gray-400 hover:bg-gray-50 border border-transparent"
-                  )}
-                >
-                  {isDone ? <Check className="h-3 w-3 text-green-500" /> : <pc2.Icon className={cn("h-3 w-3", isCurrent ? pc2.text : "text-gray-300")} />}
-                  <span>{wp.label}</span>
-                  {count > 0 && <span className={cn("text-[9px] px-1 rounded-full", isCurrent ? pc2.badge : "bg-gray-100 text-gray-500")}>{count}</span>}
-                  {!isCurrent && cascadeCount > 0 && <span className="px-1.5 py-0.5 text-[9px] font-bold bg-amber-100 text-amber-700 rounded-full">{cascadeCount}</span>}
-                </button>
-              );
-            })}
-          </div>
-        );
-      })()}
+      {/* Phase buttons intégrés dans le header ci-dessus (Discussion/Conception/Exécution) */}
 
       {/* ═══ SLOT MOBILE SIDEBAR — portal target pour MobileSidebarSheet ═══ */}
       {isMobile && <div id="mobile-sidebar-slot" className="shrink-0" />}
@@ -530,13 +491,13 @@ export function WorkspacePhasesPanel() {
               {rightSection === "dataroom" && <DataRoomView botCode={activeBotCode} headerGradient="from-blue-600 to-blue-500" showHeader />}
               {rightSection === "playbooks" && <PlaybookStoreView botCode={activeBotCode} headerGradient="from-blue-600 to-blue-500" showHeader />}
               {rightSection === "conferenceai" && <ConferenceAIView headerGradient="from-blue-600 to-blue-500" onNavigateToStore={() => setRightSection("playbooks")} onStartMeeting={meeting.startMeeting} botCode={activeBotCode} />}
-              {/* ExecutionView rendu via activePhase ci-dessous — plus jamais via rightSection */}
+              {rightSection === "chantiers" && <ExecutionView botCode={activeBotCode} showHeader activeTab={executionTab} onTabChange={setExecutionTab} onAction={handleWorkAction} />}
               {rightSection === "bureau-agenda" && <AgendaView botCode={activeBotCode} showHeader onAction={handleWorkAction} />}
               {rightSection === "admin" && <AdminView botCode={activeBotCode} showHeader onAction={handleWorkAction} />}
               {rightSection === "notification-center" && <NotificationCenter />}
               {rightSection === "standing-orders" && <StandingOrdersView />}
               {/* V2 Section Adapter — fallback pour sections non-V3 (Fix R7) */}
-              {rightSection && !["cockpit","blueprint","dataroom","playbooks","conferenceai","execution","bureau-agenda","admin","notification-center","standing-orders"].includes(rightSection) && (() => {
+              {rightSection && !["cockpit","blueprint","dataroom","playbooks","conferenceai","execution","chantiers","bureau-agenda","admin","notification-center","standing-orders"].includes(rightSection) && (() => {
                 const V2Comp = V2_SECTION_MAP[rightSection];
                 if (V2Comp) return <Suspense fallback={<V2SectionFallback />}><V2Comp /></Suspense>;
                 return null;
@@ -557,6 +518,7 @@ export function WorkspacePhasesPanel() {
         ) : (activePhase === "discussion" || activePhase === "reflexion") ? (
           /* Discussion — LiveDiscussionView avec workspace dynamique */
           <LiveDiscussionView
+            key={activeThreadId || "new"}
             context={reflexionContext || "Discussion en cours"}
             onPhaseComplete={() => {
               const discussionNotes = workflowItems.filter(w => w.phase === "discussion" || w.phase === "reflexion");
@@ -570,21 +532,33 @@ export function WorkspacePhasesPanel() {
         ) : activePhase === "creation" ? (
           /* Conception — router unifie (3 chemins: document, livrable, fallback) */
           <ConceptionRouter
+            key={activeThreadId || "new"}
             activeDocumentKey={activeDocumentKey}
             activeDocumentSection={activeDocumentSection}
             activeDeliverable={activeDeliverable}
             activeBotCode={activeBotCode}
             reflexionContext={reflexionContext}
             draftLibraryId={draftLibraryId}
-            onPhaseComplete={() => { setActivePhase("execution"); setRightSection(null); setExecutionTab("live"); }}
+            onPhaseComplete={() => { setActivePhase("execution"); setRightSection(null); setExecutionTab("accueil"); }}
             onDeliverableBack={() => setActiveDeliverable(null)}
             onStartJumelage={activeDeliverable === "document" ? () => startDeliverable("jumelage") : undefined}
           />
-        ) : (activePhase === "execution" || activePhase === "retroaction") ? (
-          /* Exécution / Rétroaction — PHASE view (rendu via activePhase, jamais rightSection) */
-          <div className={"max-w-4xl mx-auto px-6 py-4 pb-12"}>
-            <ExecutionView botCode={activeBotCode} showHeader activeTab={executionTab} onTabChange={setExecutionTab} onAction={handleWorkAction} />
-          </div>
+        ) : activePhase === "execution" ? (
+          /* Phase Exécution — vue de phase avec 4 étapes stage-gated (Briefing/Suivi/Livrables/Bilan) */
+          <LivePhaseView
+            key={activeThreadId || "new"}
+            phaseKey="execution"
+            context={reflexionContext}
+            onPhaseComplete={() => { setActivePhase("retroaction" as PhaseKey); }}
+          />
+        ) : activePhase === "retroaction" ? (
+          /* Phase Rétroaction — vue de phase avec 4 étapes stage-gated */
+          <LivePhaseView
+            key={activeThreadId || "new"}
+            phaseKey="retroaction"
+            context={reflexionContext}
+            onReturnToCockpit={() => { setActivePhase("discussion" as PhaseKey); setRightSection(null); }}
+          />
         ) : (
           /* Fallback — Discussion sans contexte ou état inattendu → Cockpit */
           <div className={"max-w-4xl mx-auto px-6 py-4 pb-12"}>

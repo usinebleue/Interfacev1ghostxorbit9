@@ -133,8 +133,8 @@ export const REGISTRY: Record<string, DomainEntry> = {
   "retroaction": {
     key: "retroaction",
     label: "Rétroaction",
-    endpoint: null,
-    status: "simu",
+    endpoint: "/chantiers?status=complete",
+    status: "live",
   },
   "operations": {
     key: "operations",

@@ -117,25 +117,30 @@ export function FrameMasterAmorcer() {
 
 
 function AmorcerLayout() {
-  const { rightSection, setActivePhase, setRightSection, setReflexionContext, startDeliverable } = useAmorcer();
+  const { rightSection, setActivePhase, setRightSection, setReflexionContext, startDeliverable, activePhase } = useAmorcer();
   const { setLeftCollapsed } = useFrameMaster();
   const isMobile = useIsMobile();
 
   // --- DocForge: auto-navigation vers conception quand le backend envoie start_deliverable ---
+  // GUARD: Discussion = l'utilisateur décide quand changer de phase, pas le bot.
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail || {};
       if (detail.deliverableType) {
+        // Ne JAMAIS auto-transiter en conception depuis une discussion
+        if (activePhase === "discussion" || window.location.pathname.includes("/discussion/")) {
+          console.log("[FrameMaster] start_deliverable BLOQUÉ: en phase discussion, ignoré");
+          return;
+        }
         startDeliverable(detail.deliverableType, detail.draftLibraryId);
       }
     };
     window.addEventListener("bt-start-deliverable", handler);
     return () => window.removeEventListener("bt-start-deliverable", handler);
-  }, [startDeliverable]);
+  }, [startDeliverable, activePhase]);
 
   // Écouter les transitions de phase CREDO → Workspace (CustomEvent depuis CanvasActionContext)
   // PROTÉGÉ: ne switch PAS si l'utilisateur est déjà dans un workflow actif
-  const { activePhase } = useAmorcer();
   useEffect(() => {
     const handler = (e: Event) => {
       const { phase, context } = (e as CustomEvent).detail || {};

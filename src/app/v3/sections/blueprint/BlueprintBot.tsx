@@ -489,6 +489,65 @@ const BOT_CONFIG: Record<string, { temperature: number; tonalite: string; modele
   CISOB: { temperature: 0.3, tonalite: "Alerte", modele: "Gemini Pro 2.0", langue: "Francais (QC)", escalade: "CEOB + CTOB si breche detectee", delegation: [] },
 };
 
+// ── Section: Déployer chantiers recommandés (Phase 4) ──
+function DeployBlueprintButton({ botCode }: { botCode: string }) {
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<{ count: number; seeded: { titre: string }[] } | null>(null);
+
+  async function handleDeploy() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/v1/chantiers/seed-from-blueprint", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ department_codes: [botCode] }),
+      });
+      const data = await res.json();
+      setResult(data);
+    } catch {
+      // silently fail
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (result) {
+    return (
+      <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4 shadow-sm">
+        <div className="flex items-center gap-2 mb-2">
+          <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+          <span className="text-xs font-bold text-emerald-800">{result.count} chantiers pré-montés créés</span>
+        </div>
+        <div className="space-y-1">
+          {result.seeded.slice(0, 5).map((s, i) => (
+            <div key={i} className="text-[10px] text-emerald-700">• {s.titre}</div>
+          ))}
+          {result.seeded.length > 5 && (
+            <div className="text-[9px] text-emerald-500">+ {result.seeded.length - 5} autres...</div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      onClick={handleDeploy}
+      disabled={loading}
+      className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-violet-300 bg-violet-50/50 text-violet-700 hover:bg-violet-100 hover:border-violet-400 transition-all cursor-pointer disabled:opacity-50"
+    >
+      {loading ? (
+        <Activity className="h-4 w-4 animate-spin" />
+      ) : (
+        <Sparkles className="h-4 w-4" />
+      )}
+      <span className="text-xs font-bold">
+        {loading ? "Déploiement en cours..." : "Déployer les chantiers recommandés"}
+      </span>
+    </button>
+  );
+}
+
 // ── Section: APIs & Connexions ──
 function BotApisSection({ botCode }: { botCode: string }) {
   const apis = BOT_APIS[botCode] || BOT_APIS.CEOB;
@@ -941,6 +1000,11 @@ export function BlueprintBot({ botCode, headerGradient }: { botCode: string; hea
             </div>
           </div>
 
+        </div>
+
+        {/* ── DÉPLOYER CHANTIERS RECOMMANDÉS (Phase 4) ── */}
+        <div id="sec-deploy-chantiers">
+          <DeployBlueprintButton botCode={botCode} />
         </div>
 
         {/* ── OUTILS & CONNEXIONS ── */}

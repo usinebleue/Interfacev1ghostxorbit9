@@ -35,8 +35,28 @@ type RetroPeriod = "mois" | "trimestre" | "annee";
 
 // ═══ Composant principal ═══
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+function apiChantiersToCycles(chantiers: any[]): CompletedCycle[] {
+  if (!Array.isArray(chantiers)) return [];
+  return chantiers.map((c) => ({
+    id: c.id,
+    titre: c.titre || "Chantier sans titre",
+    type: "chantier" as const,
+    dateCompletion: c.updated_at ? c.updated_at.slice(0, 10) : "",
+    duree: c.echeance || "—",
+    scorePerformance: c.progression ?? 0,
+    botPrimaire: (c.bot_codes && c.bot_codes[0]) || "CEOB",
+    resultats: c.description || "",
+  }));
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
 export function RetroactionTab({ botCode }: { botCode: string }) {
-  const { data: cycles } = useDataSource<CompletedCycle[]>("retroaction", MOCK_CYCLES);
+  // Fetch completed chantiers from API, fallback to mock
+  const { data: rawCompleted, isLive } = useDataSource<any[]>("retroaction", []);
+  const cycles: CompletedCycle[] = isLive && rawCompleted.length > 0
+    ? apiChantiersToCycles(rawCompleted)
+    : MOCK_CYCLES;
   const [sidebarItem, setSidebarItem] = useState<RetroSidebarItem>("overview");
   const [filter, setFilter] = useState<RetroFilter>("tout");
   const [period, setPeriod] = useState<RetroPeriod>("trimestre");

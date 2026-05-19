@@ -374,6 +374,11 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     if (initialURL.section === "discussion" && initialURL.sub) {
       urlRestoredRef.current = true;
       resumeThread(initialURL.sub);
+    } else if (activeThreadId && activePhase === "discussion") {
+      // Thread actif depuis localStorage mais URL perdue (hard refresh → URL cockpit)
+      // Re-pousser l'URL de discussion pour que le deep-link survive
+      urlRestoredRef.current = true;
+      pushDiscussionURL(activeThreadId);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -562,6 +567,16 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
   const [workspaceBlocks, setWorkspaceBlocks] = useState<WorkspaceBlock[]>(() => {
     // Pas de thread en phase scoped = pas de blocks à restaurer
     if (!activeThreadId && THREAD_SCOPED_PHASES.includes(activePhase)) return [];
+    // Protection anti-melange: si l'URL n'est PAS une discussion thread URL,
+    // ne pas charger les blocs d'un ancien thread depuis localStorage.
+    // Evite que les blocs de la discussion precedente restent colles apres hard refresh.
+    if (activeThreadId && THREAD_SCOPED_PHASES.includes(activePhase)) {
+      const urlInfo = parseURL();
+      if (urlInfo.section !== "discussion" || urlInfo.sub !== activeThreadId) {
+        // L'URL ne pointe pas vers ce thread → pas de restauration des blocs
+        return [];
+      }
+    }
     const { lsKey } = getStorageKeys(activeThreadId, activeBotCode, activePhase);
     try {
       const stored = localStorage.getItem(lsKey);

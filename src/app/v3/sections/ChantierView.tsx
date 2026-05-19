@@ -21,6 +21,7 @@ import { cn } from "../../components/ui/utils";
 import { BOT_AVATAR } from "../../v2/api/types";
 import { useChantiers } from "../../v2/api/hooks";
 import { LivingHero } from "./shared/LivingHero";
+import { ProgressMiniPhased } from "./shared/ProgressMiniPhased";
 import { useDataSource } from "../data/use-data-source";
 import { DomainBadge } from "../data/source-badge";
 import { DEPT_SHORT_LABEL, DEPT_DASH_ICON, PHASE_COLORS, BOT_DISPLAY, BOT_AVATAR_MAP, type PhaseKey } from "./shared/dept-data";
@@ -43,20 +44,7 @@ function statusToPhase(status: string, progression: number): PhaseKey {
   return "discussion";
 }
 
-// Phase-colored progress bar (uses PHASE_COLORS dot color for the bar)
-function ProgressMiniPhased({ value, phase }: { value: number; phase?: PhaseKey }) {
-  const pct = Math.min(100, Math.max(0, value));
-  const phaseColor = phase ? PHASE_COLORS[phase]?.dot : null;
-  const fallback = pct >= 75 ? "bg-emerald-500" : pct >= 40 ? "bg-amber-400" : "bg-red-400";
-  return (
-    <div className="flex items-center gap-2">
-      <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-        <div className={cn("h-full rounded-full transition-all", phaseColor || fallback)} style={{ width: `${pct}%` }} />
-      </div>
-      <span className="text-[9px] font-bold text-gray-500 w-7 text-right">{pct}%</span>
-    </div>
-  );
-}
+// ProgressMiniPhased — importé depuis shared/ProgressMiniPhased.tsx
 
 // Mock interfaces and data imported from ../data/mock/chantiers.mock.ts
 

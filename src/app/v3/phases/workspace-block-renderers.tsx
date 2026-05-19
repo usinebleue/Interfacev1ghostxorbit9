@@ -2075,9 +2075,10 @@ function RapportRenderer({ block, onAction }: BlockRendererProps) {
 // ═══ 17. Libre — Texte avec sections parsées (pattern parseContentSections) ═══
 
 function LibreRenderer({ block, onAction }: BlockRendererProps) {
-  const items = parseSummaryItems(block.summary);
+  const [expanded, setExpanded] = useState(false);
   const imageUrl = block.structured_data?.image_url as string | undefined;
   const isVision = imageUrl || block.structured_data?.vision;
+  const isLong = block.summary.length > 800;
   return (
     <BlockWrapper block={block} onAction={onAction} label={isVision ? "Vision" : "Note"} labelColor={isVision ? "bg-cyan-100 text-cyan-700" : "bg-gray-100 text-gray-600"}>
       {/* Image capture from CarlOS Vision */}
@@ -2091,19 +2092,25 @@ function LibreRenderer({ block, onAction }: BlockRendererProps) {
           />
         </div>
       )}
-      {items.length > 1 ? (
-        <div className="space-y-2">
-          {items.map((item, i) => (
-            <div key={i} className="rounded-lg border border-gray-200 bg-white px-4 py-2.5 hover:bg-gray-50 transition-colors">
-              <div className="flex items-start gap-2">
-                <span className="text-xs font-bold text-gray-400 mt-0.5 w-4 shrink-0">{i + 1}.</span>
-                <p className="text-sm text-gray-700 leading-relaxed flex-1">{item}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="text-sm text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: formatBlockMarkdown(block.summary) }} />
+      <div className="relative">
+        <div
+          className={cn("text-sm text-gray-700 leading-relaxed overflow-hidden transition-all duration-300",
+            isLong && !expanded && "max-h-[300px]"
+          )}
+          dangerouslySetInnerHTML={{ __html: formatBlockMarkdown(block.summary) }}
+        />
+        {isLong && !expanded && (
+          <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white to-transparent pointer-events-none" />
+        )}
+      </div>
+      {isLong && (
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="mt-2 text-xs font-medium text-sky-600 hover:text-sky-700 transition-colors flex items-center gap-1"
+        >
+          <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", expanded && "rotate-180")} />
+          {expanded ? "Réduire" : "Voir tout"}
+        </button>
       )}
     </BlockWrapper>
   );

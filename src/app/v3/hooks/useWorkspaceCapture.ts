@@ -723,6 +723,7 @@ export function useWorkspaceCapture() {
           continue;
         }
         if ((msg as any).isStreaming !== true && msg.content && msg.content.length >= 5) {
+          console.log(`[WC-DEBUG] msg ${id}: isStreaming=false, _preFinalized=${!!(msg as any)._preFinalized}, has_wsBlock=${!!(msg as any).workspace_block}, activePhase=${activePhase}, url=${window.location.pathname.substring(0, 40)}`);
           // Guard: si le message a ete pre-finalise par le stale timer (options extraites cote client)
           // mais onDone n'est pas encore arrive avec le workspace_block du backend → attendre max 5s
           if ((msg as any)._preFinalized && !(msg as any).workspace_block) {
@@ -733,11 +734,11 @@ export function useWorkspaceCapture() {
                 preFinalizedTimerRef.current = setTimeout(() => {
                   preFinalizedTimerRef.current = null;
                   setPreFinalizedTick(t => t + 1);
-                }, 5500);
+                }, 60500);
               }
             }
             const elapsed = Date.now() - (preFinalizedTimestamps.current.get(id) || Date.now());
-            if (elapsed < 5000) {
+            if (elapsed < 60000) {
               continue; // Attendre onDone encore un peu
             }
             // Timeout: onDone n'est jamais arrive — capturer quand meme avec le contenu du stale timer
@@ -750,8 +751,9 @@ export function useWorkspaceCapture() {
       }
       if (completed.length > 0) {
         // ═══ CAPTURE completed streaming messages ═══
-        const isDiscussion = activePhase === "discussion";
-        if (ACTIVE_PHASES.includes(activePhase)) {
+        const isDiscussion = activePhase === "discussion" || (typeof window !== "undefined" && window.location.pathname.includes("/discussion/"));
+        console.log(`[WC-DEBUG] CAPTURE: ${completed.length} completed, isDiscussion=${isDiscussion}, activePhase=${activePhase}, ACTIVE=${ACTIVE_PHASES.includes(activePhase)}`);
+        if (ACTIVE_PHASES.includes(activePhase) || isDiscussion) {
           const sectionId = getSmartSectionId(completed[0], activePhase, chatStage, pendingCapture, activeDeliverable);
           if (sectionId) {
             for (const msg of completed) {
@@ -763,25 +765,25 @@ export function useWorkspaceCapture() {
                 if (processedBlockMsgIds.current.has(msg.id)) {
                   console.log(`[WorkspaceCapture] SKIP duplicate block for msg ${msg.id} (streaming path)`);
                 } else {
-                // ═══ WORKSPACE BLOCK INTELLIGENT — backend ou fallback frontend ═══
-                const lastUserMsg = [...messages].reverse().find((m: any) => m.role === "user" && m.content);
+                // ═══ WORKSPACE BLOCK — BACKEND AUTHORITATIVE ═══
+                // CarlOS (backend) est seul responsable de la zone workspace.
+                // Pas de fallback frontend copier-coller. Jamais.
+                processedBlockMsgIds.current.add(msg.id);
                 const wsBlock = (msg as any).workspace_block as Partial<WorkspaceBlock> | undefined;
-                // Map cascade_suggestions → action_suggestions
-                const cascadeSugs = (msg as any).cascadeSuggestions as Array<{ message: string; target_section?: string }> | undefined;
-                const actionSuggestions = cascadeSugs?.slice(0, 2).map(cs => ({
-                  label: cs.message.substring(0, 35),
-                  prompt: cs.message,
-                  target_bot: cs.target_section || source,
-                })) || undefined;
 
+                const userMsgCount = messages.filter((m: any) => m.role === "user").length;
+
+                console.log(`[WC-DEBUG] DISCUSSION block check: wsBlock.type=${wsBlock?.type}, wsBlock.title=${wsBlock?.title?.substring(0,30)}, userMsgCount=${userMsgCount}, skip=${(msg as any).workspace_block_skip}`);
                 if (wsBlock && wsBlock.type && wsBlock.title) {
-                  // Backend a généré un workspace_block structuré
-                  processedBlockMsgIds.current.add(msg.id);
-                  // Safety net: si le backend summary est trop long (copier-coller), re-summarize
-                  let finalSummary = wsBlock.summary || msg.content.substring(0, 200);
-                  if (finalSummary.length > 400 && !wsBlock.structured_data) {
-                    finalSummary = summarizeForWorkspace(lastUserMsg?.content || "", finalSummary);
-                  }
+                  // Backend a généré un workspace_block structuré + conversation a du contenu
+                  console.log(`[WC-DEBUG] >>> ADDING BLOCK: type=${wsBlock.type}, title=${wsBlock.title}`);
+                  const cascadeSugs = (msg as any).cascadeSuggestions as Array<{ message: string; target_section?: string }> | undefined;
+                  const actionSuggestions = cascadeSugs?.slice(0, 2).map(cs => ({
+                    label: cs.message.substring(0, 35),
+                    prompt: cs.message,
+                    target_bot: cs.target_section || source,
+                  })) || undefined;
+                  const finalSummary = wsBlock.summary || msg.content;
                   addWorkspaceBlock_scoped({
                     id: wsBlock.id || `blk-${Date.now()}`,
                     type: wsBlock.type as WorkspaceBlockType,
@@ -797,29 +799,9 @@ export function useWorkspaceCapture() {
                     replace_block_id: wsBlock.replace_block_id,
                     action_suggestions: actionSuggestions,
                   });
-                } else if (!(msg as any).workspace_block_skip || workspaceBlocks.length === 0) {
-                  // Fallback frontend: détection locale + extraction structured_data
-                  processedBlockMsgIds.current.add(msg.id);
-                  const detectedType = detectBlockTypeFrontend(msg.content);
-                  const structuredData = extractStructuredDataFrontend(msg.content, detectedType);
-                  const lastUserMsg = [...messages].reverse().find((m: any) => m.role === "user" && m.content);
-                  const smartSummary = summarizeForWorkspace(lastUserMsg?.content || "", msg.content);
-                  addWorkspaceBlock_scoped({
-                    id: `blk-${Date.now()}`,
-                    type: detectedType,
-                    title: extractTitle(msg.content),
-                    summary: smartSummary,
-                    merge_label: "Discussion",
-                    structured_data: structuredData,
-                    credo_step: getCurrentCredoStep(chatStage),
-                    confidence: 0.6,
-                    source,
-                    sourceType,
-                    sectionId,
-                    timestamp: Date.now(),
-                    action_suggestions: actionSuggestions,
-                  });
                 }
+                // Sinon: premier échange, ou backend skip/rien → pas de bloc workspace.
+                // Le backend est l'autorité. Zéro fallback copier-coller.
                 } // end dedup guard
                 // Accumulate in existing block for same sectionId (entonnoir effect)
                 const lastUserMsg2 = [...messages].reverse().find((m: any) => m.role === "user" && m.content);
@@ -897,28 +879,31 @@ export function useWorkspaceCapture() {
             }
 
             // S103 — CASCADES cross-phases (streaming path)
-            for (const cMsg of completed) {
-              const cascades = (cMsg as any).cascadeItems as Array<{section_id: string; phase: string; label: string}> | undefined;
-              if (cascades?.length) {
-                const lastUserMsgCasc = [...messages].reverse().find((m: any) => m.role === "user" && m.content);
-                cascades.forEach(c => {
-                  addWorkspaceBlock_scoped({
-                    id: `blk-cascade-${Date.now()}`,
-                    type: "libre",
-                    title: c.label,
-                    summary: summarizeForWorkspace(lastUserMsgCasc?.content || "", cMsg.content),
-                    merge_label: "Cascade",
-                    credo_step: getCurrentCredoStep(chatStage),
-                    confidence: 0.7,
-                    source: (cMsg as any).botCode || activeBotCode,
-                    sourceType: "chat",
-                    sectionId: c.section_id,
-                    timestamp: Date.now(),
+            // Guard: pas de cascades au premier échange
+            const cascadeUserCount = messages.filter((m: any) => m.role === "user").length;
+            if (cascadeUserCount >= 2) {
+              for (const cMsg of completed) {
+                const cascades = (cMsg as any).cascadeItems as Array<{section_id: string; phase: string; label: string}> | undefined;
+                if (cascades?.length) {
+                  cascades.forEach(c => {
+                    addWorkspaceBlock_scoped({
+                      id: `blk-cascade-${Date.now()}`,
+                      type: "libre",
+                      title: c.label,
+                      summary: c.label,
+                      merge_label: "Cascade",
+                      credo_step: getCurrentCredoStep(chatStage),
+                      confidence: 0.7,
+                      source: (cMsg as any).botCode || activeBotCode,
+                      sourceType: "chat",
+                      sectionId: c.section_id,
+                      timestamp: Date.now(),
+                    });
                   });
-                });
-                cascades.forEach(c => {
-                  addWorkflowItem(c.phase, `${c.label}`, "cascade", c.section_id);
-                });
+                  cascades.forEach(c => {
+                    addWorkflowItem(c.phase, `${c.label}`, "cascade", c.section_id);
+                  });
+                }
               }
             }
           }
@@ -927,12 +912,11 @@ export function useWorkspaceCapture() {
           if (lastBot) {
             const source = (lastBot as any).botCode || activeBotCode;
             const sourceType = (lastBot as any).msgType === "voice" ? "voice" as const : "chat" as const;
-            const lastUserMsgPend = [...messages].reverse().find((m: any) => m.role === "user" && m.content);
             addWorkspaceBlock_scoped({
               id: `blk-${Date.now()}`,
               type: "libre",
               title: extractTitle(lastBot.content),
-              summary: summarizeForWorkspace(lastUserMsgPend?.content || "", lastBot.content),
+              summary: lastBot.content,
               credo_step: getCurrentCredoStep(chatStage),
               confidence: 1.0,
               source,
@@ -1012,8 +996,8 @@ export function useWorkspaceCapture() {
     if (completeBots.length === 0) return;
 
     // ═══ CAPTURE — toutes les phases actives ═══
-    const isDiscussion = activePhase === "discussion";
-    if (ACTIVE_PHASES.includes(activePhase)) {
+    const isDiscussion = activePhase === "discussion" || (typeof window !== "undefined" && window.location.pathname.includes("/discussion/"));
+    if (ACTIVE_PHASES.includes(activePhase) || isDiscussion) {
       const sectionId = getSmartSectionId(completeBots[0], activePhase, chatStage, pendingCapture, activeDeliverable);
       if (!sectionId) return;
 
@@ -1027,18 +1011,17 @@ export function useWorkspaceCapture() {
             console.log(`[WorkspaceCapture] SKIP duplicate block for msg ${msg.id} (length path)`);
             continue;
           }
-          // ═══ WORKSPACE BLOCK INTELLIGENT — backend ou fallback frontend ═══
-          const lastUserMsg = [...messages].reverse().find((m: any) => m.role === "user" && m.content);
+          // ═══ WORKSPACE BLOCK — BACKEND AUTHORITATIVE ═══
+          processedBlockMsgIds.current.add(msg.id);
           const wsBlock = (msg as any).workspace_block as Partial<WorkspaceBlock> | undefined;
-          // S2.4 — Multi-artifact support
           const wsBlocks = (msg as any).workspace_blocks as Partial<WorkspaceBlock>[] | undefined;
           const secondaries = (msg as any).msgType === "multi-enriched" && (msg as any).secondaryInputs?.length > 0
             ? (msg as any).secondaryInputs as Array<{agent: string; nom: string; contenu: string}>
             : null;
 
+          // Backend decides when to send blocks — no frontend guard needed
           if (wsBlocks && wsBlocks.length > 0) {
             // Multi-artifact: bot generated multiple <artifact> tags
-            processedBlockMsgIds.current.add(msg.id);
             for (let ai = 0; ai < wsBlocks.length; ai++) {
               const ab = wsBlocks[ai];
               if (!ab.type || !ab.title) continue;
@@ -1046,9 +1029,7 @@ export function useWorkspaceCapture() {
                 id: ab.id || `blk-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
                 type: ab.type as WorkspaceBlockType,
                 title: ab.title,
-                summary: (ab.summary && ab.summary.length > 400 && !ab.structured_data)
-                  ? summarizeForWorkspace(lastUserMsg?.content || "", ab.summary)
-                  : (ab.summary || msg.content.substring(0, 200)),
+                summary: ab.summary || msg.content,
                 structured_data: ab.structured_data,
                 credo_step: (ab.credo_step as any) || getCurrentCredoStep(chatStage),
                 confidence: ab.confidence || 0.95,
@@ -1060,11 +1041,7 @@ export function useWorkspaceCapture() {
             }
           } else if (wsBlock && wsBlock.type && wsBlock.title) {
             // Single artifact from backend
-            processedBlockMsgIds.current.add(msg.id);
-            let singleSummary = wsBlock.summary || msg.content.substring(0, 200);
-            if (singleSummary.length > 400 && !wsBlock.structured_data) {
-              singleSummary = summarizeForWorkspace(lastUserMsg?.content || "", singleSummary);
-            }
+            const singleSummary = wsBlock.summary || msg.content;
             const blockData: WorkspaceBlock = {
               id: wsBlock.id || `blk-${Date.now()}`,
               type: wsBlock.type as WorkspaceBlockType,
@@ -1079,43 +1056,15 @@ export function useWorkspaceCapture() {
               timestamp: Date.now(),
               replace_block_id: wsBlock.replace_block_id,
             };
-            // Enrich structured_data with multi-agent contributions if present
             if (secondaries && blockData.structured_data) {
               blockData.structured_data.contributions = secondaries.map((s: any) => ({
                 bot: s.agent, name: s.nom, input: s.contenu,
               }));
             }
             addWorkspaceBlock_scoped(blockData);
-          } else if (!(msg as any).workspace_block_skip || workspaceBlocks.length === 0) {
-            // Fallback frontend: détection locale + extraction structured_data
-            processedBlockMsgIds.current.add(msg.id);
-            const detectedType = detectBlockTypeFrontend(msg.content);
-            const extractedData = extractStructuredDataFrontend(msg.content, detectedType);
-            const lastUserMsg3 = [...messages].reverse().find((m: any) => m.role === "user" && m.content);
-            const blockData: WorkspaceBlock = {
-              id: `blk-${Date.now()}`,
-              type: detectedType,
-              title: extractTitle(msg.content),
-              summary: summarizeForWorkspace(lastUserMsg3?.content || "", msg.content),
-              merge_label: "Discussion",
-              structured_data: extractedData,
-              credo_step: getCurrentCredoStep(chatStage),
-              confidence: 0.6,
-              source,
-              sourceType,
-              sectionId,
-              timestamp: Date.now(),
-            };
-            if (secondaries) {
-              blockData.structured_data = {
-                ...(extractedData || {}),
-                contributions: secondaries.map((s: any) => ({
-                  bot: s.agent, name: s.nom, input: s.contenu,
-                })),
-              };
-            }
-            addWorkspaceBlock_scoped(blockData);
           }
+          // Sinon: premier échange, ou backend skip/rien → pas de bloc.
+          // Backend est l'autorité. Zéro fallback copier-coller.
 
           // Accumulate in existing block for same sectionId (entonnoir effect)
           const enrichedSummary = secondaries
@@ -1194,28 +1143,31 @@ export function useWorkspaceCapture() {
       }
 
       // ═══ S103 — CASCADES cross-phases ═══
-      for (const msg of completeBots) {
-        const cascades = (msg as any).cascadeItems as Array<{section_id: string; phase: string; label: string}> | undefined;
-        if (cascades?.length) {
-          cascades.forEach(c => {
-            const lastUserMsg5 = [...messages].reverse().find((m: any) => m.role === "user" && m.content);
-            addWorkspaceBlock_scoped({
-              id: `blk-cascade-${Date.now()}`,
-              type: "libre",
-              title: c.label,
-              summary: summarizeForWorkspace(lastUserMsg5?.content || "", msg.content),
-              merge_label: "Cascade",
-              credo_step: getCurrentCredoStep(chatStage),
-              confidence: 0.7,
-              source: (msg as any).botCode || activeBotCode,
-              sourceType: "chat",
-              sectionId: c.section_id,
-              timestamp: Date.now(),
+      // Guard: pas de cascades au premier échange
+      const cascadeUserCount2 = messages.filter((m: any) => m.role === "user").length;
+      if (cascadeUserCount2 >= 2) {
+        for (const msg of completeBots) {
+          const cascades = (msg as any).cascadeItems as Array<{section_id: string; phase: string; label: string}> | undefined;
+          if (cascades?.length) {
+            cascades.forEach(c => {
+              addWorkspaceBlock_scoped({
+                id: `blk-cascade-${Date.now()}`,
+                type: "libre",
+                title: c.label,
+                summary: c.label,
+                merge_label: "Cascade",
+                credo_step: getCurrentCredoStep(chatStage),
+                confidence: 0.7,
+                source: (msg as any).botCode || activeBotCode,
+                sourceType: "chat",
+                sectionId: c.section_id,
+                timestamp: Date.now(),
+              });
             });
-          });
-          cascades.forEach(c => {
-            addWorkflowItem(c.phase, `${c.label}`, "cascade", c.section_id);
-          });
+            cascades.forEach(c => {
+              addWorkflowItem(c.phase, `${c.label}`, "cascade", c.section_id);
+            });
+          }
         }
       }
 
@@ -1228,12 +1180,11 @@ export function useWorkspaceCapture() {
       if (lastBot) {
         const source = (lastBot as any).botCode || activeBotCode;
         const sourceType = (lastBot as any).msgType === "voice" ? "voice" as const : "chat" as const;
-        const lastUserMsgPend2 = [...messages].reverse().find((m: any) => m.role === "user" && m.content);
         addWorkspaceBlock_scoped({
           id: `blk-${Date.now()}`,
           type: "libre",
           title: extractTitle(lastBot.content),
-          summary: summarizeForWorkspace(lastUserMsgPend2?.content || "", lastBot.content),
+          summary: lastBot.content,
           credo_step: getCurrentCredoStep(chatStage),
           confidence: 1.0,
           source,

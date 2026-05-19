@@ -175,6 +175,11 @@ export function CanvasActionProvider({ children }: { children: React.ReactNode }
         break;
       }
       case "phase_transition": {
+        // GUARD: Discussion = pas de transition auto — l'utilisateur décide
+        if (window.location.pathname.includes("/discussion/")) {
+          console.log("[CanvasAction] phase_transition BLOQUÉ: en discussion");
+          break;
+        }
         // Pont CREDO → Workspace: dispatch CustomEvent pour que V3 écoute (zéro couplage V2↔V3)
         const ptData = action.data as Record<string, unknown> | undefined;
         const wsPhase = ptData?.workspace_phase as string;
@@ -186,6 +191,11 @@ export function CanvasActionProvider({ children }: { children: React.ReactNode }
         break;
       }
       case "start_deliverable": {
+        // GUARD: Discussion = pas de start_deliverable auto — l'utilisateur décide
+        if (window.location.pathname.includes("/discussion/")) {
+          console.log("[CanvasAction] start_deliverable BLOQUÉ: en discussion");
+          break;
+        }
         // DocForge: dispatch CustomEvent pour proposer l'activation du workspace livrable
         const sdData = action.data as Record<string, unknown> | undefined;
         const deliverableType = sdData?.deliverable_type as string;
