@@ -39,7 +39,7 @@ const SHORT_ACK_PATTERNS = /^(ok|oui|non|d'accord|parfait|merci|cool|super|exact
 
 /** Check if a message is substantive (not a greeting or short ack) */
 function isSubstantive(msg: ChatMessage): boolean {
-  if (msg.content.length < 15) return false;
+  if (!msg.content || msg.content.length < 15) return false;
   if (GREETING_PATTERNS.test(msg.content.trim())) return false;
   if (SHORT_ACK_PATTERNS.test(msg.content.trim())) return false;
   return true;
@@ -50,7 +50,7 @@ function extractRecentTopics(messages: ChatMessage[]): string[] {
   return messages
     .filter(m => m.role === "user" && isSubstantive(m))
     .slice(-5)
-    .map(m => m.content.length > 80 ? m.content.slice(0, 77) + "..." : m.content)
+    .map(m => (m.content || "").length > 80 ? (m.content || "").slice(0, 77) + "..." : (m.content || ""))
     .reverse();
 }
 
@@ -66,8 +66,8 @@ function detectCentralTopic(messages: ChatMessage[]): string {
   // Among the last 3 substantive messages, pick the most "topic-defining" one
   // (longest = most detail = most likely to state the real problem)
   const recent = userMsgs.slice(-3);
-  const best = [...recent].sort((a, b) => b.content.length - a.content.length)[0];
-  const text = best.content;
+  const best = [...recent].sort((a, b) => (b.content || "").length - (a.content || "").length)[0];
+  const text = best.content || "";
   return text.length > 150 ? text.slice(0, 147) + "..." : text;
 }
 
@@ -82,8 +82,8 @@ function extractStructuredContext(messages: ChatMessage[]): { tension: string; c
   // 1. Tension = the core problem/question (longest recent user message)
   let tension = "";
   if (userMsgs.length > 0) {
-    const best = [...userMsgs].sort((a, b) => b.content.length - a.content.length)[0];
-    tension = best.content.length > 150 ? best.content.slice(0, 147) + "..." : best.content;
+    const best = [...userMsgs].sort((a, b) => (b.content || "").length - (a.content || "").length)[0];
+    tension = (best.content || "").length > 150 ? (best.content || "").slice(0, 147) + "..." : (best.content || "");
   }
 
   // 2. Constraints — scan for money/dates/numbers/obligations
@@ -94,7 +94,7 @@ function extractStructuredContext(messages: ChatMessage[]): { tension: string; c
     /\d+\s*(?:personnes?|employes?|gens|manufacturiers?|entreprises?|clients?)/gi,
     /(?:il faut|on doit|objectif|contrainte|limite|maximum|minimum)[^.]{5,60}/gi,
   ];
-  const allText = userMsgs.map(m => m.content).join(" ");
+  const allText = userMsgs.map(m => m.content || "").join(" ");
   for (const pat of constraintPatterns) {
     const matches = allText.match(pat);
     if (matches) {
@@ -108,7 +108,7 @@ function extractStructuredContext(messages: ChatMessage[]): { tension: string; c
   // 3. Last direction — last bot's key sentence (first substantive sentence)
   let lastDirection = "";
   if (botMsgs.length > 0) {
-    const lastBot = botMsgs[botMsgs.length - 1].content;
+    const lastBot = botMsgs[botMsgs.length - 1].content || "";
     const sentences = lastBot.split(/[.!?]\s+/).filter(s => s.length > 20);
     lastDirection = sentences[0] ? (sentences[0].length > 120 ? sentences[0].slice(0, 117) + "..." : sentences[0]) : "";
   }

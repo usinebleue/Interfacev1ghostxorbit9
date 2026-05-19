@@ -19,7 +19,7 @@
 import { useState, useRef, useEffect, useCallback, type KeyboardEvent, type ChangeEvent } from "react";
 import {
   Bot, BrainCog, Atom, Plus, Send, ChevronUp, X, Pin, Check, CheckCircle2, ChevronDown, ChevronRight,
-  Phone, PhoneOff, Video, Glasses, Paperclip, Globe, Zap, Activity,
+  Phone, PhoneOff, Video, Glasses, Paperclip, Globe, Zap, Activity, Users,
   Brain, Target, AlertTriangle, Scale, Sparkles, MessageSquare,
   Mic, MicOff, Loader2, Upload, MessageCircle, Clock, Network, Pencil,
   BookOpen, Search, BarChart2, Lightbulb,
@@ -1106,28 +1106,32 @@ function V3MessageList() {
 
         // ── Bot bubble standard ──
         return (
-          <div key={msg.id} className="flex gap-2.5 group/msg">
-            <div className={cn("w-7 h-7 rounded-full overflow-hidden shrink-0 ring-2 mt-0.5", s.ring)}>
+          <div key={msg.id} className="flex gap-3 group/msg">
+            <div className={cn("w-8 h-8 rounded-full overflow-hidden shrink-0 ring-2 mt-1 shadow-sm", s.ring)}>
               <img src={BOT_AVATAR[botCode] || `/agents/${botCode.toLowerCase()}.png`}
                 alt={BOT_NAME[botCode] || botCode} className="w-full h-full object-cover" />
             </div>
             <div className="flex-1 max-w-[85%] relative">
-              <div className={cn("border-l-[3px] border border-gray-200 rounded-xl rounded-tl-none px-3.5 py-2.5 shadow-sm", s.border, s.bubble)}>
-                {/* Agent name + role */}
-                <div className="flex items-center gap-1.5 mb-1">
-                  <span className={cn("text-[11px] font-semibold", s.text)}>{BOT_NAME[botCode] || botCode}</span>
-                  <span className="text-[10px] text-gray-400">{BOT_ROLE[botCode] || ""}</span>
+              <div className={cn(
+                "border-l-[3px] rounded-2xl rounded-tl-none px-4 py-3 shadow-sm",
+                "bg-gradient-to-br from-white via-white to-gray-50/80",
+                "border border-gray-100",
+                s.border, s.bubble
+              )}>
+                {/* Agent name + role badge */}
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className={cn("text-[12px] font-bold tracking-tight", s.text)}>{BOT_NAME[botCode] || botCode}</span>
+                  <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 uppercase tracking-wide">{BOT_ROLE[botCode] || ""}</span>
                 </div>
                 {/* Content — formatMarkdown TOUJOURS (key stable = pas d'unmount/remount) */}
                 <div
                   key={msg.id}
-                  className="text-sm text-gray-700 leading-relaxed isolate overflow-hidden [&>p]:my-0.5 [&>ul]:my-1 [&>ol]:my-1 [&>p:first-child]:mt-0 [&>p:last-child]:mb-0 [&>hr]:my-2 [&_li]:break-words [&_p]:break-words"
+                  className="text-[13px] text-gray-700 leading-[1.7] isolate overflow-hidden [&>p]:my-1 [&>ul]:my-1.5 [&>ol]:my-1.5 [&>p:first-child]:mt-0 [&>p:last-child]:mb-0 [&>hr]:my-3 [&_li]:break-words [&_p]:break-words [&>ul]:pl-4 [&>ol]:pl-4 [&_strong]:text-gray-900 [&_strong]:font-semibold"
                   dangerouslySetInnerHTML={{ __html: formatMarkdown(msg.content) }}
                 />
                 {msg.isStreaming && (
                   <span className="inline-block w-0.5 h-4 bg-current ml-0.5 animate-pulse align-text-bottom" />
                 )}
-                {/* Cristallise bar — boutons pour ajouter ce contenu dans une section workspace */}
                 {/* ═══ Niveau 1 — Options DANS la bulle (multi-select + réponse inline questions) ═══ */}
                 {!msg.isStreaming && msg.options && msg.options.length > 0 && (
                   <InlineOptions
@@ -1231,10 +1235,15 @@ function AgentSelector({ activeRoster, addBotToRoster, removeBotFromRoster, onCo
         <Plus className="h-3 w-3 text-white/70" />
       </button>
       {open && (
-        <div className="absolute top-full right-0 mt-1.5 w-56 bg-white rounded-xl border border-gray-200 shadow-lg py-1 z-30 max-h-[360px] overflow-auto">
-          <div className="px-3 py-1.5 text-[9px] font-bold text-gray-400 uppercase tracking-wider">Agents Brain Team</div>
+        <div className="absolute top-full right-0 mt-2 w-72 bg-white rounded-2xl border border-gray-200 shadow-xl py-2 z-30 max-h-[420px] overflow-auto">
+          <div className="px-4 py-2 flex items-center gap-2 border-b border-gray-100 mb-1">
+            <Users className="h-3.5 w-3.5 text-violet-500" />
+            <span className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">Brain Team</span>
+            <span className="text-[9px] text-gray-400 ml-auto">{activeRoster.length} actifs</span>
+          </div>
           {BOT_CODES.map((code) => {
             const inRoster = activeRoster.includes(code);
+            const st = V3_STYLE[code] || DEFAULT_STYLE;
             return (
               <button
                 key={code}
@@ -1246,16 +1255,34 @@ function AgentSelector({ activeRoster, addBotToRoster, removeBotFromRoster, onCo
                     onConsultExpert?.(code);
                   }
                 }}
-                className="w-full flex items-center gap-2.5 px-3 py-1.5 hover:bg-gray-50 transition-colors cursor-pointer text-left"
+                className={cn(
+                  "w-full flex items-center gap-3 px-3 py-2.5 transition-all cursor-pointer text-left group/agent mx-1 rounded-xl",
+                  inRoster
+                    ? "bg-blue-50/70 hover:bg-blue-50"
+                    : "hover:bg-gray-50"
+                )}
+                style={{ width: "calc(100% - 8px)" }}
               >
-                <div className="w-6 h-6 rounded-full overflow-hidden ring-1 ring-gray-200 shrink-0">
+                <div className={cn("w-9 h-9 rounded-full overflow-hidden shrink-0 ring-2 shadow-sm transition-all group-hover/agent:shadow-md", inRoster ? "ring-blue-400" : st.ring)}>
                   <img src={BOT_AVATAR[code] || `/agents/${code.toLowerCase()}.png`} alt={BOT_NAME[code]} className="w-full h-full object-cover" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <span className="text-xs font-medium text-gray-800 block truncate">{BOT_NAME[code]}</span>
-                  <span className="text-[9px] text-gray-400 block truncate">{BOT_ROLE[code]}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[12px] font-bold text-gray-900 truncate">{BOT_NAME[code]}</span>
+                    <span className={cn(
+                      "text-[8px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide shrink-0",
+                      inRoster ? "bg-blue-200 text-blue-700" : "bg-gray-100 text-gray-500"
+                    )}>{BOT_ROLE[code]?.split(" ")[0] || ""}</span>
+                  </div>
+                  <span className="text-[10px] text-gray-400 block truncate">{BOT_ROLE[code]}</span>
                 </div>
-                {inRoster && <Check className="h-3.5 w-3.5 text-blue-500 shrink-0" />}
+                {inRoster ? (
+                  <div className="shrink-0 w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center shadow-sm">
+                    <Check className="h-3 w-3 text-white" />
+                  </div>
+                ) : (
+                  <div className="shrink-0 w-5 h-5 rounded-full border-2 border-gray-200 group-hover/agent:border-blue-300 transition-colors" />
+                )}
               </button>
             );
           })}
@@ -1950,15 +1977,15 @@ function ChatBoxV3() {
         </div>
       )}
 
-      <div className="relative rounded-2xl border border-gray-300 bg-white shadow-sm focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+      <div className="relative rounded-2xl border border-gray-200 bg-gradient-to-b from-white to-gray-50/50 shadow-sm focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100/80 focus-within:shadow-md transition-all">
         {/* Textarea */}
         <textarea
           ref={textareaRef}
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={`Parle à ${botName}...`}
-          className="w-full text-sm px-4 pt-3 pb-2 rounded-t-2xl border-0 focus:outline-none min-h-[70px] resize-none bg-transparent"
+          placeholder={`Parle a ${botName}...`}
+          className="w-full text-[13px] leading-relaxed px-4 pt-3.5 pb-2 rounded-t-2xl border-0 focus:outline-none min-h-[72px] resize-none bg-transparent placeholder:text-gray-400"
           rows={3}
         />
         {/* Barre de boutons intégrée en bas de la box */}
@@ -2030,13 +2057,13 @@ function ChatBoxV3() {
 
           <div className="flex-1" />
 
-          {/* Bouton Envoyer — apparaît quand il y a du texte */}
+          {/* Bouton Envoyer — apparait quand il y a du texte */}
           <button
             onClick={handleSend}
             className={cn(
-              "p-2 rounded-lg transition-all cursor-pointer",
+              "p-2.5 rounded-xl transition-all cursor-pointer",
               inputText.trim()
-                ? "bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
+                ? "bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg active:scale-95"
                 : "bg-gray-100 text-gray-300 cursor-default"
             )}
             title="Envoyer"

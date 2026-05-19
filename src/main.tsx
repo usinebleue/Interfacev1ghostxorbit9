@@ -26,11 +26,13 @@
   }
 
   window.addEventListener("error", (e) => {
-    showCrash("ERROR: " + (e.message || "Unknown") + "\n\nFile: " + (e.filename || "?") + "\nLine: " + (e.lineno || "?") + ":" + (e.colno || "?"));
+    const stack = e.error?.stack || "";
+    showCrash("ERROR: " + (e.message || "Unknown") + "\n\nFile: " + (e.filename || "?") + "\nLine: " + (e.lineno || "?") + ":" + (e.colno || "?") + (stack ? "\n\nStack:\n" + stack : ""));
   });
 
   window.addEventListener("unhandledrejection", (e) => {
-    showCrash("PROMISE REJECTION: " + String(e.reason));
+    const stack = e.reason?.stack || "";
+    showCrash("PROMISE REJECTION: " + String(e.reason) + (stack ? "\n\nStack:\n" + stack : ""));
   });
 
   try {

@@ -16,7 +16,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
-  CheckCircle2, Zap, X, ArrowRight,
+  CheckCircle2, Zap, X, ArrowRight, Plus, Check,
   Loader2, Network, FileText, Activity,
   AlertTriangle, Lightbulb, Target, TrendingUp,
   Eye, Brain, Swords, Sparkles, Search,
@@ -34,7 +34,7 @@ import { TechniquePanel } from "./reflexion-tools";
 import { WorkspaceReflexionHub } from "./WorkspaceReflexionHub";
 import { BlockRenderer, SkeletonBlock, BLOCK_TYPE_LABELS, BlockDisplayContext } from "./workspace-block-renderers";
 import { BotAvatar } from "../simulation/primitives";
-import { BOT_NAME } from "../../v2/api/types";
+import { BOT_NAME, BOT_AVATAR } from "../../v2/api/types";
 import { api } from "../../v2/api/client";
 import type { CascadeSuggestion } from "../../v2/api/types";
 import { detectBlockTypeFrontend, extractStructuredDataFrontend, summarizeExpertForWorkspace, generateExpertBlockTitle } from "../hooks/useWorkspaceCapture";
@@ -814,7 +814,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
     const prompt = prompts[stageIdx].replace("{context}", ctx).replace("{prev}", prevText);
 
     // Pick which bot answers this stage (rotate through selected bots)
-    const stageBotCode = bots[stageIdx % bots.length] || activeBotCode;
+    const stageBotCode = bots.length > 0 ? bots[stageIdx % bots.length] : activeBotCode;
 
     try {
       const recentCtx = workspaceBlocks.slice(-3).map(b => `[${BOT_NAME[b.source || ""] || ""}] ${b.title}: ${(b.summary || "").substring(0, 150)}`).join("\n");
@@ -1134,7 +1134,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
 
                     {/* Stages rendered — mode-specific visual rendering */}
                     {reflexionFlow.results.map((content, i) => {
-                      const stageBotCode = reflexionFlow.selectedBots[i % reflexionFlow.selectedBots.length] || activeBotCode;
+                      const stageBotCode = reflexionFlow.selectedBots?.length > 0 ? reflexionFlow.selectedBots[i % reflexionFlow.selectedBots.length] : activeBotCode;
                       const stageBotName = BOT_NAME[stageBotCode] || "CarlOS";
 
                       // ═══ BRAINSTORM: cartes d'idees visuelles (pattern AtelierBrainstorm) ═══
@@ -1264,9 +1264,9 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
                     {reflexionFlow.isThinking && (
                       <div className="rounded-xl border border-gray-200 bg-white overflow-hidden animate-in fade-in duration-200">
                         <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-gray-100">
-                          <BotAvatar code={reflexionFlow.selectedBots[stageIdx % reflexionFlow.selectedBots.length] || activeBotCode} size="sm" />
+                          <BotAvatar code={reflexionFlow.selectedBots?.length > 0 ? reflexionFlow.selectedBots[stageIdx % reflexionFlow.selectedBots.length] : activeBotCode} size="sm" />
                           <span className="text-[10px] font-medium text-gray-500">
-                            {BOT_NAME[reflexionFlow.selectedBots[stageIdx % reflexionFlow.selectedBots.length] || activeBotCode]} reflechit...
+                            {BOT_NAME[reflexionFlow.selectedBots?.length > 0 ? reflexionFlow.selectedBots[stageIdx % reflexionFlow.selectedBots.length] : activeBotCode]} reflechit...
                           </span>
                           <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-bold ml-auto", mc.bg, mc.text)}>
                             {stageLabels[stageIdx] || "..."}
@@ -1549,6 +1549,53 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
           )}
           <div ref={blocksEndRef} />
 
+          {/* CONSULTATION SUGGESTIONS — Zero-Silo cross-bot (PRIORITY — shown first) */}
+          {latestConsultationSuggestions.length > 0 && (
+            <div className="mt-4 space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-500">
+              <div className="flex items-center gap-2 mb-1">
+                <Users className="h-3.5 w-3.5 text-blue-600" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600">Consultation recommandee</span>
+              </div>
+              {latestConsultationSuggestions.map((sug, sugIdx) => (
+                <button
+                  key={`consult-${sugIdx}`}
+                  onClick={() => handleConsultBot(sug)}
+                  disabled={consultLoading !== null}
+                  className={cn(
+                    "w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-blue-200",
+                    "bg-gradient-to-r from-blue-50/80 via-white to-indigo-50/60",
+                    "hover:border-blue-400 hover:shadow-md hover:from-blue-50 hover:to-indigo-50",
+                    "cursor-pointer transition-all text-left group/consult",
+                    "animate-in fade-in slide-in-from-bottom-2 duration-400",
+                    consultLoading === sug.consult && "opacity-70 cursor-wait"
+                  )}
+                  style={{ animationDelay: `${sugIdx * 120}ms`, animationFillMode: 'backwards' }}
+                >
+                  <div className="w-8 h-8 rounded-full overflow-hidden ring-2 ring-blue-300 group-hover/consult:ring-blue-400 transition-all shrink-0 shadow-sm">
+                    <img src={BOT_AVATAR[sug.consult] || `/agents/${sug.consult?.toLowerCase()}.png`}
+                      alt={sug.consult_titre || ""} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="text-xs font-bold text-gray-900">{sug.consult_emoji} {sug.consult_titre}</span>
+                      <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">{BOT_ROLE_SHORT[sug.consult] || ""}</span>
+                    </div>
+                    <span className="text-[11px] text-gray-600 leading-snug line-clamp-2">
+                      {sug.reason.substring(0, 140)}
+                    </span>
+                  </div>
+                  {consultLoading === sug.consult ? (
+                    <Loader2 className="h-4 w-4 text-blue-500 shrink-0 animate-spin" />
+                  ) : (
+                    <div className="shrink-0 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-[10px] font-bold group-hover/consult:bg-blue-700 transition-colors shadow-sm">
+                      Consulter
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* CASCADE SUGGESTIONS — cross-phase (Sprint 1 Etape 6) + B.4 bordure gauche coloree */}
           {latestCascadeSuggestions.length > 0 && (
             <div className="mt-3 space-y-1.5 animate-in fade-in duration-500">
@@ -1571,36 +1618,6 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
                   <ArrowRight className="h-3 w-3 text-gray-500 shrink-0" />
                   <span className="text-[10px] text-gray-700 font-medium">
                     Explorer en {sug.view || sug.target_section}: {sug.message.substring(0, 100)}
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* CONSULTATION SUGGESTIONS — Zero-Silo cross-bot */}
-          {latestConsultationSuggestions.length > 0 && (
-            <div className="mt-3 space-y-1.5 animate-in fade-in duration-500">
-              {latestConsultationSuggestions.map((sug, sugIdx) => (
-                <button
-                  key={`consult-${sugIdx}`}
-                  onClick={() => handleConsultBot(sug)}
-                  disabled={consultLoading !== null}
-                  className={cn(
-                    "w-full flex items-center gap-2 px-3 py-2 rounded-lg border bg-white/80",
-                    "border-l-[3px] border-l-blue-400 border-gray-200",
-                    "hover:shadow-sm hover:bg-blue-50/50 cursor-pointer transition-all text-left",
-                    "animate-in fade-in slide-in-from-bottom-1 duration-300",
-                    consultLoading === sug.consult && "opacity-70 cursor-wait"
-                  )}
-                  style={{ animationDelay: `${sugIdx * 100}ms`, animationFillMode: 'backwards' }}
-                >
-                  {consultLoading === sug.consult ? (
-                    <Loader2 className="h-3 w-3 text-blue-500 shrink-0 animate-spin" />
-                  ) : (
-                    <Users className="h-3 w-3 text-blue-500 shrink-0" />
-                  )}
-                  <span className="text-[10px] text-gray-700 font-medium">
-                    Consulter {sug.consult_emoji} {sug.consult_titre}: {sug.reason.substring(0, 120)}
                   </span>
                 </button>
               ))}
@@ -1918,6 +1935,13 @@ const BOT_ACCENT_CARDS: Record<string, string> = {
   CROB: "border-l-lime-400", CLOB: "border-l-fuchsia-400", CISOB: "border-l-cyan-400",
 };
 
+const BOT_RING_COLOR: Record<string, string> = {
+  CEOB: "ring-sky-300", CTOB: "ring-violet-300", CFOB: "ring-emerald-300",
+  CMOB: "ring-pink-300", CSOB: "ring-amber-300", COOB: "ring-blue-300",
+  CPOB: "ring-orange-300", CHROB: "ring-rose-300", CINOB: "ring-teal-300",
+  CROB: "ring-lime-300", CLOB: "ring-fuchsia-300", CISOB: "ring-cyan-300",
+};
+
 const BOT_ROLE_SHORT: Record<string, string> = {
   CEOB: "CEO", CTOB: "CTO", CFOB: "CFO", CMOB: "CMO", CSOB: "CSO", COOB: "COO",
   CPOB: "CPO", CHROB: "CHRO", CINOB: "CINO", CROB: "CRO", CLOB: "CLO", CISOB: "CISO",
@@ -2007,43 +2031,67 @@ function SuggestedExpertsPanel({ messages, activeBotCode, workspaceBlocks, addWo
   return (
     <div className="mt-3 space-y-3">
       {/* Employee cards grid — 11 agents always visible */}
-      <div className="rounded-xl border border-violet-200 bg-violet-50/30 p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <h4 className="text-[10px] font-bold uppercase tracking-wider text-violet-700">
-            Brain Team — Experts disponibles
-          </h4>
+      <div className="rounded-2xl border border-violet-200/80 bg-gradient-to-br from-violet-50/40 via-white to-indigo-50/30 p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-lg bg-violet-100 flex items-center justify-center">
+            <Users className="h-3.5 w-3.5 text-violet-600" />
+          </div>
+          <div>
+            <h4 className="text-[11px] font-bold text-violet-800">
+              Brain Team
+            </h4>
+            <p className="text-[9px] text-violet-500">Experts disponibles pour consultation</p>
+          </div>
         </div>
 
-        <div className="grid gap-2 grid-cols-1 sm:grid-cols-2">
+        <div className="grid gap-2.5 grid-cols-1 sm:grid-cols-2">
           {ALL_EXPERT_CODES.map((code) => {
             const isDone = activeBotSources.has(code);
             const isLoading = expertLoadingBots.has(code);
             const isSuggested = suggestedCodes.has(code);
             const strengths = BOT_STRENGTHS[code];
+            const ringCls = BOT_RING_COLOR[code] || "ring-gray-300";
             return (
               <div key={code} className={cn(
-                "flex items-center gap-2.5 p-2.5 rounded-lg border shadow-sm bg-white border-l-[3px]",
+                "flex items-center gap-3 p-3 rounded-xl border bg-white transition-all group/card",
+                "border-l-[3px] shadow-sm hover:shadow-md",
                 BOT_ACCENT_CARDS[code] || "border-l-gray-400",
-                isSuggested && !isDone && "ring-1 ring-violet-200",
+                isDone && "bg-emerald-50/30 border-emerald-200",
+                isSuggested && !isDone && "ring-2 ring-violet-200 shadow-violet-100",
               )}>
-                <BotAvatar code={code} size="sm" />
+                <div className={cn("w-9 h-9 rounded-full overflow-hidden shrink-0 ring-2 shadow-sm group-hover/card:shadow-md transition-all", ringCls)}>
+                  <img src={BOT_AVATAR[code] || `/agents/${code.toLowerCase()}.png`}
+                    alt={BOT_NAME[code] || code} className="w-full h-full object-cover" />
+                </div>
                 <div className="flex-1 min-w-0">
-                  <span className="text-[11px] font-bold text-gray-900 block truncate">{BOT_NAME[code] || code}</span>
-                  {strengths && <span className="text-[9px] text-gray-500 block truncate">{strengths.conception}</span>}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[12px] font-bold text-gray-900 truncate">{BOT_NAME[code] || code}</span>
+                    <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 uppercase tracking-wide shrink-0">{BOT_ROLE_SHORT[code] || ""}</span>
+                  </div>
+                  {strengths && <span className="text-[10px] text-gray-500 block truncate mt-0.5">{strengths.conception}</span>}
+                  {isSuggested && !isDone && suggestedReason(code) && (
+                    <span className="text-[9px] text-violet-600 font-medium block truncate mt-0.5">
+                      Recommande: {suggestedReason(code)?.substring(0, 50)}
+                    </span>
+                  )}
                 </div>
                 <button
                   onClick={() => handleAddExpert(code)}
                   disabled={isLoading}
                   className={cn(
-                    "shrink-0 px-2 py-1 rounded-md text-[9px] font-bold transition-colors cursor-pointer",
-                    isDone ? "bg-emerald-100 text-emerald-700" :
-                    isLoading ? "bg-gray-100 text-gray-400" :
-                    "bg-violet-500 text-white hover:bg-violet-600"
+                    "shrink-0 rounded-lg text-[10px] font-bold transition-all cursor-pointer",
+                    isDone ? "px-2.5 py-1.5 bg-emerald-100 text-emerald-700 shadow-sm" :
+                    isLoading ? "px-2.5 py-1.5 bg-gray-100 text-gray-400" :
+                    "px-3 py-1.5 bg-violet-600 text-white hover:bg-violet-700 shadow-sm hover:shadow-md active:scale-95"
                   )}
                 >
                   {isLoading ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                  ) : isDone ? "✓" : "+"}
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : isDone ? (
+                    <span className="flex items-center gap-1"><Check className="h-3 w-3" /> Done</span>
+                  ) : (
+                    <span className="flex items-center gap-1"><Plus className="h-3 w-3" /> Ajouter</span>
+                  )}
                 </button>
               </div>
             );
