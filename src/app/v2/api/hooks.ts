@@ -1325,7 +1325,7 @@ export function useChat() {
             timestamp: new Date(),
             agent: persp.agent,
             tier: persp.tier,
-            options: persp.options.length > 0 ? persp.options.map((o) => o.label) : modeConf.options,
+            options: (persp.options?.length ?? 0) > 0 ? persp.options.map((o: any) => o.label) : modeConf.options,
             msgType: "consultation",
             branchLabel: `Introduction — ${persp.nom}`,
           };
@@ -1515,8 +1515,8 @@ export function useChat() {
             timestamp: new Date(),
             agent: primary.agent,
             tier: primary.tier,
-            options: primary.options.length > 0
-              ? primary.options.map((o) => o.label)
+            options: (primary.options?.length ?? 0) > 0
+              ? primary.options.map((o: any) => o.label)
               : modeConf.options,
             msgType: "multi-enriched" as any,
             branchLabel: `${primary.nom} + ${secondaries.length} expert${secondaries.length > 1 ? "s" : ""}`,
@@ -1550,8 +1550,8 @@ export function useChat() {
             }
 
             const modeConf = MODE_LIVE_CONFIG[mode || "credo"] || MODE_LIVE_CONFIG.credo;
-            const options = persp.options.length > 0
-              ? persp.options.map((o) => o.label)
+            const options = (persp.options?.length ?? 0) > 0
+              ? persp.options.map((o: any) => o.label)
               : modeConf.options;
 
             const botMsg: ChatMessage = {
