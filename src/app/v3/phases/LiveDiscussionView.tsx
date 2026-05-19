@@ -814,7 +814,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
     const prompt = prompts[stageIdx].replace("{context}", ctx).replace("{prev}", prevText);
 
     // Pick which bot answers this stage (rotate through selected bots)
-    const stageBotCode = bots.length > 0 ? bots[stageIdx % bots.length] : activeBotCode;
+    const stageBotCode = bots && bots.length > 0 ? bots[stageIdx % bots.length] : activeBotCode;
 
     try {
       const recentCtx = workspaceBlocks.slice(-3).map(b => `[${BOT_NAME[b.source || ""] || ""}] ${b.title}: ${(b.summary || "").substring(0, 150)}`).join("\n");
@@ -1120,7 +1120,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
                       ))}
                       {/* Bots actifs (simulation-style) */}
                       <div className="flex items-center gap-0.5 ml-auto">
-                        {reflexionFlow.selectedBots.slice(0, 3).map(code => (
+                        {(reflexionFlow.selectedBots || []).slice(0, 3).map(code => (
                           <div key={code} className="flex items-center gap-0.5 bg-gray-50 rounded-full px-1.5 py-0.5">
                             <BotAvatar code={code} size="sm" />
                             <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />

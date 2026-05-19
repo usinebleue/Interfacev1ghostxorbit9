@@ -963,7 +963,7 @@ export function useChat() {
 
               // Final update with all metadata
               // TOUJOURS strip [TACHE] du texte, même quand le backend envoie des options explicites
-              let cleanText = data.response.split("\n").filter((l: string) => !/\[TACHE\]/i.test(l)).join("\n").trim();
+              let cleanText = (data.response || "").split("\n").filter((l: string) => !/\[TACHE\]/i.test(l)).join("\n").trim();
               // S2.3 — Strip residual <artifact> tags from chat display (keep content inside)
               cleanText = cleanText.replace(/<\/?artifact[^>]*>/g, '').replace(/\n{3,}/g, '\n\n').trim();
               let parsedOptions: string[] = [];

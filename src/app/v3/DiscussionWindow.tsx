@@ -263,8 +263,9 @@ function ContributionCard({ agent, nom, contenu, style }: {
   style: { text: string; border: string; ring: string; bubble: string };
 }) {
   const [expanded, setExpanded] = useState(false);
-  const isLong = contenu.length > 300;
-  const displayed = isLong && !expanded ? contenu.slice(0, 280) + "…" : contenu;
+  const safe = contenu || "";
+  const isLong = safe.length > 300;
+  const displayed = isLong && !expanded ? safe.slice(0, 280) + "…" : safe;
 
   return (
     <div className={cn("border-l-[3px] rounded-lg rounded-tl-none px-3 py-2", style.border, "bg-white/60")}>
