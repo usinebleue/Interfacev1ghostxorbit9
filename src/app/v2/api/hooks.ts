@@ -1086,7 +1086,7 @@ export function useChat() {
               if (data.sentinel_alert) {
                 const sa = data.sentinel_alert;
                 setTimeout(() => {
-                  injectCoaching(sa.message, sa.suggestions.length > 0 ? sa.suggestions : undefined);
+                  injectCoaching(sa.message, (sa.suggestions?.length ?? 0) > 0 ? sa.suggestions : undefined);
                 }, 700);
               }
 
@@ -1315,8 +1315,9 @@ export function useChat() {
           history,
         });
 
-        if (res.perspectives.length > 0) {
-          const persp = res.perspectives[0];
+        const perspectives = res?.perspectives || [];
+        if (perspectives.length > 0) {
+          const persp = perspectives[0];
           const modeConf = MODE_LIVE_CONFIG.credo;
           const introMsg: ChatMessage = {
             id: `msg-${++idCounter.current}`,
@@ -1503,9 +1504,10 @@ export function useChat() {
         setMessages((prev) => prev.filter((m) => m.id !== consultBubbleId));
 
         // ═══ S102-B — Bulle consolidee (flag ON + multi-bot) ═══
-        if (MULTI_CONSOLIDATED && res.perspectives.length > 1) {
-          const primary = res.perspectives.find((p) => p.is_primary) || res.perspectives[res.perspectives.length - 1];
-          const secondaries = res.perspectives.filter((p) => p.agent !== primary.agent);
+        const perspectives = res?.perspectives || [];
+        if (MULTI_CONSOLIDATED && perspectives.length > 1) {
+          const primary = perspectives.find((p) => p.is_primary) || perspectives[perspectives.length - 1];
+          const secondaries = perspectives.filter((p) => p.agent !== primary.agent);
 
           const modeConf = MODE_LIVE_CONFIG[mode || "credo"] || MODE_LIVE_CONFIG.credo;
           const consolidatedMsg: ChatMessage = {
@@ -1530,8 +1532,8 @@ export function useChat() {
           setMessages((prev) => [...prev, consolidatedMsg]);
         } else {
           // ═══ ANCIEN — N bulles separees (code S102, INTACT) ═══
-          for (let i = 0; i < res.perspectives.length; i++) {
-            const persp = res.perspectives[i];
+          for (let i = 0; i < perspectives.length; i++) {
+            const persp = perspectives[i];
 
             // Délai entre les réponses (sauf la première) — effet séquentiel
             if (i > 0) {
@@ -1570,7 +1572,7 @@ export function useChat() {
           }
 
           // Barre de synthese apres multi-bot (ancien)
-          if (res.perspectives.length > 1) {
+          if (perspectives.length > 1) {
             const syntheseMsg: ChatMessage = {
               id: `msg-synthese-${Date.now()}`,
               role: "assistant",

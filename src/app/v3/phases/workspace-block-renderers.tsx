@@ -537,7 +537,7 @@ function DiagnosticRenderer({ block, onAction }: BlockRendererProps) {
   // Score normalization: handles both /10 and /100 scales from backend
   const isScale10 = data?.axes ? data.axes.every(a => a.score <= 10) : true;
   const normScore = (s: number) => isScale10 ? s * 10 : s;
-  const globalScore = data?.score_global ?? (data?.axes ? Math.round(data.axes.reduce((sum, a) => sum + normScore(a.score), 0) / data.axes.length) : 0);
+  const globalScore = data?.score_global ?? (data?.axes ? Math.round(data.axes.reduce((sum, a) => sum + normScore(a.score), 0) / (data.axes.length || 1)) : 0);
   const criticalCount = data?.axes?.filter(a => normScore(a.score) < 40).length ?? 0;
   const scoreStyle = (s: number) => {
     const pct = isScale10 ? s * 10 : s;
