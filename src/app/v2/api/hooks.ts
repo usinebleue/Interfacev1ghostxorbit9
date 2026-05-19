@@ -1233,27 +1233,7 @@ export function useChat() {
     setActiveRoster((prev) => {
       if (prev.includes(code)) return prev;
       if (prev.length >= 3) return prev; // max 3
-      const newRoster = [...prev, code];
-
-      // Animation d'ajout — multi-thinking variant "join" (comme les simulations)
-      // content = bot code → le rendu affiche "X rejoint la discussion" avec avatar spinner
-      const joinId = `msg-join-${Date.now()}`;
-      const joinMsg: ChatMessage = {
-        id: joinId,
-        role: "assistant",
-        content: code,
-        timestamp: new Date(),
-        agent: code,
-        msgType: "multi-thinking" as any,
-      };
-      setMessages((prevMsgs) => [...prevMsgs, joinMsg]);
-
-      // S102 — Fallback: auto-remove apres 8s si l'intro ne remplace pas le join
-      setTimeout(() => {
-        setMessages((prevMsgs) => prevMsgs.filter((m) => m.id !== joinId));
-      }, 8000);
-
-      return newRoster;
+      return [...prev, code];
     });
   }, []);
 
@@ -1269,81 +1249,11 @@ export function useChat() {
     setActiveRoster(limited.length > 0 ? limited : ["CEOB"]);
   }, []);
 
-  // ── Auto-introduction — quand un nouveau bot rejoint, il lit la conversation et se présente ──
+  // Roster tracking ref — auto-intro moved to workspace (LiveDiscussionView handleToggleBot)
   const prevRosterRef = useRef<string[]>(["CEOB"]);
   useEffect(() => {
-    const prevRoster = prevRosterRef.current;
-    const newBot = activeRoster.find((code) => !prevRoster.includes(code));
     prevRosterRef.current = [...activeRoster];
-
-    // Pas d'intro si pas de nouveau bot ou pas de conversation en cours
-    if (!newBot) return;
-    const realMsgs = messages.filter(
-      (m) => (m.role === "user" || m.role === "assistant") &&
-        m.content && !["multi-thinking", "typing"].includes((m.msgType as string) || "")
-    );
-    if (realMsgs.length === 0) return;
-
-    // Après l'animation (3s), demander au bot de se présenter
-    const introTimer = setTimeout(async () => {
-      // Typing animation pendant l'appel API
-      const typingId = `msg-typing-intro-${Date.now()}`;
-      // S102 — Remplacer le join message par typing (meme slot, pas de gap visuel)
-      setMessages((prev) => {
-        const hasJoin = prev.some((m) => (m.msgType as string) === "multi-thinking" && m.content === newBot);
-        if (hasJoin) {
-          return prev.map((m) =>
-            ((m.msgType as string) === "multi-thinking" && m.content === newBot)
-              ? { id: typingId, role: "assistant" as const, content: "", timestamp: new Date(), agent: newBot, msgType: "typing" as any }
-              : m
-          );
-        }
-        return [...prev, { id: typingId, role: "assistant" as const, content: "", timestamp: new Date(), agent: newBot, msgType: "typing" as any }];
-      });
-
-      try {
-        const history = realMsgs.slice(-10).map((m) => ({
-          role: m.role, content: m.content.slice(0, 500), agent: m.agent,
-        }));
-
-        const res = await api.chatMulti({
-          message: "Tu viens de rejoindre une discussion en cours entre Carl et tes collègues. " +
-            "Présente brièvement (3-4 phrases max) ce que tu peux apporter sur le sujet en cours, basé sur ton expertise. " +
-            "Sois direct et concis. Ne répète pas ce qui a été dit. Propose 2-3 pistes concrètes de ta perspective.",
-          user_id: 1,
-          agents: [newBot],
-          history,
-        });
-
-        const perspectives = res?.perspectives || [];
-        if (perspectives.length > 0) {
-          const persp = perspectives[0];
-          const modeConf = MODE_LIVE_CONFIG.credo;
-          const introMsg: ChatMessage = {
-            id: `msg-${++idCounter.current}`,
-            role: "assistant",
-            content: persp.contenu,
-            timestamp: new Date(),
-            agent: persp.agent,
-            tier: persp.tier,
-            options: (persp.options?.length ?? 0) > 0 ? persp.options.map((o: any) => o.label) : modeConf.options,
-            msgType: "consultation",
-            branchLabel: `Introduction — ${persp.nom}`,
-          };
-          // S102 — Remplacer typing par intro (meme slot, transition fluide)
-          setMessages((prev) => prev.map((m) => m.id === typingId ? introMsg : m));
-        } else {
-          setMessages((prev) => prev.filter((m) => m.id !== typingId));
-        }
-      } catch (e) {
-        // S102 — Retirer le typing en cas d'erreur
-        setMessages((prev) => prev.filter((m) => m.id !== typingId));
-        console.error("Bot intro failed:", e);
-      }
-    }, 3200); // 3.2s = juste après la fin de l'animation join (3s)
-
-    return () => clearTimeout(introTimer);
-  }, [activeRoster]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeRoster]);
 
   const newConversation = useCallback((initialBot?: string, workPhase?: string) => {
     // Park current thread if it has messages

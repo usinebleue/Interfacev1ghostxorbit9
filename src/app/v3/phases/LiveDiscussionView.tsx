@@ -874,14 +874,58 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
     setReflexionFlow(null);
   }, [reflexionFlow, activeBotCode, addWorkspaceBlock, currentCredoLetter]);
 
-  // Hero tab: toggle bot in roster
-  const handleToggleBot = useCallback((code: string) => {
+  // Hero tab: toggle bot in roster → workspace (not discussion)
+  const [rosterLoadingBots, setRosterLoadingBots] = useState<Set<string>>(new Set());
+  const handleToggleBot = useCallback(async (code: string) => {
     if (activeRoster.includes(code)) {
       removeBotFromRoster(code);
-    } else {
-      addBotToRoster(code);
+      return;
     }
-  }, [activeRoster, addBotToRoster, removeBotFromRoster]);
+    // Add to roster (state tracking for UI checkmarks)
+    addBotToRoster(code);
+    // Create workspace block via chatMulti (same pattern as SuggestedExpertsPanel)
+    if (rosterLoadingBots.has(code)) return;
+    setRosterLoadingBots(prev => new Set([...prev, code]));
+    try {
+      const lastUserMsg = messages.filter((m: any) => m.role === "user").pop()?.content || "";
+      const lastBotMsg = messages.filter((m: any) => m.role === "assistant" && m.content).pop()?.content || "";
+      const recentCtx = workspaceBlocks.slice(-3).map(b => `[${BOT_NAME[b.source || ""] || ""}] ${b.title}: ${(b.summary || "").substring(0, 150)}`).join("\n");
+      const context = lastUserMsg || lastBotMsg
+        ? `Question: ${lastUserMsg}\n\nAnalyse en cours: ${lastBotMsg.substring(0, 500)}\n\nContexte recent:\n${recentCtx}`
+        : "Présente brièvement (3-4 phrases max) ce que tu peux apporter dans cette discussion, basé sur ton expertise. Sois direct et concis. Propose 2-3 pistes concrètes.";
+
+      const res = await api.chatMulti({
+        message: context,
+        user_id: 1,
+        agents: [code],
+        primary_agent: code,
+        workspace_phase: activePhase,
+      });
+
+      const persp = res.perspectives?.[0];
+      if (persp) {
+        const blockType = detectBlockTypeFrontend(persp.contenu);
+        addWorkspaceBlock({
+          id: `roster-${code}-${Date.now()}`,
+          type: blockType,
+          title: generateExpertBlockTitle(BOT_NAME[code] || code, persp.contenu, "Consultation"),
+          summary: persp.contenu,
+          merge_label: "Expert",
+          structured_data: extractStructuredDataFrontend(persp.contenu, blockType),
+          credo_step: currentCredoLetter as "C" | "R" | "E" | "D" | "O",
+          credo_sub_section: "experts",
+          confidence: 0.7,
+          source: code,
+          sourceType: "chat",
+          timestamp: Date.now(),
+        });
+      }
+    } catch (err) {
+      console.error("[RosterAdd] Error adding expert to workspace:", err);
+    } finally {
+      setRosterLoadingBots(prev => { const s = new Set(prev); s.delete(code); return s; });
+    }
+  }, [activeRoster, addBotToRoster, removeBotFromRoster, messages, workspaceBlocks, addWorkspaceBlock, activePhase, currentCredoLetter, rosterLoadingBots]);
 
   // W.0: Reset sub-section when CREDO step changes + sync filterStep
   useEffect(() => {
@@ -1050,7 +1094,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
 
           {/* TAB: Ajouter un agent — roster panel */}
           {activeHeroTab === "agents" && (
-            <AgentRosterPanel activeRoster={activeRoster} onToggleBot={handleToggleBot} />
+            <AgentRosterPanel activeRoster={activeRoster} onToggleBot={handleToggleBot} loadingBots={rosterLoadingBots} />
           )}
 
           {/* TAB: Modes de reflexion — existing reflexion flow (Etape 5: flow simulation-style) */}
@@ -1665,9 +1709,10 @@ const _ROSTER_DEPT: Record<string, string> = {
   CHROB: "RH", CLOB: "Juridique", CISOB: "Securite", CINOB: "Innovation",
 };
 
-function AgentRosterPanel({ activeRoster, onToggleBot }: {
+function AgentRosterPanel({ activeRoster, onToggleBot, loadingBots }: {
   activeRoster: string[];
   onToggleBot: (botCode: string) => void;
+  loadingBots?: Set<string>;
 }) {
   return (
     <div className="space-y-4 px-1">
@@ -1696,7 +1741,7 @@ function AgentRosterPanel({ activeRoster, onToggleBot }: {
                 </div>
                 <div className="text-[10px] text-gray-400 truncate mt-0.5">{dept}</div>
               </div>
-              {inRoster && <CheckCircle2 className="w-4 h-4 text-sky-500 shrink-0" />}
+              {loadingBots?.has(code) ? <Loader2 className="w-4 h-4 text-sky-400 animate-spin shrink-0" /> : inRoster && <CheckCircle2 className="w-4 h-4 text-sky-500 shrink-0" />}
             </button>
           );
         })}
