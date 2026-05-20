@@ -13,7 +13,7 @@ import {
   Check, X, Trash2, Code,
   ThumbsUp, ThumbsDown, Trophy, Zap, Shield,
   Target, Globe, ExternalLink,
-  MessageCircle, Mic, Video,
+  MessageCircle, MessageSquare, Mic, Video,
   BarChart3, Loader2, ChevronDown, Users, Gauge,
 } from "lucide-react";
 import { cn } from "../../components/ui/utils";
@@ -23,7 +23,7 @@ import { ThinkingAnimation, BotAvatar } from "../simulation/primitives";
 import type { ThinkingStep } from "../simulation/sim-types";
 import { BOT_NAME } from "../../v2/api/types";
 import { api } from "../../v2/api/client";
-import type { WorkspaceBlock, WorkspaceBlockType, ActionSuggestion } from "../core/types";
+import type { WorkspaceBlock, WorkspaceBlockType, WorkspaceBlockMaturity, ActionSuggestion } from "../core/types";
 
 // ═══ Lucide icons used by inline section actions ═══
 import { ArrowRight, RefreshCw, Merge } from "lucide-react";
@@ -177,6 +177,30 @@ export const BOT_ACCENT_BORDERS: Record<string, string> = {
   CROB: "border-l-amber-400",
   CLOB: "border-l-indigo-400",
   CISOB: "border-l-zinc-400",
+};
+
+// Hex colors for inline border-left styles (accent per bot)
+const BOT_ACCENT_HEX: Record<string, string> = {
+  BCO: "#60a5fa", CEOB: "#60a5fa",
+  BCT: "#a78bfa", CTOB: "#a78bfa",
+  BCF: "#34d399", CFOB: "#34d399",
+  BCM: "#f472b6", CMOB: "#f472b6",
+  BCS: "#f87171", CSOB: "#f87171",
+  BOO: "#fb923c", COOB: "#fb923c",
+  CPOB: "#94a3b8",
+  CHROB: "#2dd4bf",
+  CINOB: "#fb7185",
+  CROB: "#fbbf24",
+  CLOB: "#818cf8",
+  CISOB: "#a1a1aa",
+};
+
+// ═══ Maturity badges (S117 Phase 1A) ═══
+const MATURITY_CONFIG: Record<string, { label: string; bg: string; text: string; dot: string }> = {
+  draft:     { label: "Brouillon", bg: "bg-gray-100",    text: "text-gray-600",    dot: "bg-gray-400" },
+  refined:   { label: "Affiné",    bg: "bg-blue-100",    text: "text-blue-700",    dot: "bg-blue-500" },
+  validated: { label: "Validé",    bg: "bg-emerald-100", text: "text-emerald-700", dot: "bg-emerald-500" },
+  deployed:  { label: "Déployé",   bg: "bg-violet-100",  text: "text-violet-700",  dot: "bg-violet-500" },
 };
 
 // ═══ Source badges enrichis (B.11) ═══
@@ -426,6 +450,13 @@ function BlockWrapper({ block, onAction, label, labelColor, children }: BlockRen
         )}>
           {Math.round(block.confidence * 100)}%
         </span>
+        {/* S117: Maturity badge */}
+        {block.maturity && MATURITY_CONFIG[block.maturity] && (
+          <span className={cn("flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium", MATURITY_CONFIG[block.maturity].bg, MATURITY_CONFIG[block.maturity].text)}>
+            <span className={cn("w-1.5 h-1.5 rounded-full", MATURITY_CONFIG[block.maturity].dot)} />
+            {MATURITY_CONFIG[block.maturity].label}
+          </span>
+        )}
         <h4 className="text-sm font-bold text-gray-900 flex-1 truncate">{block.title}</h4>
         {/* Sprint 2A: Hover "Modifier" flottant (pattern WorkspaceSection.tsx L142-156) */}
         <button
@@ -489,6 +520,11 @@ const BLOCK_CTAS: Record<string, CompactCTA[]> = {
   risques:         [
     { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
     { label: "Challenger", icon: Swords, action: "challenge", color: "border-amber-200 text-amber-700 hover:bg-amber-50", activeColor: "" },
+  ],
+  recalibration:   [
+    { label: "Valider ✓", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
+    { label: "Approfondir", icon: Search, action: "deepen", color: "border-sky-200 text-sky-700 hover:bg-sky-50", activeColor: "" },
+    { label: "Challenger", icon: Swords, action: "challenge", color: "border-orange-200 text-orange-700 hover:bg-orange-50", activeColor: "" },
   ],
   _default:        [
     { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
@@ -2736,6 +2772,100 @@ function CatchingUpRenderer({ block }: BlockRendererProps) {
   );
 }
 
+// ═══ S117 Phase 3C: Recalibration — synthese multi-bot apres delegation ═══
+
+function RecalibrationRenderer({ block, onAction }: BlockRendererProps) {
+  const data = block.structured_data || {};
+  const contributions: { bot: string; bot_name?: string; summary: string; type?: string }[] = data.contributions || [];
+  const recommendation = data.recommendation || block.summary;
+  const botName = BOT_NAME[block.source] || block.source;
+  const badgeColors = BOT_BADGE_COLORS[block.source] || { bg: "bg-blue-100", text: "text-blue-700" };
+  const accentColor = BOT_ACCENT_HEX[block.source] || "#60a5fa";
+
+  const [appeared, setAppeared] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setAppeared(true), 80);
+    return () => clearTimeout(t);
+  }, []);
+
+  return (
+    <div className={cn(
+      "rounded-xl overflow-hidden border border-gray-200 bg-white shadow-sm hover:shadow-md transition-all duration-300",
+      appeared ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3",
+    )}>
+      {/* Gradient header with bot color */}
+      <div className="px-4 py-2.5 border-b flex items-center gap-2.5" style={{ borderColor: accentColor + "33", background: `linear-gradient(to right, ${accentColor}11, transparent)` }}>
+        <RefreshCw className="h-4 w-4 shrink-0" style={{ color: accentColor }} />
+        <h3 className="text-xs font-bold text-gray-900 flex-1 truncate">Synthese et recommandation — {botName}</h3>
+        <BotAvatar code={block.source} size="sm" />
+        <span className={cn("text-[9px] font-medium px-2 py-0.5 rounded-full shrink-0", badgeColors.bg, badgeColors.text)}>Chef de projet</span>
+      </div>
+
+      <div className="p-4 space-y-3">
+        {/* Mini-cards sources — which bots contributed */}
+        {contributions.length > 0 && (
+          <div className="flex gap-2">
+            {contributions.map((c, i) => {
+              const srcColors = BOT_BADGE_COLORS[c.bot] || { bg: "bg-gray-100", text: "text-gray-700" };
+              const srcName = c.bot_name || BOT_NAME[c.bot] || c.bot;
+              return (
+                <div key={i} className={cn("flex-1 px-2 py-1.5 rounded-lg border", srcColors.bg, "border-opacity-50")} style={{ borderColor: (BOT_ACCENT_HEX[c.bot] || "#ccc") + "44" }}>
+                  <div className="flex items-center gap-1 mb-0.5">
+                    <BotAvatar code={c.bot} size="xs" />
+                    <span className={cn("text-[8px] font-bold", srcColors.text)}>{srcName}</span>
+                  </div>
+                  <p className="text-[9px] text-gray-600 line-clamp-2">{c.summary}</p>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Recommendation box in bot accent color */}
+        <div className="rounded-lg p-2.5 border" style={{ backgroundColor: accentColor + "0d", borderColor: accentColor + "33" }}>
+          <p className="text-[10px] font-bold mb-1" style={{ color: accentColor }}>Strategie recommandee (recalibree)</p>
+          <div className="text-[10px] text-gray-700 leading-relaxed"
+            dangerouslySetInnerHTML={{ __html: formatBlockMarkdown(recommendation) }}
+          />
+        </div>
+
+        {/* Boomerang return actions */}
+        <div className="flex items-center gap-1.5 pt-2 border-t border-gray-100">
+          <button
+            onClick={() => onAction("pin", block.id)}
+            className="flex items-center gap-1 px-2 py-1 rounded text-[9px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-pointer hover:bg-emerald-100 transition-colors"
+          >
+            <CheckCircle2 className="h-3 w-3" /> Valider la strategie ✓
+          </button>
+          <button
+            onClick={() => onAction("deepen", block.id)}
+            className="flex items-center gap-1 px-2 py-1 rounded text-[9px] font-medium bg-sky-50 text-sky-700 border border-sky-200 cursor-pointer hover:bg-sky-100 transition-colors"
+          >
+            <Search className="h-3 w-3" /> Approfondir
+          </button>
+          <button
+            onClick={() => onAction("challenge", block.id)}
+            className="flex items-center gap-1 px-2 py-1 rounded text-[9px] font-medium bg-orange-50 text-orange-700 border border-orange-200 cursor-pointer hover:bg-orange-100 transition-colors"
+          >
+            <Swords className="h-3 w-3" /> Challenger
+          </button>
+          <div className="flex-1" />
+          <button
+            onClick={() => {
+              window.dispatchEvent(new CustomEvent("bt-delegate-task", {
+                detail: { titre: block.title, bot: block.source, blockId: block.id },
+              }));
+            }}
+            className="flex items-center gap-1 px-2 py-1 rounded text-[9px] font-medium bg-violet-50 text-violet-700 border border-violet-200 cursor-pointer hover:bg-violet-100 transition-colors"
+          >
+            + Ajouter un expert
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ═══ Registre central ═══
 
 const BLOCK_RENDERERS: Record<WorkspaceBlockType, React.FC<BlockRendererProps>> = {
@@ -2767,6 +2897,30 @@ const BLOCK_RENDERERS: Record<WorkspaceBlockType, React.FC<BlockRendererProps>> 
   docforge_tableur: BudgetRenderer,
   action_result: LibreRenderer,
   catching_up: CatchingUpRenderer,
+  // S117 — New types (fallback to closest renderer or LibreRenderer)
+  swot: EtatDesLieuxRenderer,
+  positionnement: LibreRenderer,
+  roadmap: TimelineRenderer,
+  sprint_plan: PlanActionRenderer,
+  cahier_charges: RapportRenderer,
+  persona: LibreRenderer,
+  proposition_commerciale: RapportRenderer,
+  recalibration: RecalibrationRenderer,
+  consultation: LibreRenderer,
+  delegation: LibreRenderer,
+  meeting_notes: LibreRenderer,
+  compte_rendu: RapportRenderer,
+  scorecard: MetriquesRenderer,
+  dashboard: MetriquesRenderer,
+  audit: DiagnosticRenderer,
+  projection: BudgetRenderer,
+  roi_analysis: MetriquesRenderer,
+  cashflow: BudgetRenderer,
+  organigramme: LibreRenderer,
+  plan_formation: PlanActionRenderer,
+  fiche_poste: LibreRenderer,
+  poc_plan: PlanActionRenderer,
+  veille_techno: BenchmarkRenderer,
 };
 
 // ═══ Default action suggestions per bot role ═══
@@ -2842,8 +2996,6 @@ function ExpertBlockWrapper({ block, onAction, children }: BlockRendererProps & 
   const { primaryBotCode } = useContext(BlockDisplayContext);
   const isPrimaryBot = !!(primaryBotCode && block.source === primaryBotCode);
   const [appeared, setAppeared] = useState(false);
-  const [expanded, setExpanded] = useState(true); // Blocks start expanded — no auto-collapse
-  const [correction, setCorrection] = useState("");
 
   useEffect(() => {
     const t = setTimeout(() => setAppeared(true), 80);
@@ -2851,140 +3003,95 @@ function ExpertBlockWrapper({ block, onAction, children }: BlockRendererProps & 
   }, []);
 
   const botName = BOT_NAME[block.source] || block.source;
-  const botRole = BOT_ROLE[block.source] || "Expert";
+  const accentColor = BOT_ACCENT_HEX[block.source] || "#60a5fa";
+  const badgeColors = BOT_BADGE_COLORS[block.source] || { bg: "bg-gray-100", text: "text-gray-700" };
+  const isLoading = !block.summary || block.summary.trim() === "";
+  const timestamp = new Date(block.timestamp).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" });
 
-  // Confidence-based coloring (pattern DiagnosticRenderer scoreStyle)
-  const pct = Math.round(block.confidence * 100);
-  const confStyle = pct < 40
-    ? { border: "border-orange-400", bg: "bg-gradient-to-b from-orange-50 to-white", hdr: "bg-orange-100/60", badge: "bg-orange-600 text-white", bar: "bg-orange-500" }
-    : pct < 70
-    ? { border: "border-amber-300", bg: "bg-gradient-to-b from-amber-50 to-white", hdr: "bg-amber-100/60", badge: "bg-amber-500 text-white", bar: "bg-amber-500" }
-    : { border: "border-emerald-300", bg: "bg-gradient-to-b from-emerald-50 to-white", hdr: "bg-emerald-100/60", badge: "bg-emerald-500 text-white", bar: "bg-emerald-500" };
-
-  // Compact summary for collapsed state
-  const compactSummary = (block.summary || "").replace(/\n/g, " ").slice(0, 100) + ((block.summary || "").length > 100 ? "..." : "");
-
-  const handleCorrection = () => {
-    if (!correction.trim()) return;
-    onAction("correct", block.id + "||" + correction.trim());
-    setCorrection("");
-  };
+  // StatusBadge logic
+  const statusBadge = isLoading
+    ? { label: "En cours...", cls: "bg-yellow-100 text-yellow-700 animate-pulse" }
+    : block.maturity === "draft"
+    ? { label: "Brouillon", cls: "bg-gray-100 text-gray-600" }
+    : { label: "Termine", cls: "bg-emerald-100 text-emerald-600" };
 
   return (
     <div
       className={cn(
-        "rounded-xl overflow-hidden border-2 shadow-sm transition-all duration-300 hover:shadow-md",
-        confStyle.border, confStyle.bg,
+        "rounded-xl overflow-hidden border border-gray-200 bg-white shadow-sm hover:shadow-md transition-all duration-300",
         appeared ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3",
       )}
     >
-      {/* Header — pattern DiagnosticRenderer (colored header + score badge) */}
-      <div
-        className={cn("px-3 py-2.5 flex items-center gap-2.5 cursor-pointer select-none", confStyle.hdr)}
-        onClick={() => setExpanded(!expanded)}
-      >
-        <BotAvatar code={block.source} size="md" />
-        <div className="flex-1 min-w-0">
-          <span className="text-xs font-bold text-gray-900">{botName}</span>
-          <span className="text-[10px] text-gray-500 ml-1.5">{botRole}</span>
-        </div>
-        <div className={cn("flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold", confStyle.badge)}>
-          {pct}%
-        </div>
-        <ChevronDown className={cn("h-3.5 w-3.5 text-gray-400 transition-transform duration-300 shrink-0", expanded && "rotate-180")} />
+      {/* Header — clean: avatar + "Name — Title" + status + timestamp */}
+      <div className="px-4 py-2.5 border-b border-gray-100 flex items-center gap-2.5">
+        <BotAvatar code={block.source} size="sm" />
+        <h3 className="text-xs font-bold text-gray-900 flex-1 truncate">{botName} — {block.title}</h3>
+        <span className={cn("text-[9px] font-medium px-2 py-0.5 rounded-full shrink-0", statusBadge.cls)}>{statusBadge.label}</span>
+        <span className="text-[9px] text-gray-400 shrink-0">{timestamp}</span>
       </div>
 
-      {/* Body */}
-      <div className="px-3 py-2.5 space-y-2">
-        {/* Title */}
-        <h3 className="text-[11px] font-bold text-gray-900">{block.title}</h3>
-
-        {/* Confidence bar */}
-        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-          <div className={cn("h-full rounded-full transition-all", confStyle.bar)} style={{ width: `${pct}%`, transition: "width 0.8s ease-out" }} />
-        </div>
-
-        {/* Collapsed summary */}
-        {!expanded && (
-          <p className="text-[10px] text-gray-600 font-medium">{compactSummary}</p>
-        )}
-
-        {/* Expanded content — OUVERT par defaut */}
-        {expanded && (
-          <>
-            <div className="text-[11px] text-gray-700 leading-relaxed">
-              {children}
+      {/* Body — loading skeleton OR content with accent border */}
+      {isLoading ? (
+        <>
+          <div className="px-4 py-3 flex items-center gap-3" style={{ borderLeft: `3px solid ${accentColor}` }}>
+            <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-white text-[9px] font-bold shrink-0", badgeColors.bg.replace("bg-", "bg-"))}>
+              <BotAvatar code={block.source} size="sm" />
             </div>
+            <div className="flex-1 space-y-1.5 animate-pulse">
+              <div className="h-2.5 bg-gray-200 rounded w-3/4" />
+              <div className="h-2.5 bg-gray-200 rounded w-full" />
+              <div className="h-2.5 bg-gray-200 rounded w-1/2" />
+            </div>
+          </div>
+          <div className="px-4 pb-2">
+            <p className="text-[10px] text-gray-400 italic">{botName} analyse...</p>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="px-4 py-3 text-[11px] text-gray-700 leading-relaxed" style={{ borderLeft: `3px solid ${accentColor}` }}>
+            {children}
+          </div>
 
-            {/* Input de correction + actions — SEULEMENT pour bots secondaires (pas le bot primaire) */}
-            {!block.is_action_result && !isPrimaryBot && (
-              <div className="mt-2 pt-2 border-t border-gray-200">
-                <div className="flex gap-1.5">
-                  <input
-                    type="text"
-                    placeholder="Corriger ou preciser..."
-                    value={correction}
-                    onChange={(e) => setCorrection(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter") handleCorrection(); }}
-                    className="flex-1 text-[11px] border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-200 bg-white placeholder:text-gray-300"
-                  />
-                  {correction.trim() && (
-                    <button
-                      onClick={handleCorrection}
-                      className="px-2.5 py-1.5 rounded-lg bg-blue-500 text-white text-[10px] font-bold hover:bg-blue-600 transition-colors cursor-pointer"
-                    >
-                      Corriger
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Expert actions: Relancer + Approfondir + Challenger — SEULEMENT bots secondaires */}
-            {!block.is_action_result && !isPrimaryBot && (
-              <div className="mt-2 pt-2 border-t border-gray-100 flex flex-wrap gap-2">
-                <button
-                  onClick={(e) => { e.stopPropagation(); onAction("rework", block.id); }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors cursor-pointer border-violet-200 text-violet-700 hover:bg-violet-50"
-                >
-                  <RotateCcw className="h-3.5 w-3.5" /> Relancer
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); onAction("deepen", block.id); }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors cursor-pointer border-blue-200 text-blue-700 hover:bg-blue-50"
-                >
-                  <Search className="h-3.5 w-3.5" /> Approfondir
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); onAction("challenge", block.id); }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors cursor-pointer border-amber-200 text-amber-700 hover:bg-amber-50"
-                >
-                  <Swords className="h-3.5 w-3.5" /> Challenger
-                </button>
-              </div>
-            )}
-
-            {/* Action buttons contextuels — SEULEMENT bots secondaires */}
-            {!block.is_action_result && !isPrimaryBot && (() => {
-              const actions = getActionsForBlock(block);
-              if (actions.length === 0) return null;
-              return (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {actions.map((a, idx) => (
-                    <button
-                      key={idx}
-                      onClick={(e) => { e.stopPropagation(); onAction("execute_action", JSON.stringify(a)); }}
-                      className="px-3 py-1.5 rounded-lg border border-sky-200 text-sky-700 text-xs font-bold bg-sky-50/50 hover:bg-sky-100 transition-colors cursor-pointer"
-                    >
-                      ⚡ {a.label}
-                    </button>
-                  ))}
-                </div>
-              );
-            })()}
-          </>
-        )}
-      </div>
+          {/* Boomerang action buttons — secondary bots only */}
+          {!block.is_action_result && !isPrimaryBot && (
+            <div className="flex items-center gap-1.5 px-4 py-2 border-t border-gray-100">
+              <button
+                onClick={() => onAction("deepen", block.id)}
+                className="flex items-center gap-1 px-2 py-1 rounded text-[9px] font-medium bg-sky-50 text-sky-700 border border-sky-200 cursor-pointer hover:bg-sky-100 transition-colors"
+              >
+                <Search className="h-3 w-3" /> Approfondir
+              </button>
+              <button
+                onClick={() => onAction("challenge", block.id)}
+                className="flex items-center gap-1 px-2 py-1 rounded text-[9px] font-medium bg-orange-50 text-orange-700 border border-orange-200 cursor-pointer hover:bg-orange-100 transition-colors"
+              >
+                <Swords className="h-3 w-3" /> Challenger
+              </button>
+              <button
+                onClick={() => onAction("challenge", block.id)}
+                className="flex items-center gap-1 px-2 py-1 rounded text-[9px] font-medium bg-violet-50 text-violet-700 border border-violet-200 cursor-pointer hover:bg-violet-100 transition-colors"
+              >
+                <MessageSquare className="h-3 w-3" /> Debattre
+              </button>
+              {/* Contextual actions per bot role */}
+              {(() => {
+                const actions = getActionsForBlock(block);
+                if (actions.length === 0) return null;
+                return actions.map((a, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => onAction("execute_action", JSON.stringify(a))}
+                    className="flex items-center gap-1 px-2 py-1 rounded text-[9px] font-medium bg-sky-50 text-sky-700 border border-sky-200 cursor-pointer hover:bg-sky-100 transition-colors"
+                  >
+                    <Zap className="h-3 w-3" /> {a.label}
+                  </button>
+                ));
+              })()}
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
@@ -3050,6 +3157,30 @@ export const BLOCK_TYPE_LABELS: Record<WorkspaceBlockType, string> = {
   docforge_tableur: "Tableur",
   action_result: "Action",
   catching_up: "En cours...",
+  // S117 — New type labels
+  swot: "SWOT",
+  positionnement: "Positionnement",
+  roadmap: "Roadmap",
+  sprint_plan: "Sprint Plan",
+  cahier_charges: "Cahier des charges",
+  persona: "Persona",
+  proposition_commerciale: "Proposition",
+  recalibration: "Recalibration",
+  consultation: "Consultation",
+  delegation: "Delegation",
+  meeting_notes: "Notes reunion",
+  compte_rendu: "Compte rendu",
+  scorecard: "Scorecard",
+  dashboard: "Dashboard",
+  audit: "Audit",
+  projection: "Projection",
+  roi_analysis: "Analyse ROI",
+  cashflow: "Cashflow",
+  organigramme: "Organigramme",
+  plan_formation: "Plan formation",
+  fiche_poste: "Fiche de poste",
+  poc_plan: "Plan POC",
+  veille_techno: "Veille techno",
 };
 
 // ═══ Sprint 2A Phase 6A: Skeleton loading block (pattern WorkspaceSection.tsx L104-109) ═══

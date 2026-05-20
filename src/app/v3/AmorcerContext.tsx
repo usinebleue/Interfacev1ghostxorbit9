@@ -159,6 +159,12 @@ interface AmorcerState {
   reflexionContext: string | null;
   setReflexionContext: (c: string | null) => void;
 
+  // S117-B: Reflexion setup (qualification before launch) and flow (active mode execution)
+  reflexionSetup: { mode: string; participants: string; experts: string[]; subject: string } | null;
+  setReflexionSetup: (s: { mode: string; participants: string; experts: string[]; subject: string } | null) => void;
+  reflexionFlow: { mode: string; stages: { id: string; title: string; subtitle?: string }[]; currentStage: number; results: Record<string, string> } | null;
+  setReflexionFlow: (f: { mode: string; stages: { id: string; title: string; subtitle?: string }[]; currentStage: number; results: Record<string, string> } | null) => void;
+
   // Section active dans le right panel (blueprint, dashboard, etc.)
   rightSection: string | null;
   setRightSection: (s: string | null) => void;
@@ -288,6 +294,9 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
   const [chatStage, setChatStage] = useState(0);
   const [typed, setTyped] = useState(false);
   const [reflexionContext, setReflexionContextRaw] = useState<string | null>(() => lsGet("reflexionContext", null));
+  // S117-B: Reflexion setup + flow state
+  const [reflexionSetup, setReflexionSetup] = useState<{ mode: string; participants: string; experts: string[]; subject: string } | null>(null);
+  const [reflexionFlow, setReflexionFlow] = useState<{ mode: string; stages: { id: string; title: string; subtitle?: string }[]; currentStage: number; results: Record<string, string> } | null>(null);
   // Parse URL une seule fois au mount
   const [initialURL] = useState(() => parseURL());
 
@@ -627,6 +636,7 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // ═══ Canvas auto-save — persister workspaceBlocks en DB (debounce 2s) — per-thread ═══
+  // Hybrid: localStorage (instant, above) + canvas API + workspace_blocks PostgreSQL table
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (workspaceBlocks.length === 0) return;
@@ -636,9 +646,27 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
       const { canvasKey } = getStorageKeys(activeThreadId, activeBotCode, activePhase);
+      // Path 1: Canvas API (legacy — workspace data blob)
       api.getOrCreateCanvas(canvasKey).then(canvas => {
         api.updateCanvas(canvas.id, { workspaceBlocks, chatStage, workflowItems });
       }).catch(() => { /* silent */ });
+      // Path 2: workspace_blocks PostgreSQL table (S117 — structured per-block persistence)
+      if (activeThreadId) {
+        const blocksPayload = workspaceBlocks.map((b, i) => ({
+          type: b.type,
+          title: b.title || "Bloc sans titre",
+          summary: b.summary,
+          structured_data: b.structured_data || {},
+          credo_step: b.credo_step,
+          credo_sub_section: b.credo_sub_section,
+          maturity: b.maturity || "draft",
+          source_bot: b.source,
+          source_bot_name: b.sourceName,
+          confidence: b.confidence,
+          position: i,
+        }));
+        api.saveWorkspaceBlocks({ discussion_id: activeThreadId, blocks: blocksPayload }).catch(() => { /* silent */ });
+      }
     }, 2000);
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
   }, [workspaceBlocks, chatStage, activeBotCode, activePhase, workflowItems, activeThreadId]);
@@ -731,16 +759,48 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
       }
     } catch {}
 
-    // Fallback: load from canvas API (ne PAS écraser si des blocks ont été ajoutés entre-temps)
-    api.getOrCreateCanvas(canvasKey).then(canvas => {
-      const data = canvas.data as any;
-      if (data?.workspaceBlocks?.length > 0) {
-        setWorkspaceBlocks(prev => prev.length > 0 ? prev : data.workspaceBlocks);
+    // Fallback 1: workspace_blocks PostgreSQL table (S117 — structured, per-thread)
+    api.loadWorkspaceBlocks(activeThreadId).then(res => {
+      if (res?.blocks?.length > 0) {
+        const restored: WorkspaceBlock[] = res.blocks.map((b: any) => ({
+          id: b.id?.toString() || `wb-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          type: b.type || "libre",
+          title: b.title || "Bloc",
+          summary: b.summary || "",
+          structured_data: b.structured_data || {},
+          credo_step: b.credo_step,
+          credo_sub_section: b.credo_sub_section,
+          maturity: b.maturity || "draft",
+          source: b.source_bot,
+          sourceName: b.source_bot_name,
+          confidence: b.confidence || 0,
+          timestamp: b.created_at ? new Date(b.created_at).getTime() : Date.now(),
+        }));
+        setWorkspaceBlocks(prev => prev.length > 0 ? prev : restored);
+        return; // PostgreSQL had data — skip canvas fallback
       }
-      if (typeof data?.chatStage === "number") {
-        setChatStage(prev => prev > 0 ? prev : data.chatStage);
-      }
-    }).catch(() => { /* silent — ne pas wiper les blocks existants */ });
+      // Fallback 2: canvas API (legacy blob — ne PAS écraser si des blocks ont été ajoutés entre-temps)
+      api.getOrCreateCanvas(canvasKey).then(canvas => {
+        const data = canvas.data as any;
+        if (data?.workspaceBlocks?.length > 0) {
+          setWorkspaceBlocks(prev => prev.length > 0 ? prev : data.workspaceBlocks);
+        }
+        if (typeof data?.chatStage === "number") {
+          setChatStage(prev => prev > 0 ? prev : data.chatStage);
+        }
+      }).catch(() => { /* silent */ });
+    }).catch(() => {
+      // PostgreSQL load failed — fall back to canvas API
+      api.getOrCreateCanvas(canvasKey).then(canvas => {
+        const data = canvas.data as any;
+        if (data?.workspaceBlocks?.length > 0) {
+          setWorkspaceBlocks(prev => prev.length > 0 ? prev : data.workspaceBlocks);
+        }
+        if (typeof data?.chatStage === "number") {
+          setChatStage(prev => prev > 0 ? prev : data.chatStage);
+        }
+      }).catch(() => { /* silent */ });
+    });
 
     // Push discussion URL when thread changes in a scoped phase
     if (THREAD_SCOPED_PHASES.includes(activePhase)) {
@@ -954,6 +1014,8 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
         chatStage, setChatStage,
         typed, setTyped,
         reflexionContext, setReflexionContext,
+        reflexionSetup, setReflexionSetup,
+        reflexionFlow, setReflexionFlow,
         rightSection, setRightSection,
         activeBotCode, setActiveBotCode,
         cockpitTab, setCockpitTab,

@@ -21,7 +21,8 @@ import {
   AlertTriangle, Lightbulb, Target, TrendingUp,
   Eye, Brain, Swords, Sparkles, Search,
   Crown, ArrowLeftRight, RotateCcw, Leaf, Shield,
-  MessageCircle, Users,
+  MessageCircle, Users, Globe, BarChart3, Scale,
+  MapPin, Wrench, Database, Star, ThumbsUp, ThumbsDown,
 } from "lucide-react";
 import { cn } from "../../components/ui/utils";
 import { SF } from "../core/styles";
@@ -92,6 +93,379 @@ const REFLEXION_MODE_COLORS: Record<string, { bg: string; text: string }> = {
   decision: { bg: "bg-green-100", text: "text-green-700" },
   innovation: { bg: "bg-pink-100", text: "text-pink-700" },
 };
+
+// ═══ S117-B: MODE_CONFIGS — 9 modes, 9 palettes, 9 sequences d'etapes ═══
+
+interface ModeStage {
+  id: string;
+  title: string;
+  subtitle: string;
+  icon: React.ElementType;
+  color: string; // tailwind class eg "bg-pink-50 text-pink-700"
+}
+
+interface ModeConfig {
+  id: string;
+  label: string;
+  icon: React.ElementType;
+  color: { bg: string; text: string; bgLight: string; accent: string; glow1: string; glow2: string };
+  stages: ModeStage[];
+}
+
+const MODE_CONFIGS: Record<string, ModeConfig> = {
+  brainstorm: {
+    id: "brainstorm", label: "Brainstorm", icon: Lightbulb,
+    color: { bg: "bg-amber-100", text: "text-amber-700", bgLight: "bg-amber-50", accent: "bg-amber-400", glow1: "bg-amber-100/70", glow2: "bg-yellow-100/40" },
+    stages: [
+      { id: "S", title: "Substituer", subtitle: "Remplacer un element", icon: RotateCcw, color: "bg-pink-50 text-pink-700" },
+      { id: "C", title: "Combiner", subtitle: "Fusionner des idees", icon: ArrowLeftRight, color: "bg-blue-50 text-blue-700" },
+      { id: "A", title: "Adapter", subtitle: "Transposer d'ailleurs", icon: Crown, color: "bg-violet-50 text-violet-700" },
+      { id: "M", title: "Modifier", subtitle: "Amplifier ou reduire", icon: Sparkles, color: "bg-amber-50 text-amber-700" },
+      { id: "P", title: "Proposer", subtitle: "Autre usage", icon: Lightbulb, color: "bg-emerald-50 text-emerald-700" },
+      { id: "E", title: "Eliminer", subtitle: "Supprimer le superflu", icon: AlertTriangle, color: "bg-red-50 text-red-700" },
+      { id: "R", title: "Reorganiser", subtitle: "Inverser l'ordre", icon: ArrowLeftRight, color: "bg-indigo-50 text-indigo-700" },
+    ],
+  },
+  analyser: {
+    id: "analyser", label: "Analyse", icon: Eye,
+    color: { bg: "bg-blue-100", text: "text-blue-700", bgLight: "bg-blue-50", accent: "bg-blue-400", glow1: "bg-blue-100/70", glow2: "bg-sky-100/40" },
+    stages: [
+      { id: "situation", title: "Situation actuelle", subtitle: "Etat des lieux", icon: Activity, color: "bg-blue-50 text-blue-700" },
+      { id: "forces", title: "Forces en presence", subtitle: "Atouts et leviers", icon: TrendingUp, color: "bg-sky-50 text-sky-700" },
+      { id: "contraintes", title: "Contraintes reelles", subtitle: "Limites et blocages", icon: AlertTriangle, color: "bg-amber-50 text-amber-700" },
+      { id: "risques", title: "Risques critiques", subtitle: "Scenarios negatifs", icon: Shield, color: "bg-red-50 text-red-700" },
+      { id: "leviers", title: "Leviers d'action", subtitle: "Opportunites cles", icon: Target, color: "bg-emerald-50 text-emerald-700" },
+    ],
+  },
+  debat: {
+    id: "debat", label: "Debat", icon: Swords,
+    color: { bg: "bg-red-100", text: "text-red-700", bgLight: "bg-red-50", accent: "bg-red-400", glow1: "bg-red-100/70", glow2: "bg-rose-100/40" },
+    stages: [
+      { id: "these", title: "THESE (Pour)", subtitle: "Arguments favorables", icon: ThumbsUp, color: "bg-emerald-50 text-emerald-700" },
+      { id: "antithese", title: "ANTITHESE (Contre)", subtitle: "Contre-arguments", icon: ThumbsDown, color: "bg-red-50 text-red-700" },
+      { id: "synthese", title: "SYNTHESE", subtitle: "Verdict et compromis", icon: Scale, color: "bg-indigo-50 text-indigo-700" },
+    ],
+  },
+  strategie: {
+    id: "strategie", label: "Strategie", icon: Target,
+    color: { bg: "bg-purple-100", text: "text-purple-700", bgLight: "bg-purple-50", accent: "bg-purple-400", glow1: "bg-purple-100/70", glow2: "bg-violet-100/40" },
+    stages: [
+      { id: "positionnement", title: "Positionnement", subtitle: "Ou sommes-nous?", icon: MapPin, color: "bg-purple-50 text-purple-700" },
+      { id: "moats", title: "Moats & avantages", subtitle: "Fossés defensifs", icon: Shield, color: "bg-violet-50 text-violet-700" },
+      { id: "sequencage", title: "Sequencage", subtitle: "Phases d'execution", icon: Target, color: "bg-indigo-50 text-indigo-700" },
+      { id: "paris", title: "Paris strategiques", subtitle: "Risques calcules", icon: Zap, color: "bg-blue-50 text-blue-700" },
+      { id: "anti", title: "Anti-strategie", subtitle: "Comment on perd", icon: Swords, color: "bg-red-50 text-red-700" },
+    ],
+  },
+  innovation: {
+    id: "innovation", label: "Innovation", icon: Sparkles,
+    color: { bg: "bg-pink-100", text: "text-pink-700", bgLight: "bg-pink-50", accent: "bg-pink-400", glow1: "bg-pink-100/70", glow2: "bg-rose-100/40" },
+    stages: [
+      { id: "analogies", title: "Analogies 3 industries", subtitle: "Inspiration croisee", icon: ArrowLeftRight, color: "bg-blue-50 text-blue-700" },
+      { id: "inversion", title: "Inversion", subtitle: "Et si l'inverse?", icon: RotateCcw, color: "bg-pink-50 text-pink-700" },
+      { id: "contrainte", title: "Contrainte extreme", subtitle: "10x moins cher?", icon: Zap, color: "bg-orange-50 text-orange-700" },
+      { id: "biomimetisme", title: "Biomimetisme", subtitle: "La nature resout", icon: Leaf, color: "bg-emerald-50 text-emerald-700" },
+    ],
+  },
+  decision: {
+    id: "decision", label: "Decision", icon: CheckCircle2,
+    color: { bg: "bg-green-100", text: "text-green-700", bgLight: "bg-green-50", accent: "bg-green-400", glow1: "bg-green-100/70", glow2: "bg-emerald-100/40" },
+    stages: [
+      { id: "reformuler", title: "Reformuler le choix", subtitle: "Clarifier la question", icon: MessageCircle, color: "bg-green-50 text-green-700" },
+      { id: "criteres", title: "Criteres ponderes", subtitle: "Poids et priorites", icon: BarChart3, color: "bg-emerald-50 text-emerald-700" },
+      { id: "matrice", title: "Matrice de decision", subtitle: "Score par option", icon: BarChart3, color: "bg-teal-50 text-teal-700" },
+      { id: "tradeoffs", title: "Trade-offs nommes", subtitle: "Ce qu'on sacrifie", icon: Scale, color: "bg-amber-50 text-amber-700" },
+      { id: "recommandation", title: "Recommandation", subtitle: "Le verdict", icon: CheckCircle2, color: "bg-blue-50 text-blue-700" },
+    ],
+  },
+  crise: {
+    id: "crise", label: "Crise", icon: Zap,
+    color: { bg: "bg-orange-100", text: "text-orange-700", bgLight: "bg-orange-50", accent: "bg-orange-400", glow1: "bg-orange-100/70", glow2: "bg-amber-100/40" },
+    stages: [
+      { id: "triage", title: "TRIAGE (0-4h)", subtitle: "Quoi en premier", icon: AlertTriangle, color: "bg-red-50 text-red-700" },
+      { id: "containment", title: "CONTAINMENT (4-24h)", subtitle: "Limiter les degats", icon: Shield, color: "bg-orange-50 text-orange-700" },
+      { id: "resolution", title: "RESOLUTION (24-72h)", subtitle: "Corriger le fond", icon: Wrench, color: "bg-amber-50 text-amber-700" },
+      { id: "postmortem", title: "POST-MORTEM", subtitle: "Apprendre et prevenir", icon: FileText, color: "bg-emerald-50 text-emerald-700" },
+    ],
+  },
+  deep_search: {
+    id: "deep_search", label: "Deep Search", icon: Globe,
+    color: { bg: "bg-cyan-100", text: "text-cyan-700", bgLight: "bg-cyan-50", accent: "bg-cyan-400", glow1: "bg-cyan-100/70", glow2: "bg-sky-100/40" },
+    stages: [
+      { id: "tendances", title: "Tendances", subtitle: "Ou va le marche", icon: TrendingUp, color: "bg-cyan-50 text-cyan-700" },
+      { id: "benchmarks", title: "Benchmarks", subtitle: "Qui fait quoi", icon: BarChart3, color: "bg-blue-50 text-blue-700" },
+      { id: "pratiques", title: "Meilleures pratiques", subtitle: "Ce qui marche", icon: Star, color: "bg-emerald-50 text-emerald-700" },
+      { id: "contre_exemples", title: "Contre-exemples", subtitle: "Ce qui echoue", icon: AlertTriangle, color: "bg-red-50 text-red-700" },
+      { id: "donnees", title: "Donnees cles", subtitle: "Chiffres a retenir", icon: Database, color: "bg-indigo-50 text-indigo-700" },
+    ],
+  },
+  challenger: {
+    id: "challenger", label: "Challenge", icon: Shield,
+    color: { bg: "bg-red-100", text: "text-red-700", bgLight: "bg-red-50", accent: "bg-red-400", glow1: "bg-red-100/70", glow2: "bg-orange-100/40" },
+    stages: [
+      { id: "hypotheses", title: "Hypotheses cachees", subtitle: "Ce qu'on assume", icon: Eye, color: "bg-amber-50 text-amber-700" },
+      { id: "falsification", title: "Tests de falsification", subtitle: "Comment prouver le faux", icon: Search, color: "bg-red-50 text-red-700" },
+      { id: "biais", title: "Biais cognitifs", subtitle: "Nos angles morts", icon: Brain, color: "bg-violet-50 text-violet-700" },
+      { id: "echec", title: "Scenarii d'echec", subtitle: "Pre-mortem", icon: AlertTriangle, color: "bg-orange-50 text-orange-700" },
+      { id: "succes", title: "Conditions de succes", subtitle: "Go/No-Go/Conditionnel", icon: CheckCircle2, color: "bg-emerald-50 text-emerald-700" },
+    ],
+  },
+};
+
+// ═══ S117-B: Reflexion Setup Panel (qualification before launch) ═══
+
+function ReflexionSetupPanel({ mode, onLaunch, onCancel }: {
+  mode: ModeConfig;
+  onLaunch: (participants: string, experts: string[], subject: string) => void;
+  onCancel: () => void;
+}) {
+  const [participants, setParticipants] = useState<"solo" | "duo" | "equipe">("duo");
+  const [experts, setExperts] = useState<string[]>([]);
+  const [subject, setSubject] = useState("");
+  const { activeBotCode } = useAmorcer();
+  const { activeRoster } = useChatContext();
+
+  const ModeIcon = mode.icon;
+  const allBots = [
+    { code: "CEOB", name: "CarlOS" }, { code: "CTOB", name: "Tim" }, { code: "CFOB", name: "Frank" },
+    { code: "CMOB", name: "Mathilde" }, { code: "CSOB", name: "Simone" }, { code: "COOB", name: "Olivier" },
+    { code: "CPOB", name: "Paco" }, { code: "CHROB", name: "Helene" }, { code: "CROB", name: "Rich" },
+    { code: "CISOB", name: "Sebastien" }, { code: "CLOB", name: "Loulou" }, { code: "CINOB", name: "Ines" },
+  ];
+
+  return (
+    <div className="max-w-lg mx-auto space-y-4">
+      {/* Hero du mode */}
+      <div className="relative rounded-xl bg-white border border-gray-200 shadow-sm overflow-hidden flex items-center px-6 py-5">
+        <div className={cn("absolute rounded-full blur-[100px] opacity-60", mode.color.glow1)} style={{ top: "-50%", left: "-10%", width: "50%", height: "200%" }} />
+        <div className={cn("absolute rounded-full blur-[80px] opacity-40", mode.color.glow2)} style={{ top: "0%", right: "-5%", width: "30%", height: "150%" }} />
+        <div className="relative z-10 flex items-center gap-3">
+          <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", mode.color.bg)}>
+            <ModeIcon className={cn("h-5 w-5", mode.color.text)} />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold text-gray-900">{mode.label}</h2>
+            <p className="text-[10px] text-gray-500">{mode.stages.length} etapes structurees</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Participants */}
+      <div>
+        <div className="text-[10px] font-bold text-gray-600 mb-1.5">Participants</div>
+        <div className="flex gap-1.5">
+          {(["solo", "duo", "equipe"] as const).map(p => (
+            <button key={p} onClick={() => setParticipants(p)}
+              className={cn("flex-1 px-2 py-1.5 rounded-lg text-[10px] font-medium border text-center cursor-pointer transition-colors",
+                participants === p
+                  ? `border-${mode.color.text.replace("text-", "")}/30 ${mode.color.bgLight} ${mode.color.text} ring-1 ring-${mode.color.text.replace("text-", "")}/20`
+                  : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+              )}>
+              {p.charAt(0).toUpperCase() + p.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Experts */}
+      {participants !== "solo" && (
+        <div>
+          <div className="text-[10px] font-bold text-gray-600 mb-1.5">Expert(s)</div>
+          <div className="flex flex-wrap gap-1">
+            {allBots.filter(b => b.code !== activeBotCode).map(bot => (
+              <button key={bot.code} onClick={() => setExperts(prev => prev.includes(bot.code) ? prev.filter(c => c !== bot.code) : [...prev, bot.code])}
+                className={cn("px-2 py-1 rounded-full text-[9px] font-medium border flex items-center gap-1 cursor-pointer transition-colors",
+                  experts.includes(bot.code)
+                    ? `${mode.color.bgLight} ${mode.color.text} border-${mode.color.text.replace("text-", "")}/30`
+                    : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                )}>
+                <BotAvatar code={bot.code} size="xs" />
+                {bot.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Subject */}
+      <div>
+        <div className="text-[10px] font-bold text-gray-600 mb-1.5">Sujet</div>
+        <input type="text" value={subject} onChange={e => setSubject(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && onLaunch(participants, experts, subject)}
+          className="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-200 focus:border-orange-300 bg-white outline-none"
+          placeholder="Decris le sujet a explorer..." />
+      </div>
+
+      {/* Stages preview */}
+      <div className="flex flex-wrap gap-1">
+        {mode.stages.map((s, i) => (
+          <span key={s.id} className={cn("px-2 py-0.5 rounded-full text-[8px] font-medium border", s.color, "border-current/20")}>
+            {i + 1}. {s.title}
+          </span>
+        ))}
+      </div>
+
+      {/* Launch + Cancel */}
+      <div className="flex gap-2">
+        <button onClick={onCancel} className="px-4 py-2 rounded-lg text-xs font-medium text-gray-500 hover:bg-gray-50 cursor-pointer">
+          Annuler
+        </button>
+        <button onClick={() => onLaunch(participants, experts, subject)}
+          className={cn("flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white text-xs font-bold shadow-sm cursor-pointer transition-colors", mode.color.accent, "hover:opacity-90")}>
+          <Zap className="h-3.5 w-3.5" /> Lancer →
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ═══ S117-B: Reflexion Flow View (hero + sidebar + animated stages) ═══
+
+function ReflexionFlowView({ mode, flow, workspaceBlocks, onAdvanceStage, onCristallise }: {
+  mode: ModeConfig;
+  flow: { currentStage: number; results: Record<string, string> };
+  workspaceBlocks: import("../core/types").WorkspaceBlock[];
+  onAdvanceStage: () => void;
+  onCristallise: () => void;
+}) {
+  const ModeIcon = mode.icon;
+  const total = mode.stages.length;
+  const current = flow.currentStage;
+  const progress = total > 0 ? Math.round(((current + 1) / total) * 100) : 0;
+  const activeStage = mode.stages[current] || mode.stages[0];
+  const StageIcon = activeStage?.icon || Eye;
+  const isLastStage = current >= total - 1;
+
+  // Fade-in for stage content
+  const [appeared, setAppeared] = useState(false);
+  useEffect(() => {
+    setAppeared(false);
+    const t = setTimeout(() => setAppeared(true), 80);
+    return () => clearTimeout(t);
+  }, [current]);
+
+  // Get blocks for current stage
+  const stageBlocks = workspaceBlocks.filter(b =>
+    b.title?.toLowerCase().includes(activeStage?.title.toLowerCase() || "")
+  );
+
+  return (
+    <div className="space-y-4">
+      {/* Hero compact — mode-colored with progress */}
+      <div className="relative w-full rounded-xl bg-white border border-gray-200 shadow-sm overflow-hidden flex items-center px-6 py-4 hover:shadow-md transition-all">
+        <div className={cn("absolute rounded-full blur-[100px] opacity-60", mode.color.glow1)} style={{ top: "-50%", left: "-10%", width: "50%", height: "200%" }} />
+        <div className={cn("absolute rounded-full blur-[80px] opacity-40", mode.color.glow2)} style={{ top: "0%", right: "-5%", width: "30%", height: "150%" }} />
+
+        <div className="relative z-10 flex items-center gap-3 flex-1 min-w-0">
+          <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0", mode.color.bg)}>
+            <ModeIcon className={cn("h-5 w-5", mode.color.text)} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h2 className="text-sm font-bold text-gray-900 truncate">{mode.label}</h2>
+            <p className="text-[10px] text-gray-500 truncate">{activeStage?.title}</p>
+          </div>
+          {/* Pipeline dots */}
+          <div className="flex items-center gap-0.5 shrink-0">
+            {mode.stages.map((s, i) => (
+              <div key={s.id} className="flex items-center">
+                <div className={cn(
+                  "w-2.5 h-2.5 rounded-full transition-colors",
+                  i < current ? "bg-emerald-400" : i === current ? cn(mode.color.accent, "ring-2 ring-white shadow-sm") : "bg-gray-200"
+                )} title={s.title} />
+                {i < total - 1 && <div className={cn("w-2 h-0.5 mx-0.5", i < current ? "bg-emerald-300" : "bg-gray-200")} />}
+              </div>
+            ))}
+          </div>
+          <span className="text-xs font-bold text-gray-500 shrink-0 ml-2">{current + 1}/{total}</span>
+        </div>
+
+        {/* Progress bar bottom */}
+        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-100 z-10 rounded-b-xl overflow-hidden">
+          <div className={cn("h-full transition-all duration-500 rounded-r-full", mode.color.accent)} style={{ width: `${progress}%` }} />
+        </div>
+      </div>
+
+      {/* Layout: sidebar + content */}
+      <div className="flex gap-4">
+        {/* Sidebar stages */}
+        <div className="w-[180px] shrink-0 space-y-1">
+          {mode.stages.map((s, i) => {
+            const SIcon = s.icon;
+            const isActive = i === current;
+            const isComplete = i < current;
+            const isLocked = i > current + 1;
+            return (
+              <button key={s.id} disabled={isLocked}
+                onClick={() => !isLocked && undefined} // stages advance via button, not click
+                className={cn(
+                  "w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-left transition-all",
+                  isActive ? cn(mode.color.bgLight, "border shadow-sm", `border-${mode.color.text.replace("text-", "")}/20`) :
+                  isComplete ? "hover:bg-gray-50 border border-transparent" :
+                  isLocked ? "opacity-40 cursor-not-allowed" : "hover:bg-gray-50 border border-transparent"
+                )}>
+                <div className={cn("w-6 h-6 rounded-lg flex items-center justify-center shrink-0", s.color)}>
+                  {isComplete ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> :
+                   isActive ? <SIcon className="h-3.5 w-3.5" /> :
+                   <span className="text-[9px] font-bold">{i + 1}</span>}
+                </div>
+                <div className="min-w-0">
+                  <div className={cn("text-[10px] font-bold truncate", isActive ? mode.color.text : "text-gray-700")}>{s.title}</div>
+                  <div className="text-[8px] text-gray-400 truncate">{s.subtitle}</div>
+                </div>
+                {isActive && !isComplete && (
+                  <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0 ml-auto" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Content area */}
+        <div className={cn("flex-1 min-w-0 transition-all duration-200", appeared ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2")}>
+          {stageBlocks.length > 0 ? (
+            <div className="space-y-3">
+              {stageBlocks.map(block => (
+                <div key={block.id} className={cn("rounded-xl border border-gray-200 bg-white p-4 shadow-sm", activeStage && "border-l-[3px]")}
+                  style={activeStage ? { borderLeftColor: `var(--${mode.id}-accent, #60a5fa)` } : undefined}>
+                  <div className="text-sm text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: block.summary || "" }} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            /* Waiting state */
+            <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/50 p-8 text-center">
+              <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-3", mode.color.bg)}>
+                <StageIcon className={cn("h-5 w-5", mode.color.text)} />
+              </div>
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Loader2 className={cn("h-3.5 w-3.5 animate-spin", mode.color.text)} />
+                <span className="text-xs font-medium text-gray-600">En attente de la discussion...</span>
+              </div>
+              <p className="text-[10px] text-gray-400">
+                Discutez avec votre equipe pour alimenter l'etape "{activeStage?.title}"
+              </p>
+            </div>
+          )}
+
+          {/* Inter-stage button */}
+          <div className="mt-4 flex justify-end">
+            {isLastStage ? (
+              <button onClick={onCristallise}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500 text-white text-xs font-bold hover:bg-emerald-600 cursor-pointer transition-colors shadow-sm">
+                <CheckCircle2 className="h-3.5 w-3.5" /> Cristalliser
+              </button>
+            ) : (
+              <button onClick={onAdvanceStage}
+                className={cn("flex items-center gap-2 px-4 py-2 rounded-lg text-white text-xs font-bold cursor-pointer transition-colors shadow-sm", mode.color.accent, "hover:opacity-90")}>
+                Suivante: {mode.stages[current + 1]?.title} <ArrowRight className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ═══ Brainstorm visual: card colors + parsers (pattern AtelierBrainstorm.tsx) ═══
 
@@ -204,6 +578,9 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
     activeBotCode, activePhase, setActivePhase, workspaceBlocks, addWorkspaceBlock,
     updateWorkspaceBlock, removeWorkspaceBlock, getBlocksByCredoStep, getBlocksByType,
     addWorkspaceTask,
+    reflexionSetup, setReflexionSetup,
+    reflexionFlow: ctxReflexionFlow, setReflexionFlow: setCtxReflexionFlow,
+    setReflexionContext, setRightSection,
   } = useAmorcer();
   const { sendMessage, messages, isTyping, activeRoster, addBotToRoster, removeBotFromRoster } = useChatContext();
   const displayContext = context || "Discussion en cours";
@@ -1020,6 +1397,87 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
     ? workspaceBlocks.filter(b => b.credo_step === currentCredoLetter && blockMatchesSubSection(b, activeSubSection))
     : workspaceBlocks;
 
+  // S117-B: Reflexion mode handlers
+  const handleReflexionLaunch = useCallback((participants: string, experts: string[], subject: string) => {
+    if (!reflexionSetup) return;
+    const modeConfig = MODE_CONFIGS[reflexionSetup.mode];
+    if (!modeConfig) return;
+    const subjectText = subject.trim() || "la discussion en cours";
+    // Add experts to roster
+    experts.forEach(code => {
+      if (!activeRoster.includes(code)) addBotToRoster(code);
+    });
+    // Set phase + context
+    setActivePhase("reflexion" as any);
+    setReflexionContext(subjectText);
+    setRightSection(null);
+    // Start reflexion flow
+    setCtxReflexionFlow({
+      mode: reflexionSetup.mode,
+      stages: modeConfig.stages.map(s => ({ id: s.id, title: s.title, subtitle: s.subtitle })),
+      currentStage: 0,
+      results: {},
+    });
+    // Send prompt
+    const stagePrompts = REFLEXION_STAGE_PROMPTS[reflexionSetup.mode];
+    const prompt = stagePrompts?.[0]?.replace("{context}", subjectText) ||
+      `Lance une reflexion ${modeConfig.label} sur: ${subjectText}`;
+    sendMessage(prompt, activeBotCode);
+    setReflexionSetup(null);
+  }, [reflexionSetup, activeRoster, addBotToRoster, setActivePhase, setReflexionContext, setRightSection, setCtxReflexionFlow, sendMessage, activeBotCode, setReflexionSetup]);
+
+  const handleAdvanceStage = useCallback(() => {
+    if (!ctxReflexionFlow) return;
+    const next = ctxReflexionFlow.currentStage + 1;
+    const modeConfig = MODE_CONFIGS[ctxReflexionFlow.mode];
+    if (!modeConfig || next >= modeConfig.stages.length) return;
+    setCtxReflexionFlow({ ...ctxReflexionFlow, currentStage: next });
+    // Send next stage prompt
+    const stagePrompts = REFLEXION_STAGE_PROMPTS[ctxReflexionFlow.mode];
+    const prompt = stagePrompts?.[next]?.replace("{context}", displayContext).replace("{prev}", "") ||
+      `Continue l'etape: ${modeConfig.stages[next]?.title}`;
+    sendMessage(prompt, activeBotCode);
+  }, [ctxReflexionFlow, setCtxReflexionFlow, displayContext, sendMessage, activeBotCode]);
+
+  const handleCristallise = useCallback(() => {
+    setCtxReflexionFlow(null);
+    setActivePhase("discussion" as any);
+  }, [setCtxReflexionFlow, setActivePhase]);
+
+  // S117-B: If reflexion setup is active, show setup panel
+  if (reflexionSetup) {
+    const modeConfig = MODE_CONFIGS[reflexionSetup.mode];
+    if (modeConfig) {
+      return (
+        <div className="max-w-4xl mx-auto px-6 py-8">
+          <ReflexionSetupPanel
+            mode={modeConfig}
+            onLaunch={handleReflexionLaunch}
+            onCancel={() => setReflexionSetup(null)}
+          />
+        </div>
+      );
+    }
+  }
+
+  // S117-B: If reflexion flow is active, show animated flow view
+  if (ctxReflexionFlow) {
+    const modeConfig = MODE_CONFIGS[ctxReflexionFlow.mode];
+    if (modeConfig) {
+      return (
+        <div className="max-w-4xl mx-auto px-6 py-4 pb-12">
+          <ReflexionFlowView
+            mode={modeConfig}
+            flow={ctxReflexionFlow}
+            workspaceBlocks={workspaceBlocks}
+            onAdvanceStage={handleAdvanceStage}
+            onCristallise={handleCristallise}
+          />
+        </div>
+      );
+    }
+  }
+
   return (
     <div className="max-w-4xl mx-auto px-6 py-4 pb-12 space-y-4">
 
@@ -1034,7 +1492,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
             <PhaseIcon className={cn("h-5 w-5", col.hero.iconText)} />
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="text-sm font-bold text-gray-900 truncate">Discussion</h2>
+            <h2 className="text-sm font-bold text-gray-900 truncate">{displayContext || "Discussion"}</h2>
             {/* CREDO progress dots — discret tracking */}
             <div className="flex items-center gap-1 mt-1">
               {(["C","R","E","D","O"] as const).map(letter => {
@@ -1045,29 +1503,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
           </div>
         </div>
 
-        {/* 3 Hero tabs: Discussion / Ajouter un agent / Modes de reflexion */}
-        <div className="relative z-10 flex items-center gap-1.5 shrink-0">
-          {([
-            { id: "discussion" as const, label: "Discussion", icon: MessageCircle },
-            { id: "agents" as const, label: "Ajouter un agent", icon: Users },
-            { id: "reflexion" as const, label: "Modes de reflexion", icon: Brain },
-          ]).map(tab => (
-            <button key={tab.id}
-              onClick={() => {
-                setActiveHeroTab(tab.id);
-                if (tab.id === "reflexion") setActiveSubSection("modes-reflexion");
-                else if (tab.id === "discussion") setActiveSubSection(null);
-              }}
-              className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer",
-                activeHeroTab === tab.id
-                  ? "bg-sky-100 text-sky-700 shadow-sm ring-1 ring-sky-200"
-                  : "bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600"
-              )}>
-              <tab.icon className="w-3.5 h-3.5" />
-              {!isMobile && <span>{tab.label}</span>}
-            </button>
-          ))}
-        </div>
+        {/* Hero tabs retires — agents/reflexion maintenant dans ControlPanel (ChatBoxV3) */}
 
         {/* Progress bar — thin accent at bottom */}
         <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-100 z-10 rounded-b-xl overflow-hidden">
@@ -1078,42 +1514,141 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
         </div>
       </div>
 
-      {/* Titre article magazine — sous le hero */}
-      <h1 className="text-base font-bold text-gray-900 mt-3 mb-2 px-1 leading-snug">
-        {displayContext || "Nouvelle discussion"}
-      </h1>
+      {/* Titre deplace dans le hero compact (S117-B Part C) */}
 
       {/* GPS Banner — removed (D-116: CREDO alerts were distracting) */}
 
       {/* CONTENU — sidebar + main area */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
-        {/* Bot filter sidebar — desktop only, hidden when <=1 bot */}
+        {/* S117 Phase 2: CredoNav + BotFilter sidebar — desktop only, hidden when <=1 bot */}
         {!isMobile && (() => {
           const participatingBots = [...new Set([
             ...workspaceBlocks.map(b => b.source).filter(Boolean) as string[],
             ...activeRoster,
           ])];
-          if (participatingBots.length <= 1) return null;
+          const botCounts = workspaceBlocks.reduce<Record<string, number>>((acc, b) => {
+            if (b.source) acc[b.source] = (acc[b.source] || 0) + 1;
+            return acc;
+          }, {});
+          const sortedBots = [...participatingBots].sort((a, b) => {
+            if (a === activeBotCode) return -1;
+            if (b === activeBotCode) return 1;
+            return (botCounts[b] || 0) - (botCounts[a] || 0);
+          });
+          const CREDO_NAV = [
+            { key: "C" as const, label: "Comprendre", dot: "bg-sky-500", bg: "bg-sky-50", text: "text-sky-700" },
+            { key: "R" as const, label: "Rechercher", dot: "bg-violet-500", bg: "bg-violet-50", text: "text-violet-700" },
+            { key: "E" as const, label: "Exposer", dot: "bg-amber-500", bg: "bg-amber-50", text: "text-amber-700" },
+            { key: "D" as const, label: "Demontrer", dot: "bg-emerald-500", bg: "bg-emerald-50", text: "text-emerald-700" },
+            { key: "O" as const, label: "Objectif", dot: "bg-red-500", bg: "bg-red-50", text: "text-red-700" },
+          ];
+          if (participatingBots.length <= 1 && workspaceBlocks.length < 2) return null;
           return (
-            <div className="w-[140px] shrink-0 border-r border-gray-100 py-2 space-y-1 overflow-y-auto">
-              <button onClick={() => setFilterBotCode(null)}
-                className={cn("w-full flex items-center gap-2 px-3 py-2 text-xs rounded-lg transition-colors",
-                  !filterBotCode ? "bg-sky-50 text-sky-700 font-medium" : "text-gray-500 hover:bg-gray-50")}>
-                Tous ({workspaceBlocks.length})
-              </button>
-              <div className="border-b border-gray-100 mx-2" />
-              {participatingBots.map(botCode => {
-                const count = workspaceBlocks.filter(b => b.source === botCode).length;
-                return (
-                  <button key={botCode} onClick={() => setFilterBotCode(botCode === filterBotCode ? null : botCode)}
-                    className={cn("w-full flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg transition-colors",
-                      filterBotCode === botCode ? "bg-sky-50 text-sky-700 font-medium" : "text-gray-600 hover:bg-gray-50")}>
-                    <BotAvatar code={botCode} size="sm" />
-                    <span className="truncate">{BOT_NAME[botCode] || botCode}</span>
-                    {count > 0 && <span className="ml-auto text-[10px] text-gray-400">{count}</span>}
+            <div className="w-[180px] shrink-0 border-r border-gray-100 py-2 overflow-y-auto scrollbar-thin flex flex-col gap-3">
+              {/* Section 1: Bot filter */}
+              {sortedBots.length > 1 && (
+                <div className="space-y-1 px-1">
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 px-2">Participants</span>
+                  <button onClick={() => setFilterBotCode(null)}
+                    className={cn("w-full flex items-center gap-2 px-2 py-1.5 text-xs rounded-lg transition-colors cursor-pointer",
+                      !filterBotCode ? "bg-sky-50 text-sky-700 font-semibold" : "text-gray-500 hover:bg-gray-50")}>
+                    <span>Tous</span>
+                    <span className="ml-auto text-[10px] text-gray-400">{workspaceBlocks.length}</span>
                   </button>
-                );
-              })}
+                  {sortedBots.map(botCode => {
+                    const count = botCounts[botCode] || 0;
+                    const isLead = botCode === activeBotCode;
+                    return (
+                      <button key={botCode} onClick={() => setFilterBotCode(botCode === filterBotCode ? null : botCode)}
+                        className={cn("w-full flex items-center gap-2 px-2 py-1.5 text-xs rounded-lg transition-colors cursor-pointer",
+                          filterBotCode === botCode ? "bg-sky-50 text-sky-700 font-semibold ring-1 ring-sky-200" : "text-gray-600 hover:bg-gray-50")}>
+                        <BotAvatar code={botCode} size="sm" />
+                        <div className="flex flex-col items-start min-w-0 flex-1">
+                          <span className="truncate text-[11px]">{BOT_NAME[botCode] || botCode}</span>
+                          {isLead && <span className="text-[8px] font-bold uppercase tracking-wider text-sky-500">LEAD</span>}
+                        </div>
+                        {count > 0 && <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-medium",
+                          filterBotCode === botCode ? "bg-sky-200 text-sky-800" : "bg-gray-100 text-gray-500")}>{count}</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Section 2: CREDO navigation */}
+              {workspaceBlocks.length > 0 && (
+                <div className="space-y-1 px-1">
+                  <div className="border-t border-gray-100 mx-1 mb-1" />
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 px-2">Navigation CREDO</span>
+                  {CREDO_NAV.map(phase => {
+                    const phaseBlocks = workspaceBlocks.filter(b => b.credo_step === phase.key);
+                    const count = phaseBlocks.length;
+                    const isActive = currentCredoLetter === phase.key;
+                    const hasFutureOnly = count === 0 && !isActive;
+                    return (
+                      <button
+                        key={phase.key}
+                        onClick={() => {
+                          // Scroll to first block of this CREDO step
+                          const target = document.querySelector(`[data-credo-step="${phase.key}"]`);
+                          if (target) {
+                            target.scrollIntoView({ behavior: "smooth", block: "start" });
+                            // Flash blue briefly
+                            target.classList.add("ring-2", "ring-blue-400", "rounded-lg");
+                            setTimeout(() => target.classList.remove("ring-2", "ring-blue-400", "rounded-lg"), 1500);
+                          }
+                          setFilterStep(filterStep === phase.key ? null : phase.key);
+                        }}
+                        className={cn(
+                          "w-full flex items-center gap-2 px-2 py-1.5 text-xs rounded-lg transition-colors cursor-pointer",
+                          filterStep === phase.key ? cn(phase.bg, phase.text, "font-semibold") :
+                          hasFutureOnly ? "text-gray-300" :
+                          "text-gray-600 hover:bg-gray-50"
+                        )}
+                      >
+                        <div className={cn(
+                          "w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black text-white shrink-0",
+                          count > 0 ? phase.dot : isActive ? cn(phase.dot, "opacity-60 animate-pulse") : "bg-gray-200"
+                        )}>
+                          {phase.key}
+                        </div>
+                        <span className="truncate">{phase.label}</span>
+                        {count > 0 && (
+                          <span className={cn("ml-auto text-[10px] px-1.5 py-0.5 rounded-full font-medium",
+                            filterStep === phase.key ? cn(phase.bg, phase.text) : "bg-gray-100 text-gray-500"
+                          )}>{count}</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Section 3: Synthese link */}
+              {workspaceBlocks.length >= 3 && (
+                <div className="px-1 mt-auto">
+                  <div className="border-t border-gray-100 mx-1 mb-2" />
+                  <button
+                    onClick={() => {
+                      const synthBlock = document.getElementById("workspace-synthese-section");
+                      if (synthBlock) synthBlock.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    className="w-full flex items-center gap-2 px-2 py-2 text-xs rounded-lg bg-gray-50 text-gray-600 hover:bg-gray-100 cursor-pointer transition-colors font-medium"
+                  >
+                    <FileText className="h-3 w-3 shrink-0" />
+                    <span>Synthese</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Legend */}
+              <div className="px-3 mt-1">
+                <div className="flex items-center gap-1.5 text-[8px] text-gray-300">
+                  <div className="w-2 h-2 rounded-full bg-emerald-400" /> Blocs
+                  <div className="w-2 h-2 rounded-full bg-gray-200 animate-pulse" /> En cours
+                  <div className="w-2 h-2 rounded-full bg-gray-200" /> Futur
+                </div>
+              </div>
             </div>
           );
         })()}
@@ -1123,13 +1658,10 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
         <div className="w-full">
          <div className={cn("transition-all duration-300", contentAppeared ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2")}>
 
-          {/* TAB: Ajouter un agent — roster panel */}
-          {activeHeroTab === "agents" && (
-            <AgentRosterPanel activeRoster={activeRoster} onToggleBot={handleToggleBot} loadingBots={rosterLoadingBots} />
-          )}
+          {/* Agents panel + Modes de reflexion retires — maintenant dans ControlPanel */}
 
-          {/* TAB: Modes de reflexion — existing reflexion flow (Etape 5: flow simulation-style) */}
-          {activeHeroTab === "reflexion" && activeSubSection === "modes-reflexion" && (
+          {/* Reflexion flow — code retire, lance depuis ControlPanel → setActivePhase("reflexion") */}
+          {false && (
             <div className="mt-3 space-y-3">
               {/* Mode selector buttons — demarrage immediat (1-click) */}
               {!reflexionFlow && (
@@ -1415,8 +1947,8 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
             </div>
           )}
 
-          {/* W.0: SUB-SECTION CONTENT — techniques creativite (also under reflexion tab) */}
-          {activeHeroTab === "reflexion" && activeSubSection === "techniques" && (
+          {/* W.0: techniques creativite — retire, maintenant dans ControlPanel */}
+          {false && (
             <div className="mt-3 space-y-3">
               <div className="rounded-xl border border-orange-200 bg-orange-50/50 p-4 space-y-3">
                 <h4 className="text-[10px] font-bold uppercase tracking-wider text-orange-700">
@@ -1475,8 +2007,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
             </div>
           )}
 
-          {/* TAB: Discussion — all discussion content below */}
-          {activeHeroTab === "discussion" && (<>
+          {/* Discussion content — toujours visible (hero tabs retires) */}
 
           {/* W.1b: SUB-SECTION CONTENT — deep search via Gemini grounding */}
           {activeSubSection === "deep-search" && (
@@ -1669,6 +2200,15 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
               <span className="text-[9px] text-gray-400 italic">cristallisation en cours...</span>
             </div>
           )}
+
+          {/* S117 Phase 4B: Synthese section — visible quand >= 3 blocs */}
+          {workspaceBlocks.length >= 3 && (
+            <SyntheseSection
+              workspaceBlocks={workspaceBlocks}
+              activeBotCode={activeBotCode}
+              displayContext={displayContext}
+            />
+          )}
           <div ref={blocksEndRef} />
 
           {/* CASCADE SUGGESTIONS — cross-phase (Sprint 1 Etape 6) + B.4 bordure gauche coloree */}
@@ -1719,8 +2259,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
             </div>
           )}
 
-          </>)}
-          {/* end TAB: Discussion */}
+          {/* end discussion content */}
 
          </div>{/* close fade-in wrapper */}
         </div>
@@ -1973,6 +2512,198 @@ function DeepSearchPanel({ activeBotCode, currentCredoLetter, addWorkspaceBlock,
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+// ═══ S117 Phase 4B: SyntheseSection — rapport de synthese en bas du workspace ═══
+
+function SyntheseSection({ workspaceBlocks, activeBotCode, displayContext }: {
+  workspaceBlocks: import("../core/types").WorkspaceBlock[];
+  activeBotCode: string;
+  displayContext: string;
+}) {
+  const [synthese, setSynthese] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
+  const uniqueBots = [...new Set(workspaceBlocks.map(b => b.source).filter(Boolean))];
+  const credoSteps = [...new Set(workspaceBlocks.map(b => b.credo_step))];
+  const validatedCount = workspaceBlocks.filter(b => b.maturity === "validated" || b.maturity === "deployed").length;
+
+  const handleGenerate = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/v1/workspace/synthese", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-API-Key": "brain-team-2024" },
+        body: JSON.stringify({
+          blocks: workspaceBlocks.map(b => ({
+            type: b.type, title: b.title, summary: b.summary,
+            source: b.source, credo_step: b.credo_step, maturity: b.maturity,
+          })),
+          discussion_context: displayContext,
+          primary_bot: activeBotCode,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSynthese(data.synthese);
+      }
+    } catch (err) {
+      console.error("[SyntheseSection] Error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div id="workspace-synthese-section" className="mt-6 mb-4">
+      {/* Hero gradient header */}
+      <div className="rounded-t-xl bg-gradient-to-r from-[#073E5A] via-[#0c5a7d] to-[#073E5A] p-4 text-white">
+        <div className="flex items-center gap-3">
+          <FileText className="h-5 w-5 shrink-0" />
+          <div className="flex-1">
+            <h3 className="text-sm font-bold">Synthese de la discussion</h3>
+            <p className="text-[10px] text-white/60 mt-0.5">
+              {workspaceBlocks.length} blocs · {uniqueBots.length} agents · {credoSteps.length} phases CREDO
+            </p>
+          </div>
+          {!synthese && (
+            <button
+              onClick={handleGenerate}
+              disabled={loading}
+              className={cn(
+                "px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer",
+                loading
+                  ? "bg-white/20 text-white/60"
+                  : "bg-white text-[#073E5A] hover:bg-white/90 shadow-sm"
+              )}
+            >
+              {loading ? (
+                <span className="flex items-center gap-1.5"><Loader2 className="h-3 w-3 animate-spin" /> Generation...</span>
+              ) : (
+                "Generer la synthese"
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Quick stats — always visible */}
+      <div className="grid grid-cols-4 gap-2 p-3 bg-gray-50 border-x border-gray-200">
+        <div className="text-center">
+          <div className="text-lg font-bold text-gray-900">{workspaceBlocks.length}</div>
+          <div className="text-[9px] text-gray-400 uppercase font-medium">Blocs</div>
+        </div>
+        <div className="text-center">
+          <div className="text-lg font-bold text-gray-900">{uniqueBots.length}</div>
+          <div className="text-[9px] text-gray-400 uppercase font-medium">Agents</div>
+        </div>
+        <div className="text-center">
+          <div className="text-lg font-bold text-gray-900">{credoSteps.length}/5</div>
+          <div className="text-[9px] text-gray-400 uppercase font-medium">Phases</div>
+        </div>
+        <div className="text-center">
+          <div className="text-lg font-bold text-gray-900">{validatedCount}</div>
+          <div className="text-[9px] text-gray-400 uppercase font-medium">Valides</div>
+        </div>
+      </div>
+
+      {/* Synthese content — shown after generation */}
+      {synthese && (
+        <div className="border border-gray-200 border-t-0 rounded-b-xl bg-white p-4 space-y-4">
+          {/* Executive summary */}
+          <div>
+            <h4 className="text-xs font-bold text-gray-900 mb-1">{synthese.title || "Synthese"}</h4>
+            <p className="text-sm text-gray-700 leading-relaxed">{synthese.executive_summary}</p>
+          </div>
+
+          {/* KPIs */}
+          {synthese.kpis?.length > 0 && (
+            <div className="grid grid-cols-3 gap-2">
+              {synthese.kpis.map((kpi: any, i: number) => (
+                <div key={i} className="rounded-lg border border-gray-200 p-2.5 text-center">
+                  <div className="text-lg font-bold text-gray-900">{kpi.value}</div>
+                  <div className="text-[10px] text-gray-500">{kpi.label}</div>
+                  {kpi.delta && (
+                    <span className={cn("text-[9px] font-bold",
+                      kpi.status === "up" ? "text-emerald-600" : kpi.status === "down" ? "text-red-600" : "text-gray-400"
+                    )}>
+                      {kpi.delta}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Contributions par agent */}
+          {synthese.contributions?.length > 0 && (
+            <div>
+              <h5 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">Contributions</h5>
+              <div className="space-y-1.5">
+                {synthese.contributions.map((c: any, i: number) => (
+                  <div key={i} className="flex items-start gap-2 text-xs">
+                    <BotAvatar code={c.bot || ""} size="sm" />
+                    <div className="flex-1 min-w-0">
+                      <span className="font-bold text-gray-800">{c.bot_name || c.bot}</span>
+                      <span className="text-gray-400 mx-1">—</span>
+                      <span className="text-gray-600">{c.summary}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Decisions */}
+          {synthese.decisions?.length > 0 && (
+            <div>
+              <h5 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">Decisions</h5>
+              <div className="space-y-1">
+                {synthese.decisions.map((d: any, i: number) => (
+                  <div key={i} className="flex items-center gap-2 text-xs">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                    <span className="text-gray-700 flex-1">{d.decision}</span>
+                    <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium",
+                      d.priority === "haute" ? "bg-red-100 text-red-700" :
+                      d.priority === "moyenne" ? "bg-amber-100 text-amber-700" :
+                      "bg-gray-100 text-gray-500"
+                    )}>
+                      {d.priority}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Next steps */}
+          {synthese.next_steps?.length > 0 && (
+            <div>
+              <h5 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">Prochaines etapes</h5>
+              <div className="space-y-1">
+                {synthese.next_steps.map((s: any, i: number) => (
+                  <div key={i} className="flex items-center gap-2 text-xs">
+                    <ArrowRight className="h-3 w-3 text-blue-500 shrink-0" />
+                    <span className="text-gray-700 flex-1">{s.action}</span>
+                    {s.deadline && <span className="text-[9px] text-gray-400">{s.deadline}</span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Not yet generated — subtle bottom border */}
+      {!synthese && (
+        <div className="border border-gray-200 border-t-0 rounded-b-xl bg-white px-4 py-3">
+          <p className="text-[10px] text-gray-400 text-center italic">
+            Cliquez sur "Generer la synthese" pour compiler les contributions
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -2233,12 +2964,12 @@ function SuggestedExpertsPanel({ messages, activeBotCode, workspaceBlocks, addWo
 // Montre TOUS les blocs cristallises (pas de filtrage par step).
 // Le header donne le contexte de l'etape active, mais tous les blocs sont visibles.
 
-const STEP_BADGE: Record<string, { badge: string; bg: string }> = {
-  C: { badge: "C", bg: "bg-sky-100 text-sky-700" },
-  R: { badge: "R", bg: "bg-blue-100 text-blue-700" },
-  E: { badge: "E", bg: "bg-amber-100 text-amber-700" },
-  D: { badge: "D", bg: "bg-green-100 text-green-700" },
-  O: { badge: "O", bg: "bg-purple-100 text-purple-700" },
+const STEP_BADGE: Record<string, { badge: string; bg: string; dot: string; border: string }> = {
+  C: { badge: "C", bg: "bg-sky-100 text-sky-700",     dot: "bg-sky-500",    border: "border-sky-200" },
+  R: { badge: "R", bg: "bg-violet-100 text-violet-700", dot: "bg-violet-500", border: "border-violet-200" },
+  E: { badge: "E", bg: "bg-amber-100 text-amber-700", dot: "bg-amber-500",  border: "border-amber-200" },
+  D: { badge: "D", bg: "bg-emerald-100 text-emerald-700", dot: "bg-emerald-500", border: "border-emerald-200" },
+  O: { badge: "O", bg: "bg-red-100 text-red-700",     dot: "bg-red-500",    border: "border-red-200" },
 };
 
 const UNIVERSAL_BLOCK_TYPES = new Set(["rapport", "synthese"]);
@@ -2281,12 +3012,22 @@ function DynamicStepContent({ allBlocks, context, onBlockAction, pulsingBlockId,
         return (
           <div key={block.id}>
             {showStepSeparator && (
-              <div className="flex items-center gap-3 my-2">
-                <div className="flex-1 h-px bg-gray-200" />
-                <span className={cn("text-[10px] px-3 py-1 rounded-full font-bold", badge.bg)}>
-                  {CREDO_NAMES[block.credo_step] || block.credo_step}
-                </span>
-                <div className="flex-1 h-px bg-gray-200" />
+              <div className={cn("credo-separator flex items-center gap-3 my-4 py-2")} data-credo-step={block.credo_step}>
+                <div className={cn("flex-1 h-px", badge.border, "border-t")} />
+                <div className="flex items-center gap-2">
+                  <div className={cn("w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black text-white shadow-sm", badge.dot)}>
+                    {block.credo_step}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className={cn("text-[11px] font-bold", badge.bg.split(" ")[1] || "text-gray-700")}>
+                      {CREDO_NAMES[block.credo_step] || block.credo_step}
+                    </span>
+                    {block.credo_sub_section && (
+                      <span className="text-[9px] text-gray-400 font-medium">{block.credo_sub_section}</span>
+                    )}
+                  </div>
+                </div>
+                <div className={cn("flex-1 h-px", badge.border, "border-t")} />
               </div>
             )}
             <div

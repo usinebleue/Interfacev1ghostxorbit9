@@ -1477,6 +1477,10 @@ function DiscussionWindowInner() {
   const isOrbit9 = cockpitTab === "orbit9";
   const isEmpty = messages.length === 0;
 
+  // S117: Lifted ControlPanel state — shared with ChatBoxV3 buttons
+  const [cpOpen, setCpOpen] = useState(false);
+  const [cpTab, setCpTab] = useState<"modes" | "agents" | "reunion">("modes");
+
   // URL-aware thread sync — quand l'URL contient /discussion/thread-XXXX,
   // charger ce thread si ce n'est pas déjà le thread actif
   useEffect(() => {
@@ -1580,8 +1584,406 @@ function DiscussionWindowInner() {
         )}
       </div>
 
+      {/* S117 Phase 3A: ControlPanel retractable — Modes / Agents / Reunion */}
+      <ControlPanel isOpen={cpOpen} setIsOpen={setCpOpen} activeTab={cpTab} setActiveTab={setCpTab} />
+
       {/* ChatBox V3 — design Claude AI (SimAmorcer L676-754) branché sur sendMessage réel */}
-      <ChatBoxV3 />
+      <ChatBoxV3 onOpenPanel={(tab: "modes" | "agents" | "reunion") => {
+        if (cpOpen && cpTab === tab) { setCpOpen(false); }
+        else { setCpTab(tab); setCpOpen(true); }
+      }} />
+    </div>
+  );
+}
+
+// ═══ S117 Phase 3A: CONTROL PANEL — Footer retractable (Modes / Agents / Reunion) ═══
+// Refonte v2: qualification flow, orange theme, no scroll agents, workspace routing
+
+const REFLEXION_MODES = [
+  { id: "brainstorm", label: "Brainstorm", icon: "🧠", prompt: "Lance un brainstorm créatif tous azimuts sur: " },
+  { id: "analyser", label: "Analyser", icon: "🔍", prompt: "Analyse approfondie structurée de: " },
+  { id: "challenger", label: "Challenger", icon: "⚡", prompt: "Joue l'avocat du diable, challenge cette approche et trouve les failles de: " },
+  { id: "debat", label: "Debat", icon: "⚔️", prompt: "Lance un debat structure pour/contre sur: " },
+  { id: "deep_search", label: "Deep Search", icon: "🌊", prompt: "Recherche approfondie — tendances, benchmarks, meilleures pratiques pour: " },
+  { id: "decision", label: "Decision", icon: "⚖️", prompt: "Aide-moi a prendre une decision structuree sur: " },
+  { id: "strategie", label: "Strategie", icon: "🎯", prompt: "Analyse strategique complete (SWOT, positionnement, recommandations) sur: " },
+  { id: "crise", label: "Crise", icon: "🚨", prompt: "Evaluation de crise et plan d'action 48h pour: " },
+  { id: "innovation", label: "Innovation", icon: "💡", prompt: "Exploration innovation — tendances, disruption, opportunites pour: " },
+];
+
+const PLAYBOOKS = [
+  { id: "libre", label: "Libre", icon: "📹", bots: [] as string[], desc: "Sans format", color: "blue" },
+  { id: "board", label: "Board", icon: "📋", bots: ["CEOB", "CFOB", "CSOB"], desc: "Seance du CA", color: "indigo" },
+  { id: "client", label: "Client", icon: "🤝", bots: ["CEOB", "CROB", "CMOB"], desc: "Preparation client", color: "emerald" },
+  { id: "brainstorm", label: "Brainstorm", icon: "🧠", bots: ["CEOB", "CTOB", "CMOB"], desc: "Divergence → convergence", color: "amber" },
+  { id: "crise", label: "Crise", icon: "🚨", bots: ["CEOB", "COOB", "CFOB"], desc: "Evaluation, plan 48h", color: "red" },
+  { id: "diagnostic", label: "Diagnostic", icon: "🔍", bots: ["CEOB", "COOB"], desc: "Etat des lieux", color: "sky" },
+  { id: "travail", label: "Travail", icon: "📝", bots: ["CEOB"], desc: "Session de travail", color: "gray" },
+  { id: "podcast", label: "Podcast", icon: "🎙️", bots: ["CEOB", "CMOB"], desc: "Co-animation", color: "pink" },
+  { id: "debat", label: "Debat", icon: "⚔️", bots: ["CEOB", "CSOB", "CMOB"], desc: "Pour/contre, verdict", color: "orange" },
+];
+
+const BOT_LIST_CP = [
+  { code: "CEOB", name: "CarlOS", role: "CEO", color: "bg-sky-500" },
+  { code: "CTOB", name: "Tim", role: "CTO", color: "bg-violet-500" },
+  { code: "CFOB", name: "Frank", role: "CFO", color: "bg-emerald-500" },
+  { code: "CMOB", name: "Mathilde", role: "CMO", color: "bg-pink-500" },
+  { code: "CSOB", name: "Simone", role: "CSO", color: "bg-red-500" },
+  { code: "COOB", name: "Olivier", role: "COO", color: "bg-orange-500" },
+  { code: "CPOB", name: "Paco", role: "CPO", color: "bg-sky-600" },
+  { code: "CHROB", name: "Helene", role: "CHRO", color: "bg-amber-500" },
+  { code: "CROB", name: "Rich", role: "CRO", color: "bg-lime-600" },
+  { code: "CISOB", name: "Sebastien", role: "CISO", color: "bg-slate-600" },
+  { code: "CLOB", name: "Loulou", role: "CLO", color: "bg-indigo-500" },
+  { code: "CINOB", name: "Ines", role: "CINO", color: "bg-teal-500" },
+];
+
+function ControlPanel({ isOpen, setIsOpen, activeTab, setActiveTab }: {
+  isOpen: boolean;
+  setIsOpen: (v: boolean) => void;
+  activeTab: "modes" | "agents" | "reunion";
+  setActiveTab: (v: "modes" | "agents" | "reunion") => void;
+}) {
+  // Qualification flow state (modes)
+  const [qualMode, setQualMode] = useState<typeof REFLEXION_MODES[0] | null>(null);
+  const [qualParticipants, setQualParticipants] = useState<"solo" | "duo" | "equipe">("duo");
+  const [qualExperts, setQualExperts] = useState<string[]>([]);
+  const [qualSubject, setQualSubject] = useState("");
+  // Qualification flow state (reunion)
+  const [qualPlaybook, setQualPlaybook] = useState<typeof PLAYBOOKS[0] | null>(null);
+  const [reunionSubject, setReunionSubject] = useState("");
+
+  const { activeBotCode, setActivePhase, setReflexionContext, setRightSection, setActiveMeeting, setReflexionSetup } = useAmorcer();
+  const { activeRoster, addBotToRoster, removeBotFromRoster, sendMessage } = useChatContext();
+
+  const startQualification = useCallback((mode: typeof REFLEXION_MODES[0]) => {
+    setQualMode(mode);
+    setQualExperts([]);
+    setQualSubject("");
+    setQualParticipants("duo");
+  }, []);
+
+  const cancelQualification = useCallback(() => {
+    setQualMode(null);
+  }, []);
+
+  const launchMode = useCallback(() => {
+    if (!qualMode) return;
+    // Route to workspace setup panel (ReflexionSetupPanel in LiveDiscussionView)
+    setReflexionSetup({
+      mode: qualMode.id,
+      participants: qualParticipants,
+      experts: qualExperts,
+      subject: qualSubject.trim(),
+    });
+    setActivePhase("reflexion" as PhaseKey);
+    setRightSection(null);
+    setIsOpen(false);
+    setQualMode(null);
+  }, [qualMode, qualSubject, qualExperts, qualParticipants, setReflexionSetup, setActivePhase, setRightSection, setIsOpen]);
+
+  const toggleExpert = useCallback((code: string) => {
+    setQualExperts(prev => prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code]);
+  }, []);
+
+  const startPlaybookQualification = useCallback((pb: typeof PLAYBOOKS[0]) => {
+    setQualPlaybook(pb);
+    setReunionSubject("");
+  }, []);
+
+  const cancelPlaybookQualification = useCallback(() => {
+    setQualPlaybook(null);
+  }, []);
+
+  const launchPlaybook = useCallback(() => {
+    if (!qualPlaybook) return;
+    const bots = qualPlaybook.bots.length > 0 ? qualPlaybook.bots : (activeRoster.length > 0 ? activeRoster : [activeBotCode]);
+    bots.forEach(code => {
+      if (!activeRoster.includes(code)) addBotToRoster(code);
+    });
+    setActiveMeeting({
+      type: qualPlaybook.id,
+      title: reunionSubject.trim() || `${qualPlaybook.label}: ${qualPlaybook.desc}`,
+      botCodes: bots,
+    });
+    setRightSection(null);
+    setIsOpen(false);
+    setQualPlaybook(null);
+  }, [qualPlaybook, reunionSubject, activeRoster, activeBotCode, addBotToRoster, setActiveMeeting, setRightSection, setIsOpen]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="shrink-0 bg-white border-t border-gray-200 flex flex-col">
+      {/* No internal tab bar — toolbar buttons ARE the tabs. Just a close button. */}
+      <div className="flex items-center justify-end px-3 pt-2">
+        <button onClick={() => setIsOpen(false)} className="p-1 hover:bg-gray-100 rounded cursor-pointer">
+          <X className="h-3.5 w-3.5 text-gray-400" />
+        </button>
+      </div>
+
+      {/* Tab content */}
+      <div className="px-3 pb-3">
+        {/* ═══ MODES DE REFLEXION ═══ */}
+        {activeTab === "modes" && !qualMode && (
+          <div>
+            <div className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-2">Lancer un mode de reflexion</div>
+            <div className="grid grid-cols-3 gap-1.5">
+              {REFLEXION_MODES.map(mode => (
+                <button
+                  key={mode.id}
+                  onClick={() => startQualification(mode)}
+                  className="flex items-center gap-1.5 px-2 py-2 rounded-lg text-[10px] font-medium bg-orange-50 text-orange-700 border border-orange-200 hover:bg-orange-100 hover:border-orange-300 cursor-pointer transition-colors"
+                >
+                  <span className="text-xs">{mode.icon}</span>
+                  {mode.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ═══ QUALIFICATION FLOW — MODES (replaces grid when mode selected) ═══ */}
+        {activeTab === "modes" && qualMode && (
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-sm">{qualMode.icon}</span>
+              <span className="text-xs font-bold text-orange-700">{qualMode.label}</span>
+              <button onClick={cancelQualification} className="ml-auto text-[9px] text-gray-400 hover:text-gray-600 flex items-center gap-1 cursor-pointer">
+                ← Retour
+              </button>
+            </div>
+            <div className="space-y-2.5">
+              {/* Q1: Participants */}
+              <div>
+                <div className="text-[10px] font-bold text-gray-600 mb-1">Participants</div>
+                <div className="flex gap-1.5">
+                  {(["solo", "duo", "equipe"] as const).map(p => (
+                    <button
+                      key={p}
+                      onClick={() => setQualParticipants(p)}
+                      className={cn(
+                        "flex-1 px-2 py-1.5 rounded-lg text-[10px] font-medium border text-center cursor-pointer transition-colors",
+                        qualParticipants === p
+                          ? "border-orange-300 bg-orange-50 text-orange-700 ring-1 ring-orange-200"
+                          : "border-gray-200 bg-white text-gray-700 hover:border-orange-300 hover:bg-orange-50"
+                      )}
+                    >
+                      {p.charAt(0).toUpperCase() + p.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {/* Q2: Experts */}
+              {qualParticipants !== "solo" && (
+                <div>
+                  <div className="text-[10px] font-bold text-gray-600 mb-1">Expert(s)</div>
+                  <div className="flex flex-wrap gap-1">
+                    {BOT_LIST_CP.filter(b => b.code !== activeBotCode).map(bot => (
+                      <button
+                        key={bot.code}
+                        onClick={() => toggleExpert(bot.code)}
+                        className={cn(
+                          "px-2 py-1 rounded-full text-[9px] font-medium border flex items-center gap-1 cursor-pointer transition-colors",
+                          qualExperts.includes(bot.code)
+                            ? "border-orange-300 bg-orange-50 text-orange-700 ring-1 ring-orange-200"
+                            : "border-gray-200 bg-white text-gray-600 hover:border-orange-200 hover:bg-orange-50/50"
+                        )}
+                      >
+                        <span className={cn("w-3 h-3 rounded-full inline-flex items-center justify-center text-white text-[6px] font-bold", bot.color)}>
+                          {bot.name.substring(0, 2).toUpperCase()}
+                        </span>
+                        {bot.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {/* Q3: Sujet */}
+              <div>
+                <div className="text-[10px] font-bold text-gray-600 mb-1">Sujet</div>
+                <input
+                  type="text"
+                  value={qualSubject}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setQualSubject(e.target.value)}
+                  onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => e.key === "Enter" && launchMode()}
+                  className="w-full px-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-200 focus:border-orange-300 bg-white outline-none"
+                  placeholder="Decris le sujet..."
+                />
+              </div>
+              {/* Launch button */}
+              <button
+                onClick={launchMode}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-orange-500 text-white text-xs font-bold hover:bg-orange-600 shadow-sm cursor-pointer transition-colors"
+              >
+                <Zap className="h-3.5 w-3.5" />
+                Lancer →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ═══ AGENTS ═══ */}
+        {activeTab === "agents" && (
+          <div className="space-y-2.5">
+            {/* Section 1 — Bots actifs */}
+            {activeRoster.length > 0 && (
+              <div>
+                <div className="text-[9px] font-bold uppercase tracking-wider text-gray-400 mb-1.5">Bots actifs</div>
+                <div className="space-y-1">
+                  {activeRoster.map(code => {
+                    const bot = BOT_LIST_CP.find(b => b.code === code);
+                    return (
+                      <div key={code} className={cn(
+                        "flex items-center gap-2 px-2 py-1.5 rounded-lg border",
+                        `bg-sky-50 border-sky-200`
+                      )}>
+                        <span className={cn("w-5 h-5 rounded-full flex items-center justify-center text-white text-[7px] font-bold", bot?.color || "bg-sky-500")}>
+                          {(bot?.name || code).substring(0, 2).toUpperCase()}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-[10px] font-bold text-gray-900">{bot?.name || code}</span>
+                          <span className="text-[9px] text-gray-500 ml-1">{bot?.role}</span>
+                        </div>
+                        <button onClick={() => removeBotFromRoster(code)} className="text-[9px] text-red-400 hover:text-red-600 cursor-pointer">
+                          Retirer
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            {/* Section 2 — Ajouter un expert */}
+            <div>
+              <div className="text-[9px] font-bold uppercase tracking-wider text-gray-400 mb-1.5">Ajouter un expert</div>
+              <div className="grid grid-cols-2 gap-1.5">
+                {BOT_LIST_CP.filter(b => !activeRoster.includes(b.code) && b.code !== activeBotCode).map(bot => (
+                  <button
+                    key={bot.code}
+                    onClick={() => addBotToRoster(bot.code)}
+                    className={cn(
+                      "flex items-center gap-2 px-2 py-1.5 rounded-lg border border-gray-200 bg-white cursor-pointer transition-colors",
+                      "hover:bg-sky-50 hover:border-sky-200"
+                    )}
+                  >
+                    <span className={cn("w-4 h-4 rounded-full flex items-center justify-center text-white text-[6px] font-bold", bot.color)}>
+                      {bot.name.substring(0, 2).toUpperCase()}
+                    </span>
+                    <div className="min-w-0">
+                      <span className="text-[10px] font-bold text-gray-900">{bot.name}</span>
+                      <span className="text-[9px] text-gray-400 ml-1">{bot.role}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ═══ REUNION ═══ */}
+        {activeTab === "reunion" && !qualPlaybook && (
+          <div>
+            {/* Nouvelle reunion (libre) — top card dashed */}
+            <button
+              onClick={() => startPlaybookQualification(PLAYBOOKS[0])}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border-2 border-dashed border-blue-300 bg-blue-50/50 hover:bg-blue-50 cursor-pointer transition-colors mb-3"
+            >
+              <div className="w-8 h-8 rounded-lg bg-white border border-blue-200 flex items-center justify-center shrink-0">
+                <span className="text-base">📹</span>
+              </div>
+              <div className="flex-1 text-left">
+                <div className="text-[10px] font-bold text-gray-800">Nouvelle reunion</div>
+                <div className="text-[9px] text-gray-500">Format libre, choisissez vos participants</div>
+              </div>
+              <ChevronRight className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+            </button>
+
+            {/* Ou choisir un playbook */}
+            <div className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-2">Ou choisir un playbook</div>
+            <div className="grid grid-cols-2 gap-1.5">
+              {PLAYBOOKS.slice(1).map(pb => (
+                <button
+                  key={pb.id}
+                  onClick={() => startPlaybookQualification(pb)}
+                  className="flex items-center gap-2 px-2.5 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 cursor-pointer transition-colors text-left"
+                >
+                  <span className="text-base shrink-0">{pb.icon}</span>
+                  <div className="min-w-0">
+                    <div className="text-[10px] font-bold text-gray-700">{pb.label}</div>
+                    <div className="text-[8px] text-gray-400">{pb.desc}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ═══ QUALIFICATION FLOW — REUNION (replaces grid when playbook selected) ═══ */}
+        {activeTab === "reunion" && qualPlaybook && (
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-sm">{qualPlaybook.icon}</span>
+              <span className="text-xs font-bold text-gray-800">{qualPlaybook.label}</span>
+              <button onClick={cancelPlaybookQualification} className="ml-auto text-[9px] text-gray-400 hover:text-gray-600 flex items-center gap-1 cursor-pointer">
+                ← Retour
+              </button>
+            </div>
+            <div className="space-y-2.5">
+              {/* Flow stages pills */}
+              {qualPlaybook.id !== "libre" && (
+                <div>
+                  <div className="text-[10px] font-bold text-gray-600 mb-1">Deroulement</div>
+                  <div className="flex flex-wrap gap-1">
+                    <span className="px-2 py-0.5 rounded-full text-[8px] font-medium border bg-sky-100 text-sky-700 border-sky-200">Ouverture</span>
+                    <span className="px-2 py-0.5 rounded-full text-[8px] font-medium border bg-blue-50 text-blue-600 border-blue-100">Discussion</span>
+                    <span className="px-2 py-0.5 rounded-full text-[8px] font-medium border bg-emerald-100 text-emerald-700 border-emerald-200">Conclusion</span>
+                  </div>
+                </div>
+              )}
+              {/* Bots impliques */}
+              {qualPlaybook.bots.length > 0 && (
+                <div>
+                  <div className="text-[10px] font-bold text-gray-600 mb-1">Bots impliques</div>
+                  <div className="flex flex-wrap gap-1">
+                    {qualPlaybook.bots.map(code => {
+                      const bot = BOT_LIST_CP.find(b => b.code === code);
+                      return (
+                        <span key={code} className={cn("px-2 py-0.5 rounded-full text-[9px] font-medium border flex items-center gap-1", "bg-sky-50 text-sky-700 border-sky-200")}>
+                          <span className={cn("w-3 h-3 rounded-full flex items-center justify-center text-white text-[6px] font-bold", bot?.color || "bg-sky-500")}>
+                            {(bot?.name || code).substring(0, 2).toUpperCase()}
+                          </span>
+                          {bot?.name || code}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              {/* Sujet */}
+              <div>
+                <div className="text-[10px] font-bold text-gray-600 mb-1">Sujet</div>
+                <input
+                  type="text"
+                  value={reunionSubject}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setReunionSubject(e.target.value)}
+                  onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => e.key === "Enter" && launchPlaybook()}
+                  className="w-full px-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-300 bg-white outline-none"
+                  placeholder="Sujet de la reunion..."
+                />
+              </div>
+              {/* Launch button */}
+              <button
+                onClick={launchPlaybook}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#073E5A] text-white text-xs font-bold hover:opacity-90 shadow-sm cursor-pointer transition-colors"
+              >
+                <Users className="h-3.5 w-3.5" />
+                Lancer reunion →
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -1596,7 +1998,7 @@ const formatCallDuration = (s: number) => {
   return `${m}:${sec.toString().padStart(2, "0")}`;
 };
 
-function ChatBoxV3() {
+function ChatBoxV3({ onOpenPanel }: { onOpenPanel?: (tab: "modes" | "agents" | "reunion") => void }) {
   const [inputText, setInputText] = useState("");
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -2026,34 +2428,49 @@ function ChatBoxV3() {
             )}
           </div>
 
-          {/* 3 modes: Discussion, Conférence, Vision — BRANCHÉS */}
+          {/* Toolbar compact: Discussion / Réunion / Vision | Réflexions / Agents */}
           <button
             onClick={isInCall ? endCall : startCall}
             className={cn(
-              "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
+              "flex items-center gap-1 px-1.5 py-1 rounded-md text-[10px] font-medium transition-all cursor-pointer",
               isInCall ? "bg-red-50 text-red-600 hover:bg-red-100" : "bg-blue-50 text-blue-600 hover:bg-blue-100"
             )}
             title={isInCall ? "Raccrocher" : "Discussion vocale"}
           >
-            {callState === "connecting" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : isInCall ? <PhoneOff className="h-3.5 w-3.5" /> : <Phone className="h-3.5 w-3.5" />}
-            <span className="hidden lg:inline">{isInCall ? "Raccrocher" : "Discussion"}</span>
+            {callState === "connecting" ? <Loader2 className="h-3 w-3 animate-spin" /> : isInCall ? <PhoneOff className="h-3 w-3" /> : <Phone className="h-3 w-3" />}
+            {isInCall ? "Raccrocher" : "Discussion"}
           </button>
           <button
-            onClick={() => setRightSection("conferenceai")}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
+            onClick={() => onOpenPanel?.("reunion")}
+            className="flex items-center gap-1 px-1.5 py-1 rounded-md text-[10px] font-medium transition-all cursor-pointer bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
             title="Réunion AI"
           >
-            <Video className="h-3.5 w-3.5" /><span className="hidden lg:inline">Réunion</span>
+            <Users className="h-3 w-3" />Réunion
           </button>
           <button
             onClick={visionActive ? () => { stopVoicePolling(); setVisionActive(false); } : handleVision}
             className={cn(
-              "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
+              "flex items-center gap-1 px-1.5 py-1 rounded-md text-[10px] font-medium transition-all cursor-pointer",
               visionActive ? "bg-cyan-600 text-white hover:bg-cyan-700" : "bg-cyan-50 text-cyan-600 hover:bg-cyan-100"
             )}
             title={visionActive ? "Arrêter Vision" : "Vision Ray-Ban"}
           >
-            <Glasses className="h-3.5 w-3.5" /><span className="hidden lg:inline">{visionActive ? "Vision ON" : "Vision"}</span>
+            <Glasses className="h-3 w-3" />{visionActive ? "Vision ON" : "Vision"}
+          </button>
+          <div className="w-px h-4 bg-gray-200" />
+          <button
+            onClick={() => onOpenPanel?.("modes")}
+            className="flex items-center gap-1 px-1.5 py-1 rounded-md text-[10px] font-medium transition-all cursor-pointer bg-orange-50 text-orange-600 hover:bg-orange-100"
+            title="Modes de réflexion"
+          >
+            <Brain className="h-3 w-3" />Réflexions
+          </button>
+          <button
+            onClick={() => onOpenPanel?.("agents")}
+            className="flex items-center gap-1 px-1.5 py-1 rounded-md text-[10px] font-medium transition-all cursor-pointer bg-orange-50 text-orange-600 hover:bg-orange-100"
+            title="Agents impliqués"
+          >
+            <Bot className="h-3 w-3" />+ Agents
           </button>
 
           <div className="flex-1" />
