@@ -115,15 +115,33 @@ export interface WorkflowItem {
   timestamp: number;
 }
 
-// ═══ Workspace Block types (workspace dynamique intelligent) ═══
+// ═══ Workspace Block types (workspace dynamique intelligent — 48 types) ═══
 export type WorkspaceBlockType =
-  | "diagnostic" | "brainstorm" | "scamper" | "5pourquoi"
-  | "plan_action" | "budget" | "timeline" | "metriques"
-  | "projets" | "taches" | "recommandations" | "risques"
-  | "benchmark" | "challenge" | "synthese" | "rapport" | "libre"
-  | "debat" | "decision" | "crise" | "deep_search"
+  // Analyse & diagnostic
+  | "diagnostic" | "etat_des_lieux" | "swot" | "benchmark" | "metriques" | "risques"
+  // Ideation & reflexion
+  | "brainstorm" | "scamper" | "5pourquoi" | "debat" | "challenge" | "deep_search"
+  // Strategie & decision
+  | "decision" | "recommandations" | "positionnement" | "crise"
+  // Planification
+  | "plan_action" | "budget" | "timeline" | "taches" | "projets"
+  | "roadmap" | "sprint_plan" | "cahier_charges"
+  // Livrables & rapports
+  | "synthese" | "rapport" | "libre" | "persona" | "proposition_commerciale"
+  // Multi-agent
+  | "recalibration" | "consultation" | "delegation"
+  // DocForge
   | "docforge_section" | "docforge_code" | "docforge_tableur"
-  | "etat_des_lieux" | "action_result" | "catching_up";
+  // Operationnel
+  | "action_result" | "catching_up" | "meeting_notes" | "compte_rendu"
+  // Suivi & mesure
+  | "scorecard" | "dashboard" | "audit"
+  // Financier
+  | "projection" | "roi_analysis" | "cashflow"
+  // RH & equipe
+  | "organigramme" | "plan_formation" | "fiche_poste"
+  // Innovation
+  | "poc_plan" | "veille_techno";
 
 // ═══ Action suggestions (boutons contextuels one-shot sur blocs experts) ═══
 export interface ActionSuggestion {
@@ -131,6 +149,8 @@ export interface ActionSuggestion {
   prompt: string;     // Message envoye au bot
   target_bot: string; // Code bot cible
 }
+
+export type WorkspaceBlockMaturity = "draft" | "refined" | "validated" | "deployed";
 
 export interface WorkspaceBlock {
   id: string;
@@ -151,6 +171,7 @@ export interface WorkspaceBlock {
   is_action_result?: boolean;
   merge_label?: string;  // Label for merge log entries (e.g., "Approfondissement", "Challenge")
   is_catching_up?: boolean;  // Temp skeleton block while bot is loading
+  maturity?: WorkspaceBlockMaturity;  // Lifecycle: draft → refined → validated → deployed
 }
 
 // ═══ Workspace Tasks — taches assignables aux bots/humains ═══

@@ -115,11 +115,49 @@ export interface StreamDoneEvent {
   workspace_block_skip?: boolean;
 }
 
+// C.32 — Auto-consultation cross-bot event
+export interface AutoConsultationEvent {
+  bot_code: string;
+  bot_nom: string;
+  bot_titre: string;
+  bot_emoji: string;
+  reason: string;
+  degree: string;
+  from_bot: string;
+  from_bot_nom: string;
+  contenu: string;
+  workspace_block?: Record<string, unknown>;
+  options?: { label: string; value: string }[];
+}
+
+// C.34 — Bot Tools result event
+export interface ToolResultEvent {
+  bot_code: string;
+  bot_nom: string;
+  tools: { tool: string; status: string; result: unknown; error?: string }[];
+  cleaned_response: string;
+}
+
+// C.3 — Auto-Monte C-Suite: suggestion d'activer un nouveau bot
+export interface TeamSuggestionEvent {
+  bot_code: string;
+  bot_nom: string;
+  bot_titre: string;
+  reason: string;
+  pitch: string;
+  confidence: number;
+  urgency: "haute" | "moyenne" | "basse";
+  from_bot: string;
+}
+
 export type StreamCallback = {
   onToken: (text: string, accumulated: string) => void;
   onDone: (data: StreamDoneEvent) => void;
   onError: (error: string) => void;
   onStatus?: (label: string) => void;
+  onAutoConsultation?: (data: AutoConsultationEvent) => void;
+  onToolResult?: (data: ToolResultEvent) => void;
+  onTeamSuggestion?: (data: TeamSuggestionEvent) => void;
 };
 
 // Chemin relatif — nginx reverse proxy vers FastAPI :8000
@@ -182,8 +220,8 @@ async function apiFetch<T>(
   const jwt = getJwtToken();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    "X-API-Key": API_KEY,
-    ...(jwt ? { Authorization: `Bearer ${jwt}` } : {}),
+    // C.7 — JWT primary auth: use Bearer token when available, API key as fallback only
+    ...(jwt ? { Authorization: `Bearer ${jwt}` } : { "X-API-Key": API_KEY }),
     ...(options.headers as Record<string, string>),
   };
 
@@ -359,9 +397,10 @@ export const api = {
     if (titre) formData.append("titre", titre);
 
     const url = `${BASE_URL}/bureau/upload`;
+    const uploadJwt = getJwtToken();
     const res = await fetch(url, {
       method: "POST",
-      headers: { "X-API-Key": API_KEY },
+      headers: uploadJwt ? { Authorization: `Bearer ${uploadJwt}` } : { "X-API-Key": API_KEY },
       body: formData,
     });
     if (!res.ok) {
@@ -685,9 +724,10 @@ export const api = {
     // apiFetch ajoute Content-Type: application/json, on doit faire un fetch brut pour FormData
     const base = (import.meta as Record<string, Record<string, string>>).env?.VITE_API_BASE || "";
     const apiKey = (import.meta as Record<string, Record<string, string>>).env?.VITE_API_KEY || "";
+    const docJwt = getJwtToken();
     return fetch(`${base}/api/v1/entreprise-profil/extract-document`, {
       method: "POST",
-      headers: { "X-API-Key": apiKey },
+      headers: docJwt ? { Authorization: `Bearer ${docJwt}` } : { "X-API-Key": apiKey },
       body: form,
     }).then(r => {
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -1232,11 +1272,13 @@ export const api = {
       controller.abort();
     }, 90_000);
 
+    const streamJwt = getJwtToken();
     fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-API-Key": API_KEY,
+        // C.7 — JWT primary auth for streaming
+        ...(streamJwt ? { Authorization: `Bearer ${streamJwt}` } : { "X-API-Key": API_KEY }),
       },
       body: JSON.stringify(req),
       signal: controller.signal,
@@ -1288,6 +1330,12 @@ export const api = {
                 } else if (currentEvent === "done") {
                   doneReceived = true;
                   callbacks.onDone(data as StreamDoneEvent);
+                } else if (currentEvent === "auto_consultation") {
+                  callbacks.onAutoConsultation?.(data as AutoConsultationEvent);
+                } else if (currentEvent === "tool_result") {
+                  callbacks.onToolResult?.(data as ToolResultEvent);
+                } else if (currentEvent === "team_suggestion") {
+                  callbacks.onTeamSuggestion?.(data as TeamSuggestionEvent);
                 } else if (currentEvent === "error") {
                   callbacks.onError(data.error || "Unknown stream error");
                 }
@@ -1916,5 +1964,21 @@ export const api = {
     bot_code?: string;
   }): Promise<Record<string, unknown>> {
     return apiFetch("/workspace/section-action", { method: "POST", body: JSON.stringify(data) });
+  },
+
+  // ═══════════════════════════════════════
+  // S117 Phase 4D — Workspace Blocks CRUD (PostgreSQL persistence)
+  // ═══════════════════════════════════════
+
+  saveWorkspaceBlocks(data: { discussion_id: string; blocks: Record<string, unknown>[]; user_id?: number; tenant_id?: number }): Promise<{ ok: boolean; saved: number }> {
+    return apiFetch("/workspace/blocks/save", { method: "POST", body: JSON.stringify(data) });
+  },
+
+  loadWorkspaceBlocks(discussionId: string): Promise<{ blocks: Record<string, unknown>[]; count: number }> {
+    return apiFetch(`/workspace/blocks/${discussionId}`);
+  },
+
+  updateBlockMaturity(blockId: number, maturity: string): Promise<{ ok: boolean }> {
+    return apiFetch(`/workspace/blocks/${blockId}/maturity`, { method: "PATCH", body: JSON.stringify({ maturity }) });
   },
 };

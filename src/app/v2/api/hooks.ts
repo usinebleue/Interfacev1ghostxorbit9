@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { api } from "./client";
-import type { StreamDoneEvent } from "./client";
+import type { StreamDoneEvent, AutoConsultationEvent, TeamSuggestionEvent } from "./client";
 import type {
   BotInfo,
   HealthResponse,
@@ -1149,6 +1149,85 @@ export function useChat() {
               }
 
               resolve();
+            },
+            // C.32 — Auto-consultation cross-bot: inject consulted bot's response as new message
+            onAutoConsultation: (acData: AutoConsultationEvent) => {
+              const consultMsgId = `auto-consult-${Date.now()}-${acData.bot_code}`;
+              const consultContent =
+                `**${acData.bot_titre}** repond a la consultation de ${acData.from_bot_nom}:\n\n` +
+                acData.contenu;
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: consultMsgId,
+                  role: "assistant" as const,
+                  content: consultContent,
+                  agent: acData.bot_code,
+                  timestamp: new Date().toISOString(),
+                  isStreaming: false,
+                  metadata: {
+                    auto_consultation: true,
+                    from_bot: acData.from_bot,
+                    reason: acData.reason,
+                    degree: acData.degree,
+                  },
+                  consultationSuggestions: undefined,
+                  workspace_block: acData.workspace_block || undefined,
+                  workspace_blocks: undefined,
+                  workspace_block_skip: false,
+                },
+              ]);
+              console.log(`[AUTO-CONSULT] ${acData.from_bot}→${acData.bot_code}: injected message`);
+            },
+            // C.34 — Bot Tools: handle tool execution results
+            onToolResult: (trData) => {
+              if (trData.tools && trData.tools.length > 0) {
+                const toolNames = trData.tools.map((t: { tool: string }) => t.tool).join(", ");
+                console.log(`[BOT-TOOLS] ${trData.bot_code}: ${trData.tools.length} tools executed (${toolNames})`);
+                // Update the last assistant message with cleaned response (tool markers stripped)
+                if (trData.cleaned_response) {
+                  setMessages((prev) => {
+                    const idx = prev.length - 1;
+                    if (idx >= 0 && prev[idx].role === "assistant") {
+                      const updated = [...prev];
+                      updated[idx] = { ...updated[idx], content: trData.cleaned_response };
+                      return updated;
+                    }
+                    return prev;
+                  });
+                }
+              }
+            },
+            // C.3 — Auto-Monte C-Suite: CarlOS suggests activating a new bot
+            onTeamSuggestion: (tsData: TeamSuggestionEvent) => {
+              const suggestMsgId = `team-suggest-${Date.now()}-${tsData.bot_code}`;
+              const suggestContent =
+                `**Suggestion d'equipe** — ${tsData.from_bot} recommande d'ajouter **${tsData.bot_nom}** (${tsData.bot_titre}) a ton equipe.\n\n` +
+                `> ${tsData.pitch}\n\n` +
+                `_Raison: ${tsData.reason}_`;
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: suggestMsgId,
+                  role: "assistant" as const,
+                  content: suggestContent,
+                  agent: tsData.from_bot,
+                  timestamp: new Date().toISOString(),
+                  isStreaming: false,
+                  metadata: {
+                    team_suggestion: true,
+                    suggested_bot: tsData.bot_code,
+                    suggested_bot_nom: tsData.bot_nom,
+                    confidence: tsData.confidence,
+                    urgency: tsData.urgency,
+                  },
+                  consultationSuggestions: undefined,
+                  workspace_block: undefined,
+                  workspace_blocks: undefined,
+                  workspace_block_skip: true,
+                },
+              ]);
+              console.log(`[CSUITE] ${tsData.from_bot} suggests adding ${tsData.bot_code} (${tsData.bot_nom})`);
             },
             onError: (error: string) => {
               clearInterval(_thinkTimer);

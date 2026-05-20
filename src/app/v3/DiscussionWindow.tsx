@@ -23,6 +23,8 @@ import {
   Brain, Target, AlertTriangle, Scale, Sparkles, MessageSquare,
   Mic, MicOff, Loader2, Upload, MessageCircle, Clock, Network, Pencil,
   BookOpen, Search, BarChart2, Lightbulb,
+  Eye, Swords, Shield, Crown, type LucideIcon,
+  UserPlus, GraduationCap, Handshake, RotateCcw, Presentation, Timer, DollarSign, UserCheck,
 } from "lucide-react";
 import { cn } from "../components/ui/utils";
 import { useAmorcer } from "./AmorcerContext";
@@ -1599,44 +1601,80 @@ function DiscussionWindowInner() {
 // ═══ S117 Phase 3A: CONTROL PANEL — Footer retractable (Modes / Agents / Reunion) ═══
 // Refonte v2: qualification flow, orange theme, no scroll agents, workspace routing
 
-const REFLEXION_MODES = [
-  { id: "brainstorm", label: "Brainstorm", icon: "🧠", prompt: "Lance un brainstorm créatif tous azimuts sur: " },
-  { id: "analyser", label: "Analyser", icon: "🔍", prompt: "Analyse approfondie structurée de: " },
-  { id: "challenger", label: "Challenger", icon: "⚡", prompt: "Joue l'avocat du diable, challenge cette approche et trouve les failles de: " },
-  { id: "debat", label: "Debat", icon: "⚔️", prompt: "Lance un debat structure pour/contre sur: " },
-  { id: "deep_search", label: "Deep Search", icon: "🌊", prompt: "Recherche approfondie — tendances, benchmarks, meilleures pratiques pour: " },
-  { id: "decision", label: "Decision", icon: "⚖️", prompt: "Aide-moi a prendre une decision structuree sur: " },
-  { id: "strategie", label: "Strategie", icon: "🎯", prompt: "Analyse strategique complete (SWOT, positionnement, recommandations) sur: " },
-  { id: "crise", label: "Crise", icon: "🚨", prompt: "Evaluation de crise et plan d'action 48h pour: " },
-  { id: "innovation", label: "Innovation", icon: "💡", prompt: "Exploration innovation — tendances, disruption, opportunites pour: " },
+const REFLEXION_MODES: { id: string; label: string; icon: LucideIcon; color: string; prompt: string }[] = [
+  { id: "brainstorm", label: "Brainstorm", icon: Lightbulb, color: "amber", prompt: "Lance un brainstorm créatif tous azimuts sur: " },
+  { id: "analyser", label: "Analyser", icon: Eye, color: "blue", prompt: "Analyse approfondie structurée de: " },
+  { id: "challenger", label: "Challenger", icon: Shield, color: "red", prompt: "Joue l'avocat du diable, challenge cette approche et trouve les failles de: " },
+  { id: "debat", label: "Debat", icon: Swords, color: "rose", prompt: "Lance un debat structure pour/contre sur: " },
+  { id: "deep_search", label: "Deep Search", icon: Globe, color: "cyan", prompt: "Recherche approfondie — tendances, benchmarks, meilleures pratiques pour: " },
+  { id: "decision", label: "Decision", icon: CheckCircle2, color: "emerald", prompt: "Aide-moi a prendre une decision structuree sur: " },
+  { id: "strategie", label: "Strategie", icon: Target, color: "purple", prompt: "Analyse strategique complete (SWOT, positionnement, recommandations) sur: " },
+  { id: "crise", label: "Crise", icon: Zap, color: "orange", prompt: "Evaluation de crise et plan d'action 48h pour: " },
+  { id: "innovation", label: "Innovation", icon: Sparkles, color: "pink", prompt: "Exploration innovation — tendances, disruption, opportunites pour: " },
 ];
 
-const PLAYBOOKS = [
-  { id: "libre", label: "Libre", icon: "📹", bots: [] as string[], desc: "Sans format", color: "blue" },
-  { id: "board", label: "Board", icon: "📋", bots: ["CEOB", "CFOB", "CSOB"], desc: "Seance du CA", color: "indigo" },
-  { id: "client", label: "Client", icon: "🤝", bots: ["CEOB", "CROB", "CMOB"], desc: "Preparation client", color: "emerald" },
-  { id: "brainstorm", label: "Brainstorm", icon: "🧠", bots: ["CEOB", "CTOB", "CMOB"], desc: "Divergence → convergence", color: "amber" },
-  { id: "crise", label: "Crise", icon: "🚨", bots: ["CEOB", "COOB", "CFOB"], desc: "Evaluation, plan 48h", color: "red" },
-  { id: "diagnostic", label: "Diagnostic", icon: "🔍", bots: ["CEOB", "COOB"], desc: "Etat des lieux", color: "sky" },
-  { id: "travail", label: "Travail", icon: "📝", bots: ["CEOB"], desc: "Session de travail", color: "gray" },
-  { id: "podcast", label: "Podcast", icon: "🎙️", bots: ["CEOB", "CMOB"], desc: "Co-animation", color: "pink" },
-  { id: "debat", label: "Debat", icon: "⚔️", bots: ["CEOB", "CSOB", "CMOB"], desc: "Pour/contre, verdict", color: "orange" },
+const MODE_BUTTON_STYLES: Record<string, { bg: string; text: string; border: string; hover: string; iconColor: string }> = {
+  amber:   { bg: "bg-amber-50",   text: "text-amber-700",   border: "border-amber-200",   hover: "hover:bg-amber-100 hover:border-amber-300",     iconColor: "text-amber-500" },
+  blue:    { bg: "bg-blue-50",    text: "text-blue-700",    border: "border-blue-200",    hover: "hover:bg-blue-100 hover:border-blue-300",       iconColor: "text-blue-500" },
+  red:     { bg: "bg-red-50",     text: "text-red-700",     border: "border-red-200",     hover: "hover:bg-red-100 hover:border-red-300",         iconColor: "text-red-500" },
+  rose:    { bg: "bg-rose-50",    text: "text-rose-700",    border: "border-rose-200",    hover: "hover:bg-rose-100 hover:border-rose-300",       iconColor: "text-rose-500" },
+  cyan:    { bg: "bg-cyan-50",    text: "text-cyan-700",    border: "border-cyan-200",    hover: "hover:bg-cyan-100 hover:border-cyan-300",       iconColor: "text-cyan-500" },
+  emerald: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200", hover: "hover:bg-emerald-100 hover:border-emerald-300", iconColor: "text-emerald-500" },
+  purple:  { bg: "bg-purple-50",  text: "text-purple-700",  border: "border-purple-200",  hover: "hover:bg-purple-100 hover:border-purple-300",   iconColor: "text-purple-500" },
+  orange:  { bg: "bg-orange-50",  text: "text-orange-700",  border: "border-orange-200",  hover: "hover:bg-orange-100 hover:border-orange-300",   iconColor: "text-orange-500" },
+  pink:    { bg: "bg-pink-50",    text: "text-pink-700",    border: "border-pink-200",    hover: "hover:bg-pink-100 hover:border-pink-300",       iconColor: "text-pink-500" },
+};
+
+const PLAYBOOKS: { id: string; label: string; icon: LucideIcon; bots: string[]; desc: string; color: string; stages: string[] }[] = [
+  { id: "libre", label: "Libre", icon: Video, bots: [], desc: "Sans format", color: "blue", stages: [] },
+  { id: "board", label: "Board / CA", icon: Crown, bots: ["CEOB", "CFOB", "CSOB"], desc: "PV officiel, decisions", color: "indigo", stages: ["Ouverture", "Points a l'ordre", "Varia", "Cloture"] },
+  { id: "client", label: "Rencontre Client", icon: Users, bots: ["CEOB", "CROB", "CMOB"], desc: "Discovery, objections", color: "emerald", stages: ["Decouverte", "Besoins", "Objections", "Conclusion"] },
+  { id: "brainstorm", label: "Brainstorm", icon: Lightbulb, bots: ["CEOB", "CTOB", "CMOB"], desc: "Divergence → convergence", color: "amber", stages: ["Divergence", "Tri", "Convergence"] },
+  { id: "crise", label: "Crise", icon: AlertTriangle, bots: ["CEOB", "COOB", "CFOB"], desc: "Evaluation, plan 48h", color: "red", stages: ["Evaluation", "Plan d'action", "Suivi"] },
+  { id: "diagnostic", label: "Diagnostic VITAA", icon: Search, bots: ["CEOB", "COOB"], desc: "Etat des lieux", color: "sky", stages: ["Etat des lieux", "Analyse", "Recommandations"] },
+  { id: "travail", label: "Reunion de travail", icon: Pencil, bots: ["CEOB"], desc: "Session de travail", color: "gray", stages: ["Objectifs", "Travail", "Recap"] },
+  { id: "podcast", label: "Podcast", icon: Mic, bots: ["CEOB", "CMOB"], desc: "Co-animation", color: "pink", stages: ["Intro", "Discussion", "Outro"] },
+  { id: "debat", label: "Debat", icon: Swords, bots: ["CEOB", "CSOB", "CMOB"], desc: "Pour/contre, verdict", color: "orange", stages: ["These", "Antithese", "Synthese"] },
+  { id: "standup", label: "Stand-up", icon: Timer, bots: ["CEOB", "COOB"], desc: "Sync quotidien rapide", color: "cyan", stages: ["Tour de table", "Blocages", "Prochaines etapes"] },
+  { id: "onboarding", label: "Onboarding", icon: UserPlus, bots: ["CEOB", "CHROB"], desc: "Accueil nouvel employe", color: "teal", stages: ["Presentation", "Culture", "Formation", "Plan 90j"] },
+  { id: "formation", label: "Formation", icon: GraduationCap, bots: ["CEOB", "CHROB", "CTOB"], desc: "Session d'apprentissage", color: "violet", stages: ["Objectifs", "Contenu", "Exercices", "Evaluation"] },
+  { id: "negociation", label: "Negociation", icon: Handshake, bots: ["CEOB", "CROB", "CFOB"], desc: "Fournisseur, partenaire", color: "lime", stages: ["Preparation", "Offre", "Contre-offre", "Accord"] },
+  { id: "retro", label: "Retrospective", icon: RotateCcw, bots: ["CEOB", "COOB", "CTOB"], desc: "Bilan et amelioration", color: "purple", stages: ["Bilan", "Problemes", "Actions"] },
+  { id: "pitch", label: "Pitch", icon: Presentation, bots: ["CEOB", "CMOB", "CFOB"], desc: "Investisseur, client", color: "blue", stages: ["Accroche", "Probleme", "Solution", "Ask"] },
+  { id: "one_on_one", label: "One-on-one", icon: UserCheck, bots: ["CEOB"], desc: "Rencontre individuelle", color: "rose", stages: ["Check-in", "Objectifs", "Feedback"] },
+  { id: "revue_finance", label: "Revue financiere", icon: DollarSign, bots: ["CEOB", "CFOB", "CROB"], desc: "Budget, resultats, previsions", color: "green", stages: ["Resultats", "Budget", "Previsions", "Decisions"] },
 ];
 
+// colorName used to derive Tailwind classes: bg-{colorName}-50, border-{colorName}-200, text-{colorName}-700
 const BOT_LIST_CP = [
-  { code: "CEOB", name: "CarlOS", role: "CEO", color: "bg-sky-500" },
-  { code: "CTOB", name: "Tim", role: "CTO", color: "bg-violet-500" },
-  { code: "CFOB", name: "Frank", role: "CFO", color: "bg-emerald-500" },
-  { code: "CMOB", name: "Mathilde", role: "CMO", color: "bg-pink-500" },
-  { code: "CSOB", name: "Simone", role: "CSO", color: "bg-red-500" },
-  { code: "COOB", name: "Olivier", role: "COO", color: "bg-orange-500" },
-  { code: "CPOB", name: "Paco", role: "CPO", color: "bg-sky-600" },
-  { code: "CHROB", name: "Helene", role: "CHRO", color: "bg-amber-500" },
-  { code: "CROB", name: "Rich", role: "CRO", color: "bg-lime-600" },
-  { code: "CISOB", name: "Sebastien", role: "CISO", color: "bg-slate-600" },
-  { code: "CLOB", name: "Loulou", role: "CLO", color: "bg-indigo-500" },
-  { code: "CINOB", name: "Ines", role: "CINO", color: "bg-teal-500" },
+  { code: "CEOB", name: "CarlOS", role: "CEO", color: "bg-sky-500", colorName: "sky" },
+  { code: "CTOB", name: "Tim", role: "CTO", color: "bg-violet-500", colorName: "violet" },
+  { code: "CFOB", name: "Frank", role: "CFO", color: "bg-emerald-500", colorName: "emerald" },
+  { code: "CMOB", name: "Mathilde", role: "CMO", color: "bg-pink-500", colorName: "pink" },
+  { code: "CSOB", name: "Simone", role: "CSO", color: "bg-red-500", colorName: "red" },
+  { code: "COOB", name: "Olivier", role: "COO", color: "bg-orange-500", colorName: "orange" },
+  { code: "CPOB", name: "Paco", role: "CPO", color: "bg-sky-600", colorName: "sky" },
+  { code: "CHROB", name: "Helene", role: "CHRO", color: "bg-amber-500", colorName: "amber" },
+  { code: "CROB", name: "Rich", role: "CRO", color: "bg-lime-600", colorName: "lime" },
+  { code: "CISOB", name: "Sebastien", role: "CISO", color: "bg-slate-600", colorName: "slate" },
+  { code: "CLOB", name: "Loulou", role: "CLO", color: "bg-indigo-500", colorName: "indigo" },
+  { code: "CINOB", name: "Ines", role: "CINO", color: "bg-teal-500", colorName: "teal" },
 ];
+
+// Tailwind color class map for dynamic bot-colored pills (all classes explicit for JIT)
+const BOT_PILL_STYLES: Record<string, { bg: string; border: string; text: string; textLight: string; ring: string }> = {
+  sky: { bg: "bg-sky-50", border: "border-sky-200", text: "text-sky-700", textLight: "text-sky-400", ring: "ring-sky-200" },
+  violet: { bg: "bg-violet-50", border: "border-violet-200", text: "text-violet-700", textLight: "text-violet-400", ring: "ring-violet-200" },
+  emerald: { bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700", textLight: "text-emerald-400", ring: "ring-emerald-200" },
+  pink: { bg: "bg-pink-50", border: "border-pink-200", text: "text-pink-700", textLight: "text-pink-400", ring: "ring-pink-200" },
+  red: { bg: "bg-red-50", border: "border-red-200", text: "text-red-700", textLight: "text-red-400", ring: "ring-red-200" },
+  orange: { bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-700", textLight: "text-orange-400", ring: "ring-orange-200" },
+  amber: { bg: "bg-amber-50", border: "border-amber-200", text: "text-amber-700", textLight: "text-amber-400", ring: "ring-amber-200" },
+  lime: { bg: "bg-lime-50", border: "border-lime-200", text: "text-lime-700", textLight: "text-lime-400", ring: "ring-lime-200" },
+  slate: { bg: "bg-slate-50", border: "border-slate-200", text: "text-slate-700", textLight: "text-slate-400", ring: "ring-slate-200" },
+  indigo: { bg: "bg-indigo-50", border: "border-indigo-200", text: "text-indigo-700", textLight: "text-indigo-400", ring: "ring-indigo-200" },
+  teal: { bg: "bg-teal-50", border: "border-teal-200", text: "text-teal-700", textLight: "text-teal-400", ring: "ring-teal-200" },
+};
 
 function ControlPanel({ isOpen, setIsOpen, activeTab, setActiveTab }: {
   isOpen: boolean;
@@ -1729,16 +1767,19 @@ function ControlPanel({ isOpen, setIsOpen, activeTab, setActiveTab }: {
           <div>
             <div className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-2">Lancer un mode de reflexion</div>
             <div className="grid grid-cols-3 gap-1.5">
-              {REFLEXION_MODES.map(mode => (
-                <button
-                  key={mode.id}
-                  onClick={() => startQualification(mode)}
-                  className="flex items-center gap-1.5 px-2 py-2 rounded-lg text-[10px] font-medium bg-orange-50 text-orange-700 border border-orange-200 hover:bg-orange-100 hover:border-orange-300 cursor-pointer transition-colors"
-                >
-                  <span className="text-xs">{mode.icon}</span>
-                  {mode.label}
-                </button>
-              ))}
+              {REFLEXION_MODES.map(mode => {
+                const ms = MODE_BUTTON_STYLES[mode.color] || MODE_BUTTON_STYLES.amber;
+                return (
+                  <button
+                    key={mode.id}
+                    onClick={() => startQualification(mode)}
+                    className={cn("flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-[10px] font-medium border cursor-pointer transition-colors", ms.bg, ms.text, ms.border, ms.hover)}
+                  >
+                    <mode.icon className={cn("h-3.5 w-3.5 shrink-0", ms.iconColor)} />
+                    {mode.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
@@ -1746,75 +1787,81 @@ function ControlPanel({ isOpen, setIsOpen, activeTab, setActiveTab }: {
         {/* ═══ QUALIFICATION FLOW — MODES (replaces grid when mode selected) ═══ */}
         {activeTab === "modes" && qualMode && (
           <div>
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-sm">{qualMode.icon}</span>
+            <div className="px-3 py-2 -mx-3 -mt-0 bg-orange-50 border-b border-orange-100 flex items-center gap-2 mb-3">
+              <qualMode.icon className="h-4 w-4 text-orange-600" />
               <span className="text-xs font-bold text-orange-700">{qualMode.label}</span>
-              <button onClick={cancelQualification} className="ml-auto text-[9px] text-gray-400 hover:text-gray-600 flex items-center gap-1 cursor-pointer">
-                ← Retour
+              <button onClick={cancelQualification} className="ml-auto text-[9px] text-gray-400 hover:text-gray-600 cursor-pointer">
+                ✕ Annuler
               </button>
             </div>
-            <div className="space-y-2.5">
+            <div className="space-y-3">
               {/* Q1: Participants */}
               <div>
-                <div className="text-[10px] font-bold text-gray-600 mb-1">Participants</div>
+                <div className="text-[10px] font-bold text-gray-600 mb-1.5">Qui participe?</div>
                 <div className="flex gap-1.5">
-                  {(["solo", "duo", "equipe"] as const).map(p => (
+                  {([
+                    { key: "solo" as const, label: "Solo" },
+                    { key: "duo" as const, label: "Duo (1 expert)" },
+                    { key: "equipe" as const, label: "Equipe (2-4)" },
+                  ]).map(p => (
                     <button
-                      key={p}
-                      onClick={() => setQualParticipants(p)}
+                      key={p.key}
+                      onClick={() => setQualParticipants(p.key)}
                       className={cn(
                         "flex-1 px-2 py-1.5 rounded-lg text-[10px] font-medium border text-center cursor-pointer transition-colors",
-                        qualParticipants === p
+                        qualParticipants === p.key
                           ? "border-orange-300 bg-orange-50 text-orange-700 ring-1 ring-orange-200"
                           : "border-gray-200 bg-white text-gray-700 hover:border-orange-300 hover:bg-orange-50"
                       )}
                     >
-                      {p.charAt(0).toUpperCase() + p.slice(1)}
+                      {p.label}
                     </button>
                   ))}
                 </div>
               </div>
-              {/* Q2: Experts */}
+              {/* Q2: Experts — pills colored per bot */}
               {qualParticipants !== "solo" && (
                 <div>
-                  <div className="text-[10px] font-bold text-gray-600 mb-1">Expert(s)</div>
+                  <div className="text-[10px] font-bold text-gray-600 mb-1.5">Quel(s) expert(s)?</div>
                   <div className="flex flex-wrap gap-1">
-                    {BOT_LIST_CP.filter(b => b.code !== activeBotCode).map(bot => (
-                      <button
-                        key={bot.code}
-                        onClick={() => toggleExpert(bot.code)}
-                        className={cn(
-                          "px-2 py-1 rounded-full text-[9px] font-medium border flex items-center gap-1 cursor-pointer transition-colors",
-                          qualExperts.includes(bot.code)
-                            ? "border-orange-300 bg-orange-50 text-orange-700 ring-1 ring-orange-200"
-                            : "border-gray-200 bg-white text-gray-600 hover:border-orange-200 hover:bg-orange-50/50"
-                        )}
-                      >
-                        <span className={cn("w-3 h-3 rounded-full inline-flex items-center justify-center text-white text-[6px] font-bold", bot.color)}>
-                          {bot.name.substring(0, 2).toUpperCase()}
-                        </span>
-                        {bot.name}
-                      </button>
-                    ))}
+                    {BOT_LIST_CP.filter(b => b.code !== activeBotCode).map(bot => {
+                      const isSelected = qualExperts.includes(bot.code);
+                      const ps = BOT_PILL_STYLES[bot.colorName] || BOT_PILL_STYLES.sky;
+                      return (
+                        <button
+                          key={bot.code}
+                          onClick={() => toggleExpert(bot.code)}
+                          className={cn(
+                            "px-2 py-1 rounded-full text-[9px] font-medium border flex items-center gap-1 cursor-pointer transition-colors",
+                            isSelected
+                              ? `${ps.border} ${ps.bg} ${ps.text} ring-1 ${ps.ring}`
+                              : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
+                          )}
+                        >
+                          {(() => { const DeptIcon = DEPT_DASH_ICON[bot.code]; return DeptIcon ? <DeptIcon className={cn("h-3 w-3 shrink-0", ps.text)} /> : null; })()}
+                          {bot.name}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
               {/* Q3: Sujet */}
               <div>
-                <div className="text-[10px] font-bold text-gray-600 mb-1">Sujet</div>
+                <div className="text-[10px] font-bold text-gray-600 mb-1.5">Sujet de la reflexion</div>
                 <input
                   type="text"
                   value={qualSubject}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => setQualSubject(e.target.value)}
                   onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => e.key === "Enter" && launchMode()}
-                  className="w-full px-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-200 focus:border-orange-300 bg-white outline-none"
+                  className="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-200 focus:border-orange-300 bg-white outline-none"
                   placeholder="Decris le sujet..."
                 />
               </div>
               {/* Launch button */}
               <button
                 onClick={launchMode}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-orange-500 text-white text-xs font-bold hover:bg-orange-600 shadow-sm cursor-pointer transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-orange-500 text-white text-xs font-bold hover:bg-orange-600 shadow-sm cursor-pointer transition-colors"
               >
                 <Zap className="h-3.5 w-3.5" />
                 Lancer →
@@ -1825,28 +1872,36 @@ function ControlPanel({ isOpen, setIsOpen, activeTab, setActiveTab }: {
 
         {/* ═══ AGENTS ═══ */}
         {activeTab === "agents" && (
-          <div className="space-y-2.5">
+          <div className="space-y-3">
             {/* Section 1 — Bots actifs */}
             {activeRoster.length > 0 && (
               <div>
-                <div className="text-[9px] font-bold uppercase tracking-wider text-gray-400 mb-1.5">Bots actifs</div>
-                <div className="space-y-1">
+                <div className="text-[9px] font-bold uppercase tracking-wider text-gray-400 mb-2">Bots actifs</div>
+                <div className="space-y-1.5">
                   {activeRoster.map(code => {
                     const bot = BOT_LIST_CP.find(b => b.code === code);
+                    const ps = BOT_PILL_STYLES[bot?.colorName || "sky"] || BOT_PILL_STYLES.sky;
+                    const avatarUrl = BOT_AVATAR[code];
                     return (
                       <div key={code} className={cn(
-                        "flex items-center gap-2 px-2 py-1.5 rounded-lg border",
-                        `bg-sky-50 border-sky-200`
+                        "flex items-center gap-3 px-3 py-2.5 rounded-xl border shadow-sm",
+                        ps.bg, ps.border
                       )}>
-                        <span className={cn("w-5 h-5 rounded-full flex items-center justify-center text-white text-[7px] font-bold", bot?.color || "bg-sky-500")}>
-                          {(bot?.name || code).substring(0, 2).toUpperCase()}
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <span className="text-[10px] font-bold text-gray-900">{bot?.name || code}</span>
-                          <span className="text-[9px] text-gray-500 ml-1">{bot?.role}</span>
+                        <div className={cn("w-9 h-9 rounded-full shrink-0 overflow-hidden ring-2", ps.ring)}>
+                          {avatarUrl ? (
+                            <img src={avatarUrl} alt={bot?.name || code} className="w-full h-full object-cover" />
+                          ) : (
+                            <span className={cn("w-full h-full flex items-center justify-center text-white text-[10px] font-bold", bot?.color || "bg-sky-500")}>
+                              {(bot?.name || code).substring(0, 2).toUpperCase()}
+                            </span>
+                          )}
                         </div>
-                        <button onClick={() => removeBotFromRoster(code)} className="text-[9px] text-red-400 hover:text-red-600 cursor-pointer">
-                          Retirer
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-bold text-gray-900">{bot?.name || code}</div>
+                          <div className="text-[10px] text-gray-500">{bot?.role}</div>
+                        </div>
+                        <button onClick={() => removeBotFromRoster(code)} className="text-[10px] text-red-400 hover:text-red-600 cursor-pointer px-2 py-1 rounded-lg hover:bg-red-50 transition-colors">
+                          <X className="h-3 w-3" />
                         </button>
                       </div>
                     );
@@ -1854,28 +1909,58 @@ function ControlPanel({ isOpen, setIsOpen, activeTab, setActiveTab }: {
                 </div>
               </div>
             )}
-            {/* Section 2 — Ajouter un expert */}
+            {/* Section 2 — Ajouter un expert — style tour de controle avec avatar photo */}
             <div>
-              <div className="text-[9px] font-bold uppercase tracking-wider text-gray-400 mb-1.5">Ajouter un expert</div>
-              <div className="grid grid-cols-2 gap-1.5">
-                {BOT_LIST_CP.filter(b => !activeRoster.includes(b.code) && b.code !== activeBotCode).map(bot => (
-                  <button
-                    key={bot.code}
-                    onClick={() => addBotToRoster(bot.code)}
-                    className={cn(
-                      "flex items-center gap-2 px-2 py-1.5 rounded-lg border border-gray-200 bg-white cursor-pointer transition-colors",
-                      "hover:bg-sky-50 hover:border-sky-200"
-                    )}
-                  >
-                    <span className={cn("w-4 h-4 rounded-full flex items-center justify-center text-white text-[6px] font-bold", bot.color)}>
-                      {bot.name.substring(0, 2).toUpperCase()}
-                    </span>
-                    <div className="min-w-0">
-                      <span className="text-[10px] font-bold text-gray-900">{bot.name}</span>
-                      <span className="text-[9px] text-gray-400 ml-1">{bot.role}</span>
-                    </div>
-                  </button>
-                ))}
+              <div className="text-[9px] font-bold uppercase tracking-wider text-gray-400 mb-2">Ajouter un expert</div>
+              <div className="grid grid-cols-4 gap-2">
+                {BOT_LIST_CP.filter(b => !activeRoster.includes(b.code) && b.code !== activeBotCode).map(bot => {
+                  const avatarUrl = BOT_AVATAR[bot.code];
+                  const ps = BOT_PILL_STYLES[bot.colorName] || BOT_PILL_STYLES.sky;
+                  const gradientMap: Record<string, string> = {
+                    sky: "from-sky-100 to-sky-200", violet: "from-violet-100 to-violet-200",
+                    emerald: "from-emerald-100 to-emerald-200", pink: "from-pink-100 to-pink-200",
+                    red: "from-red-100 to-red-200", orange: "from-orange-100 to-orange-200",
+                    amber: "from-amber-100 to-amber-200", lime: "from-lime-100 to-lime-200",
+                    slate: "from-slate-100 to-slate-200", indigo: "from-indigo-100 to-indigo-200",
+                    teal: "from-teal-100 to-teal-200",
+                  };
+                  const shadowMap: Record<string, string> = {
+                    sky: "group-hover:shadow-sky-200/60", violet: "group-hover:shadow-violet-200/60",
+                    emerald: "group-hover:shadow-emerald-200/60", pink: "group-hover:shadow-pink-200/60",
+                    red: "group-hover:shadow-red-200/60", orange: "group-hover:shadow-orange-200/60",
+                    amber: "group-hover:shadow-amber-200/60", lime: "group-hover:shadow-lime-200/60",
+                    slate: "group-hover:shadow-slate-200/60", indigo: "group-hover:shadow-indigo-200/60",
+                    teal: "group-hover:shadow-teal-200/60",
+                  };
+                  return (
+                    <button
+                      key={bot.code}
+                      onClick={() => addBotToRoster(bot.code)}
+                      className={cn(
+                        "group relative flex flex-col items-center rounded-xl overflow-hidden bg-white border border-gray-100 cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg",
+                        shadowMap[bot.colorName] || "group-hover:shadow-gray-200/60"
+                      )}
+                    >
+                      {/* Gradient banner top */}
+                      <div className={cn("w-full h-5 bg-gradient-to-r", gradientMap[bot.colorName] || "from-sky-400 to-sky-600")} />
+                      {/* Avatar overlapping the banner */}
+                      <div className="w-11 h-11 rounded-full overflow-hidden border-2 border-white -mt-4 shadow-sm">
+                        {avatarUrl ? (
+                          <img src={avatarUrl} alt={bot.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className={cn("w-full h-full flex items-center justify-center text-white text-[11px] font-bold", bot.color)}>
+                            {bot.name.substring(0, 2).toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                      {/* Name + role — punchy style */}
+                      <div className="text-center px-1 pt-1.5 pb-2.5">
+                        <div className={cn("text-[11px] font-extrabold tracking-tight leading-none", ps.text)}>{bot.name}</div>
+                        <div className="text-[8px] font-bold text-gray-400 uppercase tracking-wider leading-tight mt-0.5">{bot.role}</div>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -1890,7 +1975,7 @@ function ControlPanel({ isOpen, setIsOpen, activeTab, setActiveTab }: {
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border-2 border-dashed border-blue-300 bg-blue-50/50 hover:bg-blue-50 cursor-pointer transition-colors mb-3"
             >
               <div className="w-8 h-8 rounded-lg bg-white border border-blue-200 flex items-center justify-center shrink-0">
-                <span className="text-base">📹</span>
+                <Video className="h-4 w-4 text-blue-500" />
               </div>
               <div className="flex-1 text-left">
                 <div className="text-[10px] font-bold text-gray-800">Nouvelle reunion</div>
@@ -1901,20 +1986,48 @@ function ControlPanel({ isOpen, setIsOpen, activeTab, setActiveTab }: {
 
             {/* Ou choisir un playbook */}
             <div className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-2">Ou choisir un playbook</div>
-            <div className="grid grid-cols-2 gap-1.5">
-              {PLAYBOOKS.slice(1).map(pb => (
-                <button
-                  key={pb.id}
-                  onClick={() => startPlaybookQualification(pb)}
-                  className="flex items-center gap-2 px-2.5 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 cursor-pointer transition-colors text-left"
-                >
-                  <span className="text-base shrink-0">{pb.icon}</span>
-                  <div className="min-w-0">
-                    <div className="text-[10px] font-bold text-gray-700">{pb.label}</div>
-                    <div className="text-[8px] text-gray-400">{pb.desc}</div>
-                  </div>
-                </button>
-              ))}
+            <div className="grid grid-cols-4 gap-1.5">
+              {PLAYBOOKS.slice(1).map(pb => {
+                const hoverMap: Record<string, string> = {
+                  indigo: "hover:bg-indigo-50 hover:border-indigo-200",
+                  emerald: "hover:bg-emerald-50 hover:border-emerald-200",
+                  amber: "hover:bg-amber-50 hover:border-amber-200",
+                  red: "hover:bg-red-50 hover:border-red-200",
+                  sky: "hover:bg-sky-50 hover:border-sky-200",
+                  gray: "hover:bg-gray-50 hover:border-gray-300",
+                  pink: "hover:bg-pink-50 hover:border-pink-200",
+                  orange: "hover:bg-orange-50 hover:border-orange-200",
+                  cyan: "hover:bg-cyan-50 hover:border-cyan-200",
+                  teal: "hover:bg-teal-50 hover:border-teal-200",
+                  violet: "hover:bg-violet-50 hover:border-violet-200",
+                  lime: "hover:bg-lime-50 hover:border-lime-200",
+                  purple: "hover:bg-purple-50 hover:border-purple-200",
+                  blue: "hover:bg-blue-50 hover:border-blue-200",
+                  rose: "hover:bg-rose-50 hover:border-rose-200",
+                  green: "hover:bg-green-50 hover:border-green-200",
+                };
+                const iconColorMap: Record<string, string> = {
+                  indigo: "text-indigo-500", emerald: "text-emerald-500", amber: "text-amber-500",
+                  red: "text-red-500", sky: "text-sky-500", gray: "text-gray-400",
+                  pink: "text-pink-500", orange: "text-orange-500", cyan: "text-cyan-500",
+                  teal: "text-teal-500", violet: "text-violet-500", lime: "text-lime-600",
+                  purple: "text-purple-500", blue: "text-blue-500", rose: "text-rose-500",
+                  green: "text-green-600",
+                };
+                return (
+                  <button
+                    key={pb.id}
+                    onClick={() => startPlaybookQualification(pb)}
+                    className={cn(
+                      "flex flex-col items-center gap-1 px-1.5 py-2 rounded-lg border border-gray-200 bg-white cursor-pointer transition-colors text-center",
+                      hoverMap[pb.color] || "hover:bg-gray-50 hover:border-gray-300"
+                    )}
+                  >
+                    <pb.icon className={cn("h-4 w-4 shrink-0", iconColorMap[pb.color] || "text-gray-500")} />
+                    <div className="text-[9px] font-bold text-gray-700 leading-tight">{pb.label}</div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
@@ -1923,62 +2036,79 @@ function ControlPanel({ isOpen, setIsOpen, activeTab, setActiveTab }: {
         {activeTab === "reunion" && qualPlaybook && (
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <span className="text-sm">{qualPlaybook.icon}</span>
-              <span className="text-xs font-bold text-gray-800">{qualPlaybook.label}</span>
+              <qualPlaybook.icon className="h-4 w-4 text-gray-600" />
+              <span className="text-xs font-bold text-gray-700">{qualPlaybook.label}</span>
               <button onClick={cancelPlaybookQualification} className="ml-auto text-[9px] text-gray-400 hover:text-gray-600 flex items-center gap-1 cursor-pointer">
                 ← Retour
               </button>
             </div>
-            <div className="space-y-2.5">
-              {/* Flow stages pills */}
-              {qualPlaybook.id !== "libre" && (
+            <div className="space-y-3">
+              {/* Flow stages pills — per-playbook numbered stages */}
+              {qualPlaybook.stages.length > 0 && (
                 <div>
-                  <div className="text-[10px] font-bold text-gray-600 mb-1">Deroulement</div>
-                  <div className="flex flex-wrap gap-1">
-                    <span className="px-2 py-0.5 rounded-full text-[8px] font-medium border bg-sky-100 text-sky-700 border-sky-200">Ouverture</span>
-                    <span className="px-2 py-0.5 rounded-full text-[8px] font-medium border bg-blue-50 text-blue-600 border-blue-100">Discussion</span>
-                    <span className="px-2 py-0.5 rounded-full text-[8px] font-medium border bg-emerald-100 text-emerald-700 border-emerald-200">Conclusion</span>
-                  </div>
-                </div>
-              )}
-              {/* Bots impliques */}
-              {qualPlaybook.bots.length > 0 && (
-                <div>
-                  <div className="text-[10px] font-bold text-gray-600 mb-1">Bots impliques</div>
-                  <div className="flex flex-wrap gap-1">
-                    {qualPlaybook.bots.map(code => {
-                      const bot = BOT_LIST_CP.find(b => b.code === code);
+                  <div className="text-[10px] font-bold text-gray-600 mb-1">Deroulement (playbook)</div>
+                  <div className="flex gap-1 flex-wrap">
+                    {qualPlaybook.stages.map((stage, i) => {
+                      const isFirst = i === 0;
+                      const isLast = i === qualPlaybook.stages.length - 1;
                       return (
-                        <span key={code} className={cn("px-2 py-0.5 rounded-full text-[9px] font-medium border flex items-center gap-1", "bg-sky-50 text-sky-700 border-sky-200")}>
-                          <span className={cn("w-3 h-3 rounded-full flex items-center justify-center text-white text-[6px] font-bold", bot?.color || "bg-sky-500")}>
-                            {(bot?.name || code).substring(0, 2).toUpperCase()}
-                          </span>
-                          {bot?.name || code}
+                        <span
+                          key={stage}
+                          className={cn(
+                            "px-2 py-0.5 rounded-full text-[8px] font-medium border",
+                            isFirst ? "bg-sky-100 text-sky-700 border-sky-200"
+                              : isLast ? "bg-emerald-100 text-emerald-700 border-emerald-200"
+                              : "bg-blue-50 text-blue-600 border-blue-100"
+                          )}
+                        >
+                          {i + 1}. {stage}
                         </span>
                       );
                     })}
                   </div>
                 </div>
               )}
+              {/* Bots invites — colored per bot with role */}
+              <div>
+                <div className="text-[10px] font-bold text-gray-600 mb-1">Bots invites <span className="font-normal text-gray-400">(modifiable)</span></div>
+                <div className="flex flex-wrap gap-1">
+                  {qualPlaybook.bots.map(code => {
+                    const bot = BOT_LIST_CP.find(b => b.code === code);
+                    const ps = BOT_PILL_STYLES[bot?.colorName || "sky"] || BOT_PILL_STYLES.sky;
+                    return (
+                      <span key={code} className={cn("px-2 py-1 rounded-full text-[9px] font-medium border flex items-center gap-1", ps.bg, ps.text, ps.border)}>
+                        {(() => { const DeptIcon = DEPT_DASH_ICON[code]; return DeptIcon ? <DeptIcon className="h-3 w-3 shrink-0" /> : null; })()}
+                        {bot?.name || code} <span className={ps.textLight}>{bot?.role}</span>
+                      </span>
+                    );
+                  })}
+                  <button
+                    onClick={() => { setActiveTab("agents"); }}
+                    className="px-2 py-1 rounded-full text-[9px] font-medium border border-dashed border-gray-300 text-gray-400 hover:border-gray-400 cursor-pointer transition-colors"
+                  >
+                    + Ajouter
+                  </button>
+                </div>
+              </div>
               {/* Sujet */}
               <div>
-                <div className="text-[10px] font-bold text-gray-600 mb-1">Sujet</div>
+                <div className="text-[10px] font-bold text-gray-600 mb-1">Sujet de la reunion</div>
                 <input
                   type="text"
                   value={reunionSubject}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => setReunionSubject(e.target.value)}
                   onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => e.key === "Enter" && launchPlaybook()}
                   className="w-full px-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-300 bg-white outline-none"
-                  placeholder="Sujet de la reunion..."
+                  placeholder="Ex: Budget Q3, Expansion Ontario..."
                 />
               </div>
-              {/* Launch button */}
+              {/* Launch button — dark navy */}
               <button
                 onClick={launchPlaybook}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#073E5A] text-white text-xs font-bold hover:opacity-90 shadow-sm cursor-pointer transition-colors"
               >
-                <Users className="h-3.5 w-3.5" />
-                Lancer reunion →
+                <Video className="h-3.5 w-3.5" />
+                Demarrer la reunion →
               </button>
             </div>
           </div>
@@ -2445,7 +2575,7 @@ function ChatBoxV3({ onOpenPanel }: { onOpenPanel?: (tab: "modes" | "agents" | "
             className="flex items-center gap-1 px-1.5 py-1 rounded-md text-[10px] font-medium transition-all cursor-pointer bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
             title="Réunion AI"
           >
-            <Users className="h-3 w-3" />Réunion
+            <Video className="h-3 w-3" />Reunion
           </button>
           <button
             onClick={visionActive ? () => { stopVoicePolling(); setVisionActive(false); } : handleVision}
@@ -2463,7 +2593,7 @@ function ChatBoxV3({ onOpenPanel }: { onOpenPanel?: (tab: "modes" | "agents" | "
             className="flex items-center gap-1 px-1.5 py-1 rounded-md text-[10px] font-medium transition-all cursor-pointer bg-orange-50 text-orange-600 hover:bg-orange-100"
             title="Modes de réflexion"
           >
-            <Brain className="h-3 w-3" />Réflexions
+            <Brain className="h-3 w-3" />Modes
           </button>
           <button
             onClick={() => onOpenPanel?.("agents")}

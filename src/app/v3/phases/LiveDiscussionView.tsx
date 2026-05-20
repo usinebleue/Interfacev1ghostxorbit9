@@ -1503,7 +1503,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
           </div>
         </div>
 
-        {/* Hero tabs retires — agents/reflexion maintenant dans ControlPanel (ChatBoxV3) */}
+        {/* Hero tabs removed — agents/modes now in ControlPanel toolbar */}
 
         {/* Progress bar — thin accent at bottom */}
         <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-100 z-10 rounded-b-xl overflow-hidden">
@@ -1514,7 +1514,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
         </div>
       </div>
 
-      {/* Titre deplace dans le hero compact (S117-B Part C) */}
+      {/* Titre retiré — déjà dans le hero compact */}
 
       {/* GPS Banner — removed (D-116: CREDO alerts were distracting) */}
 
@@ -1542,11 +1542,11 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
             { key: "D" as const, label: "Demontrer", dot: "bg-emerald-500", bg: "bg-emerald-50", text: "text-emerald-700" },
             { key: "O" as const, label: "Objectif", dot: "bg-red-500", bg: "bg-red-50", text: "text-red-700" },
           ];
-          if (participatingBots.length <= 1 && workspaceBlocks.length < 2) return null;
+          // Sidebar toujours visible — l'agent primaire est toujours present
           return (
             <div className="w-[180px] shrink-0 border-r border-gray-100 py-2 overflow-y-auto scrollbar-thin flex flex-col gap-3">
               {/* Section 1: Bot filter */}
-              {sortedBots.length > 1 && (
+              {sortedBots.length >= 1 && (
                 <div className="space-y-1 px-1">
                   <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 px-2">Participants</span>
                   <button onClick={() => setFilterBotCode(null)}
@@ -1579,7 +1579,6 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
               {workspaceBlocks.length > 0 && (
                 <div className="space-y-1 px-1">
                   <div className="border-t border-gray-100 mx-1 mb-1" />
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 px-2">Navigation CREDO</span>
                   {CREDO_NAV.map(phase => {
                     const phaseBlocks = workspaceBlocks.filter(b => b.credo_step === phase.key);
                     const count = phaseBlocks.length;
@@ -1626,7 +1625,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
 
               {/* Section 3: Synthese link */}
               {workspaceBlocks.length >= 3 && (
-                <div className="px-1 mt-auto">
+                <div className="px-1">
                   <div className="border-t border-gray-100 mx-1 mb-2" />
                   <button
                     onClick={() => {
@@ -1658,10 +1657,13 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
         <div className="w-full">
          <div className={cn("transition-all duration-300", contentAppeared ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2")}>
 
-          {/* Agents panel + Modes de reflexion retires — maintenant dans ControlPanel */}
+          {/* TAB: Ajouter un agent — roster panel */}
+          {activeHeroTab === "agents" && (
+            <AgentRosterPanel activeRoster={activeRoster} onToggleBot={handleToggleBot} loadingBots={rosterLoadingBots} />
+          )}
 
-          {/* Reflexion flow — code retire, lance depuis ControlPanel → setActivePhase("reflexion") */}
-          {false && (
+          {/* TAB: Modes de reflexion — existing reflexion flow (Etape 5: flow simulation-style) */}
+          {activeHeroTab === "reflexion" && activeSubSection === "modes-reflexion" && (
             <div className="mt-3 space-y-3">
               {/* Mode selector buttons — demarrage immediat (1-click) */}
               {!reflexionFlow && (
@@ -1947,8 +1949,8 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
             </div>
           )}
 
-          {/* W.0: techniques creativite — retire, maintenant dans ControlPanel */}
-          {false && (
+          {/* W.0: techniques creativite */}
+          {activeHeroTab === "reflexion" && activeSubSection === "techniques" && (
             <div className="mt-3 space-y-3">
               <div className="rounded-xl border border-orange-200 bg-orange-50/50 p-4 space-y-3">
                 <h4 className="text-[10px] font-bold uppercase tracking-wider text-orange-700">
@@ -2007,7 +2009,8 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
             </div>
           )}
 
-          {/* Discussion content — toujours visible (hero tabs retires) */}
+          {/* Discussion content — visible when discussion tab is active */}
+          {activeHeroTab === "discussion" && (<>
 
           {/* W.1b: SUB-SECTION CONTENT — deep search via Gemini grounding */}
           {activeSubSection === "deep-search" && (
@@ -2259,6 +2262,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
             </div>
           )}
 
+          </>)}
           {/* end discussion content */}
 
          </div>{/* close fade-in wrapper */}
@@ -2568,23 +2572,11 @@ function SyntheseSection({ workspaceBlocks, activeBotCode, displayContext }: {
               {workspaceBlocks.length} blocs · {uniqueBots.length} agents · {credoSteps.length} phases CREDO
             </p>
           </div>
-          {!synthese && (
-            <button
-              onClick={handleGenerate}
-              disabled={loading}
-              className={cn(
-                "px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer",
-                loading
-                  ? "bg-white/20 text-white/60"
-                  : "bg-white text-[#073E5A] hover:bg-white/90 shadow-sm"
-              )}
-            >
-              {loading ? (
-                <span className="flex items-center gap-1.5"><Loader2 className="h-3 w-3 animate-spin" /> Generation...</span>
-              ) : (
-                "Generer la synthese"
-              )}
-            </button>
+          {synthese && (
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-200 text-[9px] font-medium">
+              <CheckCircle2 className="h-3 w-3" />
+              Generee
+            </div>
           )}
         </div>
       </div>
@@ -2696,12 +2688,22 @@ function SyntheseSection({ workspaceBlocks, activeBotCode, displayContext }: {
         </div>
       )}
 
-      {/* Not yet generated — subtle bottom border */}
-      {!synthese && (
-        <div className="border border-gray-200 border-t-0 rounded-b-xl bg-white px-4 py-3">
-          <p className="text-[10px] text-gray-400 text-center italic">
-            Cliquez sur "Generer la synthese" pour compiler les contributions
-          </p>
+      {/* Not yet generated — compact call-to-action */}
+      {!synthese && !loading && (
+        <div className="border border-gray-200 border-t-0 rounded-b-xl bg-white px-4 py-4 flex items-center justify-center">
+          <button
+            onClick={handleGenerate}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#073E5A] text-white text-xs font-bold hover:bg-[#0c5a7d] cursor-pointer transition-colors shadow-sm"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            Generer la synthese
+          </button>
+        </div>
+      )}
+      {!synthese && loading && (
+        <div className="border border-gray-200 border-t-0 rounded-b-xl bg-white px-4 py-4 flex items-center justify-center gap-2 text-gray-400">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span className="text-xs">Generation en cours...</span>
         </div>
       )}
     </div>

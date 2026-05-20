@@ -162,6 +162,128 @@ function formatBlockMarkdown(text: string): string {
 // ═══ Compact mode context — discussion blocks: 1 colonne, pas de BlockActions lourdes ═══
 export const BlockDisplayContext = createContext({ compact: false, primaryBotCode: "" });
 
+// ═══ Section parser — splits markdown into titled sections for mini-card rendering ═══
+
+interface ContentSection {
+  title: string;
+  body: string;
+  index: number;
+}
+
+function parseContentSections(text: string): ContentSection[] | null {
+  if (!text || text.trim().length < 40) return null;
+
+  const lines = text.split("\n");
+  const sections: ContentSection[] = [];
+  let currentTitle = "";
+  let currentBody: string[] = [];
+  let sectionIdx = 0;
+
+  const flush = () => {
+    const body = currentBody.join("\n").trim();
+    if (body.length > 0) {
+      sections.push({ title: currentTitle, body, index: sectionIdx++ });
+    }
+    currentBody = [];
+  };
+
+  for (const line of lines) {
+    // Match markdown headers: ## Title, ### Title
+    const headerMatch = line.trim().match(/^#{2,3}\s+(.+)/);
+    if (headerMatch) {
+      flush();
+      currentTitle = headerMatch[1].replace(/\*\*/g, "").trim();
+      continue;
+    }
+    // Match numbered sections at root level: "1. Title", "2) Title"
+    const numberedMatch = line.match(/^(\d+)[.)]\s+\*\*(.+?)\*\*(.*)/);
+    if (numberedMatch) {
+      flush();
+      currentTitle = numberedMatch[2].trim();
+      // Keep the rest of the line as body content if any
+      const rest = numberedMatch[3]?.replace(/^[\s:—–-]+/, "").trim();
+      if (rest) currentBody.push(rest);
+      continue;
+    }
+    // Match bold-started lines like "**Title:** content" (common AI pattern)
+    const boldStartMatch = line.match(/^\*\*(.+?)\*\*\s*[:—–-]\s*(.*)/);
+    if (boldStartMatch && currentBody.length === 0 && !currentTitle) {
+      flush();
+      currentTitle = boldStartMatch[1].trim();
+      if (boldStartMatch[2].trim()) currentBody.push(boldStartMatch[2].trim());
+      continue;
+    }
+    currentBody.push(line);
+  }
+  flush();
+
+  // Only return sections if we found at least 2 distinct titled sections
+  if (sections.filter(s => s.title).length < 2) return null;
+  return sections;
+}
+
+// ═══ Bot section accent colors (pastel bg per bot for mini-cards) ═══
+const BOT_SECTION_COLORS: Record<string, { bg: string; border: string; numColor: string }> = {
+  BCO: { bg: "bg-blue-50/70", border: "border-blue-100", numColor: "text-blue-500" },
+  CEOB: { bg: "bg-blue-50/70", border: "border-blue-100", numColor: "text-blue-500" },
+  BCT: { bg: "bg-violet-50/70", border: "border-violet-100", numColor: "text-violet-500" },
+  CTOB: { bg: "bg-violet-50/70", border: "border-violet-100", numColor: "text-violet-500" },
+  BCF: { bg: "bg-emerald-50/70", border: "border-emerald-100", numColor: "text-emerald-500" },
+  CFOB: { bg: "bg-emerald-50/70", border: "border-emerald-100", numColor: "text-emerald-500" },
+  BCM: { bg: "bg-pink-50/70", border: "border-pink-100", numColor: "text-pink-500" },
+  CMOB: { bg: "bg-pink-50/70", border: "border-pink-100", numColor: "text-pink-500" },
+  BCS: { bg: "bg-red-50/70", border: "border-red-100", numColor: "text-red-500" },
+  CSOB: { bg: "bg-red-50/70", border: "border-red-100", numColor: "text-red-500" },
+  BOO: { bg: "bg-orange-50/70", border: "border-orange-100", numColor: "text-orange-500" },
+  COOB: { bg: "bg-orange-50/70", border: "border-orange-100", numColor: "text-orange-500" },
+  CPOB: { bg: "bg-slate-50/70", border: "border-slate-100", numColor: "text-slate-500" },
+  CHROB: { bg: "bg-teal-50/70", border: "border-teal-100", numColor: "text-teal-500" },
+  CINOB: { bg: "bg-rose-50/70", border: "border-rose-100", numColor: "text-rose-500" },
+  CROB: { bg: "bg-amber-50/70", border: "border-amber-100", numColor: "text-amber-500" },
+  CLOB: { bg: "bg-indigo-50/70", border: "border-indigo-100", numColor: "text-indigo-500" },
+  CISOB: { bg: "bg-zinc-50/70", border: "border-zinc-100", numColor: "text-zinc-500" },
+};
+
+/** Renders block content with titled sub-sections as styled mini-cards */
+function SectionedBlockContent({ summary, botCode }: { summary: string; botCode: string }) {
+  const sections = parseContentSections(summary);
+  const sectionColors = BOT_SECTION_COLORS[botCode] || { bg: "bg-gray-50/70", border: "border-gray-100", numColor: "text-gray-500" };
+
+  // Fallback: no parseable sections → render as formatted markdown
+  if (!sections) {
+    return (
+      <div
+        className="text-[11px] leading-relaxed text-gray-700 prose-sm"
+        dangerouslySetInnerHTML={{ __html: formatBlockMarkdown(summary) }}
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {sections.map((s) => (
+        <div
+          key={s.index}
+          className={cn("rounded-lg p-2.5 border", sectionColors.bg, sectionColors.border)}
+        >
+          {s.title && (
+            <div className="flex items-start gap-2 mb-1.5">
+              <span className={cn("text-[10px] font-bold mt-0.5 shrink-0", sectionColors.numColor)}>
+                {s.index + 1}.
+              </span>
+              <span className="text-[11px] font-semibold text-gray-900 leading-tight">{s.title}</span>
+            </div>
+          )}
+          <div
+            className={cn("text-[11px] leading-relaxed text-gray-700 prose-sm", s.title ? "ml-5" : "")}
+            dangerouslySetInnerHTML={{ __html: formatBlockMarkdown(s.body) }}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ═══ Bot Accent Borders (B.9 — pattern BOT_COLORS from sim-data.ts) ═══
 
 export const BOT_ACCENT_BORDERS: Record<string, string> = {
@@ -3113,10 +3235,7 @@ export function BlockRenderer({ block, onAction, animated }: BlockRendererProps)
     return (
       <AnimatedBlockEntry block={block} animated={animated}>
         <ExpertBlockWrapper block={block} onAction={onAction}>
-          <div
-            className="text-sm leading-relaxed text-gray-700 prose-sm"
-            dangerouslySetInnerHTML={{ __html: formatBlockMarkdown(block.summary) }}
-          />
+          <SectionedBlockContent summary={block.summary} botCode={block.source} />
         </ExpertBlockWrapper>
       </AnimatedBlockEntry>
     );
