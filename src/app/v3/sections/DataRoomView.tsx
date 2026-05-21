@@ -1055,6 +1055,29 @@ export function DataRoomView({ botCode, headerGradient, showHeader = false }: { 
     }).catch(() => {});
   }, [botCode]);
 
+  // ═══ Drive Connect état (T.4) ═══
+  const [showDriveSetup, setShowDriveSetup] = useState(false);
+  const [driveFolderInput, setDriveFolderInput] = useState("");
+  const [driveInitStatus, setDriveInitStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const [driveCreatedFolders, setDriveCreatedFolders] = useState<string[]>([]);
+
+  const handleDriveConnect = async () => {
+    if (!driveFolderInput.trim()) return;
+    setDriveInitStatus("loading");
+    try {
+      const res = await api.initClientDrive(driveFolderInput.trim());
+      if (res.created?.length > 0) {
+        setDriveCreatedFolders(res.created);
+        setDriveInitStatus("done");
+        setShowDriveSetup(false);
+      } else {
+        setDriveInitStatus("error");
+      }
+    } catch {
+      setDriveInitStatus("error");
+    }
+  };
+
   // Convertir bureau items en DataRoomDoc format
   const realDocs: DataRoomDoc[] = useMemo(() =>
     bureauDocs.map((item: any) => ({
@@ -1486,9 +1509,9 @@ export function DataRoomView({ botCode, headerGradient, showHeader = false }: { 
             </div>
           </div>
         ) : activeFolder === "_bot_rapports" ? (
-          /* Rapports produits par les outils bots (T.3) */
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 mb-2">
+          /* Rapports produits par les outils bots (T.3+T.4) */
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
               <Zap className="h-4 w-4 text-blue-500" />
               <span className="text-xs font-bold text-gray-800">Rapports générés par les bots</span>
               <span className="text-[9px] text-gray-400">{botRapportsDocs.length} fichier{botRapportsDocs.length !== 1 ? "s" : ""}</span>
@@ -1511,6 +1534,61 @@ export function DataRoomView({ botCode, headerGradient, showHeader = false }: { 
                     <span className="text-[8px] px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded font-medium shrink-0">{doc.format}</span>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* ── Connecter Drive client (T.4) ── */}
+            {driveInitStatus === "done" ? (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-200">
+                <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-bold text-emerald-700">Drive connecté</p>
+                  <p className="text-[9px] text-emerald-600">{driveCreatedFolders.length} dossiers créés</p>
+                </div>
+              </div>
+            ) : (
+              <div className="border border-dashed border-gray-200 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Database className="h-3.5 w-3.5 text-gray-400" />
+                  <span className="text-[10px] font-bold text-gray-600">Connecter votre Google Drive</span>
+                </div>
+                <p className="text-[9px] text-gray-400 mb-3">Les rapports des bots seront automatiquement copiés dans votre Drive par département.</p>
+                {!showDriveSetup ? (
+                  <button
+                    onClick={() => setShowDriveSetup(true)}
+                    className="text-[9px] font-bold text-blue-600 hover:text-blue-700 underline cursor-pointer"
+                  >
+                    + Configurer mon Drive
+                  </button>
+                ) : (
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      placeholder="ID du dossier Drive (ex: 1IRU1xnc3Me...)"
+                      value={driveFolderInput}
+                      onChange={e => setDriveFolderInput(e.target.value)}
+                      className="w-full text-[9px] px-2 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-300"
+                    />
+                    {driveInitStatus === "error" && (
+                      <p className="text-[9px] text-red-500">Erreur — vérifiez l'ID du dossier.</p>
+                    )}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleDriveConnect}
+                        disabled={driveInitStatus === "loading" || !driveFolderInput.trim()}
+                        className="flex-1 text-[9px] font-bold px-2 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                      >
+                        {driveInitStatus === "loading" ? "Connexion..." : "Connecter"}
+                      </button>
+                      <button
+                        onClick={() => { setShowDriveSetup(false); setDriveInitStatus("idle"); }}
+                        className="text-[9px] text-gray-400 hover:text-gray-600 px-2 cursor-pointer"
+                      >
+                        Annuler
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -424,6 +424,14 @@ export const api = {
     return apiFetch<{ documents: any[]; count: number }>(`/bot-documents${qs ? `?${qs}` : ""}`);
   },
 
+  /** Initialise la structure Drive départementale pour un client (T.4) */
+  initClientDrive(driveFolderId: string, userId = 1): Promise<{ created: string[]; errors: string[]; drive_folder_id: string }> {
+    return apiFetch<{ created: string[]; errors: string[]; drive_folder_id: string }>("/drive/init-client", {
+      method: "POST",
+      body: JSON.stringify({ drive_folder_id: driveFolderId, user_id: userId }),
+    });
+  },
+
   // --- Taches Plane.so ---
 
   /** Lister les taches ouvertes */
