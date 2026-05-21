@@ -432,6 +432,49 @@ export const api = {
     });
   },
 
+  /** Crée le dossier Drive "Usinebleue AI - Brain Team - {clientName}" (T.5) */
+  initClientDriveByName(clientName: string, userId = 1): Promise<{ created: string[]; errors: string[]; drive_folder_id: string; folder_name: string }> {
+    return apiFetch("/drive/init-client", {
+      method: "POST",
+      body: JSON.stringify({ client_name: clientName, user_id: userId }),
+    });
+  },
+
+  /** Liste les fichiers/dossiers Drive via rclone (T.5) */
+  listDriveFiles(path = ""): Promise<{ path: string; items: any[]; count: number }> {
+    return apiFetch(`/drive/list${path ? `?path=${encodeURIComponent(path)}` : ""}`);
+  },
+
+  // --- Intégrations tierces (T.5) ---
+
+  /** Registre complet des providers disponibles */
+  listIntegrations(): Promise<{ integrations: any[]; count: number }> {
+    return apiFetch("/integrations");
+  },
+
+  /** Intégrations actives de l'utilisateur */
+  getUserIntegrations(): Promise<{ integrations: any[] }> {
+    return apiFetch("/integrations/user");
+  },
+
+  /** Sauvegarde une intégration (upsert) */
+  saveIntegration(provider: string, config: Record<string, string>): Promise<{ ok: boolean; provider: string; name?: string; error?: string }> {
+    return apiFetch(`/integrations/${provider}`, {
+      method: "POST",
+      body: JSON.stringify({ config }),
+    });
+  },
+
+  /** Teste la connexion d'une intégration utilisateur */
+  testUserIntegration(provider: string): Promise<{ ok: boolean; message?: string; error?: string }> {
+    return apiFetch(`/integrations/${provider}/test`, { method: "POST" });
+  },
+
+  /** Supprime une intégration */
+  deleteIntegration(provider: string): Promise<{ ok: boolean; provider: string }> {
+    return apiFetch(`/integrations/${provider}`, { method: "DELETE" });
+  },
+
   // --- Taches Plane.so ---
 
   /** Lister les taches ouvertes */
