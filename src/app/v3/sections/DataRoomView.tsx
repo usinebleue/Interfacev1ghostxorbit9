@@ -1055,26 +1055,53 @@ export function DataRoomView({ botCode, headerGradient, showHeader = false }: { 
     }).catch(() => {});
   }, [botCode]);
 
-  // ═══ Drive Connect état (T.4) ═══
-  const [showDriveSetup, setShowDriveSetup] = useState(false);
+  // ═══ Drive Connect état (réel — valide via rclone + sauvegarde DB) ═══
+  const [driveConnected, setDriveConnected] = useState(false);
+  const [driveFileCount, setDriveFileCount] = useState<number | null>(null);
+  const [driveShareEmail, setDriveShareEmail] = useState("cfugere@usinebleue.ai");
   const [driveFolderInput, setDriveFolderInput] = useState("");
-  const [driveInitStatus, setDriveInitStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
-  const [driveCreatedFolders, setDriveCreatedFolders] = useState<string[]>([]);
+  const [driveConnectStatus, setDriveConnectStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const [driveConnectError, setDriveConnectError] = useState("");
+  const [showDriveSetup, setShowDriveSetup] = useState(false);
+  const [emailCopied, setEmailCopied] = useState(false);
+
+  // Charger le statut Drive au montage
+  useEffect(() => {
+    api.driveStatus().then(res => {
+      setDriveShareEmail(res.share_email || "cfugere@usinebleue.ai");
+      if (res.connected) {
+        setDriveConnected(true);
+        setDriveFileCount(res.file_count ?? null);
+      }
+    }).catch(() => {});
+  }, []);
+
+  const handleCopyEmail = () => {
+    navigator.clipboard.writeText(driveShareEmail).then(() => {
+      setEmailCopied(true);
+      setTimeout(() => setEmailCopied(false), 2000);
+    });
+  };
 
   const handleDriveConnect = async () => {
     if (!driveFolderInput.trim()) return;
-    setDriveInitStatus("loading");
+    setDriveConnectStatus("loading");
+    setDriveConnectError("");
     try {
-      const res = await api.initClientDrive(driveFolderInput.trim());
-      if (res.created?.length > 0) {
-        setDriveCreatedFolders(res.created);
-        setDriveInitStatus("done");
+      const res = await api.driveConnect(driveFolderInput.trim());
+      if (res.ok) {
+        setDriveConnected(true);
+        setDriveFileCount(res.items_count ?? null);
+        setDriveConnectStatus("done");
         setShowDriveSetup(false);
+        setDriveFolderInput("");
       } else {
-        setDriveInitStatus("error");
+        setDriveConnectError(res.error || "Connexion échouée");
+        setDriveConnectStatus("error");
       }
     } catch {
-      setDriveInitStatus("error");
+      setDriveConnectError("Erreur réseau — réessayez");
+      setDriveConnectStatus("error");
     }
   };
 
@@ -1537,51 +1564,84 @@ export function DataRoomView({ botCode, headerGradient, showHeader = false }: { 
               </div>
             )}
 
-            {/* ── Connecter Drive client (T.4) ── */}
-            {driveInitStatus === "done" ? (
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-200">
-                <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-bold text-emerald-700">Drive connecté</p>
-                  <p className="text-[9px] text-emerald-600">{driveCreatedFolders.length} dossiers créés</p>
+            {/* ── Connexion Google Drive (réelle) ── */}
+            {driveConnected ? (
+              <div className="border border-emerald-200 rounded-xl p-3 bg-emerald-50">
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                    <span className="text-[10px] font-bold text-emerald-700">Google Drive connecté</span>
+                  </div>
+                  <button
+                    onClick={() => { setDriveConnected(false); setShowDriveSetup(true); }}
+                    className="text-[9px] text-gray-400 hover:text-gray-600 cursor-pointer underline"
+                  >
+                    Changer
+                  </button>
                 </div>
+                {driveFileCount !== null && (
+                  <p className="text-[9px] text-emerald-600 mb-2">{driveFileCount} fichier{driveFileCount !== 1 ? "s" : ""} accessible{driveFileCount !== 1 ? "s" : ""}</p>
+                )}
               </div>
             ) : (
-              <div className="border border-dashed border-gray-200 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-2">
+              <div className="border border-dashed border-gray-200 rounded-xl p-3">
+                <div className="flex items-center gap-2 mb-1.5">
                   <Database className="h-3.5 w-3.5 text-gray-400" />
-                  <span className="text-[10px] font-bold text-gray-600">Connecter votre Google Drive</span>
+                  <span className="text-[10px] font-bold text-gray-700">Connecter votre Google Drive</span>
                 </div>
-                <p className="text-[9px] text-gray-400 mb-3">Les rapports des bots seront automatiquement copiés dans votre Drive par département.</p>
+                <p className="text-[9px] text-gray-400 mb-3">Partagez un dossier Drive avec Brain Team pour accéder à vos fichiers directement dans le chat.</p>
+
                 {!showDriveSetup ? (
                   <button
                     onClick={() => setShowDriveSetup(true)}
                     className="text-[9px] font-bold text-blue-600 hover:text-blue-700 underline cursor-pointer"
                   >
-                    + Configurer mon Drive
+                    + Connecter mon Drive
                   </button>
                 ) : (
-                  <div className="space-y-2">
-                    <input
-                      type="text"
-                      placeholder="ID du dossier Drive (ex: 1IRU1xnc3Me...)"
-                      value={driveFolderInput}
-                      onChange={e => setDriveFolderInput(e.target.value)}
-                      className="w-full text-[9px] px-2 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-300"
-                    />
-                    {driveInitStatus === "error" && (
-                      <p className="text-[9px] text-red-500">Erreur — vérifiez l'ID du dossier.</p>
+                  <div className="space-y-2.5">
+                    {/* Étape 1 — partager avec l'email */}
+                    <div className="bg-blue-50 border border-blue-100 rounded-lg p-2.5">
+                      <p className="text-[9px] font-bold text-blue-700 mb-1">Étape 1 — Partagez votre dossier Drive avec :</p>
+                      <div className="flex items-center gap-1.5">
+                        <code className="text-[9px] text-blue-800 bg-blue-100 px-2 py-0.5 rounded flex-1 truncate font-mono">
+                          {driveShareEmail}
+                        </code>
+                        <button
+                          onClick={handleCopyEmail}
+                          className="shrink-0 text-[9px] px-2 py-0.5 bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer transition-colors"
+                        >
+                          {emailCopied ? "Copié ✓" : "Copier"}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Étape 2 — coller l'URL */}
+                    <div>
+                      <p className="text-[9px] font-bold text-gray-600 mb-1">Étape 2 — Collez l'URL ou l'ID du dossier :</p>
+                      <input
+                        type="text"
+                        placeholder="https://drive.google.com/drive/folders/1ABC..."
+                        value={driveFolderInput}
+                        onChange={e => { setDriveFolderInput(e.target.value); setDriveConnectStatus("idle"); setDriveConnectError(""); }}
+                        className="w-full text-[9px] px-2 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-300"
+                      />
+                    </div>
+
+                    {driveConnectError && (
+                      <p className="text-[9px] text-red-500">{driveConnectError}</p>
                     )}
+
                     <div className="flex gap-2">
                       <button
                         onClick={handleDriveConnect}
-                        disabled={driveInitStatus === "loading" || !driveFolderInput.trim()}
+                        disabled={driveConnectStatus === "loading" || !driveFolderInput.trim()}
                         className="flex-1 text-[9px] font-bold px-2 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
                       >
-                        {driveInitStatus === "loading" ? "Connexion..." : "Connecter"}
+                        {driveConnectStatus === "loading" ? "Vérification..." : "Connecter"}
                       </button>
                       <button
-                        onClick={() => { setShowDriveSetup(false); setDriveInitStatus("idle"); }}
+                        onClick={() => { setShowDriveSetup(false); setDriveConnectStatus("idle"); setDriveConnectError(""); setDriveFolderInput(""); }}
                         className="text-[9px] text-gray-400 hover:text-gray-600 px-2 cursor-pointer"
                       >
                         Annuler

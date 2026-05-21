@@ -445,6 +445,16 @@ export const api = {
     return apiFetch(`/drive/list${path ? `?path=${encodeURIComponent(path)}` : ""}`);
   },
 
+  /** Statut de la connexion Drive de l'utilisateur */
+  driveStatus(): Promise<{ connected: boolean; folder_id: string | null; share_email: string; file_count?: number; error?: string }> {
+    return apiFetch("/drive/status");
+  },
+
+  /** Connecte un dossier Drive (URL complète ou ID brut) */
+  driveConnect(folder: string): Promise<{ ok: boolean; folder_id?: string; items_count?: number; error?: string }> {
+    return apiFetch("/drive/connect", { method: "POST", body: JSON.stringify({ folder }) });
+  },
+
   // --- Intégrations tierces (T.5) ---
 
   /** Registre complet des providers disponibles */

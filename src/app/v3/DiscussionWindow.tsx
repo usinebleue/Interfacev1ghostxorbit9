@@ -22,11 +22,13 @@ import {
   Phone, PhoneOff, Video, Glasses, Paperclip, Globe, Zap, Activity, Users,
   Brain, Target, AlertTriangle, Scale, Sparkles, MessageSquare,
   Mic, MicOff, Loader2, Upload, MessageCircle, Clock, Network, Pencil,
-  BookOpen, Search, BarChart2, Lightbulb,
+  BookOpen, Search, BarChart2, Lightbulb, FileText,
   Eye, Swords, Shield, Crown, type LucideIcon,
   UserPlus, GraduationCap, Handshake, RotateCcw, Presentation, Timer, DollarSign, UserCheck,
 } from "lucide-react";
 import { cn } from "../components/ui/utils";
+import { DrivePickerModal } from "./DrivePickerModal";
+import { IntegrationsPanel } from "./IntegrationsPanel";
 import { useAmorcer } from "./AmorcerContext";
 import { useDemo } from "./DemoContext";
 import { DemoChatPlayer } from "./DemoChatPlayer";
@@ -267,25 +269,26 @@ function ContributionCard({ agent, nom, contenu, style }: {
   const [expanded, setExpanded] = useState(false);
   const safe = contenu || "";
   const isLong = safe.length > 300;
-  const displayed = isLong && !expanded ? safe.slice(0, 280) + "…" : safe;
 
   return (
     <div className={cn("border-l-[3px] rounded-lg rounded-tl-none px-3 py-2", style.border, "bg-white/60")}>
-      {/* Header: avatar + nom + role badge */}
+      {/* Header: avatar + nom + role badge pill */}
       <div className="flex items-center gap-2 mb-1">
         <div className={cn("w-5 h-5 rounded-full overflow-hidden shrink-0 ring-1", style.ring)}>
           <img src={BOT_AVATAR[agent] || `/agents/${agent.toLowerCase()}.png`}
             alt="" className="w-full h-full object-cover" />
         </div>
-        <span className={cn("text-[10px] font-semibold", style.text)}>{nom}</span>
-        <span className="text-[9px] text-gray-400">{BOT_ROLE[agent]}</span>
-        <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium ml-auto", style.bubble, style.text)}>
-          Consultant
+        <span className={cn("text-[11px] font-bold", style.text)}>{nom}</span>
+        <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium", style.bubble, style.text)}>
+          {BOT_ROLE[agent] || "Consultant"}
         </span>
       </div>
-      {/* Contenu complet avec markdown */}
-      <div className="text-[12px] text-gray-700 leading-relaxed"
-        dangerouslySetInnerHTML={{ __html: formatMarkdown(displayed) }} />
+      {/* Contenu complet avec markdown — scroll au lieu de tronquer */}
+      <div className={cn(
+        "text-[12px] text-gray-700 leading-relaxed",
+        isLong && !expanded && "max-h-[200px] overflow-y-auto"
+      )}
+        dangerouslySetInnerHTML={{ __html: formatMarkdown(safe) }} />
       {/* Toggle expand/collapse */}
       {isLong && (
         <button onClick={() => setExpanded(!expanded)}
@@ -337,6 +340,87 @@ function ThinkingLabel({ botCode, userText }: { botCode: string; userText?: stri
     <span className="text-[9px] text-gray-400 text-center truncate max-w-[80px]">
       {label}...
     </span>
+  );
+}
+
+/** ExpertSuggestionChips — small chips in bubble footer for quick expert consultation */
+function ExpertSuggestionChips({ suggestions, onConsult }: {
+  suggestions: Array<{ consult: string; consult_nom: string; consult_emoji: string; reason: string }>;
+  onConsult: (s: { consult: string; reason: string }) => void;
+}) {
+  return (
+    <div className="mt-2 pt-2 border-t border-gray-100">
+      <span className="text-[9px] text-gray-400 font-medium uppercase tracking-wide">Experts suggérés</span>
+      <div className="flex flex-wrap gap-1 mt-1">
+        {suggestions.map((s, i) => (
+          <button
+            key={`expert-${i}`}
+            onClick={() => onConsult(s)}
+            className="flex items-center gap-1 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5 text-[10px] text-blue-700 hover:bg-blue-100 hover:border-blue-300 cursor-pointer transition-all font-medium"
+            title={s.reason}
+          >
+            <span className="w-4 h-4 rounded-full bg-blue-100 flex items-center justify-center text-[9px] shrink-0">
+              {s.consult_emoji || "👤"}
+            </span>
+            <span>{s.consult_nom}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** CascadeChips — small chips in bubble footer for cascade/reflexion actions */
+function CascadeChips({ suggestions, onAction }: {
+  suggestions: Array<{ target_section: string; message: string; view: string; sub_section: string }>;
+  onAction: (s: { message: string; view: string; target_section: string }) => void;
+}) {
+  return (
+    <div className="mt-2 pt-2 border-t border-gray-100">
+      <span className="text-[9px] text-gray-400 font-medium uppercase tracking-wide flex items-center gap-1">
+        <Zap className="h-2.5 w-2.5" /> Actions suggérées
+      </span>
+      <div className="flex flex-wrap gap-1 mt-1">
+        {suggestions.map((s, i) => (
+          <button
+            key={`cascade-${i}`}
+            onClick={() => onAction(s)}
+            className="flex items-center gap-1 bg-violet-50 border border-violet-200 rounded-full px-2 py-0.5 text-[10px] text-violet-700 hover:bg-violet-100 hover:border-violet-300 cursor-pointer transition-all font-medium"
+          >
+            <Brain className="h-2.5 w-2.5 shrink-0" />
+            <span>{s.message || s.target_section}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** CREDOProgressDots — 5 dots showing C/R/E/D/O phase progress */
+function CREDOProgressDots({ currentPhase }: { currentPhase: string }) {
+  const phases = [
+    { letter: "C", label: "Connexion", active: "bg-blue-500 text-white ring-2 ring-blue-200" },
+    { letter: "R", label: "Recherche", active: "bg-amber-500 text-white ring-2 ring-amber-200" },
+    { letter: "E", label: "Exposition", active: "bg-green-500 text-white ring-2 ring-green-200" },
+    { letter: "D", label: "Demo", active: "bg-purple-500 text-white ring-2 ring-purple-200" },
+    { letter: "O", label: "Obtention", active: "bg-emerald-500 text-white ring-2 ring-emerald-200" },
+  ];
+  const norm = (currentPhase || "C").charAt(0).toUpperCase();
+  const activeIdx = Math.max(0, phases.findIndex(p => p.letter === norm));
+
+  return (
+    <div className="flex items-center gap-1" title={`Phase: ${phases[activeIdx]?.label || "Connexion"}`}>
+      {phases.map((p, i) => (
+        <div key={p.letter} className={cn(
+          "w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold transition-all",
+          i < activeIdx ? "bg-emerald-100 text-emerald-600"
+          : i === activeIdx ? p.active
+          : "bg-gray-100 text-gray-400"
+        )}>
+          {p.letter}
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -706,7 +790,7 @@ function V3MessageList() {
     if (isTyping) return;
     const lower = opt.toLowerCase();
     if (lower.includes("parker") && lower.includes("thread")) { parkThread(); return; }
-    if (lower.includes("synthes") || lower.includes("synthét")) {
+    if (lower.includes("synthes") || lower.includes("synthét") || lower.includes("faire le point")) {
       sendMessage("Fais une synthèse structurée de notre discussion.", chatTargetBot);
       return;
     }
@@ -1153,6 +1237,20 @@ function V3MessageList() {
                     workspacePhase={workspacePhase}
                   />
                 )}
+                {/* ═══ Expert suggestion chips — quick consult from bubble footer ═══ */}
+                {!msg.isStreaming && isLast && msg.consultationSuggestions && msg.consultationSuggestions.length > 0 && (
+                  <ExpertSuggestionChips
+                    suggestions={msg.consultationSuggestions}
+                    onConsult={(s) => sendMessage(s.reason, s.consult)}
+                  />
+                )}
+                {/* ═══ Cascade suggestion chips — reflexion/workspace actions ═══ */}
+                {!msg.isStreaming && isLast && msg.cascadeSuggestions && msg.cascadeSuggestions.length > 0 && (
+                  <CascadeChips
+                    suggestions={msg.cascadeSuggestions}
+                    onAction={(s) => sendMessage(s.message, chatTargetBot)}
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -1538,8 +1636,6 @@ function DiscussionWindowInner() {
           </>
         )}
       </div>
-
-      {/* Phase buttons — dans WorkspacePhasesPanel uniquement (workspace top bar) */}
 
       {/* Zone principale: DeptWelcomeScreen quand vide, V3MessageList sinon */}
       <div className="flex-1 overflow-hidden flex flex-col">
@@ -2131,12 +2227,15 @@ const formatCallDuration = (s: number) => {
 function ChatBoxV3({ onOpenPanel }: { onOpenPanel?: (tab: "modes" | "agents" | "reunion") => void }) {
   const [inputText, setInputText] = useState("");
   const [showAttachMenu, setShowAttachMenu] = useState(false);
+  const [showDrivePicker, setShowDrivePicker] = useState(false);
+  const [showIntegrationsPanel, setShowIntegrationsPanel] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const attachRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // visionInputRef retiré — Vision = app mobile (Ray-Ban Meta)
   const { sendMessage, sendMultiPerspective, injectVoiceMessage, newConversation, chatTargetBot, activeRoster } = useChatContext();
   const { activeBotCode, activePhase, setRightSection, reflexionContext, setReflexionContext, setFocusType, setActivePhase, activeMeeting, chatStage, workspaceBlocks } = useAmorcer();
+  // setRightSection utilisé par "Connecteurs API" dans le menu + pour Drive picker
   // Enrichir activePhase avec le step CREDO pour que le backend injecte le bon prompt
   const _credoStepsCB = ["comprendre", "rechercher", "exposer", "demontrer", "objectif"];
   const workspacePhase = activePhase === "discussion" && chatStage < _credoStepsCB.length
@@ -2148,6 +2247,7 @@ function ChatBoxV3({ onOpenPanel }: { onOpenPanel?: (tab: "modes" | "agents" | "
   const [micOn, setMicOn] = useState(true);
   const [callDuration, setCallDuration] = useState(0);
   const [uploading, setUploading] = useState(false);
+  const [pendingFile, setPendingFile] = useState<{ file: File; previewUrl?: string; isImage: boolean } | null>(null);
   const roomRef = useRef<Room | null>(null);
   const audioElRef = useRef<HTMLAudioElement | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -2268,6 +2368,15 @@ function ChatBoxV3({ onOpenPanel }: { onOpenPanel?: (tab: "modes" | "agents" | "
   // ═══ END CALL ═══
   const endCall = useCallback(() => {
     userHangupRef.current = true;
+    // Notify backend to cleanup voice events for this room
+    const roomName = roomRef.current?.name;
+    if (roomName) {
+      fetch(`/api/v1/voice/end`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-API-Key": import.meta.env.VITE_API_KEY || "" },
+        body: JSON.stringify({ room_name: roomName }),
+      }).catch(() => {});
+    }
     if (roomRef.current) { roomRef.current.disconnect(); roomRef.current = null; }
     if (audioElRef.current) { audioElRef.current.srcObject = null; audioElRef.current.remove(); audioElRef.current = null; }
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
@@ -2356,7 +2465,13 @@ function ChatBoxV3({ onOpenPanel }: { onOpenPanel?: (tab: "modes" | "agents" | "
     } catch (err) {
       console.error("[ChatBoxV3] Voice connection failed:", err);
       setCallState("error");
-      setTimeout(() => setCallState("idle"), 3000);
+      if (injectRef.current) {
+        injectRef.current("system",
+          "Connexion vocale échouée. Vérifiez votre micro et réessayez.",
+          undefined, {}
+        );
+      }
+      setTimeout(() => setCallState("idle"), 5000);
     }
   }, [activeBotCode, callState, endCall, startVoicePolling]);
 
@@ -2383,69 +2498,37 @@ function ChatBoxV3({ onOpenPanel }: { onOpenPanel?: (tab: "modes" | "agents" | "
     setVisionActive(true);
   }, [startVoicePolling]);
 
-  // ═══ FILE UPLOAD — pièce jointe → bureau upload ═══
-  const handleFileUpload = useCallback(async (e: ChangeEvent<HTMLInputElement>) => {
+  // ═══ FILE UPLOAD — sélection locale → preview chip, upload au Send ═══
+  const handleFileUpload = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = "";
     setShowAttachMenu(false);
-    setUploading(true);
+    const isImage = file.type.startsWith("image/");
+    const previewUrl = isImage ? URL.createObjectURL(file) : undefined;
+    setPendingFile({ file, previewUrl, isImage });
+  }, []);
 
-    // S3C.2: Document type detection — route documents to DocForge restructuration
-    const docExts = [".pdf", ".docx", ".doc", ".txt", ".md", ".rtf"];
-    const ext = file.name.substring(file.name.lastIndexOf(".")).toLowerCase();
-    const isDocument = docExts.includes(ext);
-
-    try {
-      if (isDocument) {
-        // Upload + restructure → auto-switch to Conception
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("bot_code", chatTargetBot);
-        const res = await fetch("/api/v1/workspace/upload-restructure", {
-          method: "POST",
-          headers: { "X-API-Key": localStorage.getItem("bt_api_key") || "" },
-          body: formData,
-        });
-        if (res.ok) {
-          const data = await res.json();
-          sendMessage(`Document analyse: ${file.name} — ${data.sections?.length || 0} sections detectees`, chatTargetBot);
-          // Dispatch event to trigger DocForge with pre-populated sections
-          if (data.sections?.length) {
-            window.dispatchEvent(new CustomEvent("bt-start-deliverable", {
-              detail: { deliverableType: "docforge_section", sections: data.sections, fileName: file.name },
-            }));
-          }
-        } else {
-          // Fallback: upload as regular bureau file
-          const result = await api.uploadBureauFile(file, file.name);
-          sendMessage(`Fichier joint: ${result.titre || file.name}`, chatTargetBot);
-        }
-      } else {
-        const result = await api.uploadBureauFile(file, file.name);
-        sendMessage(`Fichier joint: ${result.titre || file.name}`, chatTargetBot);
-      }
-    } catch (err) {
-      console.error("[ChatBoxV3] Upload error:", err);
-    } finally {
-      setUploading(false);
-    }
-  }, [sendMessage, chatTargetBot]);
+  const removePendingFile = useCallback(() => {
+    setPendingFile(prev => {
+      if (prev?.previewUrl) URL.revokeObjectURL(prev.previewUrl);
+      return null;
+    });
+  }, []);
 
   // ═══ TEXT HANDLERS ═══
-  const handleSend = () => {
+  const handleSend = async () => {
     const text = inputText.trim();
-    if (!text) return;
+    if (!text && !pendingFile) return;
     setInputText("");
 
     // FIX Lacune 1 + Sprint 3: Entrer en Discussion AVANT le sendMessage pour que workspacePhase
     // soit "discussion_comprendre" des le premier message (au lieu de "observation")
     let effectivePhase = workspacePhase;
     if (!reflexionContext) {
-      setReflexionContext(text.substring(0, 80));
+      setReflexionContext((text || pendingFile?.file.name || "").substring(0, 80));
     }
     // Sprint 3 fix: si workspacePhase est falsy ou incohérent avec l'URL discussion, corriger
-    // Cas fréquent: activePhase stuck sur "reflexion" ou "observation" après navigation client-side
     const _isDiscURL = window.location.pathname.includes("/discussion/");
     if (!effectivePhase || effectivePhase === "observation" || (_isDiscURL && !effectivePhase.startsWith("discussion"))) {
       setActivePhase("discussion" as any);
@@ -2453,8 +2536,54 @@ function ChatBoxV3({ onOpenPanel }: { onOpenPanel?: (tab: "modes" | "agents" | "
       effectivePhase = `discussion_${_credoStepsCB[chatStage] || "comprendre"}`;
     }
 
-    // W.1: Discussion 1:1 — toujours single-bot (experts dans le workspace)
-    sendMessage(text, chatTargetBot, undefined, { workspacePhase: effectivePhase, workspaceExpertContext: buildExpertContext(workspaceBlocks, activeBotCode) });
+    // Si un fichier est en attente — upload au moment du Send
+    if (pendingFile) {
+      const fileCopy = pendingFile;
+      setPendingFile(null);
+      if (fileCopy.previewUrl) URL.revokeObjectURL(fileCopy.previewUrl);
+      setUploading(true);
+      try {
+        const docExts = [".pdf", ".docx", ".doc", ".txt", ".md", ".rtf"];
+        const ext = fileCopy.file.name.substring(fileCopy.file.name.lastIndexOf(".")).toLowerCase();
+        const isDocument = docExts.includes(ext);
+        if (isDocument) {
+          const formData = new FormData();
+          formData.append("file", fileCopy.file);
+          formData.append("bot_code", chatTargetBot);
+          const res = await fetch("/api/v1/workspace/upload-restructure", {
+            method: "POST",
+            headers: { "X-API-Key": localStorage.getItem("bt_api_key") || "" },
+            body: formData,
+          });
+          if (res.ok) {
+            const data = await res.json();
+            const msg = text ? `${text}\n\n[Document: ${fileCopy.file.name}]` : `Document: ${fileCopy.file.name}`;
+            sendMessage(msg, chatTargetBot, undefined, { workspacePhase: effectivePhase, workspaceExpertContext: buildExpertContext(workspaceBlocks, activeBotCode) });
+            if (data.sections?.length) {
+              window.dispatchEvent(new CustomEvent("bt-start-deliverable", {
+                detail: { deliverableType: "docforge_section", sections: data.sections, fileName: fileCopy.file.name },
+              }));
+            }
+          } else {
+            const result = await api.uploadBureauFile(fileCopy.file, fileCopy.file.name);
+            const msg = text ? `${text}\n\n[Fichier joint: ${result.titre || fileCopy.file.name}]` : `Fichier joint: ${result.titre || fileCopy.file.name}`;
+            sendMessage(msg, chatTargetBot, undefined, { workspacePhase: effectivePhase, workspaceExpertContext: buildExpertContext(workspaceBlocks, activeBotCode) });
+          }
+        } else {
+          const result = await api.uploadBureauFile(fileCopy.file, fileCopy.file.name);
+          const msg = text ? `${text}\n\n[Fichier joint: ${result.titre || fileCopy.file.name}]` : `Fichier joint: ${result.titre || fileCopy.file.name}`;
+          sendMessage(msg, chatTargetBot, undefined, { workspacePhase: effectivePhase, workspaceExpertContext: buildExpertContext(workspaceBlocks, activeBotCode) });
+        }
+      } catch (err) {
+        console.error("[ChatBoxV3] Upload error:", err);
+      } finally {
+        setUploading(false);
+      }
+    } else {
+      // W.1: Discussion 1:1 — toujours single-bot (experts dans le workspace)
+      sendMessage(text, chatTargetBot, undefined, { workspacePhase: effectivePhase, workspaceExpertContext: buildExpertContext(workspaceBlocks, activeBotCode) });
+    }
+
     textareaRef.current?.focus();
   };
 
@@ -2470,8 +2599,23 @@ function ChatBoxV3({ onOpenPanel }: { onOpenPanel?: (tab: "modes" | "agents" | "
 
   return (
     <div className="shrink-0 bg-white px-3 pb-2 pt-1">
-      {/* Hidden file inputs */}
+      {/* Hidden file input */}
       <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileUpload} />
+      {/* Drive / fichiers picker */}
+      {showDrivePicker && (
+        <DrivePickerModal
+          botCode={chatTargetBot}
+          onClose={() => setShowDrivePicker(false)}
+          onSelect={(content, label) => {
+            setShowDrivePicker(false);
+            sendMessage(`[Fichier joint: ${label}]\n\n${content}`, chatTargetBot);
+          }}
+        />
+      )}
+      {/* Panneau connecteurs API */}
+      {showIntegrationsPanel && (
+        <IntegrationsPanel onClose={() => setShowIntegrationsPanel(false)} />
+      )}
       {/* Vision toast — disponible dans l'app mobile */}
       {visionToast && (
         <div className="absolute bottom-24 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-4 py-2 rounded-full shadow-lg z-30 whitespace-nowrap">
@@ -2511,6 +2655,30 @@ function ChatBoxV3({ onOpenPanel }: { onOpenPanel?: (tab: "modes" | "agents" | "
       )}
 
       <div className="relative rounded-2xl border border-gray-200 bg-gradient-to-b from-white to-gray-50/50 shadow-sm focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100/80 focus-within:shadow-md transition-all">
+        {/* Fichier en attente — preview avant envoi */}
+        {pendingFile && (
+          <div className="px-3 pt-2.5 pb-1 flex items-center gap-2">
+            {pendingFile.isImage && pendingFile.previewUrl ? (
+              <img
+                src={pendingFile.previewUrl}
+                alt={pendingFile.file.name}
+                className="h-14 w-14 rounded-lg object-cover border border-gray-200 shrink-0"
+              />
+            ) : (
+              <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-2.5 py-1.5 max-w-[180px]">
+                <FileText className="h-3.5 w-3.5 text-gray-500 shrink-0" />
+                <span className="text-[11px] text-gray-700 truncate">{pendingFile.file.name}</span>
+              </div>
+            )}
+            <button
+              onClick={removePendingFile}
+              className="p-1 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
+              title="Retirer"
+            >
+              <X className="h-3 w-3 text-gray-400" />
+            </button>
+          </div>
+        )}
         {/* Textarea */}
         <textarea
           ref={textareaRef}
@@ -2534,24 +2702,24 @@ function ChatBoxV3({ onOpenPanel }: { onOpenPanel?: (tab: "modes" | "agents" | "
             </button>
             {showAttachMenu && (
               <div className="absolute bottom-full left-0 mb-1 w-52 bg-white rounded-xl border border-gray-200 shadow-lg py-1 z-20">
-                <button onClick={() => { setShowAttachMenu(false); fileInputRef.current?.click(); }} className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-colors cursor-pointer text-left">
+                <button onClick={() => { setShowAttachMenu(false); setTimeout(() => fileInputRef.current?.click(), 10); }} className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-colors cursor-pointer text-left">
                   <Paperclip className="h-4 w-4 text-gray-500" />
                   <span className="text-xs text-gray-700">Pièce jointe</span>
                 </button>
-                <button onClick={() => setShowAttachMenu(false)} className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-colors cursor-pointer text-left">
+                <button onClick={() => { setShowAttachMenu(false); setShowIntegrationsPanel(false); setShowDrivePicker(true); }} className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-colors cursor-pointer text-left">
                   <Globe className="h-4 w-4 text-amber-500" />
                   <span className="text-xs text-gray-700">Depuis Google Drive</span>
                 </button>
-                <button onClick={() => setShowAttachMenu(false)} className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-colors cursor-pointer text-left">
+                <button onClick={() => { setShowAttachMenu(false); setShowDrivePicker(true); }} className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-colors cursor-pointer text-left">
                   <Zap className="h-4 w-4 text-gray-700" />
                   <span className="text-xs text-gray-700">Depuis GitHub</span>
                 </button>
                 <div className="border-t border-gray-100 my-1" />
-                <button onClick={() => setShowAttachMenu(false)} className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-colors cursor-pointer text-left">
+                <button onClick={() => { setShowAttachMenu(false); setShowIntegrationsPanel(true); }} className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-colors cursor-pointer text-left">
                   <Activity className="h-4 w-4 text-indigo-500" />
                   <div>
                     <span className="text-xs text-gray-700">Connecteurs API</span>
-                    <span className="block text-xs text-gray-400">Intégrez vos logiciels SaaS</span>
+                    <span className="block text-xs text-gray-400">Slack, HubSpot, GitHub, Stripe...</span>
                   </div>
                 </button>
               </div>
