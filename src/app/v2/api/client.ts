@@ -415,6 +415,15 @@ export const api = {
     return `${BASE_URL}/bureau/download/${filename}`;
   },
 
+  /** Rapports produits automatiquement par les outils bots (T.3) */
+  listBotDocuments(botCode?: string, typeDoc?: string): Promise<{ documents: any[]; count: number }> {
+    const params = new URLSearchParams();
+    if (botCode) params.set("bot_code", botCode);
+    if (typeDoc) params.set("type_doc", typeDoc);
+    const qs = params.toString();
+    return apiFetch<{ documents: any[]; count: number }>(`/bot-documents${qs ? `?${qs}` : ""}`);
+  },
+
   // --- Taches Plane.so ---
 
   /** Lister les taches ouvertes */

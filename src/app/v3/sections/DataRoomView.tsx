@@ -1047,6 +1047,14 @@ export function DataRoomView({ botCode, headerGradient, showHeader = false }: { 
     }).catch(() => {});
   }, []);
 
+  // ═══ Rapports générés automatiquement par les outils bots (T.3) ═══
+  const [botDocs, setBotDocs] = useState<any[]>([]);
+  useEffect(() => {
+    api.listBotDocuments(botCode).then(res => {
+      if (res.documents?.length) setBotDocs(res.documents);
+    }).catch(() => {});
+  }, [botCode]);
+
   // Convertir bureau items en DataRoomDoc format
   const realDocs: DataRoomDoc[] = useMemo(() =>
     bureauDocs.map((item: any) => ({
@@ -1060,6 +1068,25 @@ export function DataRoomView({ botCode, headerGradient, showHeader = false }: { 
       taille: item.file_size ? `${Math.round(item.file_size / 1024)} Ko` : "—",
     })),
   [bureauDocs]);
+
+  // Rapports bots → DataRoomDoc format (T.3)
+  const botRapportsDocs = useMemo(() =>
+    botDocs.map((item: any) => ({
+      id: `bot-${item.id}`,
+      titre: item.titre || item.tool_name || "Rapport bot",
+      type: "Document" as const,
+      categorie: "Générés par les bots",
+      categorieId: "_bot_rapports",
+      format: "MD",
+      taille: "—",
+      modifie: item.created_at ? new Date(item.created_at).toLocaleDateString("fr-CA") : "—",
+      statut: "actif" as const,
+      critique: false,
+      sections: 1,
+      frequence: "À la demande",
+      createur: item.bot_code || "Bot",
+    })),
+  [botDocs]);
 
   // Flatten all docs for this department with category + format + date + taille
   const allDeptDocs: DataRoomDoc[] = [
@@ -1139,6 +1166,7 @@ export function DataRoomView({ botCode, headerGradient, showHeader = false }: { 
       {(() => {
         const currentLabel = activeFolder === "_consolidee" ? "Vue d'ensemble"
           : activeFolder === "_templates" ? "Templates"
+          : activeFolder === "_bot_rapports" ? "Rapports bots"
           : TRANSVERSAL_SECTIONS.find(ts => ts.id === activeFolder)?.label
           || activeSection?.label || "Data Room";
         const sidebarContent = (<>
@@ -1154,6 +1182,21 @@ export function DataRoomView({ botCode, headerGradient, showHeader = false }: { 
             <Building2 className={cn("h-3.5 w-3.5 shrink-0", activeFolder === "_consolidee" ? "text-blue-500" : "text-gray-400")} />
             <span className={cn("text-[10px] font-bold flex-1", activeFolder === "_consolidee" ? "text-blue-700" : "text-gray-700")}>Vue d'ensemble</span>
             <span className="text-[9px] text-gray-400">{botCode === "CEOB" ? Object.keys(DATA_ROOM_SECTIONS).length : (DATA_ROOM_SECTIONS[botCode] || []).length}</span>
+          </div>
+        </button>
+
+        {/* Rapports bots — fichiers produits automatiquement (T.3) */}
+        <button
+          onClick={() => { setActiveFolder("_bot_rapports"); setActiveDept(""); setSearchQuery(""); setTypeFilter(null); setStatusFilter(null); setFormatFilter(null); }}
+          className={cn(
+            "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
+            activeFolder === "_bot_rapports" ? SF.btnActive : SF.btnInactive
+          )}
+        >
+          <div className="flex items-center gap-1.5">
+            <Zap className={cn("h-3.5 w-3.5 shrink-0", activeFolder === "_bot_rapports" ? "text-blue-500" : "text-gray-400")} />
+            <span className={cn("text-[10px] font-bold flex-1", activeFolder === "_bot_rapports" ? "text-blue-700" : "text-gray-700")}>Rapports bots</span>
+            {botDocs.length > 0 && <span className="text-[9px] text-gray-400">{botDocs.length}</span>}
           </div>
         </button>
 
@@ -1293,11 +1336,11 @@ export function DataRoomView({ botCode, headerGradient, showHeader = false }: { 
       {/* Contenu — full height */}
       <div className="flex-1 min-w-0 space-y-2">
         {/* ── Rectangle bleu pastel — titre sous-section active ── */}
-        {(isFolderView || activeFolder === "_templates" || TRANSVERSAL_SECTIONS.some(ts => ts.id === activeFolder)) && (
+        {(isFolderView || activeFolder === "_templates" || activeFolder === "_bot_rapports" || TRANSVERSAL_SECTIONS.some(ts => ts.id === activeFolder)) && (
           <div className={cn("bg-gradient-to-r rounded-lg px-4 py-2.5 flex items-center gap-3", headerGradient)}>
             <Database className="h-5 w-5 text-white" />
             <h2 className="text-sm font-bold text-white">
-              {activeFolder === "_templates" ? "Templates" : TRANSVERSAL_SECTIONS.find(ts => ts.id === activeFolder)?.label || activeSection?.label || ""}
+              {activeFolder === "_templates" ? "Templates" : activeFolder === "_bot_rapports" ? "Rapports bots" : TRANSVERSAL_SECTIONS.find(ts => ts.id === activeFolder)?.label || activeSection?.label || ""}
             </h2>
           </div>
         )}
@@ -1441,6 +1484,35 @@ export function DataRoomView({ botCode, headerGradient, showHeader = false }: { 
             <div className="border border-dashed border-gray-300 rounded-lg p-6 text-center">
               <p className="text-[10px] text-gray-400">Contenu à venir — cette section agrégera les documents transversaux.</p>
             </div>
+          </div>
+        ) : activeFolder === "_bot_rapports" ? (
+          /* Rapports produits par les outils bots (T.3) */
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 mb-2">
+              <Zap className="h-4 w-4 text-blue-500" />
+              <span className="text-xs font-bold text-gray-800">Rapports générés par les bots</span>
+              <span className="text-[9px] text-gray-400">{botRapportsDocs.length} fichier{botRapportsDocs.length !== 1 ? "s" : ""}</span>
+            </div>
+            {botRapportsDocs.length === 0 ? (
+              <div className="border border-dashed border-gray-200 rounded-lg p-8 text-center">
+                <Zap className="h-6 w-6 text-gray-300 mx-auto mb-2" />
+                <p className="text-[10px] text-gray-400 font-medium">Aucun rapport généré pour l'instant</p>
+                <p className="text-[9px] text-gray-300 mt-1">Les bots produisent des fichiers automatiquement quand vous utilisez leurs outils.</p>
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                {botRapportsDocs.map((doc: any) => (
+                  <div key={doc.id} className="flex items-center gap-3 px-3 py-2 rounded-lg border border-gray-100 bg-white hover:border-blue-200 hover:shadow-sm transition-all">
+                    <FileText className="h-4 w-4 text-blue-400 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] font-medium text-gray-800 truncate">{doc.titre}</p>
+                      <p className="text-[9px] text-gray-400">{doc.createur} · {doc.modifie}</p>
+                    </div>
+                    <span className="text-[8px] px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded font-medium shrink-0">{doc.format}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         ) : isFolderView ? (
           <DataRoomAssetList documents={filteredDocs} viewMode={viewMode} sortField={sortField} sortDir={sortDir} onSort={(f) => { if (sortField === f) setSortDir(d => d === "asc" ? "desc" : "asc"); else { setSortField(f); setSortDir("asc"); } }} />
