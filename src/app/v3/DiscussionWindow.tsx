@@ -27,7 +27,6 @@ import {
   UserPlus, GraduationCap, Handshake, RotateCcw, Presentation, Timer, DollarSign, UserCheck,
 } from "lucide-react";
 import { cn } from "../components/ui/utils";
-import { DrivePickerModal } from "./DrivePickerModal";
 import { IntegrationsPanel } from "./IntegrationsPanel";
 import { useAmorcer } from "./AmorcerContext";
 import { useDemo } from "./DemoContext";
@@ -2227,7 +2226,6 @@ const formatCallDuration = (s: number) => {
 function ChatBoxV3({ onOpenPanel }: { onOpenPanel?: (tab: "modes" | "agents" | "reunion") => void }) {
   const [inputText, setInputText] = useState("");
   const [showAttachMenu, setShowAttachMenu] = useState(false);
-  const [showDrivePicker, setShowDrivePicker] = useState(false);
   const [showIntegrationsPanel, setShowIntegrationsPanel] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const attachRef = useRef<HTMLDivElement>(null);
@@ -2601,17 +2599,6 @@ function ChatBoxV3({ onOpenPanel }: { onOpenPanel?: (tab: "modes" | "agents" | "
     <div className="shrink-0 bg-white px-3 pb-2 pt-1">
       {/* Hidden file input */}
       <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileUpload} />
-      {/* Drive / fichiers picker */}
-      {showDrivePicker && (
-        <DrivePickerModal
-          botCode={chatTargetBot}
-          onClose={() => setShowDrivePicker(false)}
-          onSelect={(content, label) => {
-            setShowDrivePicker(false);
-            sendMessage(`[Fichier joint: ${label}]\n\n${content}`, chatTargetBot);
-          }}
-        />
-      )}
       {/* Panneau connecteurs API */}
       {showIntegrationsPanel && (
         <IntegrationsPanel onClose={() => setShowIntegrationsPanel(false)} />
@@ -2705,14 +2692,6 @@ function ChatBoxV3({ onOpenPanel }: { onOpenPanel?: (tab: "modes" | "agents" | "
                 <button onClick={() => { setShowAttachMenu(false); setTimeout(() => fileInputRef.current?.click(), 10); }} className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-colors cursor-pointer text-left">
                   <Paperclip className="h-4 w-4 text-gray-500" />
                   <span className="text-xs text-gray-700">Pièce jointe</span>
-                </button>
-                <button onClick={() => { setShowAttachMenu(false); setShowIntegrationsPanel(false); setShowDrivePicker(true); }} className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-colors cursor-pointer text-left">
-                  <Globe className="h-4 w-4 text-amber-500" />
-                  <span className="text-xs text-gray-700">Depuis Google Drive</span>
-                </button>
-                <button onClick={() => { setShowAttachMenu(false); setShowDrivePicker(true); }} className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-colors cursor-pointer text-left">
-                  <Zap className="h-4 w-4 text-gray-700" />
-                  <span className="text-xs text-gray-700">Depuis GitHub</span>
                 </button>
                 <div className="border-t border-gray-100 my-1" />
                 <button onClick={() => { setShowAttachMenu(false); setShowIntegrationsPanel(true); }} className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-colors cursor-pointer text-left">

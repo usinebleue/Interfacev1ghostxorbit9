@@ -9,7 +9,7 @@
  */
 
 import { useState } from "react";
-import { ArrowRight, CheckCircle2, Download, Save, Rocket } from "lucide-react";
+import { ArrowRight, CheckCircle2, Database, Download, Save, Rocket } from "lucide-react";
 import { cn } from "../../components/ui/utils";
 import type { L2Theme } from "./docforge-config";
 
@@ -21,15 +21,18 @@ interface CompletionBannerProps {
   onStartJumelage?: () => void;
   onBack?: () => void;
   onSaveTemplate?: (name: string) => void;
+  onSaveToDataRoom?: () => Promise<void>;
 }
 
 export function CompletionBanner({
   icon: MainIcon, theme, sectionCount,
-  onExportPdf, onStartJumelage, onBack, onSaveTemplate,
+  onExportPdf, onStartJumelage, onBack, onSaveTemplate, onSaveToDataRoom,
 }: CompletionBannerProps) {
   const [templateName, setTemplateName] = useState("");
   const [showTemplateInput, setShowTemplateInput] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [savedToDataRoom, setSavedToDataRoom] = useState(false);
+  const [savingToDataRoom, setSavingToDataRoom] = useState(false);
 
   const handleSaveTemplate = () => {
     if (templateName.trim() && onSaveTemplate) {
@@ -57,6 +60,23 @@ export function CompletionBanner({
 
       {/* Boutons d'action */}
       <div className="flex flex-wrap gap-2">
+        {onSaveToDataRoom && !savedToDataRoom && (
+          <button
+            onClick={async () => {
+              setSavingToDataRoom(true);
+              try { await onSaveToDataRoom(); setSavedToDataRoom(true); } finally { setSavingToDataRoom(false); }
+            }}
+            disabled={savingToDataRoom}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors cursor-pointer disabled:opacity-60">
+            <Database className="h-3.5 w-3.5 stroke-[2.5]" />
+            {savingToDataRoom ? "Enregistrement..." : "Enregistrer dans Données"}
+          </button>
+        )}
+        {savedToDataRoom && (
+          <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-100 text-indigo-700">
+            <CheckCircle2 className="h-3.5 w-3.5 stroke-[2.5]" /> Sauvegarde dans Données
+          </span>
+        )}
         {onExportPdf && (
           <button onClick={onExportPdf}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors cursor-pointer">

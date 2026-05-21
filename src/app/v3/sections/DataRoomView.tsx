@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect, useMemo } from "react";
+import { useAmorcer } from "../AmorcerContext";
 import { api } from "../../v2/api/client";
 import { useIsMobile } from "../../components/ui/use-mobile";
 import { MobileSidebarSheet } from "../core/MobileSidebarSheet";
@@ -565,22 +566,11 @@ type DataRoomViewMode = "list" | "cards" | "table";
 function DataRoomVueConsolidee({ onNavigateDept }: { onNavigateDept: (deptCode: string) => void }) {
   const deptSummaries = OTHER_BOTS.map(bot => {
     const sections = DATA_ROOM_SECTIONS[bot.code] || [];
-    const totalDocs = sections.reduce((s, cat) => s + cat.documents.length, 0);
     const templates = getTemplatesForBot(bot.code).length;
-    const actifs = sections.reduce((s, cat) => s + cat.documents.filter(d => d.statut === "actif").length, 0);
-    const critiques = sections.reduce((s, cat) => s + cat.documents.filter(d => d.critique).length, 0);
-    return { ...bot, sections, totalDocs, templates, actifs, critiques, pct: totalDocs > 0 ? Math.round((actifs / totalDocs) * 100) : 0 };
+    return { ...bot, sections, totalDocs: 0, templates, actifs: 0, critiques: 0, pct: 0 };
   });
-  const totalDocs = deptSummaries.reduce((s, d) => s + d.totalDocs, 0);
-  const totalActifs = deptSummaries.reduce((s, d) => s + d.actifs, 0);
-  const totalCritiques = deptSummaries.reduce((s, d) => s + d.critiques, 0);
   const totalTemplates = BLUEPRINT_TEMPLATES.length;
-  const santeScore = totalDocs > 0 ? Math.round((totalActifs / totalDocs) * 100) : 0;
-
-  // Comptage par type a travers tous les departements
-  const allDocs = Object.values(DATA_ROOM_SECTIONS).flatMap(cats => cats.flatMap(c => c.documents));
   const typeCountMap: Record<string, number> = {};
-  allDocs.forEach(d => { typeCountMap[d.type] = (typeCountMap[d.type] || 0) + 1; });
 
   return (
     <div className="space-y-4">
@@ -589,7 +579,7 @@ function DataRoomVueConsolidee({ onNavigateDept }: { onNavigateDept: (deptCode: 
         <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
           <Database className="h-4 w-4 text-gray-900 stroke-[2.5]" />
           <span className="text-sm font-bold text-gray-900">6 types d'actifs numériques</span>
-          <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/20 text-white font-medium">{allDocs.length} total</span>
+          <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/20 text-white font-medium">{totalTemplates} templates</span>
         </div>
         <div className="grid grid-cols-3 md:grid-cols-6 divide-x divide-gray-100">
           {ASSET_TYPES.map(asset => {
@@ -623,12 +613,11 @@ function DataRoomVueConsolidee({ onNavigateDept }: { onNavigateDept: (deptCode: 
             </div>
             <div className="px-3 py-2 space-y-1">
               <div className="flex items-center justify-between text-[9px]">
-                <span className="text-blue-600 font-medium">{dept.totalDocs} docs</span>
                 <span className="text-purple-600">{dept.templates} templates</span>
-                {dept.critiques > 0 && <span className="text-red-500 font-bold">{dept.critiques} critiques</span>}
+                <span className="text-gray-400">{dept.sections.length} dossiers</span>
               </div>
               <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                <div className={cn("h-full rounded-full", dept.pct >= 70 ? "bg-emerald-500" : dept.pct >= 40 ? "bg-amber-400" : "bg-red-500")} style={{ width: `${dept.pct}%` }} />
+                <div className="h-full rounded-full bg-gray-200" style={{ width: "0%" }} />
               </div>
               <div className="text-[9px] text-gray-500 truncate">
                 {dept.sections.map(s => s.label).join(" · ")}
@@ -648,7 +637,15 @@ function DataRoomAssetList({ documents, viewMode, sortField, sortDir, onSort }: 
   sortDir: DataRoomSortDir;
   onSort: (field: DataRoomSortField) => void;
 }) {
-  if (documents.length === 0) return <p className="text-xs text-gray-400 text-center py-8">Aucun resultat pour cette recherche</p>;
+  if (documents.length === 0) {
+    return (
+      <div className="border border-dashed border-gray-200 rounded-xl p-10 text-center">
+        <FileText className="h-8 w-8 text-gray-200 mx-auto mb-3" />
+        <p className="text-[10px] font-medium text-gray-400">Aucun document dans ce dossier</p>
+        <p className="text-[9px] text-gray-300 mt-1">Importez des fichiers ou connectez votre Google Drive pour commencer.</p>
+      </div>
+    );
+  }
 
   const actionLabel = (statut: string) => statut === "a_creer" ? "Creer" : statut === "brouillon" ? "Atelier" : "Consulter";
   const actionStyle = (statut: string) => statut === "a_creer" ? "bg-blue-600 hover:bg-blue-700" : statut === "brouillon" ? "bg-amber-600 hover:bg-amber-700" : "bg-gray-600 hover:bg-gray-700";
@@ -777,6 +774,7 @@ function DataRoomAssetList({ documents, viewMode, sortField, sortDir, onSort }: 
 }
 
 function DataRoomTemplatesList({ botCode, viewMode: _viewMode }: { botCode: string; viewMode: DataRoomViewMode }) {
+  const { startDeliverable } = useAmorcer();
   const allTemplates = BLUEPRINT_TEMPLATES;
   const deptTemplates = botCode === "CEOB" ? allTemplates : getTemplatesForBot(botCode);
   const [filterCat, setFilterCat] = useState<string>("all");
@@ -838,7 +836,10 @@ function DataRoomTemplatesList({ botCode, viewMode: _viewMode }: { botCode: stri
               </div>
             </div>
             <div className="flex gap-3">
-              <button className="flex-1 px-3 py-2 text-[10px] font-bold bg-gray-900 text-white rounded-lg hover:bg-gray-800 cursor-pointer transition-colors flex items-center justify-center gap-1.5">
+              <button
+                onClick={() => startDeliverable("document")}
+                className="flex-1 px-3 py-2 text-[10px] font-bold bg-gray-900 text-white rounded-lg hover:bg-gray-800 cursor-pointer transition-colors flex items-center justify-center gap-1.5"
+              >
                 <FileText className="h-3.5 w-3.5" /> Ouvrir dans DocForge
               </button>
               <button className="px-3 py-2 text-[10px] font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg cursor-pointer transition-colors flex items-center justify-center gap-1.5">
@@ -983,21 +984,6 @@ type DataRoomDoc = {
   modifie: string; taille: string;
 };
 
-// Mock date/taille derivees du titre (deterministe)
-function mockDate(titre: string): string {
-  let h = 0;
-  for (let i = 0; i < titre.length; i++) h = ((h << 5) - h + titre.charCodeAt(i)) | 0;
-  const day = (Math.abs(h) % 28) + 1;
-  const month = (Math.abs(h >> 4) % 3); // 0=jan, 1=fev, 2=mar 2026
-  return `${day} ${["jan", "fev", "mar"][month]} 2026`;
-}
-function mockTaille(titre: string, type: string): string {
-  if (type === "Dashboard" || type === "Flow") return "—";
-  let h = 0;
-  for (let i = 0; i < titre.length; i++) h = ((h << 5) - h + titre.charCodeAt(i)) | 0;
-  const kb = (Math.abs(h) % 900) + 100;
-  return kb > 500 ? `${(kb / 100).toFixed(1)} MB` : `${kb} KB`;
-}
 
 export function DataRoomView({ botCode, headerGradient, showHeader = false }: { botCode: string; headerGradient: string; showHeader?: boolean }) {
   const isMobile = useIsMobile();
@@ -1138,22 +1124,18 @@ export function DataRoomView({ botCode, headerGradient, showHeader = false }: { 
     })),
   [botDocs]);
 
-  // Flatten all docs for this department with category + format + date + taille
+  // Docs réels uniquement — bureau uploadés + rapports bots (pas de données mock)
   const allDeptDocs: DataRoomDoc[] = [
     ...realDocs,
-    ...sections.flatMap(s =>
-      s.documents.map(d => ({ ...d, categorie: s.label, categorieId: s.id, format: inferFormat(d.type, d.titre), modifie: mockDate(d.titre), taille: mockTaille(d.titre, d.type) }))
-    ),
+    ...botRapportsDocs,
   ];
 
   // Active folder
   const activeSection = sections.find(s => s.id === activeFolder);
   const isFolderView = !!activeSection;
 
-  // Get docs for active folder
-  const folderDocs: DataRoomDoc[] = activeSection
-    ? activeSection.documents.map(d => ({ ...d, categorie: activeSection.label, categorieId: activeSection.id, format: inferFormat(d.type, d.titre), modifie: mockDate(d.titre), taille: mockTaille(d.titre, d.type) }))
-    : [];
+  // Docs pour le dossier actif — tous les docs réels (non encore catégorisés par dossier)
+  const folderDocs: DataRoomDoc[] = activeSection ? allDeptDocs : [];
 
   // Filter + sort documents
   const filteredDocs = (() => {
@@ -1161,7 +1143,7 @@ export function DataRoomView({ botCode, headerGradient, showHeader = false }: { 
     let docs = [...folderDocs];
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      docs = docs.filter(d => d.titre.toLowerCase().includes(q) || d.createur.toLowerCase().includes(q) || d.format.toLowerCase().includes(q));
+      docs = docs.filter(d => d.titre.toLowerCase().includes(q) || (d.createur || "").toLowerCase().includes(q) || (d.format || "").toLowerCase().includes(q));
     }
     if (typeFilter) docs = docs.filter(d => d.type === typeFilter);
     if (statusFilter) docs = docs.filter(d => d.statut === statusFilter);
@@ -1231,7 +1213,7 @@ export function DataRoomView({ botCode, headerGradient, showHeader = false }: { 
           <div className="flex items-center gap-1.5">
             <Building2 className={cn("h-3.5 w-3.5 shrink-0", activeFolder === "_consolidee" ? "text-blue-500" : "text-gray-400")} />
             <span className={cn("text-[10px] font-bold flex-1", activeFolder === "_consolidee" ? "text-blue-700" : "text-gray-700")}>Vue d'ensemble</span>
-            <span className="text-[9px] text-gray-400">{botCode === "CEOB" ? Object.keys(DATA_ROOM_SECTIONS).length : (DATA_ROOM_SECTIONS[botCode] || []).length}</span>
+            <span className="text-[9px] text-gray-400">{allDeptDocs.length > 0 ? allDeptDocs.length : ""}</span>
           </div>
         </button>
 
@@ -1275,7 +1257,7 @@ export function DataRoomView({ botCode, headerGradient, showHeader = false }: { 
                     <span className={cn("text-[10px] font-bold flex-1 leading-tight", isDeptActive ? "text-blue-700" : "text-gray-700")}>
                       {DEPT_LABELS[deptCode] || deptCode}
                     </span>
-                    <span className="text-[9px] text-gray-400">{totalDocs}</span>
+                    <span className="text-[9px] text-gray-400"></span>
                   </div>
                 </button>
                 {isExpanded && deptSections.map(s => {
@@ -1294,7 +1276,7 @@ export function DataRoomView({ botCode, headerGradient, showHeader = false }: { 
                         <span className={cn("text-[10px] font-medium flex-1 leading-tight", isActive ? "text-blue-700" : "text-gray-600")}>
                           {s.label}
                         </span>
-                        <span className="text-[9px] text-gray-400">{s.documents.length}</span>
+                        <span className="text-[9px] text-gray-400"></span>
                       </div>
                     </button>
                   );
@@ -1496,13 +1478,11 @@ export function DataRoomView({ botCode, headerGradient, showHeader = false }: { 
             <div className="flex items-center gap-2 mb-1">
               {(() => { const DIcon = DEPT_DASH_ICON[botCode] || Database; return <DIcon className="h-4 w-4 text-blue-600" />; })()}
               <span className="text-xs font-bold text-gray-800">Données — {DEPT_SHORT_LABEL[botCode] || botCode}</span>
-              <span className="text-[9px] text-gray-400">{sections.length} dossiers · {sections.reduce((s, c) => s + c.documents.length, 0)} documents</span>
+              <span className="text-[9px] text-gray-400">{sections.length} dossiers{allDeptDocs.length > 0 ? ` · ${allDeptDocs.length} document${allDeptDocs.length > 1 ? "s" : ""}` : ""}</span>
             </div>
             <div className="grid grid-cols-2 gap-3">
               {(DATA_ROOM_SECTIONS[botCode] || []).map(cat => {
                 const CatIcon = cat.icon;
-                const critiques = cat.documents.filter(d => d.critique).length;
-                const actifs = cat.documents.filter(d => d.statut === "actif").length;
                 return (
                   <div key={cat.id}
                     onClick={() => selectDeptFolder(botCode, cat.id)}
@@ -1511,14 +1491,14 @@ export function DataRoomView({ botCode, headerGradient, showHeader = false }: { 
                     <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 rounded-t-xl">
                       <CatIcon className="h-4 w-4 text-gray-900 stroke-[2.5]" />
                       <span className="text-sm font-bold text-gray-900 flex-1 truncate">{cat.label}</span>
-                      <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600">{cat.documents.length}</span>
                     </div>
                     <div className="px-4 py-3 space-y-1.5">
                       <p className="text-[9px] text-gray-500">Volume estimé : {cat.volume}</p>
-                      <div className="flex items-center gap-3">
-                        <span className="text-[9px] text-emerald-600 font-medium">{actifs} actifs</span>
-                        {critiques > 0 && <span className="text-[9px] text-red-500 font-medium">{critiques} critiques</span>}
-                      </div>
+                      {allDeptDocs.length > 0 ? (
+                        <span className="text-[9px] text-emerald-600 font-medium">{allDeptDocs.length} document{allDeptDocs.length > 1 ? "s" : ""}</span>
+                      ) : (
+                        <span className="text-[9px] text-gray-300">Aucun document importé</span>
+                      )}
                     </div>
                   </div>
                 );

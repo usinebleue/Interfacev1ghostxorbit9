@@ -19,6 +19,7 @@ import { useChatContext } from "../../v2/context/ChatContext";
 import { useIsMobile } from "../../components/ui/use-mobile";
 import { MobileSidebarSheet } from "../core/MobileSidebarSheet";
 import { formatCristallise } from "./content-formatters";
+import { api } from "../../v2/api/client";
 
 import { DOCFORGE_CONFIGS, type DocForgeSection, type L2Theme } from "./docforge-config";
 import { CodeTerminalRenderer } from "./CodeTerminalRenderer";
@@ -258,6 +259,28 @@ export function LiveDocForgeLivrable({
     }
   }, [sections]);
 
+  // Assemble le document en markdown et l'envoie dans la Data Room (bureau upload)
+  const handleSaveToDataRoom = useCallback(async () => {
+    const lines: string[] = [];
+    const typeLabel = deliverableType.charAt(0).toUpperCase() + deliverableType.slice(1);
+    const dateStr = new Date().toLocaleDateString("fr-CA");
+    const titre = `${typeLabel} DocForge — ${activeBotCode} — ${dateStr}`;
+    lines.push(`# ${titre}`, "");
+    for (const section of sections) {
+      const blocks = workspaceBlocks.filter((b: any) => b.sectionId === section.sectionId);
+      if (blocks.length === 0) continue;
+      lines.push(`## ${section.title}`, "");
+      for (const block of blocks) {
+        const text = (block.summary || block.title || "").replace(/<[^>]+>/g, "");
+        if (text.trim()) { lines.push(text.trim(), ""); }
+      }
+    }
+    const content = lines.join("\n");
+    const blob = new Blob([content], { type: "text/markdown" });
+    const file = new File([blob], `${titre.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.md`, { type: "text/markdown" });
+    await api.uploadBureauFile(file, titre);
+  }, [sections, workspaceBlocks, deliverableType, activeBotCode]);
+
   // ═══ Sidebar TOC ═══
 
   const sidebarContent = (
@@ -450,6 +473,7 @@ export function LiveDocForgeLivrable({
               icon={Icon}
               theme={theme}
               sectionCount={sections.length}
+              onSaveToDataRoom={handleSaveToDataRoom}
               onExportPdf={() => sendMessage("Genere le PDF final du livrable complet.", activeBotCode)}
               onStartJumelage={onStartJumelage}
               onBack={onBack}
