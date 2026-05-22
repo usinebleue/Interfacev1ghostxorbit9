@@ -548,6 +548,224 @@ const BOT_CONFIG: Record<string, { temperature: number; tonalite: string; modele
   CISOB: { temperature: 0.3, tonalite: "Alerte", modele: "Gemini Pro 2.0", langue: "Francais (QC)", escalade: "CEOB + CTOB si breche detectee", delegation: [] },
 };
 
+// ── Tâches directes du bot principal — basées sur modules réels ──
+type PrimaryTaskGroup = {
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  bgColor: string; borderColor: string; textColor: string;
+  tasks: string[];
+};
+
+const BOT_PRIMARY_TASKS: Record<string, PrimaryTaskGroup[]> = {
+  CEOB: [
+    { label: "Orchestration & Intelligence", icon: Target, bgColor: "bg-blue-50", borderColor: "border-blue-200", textColor: "text-blue-700", tasks: [
+      "Session CREDO complète (C→R→E→D→O)", "Board Room — tour de table 12 bots", "War Room — gestion de crise multi-agent",
+      "Think Room — exploration stratégique", "Wargaming — simulation scénarios adversaires",
+      "Délégation intelligente aux sous-agents", "Briefing voix (LiveKit)", "Analyse document PDF/image",
+      "Transcription réunion → résumé structuré",
+    ]},
+    { label: "Diagnostic BTML", icon: BarChart3, bgColor: "bg-violet-50", borderColor: "border-violet-200", textColor: "text-violet-700", tasks: [
+      "Triangle du Feu (/feu) — BRÛLE / COUVE / MEURT", "Score VITAA — Vente, Idée, Temps, Argent, Actif",
+      "Tableau Périodique BTML (220+ éléments)", "Journal de décisions structuré",
+      "Navigation phases CREDO (/phase, /avancer)", "Activation Ghost cognitif G1-G12",
+    ]},
+    { label: "Commandes & Intégrations", icon: Zap, bgColor: "bg-emerald-50", borderColor: "border-emerald-200", textColor: "text-emerald-700", tasks: [
+      "/agenda — Vue calendrier complète", "/rdv — Créer rendez-vous Google Calendar",
+      "/briefing — Briefing du jour", "/libre — Disponibilités",
+      "Rapport Google Docs (génération automatique)", "Wrap-up de session",
+    ]},
+  ],
+  CTOB: [
+    { label: "Architecture & Infrastructure", icon: Cpu, bgColor: "bg-violet-50", borderColor: "border-violet-200", textColor: "text-violet-700", tasks: [
+      "Design infrastructure (VPS, cloud, containers)", "Évaluation architecture logicielle",
+      "Sécurité API et firewalls", "Performance et bottlenecks",
+      "Choix de stack technologique", "Migration données et cloud",
+    ]},
+    { label: "Opérations Tech", icon: Settings, bgColor: "bg-blue-50", borderColor: "border-blue-200", textColor: "text-blue-700", tasks: [
+      "Code review avec critères de qualité", "CI/CD pipeline et déploiement",
+      "Docker et containerisation", "Monitoring temps réel",
+      "Incident response et troubleshooting", "Cost optimization infra",
+    ]},
+    { label: "IA & LLM", icon: Sparkles, bgColor: "bg-cyan-50", borderColor: "border-cyan-200", textColor: "text-cyan-700", tasks: [
+      "Sélection modèle IA par tier (T0→T4)", "Optimisation tokens et prompts",
+      "Routage 5-tiers intelligent", "Gestion erreurs et fallbacks API",
+      "Budget tech quotidien ($5/jour cible)",
+    ]},
+  ],
+  CFOB: [
+    { label: "Analyse Financière", icon: BarChart3, bgColor: "bg-emerald-50", borderColor: "border-emerald-200", textColor: "text-emerald-700", tasks: [
+      "Budget vs réalité — écarts et causes", "Prévisions revenus et coûts",
+      "Cash flow et trésorerie court terme", "Point mort et seuil de rentabilité",
+      "Marge brute vs marge nette", "Coût de revient par produit",
+    ]},
+    { label: "Stratégie Capital", icon: TrendingUp, bgColor: "bg-blue-50", borderColor: "border-blue-200", textColor: "text-blue-700", tasks: [
+      "Allocation capital (Margin of Safety — Buffett)", "Évaluation investissements (ROI, payback)",
+      "Structure fiscale PME Québec", "Crédit d'impôt SR&DE",
+      "Programmes BDC, DEC, CNESST", "Financement optimal et structure dette",
+    ]},
+    { label: "Opérations Comptables", icon: Activity, bgColor: "bg-amber-50", borderColor: "border-amber-200", textColor: "text-amber-700", tasks: [
+      "Audit financier", "Paie et avantages sociaux",
+      "Conformité fiscale", "Ratios financiers clés",
+      "Analyse fournisseurs et négociation",
+    ]},
+  ],
+  CMOB: [
+    { label: "Stratégie Marché", icon: Target, bgColor: "bg-pink-50", borderColor: "border-pink-200", textColor: "text-pink-700", tasks: [
+      "Positionnement produit et marque", "Analyse concurrentielle",
+      "Customer journey mapping", "Segmentation de marché",
+      "Pricing strategy", "Stratégie d'acquisition clients",
+    ]},
+    { label: "Contenu & Communication", icon: MessageCircle, bgColor: "bg-purple-50", borderColor: "border-purple-200", textColor: "text-purple-700", tasks: [
+      "Marketing de contenu (blog, vidéo, réseaux)", "Copywriting B2B",
+      "Storytelling de marque", "Relations publiques",
+      "Gestion réseaux sociaux", "Email marketing",
+    ]},
+    { label: "Campagnes & Production", icon: Zap, bgColor: "bg-orange-50", borderColor: "border-orange-200", textColor: "text-orange-700", tasks: [
+      "Campagnes numériques (SEO/SEM)", "Études de marché",
+      "Salons et événements", "Design packaging et identité visuelle",
+    ]},
+  ],
+  CSOB: [
+    { label: "Analyse Stratégique", icon: Eye, bgColor: "bg-red-50", borderColor: "border-red-200", textColor: "text-red-700", tasks: [
+      "SWOT complet (forces/faiblesses/opportunités/menaces)", "Porter 5 Forces — analyse compétitive",
+      "Blue Ocean vs Red Ocean", "Benchmark compétiteurs",
+      "Analyse tendances sectorielles",
+    ]},
+    { label: "Wargaming", icon: ShieldAlert, bgColor: "bg-orange-50", borderColor: "border-orange-200", textColor: "text-orange-700", tasks: [
+      "Simulation réactions concurrents", "Scénarios what-if (optimiste / réaliste / pessimiste)",
+      "Jeux de guerre commerciaux", "Stratégies de riposte",
+      "Anticipated moves (mouvements attendus)",
+    ]},
+    { label: "Expansion", icon: TrendingUp, bgColor: "bg-blue-50", borderColor: "border-blue-200", textColor: "text-blue-700", tasks: [
+      "Entrée sur nouveaux marchés", "Croissance organique vs inorganique",
+      "M&A strategy", "Partenariats stratégiques", "Internationalisation",
+    ]},
+  ],
+  COOB: [
+    { label: "Optimisation Processus", icon: Settings, bgColor: "bg-orange-50", borderColor: "border-orange-200", textColor: "text-orange-700", tasks: [
+      "Lean manufacturing — élimination des 7 gaspillages", "Six Sigma DMAIC",
+      "Gestion chaîne d'approvisionnement", "Logistique et entreposage",
+      "Gestion des inventaires", "Import/Export et douanes",
+    ]},
+    { label: "Qualité & KPI", icon: BarChart3, bgColor: "bg-blue-50", borderColor: "border-blue-200", textColor: "text-blue-700", tasks: [
+      "Mise en place ISO 9001/14001/45001", "Contrôle qualité",
+      "KPI et tableaux de bord", "Amélioration continue PDCA",
+      "Planning de production (APS)",
+    ]},
+    { label: "Gestion de Projets", icon: Layers, bgColor: "bg-emerald-50", borderColor: "border-emerald-200", textColor: "text-emerald-700", tasks: [
+      "Décomposition en tâches actionnables", "Assignation des responsables",
+      "Suivi d'avancement", "Gestion des dépendances", "Livraison et bilan de projet",
+    ]},
+  ],
+  CPOB: [
+    { label: "Diagnostic Terrain", icon: Eye, bgColor: "bg-amber-50", borderColor: "border-amber-200", textColor: "text-amber-700", tasks: [
+      "Genchi Genbutsu (aller voir sur le terrain)", "Identification des 7 gaspillages (Muda)",
+      "Analyse flux de valeur (VSM)", "Diagnostic d'automatisation",
+      "ROI investissements manufacturiers", "Recommandations modernisation usine",
+    ]},
+    { label: "Automatisation & Robotique", icon: Cpu, bgColor: "bg-blue-50", borderColor: "border-blue-200", textColor: "text-blue-700", tasks: [
+      "Intégration robotique complète", "Vision artificielle industrielle",
+      "Cobotique et collaboration", "AGV/AMR (robots mobiles)",
+      "Systèmes de convoyage", "Contrôle qualité automatisé",
+    ]},
+    { label: "Projets Manufacturiers", icon: Layers, bgColor: "bg-emerald-50", borderColor: "border-emerald-200", textColor: "text-emerald-700", tasks: [
+      "Cahier de charges SMART (/cprj)", "Rapport diagnostic détaillé",
+      "Recherche intégrateurs Québec", "Estimation projets",
+      "Formation opérateurs", "Maintenance prédictive et IoT",
+    ]},
+  ],
+  CHROB: [
+    { label: "Recrutement", icon: Users, bgColor: "bg-teal-50", borderColor: "border-teal-200", textColor: "text-teal-700", tasks: [
+      "Sourcing opérateurs spécialisés", "Processus de sélection",
+      "Immigration économique (EIMT, mobilité)", "Évaluation psychométrique",
+      "Onboarding et intégration", "Chasse de têtes — cadres",
+    ]},
+    { label: "Rétention & Culture", icon: Star, bgColor: "bg-pink-50", borderColor: "border-pink-200", textColor: "text-pink-700", tasks: [
+      "Diagnostic roulement (turnover)", "Programmes de rétention",
+      "Culture d'entreprise", "Gestion de la performance",
+      "Optimisation avantages sociaux", "Succession planning",
+    ]},
+    { label: "Conformité & Sécurité", icon: ShieldAlert, bgColor: "bg-red-50", borderColor: "border-red-200", textColor: "text-red-700", tasks: [
+      "CNESST et santé-sécurité", "Mutuelle de prévention",
+      "Droit du travail Québec", "Gestion des conflits",
+      "Normes du travail", "Formation et développement",
+    ]},
+  ],
+  CINOB: [
+    { label: "Industrie 4.0", icon: Cpu, bgColor: "bg-rose-50", borderColor: "border-rose-200", textColor: "text-rose-700", tasks: [
+      "ERP/MES manufacturier", "IoT industriel",
+      "Jumeau numérique (Digital Twin)", "Maintenance prédictive",
+      "Smart factory assessment", "Transformation numérique usine",
+    ]},
+    { label: "Innovation & R&D", icon: Sparkles, bgColor: "bg-violet-50", borderColor: "border-violet-200", textColor: "text-violet-700", tasks: [
+      "Design thinking et prototypage", "Propriété intellectuelle — brevets",
+      "Commercialisation produit", "Innovation ouverte",
+      "Veille technologique sectorielle", "Radar technologies émergentes",
+    ]},
+    { label: "Financement Innovation", icon: DollarSign, bgColor: "bg-emerald-50", borderColor: "border-emerald-200", textColor: "text-emerald-700", tasks: [
+      "Crédit SR&DE (fédéral)", "CRSNG et Mitacs (transfert techno)",
+      "Programmes gouvernementaux PME Québec", "Financement innovation — Investissement Québec",
+    ]},
+  ],
+  CROB: [
+    { label: "Pipeline & CRM", icon: BarChart3, bgColor: "bg-amber-50", borderColor: "border-amber-200", textColor: "text-amber-700", tasks: [
+      "Gestion pipeline de ventes", "Qualification de leads",
+      "Scoring et priorisation", "Automation des ventes",
+      "Prévisions de revenus", "CRM strategy",
+    ]},
+    { label: "Vente Complexe B2B", icon: Target, bgColor: "bg-orange-50", borderColor: "border-orange-200", textColor: "text-orange-700", tasks: [
+      "Cycles de vente long (3-12 mois)", "Mapping multi-décideurs (stakeholders)",
+      "Proposition de valeur", "Négociation de contrats",
+      "Techniques de closing", "Pricing strategy",
+    ]},
+    { label: "Développement des Affaires", icon: TrendingUp, bgColor: "bg-blue-50", borderColor: "border-blue-200", textColor: "text-blue-700", tasks: [
+      "Expansion de comptes clés", "Développement marché export",
+      "Prospection B2B", "E-commerce B2B", "Compensation plans et incentives",
+    ]},
+  ],
+  CLOB: [
+    { label: "Droit Commercial", icon: Layers, bgColor: "bg-indigo-50", borderColor: "border-indigo-200", textColor: "text-indigo-700", tasks: [
+      "Rédaction et négociation contrats", "Achat/vente d'entreprises",
+      "NDA — accords de confidentialité", "Contrats de distribution",
+      "Termes et conditions", "Partenariats et alliances",
+    ]},
+    { label: "Propriété Intellectuelle", icon: ShieldAlert, bgColor: "bg-blue-50", borderColor: "border-blue-200", textColor: "text-blue-700", tasks: [
+      "Brevets et marques de commerce", "Droits d'auteur",
+      "Secrets commerciaux", "Portefeuille PI — gestion et stratégie",
+      "Licences et royalties",
+    ]},
+    { label: "Conformité & Litiges", icon: Activity, bgColor: "bg-red-50", borderColor: "border-red-200", textColor: "text-red-700", tasks: [
+      "Loi 25 / LPRPDE (protection des données)", "Code civil Québec",
+      "Lois du travail", "Gestion litiges commerciaux", "Assurances commerciales",
+    ]},
+  ],
+  CISOB: [
+    { label: "Cybersécurité", icon: ShieldAlert, bgColor: "bg-gray-50", borderColor: "border-gray-200", textColor: "text-gray-700", tasks: [
+      "Audit de sécurité complet", "Vulnerability assessment",
+      "Penetration testing", "Incident response",
+      "Malware analysis", "Ransomware protection",
+    ]},
+    { label: "Sécurité OT/SCADA Manufacturier", icon: Cpu, bgColor: "bg-slate-50", borderColor: "border-slate-200", textColor: "text-slate-700", tasks: [
+      "Sécurité OT (Operational Technology)", "Sécurité SCADA/ICS",
+      "Convergence IT/OT", "Protection plancher manufacturier",
+      "Isolation réseau critique", "Sécurité des robots",
+    ]},
+    { label: "Conformité & Prévention", icon: Eye, bgColor: "bg-red-50", borderColor: "border-red-200", textColor: "text-red-700", tasks: [
+      "LPRPDE et Loi 25", "Protection données personnelles",
+      "Formation sécurité employés", "Monitoring 24/7",
+      "Plan de continuité d'affaires",
+    ]},
+  ],
+};
+
+// Mode d'exécution principal par bot + liste complète (depuis carlos_core.py)
+const BOT_MODES_PRINCIPAL: Record<string, string> = {
+  CEOB: "Stratégie", CTOB: "Analyse",     CFOB: "Décision", CMOB: "Innovation",
+  CSOB: "Stratégie", COOB: "Débat",       CPOB: "Analyse",  CHROB: "Brainstorm",
+  CINOB: "Innovation", CROB: "Décision",  CLOB: "Analyse",  CISOB: "Crise",
+};
+const ALL_MODES = ["Débat", "Brainstorm", "Crise", "Analyse", "Décision", "Stratégie", "Innovation", "Deep Resonance", "Ghost Mode"];
+
 // ── Section: Déployer chantiers recommandés (Phase 4) ──
 function DeployBlueprintButton({ botCode }: { botCode: string }) {
   const [loading, setLoading] = useState(false);
@@ -800,6 +1018,93 @@ function BotSubteamSection({ botCode }: { botCode: string }) {
             </div>
           );
         })}
+      </div>
+    </Card>
+  );
+}
+
+// ── Section: Tâches directes du bot principal ──
+function BotPrimarySection({ botCode }: { botCode: string }) {
+  const groups = BOT_PRIMARY_TASKS[botCode] || BOT_PRIMARY_TASKS.CEOB;
+  const totalTasks = groups.reduce((n, g) => n + g.tasks.length, 0);
+  const [openSet, setOpenSet] = useState<Set<string>>(new Set(groups.map(g => g.label)));
+  const toggle = (label: string) => setOpenSet(prev => {
+    const next = new Set(prev);
+    next.has(label) ? next.delete(label) : next.add(label);
+    return next;
+  });
+
+  return (
+    <Card className="p-0 gap-0 overflow-hidden rounded-xl border-gray-200 shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all">
+      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+        <Target className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+        <span className="text-sm font-bold text-gray-900 flex-1">Tâches directes</span>
+        <span className="text-[9px] px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 border border-violet-200 font-medium">{totalTasks} capacités</span>
+      </div>
+      <div className="p-3 space-y-2">
+        {groups.map(g => {
+          const isOpen = openSet.has(g.label);
+          const GIcon = g.icon;
+          return (
+            <div key={g.label} className="rounded-xl border border-gray-200 overflow-hidden bg-white shadow-sm hover:shadow-md hover:border-blue-200 transition-all">
+              <button
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 bg-[#00B4D8]/10 text-left cursor-pointer hover:bg-[#00B4D8]/20 transition-colors"
+                onClick={() => toggle(g.label)}
+              >
+                <GIcon className="h-4 w-4 text-gray-700 stroke-[2.5] shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-bold text-gray-900 truncate">{g.label}</div>
+                  <div className="text-[10px] text-gray-500">{g.tasks.length} capacité{g.tasks.length > 1 ? "s" : ""}</div>
+                </div>
+                <ChevronDown className={cn("h-3.5 w-3.5 text-gray-400 shrink-0 transition-transform duration-200", isOpen ? "rotate-0" : "-rotate-90")} />
+              </button>
+              {isOpen && (
+                <div className="px-3 pb-3 pt-2 space-y-1">
+                  {g.tasks.map(t => (
+                    <div key={t} className={cn(
+                      "flex items-center gap-2 text-xs text-gray-700 py-1 px-2.5 border-l-2 rounded-r-sm",
+                      g.bgColor, g.borderColor
+                    )}>
+                      {t}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
+
+// ── Section: Modes d'exécution ──
+function BotModesSection({ botCode }: { botCode: string }) {
+  const principal = BOT_MODES_PRINCIPAL[botCode] || "Stratégie";
+  return (
+    <Card className="p-0 gap-0 overflow-hidden rounded-xl border-gray-200 shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all">
+      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+        <Zap className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+        <span className="text-sm font-bold text-gray-900 flex-1">Modes d'exécution</span>
+        <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-medium">{ALL_MODES.length} modes</span>
+      </div>
+      <div className="p-3">
+        <div className="flex flex-wrap gap-2">
+          {ALL_MODES.map(m => (
+            <div key={m} className={cn(
+              "text-xs px-3 py-1.5 rounded-full font-medium border transition-all",
+              m === principal
+                ? "bg-[#00B4D8]/15 text-[#0090AC] border-[#00B4D8]/40 font-bold"
+                : "bg-gray-50 text-gray-600 border-gray-200"
+            )}>
+              {m === principal && <span className="mr-1.5">★</span>}
+              {m}
+            </div>
+          ))}
+        </div>
+        <div className="mt-2.5 text-[10px] text-gray-400">
+          Mode principal : <span className="font-bold text-[#0090AC]">{principal}</span>
+        </div>
       </div>
     </Card>
   );
@@ -1208,8 +1513,10 @@ export function BlueprintBot({ botCode, headerGradient }: { botCode: string; hea
         </div>
 
         {/* ── ÉQUIPE SOUS-BOTS & TÂCHES ── */}
-        <div id="sec-taches">
+        <div id="sec-taches" className="space-y-3">
+          <BotPrimarySection botCode={botCode} />
           <BotSubteamSection botCode={botCode} />
+          <BotModesSection botCode={botCode} />
         </div>
 
 
