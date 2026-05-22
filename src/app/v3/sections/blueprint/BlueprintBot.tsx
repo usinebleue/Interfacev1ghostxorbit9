@@ -17,8 +17,9 @@ import { INTEGRATIONS } from "../../IntegrationsPanel";
 // ── Blueprint Bot — Profil, Trisociation, Skills, APIs, Performance ──
 
 // ── Logo intégration (Google S2 Favicon → Clearbit → initiale colorée) h-8 w-8 ──
-function IntegrationLogo({ domain, name, color }: { domain: string; name: string; color: string }) {
+function IntegrationLogo({ domain, name, color }: { domain: string; name?: string; color: string }) {
   const [srcIndex, setSrcIndex] = useState(0);
+  const safeName = name ?? "";
   const sources = domain ? [
     `https://www.google.com/s2/favicons?domain=${domain}&sz=64`,
     `https://logo.clearbit.com/${domain}`,
@@ -26,7 +27,7 @@ function IntegrationLogo({ domain, name, color }: { domain: string; name: string
   if (!domain || srcIndex >= sources.length) {
     return (
       <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center text-white text-xs font-black shrink-0", color)}>
-        {name.charAt(0).toUpperCase()}
+        {safeName.charAt(0).toUpperCase() || "?"}
       </div>
     );
   }
