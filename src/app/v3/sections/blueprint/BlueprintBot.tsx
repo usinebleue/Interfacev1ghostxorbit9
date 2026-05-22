@@ -1,16 +1,17 @@
 /** BlueprintBot.tsx — Blueprint de l'Agent IA. Extracted from BlueprintDepartement.tsx */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Target, DollarSign, TrendingUp, Settings, Save, CheckCircle2,
   Eye, ChevronRight, Users, Plus, Zap, Activity, BarChart3, Star,
-  MessageCircle, Cpu, Sparkles, ShieldAlert,
+  MessageCircle, Cpu, Sparkles, ShieldAlert, Layers,
 } from "lucide-react";
 import { Card } from "../../../components/ui/card";
 import { cn } from "../../../components/ui/utils";
 import { useIsMobile } from "../../../components/ui/use-mobile";
 import { VitaaTable } from "./blueprint-helpers";
 import { MobileSidebarSheet } from "../../core/MobileSidebarSheet";
+import { api } from "../../../v2/api/client";
 
 // ── Blueprint Bot — Profil, Trisociation, Skills, APIs, Performance ──
 
@@ -282,9 +283,86 @@ const VITAA_BOT: Record<string, { letter: string; label: string; score: number; 
 
 const BOT_SECTION_META: { id: string; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: "sec-overview", label: "Vue d'ensemble", icon: Eye },
+  { id: "sec-taches", label: "Types de taches", icon: Layers },
   { id: "sec-outils", label: "Outils & APIs", icon: Cpu },
   { id: "sec-config", label: "Configuration", icon: Settings },
 ];
+
+// ── Types de taches par bot (4 catégories × 4-5 taches) ──
+const BOT_TASKS_TYPES: Record<string, { categorie: string; emoji: string; couleur: string; bgColor: string; borderColor: string; taches: string[] }[]> = {
+  CEOB: [
+    { categorie: "Decision stratégique", emoji: "🎯", couleur: "text-blue-700", bgColor: "bg-blue-50", borderColor: "border-blue-200", taches: ["Arbitrage C-Level", "Plan stratégique 90 jours", "Allocation des ressources", "Validation priorités trimestrielles", "Wargaming concurrentiel"] },
+    { categorie: "Communication dirigeant", emoji: "📣", couleur: "text-violet-700", bgColor: "bg-violet-50", borderColor: "border-violet-200", taches: ["Pitch investisseurs", "Message all-hands", "Narratif partenariats", "Communication crise", "Présentation conseil"] },
+    { categorie: "Coaching & alignement", emoji: "🤝", couleur: "text-emerald-700", bgColor: "bg-emerald-50", borderColor: "border-emerald-200", taches: ["Session CREDO C-suite", "Résolution conflits équipe", "Alignement vision-exécution", "Coaching décision complexe"] },
+    { categorie: "Analyse & veille", emoji: "🔍", couleur: "text-amber-700", bgColor: "bg-amber-50", borderColor: "border-amber-200", taches: ["Scan opportunités M&A", "Analyse risques stratégiques", "Benchmark industrie", "Due diligence rapide", "Rapport de situation"] },
+  ],
+  CTOB: [
+    { categorie: "Architecture & code", emoji: "🏗️", couleur: "text-violet-700", bgColor: "bg-violet-50", borderColor: "border-violet-200", taches: ["Design architecture système", "Code review complet", "Refactoring critique", "Migration cloud", "API design"] },
+    { categorie: "Sécurité & DevOps", emoji: "🔒", couleur: "text-red-700", bgColor: "bg-red-50", borderColor: "border-red-200", taches: ["Audit vulnérabilités", "Pipeline CI/CD", "Gestion incidents prod", "Backup stratégie", "Monitoring & alertes"] },
+    { categorie: "Innovation technique", emoji: "🚀", couleur: "text-blue-700", bgColor: "bg-blue-50", borderColor: "border-blue-200", taches: ["POC nouvelles techno", "Évaluation stack", "R&D solution IA", "Prototype rapide", "Benchmark performance"] },
+    { categorie: "Data & intégrations", emoji: "📊", couleur: "text-emerald-700", bgColor: "bg-emerald-50", borderColor: "border-emerald-200", taches: ["Pipeline ETL", "Intégration API tierce", "Data governance", "BI dashboard", "Qualité données"] },
+  ],
+  CFOB: [
+    { categorie: "Analyse financière", emoji: "📈", couleur: "text-emerald-700", bgColor: "bg-emerald-50", borderColor: "border-emerald-200", taches: ["États financiers mensuels", "Analyse de rentabilité", "Calcul coût de revient", "Valorisation entreprise", "Ratios financiers"] },
+    { categorie: "Budget & prévisions", emoji: "🎯", couleur: "text-blue-700", bgColor: "bg-blue-50", borderColor: "border-blue-200", taches: ["Budget annuel", "Cashflow prévisionnel", "Scénarios financiers", "Budget par département", "Prévisions 18 mois"] },
+    { categorie: "Fiscalité & conformité", emoji: "📋", couleur: "text-amber-700", bgColor: "bg-amber-50", borderColor: "border-amber-200", taches: ["RS&DE pré-remplissage", "Optimisation fiscale", "Conformité CRA/ARQ", "Subventions disponibles", "Audit préparation"] },
+    { categorie: "Financement & risque", emoji: "🏦", couleur: "text-violet-700", bgColor: "bg-violet-50", borderColor: "border-violet-200", taches: ["Dossier crédit bancaire", "Analyse risque crédit", "Capital allocation", "Pricing stratégique", "Gestion trésorerie"] },
+  ],
+  CMOB: [
+    { categorie: "Contenu & copywriting", emoji: "✍️", couleur: "text-pink-700", bgColor: "bg-pink-50", borderColor: "border-pink-200", taches: ["Article de blogue SEO", "Textes landing pages", "Email marketing séquence", "Script vidéo/podcast", "Pitch deck narratif"] },
+    { categorie: "Campagnes & acquisition", emoji: "📣", couleur: "text-blue-700", bgColor: "bg-blue-50", borderColor: "border-blue-200", taches: ["Plan campagne Google Ads", "Stratégie Meta/LinkedIn", "Calendrier éditorial", "A/B test créatifs", "Budget média"] },
+    { categorie: "Branding & positionnement", emoji: "🎨", couleur: "text-violet-700", bgColor: "bg-violet-50", borderColor: "border-violet-200", taches: ["Plateforme de marque", "Message clé par persona", "Analyse concurrentielle marque", "Refonte positionnement", "Guide de voix"] },
+    { categorie: "Analytics & conversion", emoji: "📊", couleur: "text-emerald-700", bgColor: "bg-emerald-50", borderColor: "border-emerald-200", taches: ["Rapport performance campagne", "Funnel conversion", "Personas clients", "Customer journey map", "NPS & satisfaction"] },
+  ],
+  CSOB: [
+    { categorie: "Planification stratégique", emoji: "♟️", couleur: "text-red-700", bgColor: "bg-red-50", borderColor: "border-red-200", taches: ["Plan stratégique 3 ans", "OKR entreprise", "Carte stratégique", "Diagnostic SWOT", "Définition axes prioritaires"] },
+    { categorie: "Veille & intelligence marché", emoji: "🔍", couleur: "text-blue-700", bgColor: "bg-blue-50", borderColor: "border-blue-200", taches: ["Analyse sectorielle", "Profil concurrents", "Tendances marché", "Rapport veille mensuel", "Opportunités émergentes"] },
+    { categorie: "Wargaming & scénarios", emoji: "⚔️", couleur: "text-amber-700", bgColor: "bg-amber-50", borderColor: "border-amber-200", taches: ["Simulation scénarios", "Analyse forces Porter", "Plan contingence", "Stress test stratégique", "Anticiper réactions concurrents"] },
+    { categorie: "Croissance & partenariats", emoji: "🤝", couleur: "text-emerald-700", bgColor: "bg-emerald-50", borderColor: "border-emerald-200", taches: ["Identification partenaires", "Structuration alliances", "Évaluation marchés cibles", "Stratégie entrée marché", "Deal structuring"] },
+  ],
+  COOB: [
+    { categorie: "Processus & efficacité", emoji: "⚙️", couleur: "text-orange-700", bgColor: "bg-orange-50", borderColor: "border-orange-200", taches: ["Cartographie processus", "Amélioration continue", "Procédures opérationnelles", "Gestion des exceptions", "Standardisation workflows"] },
+    { categorie: "KPIs & performance", emoji: "📊", couleur: "text-blue-700", bgColor: "bg-blue-50", borderColor: "border-blue-200", taches: ["Tableau de bord opérationnel", "Suivi KPIs hebdo", "Analyse écarts", "Rapport performance mensuel", "Benchmarks industrie"] },
+    { categorie: "Qualité & conformité", emoji: "✅", couleur: "text-emerald-700", bgColor: "bg-emerald-50", borderColor: "border-emerald-200", taches: ["Audit qualité interne", "Non-conformités", "Plan correctif", "Préparation certification", "Gestion fournisseurs qualité"] },
+    { categorie: "Logistique & supply chain", emoji: "🚚", couleur: "text-violet-700", bgColor: "bg-violet-50", borderColor: "border-violet-200", taches: ["Optimisation stocks", "Gestion fournisseurs", "Planification capacité", "Gestion délais livraison", "Réduction gaspillage"] },
+  ],
+  CPOB: [
+    { categorie: "Production & planification", emoji: "🏭", couleur: "text-amber-700", bgColor: "bg-amber-50", borderColor: "border-amber-200", taches: ["Plan de production", "Ordonnancement ateliers", "Calcul capacité machines", "Gestion goulets", "Équilibre lignes"] },
+    { categorie: "Lean & amélioration", emoji: "🔧", couleur: "text-orange-700", bgColor: "bg-orange-50", borderColor: "border-orange-200", taches: ["Kaizen chantier", "Analyse gaspillage 7 muda", "5S implantation", "VSM value stream map", "Réduction temps cycle"] },
+    { categorie: "Maintenance & fiabilité", emoji: "⚙️", couleur: "text-blue-700", bgColor: "bg-blue-50", borderColor: "border-blue-200", taches: ["Plan maintenance préventive", "Analyse pannes AMDEC", "TPM déploiement", "Indicateurs OEE", "Gestion pièces de rechange"] },
+    { categorie: "Sécurité industrielle", emoji: "🦺", couleur: "text-red-700", bgColor: "bg-red-50", borderColor: "border-red-200", taches: ["Analyse risques SST", "Protocoles sécurité machine", "Enquête accident", "Formation opérateurs", "Conformité CNESST"] },
+  ],
+  CHROB: [
+    { categorie: "Recrutement & sélection", emoji: "🎯", couleur: "text-teal-700", bgColor: "bg-teal-50", borderColor: "border-teal-200", taches: ["Affichage de poste optimisé", "Grille d'entrevue structurée", "Évaluation candidats", "Vérification références", "Offre d'emploi négociation"] },
+    { categorie: "Formation & développement", emoji: "📚", couleur: "text-blue-700", bgColor: "bg-blue-50", borderColor: "border-blue-200", taches: ["Plan de formation annuel", "Matrice compétences", "Onboarding structuré", "Plan développement individuel", "Coaching gestionnaires"] },
+    { categorie: "Culture & engagement", emoji: "💜", couleur: "text-violet-700", bgColor: "bg-violet-50", borderColor: "border-violet-200", taches: ["Sondage engagement", "Programme reconnaissance", "Gestion conflits", "Ateliers cohésion d'équipe", "Communication interne"] },
+    { categorie: "Conformité RH & droit", emoji: "⚖️", couleur: "text-amber-700", bgColor: "bg-amber-50", borderColor: "border-amber-200", taches: ["Politique RH conforme", "Gestion disciplinaire", "Dossier employé", "Conformité CNESST", "Paie & avantages sociaux"] },
+  ],
+  CINOB: [
+    { categorie: "R&D & innovation", emoji: "🔬", couleur: "text-rose-700", bgColor: "bg-rose-50", borderColor: "border-rose-200", taches: ["Projet R&D structuré", "Rapport RS&DE", "Prototype validation", "Roadmap innovation", "Transfert technologique"] },
+    { categorie: "Veille technologique", emoji: "📡", couleur: "text-blue-700", bgColor: "bg-blue-50", borderColor: "border-blue-200", taches: ["Scan technologies émergentes", "Benchmark Industrie 4.0", "Évaluation fournisseurs techno", "Rapport tendances", "Opportunités IA/automation"] },
+    { categorie: "Industrie 4.0 & digital", emoji: "🤖", couleur: "text-violet-700", bgColor: "bg-violet-50", borderColor: "border-violet-200", taches: ["Jumeau numérique plan", "IoT déploiement", "Automatisation pilote", "MES intégration", "Diagnostic maturité 4.0"] },
+    { categorie: "Propriété intellectuelle", emoji: "📜", couleur: "text-emerald-700", bgColor: "bg-emerald-50", borderColor: "border-emerald-200", taches: ["Inventaire PI", "Stratégie brevets", "Contrats NDA/IP", "Licensing opportunités", "Veille brevets concurrents"] },
+  ],
+  CROB: [
+    { categorie: "Développement d'affaires", emoji: "🎯", couleur: "text-amber-700", bgColor: "bg-amber-50", borderColor: "border-amber-200", taches: ["Prospection cibles ICP", "Séquence outreach", "Qualification leads", "Analyse pipeline", "Prévisions revenus"] },
+    { categorie: "Présentation & closing", emoji: "🏆", couleur: "text-orange-700", bgColor: "bg-orange-50", borderColor: "border-orange-200", taches: ["Deck de vente personnalisé", "Démo produit script", "Gestion objections", "Structuration deal", "Lettre de confirmation"] },
+    { categorie: "CRM & pipeline", emoji: "📊", couleur: "text-blue-700", bgColor: "bg-blue-50", borderColor: "border-blue-200", taches: ["Hygiène CRM", "Scoring opportunités", "Rapport pipeline hebdo", "Analyse win/loss", "Cycle de vente optimisé"] },
+    { categorie: "Fidélisation & expansion", emoji: "💼", couleur: "text-emerald-700", bgColor: "bg-emerald-50", borderColor: "border-emerald-200", taches: ["Stratégie upsell/cross-sell", "Programme fidélité", "QBR client", "NPS & rétention", "Expansion comptes"] },
+  ],
+  CLOB: [
+    { categorie: "Contrats & rédaction", emoji: "📄", couleur: "text-indigo-700", bgColor: "bg-indigo-50", borderColor: "border-indigo-200", taches: ["Contrat commercial standard", "NDA personnalisé", "CGV / conditions service", "Contrat emploi", "Lettre d'intention"] },
+    { categorie: "Conformité réglementaire", emoji: "⚖️", couleur: "text-blue-700", bgColor: "bg-blue-50", borderColor: "border-blue-200", taches: ["Conformité Loi 25 / RGPD", "Vérification réglementaire sectorielle", "Politique de confidentialité", "Programme conformité", "Audit légal interne"] },
+    { categorie: "Propriété intellectuelle", emoji: "🔐", couleur: "text-violet-700", bgColor: "bg-violet-50", borderColor: "border-violet-200", taches: ["Stratégie marques de commerce", "Dépôt brevet préliminaire", "Contrats licensing", "Protection secrets commerciaux", "Clauses non-concurrence"] },
+    { categorie: "Litiges & risques", emoji: "🛡️", couleur: "text-red-700", bgColor: "bg-red-50", borderColor: "border-red-200", taches: ["Analyse risque légal", "Gestion pre-litige", "Médiation structurée", "Gouvernance corporative", "Structure juridique optimale"] },
+  ],
+  CISOB: [
+    { categorie: "Audit & vulnérabilités", emoji: "🔍", couleur: "text-slate-700", bgColor: "bg-slate-50", borderColor: "border-slate-200", taches: ["Scan vulnérabilités réseau", "Pentest applicatif", "Revue code sécurité", "Audit accès & permissions", "Test phishing interne"] },
+    { categorie: "Conformité & gouvernance", emoji: "📋", couleur: "text-blue-700", bgColor: "bg-blue-50", borderColor: "border-blue-200", taches: ["Conformité NIST CSF", "LPRPDE / Loi 25 cyber", "Politique sécurité SI", "Registre des risques", "Plan directeur sécurité"] },
+    { categorie: "Réponse aux incidents", emoji: "🚨", couleur: "text-red-700", bgColor: "bg-red-50", borderColor: "border-red-200", taches: ["Plan réponse incidents", "Playbook brèche données", "Forensic rapide", "Communication incident", "Post-mortem sécurité"] },
+    { categorie: "Protection & continuité", emoji: "🛡️", couleur: "text-emerald-700", bgColor: "bg-emerald-50", borderColor: "border-emerald-200", taches: ["Stratégie backup / DRP", "Chiffrement données sensibles", "Gestion identités IAM", "OT/SCADA sécurité", "Sensibilisation employés"] },
+  ],
+};
 
 // ── Modes de décision (de AgentSettingsView) ──
 const DECISION_MODES: { id: string; label: string; icon: React.ComponentType<{ className?: string }>; color: string; bgColor: string; gradient: string; description: string; comportement: string; exemple: string }[] = [
@@ -637,16 +715,85 @@ const BOT_GRADIENT: Record<string, string> = {
   CLOB: "from-indigo-600 to-blue-600", CISOB: "from-gray-600 to-slate-600",
 };
 
+// ── Section: Types de taches par bot ──
+function BotTasksSection({ botCode }: { botCode: string }) {
+  const cats = BOT_TASKS_TYPES[botCode] || BOT_TASKS_TYPES.CEOB;
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 px-1">
+        <Layers className="h-4 w-4 text-gray-500" />
+        <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">Types de tâches executables</span>
+        <span className="ml-auto text-[10px] text-gray-400">{cats.reduce((n, c) => n + c.taches.length, 0)} tâches</span>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+        {cats.map(cat => (
+          <div key={cat.categorie} className={cn("rounded-xl border p-3 space-y-2", cat.bgColor, cat.borderColor)}>
+            <div className="flex items-center gap-1.5">
+              <span className="text-base">{cat.emoji}</span>
+              <span className={cn("text-[11px] font-bold", cat.couleur)}>{cat.categorie}</span>
+              <span className={cn("ml-auto text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-white/60", cat.couleur)}>{cat.taches.length}</span>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {cat.taches.map(t => (
+                <span key={t} className={cn("text-[9px] px-2 py-0.5 rounded-full bg-white/70 font-medium border border-white/80", cat.couleur)}>
+                  {t}
+                </span>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── Section: Configuration Complete (Parametres + Mode Decision + Trisociation + Catalogue) ──
 function BotConfigSection({ botCode }: { botCode: string }) {
   const initial = BOT_CONFIG[botCode] || BOT_CONFIG.CEOB;
   const d = BOT_DISPLAY[botCode] || BOT_DISPLAY.CEOB;
   const ghosts = BOT_GHOSTS[botCode] || BOT_GHOSTS.CEOB;
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [canvasId, setCanvasId] = useState<number | null>(null);
   const [activeMode, setActiveMode] = useState("strategique");
   const [localGhosts, setLocalGhosts] = useState<string[]>(ghosts);
   const [editingSlot, setEditingSlot] = useState<number | null>(null);
-  const handleSave = () => { setSaved(true); setTimeout(() => setSaved(false), 2000); };
+
+  // Charger la config sauvegardée depuis le canvas au montage
+  useEffect(() => {
+    api.getOrCreateCanvas(`blueprint_${botCode}_config`).then(canvas => {
+      setCanvasId(canvas.id);
+      if (canvas.data?.trisociation_ghosts && Array.isArray(canvas.data.trisociation_ghosts)) {
+        setLocalGhosts(canvas.data.trisociation_ghosts as string[]);
+      }
+      if (canvas.data?.decision_mode && typeof canvas.data.decision_mode === "string") {
+        setActiveMode(canvas.data.decision_mode);
+      }
+    }).catch(() => {/* silently ignore */});
+  }, [botCode]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      let id = canvasId;
+      if (!id) {
+        const canvas = await api.getOrCreateCanvas(`blueprint_${botCode}_config`);
+        id = canvas.id;
+        setCanvasId(id);
+      }
+      await api.updateCanvas(id, {
+        trisociation_ghosts: localGhosts,
+        decision_mode: activeMode,
+        updated_at: new Date().toISOString(),
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch {
+      // silently ignore
+    } finally {
+      setSaving(false);
+    }
+  };
   const currentMode = DECISION_MODES.find(m => m.id === activeMode)!;
   const ghostSet = new Set(localGhosts);
   const allArchetypes = Object.entries(GHOST_ARCHETYPES);
@@ -811,11 +958,11 @@ function BotConfigSection({ botCode }: { botCode: string }) {
 
       {/* ── Sauvegarder ── */}
       <div className="flex items-center justify-center">
-        <button onClick={handleSave} className={cn(
-          "text-xs px-6 py-2.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all shadow-sm",
+        <button onClick={handleSave} disabled={saving} className={cn(
+          "text-xs px-6 py-2.5 rounded-full flex items-center gap-1.5 font-medium cursor-pointer transition-all shadow-sm disabled:opacity-60",
           saved ? "bg-emerald-600 text-white" : "bg-violet-600 text-white hover:bg-violet-700"
         )}>
-          {saved ? <><CheckCircle2 className="h-3.5 w-3.5" /> Sauvegarde!</> : <><Save className="h-3.5 w-3.5" /> Sauvegarder la configuration</>}
+          {saved ? <><CheckCircle2 className="h-3.5 w-3.5" /> Sauvegardé!</> : saving ? <><Activity className="h-3.5 w-3.5 animate-spin" /> Sauvegarde...</> : <><Save className="h-3.5 w-3.5" /> Sauvegarder la configuration</>}
         </button>
       </div>
     </div>
@@ -1000,6 +1147,11 @@ export function BlueprintBot({ botCode, headerGradient }: { botCode: string; hea
             </div>
           </div>
 
+        </div>
+
+        {/* ── TYPES DE TACHES ── */}
+        <div id="sec-taches">
+          <BotTasksSection botCode={botCode} />
         </div>
 
         {/* ── DÉPLOYER CHANTIERS RECOMMANDÉS (Phase 4) ── */}
