@@ -54,7 +54,7 @@ function BrandLogo({ domain, name, color }: { domain: string; name: string; colo
 // ── Registre complet ──────────────────────────────────────────────────────────
 
 type Field = { key: string; label: string; placeholder: string; type?: string; hint?: string };
-type IntegrationDef = {
+export type IntegrationDef = {
   provider: string;
   name: string;
   logoDomain: string;       // domaine optimisé pour Clearbit
@@ -66,7 +66,7 @@ type IntegrationDef = {
   badge?: string;
 };
 
-const INTEGRATIONS: IntegrationDef[] = [
+export const INTEGRATIONS: IntegrationDef[] = [
   // ── Finance & Comptabilité ──
   { provider: "acomba",      name: "Acomba",          logoDomain: "acomba.com",                color: "bg-blue-700",   category: "Finance & Comptabilité",  badge: "Québec", description: "Comptabilité la plus utilisée au Québec", fields: [{ key: "api_url", label: "URL serveur", placeholder: "http://localhost:5500/api" }, { key: "company_code", label: "Code compagnie", placeholder: "MON_CO" }, { key: "username", label: "Utilisateur", placeholder: "admin" }, { key: "password", label: "Mot de passe", placeholder: "...", type: "password" }] },
   { provider: "avantage",    name: "Avantage",        logoDomain: "avantage-erp.com",          color: "bg-indigo-700", category: "Finance & Comptabilité",  badge: "Québec", description: "ERP manufacturiers québécois", fields: [{ key: "api_url", label: "URL API", placeholder: "https://serveur/avantage/api" }, { key: "api_key", label: "Clé API", placeholder: "...", type: "password" }] },

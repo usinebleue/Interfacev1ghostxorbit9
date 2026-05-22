@@ -12,8 +12,52 @@ import { useIsMobile } from "../../../components/ui/use-mobile";
 import { VitaaTable } from "./blueprint-helpers";
 import { MobileSidebarSheet } from "../../core/MobileSidebarSheet";
 import { api } from "../../../v2/api/client";
+import { INTEGRATIONS } from "../../IntegrationsPanel";
 
 // ── Blueprint Bot — Profil, Trisociation, Skills, APIs, Performance ──
+
+// ── Logo intégration (Google S2 Favicon → Clearbit → initiale colorée) h-8 w-8 ──
+function IntegrationLogo({ domain, name, color }: { domain: string; name: string; color: string }) {
+  const [srcIndex, setSrcIndex] = useState(0);
+  const sources = domain ? [
+    `https://www.google.com/s2/favicons?domain=${domain}&sz=64`,
+    `https://logo.clearbit.com/${domain}`,
+  ] : [];
+  if (!domain || srcIndex >= sources.length) {
+    return (
+      <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center text-white text-xs font-black shrink-0", color)}>
+        {name.charAt(0).toUpperCase()}
+      </div>
+    );
+  }
+  return (
+    <img
+      key={srcIndex}
+      src={sources[srcIndex]}
+      alt={name}
+      onError={() => setSrcIndex(prev => prev + 1)}
+      className="h-8 w-8 rounded-lg object-contain bg-white border border-gray-100 p-1 shrink-0"
+    />
+  );
+}
+
+// Lookup map: provider → {logoDomain, color, name} — construit depuis IntegrationsPanel
+const INTEGRATION_BRAND_MAP = Object.fromEntries(
+  INTEGRATIONS.map(i => [i.provider, { logoDomain: i.logoDomain, color: i.color, name: i.name }])
+);
+
+// Logos systèmes (LLM, TTS, DB, infra — non éditables par l'usager)
+const CORE_BRAND_MAP: Record<string, { logoDomain: string; color: string }> = {
+  "Gemini Pro 2.0":   { logoDomain: "google.com",     color: "bg-blue-500"    },
+  "Gemini Flash 2.0": { logoDomain: "google.com",     color: "bg-sky-500"     },
+  "Claude Sonnet 4":  { logoDomain: "anthropic.com",  color: "bg-violet-500"  },
+  "Claude Opus 4":    { logoDomain: "anthropic.com",  color: "bg-violet-600"  },
+  "ElevenLabs TTS":   { logoDomain: "elevenlabs.io",  color: "bg-emerald-500" },
+  "Deepgram STT":     { logoDomain: "deepgram.com",   color: "bg-cyan-500"    },
+  "LiveKit WebRTC":   { logoDomain: "livekit.io",     color: "bg-orange-500"  },
+  "PostgreSQL":       { logoDomain: "postgresql.org", color: "bg-indigo-500"  },
+  "Docker":           { logoDomain: "docker.com",     color: "bg-blue-600"    },
+};
 
 // Ghost Archetypes (from AgentSettingsView)
 const GHOST_ARCHETYPES: Record<string, { emoji: string; nom: string; categorie: string; signature: string }> = {
@@ -83,7 +127,7 @@ const SLOT_BG = ["bg-blue-50 border-blue-200", "bg-violet-50 border-violet-200",
 const SLOT_TEXT_C = ["text-blue-700", "text-violet-700", "text-amber-700"];
 
 // Type partagé pour les entrées API
-type ApiEntry = { name: string; status: "active" | "config" | "off"; icon: string; color: string };
+type ApiEntry = { name: string; status: "active" | "config" | "off"; icon: string; color: string; provider?: string };
 
 // Connexions système (LLM routing + infra — toujours actives, pas user-configurables)
 const BOT_CORE_APIS: Record<string, ApiEntry[]> = {
@@ -594,6 +638,7 @@ function BotApisSection({ botCode }: { botCode: string }) {
             icon: meta.abbr,
             color: meta.color,
             status: activeSet.has(id) ? "active" as const : "off" as const,
+            provider: id,
           };
         });
       setThirdParty(entries);
@@ -604,12 +649,19 @@ function BotApisSection({ botCode }: { botCode: string }) {
   const activeList = allApis.filter(a => a.status === "active");
   const restList = allApis.filter(a => a.status !== "active");
 
-  const renderApi = (a: ApiEntry) => (
+  const renderApi = (a: ApiEntry) => {
+    // Résoudre logoDomain + color depuis INTEGRATION_BRAND_MAP (tiers) ou CORE_BRAND_MAP (système)
+    const brand = a.provider
+      ? INTEGRATION_BRAND_MAP[a.provider]
+      : CORE_BRAND_MAP[a.name];
+    const logoDomain = brand?.logoDomain ?? "";
+    const logoColor  = a.status === "off" ? "bg-gray-300" : (brand?.color ?? a.color);
+    return (
     <div key={a.name} className={cn(
       "flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all",
       a.status === "active" ? "bg-white border-gray-200 shadow-sm" : "bg-gray-50 border-gray-100 opacity-70"
     )}>
-      <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center text-white text-[9px] font-bold shrink-0", a.status === "off" ? "bg-gray-300" : a.color)}>{a.icon}</div>
+      <IntegrationLogo domain={a.status === "off" ? "" : logoDomain} name={a.name} color={logoColor} />
       <div className="flex-1 min-w-0">
         <div className="text-xs font-bold text-gray-800 truncate">{a.name}</div>
         <div className={cn("text-[10px] font-medium", a.status === "active" ? "text-emerald-600" : "text-gray-400")}>
@@ -624,7 +676,8 @@ function BotApisSection({ botCode }: { botCode: string }) {
         {a.status === "active" ? "Gérer" : "Activer"}
       </button>
     </div>
-  );
+    );
+  };
 
   return (
     <div className="space-y-3">
@@ -737,16 +790,24 @@ function BotSubteamSection({ botCode }: { botCode: string }) {
 
               {/* Expanded: tâches + modules */}
               {isOpen && (
-                <div className="px-3 pb-3 space-y-2">
-                  <div className="pt-2 flex flex-wrap gap-1">
-                    {sb.taches.map(t => (
-                      <span key={t} className={cn("text-xs px-2 py-0.5 rounded-full font-medium bg-white border", sb.couleur, sb.borderColor)}>{t}</span>
-                    ))}
+                <div className="px-3 pb-3 pt-2 space-y-2.5">
+                  <div>
+                    <div className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Tâches disponibles</div>
+                    <div className="space-y-1">
+                      {sb.taches.map(t => (
+                        <div key={t} className={cn("flex items-center text-xs text-gray-700 py-0.5 pl-2.5 border-l-2 rounded-r-sm bg-gray-50/60", sb.borderColor)}>
+                          {t}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-1">
-                    {sb.modules.map(m => (
-                      <span key={m} className="text-[10px] px-1.5 py-0.5 rounded bg-gray-50 text-gray-500 font-mono border border-gray-200">{m}</span>
-                    ))}
+                  <div>
+                    <div className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Modules Python</div>
+                    <div className="flex flex-wrap gap-1">
+                      {sb.modules.map(m => (
+                        <span key={m} className="text-[10px] px-1.5 py-0.5 rounded bg-gray-50 text-gray-500 font-mono border border-gray-200">{m}</span>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
