@@ -737,8 +737,11 @@ function V3MessageList() {
   const lastMsg = messages.length > 0 ? messages[messages.length - 1] : null;
   const botAlreadyResponded = lastMsg?.role === "assistant" && !lastMsg.isStreaming && (lastMsg.content?.length ?? 0) > 0;
 
-  // Dernier message bot (pour afficher les options seulement sur le dernier)
-  const lastBotId = [...messages].reverse().find(m => m.role === "assistant" && !m.isStreaming)?.id;
+  // Dernier message bot AVEC OPTIONS (pour activer les options du bon message)
+  // Ne pas se fier au dernier message bot en général — les messages sans options
+  // (ex: auto-consultation C.32) ne doivent pas désactiver les options du message principal.
+  const lastBotId = [...messages].reverse().find(m => m.role === "assistant" && !m.isStreaming && (m.options?.length ?? 0) > 0)?.id
+    ?? [...messages].reverse().find(m => m.role === "assistant" && !m.isStreaming)?.id;
   // Dernier message user (pour cristallisation intelligente)
   const lastUserMessage = [...messages].reverse().find(m => m.role === "user")?.content || "";
 
