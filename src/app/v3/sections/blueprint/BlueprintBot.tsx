@@ -120,18 +120,18 @@ const BOT_PROFILES_BP: Record<string, { style: string; forces: string[]; approch
 };
 
 const BOT_CAPACITES_BP: Record<string, { equivHumain: string; coutHumain: string; tachesCount: number; heuresMois: string; coutIA: string }> = {
-  CEOB: { equivHumain: "CEO conseil", coutHumain: "100-200K$", tachesCount: 15, heuresMois: "80-120h", coutIA: "47$" },
-  CTOB: { equivHumain: "CTO fractionnaire", coutHumain: "150-300K$", tachesCount: 16, heuresMois: "120-180h", coutIA: "62$" },
-  CFOB: { equivHumain: "CFO fractionnaire", coutHumain: "150-250K$", tachesCount: 18, heuresMois: "100-160h", coutIA: "38$" },
-  CMOB: { equivHumain: "Directeur marketing", coutHumain: "120-200K$", tachesCount: 14, heuresMois: "100-160h", coutIA: "55$" },
-  CSOB: { equivHumain: "Consultant strategie", coutHumain: "120-200K$", tachesCount: 12, heuresMois: "80-120h", coutIA: "41$" },
-  COOB: { equivHumain: "Directeur operations", coutHumain: "120-200K$", tachesCount: 15, heuresMois: "120-200h", coutIA: "52$" },
-  CPOB: { equivHumain: "Directeur usine", coutHumain: "100-180K$", tachesCount: 20, heuresMois: "140-220h", coutIA: "58$" },
-  CHROB: { equivHumain: "DRH fractionnaire", coutHumain: "100-180K$", tachesCount: 14, heuresMois: "80-140h", coutIA: "35$" },
-  CINOB: { equivHumain: "VP Innovation", coutHumain: "130-220K$", tachesCount: 10, heuresMois: "60-100h", coutIA: "44$" },
-  CROB: { equivHumain: "VP Ventes", coutHumain: "120-250K$", tachesCount: 16, heuresMois: "100-160h", coutIA: "49$" },
-  CLOB: { equivHumain: "Avocat d'entreprise", coutHumain: "150-300K$", tachesCount: 12, heuresMois: "60-100h", coutIA: "32$" },
-  CISOB: { equivHumain: "CISO fractionnaire", coutHumain: "140-250K$", tachesCount: 18, heuresMois: "100-160h", coutIA: "56$" },
+  CEOB: { equivHumain: "CEO conseil", coutHumain: "100-200K$", tachesCount: 22, heuresMois: "80-120h", coutIA: "47$" },
+  CTOB: { equivHumain: "CTO fractionnaire", coutHumain: "150-300K$", tachesCount: 23, heuresMois: "120-180h", coutIA: "62$" },
+  CFOB: { equivHumain: "CFO fractionnaire", coutHumain: "150-250K$", tachesCount: 22, heuresMois: "100-160h", coutIA: "38$" },
+  CMOB: { equivHumain: "Directeur marketing", coutHumain: "120-200K$", tachesCount: 24, heuresMois: "100-160h", coutIA: "55$" },
+  CSOB: { equivHumain: "Consultant strategie", coutHumain: "120-200K$", tachesCount: 19, heuresMois: "80-120h", coutIA: "41$" },
+  COOB: { equivHumain: "Directeur operations", coutHumain: "120-200K$", tachesCount: 20, heuresMois: "120-200h", coutIA: "52$" },
+  CPOB: { equivHumain: "Directeur usine", coutHumain: "100-180K$", tachesCount: 21, heuresMois: "140-220h", coutIA: "58$" },
+  CHROB: { equivHumain: "DRH fractionnaire", coutHumain: "100-180K$", tachesCount: 18, heuresMois: "80-140h", coutIA: "35$" },
+  CINOB: { equivHumain: "VP Innovation", coutHumain: "130-220K$", tachesCount: 17, heuresMois: "60-100h", coutIA: "44$" },
+  CROB: { equivHumain: "VP Ventes", coutHumain: "120-250K$", tachesCount: 24, heuresMois: "100-160h", coutIA: "49$" },
+  CLOB: { equivHumain: "Avocat d'entreprise", coutHumain: "150-300K$", tachesCount: 15, heuresMois: "60-100h", coutIA: "32$" },
+  CISOB: { equivHumain: "CISO fractionnaire", coutHumain: "140-250K$", tachesCount: 24, heuresMois: "100-160h", coutIA: "56$" },
 };
 
 const SLOT_LABELS_BP = ["Primaire", "Calibrateur", "Amplificateur"];
@@ -574,6 +574,12 @@ const BOT_PRIMARY_TASKS: Record<string, PrimaryTaskGroup[]> = {
       "/briefing — Briefing du jour", "/libre — Disponibilités",
       "Rapport Google Docs (génération automatique)", "Wrap-up de session",
     ]},
+    { label: "OKR & Leadership", icon: Star, bgColor: "bg-amber-50", borderColor: "border-amber-200", textColor: "text-amber-700", tasks: [
+      "OKR — définition, alignement et suivi trimestriel", "Score leadership — évaluation 360°",
+      "Executive dashboard personnalisé temps réel", "Playbook leadership stratégique PME",
+      "Orchestration multi-agent avancée (COMMAND)", "Stratégie cognitive aetherlang",
+      "Rapport PDF C-Suite généré automatiquement",
+    ]},
   ],
   CTOB: [
     { label: "Architecture & Infrastructure", icon: Cpu, bgColor: "bg-violet-50", borderColor: "border-violet-200", textColor: "text-violet-700", tasks: [
@@ -585,6 +591,8 @@ const BOT_PRIMARY_TASKS: Record<string, PrimaryTaskGroup[]> = {
       "Code review avec critères de qualité", "CI/CD pipeline et déploiement",
       "Docker et containerisation", "Monitoring temps réel",
       "Incident response et troubleshooting", "Cost optimization infra",
+      "GitHub — gestion repos, PR et branches", "Kubernetes orchestration & scaling",
+      "AiRadar — veille technologique IA en temps réel",
     ]},
     { label: "IA & LLM", icon: Sparkles, bgColor: "bg-cyan-50", borderColor: "border-cyan-200", textColor: "text-cyan-700", tasks: [
       "Sélection modèle IA par tier (T0→T4)", "Optimisation tokens et prompts",
@@ -607,6 +615,8 @@ const BOT_PRIMARY_TASKS: Record<string, PrimaryTaskGroup[]> = {
       "Audit financier", "Paie et avantages sociaux",
       "Conformité fiscale", "Ratios financiers clés",
       "Analyse fournisseurs et négociation",
+      "Xero — comptabilité cloud intégrée", "Modélisation financière startup",
+      "CFO Advisor — recommandations automatiques",
     ]},
   ],
   CMOB: [
@@ -624,12 +634,21 @@ const BOT_PRIMARY_TASKS: Record<string, PrimaryTaskGroup[]> = {
       "Campagnes numériques (SEO/SEM)", "Études de marché",
       "Salons et événements", "Design packaging et identité visuelle",
     ]},
+    { label: "CRM & Automatisation Marketing", icon: Activity, bgColor: "bg-rose-50", borderColor: "border-rose-200", textColor: "text-rose-700", tasks: [
+      "HubSpot CRM — gestion contacts et pipeline", "SEO technique — audit et mots-clés",
+      "Séquences email marketing automatisées", "Monitoring concurrents en temps réel",
+      "ActiveCampaign — automation avancée", "Apollo.io — prospection B2B",
+      "Création visuels Canva", "Rapport PDF marketing généré automatiquement",
+    ]},
   ],
   CSOB: [
     { label: "Analyse Stratégique", icon: Eye, bgColor: "bg-red-50", borderColor: "border-red-200", textColor: "text-red-700", tasks: [
       "SWOT complet (forces/faiblesses/opportunités/menaces)", "Porter 5 Forces — analyse compétitive",
       "Blue Ocean vs Red Ocean", "Benchmark compétiteurs",
       "Analyse tendances sectorielles",
+      "Perplexity Deep Search — veille stratégique en profondeur",
+      "Battlecard concurrents — fiche de combat", "Recherche académique approfondie (ArXiv/Scholar)",
+      "Stratégie cognitive aetherlang",
     ]},
     { label: "Wargaming", icon: ShieldAlert, bgColor: "bg-orange-50", borderColor: "border-orange-200", textColor: "text-orange-700", tasks: [
       "Simulation réactions concurrents", "Scénarios what-if (optimiste / réaliste / pessimiste)",
@@ -655,6 +674,8 @@ const BOT_PRIMARY_TASKS: Record<string, PrimaryTaskGroup[]> = {
     { label: "Gestion de Projets", icon: Layers, bgColor: "bg-emerald-50", borderColor: "border-emerald-200", textColor: "text-emerald-700", tasks: [
       "Décomposition en tâches actionnables", "Assignation des responsables",
       "Suivi d'avancement", "Gestion des dépendances", "Livraison et bilan de projet",
+      "Jira — gestion tickets et sprints", "Notion — documentation et wiki",
+      "Linear — tracking sprints agiles", "Asana — gestion projets multi-équipes",
     ]},
   ],
   CPOB: [
@@ -672,6 +693,7 @@ const BOT_PRIMARY_TASKS: Record<string, PrimaryTaskGroup[]> = {
       "Cahier de charges SMART (/cprj)", "Rapport diagnostic détaillé",
       "Recherche intégrateurs Québec", "Estimation projets",
       "Formation opérateurs", "Maintenance prédictive et IoT",
+      "Rapport PDF projet manufacturier généré automatiquement",
     ]},
   ],
   CHROB: [
@@ -679,6 +701,8 @@ const BOT_PRIMARY_TASKS: Record<string, PrimaryTaskGroup[]> = {
       "Sourcing opérateurs spécialisés", "Processus de sélection",
       "Immigration économique (EIMT, mobilité)", "Évaluation psychométrique",
       "Onboarding et intégration", "Chasse de têtes — cadres",
+      "LinkedIn Recruiter — sourcing automatisé", "Slack — communications RH en temps réel",
+      "Zoom — entretiens vidéo et onboarding virtuel",
     ]},
     { label: "Rétention & Culture", icon: Star, bgColor: "bg-pink-50", borderColor: "border-pink-200", textColor: "text-pink-700", tasks: [
       "Diagnostic roulement (turnover)", "Programmes de rétention",
@@ -701,6 +725,8 @@ const BOT_PRIMARY_TASKS: Record<string, PrimaryTaskGroup[]> = {
       "Design thinking et prototypage", "Propriété intellectuelle — brevets",
       "Commercialisation produit", "Innovation ouverte",
       "Veille technologique sectorielle", "Radar technologies émergentes",
+      "Recherche papers académiques (ArXiv/Scholar)", "Assistant brevets — analyse et dépôt PI",
+      "AiRadar — veille IA et technologies émergentes",
     ]},
     { label: "Financement Innovation", icon: DollarSign, bgColor: "bg-emerald-50", borderColor: "border-emerald-200", textColor: "text-emerald-700", tasks: [
       "Crédit SR&DE (fédéral)", "CRSNG et Mitacs (transfert techno)",
@@ -712,6 +738,12 @@ const BOT_PRIMARY_TASKS: Record<string, PrimaryTaskGroup[]> = {
       "Gestion pipeline de ventes", "Qualification de leads",
       "Scoring et priorisation", "Automation des ventes",
       "Prévisions de revenus", "CRM strategy",
+    ]},
+    { label: "Outils CRM & Connectivité", icon: Activity, bgColor: "bg-yellow-50", borderColor: "border-yellow-200", textColor: "text-yellow-700", tasks: [
+      "Salesforce — CRM enterprise complet", "LinkedIn Sales Navigator — prospection",
+      "ActiveCampaign — nurturing et séquences automatisées", "Apollo.io — séquences outbound B2B",
+      "Slack — coordination équipe ventes", "Zoom — calls de vente et démos",
+      "Rapport PDF proposition commerciale générée automatiquement",
     ]},
     { label: "Vente Complexe B2B", icon: Target, bgColor: "bg-orange-50", borderColor: "border-orange-200", textColor: "text-orange-700", tasks: [
       "Cycles de vente long (3-12 mois)", "Mapping multi-décideurs (stakeholders)",
@@ -737,6 +769,7 @@ const BOT_PRIMARY_TASKS: Record<string, PrimaryTaskGroup[]> = {
     { label: "Conformité & Litiges", icon: Activity, bgColor: "bg-red-50", borderColor: "border-red-200", textColor: "text-red-700", tasks: [
       "Loi 25 / LPRPDE (protection des données)", "Code civil Québec",
       "Lois du travail", "Gestion litiges commerciaux", "Assurances commerciales",
+      "Conformité réglementaire — scan automatique", "Assistant brevets et PI",
     ]},
   ],
   CISOB: [
@@ -754,6 +787,11 @@ const BOT_PRIMARY_TASKS: Record<string, PrimaryTaskGroup[]> = {
       "LPRPDE et Loi 25", "Protection données personnelles",
       "Formation sécurité employés", "Monitoring 24/7",
       "Plan de continuité d'affaires",
+    ]},
+    { label: "Aegis Security Suite", icon: ShieldAlert, bgColor: "bg-red-50", borderColor: "border-red-200", textColor: "text-red-700", tasks: [
+      "Aegis Audit — audit sécurité complet automatisé", "Aegis Shield — protection périmètre réseau",
+      "Aegis Gate — contrôle d'accès et identités", "Vulnerability Scanner — détection CVE en temps réel",
+      "Compliance scan — NIST / ISO 27001 / Loi 25", "Rapport PDF sécurité exécutif",
     ]},
   ],
 };
