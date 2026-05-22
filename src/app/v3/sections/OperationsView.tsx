@@ -45,6 +45,7 @@ import {
 import { useDataSource } from "../data/use-data-source";
 import { DomainBadge } from "../data/source-badge";
 import { MobileSidebarSheet } from "../core/MobileSidebarSheet";
+import { api } from "../../v2/api/client";
 
 // ═══ Types — même structure que ChantierView mais vocabulaire opérationnel ═══
 
@@ -68,6 +69,85 @@ const ETAPE_STATUS = {
   "a-faire": { icon: Target, color: "text-gray-400", label: "À faire" },
 };
 
+
+// ═══ CommandMissionCard — Tracker live mission COMMAND (D-091) ═══
+
+const COMMAND_STAGES = [
+  { key: "scan_result",      label: "Scan",      color: "bg-blue-500" },
+  { key: "execution_result", label: "Exécution", color: "bg-amber-500" },
+  { key: "bilan_result",     label: "Bilan",     color: "bg-emerald-500" },
+];
+
+interface ActiveCommandMission {
+  id: number;
+  message_original: string;
+  stage: string;
+  scan_bots: string[];
+  completed: boolean;
+  started_at: string;
+}
+
+function CommandMissionCard({ mission }: { mission: ActiveCommandMission }) {
+  const stagesDone = new Set(
+    COMMAND_STAGES.slice(0, COMMAND_STAGES.findIndex(s => s.key === mission.stage) + 1).map(s => s.key)
+  );
+  const isActive = !mission.completed;
+
+  return (
+    <div className={cn(
+      "rounded-xl border p-4 space-y-3 shadow-sm",
+      isActive ? "border-blue-200 bg-blue-50" : "border-gray-200 bg-white"
+    )}>
+      <div className="flex items-center gap-2">
+        {isActive ? (
+          <span className="flex h-2.5 w-2.5"><span className="animate-ping absolute inline-flex h-2.5 w-2.5 rounded-full bg-blue-400 opacity-75" /><span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500" /></span>
+        ) : (
+          <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+        )}
+        <span className="text-xs font-bold text-gray-800 leading-tight line-clamp-1">
+          Mission COMMAND — {mission.message_original.slice(0, 60)}
+        </span>
+        <span className={cn(
+          "ml-auto text-[9px] font-bold px-2 py-0.5 rounded-full shrink-0",
+          isActive ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"
+        )}>
+          {isActive ? "En cours" : "Terminé"}
+        </span>
+      </div>
+
+      {/* Stage progress */}
+      <div className="flex items-center gap-2">
+        {COMMAND_STAGES.map((s, i) => {
+          const done = stagesDone.has(s.key);
+          const active = mission.stage === s.key && isActive;
+          return (
+            <div key={s.key} className="flex items-center gap-1.5 flex-1">
+              <div className={cn(
+                "h-1.5 flex-1 rounded-full transition-all",
+                done ? s.color : active ? "bg-blue-200 animate-pulse" : "bg-gray-200"
+              )} />
+              <span className={cn(
+                "text-[9px] font-semibold shrink-0",
+                done ? "text-gray-700" : "text-gray-400"
+              )}>{s.label}</span>
+              {i < COMMAND_STAGES.length - 1 && <ChevronRight className="h-3 w-3 text-gray-300 shrink-0" />}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Bots mobilisés */}
+      {mission.scan_bots?.length > 0 && (
+        <div className="flex items-center gap-1 flex-wrap">
+          <span className="text-[9px] text-gray-400 uppercase tracking-wider">Bots:</span>
+          {mission.scan_bots.map(bot => (
+            <span key={bot} className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600">{bot}</span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ═══ OperationEntityDetail — Fiche detail inline (pattern dBlocks de ChantierEntityDetail) ═══
 function OperationEntityDetail({ type, title, description, cadence, sla, regularity, botPrimaire, botCodes, sourceChantier, derniereExecution, prochaineExecution, sante, historique, documents, checklist, instructions, validateur, dureeEstimee, assignee, raci, risques, livrables, kpisCibles, coutRecurrent, dependances, decisions, conferences, activites, bilanOptimisation, subItems, onSubItemClick, subTitle, subCount, onBack, onAction, backLabel }: {
@@ -774,6 +854,25 @@ export function OperationsView({ botCode, showHeader = true, onAction }: {
   const [sortKey, setSortKey] = useState<string>("regularity");
   const [subViewMode, setSubViewMode] = useState<"cards" | "list" | "table">("cards");
 
+  // D-091 — Fetch latest active COMMAND mission
+  const [activeMission, setActiveMission] = useState<ActiveCommandMission | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const fetchMission = () => {
+      api.commandMissionsList(5)
+        .then(data => {
+          if (cancelled) return;
+          const missions = (data.missions ?? []) as ActiveCommandMission[];
+          const active = missions.find(m => !m.completed);
+          setActiveMission(active ?? null);
+        })
+        .catch(() => {});
+    };
+    fetchMission();
+    const interval = setInterval(fetchMission, 8000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, []);
+
   useEffect(() => { setSelectedDept(botCode); resetNav(); }, [botCode]);
   const resetNav = () => { setLevel("operations"); setSelectedOp(null); setSelectedProc(null); setSelectedRoutine(null); };
 
@@ -816,6 +915,11 @@ export function OperationsView({ botCode, showHeader = true, onAction }: {
             </div>
           </div>
         </LivingHero>
+      )}
+
+      {/* D-091 — COMMAND mission tracker */}
+      {level === "operations" && activeMission && (
+        <CommandMissionCard mission={activeMission} />
       )}
 
       {/* 2. TOP 3 VEDETTES — Pattern SectionView (grid-cols-3) */}

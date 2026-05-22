@@ -150,6 +150,26 @@ export interface TeamSuggestionEvent {
   from_bot: string;
 }
 
+export interface CommandAvailableEvent {
+  mission_title: string;
+  scan_bots: string[];
+  confidence: number;
+  auto: boolean;
+  urgency: string;
+}
+
+export interface CommandProgressEvent {
+  event: string; // "started"|"scan_result"|"execution_result"|"tool_result"|"bilan_result"|"done"
+  bot: string;
+  mission_id?: number;
+  plan?: string;
+  tool?: string;
+  success?: boolean;
+  data?: string;
+  category?: string;
+  tools_count?: number;
+}
+
 export type StreamCallback = {
   onToken: (text: string, accumulated: string) => void;
   onDone: (data: StreamDoneEvent) => void;
@@ -158,6 +178,8 @@ export type StreamCallback = {
   onAutoConsultation?: (data: AutoConsultationEvent) => void;
   onToolResult?: (data: ToolResultEvent) => void;
   onTeamSuggestion?: (data: TeamSuggestionEvent) => void;
+  onCommandAvailable?: (data: CommandAvailableEvent) => void;
+  onCommandProgress?: (data: CommandProgressEvent) => void;
 };
 
 // Chemin relatif — nginx reverse proxy vers FastAPI :8000
@@ -1406,6 +1428,20 @@ export const api = {
                   callbacks.onToolResult?.(data as ToolResultEvent);
                 } else if (currentEvent === "team_suggestion") {
                   callbacks.onTeamSuggestion?.(data as TeamSuggestionEvent);
+                } else if (currentEvent === "command_available") {
+                  callbacks.onCommandAvailable?.(data as CommandAvailableEvent);
+                } else if (currentEvent?.startsWith("command_")) {
+                  callbacks.onCommandProgress?.({
+                    event: currentEvent.replace("command_", ""),
+                    bot: data.bot || "",
+                    mission_id: data.mission_id,
+                    plan: data.plan,
+                    tool: data.tool,
+                    success: data.success,
+                    data: data.data,
+                    category: data.category,
+                    tools_count: data.tools_count,
+                  } as CommandProgressEvent);
                 } else if (currentEvent === "error") {
                   callbacks.onError(data.error || "Unknown stream error");
                 }

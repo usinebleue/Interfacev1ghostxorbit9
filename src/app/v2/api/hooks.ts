@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { api } from "./client";
-import type { StreamDoneEvent, AutoConsultationEvent, TeamSuggestionEvent } from "./client";
+import type { StreamDoneEvent, AutoConsultationEvent, TeamSuggestionEvent, CommandAvailableEvent, CommandProgressEvent } from "./client";
 import type {
   BotInfo,
   HealthResponse,
@@ -517,6 +517,15 @@ export function useChat() {
   // Sprint Discussion 1 — exchange count + product flag for phase-gating
   const [exchangeCount, setExchangeCount] = useState(0);
   const [hasProduct, setHasProduct] = useState(false);
+  // D-091 — COMMAND mission tracker
+  const [commandMission, setCommandMission] = useState<{
+    missionId: number | null;
+    title: string;
+    stage: string;
+    bot: string;
+    stages: Record<string, "pending" | "working" | "done">;
+    tools: Array<{ name: string; success: boolean; data?: string }>;
+  } | null>(null);
   const idCounter = useRef(0);
   const hasAutoRestored = useRef(false);
 
@@ -947,7 +956,7 @@ export function useChat() {
                       : m
                   )
                 );
-              }, 800);
+              }, 200);
             },
             onDone: (data: StreamDoneEvent) => {
               console.log(`[WC-DEBUG] onDone received: wsBlock=${!!data.workspace_block}, type=${data.workspace_block?.type}, title=${data.workspace_block?.title?.substring(0,30)}, skip=${data.workspace_block_skip}`);
@@ -1083,7 +1092,7 @@ export function useChat() {
                 }
               } else if (!isGreeting && botCount >= modeConf.maxExchanges) {
                 setTimeout(() => {
-                  injectCoaching(modeConf.coachingConverge, ["Synthese", "Continuer l'exploration"]);
+                  injectCoaching(modeConf.coachingConverge, ["Faire le point", "Continuer l'exploration"]);
                 }, 500);
               }
 
@@ -1228,6 +1237,53 @@ export function useChat() {
                 },
               ]);
               console.log(`[CSUITE] ${tsData.from_bot} suggests adding ${tsData.bot_code} (${tsData.bot_nom})`);
+            },
+            // D-091 — COMMAND available: propose mode équipe
+            onCommandAvailable: (cmdData: CommandAvailableEvent) => {
+              if (cmdData.auto) {
+                // Haute confiance — injecter un message de proposition automatique
+                const cmdMsgId = `command-proposal-${Date.now()}`;
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    id: cmdMsgId,
+                    role: "assistant" as const,
+                    content:
+                      `**Mode Équipe disponible** — Cette demande peut être traitée par plusieurs bots en parallèle.\n\n` +
+                      `Bots mobilisés: ${cmdData.scan_bots.join(", ")} • Confiance: ${Math.round(cmdData.confidence * 100)}%\n\n` +
+                      `_Déclenchez le Mode Équipe pour obtenir une réponse multi-agents structurée._`,
+                    agent: "CEOB",
+                    timestamp: new Date().toISOString(),
+                    isStreaming: false,
+                    metadata: {
+                      command_available: true,
+                      scan_bots: cmdData.scan_bots,
+                      confidence: cmdData.confidence,
+                      urgency: cmdData.urgency,
+                    },
+                    workspace_block_skip: true,
+                  },
+                ]);
+              }
+              console.log(`[COMMAND] command_available: confidence=${cmdData.confidence}, auto=${cmdData.auto}`);
+            },
+            // D-091 — COMMAND progress: mise à jour en temps réel de la mission
+            onCommandProgress: (prog: CommandProgressEvent) => {
+              setCommandMission((prev) => {
+                const stageKey = prog.event;
+                const newStages = { ...(prev?.stages ?? {}), [stageKey]: "done" as const };
+                const newTools = prog.event === "tool_result"
+                  ? [...(prev?.tools ?? []), { name: prog.tool ?? "", success: prog.success ?? false, data: prog.data }]
+                  : (prev?.tools ?? []);
+                return {
+                  missionId: prog.mission_id ?? prev?.missionId ?? null,
+                  title: prev?.title ?? "",
+                  stage: stageKey,
+                  bot: prog.bot,
+                  stages: newStages,
+                  tools: newTools,
+                };
+              });
             },
             onError: (error: string) => {
               clearInterval(_thinkTimer);
@@ -1753,6 +1809,9 @@ export function useChat() {
     hasProduct,
     // Animations de réflexion dynamiques
     thinkingSteps,
+    // D-091 — COMMAND mission live tracker
+    commandMission,
+    clearCommandMission: () => setCommandMission(null),
   };
 }
 
