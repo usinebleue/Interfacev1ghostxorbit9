@@ -750,7 +750,8 @@ const BOT_GRADIENT: Record<string, string> = {
 function BotSubteamSection({ botCode }: { botCode: string }) {
   const team = BOT_SUBTEAM[botCode] || BOT_SUBTEAM.CEOB;
   const totalTaches = team.reduce((n, s) => n + s.taches.length, 0);
-  const [openSet, setOpenSet] = useState<Set<string>>(new Set());
+  // Tous ouverts par défaut — l'utilisateur peut fermer ceux qu'il veut
+  const [openSet, setOpenSet] = useState<Set<string>>(new Set(team.map(sb => sb.nom)));
   const toggle = (nom: string) => setOpenSet(prev => {
     const next = new Set(prev);
     next.has(nom) ? next.delete(nom) : next.add(nom);
@@ -1211,10 +1212,6 @@ export function BlueprintBot({ botCode, headerGradient }: { botCode: string; hea
           <BotSubteamSection botCode={botCode} />
         </div>
 
-        {/* ── DÉPLOYER CHANTIERS RECOMMANDÉS (Phase 4) ── */}
-        <div id="sec-deploy-chantiers">
-          <DeployBlueprintButton botCode={botCode} />
-        </div>
 
         {/* ── OUTILS & CONNEXIONS ── */}
         <div id="sec-outils">
