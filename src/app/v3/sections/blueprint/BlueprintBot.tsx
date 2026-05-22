@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import {
   Target, DollarSign, TrendingUp, Settings, Save, CheckCircle2,
-  Eye, ChevronRight, Users, Plus, Zap, Activity, BarChart3, Star,
+  Eye, ChevronRight, ChevronDown, Users, Plus, Zap, Activity, BarChart3, Star,
   MessageCircle, Cpu, Sparkles, ShieldAlert, Layers,
 } from "lucide-react";
 import { Card } from "../../../components/ui/card";
@@ -82,116 +82,39 @@ const SLOT_COLORS = ["from-blue-600 to-blue-500", "from-violet-600 to-violet-500
 const SLOT_BG = ["bg-blue-50 border-blue-200", "bg-violet-50 border-violet-200", "bg-amber-50 border-amber-200"];
 const SLOT_TEXT_C = ["text-blue-700", "text-violet-700", "text-amber-700"];
 
-const BOT_APIS: Record<string, { name: string; status: "active" | "config" | "off"; icon: string; color: string }[]> = {
-  CEOB: [
-    { name: "Gemini Pro 2.0", status: "active", icon: "LLM", color: "bg-blue-500" },
-    { name: "Claude Sonnet 4", status: "active", icon: "LLM", color: "bg-violet-500" },
-    { name: "ElevenLabs (Chris)", status: "active", icon: "TTS", color: "bg-emerald-500" },
-    { name: "Deepgram Nova-3", status: "active", icon: "STT", color: "bg-cyan-500" },
-    { name: "LiveKit WebRTC", status: "active", icon: "RTC", color: "bg-orange-500" },
-    { name: "Tavus Video Avatar", status: "active", icon: "VID", color: "bg-pink-500" },
-    { name: "PostgreSQL (carlosdb)", status: "active", icon: "DB", color: "bg-indigo-500" },
-    { name: "Telnyx Telephonie", status: "active", icon: "TEL", color: "bg-teal-500" },
-    { name: "Google Calendar", status: "config", icon: "CAL", color: "bg-amber-500" },
-    { name: "Slack Notifications", status: "off", icon: "MSG", color: "bg-purple-500" },
-  ],
-  CTOB: [
-    { name: "Gemini Pro 2.0", status: "active", icon: "LLM", color: "bg-blue-500" },
-    { name: "GitHub Copilot", status: "active", icon: "DEV", color: "bg-gray-800" },
-    { name: "ElevenLabs (Daniel)", status: "active", icon: "TTS", color: "bg-emerald-500" },
-    { name: "Sentry", status: "active", icon: "MON", color: "bg-red-500" },
-    { name: "PostgreSQL", status: "active", icon: "DB", color: "bg-indigo-500" },
-    { name: "Docker Engine", status: "active", icon: "CNT", color: "bg-blue-600" },
-    { name: "Nginx Reverse Proxy", status: "active", icon: "SRV", color: "bg-green-600" },
-    { name: "AWS CloudWatch", status: "config", icon: "INF", color: "bg-cyan-600" },
-    { name: "Vercel Deploy", status: "off", icon: "CD", color: "bg-gray-700" },
-  ],
-  CFOB: [
-    { name: "Gemini Pro 2.0", status: "active", icon: "LLM", color: "bg-blue-500" },
-    { name: "QuickBooks Online", status: "active", icon: "FIN", color: "bg-emerald-600" },
-    { name: "ElevenLabs (James)", status: "active", icon: "TTS", color: "bg-emerald-500" },
-    { name: "PostgreSQL", status: "active", icon: "DB", color: "bg-indigo-500" },
-    { name: "Stripe Payments", status: "config", icon: "PAY", color: "bg-violet-500" },
-    { name: "Wave Accounting", status: "config", icon: "FIN", color: "bg-blue-400" },
-    { name: "Dext (factures)", status: "off", icon: "OCR", color: "bg-teal-500" },
-  ],
-  CMOB: [
-    { name: "Gemini Pro 2.0", status: "active", icon: "LLM", color: "bg-blue-500" },
-    { name: "ElevenLabs (Sarah)", status: "active", icon: "TTS", color: "bg-emerald-500" },
-    { name: "Canva API", status: "active", icon: "DSN", color: "bg-cyan-500" },
-    { name: "Google Analytics 4", status: "active", icon: "ANA", color: "bg-amber-500" },
-    { name: "HubSpot Marketing", status: "config", icon: "MKT", color: "bg-orange-500" },
-    { name: "Mailchimp", status: "config", icon: "EML", color: "bg-amber-600" },
-    { name: "Meta Ads Manager", status: "config", icon: "ADS", color: "bg-blue-600" },
-    { name: "Hootsuite", status: "off", icon: "SOC", color: "bg-gray-600" },
-  ],
-  CSOB: [
-    { name: "Gemini Pro 2.0", status: "active", icon: "LLM", color: "bg-blue-500" },
-    { name: "ElevenLabs (Nicole)", status: "active", icon: "TTS", color: "bg-emerald-500" },
-    { name: "LinkedIn Sales Nav", status: "config", icon: "CRM", color: "bg-blue-700" },
-    { name: "Apollo.io", status: "config", icon: "PRO", color: "bg-violet-500" },
-    { name: "ZoomInfo", status: "off", icon: "DAT", color: "bg-orange-600" },
-    { name: "Pipedrive", status: "off", icon: "CRM", color: "bg-green-600" },
-  ],
-  COOB: [
-    { name: "Gemini Pro 2.0", status: "active", icon: "LLM", color: "bg-blue-500" },
-    { name: "ElevenLabs (Marcus)", status: "active", icon: "TTS", color: "bg-emerald-500" },
-    { name: "Notion", status: "active", icon: "DOC", color: "bg-gray-800" },
-    { name: "Monday.com", status: "config", icon: "PMO", color: "bg-red-500" },
-    { name: "Jira", status: "config", icon: "TKT", color: "bg-blue-600" },
-    { name: "Slack", status: "config", icon: "MSG", color: "bg-purple-500" },
-    { name: "Power Automate", status: "off", icon: "AUT", color: "bg-blue-500" },
-  ],
-  CPOB: [
-    { name: "Gemini Flash 2.0", status: "active", icon: "LLM", color: "bg-blue-500" },
-    { name: "ElevenLabs (Tom)", status: "active", icon: "TTS", color: "bg-emerald-500" },
-    { name: "Epicor ERP", status: "config", icon: "ERP", color: "bg-orange-600" },
-    { name: "SCADA Interface", status: "config", icon: "IOT", color: "bg-teal-600" },
-    { name: "Siemens MindSphere", status: "off", icon: "IOT", color: "bg-cyan-700" },
-    { name: "MES (Mfg Exec)", status: "off", icon: "MES", color: "bg-gray-600" },
-  ],
-  CHROB: [
-    { name: "Gemini Pro 2.0", status: "active", icon: "LLM", color: "bg-blue-500" },
-    { name: "ElevenLabs (Emily)", status: "active", icon: "TTS", color: "bg-emerald-500" },
-    { name: "BambooHR", status: "config", icon: "RH", color: "bg-teal-500" },
-    { name: "Indeed Posting", status: "config", icon: "JOB", color: "bg-blue-500" },
-    { name: "Workday", status: "off", icon: "RH", color: "bg-orange-500" },
-    { name: "Teams (comm interne)", status: "off", icon: "MSG", color: "bg-violet-600" },
-  ],
-  CINOB: [
-    { name: "Gemini Pro 2.0", status: "active", icon: "LLM", color: "bg-blue-500" },
-    { name: "Claude Opus 4", status: "active", icon: "LLM", color: "bg-violet-500" },
-    { name: "ElevenLabs (Aria)", status: "active", icon: "TTS", color: "bg-emerald-500" },
-    { name: "Miro (ideation)", status: "active", icon: "WB", color: "bg-amber-500" },
-    { name: "Google Patents", status: "config", icon: "PAT", color: "bg-amber-600" },
-    { name: "Figma API", status: "off", icon: "DSN", color: "bg-purple-500" },
-  ],
-  CROB: [
-    { name: "Gemini Pro 2.0", status: "active", icon: "LLM", color: "bg-blue-500" },
-    { name: "ElevenLabs (Brian)", status: "active", icon: "TTS", color: "bg-emerald-500" },
-    { name: "HubSpot CRM", status: "active", icon: "CRM", color: "bg-orange-500" },
-    { name: "PandaDoc", status: "active", icon: "DOC", color: "bg-green-500" },
-    { name: "Calendly", status: "config", icon: "CAL", color: "bg-blue-400" },
-    { name: "Gong.io (calls)", status: "config", icon: "ANA", color: "bg-purple-600" },
-    { name: "Salesforce", status: "off", icon: "CRM", color: "bg-blue-600" },
-  ],
-  CLOB: [
-    { name: "Gemini Pro 2.0", status: "active", icon: "LLM", color: "bg-blue-500" },
-    { name: "Claude Sonnet 4", status: "active", icon: "LLM", color: "bg-violet-500" },
-    { name: "ElevenLabs (Grace)", status: "active", icon: "TTS", color: "bg-emerald-500" },
-    { name: "DocuSign", status: "config", icon: "SGN", color: "bg-amber-500" },
-    { name: "Clio (gestion juridique)", status: "config", icon: "LAW", color: "bg-indigo-500" },
-    { name: "LexisNexis", status: "off", icon: "RCH", color: "bg-red-600" },
-  ],
-  CISOB: [
-    { name: "Gemini Pro 2.0", status: "active", icon: "LLM", color: "bg-blue-500" },
-    { name: "ElevenLabs (Adam)", status: "active", icon: "TTS", color: "bg-emerald-500" },
-    { name: "Snyk", status: "active", icon: "SEC", color: "bg-purple-600" },
-    { name: "Cloudflare WAF", status: "active", icon: "WAF", color: "bg-orange-500" },
-    { name: "CrowdStrike", status: "config", icon: "EDR", color: "bg-red-600" },
-    { name: "HashiCorp Vault", status: "config", icon: "KEY", color: "bg-gray-700" },
-    { name: "Nessus Scanner", status: "off", icon: "SCN", color: "bg-teal-600" },
-  ],
+// Type partagé pour les entrées API
+type ApiEntry = { name: string; status: "active" | "config" | "off"; icon: string; color: string };
+
+// Connexions système (LLM routing + infra — toujours actives, pas user-configurables)
+const BOT_CORE_APIS: Record<string, ApiEntry[]> = {
+  CEOB:  [{ name: "Gemini Pro 2.0", icon: "LLM", color: "bg-blue-500", status: "active" }, { name: "Claude Sonnet 4", icon: "LLM", color: "bg-violet-500", status: "active" }, { name: "ElevenLabs TTS", icon: "TTS", color: "bg-emerald-500", status: "active" }, { name: "Deepgram STT", icon: "STT", color: "bg-cyan-500", status: "active" }, { name: "LiveKit WebRTC", icon: "RTC", color: "bg-orange-500", status: "active" }, { name: "PostgreSQL", icon: "DB", color: "bg-indigo-500", status: "active" }],
+  CTOB:  [{ name: "Gemini Pro 2.0", icon: "LLM", color: "bg-blue-500", status: "active" }, { name: "ElevenLabs TTS", icon: "TTS", color: "bg-emerald-500", status: "active" }, { name: "PostgreSQL", icon: "DB", color: "bg-indigo-500", status: "active" }, { name: "Docker", icon: "CNT", color: "bg-blue-600", status: "active" }],
+  CFOB:  [{ name: "Gemini Pro 2.0", icon: "LLM", color: "bg-blue-500", status: "active" }, { name: "ElevenLabs TTS", icon: "TTS", color: "bg-emerald-500", status: "active" }, { name: "PostgreSQL", icon: "DB", color: "bg-indigo-500", status: "active" }],
+  CMOB:  [{ name: "Gemini Pro 2.0", icon: "LLM", color: "bg-blue-500", status: "active" }, { name: "ElevenLabs TTS", icon: "TTS", color: "bg-emerald-500", status: "active" }, { name: "PostgreSQL", icon: "DB", color: "bg-indigo-500", status: "active" }],
+  CSOB:  [{ name: "Gemini Pro 2.0", icon: "LLM", color: "bg-blue-500", status: "active" }, { name: "ElevenLabs TTS", icon: "TTS", color: "bg-emerald-500", status: "active" }, { name: "PostgreSQL", icon: "DB", color: "bg-indigo-500", status: "active" }],
+  COOB:  [{ name: "Gemini Pro 2.0", icon: "LLM", color: "bg-blue-500", status: "active" }, { name: "ElevenLabs TTS", icon: "TTS", color: "bg-emerald-500", status: "active" }, { name: "PostgreSQL", icon: "DB", color: "bg-indigo-500", status: "active" }],
+  CPOB:  [{ name: "Gemini Flash 2.0", icon: "LLM", color: "bg-sky-500", status: "active" }, { name: "ElevenLabs TTS", icon: "TTS", color: "bg-emerald-500", status: "active" }, { name: "PostgreSQL", icon: "DB", color: "bg-indigo-500", status: "active" }],
+  CHROB: [{ name: "Gemini Pro 2.0", icon: "LLM", color: "bg-blue-500", status: "active" }, { name: "ElevenLabs TTS", icon: "TTS", color: "bg-emerald-500", status: "active" }, { name: "PostgreSQL", icon: "DB", color: "bg-indigo-500", status: "active" }],
+  CINOB: [{ name: "Claude Opus 4", icon: "LLM", color: "bg-violet-500", status: "active" }, { name: "Gemini Pro 2.0", icon: "LLM", color: "bg-blue-500", status: "active" }, { name: "ElevenLabs TTS", icon: "TTS", color: "bg-emerald-500", status: "active" }, { name: "PostgreSQL", icon: "DB", color: "bg-indigo-500", status: "active" }],
+  CROB:  [{ name: "Gemini Pro 2.0", icon: "LLM", color: "bg-blue-500", status: "active" }, { name: "ElevenLabs TTS", icon: "TTS", color: "bg-emerald-500", status: "active" }, { name: "PostgreSQL", icon: "DB", color: "bg-indigo-500", status: "active" }],
+  CLOB:  [{ name: "Claude Sonnet 4", icon: "LLM", color: "bg-violet-500", status: "active" }, { name: "ElevenLabs TTS", icon: "TTS", color: "bg-emerald-500", status: "active" }, { name: "PostgreSQL", icon: "DB", color: "bg-indigo-500", status: "active" }],
+  CISOB: [{ name: "Gemini Pro 2.0", icon: "LLM", color: "bg-blue-500", status: "active" }, { name: "ElevenLabs TTS", icon: "TTS", color: "bg-emerald-500", status: "active" }, { name: "PostgreSQL", icon: "DB", color: "bg-indigo-500", status: "active" }],
+};
+
+// Mapping catégorie intégration → affichage
+const INTEGRATION_CATEGORY_MAP: Record<string, { color: string; abbr: string }> = {
+  "crm":           { color: "bg-orange-500",  abbr: "CRM" },
+  "finance":       { color: "bg-emerald-600", abbr: "FIN" },
+  "communication": { color: "bg-violet-500",  abbr: "MSG" },
+  "developpement": { color: "bg-gray-700",    abbr: "DEV" },
+  "marketing":     { color: "bg-pink-500",    abbr: "MKT" },
+  "rh":            { color: "bg-teal-500",    abbr: "RH"  },
+  "analytics":     { color: "bg-blue-500",    abbr: "ANA" },
+  "storage":       { color: "bg-indigo-500",  abbr: "STG" },
+  "calendar":      { color: "bg-amber-500",   abbr: "CAL" },
+  "security":      { color: "bg-red-600",     abbr: "SEC" },
+  "productivity":  { color: "bg-cyan-500",    abbr: "PRO" },
+  "default":       { color: "bg-gray-500",    abbr: "INT" },
 };
 
 const VITAA_BOT: Record<string, { letter: string; label: string; score: number; avg: number; color: string }[]> = {
@@ -642,51 +565,96 @@ function DeployBlueprintButton({ botCode }: { botCode: string }) {
   );
 }
 
-// ── Section: APIs & Connexions ──
+// ── Section: APIs & Connexions (données réelles depuis /api/v1/integrations) ──
 function BotApisSection({ botCode }: { botCode: string }) {
-  const apis = BOT_APIS[botCode] || BOT_APIS.CEOB;
-  const active = apis.filter(a => a.status === "active");
-  const rest = apis.filter(a => a.status !== "active");
-  const renderApi = (a: typeof apis[0]) => (
+  const coreApis = BOT_CORE_APIS[botCode] || BOT_CORE_APIS.CEOB;
+  const [thirdParty, setThirdParty] = useState<ApiEntry[]>([]);
+  const [loadingInt, setLoadingInt] = useState(true);
+
+  useEffect(() => {
+    setLoadingInt(true);
+    Promise.all([
+      fetch("/api/v1/integrations").then(r => r.json()).catch(() => ({})),
+      fetch("/api/v1/integrations/user").then(r => r.json()).catch(() => ({})),
+    ]).then(([allData, userData]) => {
+      const providers: Record<string, { name: string; category?: string; bots?: string[] }> =
+        allData.providers || allData || {};
+      const activeSet = new Set(
+        (userData.integrations || (Array.isArray(userData) ? userData : [])).map(
+          (i: { provider: string }) => i.provider
+        )
+      );
+      const entries: ApiEntry[] = Object.entries(providers)
+        .filter(([, p]) => !p.bots || p.bots.length === 0 || p.bots.includes(botCode))
+        .map(([id, p]) => {
+          const catKey = (p.category || "default").toLowerCase();
+          const meta = INTEGRATION_CATEGORY_MAP[catKey] ?? INTEGRATION_CATEGORY_MAP.default;
+          return {
+            name: p.name,
+            icon: meta.abbr,
+            color: meta.color,
+            status: activeSet.has(id) ? "active" as const : "off" as const,
+          };
+        });
+      setThirdParty(entries);
+    }).finally(() => setLoadingInt(false));
+  }, [botCode]);
+
+  const allApis = [...coreApis, ...thirdParty];
+  const activeList = allApis.filter(a => a.status === "active");
+  const restList = allApis.filter(a => a.status !== "active");
+
+  const renderApi = (a: ApiEntry) => (
     <div key={a.name} className={cn(
       "flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all",
-      a.status === "active" ? "bg-white border-gray-200 shadow-sm" :
-      a.status === "config" ? "bg-amber-50/50 border-amber-200" : "bg-gray-50 border-gray-100 opacity-60"
+      a.status === "active" ? "bg-white border-gray-200 shadow-sm" : "bg-gray-50 border-gray-100 opacity-70"
     )}>
       <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center text-white text-[9px] font-bold shrink-0", a.status === "off" ? "bg-gray-300" : a.color)}>{a.icon}</div>
       <div className="flex-1 min-w-0">
         <div className="text-xs font-bold text-gray-800 truncate">{a.name}</div>
-        <div className={cn("text-[9px] font-medium", a.status === "active" ? "text-emerald-600" : a.status === "config" ? "text-amber-600" : "text-gray-400")}>{a.status === "active" ? "Connecté" : a.status === "config" ? "À configurer" : "Désactivé"}</div>
+        <div className={cn("text-[10px] font-medium", a.status === "active" ? "text-emerald-600" : "text-gray-400")}>
+          {a.status === "active" ? "Connecté" : "Disponible"}
+        </div>
       </div>
       <button className={cn("text-[9px] px-2.5 py-1 rounded-full font-medium border cursor-pointer transition-all shrink-0",
-        a.status === "active" ? "bg-red-50 text-red-600 border-red-200 hover:bg-red-100" :
-        a.status === "config" ? "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100" :
-        "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+        a.status === "active"
+          ? "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
+          : "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
       )}>
-        {a.status === "active" ? "Déconnecter" : a.status === "config" ? "Configurer" : "Activer"}
+        {a.status === "active" ? "Gérer" : "Activer"}
       </button>
     </div>
   );
+
   return (
     <div className="space-y-3">
       <Card className="p-0 gap-0 overflow-hidden rounded-xl border-gray-200 shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all">
         <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
           <Activity className="h-4 w-4 text-gray-900 stroke-[2.5]" />
           <span className="text-sm font-bold text-gray-900 flex-1">Connexions Actives</span>
-          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600">{active.length} live</span>
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600">{activeList.length} live</span>
         </div>
-        <div className="p-3 grid grid-cols-2 gap-2">{active.map(renderApi)}</div>
+        <div className="p-3 grid grid-cols-2 gap-2">{activeList.map(renderApi)}</div>
       </Card>
-      {rest.length > 0 && (
-        <Card className="p-0 gap-0 overflow-hidden rounded-xl border-gray-200 shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all">
-          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
-            <Cpu className="h-4 w-4 text-gray-900 stroke-[2.5]" />
-            <span className="text-sm font-bold text-gray-900 flex-1">À configurer / Disponibles</span>
-            <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600">{rest.length}</span>
+      <Card className="p-0 gap-0 overflow-hidden rounded-xl border-gray-200 shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all">
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+          <Cpu className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+          <span className="text-sm font-bold text-gray-900 flex-1">Intégrations Disponibles</span>
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600">
+            {loadingInt ? "…" : restList.length}
+          </span>
+        </div>
+        {loadingInt ? (
+          <div className="p-4 flex items-center justify-center gap-2 text-gray-400">
+            <Activity className="h-4 w-4 animate-spin" />
+            <span className="text-xs">Chargement des intégrations…</span>
           </div>
-          <div className="p-3 grid grid-cols-2 gap-2">{rest.map(renderApi)}</div>
-        </Card>
-      )}
+        ) : restList.length > 0 ? (
+          <div className="p-3 grid grid-cols-2 gap-2">{restList.map(renderApi)}</div>
+        ) : (
+          <div className="p-4 text-center text-xs text-gray-400">Aucune intégration tierce disponible</div>
+        )}
+      </Card>
     </div>
   );
 }
@@ -739,44 +707,45 @@ function BotSubteamSection({ botCode }: { botCode: string }) {
   const [expanded, setExpanded] = useState<string | null>(null);
 
   return (
-    <div className="space-y-3">
-      {/* Header */}
-      <div className="flex items-center gap-2 px-1">
-        <Users className="h-4 w-4 text-gray-500" />
-        <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">Équipe spécialisée</span>
-        <div className="ml-auto flex items-center gap-2">
-          <span className="text-[9px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200 font-medium">{totalModules} modules actifs</span>
-          <span className="text-[9px] px-2 py-0.5 rounded-full bg-violet-50 text-violet-600 border border-violet-200 font-medium">{totalTaches} tâches</span>
-        </div>
+    <Card className="p-0 gap-0 overflow-hidden rounded-xl border-gray-200 shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all">
+      {/* Header card standard design system */}
+      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
+        <Users className="h-4 w-4 text-gray-900 stroke-[2.5]" />
+        <span className="text-sm font-bold text-gray-900 flex-1">Équipe spécialisée</span>
+        <span className="text-[9px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 font-medium">{totalModules} modules</span>
+        <span className="text-[9px] px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 border border-violet-200 font-medium">{totalTaches} tâches</span>
       </div>
 
-      {/* Sous-bots cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+      {/* Grille sous-bots */}
+      <div className="p-3 grid grid-cols-1 md:grid-cols-2 gap-2">
         {team.map(sb => {
           const isOpen = expanded === sb.nom;
           return (
-            <div key={sb.nom} className={cn("rounded-xl border overflow-hidden transition-all cursor-pointer", sb.bgColor, sb.borderColor, isOpen && "ring-1 ring-offset-0")} style={isOpen ? {ringColor: "currentColor"} : {}}>
-              {/* Card header */}
-              <button className="w-full flex items-center gap-2 px-3 py-2.5 text-left" onClick={() => setExpanded(isOpen ? null : sb.nom)}>
-                <span className="text-lg shrink-0">{sb.emoji}</span>
+            <div key={sb.nom} className="rounded-xl border border-gray-200 overflow-hidden bg-white shadow-sm hover:shadow-md hover:border-blue-200 transition-all">
+              {/* Card header — pattern design system bg-[#00B4D8]/10 */}
+              <button
+                className="w-full flex items-center gap-2 px-3 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 text-left cursor-pointer hover:bg-[#00B4D8]/20 transition-colors"
+                onClick={() => setExpanded(isOpen ? null : sb.nom)}
+              >
+                <span className="text-base shrink-0">{sb.emoji}</span>
                 <div className="flex-1 min-w-0">
-                  <div className={cn("text-[11px] font-bold truncate", sb.couleur)}>{sb.nom}</div>
-                  <div className="text-[9px] text-gray-500">{sb.modules.length} module{sb.modules.length > 1 ? "s" : ""} · {sb.taches.length} tâches</div>
+                  <div className="text-xs font-bold text-gray-900 truncate">{sb.nom}</div>
+                  <div className="text-[10px] text-gray-500">{sb.modules.length} module{sb.modules.length > 1 ? "s" : ""} · {sb.taches.length} tâches</div>
                 </div>
-                <ChevronRight className={cn("h-3.5 w-3.5 shrink-0 transition-transform", sb.couleur, isOpen && "rotate-90")} />
+                <ChevronDown className={cn("h-3.5 w-3.5 text-gray-400 shrink-0 transition-transform", isOpen ? "" : "-rotate-90")} />
               </button>
 
-              {/* Expanded: tâches */}
+              {/* Expanded: tâches + modules */}
               {isOpen && (
-                <div className="px-3 pb-3 space-y-2 border-t border-white/50">
+                <div className="px-3 pb-3 space-y-2">
                   <div className="pt-2 flex flex-wrap gap-1">
                     {sb.taches.map(t => (
-                      <span key={t} className={cn("text-[9px] px-2 py-0.5 rounded-full bg-white/70 font-medium border border-white/60", sb.couleur)}>{t}</span>
+                      <span key={t} className={cn("text-xs px-2 py-0.5 rounded-full font-medium bg-white border", sb.couleur, sb.borderColor)}>{t}</span>
                     ))}
                   </div>
                   <div className="flex flex-wrap gap-1">
                     {sb.modules.map(m => (
-                      <span key={m} className="text-[8px] px-1.5 py-0.5 rounded bg-white/50 text-gray-500 font-mono border border-gray-200/60">{m}</span>
+                      <span key={m} className="text-[10px] px-1.5 py-0.5 rounded bg-gray-50 text-gray-500 font-mono border border-gray-200">{m}</span>
                     ))}
                   </div>
                 </div>
@@ -785,7 +754,7 @@ function BotSubteamSection({ botCode }: { botCode: string }) {
           );
         })}
       </div>
-    </div>
+    </Card>
   );
 }
 
