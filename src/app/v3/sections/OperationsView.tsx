@@ -78,7 +78,7 @@ const COMMAND_STAGES = [
   { key: "bilan_result",     label: "Bilan",     color: "bg-emerald-500" },
 ];
 
-interface ActiveCommandMission {
+export interface ActiveCommandMission {
   id: number;
   message_original: string;
   stage: string;
@@ -87,7 +87,7 @@ interface ActiveCommandMission {
   started_at: string;
 }
 
-function CommandMissionCard({ mission }: { mission: ActiveCommandMission }) {
+export function CommandMissionCard({ mission }: { mission: ActiveCommandMission }) {
   const stagesDone = new Set(
     COMMAND_STAGES.slice(0, COMMAND_STAGES.findIndex(s => s.key === mission.stage) + 1).map(s => s.key)
   );

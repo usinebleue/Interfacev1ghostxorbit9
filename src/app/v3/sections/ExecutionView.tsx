@@ -13,6 +13,7 @@
  */
 
 import type { PhaseKey } from "../core/types";
+import type { CommandStatusResponse } from "../../v2/api/types";
 
 // ═══ Sous-composants — imports directs ═══
 import { ChantiersAccueilView } from "./ChantiersAccueilView";
@@ -27,17 +28,18 @@ interface ExecutionViewProps {
   activeTab?: string;
   onTabChange?: (tab: string) => void;
   onAction?: (phase: PhaseKey, context: string) => void;
+  commandMission?: CommandStatusResponse | null;
 }
 
 // ═══ Composant principal ═══
 
-export function ExecutionView({ botCode, showHeader, activeTab, onTabChange, onAction }: ExecutionViewProps) {
+export function ExecutionView({ botCode, showHeader, activeTab, onTabChange, onAction, commandMission }: ExecutionViewProps) {
   const tab = activeTab ?? "accueil";
 
   return (
     <>
       {tab === "accueil" && (
-        <ChantiersAccueilView botCode={botCode} onAction={onAction} />
+        <ChantiersAccueilView botCode={botCode} onAction={onAction} commandMission={commandMission} />
       )}
       {tab === "operations" && (
         <OperationsView botCode={botCode} showHeader={showHeader} onAction={onAction} />

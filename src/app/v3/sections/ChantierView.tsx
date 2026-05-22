@@ -30,7 +30,7 @@ import { useIsMobile } from "../../components/ui/use-mobile";
 import { MobileSidebarSheet } from "../core/MobileSidebarSheet";
 import { ViewModeToolbar } from "./shared/ViewModeToolbar";
 import { CockpitSectionHeader, WorkActionsOverlay, DEPT_ORDER, WORK_ACTIONS } from "./CockpitView";
-import { type MockChantierItem, type MockProjetItem, type MockMissionItem, type MockTacheItem, type MockDocument, type MockJalon, type MockRACIItem, type MockDecisionLog, type MockConferenceAI, type MockActivityLog, type MockCriterion, type MockDependency, MOCK_CHANTIERS, getMockChantiers } from "../data/mock/chantiers.mock";
+import { type MockChantierItem, type MockProjetItem, type MockMissionItem, type MockTacheItem, type MockDocument, type MockJalon, type MockRACIItem, type MockDecisionLog, type MockConferenceAI, type MockActivityLog, type MockCriterion, type MockDependency } from "../data/mock/chantiers.mock";
 
 type ChantierLevel = "chantiers" | "projets" | "missions" | "taches" | "tache-detail";
 type ChantierSortKey = "recent" | "progression" | "phase" | "alpha";
@@ -751,11 +751,9 @@ function SubElementsTable({ items, onAction }: { items: { typeLabel: string; tit
   );
 }
 
-export function ChantierView({ botCode, showHeader = true, onAction }: { botCode: string; showHeader?: boolean; onAction?: (phase: PhaseKey, ctx: string) => void }) {
-  // API data (real DB) + mock data (simulation réaliste)
+export function ChantierView({ botCode, showHeader = true, onAction, onSeedBlueprint }: { botCode: string; showHeader?: boolean; onAction?: (phase: PhaseKey, ctx: string) => void; onSeedBlueprint?: () => void }) {
+  // API data (real DB)
   const { chantiers: apiChantiers, loading: loadingCh } = useChantiers();
-  const { data: mockChantiers } = useDataSource("chantiers", MOCK_CHANTIERS);
-  const mockData = (mockChantiers[botCode] || mockChantiers.CEOB || []) as MockChantierItem[];
   const [selectedDept, setSelectedDept] = useState(botCode);
   const [level, setLevel] = useState<ChantierLevel>("chantiers");
   const [selectedChantier, setSelectedChantier] = useState<number | null>(null);
@@ -772,8 +770,7 @@ export function ChantierView({ botCode, showHeader = true, onAction }: { botCode
   useEffect(() => { setSelectedDept(botCode); resetNav(); }, [botCode]);
   const resetNav = () => { setLevel("chantiers"); setSelectedChantier(null); setSelectedProjet(null); setSelectedMission(null); setDetailTache(null); };
 
-  // Merge API + mock — API chantiers en premier, mock pour la simulation
-  const deptMock = selectedDept === botCode ? mockData : (mockChantiers[selectedDept] || mockChantiers.CEOB || []) as MockChantierItem[];
+  // Chantiers API uniquement
   const apiConverted: MockChantierItem[] = (apiChantiers || [])
     .filter(ch => {
       if (!ch.bot_codes?.length) return selectedDept === "CEOB";
@@ -796,7 +793,7 @@ export function ChantierView({ botCode, showHeader = true, onAction }: { botCode
       jalons: [],
       projets: [],
     }));
-  const allChantiers = [...apiConverted, ...deptMock];
+  const allChantiers = [...apiConverted];
 
   // Filter + sort
   const filtered = allChantiers
@@ -906,7 +903,7 @@ export function ChantierView({ botCode, showHeader = true, onAction }: { botCode
             <button onClick={() => { setSelectedDept(botCode); resetNav(); }} className={cn(SF.btnBase, selectedDept === botCode && level === "chantiers" ? SF.btnActive : SF.btnInactive)}>
               <Home className={selectedDept === botCode ? SF.iconActive : SF.iconInactive} />
               <span className={selectedDept === botCode ? SF.labelActive : SF.labelInactive}>Vue d'ensemble</span>
-              <span className={SF.count}>{(mockChantiers[botCode] || []).length}</span>
+              <span className={SF.count}>{(apiChantiers || []).length}</span>
             </button>
             <div className={SF.separator} />
             {/* Départements — comme Cockpit sidebar */}
@@ -914,7 +911,7 @@ export function ChantierView({ botCode, showHeader = true, onAction }: { botCode
               const isActive = selectedDept === code && selectedDept !== botCode;
               const Icon = DEPT_DASH_ICON[code] || Zap;
               const label = DEPT_SHORT_LABEL[code] || code;
-              const deptCount = (mockChantiers[code] || []).length;
+              const deptCount = (apiChantiers || []).filter((ch: any) => ch.bot_codes?.includes(code)).length;
               return (
                 <button key={code} onClick={() => { setSelectedDept(code); resetNav(); }}
                   className={cn(SF.btnBase, isActive ? SF.btnActive : SF.btnInactive)}>
@@ -1005,7 +1002,31 @@ export function ChantierView({ botCode, showHeader = true, onAction }: { botCode
               {/* Section header + contenu selon viewMode */}
               <CockpitSectionHeader icon={Flame} title="Chantiers" count={filtered.length} color="text-orange-500" />
               {filtered.length === 0 ? (
-                <div className="text-center py-12 text-gray-400 text-xs">Aucun chantier trouvé</div>
+                <div className="text-center py-12">
+                  {allChantiers.length === 0 ? (
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="text-gray-400 text-sm font-medium">Aucun chantier actif</div>
+                      <div className="flex flex-col gap-2 w-full max-w-xs">
+                        <button
+                          onClick={() => onAction?.("discussion", "creation_chantier")}
+                          className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-orange-50 border border-orange-200 text-orange-700 hover:bg-orange-100 text-xs font-medium transition-all"
+                        >
+                          <Plus className="h-3.5 w-3.5" /> Créer un chantier
+                        </button>
+                        {onSeedBlueprint && (
+                          <button
+                            onClick={onSeedBlueprint}
+                            className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 text-xs font-medium transition-all"
+                          >
+                            <Layers className="h-3.5 w-3.5" /> Initialiser depuis Blueprint
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <span className="text-gray-400 text-xs">Aucun chantier trouvé pour ce filtre</span>
+                  )}
+                </div>
               ) : subViewMode === "list" ? (
                 <SubElementsList items={filtered.map(ch => ({
                   typeLabel: "Chantier", typeIcon: Flame, title: ch.titre, phase: ch.phase, progression: ch.progression, echeance: ch.echeance, assignee: BOT_DISPLAY[ch.botPrimaire]?.name,

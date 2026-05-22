@@ -13,6 +13,7 @@
 import { useState, useRef, useEffect, useCallback, lazy, Suspense } from "react";
 import {
   Home,
+  ChevronLeft,
   ChevronRight,
   Atom,
   Palette,
@@ -75,6 +76,7 @@ import { UnifiedPhaseView } from "./phases/UnifiedPhaseView";
 import { DocumentWorkspaceView } from "./phases/DocumentWorkspaceView";
 import { LiveDocForgeLivrable } from "./phases/LiveDocForgeLivrable";
 import { ConceptionRouter } from "./phases/ConceptionRouter";
+import { LiveReflexionView } from "./phases/LiveReflexionView";
 import { NotificationCenter } from "./sections/NotificationCenter";
 import { StandingOrdersView } from "./sections/StandingOrdersView";
 import { NotificationBell } from "./core/NotificationBell";
@@ -179,7 +181,7 @@ export function WorkspacePhasesPanel() {
     workspaceSessionId,
   } = useAmorcer();
 
-  const { sendMessage, newConversation, messages, activeThreadId } = useChatContext();
+  const { sendMessage, newConversation, messages, activeThreadId, activeReflectionMode, setReflectionMode, commandMission } = useChatContext();
   const isMobile = useIsMobile();
 
   // ═══ AUTO-CAPTURE — TOUJOURS actif, pas juste quand LivePhaseView est monté ═══
@@ -491,7 +493,7 @@ export function WorkspacePhasesPanel() {
               {rightSection === "dataroom" && <DataRoomView botCode={activeBotCode} headerGradient="from-blue-600 to-blue-500" showHeader />}
               {rightSection === "playbooks" && <PlaybookStoreView botCode={activeBotCode} headerGradient="from-blue-600 to-blue-500" showHeader />}
               {rightSection === "conferenceai" && <ConferenceAIView headerGradient="from-blue-600 to-blue-500" onNavigateToStore={() => setRightSection("playbooks")} onStartMeeting={meeting.startMeeting} botCode={activeBotCode} />}
-              {rightSection === "chantiers" && <ExecutionView botCode={activeBotCode} showHeader activeTab={executionTab} onTabChange={setExecutionTab} onAction={handleWorkAction} />}
+              {rightSection === "chantiers" && <ExecutionView botCode={activeBotCode} showHeader activeTab={executionTab} onTabChange={setExecutionTab} onAction={handleWorkAction} commandMission={commandMission} />}
               {rightSection === "bureau-agenda" && <AgendaView botCode={activeBotCode} showHeader onAction={handleWorkAction} />}
               {rightSection === "admin" && <AdminView botCode={activeBotCode} showHeader onAction={handleWorkAction} />}
               {rightSection === "notification-center" && <NotificationCenter />}
@@ -530,19 +532,36 @@ export function WorkspacePhasesPanel() {
             }}
           />
         ) : activePhase === "creation" ? (
-          /* Conception — router unifie (3 chemins: document, livrable, fallback) */
-          <ConceptionRouter
-            key={activeThreadId || "new"}
-            activeDocumentKey={activeDocumentKey}
-            activeDocumentSection={activeDocumentSection}
-            activeDeliverable={activeDeliverable}
-            activeBotCode={activeBotCode}
-            reflexionContext={reflexionContext}
-            draftLibraryId={draftLibraryId}
-            onPhaseComplete={() => { setActivePhase("execution"); setRightSection(null); setExecutionTab("accueil"); }}
-            onDeliverableBack={() => setActiveDeliverable(null)}
-            onStartJumelage={activeDeliverable === "document" ? () => startDeliverable("jumelage") : undefined}
-          />
+          /* Conception — router unifie OU vue réflexion si mode actif */
+          activeReflectionMode !== "credo" ? (
+            <div className="flex flex-col h-full">
+              <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50 border-b border-indigo-100 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setReflectionMode("credo")}
+                  className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 font-medium cursor-pointer"
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" /> Retour à la conception
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto">
+                <LiveReflexionView context={reflexionContext || "Réflexion en cours"} onPhaseComplete={() => setReflectionMode("credo")} />
+              </div>
+            </div>
+          ) : (
+            <ConceptionRouter
+              key={activeThreadId || "new"}
+              activeDocumentKey={activeDocumentKey}
+              activeDocumentSection={activeDocumentSection}
+              activeDeliverable={activeDeliverable}
+              activeBotCode={activeBotCode}
+              reflexionContext={reflexionContext}
+              draftLibraryId={draftLibraryId}
+              onPhaseComplete={() => { setActivePhase("execution"); setRightSection(null); setExecutionTab("accueil"); }}
+              onDeliverableBack={() => setActiveDeliverable(null)}
+              onStartJumelage={activeDeliverable === "document" ? () => startDeliverable("jumelage") : undefined}
+            />
+          )
         ) : activePhase === "execution" ? (
           /* Phase Exécution — vue de phase avec 4 étapes stage-gated (Briefing/Suivi/Livrables/Bilan) */
           <LivePhaseView

@@ -863,6 +863,11 @@ export const api = {
     return apiFetch(`/chantiers/${chantierId}`, { method: "DELETE" });
   },
 
+  /** Initialiser les chantiers depuis le Blueprint de l'organisation */
+  seedFromBlueprint(): Promise<{ status: string; chantiers_created: number }> {
+    return apiFetch("/chantiers/seed-from-blueprint", { method: "POST" });
+  },
+
   /** Assigner un lot de missions orphelines à un chantier */
   assignMissionsToChantier(chantierId: number, missionIds: number[]): Promise<{ status: string; count: number }> {
     return apiFetch(`/chantiers/${chantierId}/assign-missions`, {

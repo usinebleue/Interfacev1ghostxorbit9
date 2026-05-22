@@ -9,7 +9,8 @@ import { useTextToSpeech } from "../api/useVocal";
 import { useCanvasActions } from "./CanvasActionContext";
 import { useFrameMaster } from "./FrameMasterContext";
 import { useAmorcerSafe } from "../../v3/AmorcerContext";
-import type { ChatMessage, ReflectionMode, CREDOPhase, Thread, MessageType, Crystal, TeamProposal } from "../api/types";
+import type { ChatMessage, ReflectionMode, CREDOPhase, Thread, MessageType, Crystal, TeamProposal, CommandStatusResponse } from "../api/types";
+import { api } from "../api/client";
 
 interface ChatState {
   messages: ChatMessage[];
@@ -29,6 +30,8 @@ interface ChatState {
   hasProduct: boolean;
   // Animations de réflexion dynamiques (backend-driven)
   thinkingSteps: string[];
+  // COMMAND mission active (D-091)
+  commandMission: CommandStatusResponse | null;
 }
 
 interface BranchMeta {
@@ -63,6 +66,7 @@ interface ChatActions {
   setChatTargetBot: (code: string) => void;
   acceptTeamProposal: (bots: string[]) => void;
   renameThread: (threadId: string, newTitle: string) => void;
+  clearCommandMission: () => void;
 }
 
 type ChatContextType = ChatState & ChatActions;
@@ -166,6 +170,21 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setChatTargetBotRaw(activeBotCode);
   }, [activeBotCode]);
+
+  // COMMAND mission active — polling 15s (D-091)
+  const [commandMission, setCommandMission] = useState<CommandStatusResponse | null>(null);
+  useEffect(() => {
+    const poll = async () => {
+      try {
+        const res = await api.commandMissionsList(1);
+        const active = (res.missions ?? []).find((m: CommandStatusResponse) => !m.completed) ?? null;
+        setCommandMission(active);
+      } catch { /* noop */ }
+    };
+    poll();
+    const interval = setInterval(poll, 15000);
+    return () => clearInterval(interval);
+  }, []);
 
   const [activeReflectionMode, setReflectionMode] =
     useState<ReflectionMode>("credo");
@@ -304,6 +323,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         exchangeCount,
         hasProduct,
         thinkingSteps,
+        commandMission,
         sendMessage,
         sendMultiPerspective,
         injectVoiceMessage,
@@ -324,6 +344,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         setChatTargetBot,
         acceptTeamProposal,
         renameThread,
+        clearCommandMission: () => setCommandMission(null),
       }}
     >
       {children}
