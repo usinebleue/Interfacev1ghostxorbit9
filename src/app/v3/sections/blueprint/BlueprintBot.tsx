@@ -12,7 +12,7 @@ import { useIsMobile } from "../../../components/ui/use-mobile";
 import { VitaaTable } from "./blueprint-helpers";
 import { MobileSidebarSheet } from "../../core/MobileSidebarSheet";
 import { api } from "../../../v2/api/client";
-import { INTEGRATIONS } from "../../IntegrationsPanel";
+import { INTEGRATIONS, type IntegrationDef } from "../../IntegrationsPanel";
 
 // ── Blueprint Bot — Profil, Trisociation, Skills, APIs, Performance ──
 
@@ -58,6 +58,18 @@ const CORE_BRAND_MAP: Record<string, { logoDomain: string; color: string }> = {
   "LiveKit WebRTC":   { logoDomain: "livekit.io",     color: "bg-orange-500"  },
   "PostgreSQL":       { logoDomain: "postgresql.org", color: "bg-indigo-500"  },
   "Docker":           { logoDomain: "docker.com",     color: "bg-blue-600"    },
+};
+
+// Mapping emoji → icône Lucide (design system — pas d'émojis dans l'UI)
+const SUBBOT_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+  "♟️": Target,        "🎯": ShieldAlert,   "💬": MessageCircle, "🧠": Sparkles,
+  "📊": BarChart3,     "🔧": Settings,      "💰": DollarSign,    "📈": TrendingUp,
+  "⚠️": ShieldAlert,  "📋": Layers,        "🤝": Users,         "💡": Zap,
+  "📣": Activity,      "🔐": ShieldAlert,   "🏗️": Cpu,           "🚀": Zap,
+  "👁️": Eye,           "⭐": Star,          "🌐": Activity,      "📁": Layers,
+  "🔍": Eye,           "🛡️": ShieldAlert,  "📝": Layers,        "⚡": Zap,
+  "🏆": Star,          "🤖": Cpu,           "📢": Activity,      "🔬": Eye,
+  "💼": Layers,        "🧩": Cpu,           "🎪": Star,          "🔑": ShieldAlert,
 };
 
 // Ghost Archetypes (from AgentSettingsView)
@@ -146,21 +158,6 @@ const BOT_CORE_APIS: Record<string, ApiEntry[]> = {
   CISOB: [{ name: "Gemini Pro 2.0", icon: "LLM", color: "bg-blue-500", status: "active" }, { name: "ElevenLabs TTS", icon: "TTS", color: "bg-emerald-500", status: "active" }, { name: "PostgreSQL", icon: "DB", color: "bg-indigo-500", status: "active" }],
 };
 
-// Mapping catégorie intégration → affichage
-const INTEGRATION_CATEGORY_MAP: Record<string, { color: string; abbr: string }> = {
-  "crm":           { color: "bg-orange-500",  abbr: "CRM" },
-  "finance":       { color: "bg-emerald-600", abbr: "FIN" },
-  "communication": { color: "bg-violet-500",  abbr: "MSG" },
-  "developpement": { color: "bg-gray-700",    abbr: "DEV" },
-  "marketing":     { color: "bg-pink-500",    abbr: "MKT" },
-  "rh":            { color: "bg-teal-500",    abbr: "RH"  },
-  "analytics":     { color: "bg-blue-500",    abbr: "ANA" },
-  "storage":       { color: "bg-indigo-500",  abbr: "STG" },
-  "calendar":      { color: "bg-amber-500",   abbr: "CAL" },
-  "security":      { color: "bg-red-600",     abbr: "SEC" },
-  "productivity":  { color: "bg-cyan-500",    abbr: "PRO" },
-  "default":       { color: "bg-gray-500",    abbr: "INT" },
-};
 
 const VITAA_BOT: Record<string, { letter: string; label: string; score: number; avg: number; color: string }[]> = {
   CEOB: [
@@ -610,103 +607,99 @@ function DeployBlueprintButton({ botCode }: { botCode: string }) {
   );
 }
 
-// ── Section: APIs & Connexions (données réelles depuis /api/v1/integrations) ──
+// ── Section: APIs & Connexions ──
 function BotApisSection({ botCode }: { botCode: string }) {
   const coreApis = BOT_CORE_APIS[botCode] || BOT_CORE_APIS.CEOB;
-  const [thirdParty, setThirdParty] = useState<ApiEntry[]>([]);
+  const [activeProviders, setActiveProviders] = useState<Set<string>>(new Set());
   const [loadingInt, setLoadingInt] = useState(true);
 
   useEffect(() => {
-    setLoadingInt(true);
-    Promise.all([
-      fetch("/api/v1/integrations").then(r => r.json()).catch(() => ({})),
-      fetch("/api/v1/integrations/user").then(r => r.json()).catch(() => ({})),
-    ]).then(([allData, userData]) => {
-      const providers: Record<string, { name: string; category?: string; bots?: string[] }> =
-        allData.providers || allData || {};
-      const activeSet = new Set(
-        (userData.integrations || (Array.isArray(userData) ? userData : [])).map(
-          (i: { provider: string }) => i.provider
-        )
-      );
-      const entries: ApiEntry[] = Object.entries(providers)
-        .filter(([, p]) => !p.bots || p.bots.length === 0 || p.bots.includes(botCode))
-        .map(([id, p]) => {
-          const catKey = (p.category || "default").toLowerCase();
-          const meta = INTEGRATION_CATEGORY_MAP[catKey] ?? INTEGRATION_CATEGORY_MAP.default;
-          return {
-            name: p.name,
-            icon: meta.abbr,
-            color: meta.color,
-            status: activeSet.has(id) ? "active" as const : "off" as const,
-            provider: id,
-          };
-        });
-      setThirdParty(entries);
-    }).finally(() => setLoadingInt(false));
+    fetch("/api/v1/integrations/user")
+      .then(r => r.json())
+      .catch(() => ({}))
+      .then(data => {
+        const list = data.integrations || (Array.isArray(data) ? data : []);
+        setActiveProviders(new Set(list.map((i: { provider: string }) => i.provider)));
+      })
+      .finally(() => setLoadingInt(false));
   }, [botCode]);
 
-  const allApis = [...coreApis, ...thirdParty];
-  const activeList = allApis.filter(a => a.status === "active");
-  const restList = allApis.filter(a => a.status !== "active");
+  // Source de vérité: INTEGRATIONS (37 providers depuis IntegrationsPanel)
+  const activeThirdParty = INTEGRATIONS.filter(i => activeProviders.has(i.provider));
+  const availableThirdParty = INTEGRATIONS.filter(i => !activeProviders.has(i.provider));
 
-  const renderApi = (a: ApiEntry) => {
-    // Résoudre logoDomain + color depuis INTEGRATION_BRAND_MAP (tiers) ou CORE_BRAND_MAP (système)
-    const brand = a.provider
-      ? INTEGRATION_BRAND_MAP[a.provider]
-      : CORE_BRAND_MAP[a.name];
-    const logoDomain = brand?.logoDomain ?? "";
-    const logoColor  = a.status === "off" ? "bg-gray-300" : (brand?.color ?? a.color);
+  const renderCore = (a: ApiEntry) => {
+    const brand = CORE_BRAND_MAP[a.name];
     return (
-    <div key={a.name} className={cn(
-      "flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all",
-      a.status === "active" ? "bg-white border-gray-200 shadow-sm" : "bg-gray-50 border-gray-100 opacity-70"
-    )}>
-      <IntegrationLogo domain={a.status === "off" ? "" : logoDomain} name={a.name} color={logoColor} />
-      <div className="flex-1 min-w-0">
-        <div className="text-xs font-bold text-gray-800 truncate">{a.name}</div>
-        <div className={cn("text-[10px] font-medium", a.status === "active" ? "text-emerald-600" : "text-gray-400")}>
-          {a.status === "active" ? "Connecté" : "Disponible"}
+      <div key={a.name} className="flex items-center gap-3 px-3 py-2.5 rounded-xl border bg-white border-gray-200 shadow-sm">
+        <IntegrationLogo domain={brand?.logoDomain ?? ""} name={a.name} color={brand?.color ?? a.color} />
+        <div className="flex-1 min-w-0">
+          <div className="text-xs font-bold text-gray-800 truncate">{a.name}</div>
+          <div className="text-[10px] font-medium text-emerald-600">Système</div>
         </div>
+        <div className="h-2 w-2 rounded-full bg-emerald-400 shrink-0" />
       </div>
-      <button className={cn("text-[9px] px-2.5 py-1 rounded-full font-medium border cursor-pointer transition-all shrink-0",
-        a.status === "active"
-          ? "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
-          : "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
-      )}>
-        {a.status === "active" ? "Gérer" : "Activer"}
-      </button>
-    </div>
     );
   };
 
+  const renderThird = (i: IntegrationDef, active: boolean) => (
+    <div key={i.provider} className={cn(
+      "flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all",
+      active ? "bg-white border-gray-200 shadow-sm" : "bg-gray-50/50 border-gray-100"
+    )}>
+      <IntegrationLogo domain={i.logoDomain} name={i.name} color={i.color} />
+      <div className="flex-1 min-w-0">
+        <div className="text-xs font-bold text-gray-800 truncate">{i.name}</div>
+        <div className={cn("text-[10px] font-medium truncate", active ? "text-emerald-600" : "text-gray-400")}>
+          {active ? "Connecté" : i.category}
+        </div>
+      </div>
+      <button className={cn(
+        "text-[9px] px-2.5 py-1 rounded-full font-medium border cursor-pointer transition-all shrink-0",
+        active
+          ? "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
+          : "bg-[#00B4D8]/10 text-[#0090AC] border-[#00B4D8]/30 hover:bg-[#00B4D8]/20"
+      )}>
+        {active ? "Gérer" : "Activer"}
+      </button>
+    </div>
+  );
+
   return (
     <div className="space-y-3">
+      {/* Connexions système + intégrations actives */}
       <Card className="p-0 gap-0 overflow-hidden rounded-xl border-gray-200 shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all">
         <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
           <Activity className="h-4 w-4 text-gray-900 stroke-[2.5]" />
           <span className="text-sm font-bold text-gray-900 flex-1">Connexions Actives</span>
-          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600">{activeList.length} live</span>
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+            {coreApis.length + activeThirdParty.length} live
+          </span>
         </div>
-        <div className="p-3 grid grid-cols-2 gap-2">{activeList.map(renderApi)}</div>
+        <div className="p-3 grid grid-cols-2 gap-2">
+          {coreApis.map(renderCore)}
+          {activeThirdParty.map(i => renderThird(i, true))}
+        </div>
       </Card>
+
+      {/* Toutes les intégrations disponibles (source: IntegrationsPanel) */}
       <Card className="p-0 gap-0 overflow-hidden rounded-xl border-gray-200 shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all">
         <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
           <Cpu className="h-4 w-4 text-gray-900 stroke-[2.5]" />
           <span className="text-sm font-bold text-gray-900 flex-1">Intégrations Disponibles</span>
           <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600">
-            {loadingInt ? "…" : restList.length}
+            {loadingInt ? "…" : availableThirdParty.length}
           </span>
         </div>
         {loadingInt ? (
           <div className="p-4 flex items-center justify-center gap-2 text-gray-400">
             <Activity className="h-4 w-4 animate-spin" />
-            <span className="text-xs">Chargement des intégrations…</span>
+            <span className="text-xs">Chargement…</span>
           </div>
-        ) : restList.length > 0 ? (
-          <div className="p-3 grid grid-cols-2 gap-2">{restList.map(renderApi)}</div>
         ) : (
-          <div className="p-4 text-center text-xs text-gray-400">Aucune intégration tierce disponible</div>
+          <div className="p-3 grid grid-cols-2 gap-2">
+            {availableThirdParty.map(i => renderThird(i, false))}
+          </div>
         )}
       </Card>
     </div>
@@ -753,63 +746,54 @@ const BOT_GRADIENT: Record<string, string> = {
   CLOB: "from-indigo-600 to-blue-600", CISOB: "from-gray-600 to-slate-600",
 };
 
-// ── Section: Équipe sous-bots + tâches complètes ──
+// ── Section: Équipe sous-bots + compétences ──
 function BotSubteamSection({ botCode }: { botCode: string }) {
   const team = BOT_SUBTEAM[botCode] || BOT_SUBTEAM.CEOB;
   const totalTaches = team.reduce((n, s) => n + s.taches.length, 0);
-  const totalModules = team.reduce((n, s) => n + s.modules.length, 0);
-  const [expanded, setExpanded] = useState<string | null>(null);
+  const [openSet, setOpenSet] = useState<Set<string>>(new Set());
+  const toggle = (nom: string) => setOpenSet(prev => {
+    const next = new Set(prev);
+    next.has(nom) ? next.delete(nom) : next.add(nom);
+    return next;
+  });
 
   return (
     <Card className="p-0 gap-0 overflow-hidden rounded-xl border-gray-200 shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all">
-      {/* Header card standard design system */}
       <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10">
         <Users className="h-4 w-4 text-gray-900 stroke-[2.5]" />
         <span className="text-sm font-bold text-gray-900 flex-1">Équipe spécialisée</span>
-        <span className="text-[9px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 font-medium">{totalModules} modules</span>
-        <span className="text-[9px] px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 border border-violet-200 font-medium">{totalTaches} tâches</span>
+        <span className="text-[9px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 font-medium">{team.length} sous-bots</span>
+        <span className="text-[9px] px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 border border-violet-200 font-medium">{totalTaches} compétences</span>
       </div>
 
-      {/* Grille sous-bots */}
-      <div className="p-3 grid grid-cols-1 md:grid-cols-2 gap-2">
+      <div className="p-3 space-y-2">
         {team.map(sb => {
-          const isOpen = expanded === sb.nom;
+          const isOpen = openSet.has(sb.nom);
+          const SbIcon = SUBBOT_ICON_MAP[sb.emoji] ?? Star;
           return (
             <div key={sb.nom} className="rounded-xl border border-gray-200 overflow-hidden bg-white shadow-sm hover:shadow-md hover:border-blue-200 transition-all">
-              {/* Card header — pattern design system bg-[#00B4D8]/10 */}
               <button
-                className="w-full flex items-center gap-2 px-3 py-2.5 border-b border-gray-100 bg-[#00B4D8]/10 text-left cursor-pointer hover:bg-[#00B4D8]/20 transition-colors"
-                onClick={() => setExpanded(isOpen ? null : sb.nom)}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 bg-[#00B4D8]/10 text-left cursor-pointer hover:bg-[#00B4D8]/20 transition-colors"
+                onClick={() => toggle(sb.nom)}
               >
-                <span className="text-base shrink-0">{sb.emoji}</span>
+                <SbIcon className="h-4 w-4 text-gray-700 stroke-[2.5] shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-bold text-gray-900 truncate">{sb.nom}</div>
-                  <div className="text-[10px] text-gray-500">{sb.modules.length} module{sb.modules.length > 1 ? "s" : ""} · {sb.taches.length} tâches</div>
+                  <div className="text-[10px] text-gray-500">{sb.taches.length} compétence{sb.taches.length > 1 ? "s" : ""}</div>
                 </div>
-                <ChevronDown className={cn("h-3.5 w-3.5 text-gray-400 shrink-0 transition-transform", isOpen ? "" : "-rotate-90")} />
+                <ChevronDown className={cn("h-3.5 w-3.5 text-gray-400 shrink-0 transition-transform duration-200", isOpen ? "rotate-0" : "-rotate-90")} />
               </button>
 
-              {/* Expanded: tâches + modules */}
               {isOpen && (
-                <div className="px-3 pb-3 pt-2 space-y-2.5">
-                  <div>
-                    <div className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Tâches disponibles</div>
-                    <div className="space-y-1">
-                      {sb.taches.map(t => (
-                        <div key={t} className={cn("flex items-center text-xs text-gray-700 py-0.5 pl-2.5 border-l-2 rounded-r-sm bg-gray-50/60", sb.borderColor)}>
-                          {t}
-                        </div>
-                      ))}
+                <div className="px-3 pb-3 pt-2 space-y-1">
+                  {sb.taches.map(t => (
+                    <div key={t} className={cn(
+                      "flex items-center gap-2 text-xs text-gray-700 py-1 px-2.5 border-l-2 rounded-r-sm",
+                      sb.bgColor, sb.borderColor
+                    )}>
+                      {t}
                     </div>
-                  </div>
-                  <div>
-                    <div className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Modules Python</div>
-                    <div className="flex flex-wrap gap-1">
-                      {sb.modules.map(m => (
-                        <span key={m} className="text-[10px] px-1.5 py-0.5 rounded bg-gray-50 text-gray-500 font-mono border border-gray-200">{m}</span>
-                      ))}
-                    </div>
-                  </div>
+                  ))}
                 </div>
               )}
             </div>
