@@ -582,7 +582,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
     reflexionFlow: ctxReflexionFlow, setReflexionFlow: setCtxReflexionFlow,
     setReflexionContext, setRightSection,
   } = useAmorcer();
-  const { sendMessage, messages, isTyping, activeRoster, addBotToRoster, removeBotFromRoster } = useChatContext();
+  const { sendMessage, messages, isTyping, activeRoster, addBotToRoster, removeBotFromRoster, threads, activeThreadId } = useChatContext();
   const displayContext = context || "Discussion en cours";
   const blocksEndRef = useRef<HTMLDivElement>(null);
 
@@ -1491,16 +1491,56 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
           <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0", col.hero.iconBg)}>
             <PhaseIcon className={cn("h-5 w-5", col.hero.iconText)} />
           </div>
-          <div className="flex-1 min-w-0">
-            <h2 className="text-sm font-bold text-gray-900 truncate">{displayContext || "Discussion"}</h2>
-            {/* CREDO progress dots — discret tracking */}
-            <div className="flex items-center gap-1 mt-1">
-              {(["C","R","E","D","O"] as const).map(letter => {
-                const hasBlocks = (blocksByCredoStep[letter] || 0) > 0;
-                return <div key={letter} className={cn("w-2 h-2 rounded-full transition-colors", hasBlocks ? "bg-sky-500" : "bg-gray-200")} title={letter} />;
-              })}
-            </div>
-          </div>
+          {(() => {
+            const currentThread = threads?.find((t: any) => t.id === activeThreadId);
+            const userMsgCount = messages.filter(m => m.role === "user").length;
+            const fmtDate = (d?: string) => {
+              if (!d) return "";
+              try { return new Intl.DateTimeFormat("fr-CA", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(d)); }
+              catch { return ""; }
+            };
+            return (
+              <>
+                {/* Gauche: titre + échanges */}
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-base font-bold text-gray-900 truncate">
+                    {currentThread?.title || displayContext || "Discussion"}
+                  </h2>
+                  <span className="text-[10px] text-gray-400">
+                    {userMsgCount} échange{userMsgCount !== 1 ? "s" : ""}
+                  </span>
+                </div>
+                {/* Droite: CREDO dots + date */}
+                <div className="flex flex-col items-end gap-1.5 shrink-0">
+                  <div className="flex items-center gap-1">
+                    {([
+                      { key: "C" as const, dot: "bg-sky-500" },
+                      { key: "R" as const, dot: "bg-violet-500" },
+                      { key: "E" as const, dot: "bg-amber-500" },
+                      { key: "D" as const, dot: "bg-emerald-500" },
+                      { key: "O" as const, dot: "bg-red-500" },
+                    ]).map(phase => {
+                      const hasBlocks = (blocksByCredoStep[phase.key] || 0) > 0;
+                      const isCurrent = phase.key === currentCredoLetter;
+                      return (
+                        <div key={phase.key} className={cn(
+                          "w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black transition-colors",
+                          hasBlocks ? cn(phase.dot, "text-white")
+                          : isCurrent ? cn(phase.dot, "opacity-60 text-white animate-pulse")
+                          : "bg-gray-200 text-gray-400"
+                        )} title={phase.key}>
+                          {phase.key}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {currentThread?.createdAt && (
+                    <span className="text-[11px] font-bold text-gray-600">{fmtDate(currentThread.createdAt)}</span>
+                  )}
+                </div>
+              </>
+            );
+          })()}
         </div>
 
         {/* Hero tabs removed — agents/modes now in ControlPanel toolbar */}
@@ -1579,6 +1619,13 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
               {workspaceBlocks.length > 0 && (
                 <div className="space-y-1 px-1">
                   <div className="border-t border-gray-100 mx-1 mb-1" />
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 px-2">Étapes CREDO</span>
+                  <button onClick={() => setFilterStep(null)}
+                    className={cn("w-full flex items-center gap-2 px-2 py-1.5 text-xs rounded-lg transition-colors cursor-pointer",
+                      !filterStep ? "bg-sky-50 text-sky-700 font-semibold" : "text-gray-500 hover:bg-gray-50")}>
+                    <span>Vue globale</span>
+                    <span className="ml-auto text-[10px] text-gray-400">{workspaceBlocks.length}</span>
+                  </button>
                   {CREDO_NAV.map(phase => {
                     const phaseBlocks = workspaceBlocks.filter(b => b.credo_step === phase.key);
                     const count = phaseBlocks.length;
@@ -2952,6 +2999,24 @@ function SuggestedExpertsPanel({ messages, activeBotCode, workspaceBlocks, addWo
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* CPOB — CTA Cahier de Projet REAI après 2 échanges */}
+      {activeBotCode === "CPOB" && onPhaseComplete && messages.filter(m => m.role === "user").length >= 2 && (
+        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-lg">📋</span>
+            <span className="text-amber-800 text-sm font-medium leading-tight">
+              Paco est prêt à rédiger votre <strong>Cahier de Projet REAI</strong>
+            </span>
+          </div>
+          <button
+            onClick={onPhaseComplete}
+            className="shrink-0 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+          >
+            Lancer le CPRJ →
+          </button>
         </div>
       )}
     </div>
