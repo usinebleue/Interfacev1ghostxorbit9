@@ -2234,7 +2234,7 @@ function ChatBoxV3({ onOpenPanel }: { onOpenPanel?: (tab: "modes" | "agents" | "
   const attachRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // visionInputRef retiré — Vision = app mobile (Ray-Ban Meta)
-  const { sendMessage, sendMultiPerspective, injectVoiceMessage, newConversation, chatTargetBot, activeRoster } = useChatContext();
+  const { sendMessage, sendMultiPerspective, injectVoiceMessage, newConversation, chatTargetBot, activeRoster, setReflectionMode } = useChatContext();
   const { activeBotCode, activePhase, setRightSection, reflexionContext, setReflexionContext, setFocusType, setActivePhase, activeMeeting, chatStage, workspaceBlocks } = useAmorcer();
   // setRightSection utilisé par "Connecteurs API" dans le menu + pour Drive picker
   // Enrichir activePhase avec le step CREDO pour que le backend injecte le bon prompt
@@ -2547,13 +2547,14 @@ function ChatBoxV3({ onOpenPanel }: { onOpenPanel?: (tab: "modes" | "agents" | "
         const docExts = [".pdf", ".docx", ".doc", ".txt", ".md", ".rtf"];
         const ext = fileCopy.file.name.substring(fileCopy.file.name.lastIndexOf(".")).toLowerCase();
         const isDocument = docExts.includes(ext);
-        if (isDocument) {
+        // DocForge restructuring uniquement en phase Conception — pas en Discussion
+        if (isDocument && activePhase === "creation") {
           const formData = new FormData();
           formData.append("file", fileCopy.file);
           formData.append("bot_code", chatTargetBot);
           const res = await fetch("/api/v1/workspace/upload-restructure", {
             method: "POST",
-            headers: { "X-API-Key": localStorage.getItem("bt_api_key") || "" },
+            headers: { "X-API-Key": import.meta.env.VITE_API_KEY || "" },
             body: formData,
           });
           if (res.ok) {
@@ -2570,19 +2571,72 @@ function ChatBoxV3({ onOpenPanel }: { onOpenPanel?: (tab: "modes" | "agents" | "
             const msg = text ? `${text}\n\n[Fichier joint: ${result.titre || fileCopy.file.name}]` : `Fichier joint: ${result.titre || fileCopy.file.name}`;
             sendMessage(msg, chatTargetBot, undefined, { workspacePhase: effectivePhase, workspaceExpertContext: buildExpertContext(workspaceBlocks, activeBotCode) });
           }
+        } else if (isDocument) {
+          // Document en Discussion — extraire le texte et l'inclure dans le message pour le bot
+          const formData = new FormData();
+          formData.append("file", fileCopy.file);
+          formData.append("bot_code", chatTargetBot);
+          const res = await fetch("/api/v1/workspace/upload-restructure", {
+            method: "POST",
+            headers: { "X-API-Key": import.meta.env.VITE_API_KEY || "" },
+            body: formData,
+          });
+          if (res.ok) {
+            const data = await res.json();
+            // Reconstruire le texte depuis les sections pour donner contexte au bot
+            const docText = (data.sections as any[] || [])
+              .map((s: any) => s.content || "")
+              .join("\n\n");
+            const contextSnippet = docText
+              ? `\n\n📄 Contenu de "${data.title || fileCopy.file.name}":\n${docText.substring(0, 5000)}`
+              : "";
+            const msg = text ? `${text}${contextSnippet}` : `📄 ${data.title || fileCopy.file.name}${contextSnippet}`;
+            sendMessage(msg, chatTargetBot, undefined, { workspacePhase: effectivePhase, workspaceExpertContext: buildExpertContext(workspaceBlocks, activeBotCode) });
+          } else {
+            // Fallback si extraction échoue
+            const result = await api.uploadBureauFile(fileCopy.file, fileCopy.file.name);
+            const msg = text ? `${text}\n\n[Fichier joint: ${result.titre || fileCopy.file.name}]` : `Fichier joint: ${result.titre || fileCopy.file.name}`;
+            sendMessage(msg, chatTargetBot, undefined, { workspacePhase: effectivePhase, workspaceExpertContext: buildExpertContext(workspaceBlocks, activeBotCode) });
+          }
         } else {
+          // Fichier non-document (image, etc.) — upload bureau simple
           const result = await api.uploadBureauFile(fileCopy.file, fileCopy.file.name);
           const msg = text ? `${text}\n\n[Fichier joint: ${result.titre || fileCopy.file.name}]` : `Fichier joint: ${result.titre || fileCopy.file.name}`;
           sendMessage(msg, chatTargetBot, undefined, { workspacePhase: effectivePhase, workspaceExpertContext: buildExpertContext(workspaceBlocks, activeBotCode) });
         }
       } catch (err) {
         console.error("[ChatBoxV3] Upload error:", err);
+        // Fallback — ne pas perdre le prompt si l'upload échoue
+        const fallbackMsg = text ? `${text}\n\n[Pièce jointe: ${fileCopy.file.name}]` : `Pièce jointe: ${fileCopy.file.name}`;
+        sendMessage(fallbackMsg, chatTargetBot, undefined, { workspacePhase: effectivePhase });
       } finally {
         setUploading(false);
       }
     } else {
+      // Slash commands — /brainstorm, /5pourquoi, /scamper, /analyse, /debat, /decision, /strategie
+      const SLASH_MODES: Record<string, string> = {
+        brainstorm: "brainstorm",
+        "5pourquoi": "5-pourquoi",
+        "5-pourquoi": "5-pourquoi",
+        scamper: "scamper",
+        analyse: "analyse",
+        debat: "debat",
+        decision: "decision",
+        strategie: "strategie",
+        credo: "credo",
+      };
+      const slashMatch = text.match(/^\/(\w[\w-]*)\s+([\s\S]+)/s);
+      let msgText = text;
+      if (slashMatch) {
+        const modeKey = slashMatch[1].toLowerCase();
+        const mapped = SLASH_MODES[modeKey];
+        if (mapped) {
+          setReflectionMode(mapped as any);
+          msgText = slashMatch[2].trim();
+        }
+      }
       // W.1: Discussion 1:1 — toujours single-bot (experts dans le workspace)
-      sendMessage(text, chatTargetBot, undefined, { workspacePhase: effectivePhase, workspaceExpertContext: buildExpertContext(workspaceBlocks, activeBotCode) });
+      sendMessage(msgText, chatTargetBot, undefined, { workspacePhase: effectivePhase, workspaceExpertContext: buildExpertContext(workspaceBlocks, activeBotCode) });
     }
 
     textareaRef.current?.focus();
