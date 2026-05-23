@@ -1041,6 +1041,16 @@ export function DataRoomView({ botCode, headerGradient, showHeader = false }: { 
     }).catch(() => {});
   }, [botCode]);
 
+  // ═══ Cahiers de Projet — créés en phase Conception avec Paco (CPOB) ═══
+  const [cprjLibraries, setCprjLibraries] = useState<any[]>([]);
+  useEffect(() => {
+    if (botCode !== "CPOB") return;
+    api.getDocForgeLibraries().then(res => {
+      if (res.libraries?.length) setCprjLibraries(res.libraries);
+    }).catch(() => {});
+  }, [botCode]);
+  const { startDeliverable } = useAmorcer();
+
   // ═══ Drive Connect état (réel — valide via rclone + sauvegarde DB) ═══
   const [driveConnected, setDriveConnected] = useState(false);
   const [driveFileCount, setDriveFileCount] = useState<number | null>(null);
@@ -1232,6 +1242,23 @@ export function DataRoomView({ botCode, headerGradient, showHeader = false }: { 
           </div>
         </button>
 
+        {/* Cahiers de Projet — Paco (CPOB) uniquement */}
+        {botCode === "CPOB" && (
+          <button
+            onClick={() => { setActiveFolder("_cahiers_cprj"); setActiveDept(""); setSearchQuery(""); setTypeFilter(null); setStatusFilter(null); setFormatFilter(null); }}
+            className={cn(
+              "w-full px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer",
+              activeFolder === "_cahiers_cprj" ? SF.btnActive : SF.btnInactive
+            )}
+          >
+            <div className="flex items-center gap-1.5">
+              <ClipboardCheck className={cn("h-3.5 w-3.5 shrink-0", activeFolder === "_cahiers_cprj" ? "text-amber-500" : "text-gray-400")} />
+              <span className={cn("text-[10px] font-bold flex-1", activeFolder === "_cahiers_cprj" ? "text-amber-700" : "text-gray-700")}>Cahiers de Projet</span>
+              {cprjLibraries.length > 0 && <span className="text-[9px] text-gray-400">{cprjLibraries.length}</span>}
+            </div>
+          </button>
+        )}
+
         <div className={SF.separator} />
 
         {/* Départements — CEOB: accordion 12 depts | Autre: dossiers du dept actif seulement */}
@@ -1368,11 +1395,11 @@ export function DataRoomView({ botCode, headerGradient, showHeader = false }: { 
       {/* Contenu — full height */}
       <div className="flex-1 min-w-0 space-y-2">
         {/* ── Rectangle bleu pastel — titre sous-section active ── */}
-        {(isFolderView || activeFolder === "_templates" || activeFolder === "_bot_rapports" || TRANSVERSAL_SECTIONS.some(ts => ts.id === activeFolder)) && (
+        {(isFolderView || activeFolder === "_templates" || activeFolder === "_bot_rapports" || activeFolder === "_cahiers_cprj" || TRANSVERSAL_SECTIONS.some(ts => ts.id === activeFolder)) && (
           <div className={cn("bg-gradient-to-r rounded-lg px-4 py-2.5 flex items-center gap-3", headerGradient)}>
             <Database className="h-5 w-5 text-white" />
             <h2 className="text-sm font-bold text-white">
-              {activeFolder === "_templates" ? "Templates" : activeFolder === "_bot_rapports" ? "Rapports bots" : TRANSVERSAL_SECTIONS.find(ts => ts.id === activeFolder)?.label || activeSection?.label || ""}
+              {activeFolder === "_templates" ? "Templates" : activeFolder === "_bot_rapports" ? "Rapports bots" : activeFolder === "_cahiers_cprj" ? "Cahiers de Projet" : TRANSVERSAL_SECTIONS.find(ts => ts.id === activeFolder)?.label || activeSection?.label || ""}
             </h2>
           </div>
         )}
@@ -1514,6 +1541,40 @@ export function DataRoomView({ botCode, headerGradient, showHeader = false }: { 
             <div className="border border-dashed border-gray-300 rounded-lg p-6 text-center">
               <p className="text-[10px] text-gray-400">Contenu à venir — cette section agrégera les documents transversaux.</p>
             </div>
+          </div>
+        ) : activeFolder === "_cahiers_cprj" ? (
+          /* Cahiers de Projet — créés avec Paco en phase Conception */
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <ClipboardCheck className="h-4 w-4 text-amber-500" />
+              <span className="text-xs font-bold text-gray-800">Cahiers de Projet Usine Bleue</span>
+              <span className="text-[9px] text-gray-400">{cprjLibraries.length} cahier{cprjLibraries.length !== 1 ? "s" : ""}</span>
+            </div>
+            {cprjLibraries.length === 0 ? (
+              <div className="border border-dashed border-amber-200 rounded-lg p-8 text-center">
+                <ClipboardCheck className="h-6 w-6 text-amber-200 mx-auto mb-2" />
+                <p className="text-[10px] text-gray-400 font-medium">Aucun cahier créé pour l'instant</p>
+                <p className="text-[9px] text-gray-300 mt-1">Démarrez un cahier de projet avec Paco en phase Conception.</p>
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                {cprjLibraries.map((lib: any) => (
+                  <div key={lib.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-amber-100 bg-amber-50 hover:border-amber-300 hover:shadow-sm transition-all">
+                    <ClipboardCheck className="h-4 w-4 text-amber-500 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] font-medium text-gray-800 truncate">{lib.titre || "Cahier de Projet"}</p>
+                      <p className="text-[9px] text-gray-400">{lib.nb_blocs ?? 0} sections · {lib.created_at?.slice(0, 10) || ""}</p>
+                    </div>
+                    <button
+                      onClick={() => startDeliverable("cprj", lib.id)}
+                      className="shrink-0 text-[9px] font-bold px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-colors cursor-pointer"
+                    >
+                      Reprendre →
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         ) : activeFolder === "_bot_rapports" ? (
           /* Rapports produits par les outils bots (T.3+T.4) */

@@ -518,19 +518,36 @@ export function WorkspacePhasesPanel() {
             <VueEnsemble phase={activePhase} chatStage={chatStage} onStartReflexion={startReflexion} onStartSimulation={(type) => startDeliverable(type)} />
           </div>
         ) : (activePhase === "discussion" || activePhase === "reflexion") ? (
-          /* Discussion — LiveDiscussionView avec workspace dynamique */
-          <LiveDiscussionView
-            key={activeThreadId || "new"}
-            context={reflexionContext || "Discussion en cours"}
-            onPhaseComplete={() => {
-              const discussionNotes = workflowItems.filter(w => w.phase === "discussion" || w.phase === "reflexion");
-              startConception();
-              if (discussionNotes.length > 0) {
-                const ctx = discussionNotes.map(n => n.text).join("\n- ");
-                sendMessage(`Contexte de discussion :\n- ${ctx}\n\nPassons à la conception.`, activeBotCode);
-              }
-            }}
-          />
+          /* Discussion — LiveReflexionView si mode réflexion actif, sinon LiveDiscussionView */
+          activeReflectionMode !== "credo" ? (
+            <div className="flex flex-col h-full">
+              <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50 border-b border-indigo-100 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setReflectionMode("credo")}
+                  className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 font-medium cursor-pointer"
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" /> Retour à la discussion
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto">
+                <LiveReflexionView context={reflexionContext || "Réflexion en cours"} onPhaseComplete={() => setReflectionMode("credo")} />
+              </div>
+            </div>
+          ) : (
+            <LiveDiscussionView
+              key={activeThreadId || "new"}
+              context={reflexionContext || "Discussion en cours"}
+              onPhaseComplete={() => {
+                const discussionNotes = workflowItems.filter(w => w.phase === "discussion" || w.phase === "reflexion");
+                startConception();
+                if (discussionNotes.length > 0) {
+                  const ctx = discussionNotes.map(n => n.text).join("\n- ");
+                  sendMessage(`Contexte de discussion :\n- ${ctx}\n\nPassons à la conception.`, activeBotCode);
+                }
+              }}
+            />
+          )
         ) : activePhase === "creation" ? (
           /* Conception — router unifie OU vue réflexion si mode actif */
           activeReflectionMode !== "credo" ? (

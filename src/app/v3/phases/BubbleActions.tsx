@@ -105,7 +105,7 @@ export function BubbleActions({
                 key={i}
                 onClick={() => handleOptionClick(i, opt)}
                 style={{ animation: `fadeSlideUp 0.3s ease-out ${i * 0.08}s both` }}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] border cursor-pointer transition-all font-medium max-w-[180px] text-left ${
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] border cursor-pointer transition-all font-medium text-left ${
                   selected.has(i)
                     ? "text-gray-800 border-gray-400 bg-gray-100 ring-1 ring-gray-300"
                     : "text-gray-600 border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-gray-300"
@@ -115,7 +115,7 @@ export function BubbleActions({
                   ? <CheckCircle2 className="h-2.5 w-2.5 flex-shrink-0 text-gray-600" />
                   : <ArrowRight className="h-2.5 w-2.5 flex-shrink-0" />
                 }
-                <span className="line-clamp-2">{opt}</span>
+                <span>{opt}</span>
               </button>
             ))}
             {/* Bouton envoi combine */}
