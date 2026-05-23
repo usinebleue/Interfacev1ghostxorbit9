@@ -544,9 +544,12 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     // Nettoyer le deliverable actif (évite que Jumelage/DocForge reste bloqué)
     setActiveDeliverable(null);
     setActiveDocForgeLibraryId(null);
-    // Restaurer depuis le cache local (instantané) ou vider si phase jamais visitée
+    // Restaurer depuis le cache local (instantané) ou vider si phase jamais visitée.
+    // EXCEPTION: observation→discussion = premier message d'une nouvelle session (accueil → chat).
+    // Dans ce cas, ne PAS restaurer le cache : l'utilisateur démarre à zéro, pas une reprise.
+    const isFreshStart = prevPhase === "observation" && p === "discussion";
     const { cacheKey: newCacheKey } = getStorageKeys(activeThreadIdRef.current, activeBotCodeRef.current, p);
-    const cached = phaseStateCacheRef.current[newCacheKey];
+    const cached = !isFreshStart ? phaseStateCacheRef.current[newCacheKey] : null;
     if (cached) {
       setWorkspaceBlocks(cached.blocks);
       setChatStage(cached.chatStage);
@@ -683,12 +686,18 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
   const prevThreadRef = useRef(activeThreadId);
   useEffect(() => {
     if (activePhase === prevLoadPhaseRef.current && activeThreadId === prevThreadRef.current) return;
+    // Capturer AVANT de mettre à jour les refs — détecter la transition observation→discussion
+    const wasObservation = prevLoadPhaseRef.current === "observation";
     prevLoadPhaseRef.current = activePhase;
     prevThreadRef.current = activeThreadId;
     if (activePhase === "observation") return;
     // Thread-scoped phases sans threadId = nouvelle discussion vide → PAS de load
     // (sinon getStorageKeys fallback vers canvas global qui contient d'anciens blocs)
     if (!activeThreadId && THREAD_SCOPED_PHASES.includes(activePhase)) return;
+    // Transition observation→discussion = premier message d'une nouvelle session (accueil → chat).
+    // Ne PAS restaurer les blocs depuis l'API : c'est un départ à zéro, pas une reprise.
+    // Le thread switch effect gère la restauration pour les reprises explicites de threads.
+    if (wasObservation && activePhase === "discussion") return;
     // Si le cache local a déjà restauré les blocks, pas besoin de l'API
     const { cacheKey, canvasKey } = getStorageKeys(activeThreadId, activeBotCode, activePhase);
     if (phaseStateCacheRef.current[cacheKey]?.blocks?.length) return;
@@ -816,6 +825,12 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
   }, [activeThreadId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const addWorkspaceBlock = useCallback((block: WorkspaceBlock) => {
+    // Thread guard: rejeter les blocs d'une discussion précédente
+    // (race condition: async captures arrivent après setWorkspaceBlocks([]))
+    if (block.discussionId && activeThreadIdRef.current && block.discussionId !== activeThreadIdRef.current) {
+      console.log(`[WorkspaceBlock] SKIP stale block from thread ${block.discussionId} (current: ${activeThreadIdRef.current}): ${block.title}`);
+      return;
+    }
     setWorkspaceBlocks((prev) => {
       // If replace_block_id, update the existing block
       if (block.replace_block_id) {
