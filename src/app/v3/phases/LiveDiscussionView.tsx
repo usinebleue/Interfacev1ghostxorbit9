@@ -582,7 +582,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
     reflexionFlow: ctxReflexionFlow, setReflexionFlow: setCtxReflexionFlow,
     setReflexionContext, setRightSection,
   } = useAmorcer();
-  const { sendMessage, messages, isTyping, activeRoster, addBotToRoster, removeBotFromRoster, threads, activeThreadId } = useChatContext();
+  const { sendMessage, messages, isTyping, activeRoster, addBotToRoster, removeBotFromRoster, threads, activeThreadId, currentCREDOPhase } = useChatContext();
   const displayContext = context || "Discussion en cours";
   const blocksEndRef = useRef<HTMLDivElement>(null);
 
@@ -3002,20 +3002,22 @@ function SuggestedExpertsPanel({ messages, activeBotCode, workspaceBlocks, addWo
         </div>
       )}
 
-      {/* CPOB — CTA Cahier de Projet REAI après 2 échanges */}
-      {activeBotCode === "CPOB" && onPhaseComplete && messages.filter(m => m.role === "user").length >= 2 && (
+      {/* CPOB — CTA Cahier de Projet Usine Bleue — déclenché quand CREDO atteint phase D ou O */}
+      {activeBotCode === "CPOB" && onPhaseComplete &&
+        (currentCREDOPhase === "D" || currentCREDOPhase === "O" ||
+         (currentCREDOPhase === null && messages.filter(m => m.role === "user").length >= 5)) && (
         <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
             <span className="text-lg">📋</span>
             <span className="text-amber-800 text-sm font-medium leading-tight">
-              Paco est prêt à rédiger votre <strong>Cahier de Projet REAI</strong>
+              Paco a complété son diagnostic — prêt à rédiger le <strong>Cahier de Projet</strong>
             </span>
           </div>
           <button
             onClick={onPhaseComplete}
             className="shrink-0 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
           >
-            Lancer le CPRJ →
+            Lancer le Cahier →
           </button>
         </div>
       )}

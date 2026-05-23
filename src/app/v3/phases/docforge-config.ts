@@ -135,5 +135,5 @@ export const DOCFORGE_CONFIGS: Record<string, {
   presentation: { sections: PRESENTATION_SECTIONS, theme: L2_THEMES.blue, icon: Target, title: "Pitch Deck" },
   code: { sections: CODE_SECTIONS, theme: L2_THEMES.violet, icon: Code2, title: "Dashboard Code" },
   jumelage: { sections: JUMELAGE_SECTIONS, theme: L2_THEMES.amber, icon: Trophy, title: "Jumelage SMART" },
-  cprj: { sections: CPRJ_SECTIONS, theme: L2_THEMES.amber, icon: ClipboardList, title: "Cahier de Projet REAI" },
+  cprj: { sections: CPRJ_SECTIONS, theme: L2_THEMES.amber, icon: ClipboardList, title: "Cahier de Projet" },
 };
