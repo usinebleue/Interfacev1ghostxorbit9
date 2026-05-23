@@ -863,6 +863,7 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
         const existing = prev.find(b =>
           b.source === block.source &&
           b.credo_step === block.credo_step &&
+          b.type === block.type &&
           b.credo_sub_section !== "modes-reflexion"
         );
         if (existing) {
