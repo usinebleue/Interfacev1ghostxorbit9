@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { api } from "./client";
+import { useAmorcerSafe } from "../../v3/AmorcerContext";
 import type { StreamDoneEvent, AutoConsultationEvent, TeamSuggestionEvent, CommandAvailableEvent, CommandProgressEvent } from "./client";
 import type {
   BotInfo,
@@ -528,6 +529,8 @@ export function useChat() {
   } | null>(null);
   const idCounter = useRef(0);
   const hasAutoRestored = useRef(false);
+  // CPRJ — accès au contexte AmorcerContext (V3) pour docforge_library_id
+  const amorcerCtx = useAmorcerSafe();
 
   // Canvas Actions — callback ref pour dispatch vers le bus
   const canvasActionsCallbackRef = useRef<((actions: CanvasAction[]) => void) | null>(null);
@@ -895,6 +898,8 @@ export function useChat() {
         active_agents: activeRoster.length > 1 ? activeRoster : undefined,
         // S116 — Mémoire contextuelle intelligente
         thread_id: activeThreadId || undefined,
+        // CPRJ — DocForge pipeline trigger (fire-and-forget côté backend)
+        docforge_library_id: amorcerCtx?.activeDocForgeLibraryId ?? undefined,
       };
 
       // Create placeholder bot message for streaming

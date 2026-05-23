@@ -50,7 +50,25 @@ export function LiveDocForgeLivrable({
   const Icon = config.icon;
   const sections = initialSections || config.sections;
 
-  const { workspaceBlocks, addWorkspaceBlock, addWorkflowItem, activeBotCode } = useAmorcer();
+  const { workspaceBlocks, addWorkspaceBlock, addWorkflowItem, activeBotCode, setActiveDocForgeLibraryId } = useAmorcer();
+
+  // CPRJ — Auto-création library DocForge au mount si deliverableType === "cprj" et pas de draft existant
+  useEffect(() => {
+    if (deliverableType !== "cprj" || draftLibraryId) return;
+    const createLibrary = async () => {
+      try {
+        const lib = await api.createDocForgeLibrary({
+          titre: `CPRJ — ${context || "Nouveau projet"}`,
+          template_alias: "reai-cprj-complet",
+          bot_primaire: "CPOB",
+        });
+        if (lib?.id) {
+          setActiveDocForgeLibraryId(lib.id);
+        }
+      } catch { /* silent — non-bloquant */ }
+    };
+    createLibrary();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // D1: Pre-fill from draft if draftLibraryId is provided
   const [draftLoaded, setDraftLoaded] = useState(false);

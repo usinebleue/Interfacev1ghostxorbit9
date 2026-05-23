@@ -15,6 +15,7 @@ import {
   AlertTriangle, Compass, Palette,
   Code2, Bug, FlaskConical, Rocket,
   Filter, Search, Video, Trophy,
+  ClipboardList,
 } from "lucide-react";
 
 // ═══ L2 Themes — 4 palettes × 14 tokens ═══
@@ -104,6 +105,15 @@ export const CODE_SECTIONS: DocForgeSection[] = [
   { id: 5, title: "Deploiement", icon: Rocket, sectionId: "docforge-code-deploy", prompt: "Prepare le plan de deploiement." },
 ];
 
+export const CPRJ_SECTIONS: DocForgeSection[] = [
+  { id: 1, title: "Profil Entreprise & État Actuel",    icon: Activity,      sectionId: "docforge-cprj-profil",      prompt: "Décris le profil de l'entreprise manufacturière: secteur, taille, produits, défis actuels, VITAA." },
+  { id: 2, title: "Analyse du Projet & Indice SMART",   icon: Target,        sectionId: "docforge-cprj-projet",      prompt: "Analyse l'objectif du projet: qu'est-ce qu'on veut automatiser, OEE cible, critères SMART." },
+  { id: 3, title: "Solutions Recommandées & Scénarios", icon: Wrench,        sectionId: "docforge-cprj-solutions",   prompt: "Propose les solutions technologiques et les scénarios d'automatisation pour ce manufacturier." },
+  { id: 4, title: "Budget, ROI & Financement",          icon: DollarSign,    sectionId: "docforge-cprj-budget",      prompt: "Calcule le budget, le ROI et les options de financement (subventions, RS&DE, payback period)." },
+  { id: 5, title: "Plan d'Implantation & Échéancier",   icon: Calendar,      sectionId: "docforge-cprj-echeancier",  prompt: "Définis le plan d'implantation par phases, les jalons, l'équipe et les risques." },
+  { id: 6, title: "Conclusions & Validation GO/NO-GO",  icon: CheckCircle2,  sectionId: "docforge-cprj-conclusions", prompt: "Rédige les conclusions, la recommandation finale et la grille de décision GO/NO-GO." },
+];
+
 export const JUMELAGE_SECTIONS: DocForgeSection[] = [
   { id: 1, title: "Criteres de Matching", icon: Filter, sectionId: "docforge-jumelage-criteres", prompt: "Definis les criteres de matching prioritaires." },
   { id: 2, title: "Scan Reseau", icon: Search, sectionId: "docforge-jumelage-scan", prompt: "Lance un scan du reseau pour les candidats potentiels." },
@@ -125,4 +135,5 @@ export const DOCFORGE_CONFIGS: Record<string, {
   presentation: { sections: PRESENTATION_SECTIONS, theme: L2_THEMES.blue, icon: Target, title: "Pitch Deck" },
   code: { sections: CODE_SECTIONS, theme: L2_THEMES.violet, icon: Code2, title: "Dashboard Code" },
   jumelage: { sections: JUMELAGE_SECTIONS, theme: L2_THEMES.amber, icon: Trophy, title: "Jumelage SMART" },
+  cprj: { sections: CPRJ_SECTIONS, theme: L2_THEMES.amber, icon: ClipboardList, title: "Cahier de Projet REAI" },
 };

@@ -46,9 +46,11 @@ export function ConceptionRouter({
     );
   }
 
-  // Smart default: Tim CTO → code atelier, pas la vue generique
+  // Smart default: Tim CTO → code atelier, Paco CPO → wizard CPRJ
   const effectiveDeliverable = activeDeliverable
-    || (activeBotCode === "CTOB" ? "code" : null);
+    || (activeBotCode === "CTOB" ? "code"
+        : activeBotCode === "CPOB" ? "cprj"
+        : null);
 
   if (effectiveDeliverable) {
     return (

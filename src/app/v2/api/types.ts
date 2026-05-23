@@ -41,6 +41,8 @@ export interface ChatRequest {
   active_agents?: string[];
   // S116 — Mémoire contextuelle intelligente
   thread_id?: string;
+  // CPRJ — DocForge pipeline trigger (fire-and-forget si présent)
+  docforge_library_id?: number;
 }
 
 // --- Équipe 3 Bots (Chef d'Orchestre) ---

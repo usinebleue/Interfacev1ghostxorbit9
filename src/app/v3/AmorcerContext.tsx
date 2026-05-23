@@ -195,6 +195,9 @@ interface AmorcerState {
   advanceDeliverable: () => void;
   startDeliverable: (deliverable: string, draftLibraryId?: number) => void;
   draftLibraryId: number | null;
+  // CPRJ — library auto-créée par LiveDocForgeLivrable (utilisée par useChat pour pipeline)
+  activeDocForgeLibraryId: number | null;
+  setActiveDocForgeLibraryId: (id: number | null) => void;
 
   // SimV3 shared state (chat ↔ right panel)
   simV3Active: boolean;
@@ -445,6 +448,7 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     setActiveDeliverable(null);
     setDeliverableStage(0);
     setDraftLibraryId(null);
+    setActiveDocForgeLibraryId(null);
     setChatStage(0);
     setConceptionStage(0);
     setTyped(false);
@@ -489,6 +493,8 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
   const [activeDeliverable, setActiveDeliverable] = useState<string | null>(null);
   const [deliverableStage, setDeliverableStage] = useState(0);
   const [draftLibraryId, setDraftLibraryId] = useState<number | null>(null);
+  // CPRJ — library auto-créée par LiveDocForgeLivrable au mount (pipeline DocForge)
+  const [activeDocForgeLibraryId, setActiveDocForgeLibraryId] = useState<number | null>(null);
 
   // Focus type state — persisté en localStorage
   const [focusType, setFocusTypeRaw] = useState(() => lsGet("focusType", "chantier"));
@@ -537,6 +543,7 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     lsSet("activePhase", p);
     // Nettoyer le deliverable actif (évite que Jumelage/DocForge reste bloqué)
     setActiveDeliverable(null);
+    setActiveDocForgeLibraryId(null);
     // Restaurer depuis le cache local (instantané) ou vider si phase jamais visitée
     const { cacheKey: newCacheKey } = getStorageKeys(activeThreadIdRef.current, activeBotCodeRef.current, p);
     const cached = phaseStateCacheRef.current[newCacheKey];
@@ -1025,6 +1032,7 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
         activeDeliverable, setActiveDeliverable,
         deliverableStage, setDeliverableStage,
         advanceDeliverable, startDeliverable, draftLibraryId,
+        activeDocForgeLibraryId, setActiveDocForgeLibraryId,
         focusType, setFocusType,
         credoPhase, setCredoPhase,
         workflowItems, addWorkflowItem, removeWorkflowItem, clearWorkflowItems,
