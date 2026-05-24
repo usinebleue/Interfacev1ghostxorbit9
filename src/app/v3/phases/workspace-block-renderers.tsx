@@ -108,7 +108,7 @@ function formatBlockMarkdown(text: string): string {
 
     if (/^[━─═\-]{3,}$/.test(line.trim())) { closeList(); result.push('<hr class="my-3 border-gray-200">'); continue; }
 
-    const headingMatch = line.trim().match(/^(#{1,3})\s+(.+)/);
+    const headingMatch = line.trim().match(/^(#{1,3})\s*(\S.+)/);
     if (headingMatch) {
       closeList();
       const level = headingMatch[1].length;
@@ -202,13 +202,28 @@ function parseContentSections(text: string): ContentSection[] | null {
       currentTitle = headerMatch[1].replace(/\*\*/g, "").trim();
       continue;
     }
-    // Match numbered sections at root level: "1. Title", "2) Title"
-    const numberedMatch = line.match(/^(\d+)[.)]\s+\*\*(.+?)\*\*(.*)/);
-    if (numberedMatch) {
+    // Match numbered sections with bold: "1. **Title**" or "1) **Title**"
+    const numberedBoldMatch = line.match(/^(\d+)[.)]\s+\*\*(.+?)\*\*(.*)/);
+    if (numberedBoldMatch) {
       flush();
-      currentTitle = numberedMatch[2].trim();
-      // Keep the rest of the line as body content if any
-      const rest = numberedMatch[3]?.replace(/^[\s:—–-]+/, "").trim();
+      currentTitle = numberedBoldMatch[2].trim();
+      const rest = numberedBoldMatch[3]?.replace(/^[\s:—–-]+/, "").trim();
+      if (rest) currentBody.push(rest);
+      continue;
+    }
+    // Match numbered sections without bold: "1. Short Title" (title < 80 chars, no trailing colon content)
+    const numberedPlainMatch = line.match(/^(\d+)[.)]\s+([^*\n]{3,80}?)[\s]*$/);
+    if (numberedPlainMatch && !numberedPlainMatch[2].trim().startsWith("•")) {
+      flush();
+      currentTitle = numberedPlainMatch[2].replace(/\*\*/g, "").replace(/[:—–]\s*$/, "").trim();
+      continue;
+    }
+    // Match emoji + bold headers: "🔴 **Title**", "⭐ **Title**", "💰 **Title**"
+    const emojiBoldMatch = line.match(/^([🔴🟡🟠🟢⭐💰⚠️✅❌🎯🏭🤖🔧📊👥🎁🔍]\s*)\*\*(.+?)\*\*(.*)/u);
+    if (emojiBoldMatch) {
+      flush();
+      currentTitle = emojiBoldMatch[1].trim() + " " + emojiBoldMatch[2].trim();
+      const rest = emojiBoldMatch[3]?.replace(/^[\s:—–-]+/, "").trim();
       if (rest) currentBody.push(rest);
       continue;
     }
@@ -253,15 +268,20 @@ const BOT_SECTION_COLORS: Record<string, { bg: string; border: string; numColor:
 
 /** Renders block content with titled sub-sections as styled mini-cards */
 function SectionedBlockContent({ summary, botCode }: { summary: string; botCode: string }) {
-  const sections = parseContentSections(summary);
+  // Strip consultation prefix: "XXX repond a la consultation de YYY Bot:\n\n"
+  const cleanSummary = (summary || "")
+    .replace(/^[A-ZÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝ\s]+repond\s+[^:\n]+:\s*\n+/i, "")
+    .replace(/^(COO|CFO|CTO|CMO|CPO|CSO|COO|CHRO|CLO|CISO|CINO|CRO)\s+repond[^:\n]+:\s*\n+/i, "")
+    .trim();
+  const sections = parseContentSections(cleanSummary);
   const sectionColors = BOT_SECTION_COLORS[botCode] || { bg: "bg-gray-50/70", border: "border-gray-100", numColor: "text-gray-500" };
 
   // Fallback: no parseable sections → render as formatted markdown
   if (!sections) {
     return (
       <div
-        className="text-[11px] leading-relaxed text-gray-700 prose-sm"
-        dangerouslySetInnerHTML={{ __html: formatBlockMarkdown(summary) }}
+        className="text-sm leading-relaxed text-gray-700 [&>p]:my-1 [&>ul]:my-1.5 [&>ol]:my-1.5 [&>p:first-child]:mt-0 [&>p:last-child]:mb-0"
+        dangerouslySetInnerHTML={{ __html: formatBlockMarkdown(cleanSummary) }}
       />
     );
   }
@@ -278,11 +298,11 @@ function SectionedBlockContent({ summary, botCode }: { summary: string; botCode:
               <span className={cn("text-[10px] font-bold mt-0.5 shrink-0", sectionColors.numColor)}>
                 {s.index + 1}.
               </span>
-              <span className="text-[11px] font-semibold text-gray-900 leading-tight">{s.title}</span>
+              <span className="text-xs font-semibold text-gray-900 leading-tight">{s.title}</span>
             </div>
           )}
           <div
-            className={cn("text-[11px] leading-relaxed text-gray-700 prose-sm", s.title ? "ml-5" : "")}
+            className={cn("text-sm leading-relaxed text-gray-700 [&>p]:my-0.5 [&>ul]:my-1 [&>ol]:my-1", s.title ? "ml-5" : "")}
             dangerouslySetInnerHTML={{ __html: formatBlockMarkdown(s.body) }}
           />
         </div>
@@ -564,8 +584,8 @@ function BlockActions({ block, onAction }: BlockRendererProps) {
 function BlockWrapper({ block, onAction, label, labelColor, children }: BlockRendererProps & { label: string; labelColor: string; children: React.ReactNode }) {
   const displayCtx = useContext(BlockDisplayContext);
   const [isHoverEdit, setIsHoverEdit] = useState(false);
-  // Sprint 2A Phase 6A: fade-in + slide-up animation (pattern FocusReflexionView L164-167)
   const [appeared, setAppeared] = useState(false);
+  const accentHex = BOT_ACCENT_HEX[block.source] || "#60a5fa";
   useEffect(() => {
     const t = setTimeout(() => setAppeared(true), 80);
     return () => clearTimeout(t);
@@ -573,46 +593,36 @@ function BlockWrapper({ block, onAction, label, labelColor, children }: BlockRen
   return (
     <div
       className={cn(
-        "group/edit rounded-xl border bg-white p-4 shadow-sm transition-all duration-300",
-        "border-gray-200 hover:shadow-md",
-        "hover:ring-1 hover:ring-blue-200 hover:border-blue-200",
+        "group/edit rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm transition-all duration-300",
+        "hover:shadow-md",
         appeared ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3",
-        block.source && BOT_ACCENT_BORDERS[block.source] && cn("border-l-[3px]", BOT_ACCENT_BORDERS[block.source])
       )}
       onMouseEnter={() => setIsHoverEdit(true)}
       onMouseLeave={() => setIsHoverEdit(false)}
     >
-      <div className="flex items-center gap-2 mb-3">
-        <span className={cn("text-xs px-2 py-0.5 rounded-full font-bold", labelColor)}>{label}</span>
-        {/* S3A.1: BotAvatar attribution */}
-        {block.source && (
-          <div className="flex items-center gap-1 shrink-0">
-            <BotAvatar code={block.source} size="sm" />
-            <span className="text-[10px] text-gray-400 font-medium">{BOT_NAME[block.source] || block.source}</span>
-          </div>
+      {/* Header — avatar + label + titre + meta + edit */}
+      <div className="px-4 py-2.5 border-b border-gray-100 flex items-center gap-2">
+        {block.source && <BotAvatar code={block.source} size="sm" />}
+        <span className={cn("text-[10px] px-2 py-0.5 rounded-full font-bold shrink-0", labelColor)}>{label}</span>
+        <h4 className="text-xs font-bold text-gray-900 flex-1 truncate">{block.title}</h4>
+        {block.maturity && MATURITY_CONFIG[block.maturity] && (
+          <span className={cn("flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded-full font-medium shrink-0", MATURITY_CONFIG[block.maturity].bg, MATURITY_CONFIG[block.maturity].text)}>
+            <span className={cn("w-1.5 h-1.5 rounded-full", MATURITY_CONFIG[block.maturity].dot)} />
+            {MATURITY_CONFIG[block.maturity].label}
+          </span>
         )}
-        {/* S2.2.3: Confidence badge */}
         <span className={cn(
-          "text-[10px] px-1.5 py-0.5 rounded-full font-bold",
+          "text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0",
           block.confidence >= 0.8 ? "bg-emerald-100 text-emerald-700" :
           block.confidence >= 0.5 ? "bg-amber-100 text-amber-700" :
           "bg-red-100 text-red-700"
         )}>
           {Math.round(block.confidence * 100)}%
         </span>
-        {/* S117: Maturity badge */}
-        {block.maturity && MATURITY_CONFIG[block.maturity] && (
-          <span className={cn("flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium", MATURITY_CONFIG[block.maturity].bg, MATURITY_CONFIG[block.maturity].text)}>
-            <span className={cn("w-1.5 h-1.5 rounded-full", MATURITY_CONFIG[block.maturity].dot)} />
-            {MATURITY_CONFIG[block.maturity].label}
-          </span>
-        )}
-        <h4 className="text-sm font-bold text-gray-900 flex-1 truncate">{block.title}</h4>
-        {/* Sprint 2A: Hover "Modifier" flottant (pattern WorkspaceSection.tsx L142-156) */}
         <button
           onClick={() => onAction("edit", block.id)}
           className={cn(
-            "flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium",
+            "flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-medium shrink-0",
             "border border-blue-200 bg-blue-50 text-blue-600 cursor-pointer",
             "transition-opacity duration-150",
             isHoverEdit ? "opacity-100" : "opacity-0"
@@ -620,10 +630,13 @@ function BlockWrapper({ block, onAction, label, labelColor, children }: BlockRen
         >
           <Pencil className="h-2.5 w-2.5" /> Modifier
         </button>
-        <span className="text-[10px] text-gray-300">{new Date(block.timestamp).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })}</span>
+        <span className="text-[9px] text-gray-400 shrink-0">{new Date(block.timestamp).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })}</span>
       </div>
-      {children}
-      {/* Footer actions — compact CTAs en mode discussion, boutons complets sinon */}
+      {/* Body — accent border gauche, même pattern ExpertBlockWrapper */}
+      <div className="px-4 py-3" style={{ borderLeft: `3px solid ${accentHex}` }}>
+        {children}
+      </div>
+      {/* Footer actions */}
       {displayCtx.compact && block.type !== "rapport" ? (
         <CompactBlockFooter block={block} onAction={onAction} />
       ) : (
@@ -3233,7 +3246,7 @@ function ExpertBlockWrapper({ block, onAction, children }: BlockRendererProps & 
         </>
       ) : (
         <>
-          <div className="px-4 py-3 text-[11px] text-gray-700 leading-relaxed" style={{ borderLeft: `3px solid ${accentColor}` }}>
+          <div className="px-4 py-3 text-sm text-gray-700 leading-relaxed" style={{ borderLeft: `3px solid ${accentColor}` }}>
             {children}
           </div>
 
@@ -3292,8 +3305,23 @@ export function BlockRenderer({ block, onAction, animated }: BlockRendererProps)
 
   const Renderer = BLOCK_RENDERERS[block.type] || LibreRenderer;
 
-  // Expert blocks (sourceType=chat) get enhanced ExpertBlockWrapper with large avatar/fonts
+  // Expert blocks (sourceType=chat):
+  // — Si le bloc a un renderer spécialisé (pas LibreRenderer) ET des structured_data réelles
+  //   → utiliser le renderer directement (diagnostic, brainstorm, plan_action, rapport, etc.)
+  //   L'ancien flow ignorait structured_data et n'affichait que le summary texte.
+  // — Sinon → ExpertBlockWrapper + SectionedBlockContent (affichage texte enrichi)
   if (block.sourceType === "chat" && block.source) {
+    const hasStructuredData = block.structured_data
+      && Object.keys(block.structured_data).length > 0;
+    const hasRichRenderer = Renderer !== LibreRenderer;
+
+    if (hasRichRenderer && hasStructuredData) {
+      return (
+        <AnimatedBlockEntry block={block} animated={animated}>
+          <Renderer block={block} onAction={onAction} />
+        </AnimatedBlockEntry>
+      );
+    }
     return (
       <AnimatedBlockEntry block={block} animated={animated}>
         <ExpertBlockWrapper block={block} onAction={onAction}>

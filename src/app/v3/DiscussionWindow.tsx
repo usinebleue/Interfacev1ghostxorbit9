@@ -174,10 +174,10 @@ function formatMarkdown(text: string): string {
       continue;
     }
 
-    // Headers: ### or ##
-    if (/^#{1,3}\s+/.test(line.trim())) {
+    // Headers: ### or ## (avec ou sans espace après le #)
+    if (/^#{1,3}\s*\S/.test(line.trim())) {
       closeList();
-      const hText = applyInlineFormatting(line.replace(/^#{1,3}\s+/, ""));
+      const hText = applyInlineFormatting(line.trim().replace(/^#{1,3}\s*/, ""));
       result.push(`<div class="font-semibold text-gray-900 mt-3 mb-1">${hText}</div>`);
       continue;
     }
@@ -349,29 +349,79 @@ function ThinkingLabel({ botCode, userText }: { botCode: string; userText?: stri
   );
 }
 
-/** ExpertSuggestionChips — small chips in bubble footer for quick expert consultation */
+/** ExpertSuggestionChips — PR bubbles dans le fil de discussion pour consultation directe */
 function ExpertSuggestionChips({ suggestions, onConsult }: {
-  suggestions: Array<{ consult: string; consult_nom: string; consult_emoji: string; reason: string }>;
-  onConsult: (s: { consult: string; reason: string }) => void;
+  suggestions: Array<{ consult: string; consult_nom: string; consult_emoji: string; consult_titre?: string; reason: string }>;
+  onConsult: (s: { consult: string; consult_nom: string; reason: string }) => void;
 }) {
+  const [loading, setLoading] = useState<string | null>(null);
+  const [done, setDone] = useState<Set<string>>(new Set());
+
+  const handleClick = (s: typeof suggestions[0]) => {
+    if (loading || done.has(s.consult)) return;
+    setLoading(s.consult);
+    onConsult(s);
+    // Marquer comme fait après 800ms (le bot commence à répondre)
+    setTimeout(() => { setLoading(null); setDone(prev => new Set([...prev, s.consult])); }, 800);
+  };
+
   return (
-    <div className="mt-2 pt-2 border-t border-gray-100">
-      <span className="text-[9px] text-gray-400 font-medium uppercase tracking-wide">Experts suggérés</span>
-      <div className="flex flex-wrap gap-1 mt-1">
-        {suggestions.map((s, i) => (
+    <div className="mt-3 pt-2 border-t border-gray-100 space-y-1.5">
+      <span className="text-[9px] text-gray-400 font-medium uppercase tracking-wide flex items-center gap-1">
+        <Users className="h-2.5 w-2.5" /> Input d'expert recommandé
+      </span>
+      {suggestions.map((s, i) => {
+        const isDone = done.has(s.consult);
+        const isLoading = loading === s.consult;
+        return (
           <button
             key={`expert-${i}`}
-            onClick={() => onConsult(s)}
-            className="flex items-center gap-1 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5 text-[10px] text-blue-700 hover:bg-blue-100 hover:border-blue-300 cursor-pointer transition-all font-medium"
-            title={s.reason}
+            onClick={() => handleClick(s)}
+            disabled={!!loading || isDone}
+            className={cn(
+              "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl border text-left transition-all",
+              isDone
+                ? "border-emerald-200 bg-emerald-50/60 cursor-default"
+                : "border-blue-100 bg-gradient-to-r from-blue-50/60 to-white hover:border-blue-300 hover:shadow-sm cursor-pointer group"
+            )}
           >
-            <span className="w-4 h-4 rounded-full bg-blue-100 flex items-center justify-center text-[9px] shrink-0">
-              {s.consult_emoji || "👤"}
-            </span>
-            <span>{s.consult_nom}</span>
+            <div className={cn("w-7 h-7 rounded-full overflow-hidden shrink-0 ring-1 transition-all",
+              isDone ? "ring-emerald-300" : "ring-blue-200 group-hover:ring-blue-400"
+            )}>
+              <img
+                src={BOT_AVATAR[s.consult] || `/agents/${s.consult?.toLowerCase()}.png`}
+                alt={s.consult_nom}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-baseline gap-1.5">
+                <span className={cn("text-[11px] font-bold", isDone ? "text-emerald-700" : "text-blue-700")}>
+                  {s.consult_nom}
+                </span>
+                {s.consult_titre && (
+                  <span className="text-[9px] text-gray-400 truncate">{s.consult_titre}</span>
+                )}
+              </div>
+              <p className="text-[10px] text-gray-500 leading-snug line-clamp-1">{s.reason}</p>
+            </div>
+            <div className={cn(
+              "shrink-0 px-2 py-1 rounded-lg text-[9px] font-bold transition-colors flex items-center gap-1",
+              isDone
+                ? "bg-emerald-100 text-emerald-700"
+                : "bg-blue-600 text-white group-hover:bg-blue-700"
+            )}>
+              {isLoading ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : isDone ? (
+                <><CheckCircle2 className="h-3 w-3" /> Ajouté</>
+              ) : (
+                "Input →"
+              )}
+            </div>
           </button>
-        ))}
-      </div>
+        );
+      })}
     </div>
   );
 }
@@ -939,6 +989,14 @@ function V3MessageList() {
       startDeliverable(deliverableType);
       return;
     }
+    // Detection "Cahier de projet / charges" — bouton explicite du bot (ex: Paco "Lancer le Cahier")
+    const cahierMatch = opt.match(/(?:lancer|ouvrir|créer|démarrer|commencer|activer)\s+le\s+cahier/i)
+      || opt.match(/cahier\s+de\s+(?:projet|charges)/i)
+      || opt.match(/(?:lancer|ouvrir)\s+docforge/i);
+    if (cahierMatch) {
+      startDeliverable("cprj");
+      return;
+    }
 
     // Retour au cockpit (fin de rétroaction)
     if (lower.includes("retour au cockpit")) {
@@ -1365,18 +1423,22 @@ function V3MessageList() {
                         handleOption(text);
                       }
                     }}
-                    isActive={isLast}
+                    isActive={isLast || (!!msg.agent && msg.agent !== activeBotCode)}
                     msgType={msg.msgType}
                     agent={msg.agent}
                     activeRoster={activeRoster}
                     workspacePhase={workspacePhase}
                   />
                 )}
-                {/* ═══ Expert suggestion chips — quick consult from bubble footer ═══ */}
+                {/* ═══ Expert PR bubbles — consultation directe dans la discussion ═══ */}
                 {!msg.isStreaming && isLast && msg.consultationSuggestions && msg.consultationSuggestions.length > 0 && (
                   <ExpertSuggestionChips
                     suggestions={msg.consultationSuggestions}
-                    onConsult={(s) => sendMessage(s.reason, s.consult)}
+                    onConsult={(s) => {
+                      // Envoyer la vraie dernière question user (pas la raison de suggestion)
+                      const lastUserMsg = [...messages].reverse().find(m => m.role === "user")?.content || s.reason;
+                      sendMessage(lastUserMsg, s.consult);
+                    }}
                   />
                 )}
                 {/* ═══ Cascade suggestion chips — reflexion/workspace actions ═══ */}
@@ -1392,6 +1454,49 @@ function V3MessageList() {
                     suggestion={(msg as any).teamSuggestion as TeamSuggestionEvent}
                     onAdd={(code) => addExpertToWorkspace(code)}
                   />
+                )}
+                {/* ═══ Boutons action bots secondaires — Approfondir / Challenger / +Workspace ═══ */}
+                {!msg.isStreaming && !!msg.agent && msg.agent !== activeBotCode && (
+                  <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-gray-100">
+                    <button
+                      onClick={() => sendMessage(`Approfondir en detail: ${msg.content.slice(0, 120)}`, botCode, undefined, { workspacePhase })}
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] border border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100 hover:border-gray-300 cursor-pointer transition-all font-medium"
+                    >
+                      <ChevronRight className="h-2.5 w-2.5 flex-shrink-0" />
+                      Approfondir
+                    </button>
+                    <button
+                      onClick={() => sendMessage(`Challenge cet element, trouve les failles: ${msg.content.slice(0, 120)}`, chatTargetBot, undefined, { workspacePhase })}
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] border border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100 hover:border-gray-300 cursor-pointer transition-all font-medium"
+                    >
+                      <Shield className="h-2.5 w-2.5 flex-shrink-0" />
+                      Challenger
+                    </button>
+                    <button
+                      onClick={() => {
+                        const _steps: ("C"|"R"|"E"|"D"|"O")[] = ["C","R","E","D","O"];
+                        // Strip consultation prefix before storing
+                        const _clean = (msg.content || "")
+                          .replace(/^[A-Z]+\s+repond[^:\n]+:\s*\n+/i, "")
+                          .trim();
+                        addWorkspaceBlock({
+                          id: `expert-input-${botCode}-${Date.now()}`,
+                          type: "expert_input",
+                          title: `${BOT_NAME[botCode] || botCode} — Input`,
+                          summary: _clean.slice(0, 2000),
+                          credo_step: _steps[Math.min(chatStage, 4)],
+                          confidence: 0.85,
+                          source: botCode,
+                          sourceType: "chat",
+                          timestamp: Date.now(),
+                        } as any);
+                      }}
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300 cursor-pointer transition-all font-medium"
+                    >
+                      <Plus className="h-2.5 w-2.5 flex-shrink-0" />
+                      +Workspace
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
