@@ -2155,18 +2155,8 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
             </div>
           )}
 
-          {/* REFLEXION HUB — visible quand sub-section null + etape Rechercher */}
-          {activeStepId.includes("rechercher") && !selectedTechnique && !activeSubSection && (
-            <div className="mt-3">
-              <WorkspaceReflexionHub
-                context={displayContext !== "Discussion en cours" ? displayContext : null}
-                onSendMessage={handleReflexionSend}
-                messages={messages}
-                activeBotCode={activeBotCode}
-                activeBotName={BOT_NAME[activeBotCode] || "CarlOS"}
-              />
-            </div>
-          )}
+          {/* WorkspaceReflexionHub retiré — les modes de réflexion se déclenchent depuis
+             le panneau de contrôle de la chatbox et les boutons action des blocs/synthèses */}
 
           {/* B.1: Bot processing bubble — visible quand le bot synthetise la discussion */}
           {isThinking && (

@@ -773,13 +773,15 @@ export function useWorkspaceCapture() {
                 // ═══ WORKSPACE BLOCK — BACKEND AUTHORITATIVE ═══
                 // CarlOS (backend) est seul responsable de la zone workspace.
                 // Pas de fallback frontend copier-coller. Jamais.
-                processedBlockMsgIds.current.add(msg.id);
                 const wsBlock = (msg as any).workspace_block as Partial<WorkspaceBlock> | undefined;
 
                 const userMsgCount = messages.filter((m: any) => m.role === "user").length;
 
                 console.log(`[WC-DEBUG] DISCUSSION block check: wsBlock.type=${wsBlock?.type}, wsBlock.title=${wsBlock?.title?.substring(0,30)}, userMsgCount=${userMsgCount}, skip=${(msg as any).workspace_block_skip}`);
                 if (wsBlock && wsBlock.type && wsBlock.title) {
+                  // Marquer comme traité SEULEMENT si le block est valide — sinon,
+                  // le message reste éligible si le backend renvoie un block valide plus tard.
+                  processedBlockMsgIds.current.add(msg.id);
                   // Backend a généré un workspace_block structuré + conversation a du contenu
                   console.log(`[WC-DEBUG] >>> ADDING BLOCK: type=${wsBlock.type}, title=${wsBlock.title}`);
                   const cascadeSugs = (msg as any).cascadeSuggestions as Array<{ message: string; target_section?: string }> | undefined;

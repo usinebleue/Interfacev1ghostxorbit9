@@ -1009,8 +1009,7 @@ function V3MessageList() {
     ? `discussion_${_credoSteps[chatStage]}`
     : activePhase;
 
-  // W.1 Expert pipeline — ajoute un bot dans la zone workspace (pas dans la discussion)
-  // Pattern identique à handleToggleBot dans LiveDiscussionView.tsx
+  // W.1 Expert pipeline — ajoute un bot dans l'équipe (roster discussion) + consultation workspace
   const addExpertToWorkspace = useCallback(async (code: string) => {
     addBotToRoster(code);
     // Fix S131: utiliser le step du dernier bloc workspace (chatStage peut être décalé par phase_credo backend)
@@ -1613,17 +1612,8 @@ function V3MessageList() {
                     workspacePhase={workspacePhase}
                   />
                 )}
-                {/* ═══ Expert PR bubbles — consultation directe dans la discussion ═══ */}
-                {!msg.isStreaming && isLast && msg.consultationSuggestions && msg.consultationSuggestions.length > 0 && (
-                  <ExpertSuggestionChips
-                    suggestions={msg.consultationSuggestions}
-                    onConsult={(s) => {
-                      // Envoyer la vraie dernière question user (pas la raison de suggestion)
-                      const lastUserMsg = [...messages].reverse().find(m => m.role === "user")?.content || s.reason;
-                      sendMessage(lastUserMsg, s.consult);
-                    }}
-                  />
-                )}
+                {/* ExpertSuggestionChips retiré — les consultation suggestions sont gérées dans la zone workspace
+                   via latestConsultationSuggestions → handleConsultBot → workspace block (pas bulle discussion) */}
                 {/* ═══ Cascade suggestion chips — reflexion/workspace actions ═══ */}
                 {!msg.isStreaming && isLast && msg.cascadeSuggestions && msg.cascadeSuggestions.length > 0 && (
                   <CascadeChips
