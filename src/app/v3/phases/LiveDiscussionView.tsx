@@ -794,6 +794,14 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
     return () => clearTimeout(t);
   }, [workspaceBlocks.length]);
 
+  // N7 fix: pour blocs non-expert (sendMessage path), effacer le badge loading quand le streaming se termine
+  useEffect(() => {
+    if (!isTyping && loadingBlockId) {
+      const t = setTimeout(() => setLoadingBlockId(null), 800);
+      return () => clearTimeout(t);
+    }
+  }, [isTyping]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const activeStep = config.steps.find(s => s.id === activeStepId) || config.steps[0];
   const completedCount = config.steps.filter(s => getCristallise(s.id) !== null).length;
   const progress = Math.round((completedCount / config.steps.length) * 100);
@@ -889,7 +897,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
           })();
         } else {
           sendMessage(`Approfondir en detail: ${block.title}\n\nContexte: ${block.summary}`, targetBot);
-          setLoadingBlockId(null);
+          // setLoadingBlockId(null) géré par useEffect isTyping (N7 fix)
         }
         break;
       }
@@ -936,7 +944,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
           })();
         } else {
           sendMessage(`Challenge cet element, trouve les failles: ${block.title}\n\n${block.summary}`, targetBot2);
-          setLoadingBlockId(null);
+          // setLoadingBlockId(null) géré par useEffect isTyping (N7 fix)
         }
         break;
       }
@@ -983,7 +991,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
           })();
         } else {
           sendMessage(`Retravaille et enrichis: ${block.title}\n\n${block.summary}`, targetBot3);
-          setLoadingBlockId(null);
+          // setLoadingBlockId(null) géré par useEffect isTyping (N7 fix)
         }
         break;
       }
