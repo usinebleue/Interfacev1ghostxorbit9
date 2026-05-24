@@ -32,7 +32,7 @@ import { useAmorcer } from "./AmorcerContext";
 import { useDemo } from "./DemoContext";
 import { DemoChatPlayer } from "./DemoChatPlayer";
 import { useChatContext } from "../v2/context/ChatContext";
-import { BOT_AVATAR, BOT_NAME, BOT_ROLE } from "../v2/api/types";
+import { BOT_AVATAR, BOT_NAME, BOT_ROLE, type AutoConsultationData } from "../v2/api/types";
 import { useIsMobile } from "../components/ui/use-mobile";
 import { api } from "../v2/api/client";
 import type { TeamSuggestionEvent } from "../v2/api/client";
@@ -422,6 +422,149 @@ function ExpertSuggestionChips({ suggestions, onConsult }: {
           </button>
         );
       })}
+    </div>
+  );
+}
+
+/** AutoConsultationPills — D2 fix: auto-consultations pré-chargées en pills expandables dans le footer */
+function AutoConsultationPills({
+  consultations,
+  onSendOption,
+  onAddToWorkspace,
+}: {
+  consultations: AutoConsultationData[];
+  onSendOption: (text: string) => void;
+  onAddToWorkspace: (c: AutoConsultationData) => void;
+}) {
+  const [expanded, setExpanded] = useState<number | null>(null);
+
+  return (
+    <div className="mt-2 pt-2 border-t border-gray-100 space-y-1">
+      <span className="text-[9px] text-blue-500 font-medium uppercase tracking-wide flex items-center gap-1">
+        <Users className="h-2.5 w-2.5" /> Consultations d'experts
+      </span>
+      {consultations.map((c, i) => (
+        <div key={`ac-${i}`} className="rounded-lg border border-blue-100 overflow-hidden">
+          <button
+            onClick={() => setExpanded(expanded === i ? null : i)}
+            className="w-full flex items-center gap-2 px-3 py-1.5 bg-blue-50/40 hover:bg-blue-50 transition-colors text-left"
+          >
+            <img
+              src={BOT_AVATAR[c.bot_code] || `/agents/${c.bot_code?.toLowerCase()}.png`}
+              alt={c.bot_nom}
+              className="w-5 h-5 rounded-full object-cover shrink-0"
+            />
+            <span className="text-[10px] font-bold text-blue-700 flex-1 truncate">{c.bot_nom}</span>
+            <span className="text-[9px] text-gray-400 line-clamp-1 flex-1 truncate">{c.reason}</span>
+            <ChevronDown className={cn("h-3 w-3 text-gray-400 shrink-0 transition-transform", expanded === i && "rotate-180")} />
+          </button>
+          {expanded === i && (
+            <div className="px-3 py-2 bg-white border-t border-blue-100 space-y-2">
+              <p className="text-[11px] text-gray-700 leading-relaxed whitespace-pre-wrap line-clamp-6">
+                {c.contenu}
+              </p>
+              {c.options && c.options.length > 0 && (
+                <div className="flex flex-wrap gap-1 pt-1">
+                  {c.options.map((opt, j) => (
+                    <button
+                      key={j}
+                      onClick={() => onSendOption(opt.value || opt.label)}
+                      className="flex items-center gap-1 px-2 py-0.5 rounded text-[9px] border border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
+                    >
+                      <ChevronRight className="h-2.5 w-2.5" />
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <button
+                onClick={() => onAddToWorkspace(c)}
+                className="flex items-center gap-1 px-2 py-0.5 rounded text-[9px] border border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors cursor-pointer"
+              >
+                <Plus className="h-2.5 w-2.5" />
+                +Workspace
+              </button>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** SecondaryBotActions — D3/D4/D5 fix: boutons avec loading state pour bots secondaires */
+function SecondaryBotActions({
+  msg,
+  botCode,
+  chatTargetBot,
+  workspacePhase,
+  chatStage,
+  onSend,
+  onAddWorkspace,
+}: {
+  msg: { content: string; agent?: string };
+  botCode: string;
+  chatTargetBot: string;
+  workspacePhase: string;
+  chatStage: number;
+  onSend: (text: string, bot: string, opts?: undefined, extra?: Record<string, unknown>) => void;
+  onAddWorkspace: (block: Record<string, unknown>) => void;
+}) {
+  const [pending, setPending] = useState<"deepen" | "challenge" | "workspace" | null>(null);
+
+  const handle = (action: "deepen" | "challenge" | "workspace") => {
+    if (pending) return;
+    setPending(action);
+    const _steps: ("C"|"R"|"E"|"D"|"O")[] = ["C","R","E","D","O"];
+    if (action === "deepen") {
+      onSend(`Approfondir en detail: ${msg.content.slice(0, 120)}`, botCode, undefined, { workspacePhase });
+      setTimeout(() => setPending(null), 1200);
+    } else if (action === "challenge") {
+      onSend(`Challenge cet element, trouve les failles: ${msg.content.slice(0, 120)}`, chatTargetBot, undefined, { workspacePhase });
+      setTimeout(() => setPending(null), 1200);
+    } else {
+      const _clean = (msg.content || "").replace(/^[A-Z]+\s+repond[^:\n]+:\s*\n+/i, "").trim();
+      onAddWorkspace({
+        id: `expert-input-${botCode}-${Date.now()}`,
+        type: "expert_input",
+        title: `${BOT_NAME[botCode] || botCode} — Input`,
+        summary: _clean.slice(0, 2000),
+        credo_step: _steps[Math.min(chatStage, 4)],
+        confidence: 0.85,
+        source: botCode,
+        sourceType: "chat",
+        timestamp: Date.now(),
+      });
+      setTimeout(() => setPending(null), 600);
+    }
+  };
+
+  return (
+    <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-gray-100">
+      <button
+        onClick={() => handle("deepen")}
+        disabled={!!pending}
+        className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] border border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100 hover:border-gray-300 cursor-pointer transition-all font-medium disabled:opacity-60"
+      >
+        {pending === "deepen" ? <Loader2 className="h-2.5 w-2.5 animate-spin" /> : <ChevronRight className="h-2.5 w-2.5 flex-shrink-0" />}
+        Approfondir
+      </button>
+      <button
+        onClick={() => handle("challenge")}
+        disabled={!!pending}
+        className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] border border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100 hover:border-gray-300 cursor-pointer transition-all font-medium disabled:opacity-60"
+      >
+        {pending === "challenge" ? <Loader2 className="h-2.5 w-2.5 animate-spin" /> : <Shield className="h-2.5 w-2.5 flex-shrink-0" />}
+        Challenger
+      </button>
+      <button
+        onClick={() => handle("workspace")}
+        disabled={!!pending}
+        className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300 cursor-pointer transition-all font-medium disabled:opacity-60"
+      >
+        {pending === "workspace" ? <Loader2 className="h-2.5 w-2.5 animate-spin" /> : <Plus className="h-2.5 w-2.5 flex-shrink-0" />}
+        +Workspace
+      </button>
     </div>
   );
 }
@@ -1455,48 +1598,38 @@ function V3MessageList() {
                     onAdd={(code) => addExpertToWorkspace(code)}
                   />
                 )}
-                {/* ═══ Boutons action bots secondaires — Approfondir / Challenger / +Workspace ═══ */}
+                {/* ═══ Auto-consultation pills — D2 fix: consultations bot en pills expandables ═══ */}
+                {!msg.isStreaming && (msg as any).autoConsultations && (msg as any).autoConsultations.length > 0 && (
+                  <AutoConsultationPills
+                    consultations={(msg as any).autoConsultations as AutoConsultationData[]}
+                    onSendOption={(text) => sendMessage(text, chatTargetBot, undefined, { workspacePhase })}
+                    onAddToWorkspace={(c) => {
+                      const _steps: ("C"|"R"|"E"|"D"|"O")[] = ["C","R","E","D","O"];
+                      addWorkspaceBlock({
+                        id: `expert-consult-${c.bot_code}-${Date.now()}`,
+                        type: "expert_consultation",
+                        title: `Consultation ${BOT_NAME[c.bot_code] || c.bot_nom}`,
+                        summary: (c.contenu || "").trim().slice(0, 2000),
+                        credo_step: _steps[Math.min(chatStage, 4)],
+                        confidence: 0.85,
+                        source: c.bot_code,
+                        sourceType: "chat",
+                        timestamp: Date.now(),
+                      } as any);
+                    }}
+                  />
+                )}
+                {/* ═══ Boutons action bots secondaires — D3/D4/D5 fix: avec loading state ═══ */}
                 {!msg.isStreaming && !!msg.agent && msg.agent !== activeBotCode && (
-                  <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-gray-100">
-                    <button
-                      onClick={() => sendMessage(`Approfondir en detail: ${msg.content.slice(0, 120)}`, botCode, undefined, { workspacePhase })}
-                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] border border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100 hover:border-gray-300 cursor-pointer transition-all font-medium"
-                    >
-                      <ChevronRight className="h-2.5 w-2.5 flex-shrink-0" />
-                      Approfondir
-                    </button>
-                    <button
-                      onClick={() => sendMessage(`Challenge cet element, trouve les failles: ${msg.content.slice(0, 120)}`, chatTargetBot, undefined, { workspacePhase })}
-                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] border border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100 hover:border-gray-300 cursor-pointer transition-all font-medium"
-                    >
-                      <Shield className="h-2.5 w-2.5 flex-shrink-0" />
-                      Challenger
-                    </button>
-                    <button
-                      onClick={() => {
-                        const _steps: ("C"|"R"|"E"|"D"|"O")[] = ["C","R","E","D","O"];
-                        // Strip consultation prefix before storing
-                        const _clean = (msg.content || "")
-                          .replace(/^[A-Z]+\s+repond[^:\n]+:\s*\n+/i, "")
-                          .trim();
-                        addWorkspaceBlock({
-                          id: `expert-input-${botCode}-${Date.now()}`,
-                          type: "expert_input",
-                          title: `${BOT_NAME[botCode] || botCode} — Input`,
-                          summary: _clean.slice(0, 2000),
-                          credo_step: _steps[Math.min(chatStage, 4)],
-                          confidence: 0.85,
-                          source: botCode,
-                          sourceType: "chat",
-                          timestamp: Date.now(),
-                        } as any);
-                      }}
-                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300 cursor-pointer transition-all font-medium"
-                    >
-                      <Plus className="h-2.5 w-2.5 flex-shrink-0" />
-                      +Workspace
-                    </button>
-                  </div>
+                  <SecondaryBotActions
+                    msg={msg}
+                    botCode={botCode}
+                    chatTargetBot={chatTargetBot}
+                    workspacePhase={workspacePhase}
+                    chatStage={chatStage}
+                    onSend={sendMessage}
+                    onAddWorkspace={(block) => addWorkspaceBlock(block as any)}
+                  />
                 )}
               </div>
             </div>

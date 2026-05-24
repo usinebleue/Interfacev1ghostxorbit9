@@ -3219,10 +3219,15 @@ function ExpertBlockWrapper({ block, onAction, children }: BlockRendererProps & 
         appeared ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3",
       )}
     >
-      {/* Header — clean: avatar + "Name — Title" + status + timestamp */}
+      {/* Header — D6 fix: avatar + "Name — Title" + source_action badge + status + timestamp */}
       <div className="px-4 py-2.5 border-b border-gray-100 flex items-center gap-2.5">
         <BotAvatar code={block.source} size="sm" />
         <h3 className="text-xs font-bold text-gray-900 flex-1 truncate">{botName} — {block.title}</h3>
+        {(block as any).source_action && (
+          <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 border border-amber-200 shrink-0 capitalize">
+            {(block as any).source_action}
+          </span>
+        )}
         <span className={cn("text-[9px] font-medium px-2 py-0.5 rounded-full shrink-0", statusBadge.cls)}>{statusBadge.label}</span>
         <span className="text-[9px] text-gray-400 shrink-0">{timestamp}</span>
       </div>
@@ -3250,27 +3255,36 @@ function ExpertBlockWrapper({ block, onAction, children }: BlockRendererProps & 
             {children}
           </div>
 
-          {/* Boomerang action buttons — secondary bots only */}
-          {!block.is_action_result && !isPrimaryBot && (
+          {/* Boomerang action buttons — D9 fix: secondaires seulement, boutons pertinents par type */}
+          {!block.is_action_result && !isPrimaryBot && block.type !== "bot_actions" && (
             <div className="flex items-center gap-1.5 px-4 py-2 border-t border-gray-100">
-              <button
-                onClick={() => onAction("deepen", block.id)}
-                className="flex items-center gap-1 px-2 py-1 rounded text-[9px] font-medium bg-sky-50 text-sky-700 border border-sky-200 cursor-pointer hover:bg-sky-100 transition-colors"
-              >
-                <Search className="h-3 w-3" /> Approfondir
-              </button>
-              <button
-                onClick={() => onAction("challenge", block.id)}
-                className="flex items-center gap-1 px-2 py-1 rounded text-[9px] font-medium bg-orange-50 text-orange-700 border border-orange-200 cursor-pointer hover:bg-orange-100 transition-colors"
-              >
-                <Swords className="h-3 w-3" /> Challenger
-              </button>
-              <button
-                onClick={() => onAction("challenge", block.id)}
-                className="flex items-center gap-1 px-2 py-1 rounded text-[9px] font-medium bg-violet-50 text-violet-700 border border-violet-200 cursor-pointer hover:bg-violet-100 transition-colors"
-              >
-                <MessageSquare className="h-3 w-3" /> Debattre
-              </button>
+              {/* Approfondir — pas sur les blocs déjà de type "diagnostic" (déjà max depth) */}
+              {block.type !== "diagnostic" && (
+                <button
+                  onClick={() => onAction("deepen", block.id)}
+                  className="flex items-center gap-1 px-2 py-1 rounded text-[9px] font-medium bg-sky-50 text-sky-700 border border-sky-200 cursor-pointer hover:bg-sky-100 transition-colors"
+                >
+                  <Search className="h-3 w-3" /> Approfondir
+                </button>
+              )}
+              {/* Challenger — pas sur les blocs déjà de type "challenge" */}
+              {block.type !== "challenge" && block.type !== "challenge_result" && (
+                <button
+                  onClick={() => onAction("challenge", block.id)}
+                  className="flex items-center gap-1 px-2 py-1 rounded text-[9px] font-medium bg-orange-50 text-orange-700 border border-orange-200 cursor-pointer hover:bg-orange-100 transition-colors"
+                >
+                  <Swords className="h-3 w-3" /> Challenger
+                </button>
+              )}
+              {/* Debattre — sur expert_consultation et expert_input seulement */}
+              {(block.type === "expert_consultation" || block.type === "expert_input") && (
+                <button
+                  onClick={() => onAction("debate", block.id)}
+                  className="flex items-center gap-1 px-2 py-1 rounded text-[9px] font-medium bg-violet-50 text-violet-700 border border-violet-200 cursor-pointer hover:bg-violet-100 transition-colors"
+                >
+                  <MessageSquare className="h-3 w-3" /> Debattre
+                </button>
+              )}
               {/* Contextual actions per bot role */}
               {(() => {
                 const actions = getActionsForBlock(block);
@@ -3294,6 +3308,9 @@ function ExpertBlockWrapper({ block, onAction, children }: BlockRendererProps & 
 }
 
 export function BlockRenderer({ block, onAction, animated }: BlockRendererProps) {
+  // D9 fix: bot_actions = logique interne du bot, jamais affichée dans le workspace
+  if (block.type === "bot_actions") return null;
+
   // Catching-up skeleton: render directly without ExpertBlockWrapper
   if (block.is_catching_up || block.type === "catching_up") {
     return (

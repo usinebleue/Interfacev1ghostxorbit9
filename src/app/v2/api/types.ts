@@ -267,6 +267,21 @@ export interface CahierStatusResponse {
 
 // --- Chat Message (frontend) ---
 
+// C.32 — Données d'une auto-consultation pré-chargée (pills footer bot primaire, D2 fix)
+export interface AutoConsultationData {
+  bot_code: string;
+  bot_nom: string;
+  bot_titre: string;
+  bot_emoji: string;
+  reason: string;
+  degree: string;
+  from_bot: string;
+  from_bot_nom: string;
+  contenu: string;
+  options?: { label: string; value: string }[];
+  workspace_block?: Record<string, unknown>;
+}
+
 export type MessageType =
   | "normal"         // question/reponse standard
   | "challenge"      // user a challenge un bot
@@ -335,6 +350,8 @@ export interface ChatMessage {
   workspace_block_skip?: boolean;
   // Zero-Silo — consultation suggestions cross-bot
   consultationSuggestions?: ConsultationSuggestion[];
+  // C.32 — Auto-consultations pré-chargées (D2 fix: pills footer instead of new bubbles)
+  autoConsultations?: AutoConsultationData[];
 }
 
 // --- Crystal (idee cristallisee) ---

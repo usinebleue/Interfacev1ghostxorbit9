@@ -1181,34 +1181,35 @@ export function useChat() {
                 )
               );
             },
-            // C.32 — Auto-consultation cross-bot: inject consulted bot's response as new message
+            // C.32 — Auto-consultation cross-bot: D2 fix — pill footer sur bulle primaire, pas nouveau message
             onAutoConsultation: (acData: AutoConsultationEvent) => {
-              const consultMsgId = `auto-consult-${Date.now()}-${acData.bot_code}`;
-              const consultContent =
-                `**${acData.bot_titre}** repond a la consultation de ${acData.from_bot_nom}:\n\n` +
-                acData.contenu;
-              setMessages((prev) => [
-                ...prev,
-                {
-                  id: consultMsgId,
-                  role: "assistant" as const,
-                  content: consultContent,
-                  agent: acData.bot_code,
-                  timestamp: new Date().toISOString(),
-                  isStreaming: false,
-                  metadata: {
-                    auto_consultation: true,
-                    from_bot: acData.from_bot,
-                    reason: acData.reason,
-                    degree: acData.degree,
-                  },
-                  consultationSuggestions: undefined,
-                  workspace_block: acData.workspace_block || undefined,
-                  workspace_blocks: undefined,
-                  workspace_block_skip: false,
-                },
-              ]);
-              console.log(`[AUTO-CONSULT] ${acData.from_bot}→${acData.bot_code}: injected message`);
+              if (!botMsgId) return;
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === botMsgId
+                    ? {
+                        ...m,
+                        autoConsultations: [
+                          ...(m.autoConsultations || []),
+                          {
+                            bot_code: acData.bot_code,
+                            bot_nom: acData.bot_nom,
+                            bot_titre: acData.bot_titre,
+                            bot_emoji: acData.bot_emoji,
+                            reason: acData.reason,
+                            degree: acData.degree,
+                            from_bot: acData.from_bot,
+                            from_bot_nom: acData.from_bot_nom,
+                            contenu: acData.contenu,
+                            options: acData.options,
+                            workspace_block: acData.workspace_block,
+                          },
+                        ],
+                      }
+                    : m
+                )
+              );
+              console.log(`[AUTO-CONSULT] ${acData.from_bot}→${acData.bot_code}: added as footer pill`);
             },
             // C.34 — Bot Tools: handle tool execution results
             onToolResult: (trData) => {
