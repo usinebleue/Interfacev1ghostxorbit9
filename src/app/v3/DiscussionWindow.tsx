@@ -35,6 +35,7 @@ import { useChatContext } from "../v2/context/ChatContext";
 import { BOT_AVATAR, BOT_NAME, BOT_ROLE } from "../v2/api/types";
 import { useIsMobile } from "../components/ui/use-mobile";
 import { api } from "../v2/api/client";
+import type { TeamSuggestionEvent } from "../v2/api/client";
 import { BOT_CODES } from "./constants";
 import { DEPT_DASH_ICON, DEPT_GRADIENT, BOT_DISPLAY, PHASE_COLORS } from "./sections/shared/dept-data";
 import { DEPT_GREETING, DEPT_ACTIONS, ACTION_COLORS } from "./data/dept-welcome";
@@ -74,13 +75,19 @@ function applyInlineFormatting(text: string): string {
   return text
     .replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>')
     .replace(/\*(.+?)\*/g, '<em class="text-gray-600 italic">$1</em>')
-    .replace(/`(.+?)`/g, '<code class="px-1 py-0.5 bg-gray-100 rounded text-xs font-mono text-gray-800">$1</code>');
+    .replace(/`(.+?)`/g, '<code class="px-1 py-0.5 bg-gray-100 rounded text-xs font-mono text-gray-800">$1</code>')
+    .replace(/\[DONNEE REQUISE:\s*([^\]]+)\]/gi, '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-100 text-amber-700 text-xs font-medium border border-amber-200">⚠ Donnée manquante: $1</span>');
 }
 
 /** Rich markdown → HTML — copié du V2 formatBotText (source de vérité) */
 function formatMarkdown(text: string): string {
   if (!text) return "";
-  let html = text
+  // Strip internal labels: [INTERNE...], [EQUIPE PRESENTE:...], [BOT PRINCIPAL], [CONSULTANT — ...]
+  const stripped = text
+    .split("\n")
+    .filter(l => !/^\[(INTERNE|EQUIPE PRESENTE|BOT PRINCIPAL|CONSULTANT\s*[—\-])[^\]]*\]/i.test(l.trim()))
+    .join("\n");
+  let html = stripped
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
@@ -390,6 +397,48 @@ function CascadeChips({ suggestions, onAction }: {
             <span>{s.message || s.target_section}</span>
           </button>
         ))}
+      </div>
+    </div>
+  );
+}
+
+/** TeamSuggestionChip — bloc compact footer bulle: phrase punch + bouton ajouter bot */
+function TeamSuggestionChip({ suggestion, onAdd }: {
+  suggestion: TeamSuggestionEvent;
+  onAdd: (botCode: string) => void;
+}) {
+  const [added, setAdded] = useState(false);
+  const botCode = suggestion.bot_code;
+  const s = V3_STYLE[botCode] || DEFAULT_STYLE;
+  return (
+    <div className="mt-2 pt-2 border-t border-gray-100">
+      <span className="text-[9px] text-gray-400 font-medium uppercase tracking-wide flex items-center gap-1">
+        <Users className="h-2.5 w-2.5" /> Suggestion d'équipe
+      </span>
+      <div className="flex items-center gap-2.5 mt-1.5 bg-gradient-to-r from-indigo-50/60 to-white border border-indigo-100 rounded-xl px-3 py-2">
+        <div className={cn("w-7 h-7 rounded-full overflow-hidden shrink-0 ring-2", s.ring)}>
+          <img src={BOT_AVATAR[botCode] || `/agents/${botCode.toLowerCase()}.png`} alt={suggestion.bot_nom} className="w-full h-full object-cover" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-baseline gap-1.5">
+            <span className={cn("text-[11px] font-bold shrink-0", s.text)}>{suggestion.bot_nom}</span>
+            <span className="text-[9px] text-gray-400 truncate">{suggestion.bot_titre}</span>
+          </div>
+          <p className="text-[11px] text-gray-600 leading-snug mt-0.5 line-clamp-2">«&nbsp;{suggestion.pitch}&nbsp;»</p>
+        </div>
+        <button
+          onClick={() => { onAdd(botCode); setAdded(true); }}
+          disabled={added}
+          className={cn(
+            "shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-all",
+            added
+              ? "bg-green-50 border border-green-200 text-green-700 cursor-default"
+              : "border border-indigo-200 bg-white text-indigo-700 hover:bg-indigo-50 hover:border-indigo-300 cursor-pointer"
+          )}
+        >
+          {added ? <CheckCircle2 className="h-3 w-3" /> : <UserPlus className="h-3 w-3" />}
+          {added ? "Ajouté" : "+ Ajouter"}
+        </button>
       </div>
     </div>
   );
@@ -718,8 +767,8 @@ function InlineOptions({ options, onSend, isActive, msgType, agent, activeRoster
 // ═══ V3 MESSAGE LIST — Système unique de rendu des discussions ═══
 // Gère: bulles V3, options cliquables, streaming, thinking, coaching, voice
 function V3MessageList() {
-  const { messages, isTyping, sendMessage, sendMultiPerspective, thinkingSteps, parkThread, activeRoster, chatTargetBot } = useChatContext();
-  const { activeBotCode, activePhase, setActivePhase, setRightSection, setReflexionContext, reflexionContext, credoPhase, addWorkflowItem, workflowItems, chatStage, addWorkspaceBlock, workspaceBlocks, focusType, activeDocumentSection, startDeliverable } = useAmorcer();
+  const { messages, isTyping, sendMessage, sendMultiPerspective, thinkingSteps, parkThread, activeRoster, addBotToRoster, chatTargetBot } = useChatContext();
+  const { activeBotCode, activePhase, setActivePhase, setRightSection, setReflexionContext, reflexionContext, credoPhase, addWorkflowItem, workflowItems, chatStage, addWorkspaceBlock, removeWorkspaceBlock, workspaceBlocks, focusType, activeDocumentSection, startDeliverable } = useAmorcer();
   // Enrichir activePhase avec le step CREDO pour que le backend injecte le bon prompt
   // URL-based fallback: activePhase peut être "reflexion" si l'état a dérivé
   const _credoSteps = ["comprendre", "rechercher", "exposer", "demontrer", "objectif"];
@@ -728,6 +777,78 @@ function V3MessageList() {
   const workspacePhase = _effectiveDiscussion && chatStage < _credoSteps.length
     ? `discussion_${_credoSteps[chatStage]}`
     : activePhase;
+
+  // W.1 Expert pipeline — ajoute un bot dans la zone workspace (pas dans la discussion)
+  // Pattern identique à handleToggleBot dans LiveDiscussionView.tsx
+  const _credoLettersExpert: ("C" | "R" | "E" | "D" | "O")[] = ["C", "R", "E", "D", "O"];
+  const addExpertToWorkspace = useCallback(async (code: string) => {
+    addBotToRoster(code);
+    const credoStep = _credoLettersExpert[Math.min(chatStage, _credoLettersExpert.length - 1)];
+    const tempId = `catching-up-${code}-${Date.now()}`;
+    addWorkspaceBlock({
+      id: tempId,
+      type: "catching_up",
+      title: `${BOT_NAME[code] || code} prend connaissance...`,
+      summary: "Analyse de la discussion en cours...",
+      structured_data: {},
+      credo_step: credoStep,
+      credo_sub_section: "experts",
+      confidence: 0.5,
+      source: code,
+      sourceType: "chat",
+      timestamp: Date.now(),
+      is_catching_up: true,
+    } as any);
+    try {
+      const lastUserMsg = messages.filter(m => m.role === "user").pop()?.content || "";
+      const lastBotMsg = messages.filter(m => m.role === "assistant" && m.content).pop()?.content || "";
+      const recentCtx = workspaceBlocks.slice(-3)
+        .map(b => `[${BOT_NAME[b.source || ""] || ""}] ${b.title}: ${(b.summary || "").substring(0, 150)}`)
+        .join("\n");
+      const context = lastUserMsg || lastBotMsg
+        ? `Question: ${lastUserMsg}\n\nAnalyse en cours: ${lastBotMsg.substring(0, 500)}\n\nContexte récent:\n${recentCtx}`
+        : `Présente ce que tu apportes à cette discussion (3-4 phrases). Sois direct et propose 2-3 pistes concrètes.`;
+      const res = await api.chatMulti({
+        message: context,
+        user_id: 1,
+        agents: [code],
+        primary_agent: code,
+        workspace_phase: workspacePhase,
+      });
+      const persp = res.perspectives?.[0];
+      if (persp) {
+        // Strip internal scaffold markers que le LLM peut échoer
+        const _INTERNAL_MARKER_RE = /^\[(EQUIPE PRESENTE|BOT PRINCIPAL|CONSULTANT\s*[—\-])[^\]]*\]\s*/gim;
+        const cleanContent = (persp.contenu || "")
+          .replace(_INTERNAL_MARKER_RE, "")
+          .replace(/^---+\s*/gm, "")
+          .trim();
+        if (cleanContent.length > 10) {
+          addWorkspaceBlock({
+            id: `expert-${code}-${Date.now()}`,
+            type: "libre",
+            title: `${BOT_NAME[code] || code} — Apport expert`,
+            summary: cleanContent,
+            credo_step: credoStep,
+            credo_sub_section: "experts",
+            confidence: 0.7,
+            source: code,
+            sourceType: "chat",
+            timestamp: Date.now(),
+            replace_block_id: tempId,
+          } as any);
+        } else {
+          removeWorkspaceBlock(tempId);
+        }
+      } else {
+        removeWorkspaceBlock(tempId);
+      }
+    } catch (err) {
+      console.error("[ExpertAdd]", err);
+      removeWorkspaceBlock(tempId);
+    }
+  }, [addBotToRoster, messages, workspaceBlocks, addWorkspaceBlock, removeWorkspaceBlock, workspacePhase, chatStage]);
+
   const endRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const userScrolledUp = useRef(false);
@@ -1251,6 +1372,13 @@ function V3MessageList() {
                   <CascadeChips
                     suggestions={msg.cascadeSuggestions}
                     onAction={(s) => sendMessage(s.message, chatTargetBot)}
+                  />
+                )}
+                {/* ═══ Team suggestion — C.3 Auto-Monte: phrase punch + bouton ajouter bot ═══ */}
+                {!msg.isStreaming && isLast && (msg as any).teamSuggestion && (
+                  <TeamSuggestionChip
+                    suggestion={(msg as any).teamSuggestion as TeamSuggestionEvent}
+                    onAdd={(code) => addExpertToWorkspace(code)}
                   />
                 )}
               </div>

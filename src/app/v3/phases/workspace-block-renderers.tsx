@@ -38,7 +38,14 @@ function applyInlineFmt(text: string): string {
 
 function formatBlockMarkdown(text: string): string {
   if (!text) return "";
-  let html = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  // Strip internal scaffold markers (LLM peut les échoer depuis le team_scaffold)
+  const clean = text
+    .split("\n")
+    .filter(l => !/^\[(INTERNE|EQUIPE PRESENTE|BOT PRINCIPAL|CONSULTANT\s*[—\-])[^\]]*\]/i.test(l.trim()))
+    .join("\n")
+    .replace(/^---+\s*\n/gm, "")
+    .trim();
+  let html = clean.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   const lines = html.split("\n");
   const result: string[] = [];
   let listTag: "ul" | "ol" | null = null;
