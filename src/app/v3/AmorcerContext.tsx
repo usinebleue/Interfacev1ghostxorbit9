@@ -841,13 +841,16 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
           return copy;
         }
       }
-      // Dedup guard: skip if same source + same type + similar title within 5s
+      // Dedup guard: skip if same source + same type + similar title within 60s
+      // D-UX-03: fenêtre 60s (vs 5s avant) + fuzzy title (50 premiers chars, case-insensitive)
+      // Évite que useWorkspaceCapture ET le SSE workspace_block event n'ajoutent 2 blocs identiques
       const now = block.timestamp || Date.now();
+      const titlePrefix = (t: string) => (t || "").toLowerCase().trim().slice(0, 50);
       const duplicate = prev.find(b =>
         b.source === block.source &&
         b.type === block.type &&
-        b.title === block.title &&
-        Math.abs((b.timestamp || 0) - now) < 5000
+        titlePrefix(b.title) === titlePrefix(block.title) &&
+        Math.abs((b.timestamp || 0) - now) < 60000
       );
       if (duplicate) {
         console.log(`[WorkspaceBlock] SKIP duplicate: ${block.title} (source=${block.source})`);

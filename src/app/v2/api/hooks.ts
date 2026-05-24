@@ -318,6 +318,10 @@ function parseApiOptions(responseText: string): { cleanText: string; parsedOptio
     if (/\[TACHE\]/i.test(trimmed)) {
       continue;
     }
+    // Strip [INTERNE...] internal phase labels — never show to user
+    if (/^\[INTERNE/i.test(trimmed)) {
+      continue;
+    }
 
     // Detect Telegram-style options: 📌 1 · Option A | 2 · Option B | 3 · Option C
     if (/^\p{Emoji}?\s*1\s*[·.]\s*/u.test(trimmed) && /\|/.test(trimmed)) {
@@ -1026,6 +1030,7 @@ export function useChat() {
                         workspace_block: data.workspace_block || undefined,
                         workspace_blocks: data.workspace_blocks || undefined,
                         workspace_block_skip: data.workspace_block_skip || false,
+                        workspace_block_pending: data.workspace_block_pending || false,
                       }
                     : m
                 )
@@ -1164,6 +1169,18 @@ export function useChat() {
 
               resolve();
             },
+            // Workspace block différé — arrive via event "workspace" séparé après le done
+            // (perf: les options apparaissent immédiatement, le block suit ~5s plus tard)
+            onWorkspaceBlock: (wsData: { workspace_block: Record<string, unknown> }) => {
+              if (!wsData.workspace_block || !botMsgId) return;
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === botMsgId
+                    ? { ...m, workspace_block: wsData.workspace_block, workspace_block_pending: false }
+                    : m
+                )
+              );
+            },
             // C.32 — Auto-consultation cross-bot: inject consulted bot's response as new message
             onAutoConsultation: (acData: AutoConsultationEvent) => {
               const consultMsgId = `auto-consult-${Date.now()}-${acData.bot_code}`;
@@ -1214,33 +1231,15 @@ export function useChat() {
             },
             // C.3 — Auto-Monte C-Suite: CarlOS suggests activating a new bot
             onTeamSuggestion: (tsData: TeamSuggestionEvent) => {
-              const suggestMsgId = `team-suggest-${Date.now()}-${tsData.bot_code}`;
-              const suggestContent =
-                `**Suggestion d'equipe** — ${tsData.from_bot} recommande d'ajouter **${tsData.bot_nom}** (${tsData.bot_titre}) a ton equipe.\n\n` +
-                `> ${tsData.pitch}\n\n` +
-                `_Raison: ${tsData.reason}_`;
-              setMessages((prev) => [
-                ...prev,
-                {
-                  id: suggestMsgId,
-                  role: "assistant" as const,
-                  content: suggestContent,
-                  agent: tsData.from_bot,
-                  timestamp: new Date().toISOString(),
-                  isStreaming: false,
-                  metadata: {
-                    team_suggestion: true,
-                    suggested_bot: tsData.bot_code,
-                    suggested_bot_nom: tsData.bot_nom,
-                    confidence: tsData.confidence,
-                    urgency: tsData.urgency,
-                  },
-                  consultationSuggestions: undefined,
-                  workspace_block: undefined,
-                  workspace_blocks: undefined,
-                  workspace_block_skip: true,
-                },
-              ]);
+              // Patch la bulle courante avec la suggestion — pas de nouveau message dans le chat
+              if (!botMsgId) return;
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === botMsgId
+                    ? { ...m, teamSuggestion: tsData }
+                    : m
+                )
+              );
               console.log(`[CSUITE] ${tsData.from_bot} suggests adding ${tsData.bot_code} (${tsData.bot_nom})`);
             },
             // D-091 — COMMAND available: propose mode équipe

@@ -724,6 +724,11 @@ export function useWorkspaceCapture() {
         }
         if ((msg as any).isStreaming !== true && msg.content && msg.content.length >= 5) {
           console.log(`[WC-DEBUG] msg ${id}: isStreaming=false, _preFinalized=${!!(msg as any)._preFinalized}, has_wsBlock=${!!(msg as any).workspace_block}, activePhase=${activePhase}, url=${window.location.pathname.substring(0, 40)}`);
+          // Guard: workspace block différé — backend signale que le block arrive via event "workspace" séparé
+          // Ne pas marquer comme "processed" tant que le block n'est pas arrivé
+          if ((msg as any).workspace_block_pending) {
+            continue; // Attendre l'event "workspace" SSE
+          }
           // Guard: si le message a ete pre-finalise par le stale timer (options extraites cote client)
           // mais onDone n'est pas encore arrive avec le workspace_block du backend → attendre max 5s
           if ((msg as any)._preFinalized && !(msg as any).workspace_block) {

@@ -180,6 +180,7 @@ export type StreamCallback = {
   onTeamSuggestion?: (data: TeamSuggestionEvent) => void;
   onCommandAvailable?: (data: CommandAvailableEvent) => void;
   onCommandProgress?: (data: CommandProgressEvent) => void;
+  onWorkspaceBlock?: (data: { workspace_block: Record<string, unknown> }) => void;
 };
 
 // Chemin relatif — nginx reverse proxy vers FastAPI :8000
@@ -1447,6 +1448,8 @@ export const api = {
                     category: data.category,
                     tools_count: data.tools_count,
                   } as CommandProgressEvent);
+                } else if (currentEvent === "workspace") {
+                  callbacks.onWorkspaceBlock?.(data as { workspace_block: Record<string, unknown> });
                 } else if (currentEvent === "error") {
                   callbacks.onError(data.error || "Unknown stream error");
                 }
