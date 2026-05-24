@@ -298,7 +298,7 @@ function SectionedBlockContent({ summary, botCode }: { summary: string; botCode:
               <span className={cn("text-[10px] font-bold mt-0.5 shrink-0", sectionColors.numColor)}>
                 {s.index + 1}.
               </span>
-              <span className="text-xs font-semibold text-gray-900 leading-tight">{s.title}</span>
+              <span className="text-sm font-semibold text-gray-900 leading-tight">{s.title}</span>
             </div>
           )}
           <div
@@ -443,7 +443,7 @@ function BlockActions({ block, onAction }: BlockRendererProps) {
         <textarea
           value={editText}
           onChange={(e) => setEditText(e.target.value)}
-          className="w-full min-h-[100px] text-xs text-gray-700 leading-relaxed p-3 rounded-lg border border-blue-200 bg-blue-50/30 focus:outline-none focus:ring-1 focus:ring-blue-300 resize-y"
+          className="w-full min-h-[100px] text-sm text-gray-700 leading-relaxed p-3 rounded-lg border border-blue-200 bg-blue-50/30 focus:outline-none focus:ring-1 focus:ring-blue-300 resize-y"
           autoFocus
         />
         <div className="flex items-center gap-2">
@@ -653,16 +653,55 @@ type CompactCTA = { label: string; icon: typeof CheckCircle2; action: BlockActio
 // CTAs discussion (C→R→E→D): construire la reflexion, PAS executer.
 // L'execution vit dans le rapport final (O) qui garde BlockActions complet.
 const BLOCK_CTAS: Record<string, CompactCTA[]> = {
+  // ── Analyse & diagnostic ──
   diagnostic:      [
     { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
     { label: "Challenger", icon: Swords, action: "challenge", color: "border-amber-200 text-amber-700 hover:bg-amber-50", activeColor: "" },
     { label: "Approfondir", icon: Search, action: "deepen", color: "border-blue-200 text-blue-700 hover:bg-blue-50", activeColor: "" },
   ],
+  etat_des_lieux:  [
+    { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
+    { label: "Approfondir", icon: Search, action: "deepen", color: "border-blue-200 text-blue-700 hover:bg-blue-50", activeColor: "" },
+    { label: "Modifier", icon: Pencil, action: "edit", color: "border-gray-200 text-gray-600 hover:bg-gray-50", activeColor: "" },
+  ],
+  swot:            [
+    { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
+    { label: "Challenger", icon: Swords, action: "challenge", color: "border-amber-200 text-amber-700 hover:bg-amber-50", activeColor: "" },
+    { label: "Approfondir", icon: Search, action: "deepen", color: "border-blue-200 text-blue-700 hover:bg-blue-50", activeColor: "" },
+  ],
+  benchmark:       [
+    { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
+    { label: "Challenger", icon: Swords, action: "challenge", color: "border-amber-200 text-amber-700 hover:bg-amber-50", activeColor: "" },
+  ],
+  risques:         [
+    { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
+    { label: "Challenger", icon: Swords, action: "challenge", color: "border-amber-200 text-amber-700 hover:bg-amber-50", activeColor: "" },
+  ],
+  metriques:       [
+    { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
+    { label: "Approfondir", icon: Search, action: "deepen", color: "border-blue-200 text-blue-700 hover:bg-blue-50", activeColor: "" },
+  ],
+  // ── Idéation ──
   brainstorm:      [
     { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
     { label: "Challenger", icon: Swords, action: "challenge", color: "border-amber-200 text-amber-700 hover:bg-amber-50", activeColor: "" },
     { label: "Approfondir", icon: Search, action: "deepen", color: "border-blue-200 text-blue-700 hover:bg-blue-50", activeColor: "" },
   ],
+  // ── Stratégie & décision ──
+  decision:        [
+    { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
+    { label: "Challenger", icon: Swords, action: "challenge", color: "border-amber-200 text-amber-700 hover:bg-amber-50", activeColor: "" },
+  ],
+  recommandations: [
+    { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
+    { label: "Challenger", icon: Swords, action: "challenge", color: "border-amber-200 text-amber-700 hover:bg-amber-50", activeColor: "" },
+    { label: "Approfondir", icon: Search, action: "deepen", color: "border-blue-200 text-blue-700 hover:bg-blue-50", activeColor: "" },
+  ],
+  positionnement:  [
+    { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
+    { label: "Challenger", icon: Swords, action: "challenge", color: "border-amber-200 text-amber-700 hover:bg-amber-50", activeColor: "" },
+  ],
+  // ── Planification ──
   plan_action:     [
     { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
     { label: "Challenger", icon: Swords, action: "challenge", color: "border-amber-200 text-amber-700 hover:bg-amber-50", activeColor: "" },
@@ -672,15 +711,49 @@ const BLOCK_CTAS: Record<string, CompactCTA[]> = {
     { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
     { label: "Challenger", icon: Swords, action: "challenge", color: "border-amber-200 text-amber-700 hover:bg-amber-50", activeColor: "" },
   ],
-  recommandations: [
+  roadmap:         [
     { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
     { label: "Challenger", icon: Swords, action: "challenge", color: "border-amber-200 text-amber-700 hover:bg-amber-50", activeColor: "" },
+    { label: "Modifier", icon: Pencil, action: "edit", color: "border-gray-200 text-gray-600 hover:bg-gray-50", activeColor: "" },
+  ],
+  sprint_plan:     [
+    { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
+    { label: "Modifier", icon: Pencil, action: "edit", color: "border-gray-200 text-gray-600 hover:bg-gray-50", activeColor: "" },
+  ],
+  budget:          [
+    { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
     { label: "Approfondir", icon: Search, action: "deepen", color: "border-blue-200 text-blue-700 hover:bg-blue-50", activeColor: "" },
+    { label: "Modifier", icon: Pencil, action: "edit", color: "border-gray-200 text-gray-600 hover:bg-gray-50", activeColor: "" },
   ],
-  risques:         [
+  // ── Livrables & rapports ──
+  synthese:        [
+    { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
+    { label: "Retravailler", icon: RotateCcw, action: "rework", color: "border-sky-200 text-sky-700 hover:bg-sky-50", activeColor: "" },
+  ],
+  rapport:         [
+    { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
+    { label: "Modifier", icon: Pencil, action: "edit", color: "border-gray-200 text-gray-600 hover:bg-gray-50", activeColor: "" },
+  ],
+  // ── Opérationnel ──
+  compte_rendu:    [
+    { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
+    { label: "Modifier", icon: Pencil, action: "edit", color: "border-gray-200 text-gray-600 hover:bg-gray-50", activeColor: "" },
+  ],
+  meeting_notes:   [
+    { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
+    { label: "Modifier", icon: Pencil, action: "edit", color: "border-gray-200 text-gray-600 hover:bg-gray-50", activeColor: "" },
+  ],
+  // ── Financier ──
+  projection:      [
+    { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
+    { label: "Approfondir", icon: Search, action: "deepen", color: "border-blue-200 text-blue-700 hover:bg-blue-50", activeColor: "" },
+    { label: "Challenger", icon: Swords, action: "challenge", color: "border-amber-200 text-amber-700 hover:bg-amber-50", activeColor: "" },
+  ],
+  roi_analysis:    [
     { label: "Approuver", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
     { label: "Challenger", icon: Swords, action: "challenge", color: "border-amber-200 text-amber-700 hover:bg-amber-50", activeColor: "" },
   ],
+  // ── Multi-agent ──
   recalibration:   [
     { label: "Valider ✓", icon: CheckCircle2, action: "approve", color: "border-emerald-200 text-emerald-700 hover:bg-emerald-50", activeColor: "bg-emerald-100 border-emerald-300 text-emerald-800" },
     { label: "Approfondir", icon: Search, action: "deepen", color: "border-sky-200 text-sky-700 hover:bg-sky-50", activeColor: "" },

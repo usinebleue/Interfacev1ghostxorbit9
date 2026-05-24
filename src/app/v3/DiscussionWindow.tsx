@@ -426,68 +426,93 @@ function ExpertSuggestionChips({ suggestions, onConsult }: {
   );
 }
 
-/** AutoConsultationPills — D2 fix: auto-consultations pré-chargées en pills expandables dans le footer */
+/** AutoConsultationPills — N2/N10/N11/N12 fix: couleurs bot, markdown, option = capture (no bifurcation) */
 function AutoConsultationPills({
   consultations,
-  onSendOption,
   onAddToWorkspace,
 }: {
   consultations: AutoConsultationData[];
-  onSendOption: (text: string) => void;
   onAddToWorkspace: (c: AutoConsultationData) => void;
 }) {
   const [expanded, setExpanded] = useState<number | null>(null);
+  const [selected, setSelected] = useState<Record<number, string>>({});
 
   return (
     <div className="mt-2 pt-2 border-t border-gray-100 space-y-1">
-      <span className="text-[9px] text-blue-500 font-medium uppercase tracking-wide flex items-center gap-1">
+      <span className="text-[9px] text-gray-500 font-medium uppercase tracking-wide flex items-center gap-1">
         <Users className="h-2.5 w-2.5" /> Consultations d'experts
       </span>
-      {consultations.map((c, i) => (
-        <div key={`ac-${i}`} className="rounded-lg border border-blue-100 overflow-hidden">
-          <button
-            onClick={() => setExpanded(expanded === i ? null : i)}
-            className="w-full flex items-center gap-2 px-3 py-1.5 bg-blue-50/40 hover:bg-blue-50 transition-colors text-left"
-          >
-            <img
-              src={BOT_AVATAR[c.bot_code] || `/agents/${c.bot_code?.toLowerCase()}.png`}
-              alt={c.bot_nom}
-              className="w-5 h-5 rounded-full object-cover shrink-0"
-            />
-            <span className="text-[10px] font-bold text-blue-700 flex-1 truncate">{c.bot_nom}</span>
-            <span className="text-[9px] text-gray-400 line-clamp-1 flex-1 truncate">{c.reason}</span>
-            <ChevronDown className={cn("h-3 w-3 text-gray-400 shrink-0 transition-transform", expanded === i && "rotate-180")} />
-          </button>
-          {expanded === i && (
-            <div className="px-3 py-2 bg-white border-t border-blue-100 space-y-2">
-              <p className="text-[11px] text-gray-700 leading-relaxed whitespace-pre-wrap line-clamp-6">
-                {c.contenu}
-              </p>
-              {c.options && c.options.length > 0 && (
-                <div className="flex flex-wrap gap-1 pt-1">
-                  {c.options.map((opt, j) => (
-                    <button
-                      key={j}
-                      onClick={() => onSendOption(opt.value || opt.label)}
-                      className="flex items-center gap-1 px-2 py-0.5 rounded text-[9px] border border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
-                    >
-                      <ChevronRight className="h-2.5 w-2.5" />
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
+      {consultations.map((c, i) => {
+        const cStyle = V3_STYLE[c.bot_code] || DEFAULT_STYLE;
+        const isExpanded = expanded === i;
+        const chosenLabel = selected[i];
+        return (
+          <div key={`ac-${i}`} className={cn("rounded-lg border overflow-hidden", cStyle.border)}>
+            <button
+              onClick={() => setExpanded(isExpanded ? null : i)}
+              className={cn("w-full flex items-center gap-2 px-3 py-1.5 transition-colors text-left hover:brightness-95", cStyle.bubble)}
+            >
+              <img
+                src={BOT_AVATAR[c.bot_code] || `/agents/${c.bot_code?.toLowerCase()}.png`}
+                alt={c.bot_nom}
+                className="w-5 h-5 rounded-full object-cover shrink-0"
+              />
+              <span className={cn("text-[10px] font-bold flex-1 truncate", cStyle.text)}>{c.bot_nom}</span>
+              {chosenLabel ? (
+                <span className="text-[9px] text-emerald-600 flex items-center gap-0.5 shrink-0">
+                  <CheckCircle2 className="h-2.5 w-2.5" /> {chosenLabel}
+                </span>
+              ) : (
+                <span className="text-[9px] text-gray-400 line-clamp-1 flex-1 truncate">{c.reason}</span>
               )}
-              <button
-                onClick={() => onAddToWorkspace(c)}
-                className="flex items-center gap-1 px-2 py-0.5 rounded text-[9px] border border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors cursor-pointer"
-              >
-                <Plus className="h-2.5 w-2.5" />
-                +Workspace
-              </button>
-            </div>
-          )}
-        </div>
-      ))}
+              <ChevronDown className={cn("h-3 w-3 text-gray-400 shrink-0 transition-transform", isExpanded && "rotate-180")} />
+            </button>
+            {isExpanded && (
+              <div className="px-3 py-2 bg-white border-t border-gray-100 space-y-2">
+                {/* N11: contenu formaté markdown, N2: plus de line-clamp */}
+                <div
+                  className="text-sm leading-relaxed text-gray-700 [&>p]:my-1 [&>ul]:my-1.5 [&>ol]:my-1.5 [&>p:first-child]:mt-0 [&>p:last-child]:mb-0"
+                  dangerouslySetInnerHTML={{ __html: formatMarkdown(c.contenu) }}
+                />
+                {c.options && c.options.length > 0 && (
+                  <div className="flex flex-wrap gap-1 pt-1 border-t border-gray-50">
+                    <span className="text-[9px] text-gray-400 w-full mb-0.5">Point retenu :</span>
+                    {c.options.map((opt, j) => {
+                      const isChosen = selected[i] === opt.label;
+                      return (
+                        <button
+                          key={j}
+                          onClick={() => {
+                            // N12/N3/N4: capture le choix dans la pill, sans envoyer de message (no bifurcation)
+                            setSelected(prev => ({ ...prev, [i]: isChosen ? "" : opt.label }));
+                            if (!isChosen) setExpanded(null);
+                          }}
+                          className={cn(
+                            "flex items-center gap-1 px-2 py-0.5 rounded text-[9px] border transition-colors cursor-pointer",
+                            isChosen
+                              ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                              : "border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100"
+                          )}
+                        >
+                          {isChosen ? <Check className="h-2.5 w-2.5" /> : <ChevronRight className="h-2.5 w-2.5" />}
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                <button
+                  onClick={() => onAddToWorkspace(c)}
+                  className={cn("flex items-center gap-1 px-2 py-0.5 rounded text-[9px] border transition-colors cursor-pointer bg-white hover:bg-gray-50", cStyle.border, cStyle.text)}
+                >
+                  <Plus className="h-2.5 w-2.5" />
+                  +Workspace
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -1602,7 +1627,6 @@ function V3MessageList() {
                 {!msg.isStreaming && (msg as any).autoConsultations && (msg as any).autoConsultations.length > 0 && (
                   <AutoConsultationPills
                     consultations={(msg as any).autoConsultations as AutoConsultationData[]}
-                    onSendOption={(text) => sendMessage(text, chatTargetBot, undefined, { workspacePhase })}
                     onAddToWorkspace={(c) => {
                       const _steps: ("C"|"R"|"E"|"D"|"O")[] = ["C","R","E","D","O"];
                       addWorkspaceBlock({
