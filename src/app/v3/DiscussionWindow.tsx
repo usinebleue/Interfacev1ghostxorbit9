@@ -1011,10 +1011,12 @@ function V3MessageList() {
 
   // W.1 Expert pipeline — ajoute un bot dans la zone workspace (pas dans la discussion)
   // Pattern identique à handleToggleBot dans LiveDiscussionView.tsx
-  const _credoLettersExpert: ("C" | "R" | "E" | "D" | "O")[] = ["C", "R", "E", "D", "O"];
   const addExpertToWorkspace = useCallback(async (code: string) => {
     addBotToRoster(code);
-    const credoStep = _credoLettersExpert[Math.min(chatStage, _credoLettersExpert.length - 1)];
+    // Fix S131: utiliser le step du dernier bloc workspace (chatStage peut être décalé par phase_credo backend)
+    const credoStep = (workspaceBlocks.length > 0
+      ? workspaceBlocks[workspaceBlocks.length - 1].credo_step
+      : "C") as "C" | "R" | "E" | "D" | "O";
     const tempId = `catching-up-${code}-${Date.now()}`;
     addWorkspaceBlock({
       id: tempId,
@@ -1653,7 +1655,9 @@ function V3MessageList() {
                         type: "consultation",
                         title: _title,
                         summary: _summary,
-                        credo_step: _steps[Math.min(chatStage, 4)],
+                        credo_step: (workspaceBlocks.length > 0
+                          ? workspaceBlocks[workspaceBlocks.length - 1].credo_step
+                          : "C") as "C" | "R" | "E" | "D" | "O",
                         confidence: 0.85,
                         source: c.bot_code,
                         sourceType: "chat",
