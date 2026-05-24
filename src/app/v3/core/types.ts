@@ -133,7 +133,7 @@ export type WorkspaceBlockType =
   // DocForge
   | "docforge_section" | "docforge_code" | "docforge_tableur"
   // Operationnel
-  | "action_result" | "catching_up" | "meeting_notes" | "compte_rendu"
+  | "action_result" | "catching_up" | "meeting_notes" | "compte_rendu" | "bot_actions"
   // Suivi & mesure
   | "scorecard" | "dashboard" | "audit"
   // Financier

@@ -442,6 +442,27 @@ function BlockActions({ block, onAction }: BlockRendererProps) {
 
   return (
     <div className="pt-2 border-t border-gray-100 mt-3 space-y-2">
+      {/* Boutons "Démarrer" — actions que le bot propose d'exécuter */}
+      {block.action_suggestions && block.action_suggestions.length > 0 && (
+        <div className="space-y-1.5 pb-1">
+          <span className="text-[9px] text-emerald-600 font-semibold uppercase tracking-wide flex items-center gap-1">
+            <Zap className="h-2.5 w-2.5" /> Actions disponibles
+          </span>
+          <div className="flex flex-wrap gap-1.5">
+            {block.action_suggestions.map((suggestion, i) => (
+              <button
+                key={i}
+                onClick={() => window.dispatchEvent(new CustomEvent("bt-execute-task", {
+                  detail: { prompt: suggestion.prompt, bot: suggestion.target_bot || block.source, blockId: block.id, label: suggestion.label },
+                }))}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-colors cursor-pointer border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 shadow-sm"
+              >
+                <Zap className="h-3 w-3" /> {suggestion.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="flex flex-wrap gap-1.5">
         <button onClick={() => onAction("pin", block.id)}
           className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors cursor-pointer border-gray-200 text-gray-600 hover:bg-gray-50">
@@ -602,14 +623,11 @@ function BlockWrapper({ block, onAction, label, labelColor, children }: BlockRen
         <span className="text-[10px] text-gray-300">{new Date(block.timestamp).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })}</span>
       </div>
       {children}
-      {/* Compact mode (discussion): footer leger — SAUF pour rapport qui garde les boutons complets */}
-      {/* Primary bot blocks = captures de la discussion → PAS de boutons actions */}
-      {!(displayCtx.primaryBotCode && block.source === displayCtx.primaryBotCode) && (
-        displayCtx.compact && block.type !== "rapport" ? (
-          <CompactBlockFooter block={block} onAction={onAction} />
-        ) : (
-          <BlockActions block={block} onAction={onAction} />
-        )
+      {/* Footer actions — compact CTAs en mode discussion, boutons complets sinon */}
+      {displayCtx.compact && block.type !== "rapport" ? (
+        <CompactBlockFooter block={block} onAction={onAction} />
+      ) : (
+        <BlockActions block={block} onAction={onAction} />
       )}
     </div>
   );
@@ -2995,6 +3013,42 @@ function RecalibrationRenderer({ block, onAction }: BlockRendererProps) {
   );
 }
 
+// ═══ BotActionsRenderer — tâches exécutables que le bot propose de faire ═══
+function BotActionsRenderer({ block, onAction }: BlockRendererProps) {
+  const actions: { titre: string; prompt: string; bot?: string; priorite?: string }[] =
+    block.structured_data?.actions || [];
+  return (
+    <BlockWrapper block={block} onAction={onAction} label="Actions bot" labelColor="bg-emerald-100 text-emerald-700">
+      <p className="text-xs text-gray-600 mb-3 italic">{block.summary}</p>
+      {actions.length > 0 && (
+        <div className="space-y-2">
+          {actions.map((a, i) => (
+            <div key={i} className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-emerald-50/60 border border-emerald-100">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-gray-800 truncate">{a.titre}</p>
+                {a.priorite && (
+                  <span className={cn("text-[9px] font-medium px-1.5 py-0.5 rounded-full",
+                    a.priorite === "haute" ? "bg-red-100 text-red-700" :
+                    a.priorite === "normale" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600"
+                  )}>{a.priorite}</span>
+                )}
+              </div>
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent("bt-execute-task", {
+                  detail: { prompt: a.prompt || a.titre, bot: a.bot || block.source, blockId: block.id, label: a.titre },
+                }))}
+                className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-emerald-300 bg-white text-emerald-700 hover:bg-emerald-50 text-[10px] font-bold transition-colors cursor-pointer"
+              >
+                <Zap className="h-3 w-3" /> Démarrer
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </BlockWrapper>
+  );
+}
+
 // ═══ Registre central ═══
 
 const BLOCK_RENDERERS: Record<WorkspaceBlockType, React.FC<BlockRendererProps>> = {
@@ -3050,6 +3104,7 @@ const BLOCK_RENDERERS: Record<WorkspaceBlockType, React.FC<BlockRendererProps>> 
   fiche_poste: LibreRenderer,
   poc_plan: PlanActionRenderer,
   veille_techno: BenchmarkRenderer,
+  bot_actions: BotActionsRenderer,
 };
 
 // ═══ Default action suggestions per bot role ═══
@@ -3283,6 +3338,7 @@ export const BLOCK_TYPE_LABELS: Record<WorkspaceBlockType, string> = {
   docforge_tableur: "Tableur",
   action_result: "Action",
   catching_up: "En cours...",
+  bot_actions: "Actions bot",
   // S117 — New type labels
   swot: "SWOT",
   positionnement: "Positionnement",

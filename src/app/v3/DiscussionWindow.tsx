@@ -866,6 +866,18 @@ function V3MessageList() {
   // Dernier message user (pour cristallisation intelligente)
   const lastUserMessage = [...messages].reverse().find(m => m.role === "user")?.content || "";
 
+  // Écouter bt-execute-task — bouton "Démarrer" depuis les blocs workspace
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { prompt, bot } = (e as CustomEvent).detail || {};
+      if (!prompt) return;
+      const targetBot = bot || chatTargetBot;
+      sendMessage(prompt, targetBot, undefined, { workspacePhase });
+    };
+    window.addEventListener("bt-execute-task", handler);
+    return () => window.removeEventListener("bt-execute-task", handler);
+  }, [sendMessage, chatTargetBot, workspacePhase]);
+
   // Détecter si l'user a scrollé vers le haut (désactive l'auto-scroll)
   useEffect(() => {
     const el = scrollRef.current;
