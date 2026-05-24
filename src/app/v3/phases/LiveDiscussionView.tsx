@@ -2212,52 +2212,8 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
           {/* Completude CREDO = interne. Les champs manquants sont injectes dans le
              prompt backend pour guider les options du bot, pas affiches a l'utilisateur. */}
 
-          {/* CONSULTATION SUGGESTIONS — Zero-Silo cross-bot (D-116: moved ABOVE blocks for visibility) */}
-          {latestConsultationSuggestions.length > 0 && (
-            <div className="mb-3 space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-500">
-              <div className="flex items-center gap-2 mb-1">
-                <Users className="h-3.5 w-3.5 text-blue-600" />
-                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600">Consultation recommandee</span>
-              </div>
-              {latestConsultationSuggestions.map((sug, sugIdx) => (
-                <button
-                  key={`consult-${sugIdx}`}
-                  onClick={() => handleConsultBot(sug)}
-                  disabled={consultLoading !== null}
-                  className={cn(
-                    "w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-blue-200",
-                    "bg-gradient-to-r from-blue-50/80 via-white to-indigo-50/60",
-                    "hover:border-blue-400 hover:shadow-md hover:from-blue-50 hover:to-indigo-50",
-                    "cursor-pointer transition-all text-left group/consult",
-                    "animate-in fade-in slide-in-from-bottom-2 duration-400",
-                    consultLoading === sug.consult && "opacity-70 cursor-wait"
-                  )}
-                  style={{ animationDelay: `${sugIdx * 120}ms`, animationFillMode: 'backwards' }}
-                >
-                  <div className="w-8 h-8 rounded-full overflow-hidden ring-2 ring-blue-300 group-hover/consult:ring-blue-400 transition-all shrink-0 shadow-sm">
-                    <img src={BOT_AVATAR[sug.consult] || `/agents/${sug.consult?.toLowerCase()}.png`}
-                      alt={sug.consult_titre || ""} className="w-full h-full object-cover" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span className="text-xs font-bold text-gray-900">{sug.consult_emoji} {sug.consult_titre}</span>
-                      <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">{BOT_ROLE_SHORT[sug.consult] || ""}</span>
-                    </div>
-                    <span className="text-[11px] text-gray-600 leading-snug line-clamp-2">
-                      {sug.reason.substring(0, 140)}
-                    </span>
-                  </div>
-                  {consultLoading === sug.consult ? (
-                    <Loader2 className="h-4 w-4 text-blue-500 shrink-0 animate-spin" />
-                  ) : (
-                    <div className="shrink-0 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-[10px] font-bold group-hover/consult:bg-blue-700 transition-colors shadow-sm">
-                      Consulter
-                    </div>
-                  )}
-                </button>
-              ))}
-            </div>
-          )}
+          {/* Consultation suggestions retirées du workspace — gérées dans le footer des bulles
+             via AutoConsultationPills (DiscussionWindow.tsx) — pas de duplication workspace/discussion */}
 
           {/* DYNAMIC STEP CONTENT — timeline plate de tous les blocs */}
           <DynamicStepContent
