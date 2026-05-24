@@ -432,10 +432,11 @@ function AutoConsultationPills({
   onAddToWorkspace,
 }: {
   consultations: AutoConsultationData[];
-  onAddToWorkspace: (c: AutoConsultationData) => void;
+  onAddToWorkspace: (c: AutoConsultationData, selectedOption?: string) => void;
 }) {
   const [expanded, setExpanded] = useState<number | null>(null);
   const [selected, setSelected] = useState<Record<number, string>>({});
+  const [added, setAdded] = useState<Set<number>>(new Set());
 
   return (
     <div className="mt-2 pt-2 border-t border-gray-100 space-y-1">
@@ -502,11 +503,23 @@ function AutoConsultationPills({
                   </div>
                 )}
                 <button
-                  onClick={() => onAddToWorkspace(c)}
-                  className={cn("flex items-center gap-1 px-2 py-0.5 rounded text-[9px] border transition-colors cursor-pointer bg-white hover:bg-gray-50", cStyle.border, cStyle.text)}
+                  onClick={() => {
+                    if (added.has(i)) return;
+                    onAddToWorkspace(c, selected[i] || undefined);
+                    setAdded(prev => new Set([...prev, i]));
+                    setExpanded(null);
+                  }}
+                  className={cn(
+                    "flex items-center gap-1 px-2 py-0.5 rounded text-[9px] border transition-colors cursor-pointer",
+                    added.has(i)
+                      ? "bg-emerald-50 border-emerald-300 text-emerald-700 cursor-default"
+                      : cn("bg-white hover:bg-gray-50", cStyle.border, cStyle.text)
+                  )}
                 >
-                  <Plus className="h-2.5 w-2.5" />
-                  +Workspace
+                  {added.has(i)
+                    ? <><CheckCircle2 className="h-2.5 w-2.5" /> Ajouté</>
+                    : <><Plus className="h-2.5 w-2.5" /> +Workspace</>
+                  }
                 </button>
               </div>
             )}
@@ -1627,13 +1640,19 @@ function V3MessageList() {
                 {!msg.isStreaming && (msg as any).autoConsultations && (msg as any).autoConsultations.length > 0 && (
                   <AutoConsultationPills
                     consultations={(msg as any).autoConsultations as AutoConsultationData[]}
-                    onAddToWorkspace={(c) => {
+                    onAddToWorkspace={(c, selectedOption) => {
                       const _steps: ("C"|"R"|"E"|"D"|"O")[] = ["C","R","E","D","O"];
+                      const _title = selectedOption
+                        ? `${BOT_NAME[c.bot_code] || c.bot_nom} — ${selectedOption}`
+                        : `Consultation ${BOT_NAME[c.bot_code] || c.bot_nom}`;
+                      const _summary = selectedOption
+                        ? `Focus retenu : ${selectedOption}\n\n${(c.contenu || "").trim().slice(0, 1800)}`
+                        : (c.contenu || "").trim().slice(0, 2000);
                       addWorkspaceBlock({
                         id: `expert-consult-${c.bot_code}-${Date.now()}`,
-                        type: "expert_consultation",
-                        title: `Consultation ${BOT_NAME[c.bot_code] || c.bot_nom}`,
-                        summary: (c.contenu || "").trim().slice(0, 2000),
+                        type: "consultation",
+                        title: _title,
+                        summary: _summary,
                         credo_step: _steps[Math.min(chatStage, 4)],
                         confidence: 0.85,
                         source: c.bot_code,

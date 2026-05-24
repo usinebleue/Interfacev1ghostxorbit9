@@ -1087,6 +1087,54 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
         })();
         break;
       }
+      case "edit": {
+        // Modifier = retravail dirigé — même pipeline que rework
+        setPulsingBlockId(effectiveId);
+        setTimeout(() => setPulsingBlockId(null), 1500);
+        const targetBotEdit = block.source || activeBotCode;
+        setLoadingBlockId(effectiveId);
+        setLoadingLabel("Modification en cours...");
+        setLoadingBotCode(targetBotEdit);
+        if (block.sourceType === "chat" && block.source) {
+          (async () => {
+            try {
+              const recentCtx = workspaceBlocks.slice(-3).map(b2 => `[${BOT_NAME[b2.source || ""] || ""}] ${b2.title}: ${(b2.summary || "").substring(0, 150)}`).join("\n");
+              const res = await api.chatMulti({
+                message: `Modifie et améliore ce point: ${block.title}\n\n${block.summary.substring(0, 500)}\n\nContexte recent:\n${recentCtx}${teamNote}`,
+                user_id: 1,
+                agents: [targetBotEdit],
+                primary_agent: targetBotEdit,
+                workspace_phase: activePhase,
+              });
+              const persp = res.perspectives?.[0];
+              if (!persp) return;
+              const blockType = detectBlockTypeFrontend(persp.contenu);
+              addWorkspaceBlock({
+                id: `expert-${targetBotEdit}-${Date.now()}`,
+                type: blockType,
+                title: generateExpertBlockTitle(BOT_NAME[targetBotEdit] || targetBotEdit, persp.contenu, "Modification"),
+                summary: persp.contenu,
+                structured_data: extractStructuredDataFrontend(persp.contenu, blockType),
+                credo_step: block.credo_step,
+                credo_sub_section: "experts",
+                confidence: 0.8,
+                source: targetBotEdit,
+                sourceType: "chat",
+                timestamp: Date.now(),
+                merge_label: "Modification",
+              });
+            } catch (err) {
+              console.error("[Expert edit] Error:", err);
+            } finally {
+              setLoadingBlockId(null);
+            }
+          })();
+        } else {
+          sendMessage(`Modifie et améliore: ${block.title}\n\n${block.summary}`, targetBotEdit);
+          // setLoadingBlockId(null) géré par useEffect isTyping (N7 fix)
+        }
+        break;
+      }
       case "delete":
         removeWorkspaceBlock(blockId);
         break;
@@ -2575,192 +2623,81 @@ function DeepSearchPanel({ activeBotCode, currentCredoLetter, addWorkspaceBlock,
   );
 }
 
-// ═══ S117 Phase 4B: SyntheseSection — rapport de synthese en bas du workspace ═══
+// ═══ S117 Phase 4B: SyntheseSection — capsule de ce qui a été cerné ═══
+// Redesign S131: auto-display par étape CREDO, sans bouton ni KPIs numériques.
 
-function SyntheseSection({ workspaceBlocks, activeBotCode, displayContext }: {
+function SyntheseSection({ workspaceBlocks }: {
   workspaceBlocks: import("../core/types").WorkspaceBlock[];
   activeBotCode: string;
   displayContext: string;
 }) {
-  const [synthese, setSynthese] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
-
-  const uniqueBots = [...new Set(workspaceBlocks.map(b => b.source).filter(Boolean))];
-  const credoSteps = [...new Set(workspaceBlocks.map(b => b.credo_step))];
-  const validatedCount = workspaceBlocks.filter(b => b.maturity === "validated" || b.maturity === "deployed").length;
-
-  const handleGenerate = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/v1/workspace/synthese", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-API-Key": "brain-team-2024" },
-        body: JSON.stringify({
-          blocks: workspaceBlocks.map(b => ({
-            type: b.type, title: b.title, summary: b.summary,
-            source: b.source, credo_step: b.credo_step, maturity: b.maturity,
-          })),
-          discussion_context: displayContext,
-          primary_bot: activeBotCode,
-        }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setSynthese(data.synthese);
-      }
-    } catch (err) {
-      console.error("[SyntheseSection] Error:", err);
-    } finally {
-      setLoading(false);
-    }
+  const CREDO_LABELS: Record<string, string> = {
+    C: "Connecter", R: "Rechercher", E: "Exposer", D: "Démontrer", O: "Objectif",
   };
+  const CREDO_ORDER: ("C" | "R" | "E" | "D" | "O")[] = ["C", "R", "E", "D", "O"];
+
+  // Grouper les blocs par étape CREDO dans l'ordre
+  const blocksByStep = workspaceBlocks.reduce<Record<string, import("../core/types").WorkspaceBlock[]>>((acc, b) => {
+    if (!acc[b.credo_step]) acc[b.credo_step] = [];
+    acc[b.credo_step].push(b);
+    return acc;
+  }, {});
+  const activeSteps = CREDO_ORDER.filter(s => (blocksByStep[s]?.length ?? 0) > 0);
+  const uniqueBots = [...new Set(workspaceBlocks.map(b => b.source).filter(Boolean))];
 
   return (
-    <div id="workspace-synthese-section" className="mt-6 mb-4">
-      {/* Hero gradient header */}
-      <div className="rounded-t-xl bg-gradient-to-r from-[#073E5A] via-[#0c5a7d] to-[#073E5A] p-4 text-white">
-        <div className="flex items-center gap-3">
-          <FileText className="h-5 w-5 shrink-0" />
-          <div className="flex-1">
-            <h3 className="text-sm font-bold">Synthese de la discussion</h3>
-            <p className="text-[10px] text-white/60 mt-0.5">
-              {workspaceBlocks.length} blocs · {uniqueBots.length} agents · {credoSteps.length} phases CREDO
-            </p>
-          </div>
-          {synthese && (
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-200 text-[9px] font-medium">
-              <CheckCircle2 className="h-3 w-3" />
-              Generee
-            </div>
-          )}
+    <div id="workspace-synthese-section" className="mt-4 mb-4">
+      <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+        {/* Header compact */}
+        <div className="flex items-center gap-2.5 px-3 py-2 border-b border-slate-100 bg-slate-50">
+          <Target className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex-1">
+            Ce que vous avez cerné
+          </span>
+          <span className="text-[9px] text-slate-400">
+            {workspaceBlocks.length} élément{workspaceBlocks.length > 1 ? "s" : ""}
+            {uniqueBots.length > 1 ? ` · ${uniqueBots.length} experts` : ""}
+          </span>
         </div>
-      </div>
-
-      {/* Quick stats — always visible */}
-      <div className="grid grid-cols-4 gap-2 p-3 bg-gray-50 border-x border-gray-200">
-        <div className="text-center">
-          <div className="text-lg font-bold text-gray-900">{workspaceBlocks.length}</div>
-          <div className="text-[9px] text-gray-400 uppercase font-medium">Blocs</div>
-        </div>
-        <div className="text-center">
-          <div className="text-lg font-bold text-gray-900">{uniqueBots.length}</div>
-          <div className="text-[9px] text-gray-400 uppercase font-medium">Agents</div>
-        </div>
-        <div className="text-center">
-          <div className="text-lg font-bold text-gray-900">{credoSteps.length}/5</div>
-          <div className="text-[9px] text-gray-400 uppercase font-medium">Phases</div>
-        </div>
-        <div className="text-center">
-          <div className="text-lg font-bold text-gray-900">{validatedCount}</div>
-          <div className="text-[9px] text-gray-400 uppercase font-medium">Valides</div>
-        </div>
-      </div>
-
-      {/* Synthese content — shown after generation */}
-      {synthese && (
-        <div className="border border-gray-200 border-t-0 rounded-b-xl bg-white p-4 space-y-4">
-          {/* Executive summary */}
-          <div>
-            <h4 className="text-xs font-bold text-gray-900 mb-1">{synthese.title || "Synthese"}</h4>
-            <p className="text-sm text-gray-700 leading-relaxed">{synthese.executive_summary}</p>
-          </div>
-
-          {/* KPIs */}
-          {synthese.kpis?.length > 0 && (
-            <div className="grid grid-cols-3 gap-2">
-              {synthese.kpis.map((kpi: any, i: number) => (
-                <div key={i} className="rounded-lg border border-gray-200 p-2.5 text-center">
-                  <div className="text-lg font-bold text-gray-900">{kpi.value}</div>
-                  <div className="text-[10px] text-gray-500">{kpi.label}</div>
-                  {kpi.delta && (
-                    <span className={cn("text-[9px] font-bold",
-                      kpi.status === "up" ? "text-emerald-600" : kpi.status === "down" ? "text-red-600" : "text-gray-400"
-                    )}>
-                      {kpi.delta}
-                    </span>
+        {/* Blocs groupés par étape CREDO — dans l'ordre C→R→E→D→O */}
+        <div className="divide-y divide-slate-100">
+          {activeSteps.map(step => {
+            const stepBlocks = blocksByStep[step] ?? [];
+            const topBlocks = stepBlocks.slice(0, 3);
+            return (
+              <div key={step} className="px-3 py-2.5">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <span className="w-4 h-4 rounded-full bg-slate-100 flex items-center justify-center text-[8px] font-bold text-slate-500 shrink-0 border border-slate-200">
+                    {step}
+                  </span>
+                  <span className="text-[9px] font-semibold text-slate-500 uppercase tracking-wide">
+                    {CREDO_LABELS[step]}
+                  </span>
+                  {stepBlocks.length > 3 && (
+                    <span className="text-[8px] text-slate-400 ml-1">+{stepBlocks.length - 3} autres</span>
                   )}
                 </div>
-              ))}
-            </div>
-          )}
-
-          {/* Contributions par agent */}
-          {synthese.contributions?.length > 0 && (
-            <div>
-              <h5 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">Contributions</h5>
-              <div className="space-y-1.5">
-                {synthese.contributions.map((c: any, i: number) => (
-                  <div key={i} className="flex items-start gap-2 text-xs">
-                    <BotAvatar code={c.bot || ""} size="sm" />
-                    <div className="flex-1 min-w-0">
-                      <span className="font-bold text-gray-800">{c.bot_name || c.bot}</span>
-                      <span className="text-gray-400 mx-1">—</span>
-                      <span className="text-gray-600">{c.summary}</span>
+                <div className="space-y-1 pl-[22px]">
+                  {topBlocks.map(b => (
+                    <div key={b.id} className="flex items-start gap-1.5">
+                      <span className="text-slate-300 text-[10px] mt-0.5 shrink-0">·</span>
+                      <p className="text-[10px] text-slate-700 leading-snug">
+                        <span className="font-medium">{b.title}</span>
+                        {b.summary && (
+                          <span className="text-slate-400">
+                            {" — "}{b.summary.replace(/\n/g, " ").substring(0, 90)}
+                            {b.summary.length > 90 ? "…" : ""}
+                          </span>
+                        )}
+                      </p>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-
-          {/* Decisions */}
-          {synthese.decisions?.length > 0 && (
-            <div>
-              <h5 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">Decisions</h5>
-              <div className="space-y-1">
-                {synthese.decisions.map((d: any, i: number) => (
-                  <div key={i} className="flex items-center gap-2 text-xs">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                    <span className="text-gray-700 flex-1">{d.decision}</span>
-                    <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium",
-                      d.priority === "haute" ? "bg-red-100 text-red-700" :
-                      d.priority === "moyenne" ? "bg-amber-100 text-amber-700" :
-                      "bg-gray-100 text-gray-500"
-                    )}>
-                      {d.priority}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Next steps */}
-          {synthese.next_steps?.length > 0 && (
-            <div>
-              <h5 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">Prochaines etapes</h5>
-              <div className="space-y-1">
-                {synthese.next_steps.map((s: any, i: number) => (
-                  <div key={i} className="flex items-center gap-2 text-xs">
-                    <ArrowRight className="h-3 w-3 text-blue-500 shrink-0" />
-                    <span className="text-gray-700 flex-1">{s.action}</span>
-                    {s.deadline && <span className="text-[9px] text-gray-400">{s.deadline}</span>}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+            );
+          })}
         </div>
-      )}
-
-      {/* Not yet generated — compact call-to-action */}
-      {!synthese && !loading && (
-        <div className="border border-gray-200 border-t-0 rounded-b-xl bg-white px-4 py-4 flex items-center justify-center">
-          <button
-            onClick={handleGenerate}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#073E5A] text-white text-xs font-bold hover:bg-[#0c5a7d] cursor-pointer transition-colors shadow-sm"
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            Generer la synthese
-          </button>
-        </div>
-      )}
-      {!synthese && loading && (
-        <div className="border border-gray-200 border-t-0 rounded-b-xl bg-white px-4 py-4 flex items-center justify-center gap-2 text-gray-400">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <span className="text-xs">Generation en cours...</span>
-        </div>
-      )}
+      </div>
     </div>
   );
 }
