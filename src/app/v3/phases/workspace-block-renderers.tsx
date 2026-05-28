@@ -769,6 +769,7 @@ const BLOCK_CTAS: Record<string, CompactCTA[]> = {
 
 function CompactBlockFooter({ block, onAction }: BlockRendererProps) {
   const [approved, setApproved] = useState(false);
+  const [feedback, setFeedback] = useState<"up" | "down" | null>(null);
   const ctas = BLOCK_CTAS[block.type] || BLOCK_CTAS._default;
 
   const handleCTA = (cta: CompactCTA) => {
@@ -798,10 +799,44 @@ function CompactBlockFooter({ block, onAction }: BlockRendererProps) {
           );
         })}
       </div>
-      {/* Source bot + timestamp */}
+      {/* Source bot + timestamp + C.57 feedback thumbs */}
       <div className="flex items-center gap-2">
         <BotBadgeFull botCode={block.source} compact />
-        <span className="text-[9px] text-gray-300 ml-auto">{new Date(block.timestamp).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })}</span>
+        <span className="text-[9px] text-gray-300">{new Date(block.timestamp).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })}</span>
+        <div className="ml-auto flex items-center gap-1">
+          <button
+            onClick={() => {
+              const next = feedback === "up" ? null : "up";
+              setFeedback(next);
+              if (next) fetch("/api/v1/workspace/feedback", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ block_id: block.id, rating: "up", user_id: 0 }),
+              }).catch(() => {});
+            }}
+            className={cn(
+              "p-1 rounded-md transition-colors cursor-pointer",
+              feedback === "up" ? "bg-emerald-100 text-emerald-600" : "text-gray-300 hover:text-emerald-500 hover:bg-emerald-50"
+            )}
+          >
+            <ThumbsUp className="h-3 w-3" />
+          </button>
+          <button
+            onClick={() => {
+              const next = feedback === "down" ? null : "down";
+              setFeedback(next);
+              if (next) fetch("/api/v1/workspace/feedback", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ block_id: block.id, rating: "down", user_id: 0 }),
+              }).catch(() => {});
+            }}
+            className={cn(
+              "p-1 rounded-md transition-colors cursor-pointer",
+              feedback === "down" ? "bg-red-100 text-red-500" : "text-gray-300 hover:text-red-400 hover:bg-red-50"
+            )}
+          >
+            <ThumbsDown className="h-3 w-3" />
+          </button>
+        </div>
       </div>
     </div>
   );
