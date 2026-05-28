@@ -2382,7 +2382,7 @@ function LibreRenderer({ block, onAction }: BlockRendererProps) {
       )}
       <div className="relative">
         <div
-          className={cn("text-sm text-gray-700 leading-relaxed overflow-hidden transition-all duration-300",
+          className={cn("text-sm text-gray-700 leading-relaxed overflow-hidden transition-all duration-300 [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded",
             isLong && !expanded && "max-h-[300px]"
           )}
           dangerouslySetInnerHTML={{ __html: formatBlockMarkdown(block.summary) }}

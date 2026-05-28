@@ -530,83 +530,6 @@ function AutoConsultationPills({
   );
 }
 
-/** SecondaryBotActions — D3/D4/D5 fix: boutons avec loading state pour bots secondaires */
-function SecondaryBotActions({
-  msg,
-  botCode,
-  chatTargetBot,
-  workspacePhase,
-  chatStage,
-  onSend,
-  onAddWorkspace,
-}: {
-  msg: { content: string; agent?: string };
-  botCode: string;
-  chatTargetBot: string;
-  workspacePhase: string;
-  chatStage: number;
-  onSend: (text: string, bot: string, opts?: undefined, extra?: Record<string, unknown>) => void;
-  onAddWorkspace: (block: Record<string, unknown>) => void;
-}) {
-  const [pending, setPending] = useState<"deepen" | "challenge" | "workspace" | null>(null);
-
-  const handle = (action: "deepen" | "challenge" | "workspace") => {
-    if (pending) return;
-    setPending(action);
-    const _steps: ("C"|"R"|"E"|"D"|"O")[] = ["C","R","E","D","O"];
-    if (action === "deepen") {
-      onSend(`Approfondir en detail: ${msg.content.slice(0, 120)}`, botCode, undefined, { workspacePhase });
-      setTimeout(() => setPending(null), 1200);
-    } else if (action === "challenge") {
-      onSend(`Challenge cet element, trouve les failles: ${msg.content.slice(0, 120)}`, chatTargetBot, undefined, { workspacePhase });
-      setTimeout(() => setPending(null), 1200);
-    } else {
-      const _clean = (msg.content || "").replace(/^[A-Z]+\s+repond[^:\n]+:\s*\n+/i, "").trim();
-      onAddWorkspace({
-        id: `expert-input-${botCode}-${Date.now()}`,
-        type: "expert_input",
-        title: `${BOT_NAME[botCode] || botCode} — Input`,
-        summary: _clean.slice(0, 2000),
-        credo_step: _steps[Math.min(chatStage, 4)],
-        confidence: 0.85,
-        source: botCode,
-        sourceType: "chat",
-        timestamp: Date.now(),
-      });
-      setTimeout(() => setPending(null), 600);
-    }
-  };
-
-  return (
-    <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-gray-100">
-      <button
-        onClick={() => handle("deepen")}
-        disabled={!!pending}
-        className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] border border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100 hover:border-gray-300 cursor-pointer transition-all font-medium disabled:opacity-60"
-      >
-        {pending === "deepen" ? <Loader2 className="h-2.5 w-2.5 animate-spin" /> : <ChevronRight className="h-2.5 w-2.5 flex-shrink-0" />}
-        Approfondir
-      </button>
-      <button
-        onClick={() => handle("challenge")}
-        disabled={!!pending}
-        className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] border border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100 hover:border-gray-300 cursor-pointer transition-all font-medium disabled:opacity-60"
-      >
-        {pending === "challenge" ? <Loader2 className="h-2.5 w-2.5 animate-spin" /> : <Shield className="h-2.5 w-2.5 flex-shrink-0" />}
-        Challenger
-      </button>
-      <button
-        onClick={() => handle("workspace")}
-        disabled={!!pending}
-        className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300 cursor-pointer transition-all font-medium disabled:opacity-60"
-      >
-        {pending === "workspace" ? <Loader2 className="h-2.5 w-2.5 animate-spin" /> : <Plus className="h-2.5 w-2.5 flex-shrink-0" />}
-        +Workspace
-      </button>
-    </div>
-  );
-}
-
 /** CascadeChips — small chips in bubble footer for cascade/reflexion actions */
 function CascadeChips({ suggestions, onAction }: {
   suggestions: Array<{ target_section: string; message: string; view: string; sub_section: string }>;
@@ -1654,18 +1577,6 @@ function V3MessageList() {
                         timestamp: Date.now(),
                       } as any);
                     }}
-                  />
-                )}
-                {/* ═══ Boutons action bots secondaires — D3/D4/D5 fix: avec loading state ═══ */}
-                {!msg.isStreaming && !!msg.agent && msg.agent !== activeBotCode && (
-                  <SecondaryBotActions
-                    msg={msg}
-                    botCode={botCode}
-                    chatTargetBot={chatTargetBot}
-                    workspacePhase={workspacePhase}
-                    chatStage={chatStage}
-                    onSend={sendMessage}
-                    onAddWorkspace={(block) => addWorkspaceBlock(block as any)}
                   />
                 )}
               </div>

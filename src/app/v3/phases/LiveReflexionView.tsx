@@ -107,8 +107,9 @@ export function LiveReflexionView({ context, onPhaseComplete }: LiveReflexionVie
       });
     } catch (err) {
       console.error("[Reflexion→Workspace] Error:", err);
-      // Fallback to sendMessage if workspace route fails
-      sendMessage(prompt, activeBotCode, undefined, undefined, { workspacePhase: "reflexion" });
+      // Fallback: 1ère ligne seulement (pas le bloc BTML complet dans la bulle)
+      const shortPrompt = prompt.split("\n")[0].trim();
+      sendMessage(shortPrompt, activeBotCode, undefined, undefined, { workspacePhase: "reflexion" });
     }
   }, [activeBotCode, addWorkspaceBlock, sendMessage]);
 
