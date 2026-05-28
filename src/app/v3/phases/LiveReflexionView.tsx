@@ -19,7 +19,7 @@
  * Stage gating: chaque réponse bot débloque l'étape suivante.
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Brain,
   Stethoscope,
@@ -75,9 +75,32 @@ const EXPLORATION_STEP_IDS = ["ref-2-brainstorm", "ref-4-cinq-pourquoi", "ref-5-
 
 export function LiveReflexionView({ context, onPhaseComplete }: LiveReflexionViewProps) {
   const isMobile = useIsMobile();
-  const { chatStage, workflowItems, removeWorkflowItem, addWorkflowItem, getCristallise, activeBotCode, activePhase, addWorkspaceBlock, workspaceBlocks } = useAmorcer();
+  const { chatStage, workflowItems, removeWorkflowItem, addWorkflowItem, getCristallise, activeBotCode, activePhase, addWorkspaceBlock, workspaceBlocks, setReflexionContext } = useAmorcer();
   const { sendMessage } = useChatContext();
-  const displayContext = context || "Réflexion";
+
+  // C.44 — Sujet local éditable (évite duplication "que voulez-vous brainstormer?")
+  const isGenericContext = !context || context === "Réflexion en cours" || context === "Réflexion";
+  const [localTopic, setLocalTopic] = useState(isGenericContext ? "" : (context || ""));
+  const [editingTopic, setEditingTopic] = useState(isGenericContext);
+  const topicInputRef = useRef<HTMLInputElement>(null);
+
+  // Sync si le contexte change depuis le parent (navigation)
+  useEffect(() => {
+    if (context && context !== "Réflexion en cours" && context !== "Réflexion") {
+      setLocalTopic(context);
+      setEditingTopic(false);
+    }
+  }, [context]);
+
+  const commitTopic = useCallback((val: string) => {
+    const trimmed = val.trim();
+    if (!trimmed) return;
+    setLocalTopic(trimmed);
+    setEditingTopic(false);
+    setReflexionContext(trimmed);
+  }, [setReflexionContext]);
+
+  const displayContext = localTopic || "Réflexion";
 
   // Route reflexion mode results to WORKSPACE blocks (not discussion)
   const handleReflexionToWorkspace = useCallback(async (prompt: string) => {
@@ -139,9 +162,28 @@ export function LiveReflexionView({ context, onPhaseComplete }: LiveReflexionVie
         <div className="relative z-10 p-2 rounded-xl bg-orange-50 border border-orange-100">
           <Brain className="h-4 w-4 text-orange-600 stroke-[2.5]" />
         </div>
-        <div className="relative z-10 flex-1">
+        <div className="relative z-10 flex-1 min-w-0">
           <h2 className="text-sm font-bold text-gray-900">Réflexion</h2>
-          <p className="text-xs text-gray-500 mt-0.5">{displayContext}</p>
+          {editingTopic ? (
+            <input
+              ref={topicInputRef}
+              type="text"
+              autoFocus
+              defaultValue={localTopic}
+              placeholder="Ex: augmenter nos ventes de 30%..."
+              className="mt-1 w-full text-xs px-2 py-1 rounded-lg border border-orange-300 focus:border-orange-500 focus:ring-1 focus:ring-orange-200 outline-none bg-white"
+              onKeyDown={(e) => { if (e.key === "Enter") commitTopic((e.target as HTMLInputElement).value); if (e.key === "Escape") setEditingTopic(false); }}
+              onBlur={(e) => { if (e.target.value.trim()) commitTopic(e.target.value); else setEditingTopic(false); }}
+            />
+          ) : (
+            <button
+              onClick={() => setEditingTopic(true)}
+              className="text-xs text-gray-500 mt-0.5 text-left hover:text-orange-600 transition-colors cursor-text max-w-full truncate block"
+              title="Cliquer pour modifier le sujet"
+            >
+              {displayContext}
+            </button>
+          )}
         </div>
         <div className="relative z-10 flex items-center gap-2">
           <div className="w-28 h-2 bg-orange-100 rounded-full overflow-hidden">
