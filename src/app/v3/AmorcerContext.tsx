@@ -832,7 +832,64 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
       return;
     }
     setWorkspaceBlocks((prev) => {
-      // If replace_block_id, update the existing block
+      const now = block.timestamp || Date.now();
+      const timeLabel = new Date(now).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" });
+
+      // C.50 — ENRICH: le LLM a décidé d'enrichir un bloc existant
+      if (block.operation === "ENRICH" && block.target_block_id) {
+        const idx = prev.findIndex(b => b.id === block.target_block_id);
+        if (idx >= 0) {
+          const existing = prev[idx];
+          const label = block.merge_label || "Enrichissement";
+          const separator = `\n\n---\n\n#### ${label} — ${timeLabel}\n\n`;
+          const mergedSummary = (existing.summary || "") + separator + (block.summary || "");
+          const newTitle = (block.title || "").length > (existing.title || "").length ? block.title : existing.title;
+          const copy = [...prev];
+          copy[idx] = {
+            ...existing,
+            summary: mergedSummary,
+            title: newTitle,
+            timestamp: now,
+            confidence: Math.max(existing.confidence || 0, block.confidence || 0),
+            structured_data: block.structured_data || existing.structured_data,
+          };
+          console.log(`[WorkspaceBlock] ENRICH block ${block.target_block_id}: ${block.title}`);
+          return copy;
+        }
+        // target block not found — fall through to CREATE
+      }
+
+      // C.50 — MERGE: le LLM a décidé de fusionner deux blocs existants
+      if (block.operation === "MERGE" && block.target_block_id && block.merge_secondary_id) {
+        const primaryIdx = prev.findIndex(b => b.id === block.target_block_id);
+        if (primaryIdx >= 0) {
+          const primary = prev[primaryIdx];
+          const secondary = prev.find(b => b.id === block.merge_secondary_id);
+          const fusionLabel = `\n\n---\n\n#### Fusion — ${timeLabel}\n\n`;
+          const parts = [primary.summary, secondary?.summary, block.summary].filter(Boolean);
+          const mergedSummary = parts.join(fusionLabel);
+          const copy = prev
+            .filter(b => b.id !== block.merge_secondary_id) // retirer le bloc secondaire
+            .map(b => {
+              if (b.id === block.target_block_id) {
+                return {
+                  ...b,
+                  summary: mergedSummary,
+                  title: block.title || b.title,
+                  timestamp: now,
+                  confidence: Math.max(b.confidence || 0, block.confidence || 0),
+                  structured_data: block.structured_data || b.structured_data,
+                };
+              }
+              return b;
+            });
+          console.log(`[WorkspaceBlock] MERGE ${block.target_block_id} + ${block.merge_secondary_id}`);
+          return copy;
+        }
+        // primary block not found — fall through to CREATE
+      }
+
+      // If replace_block_id, update the existing block (full replacement)
       if (block.replace_block_id) {
         const idx = prev.findIndex(b => b.id === block.replace_block_id);
         if (idx >= 0) {
@@ -844,7 +901,6 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
       // Dedup guard: skip if same source + same type + similar title within 60s
       // D-UX-03: fenêtre 60s (vs 5s avant) + fuzzy title (50 premiers chars, case-insensitive)
       // Évite que useWorkspaceCapture ET le SSE workspace_block event n'ajoutent 2 blocs identiques
-      const now = block.timestamp || Date.now();
       const titlePrefix = (t: string) => (t || "").toLowerCase().trim().slice(0, 50);
       const duplicate = prev.find(b =>
         b.source === block.source &&

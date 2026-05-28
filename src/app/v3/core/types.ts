@@ -172,6 +172,10 @@ export interface WorkspaceBlock {
   merge_label?: string;  // Label for merge log entries (e.g., "Approfondissement", "Challenge")
   is_catching_up?: boolean;  // Temp skeleton block while bot is loading
   maturity?: WorkspaceBlockMaturity;  // Lifecycle: draft → refined → validated → deployed
+  // C.50 — Architecture Workspace Vivant (CREATE/ENRICH/MERGE)
+  operation?: "CREATE" | "ENRICH" | "MERGE";
+  target_block_id?: string;    // ENRICH: id du bloc existant à enrichir
+  merge_secondary_id?: string; // MERGE: id du bloc secondaire à supprimer après fusion
 }
 
 // ═══ Workspace Tasks — taches assignables aux bots/humains ═══

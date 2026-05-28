@@ -103,7 +103,8 @@ export function LiveReflexionView({ context, onPhaseComplete }: LiveReflexionVie
   const displayContext = localTopic || "Réflexion";
 
   // Route reflexion mode results to WORKSPACE blocks (not discussion)
-  const handleReflexionToWorkspace = useCallback(async (prompt: string) => {
+  // C.46 — accepte modeId pour propager le mode de réflexion au backend
+  const handleReflexionToWorkspace = useCallback(async (prompt: string, modeId?: string) => {
     try {
       const res = await api.chatMulti({
         message: prompt,
@@ -111,6 +112,7 @@ export function LiveReflexionView({ context, onPhaseComplete }: LiveReflexionVie
         agents: [activeBotCode],
         primary_agent: activeBotCode,
         workspace_phase: "reflexion",
+        mode: modeId,   // C.46 — mode propagé au backend (/chat/multi l.6800)
       });
       const persp = res.perspectives?.[0];
       if (!persp) return;
@@ -338,9 +340,10 @@ function TechniqueSelector({ context, modePrefix, onSend }: {
 }
 
 // ═══ Modes de réflexion — boutons d'ACTION (chaque clic ENVOIE un prompt au bot) ═══
+// C.46 — onSend accepte maintenant modeId pour propager le mode au backend
 function ReflexionModeActions({ context, onSend }: {
   context: string;
-  onSend: (prompt: string) => void;
+  onSend: (prompt: string, modeId?: string) => void;
 }) {
   const MODES = [
     { id: "analyse", label: "Analyse", icon: Eye, bg: "bg-blue-100", text: "text-blue-700",
@@ -364,7 +367,7 @@ function ReflexionModeActions({ context, onSend }: {
   return (
     <div className="flex flex-wrap gap-1.5 mb-3">
       {MODES.map(m => (
-        <button key={m.id} onClick={() => onSend(m.prompt)}
+        <button key={m.id} onClick={() => onSend(m.prompt, m.id)}
           className={cn("flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium border cursor-pointer transition-colors hover:shadow-sm",
             m.bg, m.text, "border-current/30"
           )}>

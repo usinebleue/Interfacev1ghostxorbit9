@@ -593,10 +593,11 @@ function BlockWrapper({ block, onAction, label, labelColor, children }: BlockRen
   return (
     <div
       className={cn(
-        "group/edit rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm transition-all duration-300",
-        "hover:shadow-md",
+        "group/edit rounded-xl border border-gray-200 bg-white overflow-hidden transition-all duration-300",
+        "hover:border-gray-300",
         appeared ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3",
       )}
+      style={{ borderTopWidth: "3px", borderTopColor: accentHex, borderTopStyle: "solid" }}
       onMouseEnter={() => setIsHoverEdit(true)}
       onMouseLeave={() => setIsHoverEdit(false)}
     >
@@ -3193,7 +3194,7 @@ const BLOCK_RENDERERS: Record<WorkspaceBlockType, React.FC<BlockRendererProps>> 
   bot_actions: BotActionsRenderer,
 };
 
-// ═══ Default action suggestions per bot role ═══
+// ═══ Default action suggestions per bot role (secondary fallback) ═══
 const DEFAULT_ACTIONS: Record<string, ActionSuggestion[]> = {
   CFOB: [
     { label: "Ajuster budget", prompt: "Propose un ajustement budgetaire base sur cette analyse.", target_bot: "CFOB" },
@@ -3221,9 +3222,88 @@ const DEFAULT_ACTIONS: Record<string, ActionSuggestion[]> = {
   ],
 };
 
+// C.59 — CREDO-phase action suggestions per block type (primary fallback)
+// Indexed by block.type — types correlate to CREDO phases
+const DEFAULT_ACTIONS_BY_TYPE: Record<string, ActionSuggestion[]> = {
+  // Phase C — Connecter
+  diagnostic: [
+    { label: "Lancer 5 Pourquoi", prompt: "Effectue une analyse 5 Pourquoi sur le point le plus critique de ce diagnostic.", target_bot: "CEOB" },
+    { label: "Plan d'action rapide", prompt: "Sur la base de ce diagnostic, cree un plan d'action prioritaire avec 5 actions concretes.", target_bot: "COOB" },
+    { label: "Challenger", prompt: "Challenge ce diagnostic — quelles hypotheses pourraient etre incorrectes?", target_bot: "CSOB" },
+  ],
+  etat_des_lieux: [
+    { label: "Identifier priorites", prompt: "Identifie les 3 priorites les plus urgentes a partir de cet etat des lieux.", target_bot: "CEOB" },
+    { label: "Comparer au marche", prompt: "Compare cet etat des lieux aux benchmarks du secteur.", target_bot: "CSOB" },
+  ],
+  // Phase R — Rechercher
+  brainstorm: [
+    { label: "Evaluer faisabilite", prompt: "Evalue la faisabilite de chaque idee avec un score effort/impact.", target_bot: "COOB" },
+    { label: "Prioriser top 3", prompt: "Selectionne les 3 meilleures idees et justifie le choix strategique.", target_bot: "CEOB" },
+    { label: "Chiffrer potentiel", prompt: "Quantifie le potentiel business des idees les plus prometteuses.", target_bot: "CFOB" },
+  ],
+  "5pourquoi": [
+    { label: "Plan correctif", prompt: "Sur la base de la cause racine identifiee, cree un plan d'action correctif.", target_bot: "COOB" },
+    { label: "Valider la cause", prompt: "Valide la cause racine identifiee avec des donnees ou exemples concrets.", target_bot: "CEOB" },
+  ],
+  benchmark: [
+    { label: "Adapter au contexte", prompt: "Adapte les meilleures pratiques de ce benchmark a notre situation specifique.", target_bot: "CSOB" },
+    { label: "Chiffrer l'ecart", prompt: "Quantifie l'ecart entre notre position et le benchmark.", target_bot: "CFOB" },
+  ],
+  challenge: [
+    { label: "Integrer les critiques", prompt: "Integre les critiques valides dans une version amelioree de l'approche.", target_bot: "CEOB" },
+    { label: "Plan de mitigation", prompt: "Pour chaque critique majeure, propose une mesure de mitigation concrete.", target_bot: "COOB" },
+  ],
+  // Phase E — Exposer
+  debat: [
+    { label: "Trancher le debat", prompt: "Sur la base des arguments presentes, formule une recommandation decisive avec justification.", target_bot: "CEOB" },
+    { label: "Approfondir risques", prompt: "Approfondis l'analyse des risques du scenario le moins favori.", target_bot: "CSOB" },
+  ],
+  decision: [
+    { label: "Plan execution", prompt: "Pour l'option recommandee, cree un plan d'execution detaille sur 90 jours.", target_bot: "COOB" },
+    { label: "Analyser risques", prompt: "Identifie les 3 risques principaux de cette decision et propose des plans de contingence.", target_bot: "CSOB" },
+    { label: "Chiffrer impact", prompt: "Calcule l'impact financier attendu de cette decision sur 12 mois.", target_bot: "CFOB" },
+  ],
+  recommandations: [
+    { label: "Prioriser actions", prompt: "Priorise ces recommandations selon la matrice effort/impact.", target_bot: "COOB" },
+    { label: "Planifier 90 jours", prompt: "Cree un plan de mise en oeuvre sur 90 jours pour les recommandations prioritaires.", target_bot: "COOB" },
+  ],
+  // Phase D — Demontrer
+  plan_action: [
+    { label: "Assigner responsables", prompt: "Assigne un responsable et une date limite a chaque action de ce plan.", target_bot: "COOB" },
+    { label: "Evaluer budget", prompt: "Estime le budget necessaire pour executer chaque action de ce plan.", target_bot: "CFOB" },
+    { label: "Identifier blocages", prompt: "Identifie les obstacles potentiels a l'execution et propose des solutions.", target_bot: "CSOB" },
+  ],
+  risques: [
+    { label: "Plan mitigation", prompt: "Cree un plan de mitigation detaille pour les risques critiques identifies.", target_bot: "CEOB" },
+    { label: "Chiffrer les risques", prompt: "Quantifie l'impact financier et la probabilite de chaque risque.", target_bot: "CFOB" },
+  ],
+  budget: [
+    { label: "Optimiser les couts", prompt: "Identifie les postes budgetaires a optimiser sans perdre en qualite ou impact.", target_bot: "CFOB" },
+    { label: "Calculer le ROI", prompt: "Calcule le retour sur investissement attendu de ce budget sur 1 an.", target_bot: "CFOB" },
+    { label: "Planifier financement", prompt: "Propose un plan de financement ou de phasage de ce budget.", target_bot: "CFOB" },
+  ],
+  taches: [
+    { label: "Creer sprint", prompt: "Organise ces taches en sprint de 2 semaines avec un ordre de priorite clair.", target_bot: "COOB" },
+    { label: "Allouer equipe", prompt: "Recommande l'allocation ideale de l'equipe pour executer ces taches.", target_bot: "CHROB" },
+  ],
+  // Phase O — Obtenir
+  rapport: [
+    { label: "Executer decisions", prompt: "Sur la base de ce rapport, identifie les 3 decisions a prendre maintenant avec les responsables.", target_bot: "CEOB" },
+    { label: "Synthese executive", prompt: "Prepare une synthese executive d'une page de ce rapport pour la direction.", target_bot: "CEOB" },
+    { label: "Plan de suivi", prompt: "Cree un plan de suivi avec KPIs mesurables, responsables et echeances.", target_bot: "COOB" },
+  ],
+  metriques: [
+    { label: "Analyser les ecarts", prompt: "Analyse les ecarts entre les KPIs cibles et les resultats actuels — causes et actions.", target_bot: "CEOB" },
+    { label: "Plan amelioration", prompt: "Pour les KPIs sous-performants, propose un plan d'amelioration avec actions concretes.", target_bot: "COOB" },
+  ],
+};
+
 function getActionsForBlock(block: WorkspaceBlock): ActionSuggestion[] {
   if (block.is_action_result) return []; // Anti-loop: no actions on action results
+  // C.59 priority: 1) LLM-generated suggestions, 2) CREDO phase by type, 3) bot role default
   if (block.action_suggestions && block.action_suggestions.length > 0) return block.action_suggestions;
+  const byType = DEFAULT_ACTIONS_BY_TYPE[block.type];
+  if (byType && byType.length > 0) return byType;
   return DEFAULT_ACTIONS[block.source] || [
     { label: "Approfondir l'analyse", prompt: "Approfondis cette analyse avec plus de details.", target_bot: block.source },
   ];

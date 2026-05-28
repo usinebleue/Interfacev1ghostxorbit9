@@ -43,6 +43,8 @@ export interface ChatRequest {
   thread_id?: string;
   // CPRJ — DocForge pipeline trigger (fire-and-forget si présent)
   docforge_library_id?: number;
+  // C.50 — Architecture Workspace Vivant: contexte blocs existants pour CREATE/ENRICH/MERGE
+  workspace_blocks_context?: Array<{ id: string; title: string; type: string; summary: string }>;
 }
 
 // --- Équipe 3 Bots (Chef d'Orchestre) ---

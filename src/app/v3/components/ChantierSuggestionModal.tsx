@@ -16,7 +16,7 @@ import {
   X, FolderOpen, Plus, CheckCircle2,
   ArrowRight, Flame, Target,
 } from "lucide-react";
-import { cn } from "../../../components/ui/utils";
+import { cn } from "../../components/ui/utils";
 
 // ═══ Types ═══
 

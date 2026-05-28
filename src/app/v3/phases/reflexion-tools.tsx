@@ -21,9 +21,10 @@ import { cn } from "../../components/ui/utils";
 
 // ═══ Modes de réflexion — boutons d'ACTION (chaque clic ENVOIE un prompt au bot) ═══
 
+// C.46 — onSend accepte maintenant modeId pour propager le mode au backend
 export function ReflexionModeActions({ context, onSend }: {
   context: string;
-  onSend: (prompt: string) => void;
+  onSend: (prompt: string, modeId?: string) => void;
 }) {
   const MODES = [
     { id: "analyse", label: "Analyse", icon: Eye, bg: "bg-blue-100", text: "text-blue-700",
@@ -47,7 +48,7 @@ export function ReflexionModeActions({ context, onSend }: {
   return (
     <div className="flex flex-wrap gap-1.5 mb-3">
       {MODES.map(m => (
-        <button key={m.id} onClick={() => onSend(m.prompt)}
+        <button key={m.id} onClick={() => onSend(m.prompt, m.id)}
           className={cn("flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium border cursor-pointer transition-colors hover:shadow-sm",
             m.bg, m.text, "border-current/30"
           )}>

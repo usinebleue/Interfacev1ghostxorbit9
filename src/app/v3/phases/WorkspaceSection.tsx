@@ -41,9 +41,9 @@ export function WorkspaceSection({
   const [editText, setEditText] = useState("");
   const [feedback, setFeedback] = useState<"up" | "down" | null>(null);
 
-  const colorMap: Record<string, { bg: string; border: string; text: string; hoverBg: string }> = {
-    orange: { bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-700", hoverBg: "hover:bg-orange-100" },
-    yellow: { bg: "bg-yellow-50", border: "border-yellow-200", text: "text-yellow-700", hoverBg: "hover:bg-yellow-100" },
+  const colorMap: Record<string, { bg: string; border: string; text: string; hoverBg: string; topBorder: string }> = {
+    orange: { bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-700", hoverBg: "hover:bg-orange-100", topBorder: "#f97316" },
+    yellow: { bg: "bg-yellow-50", border: "border-yellow-200", text: "text-yellow-700", hoverBg: "hover:bg-yellow-100", topBorder: "#eab308" },
   };
   const c = colorMap[phaseColor] || colorMap.orange;
 
@@ -67,7 +67,7 @@ export function WorkspaceSection({
   };
 
   return (
-    <div className="rounded-xl border border-gray-200 shadow-sm bg-white hover:shadow-md hover:border-blue-200 transition-all overflow-hidden">
+    <div className="rounded-xl border border-gray-200 bg-white hover:border-blue-200 transition-all overflow-hidden" style={{ borderTopWidth: "3px", borderTopColor: c.topBorder, borderTopStyle: "solid" }}>
       {/* Header */}
       <div className="px-5 py-3 border-b border-gray-100 flex items-center gap-3">
         <section.icon className="h-4 w-4 text-gray-900 stroke-[2.5]" />

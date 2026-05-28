@@ -47,7 +47,7 @@ interface BranchMeta {
 interface ChatActions {
   sendMessage: (text: string, agent?: string, ghost?: string, meta?: BranchMeta) => Promise<void>;
   sendMultiPerspective: (text: string, agents: string[]) => Promise<void>;
-  injectVoiceMessage: (role: "user" | "assistant", content: string, agent?: string, meta?: { options?: any[]; canvasActions?: any[]; teamProposal?: any; phaseCredo?: string; bubbleContext?: any; isDiagnostic?: boolean; ghostActif?: string | null; tier?: string; latenceMs?: number; cascadeSuggestions?: any[]; scaffoldProgress?: any }) => void;
+  injectVoiceMessage: (role: "user" | "assistant", content: string, agent?: string, meta?: { options?: any[]; canvasActions?: any[]; teamProposal?: any; phaseCredo?: string; bubbleContext?: any; isDiagnostic?: boolean; ghostActif?: string | null; tier?: string; latenceMs?: number; cascadeSuggestions?: any[]; scaffoldProgress?: any; workspaceBlock?: Record<string, unknown> }) => void;
   injectTeamProposal: (proposal: TeamProposal, agent: string) => void;
   setReflectionMode: (mode: ReflectionMode) => void;
   setCurrentCREDOPhase: (phase: CREDOPhase) => void;

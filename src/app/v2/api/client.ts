@@ -2095,4 +2095,20 @@ export const api = {
   updateBlockMaturity(blockId: number, maturity: string): Promise<{ ok: boolean }> {
     return apiFetch(`/workspace/blocks/${blockId}/maturity`, { method: "PATCH", body: JSON.stringify({ maturity }) });
   },
+
+  /** C.56 — Chercher les chantiers existants qui matchent des workspace blocks */
+  chantiersMatch(objectifs: string[], department?: string): Promise<{ matches: { chantier_id: number; titre: string; score: number; reason: string; status: string; section_primaire: string }[]; create_new: boolean }> {
+    return apiFetch("/chantiers/suggest-match", {
+      method: "POST",
+      body: JSON.stringify({ objectifs, department: department || "", tags: [] }),
+    });
+  },
+
+  /** C.56 — Créer un chantier depuis les workspace blocks */
+  workspaceToChantier(workspaceBlocks: Record<string, unknown>[], threadId: string, botCode: string, discussionId?: number): Promise<{ chantier_id: number; titre: string; ok: boolean }> {
+    return apiFetch("/workspace/to-chantier", {
+      method: "POST",
+      body: JSON.stringify({ workspace_blocks: workspaceBlocks, thread_id: threadId, bot_code: botCode, discussion_id: discussionId ?? null }),
+    });
+  },
 };

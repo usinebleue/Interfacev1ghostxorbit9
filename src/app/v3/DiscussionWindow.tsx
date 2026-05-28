@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { cn } from "../components/ui/utils";
 import { IntegrationsPanel } from "./IntegrationsPanel";
+import { ChantierSuggestionModal } from "./components/ChantierSuggestionModal";
 import { useAmorcer } from "./AmorcerContext";
 import { useDemo } from "./DemoContext";
 import { DemoChatPlayer } from "./DemoChatPlayer";
@@ -46,6 +47,7 @@ import { detectPhaseFromMessage } from "./core/phase-router";
 import { getPhaseSteps } from "./phases/phase-config";
 import { buildExpertContext } from "./phases/LiveDiscussionView";
 import { BubbleActions } from "./phases/BubbleActions";
+import { detectBlockTypeFrontend, extractStructuredDataFrontend, extractTitle, generateExpertBlockTitle } from "./hooks/useWorkspaceCapture";
 import {
   Room, RoomEvent, Track,
   type RemoteTrack, type RemoteTrackPublication,
@@ -556,14 +558,17 @@ function CascadeChips({ suggestions, onAction }: {
   );
 }
 
-/** TeamSuggestionChip — bloc compact footer bulle: phrase punch + bouton ajouter bot */
+/** TeamSuggestionChip — bloc compact footer bulle: phrase punch + bouton Accepter/Ignorer */
 function TeamSuggestionChip({ suggestion, onAdd }: {
   suggestion: TeamSuggestionEvent;
   onAdd: (botCode: string) => void;
 }) {
   const [added, setAdded] = useState(false);
+  const [ignored, setIgnored] = useState(false);
   const botCode = suggestion.bot_code;
   const s = V3_STYLE[botCode] || DEFAULT_STYLE;
+  // C.54 — Masquer après Ignorer
+  if (ignored) return null;
   return (
     <div className="mt-2 pt-2 border-t border-gray-100">
       <span className="text-[9px] text-gray-400 font-medium uppercase tracking-wide flex items-center gap-1">
@@ -580,19 +585,27 @@ function TeamSuggestionChip({ suggestion, onAdd }: {
           </div>
           <p className="text-[11px] text-gray-600 leading-snug mt-0.5 line-clamp-2">«&nbsp;{suggestion.pitch}&nbsp;»</p>
         </div>
-        <button
-          onClick={() => { onAdd(botCode); setAdded(true); }}
-          disabled={added}
-          className={cn(
-            "shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-all",
-            added
-              ? "bg-green-50 border border-green-200 text-green-700 cursor-default"
-              : "border border-indigo-200 bg-white text-indigo-700 hover:bg-indigo-50 hover:border-indigo-300 cursor-pointer"
-          )}
-        >
-          {added ? <CheckCircle2 className="h-3 w-3" /> : <UserPlus className="h-3 w-3" />}
-          {added ? "Ajouté" : "+ Ajouter"}
-        </button>
+        {/* C.54 — Boutons Accepter + Ignorer */}
+        {!added ? (
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              onClick={() => { onAdd(botCode); setAdded(true); }}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-semibold border border-indigo-200 bg-white text-indigo-700 hover:bg-indigo-50 hover:border-indigo-300 cursor-pointer transition-all"
+            >
+              <UserPlus className="h-3 w-3" /> Accepter
+            </button>
+            <button
+              onClick={() => setIgnored(true)}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-semibold border border-gray-200 bg-white text-gray-400 hover:bg-gray-50 hover:text-gray-600 cursor-pointer transition-all"
+            >
+              <X className="h-3 w-3" /> Ignorer
+            </button>
+          </div>
+        ) : (
+          <span className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-green-50 border border-green-200 text-green-700">
+            <CheckCircle2 className="h-3 w-3" /> Ajouté
+          </span>
+        )}
       </div>
     </div>
   );
@@ -628,7 +641,51 @@ function CREDOProgressDots({ currentPhase }: { currentPhase: string }) {
 
 // CristalliseBar removed — cristallisation is now automatic via useWorkspaceCapture
 
-/** Helper: cristallisation intelligente via API (shared par tous les chemins) */
+/**
+ * C.49 — crystallizeAndAddBlock: chemin central normalisé pour tous les blocs workspace.
+ * Applique detectBlockTypeFrontend + extractStructuredDataFrontend (qualité niveau 3, sync, zéro latence).
+ * Tous les chemins manuels (handleOption, addExpertToWorkspace, AutoConsultationPills, etc.) passent ici.
+ */
+function crystallizeAndAddBlock(
+  content: string,
+  opts: {
+    addWorkspaceBlock: (block: import("./core/types").WorkspaceBlock) => void;
+    botCode: string;
+    credoStep?: "C" | "R" | "E" | "D" | "O";
+    sectionId?: string;
+    sourceType?: "chat" | "voice" | "meeting";
+    forceType?: import("./core/types").WorkspaceBlockType;
+    forceTitle?: string;
+    confidence?: number;
+    credo_sub_section?: string;
+    blockId?: string;
+    replace_block_id?: string;
+    merge_label?: string;
+  }
+): void {
+  const type = opts.forceType || detectBlockTypeFrontend(content);
+  const structured_data = extractStructuredDataFrontend(content, type);
+  const title = opts.forceTitle || extractTitle(content);
+  const summary = content.length > 600 ? content.substring(0, 597) + "…" : content;
+  opts.addWorkspaceBlock({
+    id: opts.blockId || `blk-${Date.now()}`,
+    type,
+    title,
+    summary,
+    structured_data,
+    credo_step: opts.credoStep || "C",
+    confidence: opts.confidence ?? 0.75,
+    source: opts.botCode,
+    sourceType: opts.sourceType || "chat",
+    sectionId: opts.sectionId,
+    credo_sub_section: opts.credo_sub_section,
+    replace_block_id: opts.replace_block_id,
+    merge_label: opts.merge_label,
+    timestamp: Date.now(),
+  });
+}
+
+/** Helper: cristallisation intelligente via API (Cristalliser vers [Section]) */
 async function cristalliseViaAPI(
   content: string,
   opts: {
@@ -666,18 +723,13 @@ async function cristalliseViaAPI(
       timestamp: Date.now(),
     });
   } catch {
-    // Fallback copie brute si API echoue
-    addWorkspaceBlock({
-      id: `blk-${Date.now()}`,
-      type: "libre",
-      title: content.substring(0, 60),
-      summary: content,
-      credo_step: credoStep,
-      confidence: 1.0,
-      source: botCode,
-      sourceType: "chat",
+    // C.49 — Fallback normalisé via crystallizeAndAddBlock (qualité frontend homogène)
+    crystallizeAndAddBlock(content, {
+      addWorkspaceBlock,
+      botCode,
+      credoStep,
       sectionId,
-      timestamp: Date.now(),
+      confidence: 0.6,
     });
   }
 }
@@ -979,19 +1031,17 @@ function V3MessageList() {
           .replace(/^---+\s*/gm, "")
           .trim();
         if (cleanContent.length > 10) {
-          addWorkspaceBlock({
-            id: `expert-${code}-${Date.now()}`,
-            type: "libre",
-            title: `${BOT_NAME[code] || code} — Apport expert`,
-            summary: cleanContent,
-            credo_step: credoStep,
+          // C.49 — Chemin normalisé: detectBlockTypeFrontend + extractStructuredDataFrontend
+          crystallizeAndAddBlock(cleanContent, {
+            addWorkspaceBlock,
+            botCode: code,
+            credoStep,
             credo_sub_section: "experts",
-            confidence: 0.7,
-            source: code,
-            sourceType: "chat",
-            timestamp: Date.now(),
+            confidence: 0.75,
+            forceTitle: generateExpertBlockTitle(BOT_NAME[code] || code, cleanContent, "Apport expert"),
             replace_block_id: tempId,
-          } as any);
+            blockId: `expert-${code}-${Date.now()}`,
+          });
         } else {
           removeWorkspaceBlock(tempId);
         }
@@ -1195,16 +1245,16 @@ function V3MessageList() {
       const lastBotMsg = [...messages].reverse().find(m => m.role === "assistant" && m.content);
       const _credoLetters: ("C" | "R" | "E" | "D" | "O")[] = ["C", "R", "E", "D", "O"];
       const credoStep = _credoLetters[Math.min(chatStage, _credoLetters.length - 1)];
-      addWorkspaceBlock({
-        id: `decision-${Date.now()}`,
-        type: "decision",
-        title: `Decision: ${opt.substring(0, 50)}`,
-        summary: `**Choix**: ${opt}${lastBotMsg ? `\n**Contexte**: ${lastBotMsg.content.substring(0, 200)}` : ""}`,
-        credo_step: credoStep,
+      // C.49 — Chemin normalisé: type décision forcé, structured_data extrait
+      const _decisionSummary = `**Choix**: ${opt}${lastBotMsg ? `\n**Contexte**: ${lastBotMsg.content.substring(0, 200)}` : ""}`;
+      crystallizeAndAddBlock(_decisionSummary, {
+        addWorkspaceBlock,
+        botCode: activeBotCode,
+        credoStep,
+        forceType: "decision",
+        forceTitle: `Décision: ${opt.substring(0, 50)}`,
         confidence: 1.0,
-        source: activeBotCode,
-        sourceType: "chat",
-        timestamp: Date.now(),
+        blockId: `decision-${Date.now()}`,
       });
     }
 
@@ -1556,26 +1606,24 @@ function V3MessageList() {
                   <AutoConsultationPills
                     consultations={(msg as any).autoConsultations as AutoConsultationData[]}
                     onAddToWorkspace={(c, selectedOption) => {
-                      const _steps: ("C"|"R"|"E"|"D"|"O")[] = ["C","R","E","D","O"];
                       const _title = selectedOption
                         ? `${BOT_NAME[c.bot_code] || c.bot_nom} — ${selectedOption}`
                         : `Consultation ${BOT_NAME[c.bot_code] || c.bot_nom}`;
                       const _summary = selectedOption
                         ? `Focus retenu : ${selectedOption}\n\n${(c.contenu || "").trim().slice(0, 1800)}`
                         : (c.contenu || "").trim().slice(0, 2000);
-                      addWorkspaceBlock({
-                        id: `expert-consult-${c.bot_code}-${Date.now()}`,
-                        type: "consultation",
-                        title: _title,
-                        summary: _summary,
-                        credo_step: (workspaceBlocks.length > 0
-                          ? workspaceBlocks[workspaceBlocks.length - 1].credo_step
-                          : "C") as "C" | "R" | "E" | "D" | "O",
+                      const _consultStep = (workspaceBlocks.length > 0
+                        ? workspaceBlocks[workspaceBlocks.length - 1].credo_step
+                        : "C") as "C" | "R" | "E" | "D" | "O";
+                      // C.49 — Chemin normalisé: detectBlockTypeFrontend sur le contenu de consultation
+                      crystallizeAndAddBlock(_summary, {
+                        addWorkspaceBlock,
+                        botCode: c.bot_code,
+                        credoStep: _consultStep,
+                        forceTitle: _title,
                         confidence: 0.85,
-                        source: c.bot_code,
-                        sourceType: "chat",
-                        timestamp: Date.now(),
-                      } as any);
+                        blockId: `expert-consult-${c.bot_code}-${Date.now()}`,
+                      });
                     }}
                   />
                 )}
@@ -1900,10 +1948,43 @@ export function DiscussionWindow() {
 
 function DiscussionWindowInner() {
   const { cockpitTab, activeBotCode, activePhase, setActivePhase, setRightSection, setReflexionContext, setFocusType, setActiveDeliverable, credoPhase, reflexionContext, addWorkflowItem, activeMeeting: dwActiveMeeting, addWorkspaceBlock, workspaceBlocks, chatStage } = useAmorcer();
-  const { activeRoster, addBotToRoster, removeBotFromRoster, messages, sendMessage, threads, resumeThread, deleteThread, renameThread, chatTargetBot, activeThreadId } = useChatContext();
+  const { activeRoster, addBotToRoster, removeBotFromRoster, messages, sendMessage, sendMultiPerspective, threads, resumeThread, deleteThread, renameThread, chatTargetBot, activeThreadId, commandMission, clearCommandMission } = useChatContext();
   const isMobile = useIsMobile();
   const isOrbit9 = cockpitTab === "orbit9";
   const isEmpty = messages.length === 0;
+
+  // C.55 — COMMAND bandeau
+  const [missionLaunching, setMissionLaunching] = useState(false);
+  const commandProposal = messages.length > 0
+    ? [...messages].reverse().find(m => m.metadata?.command_available === true)
+    : null;
+
+  // C.56 — ChantierSuggestionModal (Phase O = chatStage 4)
+  const [showChantierModal, setShowChantierModal] = useState(false);
+  const [chantierMatches, setChantierMatches] = useState<{ chantier_id: number; titre: string; score: number; reason: string; status: string; section_primaire: string }[]>([]);
+  const chantierTriggeredRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (chatStage < 4 || workspaceBlocks.length === 0 || messages.length === 0) return;
+    const tid = activeThreadId || "no-thread";
+    if (chantierTriggeredRef.current === tid) return; // déjà affiché pour ce thread
+    chantierTriggeredRef.current = tid;
+
+    const objectifs = workspaceBlocks
+      .filter(b => b.type === "objectif" || b.type === "objectifs")
+      .map(b => b.content)
+      .filter(Boolean);
+
+    api.chantiersMatch(objectifs, activeBotCode)
+      .then(data => {
+        setChantierMatches(data.matches || []);
+        setShowChantierModal(true);
+      })
+      .catch(() => {
+        setChantierMatches([]);
+        setShowChantierModal(true);
+      });
+  }, [chatStage, workspaceBlocks.length, activeThreadId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // S117: Lifted ControlPanel state — shared with ChatBoxV3 buttons
   const [cpOpen, setCpOpen] = useState(false);
@@ -1953,17 +2034,80 @@ function DiscussionWindowInner() {
             <span className="text-[11px] text-white font-medium">Brain Team</span>
             <div className="flex-1" />
 
-            {/* Primary bot avatar only — experts moved to workspace */}
+            {/* Primary bot avatar + roster chips + AgentSelector (+) */}
             <div className="flex items-center gap-1.5">
               <div className="w-5 h-5 rounded-full overflow-hidden ring-1 ring-white/30 shrink-0">
                 <img src={BOT_AVATAR[activeBotCode] || `/agents/${activeBotCode.toLowerCase()}.png`} alt={BOT_NAME[activeBotCode] || activeBotCode} className="w-full h-full object-cover" />
               </div>
               <span className="text-[9px] text-white/80 font-medium">{BOT_NAME[activeBotCode] || activeBotCode}</span>
+              {/* C.53 — Roster chips for added bots */}
+              {activeRoster.filter(c => c !== activeBotCode).slice(0, 2).map(code => (
+                <div key={code} className="w-5 h-5 rounded-full overflow-hidden ring-1 ring-white/30 shrink-0 -ml-1" title={BOT_NAME[code] || code}>
+                  <img src={BOT_AVATAR[code] || `/agents/${code.toLowerCase()}.png`} alt={code} className="w-full h-full object-cover" />
+                </div>
+              ))}
+              {/* C.53 — AgentSelector (+) bouton */}
+              <AgentSelector
+                activeRoster={activeRoster}
+                addBotToRoster={addBotToRoster}
+                removeBotFromRoster={removeBotFromRoster}
+                onConsultExpert={(code) => {
+                  // Lancer une consultation multi-bot si déjà dans une conversation
+                  if (messages.length > 0) {
+                    const lastUserMsg = [...messages].reverse().find(m => m.role === "user");
+                    if (lastUserMsg) {
+                      sendMultiPerspective(lastUserMsg.content, [activeBotCode, code], undefined, { primaryAgent: activeBotCode });
+                    }
+                  }
+                }}
+              />
             </div>
 
           </>
         )}
       </div>
+
+      {/* C.55 — Bandeau COMMAND (proposition bot OU mission active) */}
+      {commandProposal && !(commandMission && !commandMission.completed) && (
+        <div className="shrink-0 px-3 py-1.5 bg-amber-50 border-b border-amber-200 flex items-center gap-2">
+          <Zap className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+          <span className="text-[11px] text-amber-800 flex-1 truncate">
+            Mode Équipe recommandé — {(commandProposal.metadata?.scan_bots as string[] | undefined)?.join(", ")}
+          </span>
+          <button
+            disabled={missionLaunching}
+            onClick={async () => {
+              setMissionLaunching(true);
+              try {
+                const lastUserMsg = [...messages].reverse().find(m => m.role === "user");
+                if (lastUserMsg) {
+                  await api.commandStart(
+                    lastUserMsg.content,
+                    ((commandProposal.metadata?.urgency) as string | undefined) || "routine",
+                    (commandProposal.metadata?.scan_bots) as string[] | undefined,
+                  );
+                }
+              } catch (e) {
+                console.error("[C.55] commandStart error", e);
+              } finally {
+                setMissionLaunching(false);
+              }
+            }}
+            className="shrink-0 text-[10px] font-medium px-2 py-0.5 rounded bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50"
+          >
+            {missionLaunching ? "Lancement…" : "Lancer Mission"}
+          </button>
+        </div>
+      )}
+      {commandMission && !commandMission.completed && (
+        <div className="shrink-0 px-3 py-1.5 bg-blue-50 border-b border-blue-200 flex items-center gap-2">
+          <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse shrink-0" />
+          <span className="text-[11px] text-blue-800 flex-1 truncate">
+            Mission COMMAND en cours — Étape: {commandMission.stage}
+          </span>
+          <button onClick={clearCommandMission} className="shrink-0 text-[10px] text-blue-400 hover:text-blue-700">✕</button>
+        </div>
+      )}
 
       {/* Zone principale: DeptWelcomeScreen quand vide, V3MessageList sinon */}
       <div className="flex-1 overflow-hidden flex flex-col">
@@ -2538,6 +2682,20 @@ function ControlPanel({ isOpen, setIsOpen, activeTab, setActiveTab }: {
           </div>
         )}
       </div>
+
+      {/* C.56 — ChantierSuggestionModal: monté quand Phase O (chatStage 4) */}
+      {showChantierModal && (
+        <ChantierSuggestionModal
+          open={showChantierModal}
+          onClose={() => setShowChantierModal(false)}
+          matches={chantierMatches}
+          workspaceBlocks={workspaceBlocks as { type: string; content: string; title?: string }[]}
+          threadId={activeThreadId || ""}
+          botCode={activeBotCode}
+          onCreated={() => setShowChantierModal(false)}
+          onJoined={() => setShowChantierModal(false)}
+        />
+      )}
     </div>
   );
 }
@@ -2678,6 +2836,7 @@ function ChatBoxV3({ onOpenPanel }: { onOpenPanel?: (tab: "modes" | "agents" | "
                 latenceMs: evt.latence_ms,
                 cascadeSuggestions: evt.cascade_suggestions,
                 scaffoldProgress: evt.scaffold_progress,
+                workspaceBlock: evt.workspace_block || undefined,  // C.52
               });
             }
           }
@@ -2962,7 +3121,9 @@ function ChatBoxV3({ onOpenPanel }: { onOpenPanel?: (tab: "modes" | "agents" | "
         }
       }
       // W.1: Discussion 1:1 — toujours single-bot (experts dans le workspace)
-      sendMessage(msgText, chatTargetBot, undefined, { workspacePhase: effectivePhase, workspaceExpertContext: buildExpertContext(workspaceBlocks, activeBotCode) });
+      // C.50 — Passer les 5 derniers blocs pour CREATE/ENRICH/MERGE
+      const _wsCtx50 = workspaceBlocks.slice(-5).map(b => ({ id: b.id, title: (b.title || "").slice(0, 60), type: b.type, summary: (b.summary || "").slice(0, 200) }));
+      sendMessage(msgText, chatTargetBot, undefined, { workspacePhase: effectivePhase, workspaceExpertContext: buildExpertContext(workspaceBlocks, activeBotCode), workspaceBlocksContext: _wsCtx50.length > 0 ? _wsCtx50 : undefined });
     }
 
     textareaRef.current?.focus();

@@ -729,7 +729,7 @@ export function useChat() {
       agent?: string,
       ghost?: string,
       mode?: string,
-      meta?: { msgType?: MessageType; parentId?: string; branchLabel?: string; activeView?: string; activeSubSection?: string; workspacePhase?: string; workspaceExpertContext?: string; techniqueActive?: string; techniqueStep?: number; techniqueContext?: string }
+      meta?: { msgType?: MessageType; parentId?: string; branchLabel?: string; activeView?: string; activeSubSection?: string; workspacePhase?: string; workspaceExpertContext?: string; techniqueActive?: string; techniqueStep?: number; techniqueContext?: string; workspaceBlocksContext?: Array<{ id: string; title: string; type: string; summary: string }> }
     ) => {
       const msgType = meta?.msgType || "normal";
       const branchDepth = msgType === "challenge" || msgType === "consultation"
@@ -830,6 +830,8 @@ export function useChat() {
           clearInterval(_thinkTimer);
         }
       }, 1800);
+      // C.51 — Timer séparé pour les étapes workspace (pendant crystallisation différée)
+      let _wsThinkTimer: ReturnType<typeof setInterval> | null = null;
 
       // Auto-create thread on first message
       if (!activeThreadId) {
@@ -904,6 +906,8 @@ export function useChat() {
         thread_id: activeThreadId || undefined,
         // CPRJ — DocForge pipeline trigger (fire-and-forget côté backend)
         docforge_library_id: amorcerCtx?.activeDocForgeLibraryId ?? undefined,
+        // C.50 — Architecture Workspace Vivant: envoyer les 5 derniers blocs au backend pour CREATE/ENRICH/MERGE
+        workspace_blocks_context: meta?.workspaceBlocksContext,
       };
 
       // Create placeholder bot message for streaming
@@ -974,7 +978,26 @@ export function useChat() {
               if (_staleTimer) { clearTimeout(_staleTimer); _staleTimer = null; }
               // Clear thinking overlay + typing state dans le MEME batch React
               clearInterval(_thinkTimer);
-              setThinkingSteps([]);
+              // C.51 — Si workspace_block_pending, afficher étapes de crystallisation
+              if (data.workspace_block_pending) {
+                const _wsSteps = [
+                  "Analysant le workspace existant...",
+                  "Identifiant les connexions...",
+                  "Cristallisation en cours...",
+                ];
+                let _wsIdx = 0;
+                setThinkingSteps([_wsSteps[0]]);
+                _wsThinkTimer = setInterval(() => {
+                  _wsIdx++;
+                  if (_wsIdx < _wsSteps.length) {
+                    setThinkingSteps([_wsSteps[_wsIdx]]);
+                  } else {
+                    if (_wsThinkTimer) clearInterval(_wsThinkTimer);
+                  }
+                }, 1500);
+              } else {
+                setThinkingSteps([]);
+              }
               setIsTyping(false);
               // Sync CREDO phase from backend
               const backendPhase = data.bubble_context?.credo_phase || data.phase_credo;
@@ -1173,6 +1196,9 @@ export function useChat() {
             // (perf: les options apparaissent immédiatement, le block suit ~5s plus tard)
             onWorkspaceBlock: (wsData: { workspace_block: Record<string, unknown> }) => {
               if (!wsData.workspace_block || !botMsgId) return;
+              // C.51 — Arrêter les étapes de crystallisation quand le bloc arrive
+              if (_wsThinkTimer) { clearInterval(_wsThinkTimer); _wsThinkTimer = null; }
+              setThinkingSteps([]);
               setMessages((prev) =>
                 prev.map((m) =>
                   m.id === botMsgId
@@ -1292,6 +1318,7 @@ export function useChat() {
             },
             onError: (error: string) => {
               clearInterval(_thinkTimer);
+              if (_wsThinkTimer) { clearInterval(_wsThinkTimer); _wsThinkTimer = null; }
               reject(new Error(error));
             },
           });
@@ -1300,6 +1327,7 @@ export function useChat() {
       } catch (err) {
         // Streaming failed — fallback to standard chat
         clearInterval(_thinkTimer);
+        if (_wsThinkTimer) { clearInterval(_wsThinkTimer); _wsThinkTimer = null; }
         streamingMsgId.current = null;
 
         try {
@@ -1580,9 +1608,14 @@ export function useChat() {
           // Stocker metadata consolidee (via any cast — non-standard fields)
           (consolidatedMsg as any).secondaryInputs = secondaries.map((s) => ({
             agent: s.agent, nom: s.nom, contenu: s.contenu,
+            workspace_block: s.workspace_block,  // C.53 — inclure les workspace_blocks secondaires
           }));
           (consolidatedMsg as any).modeActif = res.mode_actif;
           (consolidatedMsg as any).modeSteps = res.mode_steps;
+          // C.53 — workspace_block du bot primaire sur la bulle consolidée
+          if (primary.workspace_block) {
+            (consolidatedMsg as any).workspace_block = primary.workspace_block;
+          }
           setMessages((prev) => [...prev, consolidatedMsg]);
         } else {
           // ═══ ANCIEN — N bulles separees (code S102, INTACT) ═══
@@ -1621,6 +1654,7 @@ export function useChat() {
               msgType: "consultation",
               branchLabel: `Consultation — ${persp.nom}`,
               branchDepth: 1,
+              workspace_block: persp.workspace_block || undefined,  // C.53
             };
             setMessages((prev) => [...prev, botMsg]);
           }
@@ -1673,6 +1707,7 @@ export function useChat() {
     latenceMs?: number;
     cascadeSuggestions?: any[];
     scaffoldProgress?: any;
+    workspaceBlock?: Record<string, unknown>;  // C.52 — workspace block depuis vocal
   }
 
   const injectVoiceMessage = useCallback(
@@ -1700,6 +1735,7 @@ export function useChat() {
         latence_ms: meta?.latenceMs,
         cascadeSuggestions: meta?.cascadeSuggestions,
         scaffoldProgress: meta?.scaffoldProgress,
+        workspace_block: meta?.workspaceBlock || undefined,  // C.52 — workspace block depuis vocal
       };
       setMessages((prev) => [...prev, msg]);
 
