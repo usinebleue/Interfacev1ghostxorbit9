@@ -601,6 +601,16 @@ export function useChat() {
     return () => clearTimeout(timeout);
   }, [isTyping]);
 
+  // Sync messages React state → thread actif en localStorage (fix chat vide au reload)
+  useEffect(() => {
+    if (!activeThreadId || messages.length === 0) return;
+    setThreads((prev) =>
+      prev.map((t) =>
+        t.id === activeThreadId ? { ...t, messages } : t
+      )
+    );
+  }, [messages, activeThreadId]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Persist threads to localStorage + sync metadata to PostgreSQL
   const prevThreadsRef = useRef<string>("");
   useEffect(() => {

@@ -1998,12 +1998,14 @@ function DiscussionWindowInner() {
     if (!match) return;
     const urlThreadId = match[1];
     if (urlThreadId && urlThreadId !== activeThreadId) {
+      // Guard: si on a déjà un thread actif avec messages, l'URL est périmée (race condition)
+      if (activeThreadId && messages.length > 0) return;
       const found = threads.find(t => t.id === urlThreadId);
       if (found) {
         resumeThread(urlThreadId, activePhase);
       }
     }
-  }, [threads, activeThreadId, activePhase, resumeThread]);
+  }, [threads, activeThreadId, activePhase, resumeThread, messages.length]);
 
   // Expert consultation moved to workspace SuggestedExpertsPanel (LiveDiscussionView)
 
@@ -2012,6 +2014,8 @@ function DiscussionWindowInner() {
   // GUARD: ne PAS reset pendant un meeting actif (la discussion est vide au début, le transcript arrive après)
   useEffect(() => {
     if (isEmpty && activePhase && !dwActiveMeeting && !["observation", "attention", "moderation", "execution", "retroaction"].includes(activePhase)) {
+      // Guard: ne pas rediriger vers cockpit si on est en train de restaurer un thread depuis l'URL
+      if (/\/discussion\/thread-/.test(window.location.pathname)) return;
       setActivePhase("observation" as PhaseKey);
       setReflexionContext(null);
       setRightSection("cockpit");
