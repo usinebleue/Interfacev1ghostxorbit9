@@ -544,19 +544,34 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     // Nettoyer le deliverable actif (évite que Jumelage/DocForge reste bloqué)
     setActiveDeliverable(null);
     setActiveDocForgeLibraryId(null);
-    // Restaurer depuis le cache local (instantané) ou vider si phase jamais visitée.
-    // EXCEPTION: observation→discussion = premier message d'une nouvelle session (accueil → chat).
-    // Dans ce cas, ne PAS restaurer le cache : l'utilisateur démarre à zéro, pas une reprise.
-    const isFreshStart = prevPhase === "observation" && p === "discussion";
-    const { cacheKey: newCacheKey } = getStorageKeys(activeThreadIdRef.current, activeBotCodeRef.current, p);
-    const cached = !isFreshStart ? phaseStateCacheRef.current[newCacheKey] : null;
+    // Restaurer depuis le cache local (instantané) ou localStorage.
+    // Observation est l'état par défaut — pas un signal de "départ à zéro".
+    // Un thread actif avec des blocs en localStorage = reprise de thread, pas nouveau départ.
+    const { cacheKey: newCacheKey, lsKey: newLsKey } = getStorageKeys(activeThreadIdRef.current, activeBotCodeRef.current, p);
+    const cached = phaseStateCacheRef.current[newCacheKey];
     if (cached) {
       setWorkspaceBlocks(cached.blocks);
       setChatStage(cached.chatStage);
       setWorkflowItems(cached.workflowItems);
     } else {
-      setWorkspaceBlocks([]);
-      setChatStage(0);
+      // Pas de cache en mémoire — essayer localStorage (couvre reprise de thread depuis accueil)
+      let blocksFromLS = false;
+      if (activeThreadIdRef.current) {
+        try {
+          const stored = localStorage.getItem(newLsKey);
+          if (stored) {
+            const blocks = JSON.parse(stored) as WorkspaceBlock[];
+            if (blocks.length > 0) {
+              setWorkspaceBlocks(blocks);
+              blocksFromLS = true;
+            }
+          }
+        } catch {}
+      }
+      if (!blocksFromLS) {
+        setWorkspaceBlocks([]);
+        setChatStage(0);
+      }
     }
   }, [saveCanvasNow]);
   const setReflexionContext = useCallback((c: string | null) => {
@@ -694,10 +709,33 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     // Thread-scoped phases sans threadId = nouvelle discussion vide → PAS de load
     // (sinon getStorageKeys fallback vers canvas global qui contient d'anciens blocs)
     if (!activeThreadId && THREAD_SCOPED_PHASES.includes(activePhase)) return;
-    // Transition observation→discussion = premier message d'une nouvelle session (accueil → chat).
-    // Ne PAS restaurer les blocs depuis l'API : c'est un départ à zéro, pas une reprise.
-    // Le thread switch effect gère la restauration pour les reprises explicites de threads.
-    if (wasObservation && activePhase === "discussion") return;
+    // Observation est l'état par défaut — wasObservation→discussion peut être :
+    // 1. Nouveau départ sans thread → skip (pas de blocs à restaurer)
+    // 2. Reprise de thread existant → charger depuis PostgreSQL (async fallback)
+    if (wasObservation && activePhase === "discussion") {
+      if (!activeThreadId) return; // Vraiment nouveau → skip
+      // Reprise : localStorage déjà tenté dans setActivePhase — fallback PostgreSQL async
+      api.loadWorkspaceBlocks(activeThreadId).then(res => {
+        if (res?.blocks?.length > 0) {
+          const restored: WorkspaceBlock[] = res.blocks.map((b: any) => ({
+            id: b.id?.toString() || `wb-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+            type: b.type || "libre",
+            title: b.title || "Bloc",
+            summary: b.summary || "",
+            structured_data: b.structured_data || {},
+            credo_step: b.credo_step,
+            credo_sub_section: b.credo_sub_section,
+            maturity: b.maturity || "draft",
+            source: b.source_bot,
+            sourceName: b.source_bot_name,
+            confidence: b.confidence || 0,
+            timestamp: b.created_at ? new Date(b.created_at).getTime() : Date.now(),
+          }));
+          setWorkspaceBlocks(prev => prev.length > 0 ? prev : restored);
+        }
+      }).catch(() => {});
+      return;
+    }
     // Si le cache local a déjà restauré les blocks, pas besoin de l'API
     const { cacheKey, canvasKey } = getStorageKeys(activeThreadId, activeBotCode, activePhase);
     if (phaseStateCacheRef.current[cacheKey]?.blocks?.length) return;
