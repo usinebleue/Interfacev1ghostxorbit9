@@ -861,44 +861,30 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
         setLoadingBlockId(blockId);
         setLoadingLabel("Approfondissement en cours...");
         setLoadingBotCode(targetBot);
-        if (isExpertBlock) {
-          (async () => {
-            try {
-              const recentCtx = workspaceBlocks.slice(-3).map(b2 => `[${BOT_NAME[b2.source || ""] || ""}] ${b2.title}: ${(b2.summary || "").substring(0, 150)}`).join("\n");
-              const res = await api.chatMulti({
-                message: `Approfondir en detail: ${block.title}\n\nContexte: ${block.summary.substring(0, 500)}\n\nContexte recent:\n${recentCtx}${teamNote}`,
-                user_id: 1,
-                agents: [targetBot],
-                primary_agent: targetBot,
-                workspace_phase: activePhase,
-              });
-              const persp = res.perspectives?.[0];
-              if (!persp) return;
-              const blockType = detectBlockTypeFrontend(persp.contenu);
-              addWorkspaceBlock({
-                id: `expert-${targetBot}-${Date.now()}`,
-                type: blockType,
-                title: generateExpertBlockTitle(BOT_NAME[targetBot] || targetBot, persp.contenu, "Approfondissement"),
-                summary: persp.contenu,
-                structured_data: extractStructuredDataFrontend(persp.contenu, blockType),
-                credo_step: block.credo_step,
-                credo_sub_section: "experts",
-                confidence: 0.8,
-                source: targetBot,
-                sourceType: "chat",
-                timestamp: Date.now(),
-                merge_label: "Approfondissement",
-              });
-            } catch (err) {
-              console.error("[Expert deepen] Error:", err);
-            } finally {
-              setLoadingBlockId(null);
-            }
-          })();
-        } else {
-          sendMessage(`Approfondir en detail: ${block.title}\n\nContexte: ${block.summary}`, targetBot);
-          // setLoadingBlockId(null) géré par useEffect isTyping (N7 fix)
-        }
+        (async () => {
+          try {
+            const recentCtx = workspaceBlocks.slice(-3).map(b2 => `[${BOT_NAME[b2.source || ""] || ""}] ${b2.title}: ${(b2.summary || "").substring(0, 150)}`).join("\n");
+            const res = await api.chatMulti({
+              message: `Approfondir en detail: ${block.title}\n\nContexte: ${block.summary.substring(0, 500)}\n\nContexte recent:\n${recentCtx}${teamNote}`,
+              user_id: 1,
+              agents: [targetBot],
+              primary_agent: targetBot,
+              workspace_phase: activePhase,
+            });
+            const persp = res.perspectives?.[0];
+            if (!persp) return;
+            // Enrichir le bloc existant inline — pas de nouveau bloc en bas
+            updateWorkspaceBlock(effectiveId, {
+              summary: block.summary + "\n\n---\n**Approfondissement (" + (BOT_NAME[targetBot] || targetBot) + "):**\n" + persp.contenu,
+              merge_label: "Approfondi",
+              timestamp: Date.now(),
+            });
+          } catch (err) {
+            console.error("[deepen] Error:", err);
+          } finally {
+            setLoadingBlockId(null);
+          }
+        })();
         break;
       }
       case "challenge": {
@@ -908,44 +894,30 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
         setLoadingBlockId(blockId);
         setLoadingLabel("Challenge en cours...");
         setLoadingBotCode(targetBot2);
-        if (isExpertBlock) {
-          (async () => {
-            try {
-              const recentCtx = workspaceBlocks.slice(-3).map(b2 => `[${BOT_NAME[b2.source || ""] || ""}] ${b2.title}: ${(b2.summary || "").substring(0, 150)}`).join("\n");
-              const res = await api.chatMulti({
-                message: `Challenge cet element, trouve les failles: ${block.title}\n\n${block.summary.substring(0, 500)}\n\nContexte recent:\n${recentCtx}${teamNote}`,
-                user_id: 1,
-                agents: [targetBot2],
-                primary_agent: targetBot2,
-                workspace_phase: activePhase,
-              });
-              const persp = res.perspectives?.[0];
-              if (!persp) return;
-              const blockType = detectBlockTypeFrontend(persp.contenu);
-              addWorkspaceBlock({
-                id: `expert-${targetBot2}-${Date.now()}`,
-                type: blockType,
-                title: generateExpertBlockTitle(BOT_NAME[targetBot2] || targetBot2, persp.contenu, "Challenge"),
-                summary: persp.contenu,
-                structured_data: extractStructuredDataFrontend(persp.contenu, blockType),
-                credo_step: block.credo_step,
-                credo_sub_section: "experts",
-                confidence: 0.8,
-                source: targetBot2,
-                sourceType: "chat",
-                timestamp: Date.now(),
-                merge_label: "Challenge",
-              });
-            } catch (err) {
-              console.error("[Expert challenge] Error:", err);
-            } finally {
-              setLoadingBlockId(null);
-            }
-          })();
-        } else {
-          sendMessage(`Challenge cet element, trouve les failles: ${block.title}\n\n${block.summary}`, targetBot2);
-          // setLoadingBlockId(null) géré par useEffect isTyping (N7 fix)
-        }
+        (async () => {
+          try {
+            const recentCtx = workspaceBlocks.slice(-3).map(b2 => `[${BOT_NAME[b2.source || ""] || ""}] ${b2.title}: ${(b2.summary || "").substring(0, 150)}`).join("\n");
+            const res = await api.chatMulti({
+              message: `Challenge cet element, trouve les failles: ${block.title}\n\n${block.summary.substring(0, 500)}\n\nContexte recent:\n${recentCtx}${teamNote}`,
+              user_id: 1,
+              agents: [targetBot2],
+              primary_agent: targetBot2,
+              workspace_phase: activePhase,
+            });
+            const persp = res.perspectives?.[0];
+            if (!persp) return;
+            // Enrichir le bloc existant inline — pas de nouveau bloc en bas
+            updateWorkspaceBlock(effectiveId, {
+              summary: block.summary + "\n\n---\n**Challenge (" + (BOT_NAME[targetBot2] || targetBot2) + "):**\n" + persp.contenu,
+              merge_label: "Challengé",
+              timestamp: Date.now(),
+            });
+          } catch (err) {
+            console.error("[challenge] Error:", err);
+          } finally {
+            setLoadingBlockId(null);
+          }
+        })();
         break;
       }
       case "rework": {
@@ -2259,6 +2231,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
               workspaceBlocks={workspaceBlocks}
               activeBotCode={activeBotCode}
               displayContext={displayContext}
+              onAction={handleBlockAction}
             />
           )}
           <div ref={blocksEndRef} />
@@ -2572,10 +2545,11 @@ function DeepSearchPanel({ activeBotCode, currentCredoLetter, addWorkspaceBlock,
 // ═══ S117 Phase 4B: SyntheseSection — capsule de ce qui a été cerné ═══
 // Redesign S131: auto-display par étape CREDO, sans bouton ni KPIs numériques.
 
-function SyntheseSection({ workspaceBlocks }: {
+function SyntheseSection({ workspaceBlocks, onAction }: {
   workspaceBlocks: import("../core/types").WorkspaceBlock[];
   activeBotCode: string;
   displayContext: string;
+  onAction?: (action: string, blockId: string, payload?: string) => void;
 }) {
   const CREDO_LABELS: Record<string, string> = {
     C: "Connecter", R: "Rechercher", E: "Exposer", D: "Démontrer", O: "Objectif",
@@ -2590,6 +2564,7 @@ function SyntheseSection({ workspaceBlocks }: {
   }, {});
   const activeSteps = CREDO_ORDER.filter(s => (blocksByStep[s]?.length ?? 0) > 0);
   const uniqueBots = [...new Set(workspaceBlocks.map(b => b.source).filter(Boolean))];
+  const safeOnAction = onAction ?? (() => {});
 
   return (
     <div id="workspace-synthese-section" className="mt-4 mb-4">
@@ -2605,14 +2580,14 @@ function SyntheseSection({ workspaceBlocks }: {
             {uniqueBots.length > 1 ? ` · ${uniqueBots.length} experts` : ""}
           </span>
         </div>
-        {/* Blocs groupés par étape CREDO — dans l'ordre C→R→E→D→O */}
+        {/* Blocs groupés par étape CREDO — BlockRenderer avec bordures, badges, thumbs */}
         <div className="divide-y divide-slate-100">
           {activeSteps.map(step => {
             const stepBlocks = blocksByStep[step] ?? [];
             const topBlocks = stepBlocks.slice(0, 3);
             return (
               <div key={step} className="px-3 py-2.5">
-                <div className="flex items-center gap-1.5 mb-1.5">
+                <div className="flex items-center gap-1.5 mb-2">
                   <span className="w-4 h-4 rounded-full bg-slate-100 flex items-center justify-center text-[8px] font-bold text-slate-500 shrink-0 border border-slate-200">
                     {step}
                   </span>
@@ -2623,20 +2598,9 @@ function SyntheseSection({ workspaceBlocks }: {
                     <span className="text-[8px] text-slate-400 ml-1">+{stepBlocks.length - 3} autres</span>
                   )}
                 </div>
-                <div className="space-y-1 pl-[22px]">
+                <div className="space-y-2">
                   {topBlocks.map(b => (
-                    <div key={b.id} className="flex items-start gap-1.5">
-                      <span className="text-slate-300 text-[10px] mt-0.5 shrink-0">·</span>
-                      <p className="text-[10px] text-slate-700 leading-snug">
-                        <span className="font-medium">{b.title}</span>
-                        {b.summary && (
-                          <span className="text-slate-400">
-                            {" — "}{b.summary.replace(/\n/g, " ").substring(0, 90)}
-                            {b.summary.length > 90 ? "…" : ""}
-                          </span>
-                        )}
-                      </p>
-                    </div>
+                    <BlockRenderer key={b.id} block={b} onAction={safeOnAction} animated={false} />
                   ))}
                 </div>
               </div>
