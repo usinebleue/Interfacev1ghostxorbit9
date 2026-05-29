@@ -270,6 +270,12 @@ function urlToState(
     return true;
   }
 
+  // ── V3 bot-slug URLs (/ceo/discussion/... etc.) — skip, V3 gère ──
+  const V3_BOT_SLUGS = new Set(["ceo", "cto", "cfo", "cmo", "cso", "coo", "cpo", "chro", "cro", "ciso", "clo", "cino"]);
+  if (V3_BOT_SLUGS.has(first)) {
+    return false;
+  }
+
   // ── Fallback: département CEOB ──
   ctx.navigateToDepartment("CEOB", "department");
   ctx.navigateDeptTab("cockpit");

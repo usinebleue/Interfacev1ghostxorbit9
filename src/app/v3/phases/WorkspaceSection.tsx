@@ -196,12 +196,14 @@ export function WorkspaceSection({
                 })}
                 <div className="ml-auto flex items-center gap-1">
                   <button
+                    aria-label="Feedback positif"
                     onClick={() => setFeedback(feedback === "up" ? null : "up")}
                     className={`p-1 rounded-md transition-colors cursor-pointer ${feedback === "up" ? "text-emerald-600 bg-emerald-50" : "text-gray-300 hover:text-emerald-500 hover:bg-emerald-50"}`}
                   >
                     <ThumbsUp className="h-3 w-3" />
                   </button>
                   <button
+                    aria-label="Feedback négatif"
                     onClick={() => setFeedback(feedback === "down" ? null : "down")}
                     className={`p-1 rounded-md transition-colors cursor-pointer ${feedback === "down" ? "text-red-500 bg-red-50" : "text-gray-300 hover:text-red-400 hover:bg-red-50"}`}
                   >

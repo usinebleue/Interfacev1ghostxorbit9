@@ -542,6 +542,7 @@ function BlockActions({ block, onAction }: BlockRendererProps) {
         {/* S3.4 + S5.2 — Feedback thumbs (wired to backend) */}
         <div className="ml-auto flex items-center gap-1">
           <button
+            aria-label="Feedback positif"
             onClick={() => {
               const next = feedback === "up" ? null : "up";
               setFeedback(next);
@@ -558,6 +559,7 @@ function BlockActions({ block, onAction }: BlockRendererProps) {
             <ThumbsUp className="h-3 w-3" />
           </button>
           <button
+            aria-label="Feedback négatif"
             onClick={() => {
               const next = feedback === "down" ? null : "down";
               setFeedback(next);
@@ -805,6 +807,7 @@ function CompactBlockFooter({ block, onAction }: BlockRendererProps) {
         <span className="text-[9px] text-gray-300">{new Date(block.timestamp).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })}</span>
         <div className="ml-auto flex items-center gap-1">
           <button
+            aria-label="Feedback positif"
             onClick={() => {
               const next = feedback === "up" ? null : "up";
               setFeedback(next);
@@ -821,6 +824,7 @@ function CompactBlockFooter({ block, onAction }: BlockRendererProps) {
             <ThumbsUp className="h-3 w-3" />
           </button>
           <button
+            aria-label="Feedback négatif"
             onClick={() => {
               const next = feedback === "down" ? null : "down";
               setFeedback(next);
