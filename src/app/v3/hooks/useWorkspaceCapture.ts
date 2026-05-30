@@ -761,7 +761,8 @@ export function useWorkspaceCapture() {
         if (ACTIVE_PHASES.includes(activePhase) || isDiscussion) {
           const sectionId = getSmartSectionId(completed[0], activePhase, chatStage, pendingCapture, activeDeliverable);
           if (sectionId) {
-            for (const msg of completed) {
+            let anyNewBlock = false; // C.67 — tracker si un bloc a vraiment été ajouté (non-discussion)
+          for (const msg of completed) {
               const source = (msg as any).botCode || activeBotCode;
               const sourceType = (msg as any).msgType === "voice" ? "voice" as const : "chat" as const;
               const msgContentTypes = (msg as any).cristallisationSuggestion?.content_types as string[] | undefined;
@@ -817,6 +818,7 @@ export function useWorkspaceCapture() {
                   editCristallise(sectionId, existing + "\n\n" + msg.content);
                 }
               } else {
+                anyNewBlock = true; // C.67 — bloc ajouté pour cette phase non-discussion
                 // ═══ RÉSUMÉ INTELLIGENT — autres phases (conception, exécution, etc.) ═══
                 // Même pipeline que discussion fallback: détection type + extraction structured_data + résumé
                 const wsBlock = (msg as any).workspace_block as Partial<WorkspaceBlock> | undefined;
@@ -881,8 +883,8 @@ export function useWorkspaceCapture() {
                 const target2 = computeTargetStage(lastCREDOPhase, messages.filter((m: any) => m.role === "assistant"), chatStage);
                 if (target2 > chatStage) setChatStage(target2);
               }
-            } else {
-              setChatStage((s: number) => s + 1);
+            } else if (anyNewBlock) {
+              setChatStage((s: number) => s + 1); // C.67 — seulement si un bloc non-discussion a été ajouté
             }
 
             // S103 — CASCADES cross-phases (streaming path)
@@ -1008,6 +1010,7 @@ export function useWorkspaceCapture() {
       const sectionId = getSmartSectionId(completeBots[0], activePhase, chatStage, pendingCapture, activeDeliverable);
       if (!sectionId) return;
 
+      let anyNewBlock = false; // C.67 — tracker si un bloc a vraiment été ajouté (non-discussion)
       for (const msg of completeBots) {
         const source = (msg as any).botCode || activeBotCode;
         const sourceType = (msg as any).msgType === "voice" ? "voice" as const : "chat" as const;
@@ -1084,6 +1087,7 @@ export function useWorkspaceCapture() {
             }
           }
         } else {
+          anyNewBlock = true; // C.67 — bloc ajouté pour cette phase non-discussion
           // ═══ RÉSUMÉ INTELLIGENT — autres phases (conception, exécution, etc.) ═══
           const wsBlock = (msg as any).workspace_block as Partial<WorkspaceBlock> | undefined;
           if (wsBlock && wsBlock.type && wsBlock.title) {
@@ -1147,8 +1151,8 @@ export function useWorkspaceCapture() {
           const target4 = computeTargetStage(lastCREDOPhase, messages.filter((m: any) => m.role === "assistant"), chatStage);
           if (target4 > chatStage) setChatStage(target4);
         }
-      } else {
-        setChatStage((s: number) => s + 1);
+      } else if (anyNewBlock) {
+        setChatStage((s: number) => s + 1); // C.67 — seulement si un bloc non-discussion a été ajouté
       }
 
       // ═══ S103 — CASCADES cross-phases ═══

@@ -177,7 +177,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     const poll = async () => {
       try {
         const res = await api.commandMissionsList(1);
-        const active = (res.missions ?? []).find((m: CommandStatusResponse) => !m.completed) ?? null;
+        const active = (res.missions ?? []).find((m: CommandStatusResponse) => !m.completed && m.stage !== "done") ?? null;
         setCommandMission(active);
       } catch { /* noop */ }
     };
@@ -198,6 +198,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     const normalized = _fullToLetter[lastCREDOPhase] || lastCREDOPhase;
     if (["C", "R", "E", "D", "O"].includes(normalized)) {
       setCurrentCREDOPhase(normalized as CREDOPhase);
+      amorcerCtx?.setCredoPhase(normalized as any); // C.66 — sync AmorcerContext.credoPhase depuis backend
     }
   }, [lastCREDOPhase]);
   // chatStage est piloté par le FRONTEND (useWorkspaceCapture — messages.length de la conversation)
