@@ -32,6 +32,7 @@ interface LiveDocForgeLivrableProps {
   deliverableType: string;
   context: string | null;
   onBack: () => void;
+  onPhaseComplete?: () => void; // C.73 — signaler la completion au parent
   onStartJumelage?: () => void;
   initialSections?: DocForgeSection[];
   draftLibraryId?: number;
@@ -41,7 +42,7 @@ interface LiveDocForgeLivrableProps {
 // ═══ Composant principal ═══
 
 export function LiveDocForgeLivrable({
-  deliverableType, context, onBack, onStartJumelage, initialSections, draftLibraryId, reviewMode,
+  deliverableType, context, onBack, onPhaseComplete, onStartJumelage, initialSections, draftLibraryId, reviewMode,
 }: LiveDocForgeLivrableProps) {
   const config = DOCFORGE_CONFIGS[deliverableType];
   if (!config) return null;
@@ -150,6 +151,11 @@ export function LiveDocForgeLivrable({
   // Compteur validees
   const validatedCount = Object.values(sectionValidation).filter(Boolean).length;
   const allValidated = validatedCount === sections.length;
+
+  // C.73 — signaler completion au parent quand toutes sections validées
+  useEffect(() => {
+    if (allValidated) onPhaseComplete?.();
+  }, [allValidated]);
 
   // Progress
   const sectionsWithContent = sections.filter(s =>

@@ -298,6 +298,7 @@ export function WorkspacePhasesPanel() {
 
     if (phase === "creation" && deliverable) {
       // Conception avec livrable → Blueprint réel
+      startDeliverable(deliverable); // C.72 — déclencher le flux livrable réel
       setRightSection("blueprint");
     } else if (phase === "execution" || phase === "retroaction") {
       // Exécution/Rétroaction = PHASE view, jamais dans rightSection (anti-persistence)

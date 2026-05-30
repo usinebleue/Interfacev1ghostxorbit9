@@ -354,9 +354,9 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
       }
       if (section === "discussion" && sub) {
         // Navigation vers une discussion spécifique
-        resumeThread(sub);
-        setActivePhaseRaw("discussion" as PhaseKey);
-        lsSet("activePhase", "discussion");
+        const _restoredPhase = resumeThread(sub); // C.74/C.75 — utiliser workPhase du thread
+        setActivePhaseRaw((_restoredPhase || "discussion") as PhaseKey);
+        lsSet("activePhase", _restoredPhase || "discussion");
         setRightSectionRaw(null);
       } else if (section === "orbit9") {
         setCockpitTabRaw("orbit9");
@@ -385,9 +385,9 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     if (urlRestoredRef.current) return;
     if (initialURL.section === "discussion" && initialURL.sub) {
       urlRestoredRef.current = true;
-      resumeThread(initialURL.sub);
-      setActivePhaseRaw("discussion" as PhaseKey);
-      lsSet("activePhase", "discussion");
+      const _urlRestoredPhase = resumeThread(initialURL.sub); // C.74/C.75 — utiliser workPhase du thread
+      setActivePhaseRaw((_urlRestoredPhase || "discussion") as PhaseKey);
+      lsSet("activePhase", _urlRestoredPhase || "discussion");
       setRightSectionRaw(null);
     } else if (activeThreadId && activePhase === "discussion") {
       // Thread actif depuis localStorage mais URL perdue (hard refresh → URL cockpit)
