@@ -17,7 +17,7 @@ interface ConceptionRouterProps {
   activeDeliverable: string | null;
   activeBotCode: string;
   reflexionContext: string | null;
-  draftLibraryId: string | null;
+  draftLibraryId: number | null; // C.81 — aligner avec AmorcerContext (number | null)
   onPhaseComplete: () => void;
   onDeliverableBack: () => void;
   onStartJumelage?: () => void;

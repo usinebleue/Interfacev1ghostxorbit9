@@ -541,11 +541,14 @@ const CREDO_TO_STAGE: Record<string, number> = { C: 0, R: 1, E: 2, D: 3, O: 4 };
 function computeTargetStage(
   lastCREDOPhase: string | undefined,
   botMessages: any[],
-  currentStage: number
+  currentStage: number,
+  isResuming?: boolean // C.78 — bypass du cap +1 au resume initial
 ): number {
   // Priorite 1: backend phase_credo — avancer de +1 max (progression graduelle)
   if (lastCREDOPhase && CREDO_TO_STAGE[lastCREDOPhase] !== undefined) {
     const target = CREDO_TO_STAGE[lastCREDOPhase];
+    // C.78 — au resume: sauter directement au stage cible (pas de cap)
+    if (isResuming) return target > currentStage ? target : currentStage;
     // Cap a +1 pour eviter les sauts (backend peut detecter "D" des le premier message)
     return target > currentStage ? currentStage + 1 : currentStage;
   }
@@ -650,6 +653,7 @@ export function useWorkspaceCapture() {
 
   // Reset dedup quand le thread change
   const prevThreadIdRef = useRef(activeThreadId);
+  const isResumingRef = useRef(false); // C.78 — flag one-shot pour bypass cap au resume
   useEffect(() => {
     if (activeThreadId !== prevThreadIdRef.current) {
       const wasNull = prevThreadIdRef.current === null;
@@ -661,7 +665,8 @@ export function useWorkspaceCapture() {
       // Ne PAS reset sur création de thread (null → id, messages = 1-2)
       // sinon le premier message user n'est jamais traité → pas d'auto-transition
       if (!wasNull || messages.length > 2) {
-        prevMsgCountRef.current = messages.length;
+        prevMsgCountRef.current = 0; // C.77 — reset à 0 (était messages.length → timing race fix)
+        isResumingRef.current = true; // C.78 — signaler resume pour bypass cap computeTargetStage
       }
     }
   }, [activeThreadId, messages.length]);
@@ -876,11 +881,13 @@ export function useWorkspaceCapture() {
                 if (sugIdx >= 0 && sugIdx === chatStage + 1) {
                   setChatStage(sugIdx);
                 } else {
-                  const target1 = computeTargetStage(lastCREDOPhase, messages.filter((m: any) => m.role === "assistant"), chatStage);
+                  const target1 = computeTargetStage(lastCREDOPhase, messages.filter((m: any) => m.role === "assistant"), chatStage, isResumingRef.current);
+                  isResumingRef.current = false; // C.78 — one-shot consume
                   if (target1 > chatStage) setChatStage(target1);
                 }
               } else {
-                const target2 = computeTargetStage(lastCREDOPhase, messages.filter((m: any) => m.role === "assistant"), chatStage);
+                const target2 = computeTargetStage(lastCREDOPhase, messages.filter((m: any) => m.role === "assistant"), chatStage, isResumingRef.current);
+                isResumingRef.current = false; // C.78 — one-shot consume
                 if (target2 > chatStage) setChatStage(target2);
               }
             } else if (anyNewBlock) {
@@ -1144,11 +1151,13 @@ export function useWorkspaceCapture() {
           if (sugIdx >= 0 && sugIdx === chatStage + 1) {
             setChatStage(sugIdx);
           } else {
-            const target3 = computeTargetStage(lastCREDOPhase, messages.filter((m: any) => m.role === "assistant"), chatStage);
+            const target3 = computeTargetStage(lastCREDOPhase, messages.filter((m: any) => m.role === "assistant"), chatStage, isResumingRef.current);
+            isResumingRef.current = false; // C.78 — one-shot consume
             if (target3 > chatStage) setChatStage(target3);
           }
         } else {
-          const target4 = computeTargetStage(lastCREDOPhase, messages.filter((m: any) => m.role === "assistant"), chatStage);
+          const target4 = computeTargetStage(lastCREDOPhase, messages.filter((m: any) => m.role === "assistant"), chatStage, isResumingRef.current);
+          isResumingRef.current = false; // C.78 — one-shot consume
           if (target4 > chatStage) setChatStage(target4);
         }
       } else if (anyNewBlock) {

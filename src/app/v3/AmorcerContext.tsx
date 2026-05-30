@@ -1121,7 +1121,7 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     setActivePhase("creation");
     setRightSection(null);
     setConceptionStage(0);
-    setActiveDeliverable(null);
+    setActiveDeliverable(prev => prev); // C.80 — ne pas écraser si livrable déjà sélectionné
     setTyped(false);
   }, []);
 
