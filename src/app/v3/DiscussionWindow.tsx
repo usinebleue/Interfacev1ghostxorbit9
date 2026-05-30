@@ -33,7 +33,7 @@ import { useAmorcer } from "./AmorcerContext";
 import { useDemo } from "./DemoContext";
 import { DemoChatPlayer } from "./DemoChatPlayer";
 import { useChatContext } from "../v2/context/ChatContext";
-import { BOT_AVATAR, BOT_NAME, BOT_ROLE, type AutoConsultationData } from "../v2/api/types";
+import { BOT_AVATAR, BOT_NAME, BOT_ROLE, type AutoConsultationData, type ReflectionMode } from "../v2/api/types";
 import { useIsMobile } from "../components/ui/use-mobile";
 import { api } from "../v2/api/client";
 import type { TeamSuggestionEvent } from "../v2/api/client";
@@ -1947,8 +1947,8 @@ export function DiscussionWindow() {
 }
 
 function DiscussionWindowInner() {
-  const { cockpitTab, activeBotCode, activePhase, setActivePhase, setRightSection, setReflexionContext, setFocusType, setActiveDeliverable, credoPhase, reflexionContext, addWorkflowItem, activeMeeting: dwActiveMeeting, addWorkspaceBlock, workspaceBlocks, chatStage } = useAmorcer();
-  const { activeRoster, addBotToRoster, removeBotFromRoster, messages, sendMessage, sendMultiPerspective, threads, resumeThread, deleteThread, renameThread, chatTargetBot, activeThreadId, commandMission, clearCommandMission } = useChatContext();
+  const { cockpitTab, activeBotCode, activePhase, setActivePhase, setRightSection, setReflexionContext, setFocusType, setActiveDeliverable, credoPhase, reflexionContext, addWorkflowItem, activeMeeting: dwActiveMeeting, addWorkspaceBlock, workspaceBlocks, chatStage, setReflexionSetup } = useAmorcer();
+  const { activeRoster, addBotToRoster, removeBotFromRoster, messages, sendMessage, sendMultiPerspective, threads, resumeThread, deleteThread, renameThread, chatTargetBot, activeThreadId, commandMission, clearCommandMission, setReflectionMode } = useChatContext();
   const isMobile = useIsMobile();
   const isOrbit9 = cockpitTab === "orbit9";
   const isEmpty = messages.length === 0;
@@ -2015,10 +2015,13 @@ function DiscussionWindowInner() {
   useEffect(() => {
     if (isEmpty && activePhase && !dwActiveMeeting && !["observation", "attention", "moderation", "execution", "retroaction"].includes(activePhase)) {
       // Guard: ne pas rediriger vers cockpit si on est en train de restaurer un thread depuis l'URL
-      if (/\/discussion\/thread-/.test(window.location.pathname)) return;
+      // FIX Bug3: vérifier aussi que activeThreadId est non-null (sinon newConversation dans un thread URL freezait le workspace)
+      if (/\/discussion\/thread-/.test(window.location.pathname) && activeThreadId) return;
       setActivePhase("observation" as PhaseKey);
       setReflexionContext(null);
       setRightSection("cockpit");
+      setReflexionSetup(null);
+      setReflectionMode("credo");
     }
   }, [isEmpty]);
 
@@ -2283,7 +2286,7 @@ function ControlPanel({ isOpen, setIsOpen, activeTab, setActiveTab }: {
   const [reunionSubject, setReunionSubject] = useState("");
 
   const { activeBotCode, setActivePhase, setReflexionContext, setRightSection, setActiveMeeting, setReflexionSetup } = useAmorcer();
-  const { activeRoster, addBotToRoster, removeBotFromRoster, sendMessage } = useChatContext();
+  const { activeRoster, addBotToRoster, removeBotFromRoster, sendMessage, setReflectionMode } = useChatContext();
 
   const startQualification = useCallback((mode: typeof REFLEXION_MODES[0]) => {
     setQualMode(mode);
@@ -2300,6 +2303,8 @@ function ControlPanel({ isOpen, setIsOpen, activeTab, setActiveTab }: {
     if (!qualMode) return;
     // C.44 — propager le sujet au contexte réflexion pour éviter la question dupliquée dans LiveReflexionView
     if (qualSubject.trim()) setReflexionContext(qualSubject.trim());
+    // FIX Bug1: activer le mode réflexion pour que WorkspacePhasesPanel route vers LiveReflexionView
+    setReflectionMode(qualMode.id as ReflectionMode);
     // Route to workspace setup panel (ReflexionSetupPanel in LiveDiscussionView)
     setReflexionSetup({
       mode: qualMode.id,
@@ -2311,7 +2316,7 @@ function ControlPanel({ isOpen, setIsOpen, activeTab, setActiveTab }: {
     setRightSection(null);
     setIsOpen(false);
     setQualMode(null);
-  }, [qualMode, qualSubject, qualExperts, qualParticipants, setReflexionSetup, setActivePhase, setRightSection, setIsOpen, setReflexionContext]);
+  }, [qualMode, qualSubject, qualExperts, qualParticipants, setReflexionSetup, setActivePhase, setRightSection, setIsOpen, setReflexionContext, setReflectionMode]);
 
   const toggleExpert = useCallback((code: string) => {
     setQualExperts(prev => prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code]);
@@ -2528,7 +2533,7 @@ function ControlPanel({ isOpen, setIsOpen, activeTab, setActiveTab }: {
                   return (
                     <button
                       key={bot.code}
-                      onClick={() => addBotToRoster(bot.code)}
+                      onClick={() => { addBotToRoster(bot.code); setIsOpen(false); }}
                       className={cn(
                         "group relative flex flex-col items-center rounded-xl overflow-hidden bg-white border border-gray-100 cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg",
                         shadowMap[bot.colorName] || "group-hover:shadow-gray-200/60"
