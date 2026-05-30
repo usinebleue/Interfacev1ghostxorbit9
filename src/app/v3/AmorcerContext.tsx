@@ -386,6 +386,9 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     if (initialURL.section === "discussion" && initialURL.sub) {
       urlRestoredRef.current = true;
       resumeThread(initialURL.sub);
+      setActivePhaseRaw("discussion" as PhaseKey);
+      lsSet("activePhase", "discussion");
+      setRightSectionRaw(null);
     } else if (activeThreadId && activePhase === "discussion") {
       // Thread actif depuis localStorage mais URL perdue (hard refresh → URL cockpit)
       // Re-pousser l'URL de discussion pour que le deep-link survive
@@ -629,11 +632,14 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     try {
       if (workspaceBlocks.length === 0) {
         localStorage.removeItem(lsKey);
+        localStorage.removeItem(lsKey + "_s");
       } else {
         localStorage.setItem(lsKey, JSON.stringify(workspaceBlocks));
+        // C.68 — Sauvegarder chatStage aux côtés des blocks (clé "_s")
+        if (chatStage > 0) localStorage.setItem(lsKey + "_s", String(chatStage));
       }
     } catch { /* silent */ }
-  }, [workspaceBlocks, activeThreadId, activeBotCode, activePhase]);
+  }, [workspaceBlocks, chatStage, activeThreadId, activeBotCode, activePhase]);
 
   // ═══ getCristallise/getCristalliseItem — vues dérivées de workspaceBlocks ═══
   const getCristallise = useCallback((sectionId: string): string | null => {
@@ -807,6 +813,12 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
         const blocks = JSON.parse(stored);
         if (blocks.length > 0) {
           setWorkspaceBlocks(blocks);
+          // C.68 — Restaurer chatStage depuis localStorage (sauvegardé aux côtés des blocks)
+          const storedStage = localStorage.getItem(lsKey + "_s");
+          if (storedStage) {
+            const parsedStage = parseInt(storedStage, 10);
+            if (!isNaN(parsedStage) && parsedStage > 0) setChatStage(parsedStage);
+          }
           if (THREAD_SCOPED_PHASES.includes(activePhase)) pushDiscussionURL(activeThreadId);
           return;
         }
