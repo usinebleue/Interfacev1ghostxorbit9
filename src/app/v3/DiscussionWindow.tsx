@@ -1271,7 +1271,9 @@ function V3MessageList() {
     <div ref={scrollRef} className="flex-1 overflow-auto px-4 py-3 space-y-3 scrollbar-discussion">
       {messages.map((msg) => {
         if (msg.role === "system") return null;
-        if (msg.isStreaming) return null; // C.BUFFER: bulle visible seulement quand réponse complète
+        // C.BUFFER: masquer la bulle pendant le streaming actif SEULEMENT
+        // (isTyping=false sur refresh → pas de masquage des messages stale)
+        if (msg.isStreaming && isTyping) return null;
         if ((msg.msgType as string) === "team_proposal") return null; // W.1: team_proposal consumed by workspace, not shown in chat
 
         // ── Multi-thinking bubble — animation consultation multi-agent ──
