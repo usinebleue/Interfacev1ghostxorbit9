@@ -68,6 +68,8 @@ import type {
   TacheUser,
   EntrepriseProfil,
   CanvasItemType,
+  ScaffoldProgress,
+  ConsultationSuggestion,
 } from "./types";
 
 // --- SSE Stream types ---
@@ -108,11 +110,19 @@ export interface StreamDoneEvent {
   has_product?: boolean;
   // Mega Plan V5 — CarlOS GPS cristallisation suggestion
   cristallisation_suggestion?: { section_id: string; section_label: string; confidence: number } | null;
+  // S43 — Scaffold progress (anti-hallucination)
+  scaffold_progress?: ScaffoldProgress | null;
+  // Zero-Silo — cascade items cross-section
+  cascade_items?: Array<Record<string, unknown>> | null;
+  // Zero-Silo — consultation suggestions cross-bot
+  consultation_suggestions?: ConsultationSuggestion[] | null;
   // Sprint 2A — Workspace block + skip flag
   workspace_block?: Record<string, unknown> | null;
   // S2.3 — Multi-artifact support
   workspace_blocks?: Record<string, unknown>[] | null;
   workspace_block_skip?: boolean;
+  // C.51 — Workspace block pending (crystallisation en cours)
+  workspace_block_pending?: boolean;
 }
 
 // C.32 — Auto-consultation cross-bot event

@@ -42,6 +42,8 @@ interface BranchMeta {
   techniqueActive?: string;
   techniqueStep?: number;
   techniqueContext?: string;
+  // Mega Plan V5 — workspace phase active (override depuis ChatBoxV3)
+  workspacePhase?: string;
 }
 
 interface ChatActions {

@@ -510,11 +510,39 @@ function extractFocusItems(data: unknown): Array<{ label: string; value: string 
 // --- useChat ---
 
 export function useChat() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  // URL-priority init — si l'URL est /discussion/thread-xxx, charger les messages au premier render
+  // (évite le flash de DeptWelcomeScreen sur hard refresh)
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    try {
+      const m = window.location.pathname.match(/\/discussion\/(thread-[a-zA-Z0-9_-]+)/);
+      if (m) {
+        const t = loadThreads().find(th => th.id === m[1]);
+        if (t?.messages?.length) {
+          const valid = (t.messages as ChatMessage[]).filter(
+            msg => msg && typeof msg.role === "string" && typeof msg.content === "string" && msg.id
+          );
+          if (valid.length > 0) return valid.map(msg => ({
+            ...msg,
+            timestamp: msg.timestamp instanceof Date ? msg.timestamp : new Date((msg.timestamp as string | number) || Date.now()),
+          }));
+        }
+      }
+    } catch { /* noop */ }
+    return [];
+  });
   const [isTyping, setIsTyping] = useState(false);
   const [thinkingSteps, setThinkingSteps] = useState<string[]>([]);
   const [threads, setThreads] = useState<Thread[]>(() => loadThreads());
-  const [activeThreadId, setActiveThreadIdRaw] = useState<string | null>(() => loadActiveThreadId());
+  const [activeThreadId, setActiveThreadIdRaw] = useState<string | null>(() => {
+    try {
+      const m = window.location.pathname.match(/\/discussion\/(thread-[a-zA-Z0-9_-]+)/);
+      if (m) {
+        const t = loadThreads().find(th => th.id === m[1]);
+        if (t?.messages?.length) return m[1]; // URL thread prioritaire sur ghostx-active-thread
+      }
+    } catch { /* noop */ }
+    return loadActiveThreadId();
+  });
   // Roster de bots actifs — max 3, CarlOS en défaut
   const [activeRoster, setActiveRoster] = useState<string[]>(["CEOB"]);
   // CREDO phase — synced from backend responses
@@ -553,6 +581,9 @@ export function useChat() {
     if (hasAutoRestored.current) return;
     hasAutoRestored.current = true;
 
+    // Si URL-priority init a déjà chargé les messages, pas besoin de l'auto-restore
+    if (messages.length > 0) return;
+
     try {
       const savedId = loadActiveThreadId();
       if (!savedId) return;
@@ -585,8 +616,8 @@ export function useChat() {
       console.error("[useChat] Auto-restore failed, clearing state:", err);
       saveActiveThreadId(null);
       setActiveThreadIdRaw(null);
-      // Nettoyer les threads corrompus
-      try { localStorage.removeItem(THREADS_KEY); } catch { /* noop */ }
+      // NE PAS supprimer THREADS_KEY ici — ça détruirait tous les messages sauvegardés
+      // On efface seulement le pointeur actif, pas les données
     }
   }, []);
 
@@ -982,7 +1013,7 @@ export function useChat() {
               }, 200);
             },
             onDone: (data: StreamDoneEvent) => {
-              console.log(`[WC-DEBUG] onDone received: wsBlock=${!!data.workspace_block}, type=${data.workspace_block?.type}, title=${data.workspace_block?.title?.substring(0,30)}, skip=${data.workspace_block_skip}`);
+              console.log(`[WC-DEBUG] onDone received: wsBlock=${!!data.workspace_block}, type=${data.workspace_block?.type}, title=${(data.workspace_block?.title as string | undefined)?.substring(0,30)}, skip=${data.workspace_block_skip}`);
               // Stop le throttle timer, stale timer, et flush final
               if (_tokenFlushTimer) { clearTimeout(_tokenFlushTimer); _tokenFlushTimer = null; }
               if (_staleTimer) { clearTimeout(_staleTimer); _staleTimer = null; }
@@ -1294,7 +1325,7 @@ export function useChat() {
                       `Bots mobilisés: ${cmdData.scan_bots.join(", ")} • Confiance: ${Math.round(cmdData.confidence * 100)}%\n\n` +
                       `_Déclenchez le Mode Équipe pour obtenir une réponse multi-agents structurée._`,
                     agent: "CEOB",
-                    timestamp: new Date().toISOString(),
+                    timestamp: new Date(),
                     isStreaming: false,
                     metadata: {
                       command_available: true,

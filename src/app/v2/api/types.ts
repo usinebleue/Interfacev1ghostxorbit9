@@ -45,6 +45,10 @@ export interface ChatRequest {
   docforge_library_id?: number;
   // C.50 — Architecture Workspace Vivant: contexte blocs existants pour CREATE/ENRICH/MERGE
   workspace_blocks_context?: Array<{ id: string; title: string; type: string; summary: string }>;
+  // Sprint 2A — Techniques interactives (SCAMPER, 5 Pourquoi, 6 Chapeaux)
+  technique_active?: string;
+  technique_step?: number;
+  technique_context?: string;
 }
 
 // --- Équipe 3 Bots (Chef d'Orchestre) ---
@@ -97,6 +101,12 @@ export interface ChatResponse {
   workspace_blocks?: WorkspaceBlockData[];
   workspace_block_skip?: boolean;
   workspace_block_pending?: boolean;
+  // Mega Plan V5 — CarlOS GPS cristallisation suggestion
+  cristallisation_suggestion?: { section_id: string; section_label: string; confidence: number } | null;
+  // Zero-Silo — cascade items cross-section
+  cascade_items?: Array<Record<string, unknown>> | null;
+  // Zero-Silo — consultation suggestions cross-bot
+  consultation_suggestions?: ConsultationSuggestion[] | null;
 }
 
 // --- Scaffold (Anti-Hallucination) ---
@@ -310,7 +320,9 @@ export type MessageType =
   | "fil_parallele"  // G — Gemini: fil de reflexion parallele
   | "command_progress" // COMMAND — progress card pendant execution
   | "command_stage"    // COMMAND — resultat d'un stage termine
-  | "multi-enriched";  // S102-B — bulle consolidee multi-agent
+  | "multi-enriched"   // S102-B — bulle consolidee multi-agent
+  | "multi-thinking"   // overlay de réflexion multi-étapes (filtré du contexte)
+  | "typing";          // bot est en train de taper (filtré du contexte)
 
 export interface ChatMessage {
   id: string;
@@ -977,7 +989,9 @@ export type CanvasActionType =
   | "execute"          // Cerveau: lance une action (connexion, generation, etc.)
   | "context_widget"   // Coeur: affiche un widget contextuel overlay
   | "annotate"         // Coeur: highlight/badge sur un element
-  | "focus";           // Focus Mode: ancre un element + ouvre LiveChat en dessous
+  | "focus"            // Focus Mode: ancre un element + ouvre LiveChat en dessous
+  | "phase_transition" // transition entre phases CREDO / 5 modes
+  | "start_deliverable"; // démarrer la production d'un livrable (DocForge)
 
 export type CredoLayer = "bouche" | "cerveau" | "coeur";
 
