@@ -176,6 +176,7 @@ export interface WorkspaceBlock {
   operation?: "CREATE" | "ENRICH" | "MERGE";
   target_block_id?: string;    // ENRICH: id du bloc existant à enrichir
   merge_secondary_id?: string; // MERGE: id du bloc secondaire à supprimer après fusion
+  deliverable_type?: string;   // C.84 — type détecté: document/spreadsheet/presentation/code/jumelage
 }
 
 // ═══ Workspace Tasks — taches assignables aux bots/humains ═══

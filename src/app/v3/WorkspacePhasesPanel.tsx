@@ -15,6 +15,7 @@ import {
   Home,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Atom,
   Palette,
   Gauge,
@@ -173,6 +174,7 @@ export function WorkspacePhasesPanel() {
     focusType,
     setFocusType,
     workflowItems,
+    workspaceBlocks,
     activeDocumentKey,
     activeDocumentSection,
     activeMeeting,
@@ -536,18 +538,75 @@ export function WorkspacePhasesPanel() {
               </div>
             </div>
           ) : (
-            <LiveDiscussionView
-              key={activeThreadId || "new"}
-              context={reflexionContext || "Discussion en cours"}
-              onPhaseComplete={() => {
-                const discussionNotes = workflowItems.filter(w => w.phase === "discussion" || w.phase === "reflexion");
-                startConception();
-                if (discussionNotes.length > 0) {
-                  const ctx = discussionNotes.map(n => n.text).join("\n- ");
-                  sendMessage(`Contexte de discussion :\n- ${ctx}\n\nPassons à la conception.`, activeBotCode);
-                }
-              }}
-            />
+            <div className="flex flex-col h-full overflow-hidden">
+              {/* C.93/C.94 — Vue Chantier: Plan de match consolidation */}
+              {chatStage >= 4 && workspaceBlocks.length >= 3 && (() => {
+                const blocksC = workspaceBlocks.filter(b => b.credo_step === "C");
+                const blocksRE = workspaceBlocks.filter(b => b.credo_step === "R" || b.credo_step === "E");
+                const blocksTasks = workspaceBlocks.filter(b => b.type === "taches" || b.type === "plan_action");
+                const blocksDeliv = workspaceBlocks.filter(b => b.deliverable_type);
+                if (!blocksDeliv.length && !blocksTasks.length) return null;
+                return (
+                  <details className="group border-b border-violet-100 bg-violet-50 px-4 py-2 shrink-0">
+                    <summary className="flex items-center gap-2 cursor-pointer list-none select-none">
+                      <span className="text-xs font-semibold text-violet-700">Plan de match</span>
+                      <span className="text-[10px] text-violet-500 bg-violet-100 px-1.5 py-0.5 rounded-full">{workspaceBlocks.length} blocs</span>
+                      <ChevronDown className="h-3 w-3 text-violet-400 ml-auto group-open:rotate-180 transition-transform" />
+                    </summary>
+                    <div className="mt-2 space-y-2 pb-1">
+                      {blocksC.length > 0 && (
+                        <div>
+                          <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">Tension initiale</p>
+                          <p className="text-xs text-gray-700 mt-0.5 line-clamp-1">{blocksC[0].title}</p>
+                        </div>
+                      )}
+                      {blocksRE.length > 0 && (
+                        <div>
+                          <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">Éléments clés</p>
+                          <p className="text-xs text-gray-700 mt-0.5 line-clamp-1">{blocksRE.slice(0, 2).map(b => b.title).join(" · ")}</p>
+                        </div>
+                      )}
+                      {blocksTasks.length > 0 && (
+                        <div>
+                          <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">Tâches identifiées</p>
+                          <p className="text-xs text-gray-700 mt-0.5 line-clamp-1">{blocksTasks[0].title}</p>
+                        </div>
+                      )}
+                      {blocksDeliv.length > 0 && (
+                        <div>
+                          <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">Livrables à produire</p>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {blocksDeliv.map(b => (
+                              <button
+                                key={b.id}
+                                onClick={() => startDeliverable(b.deliverable_type!, undefined, undefined)}
+                                className="text-[10px] px-2 py-1 rounded-md border border-violet-200 text-violet-700 hover:bg-violet-100 cursor-pointer transition-colors"
+                              >
+                                → {b.title.substring(0, 35)}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </details>
+                );
+              })()}
+              <div className="flex-1 min-h-0 overflow-hidden">
+                <LiveDiscussionView
+                  key={activeThreadId || "new"}
+                  context={reflexionContext || "Discussion en cours"}
+                  onPhaseComplete={() => {
+                    const discussionNotes = workflowItems.filter(w => w.phase === "discussion" || w.phase === "reflexion");
+                    startConception();
+                    if (discussionNotes.length > 0) {
+                      const ctx = discussionNotes.map(n => n.text).join("\n- ");
+                      sendMessage(`Contexte de discussion :\n- ${ctx}\n\nPassons à la conception.`, activeBotCode);
+                    }
+                  }}
+                />
+              </div>
+            </div>
           )
         ) : activePhase === "creation" ? (
           /* Conception — router unifie OU vue réflexion si mode actif */

@@ -421,7 +421,7 @@ function AnimatedBlockEntry({ children }: {
 
 // ═══ Block Action Types ═══
 
-export type BlockActionType = "pin" | "deepen" | "challenge" | "edit" | "rework" | "merge" | "delete";
+export type BlockActionType = "pin" | "deepen" | "challenge" | "edit" | "rework" | "merge" | "delete" | "start_deliverable";
 
 interface BlockRendererProps {
   block: WorkspaceBlock;
@@ -772,7 +772,19 @@ const BLOCK_CTAS: Record<string, CompactCTA[]> = {
 function CompactBlockFooter({ block, onAction }: BlockRendererProps) {
   const [approved, setApproved] = useState(false);
   const [feedback, setFeedback] = useState<"up" | "down" | null>(null);
-  const ctas = BLOCK_CTAS[block.type] || BLOCK_CTAS._default;
+
+  // C.91 fix: les blocs container multi-sources (diagnostic avec 4+ axes, recalibration avec contributions)
+  // n'ont pas de boutons Challenger/Approfondir au niveau container — ça n'a pas de sens d'challenger
+  // 8 contributions d'un coup. Seul "Approuver" reste au niveau container.
+  // Les boutons d'action restent sur chaque sous-bloc individuel (ExpertBlockWrapper).
+  const isMultiSourceContainer = (
+    (block.structured_data?.contributions?.length || 0) > 1 ||
+    (block.structured_data?.axes?.length || 0) > 3
+  );
+  const allCtas = BLOCK_CTAS[block.type] || BLOCK_CTAS._default;
+  const ctas = isMultiSourceContainer
+    ? allCtas.filter(c => c.action === "approve" || c.action === "pin")
+    : allCtas;
 
   const handleCTA = (cta: CompactCTA) => {
     if (cta.action === "approve") {
@@ -801,6 +813,16 @@ function CompactBlockFooter({ block, onAction }: BlockRendererProps) {
           );
         })}
       </div>
+      {/* C.84/C.85 — Déclencheur livrable si détecté par le backend */}
+      {block.deliverable_type && (
+        <button
+          onClick={() => onAction("start_deliverable", block.id, block.deliverable_type)}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all cursor-pointer border-violet-200 text-violet-700 hover:bg-violet-50 w-full justify-center"
+        >
+          <ArrowRight className="h-3 w-3" />
+          → Ouvrir en Conception
+        </button>
+      )}
       {/* Source bot + timestamp + C.57 feedback thumbs */}
       <div className="flex items-center gap-2">
         <BotBadgeFull botCode={block.source} compact />

@@ -580,7 +580,7 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
     addWorkspaceTask,
     reflexionSetup, setReflexionSetup,
     reflexionFlow: ctxReflexionFlow, setReflexionFlow: setCtxReflexionFlow,
-    setReflexionContext, setRightSection,
+    setReflexionContext, setRightSection, startDeliverable,
   } = useAmorcer();
   const { sendMessage, messages, isTyping, activeRoster, addBotToRoster, removeBotFromRoster, threads, activeThreadId, currentCREDOPhase } = useChatContext();
   const displayContext = context || "Discussion en cours";
@@ -1107,11 +1107,37 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
         }
         break;
       }
+      case "start_deliverable": {
+        // C.84/C.85/C.86/C.87 — Ouvrir en Conception avec pré-population via blocs workspace
+        const delivType = block?.deliverable_type || "document";
+        (async () => {
+          try {
+            const res = await fetch("/api/v1/docforge/prefill-from-workspace", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                deliverable_type: delivType,
+                workspace_blocks: workspaceBlocks.slice(-10).map(b => ({
+                  id: b.id, type: b.type, title: b.title,
+                  summary: (b.summary || "").substring(0, 250),
+                })),
+              }),
+            });
+            const data = await res.json();
+            const titles: string[] = data.section_titles?.length ? data.section_titles : [];
+            startDeliverable(delivType, undefined, titles.length ? titles : undefined);
+          } catch {
+            // Fallback: ouvrir sans pré-population
+            startDeliverable(delivType, undefined, undefined);
+          }
+        })();
+        break;
+      }
       case "delete":
         removeWorkspaceBlock(blockId);
         break;
     }
-  }, [workspaceBlocks, addWorkflowItem, sendMessage, activeBotCode, removeWorkspaceBlock, activePhase, addWorkspaceBlock, activeRoster]);
+  }, [workspaceBlocks, addWorkflowItem, sendMessage, activeBotCode, removeWorkspaceBlock, activePhase, addWorkspaceBlock, activeRoster, startDeliverable]);
 
   // Reflexion tool click handler
   // ═══ REFLEXION/TECHNIQUE → WORKSPACE ONLY (JAMAIS dans la discussion) ═══
@@ -2188,35 +2214,16 @@ function LiveDiscussionViewInner({ config, context, onPhaseComplete }: {
              via AutoConsultationPills (DiscussionWindow.tsx) — pas de duplication workspace/discussion */}
 
           {/* DYNAMIC STEP CONTENT — timeline plate de tous les blocs */}
+          {/* C.89 fix: loadingBlockId transmis → ring amber sur le bloc en cours */}
           <DynamicStepContent
             allBlocks={displayBlocks}
             context={displayContext}
             onBlockAction={handleBlockAction}
             pulsingBlockId={pulsingBlockId}
+            loadingBlockId={loadingBlockId}
             activeBotCode={activeBotCode}
             activeCredoStep={currentCredoLetter}
           />
-
-          {/* Loading — bot thinking bubble (visible during full API call) */}
-          {loadingBlockId && (
-            <div className="mt-2 flex gap-2.5 animate-in fade-in duration-200">
-              <BotAvatar code={loadingBotCode || activeBotCode} size="md" />
-              <div className="rounded-xl border border-gray-200 shadow-sm bg-white rounded-tl-none px-4 py-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-[11px] font-semibold text-gray-700">{BOT_NAME[loadingBotCode || activeBotCode] || "Bot"}</span>
-                  <span className="text-[9px] text-gray-400">reflechit...</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex gap-1">
-                    {[0, 150, 300].map(d => (
-                      <div key={d} className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: `${d}ms` }} />
-                    ))}
-                  </div>
-                  <span className="text-xs text-blue-600 font-medium">{loadingLabel}</span>
-                </div>
-              </div>
-            </div>
-          )}
 
           {showTypingCursor && (
             <div className="flex items-center gap-1.5 px-4 py-2 animate-in fade-in duration-300">
@@ -2612,9 +2619,9 @@ function SyntheseSection({ workspaceBlocks, onAction }: {
   );
 }
 
-// ═══ W.1: buildExpertContext — percolation optimisee (max 2 phrases/expert, cap 1500 chars) ═══
+// ═══ W.1: buildExpertContext — percolation optimisee (max 2500 chars) ═══
 
-const MAX_EXPERT_CTX = 1500;
+const MAX_EXPERT_CTX = 2500;
 
 /** Truncate at the last complete sentence within maxLen */
 function truncateAtSentence(text: string, maxLen: number): string {
@@ -2632,18 +2639,44 @@ function extractExpertEssence(summary: string): string {
 }
 
 export function buildExpertContext(blocks: import("../core/types").WorkspaceBlock[], primaryBot: string): string | undefined {
-  const expertBlocks = blocks.filter(b => b.source && b.source !== primaryBot && b.summary);
-  if (expertBlocks.length === 0) return undefined;
+  if (blocks.length === 0) return undefined;
 
-  let result = "[PERSPECTIVES EXPERTS]\n";
-  for (const b of expertBlocks) {
-    const botName = BOT_NAME[b.source || ""] || b.source || "Expert";
-    const essence = extractExpertEssence(b.summary || "");
-    const line = `${botName}: ${essence}\n`;
-    if (result.length + line.length > MAX_EXPERT_CTX) break;
-    result += line;
+  // Blocs du bot primaire — sa propre mémoire workspace (analyses précédentes)
+  const primaryBlocks = blocks.filter(b => b.source === primaryBot && b.summary);
+  // Blocs des autres bots — perspectives expertes
+  const expertBlocks = blocks.filter(b => b.source && b.source !== primaryBot && b.summary);
+
+  if (primaryBlocks.length === 0 && expertBlocks.length === 0) return undefined;
+
+  let result = "[CONTEXTE WORKSPACE DISCUSSION]\n";
+
+  // Section 1: mémoire du bot primaire — ses propres analyses précédentes (65% du budget)
+  if (primaryBlocks.length > 0) {
+    result += "[TES ANALYSES PRÉCÉDENTES]\n";
+    for (const b of primaryBlocks.slice(-6)) {
+      const essence = extractExpertEssence(b.summary || "");
+      const line = `- [${(b as any).credo_step || "C"}] ${b.title || b.type}: ${essence}\n`;
+      if (result.length + line.length > MAX_EXPERT_CTX * 0.65) break;
+      result += line;
+    }
+    result += "\n";
   }
-  return result + "[/PERSPECTIVES]";
+
+  // Section 2: perspectives des autres experts (35% restant)
+  if (expertBlocks.length > 0) {
+    result += "[PERSPECTIVES EXPERTS]\n";
+    for (const b of expertBlocks) {
+      const botName = BOT_NAME[b.source || ""] || b.source || "Expert";
+      const essence = extractExpertEssence(b.summary || "");
+      const line = `${botName}: ${essence}\n`;
+      if (result.length + line.length > MAX_EXPERT_CTX) break;
+      result += line;
+    }
+  }
+
+  const content = result.replace("[CONTEXTE WORKSPACE DISCUSSION]\n", "").trim();
+  if (!content) return undefined;
+  return truncateAtSentence(result, MAX_EXPERT_CTX) + "\n[/CONTEXTE WORKSPACE]";
 }
 
 // ═══ W.1: SuggestedExpertsPanel — Employee cards grid (11 agents toujours visibles) ═══
@@ -2906,11 +2939,12 @@ const CREDO_EMPTY_STATE: Record<string, { title: string; hint: string }> = {
   O: { title: "Objectif et decisions", hint: "Le plan de match final et les decisions prises." },
 };
 
-function DynamicStepContent({ allBlocks, context, onBlockAction, pulsingBlockId, activeBotCode, activeCredoStep }: {
+function DynamicStepContent({ allBlocks, context, onBlockAction, pulsingBlockId, loadingBlockId, activeBotCode, activeCredoStep }: {
   allBlocks: import("../core/types").WorkspaceBlock[];
   context: string;
   onBlockAction: (action: string, blockId: string) => void;
   pulsingBlockId: string | null;
+  loadingBlockId?: string | null;
   activeBotCode?: string;
   activeCredoStep?: string;
 }) {
@@ -2956,7 +2990,10 @@ function DynamicStepContent({ allBlocks, context, onBlockAction, pulsingBlockId,
             )}
             <div
               id={`block-${block.type}`}
-              className={cn(pulsingBlockId === block.id && "ring-2 ring-blue-400 rounded-xl transition-all")}
+              className={cn(
+                pulsingBlockId === block.id && "ring-2 ring-blue-400 rounded-xl transition-all",
+                loadingBlockId === block.id && "ring-2 ring-amber-400 rounded-xl transition-all animate-pulse"
+              )}
             >
               <BlockRenderer block={block} onAction={onBlockAction} animated={false} />
             </div>
