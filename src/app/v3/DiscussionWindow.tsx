@@ -2171,6 +2171,20 @@ function DiscussionWindowInner() {
         if (cpOpen && cpTab === tab) { setCpOpen(false); }
         else { setCpTab(tab); setCpOpen(true); }
       }} />
+
+      {/* C.56 — ChantierSuggestionModal: monté quand Phase O (chatStage 4) */}
+      {showChantierModal && (
+        <ChantierSuggestionModal
+          open={showChantierModal}
+          onClose={() => setShowChantierModal(false)}
+          matches={chantierMatches}
+          workspaceBlocks={workspaceBlocks as { type: string; content: string; title?: string }[]}
+          threadId={activeThreadId || ""}
+          botCode={activeBotCode}
+          onCreated={() => setShowChantierModal(false)}
+          onJoined={() => setShowChantierModal(false)}
+        />
+      )}
     </div>
   );
 }
@@ -2694,19 +2708,6 @@ function ControlPanel({ isOpen, setIsOpen, activeTab, setActiveTab }: {
         )}
       </div>
 
-      {/* C.56 — ChantierSuggestionModal: monté quand Phase O (chatStage 4) */}
-      {showChantierModal && (
-        <ChantierSuggestionModal
-          open={showChantierModal}
-          onClose={() => setShowChantierModal(false)}
-          matches={chantierMatches}
-          workspaceBlocks={workspaceBlocks as { type: string; content: string; title?: string }[]}
-          threadId={activeThreadId || ""}
-          botCode={activeBotCode}
-          onCreated={() => setShowChantierModal(false)}
-          onJoined={() => setShowChantierModal(false)}
-        />
-      )}
     </div>
   );
 }

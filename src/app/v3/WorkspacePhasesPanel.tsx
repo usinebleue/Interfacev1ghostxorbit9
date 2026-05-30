@@ -592,7 +592,7 @@ export function WorkspacePhasesPanel() {
                   </details>
                 );
               })()}
-              <div className="flex-1 min-h-0 overflow-hidden">
+              <div className="flex-1 min-h-0 overflow-y-auto">
                 <LiveDiscussionView
                   key={activeThreadId || "new"}
                   context={reflexionContext || "Discussion en cours"}
