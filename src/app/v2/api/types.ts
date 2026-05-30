@@ -92,6 +92,11 @@ export interface ChatResponse {
   bubble_context?: BubbleContext | null;
   // S43 — Scaffold progress (anti-hallucination)
   scaffold_progress?: ScaffoldProgress | null;
+  // C.70 — Workspace blocks dans la réponse directe (B-2 fix)
+  workspace_block?: WorkspaceBlockData;
+  workspace_blocks?: WorkspaceBlockData[];
+  workspace_block_skip?: boolean;
+  workspace_block_pending?: boolean;
 }
 
 // --- Scaffold (Anti-Hallucination) ---
@@ -694,12 +699,22 @@ export interface ConsultationSuggestion {
 // --- Workspace Block (backend-generated structured capture) ---
 
 export interface WorkspaceBlockData {
+  // Identité du bloc
+  id?: string;
   type?: string;
   title?: string;
+  content?: string;
   summary?: string;
-  structured_data?: Record<string, any>;
+  // Métadonnées
+  agent?: string;
+  phase?: string;
   credo_step?: string;
   confidence?: number;
+  structured_data?: Record<string, any>;
+  // C.50 — Architecture CREATE/ENRICH/MERGE (S141)
+  operation?: "CREATE" | "ENRICH" | "MERGE";
+  target_block_id?: string | null;
+  action_suggestions?: string[];
 }
 
 

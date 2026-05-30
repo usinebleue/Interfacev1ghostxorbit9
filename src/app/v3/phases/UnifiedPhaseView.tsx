@@ -179,7 +179,7 @@ export function UnifiedPhaseView({ phaseKey, context, onPhaseComplete }: Unified
               />
             );
           })()
-          )}
+          }
 
           {/* Phase transitions via ControlTowerPanel sidebar + progress bar uniquement (Carl feedback 13 mai) */}
         </div>
