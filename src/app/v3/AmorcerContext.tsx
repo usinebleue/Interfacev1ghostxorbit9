@@ -193,8 +193,9 @@ interface AmorcerState {
   deliverableStage: number;
   setDeliverableStage: React.Dispatch<React.SetStateAction<number>>;
   advanceDeliverable: () => void;
-  startDeliverable: (deliverable: string, draftLibraryId?: number) => void;
+  startDeliverable: (deliverable: string, draftLibraryId?: number, sectionTitles?: string[]) => void;
   draftLibraryId: number | null;
+  draftSectionTitles: string[] | null; // T.6.7 — sections depuis template Blueprint
   // CPRJ — library auto-créée par LiveDocForgeLivrable (utilisée par useChat pour pipeline)
   activeDocForgeLibraryId: number | null;
   setActiveDocForgeLibraryId: (id: number | null) => void;
@@ -496,6 +497,7 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
   const [activeDeliverable, setActiveDeliverable] = useState<string | null>(null);
   const [deliverableStage, setDeliverableStage] = useState(0);
   const [draftLibraryId, setDraftLibraryId] = useState<number | null>(null);
+  const [draftSectionTitles, setDraftSectionTitles] = useState<string[] | null>(null); // T.6.7
   // CPRJ — library auto-créée par LiveDocForgeLivrable au mount (pipeline DocForge)
   const [activeDocForgeLibraryId, setActiveDocForgeLibraryId] = useState<number | null>(null);
 
@@ -1130,13 +1132,14 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
     setDeliverableStage((s) => s + 1);
   }, []);
 
-  const startDeliverable = useCallback((deliverable: string, draftId?: number) => {
+  const startDeliverable = useCallback((deliverable: string, draftId?: number, sectionTitles?: string[]) => {
     setActivePhase("creation");
     setRightSection(null);
     setActiveDeliverable(deliverable);
     setDeliverableStage(0);
     setTyped(false);
     setDraftLibraryId(draftId ?? null);
+    setDraftSectionTitles(sectionTitles ?? null); // T.6.7
   }, []);
 
   return (
@@ -1156,7 +1159,7 @@ export function AmorcerProvider({ children }: { children: ReactNode }) {
         advanceConception, startConception,
         activeDeliverable, setActiveDeliverable,
         deliverableStage, setDeliverableStage,
-        advanceDeliverable, startDeliverable, draftLibraryId,
+        advanceDeliverable, startDeliverable, draftLibraryId, draftSectionTitles,
         activeDocForgeLibraryId, setActiveDocForgeLibraryId,
         focusType, setFocusType,
         credoPhase, setCredoPhase,

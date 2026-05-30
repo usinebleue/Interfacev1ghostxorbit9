@@ -7,9 +7,11 @@
  * 3. fallback → LivePhaseView (4 etapes auto-capture)
  */
 
+import { FileText } from "lucide-react";
 import { DocumentWorkspaceView } from "./DocumentWorkspaceView";
 import { LiveDocForgeLivrable } from "./LiveDocForgeLivrable";
 import { LivePhaseView } from "./LivePhaseView";
+import type { DocForgeSection } from "./docforge-config";
 
 interface ConceptionRouterProps {
   activeDocumentKey: string | null;
@@ -18,6 +20,7 @@ interface ConceptionRouterProps {
   activeBotCode: string;
   reflexionContext: string | null;
   draftLibraryId: number | null; // C.81 — aligner avec AmorcerContext (number | null)
+  draftSectionTitles?: string[] | null; // T.6.7 — sections depuis template Blueprint
   onPhaseComplete: () => void;
   onDeliverableBack: () => void;
   onStartJumelage?: () => void;
@@ -30,6 +33,7 @@ export function ConceptionRouter({
   activeBotCode,
   reflexionContext,
   draftLibraryId,
+  draftSectionTitles,
   onPhaseComplete,
   onDeliverableBack,
   onStartJumelage,
@@ -52,6 +56,17 @@ export function ConceptionRouter({
         : activeBotCode === "CPOB" ? "cprj"
         : null);
 
+  // T.6.7 — mapper les titres de section depuis le template Blueprint sélectionné
+  const initialSections: DocForgeSection[] | undefined = draftSectionTitles?.length
+    ? draftSectionTitles.map((title, i) => ({
+        id: i + 1,
+        title,
+        icon: FileText,
+        sectionId: `template-section-${i + 1}`,
+        prompt: `Redige la section: ${title}`,
+      }))
+    : undefined;
+
   if (effectiveDeliverable) {
     return (
       <LiveDocForgeLivrable
@@ -60,6 +75,7 @@ export function ConceptionRouter({
         onBack={onDeliverableBack}
         onStartJumelage={onStartJumelage}
         draftLibraryId={draftLibraryId ?? undefined}
+        initialSections={initialSections}
       />
     );
   }

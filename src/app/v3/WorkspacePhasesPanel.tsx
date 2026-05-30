@@ -169,7 +169,7 @@ export function WorkspacePhasesPanel() {
     setActiveDeliverable,
     deliverableStage,
     startDeliverable,
-    draftLibraryId,
+    draftLibraryId, draftSectionTitles,
     focusType,
     setFocusType,
     workflowItems,
@@ -575,6 +575,7 @@ export function WorkspacePhasesPanel() {
               activeBotCode={activeBotCode}
               reflexionContext={reflexionContext}
               draftLibraryId={draftLibraryId}
+              draftSectionTitles={draftSectionTitles}
               onPhaseComplete={() => { setActivePhase("execution"); setRightSection(null); setExecutionTab("accueil"); }}
               onDeliverableBack={() => setActiveDeliverable(null)}
               onStartJumelage={activeDeliverable === "document" ? () => startDeliverable("jumelage") : undefined}
