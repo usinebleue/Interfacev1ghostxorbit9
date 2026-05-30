@@ -880,7 +880,7 @@ function InlineOptions({ options, onSend, isActive, msgType, agent, activeRoster
             <button
               disabled={!isActive}
               onClick={() => toggleSelect(i)}
-              style={isActive ? { animation: `fadeSlideUp 0.3s ease-out ${i * 0.08}s both` } : undefined}
+              style={isActive ? { animation: `fadeSlideUp 0.08s ease-out both` } : undefined}
               className={cn(
                 "w-full text-left border rounded-lg px-3 py-2 transition-all",
                 "border-l-[3px]",
@@ -2131,16 +2131,21 @@ function DiscussionWindowInner() {
               onResumeThread={(threadId) => {
                 const thread = threads.find(t => t.id === threadId);
                 resumeThread(threadId, activePhase);
+
+                // Push URL pour que le guard reset useEffect (L2018) ne redirige pas vers cockpit
+                const dept = window.location.pathname.split('/')[1] || 'ceo';
+                window.history.pushState({}, '', `/${dept}/discussion/${threadId}`);
+
                 const context = thread?.title || "";
 
-                // Restaurer le contexte de réflexion (même logique que handleWorkAction)
-                if (context) {
+                // N'activer le workspace que si le thread a des messages —
+                // sinon le workspace s'allume sur un thread vide et la discussion reste sur l'accueil
+                if (context && thread?.messages && thread.messages.length > 0) {
                   setReflexionContext(context);
                   setFocusType("chantier");
                 }
 
                 // Toujours afficher la discussion d'abord quand on reprend un thread
-                // L'utilisateur veut voir les messages, pas le workspace
                 setActivePhase("discussion" as any);
                 setRightSection(null);
               }}
@@ -2279,6 +2284,8 @@ function ControlPanel({ isOpen, setIsOpen, activeTab, setActiveTab }: {
 
   const launchMode = useCallback(() => {
     if (!qualMode) return;
+    // C.44 — propager le sujet au contexte réflexion pour éviter la question dupliquée dans LiveReflexionView
+    if (qualSubject.trim()) setReflexionContext(qualSubject.trim());
     // Route to workspace setup panel (ReflexionSetupPanel in LiveDiscussionView)
     setReflexionSetup({
       mode: qualMode.id,
@@ -2290,7 +2297,7 @@ function ControlPanel({ isOpen, setIsOpen, activeTab, setActiveTab }: {
     setRightSection(null);
     setIsOpen(false);
     setQualMode(null);
-  }, [qualMode, qualSubject, qualExperts, qualParticipants, setReflexionSetup, setActivePhase, setRightSection, setIsOpen]);
+  }, [qualMode, qualSubject, qualExperts, qualParticipants, setReflexionSetup, setActivePhase, setRightSection, setIsOpen, setReflexionContext]);
 
   const toggleExpert = useCallback((code: string) => {
     setQualExperts(prev => prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code]);
@@ -3126,7 +3133,7 @@ function ChatBoxV3({ onOpenPanel }: { onOpenPanel?: (tab: "modes" | "agents" | "
       }
       // W.1: Discussion 1:1 — toujours single-bot (experts dans le workspace)
       // C.50 — Passer les 5 derniers blocs pour CREATE/ENRICH/MERGE
-      const _wsCtx50 = workspaceBlocks.slice(-5).map(b => ({ id: b.id, title: (b.title || "").slice(0, 60), type: b.type, summary: (b.summary || "").slice(0, 200) }));
+      const _wsCtx50 = workspaceBlocks.slice(-10).map(b => ({ id: b.id, title: (b.title || "").slice(0, 60), type: b.type, summary: (b.summary || "").slice(0, 200) }));
       sendMessage(msgText, chatTargetBot, undefined, { workspacePhase: effectivePhase, workspaceExpertContext: buildExpertContext(workspaceBlocks, activeBotCode), workspaceBlocksContext: _wsCtx50.length > 0 ? _wsCtx50 : undefined });
     }
 

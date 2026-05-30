@@ -258,6 +258,11 @@ async function apiFetch<T>(
     if (newJwt) {
       const retryHeaders = { ...headers, Authorization: `Bearer ${newJwt}` };
       res = await fetch(url, { ...options, headers: retryHeaders });
+    } else {
+      // C.45 — JWT refresh échoué : fallback sur X-API-Key pour éviter le 401 (ex: Mathilde en mode réflexion)
+      const fallbackHeaders = { ...headers, "X-API-Key": API_KEY };
+      delete (fallbackHeaders as Record<string, string>).Authorization;
+      res = await fetch(url, { ...options, headers: fallbackHeaders });
     }
   }
 

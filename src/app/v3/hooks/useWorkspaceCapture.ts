@@ -810,6 +810,10 @@ export function useWorkspaceCapture() {
                     sectionId,
                     timestamp: Date.now(),
                     replace_block_id: wsBlock.replace_block_id,
+                    // C.50 — Propager ENRICH/MERGE pour que AmorcerContext applique la bonne logique
+                    operation: wsBlock.operation,
+                    target_block_id: wsBlock.target_block_id,
+                    merge_secondary_id: wsBlock.merge_secondary_id,
                     action_suggestions: actionSuggestions,
                   });
                 }
@@ -1072,6 +1076,10 @@ export function useWorkspaceCapture() {
               sectionId,
               timestamp: Date.now(),
               replace_block_id: wsBlock.replace_block_id,
+              // C.50 — Propager ENRICH/MERGE pour que AmorcerContext applique la bonne logique
+              operation: wsBlock.operation,
+              target_block_id: wsBlock.target_block_id,
+              merge_secondary_id: wsBlock.merge_secondary_id,
             };
             if (secondaries && blockData.structured_data) {
               blockData.structured_data.contributions = secondaries.map((s: any) => ({
