@@ -1077,11 +1077,16 @@ function V3MessageList() {
       const { prompt, bot } = (e as CustomEvent).detail || {};
       if (!prompt) return;
       const targetBot = bot || chatTargetBot;
-      sendMessage(prompt, targetBot, undefined, { workspacePhase });
+      // L'user a cliqué un bouton action — il veut voir la réponse → force-scroll vers le bas
+      userScrolledUp.current = false;
+      endRef.current?.scrollIntoView({ behavior: "smooth" });
+      // C.50 — Passer les blocs existants pour que le backend puisse ENRICH/MERGE
+      const _wsCtx = workspaceBlocks.slice(-10).map(b => ({ id: b.id, title: (b.title || "").slice(0, 60), type: b.type, summary: (b.summary || "").slice(0, 200) }));
+      sendMessage(prompt, targetBot, undefined, { workspacePhase, workspaceBlocksContext: _wsCtx.length > 0 ? _wsCtx : undefined });
     };
     window.addEventListener("bt-execute-task", handler);
     return () => window.removeEventListener("bt-execute-task", handler);
-  }, [sendMessage, chatTargetBot, workspacePhase]);
+  }, [sendMessage, chatTargetBot, workspacePhase, workspaceBlocks]);
 
   // Détecter si l'user a scrollé vers le haut (désactive l'auto-scroll)
   useEffect(() => {
@@ -1266,7 +1271,7 @@ function V3MessageList() {
     <div ref={scrollRef} className="flex-1 overflow-auto px-4 py-3 space-y-3 scrollbar-discussion">
       {messages.map((msg) => {
         if (msg.role === "system") return null;
-        if (msg.isStreaming && !msg.content) return null;
+        if (msg.isStreaming) return null; // C.BUFFER: bulle visible seulement quand réponse complète
         if ((msg.msgType as string) === "team_proposal") return null; // W.1: team_proposal consumed by workspace, not shown in chat
 
         // ── Multi-thinking bubble — animation consultation multi-agent ──
@@ -1634,12 +1639,12 @@ function V3MessageList() {
       })}
 
       {/* Thinking step — UNE ligne qui défile, contextuelle par bot + icones S102-B */}
-      {isTyping && !botAlreadyResponded && thinkingSteps.length > 0 && (() => {
+      {isTyping && !botAlreadyResponded && (thinkingSteps.length > 0 || isAnyStreaming) && (() => {
         const streamMsg = [...messages].reverse().find(m => m.role === "assistant" && m.isStreaming);
         const thinkBot = streamMsg?.agent || activeBotCode;
         const ts = V3_STYLE[thinkBot] || DEFAULT_STYLE;
         const botName = BOT_NAME[thinkBot] || "CarlOS";
-        const currentStep = thinkingSteps[thinkingSteps.length - 1];
+        const currentStep = thinkingSteps[thinkingSteps.length - 1] || "En traitement...";
         return (
           <div className="flex gap-2.5 animate-in fade-in duration-300">
             <div className={cn("w-7 h-7 rounded-full overflow-hidden shrink-0 ring-2 mt-0.5", ts.ring)}>
@@ -1959,32 +1964,11 @@ function DiscussionWindowInner() {
     ? [...messages].reverse().find(m => m.metadata?.command_available === true)
     : null;
 
-  // C.56 — ChantierSuggestionModal (Phase O = chatStage 4)
-  const [showChantierModal, setShowChantierModal] = useState(false);
-  const [chantierMatches, setChantierMatches] = useState<{ chantier_id: number; titre: string; score: number; reason: string; status: string; section_primaire: string }[]>([]);
-  const chantierTriggeredRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (chatStage < 4 || workspaceBlocks.length === 0 || messages.length === 0) return;
-    const tid = activeThreadId || "no-thread";
-    if (chantierTriggeredRef.current === tid) return; // déjà affiché pour ce thread
-    chantierTriggeredRef.current = tid;
-
-    const objectifs = workspaceBlocks
-      .filter(b => b.type === "objectif" || b.type === "objectifs")
-      .map(b => b.content)
-      .filter(Boolean);
-
-    api.chantiersMatch(objectifs, activeBotCode)
-      .then(data => {
-        setChantierMatches(data.matches || []);
-        setShowChantierModal(true);
-      })
-      .catch(() => {
-        setChantierMatches([]);
-        setShowChantierModal(true);
-      });
-  }, [chatStage, workspaceBlocks.length, activeThreadId]); // eslint-disable-line react-hooks/exhaustive-deps
+  // C.56 — ChantierSuggestionModal DÉSACTIVÉ: Carl ne veut pas de modal.
+  // Il existe déjà une vue chantier et une section chantier dans la sidebar.
+  // La navigation vers le chantier se fait via la sidebar, pas par modal automatique.
+  const showChantierModal = false;
+  const chantierMatches: { chantier_id: number; titre: string; score: number; reason: string; status: string; section_primaire: string }[] = [];
 
   // S117: Lifted ControlPanel state — shared with ChatBoxV3 buttons
   const [cpOpen, setCpOpen] = useState(false);
@@ -2141,16 +2125,16 @@ function DiscussionWindowInner() {
 
                 const context = thread?.title || "";
 
-                // N'activer le workspace que si le thread a des messages —
-                // sinon le workspace s'allume sur un thread vide et la discussion reste sur l'accueil
-                if (context && thread?.messages && thread.messages.length > 0) {
-                  setReflexionContext(context);
-                  setFocusType("chantier");
+                // N'activer workspace + discussion que si le thread a des messages —
+                // sinon le workspace s'allume sur un thread vide et le chat reste sur l'écran d'accueil
+                if (thread?.messages && thread.messages.length > 0) {
+                  if (context) {
+                    setReflexionContext(context);
+                    setFocusType("chantier");
+                  }
+                  setActivePhase("discussion" as any);
+                  setRightSection(null);
                 }
-
-                // Toujours afficher la discussion d'abord quand on reprend un thread
-                setActivePhase("discussion" as any);
-                setRightSection(null);
               }}
               onDeleteThread={(threadId) => deleteThread(threadId)}
               onRenameThread={(threadId, newTitle) => renameThread(threadId, newTitle)}
