@@ -1134,6 +1134,11 @@ export const api = {
     return apiFetch<Discussion[]>(`/discussions/stale?heures=${heures}`);
   },
 
+  /** Obtenir une discussion par external_id (UUID frontend) — fallback DB C.96 */
+  getDiscussionByExternal(externalId: string): Promise<Discussion> {
+    return apiFetch<Discussion>(`/discussions/by-external/${encodeURIComponent(externalId)}`);
+  },
+
   // ── COMMAND (BLOC 1) ──────────────────────────────────────
 
   /** Lancer une mission COMMAND */

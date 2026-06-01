@@ -1501,7 +1501,38 @@ export function useChat() {
 
   const resumeThread = useCallback((threadId: string, currentWorkPhase?: string): string | undefined => {
     const thread = threads.find((t) => t.id === threadId);
-    if (!thread) return undefined;
+    if (!thread) {
+      // C.96 — fallback DB: thread absent du state (localStorage vidé ou autre appareil)
+      api.getDiscussionByExternal(threadId).then((disc) => {
+        if (!disc?.external_id) return;
+        const restored: Thread = {
+          id: disc.external_id,
+          title: disc.titre || "Discussion restaurée",
+          status: "parked" as ThreadStatus,
+          messages: [],
+          mode: "credo" as import("./types").ReflectionMode,
+          primaryBot: disc.bot_primaire || "CEOB",
+          createdAt: disc.created_at || new Date().toISOString(),
+          updatedAt: disc.updated_at || new Date().toISOString(),
+          workPhase: disc.work_phase || "discussion",
+          flowSection: disc.section,
+          flowType: disc.flow_type,
+        };
+        setThreads((prev) => {
+          if (prev.find((t) => t.id === threadId)) return prev; // déjà présent
+          return [...prev, restored];
+        });
+        // Ouvrir directement (pas de rappel récursif depuis callback async)
+        setMessages([]);
+        setActiveThreadId(threadId);
+        idCounter.current = 0;
+        if (disc.bot_primaire) setActiveRoster([disc.bot_primaire]);
+        setThreads((prev) =>
+          prev.map((t) => t.id === threadId ? { ...t, status: "active" as ThreadStatus } : t)
+        );
+      }).catch(() => {/* thread introuvable en DB — no-op */});
+      return undefined;
+    }
 
     // Park current if needed — save current workPhase
     if (activeThreadId && messages.length > 0) {
