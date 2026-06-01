@@ -1973,13 +1973,13 @@ export const api = {
   // ═══════════════════════════════════════
 
   listProspectCampaigns(): Promise<any[]> {
-    return apiFetch("/prospects/campaigns");
+    return apiFetch("/prospect/campaigns");
   },
   listProspectSessions(): Promise<any[]> {
-    return apiFetch("/prospects/sessions");
+    return apiFetch("/prospect/sessions");
   },
   listCampaignTargets(campaignId: number): Promise<any[]> {
-    return apiFetch(`/prospects/campaigns/${campaignId}/targets`);
+    return apiFetch(`/prospect/campaigns/${campaignId}/targets`);
   },
 
   // ═══════════════════════════════════════
