@@ -1010,7 +1010,7 @@ export function useChat() {
                       : m
                   )
                 );
-              }, 200);
+              }, 1500);
             },
             onDone: (data: StreamDoneEvent) => {
               console.log(`[WC-DEBUG] onDone received: wsBlock=${!!data.workspace_block}, type=${data.workspace_block?.type}, title=${(data.workspace_block?.title as string | undefined)?.substring(0,30)}, skip=${data.workspace_block_skip}`);
@@ -1076,7 +1076,7 @@ export function useChat() {
                     ? {
                         ...m,
                         _preFinalized: undefined, // Effacer le flag stale timer — onDone est arrivé
-                        content: cleanText,
+                        content: (m.content && m.content.length > cleanText.length) ? m.content : cleanText,
                         agent: data.agent || agent || "CEOB",
                         ghost: data.ghost_actif,
                         tier: data.tier,
